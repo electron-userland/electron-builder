@@ -336,22 +336,25 @@ export interface CommonConfiguration {
   readonly ignoredProductionDependencies?: Array<string> | null
 
   /**
-   * Whether a production dependency that cannot be resolved during node-module collection should
-   * fail the build instead of only being logged as a warning.
+   * Whether production dependencies that cannot be resolved during node-module collection are
+   * allowed — i.e. whether the build should continue with a warning instead of failing.
    *
-   * By default, a dependency that node-module collection cannot resolve (`cannot find path for
-   * dependency` / `dependency not found on disk`) only produces a warning and the build "succeeds"
-   * without the package — typically breaking the packaged app at runtime with `MODULE_NOT_FOUND`.
+   * During collection every production dependency must resolve to an installed package on disk. A
+   * dependency that does not resolve (`cannot find path for dependency` / `dependency not found on
+   * disk`) is not bundled, which typically breaks the packaged app at runtime with
+   * `MODULE_NOT_FOUND`.
    *
-   * - `false` (or omitted): today's behaviour — missing dependencies are logged as warnings only.
-   * - `true`: the build fails after dependency collection completes, reporting the **complete**
-   *   list of missing production dependencies at once.
-   * - `string[]`: like `true`, but the listed dependency names are ignored — they are allowed to
-   *   be missing without failing the build. Entries match the package name of the reported
-   *   `name@version` entry (e.g. `some-native-module`, `@scope/pkg`).
+   * - `false` or `null` (default): the build fails after dependency collection completes,
+   *   reporting the **complete** list of missing production dependencies at once.
+   * - `string[]`: the listed dependency names are allowed to be missing; any other missing
+   *   production dependency still fails the build. Entries match the package name of the reported
+   *   `name@version` entry (e.g. `some-native-module`, `@scope/pkg`), or an exact `name@version`
+   *   string to allow only that resolved version to be missing.
+   * - `true`: missing production dependencies are only logged as warnings (the electron-builder
+   *   ≤ 26 behavior).
    *
    * Missing *optional* dependencies (declared in `optionalDependencies`, e.g. `fsevents` on
-   * Linux/Windows, or platform-specific packages) never fail the build.
+   * Linux/Windows, or platform-specific packages) are always allowed and never fail the build.
    *
    * Independent of {@link ignoredProductionDependencies}, which controls which dependencies are
    * excluded from the copied `node_modules`; this option only controls validation of the
@@ -359,7 +362,7 @@ export interface CommonConfiguration {
    *
    * @default false
    */
-  readonly failOnMissingDependencies?: boolean | Array<string> | null
+  readonly allowMissingDependencies?: boolean | Array<string> | null
 
   /**
    * Configuration for native Node.js module installation and rebuilding.

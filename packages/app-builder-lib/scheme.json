@@ -9154,6 +9154,24 @@
       ],
       "description": "Called after code signing but **before** the signed app is packed into the final\ndistributable format (e.g. before `dmg` is created from the signed `.app`).\n\nUse this hook to perform post-sign validation or to add signed resources that are not part of\nthe main app bundle.\n\nReceives an {@link AfterPackContext}."
     },
+    "allowMissingDependencies": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        }
+      ],
+      "default": false,
+      "description": "Whether production dependencies that cannot be resolved during node-module collection are\nallowed — i.e. whether the build should continue with a warning instead of failing.\n\nDuring collection every production dependency must resolve to an installed package on disk. A\ndependency that does not resolve (`cannot find path for dependency` / `dependency not found on\ndisk`) is not bundled, which typically breaks the packaged app at runtime with\n`MODULE_NOT_FOUND`.\n\n- `false` or `null` (default): the build fails after dependency collection completes,\n  reporting the **complete** list of missing production dependencies at once.\n- `string[]`: the listed dependency names are allowed to be missing; any other missing\n  production dependency still fails the build. Entries match the package name of the reported\n  `name@version` entry (e.g. `some-native-module`, `@scope/pkg`), or an exact `name@version`\n  string to allow only that resolved version to be missing.\n- `true`: missing production dependencies are only logged as warnings (the electron-builder\n  ≤ 26 behavior).\n\nMissing *optional* dependencies (declared in `optionalDependencies`, e.g. `fsevents` on\nLinux/Windows, or platform-specific packages) are always allowed and never fail the build.\n\nIndependent of {@link ignoredProductionDependencies}, which controls which dependencies are\nexcluded from the copied `node_modules`; this option only controls validation of the\ncollection result."
+    },
     "apk": {
       "anyOf": [
         {
@@ -9543,24 +9561,6 @@
         }
       ],
       "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
-    },
-    "failOnMissingDependencies": {
-      "anyOf": [
-        {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        {
-          "type": [
-            "null",
-            "boolean"
-          ]
-        }
-      ],
-      "default": false,
-      "description": "Whether a production dependency that cannot be resolved during node-module collection should\nfail the build instead of only being logged as a warning.\n\nBy default, a dependency that node-module collection cannot resolve (`cannot find path for\ndependency` / `dependency not found on disk`) only produces a warning and the build \"succeeds\"\nwithout the package — typically breaking the packaged app at runtime with `MODULE_NOT_FOUND`.\n\n- `false` (or omitted): today's behaviour — missing dependencies are logged as warnings only.\n- `true`: the build fails after dependency collection completes, reporting the **complete**\n  list of missing production dependencies at once.\n- `string[]`: like `true`, but the listed dependency names are ignored — they are allowed to\n  be missing without failing the build. Entries match the package name of the reported\n  `name@version` entry (e.g. `some-native-module`, `@scope/pkg`).\n\nMissing *optional* dependencies (declared in `optionalDependencies`, e.g. `fsevents` on\nLinux/Windows, or platform-specific packages) never fail the build.\n\nIndependent of {@link ignoredProductionDependencies}, which controls which dependencies are\nexcluded from the copied `node_modules`; this option only controls validation of the\ncollection result."
     },
     "fileAssociations": {
       "anyOf": [
