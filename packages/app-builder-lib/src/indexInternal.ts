@@ -68,6 +68,7 @@ export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConve
 export { getLicenseAssets, getLicenseFiles } from "./util/license.js"
 export { parsePlistFile, PlistObject } from "./util/mac/plist.js"
 export { expandMacro } from "./util/macroExpander.js"
+export { checkMetadata } from "./util/packageMetadata.js"
 export { getRepositoryInfo } from "./util/repositoryInfo.js"
 export { withToolsetLock } from "./util/toolsetLock.js"
 export { editWindowsResources, ResourceEditOptions } from "./util/win/resEdit.js"

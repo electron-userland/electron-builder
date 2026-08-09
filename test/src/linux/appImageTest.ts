@@ -36,6 +36,14 @@ describe("validateCriticalPathString", () => {
     expect(() => validateCriticalPathString("my@app", "executableName")).toThrow(InvalidConfigurationError)
   })
 
+  test("rejects double dots (path traversal)", ({ expect }) => {
+    expect(() => validateCriticalPathString("../my-app", "executableName")).toThrow(InvalidConfigurationError)
+  })
+
+  test("rejects backslash", ({ expect }) => {
+    expect(() => validateCriticalPathString("my\\app", "executableName")).toThrow(InvalidConfigurationError)
+  })
+
   test("rejects empty string", ({ expect }) => {
     expect(() => validateCriticalPathString("", "executableName")).toThrow(InvalidConfigurationError)
   })
@@ -46,6 +54,16 @@ describe("validateCriticalPathString", () => {
 
   test("allows Unicode letters (e.g. German ß)", ({ expect }) => {
     expect(() => validateCriticalPathString("Test App ßW", "productFilename")).not.toThrow()
+  })
+
+  test("allows parentheses", ({ expect }) => {
+    expect(() => validateCriticalPathString("Zoo Design Studio (Staging)", "productFilename")).not.toThrow()
+    expect(() => validateCriticalPathString("Foo (Beta)", "executableName")).not.toThrow()
+  })
+
+  test("rejects parentheses combined with shell metacharacters", ({ expect }) => {
+    expect(() => validateCriticalPathString("my$(app)", "executableName")).toThrow(InvalidConfigurationError)
+    expect(() => validateCriticalPathString("my`(app)`", "executableName")).toThrow(InvalidConfigurationError)
   })
 })
 
