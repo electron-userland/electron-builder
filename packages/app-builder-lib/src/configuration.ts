@@ -199,26 +199,30 @@ export interface CommonConfiguration {
   readonly nativeRebuilder?: "legacy" | "sequential" | "parallel" | null
 
   /**
-   * Whether a production dependency that cannot be resolved during node-module collection should
-   * fail the build instead of only being logged as a warning.
+   * Whether production dependencies that cannot be resolved during node-module collection are
+   * allowed — i.e. whether the build should continue with a warning instead of failing.
    *
-   * By default, a dependency that node-module collection cannot resolve (`cannot find path for
-   * dependency` / `dependency not found on disk`) only produces a warning and the build "succeeds"
-   * without the package — typically breaking the packaged app at runtime with `MODULE_NOT_FOUND`.
+   * During collection every production dependency must resolve to an installed package on disk. A
+   * dependency that does not resolve (`cannot find path for dependency` / `dependency not found on
+   * disk`) is not bundled, which typically breaks the packaged app at runtime with
+   * `MODULE_NOT_FOUND`.
    *
-   * - `false` (or omitted): today's behaviour — missing dependencies are logged as warnings only.
-   * - `true`: the build fails after dependency collection completes, reporting the **complete**
-   *   list of missing production dependencies at once.
-   * - `string[]`: like `true`, but the listed dependency names are ignored — they are allowed to
-   *   be missing without failing the build. Entries match the package name of the reported
-   *   `name@version` entry (e.g. `some-native-module`, `@scope/pkg`).
+   * - `true` (or omitted — the v26 default): missing production dependencies are only logged as
+   *   warnings, keeping the historical behavior of the stable 26.x line. (electron-builder 27+
+   *   defaults to `false` and fails the build instead.)
+   * - `false` or `null`: the build fails after dependency collection completes, reporting the
+   *   **complete** list of missing production dependencies at once.
+   * - `string[]`: the listed dependency names are allowed to be missing; any other missing
+   *   production dependency fails the build. Entries match the package name of the reported
+   *   `name@version` entry (e.g. `some-native-module`, `@scope/pkg`), or an exact `name@version`
+   *   string to allow only that resolved version to be missing.
    *
    * Missing *optional* dependencies (declared in `optionalDependencies`, e.g. `fsevents` on
-   * Linux/Windows, or platform-specific packages) never fail the build.
+   * Linux/Windows, or platform-specific packages) are always allowed and never fail the build.
    *
-   * @default false
+   * @default true
    */
-  readonly failOnMissingDependencies?: boolean | Array<string> | null
+  readonly allowMissingDependencies?: boolean | Array<string> | null
 
   /**
    * The build number. Maps to the `--iteration` flag for builds using FPM on Linux.
