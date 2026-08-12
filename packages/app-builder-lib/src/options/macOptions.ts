@@ -34,8 +34,13 @@ export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFi
    * The type of certificate to use when signing: `development` or `distribution`.
    *
    * Defaults to a value derived from the build flavor: `mas-dev` → `development`, otherwise `distribution`.
-   * Set it explicitly to override — e.g. `development` on a darwin build selects a development
-   * certificate and embeds a matching development provisioning profile.
+   * Set it explicitly to override — e.g. `development` on a darwin build signs with a `Mac Developer` or
+   * `Apple Development` certificate instead of `Developer ID Application` and embeds a matching
+   * development provisioning profile.
+   *
+   * Development-signed apps are blocked by Gatekeeper on other machines; users must use the
+   * right-click → Open workaround documented at https://support.apple.com/en-us/guide/mac-help/mh40616/mac.
+   * Such builds are not suitable for production distribution and cannot be notarized.
    */
   readonly type?: SigningDistributionType
   /**

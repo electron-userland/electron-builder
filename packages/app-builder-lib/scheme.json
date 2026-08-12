@@ -1333,7 +1333,7 @@
           ]
         },
         "type": {
-          "description": "The type of certificate to use when signing: `development` or `distribution`.\n\nDefaults to a value derived from the build flavor: `mas-dev` → `development`, otherwise `distribution`.\nSet it explicitly to override — e.g. `development` on a darwin build selects a development\ncertificate and embeds a matching development provisioning profile.",
+          "description": "The type of certificate to use when signing: `development` or `distribution`.\n\nDefaults to a value derived from the build flavor: `mas-dev` → `development`, otherwise `distribution`.\nSet it explicitly to override — e.g. `development` on a darwin build signs with a `Mac Developer` or\n`Apple Development` certificate instead of `Developer ID Application` and embeds a matching\ndevelopment provisioning profile.\n\nDevelopment-signed apps are blocked by Gatekeeper on other machines; users must use the\nright-click → Open workaround documented at https://support.apple.com/en-us/guide/mac-help/mh40616/mac.\nSuch builds are not suitable for production distribution and cannot be notarized.",
           "enum": [
             "development",
             "distribution"
