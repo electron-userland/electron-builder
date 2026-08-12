@@ -9,6 +9,7 @@ import { getAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../../p
 import { getNotLocalizedLicenseFile } from "../../../util/license.js"
 import { LinuxTargetHelper } from "../LinuxTargetHelper.js"
 import { createStageDir } from "../../targetUtil.js"
+import { prepareMetainfoFile } from "../metainfo.js"
 import { buildLegacyFuse2AppImage, buildStaticRuntimeAppImage } from "./appImageUtil.js"
 import { BlockMapDataHolder } from "builder-util-runtime"
 
@@ -77,6 +78,20 @@ export default class AppImageTarget extends Target {
     // Validated once here; throws InvalidConfigurationError for path traversal / NUL.
     const desktopBaseName = this.helper.getDesktopFileName()
 
+    // Validated (unless opted out) before packing; staged into usr/share/metainfo by writeAppLauncherAndRelatedFiles.
+    // Note: appimagetool/AppImageHub conventionally expect `<desktop-basename>.appdata.xml` while the AppStream spec
+    // prefers `<id>.metainfo.xml` — both basenames are kept as-is (see prepareMetainfoFile).
+    const metainfo =
+      options.metainfo == null
+        ? null
+        : await prepareMetainfoFile({
+            projectDir: packager.projectDir,
+            metainfo: options.metainfo,
+            appId: packager.appInfo.id,
+            expectedDesktopId: `${desktopBaseName}.desktop`,
+            disableValidation: options.disableMetainfoValidation === true,
+          })
+
     if (
       this.packager.packagerOptions.effectiveOptionComputed != null &&
       (await this.packager.packagerOptions.effectiveOptionComputed({ desktop: desktopEntry, desktopFileName: `${desktopBaseName}.desktop` }))
@@ -105,6 +120,7 @@ export default class AppImageTarget extends Target {
               icons,
               fileAssociations: packager.fileAssociations,
               desktopBaseName,
+              metainfo,
               compression: (() => {
                 const c = options.compression
                 if (c === "xz" || c === "gzip") {
@@ -137,6 +153,7 @@ export default class AppImageTarget extends Target {
               icons,
               fileAssociations: packager.fileAssociations,
               desktopBaseName,
+              metainfo,
               compression: (() => {
                 const c = options.compression
                 if (c === "gzip" || c === "zstd") {
