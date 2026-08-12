@@ -1,11 +1,5 @@
 # app-builder-lib
 
-## 27.0.1-alpha.1
-
-### Patch Changes
-
-- Fix(win): only log a file as "signed" when signing actually succeeded, and log an explicit "signing skipped" message when no signing configuration is found instead of always claiming success before signing runs.
-
 ## 27.0.0-alpha.6
 
 ### Major Changes
