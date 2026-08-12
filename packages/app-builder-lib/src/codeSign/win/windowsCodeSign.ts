@@ -9,17 +9,22 @@ export interface WindowsSignOptions {
 
 export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
   const signing = resolveWindowsSigningConfiguration(options.options)
-  if (signing?.type === "azure") {
-    log.info({ path: log.filePath(options.path) }, "signing with Azure Trusted Signing")
-  } else if (signing?.type === "hsm") {
-    log.info({ path: log.filePath(options.path) }, "signing with signtool.exe (HSM)")
-  } else if (signing?.type === "pkcs11") {
-    log.info({ path: log.filePath(options.path) }, "signing with osslsigncode (PKCS#11)")
-  } else {
-    log.info({ path: log.filePath(options.path) }, "signing with signtool.exe")
-  }
   const packageManager = await packager.signingManager.value
-  return signWithRetry(async () => packageManager.signFile(options))
+  const didSign = await signWithRetry(async () => packageManager.signFile(options))
+
+  if (!didSign) {
+    log.debug({ path: log.filePath(options.path) }, "signing skipped (no signing configuration found)")
+  } else if (signing?.type === "azure") {
+    log.info({ path: log.filePath(options.path) }, "signed with Azure Trusted Signing")
+  } else if (signing?.type === "hsm") {
+    log.info({ path: log.filePath(options.path) }, "signed with signtool.exe (HSM)")
+  } else if (signing?.type === "pkcs11") {
+    log.info({ path: log.filePath(options.path) }, "signed with osslsigncode (PKCS#11)")
+  } else {
+    log.info({ path: log.filePath(options.path) }, "signed with signtool.exe")
+  }
+
+  return didSign
 }
 
 function signWithRetry(signer: () => Promise<boolean>): Promise<boolean> {
