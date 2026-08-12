@@ -1,8 +1,10 @@
+import { log } from "builder-util"
 import { GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, KeygenOptions, R2Options, SpacesOptions } from "builder-util-runtime"
 import { Arch, createTargets, Platform } from "electron-builder"
 import fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
+import { vi } from "vitest"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, checkDirContents } from "./helpers/packTester.js"
 
@@ -112,6 +114,46 @@ test.ifNotWindows("r2 as first publisher writes provider r2 to app-update.yml", 
     }
   )
 )
+
+// A github publish config without owner/repo is completed from the repository info (package.json "repository",
+// CI env vars, then .git/config). The result is written into app-update.yml inside the shipped app and becomes its
+// permanent update feed, so the build has to report which repository it resolved to - and report it exactly once,
+// even though getResolvedPublishConfig runs per target and arch.
+test.ifNotWindows("detected github repo is reported once and written to app-update.yml", async ({ expect }) => {
+  const oldSlug = process.env.TRAVIS_REPO_SLUG
+  const warn = vi.spyOn(log, "warn")
+  try {
+    process.env.TRAVIS_REPO_SLUG = "detected-owner/detected-repo"
+    await app(
+      expect,
+      {
+        targets: Platform.MAC.createTarget("zip", Arch.x64),
+        config: {
+          publish: { provider: "github" },
+        },
+      },
+      {
+        publish: "never",
+        packed: async context => {
+          const updateConfig = load(await fsExtra.readFile(path.join(context.getResources(Platform.MAC, Arch.x64), "app-update.yml"), "utf-8")) as any
+          expect(updateConfig.owner).toBe("detected-owner")
+          expect(updateConfig.repo).toBe("detected-repo")
+
+          const reported = warn.mock.calls.filter(([messageOrFields]) => typeof messageOrFields === "object" && messageOrFields != null && "owner" in messageOrFields)
+          expect(reported).toHaveLength(1)
+          expect(reported[0][0]).toMatchObject({ provider: "github", owner: "detected-owner", repo: "detected-repo" })
+        },
+      }
+    )
+  } finally {
+    warn.mockRestore()
+    if (oldSlug == null) {
+      delete process.env.TRAVIS_REPO_SLUG
+    } else {
+      process.env.TRAVIS_REPO_SLUG = oldSlug
+    }
+  }
+})
 
 test.ifNotWindows("github and r2 (publishAutoUpdate)", ({ expect }) =>
   app(expect, {

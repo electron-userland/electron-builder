@@ -56,6 +56,21 @@ electron-builder --publish always   # explicit — required in v27
 
 **See also:** [Publish configuration](../publish.md) · [Implicit `--publish` removed](../migration/v27-breaking-changes.md#implicit-publish-removed)
 
+## Update feed ownership
+
+When a GitHub or Bitbucket publish configuration omits `owner`/`repo`, electron-builder fills them in from the repository info (`package.json` `repository`, CI environment variables, then `.git/config`). The result is written to `app-update.yml` inside the packaged app, so it is the update feed every installed copy keeps using — long after the build machine is gone. A build reports the repository it resolved to, so read that line and confirm it is correct:
+
+```
+• update feed detected from repository info and written to app-update.yml, installed builds
+  will fetch updates from this repository - specify it explicitly to be sure it stays under
+  your control  reason=not specified in the publish configuration provider=github
+  owner=my-org repo=my-app
+```
+
+That name has to stay yours. GitHub frees an owner or repository name for re-registration as soon as it is renamed, transferred or deleted, and whoever claims it next can publish a release that installed copies of your app will download and run. Set `owner` and `repo` explicitly rather than relying on detection, and do not retire the namespace while builds are still in the field.
+
+**See also:** [GitHub repository detection](../publish.md#github-repository-and-bintray-package)
+
 ## Toolset integrity
 
 The external build toolsets electron-builder downloads (NSIS, winCodeSign, AppImage, Wine, FPM, …) are checksum-verified after download and cached, so a corrupted or substituted bundle is rejected. When you supply a **custom** toolset from a remote `url`, a `checksum` is **required**; a local `file://` directory is used as-is and needs no checksum.
