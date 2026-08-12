@@ -30,7 +30,7 @@ export class MacTargetHelper {
     signOpts: ElectronSignOptions | null | undefined
   ): Promise<Identity | null> {
     const isMas = MacTargetHelper.isMasTarget(targetPlatform)
-    const certificateTypes = MacTargetHelper.getCertificateTypes(targetPlatform)
+    const certificateTypes = MacTargetHelper.getCertificateTypes(targetPlatform, signOpts)
 
     let identity: Identity | null = null
     for (const certificateType of certificateTypes) {
@@ -256,13 +256,16 @@ export class MacTargetHelper {
     }
   }
 
-  static getCertificateTypes(targetPlatform: PlatformType): CertType[] {
+  static getCertificateTypes(targetPlatform: PlatformType, signOpts?: ElectronSignOptions | null): CertType[] {
     switch (targetPlatform) {
       case "mas-dev":
         return ["Mac Developer", "Apple Development"]
       case "mas":
         return ["Apple Distribution", "3rd Party Mac Developer Application"]
       default:
+        if (signOpts?.type === "development") {
+          return ["Mac Developer", "Apple Development"]
+        }
         return ["Developer ID Application"]
     }
   }

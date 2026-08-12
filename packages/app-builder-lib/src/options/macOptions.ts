@@ -78,6 +78,18 @@ export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFi
    * @example ["--deep"]
    */
   readonly additionalArguments?: Array<string> | null
+  /**
+   * Signing type for `mac` (non-MAS) builds.
+   *
+   * - **Not set** (default): signs with a `Developer ID Application` certificate for direct distribution.
+   * - **`"development"`**: signs with a `Mac Developer` or `Apple Development` certificate instead.
+   *   The resulting app will be blocked by Gatekeeper on other machines; users must use the
+   *   right-click → Open workaround documented at https://support.apple.com/en-us/guide/mac-help/mh40616/mac.
+   *   Not suitable for production distribution and cannot be notarized.
+   *
+   * Has no effect on `mas` or `mas-dev` builds — those always use their respective certificate types.
+   */
+  readonly type?: "development"
 }
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"

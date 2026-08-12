@@ -2,17 +2,19 @@ import { afterEach, expect } from "vitest"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { MacTargetHelper, type PlatformType } from "app-builder-lib/internal"
+import { ElectronSignOptions } from "app-builder-lib"
 
 describe("MacTargetHelper", () => {
   describe("getCertificateTypes", () => {
-    const cases: [PlatformType, string[]][] = [
-      ["mas", ["Apple Distribution", "3rd Party Mac Developer Application"]],
-      ["mas-dev", ["Mac Developer", "Apple Development"]],
-      ["mac", ["Developer ID Application"]],
+    const cases: [PlatformType, ElectronSignOptions["type"], string[]][] = [
+      ["mas", undefined, ["Apple Distribution", "3rd Party Mac Developer Application"]],
+      ["mas-dev", undefined, ["Mac Developer", "Apple Development"]],
+      ["mac", undefined, ["Developer ID Application"]],
+      ["mac", "development", ["Mac Developer", "Apple Development"]],
     ]
 
-    test.each(cases)("%s", (targetPlatform, expected) => {
-      expect(MacTargetHelper.getCertificateTypes(targetPlatform)).toEqual(expected)
+    test.each(cases)("%s %s", (targetPlatform, signOpts, expected) => {
+      expect(MacTargetHelper.getCertificateTypes(targetPlatform, { type: signOpts })).toEqual(expected)
     })
   })
 
