@@ -12,7 +12,7 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
   const packageManager = await packager.signingManager.value
 
   const path = log.filePath(options.path)
-  console.info(`Signing ${path}...`)
+  log.info(`Signing ${path}...`)
   const didSign = await signWithRetry(async () => packageManager.signFile(options))
 
   if (!didSign) {
