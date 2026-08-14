@@ -199,6 +199,32 @@ export interface CommonConfiguration {
   readonly nativeRebuilder?: "legacy" | "sequential" | "parallel" | null
 
   /**
+   * Whether production dependencies that cannot be resolved during node-module collection are
+   * allowed — i.e. whether the build should continue with a warning instead of failing.
+   *
+   * During collection every production dependency must resolve to an installed package on disk. A
+   * dependency that does not resolve (`cannot find path for dependency` / `dependency not found on
+   * disk`) is not bundled, which typically breaks the packaged app at runtime with
+   * `MODULE_NOT_FOUND`.
+   *
+   * - `true` (or omitted — the v26 default): missing production dependencies are only logged as
+   *   warnings, keeping the historical behavior of the stable 26.x line. (electron-builder 27+
+   *   defaults to `false` and fails the build instead.)
+   * - `false` or `null`: the build fails after dependency collection completes, reporting the
+   *   **complete** list of missing production dependencies at once.
+   * - `string[]`: the listed dependency names are allowed to be missing; any other missing
+   *   production dependency fails the build. Entries match the package name of the reported
+   *   `name@version` entry (e.g. `some-native-module`, `@scope/pkg`), or an exact `name@version`
+   *   string to allow only that resolved version to be missing.
+   *
+   * Missing *optional* dependencies (declared in `optionalDependencies`, e.g. `fsevents` on
+   * Linux/Windows, or platform-specific packages) are always allowed and never fail the build.
+   *
+   * @default true
+   */
+  readonly allowMissingDependencies?: boolean | Array<string> | null
+
+  /**
    * The build number. Maps to the `--iteration` flag for builds using FPM on Linux.
    * If not defined, then it will fallback to `BUILD_NUMBER` or `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_BUILDNUMBER` or `CI_PIPELINE_IID` env.
    */

@@ -8963,6 +8963,24 @@
       ],
       "description": "The function (or path to file or module id) to be run after pack and sign but before pack into distributable format.\nReceives an {@link AfterPackContext}. For file/module setup, see {@link beforePack}."
     },
+    "allowMissingDependencies": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        }
+      ],
+      "default": true,
+      "description": "Whether production dependencies that cannot be resolved during node-module collection are\nallowed — i.e. whether the build should continue with a warning instead of failing.\n\nDuring collection every production dependency must resolve to an installed package on disk. A\ndependency that does not resolve (`cannot find path for dependency` / `dependency not found on\ndisk`) is not bundled, which typically breaks the packaged app at runtime with\n`MODULE_NOT_FOUND`.\n\n- `true` (or omitted — the v26 default): missing production dependencies are only logged as\n  warnings, keeping the historical behavior of the stable 26.x line. (electron-builder 27+\n  defaults to `false` and fails the build instead.)\n- `false` or `null`: the build fails after dependency collection completes, reporting the\n  **complete** list of missing production dependencies at once.\n- `string[]`: the listed dependency names are allowed to be missing; any other missing\n  production dependency fails the build. Entries match the package name of the reported\n  `name@version` entry (e.g. `some-native-module`, `@scope/pkg`), or an exact `name@version`\n  string to allow only that resolved version to be missing.\n\nMissing *optional* dependencies (declared in `optionalDependencies`, e.g. `fsevents` on\nLinux/Windows, or platform-specific packages) are always allowed and never fail the build."
+    },
     "apk": {
       "anyOf": [
         {

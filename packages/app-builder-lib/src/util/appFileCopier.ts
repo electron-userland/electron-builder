@@ -1,4 +1,4 @@
-import { AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
+import { AsyncTaskManager, FileCopier, FileTransformer, InvalidConfigurationError, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
 import { ensureSymlink } from "fs-extra"
 import { mkdir, readlink } from "fs/promises"
@@ -281,7 +281,62 @@ export async function resolveFirstMatchingCollection(options: {
   return fallback
 }
 
-async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>) {
+/** Extracts the package name from a `name@version` log-summary entry, handling `@scope/name@version`. */
+function dependencyNameFromSummaryId(id: string): string {
+  let at: number
+  if (id.startsWith("@")) {
+    // Scoped package: the version separator is the first `@` after the scope's `/`
+    const slashIndex = id.indexOf("/")
+    if (slashIndex === -1) {
+      return id
+    }
+    at = id.indexOf("@", slashIndex + 1)
+  } else {
+    at = id.indexOf("@")
+  }
+  return at > 0 ? id.slice(0, at) : id
+}
+
+/**
+ * Enforces `allowMissingDependencies` against the finished collection summary (issue #10058).
+ * Runs only after collection completes, so the error reports the COMPLETE set of missing
+ * production dependencies at once instead of failing on the first one.
+ *
+ * v26 defaults to warn-only: `true` and omitted keep the historical warning behavior of the
+ * stable 26.x line, while `false`/`null` fail the build on any missing production dependency
+ * (the electron-builder 27+ default). When the option is a `string[]`, only the listed dependency
+ * names are allowed to be missing — matched against the package name parsed from the summary's
+ * `name@version` entries (scoped names included), with an exact-entry match accepted as well.
+ *
+ * Only genuinely missing production dependencies (`PKG_NOT_FOUND` / `PKG_NOT_ON_DISK`) are fatal;
+ * missing optional dependencies (`PKG_OPTIONAL_NOT_INSTALLED` / `PKG_OPTIONAL_PLATFORM_NOT_INSTALLED`)
+ * never fail the build.
+ *
+ * Exported for tests (an internal-tagged export would be stripped from the declarations the test
+ * project consumes).
+ */
+export function enforceAllowMissingDependencies(allowMissingDependencies: boolean | Array<string> | null | undefined, logSummary: ModuleManager["logSummary"] | undefined): void {
+  // v26 default: omitted behaves like `true` (warn-only) so existing 26.x builds keep working.
+  if (allowMissingDependencies === true || allowMissingDependencies === undefined) {
+    return
+  }
+  const missing = new Set<string>([...(logSummary?.[LogMessageByKey.PKG_NOT_FOUND] ?? []), ...(logSummary?.[LogMessageByKey.PKG_NOT_ON_DISK] ?? [])])
+  const allowed = new Set(Array.isArray(allowMissingDependencies) ? allowMissingDependencies : [])
+  const fatal = Array.from(missing)
+    .filter(id => !allowed.has(dependencyNameFromSummaryId(id)) && !allowed.has(id))
+    .sort()
+  if (fatal.length === 0) {
+    return
+  }
+  throw new InvalidConfigurationError(
+    `The following production dependencies could not be resolved during node-module collection:\n` +
+      fatal.map(id => `  - ${id}`).join("\n") +
+      `\nInstall the missing dependencies, list names in \`allowMissingDependencies\` to allow specific ones to be missing, or set \`allowMissingDependencies\` to true to only warn.`
+  )
+}
+
+/** Exported for tests (an internal-tagged export would be stripped from the declarations the test project consumes). */
+export async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>) {
   const packager = platformPackager.info
   const { tempDirManager, appDir, projectDir } = packager
 
@@ -307,6 +362,10 @@ async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<
     const logLevel = logMessageLevelByKey[errorMessage as LogMessageByKey] || "debug"
     log[logLevel]({ dependencies }, errorMessage)
   }
+
+  // Enforcement (issue #10058): collection is complete and the summary above has reached the log,
+  // so failing here reports every missing production dependency at once.
+  enforceAllowMissingDependencies(packager.config.allowMissingDependencies, deps.logSummary)
 
   return deps.nodeModules
 }
