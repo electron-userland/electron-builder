@@ -145,3 +145,42 @@ Name "${PRODUCT_NAME}" "${DoubleAmpersand}"
     LogText ${INPUT_TEXT}
   !endif
 !macroend
+
+# Live check for whether the current (possibly unelevated) process can actually write to
+# a directory, rather than relying solely on the persisted "was this a per-machine
+# install" registry flag. A per-machine-flagged install doesn't necessarily still need
+# elevation to write to its own folder -- e.g. an installer's customInstall hook may have
+# already loosened that folder's ACL for the current user. Attempts to create and remove
+# a marker file; leaves _RESULT_VAR as "1" if that succeeds, "0" otherwise.
+!macro IsDirWritable _DIR _RESULT_VAR
+  Push $R9
+  ClearErrors
+  FileOpen $R9 "${_DIR}\.eb-write-test.tmp" w
+  ${if} ${Errors}
+    StrCpy ${_RESULT_VAR} "0"
+  ${else}
+    FileClose $R9
+    Delete "${_DIR}\.eb-write-test.tmp"
+    StrCpy ${_RESULT_VAR} "1"
+  ${endif}
+  Pop $R9
+!macroend
+
+# Companion to IsDirWritable: the install section also writes its per-machine
+# registration (registryAddInstallInfo) to SHELL_CONTEXT, which resolves to HKLM when
+# installMode is "all". That WriteRegStr fails silently (no error surfaced, no abort)
+# when unelevated, which -- combined with uninstallOldVersion deleting the *existing*
+# registry key first -- can wipe the InstallLocation value entirely instead of leaving it
+# unchanged, corrupting the next launch's per-machine detection. A writability check on
+# $INSTDIR alone is therefore not sufficient to safely skip elevation; this must also
+# hold for _RESULT_VAR to be trustworthy.
+!macro IsRegKeyWritable _ROOT _KEY _RESULT_VAR
+  ClearErrors
+  WriteRegStr ${_ROOT} "${_KEY}" ".eb-write-test" "1"
+  ${if} ${Errors}
+    StrCpy ${_RESULT_VAR} "0"
+  ${else}
+    DeleteRegValue ${_ROOT} "${_KEY}" ".eb-write-test"
+    StrCpy ${_RESULT_VAR} "1"
+  ${endif}
+!macroend
