@@ -9,6 +9,7 @@ import {
   GetFileMatchersOptions,
   getMainFileMatchers,
   getReincludedDefaultExclusions,
+  resolveFileSetDestination,
 } from "app-builder-lib/internal"
 import * as path from "path"
 import { vi } from "vitest"
@@ -329,6 +330,110 @@ describe("getFileMatchers – string patterns in config.files", () => {
     expect(result).not.toBeNull()
     expect(result![0].patterns).toContain("installer.nsis")
     expect(result![0].patterns).not.toContain("should-be-ignored.txt")
+  })
+})
+
+describe("getFileMatchers – extraFiles/extraResources `to` destination validation", () => {
+  // mirrors a real macOS layout: outDir/dist contains the .app, extraResources default
+  // destination is Contents/Resources inside the .app
+  const outDir = path.resolve("/project/dist")
+  const contentsDir = path.join(outDir, "mac", "Test.app", "Contents")
+  const resourcesDir = path.join(contentsDir, "Resources")
+
+  const opts: GetFileMatchersOptions = {
+    macroExpander: noMacro,
+    customBuildOptions: {},
+    globalOutDir: outDir,
+    defaultSrc: path.resolve("/project"),
+  }
+
+  test("absolute `to` throws InvalidConfigurationError", ({ expect }) => {
+    expect(() => getFileMatchers({ extraFiles: [{ from: "build/x.xml", to: "/usr/share/metainfo/x.xml" }] } as any, "extraFiles", contentsDir, opts)).toThrowError(
+      /is absolute.*fpm/s
+    )
+  })
+
+  test("Windows drive-letter `to` throws even on a non-Windows build machine", ({ expect }) => {
+    expect(() => getFileMatchers({ extraFiles: [{ from: "build", to: "C:\\Program Files\\App" }] } as any, "extraFiles", contentsDir, opts)).toThrowError(/is absolute/)
+  })
+
+  test("UNC `to` throws", ({ expect }) => {
+    expect(() => getFileMatchers({ extraFiles: [{ from: "build", to: "\\\\server\\share\\dir" }] } as any, "extraFiles", contentsDir, opts)).toThrowError(/is absolute/)
+  })
+
+  test("relative `to` escaping the build output directory throws", ({ expect }) => {
+    expect(() =>
+      getFileMatchers({ extraResources: [{ from: "build/x.xml", to: "../../../../../usr/share/metainfo/x.xml" }] } as any, "extraResources", resourcesDir, opts)
+    ).toThrowError(/outside the build output directory/)
+  })
+
+  test("backslash-written parent hops that escape are also caught", ({ expect }) => {
+    expect(() => getFileMatchers({ extraFiles: [{ from: "build", to: "..\\..\\..\\..\\usr\\share" }] } as any, "extraFiles", contentsDir, opts)).toThrowError(
+      /outside the build output directory/
+    )
+  })
+
+  test("normal relative `to` still works", ({ expect }) => {
+    const result = getFileMatchers({ extraResources: [{ from: "assets", to: "bin" }] } as any, "extraResources", resourcesDir, opts)
+    expect(result).not.toBeNull()
+    expect(result![0].to).toBe(path.join(resourcesDir, "bin"))
+  })
+
+  test("legitimate `../` hop that stays inside the package still works", ({ expect }) => {
+    // e.g. macOS: extraResources with to: "../Frameworks" targets Contents/Frameworks inside the .app
+    const result = getFileMatchers({ extraResources: [{ from: "native", to: "../Frameworks" }] } as any, "extraResources", resourcesDir, opts)
+    expect(result).not.toBeNull()
+    expect(result![0].to).toBe(path.join(contentsDir, "Frameworks"))
+  })
+
+  test("omitted `to` is not validated and keeps the default destination", ({ expect }) => {
+    const result = getFileMatchers({ extraFiles: [{ from: "build", filter: "*.dll" }] } as any, "extraFiles", contentsDir, opts)
+    expect(result).not.toBeNull()
+    expect(result![0].to).toBe(contentsDir)
+  })
+
+  test("`files` FileSet `to` is not subject to the containment check", ({ expect }) => {
+    // `files` destinations participate in asar-relative math; existing behavior is preserved
+    const result = getFileMatchers({ files: [{ from: "assets", to: "resources" }] } as any, "files", "/out", opts)
+    expect(result).not.toBeNull()
+    expect(result![0].to).toBe(path.resolve("/out", "resources"))
+  })
+})
+
+describe("resolveFileSetDestination – per-branch behavior", () => {
+  const outDir = path.resolve("/project/dist")
+  const contentsDir = path.join(outDir, "mac", "Test.app", "Contents")
+  const resourcesDir = path.join(contentsDir, "Resources")
+
+  test("null/undefined `to` falls back to the default destination without validation", ({ expect }) => {
+    expect(resolveFileSetDestination("extraFiles", null, contentsDir, outDir)).toBe(contentsDir)
+    expect(resolveFileSetDestination("extraResources", undefined, resourcesDir, outDir)).toBe(resourcesDir)
+    expect(resolveFileSetDestination("files", null, "/out", outDir)).toBe("/out")
+  })
+
+  test("`files` set is exempt from validation and plainly resolves against the default destination", ({ expect }) => {
+    expect(resolveFileSetDestination("files", "resources", "/out", outDir)).toBe(path.resolve("/out", "resources"))
+    // even values that would throw for validated sets are resolved as-is for `files`
+    expect(resolveFileSetDestination("files", "../elsewhere", "/out", outDir)).toBe(path.resolve("/out", "../elsewhere"))
+  })
+
+  test("relative `to` on a validated set resolves inside the default destination", ({ expect }) => {
+    expect(resolveFileSetDestination("extraResources", "bin", resourcesDir, outDir)).toBe(path.join(resourcesDir, "bin"))
+  })
+
+  test("`../` hop that stays inside the build output directory is valid", ({ expect }) => {
+    expect(resolveFileSetDestination("extraResources", "../Frameworks", resourcesDir, outDir)).toBe(path.join(contentsDir, "Frameworks"))
+  })
+
+  test("absolute `to` on a validated set throws (POSIX, drive-letter, UNC)", ({ expect }) => {
+    expect(() => resolveFileSetDestination("extraFiles", "/usr/share/metainfo/x.xml", contentsDir, outDir)).toThrowError(/is absolute.*fpm/s)
+    expect(() => resolveFileSetDestination("extraFiles", "C:\\Program Files\\App", contentsDir, outDir)).toThrowError(/is absolute/)
+    expect(() => resolveFileSetDestination("extraDistFiles", "\\\\server\\share\\dir", outDir, outDir)).toThrowError(/is absolute/)
+  })
+
+  test("relative `to` escaping the build output directory throws", ({ expect }) => {
+    expect(() => resolveFileSetDestination("extraResources", "../../../../../usr/share", resourcesDir, outDir)).toThrowError(/outside the build output directory/)
+    expect(() => resolveFileSetDestination("extraFiles", "..\\..\\..\\..\\usr\\share", contentsDir, outDir)).toThrowError(/outside the build output directory/)
   })
 })
 

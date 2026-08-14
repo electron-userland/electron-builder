@@ -400,8 +400,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
       }
 
-      // mas-dev signs but produces no installer
-      if (signed && !MacTargetHelper.isMasDevelopment(platformType)) {
+      // A development-signed build (mas-dev, or an explicit sign.type "development" — see
+      // MacTargetHelper.shouldCreateMasInstaller) produces no installer
+      const masSignConfig = platformConfig.config.sign
+      const masSignOpts = isElectronSignOptions(masSignConfig) ? masSignConfig : undefined
+      if (signed && MacTargetHelper.shouldCreateMasInstaller(platformType, masSignOpts?.type)) {
         await this.createMasInstaller(appPath, targetOutDir, arch, platformType)
       }
     }

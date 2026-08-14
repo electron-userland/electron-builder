@@ -66,6 +66,7 @@ async function collectWithWarnings(rootDir: string, packageName: string, depende
       nodePackageName: packageName,
       platform: { nodeName: "darwin" },
       originalMetadata: { dependencies },
+      metadata: { dependencies },
       config: { ignoredProductionDependencies },
       getWorkspaceRoot: async () => null,
       getPackageManager: async () => PM.TRAVERSAL,
