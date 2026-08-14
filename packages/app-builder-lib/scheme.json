@@ -1219,7 +1219,7 @@
     },
     "ElectronSignOptions": {
       "additionalProperties": false,
-      "description": "Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control\nitself — `app`, `keychain`, `platform`, `version`, `optionsForFile`, and `type` (derived from the\nbuild flavor: `mas-dev` → `development`, otherwise `distribution`) — and forwards everything else.\n\nAdditionally exposes a small set of per-file convenience fields that electron-builder maps\ninternally through `optionsForFile`.",
+      "description": "Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control\nitself — `app`, `keychain`, `platform`, `version`, and `optionsForFile` — and forwards everything else.\n\nAdditionally exposes a small set of per-file convenience fields that electron-builder maps\ninternally through `optionsForFile`.",
       "properties": {
         "additionalArguments": {
           "anyOf": [
@@ -1331,6 +1331,14 @@
             "null",
             "string"
           ]
+        },
+        "type": {
+          "description": "The type of certificate to use when signing: `development` or `distribution`.\n\nDefaults to a value derived from the build flavor: `mas-dev` → `development`, otherwise `distribution`.\nSet it explicitly to override — e.g. `development` on a darwin build signs with a `Mac Developer` or\n`Apple Development` certificate instead of `Developer ID Application` and embeds a matching\ndevelopment provisioning profile.\n\nDevelopment-signed apps are blocked by Gatekeeper on other machines; users must use the\nright-click → Open workaround documented at https://support.apple.com/en-us/guide/mac-help/mh40616/mac.\nSuch builds are not suitable for production distribution and cannot be notarized.",
+          "enum": [
+            "development",
+            "distribution"
+          ],
+          "type": "string"
         }
       },
       "type": "object"
