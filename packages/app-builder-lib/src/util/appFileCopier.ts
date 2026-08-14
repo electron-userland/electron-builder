@@ -1,4 +1,4 @@
-import { Arch, AsyncTaskManager, FileCopier, FileTransformer, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
+import { Arch, AsyncTaskManager, FileCopier, FileTransformer, InvalidConfigurationError, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES } from "../configuration.js"
 import { Stats } from "fs"
 import fsExtra from "fs-extra"
@@ -278,6 +278,58 @@ export async function resolveFirstMatchingCollection(options: {
   return fallback
 }
 
+/** Extracts the package name from a `name@version` log-summary entry, handling `@scope/name@version`. */
+function dependencyNameFromSummaryId(id: string): string {
+  let at: number
+  if (id.startsWith("@")) {
+    // Scoped package: the version separator is the first `@` after the scope's `/`
+    const slashIndex = id.indexOf("/")
+    if (slashIndex === -1) {
+      return id
+    }
+    at = id.indexOf("@", slashIndex + 1)
+  } else {
+    at = id.indexOf("@")
+  }
+  return at > 0 ? id.slice(0, at) : id
+}
+
+/**
+ * Enforces {@link CommonConfiguration.allowMissingDependencies} against the finished collection
+ * summary (issue #10058). Runs only after collection completes, so the error reports the COMPLETE
+ * set of missing production dependencies at once instead of failing on the first one.
+ *
+ * Fail-closed by default: `false`, `null` and omitted all fail the build when a production
+ * dependency is missing; `true` restores the historical warn-only behavior. When the option is a
+ * `string[]`, only the listed dependency names are allowed to be missing — matched against the
+ * package name parsed from the summary's `name@version` entries (scoped names included), with an
+ * exact-entry match accepted as well.
+ *
+ * Only genuinely missing production dependencies (`PKG_NOT_FOUND` / `PKG_NOT_ON_DISK`) are fatal;
+ * missing optional dependencies (`PKG_OPTIONAL_NOT_INSTALLED` / `PKG_OPTIONAL_PLATFORM_NOT_INSTALLED`)
+ * never fail the build.
+ *
+ * @internal exported for tests
+ */
+export function enforceAllowMissingDependencies(allowMissingDependencies: boolean | Array<string> | null | undefined, logSummary: ModuleManager["logSummary"] | undefined): void {
+  if (allowMissingDependencies === true) {
+    return
+  }
+  const missing = new Set<string>([...(logSummary?.[LogMessageByKey.PKG_NOT_FOUND] ?? []), ...(logSummary?.[LogMessageByKey.PKG_NOT_ON_DISK] ?? [])])
+  const allowed = new Set(Array.isArray(allowMissingDependencies) ? allowMissingDependencies : [])
+  const fatal = Array.from(missing)
+    .filter(id => !allowed.has(dependencyNameFromSummaryId(id)) && !allowed.has(id))
+    .sort()
+  if (fatal.length === 0) {
+    return
+  }
+  throw new InvalidConfigurationError(
+    `The following production dependencies could not be resolved during node-module collection:\n` +
+      fatal.map(id => `  - ${id}`).join("\n") +
+      `\nInstall the missing dependencies, list names in \`allowMissingDependencies\` to allow specific ones to be missing, or set \`allowMissingDependencies\` to true to only warn (electron-builder <= 26 behavior).`
+  )
+}
+
 /** @internal */
 export async function collectNodeModulesWithLogging(platformPackager: PlatformPackager<any>, arch: Arch | null) {
   const { tempDirManager, appDir, projectDir } = platformPackager
@@ -326,6 +378,10 @@ export async function collectNodeModulesWithLogging(platformPackager: PlatformPa
     const logLevel = logMessageLevelByKey[errorMessage as LogMessageByKey] || "debug"
     log[logLevel]({ dependencies }, errorMessage)
   }
+
+  // Fail-closed enforcement (issue #10058): collection is complete and the summary above has reached
+  // the log, so failing here reports every missing production dependency at once.
+  enforceAllowMissingDependencies(platformPackager.config.allowMissingDependencies, deps.logSummary)
 
   // Tripwire: the default-ignored packages are excluded because electron-builder already provides them
   // (e.g. the embedded Electron runtime), so a copy in `node_modules` is redundant. They only reach this
