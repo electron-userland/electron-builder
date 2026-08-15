@@ -25,12 +25,19 @@ jobs:
       - name: Build docusaurus site
         run: pnpm docs:all
 
+      # The production site (electron.build) is deployed exclusively by the
+      # master branch's copy of this workflow, which composes the current-major
+      # docs at "/" with this branch's docs at "/v26/". Release events run the
+      # workflow file from the released tag's commit, so this v26 copy must
+      # never deploy to prod — otherwise a v26 patch release would overwrite
+      # the site with v26-only docs. Keep building a draft (preview) deploy so
+      # v26 releases still get an inspectable docs preview.
       - uses: jsmrcaga/action-netlify-deploy@ae36ac1b3d1ad3646eecb5631977e7314d3a6a2f # v2.4.0
         with:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          NETLIFY_DEPLOY_MESSAGE: "Prod deploy v${{ github.ref }}"
-          NETLIFY_DEPLOY_TO_PROD: true
+          NETLIFY_DEPLOY_MESSAGE: "Preview deploy (v26 docs) ${{ github.ref }}"
+          NETLIFY_DEPLOY_TO_PROD: false
           install_command: "echo Skipping installing the dependencies"
           build_command: "echo Skipping building the web files"
           build_directory: "website/build"
@@ -43,6 +50,6 @@ jobs:
           authToken: ${{ secrets.GITHUB_TOKEN }}
           state: success
           context: Netlify Documentation Site preview
-          description: Production - Click "details"
+          description: Preview - Click "details"
           target_url: ${{ env.NETLIFY_PREVIEW_URL }}
           sha: ${{github.event.pull_request.head.sha || github.sha}}

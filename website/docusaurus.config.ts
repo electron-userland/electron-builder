@@ -9,6 +9,12 @@ import remarkInclude from "./src/remark/remark-include.mjs"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const docsDir = join(__dirname, "docs")
 
+// Base URL of this Docusaurus instance. The production site composes multiple
+// instances (one per major version line) into a single publish tree: the
+// current major at "/" and this branch's v26 docs at "/v26/". CI sets
+// DOCS_BASE_URL when building the versioned sub-site; it defaults to "/".
+const baseUrl = process.env.DOCS_BASE_URL || "/"
+
 const config: Config = {
   title: "electron-builder",
   tagline: "A complete solution to package and build a ready-for-distribution Electron app",
@@ -19,7 +25,7 @@ const config: Config = {
   },
 
   url: "https://www.electron.build",
-  baseUrl: "/",
+  baseUrl,
 
   organizationName: "electron-userland",
   projectName: "electron-builder",
@@ -169,6 +175,20 @@ const config: Config = {
           ],
         },
 
+        {
+          // Manual version switcher. Each entry points at the root of a separate
+          // Docusaurus instance, so the links must escape this instance's SPA
+          // router: "pathname://" renders a plain <a> (full page load) and
+          // autoAddBaseUrl: false keeps Docusaurus from prefixing this
+          // instance's baseUrl, so the absolute paths are emitted as-is.
+          type: "dropdown",
+          label: "v26",
+          position: "right",
+          items: [
+            { label: "v27 (current)", href: "pathname:///", target: "_self", autoAddBaseUrl: false },
+            { label: "v26", href: "pathname:///v26/", target: "_self", autoAddBaseUrl: false },
+          ],
+        },
         {
           href: "https://github.com/electron-userland/electron-builder",
           label: "GitHub",
