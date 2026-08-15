@@ -285,6 +285,9 @@ describe("allowMissingDependencies (collectNodeModulesWithLogging wiring)", { se
         nodePackageName: "my-app",
         platform: { nodeName: "darwin" },
         originalMetadata: { dependencies },
+        // The no-production-deps guard in collectNodeModulesWithLogging (#10035) reads both
+        // originalMetadata.dependencies and metadata.dependencies; a real packager always has both.
+        metadata: { dependencies },
         config: { allowMissingDependencies },
         getWorkspaceRoot: async () => null,
         getPackageManager: async () => PM.TRAVERSAL,
