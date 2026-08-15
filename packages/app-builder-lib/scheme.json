@@ -8213,7 +8213,6 @@
             },
             {
               "enum": [
-                "1.2.1",
                 "1.2.3",
                 "latest"
               ],
@@ -8221,7 +8220,7 @@
             }
           ],
           "default": "latest",
-          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.2.1\"` | `wasm-vips` + `@resvg/resvg-wasm` |\n| `\"1.2.3\"` | Writes 16px/32px ICNS entries as `ic04`/`ic05` ARGB (fixes corrupt small icons in Finder) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md"
+          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.2.3\"` | Writes 16px/32px ICNS entries as `ic04`/`ic05` ARGB (fixes corrupt small icons in Finder) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md"
         },
         "linuxToolsMac": {
           "anyOf": [
