@@ -14,6 +14,11 @@ jobs:
   deploy:
     name: 'Deploy Release'
     runs-on: ubuntu-latest
+    # Release-triggered runs execute the workflow file from the release tag's commit,
+    # so this file only ever runs for master-line (current major) tags. The guard is a
+    # belt on top of that: never prod-deploy from a non-current-major release event.
+    # (release/v26 carries its own copy of this workflow, gated separately on that branch.)
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'electron-builder@27.')
 
     steps:
       - name: Checkout code repository
@@ -24,8 +29,15 @@ jobs:
       - name: Install deps and audit
         uses: ./.github/actions/pnpm
 
-      - name: Build docusaurus site
+      - name: Build composed multi-version docusaurus site
+        # One self-contained docker build: the container builds the current
+        # checkout at "/" and, for each ref in RELEASE_TAGS, that branch/tag's
+        # site under its own sub-path (release/v26 → /v26/). See
+        # website/scripts/build-versioned-site.sh.
         run: pnpm docs:all
+        env:
+          # release/v26 is also the script's default; kept explicit for visibility.
+          RELEASE_TAGS: release/v26
 
       - uses: jsmrcaga/action-netlify-deploy@ae36ac1b3d1ad3646eecb5631977e7314d3a6a2f # v2.4.0
         with:
