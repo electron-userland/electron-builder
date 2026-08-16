@@ -337,7 +337,7 @@ All macOS code-signing options now live inside a single `sign` object on `mac` (
 | `entitlementsInherit` | `sign.entitlementsInherit` |
 | `entitlementsLoginHelper` | `sign.entitlementsLoginHelper` |
 | `provisioningProfile` | `sign.provisioningProfile` |
-| `type` | `sign.type` |
+| `type` | `sign.type` *(defaults to a value derived from the target: `mas-dev` builds default to `development`, everything else to `distribution`; an explicit value wins)* |
 | `binaries` | `sign.binaries` |
 | `requirements` | `sign.requirements` |
 | `hardenedRuntime` | `sign.hardenedRuntime` |
