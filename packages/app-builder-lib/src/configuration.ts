@@ -774,13 +774,13 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Notes |
    * |---------|-------|
-   * | `"1.2.1"` | `wasm-vips` + `@resvg/resvg-wasm` |
+   * | `"1.2.3"` | Writes 16px/32px ICNS entries as `ic04`/`ic05` ARGB (fixes corrupt small icons in Finder) |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly icons?: "1.2.1" | ToolsetCustom | "latest"
+  readonly icons?: "1.2.3" | ToolsetCustom | "latest"
 }
 
 /**
