@@ -1,5 +1,37 @@
 ## 4.3.0
 
+## 7.0.0-alpha.6
+
+### Minor Changes
+
+- Feat: warn on silently skipped update signature verification and validate `publisherName` against the signing certificate at build time _[`#10056`](https://github.com/electron-userland/electron-builder/pull/10056) [`331afdd`](https://github.com/electron-userland/electron-builder/commit/331afdd30bd59aa0185f7df31b5712e62a5acfbf) [@claude](https://github.com/apps/claude)_
+
+  Two guards around Windows update signature verification:
+  - **electron-updater**: when `app-update.yml` exists but contains no `publisherName`, the updater used to skip signature verification (including custom `verifyUpdateCodeSignature` hooks) completely silently. It now logs a warning explaining that verification was skipped, how to fix it (sign the build so `publisherName` is derived automatically, or set `win.publisherName` explicitly), and that this fail-open behavior is deprecated: electron-builder v28 will treat a missing `publisherName` as a verification failure (fail-closed). The no-`app-update.yml` path (unpackaged/dev mode) stays silent.
+  - **app-builder-lib**: when `publisherName` is explicitly configured and the subject of the local code signing certificate is known, the build now fails with a clear error if none of the configured names match the certificate (same DN-subset/CN matching semantics as the updater's verifier; any one of multiple configured names matching passes, so certificate-rotation setups keep working). This catches signing with the wrong certificate at build time instead of at update time. The check is skipped whenever the actual signing certificate's subject is not genuinely known (custom `sign` hooks, Azure Trusted Signing, PKCS#11 without an extractable certificate, x509 files without a CN), and `publisherName: null` remains a pure opt-out.
+
+### Patch Changes
+
+- Fix: expose `./package.json` in the `exports` map so tooling (including electron-builder's installed-version check) can resolve the installed version via `require.resolve("electron-updater/package.json")` _[`#10019`](https://github.com/electron-userland/electron-builder/pull/10019) [`0fdb4cb`](https://github.com/electron-userland/electron-builder/commit/0fdb4cb4fd08a2adb7a64dce2a0c347b235e8192) [@claude](https://github.com/apps/claude)_
+- Security hardening and a migrate-schema fix: _[`#10036`](https://github.com/electron-userland/electron-builder/pull/10036) [`b87a0b7`](https://github.com/electron-userland/electron-builder/commit/b87a0b7a533eef1711e600864f2540dc163176d7) [@mmaietta](https://github.com/mmaietta)_
+  - `builder-util` `removePassword`: redact single-letter/URI secret flags (`security … -k <password>`, `osslsigncode -key <pkcs11-uri?pin-value=…>`) and whitespace-containing secrets in debug logs, and make the `/b … /c` block-redaction regex ReDoS-safe.
+  - `builder-util-runtime` `httpExecutor`: fix the non-functional `maxRedirects` guard (the redirect counter was never advanced), so a redirect loop from a malicious feed/mirror no longer hangs the updater.
+  - `electron-updater` `GitLabProvider`: only forward the GitLab token to the channel-file request when its URL is same-origin as the API host, so an off-host/`http://` `direct_asset_url` in the release JSON cannot exfiltrate the token.
+  - `app-builder-lib`: defense-in-depth hardening — validate `executableName` before interpolating it into the generated Flatpak launcher, contain custom-toolset extraction within the cache dir, and XML-escape MSI file-association `ext`/`description`.
+  - `electron-builder` `migrate-schema`: auto-remove the removed `linux.syncDesktopName` flag.
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`b87a0b7`](https://github.com/electron-userland/electron-builder/commit/b87a0b7a533eef1711e600864f2540dc163176d7)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.6`
+
+</details>
+
 ## 7.0.0-alpha.5
 
 ### Major Changes
