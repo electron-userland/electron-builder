@@ -127,6 +127,31 @@ Detected automatically using:
     * or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
 * if no env, from `.git/config` origin url.
 
+:::warning[The detected repository ships inside your app]
+Whatever is detected here is written to `app-update.yml` inside every packaged build, and that is where electron-updater looks for updates for the lifetime of that install. A build reports the repository it detected:
+
+```
+• update feed detected from repository info and written to app-update.yml, installed builds
+  will fetch updates from this repository - specify it explicitly to be sure it stays under
+  your control  reason=not specified in the publish configuration provider=github
+  owner=my-org repo=my-app
+```
+
+Check that it is the repository you expect, and keep control of it. GitHub releases an owner or repository name for re-registration once it is renamed, transferred or deleted, so anyone who then claims that name can publish releases that already-installed copies of your app will download. Set `owner` and `repo` explicitly to avoid depending on detection at all:
+
+```json5
+{
+  "build": {
+    "publish": {
+      "provider": "github",
+      "owner": "my-org",
+      "repo": "my-app"
+    }
+  }
+}
+```
+:::
+
 # Publishers
 
 ## Bitbucket

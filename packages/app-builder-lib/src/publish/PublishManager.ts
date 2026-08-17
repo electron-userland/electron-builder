@@ -541,6 +541,31 @@ function isDetectUpdateChannel(platformSpecificConfiguration: PlatformSpecificBu
   return value == null ? configuration.detectUpdateChannel !== false : value
 }
 
+// keyed by the build's CancellationToken (one instance per Packager) so that a build reports a given feed once - getResolvedPublishConfig
+// is called per target and arch - without leaking state between programmatic builds running in the same process
+const reportedInferredUpdateFeeds = new WeakMap<CancellationToken, Set<string>>()
+
+// the resolved repository is written verbatim into app-update.yml inside every shipped build and becomes its permanent
+// update feed, so the developer has to be told which repository they are committing to - it is not reported anywhere else
+function logInferredUpdateFeed(buildId: CancellationToken, provider: PublishProvider, owner: string, project: string): void {
+  let reported = reportedInferredUpdateFeeds.get(buildId)
+  if (reported == null) {
+    reported = new Set<string>()
+    reportedInferredUpdateFeeds.set(buildId, reported)
+  }
+
+  const feed = `${provider}:${owner}/${project}`
+  if (reported.has(feed)) {
+    return
+  }
+  reported.add(feed)
+
+  log.warn(
+    { reason: "not specified in the publish configuration", provider, owner, repo: project },
+    "update feed detected from repository info and written to app-update.yml, installed builds will fetch updates from this repository - specify it explicitly to be sure it stays under your control"
+  )
+}
+
 async function getResolvedPublishConfig(
   platformPackager: PlatformPackager<any> | null,
   options: PublishConfiguration,
@@ -628,6 +653,8 @@ async function getResolvedPublishConfig(
     if (!project) {
       project = info.project
     }
+
+    logInferredUpdateFeed(ctx.cancellationToken, provider, owner, project)
   }
 
   if (isGithub) {
