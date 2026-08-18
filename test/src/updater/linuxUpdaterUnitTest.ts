@@ -158,6 +158,29 @@ describe("LinuxUpdater unit tests", { sequential: true }, () => {
     })
   })
 
+  describe("determineSudoCommand", () => {
+    it("prefers pkexec over the unmaintained helpers when both are installed", () => {
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => {
+        const cmd = args[0] as string
+        return cmd === "pkexec" || cmd === "gksudo"
+      })
+
+      expect((updater as any).determineSudoCommand()).toBe("pkexec")
+    })
+
+    it("falls back to a legacy helper when polkit is not available", () => {
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => (args[0] as string) === "gksudo")
+
+      expect((updater as any).determineSudoCommand()).toBe("gksudo")
+    })
+
+    it("falls back to sudo when no graphical helper is installed", () => {
+      vi.spyOn(updater as any, "hasCommand").mockReturnValue(false)
+
+      expect((updater as any).determineSudoCommand()).toBe("sudo")
+    })
+  })
+
   describe("async install", () => {
     const setRawPath = (rawPath: string) => {
       ;(updater as any).downloadedUpdateHelper = { file: rawPath }

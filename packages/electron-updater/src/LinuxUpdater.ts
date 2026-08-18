@@ -175,7 +175,11 @@ export abstract class LinuxUpdater extends BaseUpdater {
   }
 
   protected determineSudoCommand(): string {
-    const sudos = ["gksudo", "kdesudo", "pkexec", "beesu"]
+    // pkexec first: it is the maintained, polkit-based mechanism, it is the only helper here that takes an
+    // argv array (so the dialog shows the install command and the path needs no escaping), and it works under
+    // Wayland. gksudo and kdesudo are unmaintained and were removed from Debian and Ubuntu; they stay as
+    // fallbacks for systems without polkit.
+    const sudos = ["pkexec", "gksudo", "kdesudo", "beesu"]
     for (const sudo of sudos) {
       if (this.hasCommand(sudo)) {
         return sudo
