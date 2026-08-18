@@ -57,6 +57,15 @@ export abstract class LinuxUpdater extends BaseUpdater {
       .replace(/[\n\r]/g, "")
   }
 
+  /**
+   * The installer path as downloaded. {@link installerPath} escapes shell metacharacters, which is only
+   * correct when the command goes through a shell — passed as an argv element, the escapes would reach the
+   * package manager literally.
+   */
+  protected get rawInstallerPath(): string | null {
+    return super.installerPath
+  }
+
   protected runCommandWithSudoIfNeeded(commandWithArgs: string[]) {
     if (this.isRunningAsRoot()) {
       this._logger.info("Running as root, no need to use sudo")
@@ -77,21 +86,49 @@ export abstract class LinuxUpdater extends BaseUpdater {
 
   private commandWrapperFor(sudo: string[]): string {
     // some sudo commands dont want the command to be wrapped in " quotes
-    return /pkexec/i.test(sudo[0]) || sudo[0] === "sudo" ? "" : `"`
+    return this.takesArgv(sudo[0]) ? "" : `"`
   }
 
-  /** {@link runCommandWithSudoIfNeeded} without blocking the main process while the elevation dialog is open. */
+  /**
+   * {@link runCommandWithSudoIfNeeded} without blocking the main process, and without a shell wherever the
+   * elevation helper accepts an argv array.
+   *
+   * pkexec and sudo do, so their authentication dialog shows the command being authorized
+   * (`dpkg -i /path/app.deb`) instead of the `/bin/bash -c '…'` wrapper, the installer path needs no
+   * escaping, and no `shell: true` deprecation applies. gksudo, kdesudo and beesu take the command as a
+   * single string, so those keep the wrapped form.
+   */
   protected async runCommandWithSudoIfNeededAsync(commandWithArgs: string[]): Promise<void> {
     if (this.isRunningAsRoot()) {
       this._logger.info("Running as root, no need to use sudo")
-      await this.spawnAsyncLog(commandWithArgs[0], commandWithArgs.slice(1))
+      await this.spawnAsyncLog(commandWithArgs[0], commandWithArgs.slice(1), {}, false)
       return
     }
 
     const sudo = this.sudoWithArgs(this.installComment())
     this._logger.info(`Running as non-root user, using sudo to install: ${sudo}`)
+    const sudoArgs = sudo.length > 1 ? sudo.slice(1) : []
+
+    if (this.takesArgv(sudo[0])) {
+      await this.spawnAsyncLog(sudo[0], [...sudoArgs, ...commandWithArgs], {}, false)
+      return
+    }
+
     const wrapper = this.commandWrapperFor(sudo)
-    await this.spawnAsyncLog(sudo[0], [...(sudo.length > 1 ? sudo.slice(1) : []), `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
+    await this.spawnAsyncLog(sudo[0], [...sudoArgs, `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
+  }
+
+  /** Whether the elevation helper runs an argv array rather than a single command string. */
+  private takesArgv(sudo: string): boolean {
+    return /pkexec/i.test(sudo) || sudo === "sudo"
+  }
+
+  /**
+   * The installer path for the asynchronous path: unescaped when the command is passed as argv, escaped when
+   * it still goes through the `/bin/bash -c` wrapper.
+   */
+  protected get asyncInstallerPath(): string | null {
+    return this.isRunningAsRoot() || this.takesArgv(this.determineSudoCommand()) ? this.rawInstallerPath : this.installerPath
   }
 
   /**

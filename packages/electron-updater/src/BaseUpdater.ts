@@ -362,14 +362,19 @@ export abstract class BaseUpdater extends AppUpdater {
    */
   // https://github.com/electron-userland/electron-builder/issues/1129
   // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
-  /** {@link spawnSyncLog} without blocking the main process: same command, same environment, awaited instead. */
-  protected spawnAsyncLog(cmd: string, args: string[] = [], env = {}): Promise<string> {
+  /**
+   * {@link spawnSyncLog} without blocking the main process, awaited instead.
+   *
+   * `useShell` is opt-out: without a shell the arguments are passed as an argv array, so nothing has to be
+   * escaped and Node's DEP0190 warning about `shell: true` does not apply.
+   */
+  protected spawnAsyncLog(cmd: string, args: string[] = [], env = {}, useShell = true): Promise<string> {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
     return new Promise<string>((resolve, reject) => {
       const child = spawn(cmd, args, {
         env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
-        shell: true,
+        shell: useShell,
         stdio: ["ignore", "pipe", "pipe"],
       })
 

@@ -171,13 +171,25 @@ describe("LinuxUpdater unit tests", { sequential: true }, () => {
       })
     })
 
-    it("runs the same command as the synchronous path, awaited instead of blocking", async () => {
-      setRawPath("/tmp/update-1.0.2.deb")
+    it("passes the command to pkexec as argv, without a shell and without escaping the path", async () => {
+      setRawPath("/tmp/a b/update-1.0.2.deb")
       const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue("")
 
       await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
 
-      expect(spawnAsyncLog).toHaveBeenCalledWith("pkexec", ["--disable-internal-agent", "/bin/bash", "-c", "'dpkg -i /tmp/update-1.0.2.deb'"])
+      // the dialog shows `dpkg -i …` instead of `/bin/bash -c '…'`, and the space is not backslash-escaped
+      expect(spawnAsyncLog).toHaveBeenCalledWith("pkexec", ["--disable-internal-agent", "dpkg", "-i", "/tmp/a b/update-1.0.2.deb"], {}, false)
+    })
+
+    it("keeps the wrapped command string for helpers that cannot take argv", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      vi.spyOn(updater as any, "determineSudoCommand").mockReturnValue("gksudo")
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue("")
+
+      await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+
+      // gksudo takes a single command string, so the bash wrapper and the shell stay
+      expect(spawnAsyncLog).toHaveBeenCalledWith("gksudo", ["--message", expect.any(String), `"/bin/bash`, "-c", `'dpkg -i /tmp/update-1.0.2.deb'"`])
     })
 
     it("never falls back to the blocking spawnSync path", async () => {
@@ -202,7 +214,10 @@ describe("LinuxUpdater unit tests", { sequential: true }, () => {
 
       await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
 
-      expect(spawnAsyncLog.mock.calls.map(([, argv]: any) => argv[argv.length - 1])).toEqual(["'dpkg -i /tmp/update-1.0.2.deb'", "'apt-get install -f -y'"])
+      expect(spawnAsyncLog.mock.calls.map(([, argv]: any) => argv.slice(1))).toEqual([
+        ["dpkg", "-i", "/tmp/update-1.0.2.deb"],
+        ["apt-get", "install", "-f", "-y"],
+      ])
     })
 
     it("reports the failure instead of relaunching when every command fails", async () => {

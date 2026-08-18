@@ -46,7 +46,7 @@ export class RpmUpdater extends LinuxUpdater {
   }
 
   protected async doInstallAsync(options: InstallOptions): Promise<boolean> {
-    const plan = this.planInstall(this.installerPath)
+    const plan = this.planInstall(this.asyncInstallerPath)
     if (plan == null) {
       return false
     }
