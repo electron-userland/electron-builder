@@ -1,5 +1,62 @@
 # app-builder-lib
 
+## 27.0.0-alpha.7
+
+### Major Changes
+
+- Feat: fail builds on missing production dependencies by default. When node-module collection completes and a production dependency could not be resolved (`cannot find path for dependency` / `dependency not found on disk`), the build now fails with an error listing the complete set of missing dependencies, instead of logging warnings and producing a package that breaks at runtime with `MODULE_NOT_FOUND`. Configure via the new `allowMissingDependencies?: boolean | string[] | null` option: `true` restores the previous warn-only behavior, a `string[]` allows only the listed dependency names to be missing (bare package name, or exact `name@version`), and `false`/`null`/omitted (the default) fails on any missing production dependency. Missing optional dependencies (declared in `optionalDependencies`, e.g. `fsevents` on Linux/Windows, or platform-specific packages) are always allowed and never fail the build. Migration: builds that previously "succeeded" while logging `dependency not found on disk` / `cannot find path for dependency` warnings will now fail — fix the underlying installation issue, list the affected dependency names in `allowMissingDependencies`, or set `allowMissingDependencies: true` to keep the old behavior. _[`#10073`](https://github.com/electron-userland/electron-builder/pull/10073) [`2158350`](https://github.com/electron-userland/electron-builder/commit/21583509ffdbb4a3225b7b3a40c275855d15beba) [@claude](https://github.com/apps/claude)_
+
+### Minor Changes
+
+- Feat: warn on silently skipped update signature verification and validate `publisherName` against the signing certificate at build time _[`#10056`](https://github.com/electron-userland/electron-builder/pull/10056) [`331afdd`](https://github.com/electron-userland/electron-builder/commit/331afdd30bd59aa0185f7df31b5712e62a5acfbf) [@claude](https://github.com/apps/claude)_
+
+  Two guards around Windows update signature verification:
+  - **electron-updater**: when `app-update.yml` exists but contains no `publisherName`, the updater used to skip signature verification (including custom `verifyUpdateCodeSignature` hooks) completely silently. It now logs a warning explaining that verification was skipped, how to fix it (sign the build so `publisherName` is derived automatically, or set `win.publisherName` explicitly), and that this fail-open behavior is deprecated: electron-builder v28 will treat a missing `publisherName` as a verification failure (fail-closed). The no-`app-update.yml` path (unpackaged/dev mode) stays silent.
+  - **app-builder-lib**: when `publisherName` is explicitly configured and the subject of the local code signing certificate is known, the build now fails with a clear error if none of the configured names match the certificate (same DN-subset/CN matching semantics as the updater's verifier; any one of multiple configured names matching passes, so certificate-rotation setups keep working). This catches signing with the wrong certificate at build time instead of at update time. The check is skipped whenever the actual signing certificate's subject is not genuinely known (custom `sign` hooks, Azure Trusted Signing, PKCS#11 without an extractable certificate, x509 files without a CN), and `publisherName: null` remains a pure opt-out.
+
+- Feat: restore `mac.sign.type` (removed in #9889 without a working replacement). An explicit `sign.type` now selects development certificates (`Mac Developer` / `Apple Development`) and embeds matching development provisioning profiles on any mac build flavor; the default is still derived from the target (`mas-dev` → `development`, otherwise `distribution`). A `mas` build with `sign.type: "development"` also skips the MAS `.pkg` installer, matching v26 behavior. Docs and the `migrate-schema` `type` → `sign.type` move now match the implementation. _[`#10065`](https://github.com/electron-userland/electron-builder/pull/10065) [`0011184`](https://github.com/electron-userland/electron-builder/commit/0011184b69300a2e69fa322139e0343796620c57) [@claude](https://github.com/apps/claude)_
+- Feat: validate `to` destinations in `extraFiles`/`extraResources` file sets. An absolute `to` path (POSIX, Windows drive-letter, or UNC) or a relative `to` that escapes the build output directory now fails the build with a clear `InvalidConfigurationError` instead of silently copying files outside the package onto the build machine. Relative hops that stay inside the build output directory (e.g. `to: "../Frameworks"` from `Contents/Resources` on macOS) keep working. The error suggests the fpm file-mapping syntax (`"deb": { "fpm": ["src=/abs/dest"] }`) for users who want absolute in-package paths on deb/rpm. _[`#10062`](https://github.com/electron-userland/electron-builder/pull/10062) [`c0b8235`](https://github.com/electron-userland/electron-builder/commit/c0b8235d7f86d90ffe7218765115b6948b180739) [@claude](https://github.com/apps/claude)_
+
+### Patch Changes
+
+- Feat: support fully offline (air-gapped) Electron downloads by picking up a locally seeded `SHASUMS256.txt-<version>` at the Electron cache root and passing it to `@electron/get` as inline checksums, suppressing the mandatory network fetch of `SHASUMS256.txt` that failed air-gapped builds even with a fully seeded cache (#10039) _[`#10046`](https://github.com/electron-userland/electron-builder/pull/10046) [`362a01f`](https://github.com/electron-userland/electron-builder/commit/362a01f802d4c89d4a586c1704ecd81325f7b2de) [@claude](https://github.com/apps/claude)_
+- Fix: allow parentheses in AppImage executable, product, and license file names. Before, product names like `Zoo Design Studio (Staging)` failed AppImage builds with "productFilename contains characters that cannot be safely used in file paths" — a regression from the Go pipeline, which accepted them. After, names containing `(` and `)` build again; parentheses are legal in Linux filenames and inert inside the double-quoted bash strings of the generated AppRun launcher, while genuinely dangerous characters (`$`, backticks, quotes, slashes) remain rejected. _[`#10050`](https://github.com/electron-userland/electron-builder/pull/10050) [`f39edbb`](https://github.com/electron-userland/electron-builder/commit/f39edbbea6b349b51d3569da15377bac8e60fbfd) [@claude](https://github.com/apps/claude)_
+- Fix: classic-confinement core24 snaps no longer get default plugs or a generated layout, which the snap store review rejects _[`#10060`](https://github.com/electron-userland/electron-builder/pull/10060) [`e37cb17`](https://github.com/electron-userland/electron-builder/commit/e37cb170efe643ddd5a7e28e1a7fcb3271300e97) [@claude](https://github.com/apps/claude)_
+- Fix(mac): bump icons toolset to 1.2.3 so small ICNS sizes are written as ic04/ic05 ARGB instead of PNG-in-icp4/icp5/icp6, which macOS renders as noise at 16/32px (fixes corrupted Finder/DMG icons) _[`#10087`](https://github.com/electron-userland/electron-builder/pull/10087) [`c8d24ae`](https://github.com/electron-userland/electron-builder/commit/c8d24aea5e4c03c073a076ec6a1e22ac5b892802) [@claude](https://github.com/apps/claude)_
+- Fix: validate the resolved installed electron-updater version instead of the declared specifier, fixing false "At least electron-updater 4.0.0" errors for pnpm `catalog:`/`workspace:` specifiers _[`#10019`](https://github.com/electron-userland/electron-builder/pull/10019) [`0fdb4cb`](https://github.com/electron-userland/electron-builder/commit/0fdb4cb4fd08a2adb7a64dce2a0c347b235e8192) [@claude](https://github.com/apps/claude)_
+- Fix: multithread the deb payload compression. fpm's deb path pipes GNU `tar -J` exporting only `XZ_OPT=-<level>`, so `data.tar` compressed single-threaded while rpm already defaults to multithreaded `xzmt` (measured on the same 6.4 GiB tree in one run: deb 1,059 s vs rpm 171 s). Export `XZ_DEFAULTS=-T0` for the deb fpm invocation (xz parses it before `XZ_OPT`, keeping the compression level unchanged; an operator-provided `XZ_DEFAULTS` wins). _[`#10049`](https://github.com/electron-userland/electron-builder/pull/10049) [`b276f7a`](https://github.com/electron-userland/electron-builder/commit/b276f7a859b32721b0c9950484bbef8597bad8f7) [@xpolb01](https://github.com/xpolb01)_
+- Fix: classify missing declared-optional dependencies (e.g. `fsevents` on Linux/Windows) as missing optional dependencies in the pnpm collector, instead of warning `dependency not found on disk` _[`#10073`](https://github.com/electron-userland/electron-builder/pull/10073) [`2158350`](https://github.com/electron-userland/electron-builder/commit/21583509ffdbb4a3225b7b3a40c275855d15beba) [@claude](https://github.com/apps/claude)_
+- Fix: don't mutate shared UpdateInfo.files when applying GitHub safeArtifactName, which leaked the GitHub-safe file name into other publish providers' update metadata _[`#10013`](https://github.com/electron-userland/electron-builder/pull/10013) [`951e177`](https://github.com/electron-userland/electron-builder/commit/951e17796d98a72d0058bf629d1ca492f06e50c5) [@claude](https://github.com/apps/claude)_
+- Fix: prevent infinite recursion in node module collection when a package depends on itself (e.g. `libsql@0.3.19` via `@prisma/adapter-libsql` -> `@libsql/client`), which caused npm-based builds to hang at `searching for node modules` and eventually crash with a JavaScript heap out-of-memory error (#10068) _[`#10070`](https://github.com/electron-userland/electron-builder/pull/10070) [`075efcf`](https://github.com/electron-userland/electron-builder/commit/075efcf2725a733aa25bb115801dee62e85a5594) [@claude](https://github.com/apps/claude)_
+- Security hardening and a migrate-schema fix: _[`#10036`](https://github.com/electron-userland/electron-builder/pull/10036) [`b87a0b7`](https://github.com/electron-userland/electron-builder/commit/b87a0b7a533eef1711e600864f2540dc163176d7) [@mmaietta](https://github.com/mmaietta)_
+  - `builder-util` `removePassword`: redact single-letter/URI secret flags (`security … -k <password>`, `osslsigncode -key <pkcs11-uri?pin-value=…>`) and whitespace-containing secrets in debug logs, and make the `/b … /c` block-redaction regex ReDoS-safe.
+  - `builder-util-runtime` `httpExecutor`: fix the non-functional `maxRedirects` guard (the redirect counter was never advanced), so a redirect loop from a malicious feed/mirror no longer hangs the updater.
+  - `electron-updater` `GitLabProvider`: only forward the GitLab token to the channel-file request when its URL is same-origin as the API host, so an off-host/`http://` `direct_asset_url` in the release JSON cannot exfiltrate the token.
+  - `app-builder-lib`: defense-in-depth hardening — validate `executableName` before interpolating it into the generated Flatpak launcher, contain custom-toolset extraction within the cache dir, and XML-escape MSI file-association `ext`/`description`.
+  - `electron-builder` `migrate-schema`: auto-remove the removed `linux.syncDesktopName` flag.
+
+- Fix: don't bundle workspace node*modules when the app has no production dependencies *[`#10035`](https://github.com/electron-userland/electron-builder/pull/10035) [`f5babad`](https://github.com/electron-userland/electron-builder/commit/f5babad91b1dea5370aa7a28b727b31e6172b6a1) [@claude](https://github.com/apps/claude)\_
+
+  Before: packaging an app that declares zero production dependencies (e.g. everything is bundled by a JS bundler) from inside a monorepo skipped the app's own empty `node_modules`, climbed to the workspace root, and copied the entire hoisted workspace `node_modules` into `app.asar`.
+
+  After: an app with no production dependencies (neither in its `package.json` nor added via `extraMetadata`) bundles no `node_modules` at all — the collection step is skipped with an informational log message.
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`b87a0b7`](https://github.com/electron-userland/electron-builder/commit/b87a0b7a533eef1711e600864f2540dc163176d7)
+
+</small>
+
+- `builder-util@27.0.0-alpha.7`
+- `builder-util-runtime@10.0.0-alpha.6`
+- `dmg-builder@27.0.0-alpha.7`
+- `electron-builder-squirrel-windows@27.0.0-alpha.7`
+- `electron-publish@27.0.0-alpha.7`
+
+</details>
+
 ## 27.0.0-alpha.6
 
 ### Major Changes
