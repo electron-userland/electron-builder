@@ -1,6 +1,5 @@
 import { asArray, exists, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { deepAssign } from "builder-util-runtime"
-
 import { Lazy } from "lazy-val"
 import { join } from "path"
 import * as semver from "semver"
@@ -250,9 +249,15 @@ export class LinuxTargetHelper {
     if (exec != null && exec.length === 0) {
       throw new Error("Specified exec is empty")
     }
+    // Normalize boolean desktop value: `true` means use defaults, boolean is never an object
+    const desktopConfig = typeof targetSpecificOptions.desktop === "object" ? targetSpecificOptions.desktop : null
+
     // https://github.com/electron-userland/electron-builder/issues/3418
-    if (targetSpecificOptions.desktop?.entry?.Exec) {
-      throw new Error("Please specify executable name as linux.executableName instead of linux.desktop.Exec")
+    if (desktopConfig?.entry?.Exec) {
+      throw new InvalidConfigurationError("Please specify executable name as linux.executableName instead of linux.desktop.entry.Exec")
+    }
+    if (desktopConfig?.entry?.Comment) {
+      throw new InvalidConfigurationError("Please specify the application description as linux.description instead of linux.desktop.entry.Comment")
     }
 
     const packager = this.packager
@@ -269,12 +274,13 @@ export class LinuxTargetHelper {
     // Falls back to productName for apps that don't set desktopName.
     const wmClass = this.resolveDesktopName() ?? appInfo.productName
 
+    // Field values are NOT escaped here. Escaping is applied uniformly at the single
+    // serialization site below (every value except the specially-quoted Exec key), so that
+    // config-/metadata-derived strings — productName, description, user `desktop.entry`
+    // overrides, MimeType, Categories — cannot inject extra key=value lines into the file.
     const desktopMeta = deepAssign<any>(
       {
-        // String values are escaped per the freedesktop spec (\\, \n, \r, \t)
-        // so that a product name containing a newline cannot inject new key=value
-        // pairs into the .desktop file (e.g. overriding the Exec key).
-        Name: desktopStringEscape(appInfo.productName),
+        Name: appInfo.productName,
         Exec: exec,
         Terminal: "false",
         Type: "Application",
@@ -286,15 +292,15 @@ export class LinuxTargetHelper {
         // to get WM_CLASS of running window: xprop WM_CLASS
         // StartupWMClass doesn't work for unicode
         // https://github.com/electron/electron/blob/2-0-x/atom/browser/native_window_views.cc#L226
-        StartupWMClass: desktopStringEscape(wmClass),
+        StartupWMClass: wmClass,
       },
       extra,
-      targetSpecificOptions.desktop?.entry ?? {}
+      desktopConfig?.entry ?? {}
     )
 
     const description = this.getDescription(targetSpecificOptions)
     if (!isEmptyOrSpaces(description)) {
-      desktopMeta.Comment = desktopStringEscape(description)
+      desktopMeta.Comment = description
     }
 
     const mimeTypes: Array<string> = asArray(targetSpecificOptions.mimeTypes)
@@ -340,17 +346,19 @@ export class LinuxTargetHelper {
 
     let data = `[Desktop Entry]`
     for (const name of Object.keys(desktopMeta)) {
-      data += `\n${name}=${desktopMeta[name]}`
+      // Exec is already escaped/quoted per the freedesktop Exec spec (quoteDesktopExecPath); every
+      // other value is escaped here so that a value containing \n/\r/\t/\\ cannot inject extra lines.
+      data += `\n${name}=${name === "Exec" ? desktopMeta[name] : desktopStringEscape(String(desktopMeta[name]))}`
     }
     data += "\n"
-    const desktopActions = targetSpecificOptions.desktop?.desktopActions ?? {}
+    const desktopActions = desktopConfig?.desktopActions ?? {}
     for (const [actionName, config] of Object.entries(desktopActions)) {
       if (!Object.keys(config ?? {}).length) {
         continue
       }
       data += `\n[Desktop Action ${actionName}]`
       for (const [key, value] of Object.entries(config ?? {})) {
-        data += `\n${key}=${value}`
+        data += `\n${key}=${desktopStringEscape(String(value))}`
       }
       data += "\n"
     }
