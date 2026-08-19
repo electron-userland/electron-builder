@@ -1,5 +1,22 @@
 # electron-publish
 
+## 27.0.0-alpha.7
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`b87a0b7`](https://github.com/electron-userland/electron-builder/commit/b87a0b7a533eef1711e600864f2540dc163176d7)
+
+</small>
+
+- `builder-util@27.0.0-alpha.7`
+- `builder-util-runtime@10.0.0-alpha.6`
+
+</details>
+
 ## 27.0.0-alpha.6
 
 ### Minor Changes
