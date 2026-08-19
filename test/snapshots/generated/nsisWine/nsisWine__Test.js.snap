@@ -13,6 +13,7 @@ exports[`nsisWine > custom include — build 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
@@ -37,6 +38,7 @@ exports[`nsisWine > menuCategory — build + install 1`] = `
       },
     },
     {
+      "arch": "ia32",
       "file": "Test Menu Category CustomName 1.1.0.exe.blockmap",
       "safeArtifactName": "Test-Menu-Category-CustomName-1.1.0.exe.blockmap",
       "updateInfo": {
@@ -61,6 +63,7 @@ exports[`nsisWine > multi-language license — build 1`] = `
       },
     },
     {
+      "arch": "ia32",
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
@@ -86,6 +89,7 @@ exports[`nsisWine > perMachine oneClick — build + install 1`] = `
       },
     },
     {
+      "arch": "ia32",
       "file": "TestApp Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
@@ -134,6 +138,7 @@ exports[`nsisWine > perUser file associations — build + install 1`] = `
       },
     },
     {
+      "arch": "ia32",
       "file": "TestApp Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
@@ -158,6 +163,7 @@ exports[`nsisWine > perUser oneClick — build + install 1`] = `
       },
     },
     {
+      "arch": "ia32",
       "file": "TestApp Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
@@ -182,6 +188,7 @@ exports[`nsisWine > string menuCategory — build + install 1`] = `
       },
     },
     {
+      "arch": "ia32",
       "file": "Test Menu Category ' CustomName 1.1.0.exe.blockmap",
       "safeArtifactName": "test-menu-category-setup-1.1.0.exe.blockmap",
       "updateInfo": {
@@ -206,6 +213,7 @@ exports[`nsisWine > x64 oneClick — build 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "TestApp Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
