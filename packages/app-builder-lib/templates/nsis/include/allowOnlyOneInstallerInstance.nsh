@@ -45,12 +45,12 @@
 !macro IS_POWERSHELL_AVAILABLE
   Var /GLOBAL IsPowerShellAvailable ; 0 = available, 1 = not available
   # Try running PowerShell with a simple command to check if it's available
-  nsExec::Exec `"$PowerShellPath" -C "if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"`
+  nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"`
   Pop $0  # Return code (0 = success, other = error)
 
   ${if} $0 == 0
     # PowerShell is available, check if it's not blocked by policies
-    nsExec::Exec `"$PowerShellPath" -C "if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
+    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
     Pop $0
   ${endIf}
 
@@ -63,7 +63,7 @@
 
 !macro FIND_PROCESS _FILE _RETURN
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')}).Count -gt 0) { exit 0 } else { exit 1 }"`
+    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')}).Count -gt 0) { exit 0 } else { exit 1 }"`
     Pop ${_RETURN}
   ${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
@@ -91,7 +91,7 @@
   ${endIf}
 
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')} | % { Stop-Process -Id $$_.ProcessId $0 }"`
+    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')} | % { Stop-Process -Id $$_.ProcessId $0 }"`
   ${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
       nsExec::Exec `taskkill /IM "${_FILE}" /FI "PID ne $pid"`
