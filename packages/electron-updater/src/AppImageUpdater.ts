@@ -27,6 +27,11 @@ export class AppImageUpdater extends BaseUpdater {
     return super.isUpdaterActive()
   }
 
+  // replacing the AppImage file needs no elevation, so the automatic install at startup is allowed
+  protected get isAutoInstallOnNextLaunchSupported(): boolean {
+    return true
+  }
+
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider

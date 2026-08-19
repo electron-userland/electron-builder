@@ -336,54 +336,7 @@ export async function runTest(
         throw new Error(`Update phase did not complete — quitAndInstall was never triggered.\nFull stdout:\n${result.stdout}`)
       }
 
-      // Poll until the installed binary reports the new version.
-      // We disable AUTO_UPDATER_TEST so the probe app quits immediately after printing its version
-      // (no update cycle triggered), which also prevents a second installer from running in parallel.
-      const pollDeadline = Date.now() + 6 * 60 * 1000
-      const pollInterval = 5 * 1000
-      let newVersion: string | undefined
-      while (Date.now() < pollDeadline) {
-        try {
-          const probe = await launchAndWaitForQuit({
-            appPath,
-            vm,
-            // A cold relaunch of the freshly-extracted update can be slow (Gatekeeper verification,
-            // embedded-asar integrity validation, slow CI crypto), so give each probe a generous
-            // window. A single timeout is not fatal — the surrounding poll loop retries until the
-            // pollDeadline, so the worst case is bounded by pollDeadline, not by this value.
-            timeoutMs: 60 * 1000,
-            updateConfigPath,
-            packageManagerToTest: packageManager,
-            env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
-            // waitForExit: true ensures TestApp.exe is fully released before the next
-            // poll iteration, giving the detached NSIS installer an uncontested window
-            // to overwrite the binary (Windows locks executables while they are running).
-            waitForExit: true,
-          })
-          newVersion = probe.version
-          if (newVersion === NEW_VERSION_NUMBER) {
-            break
-          }
-          log.info({ installedVersion: newVersion, expected: NEW_VERSION_NUMBER, stdout: probe.stdout, stderr: probe.stderr }, "Installer still in progress, retrying...")
-        } catch (err: any) {
-          // NSIS replaces the exe non-atomically: it deletes the old binary before writing the new one,
-          // so there is a brief window where TestApp.exe does not exist on disk.
-          if (err.code === "ENOENT" && (err.syscall === "spawn" || err.syscall?.startsWith("spawn "))) {
-            log.info({ appPath }, "Binary temporarily unavailable (NSIS installer in progress), retrying...")
-          } else if (typeof err.message === "string" && err.message.startsWith("Timeout after")) {
-            // A single probe launch stalled (no APP_VERSION printed before the timeout). Surface
-            // exactly what the app emitted (the message embeds STDOUT/STDERR) and keep polling
-            // instead of failing the whole test on the first slow launch.
-            log.info({ appPath, detail: err.message }, "Probe launch timed out, retrying...")
-          } else {
-            throw err
-          }
-        }
-        if (Date.now() + pollInterval < pollDeadline) {
-          await new Promise(resolve => setTimeout(resolve, pollInterval))
-        }
-      }
-      expect(newVersion).toMatch(NEW_VERSION_NUMBER)
+      await pollUntilNewVersionInstalled(expect, { appPath, vm, updateConfigPath, packageManagerToTest: packageManager })
     }, vm)
   } catch (error: any) {
     log.error({ error: error.message }, "Blackbox Updater Test failed to run")
@@ -396,6 +349,203 @@ export async function runTest(
       await handleCleanupPerOS({ target, perMachine })
     } catch (error: any) {
       log.error({ error: error.message }, "Blackbox Updater Test cleanup failed")
+      // ignore
+    }
+  }
+  if (queuedError) {
+    throw queuedError
+  }
+}
+
+/**
+ * Poll until the installed binary reports the new version.
+ * AUTO_UPDATER_TEST is disabled so the probe app quits immediately after printing its version
+ * (no update cycle triggered), which also prevents a second installer from running in parallel.
+ */
+async function pollUntilNewVersionInstalled(
+  expect: ExpectStatic,
+  { appPath, vm, updateConfigPath, packageManagerToTest }: { appPath: string; vm: VmManager | undefined; updateConfigPath: string; packageManagerToTest: string }
+): Promise<void> {
+  const pollDeadline = Date.now() + 6 * 60 * 1000
+  const pollInterval = 5 * 1000
+  let newVersion: string | undefined
+  while (Date.now() < pollDeadline) {
+    try {
+      const probe = await launchAndWaitForQuit({
+        appPath,
+        vm,
+        // A cold relaunch of the freshly-extracted update can be slow (Gatekeeper verification,
+        // embedded-asar integrity validation, slow CI crypto), so give each probe a generous
+        // window. A single timeout is not fatal — the surrounding poll loop retries until the
+        // pollDeadline, so the worst case is bounded by pollDeadline, not by this value.
+        timeoutMs: 60 * 1000,
+        updateConfigPath,
+        packageManagerToTest,
+        env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
+        // waitForExit: true ensures TestApp.exe is fully released before the next
+        // poll iteration, giving the detached NSIS installer an uncontested window
+        // to overwrite the binary (Windows locks executables while they are running).
+        waitForExit: true,
+      })
+      newVersion = probe.version
+      if (newVersion === NEW_VERSION_NUMBER) {
+        break
+      }
+      log.info({ installedVersion: newVersion, expected: NEW_VERSION_NUMBER, stdout: probe.stdout, stderr: probe.stderr }, "Installer still in progress, retrying...")
+    } catch (err: any) {
+      // NSIS replaces the exe non-atomically: it deletes the old binary before writing the new one,
+      // so there is a brief window where TestApp.exe does not exist on disk.
+      if (err.code === "ENOENT" && (err.syscall === "spawn" || err.syscall?.startsWith("spawn "))) {
+        log.info({ appPath }, "Binary temporarily unavailable (NSIS installer in progress), retrying...")
+      } else if (typeof err.message === "string" && err.message.startsWith("Timeout after")) {
+        // A single probe launch stalled (no APP_VERSION printed before the timeout). Surface
+        // exactly what the app emitted (the message embeds STDOUT/STDERR) and keep polling
+        // instead of failing the whole test on the first slow launch.
+        log.info({ appPath, detail: err.message }, "Probe launch timed out, retrying...")
+      } else {
+        throw err
+      }
+    }
+    if (Date.now() + pollInterval < pollDeadline) {
+      await new Promise(resolve => setTimeout(resolve, pollInterval))
+    }
+  }
+  expect(newVersion).toMatch(NEW_VERSION_NUMBER)
+}
+
+/**
+ * Full install-on-next-launch update cycle (#7807):
+ *   1. launch the old version with AUTO_UPDATER_TEST_NEXT_LAUNCH=true — the update is downloaded and
+ *      quitAndInstall({ waitUntilNextLaunch: true }) queues it and quits WITHOUT running the installer
+ *   2. probe that the installed binary still reports the old version (nothing was installed on quit)
+ *   3. relaunch, installing the pending update:
+ *      - "automatic": AUTO_UPDATER_TEST_AUTO_INSTALL_ON_NEXT_LAUNCH=true — autoInstallEvent: "onNextLaunch"
+ *        installs at startup on its own (supported by NSIS and AppImage only)
+ *      - "explicit": AUTO_UPDATER_TEST_INSTALL_PENDING=true — the app calls
+ *        installPendingUpdateIfAvailable() itself; the only pending-install path for deb/rpm/pacman,
+ *        whose doInstall elevates via pkexec/sudo and must not prompt at startup
+ *   4. poll until the installed binary reports the new version
+ *   5. "explicit" only: relaunch once more and assert installPendingUpdateIfAvailable() reports false
+ *      now that nothing is pending
+ */
+export async function runInstallOnNextLaunchTest(
+  context: TestContext,
+  target: string,
+  packageManager: string,
+  arch: Arch,
+  toolsets: ToolsetConfig,
+  installMode: "automatic" | "explicit",
+  extraConfig?: Partial<Configuration>
+) {
+  const { expect } = context
+  const vm = await windowsVmPromise
+  if (vm && target === "nsis") {
+    console.log("Running Windows install-on-next-launch test via Parallels VM")
+  }
+
+  const tmpDir = new TmpDir("install-on-next-launch")
+  const outDirs: ApplicationUpdatePaths[] = []
+  const shouldRunWindowsTests = process.platform === "win32" || (target === "nsis" && vm != null)
+  const buildConfig = deepAssign({ toolsets } as Configuration, extraConfig ?? {})
+  await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, buildConfig)
+
+  const oldAppDir = outDirs[0]
+  const newAppDir = outDirs[1]
+
+  // Setup tests by installing the previous version
+  const appPath = await handleInitialInstallPerOS({ target, dirPath: oldAppDir.dir, arch, vm })
+  if (!vm && !existsSync(appPath)) {
+    throw new Error(`App not found: ${appPath}`)
+  }
+
+  let queuedError: Error | null = null
+  try {
+    await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
+      // Move app update to the root directory of the server
+      await copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
+
+      // 1. Download the update and queue it for the next launch — the app must quit without installing.
+      const queueResult = await launchAndWaitForQuit({
+        appPath,
+        vm,
+        timeoutMs: 5 * 60 * 1000,
+        updateConfigPath,
+        expectedVersion: OLD_VERSION_NUMBER,
+        packageManagerToTest: packageManager,
+        waitForExit: true,
+        env: { AUTO_UPDATER_TEST_NEXT_LAUNCH: "true" },
+      })
+      log.info({ version: queueResult.version }, "Queue-for-next-launch launch completed")
+      await queueResult.assert(() => {
+        expect(queueResult.version).toMatch(OLD_VERSION_NUMBER)
+        expect(queueResult.stdout).toContain("Update downloaded")
+        expect(queueResult.stdout).toContain("Deferring install to next launch on explicit quitAndInstall")
+        expect(queueResult.stdout).toContain("Update is marked for install on next launch")
+      })
+
+      // 2. The installer must NOT have run — the installed binary still reports the old version.
+      const probe = await launchAndWaitForQuit({
+        appPath,
+        vm,
+        timeoutMs: 60 * 1000,
+        updateConfigPath,
+        packageManagerToTest: packageManager,
+        env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
+        waitForExit: true,
+      })
+      await probe.assert(() => expect(probe.version).toMatch(OLD_VERSION_NUMBER))
+
+      // 3. Relaunch — the pending update is re-validated against the update server and installed.
+      const installResult = await launchAndWaitForQuit({
+        appPath,
+        vm,
+        timeoutMs: 5 * 60 * 1000,
+        updateConfigPath,
+        expectedVersion: OLD_VERSION_NUMBER,
+        packageManagerToTest: packageManager,
+        waitForExit: true,
+        env: installMode === "automatic" ? { AUTO_UPDATER_TEST_AUTO_INSTALL_ON_NEXT_LAUNCH: "true" } : { AUTO_UPDATER_TEST_INSTALL_PENDING: "true" },
+      })
+      log.info({ version: installResult.version, installMode }, "Pending-install launch completed")
+      await installResult.assert(() => {
+        expect(installResult.stdout).toContain("Installing pending update")
+        if (installMode === "explicit") {
+          expect(installResult.stdout).toContain("INSTALL_PENDING_RESULT: true")
+        }
+      })
+
+      // 4. Wait until the installed binary reports the new version (NSIS/AppImage installers run detached).
+      await pollUntilNewVersionInstalled(expect, { appPath, vm, updateConfigPath, packageManagerToTest: packageManager })
+
+      // 5. Nothing is pending anymore — the explicit call must report false and leave the app intact.
+      if (installMode === "explicit") {
+        const negativeResult = await launchAndWaitForQuit({
+          appPath,
+          vm,
+          timeoutMs: 2 * 60 * 1000,
+          updateConfigPath,
+          expectedVersion: NEW_VERSION_NUMBER,
+          packageManagerToTest: packageManager,
+          waitForExit: true,
+          env: { AUTO_UPDATER_TEST_INSTALL_PENDING: "true" },
+        })
+        await negativeResult.assert(() => {
+          expect(negativeResult.version).toMatch(NEW_VERSION_NUMBER)
+          expect(negativeResult.stdout).toContain("INSTALL_PENDING_RESULT: false")
+        })
+      }
+    }, vm)
+  } catch (error: any) {
+    log.error({ error: error.message }, "Install-on-next-launch blackbox test failed to run")
+    queuedError = error
+  } finally {
+    // windows needs to release file locks, so a delay seems to be needed
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    await tmpDir.cleanup()
+    try {
+      await handleCleanupPerOS({ target })
+    } catch (error: any) {
+      log.error({ error: error.message }, "Install-on-next-launch blackbox test cleanup failed")
       // ignore
     }
   }

@@ -29,6 +29,10 @@ export class TestAppAdapter extends ElectronAppAdapter {
   quit(): void {
     // empty
   }
+
+  onSessionEnd(): void {
+    // powerMonitor is not available outside of a real Electron app
+  }
 }
 
 class MockApp {

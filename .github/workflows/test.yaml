@@ -359,12 +359,27 @@ jobs:
           GH_TOKEN_SECRET: ${{ secrets.GH_TOKEN }}
           GITLAB_TOKEN_SECRET: ${{ secrets.GITLAB_TOKEN }}
 
+      # Gated on the upstream repository so forks cannot substitute their own R2 credentials;
+      # without these vars the R2 live smoke test is skipped (test.ifEnv).
+      - name: Add R2 secrets to Docker secrets env file
+        if: github.repository == 'electron-userland/electron-builder'
+        run: |
+          printf 'CF_R2_ACCESS_KEY_ID=%s\nCF_R2_SECRET_ACCESS_KEY=%s\nCF_R2_ACCOUNT_ID=%s\nCF_R2_BUCKET=%s\nCF_R2_PUBLIC_URL=%s\n' \
+            "$CF_R2_ACCESS_KEY_ID_SECRET" "$CF_R2_SECRET_ACCESS_KEY_SECRET" "$CF_R2_ACCOUNT_ID_SECRET" "$CF_R2_BUCKET_SECRET" "$CF_R2_PUBLIC_URL_SECRET" \
+            >> "${{ runner.temp }}/docker-secrets.env"
+        env:
+          CF_R2_ACCESS_KEY_ID_SECRET: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          CF_R2_SECRET_ACCESS_KEY_SECRET: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          CF_R2_ACCOUNT_ID_SECRET: ${{ secrets.CF_R2_ACCOUNT_ID }}
+          CF_R2_BUCKET_SECRET: ${{ secrets.CF_R2_BUCKET }}
+          CF_R2_PUBLIC_URL_SECRET: ${{ secrets.CF_R2_PUBLIC_URL }}
+
       - name: Test
         run: |
           echo $TEST_RUNNER_IMAGE_TAG
           pnpm test:linux
         env:
-          TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,GitlabPublisher.integration.test
+          TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,GitlabPublisher.integration.test,R2PublisherTest
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
           ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
 

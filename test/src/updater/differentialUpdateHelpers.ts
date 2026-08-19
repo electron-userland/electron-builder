@@ -75,7 +75,7 @@ export function getTestUpdaterCacheDir(oldDir: string) {
 
 export async function checkResult(expect: ExpectStatic, updater: BaseUpdater) {
   // disable automatic install otherwise mac updater will permanently wait on mocked electron's native updater to receive update (mocked server can't install)
-  updater.autoInstallOnAppQuit = false
+  updater.autoInstallEvent = "manual"
 
   const updateCheckResult = await updater.checkForUpdates()
   const downloadPromise = updateCheckResult?.downloadPromise

@@ -25,12 +25,18 @@ export class BitbucketPublisher extends HttpPublisher {
       throw new InvalidConfigurationError(`Bitbucket token is not set using env "BITBUCKET_TOKEN" (see https://www.electron.build/publish#BitbucketOptions)`)
     }
 
-    if (isEmptyOrSpaces(username)) {
-      log.warn('No Bitbucket username provided via "BITBUCKET_USERNAME". Defaulting to use repo owner.')
-    }
-
     this.info = info
-    this.auth = BitbucketPublisher.convertAppPassword(username ?? this.info.owner, token)
+    // Bitbucket Cloud is retiring app passwords (https://www.atlassian.com/blog/bitbucket/bitbucket-cloud-transitions-to-api-tokens).
+    // - With a username, the token is sent as HTTP Basic auth: a Bitbucket username + app password, or an Atlassian account email + API token.
+    // - Without a username, the token is treated as a repository/project/workspace access token and sent as Bearer auth.
+    if (isEmptyOrSpaces(username)) {
+      log.info(
+        'No Bitbucket username provided via "BITBUCKET_USERNAME"; sending the token as an access token (Bearer auth). Set "BITBUCKET_USERNAME" to authenticate with an app password or API token instead.'
+      )
+      this.auth = BitbucketPublisher.convertAccessToken(token)
+    } else {
+      this.auth = BitbucketPublisher.convertAppPassword(username, token)
+    }
     this.basePath = `/2.0/repositories/${this.info.owner}/${this.info.slug}/downloads`
   }
 
@@ -73,5 +79,9 @@ export class BitbucketPublisher extends HttpPublisher {
   static convertAppPassword(username: string, token: string) {
     const base64encodedData = Buffer.from(`${username}:${token.trim()}`).toString("base64")
     return `Basic ${base64encodedData}`
+  }
+
+  static convertAccessToken(token: string) {
+    return `Bearer ${token.trim()}`
   }
 }

@@ -190,6 +190,17 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     const resolvedExtensions = extensionsList.length > 0 ? extensionsList : undefined
     const useGnomeExtension = extensionsList.includes("gnome")
 
+    // Snap store review rejects classic-confinement snaps that declare plugs or layout, so skip
+    // the generated defaults for classic (mirrors SnapCoreLegacy). Explicitly configured values
+    // are kept, but warn that the store is likely to reject them.
+    const isClassic = options.confinement === "classic"
+    if (isClassic && (options.plugs != null || options.layout != null)) {
+      log.warn(
+        { confinement: "classic", plugs: options.plugs != null, layout: options.layout != null },
+        "classic confinement does not support plugs or layout; keeping the explicitly configured values, but the snap store review is likely to reject them"
+      )
+    }
+
     // Create the app part
     const appPart: Part = {
       plugin: "dump",
@@ -200,66 +211,21 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       stage: options.appPartStage?.length ? options.appPartStage : undefined,
     }
 
-    // Process plugs and slots
-    // When using GNOME extension, we don't need to manually configure content snaps
-    // The extension will handle: gnome-46-2404, gtk-3-themes, icon-themes, sound-themes
-    let rootPlugs: Record<string, any> | undefined
-    let appPlugs: string[] | undefined
-
-    if (useGnomeExtension) {
-      // With GNOME extension, only process user-provided custom plugs
-      const result = options.plugs ? this.processPlugOrSlots(options.plugs) : { root: undefined, app: undefined }
-      rootPlugs = result.root
-      // Extension automatically adds common plugs, so we only add custom ones
-      appPlugs = result.app
-    } else {
-      // Without GNOME extension, we need manual content snaps
-      const defaultRootPlugs: Record<string, any> = {
-        "gtk-3-themes": {
-          interface: "content",
-          target: "$SNAP/data-dir/themes",
-          "default-provider": "gtk-common-themes",
-        },
-        "icon-themes": {
-          interface: "content",
-          target: "$SNAP/data-dir/icons",
-          "default-provider": "gtk-common-themes",
-        },
-        "sound-themes": {
-          interface: "content",
-          target: "$SNAP/data-dir/sounds",
-          "default-provider": "gtk-common-themes",
-        },
-        "gnome-46-2404": {
-          interface: "content",
-          target: "$SNAP/gnome-platform",
-          "default-provider": "gnome-46-2404",
-        },
-        "gpu-2404": {
-          interface: "content",
-          target: "$SNAP/gpu-2404",
-          "default-provider": "mesa-2404",
-        },
-      }
-
-      const result = options.plugs
-        ? this.processPlugOrSlots(options.plugs)
-        : hostMode
-          ? { root: undefined, app: this.defaultPlugs }
-          : {
-              root: defaultRootPlugs,
-              app: this.defaultPlugs,
-            }
-      rootPlugs = result.root
-      appPlugs = result.app
-    }
+    // Process plugs and slots (see resolvePlugs for the per-build-flavor rules)
+    let { root: rootPlugs, app: appPlugs }: { root: Record<string, any> | undefined; app: string[] | undefined } = this.resolvePlugs(
+      options,
+      isClassic,
+      hostMode,
+      useGnomeExtension
+    )
 
     // Always add browser-support with allow-sandbox so Chromium's internal sandbox
     // can create user namespaces under strict confinement.  Without allow-sandbox: true
     // the app crashes immediately with "FATAL: Permission denied (13)" in credentials.cc.
-    // Skip the injection only when the user has explicitly provided their own plugs
-    // (they are responsible for including browser-support in that case).
-    if (!options.plugs) {
+    // Skip the injection when the user has explicitly provided their own plugs
+    // (they are responsible for including browser-support in that case) and for
+    // classic confinement, where plugs must not be declared at all.
+    if (!options.plugs && !isClassic) {
       rootPlugs = { ...rootPlugs, "browser-support": { interface: "browser-support", "allow-sandbox": true } }
       if (!appPlugs?.includes("browser-support")) {
         appPlugs = [...(appPlugs ?? []), "browser-support"]
@@ -356,8 +322,8 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       // Environment
       environment: this.buildEnvironment(options),
 
-      // User-supplied layout always wins. Without gnome extension and not in host mode, fall back to content-snap defaults.
-      layout: options.layout ?? (useGnomeExtension || hostMode ? undefined : this.buildDefaultLayout(options)),
+      // Layout (see resolveLayout for the per-build-flavor rules)
+      layout: this.resolveLayout(options, isClassic, hostMode, useGnomeExtension),
 
       // Interfaces
       plugs: rootPlugs,
@@ -373,6 +339,91 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     }
 
     return removeNullish(snapcraft)
+  }
+
+  /**
+   * Resolve the root-level plug definitions and the app-level plug references for the build flavor.
+   *
+   * Explicitly configured plugs always win — they are kept even under classic confinement
+   * (with the warning logged in mapSnapOptionsToSnapcraftYAML). Otherwise:
+   * - classic confinement: no plugs at all — the snap store review rejects classic snaps that declare plugs
+   * - GNOME extension: no defaults — the extension supplies the common plugs and content snaps
+   *   (gnome-46-2404, gtk-3-themes, icon-themes, sound-themes) itself
+   * - host/destructive mode: app-level default plugs only, no content-snap root plugs
+   * - default (strict, no extension): manual content-snap root plugs plus the app-level default plugs
+   */
+  private resolvePlugs(
+    options: SnapOptions24,
+    isClassic: boolean,
+    hostMode: boolean,
+    useGnomeExtension: boolean
+  ): { root: Record<string, any> | undefined; app: string[] | undefined } {
+    if (options.plugs) {
+      return this.processPlugOrSlots(options.plugs)
+    }
+    if (isClassic) {
+      return { root: undefined, app: undefined }
+    }
+    if (useGnomeExtension) {
+      return { root: undefined, app: undefined }
+    }
+    if (hostMode) {
+      return { root: undefined, app: this.defaultPlugs }
+    }
+    return { root: this.buildDefaultRootPlugs(), app: this.defaultPlugs }
+  }
+
+  /**
+   * Default root-level content-snap plugs used without the GNOME extension, wiring up the
+   * GNOME platform, theme, and GPU content snaps manually.
+   */
+  private buildDefaultRootPlugs(): Record<string, any> {
+    return {
+      "gtk-3-themes": {
+        interface: "content",
+        target: "$SNAP/data-dir/themes",
+        "default-provider": "gtk-common-themes",
+      },
+      "icon-themes": {
+        interface: "content",
+        target: "$SNAP/data-dir/icons",
+        "default-provider": "gtk-common-themes",
+      },
+      "sound-themes": {
+        interface: "content",
+        target: "$SNAP/data-dir/sounds",
+        "default-provider": "gtk-common-themes",
+      },
+      "gnome-46-2404": {
+        interface: "content",
+        target: "$SNAP/gnome-platform",
+        "default-provider": "gnome-46-2404",
+      },
+      "gpu-2404": {
+        interface: "content",
+        target: "$SNAP/gpu-2404",
+        "default-provider": "mesa-2404",
+      },
+    }
+  }
+
+  /**
+   * Resolve the snap-wide layout for the build flavor.
+   *
+   * An explicitly configured layout always wins — it is kept even under classic confinement
+   * (with the warning logged in mapSnapOptionsToSnapcraftYAML). Otherwise:
+   * - classic confinement: no layout — the snap store review rejects classic snaps that declare one
+   * - GNOME extension or host/destructive mode: no layout needed
+   * - default (strict, no extension): content-snap default layout
+   */
+  private resolveLayout(options: SnapOptions24, isClassic: boolean, hostMode: boolean, useGnomeExtension: boolean): Record<string, any> | undefined {
+    if (options.layout != null) {
+      return options.layout
+    }
+    if (isClassic || useGnomeExtension || hostMode) {
+      return undefined
+    }
+    return this.buildDefaultLayout(options)
   }
 
   /**

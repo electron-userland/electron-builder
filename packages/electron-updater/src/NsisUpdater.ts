@@ -145,16 +145,33 @@ export class NsisUpdater extends BaseUpdater {
     try {
       publisherName = (await this.configOnDisk.value).publisherName
       if (publisherName == null) {
+        this._logger.warn(
+          "Signature verification of the downloaded update was skipped because no publisherName is present in app-update.yml. " +
+            "Sign your build so electron-builder can derive publisherName from the code signing certificate automatically, or set win.publisherName explicitly. " +
+            "This fail-open behavior is deprecated: electron-builder v28 will treat a missing publisherName as a verification failure (fail-closed)."
+        )
         return null
       }
     } catch (e: any) {
       if (e.code === "ENOENT") {
-        // no app-update.yml
+        // no app-update.yml at all (unpackaged/dev mode) — nothing to verify against, stay silent
         return null
       }
       throw e
     }
     return await this._verifyUpdateCodeSignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile)
+  }
+
+  // the cached installer sat on disk since a previous launch, so its Authenticode signature is re-verified before an
+  // install-on-next-launch is executed (same check as at download time)
+  protected verifyInstallerSignatureOnLaunch(installerPath: string): Promise<string | null> {
+    return this.verifySignature(installerPath)
+  }
+
+  // per-user NSIS installs run without an elevation prompt (per-machine installs are filtered separately via
+  // isAdminRightsRequired), so the automatic install at startup is allowed
+  protected get isAutoInstallOnNextLaunchSupported(): boolean {
+    return true
   }
 
   protected doInstall(options: InstallOptions): boolean {

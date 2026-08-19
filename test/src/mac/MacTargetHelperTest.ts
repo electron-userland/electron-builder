@@ -1,16 +1,84 @@
 import { afterEach, expect } from "vitest"
+import * as fs from "fs/promises"
+import * as path from "path"
+import { Arch } from "builder-util"
 import { MacTargetHelper, type PlatformType } from "app-builder-lib/internal"
 
 describe("MacTargetHelper", () => {
   describe("getCertificateTypes", () => {
-    const cases: [PlatformType, string[]][] = [
-      ["mas", ["Apple Distribution", "3rd Party Mac Developer Application"]],
-      ["mas-dev", ["Mac Developer", "Apple Development"]],
-      ["mac", ["Developer ID Application"]],
+    const cases: [PlatformType, "development" | "distribution", string[]][] = [
+      ["mas", "distribution", ["Apple Distribution", "3rd Party Mac Developer Application"]],
+      ["mas", "development", ["Mac Developer", "Apple Development"]],
+      ["mas-dev", "development", ["Mac Developer", "Apple Development"]],
+      ["mas-dev", "distribution", ["Apple Distribution", "3rd Party Mac Developer Application"]],
+      ["mac", "distribution", ["Developer ID Application"]],
+      ["mac", "development", ["Mac Developer", "Apple Development"]],
     ]
 
-    test.each(cases)("%s", (targetPlatform, expected) => {
-      expect(MacTargetHelper.getCertificateTypes(targetPlatform)).toEqual(expected)
+    test.each(cases)("%s %s", (targetPlatform, type, expected) => {
+      expect(MacTargetHelper.getCertificateTypes(targetPlatform, type)).toEqual(expected)
+    })
+  })
+
+  describe("resolveSigningType", () => {
+    const cases: [PlatformType, "development" | "distribution" | undefined, string][] = [
+      // default is derived from the build flavor
+      ["mas-dev", undefined, "development"],
+      ["mas", undefined, "distribution"],
+      ["mac", undefined, "distribution"],
+      // an explicit sign.type wins over the default
+      ["mac", "development", "development"],
+      ["mas", "development", "development"],
+      ["mas-dev", "distribution", "distribution"],
+    ]
+
+    test.each(cases)("targetPlatform=%s configType=%s => %s", (targetPlatform, configType, expected) => {
+      expect(MacTargetHelper.resolveSigningType(targetPlatform, configType)).toBe(expected)
+    })
+  })
+
+  describe("shouldCreateMasInstaller", () => {
+    const cases: [PlatformType, "development" | "distribution" | undefined, boolean][] = [
+      ["mas", undefined, true],
+      ["mas", "distribution", true],
+      // explicit development signing on a mas build skips the .pkg installer
+      ["mas", "development", false],
+      ["mas-dev", undefined, false],
+      ["mac", undefined, false],
+      ["mac", "development", false],
+    ]
+
+    test.each(cases)("targetPlatform=%s configType=%s => %s", (targetPlatform, configType, expected) => {
+      expect(MacTargetHelper.shouldCreateMasInstaller(targetPlatform, configType)).toBe(expected)
+    })
+  })
+
+  describe("buildSignOptions", () => {
+    function makeHelper(): MacTargetHelper {
+      const packager = {
+        config: { electronVersion: "38.0.0" },
+        resourceList: Promise.resolve([]),
+        buildResourcesDir: "/nonexistent",
+      }
+      return new MacTargetHelper(packager as any)
+    }
+
+    const identity = { name: "Test Identity", hash: "HASH" } as any
+
+    const cases: [PlatformType, "development" | "distribution" | undefined, string][] = [
+      ["mac", undefined, "distribution"],
+      ["mas", undefined, "distribution"],
+      ["mas-dev", undefined, "development"],
+      // explicit sign.type is forwarded to @electron/osx-sign
+      ["mac", "development", "development"],
+      ["mas", "development", "development"],
+    ]
+
+    test.each(cases)("targetPlatform=%s type=%s => signs with type %s", async (targetPlatform, type, expected) => {
+      const config = type == null ? undefined : { type }
+      const signOptions = await makeHelper().buildSignOptions("/project/My.app", identity, config, null, Arch.x64, targetPlatform)
+      expect(signOptions.type).toBe(expected)
+      expect(signOptions.platform).toBe(targetPlatform === "mac" ? "darwin" : "mas")
     })
   })
 
@@ -103,6 +171,67 @@ describe("MacTargetHelper", () => {
 
     test.each(cases)("targetPlatform=%s hardenedRuntime=%s => %s", (targetPlatform, hardenedRuntime, expected) => {
       expect(MacTargetHelper.isHardenedRuntimeEnabledForSigning(targetPlatform, hardenedRuntime)).toBe(expected)
+    })
+  })
+
+  describe("isLibraryValidationDisabled", () => {
+    const plistWith = (body: string) => `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+${body}
+  </dict>
+</plist>
+`
+    const grantingPlist = plistWith(`    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>`)
+    const nonGrantingPlist = plistWith(`    <key>com.apple.security.cs.allow-jit</key>
+    <true/>`)
+
+    function makeHelper(resourceFiles: string[], buildResourcesDir: string): MacTargetHelper {
+      return new MacTargetHelper({ resourceList: Promise.resolve(resourceFiles), buildResourcesDir } as any)
+    }
+
+    test("returns true when the explicit entitlements file grants the key", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const file = path.join(dir, "custom.plist")
+      await fs.writeFile(file, grantingPlist, "utf-8")
+      await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements: file })).resolves.toBe(true)
+    })
+
+    test("returns false when the explicit entitlements file lacks the key", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const file = path.join(dir, "custom.plist")
+      await fs.writeFile(file, nonGrantingPlist, "utf-8")
+      await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements: file })).resolves.toBe(false)
+    })
+
+    test("returns false when the explicit entitlements file cannot be parsed", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const file = path.join(dir, "garbage.plist")
+      await fs.writeFile(file, "not a plist at all <<<", "utf-8")
+      await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements: file })).resolves.toBe(false)
+    })
+
+    test("returns false when the explicit entitlements file does not exist", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements: path.join(dir, "missing.plist") })).resolves.toBe(false)
+    })
+
+    test.for<[PlatformType, string]>([
+      ["mac", "entitlements.mac.plist"],
+      ["mas", "entitlements.mas.plist"],
+    ])("uses %s build-resources file %s when no explicit file is set", async ([targetPlatform, resourceName], { tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(dir, resourceName), grantingPlist, "utf-8")
+      await expect(makeHelper([resourceName], dir).isLibraryValidationDisabled(targetPlatform, undefined)).resolves.toBe(true)
+
+      await fs.writeFile(path.join(dir, resourceName), nonGrantingPlist, "utf-8")
+      await expect(makeHelper([resourceName], dir).isLibraryValidationDisabled(targetPlatform, undefined)).resolves.toBe(false)
+    })
+
+    test("returns true for the bundled default template (it grants the key)", async () => {
+      await expect(makeHelper([], "/nonexistent").isLibraryValidationDisabled("mac", undefined)).resolves.toBe(true)
     })
   })
 

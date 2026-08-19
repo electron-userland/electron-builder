@@ -6,6 +6,7 @@ import * as path from "path"
 import { CertType, findIdentity, Identity, reportError } from "../../codeSign/mac/macCodeSign.js"
 import type { MacPackager } from "../../macPackager.js"
 import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
+import { parsePlistFile, PlistObject } from "../../util/mac/plist.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 
 export type PlatformType = "mas" | "mas-dev" | "mac"
@@ -29,7 +30,7 @@ export class MacTargetHelper {
     signOpts: ElectronSignOptions | null | undefined
   ): Promise<Identity | null> {
     const isMas = MacTargetHelper.isMasTarget(targetPlatform)
-    const certificateTypes = MacTargetHelper.getCertificateTypes(targetPlatform)
+    const certificateTypes = MacTargetHelper.getCertificateTypes(targetPlatform, MacTargetHelper.resolveSigningType(targetPlatform, signOpts?.type))
 
     let identity: Identity | null = null
     for (const certificateType of certificateTypes) {
@@ -42,7 +43,7 @@ export class MacTargetHelper {
     if (identity == null) {
       const noIdentity = !hasCustomSign
       if (qualifier === "-") {
-        if (MacTargetHelper.isHardenedRuntimeEnabledForSigning(targetPlatform, signOpts?.hardenedRuntime)) {
+        if (MacTargetHelper.isHardenedRuntimeEnabledForSigning(targetPlatform, signOpts?.hardenedRuntime) && !(await this.isLibraryValidationDisabled(targetPlatform, signOpts))) {
           log.warn(
             null,
             "ad-hoc signing with hardenedRuntime enabled requires the com.apple.security.cs.disable-library-validation entitlement " +
@@ -59,6 +60,26 @@ export class MacTargetHelper {
     return identity
   }
 
+  /**
+   * Resolves the effective app entitlements file — same precedence as `getOptionsForFile()` — and
+   * returns whether it grants `com.apple.security.cs.disable-library-validation`.
+   * Fails open: returns false (so callers still warn) when the file cannot be read or parsed.
+   */
+  async isLibraryValidationDisabled(targetPlatform: PlatformType, signOpts: ElectronSignOptions | Nullish): Promise<boolean> {
+    let file = signOpts?.entitlements
+    if (!file) {
+      const p = `entitlements.${MacTargetHelper.isMasTarget(targetPlatform) ? "mas" : "mac"}.plist`
+      file = (await this.packager.resourceList).includes(p) ? path.join(this.packager.buildResourcesDir, p) : getTemplatePath("entitlements.mac.plist")
+    }
+    try {
+      const entitlements = await parsePlistFile<PlistObject>(file)
+      return entitlements["com.apple.security.cs.disable-library-validation"] === true
+    } catch (e: any) {
+      log.debug({ file, error: e.message }, "cannot read entitlements to verify library validation")
+      return false
+    }
+  }
+
   async buildSignOptions(
     appPath: string,
     identity: Identity,
@@ -68,8 +89,7 @@ export class MacTargetHelper {
     targetPlatform: PlatformType
   ): Promise<SignOptions> {
     const isMas = MacTargetHelper.isMasTarget(targetPlatform)
-    // `type` is derived from the build flavor, never from user config: mas-dev → development, otherwise distribution.
-    const type: SigningDistributionType = MacTargetHelper.isMasDevelopment(targetPlatform) ? "development" : "distribution"
+    const type = MacTargetHelper.resolveSigningType(targetPlatform, config?.type)
 
     let binaries = config?.binaries || undefined
     if (binaries) {
@@ -235,15 +255,27 @@ export class MacTargetHelper {
     }
   }
 
-  static getCertificateTypes(targetPlatform: PlatformType): CertType[] {
-    switch (targetPlatform) {
-      case "mas-dev":
-        return ["Mac Developer", "Apple Development"]
-      case "mas":
-        return ["Apple Distribution", "3rd Party Mac Developer Application"]
-      default:
-        return ["Developer ID Application"]
+  /**
+   * The effective signing type: an explicit `sign.type` wins, otherwise derived from the build flavor
+   * (`mas-dev` → `development`, otherwise `distribution`).
+   */
+  static resolveSigningType(targetPlatform: PlatformType, configType: SigningDistributionType | Nullish): SigningDistributionType {
+    return configType ?? (MacTargetHelper.isMasDevelopment(targetPlatform) ? "development" : "distribution")
+  }
+
+  static getCertificateTypes(targetPlatform: PlatformType, type: SigningDistributionType): CertType[] {
+    if (type === "development") {
+      return ["Mac Developer", "Apple Development"]
     }
+    return MacTargetHelper.isMasTarget(targetPlatform) ? ["Apple Distribution", "3rd Party Mac Developer Application"] : ["Developer ID Application"]
+  }
+
+  /**
+   * The MAS `.pkg` installer is only built for distribution signing — a development-signed build
+   * (`mas-dev`, or an explicit `sign.type: "development"` on a `mas` build) is installed directly.
+   */
+  static shouldCreateMasInstaller(targetPlatform: PlatformType, configType: SigningDistributionType | Nullish): boolean {
+    return MacTargetHelper.isMasTarget(targetPlatform) && MacTargetHelper.resolveSigningType(targetPlatform, configType) !== "development"
   }
 
   static isMasTarget(targetName: string): boolean {

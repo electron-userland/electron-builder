@@ -91,8 +91,10 @@ export interface CommonConfiguration {
    * Pinned versions of the binary toolsets electron-builder downloads and uses internally.
    *
    * Each property selects a specific release of the corresponding tool bundle. Set a property to
-   * `"0.0.0"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set to
-   * `null`) to use the modern default for that toolset.
+   * `"0.0.0"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set it to
+   * `"latest"`) to use the modern default (newest bundle) for that toolset.
+   *
+   * Note: Toolset versioning can drop intermediate releases (such as if a problem is discovered in a bundle). If you need to pin to a specific release, check the release notes for the toolset to ensure the version you specify is valid.
    *
    * @see {@link ToolsetConfig}
    */
@@ -334,6 +336,35 @@ export interface CommonConfiguration {
   readonly ignoredProductionDependencies?: Array<string> | null
 
   /**
+   * Whether production dependencies that cannot be resolved during node-module collection are
+   * allowed — i.e. whether the build should continue with a warning instead of failing.
+   *
+   * During collection every production dependency must resolve to an installed package on disk. A
+   * dependency that does not resolve (`cannot find path for dependency` / `dependency not found on
+   * disk`) is not bundled, which typically breaks the packaged app at runtime with
+   * `MODULE_NOT_FOUND`.
+   *
+   * - `false` or `null` (default): the build fails after dependency collection completes,
+   *   reporting the **complete** list of missing production dependencies at once.
+   * - `string[]`: the listed dependency names are allowed to be missing; any other missing
+   *   production dependency still fails the build. Entries match the package name of the reported
+   *   `name@version` entry (e.g. `some-native-module`, `@scope/pkg`), or an exact `name@version`
+   *   string to allow only that resolved version to be missing.
+   * - `true`: missing production dependencies are only logged as warnings (the electron-builder
+   *   ≤ 26 behavior).
+   *
+   * Missing *optional* dependencies (declared in `optionalDependencies`, e.g. `fsevents` on
+   * Linux/Windows, or platform-specific packages) are always allowed and never fail the build.
+   *
+   * Independent of {@link ignoredProductionDependencies}, which controls which dependencies are
+   * excluded from the copied `node_modules`; this option only controls validation of the
+   * collection result.
+   *
+   * @default false
+   */
+  readonly allowMissingDependencies?: boolean | Array<string> | null
+
+  /**
    * Configuration for native Node.js module installation and rebuilding.
    *
    * Groups all options that control how electron-builder handles native modules — from forcing
@@ -470,6 +501,13 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
   /**
    * Options forwarded to [`@electron/get`](https://github.com/electron/get) when downloading the
    * Electron distribution to package.
+   *
+   * `checksums` (a map of artifact file name → SHA-256 hex) makes checksum validation fully offline —
+   * without it, `@electron/get` fetches `SHASUMS256.txt` from the network on every build, even when the
+   * artifact itself is already cached. When `checksums` is not configured, electron-builder automatically
+   * picks up a locally seeded `SHASUMS256.txt-<version>` (or `SHASUMS256.txt`) file at the root of the
+   * Electron cache directory. See the
+   * [air-gapped / offline builds guide](https://www.electron.build/tutorials/offline-air-gapped-builds).
    */
   readonly electronGet?: ElectronGetOptions | null
 
@@ -736,13 +774,13 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Notes |
    * |---------|-------|
-   * | `"1.2.1"` | `wasm-vips` + `@resvg/resvg-wasm` |
+   * | `"1.2.3"` | Writes 16px/32px ICNS entries as `ic04`/`ic05` ARGB (fixes corrupt small icons in Finder) |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly icons?: "1.2.1" | ToolsetCustom | "latest"
+  readonly icons?: "1.2.3" | ToolsetCustom | "latest"
 }
 
 /**
@@ -945,7 +983,7 @@ export interface Hooks {
    *   `electron-v${version}-${platformName}-${arch}.zip`.
    *
    * When not set, electron-builder downloads the official Electron release from GitHub (or the
-   * mirror configured via `electronDownload`).
+   * mirror configured via `electronGet`).
    *
    * Receives a {@link PrepareApplicationStageDirectoryOptions}.
    */

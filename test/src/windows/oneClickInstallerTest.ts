@@ -34,7 +34,10 @@ test("one-click", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
         win: {
           sign: {
             type: "signtool" as const,
-            publisherName: "Foo, Inc",
+            // An explicit publisherName must now include at least one name matching the signing
+            // certificate (the ephemeral test identity, CN=EB Test Code Signing) — extra names for
+            // certificate rotation still pass through to app-update.yml verbatim.
+            publisherName: ["Foo, Inc", "CN=EB Test Code Signing"],
           },
         },
         publish: {
