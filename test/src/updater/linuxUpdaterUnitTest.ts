@@ -158,6 +158,65 @@ describe("LinuxUpdater unit tests", { sequential: true }, () => {
     })
   })
 
+  describe("async install", () => {
+    const setRawPath = (rawPath: string) => {
+      ;(updater as any).downloadedUpdateHelper = { file: rawPath }
+    }
+
+    beforeEach(() => {
+      vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(false)
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => {
+        const cmd = args[0] as string
+        return cmd === "dpkg" || cmd === "pkexec"
+      })
+    })
+
+    it("runs the same command as the synchronous path, awaited instead of blocking", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue("")
+
+      await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+
+      expect(spawnAsyncLog).toHaveBeenCalledWith("pkexec", ["--disable-internal-agent", "/bin/bash", "-c", "'dpkg -i /tmp/update-1.0.2.deb'"])
+    })
+
+    it("never falls back to the blocking spawnSync path", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      const spawnSyncLog = vi.spyOn(updater as any, "spawnSyncLog").mockReturnValue("")
+      vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue("")
+
+      await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+
+      // only the non-privileged `command -v` probes may be synchronous
+      const privileged = spawnSyncLog.mock.calls.filter(([cmd]) => cmd !== "command")
+      expect(privileged).toEqual([])
+    })
+
+    it("repairs dependencies with apt-get when dpkg fails, as a separate authenticated command", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      // first call is dpkg, second is the apt-get repair
+      const spawnAsyncLog = vi
+        .spyOn(updater as any, "spawnAsyncLog")
+        .mockRejectedValueOnce(new Error("Command pkexec exited with code 1"))
+        .mockResolvedValue("")
+
+      await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+
+      expect(spawnAsyncLog.mock.calls.map(([, argv]: any) => argv[argv.length - 1])).toEqual(["'dpkg -i /tmp/update-1.0.2.deb'", "'apt-get install -f -y'"])
+    })
+
+    it("reports the failure instead of relaunching when every command fails", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      vi.spyOn(updater as any, "spawnAsyncLog").mockRejectedValue(new Error("Command pkexec exited with code 126"))
+      const dispatchError = vi.spyOn(updater as any, "dispatchError").mockReturnValue(undefined)
+
+      const installed = await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: true, isAdminRightsRequired: false })
+
+      expect(installed).toBe(false)
+      expect(dispatchError).toHaveBeenCalled()
+    })
+  })
+
   describe("runCommandWithSudoIfNeeded app name handling", () => {
     beforeEach(() => {
       vi.spyOn(updater as any, "isRunningAsRoot").mockReturnValue(false)

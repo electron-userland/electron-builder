@@ -134,12 +134,23 @@ describe("install on next launch", { sequential: true }, () => {
     })
   })
 
+  /**
+   * Routes the async install path back to `doInstall`, which every assertion in this file spies on. Linux
+   * targets install asynchronously so their elevation dialog cannot block the main process; what those tests
+   * exercise is BaseUpdater's orchestration, and the Linux execution itself is covered by linuxUpdaterUnitTest.
+   */
+  function delegateAsyncInstallToSyncInstall(updater: DebUpdater | NsisUpdater): void {
+    ;(updater as any).doInstallAsync = (options: unknown) => Promise.resolve((updater as any).doInstall(options))
+  }
+
   describe("BaseUpdater quit handler", () => {
     function createUpdater(app = makeStubApp()) {
       const updater = new DebUpdater(null, app)
       updater.logger = log
       ;(updater as any).downloadedUpdateHelper = helper
       const doInstall = vi.spyOn(updater as any, "doInstall").mockReturnValue(true)
+      // Linux targets install through the async path; keep every assertion on the single doInstall spy
+      delegateAsyncInstallToSyncInstall(updater)
       ;(updater as any).addQuitHandler()
       return { updater, app, doInstall }
     }
@@ -222,6 +233,8 @@ describe("install on next launch", { sequential: true }, () => {
       updater.forceDevUpdateConfig = true
       ;(updater as any).downloadedUpdateHelper = helper
       const doInstall = vi.spyOn(updater as any, "doInstall").mockReturnValue(true)
+      // Linux targets install through the async path; keep every assertion on the single doInstall spy
+      delegateAsyncInstallToSyncInstall(updater)
       const getUpdateInfoAndProvider = vi.spyOn(updater as any, "getUpdateInfoAndProvider")
       if (latestUpdateInfo == null) {
         getUpdateInfoAndProvider.mockRejectedValue(new Error("network must not be hit"))

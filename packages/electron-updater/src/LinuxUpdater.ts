@@ -1,10 +1,33 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter.js"
 import { BaseUpdater } from "./BaseUpdater.js"
+import { Logger } from "./types.js"
 
 // Matches safe package manager names: alphanumeric, hyphens, underscores only.
 // Rejects names with shell metacharacters that could cause command injection.
 const SAFE_PM_REGEX = /^[a-zA-Z0-9_-]+$/
+
+/**
+ * An install plan: a list of alternatives, each a sequence of commands. The first alternative that succeeds
+ * wins; the next one is attempted only when the previous failed. It exists so the commands of a package
+ * manager are declared once and executed by both the synchronous on-quit path and the asynchronous one.
+ */
+export type InstallPlan = string[][][]
+
+/** Runs an {@link InstallPlan} synchronously, for the on-quit path where an async install cannot be awaited. */
+export function runInstallPlan(plan: InstallPlan, commandRunner: (commandWithArgs: string[]) => void, logger: Logger): void {
+  for (let i = 0; i < plan.length; i++) {
+    try {
+      plan[i].forEach(commandRunner)
+      return
+    } catch (error: any) {
+      if (i === plan.length - 1) {
+        throw error
+      }
+      logger.warn(`${error.message ?? error} — trying the next install command`)
+    }
+  }
+}
 
 export abstract class LinuxUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
@@ -40,18 +63,55 @@ export abstract class LinuxUpdater extends BaseUpdater {
       return this.spawnSyncLog(commandWithArgs[0], commandWithArgs.slice(1))
     }
 
-    const { name } = this.app
-    // Strip characters that could break shell quoting in the sudo dialog comment string
-    const safeName = name.replace(/["`$\\!\n\r;|&<>(){}*?[\]#~]/g, "")
-    const installComment = `"${safeName} would like to update"`
-    const sudo = this.sudoWithArgs(installComment)
+    const sudo = this.sudoWithArgs(this.installComment())
     this._logger.info(`Running as non-root user, using sudo to install: ${sudo}`)
-    let wrapper = `"`
-    // some sudo commands dont want the command to be wrapped in " quotes
-    if (/pkexec/i.test(sudo[0]) || sudo[0] === "sudo") {
-      wrapper = ""
-    }
+    const wrapper = this.commandWrapperFor(sudo)
     return this.spawnSyncLog(sudo[0], [...(sudo.length > 1 ? sudo.slice(1) : []), `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
+  }
+
+  private installComment(): string {
+    // Strip characters that could break shell quoting in the sudo dialog comment string
+    const safeName = this.app.name.replace(/["`$\\!\n\r;|&<>(){}*?[\]#~]/g, "")
+    return `"${safeName} would like to update"`
+  }
+
+  private commandWrapperFor(sudo: string[]): string {
+    // some sudo commands dont want the command to be wrapped in " quotes
+    return /pkexec/i.test(sudo[0]) || sudo[0] === "sudo" ? "" : `"`
+  }
+
+  /** {@link runCommandWithSudoIfNeeded} without blocking the main process while the elevation dialog is open. */
+  protected async runCommandWithSudoIfNeededAsync(commandWithArgs: string[]): Promise<void> {
+    if (this.isRunningAsRoot()) {
+      this._logger.info("Running as root, no need to use sudo")
+      await this.spawnAsyncLog(commandWithArgs[0], commandWithArgs.slice(1))
+      return
+    }
+
+    const sudo = this.sudoWithArgs(this.installComment())
+    this._logger.info(`Running as non-root user, using sudo to install: ${sudo}`)
+    const wrapper = this.commandWrapperFor(sudo)
+    await this.spawnAsyncLog(sudo[0], [...(sudo.length > 1 ? sudo.slice(1) : []), `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
+  }
+
+  /**
+   * Runs an install plan: the first sequence of commands that succeeds wins, the next one is only attempted
+   * when the previous failed. Both install paths share it so the commands themselves live in one place.
+   */
+  protected async runInstallPlanWithSudoIfNeededAsync(plan: InstallPlan): Promise<void> {
+    for (let i = 0; i < plan.length; i++) {
+      try {
+        for (const command of plan[i]) {
+          await this.runCommandWithSudoIfNeededAsync(command)
+        }
+        return
+      } catch (error: any) {
+        if (i === plan.length - 1) {
+          throw error
+        }
+        this._logger.warn(`${error.message ?? error} — trying the next install command`)
+      }
+    }
   }
 
   protected sudoWithArgs(installComment: string): string[] {
