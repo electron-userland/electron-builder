@@ -1,3 +1,13 @@
+# [27.0.0-alpha.8](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.7...electron-builder@27.0.0-alpha.8) (2026-08-19)
+
+
+### Bug Fixes
+
+* **nsis:** detect running app in previous install locations when checking/closing processes ([#10024](https://github.com/electron-userland/electron-builder/issues/10024)) ([8e95ad0](https://github.com/electron-userland/electron-builder/commit/8e95ad0e00c866c8389ae295ac802ebd9954d2ca))
+* **nsis:** run PowerShell with -NoProfile -NonInteractive in allowOnlyOneInstallerInstance checks ([#10051](https://github.com/electron-userland/electron-builder/issues/10051)) ([4070ce7](https://github.com/electron-userland/electron-builder/commit/4070ce731159ede8239b8129fa9f177e2193b1ad))
+
+
+
 # [27.0.0-alpha.7](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.6...electron-builder@27.0.0-alpha.7) (2026-08-17)
 
 

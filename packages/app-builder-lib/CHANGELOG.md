@@ -1,5 +1,23 @@
 # app-builder-lib
 
+## 27.0.0-alpha.8
+
+### Patch Changes
+
+- Fix(nsis): detect and close app instances running from the previous per-user/per-machine install location, not only the new `$INSTDIR`, so a `perMachine` install over a running per-user installation no longer fails. The path match now also requires a trailing backslash so sibling directories with the same prefix are no longer matched, and a failure to uninstall the previous version now reports the real uninstaller error instead of the misleading "cannot be closed" dialog. _[`#10024`](https://github.com/electron-userland/electron-builder/pull/10024) [`8e95ad0`](https://github.com/electron-userland/electron-builder/commit/8e95ad0e00c866c8389ae295ac802ebd9954d2ca) [@claude](https://github.com/apps/claude)_
+- Fix NSIS installer hang when the user's PowerShell profile contains interactive commands: run powershell.exe with -NoProfile -NonInteractive in allowOnlyOneInstallerInstance checks _[`#10051`](https://github.com/electron-userland/electron-builder/pull/10051) [`4070ce7`](https://github.com/electron-userland/electron-builder/commit/4070ce731159ede8239b8129fa9f177e2193b1ad) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@27.0.0-alpha.8`
+- `electron-builder-squirrel-windows@27.0.0-alpha.8`
+
+</details>
+
 ## 27.0.0-alpha.7
 
 ### Major Changes
