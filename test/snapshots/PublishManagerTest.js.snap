@@ -131,6 +131,7 @@ exports[`generic, github and r2 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
@@ -302,6 +303,7 @@ exports[`generic, github and spaces 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
@@ -647,6 +649,7 @@ exports[`os macro 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
@@ -743,6 +746,7 @@ exports[`r2 as first publisher writes provider r2 to app-update.yml 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {

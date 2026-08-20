@@ -13,6 +13,7 @@ exports[`blackboxWin > windows > nsis - install on next launch 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
@@ -89,6 +90,7 @@ exports[`blackboxWin > windows > nsis - installer succeeds with sibling process 
       },
     },
     {
+      "arch": "x64",
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
@@ -165,6 +167,7 @@ exports[`blackboxWin > windows > nsis 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {

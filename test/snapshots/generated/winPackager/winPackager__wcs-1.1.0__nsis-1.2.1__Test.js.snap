@@ -22,6 +22,7 @@ exports[`winPackager > beta version 1`] = `
       },
     },
     {
+      "arch": "arm64",
       "file": "Test App ßW Setup 3.0.0-beta.2-arm64.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-3.0.0-beta.2-arm64.exe.blockmap",
       "updateInfo": {
@@ -30,6 +31,7 @@ exports[`winPackager > beta version 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW Setup 3.0.0-beta.2.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-3.0.0-beta.2.exe.blockmap",
       "updateInfo": {
@@ -98,6 +100,7 @@ exports[`winPackager > sign: false — NSIS installer and elevate.exe not signed
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {

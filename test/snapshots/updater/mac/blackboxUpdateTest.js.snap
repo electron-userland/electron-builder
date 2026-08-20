@@ -12,6 +12,7 @@ exports[`mac > mac auto-update > arm64 1`] = `
       },
     },
     {
+      "arch": "arm64",
       "file": "TestApp.zip.blockmap",
       "safeArtifactName": "TestApp.zip.blockmap",
       "updateInfo": {
@@ -184,6 +185,7 @@ exports[`mac > mac auto-update > universal 1`] = `
       },
     },
     {
+      "arch": "universal",
       "file": "TestApp.zip.blockmap",
       "safeArtifactName": "TestApp.zip.blockmap",
       "updateInfo": {
@@ -356,6 +358,7 @@ exports[`mac > mac auto-update > x64 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "TestApp.zip.blockmap",
       "safeArtifactName": "TestApp.zip.blockmap",
       "updateInfo": {
