@@ -828,15 +828,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     let updateFile = path.join(cacheDir, updateFileName)
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
 
+    const pendingBlockMapFile = path.join(cacheDir, "current.blockmap")
+    const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
     const done = async (isSaveCache: boolean) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
       await taskOptions.done!({
         ...updateInfo,
         downloadedFile: updateFile,
       })
-      const currentBlockMapFile = path.join(cacheDir, "current.blockmap")
-      if (await fsExtra.pathExists(currentBlockMapFile)) {
-        await fsExtra.copyFile(currentBlockMapFile, path.join(downloadedUpdateHelper.cacheDir, "current.blockmap"))
+      if (await fsExtra.pathExists(pendingBlockMapFile)) {
+        await fsExtra.copyFile(pendingBlockMapFile, cachedBlockMapFile)
+      } else if (!taskOptions.downloadUpdateOptions.disableDifferentialDownload) {
+        // this download did not produce a blockmap, but `taskOptions.done` above refreshes the cached installer —
+        // remove the cached blockmap too, so a stale one cannot sit next to a fresh file and poison the next
+        // differential download with a wrong copy plan (https://github.com/electron-userland/electron-builder/issues/10097).
+        // The differential downloader re-fetches the old blockmap from the server when no cached one exists.
+        await fsExtra.remove(cachedBlockMapFile)
       }
       return packageFile == null ? [updateFile] : [updateFile, packageFile]
     }
@@ -856,6 +863,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         // ignore
       })
     }
+
+    // a fresh download starts — drop any blockmap left over from a previous update round, so that when this round
+    // does not produce a new one (e.g. the differential download is skipped), the leftover cannot be promoted to the
+    // cache next to a file it does not describe
+    await fsExtra.remove(pendingBlockMapFile)
 
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
@@ -877,6 +889,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       if (e instanceof CancellationError) {
         log.info("cancelled")
         this.emit("update-cancelled", updateInfo)
+      } else if (e.code === "ERR_CHECKSUM_MISMATCH") {
+        // a differential-download failure never escapes the task (it falls back to a full download),
+        // so a checksum mismatch here means the fully downloaded file itself failed verification
+        log.warn(
+          `sha512 checksum mismatch after full download of ${updateFileName}: the downloaded file is corrupted or the published update metadata does not match the uploaded file`
+        )
       }
       throw e
     }
@@ -891,6 +909,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     provider: Provider<any>,
     oldInstallerFileName: string
   ): Promise<boolean> {
+    let isOldBlockMapFromCache = false
     try {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
@@ -957,13 +976,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
       // get old blockmap from cache dir first, if not found, download it
       let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
+      isOldBlockMapFromCache = oldBlockMapData != null
       if (oldBlockMapData == null) {
+        this._logger.info(`No cached blockmap for the old installer, downloading it from "${blockmapFileUrls[0]}"`)
         oldBlockMapData = await downloadBlockMap(blockmapFileUrls[0])
       }
 
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
       return false
     } catch (e: any) {
+      if (e.code === "ERR_CHECKSUM_MISMATCH") {
+        this._logger.warn(
+          `sha512 checksum mismatch after differential download (old blockmap ${
+            isOldBlockMapFromCache ? "was read from the local cache" : "was downloaded from the server"
+          }): cached "${oldInstallerFileName}" is likely out of sync with the old blockmap, e.g. because one of them was replaced or evicted independently of the other`
+        )
+      }
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
       if (this._testOnlyOptions != null) {
         // test mode
