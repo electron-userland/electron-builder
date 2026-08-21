@@ -18,6 +18,7 @@ export default [{
     ignores: [
       "**/*.d.ts",
       "**/out",
+      "**/dist",
       // used for CLI
       "**/main.js",
       "test/vitest-setup.ts",
