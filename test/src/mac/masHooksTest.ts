@@ -15,7 +15,8 @@ describe.ifNotWindows("mas hooks", () => {
   class SignedMasPackager extends CheckingMacPackager {
     readonly events: Array<string> = []
 
-    protected signMas(_appPath: string, _arch: Arch, _targetPlatform: PlatformType): Promise<boolean> {
+    // stub the main signing method: on non-mac hosts isSignAllowed() would short-circuit it
+    protected sign(_appPath: string, _arch: Arch, _targetPlatform: PlatformType): Promise<boolean> {
       this.events.push("sign")
       return Promise.resolve(true)
     }
@@ -29,7 +30,7 @@ describe.ifNotWindows("mas hooks", () => {
   class UnsignedMasPackager extends CheckingMacPackager {
     readonly events: Array<string> = []
 
-    protected signMas(_appPath: string, _arch: Arch, _targetPlatform: PlatformType): Promise<boolean> {
+    protected sign(_appPath: string, _arch: Arch, _targetPlatform: PlatformType): Promise<boolean> {
       this.events.push("sign-skipped")
       return Promise.resolve(false)
     }

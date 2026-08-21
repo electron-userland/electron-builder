@@ -296,7 +296,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     await this.doAddElectronFuses(packContext)
 
     // Mirror the base-class guard: skip signing when the caller explicitly set sign:false
-    // (e.g. packMasTargets passes sign:false so that signMas() is the sole signing step).
+    // (e.g. packMasTargets passes sign:false so that its own sign() call is the sole signing step).
     if (config.options?.sign ?? true) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, platformType, arch, platformSpecificBuildOptions, targets)
     }
@@ -381,7 +381,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         })
         MacTargetHelper.assertSafePathForCommandUsage(this.appInfo.productFilename, "product filename")
       }
-      const signed = await this.signMas(appPath, arch, platformType)
+      const signed = await this.sign(appPath, arch, platformType)
 
       // The MAS flow packs with sign:false and signs here, bypassing doSignAfterPack — the only other
       // emitAfterSign site. Mirror its contract: fire afterSign after codesigning succeeded, but before
@@ -429,10 +429,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     this.packageInDistributableFormat(appPath, arch, targets, taskManager)
   }
 
-  protected async signMas(appPath: string, arch: Arch, targetPlatform: PlatformType): Promise<boolean> {
-    return await this.sign(appPath, arch, targetPlatform)
-  }
-
   /**
    * Creates the signed MAS installer .pkg for an already codesigned app. Kept separate from `sign()`
    * so that the `afterSign` hook can run between codesigning and installer creation (see `packMasTargets`).
@@ -446,9 +442,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   }
 
   /**
-   * Main signing method with platform awareness
+   * Main signing method with platform awareness. Protected so tests can stub signing
+   * (`isSignAllowed()` short-circuits it on non-mac hosts).
    */
-  private async sign(appPath: string, arch: Arch, targetPlatform: PlatformType): Promise<boolean> {
+  protected async sign(appPath: string, arch: Arch, targetPlatform: PlatformType): Promise<boolean> {
     if (!isSignAllowed()) {
       return false
     }
