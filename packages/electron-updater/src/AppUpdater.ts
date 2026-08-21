@@ -339,7 +339,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
 
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null = null
-  private downloadPromise: Promise<Array<string>> | null = null
+  private downloadPromise: Promise<DownloadExecutorResult> | null = null
 
   protected readonly app: AppAdapter
 
@@ -639,7 +639,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (this.downloadPromise != null) {
       this._logger.info("Downloading update (already in progress)")
-      return this.downloadPromise
+      return this.downloadPromise.then(toDownloadedFilesArray)
     }
 
     this._logger.info(
@@ -674,7 +674,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         this.downloadPromise = null
       })
 
-    return this.downloadPromise
+    return this.downloadPromise.then(toDownloadedFilesArray)
   }
 
   protected dispatchError(e: Error): void {
@@ -685,7 +685,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.emit(UPDATE_DOWNLOADED, event)
   }
 
-  protected abstract doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>>
+  protected abstract doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult>
 
   /**
    * Restarts the app and installs the update after it has been downloaded.
@@ -787,7 +787,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     return result
   }
 
-  protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
+  protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
     const fileInfo = taskOptions.fileInfo
     if (fileInfo.info.sha512 == null && (fileInfo.info as any).sha2 != null) {
       this._logger.warn(
@@ -845,7 +845,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         // The differential downloader re-fetches the old blockmap from the server when no cached one exists.
         await fsExtra.remove(cachedBlockMapFile)
       }
-      return packageFile == null ? [updateFile] : [updateFile, packageFile]
+      return packageFile == null ? { updateFile } : { updateFile, packageFile }
     }
 
     const log = this._logger
@@ -1045,6 +1045,15 @@ export interface DownloadExecutorTask {
   readonly task: (destinationFile: string, downloadOptions: DownloadOptions, packageFile: string | null, removeTempDirIfAny: () => Promise<any>) => Promise<any>
 
   readonly done?: (event: UpdateDownloadedEvent) => Promise<any>
+}
+
+export interface DownloadExecutorResult {
+  readonly updateFile: string
+  readonly packageFile?: string
+}
+
+function toDownloadedFilesArray({ updateFile, packageFile }: DownloadExecutorResult): Array<string> {
+  return packageFile == null ? [updateFile] : [updateFile, packageFile]
 }
 
 export interface DownloadNotification {

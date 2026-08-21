@@ -3,7 +3,7 @@ import { AppImageUpdater } from "electron-updater"
 import { AppUpdater } from "electron-updater/src/AppUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
-import type { DownloadExecutorTask } from "electron-updater/src/AppUpdater"
+import type { DownloadExecutorResult, DownloadExecutorTask } from "electron-updater/src/AppUpdater"
 import { copyFile, outputFile, pathExists, readFile } from "fs-extra"
 import * as path from "path"
 import { beforeEach, describe, expect, test } from "vitest"
@@ -47,7 +47,7 @@ describe("executeDownload blockmap cache consistency", { sequential: true }, () 
     ;(updater as any).downloadedUpdateHelper = helper
   })
 
-  function executeDownload(options: { disableDifferentialDownload?: boolean; writePendingBlockMap?: string } = {}): Promise<Array<string>> {
+  function executeDownload(options: { disableDifferentialDownload?: boolean; writePendingBlockMap?: string } = {}): Promise<DownloadExecutorResult> {
     const disableDifferentialDownload = options.disableDifferentialDownload === true
     const taskOptions: DownloadExecutorTask = {
       fileExtension: "zip",
