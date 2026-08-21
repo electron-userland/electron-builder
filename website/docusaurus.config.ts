@@ -1,5 +1,6 @@
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
+import { readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { themes as prismThemes } from "prism-react-renderer"
@@ -8,6 +9,32 @@ import remarkInclude from "./src/remark/remark-include.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const docsDir = join(__dirname, "docs")
+
+// --- multi-version site ------------------------------------------------------
+// The production site composes several independent Docusaurus builds (one per
+// major version line) into a single publish tree: the current line at "/" and
+// each maintenance line under its own sub-path, e.g. "/v26/".
+//
+// docs-versions.json is the single source of truth for that set — the same file
+// tells website/scripts/build-versioned-site.sh which git ref to build at which
+// path, and is read here for the navbar version dropdown, so labels and paths
+// are declared once.
+type DocsVersion = { label: string; path: string; ref?: string; current?: boolean }
+
+const docsVersions: DocsVersion[] = (
+  JSON.parse(readFileSync(join(__dirname, "docs-versions.json"), "utf8")).versions as DocsVersion[]
+).map(version => ({
+  ...version,
+  // normalize to a leading + trailing slash so hrefs are stable
+  path: `/${version.path.replace(/^\/+/, "").replace(/\/+$/, "")}/`.replace(/^\/\/$/, "/"),
+}))
+
+// Base URL of *this* instance. build-versioned-site.sh sets DOCS_BASE_URL per
+// sub-site build; it defaults to the path of the entry marked `current`.
+const baseUrl = process.env.DOCS_BASE_URL || docsVersions.find(v => v.current)?.path || "/"
+
+// Which declared version this build is, so the dropdown can name itself.
+const activeVersion = docsVersions.find(v => v.path === baseUrl) ?? docsVersions.find(v => v.current)
 
 const config: Config = {
   title: "electron-builder",
@@ -19,7 +46,7 @@ const config: Config = {
   },
 
   url: "https://www.electron.build",
-  baseUrl: "/",
+  baseUrl,
 
   organizationName: "electron-userland",
   projectName: "electron-builder",
@@ -169,6 +196,23 @@ const config: Config = {
           ],
         },
 
+        {
+          // Version switcher, generated from docs-versions.json. Each entry
+          // points at the root of a separate Docusaurus instance, so the links
+          // must escape this instance's SPA router: "pathname://" renders a
+          // plain <a> (full page load) and autoAddBaseUrl: false keeps
+          // Docusaurus from prefixing this instance's baseUrl, so the absolute
+          // paths are emitted as-is.
+          type: "dropdown",
+          label: activeVersion?.label ?? "versions",
+          position: "right",
+          items: docsVersions.map(version => ({
+            label: version.label,
+            href: `pathname://${version.path}`,
+            target: "_self",
+            autoAddBaseUrl: false,
+          })),
+        },
         {
           href: "https://github.com/electron-userland/electron-builder",
           label: "GitHub",
