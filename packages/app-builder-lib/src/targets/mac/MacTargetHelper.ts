@@ -9,7 +9,8 @@ import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.
 import { parsePlistFile, PlistObject } from "../../util/mac/plist.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 
-export type PlatformType = "mas" | "mas-dev" | "mac"
+export type MasPlatformType = "mas" | "mas-dev"
+export type PlatformType = MasPlatformType | "mac"
 
 export class MacTargetHelper {
   constructor(private packager: MacPackager) {}
@@ -274,7 +275,7 @@ export class MacTargetHelper {
    * The MAS `.pkg` installer is only built for distribution signing — a development-signed build
    * (`mas-dev`, or an explicit `sign.type: "development"` on a `mas` build) is installed directly.
    */
-  static shouldCreateMasInstaller(targetPlatform: PlatformType, configType: SigningDistributionType | Nullish): boolean {
+  static shouldCreateMasInstaller(targetPlatform: PlatformType, configType: SigningDistributionType | Nullish): targetPlatform is MasPlatformType {
     return MacTargetHelper.isMasTarget(targetPlatform) && MacTargetHelper.resolveSigningType(targetPlatform, configType) !== "development"
   }
 
