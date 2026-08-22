@@ -27,7 +27,7 @@ import { assertSafeHelperName } from "./electron/mac/electronMacUtils.js"
 import { CodeSigningInfo, createKeychain, CreateKeychainOptions, Identity, isSignAllowed, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
-import { MacTargetHelper, PlatformType } from "./targets/mac/MacTargetHelper.js"
+import { MacTargetHelper, MasPlatformType, PlatformType } from "./targets/mac/MacTargetHelper.js"
 import { ElectronSignOptions, MacConfiguration, MasConfiguration } from "./options/macOptions.js"
 import { Packager } from "./packager.js"
 import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackager.js"
@@ -47,9 +47,9 @@ function isElectronSignOptions(sign: MacConfiguration["sign"]): sign is Electron
   return typeof sign === "object" && sign !== null
 }
 
-interface PlatformConfig {
+interface PlatformConfig<C extends MacConfiguration | MasConfiguration = MacConfiguration | MasConfiguration> {
   type: PlatformType
-  config: MacConfiguration | MasConfiguration
+  config: C
   platformName: ElectronPlatformName
 }
 
@@ -100,8 +100,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   }
 
   /**
-   * Get the merged configuration for a specific platform type
+   * Get the merged configuration for a specific platform type. Calls statically known to be a MAS
+   * flavor (`mas` / `mas-dev`) get a `MasConfiguration` back, so no cast is needed downstream.
    */
+  getPlatformConfig(platformType: MasPlatformType): PlatformConfig<MasConfiguration>
+  getPlatformConfig(platformType: PlatformType): PlatformConfig
   getPlatformConfig(platformType: PlatformType): PlatformConfig {
     let config: MacConfiguration | MasConfiguration
     let platformName: ElectronPlatformName
@@ -433,12 +436,12 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
    * Creates the signed MAS installer .pkg for an already codesigned app. Kept separate from `sign()`
    * so that the `afterSign` hook can run between codesigning and installer creation (see `packMasTargets`).
    */
-  protected async createMasInstaller(appPath: string, outDir: string, arch: Arch, targetPlatform: PlatformType): Promise<void> {
+  protected async createMasInstaller(appPath: string, outDir: string, arch: Arch, targetPlatform: MasPlatformType): Promise<void> {
     const config = this.getPlatformConfig(targetPlatform).config
     const signConfig = config.sign
     const signOpts = isElectronSignOptions(signConfig) ? signConfig : undefined
     const keychainFile = (await this.codeSigningInfo.value).keychainFile
-    await this.helper.createMasInstaller(appPath, outDir, config as MasConfiguration, keychainFile, targetPlatform, arch, signOpts?.identity)
+    await this.helper.createMasInstaller(appPath, outDir, config, keychainFile, targetPlatform, arch, signOpts?.identity)
   }
 
   /**
