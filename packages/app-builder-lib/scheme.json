@@ -8230,13 +8230,14 @@
             {
               "enum": [
                 "1.0.0",
+                "1.0.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md"
+          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |\n| `\"1.0.1\"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md"
         },
         "nsis": {
           "anyOf": [
