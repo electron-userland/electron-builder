@@ -819,7 +819,9 @@ export interface ToolsetCustom {
   readonly url: string
 
   /**
-   * SHA checksum of the custom toolset bundle for verification.
+   * SHA-256 checksum of the custom toolset bundle for verification, as a lowercase hex string
+   * (e.g. the output of `shasum -a 256 bundle.tar.gz`) — not the base64 values GitHub release
+   * notes may show.
    * Required for remote (`https://`) URLs and local archive files (`file://`).
    * Not needed for bare directory paths — the directory is used as-is with no caching.
    */

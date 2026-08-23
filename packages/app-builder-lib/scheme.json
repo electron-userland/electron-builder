@@ -8318,7 +8318,7 @@
       "description": "A custom toolset bundle supplied by the user in place of a built-in versioned bundle.\n\nThe bundle must mirror the expected directory layout of the corresponding built-in bundle.\nSee the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.\n\nFile formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.",
       "properties": {
         "checksum": {
-          "description": "SHA checksum of the custom toolset bundle for verification.\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching.",
+          "description": "SHA-256 checksum of the custom toolset bundle for verification, as a lowercase hex string\n(e.g. the output of `shasum -a 256 bundle.tar.gz`) — not the base64 values GitHub release\nnotes may show.\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching.",
           "type": "string"
         },
         "url": {
