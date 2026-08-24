@@ -292,7 +292,7 @@ export default class AppXTarget extends Target {
           return escapeForXml(appInfo.description || appInfo.productName)
 
         case "backgroundColor":
-          return options.backgroundColor || "#464646"
+          return escapeForXml(options.backgroundColor || "#464646")
 
         case "logo":
           return "assets\\StoreLogo.png"
