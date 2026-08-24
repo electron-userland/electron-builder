@@ -231,7 +231,7 @@ export default class MsiTarget extends Target {
         directoryId = "d" + createHash("md5").update(dirName).digest("base64").replace(/\//g, "_").replace(/\+/g, ".").replace(/=+$/, "")
         if (!dirNames.has(dirName)) {
           dirNames.add(dirName)
-          dirs.push(`<Directory Id="${directoryId}" Name="${ROOT_DIR_ID}:\\${dirName.replace(/\//g, "\\")}\\"/>`)
+          dirs.push(`<Directory Id="${directoryId}" Name="${ROOT_DIR_ID}:\\${escapeForXml(dirName.replace(/\//g, "\\"))}\\"/>`)
         }
       } else if (!isRootDirAddedToRemoveTable) {
         isRootDirAddedToRemoveTable = true
@@ -262,7 +262,7 @@ export default class MsiTarget extends Target {
         const startMenuShortcutDirectoryId = hasMenuCategory ? "AppProgramMenuDir" : "ProgramMenuFolder"
         if (commonOptions.isCreateStartMenuShortcut) {
           if (hasMenuCategory) {
-            dirs.push(`<Directory Id="${startMenuShortcutDirectoryId}" Name="ProgramMenuFolder:\\${commonOptions.menuCategory}\\"/>`)
+            dirs.push(`<Directory Id="${startMenuShortcutDirectoryId}" Name="ProgramMenuFolder:\\${escapeForXml(commonOptions.menuCategory)}\\"/>`)
           }
           result += `${fileSpace}  <Shortcut Id="startMenuShortcut" Directory="${startMenuShortcutDirectoryId}" Name="${escapeForXml(
             shortcutName
@@ -285,7 +285,7 @@ export default class MsiTarget extends Target {
           const extensions = asArray(item.ext).map(normalizeExt)
           for (const ext of extensions) {
             result += `${fileSpace}  <ProgId Id="${this.productMsiIdPrefix}.${ext}" Advertise="yes" Icon="${this.iconId}" ${
-              item.description ? `Description="${item.description}"` : ""
+              item.description ? `Description="${escapeForXml(item.description)}"` : ""
             }>\n`
             result += `${fileSpace}    <Extension Id="${ext}" Advertise="yes">\n`
             result += `${fileSpace}      <Verb Id="open" Command="Open with ${escapeForXml(this.packager.appInfo.productName)}" Argument="&quot;%1&quot;"/>\n`
