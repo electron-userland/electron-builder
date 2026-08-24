@@ -7,9 +7,9 @@ export function isEmptyOrSpaces(s: string | Nullish): s is "" | Nullish {
 /**
  * escape given string for usage as XML text or attribute value
  */
-export function escapeForXml(raw: string): string {
+export function escapeForXml(raw?: string | null): string {
   if (!raw) {
-    return raw
+    return ""
   }
 
   return raw.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;")
