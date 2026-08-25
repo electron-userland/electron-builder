@@ -7,6 +7,12 @@ exports[`afterSign 1`] = `
 }
 `;
 
+exports[`afterSign is skipped when signing does not occur 1`] = `
+{
+  "win": [],
+}
+`;
+
 exports[`beforeBuild 1`] = `
 {
   "linux": [],
