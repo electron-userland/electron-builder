@@ -26,8 +26,8 @@ export const appimageChecksums = {
 
 // no legacy toolset as macos arm64 BSD gtar/ar/lzip are not compatible with linux targets, so we always use newer toolset on macos for linux archives
 const linuxToolsMacChecksums = {
-  "linux-tools-mac-darwin-arm64.tar.gz": "204e76f08364352edb28a6a4be87e8f9bd9340213865d9a0d1c664aa46fcf053",
-  "linux-tools-mac-darwin-x86_64.tar.gz": "7ee26dfbd0d2a4c2c83b55a9416a30cc84876eef01c6497ca49bb016a190c726",
+  "linux-tools-mac-darwin-arm64.tar.gz": "3dcb43a12b8630919b8d5cc9045be102108b0edd9b0354e0a7409ee5b53141ac",
+  "linux-tools-mac-darwin-x86_64.tar.gz": "d62f5e2f6949c6420fdda8b18d2e70b0e14eeb959128c0cea11acada2c105ad9",
 } as const
 
 export async function getLinuxToolsPath(): Promise<string> {
@@ -36,7 +36,7 @@ export async function getLinuxToolsPath(): Promise<string> {
     return envPath
   }
   const arch = process.arch === "arm64" ? "arm64" : "x86_64"
-  const toolsetVersion = "1.0.0"
+  const toolsetVersion = "1.0.1"
   const filename: keyof typeof linuxToolsMacChecksums = `linux-tools-mac-darwin-${arch}.tar.gz`
   return await downloadBuilderToolset({
     releaseName: `linux-tools-mac@${toolsetVersion}`,
