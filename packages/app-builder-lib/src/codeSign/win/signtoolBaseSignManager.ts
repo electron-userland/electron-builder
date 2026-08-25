@@ -22,7 +22,7 @@ import { VmManager } from "../../vm/vm.js"
 import type { WinPackager } from "../../winPackager.js"
 import { importCertificate } from "../codesign.js"
 import type { SignManager } from "./signManager.js"
-import { WindowsSignOptions } from "./windowsCodeSign.js"
+import { WindowsSignFileResult, WindowsSignOptions } from "./windowsCodeSign.js"
 const { rename } = _fsExtra
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
@@ -294,7 +294,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     return !customSign // default: skip when no cert and no custom sign hook
   }
 
-  async signFile(options: WindowsSignOptions): Promise<boolean> {
+  async signFile(options: WindowsSignOptions): Promise<WindowsSignFileResult> {
     const signing = getSigntoolFamilyConfig(options.options)
     let hashes = signing?.signingHashAlgorithms
     // msi does not support dual-signing
@@ -335,8 +335,8 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       // first file is signed, so a wrong-certificate build fails even when no publish config exists
       await this.explicitPublisherNameValidation.value
     } else if (this.handleNullCscInfo(customSign)) {
-      log.debug({ signHook: !!customSign, cscInfo }, "no signing info identified, signing is skipped")
-      return false
+      // the canonical "signing skipped" message is logged once in signWindows, which receives this reason
+      return "skipped:no-certificate"
     }
 
     const executor = customSign || ((config: CustomWindowsSignTaskConfiguration, packager: WinPackager) => this.doSign(config, packager))
@@ -358,7 +358,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       }
     }
 
-    return true
+    return customSign ? "signed:custom" : "signed"
   }
 
   async getCertInfo(file: string, password: string): Promise<CertificateInfo> {

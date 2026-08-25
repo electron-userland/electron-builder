@@ -8,7 +8,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { readAsarHeader } from "./asar/asar.js"
 import { createSignManager } from "./codeSign/win/signManager.js"
-import { signWindows, WindowsSignOptions } from "./codeSign/win/windowsCodeSign.js"
+import { isSignResultSigned, signWindows, WindowsSignFileResult, WindowsSignOptions, WindowsSignResult } from "./codeSign/win/windowsCodeSign.js"
 import { FileCodeSigningInfo } from "./codeSign/win/signtoolBaseSignManager.js"
 import { AfterPackContext } from "./configuration.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
@@ -41,7 +41,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     await manager.initialize()
     return manager
   })
-  private signingQueue = Promise.resolve(true)
+  private signingQueue: Promise<unknown> = Promise.resolve()
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -124,41 +124,46 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return chooseNotNull(chooseNotNull(certPassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
   }
 
-  async signIf(file: string): Promise<boolean> {
+  async signIf(file: string): Promise<WindowsSignResult> {
     const logFields = { file: log.filePath(file) }
     if (!this.shouldSignFile(file, true)) {
       log.info(logFields, "file signing skipped via signExts configuration")
-      return false
+      return "skipped:filtered"
     }
     if (isWindowsSigningDisabled(this.platformSpecificBuildOptions)) {
       log.info(logFields, "file signing disabled (`sign: false` or `sign: null`)")
-      return false
+      return "skipped:disabled"
     }
 
     const promise = this.signingQueue.then(() => this._sign(file))
     this.signingQueue = promise.catch(e => {
       log.warn({ file: log.filePath(file), error: e.message }, "signing failed for file, queue will continue to next file")
-      return false
     })
     return promise
   }
 
-  private async _sign(file: string): Promise<boolean> {
+  private async _sign(file: string): Promise<WindowsSignFileResult> {
     const signOptions: WindowsSignOptions = {
       path: file,
       options: this.platformSpecificBuildOptions,
     }
 
-    const didSignSuccessfully = await signWindows(signOptions, this)
-    if (!didSignSuccessfully && this.forceCodeSigning) {
+    const result = await signWindows(signOptions, this)
+    if (!isSignResultSigned(result) && this.forceCodeSigning) {
       throw new InvalidConfigurationError(
         `App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`
       )
     }
-    return didSignSuccessfully
+    return result
   }
 
-  async signAndEditResources(file: string, arch: Arch, outDir: string, internalName?: string | null, requestedExecutionLevel?: RequestedExecutionLevel | null) {
+  async signAndEditResources(
+    file: string,
+    arch: Arch,
+    outDir: string,
+    internalName?: string | null,
+    requestedExecutionLevel?: RequestedExecutionLevel | null
+  ): Promise<WindowsSignResult> {
     const appInfo = this.appInfo
 
     const files: Array<string> = []
@@ -226,19 +231,21 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       buildCacheManager = new BuildCacheManager(outDir, file, arch)
       if (await buildCacheManager.copyIfValid(await digest(hash, files))) {
         timer.end()
-        return
+        // the cache is only used when signing is configured (cscInfo != null), so the restored executable was signed when it was cached
+        return "signed"
       }
       timer.end()
     }
 
     const timer = time("resource-edit&sign")
     await editWindowsResources(opts)
-    await this.signIf(file)
+    const signResult = await this.signIf(file)
     timer.end()
 
     if (buildCacheManager != null) {
       await buildCacheManager.save()
     }
+    return signResult
   }
 
   private shouldSignFile(file: string, fallbackValue = false): boolean {
@@ -268,7 +275,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       if (this.shouldSignFile(file)) {
         const parentDir = path.dirname(file)
         if (parentDir !== packContext.appOutDir) {
-          return new CopyFileTransformer(file => this.signIf(file))
+          return new CopyFileTransformer(file => this.signIf(file).then(isSignResultSigned))
         }
       }
       return null
@@ -282,23 +289,27 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       throw new InvalidConfigurationError("Signing is disabled (`sign: false`) but `forceCodeSigning` is enabled. Remove one of these options.")
     }
 
+    const results: Array<WindowsSignResult> = []
     const files = await readdir(packContext.appOutDir)
     for (const file of files) {
       if (file === exeFileName) {
-        await this.signAndEditResources(
-          path.join(packContext.appOutDir, exeFileName),
-          packContext.arch,
-          packContext.outDir,
-          path.basename(exeFileName, ".exe"),
-          this.platformSpecificBuildOptions.requestedExecutionLevel
+        results.push(
+          await this.signAndEditResources(
+            path.join(packContext.appOutDir, exeFileName),
+            packContext.arch,
+            packContext.outDir,
+            path.basename(exeFileName, ".exe"),
+            this.platformSpecificBuildOptions.requestedExecutionLevel
+          )
         )
       } else if (this.shouldSignFile(file)) {
-        await this.signIf(path.join(packContext.appOutDir, file))
+        results.push(await this.signIf(path.join(packContext.appOutDir, file)))
       }
     }
 
+    // returning "did we actually sign anything" gates the `afterSign` hook (see PlatformPackager.doSignAfterPack)
     if (!isAsar || signingDisabled) {
-      return true
+      return results.some(isSignResultSigned)
     }
 
     const filesToSign = await Promise.all([
@@ -307,10 +318,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       this.walkSignableFiles(packContext.appOutDir, "swiftshader"),
     ])
     for (const file of filesToSign.flat(1)) {
-      await this.signIf(file)
+      results.push(await this.signIf(file))
     }
 
-    return true
+    return results.some(isSignResultSigned)
   }
 
   private walkSignableFiles(baseDir: string, ...subpath: string[]): Promise<string[]> {

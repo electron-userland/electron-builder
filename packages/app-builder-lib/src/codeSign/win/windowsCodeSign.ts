@@ -7,16 +7,38 @@ export interface WindowsSignOptions {
   readonly options: WindowsConfiguration
 }
 
-export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
+/**
+ * Result of a single sign attempt (`SignManager.signFile`). Failures are always thrown, never returned:
+ * - `signed` — the configured sign manager signed the file itself
+ * - `signed:custom` — a custom `sign` hook did the signing
+ * - `skipped:no-certificate` — nothing to sign with (no certificate configured and no custom `sign` hook)
+ */
+export type WindowsSignFileResult = "signed" | "signed:custom" | "skipped:no-certificate"
+
+/**
+ * {@link WindowsSignFileResult} extended with the skip reasons that are decided before the sign manager
+ * is ever invoked (see `WinPackager.signIf`):
+ * - `skipped:filtered` — the file does not match the `signExts` filter
+ * - `skipped:disabled` — signing is explicitly disabled (`sign: false` or `sign: null`)
+ */
+export type WindowsSignResult = WindowsSignFileResult | "skipped:filtered" | "skipped:disabled"
+
+export function isSignResultSigned(result: WindowsSignResult): result is "signed" | "signed:custom" {
+  return result === "signed" || result === "signed:custom"
+}
+
+export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<WindowsSignFileResult> {
   const signing = resolveWindowsSigningConfiguration(options.options)
   const packageManager = await packager.signingManager.value
 
   const path = log.filePath(options.path)
-  log.info(`Signing ${path}...`)
-  const didSign = await signWithRetry(async () => packageManager.signFile(options))
+  // no "signing..." pre-log here: the sign managers already log "signing" with certificate details right before executing
+  const result = await signWithRetry(async () => packageManager.signFile(options))
 
-  if (!didSign) {
-    log.debug({ path }, "signing skipped (no signing configuration found)")
+  if (result === "skipped:no-certificate") {
+    log.info({ path, reason: "no code signing certificate configured" }, "signing skipped")
+  } else if (result === "signed:custom") {
+    log.info({ path }, "signed with custom `sign` hook")
   } else if (signing?.type === "azure") {
     log.info({ path }, "signed with Azure Trusted Signing")
   } else if (signing?.type === "hsm") {
@@ -27,10 +49,10 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
     log.info({ path }, "signed with signtool.exe")
   }
 
-  return didSign
+  return result
 }
 
-function signWithRetry(signer: () => Promise<boolean>): Promise<boolean> {
+function signWithRetry<T>(signer: () => Promise<T>): Promise<T> {
   return retry(signer, {
     retries: 3,
     interval: 1000,
