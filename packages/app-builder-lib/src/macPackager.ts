@@ -320,6 +320,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         throw new InvalidConfigurationError(`Invalid target output directory: ${targetOutDir}`)
       }
 
+      let appPath: string
       if (prepackaged == null) {
         await this.doPack({
           outDir: resolvedOutDir,
@@ -331,9 +332,32 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
           options: { sign: false },
         })
         MacTargetHelper.assertSafePathForCommandUsage(this.appInfo.productFilename, "product filename")
-        await this.signMas(path.resolve(targetOutDir, `${path.basename(this.appInfo.productFilename)}.app`), targetOutDir, platformConfig, arch)
+        appPath = path.resolve(targetOutDir, `${path.basename(this.appInfo.productFilename)}.app`)
       } else {
-        await this.signMas(prepackaged, targetOutDir, platformConfig, arch)
+        appPath = prepackaged
+      }
+      const signed = await this.signMas(appPath, arch, platformType)
+
+      // The MAS flow packs with sign:false and signs here, bypassing doSignAfterPack — the only other
+      // emitAfterSign site. Mirror its contract: fire afterSign after codesigning succeeded, but before
+      // the .pkg installer is built, and warn when signing was skipped (#9997).
+      const packContext: AfterPackContext = {
+        appOutDir: path.dirname(appPath),
+        outDir: resolvedOutDir,
+        arch,
+        targets: [target],
+        packager: this,
+        electronPlatformName: platformConfig.platformName,
+      }
+      if (signed) {
+        await this.info.emitAfterSign(packContext)
+      } else if (this.info.filterPackagerEventListeners("afterSign", "user").length) {
+        log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
+      }
+
+      // development-signed builds (mas-dev) produce no installer
+      if (signed && (platformConfig.config.type || "distribution") !== "development") {
+        await this.createMasInstaller(appPath, targetOutDir, arch, platformType)
       }
     }
   }
@@ -356,15 +380,26 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     this.packageInDistributableFormat(appPath, arch, targets, taskManager)
   }
 
-  private async signMas(appPath: string, outDir: string, platformConfig: PlatformConfig, arch: Arch): Promise<boolean> {
-    const signed = await this.sign(appPath, outDir, platformConfig.config as MasConfiguration, arch, true)
-    return signed
+  protected async signMas(appPath: string, arch: Arch, targetPlatform: PlatformType): Promise<boolean> {
+    const platformConfig = this.getPlatformConfig(targetPlatform)
+    return await this.sign(appPath, platformConfig.config as MasConfiguration, arch, true)
+  }
+
+  /**
+   * Creates the signed MAS installer .pkg for an already codesigned app. Kept separate from `sign()`
+   * so that the `afterSign` hook can run between codesigning and installer creation (see `packMasTargets`).
+   */
+  protected async createMasInstaller(appPath: string, outDir: string, arch: Arch, targetPlatform: PlatformType): Promise<void> {
+    const config = this.getPlatformConfig(targetPlatform).config as MasConfiguration
+    const keychainFile = (await this.codeSigningInfo.value).keychainFile
+    const isDevelopment = (config.type || "distribution") === "development"
+    await this.helper.createMasInstaller(appPath, outDir, config, keychainFile, isDevelopment, arch)
   }
 
   /**
    * Main signing method with platform awareness
    */
-  private async sign(appPath: string, outDir: string | null, options: MasConfiguration | MacConfiguration | null, arch: Arch, isMas: boolean = false): Promise<boolean> {
+  private async sign(appPath: string, options: MasConfiguration | MacConfiguration | null, arch: Arch, isMas: boolean = false): Promise<boolean> {
     if (!isSignAllowed()) {
       return false
     }
@@ -393,11 +428,6 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     const signOptions = await this.helper.buildSignOptions(appPath, identity, type, isMas, config, keychainFile, arch)
     await this.doSign(signOptions, config, identity)
-
-    // Handle MAS installer creation
-    if (isMas && !isDevelopment && outDir) {
-      await this.helper.createMasInstaller(appPath, outDir, config as MasConfiguration, keychainFile, isDevelopment, arch)
-    }
 
     // Handle notarization for non-MAS builds
     if (!isMas) {
@@ -537,7 +567,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
             }
             const signTarget = path.resolve(normalizedSourceDirectory, entryName)
             const safeSignTarget = sanitizeDirPath(signTarget, normalizedSourceDirectory)
-            await this.sign(safeSignTarget, null, isMas ? activeConfig : null, packContext.arch, isMas)
+            await this.sign(safeSignTarget, isMas ? activeConfig : null, packContext.arch, isMas)
           }
         })
       )
