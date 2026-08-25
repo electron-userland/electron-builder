@@ -92,7 +92,7 @@ jobs:
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
-          cache-key: v-39.8.5-linux-electron
+          cache-key: v-39.8.10-linux-electron
           cache-path: ~/.cache/electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
@@ -146,7 +146,7 @@ jobs:
           - platform: linux
             runner: ubuntu-latest
             cache-path: ~/.cache/electron
-            cache-key: v-39.8.5-linux-electron
+            cache-key: v-39.8.10-linux-electron
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
@@ -211,7 +211,7 @@ jobs:
           - platform: windows
             runner: windows-latest
             cache-path: ~\AppData\Local\electron\Cache
-            cache-key: v-39.8.5-windows-electron
+            cache-key: v-39.8.10-windows-electron
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
@@ -260,7 +260,7 @@ jobs:
           - platform: macos
             runner: macos-26
             cache-path: ~/Library/Caches/electron
-            cache-key: v-39.8.5-macos-electron
+            cache-key: v-39.8.10-macos-electron
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
@@ -324,7 +324,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-39.8.5-update-electron
+          cache-key: v-39.8.10-update-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
 
@@ -406,7 +406,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-39.8.5-native-electron
+          cache-key: v-39.8.10-native-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
 
@@ -496,7 +496,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-39.8.5-linux-e2e-electron
+          cache-key: v-39.8.10-linux-e2e-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
 
