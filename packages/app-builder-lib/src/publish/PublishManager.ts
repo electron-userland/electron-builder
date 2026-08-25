@@ -545,9 +545,18 @@ function isDetectUpdateChannel(platformSpecificConfiguration: PlatformSpecificBu
 // is called per target and arch - without leaking state between programmatic builds running in the same process
 const reportedInferredUpdateFeeds = new WeakMap<CancellationToken, Set<string>>()
 
-// the resolved repository is written verbatim into app-update.yml inside every shipped build and becomes its permanent
-// update feed, so the developer has to be told which repository they are committing to - it is not reported anywhere else
-function logInferredUpdateFeed(buildId: CancellationToken, provider: PublishProvider, owner: string, project: string): void {
+// the inferred repository becomes the publish/update destination and, for auto-update-capable targets, is written
+// verbatim into app-update.yml inside every shipped build as its permanent update feed - so the developer has to be
+// told which repository they are committing to. A repository taken from package.json "repository" is deliberate
+// configuration (info); one picked up from the CI environment or .git/config is not (warn).
+function logInferredUpdateFeed(
+  buildId: CancellationToken,
+  provider: PublishProvider,
+  owner: string,
+  project: string,
+  source: string | undefined,
+  inferredFields: Array<string>
+): void {
   let reported = reportedInferredUpdateFeeds.get(buildId)
   if (reported == null) {
     reported = new Set<string>()
@@ -560,10 +569,20 @@ function logInferredUpdateFeed(buildId: CancellationToken, provider: PublishProv
   }
   reported.add(feed)
 
-  log.warn(
-    { reason: "not specified in the publish configuration", provider, owner, repo: project },
-    "update feed detected from repository info and written to app-update.yml, installed builds will fetch updates from this repository - specify it explicitly to be sure it stays under your control"
-  )
+  const fields = {
+    reason: `${inferredFields.join(" and ")} not specified in the publish configuration`,
+    source: source ?? "unknown",
+    provider,
+    owner,
+    ...(provider === "bitbucket" ? { slug: project } : { repo: project }),
+  }
+  const message =
+    "update feed inferred from repository info; it will be used as the publish/update destination (written to app-update.yml in auto-update-capable targets) - specify it explicitly to be sure it stays under your control"
+  if (source === "package.json") {
+    log.info(fields, message)
+  } else {
+    log.warn(fields, message)
+  }
 }
 
 async function getResolvedPublishConfig(
@@ -647,14 +666,17 @@ async function getResolvedPublishConfig(
       return null
     }
 
+    const inferredFields: Array<string> = []
     if (!owner) {
       owner = info.user
+      inferredFields.push("owner")
     }
     if (!project) {
       project = info.project
+      inferredFields.push(isGithub ? "repo" : "slug")
     }
 
-    logInferredUpdateFeed(ctx.cancellationToken, provider, owner, project)
+    logInferredUpdateFeed(ctx.cancellationToken, provider, owner, project, info.source, inferredFields)
   }
 
   if (isGithub) {

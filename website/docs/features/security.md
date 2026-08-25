@@ -58,13 +58,13 @@ electron-builder --publish always   # explicit — required in v27
 
 ## Update feed ownership
 
-When a GitHub or Bitbucket publish configuration omits `owner`/`repo`, electron-builder fills them in from the repository info (`package.json` `repository`, CI environment variables, then `.git/config`). The result is written to `app-update.yml` inside the packaged app, so it is the update feed every installed copy keeps using — long after the build machine is gone. A build reports the repository it resolved to, so read that line and confirm it is correct:
+When a GitHub or Bitbucket publish configuration omits `owner`/`repo`, electron-builder fills them in from the repository info (`package.json` `repository`, CI environment variables, then `.git/config`). The result becomes the publish/update destination and, for auto-update-capable targets, is written to `app-update.yml` inside the packaged app, so it is the update feed every installed copy keeps using — long after the build machine is gone. A build reports the repository it resolved to and the `source` it came from (info level for `package.json` `repository`, warn level for CI environment variables or `.git/config`), so read that line and confirm it is correct:
 
 ```
-• update feed detected from repository info and written to app-update.yml, installed builds
-  will fetch updates from this repository - specify it explicitly to be sure it stays under
-  your control  reason=not specified in the publish configuration provider=github
-  owner=my-org repo=my-app
+• update feed inferred from repository info; it will be used as the publish/update destination
+  (written to app-update.yml in auto-update-capable targets) - specify it explicitly to be sure
+  it stays under your control  reason=owner and repo not specified in the publish configuration
+  source=.git/config provider=github owner=my-org repo=my-app
 ```
 
 That name has to stay yours. GitHub frees an owner or repository name for re-registration as soon as it is renamed, transferred or deleted, and whoever claims it next can publish a release that installed copies of your app will download and run. Set `owner` and `repo` explicitly rather than relying on detection, and do not retire the namespace while builds are still in the field.

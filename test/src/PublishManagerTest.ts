@@ -141,7 +141,13 @@ test.ifNotWindows("detected github repo is reported once and written to app-upda
 
           const reported = warn.mock.calls.filter(([messageOrFields]) => typeof messageOrFields === "object" && messageOrFields != null && "owner" in messageOrFields)
           expect(reported).toHaveLength(1)
-          expect(reported[0][0]).toMatchObject({ provider: "github", owner: "detected-owner", repo: "detected-repo" })
+          expect(reported[0][0]).toMatchObject({
+            reason: "owner and repo not specified in the publish configuration",
+            source: "TRAVIS_REPO_SLUG",
+            provider: "github",
+            owner: "detected-owner",
+            repo: "detected-repo",
+          })
         },
       }
     )
@@ -152,6 +158,52 @@ test.ifNotWindows("detected github repo is reported once and written to app-upda
     } else {
       process.env.TRAVIS_REPO_SLUG = oldSlug
     }
+  }
+})
+
+// A repository taken from package.json "repository" is deliberate configuration, so it is reported at info level
+// instead of warn - and still exactly once per build.
+test.ifNotWindows("repo detected from package.json is reported once at info level", async ({ expect }) => {
+  const info = vi.spyOn(log, "info")
+  const warn = vi.spyOn(log, "warn")
+  const isFeedReport = ([messageOrFields]: ReadonlyArray<unknown>) =>
+    typeof messageOrFields === "object" && messageOrFields != null && "source" in messageOrFields && "owner" in messageOrFields
+  try {
+    await app(
+      expect,
+      {
+        targets: Platform.MAC.createTarget("zip", Arch.x64),
+        config: {
+          extraMetadata: {
+            repository: "detected-owner/detected-repo",
+          } as any,
+          publish: { provider: "github" },
+        },
+      },
+      {
+        publish: "never",
+        packed: async context => {
+          const updateConfig = load(await fsExtra.readFile(path.join(context.getResources(Platform.MAC, Arch.x64), "app-update.yml"), "utf-8")) as any
+          expect(updateConfig.owner).toBe("detected-owner")
+          expect(updateConfig.repo).toBe("detected-repo")
+
+          expect(warn.mock.calls.filter(isFeedReport)).toHaveLength(0)
+
+          const reported = info.mock.calls.filter(isFeedReport)
+          expect(reported).toHaveLength(1)
+          expect(reported[0][0]).toMatchObject({
+            reason: "owner and repo not specified in the publish configuration",
+            source: "package.json",
+            provider: "github",
+            owner: "detected-owner",
+            repo: "detected-repo",
+          })
+        },
+      }
+    )
+  } finally {
+    info.mockRestore()
+    warn.mockRestore()
   }
 })
 

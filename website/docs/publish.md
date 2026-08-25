@@ -128,13 +128,13 @@ Detected automatically using:
 * if no env, from `.git/config` origin url.
 
 :::warning[The detected repository ships inside your app]
-Whatever is detected here is written to `app-update.yml` inside every packaged build, and that is where electron-updater looks for updates for the lifetime of that install. A build reports the repository it detected:
+Whatever is detected here becomes the publish/update destination and, for auto-update-capable targets, is written to `app-update.yml` inside every packaged build - that is where electron-updater looks for updates for the lifetime of that install. A build reports the repository it inferred, including the `source` it came from - at info level when it comes from the `repository` field of `package.json` (deliberate configuration), at warn level when it is picked up from CI environment variables or `.git/config`:
 
 ```
-• update feed detected from repository info and written to app-update.yml, installed builds
-  will fetch updates from this repository - specify it explicitly to be sure it stays under
-  your control  reason=not specified in the publish configuration provider=github
-  owner=my-org repo=my-app
+• update feed inferred from repository info; it will be used as the publish/update destination
+  (written to app-update.yml in auto-update-capable targets) - specify it explicitly to be sure
+  it stays under your control  reason=owner and repo not specified in the publish configuration
+  source=.git/config provider=github owner=my-org repo=my-app
 ```
 
 Check that it is the repository you expect, and keep control of it. GitHub releases an owner or repository name for re-registration once it is renamed, transferred or deleted, so anyone who then claims that name can publish releases that already-installed copies of your app will download. Set `owner` and `repo` explicitly to avoid depending on detection at all:
