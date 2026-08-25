@@ -182,6 +182,10 @@ while IFS=$'\t' read -r ref path_seg; do
   log "building '$ref' → /$path_seg/"
   rm -rf "$src"
   materialize_ref "$ref" "$src" || die "could not materialize ref '$ref'"
+  # A tree that ignores DOCS_BASE_URL builds at baseUrl "/" and is silently
+  # broken when served under /$path_seg/ — refuse to compose it.
+  grep -q 'DOCS_BASE_URL' "$src/website/docusaurus.config.ts" 2>/dev/null ||
+    die "ref '$ref': website/docusaurus.config.ts does not read DOCS_BASE_URL, so it cannot build at /$path_seg/. Merge the versioned-site config support into '$ref' first, or point this entry's ref at a branch that has it."
   build_tree "$src" "/$path_seg/" || die "build failed for ref '$ref'"
   [ -d "$src/website/build" ] || die "ref '$ref' produced no website/build output"
   mkdir -p "$OUT/$path_seg"
