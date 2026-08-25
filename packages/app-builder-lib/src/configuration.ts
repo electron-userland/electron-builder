@@ -743,12 +743,13 @@ export interface ToolsetConfig {
    * | Version | Notes |
    * |---------|-------|
    * | `"1.0.0"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |
+   * | `"1.0.1"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly linuxToolsMac?: "1.0.0" | ToolsetCustom | "latest"
+  readonly linuxToolsMac?: "1.0.0" | "1.0.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.
@@ -818,7 +819,9 @@ export interface ToolsetCustom {
   readonly url: string
 
   /**
-   * SHA checksum of the custom toolset bundle for verification.
+   * SHA-256 checksum of the custom toolset bundle for verification, as a lowercase hex string
+   * (e.g. the output of `shasum -a 256 bundle.tar.gz`) — not the base64 values GitHub release
+   * notes may show.
    * Required for remote (`https://`) URLs and local archive files (`file://`).
    * Not needed for bare directory paths — the directory is used as-is with no caching.
    */
