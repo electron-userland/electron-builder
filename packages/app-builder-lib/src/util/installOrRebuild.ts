@@ -89,7 +89,12 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   }
 }
 
-const YARN_ENV_VAR_REFERENCE_RE = /\$(?:\{([A-Za-z_][A-Za-z0-9_]*)[^}]*\}|([A-Za-z_][A-Za-z0-9_]*))/g
+// Yarn's own grammar, from miscUtils.replaceEnvVariables: only `${NAME}`,
+// `${NAME-default}` and `${NAME:-default}` interpolate, a name starts with a
+// letter, and a backslash escapes the sigil. The escape alternative has to come
+// first so `\${FOO}` is consumed rather than read as a reference, and not
+// requiring the closing brace is what picks up a nested `${A:-${B}}`.
+const YARN_ENV_VAR_REFERENCE_RE = /\\[\\$}]|\$\{([a-zA-Z]\w*)(?::-|-|(?=\}))/g
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === "object" && !Array.isArray(value)
@@ -125,7 +130,9 @@ export async function getYarnBerryNpmAuthTokenEnv(projectDir: string, env: NodeJ
   const names = new Set<string>()
   for (const value of getYarnNpmAuthTokenValues(config)) {
     for (const match of value.matchAll(YARN_ENV_VAR_REFERENCE_RE)) {
-      names.add(match[1] ?? match[2])
+      if (match[1] != null) {
+        names.add(match[1])
+      }
     }
   }
 

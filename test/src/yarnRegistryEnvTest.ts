@@ -42,6 +42,33 @@ test("does not preserve sensitive variables referenced outside Yarn npmAuthToken
   ).toEqual({ ROOT_NPM_TOKEN: "root-token", SCOPED_NPM_TOKEN: "scoped-token" })
 })
 
+test("matches Yarn's own interpolation grammar", async ({ expect, tmpDir }) => {
+  const projectDir = await tmpDir.createTempDir({ prefix: "electron-builder-yarn-registry-env-" })
+  await writeFile(
+    path.join(projectDir, ".yarnrc.yml"),
+    [
+      "npmScopes:",
+      // Yarn resolves nested defaults, so both names are real references.
+      "  nested:",
+      '    npmAuthToken: "${PRIMARY_TOKEN:-${FALLBACK_TOKEN}}"',
+      // Yarn interpolates neither of these, so neither may reach the child.
+      "  bare:",
+      '    npmAuthToken: "$BARE_TOKEN"',
+      "  escaped:",
+      "    npmAuthToken: '\\${ESCAPED_TOKEN}'",
+    ].join("\n")
+  )
+
+  expect(
+    await getYarnBerryNpmAuthTokenEnv(projectDir, {
+      PRIMARY_TOKEN: "primary",
+      FALLBACK_TOKEN: "fallback",
+      BARE_TOKEN: "bare",
+      ESCAPED_TOKEN: "escaped",
+    })
+  ).toEqual({ PRIMARY_TOKEN: "primary", FALLBACK_TOKEN: "fallback" })
+})
+
 test("passes only Yarn npmAuthToken variables to the Yarn Berry install child", async ({ expect, tmpDir }) => {
   const projectDir = await tmpDir.createTempDir({ prefix: "electron-builder-yarn-registry-env-" })
   await writeFile(path.join(projectDir, ".yarnrc.yml"), ['npmAuthToken: "${XXX_NPM_TOKEN}"', 'npmRegistryServer: "${GITHUB_TOKEN}"'].join("\n"))
