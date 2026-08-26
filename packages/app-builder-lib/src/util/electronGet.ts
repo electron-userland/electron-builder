@@ -569,7 +569,7 @@ const CUSTOM_DIR_ENV_VARS = [
  * Resolves the final download URL for a builder binary, honouring:
  *   ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL  – fully replaces the URL directory
  *   ELECTRON_BUILDER_BINARIES_CUSTOM_DIR (and npm_ variants) – replaces releaseName in the path
- *   overrideUrl (caller-supplied)                     – used as-is when no env var is set
+ *   overrideUrl (caller-supplied)                     – the complete file URL, used as-is when no env var is set
  *
  * Exported for unit testing; not part of the public API.
  * @internal
@@ -580,7 +580,9 @@ export function resolveBuilderBinaryUrl(releaseName: string, filenameWithExt: st
     return `${envOverrideUrl}/${filenameWithExt}`
   }
   if (overrideUrl != null) {
-    return `${overrideUrl}/${filenameWithExt}`
+    // The caller-supplied override (ToolsetCustom.url) points directly at the file — appending
+    // filenameWithExt would double the last path segment (e.g. …/bundle.7z/bundle.7z, issue #10084).
+    return overrideUrl
   }
   const customDirEntry = CUSTOM_DIR_ENV_VARS.map(name => ({ name, value: process.env[name] })).find(e => e.value != null)
   if (customDirEntry != null) {
