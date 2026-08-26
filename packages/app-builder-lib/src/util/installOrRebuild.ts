@@ -100,24 +100,24 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === "object" && !Array.isArray(value)
 }
 
-function getYarnNpmAuthTokenValues(config: unknown): Array<string> {
+function getYarnNpmCredentialValues(config: unknown): Array<string> {
   if (!isRecord(config)) {
     return []
   }
 
-  const values = [config.npmAuthToken]
+  const values = [config.npmAuthToken, config.npmAuthIdent]
   for (const scopes of [config.npmScopes, config.npmRegistries]) {
     if (isRecord(scopes)) {
-      values.push(...Object.values(scopes).map(scope => (isRecord(scope) ? scope.npmAuthToken : undefined)))
+      values.push(...Object.values(scopes).flatMap(scope => (isRecord(scope) ? [scope.npmAuthToken, scope.npmAuthIdent] : [])))
     }
   }
   return values.filter((value): value is string => typeof value === "string")
 }
 
 /**
- * Returns the environment variables explicitly referenced by Yarn's npmAuthToken configuration.
- * This keeps the default child-process credential deny-list intact while allowing Yarn Berry to
- * resolve a registry credential that the project has explicitly configured it to use.
+ * Returns the environment variables explicitly referenced by Yarn's npmAuthToken and npmAuthIdent
+ * configuration. This keeps the default child-process credential deny-list intact while allowing
+ * Yarn Berry to resolve a registry credential that the project has explicitly configured it to use.
  */
 export async function getYarnBerryNpmAuthTokenEnv(projectDir: string, env: NodeJS.ProcessEnv): Promise<NodeJS.ProcessEnv> {
   let config: unknown
@@ -128,7 +128,7 @@ export async function getYarnBerryNpmAuthTokenEnv(projectDir: string, env: NodeJ
   }
 
   const names = new Set<string>()
-  for (const value of getYarnNpmAuthTokenValues(config)) {
+  for (const value of getYarnNpmCredentialValues(config)) {
     for (const match of value.matchAll(YARN_ENV_VAR_REFERENCE_RE)) {
       if (match[1] != null) {
         names.add(match[1])

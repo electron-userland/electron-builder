@@ -42,6 +42,33 @@ test("does not preserve sensitive variables referenced outside Yarn npmAuthToken
   ).toEqual({ ROOT_NPM_TOKEN: "root-token", SCOPED_NPM_TOKEN: "scoped-token" })
 })
 
+test("preserves the environment variables referenced by Yarn npmAuthIdent settings", async ({ expect, tmpDir }) => {
+  const projectDir = await tmpDir.createTempDir({ prefix: "electron-builder-yarn-registry-env-" })
+  await writeFile(
+    path.join(projectDir, ".yarnrc.yml"),
+    [
+      'npmAuthIdent: "${NPM_USER}:${NPM_PASS}"',
+      "npmScopes:",
+      "  example:",
+      // `${NAME-default}` (no colon) is the other fallback operator Yarn interpolates.
+      '    npmAuthIdent: "${SCOPED_IDENT-user:pass}"',
+      "npmRegistries:",
+      '  "https://registry.example.test":',
+      '    npmAuthIdent: "${REGISTRY_IDENT}"',
+    ].join("\n")
+  )
+
+  expect(
+    await getYarnBerryNpmAuthTokenEnv(projectDir, {
+      NPM_USER: "user",
+      NPM_PASS: "pass",
+      SCOPED_IDENT: "scoped",
+      REGISTRY_IDENT: "registry",
+      GITHUB_TOKEN: "publish-token",
+    })
+  ).toEqual({ NPM_USER: "user", NPM_PASS: "pass", SCOPED_IDENT: "scoped", REGISTRY_IDENT: "registry" })
+})
+
 test("matches Yarn's own interpolation grammar", async ({ expect, tmpDir }) => {
   const projectDir = await tmpDir.createTempDir({ prefix: "electron-builder-yarn-registry-env-" })
   await writeFile(
