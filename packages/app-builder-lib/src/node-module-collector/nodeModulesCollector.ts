@@ -362,19 +362,26 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const deps = (obj[key] || {}).dependencies || []
       for (const dep of deps) {
         const child = this.transformToHoisterTree(obj, dep, nodes)
-        node.dependencies.add(child)
+        // a package that declares itself as a dependency (e.g. libsql) must not produce a self-edge
+        if (child !== node) {
+          node.dependencies.add(child)
+        }
       }
     }
 
     return node
   }
 
-  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[], archFilter?: ArchFilter) {
+  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[], archFilter?: ArchFilter, ancestors: Set<HoisterResult> = new Set()) {
     if (dependencies.size === 0) {
       return
     }
 
     for (const d of dependencies.values()) {
+      // dependency cycles (including self-references) must not recurse
+      if (ancestors.has(d)) {
+        continue
+      }
       const reference = [...d.references][0]
       const key = `${d.name}@${reference}`
       // Normalize the path to handle mixed separators from pnpm JSON output on Windows
@@ -416,15 +423,31 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       result.push(node)
       if (d.dependencies.size > 0) {
         node.dependencies = []
-        await this._getNodeModules(d.dependencies, node.dependencies, archFilter)
+        ancestors.add(d)
+        await this._getNodeModules(d.dependencies, node.dependencies, archFilter, ancestors)
+        ancestors.delete(d)
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  protected logMissingDependency(pkgName: string) {
+  /**
+   * Records a dependency that could not be resolved on disk in the log summary.
+   *
+   * A platform-specific package name (e.g. `sass-embedded-linux-x64`) is always classified as a
+   * platform-specific optional dependency. Otherwise, `isDeclaredOptional` decides the bucket: a
+   * caller that *knows* the dependency was declared in `optionalDependencies` (e.g. the pnpm
+   * collector's optional-dependency check) reports a missing *optional* dependency — an expected
+   * condition — rather than the `PKG_NOT_ON_DISK` warning reserved for genuinely missing
+   * production dependencies.
+   */
+  protected logMissingDependency(pkgName: string, isDeclaredOptional = false) {
     const PLATFORM_PACKAGE_RE = /(linux|win32|darwin|freebsd|android)[-_](x64|arm64|ia32|arm|ppc64|s390x|loong64|riscv64|universal)/
-    const diskLogKey = PLATFORM_PACKAGE_RE.test(pkgName) ? LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED : LogMessageByKey.PKG_NOT_ON_DISK
+    const diskLogKey = PLATFORM_PACKAGE_RE.test(pkgName)
+      ? LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED
+      : isDeclaredOptional
+        ? LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED
+        : LogMessageByKey.PKG_NOT_ON_DISK
     this.cache.logSummary[diskLogKey].push(pkgName)
   }
 

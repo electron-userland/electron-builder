@@ -18,6 +18,7 @@ export {
   GetFileMatchersOptions,
   getMainFileMatchers,
   getReincludedDefaultExclusions,
+  resolveFileSetDestination,
 } from "./fileMatcher.js"
 export { hoist, HoisterDependencyKind, HoisterResult, HoisterTree } from "./node-module-collector/hoist.js"
 export {
@@ -68,6 +69,7 @@ export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConve
 export { getLicenseAssets, getLicenseFiles } from "./util/license.js"
 export { parsePlistFile, PlistObject } from "./util/mac/plist.js"
 export { expandMacro } from "./util/macroExpander.js"
+export { checkMetadata } from "./util/packageMetadata.js"
 export { getRepositoryInfo } from "./util/repositoryInfo.js"
 export { withToolsetLock } from "./util/toolsetLock.js"
 export { editWindowsResources, ResourceEditOptions } from "./util/win/resEdit.js"

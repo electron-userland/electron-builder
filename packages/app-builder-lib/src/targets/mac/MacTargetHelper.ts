@@ -9,7 +9,8 @@ import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.
 import { parsePlistFile, PlistObject } from "../../util/mac/plist.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 
-export type PlatformType = "mas" | "mas-dev" | "mac"
+export type MasPlatformType = "mas" | "mas-dev"
+export type PlatformType = MasPlatformType | "mac"
 
 export class MacTargetHelper {
   constructor(private packager: MacPackager) {}
@@ -30,7 +31,7 @@ export class MacTargetHelper {
     signOpts: ElectronSignOptions | null | undefined
   ): Promise<Identity | null> {
     const isMas = MacTargetHelper.isMasTarget(targetPlatform)
-    const certificateTypes = MacTargetHelper.getCertificateTypes(targetPlatform)
+    const certificateTypes = MacTargetHelper.getCertificateTypes(targetPlatform, MacTargetHelper.resolveSigningType(targetPlatform, signOpts?.type))
 
     let identity: Identity | null = null
     for (const certificateType of certificateTypes) {
@@ -89,8 +90,7 @@ export class MacTargetHelper {
     targetPlatform: PlatformType
   ): Promise<SignOptions> {
     const isMas = MacTargetHelper.isMasTarget(targetPlatform)
-    // `type` is derived from the build flavor, never from user config: mas-dev → development, otherwise distribution.
-    const type: SigningDistributionType = MacTargetHelper.isMasDevelopment(targetPlatform) ? "development" : "distribution"
+    const type = MacTargetHelper.resolveSigningType(targetPlatform, config?.type)
 
     let binaries = config?.binaries || undefined
     if (binaries) {
@@ -256,15 +256,27 @@ export class MacTargetHelper {
     }
   }
 
-  static getCertificateTypes(targetPlatform: PlatformType): CertType[] {
-    switch (targetPlatform) {
-      case "mas-dev":
-        return ["Mac Developer", "Apple Development"]
-      case "mas":
-        return ["Apple Distribution", "3rd Party Mac Developer Application"]
-      default:
-        return ["Developer ID Application"]
+  /**
+   * The effective signing type: an explicit `sign.type` wins, otherwise derived from the build flavor
+   * (`mas-dev` → `development`, otherwise `distribution`).
+   */
+  static resolveSigningType(targetPlatform: PlatformType, configType: SigningDistributionType | Nullish): SigningDistributionType {
+    return configType ?? (MacTargetHelper.isMasDevelopment(targetPlatform) ? "development" : "distribution")
+  }
+
+  static getCertificateTypes(targetPlatform: PlatformType, type: SigningDistributionType): CertType[] {
+    if (type === "development") {
+      return ["Mac Developer", "Apple Development"]
     }
+    return MacTargetHelper.isMasTarget(targetPlatform) ? ["Apple Distribution", "3rd Party Mac Developer Application"] : ["Developer ID Application"]
+  }
+
+  /**
+   * The MAS `.pkg` installer is only built for distribution signing — a development-signed build
+   * (`mas-dev`, or an explicit `sign.type: "development"` on a `mas` build) is installed directly.
+   */
+  static shouldCreateMasInstaller(targetPlatform: PlatformType, configType: SigningDistributionType | Nullish): targetPlatform is MasPlatformType {
+    return MacTargetHelper.isMasTarget(targetPlatform) && MacTargetHelper.resolveSigningType(targetPlatform, configType) !== "development"
   }
 
   static isMasTarget(targetName: string): boolean {
