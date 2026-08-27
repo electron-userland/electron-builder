@@ -64,6 +64,7 @@ export const DEFAULT_EXCLUDED_EXTENSIONS: ReadonlyArray<string> = [
   "swp",
   "csproj",
   "sln",
+  "slnx",
   "suo",
   "xproj",
   "cc",
