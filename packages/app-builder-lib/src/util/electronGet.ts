@@ -283,6 +283,49 @@ export function reinitializeProxy(): void {
   get.initializeProxy()
 }
 
+/**
+ * Error codes considered transient for artifact downloads. Plain node socket errors carry the code
+ * directly on `error.code`; undici (the fetch implementation used by @electron/get v5) wraps them in
+ * a `TypeError: fetch failed` whose code lives on `error.cause.code` — including undici's own
+ * `UND_ERR_*` codes for connection resets and connect timeouts.
+ */
+const TRANSIENT_DOWNLOAD_ERROR_CODES = new Set([
+  "ENOTFOUND",
+  "ETIMEDOUT",
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "EAI_AGAIN",
+  "EPIPE",
+  "ENOENT",
+  "UND_ERR_SOCKET",
+  "UND_ERR_CONNECT_TIMEOUT",
+])
+
+/**
+ * Decides whether a failed @electron/get download should be retried. Handles all three error shapes
+ * seen in practice (exported for tests):
+ * - builder-util-runtime's `HttpError` — retry on 5xx.
+ * - @electron/get v5's `HTTPError` (`FetchDownloader`) — a plain `Error` subclass with the fetch
+ *   `Response` on `.response` and NO `.code`; retry on 5xx and 429. Matched by class and by
+ *   `name === "HTTPError"` as a fallback in case multiple @electron/get copies are loaded.
+ * - transient network errors — code on `error.code`, or on `error.cause.code` for undici's
+ *   `TypeError: fetch failed` wrapper.
+ */
+export function shouldRetryDownloadError(e: any): boolean {
+  if (e == null) {
+    return false
+  }
+  if (e instanceof HttpError) {
+    return e.isServerError()
+  }
+  if (e instanceof get.HTTPError || e.name === "HTTPError") {
+    const status = e.response?.status
+    return typeof status === "number" && (status >= 500 || status === 429)
+  }
+  const code = typeof e.code === "string" ? e.code : typeof e.cause?.code === "string" ? e.cause.code : undefined
+  return code != null && TRANSIENT_DOWNLOAD_ERROR_CODES.has(code)
+}
+
 async function downloadArtifactToFile(config: ElectronArtifactDetails, label: string): Promise<string> {
   // Serialize concurrent downloads of the same artifact across vitest workers to prevent @electron/get's
   // non-atomic putFileInCache (remove + move) from racing with a concurrent reader.
@@ -351,8 +394,7 @@ async function downloadArtifactToFile(config: ElectronArtifactDetails, label: st
         retries: 3,
         interval: 2000,
         backoff: 2000,
-        shouldRetry: (e: any) =>
-          e instanceof HttpError ? e.isServerError() : typeof e?.code === "string" && ["ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EPIPE", "ENOENT"].includes(e.code),
+        shouldRetry: shouldRetryDownloadError,
       })
     } catch (err) {
       if (typeof (err as any)?.message === "string" && (err as any).message.includes("dest already exists")) {

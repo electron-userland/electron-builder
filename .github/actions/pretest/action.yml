@@ -26,11 +26,18 @@ runs:
       run: pnpm compile
       shell: bash
 
+    # The primary key includes run_id so it never exactly matches an existing entry: the job always
+    # restores the newest cache via restore-keys and re-saves at the end. With a static key,
+    # actions/cache never saves after an exact hit, so a cache snapshot missing artifacts (e.g. the
+    # win32 ia32/arm64 Electron zips only some shards need) stays incomplete forever and those
+    # artifacts are re-downloaded from github.com on every run.
     - name: Cache Electron
       uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: ${{ inputs.cache-path }}
-        key: ${{ inputs.cache-key }}
+        key: ${{ inputs.cache-key }}-${{ github.run_id }}
+        restore-keys: |
+          ${{ inputs.cache-key }}
 
     - name: Cache electron-builder binaries
       uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
@@ -38,8 +45,10 @@ runs:
         path: |
           ~/.cache/electron-builder
           ~/Library/Caches/electron-builder
-        key: electron-builder-binaries-${{ runner.os }}-${{ hashFiles('packages/app-builder-lib/src/toolsets/linux.ts', 'packages/app-builder-lib/src/toolsets/win.ts', 'packages/app-builder-lib/src/toolsets/mac.ts') }}
+          ~\AppData\Local\electron-builder\Cache
+        key: electron-builder-binaries-${{ runner.os }}-${{ hashFiles('packages/app-builder-lib/src/toolsets/*.ts') }}-${{ github.run_id }}
         restore-keys: |
+          electron-builder-binaries-${{ runner.os }}-${{ hashFiles('packages/app-builder-lib/src/toolsets/*.ts') }}-
           electron-builder-binaries-${{ runner.os }}-
 
     - name: Compute Vitest smart cache ref
