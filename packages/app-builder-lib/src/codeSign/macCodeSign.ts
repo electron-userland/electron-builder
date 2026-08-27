@@ -195,17 +195,19 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
   if (cscIKeyPassword != null) {
     cscPasswords.push(cscIKeyPassword)
   }
-  return await importCerts(keychainFile, certPaths, cscPasswords)
+  return await importCerts(keychainFile, certPaths, cscPasswords, keychainPassword)
 }
 
-async function importCerts(keychainFile: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {
+async function importCerts(keychainFile: string, paths: Array<string>, keyPasswords: Array<string>, keychainPassword: string): Promise<CodeSigningInfo> {
   for (let i = 0; i < paths.length; i++) {
     const password = keyPasswords[i] ?? ""
     await exec("/usr/bin/security", ["import", paths[i], "-k", keychainFile, "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild", "-P", password])
 
     // https://stackoverflow.com/questions/39868578/security-codesign-in-sierra-keychain-ignores-access-control-settings-and-ui-p
     // https://github.com/electron-userland/electron-packager/issues/701#issuecomment-322315996
-    await exec("/usr/bin/security", ["set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", password, keychainFile])
+    // `-k` expects the keychain's own unlock password (as used by create-keychain/unlock-keychain above),
+    // not the imported item's password used by `security import -P`.
+    await exec("/usr/bin/security", ["set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", keychainPassword, keychainFile])
   }
 
   return {
