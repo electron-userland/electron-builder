@@ -72,7 +72,8 @@ export { CommonNsisOptions, CustomNsisBinary, NsisOptions, NsisWebOptions, Porta
 export { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
-export { isSignResultSigned, WindowsSignFileResult, WindowsSignOptions, WindowsSignResult } from "./codeSign/win/windowsCodeSign.js"
+export { combineSignResults, isSignResultSigned, SignFileResult, SigningResult } from "./codeSign/signResult.js"
+export { WindowsSignOptions } from "./codeSign/win/windowsCodeSign.js"
 export {
   CertificateFromStoreInfo,
   CustomWindowsSign,

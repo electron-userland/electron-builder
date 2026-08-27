@@ -8,7 +8,8 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { readAsarHeader } from "./asar/asar.js"
 import { createSignManager } from "./codeSign/win/signManager.js"
-import { isSignResultSigned, signWindows, WindowsSignFileResult, WindowsSignOptions, WindowsSignResult } from "./codeSign/win/windowsCodeSign.js"
+import { combineSignResults, isSignResultSigned, SignFileResult, SigningResult } from "./codeSign/signResult.js"
+import { signWindows, WindowsSignOptions } from "./codeSign/win/windowsCodeSign.js"
 import { FileCodeSigningInfo } from "./codeSign/win/signtoolBaseSignManager.js"
 import { AfterPackContext } from "./configuration.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
@@ -41,7 +42,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     await manager.initialize()
     return manager
   })
-  private signingQueue: Promise<unknown> = Promise.resolve()
+  // Sequences the sign requests; per-file failures are logged and swallowed in the queue itself (hence `| void`)
+  // so it keeps flowing to the next file — each caller still observes its own failure via the promise `signIf` returns.
+  private signingQueue: Promise<SigningResult | void> = Promise.resolve()
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
@@ -124,7 +127,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return chooseNotNull(chooseNotNull(certPassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
   }
 
-  async signIf(file: string): Promise<WindowsSignResult> {
+  async signIf(file: string): Promise<SigningResult> {
     const logFields = { file: log.filePath(file) }
     if (!this.shouldSignFile(file, true)) {
       log.info(logFields, "file signing skipped via signExts configuration")
@@ -142,7 +145,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return promise
   }
 
-  private async _sign(file: string): Promise<WindowsSignFileResult> {
+  private async _sign(file: string): Promise<SignFileResult> {
     const signOptions: WindowsSignOptions = {
       path: file,
       options: this.platformSpecificBuildOptions,
@@ -163,7 +166,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     outDir: string,
     internalName?: string | null,
     requestedExecutionLevel?: RequestedExecutionLevel | null
-  ): Promise<WindowsSignResult> {
+  ): Promise<SigningResult> {
     const appInfo = this.appInfo
 
     const files: Array<string> = []
@@ -282,14 +285,14 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
   }
 
-  protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
+  protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<SigningResult> {
     const exeFileName = `${this.appInfo.productFilename}.exe`
     const signingDisabled = isWindowsSigningDisabled(this.platformSpecificBuildOptions)
     if (signingDisabled && this.forceCodeSigning) {
       throw new InvalidConfigurationError("Signing is disabled (`sign: false`) but `forceCodeSigning` is enabled. Remove one of these options.")
     }
 
-    const results: Array<WindowsSignResult> = []
+    const results: Array<SigningResult> = []
     const files = await readdir(packContext.appOutDir)
     for (const file of files) {
       if (file === exeFileName) {
@@ -307,9 +310,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       }
     }
 
-    // returning "did we actually sign anything" gates the `afterSign` hook (see PlatformPackager.doSignAfterPack)
+    // the combined result gates the `afterSign` hook — a signed result wins (see PlatformPackager.doSignAfterPack)
     if (!isAsar || signingDisabled) {
-      return results.some(isSignResultSigned)
+      return combineSignResults(results)
     }
 
     const filesToSign = await Promise.all([
@@ -321,7 +324,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       results.push(await this.signIf(file))
     }
 
-    return results.some(isSignResultSigned)
+    return combineSignResults(results)
   }
 
   private walkSignableFiles(baseDir: string, ...subpath: string[]): Promise<string[]> {

@@ -22,7 +22,8 @@ import { VmManager } from "../../vm/vm.js"
 import type { WinPackager } from "../../winPackager.js"
 import { importCertificate } from "../codesign.js"
 import type { SignManager } from "./signManager.js"
-import { WindowsSignFileResult, WindowsSignOptions } from "./windowsCodeSign.js"
+import { WindowsSignOptions } from "./windowsCodeSign.js"
+import { SignFileResult } from "../signResult.js"
 const { rename } = _fsExtra
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
@@ -294,7 +295,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     return !customSign // default: skip when no cert and no custom sign hook
   }
 
-  async signFile(options: WindowsSignOptions): Promise<WindowsSignFileResult> {
+  async signFile(options: WindowsSignOptions): Promise<SignFileResult> {
     const signing = getSigntoolFamilyConfig(options.options)
     let hashes = signing?.signingHashAlgorithms
     // msi does not support dual-signing

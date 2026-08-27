@@ -1,7 +1,8 @@
 import { WinPackager } from "app-builder-lib"
 import { SignManager } from "app-builder-lib/src/codeSign/win/signManager"
 import { CustomWindowsSign, SigntoolSignManager } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
-import { signWindows, WindowsSignFileResult, WindowsSignOptions } from "app-builder-lib/src/codeSign/win/windowsCodeSign"
+import { SignFileResult, SigningResult } from "app-builder-lib/src/codeSign/signResult"
+import { signWindows, WindowsSignOptions } from "app-builder-lib/src/codeSign/win/windowsCodeSign"
 import { WindowsConfiguration } from "app-builder-lib/src/options/winOptions"
 import { AsyncTaskManager, log } from "builder-util"
 import { Arch, DIR_TARGET, Platform, Target } from "electron-builder"
@@ -13,7 +14,7 @@ import { app } from "../helpers/packTester"
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-function makePackagerWithManager(signFile: (options: WindowsSignOptions) => Promise<WindowsSignFileResult>): WinPackager {
+function makePackagerWithManager(signFile: (options: WindowsSignOptions) => Promise<SignFileResult>): WinPackager {
   const manager = { signFile } as unknown as SignManager
   return {
     signingManager: { value: Promise.resolve(manager) },
@@ -131,7 +132,7 @@ describe("SigntoolSignManager.signFile result", () => {
 // ─── WinPackager.signIf: extended skip reasons and forceCodeSigning ───────────
 
 describe("WinPackager.signIf result", () => {
-  function makeWinPackager(platformSpecificBuildOptions: WindowsConfiguration, signFileResult: WindowsSignFileResult | Error, forceCodeSigning = false): WinPackager {
+  function makeWinPackager(platformSpecificBuildOptions: WindowsConfiguration, signFileResult: SignFileResult | Error, forceCodeSigning = false): WinPackager {
     const packager = Object.create(WinPackager.prototype) as WinPackager
     ;(packager as any).platformSpecificBuildOptions = platformSpecificBuildOptions
     ;(packager as any).signingQueue = Promise.resolve()
@@ -177,7 +178,7 @@ describe("WinPackager.signIf result", () => {
 // ─── WinPackager.signApp: aggregated result gates the afterSign hook ──────────
 
 describe("WinPackager.signApp result", () => {
-  function makeSignAppTestPackager(resultHolder: { value: boolean | null }) {
+  function makeSignAppTestPackager(resultHolder: { value: SigningResult | null }) {
     return class SignAppTestPackager extends WinPackager {
       constructor(info: Packager) {
         super(info)
@@ -202,8 +203,8 @@ describe("WinPackager.signApp result", () => {
     }
   }
 
-  test("returns false when nothing was signed (no certificate configured)", async ({ expect }) => {
-    const resultHolder: { value: boolean | null } = { value: null }
+  test(`returns "skipped:no-certificate" when nothing was signed (no certificate configured)`, async ({ expect }) => {
+    const resultHolder: { value: SigningResult | null } = { value: null }
     const PackagerClass = makeSignAppTestPackager(resultHolder)
 
     await app(expect, {
@@ -214,11 +215,11 @@ describe("WinPackager.signApp result", () => {
       },
     })
 
-    expect(resultHolder.value).toBe(false)
+    expect(resultHolder.value).toBe("skipped:no-certificate")
   })
 
-  test("returns true when a custom sign hook signed at least one file", async ({ expect }) => {
-    const resultHolder: { value: boolean | null } = { value: null }
+  test(`returns "signed:custom" when a custom sign hook signed at least one file`, async ({ expect }) => {
+    const resultHolder: { value: SigningResult | null } = { value: null }
     let hookCallCount = 0
     const sign: CustomWindowsSign = () => {
       hookCallCount++
@@ -237,6 +238,6 @@ describe("WinPackager.signApp result", () => {
     })
 
     expect(hookCallCount).toBeGreaterThan(0)
-    expect(resultHolder.value).toBe(true)
+    expect(resultHolder.value).toBe("signed:custom")
   })
 })

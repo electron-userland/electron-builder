@@ -1,33 +1,14 @@
 import { log, retry } from "builder-util"
 import { resolveWindowsSigningConfiguration, WindowsConfiguration } from "../../options/winOptions.js"
 import { WinPackager } from "../../winPackager.js"
+import { SignFileResult } from "../signResult.js"
 
 export interface WindowsSignOptions {
   readonly path: string
   readonly options: WindowsConfiguration
 }
 
-/**
- * Result of a single sign attempt (`SignManager.signFile`). Failures are always thrown, never returned:
- * - `signed` — the configured sign manager signed the file itself
- * - `signed:custom` — a custom `sign` hook did the signing
- * - `skipped:no-certificate` — nothing to sign with (no certificate configured and no custom `sign` hook)
- */
-export type WindowsSignFileResult = "signed" | "signed:custom" | "skipped:no-certificate"
-
-/**
- * {@link WindowsSignFileResult} extended with the skip reasons that are decided before the sign manager
- * is ever invoked (see `WinPackager.signIf`):
- * - `skipped:filtered` — the file does not match the `signExts` filter
- * - `skipped:disabled` — signing is explicitly disabled (`sign: false` or `sign: null`)
- */
-export type WindowsSignResult = WindowsSignFileResult | "skipped:filtered" | "skipped:disabled"
-
-export function isSignResultSigned(result: WindowsSignResult): result is "signed" | "signed:custom" {
-  return result === "signed" || result === "signed:custom"
-}
-
-export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<WindowsSignFileResult> {
+export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<SignFileResult> {
   const signing = resolveWindowsSigningConfiguration(options.options)
   const packageManager = await packager.signingManager.value
 

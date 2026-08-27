@@ -150,8 +150,8 @@ describe("MacTargetHelper", () => {
       expect(() => makeHelper(true).handleNullIdentity()).toThrow("identity explicitly is set to null")
     })
 
-    test("returns false when forceCodeSigning is false", () => {
-      expect(makeHelper(false).handleNullIdentity()).toBe(false)
+    test(`returns "skipped:disabled" when forceCodeSigning is false`, () => {
+      expect(makeHelper(false).handleNullIdentity()).toBe("skipped:disabled")
     })
   })
 

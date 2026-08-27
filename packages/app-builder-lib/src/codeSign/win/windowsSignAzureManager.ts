@@ -11,7 +11,8 @@ import { VmManager } from "../../vm/vm.js"
 import { WineVmManager } from "../../vm/WineVm.js"
 import { WinPackager } from "../../winPackager.js"
 import { SignManager } from "./signManager.js"
-import { WindowsSignFileResult, WindowsSignOptions } from "./windowsCodeSign.js"
+import { WindowsSignOptions } from "./windowsCodeSign.js"
+import { SignFileResult } from "../signResult.js"
 import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager.js"
 import semver from "semver"
 
@@ -88,11 +89,11 @@ export class WindowsSignAzureManager implements SignManager {
     _selected => Promise.resolve(null)
   )
 
-  async signFile(options: WindowsSignOptions): Promise<WindowsSignFileResult> {
+  async signFile(options: WindowsSignOptions): Promise<SignFileResult> {
     return this.isLegacyMode() ? this.signFileLegacy(options) : this.signFileWithDlib(options)
   }
 
-  private async signFileLegacy(options: WindowsSignOptions): Promise<WindowsSignFileResult> {
+  private async signFileLegacy(options: WindowsSignOptions): Promise<SignFileResult> {
     const { signing } = this
     const vm = await this.packager.vm.value
     const ps = await vm.powershellCommand.value
@@ -134,7 +135,7 @@ export class WindowsSignAzureManager implements SignManager {
     return "signed"
   }
 
-  private async signFileWithDlib(options: WindowsSignOptions): Promise<WindowsSignFileResult> {
+  private async signFileWithDlib(options: WindowsSignOptions): Promise<SignFileResult> {
     const { signing } = this
     const winCodeSign = this.packager.config.toolsets?.winCodeSign
     const isCustom = typeof winCodeSign === "object" && winCodeSign != null

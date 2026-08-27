@@ -1,4 +1,5 @@
 import { PlatformType } from "app-builder-lib/internal"
+import { SigningResult } from "app-builder-lib"
 import { log } from "builder-util"
 import { Arch, Platform } from "electron-builder"
 import * as path from "path"
@@ -16,9 +17,9 @@ describe.ifNotWindows("mas hooks", () => {
     readonly events: Array<string> = []
 
     // stub the main signing method: on non-mac hosts isSignAllowed() would short-circuit it
-    protected sign(_appPath: string, _arch: Arch, _targetPlatform: PlatformType): Promise<boolean> {
+    protected sign(_appPath: string, _arch: Arch, _targetPlatform: PlatformType): Promise<SigningResult> {
       this.events.push("sign")
-      return Promise.resolve(true)
+      return Promise.resolve("signed")
     }
 
     protected createMasInstaller(_appPath: string, _outDir: string, _arch: Arch, _targetPlatform: PlatformType): Promise<void> {
@@ -30,9 +31,9 @@ describe.ifNotWindows("mas hooks", () => {
   class UnsignedMasPackager extends CheckingMacPackager {
     readonly events: Array<string> = []
 
-    protected sign(_appPath: string, _arch: Arch, _targetPlatform: PlatformType): Promise<boolean> {
+    protected sign(_appPath: string, _arch: Arch, _targetPlatform: PlatformType): Promise<SigningResult> {
       this.events.push("sign-skipped")
-      return Promise.resolve(false)
+      return Promise.resolve("skipped:no-certificate")
     }
 
     protected createMasInstaller(_appPath: string, _outDir: string, _arch: Arch, _targetPlatform: PlatformType): Promise<void> {
