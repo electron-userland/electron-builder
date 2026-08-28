@@ -1,5 +1,16 @@
 import { Arch, Platform } from "electron-builder"
+import FpmTarget from "app-builder-lib/src/targets/linux/FpmTarget"
 import { app, EXTENDED_TIMEOUT } from "../helpers/packTester.js"
+
+describe("fpm default depends", () => {
+  test("pacman does not depend on AUR-only packages", ({ expect }) => {
+    // https://github.com/electron-userland/electron-builder/issues/9429
+    // `http-parser` is not available in the official Arch repositories (AUR-only),
+    // so including it by default made pacman packages uninstallable on stock Arch.
+    const defaults: string[] = FpmTarget.prototype["getDefaultDepends"].call(null, "pacman")
+    expect(defaults).not.toContain("http-parser")
+  })
+})
 
 // "apk" is very slow, don't test for now
 describe.heavy.ifNotWindows("fpm", () => {
