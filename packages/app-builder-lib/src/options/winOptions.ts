@@ -4,8 +4,8 @@ import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
 
 export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
-   * The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable]https://www.electron.build/nsis#portable) app without installation), `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
-   * AppX package can be built only on Windows 10.
+   * The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable app](https://www.electron.build/nsis#portable) without installation), `appx`, `msix`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
+   * AppX and MSIX packages can be built on Windows 10 or Windows Server 2012 R2 (version 6.3+) or later, and on macOS via Parallels Desktop.
    *
    * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
    *
@@ -36,10 +36,11 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    *   `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.
    * - Set to `false` or `null` to **disable** code signing entirely (executable resources such as
    *   the icon and metadata are still edited).
-   * - Set to an **object** to configure signing explicitly. The `type` field selects the signing
-   *   backend (`signtool` is the implicit default) and dispatches to a dedicated sign manager;
-   *   provide exactly one of the modes below. Each output artifact is signed individually, and by
-   *   default executables are dual-signed (see `signingHashAlgorithms`).
+   * - Set to an **object** to configure signing explicitly. The **required** `type` field selects the
+   *   signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign
+   *   manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`
+   *   backend is used with env-discovered credentials. Each output artifact is signed individually,
+   *   and by default executables are dual-signed (see `signingHashAlgorithms`).
    *
    * - `{ type: "signtool", ... }` — Sign with a local certificate file (.pfx/.p12) or a
    *   certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and

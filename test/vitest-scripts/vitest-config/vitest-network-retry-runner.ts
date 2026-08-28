@@ -20,6 +20,15 @@ const NETWORK_PATTERNS = [
   /[Rr]equest timed out/,
 ]
 
+// EPIPE is normal when a CI pipe closes before all output is flushed; suppress it.
+for (const stream of [process.stdout, process.stderr] as NodeJS.WriteStream[]) {
+  stream.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code !== "EPIPE") {
+      throw err
+    }
+  })
+}
+
 const MAX_NETWORK_RETRIES = 2
 const RETRY_BASE_DELAY_MS = 2000
 

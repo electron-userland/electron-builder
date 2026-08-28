@@ -37,6 +37,29 @@ describe("migrateConfig — electronCompile", () => {
   })
 })
 
+describe("migrateConfig — linux.syncDesktopName", () => {
+  test("removes linux.syncDesktopName: true (behaviour is now the default)", () => {
+    const result = migrateConfig({ linux: { target: "deb", syncDesktopName: true } })
+    expect("syncDesktopName" in result.migrated.linux).toBe(false)
+    expect(result.migrated.linux.target).toBe("deb")
+    expect(result.changes.some(c => c.key === "linux.syncDesktopName")).toBe(true)
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  test("removes linux.syncDesktopName: false and warns about the behaviour change", () => {
+    const result = migrateConfig({ linux: { syncDesktopName: false } })
+    expect("syncDesktopName" in result.migrated.linux).toBe(false)
+    expect(result.changes.some(c => c.key === "linux.syncDesktopName")).toBe(true)
+    expect(result.warnings.some(w => w.includes("syncDesktopName") && w.includes("desktopName"))).toBe(true)
+  })
+
+  test("no-op when linux config has no syncDesktopName", () => {
+    const result = migrateConfig({ linux: { target: "deb" } })
+    expect(result.modified).toBe(false)
+    expect(result.warnings).toHaveLength(0)
+  })
+})
+
 describe("migrateConfig — framework / nodeVersion / launchUiVersion", () => {
   test("removes all three when present", () => {
     const result = migrateConfig({ framework: "electron", nodeVersion: "current", launchUiVersion: "0.1.0" })
@@ -550,6 +573,13 @@ describe("migrateConfig — mac signing consolidation", () => {
     expect(result.changes.some(c => c.key === "mac.identity")).toBe(true)
   })
 
+  test("moves mac.type → sign.type", () => {
+    const result = migrateConfig({ mac: { type: "development" } })
+    expect("type" in result.migrated.mac).toBe(false)
+    expect(result.migrated.mac.sign).toEqual({ type: "development" })
+    expect(result.changes.some(c => c.key === "mac.type")).toBe(true)
+  })
+
   test("renames signIgnore → sign.ignore", () => {
     const result = migrateConfig({ mac: { signIgnore: ["foo", "bar"] } })
     expect("signIgnore" in result.migrated.mac).toBe(false)
@@ -619,5 +649,48 @@ describe("migrateConfig — does not mutate input", () => {
     const frozen = JSON.parse(JSON.stringify(input))
     migrateConfig(input)
     expect(input).toEqual(frozen)
+  })
+})
+
+describe("migrateConfig — nsis-web advisory", () => {
+  test("win.target: 'nsis-web' (string) emits an advisory without changing the config", () => {
+    const input = { win: { target: "nsis-web" } }
+    const result = migrateConfig(input)
+    expect(result.modified).toBe(false)
+    expect(result.changes).toHaveLength(0)
+    expect(result.advisories).toHaveLength(1)
+    expect(result.advisories[0]).toMatch(/nsis-web/)
+    expect(result.advisories[0]).toMatch(/disableWebInstaller = false/)
+    expect(result.migrated).toEqual(input)
+  })
+
+  test("win.target: ['nsis', 'nsis-web'] (array) emits an advisory", () => {
+    const result = migrateConfig({ win: { target: ["nsis", "nsis-web"] } })
+    expect(result.advisories).toHaveLength(1)
+    expect(result.modified).toBe(false)
+  })
+
+  test("win.target: [{ target: 'nsis-web' }] (object form) emits an advisory", () => {
+    const result = migrateConfig({ win: { target: [{ target: "nsis-web", arch: "x64" }] } })
+    expect(result.advisories).toHaveLength(1)
+    expect(result.modified).toBe(false)
+  })
+
+  test("global top-level target: 'nsis-web' emits an advisory", () => {
+    const result = migrateConfig({ target: "nsis-web" })
+    expect(result.advisories).toHaveLength(1)
+  })
+
+  test("a non-web target produces no advisory", () => {
+    const result = migrateConfig({ win: { target: "nsis" } })
+    expect(result.advisories).toHaveLength(0)
+    expect(result.modified).toBe(false)
+  })
+
+  test("advisory coexists with real changes — modified stays true, advisory is excluded from the modified calc", () => {
+    const result = migrateConfig({ electronCompile: true, win: { target: "nsis-web" } })
+    expect(result.modified).toBe(true)
+    expect(result.changes.some(c => c.key === "electronCompile")).toBe(true)
+    expect(result.advisories).toHaveLength(1)
   })
 })

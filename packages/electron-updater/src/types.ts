@@ -18,6 +18,36 @@ export interface Logger {
   debug?(message: string): void
 }
 
+/**
+ * When a downloaded update is automatically installed.
+ * - `"onQuit"` — install on app quit by spawning the installer while the app exits (the historical `autoInstallOnAppQuit = true` behavior).
+ * - `"onNextLaunch"` — persist the downloaded update on quit and install it at the start of the *next* launch, after re-validating it,
+ *   so the installer is never killed by an OS session end (see https://github.com/electron-userland/electron-builder/issues/7807).
+ * - `"manual"` — never auto-install; the downloaded update stays cached until an explicit `quitAndInstall()` (the historical `autoInstallOnAppQuit = false` behavior).
+ */
+export type AutoInstallEvent = "manual" | "onQuit" | "onNextLaunch"
+
+export interface QuitAndInstallOptions {
+  /**
+   * *windows-only* Runs the installer in silent mode.
+   * @default false
+   */
+  isSilent?: boolean
+  /**
+   * Run the app after finish even on silent install. Not applicable for macOS.
+   * Ignored if `isSilent` is set to `false` (in this case you can still set `autoRunAppAfterInstall` to `false` to prevent running the app after install).
+   * @default false
+   */
+  isForceRunAfter?: boolean
+  /**
+   * Quit WITHOUT spawning the installer and persist the downloaded update for installation on the next application
+   * launch instead (same deferred flow as `autoInstallEvent: "onNextLaunch"`, but for a single call). `isSilent` and
+   * `isForceRunAfter` are ignored when set. Not applicable for macOS (Squirrel.Mac stages updates natively).
+   * @default false
+   */
+  waitUntilNextLaunch?: boolean
+}
+
 export class UpdaterSignal {
   constructor(private emitter: EventEmitter) {}
 

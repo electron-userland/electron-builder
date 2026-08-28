@@ -306,9 +306,37 @@ test.ifWindows("afterSign", ({ expect }) => {
       },
     },
     {
+      // afterSign is only called when the app is actually signed, so sign with an ephemeral self-signed certificate
+      signedWin: true,
       packed: async () => {
         // afterSign is only called when an app is actually signed and ignored otherwise.
         expect(called).toEqual(1)
+        return Promise.resolve()
+      },
+    }
+  )
+})
+
+test.ifWindows("afterSign is skipped when signing does not occur", ({ expect }) => {
+  let called = 0
+  return assertPack(
+    expect,
+    "test-app-one",
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+      config: {
+        win: {
+          sign: false,
+        },
+        afterSign: () => {
+          called++
+          return Promise.resolve()
+        },
+      },
+    },
+    {
+      packed: async () => {
+        expect(called).toEqual(0)
         return Promise.resolve()
       },
     }

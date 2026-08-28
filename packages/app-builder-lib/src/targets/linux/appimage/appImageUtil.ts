@@ -154,12 +154,12 @@ function escapeShellString(str: string): string {
 /**
  * Validates that critical path fields (executable name, product filename, license filename)
  * contain only characters that are safe for use in filesystem paths and embedded bash strings.
- * Allowed: Unicode letters, digits, dots, underscores, hyphens, and spaces.
+ * Allowed: Unicode letters, digits, dots, underscores, hyphens, spaces, and parentheses.
  */
 export function validateCriticalPathString(str: string, fieldName: string): void {
-  if (!/^[\p{L}\p{N}._\- ]+$/u.test(str)) {
+  if (!/^[\p{L}\p{N}._\- ()]+$/u.test(str)) {
     throw new InvalidConfigurationError(
-      `${fieldName} contains characters that cannot be safely used in file paths: ${str}. Please use only letters, digits, hyphens, underscores, dots, and spaces.`
+      `${fieldName} contains characters that cannot be safely used in file paths: ${str}. Please use only letters, digits, hyphens, underscores, dots, spaces, and parentheses.`
     )
   }
 }

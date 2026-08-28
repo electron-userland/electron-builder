@@ -23,9 +23,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression maximum - appIm
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -56,9 +54,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression maximum - appIm
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -89,9 +85,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression maximum - appIm
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -122,9 +116,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression maximum - appIm
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -155,9 +147,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression maximum - compr
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -188,9 +178,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression maximum - compr
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -221,9 +209,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression maximum - compr
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -254,9 +240,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression maximum - tools
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -287,9 +271,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression maximum - tools
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -320,9 +302,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression maximum - tools
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -353,9 +333,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression maximum - tools
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -386,9 +364,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression normal - appIma
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -419,9 +395,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression normal - appIma
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -452,9 +426,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression normal - appIma
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -485,9 +457,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression normal - appIma
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -518,9 +488,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression normal - compre
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -551,9 +519,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression normal - compre
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -584,9 +550,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression normal - compre
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -617,9 +581,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression normal - toolse
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -650,9 +612,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression normal - toolse
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -683,9 +643,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression normal - toolse
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -716,9 +674,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression normal - toolse
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -749,9 +705,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression store - appImag
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -782,9 +736,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression store - appImag
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -815,9 +767,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression store - appImag
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -848,9 +798,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression store - appImag
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -881,9 +829,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression store - compres
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -914,9 +860,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression store - compres
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -947,9 +891,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression store - compres
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -980,9 +922,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression store - toolset
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1013,9 +953,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression store - toolset
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1046,9 +984,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression store - toolset
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1079,9 +1015,7 @@ exports[`linux install > AppImage toolsets > arm64 - compression store - toolset
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1112,9 +1046,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1147,9 +1079,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1182,9 +1112,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1217,9 +1145,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1252,9 +1178,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1287,9 +1211,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1322,9 +1244,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1357,9 +1277,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1392,9 +1310,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1427,9 +1343,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1462,9 +1376,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1497,9 +1409,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1532,9 +1442,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1567,9 +1475,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1602,9 +1508,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1637,9 +1541,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1672,9 +1574,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1707,9 +1607,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1742,9 +1640,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1777,9 +1673,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1812,9 +1706,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.2 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1847,9 +1739,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1882,9 +1772,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1917,9 +1805,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1952,9 +1838,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -1987,9 +1871,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2022,9 +1904,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2057,9 +1937,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2092,9 +1970,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2127,9 +2003,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2162,9 +2036,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2197,9 +2069,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2232,9 +2102,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2267,9 +2135,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2302,9 +2168,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2337,9 +2201,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2372,9 +2234,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2407,9 +2267,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2442,9 +2300,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2477,9 +2333,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2512,9 +2366,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2547,9 +2399,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: 1.0.3 - compressio
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2582,9 +2432,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2617,9 +2465,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2652,9 +2498,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2687,9 +2531,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2722,9 +2564,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2757,9 +2597,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2792,9 +2630,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2827,9 +2663,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2862,9 +2696,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2897,9 +2729,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2932,9 +2762,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -2967,9 +2795,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3002,9 +2828,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3037,9 +2861,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3072,9 +2894,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3107,9 +2927,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3142,9 +2960,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3177,9 +2993,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3212,9 +3026,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3247,9 +3059,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3282,9 +3092,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3317,9 +3125,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3352,9 +3158,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3387,9 +3191,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3422,9 +3224,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3457,9 +3257,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3492,9 +3290,7 @@ exports[`linux install > AppImage toolsets > arm64 - toolset: legacy - compressi
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3527,9 +3323,7 @@ exports[`linux install > AppImage toolsets > x64 - compression maximum - compres
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3560,9 +3354,7 @@ exports[`linux install > AppImage toolsets > x64 - compression maximum - compres
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3593,9 +3385,7 @@ exports[`linux install > AppImage toolsets > x64 - compression maximum - compres
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3626,9 +3416,7 @@ exports[`linux install > AppImage toolsets > x64 - compression normal - compress
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3659,9 +3447,7 @@ exports[`linux install > AppImage toolsets > x64 - compression normal - compress
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3692,9 +3478,7 @@ exports[`linux install > AppImage toolsets > x64 - compression normal - compress
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3725,9 +3509,7 @@ exports[`linux install > AppImage toolsets > x64 - compression store - compresso
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3758,9 +3540,7 @@ exports[`linux install > AppImage toolsets > x64 - compression store - compresso
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3791,15 +3571,607 @@ exports[`linux install > AppImage toolsets > x64 - compression store - compresso
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
   ],
 }
 `;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: maximum - compressor: gzip 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: maximum - compressor: gzip 2`] = `"gzip"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: maximum - compressor: xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: maximum - compressor: xz 2`] = `"zstd"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: maximum - compressor: zstd 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: maximum - compressor: zstd 2`] = `"zstd"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: normal - compressor: gzip 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: normal - compressor: gzip 2`] = `"gzip"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: normal - compressor: xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: normal - compressor: xz 2`] = `"zstd"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: normal - compressor: zstd 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: normal - compressor: zstd 2`] = `"zstd"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: store - compressor: gzip 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: store - compressor: gzip 2`] = `"gzip"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: store - compressor: xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: store - compressor: xz 2`] = `"zstd"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: store - compressor: zstd 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.0.3 - compression: store - compressor: zstd 2`] = `"zstd"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: maximum - compressor: gzip 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: maximum - compressor: gzip 2`] = `"gzip"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: maximum - compressor: xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: maximum - compressor: xz 2`] = `"zstd"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: maximum - compressor: zstd 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: maximum - compressor: zstd 2`] = `"zstd"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: normal - compressor: gzip 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: normal - compressor: gzip 2`] = `"gzip"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: normal - compressor: xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: normal - compressor: xz 2`] = `"zstd"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: normal - compressor: zstd 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: normal - compressor: zstd 2`] = `"zstd"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: store - compressor: gzip 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: store - compressor: gzip 2`] = `"gzip"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: store - compressor: xz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: store - compressor: xz 2`] = `"zstd"`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: store - compressor: zstd 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: 1.1.0 - compression: store - compressor: zstd 2`] = `"zstd"`;
 
 exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: maximum - compressor: override: bzip2 1`] = `
 {
@@ -3824,9 +4196,7 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3857,9 +4227,7 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3890,15 +4258,15 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
   ],
 }
 `;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: maximum - compressor: override: gzip 2`] = `"gzip"`;
 
 exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: maximum - compressor: override: lzo 1`] = `
 {
@@ -3923,9 +4291,7 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3956,9 +4322,7 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -3989,15 +4353,15 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
   ],
 }
 `;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: maximum - compressor: override: xz 2`] = `"xz"`;
 
 exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: maximum - compressor: override: zstd 1`] = `
 {
@@ -4022,15 +4386,15 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
   ],
 }
 `;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: maximum - compressor: override: zstd 2`] = `"xz"`;
 
 exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: normal - compressor: override: bzip2 1`] = `
 {
@@ -4055,9 +4419,7 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -4088,9 +4450,7 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -4121,15 +4481,15 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
   ],
 }
 `;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: normal - compressor: override: gzip 2`] = `"gzip"`;
 
 exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: normal - compressor: override: lzo 1`] = `
 {
@@ -4154,9 +4514,7 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -4187,9 +4545,7 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -4220,15 +4576,15 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
   ],
 }
 `;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: normal - compressor: override: xz 2`] = `"xz"`;
 
 exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: normal - compressor: override: zstd 1`] = `
 {
@@ -4253,15 +4609,15 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
   ],
 }
 `;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: normal - compressor: override: zstd 2`] = `"gzip"`;
 
 exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: store - compressor: override: bzip2 1`] = `
 {
@@ -4286,9 +4642,7 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -4319,9 +4673,7 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -4352,15 +4704,15 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
   ],
 }
 `;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: store - compressor: override: gzip 2`] = `"gzip"`;
 
 exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: store - compressor: override: lzo 1`] = `
 {
@@ -4385,9 +4737,7 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -4418,9 +4768,7 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -4451,15 +4799,15 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
   ],
 }
 `;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: store - compressor: override: xz 2`] = `"xz"`;
 
 exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: store - compressor: override: zstd 1`] = `
 {
@@ -4484,15 +4832,15 @@ exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression
             "url": "TestApp.AppImage",
           },
         ],
-        "path": "TestApp.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
   ],
 }
 `;
+
+exports[`linux install > AppImage toolsets > x64 - toolset: legacy - compression: store - compressor: override: zstd 2`] = `"gzip"`;
 
 exports[`linux install > compression: maximum > deb - compression: maximum - compressor: bzip2 1`] = `
 {
@@ -4515,9 +4863,7 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -4546,6 +4892,7 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -4653,9 +5000,7 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -4684,6 +5029,7 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -4791,9 +5137,7 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -4822,6 +5166,7 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -4929,9 +5274,7 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -4960,6 +5303,7 @@ exports[`linux install > compression: maximum > deb - compression: maximum - com
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -5059,9 +5403,7 @@ exports[`linux install > compression: maximum > pacman - compression: maximum - 
             "url": "TestApp.pacman",
           },
         ],
-        "path": "TestApp.pacman",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5090,9 +5432,7 @@ exports[`linux install > compression: maximum > pacman - compression: maximum - 
             "url": "TestApp.pacman",
           },
         ],
-        "path": "TestApp.pacman",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5121,9 +5461,7 @@ exports[`linux install > compression: maximum > pacman - compression: maximum - 
             "url": "TestApp.pacman",
           },
         ],
-        "path": "TestApp.pacman",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5152,9 +5490,7 @@ exports[`linux install > compression: maximum > pacman - compression: maximum - 
             "url": "TestApp.pacman",
           },
         ],
-        "path": "TestApp.pacman",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5191,9 +5527,7 @@ exports[`linux install > compression: maximum > rpm - compression: maximum - com
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5222,9 +5556,7 @@ exports[`linux install > compression: maximum > rpm - compression: maximum - com
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5253,9 +5585,7 @@ exports[`linux install > compression: maximum > rpm - compression: maximum - com
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5284,9 +5614,7 @@ exports[`linux install > compression: maximum > rpm - compression: maximum - com
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5315,9 +5643,7 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5346,6 +5672,7 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -5453,9 +5780,7 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5484,6 +5809,7 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -5591,9 +5917,7 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5622,6 +5946,7 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -5729,9 +6054,7 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5760,6 +6083,7 @@ exports[`linux install > compression: normal > deb - compression: normal - compr
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -5859,9 +6183,7 @@ exports[`linux install > compression: normal > pacman - compression: normal - co
             "url": "TestApp.pacman",
           },
         ],
-        "path": "TestApp.pacman",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5890,9 +6212,7 @@ exports[`linux install > compression: normal > pacman - compression: normal - co
             "url": "TestApp.pacman",
           },
         ],
-        "path": "TestApp.pacman",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5921,9 +6241,7 @@ exports[`linux install > compression: normal > pacman - compression: normal - co
             "url": "TestApp.pacman",
           },
         ],
-        "path": "TestApp.pacman",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5952,9 +6270,7 @@ exports[`linux install > compression: normal > pacman - compression: normal - co
             "url": "TestApp.pacman",
           },
         ],
-        "path": "TestApp.pacman",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -5991,9 +6307,7 @@ exports[`linux install > compression: normal > rpm - compression: normal - compr
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6022,9 +6336,7 @@ exports[`linux install > compression: normal > rpm - compression: normal - compr
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6053,9 +6365,7 @@ exports[`linux install > compression: normal > rpm - compression: normal - compr
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6084,9 +6394,7 @@ exports[`linux install > compression: normal > rpm - compression: normal - compr
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6115,9 +6423,7 @@ exports[`linux install > compression: store > deb - compression: store - compres
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6146,6 +6452,7 @@ exports[`linux install > compression: store > deb - compression: store - compres
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -6253,9 +6560,7 @@ exports[`linux install > compression: store > deb - compression: store - compres
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6284,6 +6589,7 @@ exports[`linux install > compression: store > deb - compression: store - compres
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -6391,9 +6697,7 @@ exports[`linux install > compression: store > deb - compression: store - compres
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6422,6 +6726,7 @@ exports[`linux install > compression: store > deb - compression: store - compres
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -6529,9 +6834,7 @@ exports[`linux install > compression: store > deb - compression: store - compres
             "url": "TestApp.deb",
           },
         ],
-        "path": "TestApp.deb",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6560,6 +6863,7 @@ exports[`linux install > compression: store > deb - compression: store - compres
   "/opt/TestApp/resources.pak",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
   "/opt/TestApp/v8_context_snapshot.bin",
   "/opt/TestApp/vk_swiftshader_icd.json",
   "/usr/share/",
@@ -6659,9 +6963,7 @@ exports[`linux install > compression: store > pacman - compression: store - comp
             "url": "TestApp.pacman",
           },
         ],
-        "path": "TestApp.pacman",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6690,9 +6992,7 @@ exports[`linux install > compression: store > pacman - compression: store - comp
             "url": "TestApp.pacman",
           },
         ],
-        "path": "TestApp.pacman",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6721,9 +7021,7 @@ exports[`linux install > compression: store > pacman - compression: store - comp
             "url": "TestApp.pacman",
           },
         ],
-        "path": "TestApp.pacman",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6752,9 +7050,7 @@ exports[`linux install > compression: store > pacman - compression: store - comp
             "url": "TestApp.pacman",
           },
         ],
-        "path": "TestApp.pacman",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6791,9 +7087,7 @@ exports[`linux install > compression: store > rpm - compression: store - compres
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6822,9 +7116,7 @@ exports[`linux install > compression: store > rpm - compression: store - compres
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6853,9 +7145,7 @@ exports[`linux install > compression: store > rpm - compression: store - compres
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -6884,9 +7174,7 @@ exports[`linux install > compression: store > rpm - compression: store - compres
             "url": "TestApp.rpm",
           },
         ],
-        "path": "TestApp.rpm",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },

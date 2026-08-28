@@ -51,6 +51,7 @@ export type { DmgContent, DmgOptions, DmgWindow, ElectronSignOptions, ElectronUn
 export { AuthorMetadata, Metadata, RepositoryInfo } from "./options/metadata.js"
 export { MsiOptions } from "./options/MsiOptions.js"
 export { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
+export { MsixOptions, MsixWindowsService } from "./options/MsixOptions.js"
 export { BackgroundAlignment, BackgroundScaling, PkgBackgroundOptions, PkgOptions } from "./options/pkgOptions.js"
 export { AsarOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions.js"
 export { PlugDescriptor, SlotDescriptor, SnapcraftOptions } from "./options/SnapOptions.js"
@@ -71,6 +72,7 @@ export { CommonNsisOptions, CustomNsisBinary, NsisOptions, NsisWebOptions, Porta
 export { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
+export { combineSignResults, isSignResultSigned, SignFileResult, SigningResult } from "./codeSign/signResult.js"
 export { WindowsSignOptions } from "./codeSign/win/windowsCodeSign.js"
 export {
   CertificateFromStoreInfo,

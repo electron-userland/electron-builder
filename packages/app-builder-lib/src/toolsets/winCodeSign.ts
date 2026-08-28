@@ -130,6 +130,18 @@ export function isOldWin6() {
   return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
 
+/**
+ * True only for the explicit legacy winCodeSign pin (`"0.0.0"` → winCodeSign-2.6.0). That bundle lacks
+ * the modern Windows Kits SDK (no MSIX-capable `makeappx`/`makepri`), so it cannot build MSIX — only the
+ * MSIX target gates on this. AppX still builds fine with the legacy bundle (it has its own legacy-bundle
+ * `signtool` handling in `getWindowsSignToolExe`). Unset / `null` / `"latest"` and any modern version pin
+ * resolve to a modern bundle; a custom `{ url, … }` toolset is the caller's responsibility and is not
+ * treated as legacy.
+ */
+export function isLegacyWinCodeSign(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish): boolean {
+  return typeof winCodeSign !== "object" && resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST) === "0.0.0"
+}
+
 async function getWindowsSignToolExe({ winCodeSign, resourcesDir = "" }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; resourcesDir?: string }) {
   if (typeof winCodeSign !== "object" && resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST) === "0.0.0") {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX

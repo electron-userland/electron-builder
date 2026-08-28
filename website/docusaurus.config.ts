@@ -157,6 +157,11 @@ const config: Config = {
             },
             {
               type: "doc",
+              docId: "tutorials/offline-air-gapped-builds",
+              label: "Offline / Air-Gapped Builds",
+            },
+            {
+              type: "doc",
               docId: "tutorials/release-using-channels",
               label: "Release Using Channels",
             },

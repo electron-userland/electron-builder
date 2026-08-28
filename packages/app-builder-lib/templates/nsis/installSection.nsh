@@ -64,6 +64,20 @@ SetOutPath $INSTDIR
 !endif
 
 !insertmacro installApplicationFiles
+
+# Self-identify the install method for the auto-updater (parity with the Linux `package-type` marker).
+# This is the only install-time signal that differs between nsis and nsis-web — the app payload itself is
+# byte-identical (both targets share one app archive). electron-updater reads this to default
+# disableWebInstaller=false for nsis-web installs.
+FileOpen $0 "$INSTDIR\resources\package-type" w
+!ifdef APP_PACKAGE_URL
+  FileWrite $0 "nsis-web"
+!else
+  FileWrite $0 "nsis"
+!endif
+FileClose $0
+ClearErrors
+
 !insertmacro registryAddInstallInfo
 !insertmacro addStartMenuLink $keepShortcuts
 !insertmacro addDesktopLink $keepShortcuts

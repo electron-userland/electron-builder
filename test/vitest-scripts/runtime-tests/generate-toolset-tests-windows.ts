@@ -7,6 +7,7 @@ import type * as _AppxSuite from "../../src/windows/appxTestSuite.js"
 import type * as _AssistedInstallerSuite from "../../src/windows/assistedInstallerTestSuite.js"
 import type * as _MsiSuite from "../../src/windows/msiTestSuite.js"
 import type * as _MsiWrappedSuite from "../../src/windows/msiWrappedTestSuite.js"
+import type * as _MsixSuite from "../../src/windows/msixTestSuite.js"
 import type * as _PortableSuite from "../../src/windows/portableTestSuite.js"
 import type * as _SquirrelWindowsSuite from "../../src/windows/squirrelWindowsTestSuite.js"
 import type * as _WinCodeSignSuite from "../../src/windows/winCodeSignTestSuite.js"
@@ -79,6 +80,13 @@ const SUITES: WindowsSuiteConfig[] = [
     importPath: "windows/appxTestSuite",
     describeConfig: { name: "AppX", chain: ["ifWindows"] },
     winCodeSignVersions: WIN_CODE_SIGN_VERSIONS.filter(version => version !== "0.0.0"), // AppX tests are currently incompatible with win-codesign 0.0.0 due to bundled osslsigncode version differences
+  },
+  {
+    name: "msix",
+    registerFn: namedFn("registerMsixTests" satisfies keyof typeof _MsixSuite),
+    importPath: "windows/msixTestSuite",
+    describeConfig: { name: "MSIX", chain: ["ifWindows"] },
+    winCodeSignVersions: WIN_CODE_SIGN_VERSIONS.filter(version => version !== "0.0.0"), // MSIX tests are currently incompatible with win-codesign 0.0.0 due to bundled osslsigncode version differences
   },
   {
     name: "differentialWin",

@@ -2,6 +2,8 @@
     !include "nsProcess.nsh"
 !endif
 
+!include "WordFunc.nsh"
+
 !ifmacrondef customCheckAppRunning
   !include "getProcessInfo.nsh"
   Var pid
@@ -29,11 +31,73 @@
   launch:
 !macroend
 
+# strips trailing backslashes from the path in register _VAR (_TEMP is scratch), so that the
+# single separator the caller appends cannot become a double backslash that never matches
+!macro TRIM_TRAILING_BACKSLASHES _VAR _TEMP
+  ${Do}
+    StrCpy ${_TEMP} ${_VAR} 1 -1
+    ${if} ${_TEMP} != "\"
+      ${Break}
+    ${endIf}
+    StrCpy ${_VAR} ${_VAR} -1
+  ${Loop}
+!macroend
+
+# appends "-or <path>.StartsWith(...)" to $processPathFilter for the InstallLocation stored in
+# the given registry root (if any); expects $R8 to hold the escaped, normalized $INSTDIR prefix
+# already in the filter (used to skip duplicates)
+!macro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER _ROOT_KEY
+  ReadRegStr $R9 ${_ROOT_KEY} "${INSTALL_REGISTRY_KEY}" InstallLocation
+  # a registry value may carry a trailing backslash (e.g. written by an installer run with
+  # /D=C:\path\), which would defeat the StartsWith prefix built below
+  !insertmacro TRIM_TRAILING_BACKSLASHES $R9 $R7
+  # $R7 = $R9 with all double quotes removed; a double quote is invalid in a Windows path
+  # and would break out of the double-quoted PowerShell -Command argument built in
+  # FIND_PROCESS/KILL_PROCESS, so any value containing one is skipped below
+  ${WordReplace} $R9 '"' "" "+" $R7
+  ${if} $R9 != ""
+  ${andIf} $R9 == $R7
+    # escape single quotes for the single-quoted PowerShell string literal, so a quote in the
+    # registry value can neither break the expression nor inject PowerShell into the
+    # (possibly elevated) installer
+    ${WordReplace} $R9 "'" "''" "+" $R7
+    ${if} $R7 != $R8
+      StrCpy $processPathFilter "$processPathFilter -or $$_.Path.StartsWith('$R7\', 'CurrentCultureIgnoreCase')"
+    ${endIf}
+  ${endIf}
+!macroend
+
 !macro CHECK_APP_RUNNING
   Var /GLOBAL CmdPath
   Var /GLOBAL PowerShellPath
+  Var /GLOBAL processPathFilter
   StrCpy $CmdPath "$SYSDIR\cmd.exe"
   StrCpy $PowerShellPath "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
+  Push $R8
+  Push $R9
+  # PowerShell filter matching processes running from the installation directory
+  # (trailing backslash so that a sibling directory with the same prefix is not matched).
+  # $R8 = $INSTDIR with any trailing backslashes stripped ($INSTDIR can carry one, e.g. from
+  # /D=C:\path\ or a registry-restored install location, and the appended separator below
+  # would then become a never-matching double backslash) and with single quotes escaped ('')
+  # for the single-quoted PowerShell string literal, so a quote in the path can neither break
+  # the expression nor inject PowerShell; a double quote needs no handling here because it is
+  # invalid in a Windows path and NSIS never lets $INSTDIR contain one
+  StrCpy $R8 $INSTDIR
+  !insertmacro TRIM_TRAILING_BACKSLASHES $R8 $R9
+  ${WordReplace} $R8 "'" "''" "+" $R8
+  StrCpy $processPathFilter "$$_.Path.StartsWith('$R8\', 'CurrentCultureIgnoreCase')"
+  !ifndef BUILD_UNINSTALLER
+    # also match processes running from the previous per-user and per-machine installation directories,
+    # because the previous installation is uninstalled during install
+    # https://github.com/electron-userland/electron-builder/issues/10022
+    Push $R7
+    !insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKCU
+    !insertmacro APPEND_INSTALL_LOCATION_TO_PROCESS_PATH_FILTER HKLM
+    Pop $R7
+  !endif
+  Pop $R9
+  Pop $R8
   !ifmacrodef customCheckAppRunning
     !insertmacro customCheckAppRunning
   !else
@@ -45,12 +109,12 @@
 !macro IS_POWERSHELL_AVAILABLE
   Var /GLOBAL IsPowerShellAvailable ; 0 = available, 1 = not available
   # Try running PowerShell with a simple command to check if it's available
-  nsExec::Exec `"$PowerShellPath" -C "if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"`
+  nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"`
   Pop $0  # Return code (0 = success, other = error)
 
   ${if} $0 == 0
     # PowerShell is available, check if it's not blocked by policies
-    nsExec::Exec `"$PowerShellPath" -C "if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
+    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
     Pop $0
   ${endIf}
 
@@ -63,7 +127,7 @@
 
 !macro FIND_PROCESS _FILE _RETURN
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')}).Count -gt 0) { exit 0 } else { exit 1 }"`
+    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)}).Count -gt 0) { exit 0 } else { exit 1 }"`
     Pop ${_RETURN}
   ${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
@@ -91,7 +155,7 @@
   ${endIf}
 
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and $$_.Path.StartsWith('$INSTDIR', 'CurrentCultureIgnoreCase')} | % { Stop-Process -Id $$_.ProcessId $0 }"`
+    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)} | % { Stop-Process -Id $$_.ProcessId $0 }"`
   ${else}
     !ifdef INSTALL_MODE_PER_ALL_USERS
       nsExec::Exec `taskkill /IM "${_FILE}" /FI "PID ne $pid"`

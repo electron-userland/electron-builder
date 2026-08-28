@@ -1,6 +1,6 @@
 import { parseValidEnvVarUrl } from "builder-util/internal"
 import { resolveEnvShellValue, validateShellEmbeddable } from "builder-util/src/envUtil"
-import { removePassword, filterSensitiveEnv, spawnAndWriteWithOutput, ExecError } from "builder-util"
+import { removePassword, removePasswordFromArgs, filterSensitiveEnv, spawnAndWriteWithOutput, ExecError } from "builder-util"
 import { afterEach, expect, vi } from "vitest"
 
 const testValue = "secretValue"
@@ -281,6 +281,68 @@ describe("removePassword: multiple keys in one string", () => {
     const output = removePassword(input)
 
     expect(output).toMatchSnapshot()
+  })
+})
+
+describe("removePassword: -k / -key single-letter and pkcs11 stems (string form, e.g. echoed in stderr)", () => {
+  test("redacts `security … -k <password>`", ({ expect }) => {
+    const out = removePassword("security set-key-partition-list -S apple-tool:,apple: -s -k topSecretPw /Users/x/build.keychain")
+    expect(out).not.toContain("topSecretPw")
+    expect(out).toContain("/Users/x/build.keychain")
+  })
+
+  test("redacts a `-key` pkcs11 URI (hides an embedded pin-value)", ({ expect }) => {
+    const out = removePassword("osslsigncode -key pkcs11:token=t;object=k?pin-value=9999 -in app.exe")
+    expect(out).not.toContain("9999")
+    expect(out).not.toContain("pin-value")
+  })
+
+  test("does not redact `-keychain <path>` (word boundary)", ({ expect }) => {
+    const input = "security -keychain /Users/x/login.keychain"
+    expect(removePassword(input)).toBe(input)
+  })
+})
+
+describe("removePasswordFromArgs (per-argument redaction)", () => {
+  test("hashes a whitespace-containing password in full — no tail leak", ({ expect }) => {
+    const out = removePasswordFromArgs(["signtool", "-P", "my pass phrase", "/some/keychain"])
+    expect(out).not.toContain("pass phrase")
+    expect(out).not.toContain("my pass")
+    // the trailing non-secret argument is preserved
+    expect(out).toContain("/some/keychain")
+  })
+
+  test("redacts a whitespace-containing value for -pass / --accessKey too", ({ expect }) => {
+    expect(removePasswordFromArgs(["osslsigncode", "-pass", "spaced secret value"])).not.toContain("secret value")
+    expect(removePasswordFromArgs(["tool", "--accessKey", "two word key"])).not.toContain("word key")
+  })
+
+  test("redacts `security … -k <password>` keychain value", ({ expect }) => {
+    const out = removePasswordFromArgs(["security", "set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", "topSecretPw", "/Users/x/build.keychain"])
+    expect(out).not.toContain("topSecretPw")
+    expect(out).toContain("/Users/x/build.keychain")
+  })
+
+  test("redacts the whole -key pkcs11 URI including an embedded pin-value", ({ expect }) => {
+    const out = removePasswordFromArgs(["osslsigncode", "-key", "pkcs11:token=t;object=k?pin-value=1234", "-certs", "cert.pem"])
+    expect(out).not.toContain("1234")
+    expect(out).not.toContain("pin-value")
+    expect(out).toContain("cert.pem")
+  })
+
+  test("does not redact a non-secret flag value", ({ expect }) => {
+    expect(removePasswordFromArgs(["tool", "-path", "/some/dir"])).toBe("tool -path /some/dir")
+  })
+
+  test("preserves a Parallels Mac host path passed to /p", ({ expect }) => {
+    expect(removePasswordFromArgs(["signtool", "/p", "\\\\Mac\\Host\\Users\\user"])).toContain("\\\\Mac\\Host\\Users\\user")
+  })
+
+  test("redacts the `/b <cert> /c` block that spans arguments", ({ expect }) => {
+    const out = removePasswordFromArgs(["signtool", "/b", "blockSecret", "/c"])
+    expect(out).not.toContain("blockSecret")
+    expect(out).toContain("/b")
+    expect(out).toContain("/c")
   })
 })
 

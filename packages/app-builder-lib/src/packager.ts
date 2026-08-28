@@ -25,7 +25,8 @@ import { readAsarJson } from "./asar/asar.js"
 import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration, Hook } from "./configuration.js"
 import { Platform, SourceRepositoryInfo, Target } from "./core.js"
 import { createElectronFrameworkSupport } from "./electron/ElectronFramework.js"
-import { Framework } from "./Framework.js"
+import { assertElectronArchSupported } from "./electron/electronArchSupport.js"
+import { Framework, isElectronBased } from "./Framework.js"
 import { Metadata } from "./options/metadata.js"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
@@ -42,7 +43,7 @@ import asyncPool from "tiny-async-pool"
 import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js"
 import _fsExtra from "fs-extra"
 const { chmod, mkdirs, outputFile } = _fsExtra
-import { setSevenZipPath } from "./toolsets/7zip.js"
+import { setSevenZipPath, setSevenZipVersion } from "./toolsets/7zip.js"
 import { getCustomToolsetPath } from "./toolsets/custom.js"
 
 type PackagerEvents = {
@@ -345,7 +346,7 @@ export class Packager {
     if (this.isTwoPackageJsonProjectLayoutUsed) {
       log.debug({ devPackageFile, appPackageFile }, "two package.json structure is used")
     }
-    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile)
+    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile, projectDir)
 
     await validateConfiguration(configuration, this.debugLogger)
 
@@ -453,6 +454,8 @@ export class Packager {
         await chmod(bin, 0o755)
       }
       setSevenZipPath(bin)
+    } else {
+      setSevenZipVersion(sevenZipConfig)
     }
 
     const taskManager = new AsyncTaskManager(this.cancellationToken)
@@ -489,6 +492,12 @@ export class Packager {
       for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
         if (this.cancellationToken.cancelled) {
           break
+        }
+
+        // fail fast when the requested arch has no official Electron build anymore (Electron 44 removed win32-ia32 and linux-armv7l);
+        // skipped for prepackaged apps since nothing is downloaded then
+        if (this.options.prepackaged == null && isElectronBased(this.framework)) {
+          assertElectronArchSupported(platform, arch, this.framework.version, this.config)
         }
 
         // support os and arch macro in output value

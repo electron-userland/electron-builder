@@ -1,6 +1,8 @@
+{!./partials/_upgrading-from-v26.md!}
+
 The [publish](./configuration.md#publish) key contains a set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](./features/auto-update.md).
 
-`String | Object | Array<Object | String>` where `Object` it is [Keygen](#keygen), [Generic Server](#byo-generic-create-your-own), [GitHub](#github), [S3](#s3), [Spaces](#spaces) or [Snap Store](#snap-store) options. Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](./configuration.md) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
+`String | Object | Array<Object | String>` where `Object` it is [Keygen](#keygen), [Generic Server](#byo-generic-create-your-own), [GitHub](#github), [S3](#s3), [Spaces](#spaces), [R2](#r2) or [Snap Store](#snap-store) options. Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](./configuration.md) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
 
 Note that when using a generic server, you have to upload the built application and metadata files yourself.
 
@@ -20,16 +22,10 @@ If `GITHUB_RELEASE_TOKEN` is defined, it will be used instead of (`GH_TOKEN` or 
 - you could make your `GITHUB_TOKEN` "Read-only" when creating a fine-grained personal access token, and "Read and write" for the `GITHUB_RELEASE_TOKEN`.
 - "Contents" fine-grained permission was sufficient. (at time of writing - Apr 2024)
 
-:::warning[Deprecation Notice: Implicit Publishing]
-electron-builder currently auto-detects when to publish based on CI environment conditions:
+:::warning[Implicit publishing was removed in v27]
+In v26 and earlier, electron-builder auto-detected when to publish based on CI environment conditions (npm lifecycle event, a git tag in CI, etc.). **As of v27 this implicit behavior is removed** — publishing never happens unless you request it. This closes a hole where unfinished work or secrets could be published unintentionally.
 
-- Running via `npm run release` → publishes always
-- Git tag detected in CI → publishes on tag
-- CI environment detected → publishes to draft releases
-
-**This implicit publishing behavior is deprecated and will be disabled in electron-builder v27.**
-
-To prepare for this change, please explicitly specify your publish intent using the `--publish` CLI flag (e.g., `--publish always`, `--publish onTag`) or set the `publish` configuration in your `package.json` or `electron-builder.yml`.
+Explicitly specify your publish intent with the `--publish` CLI flag (e.g. `--publish always`, `--publish onTag`, `--publish onTagOrDraft`, `--publish never`) or set the `publish` option in your configuration. See [v27 Breaking Changes → implicit `--publish` removed](./migration/v27-breaking-changes.md#implicit-publish-removed).
 :::
 
 :::info[Snap store]
@@ -134,9 +130,24 @@ Detected automatically using:
 # Publishers
 
 ## Bitbucket
+
+:::note[v27: authentication mode]
+The Bitbucket publisher selects its auth scheme by whether a username is present:
+
+- **With a username** (`bitbucket.username`, or the `BITBUCKET_USERNAME` env var) → HTTP **Basic** auth. Use this for a Bitbucket **app password** or an Atlassian **API token** (the username is your Bitbucket username or Atlassian account email).
+- **Without a username** → the token is sent as `Authorization: Bearer <token>` (a repository / project / workspace **access token**). This is new in v27; previously a token was always sent as Basic auth with the repo owner as the username.
+
+If your CI sets `BITBUCKET_TOKEN` to an app password / API token **without** a username, set `BITBUCKET_USERNAME` too, or the request goes out as Bearer and fails authentication.
+:::
+
   {!./builder-util-runtime.Interface.BitbucketOptions.md!}
 
 ## Github
+
+:::note[v27: tagNamePrefix replaces vPrefixedTagName]
+The GitHub `vPrefixedTagName` boolean was removed — use `tagNamePrefix` to control the tag prefix (defaults to `"v"`; set `tagNamePrefix: ""` for no prefix). `electron-builder migrate-schema` rewrites it. (On **GitLab**, `vPrefixedTagName` is unchanged and still works.)
+:::
+
   {!./builder-util-runtime.Interface.GithubOptions.md!}
 
 ## GitLab
@@ -153,6 +164,21 @@ Detected automatically using:
 
 ## Spaces
   {!./builder-util-runtime.Interface.SpacesOptions.md!}
+
+## R2
+
+To publish to [Cloudflare R2](https://developers.cloudflare.com/r2/):
+
+1. Create an [R2 API token](https://developers.cloudflare.com/r2/api/s3/tokens/) with at least **Object Read & Write** permission on your bucket.
+2. Expose its credentials to electron-builder via the `CF_R2_ACCESS_KEY_ID` and `CF_R2_SECRET_ACCESS_KEY` environment variables.
+3. Enable [public access](https://developers.cloudflare.com/r2/buckets/public-buckets/) for the bucket via an `r2.dev` subdomain or a custom domain — R2's S3 API endpoint cannot serve unauthenticated downloads, so `electron-updater` cannot download updates from it.
+4. Set `publicUrl` to that public base URL.
+
+Auto-updating from R2 requires an `electron-updater` version that supports the `r2` provider: electron-updater >= 7.0.0 (the release line containing this feature).
+
+Note: files are uploaded with a single PUT request, and R2 limits single-PUT uploads to ~5 GiB per object.
+
+  {!./builder-util-runtime.Interface.R2Options.md!}
 
 ## BYO Generic (create-your-own)
 (And maybe submit it upstream in a PR!)

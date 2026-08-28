@@ -53,7 +53,15 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * 5. Hoisting the dependencies to their final locations
    * 6. Resolving and returning module information
    */
-  public async getNodeModules({ packageName, archFilter }: { packageName: string; archFilter?: ArchFilter }): Promise<{
+  public async getNodeModules({
+    packageName,
+    archFilter,
+    ignoredDependencies,
+  }: {
+    packageName: string
+    archFilter?: ArchFilter
+    ignoredDependencies?: ReadonlyArray<string>
+  }): Promise<{
     nodeModules: NodeModuleInfo[]
     logSummary: ModuleManager["logSummary"]
   }> {
@@ -62,6 +70,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     await this.collectAllDependencies(tree, packageName)
     const realTree: ProdDepType = this.getTreeFromWorkspaces(tree, packageName)
     await this.extractProductionDependencyGraph(realTree, packageName)
+
+    this.markExcludedModules(this.productionGraph, packageName, ignoredDependencies ?? [])
 
     const hoisterResult: HoisterResult = hoist(this.transformToHoisterTree(this.productionGraph, packageName), {
       check: log.isDebugEnabled,
@@ -266,6 +276,74 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     return tree
   }
 
+  /**
+   * Flags which modules must be omitted from the *copied* app output for the given `ignoredNames` by
+   * setting an `excluded` marker on the pre-hoist graph nodes.
+   *
+   * Only a *top-level* production dependency (one the app itself declares) can be excluded, together
+   * with its exclusively-owned transitive subtree. A package that is merely a transitive dependency of
+   * a non-excluded production dependency is never excluded, even if its name is in `ignoredNames`:
+   * only the root's own edges to ignored names are severed, so anything still reachable through another
+   * production dependency stays reachable and is kept.
+   *
+   * Runs on the pre-hoist graph, where the true parent->child edges still exist, so a shared (deduped)
+   * transitive dependency remains reachable and is kept while an ignored package's exclusive subtree
+   * becomes unreachable and is flagged.
+   */
+  private markExcludedModules(graph: DependencyGraph, rootId: string, ignoredNames: ReadonlyArray<string>): void {
+    const ignored = new Set(ignoredNames)
+    if (ignored.size === 0) {
+      return
+    }
+
+    const rootDeps = graph[rootId]?.dependencies ?? []
+    const ignoredRootEdges = new Set(rootDeps.filter(dep => ignored.has(this.parseNameVersion(dep).name)))
+    if (ignoredRootEdges.size === 0) {
+      return
+    }
+
+    const reachable = new Set<string>()
+    const stack: string[] = [rootId]
+    while (stack.length > 0) {
+      const id = stack.pop()!
+      if (reachable.has(id)) {
+        continue
+      }
+      reachable.add(id)
+      const node = graph[id]
+      if (node != null) {
+        for (const dep of node.dependencies) {
+          if (id === rootId && ignoredRootEdges?.has(dep)) {
+            continue
+          }
+          if (!reachable.has(dep)) {
+            stack.push(dep)
+          }
+        }
+      }
+    }
+    for (const id of Object.keys(graph)) {
+      if (!reachable.has(id)) {
+        graph[id].excluded = true
+      }
+    }
+
+    // Only directly-declared deps that actually ended up excluded (i.e. not still reachable via a kept
+    // dependency) are surfaced to the user; their exclusive transitive subtree is omitted from the log.
+    // Report the full `name@version` graph id — like the other logSummary buckets — so the log stays
+    // truthful when another version of the same name still ships via a kept dependency (e.g. `debug@4`
+    // excluded while `debug@3` remains bundled).
+    const topLevelExcluded = new Set<string>()
+    for (const dep of ignoredRootEdges) {
+      if (!reachable.has(dep)) {
+        topLevelExcluded.add(dep)
+      }
+    }
+    if (topLevelExcluded.size > 0) {
+      this.cache.logSummary[LogMessageByKey.PKG_EXCLUDED_IGNORED].push(...Array.from(topLevelExcluded).sort())
+    }
+  }
+
   private transformToHoisterTree(obj: DependencyGraph, key: string, nodes: Map<string, HoisterTree> = new Map()): HoisterTree {
     let node = nodes.get(key)
     const { name, version } = this.parseNameVersion(key)
@@ -284,19 +362,26 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
       const deps = (obj[key] || {}).dependencies || []
       for (const dep of deps) {
         const child = this.transformToHoisterTree(obj, dep, nodes)
-        node.dependencies.add(child)
+        // a package that declares itself as a dependency (e.g. libsql) must not produce a self-edge
+        if (child !== node) {
+          node.dependencies.add(child)
+        }
       }
     }
 
     return node
   }
 
-  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[], archFilter?: ArchFilter) {
+  private async _getNodeModules(dependencies: Set<HoisterResult>, result: NodeModuleInfo[], archFilter?: ArchFilter, ancestors: Set<HoisterResult> = new Set()) {
     if (dependencies.size === 0) {
       return
     }
 
     for (const d of dependencies.values()) {
+      // dependency cycles (including self-references) must not recurse
+      if (ancestors.has(d)) {
+        continue
+      }
       const reference = [...d.references][0]
       const key = `${d.name}@${reference}`
       // Normalize the path to handle mixed separators from pnpm JSON output on Windows
@@ -333,19 +418,36 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         name: d.name,
         version: reference,
         dir,
+        excluded: this.productionGraph[key]?.excluded,
       }
       result.push(node)
       if (d.dependencies.size > 0) {
         node.dependencies = []
-        await this._getNodeModules(d.dependencies, node.dependencies, archFilter)
+        ancestors.add(d)
+        await this._getNodeModules(d.dependencies, node.dependencies, archFilter, ancestors)
+        ancestors.delete(d)
       }
     }
     result.sort((a, b) => a.name.localeCompare(b.name))
   }
 
-  protected logMissingDependency(pkgName: string) {
+  /**
+   * Records a dependency that could not be resolved on disk in the log summary.
+   *
+   * A platform-specific package name (e.g. `sass-embedded-linux-x64`) is always classified as a
+   * platform-specific optional dependency. Otherwise, `isDeclaredOptional` decides the bucket: a
+   * caller that *knows* the dependency was declared in `optionalDependencies` (e.g. the pnpm
+   * collector's optional-dependency check) reports a missing *optional* dependency — an expected
+   * condition — rather than the `PKG_NOT_ON_DISK` warning reserved for genuinely missing
+   * production dependencies.
+   */
+  protected logMissingDependency(pkgName: string, isDeclaredOptional = false) {
     const PLATFORM_PACKAGE_RE = /(linux|win32|darwin|freebsd|android)[-_](x64|arm64|ia32|arm|ppc64|s390x|loong64|riscv64|universal)/
-    const diskLogKey = PLATFORM_PACKAGE_RE.test(pkgName) ? LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED : LogMessageByKey.PKG_NOT_ON_DISK
+    const diskLogKey = PLATFORM_PACKAGE_RE.test(pkgName)
+      ? LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED
+      : isDeclaredOptional
+        ? LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED
+        : LogMessageByKey.PKG_NOT_ON_DISK
     this.cache.logSummary[diskLogKey].push(pkgName)
   }
 

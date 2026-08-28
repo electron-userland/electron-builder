@@ -1,53 +1,26 @@
-import { Arch, asArray, copyOrLinkFile, ensureNotBusy, InvalidConfigurationError, log, sanitizeDirPath, walk, escapeForXml } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { Arch, asArray, InvalidConfigurationError, log } from "builder-util"
 
 import path from "path"
 import { AppXOptions } from "../../index.js"
-import { getWindowsKitsBundle, isOldWin6 } from "../../toolsets/winCodeSign.js"
+import { isOldWin6 } from "../../toolsets/winCodeSign.js"
 import { Target } from "../../core.js"
 import { getTemplatePath } from "../../util/pathManager.js"
-import { VmManager } from "../../vm/vm.js"
 import { WinPackager } from "../../winPackager.js"
-import { createStageDir } from "../targetUtil.js"
-import { CAPABILITIES, isValidCapabilityName } from "./AppxCapabilities.js"
+// Shared with the MSIX target — winAppUtil is the single source of truth for the build pipeline + manifest helpers.
+import {
+  buildAppxPackage,
+  buildCapabilitiesXml,
+  buildExtensionsXml,
+  defaultTileTag,
+  lockScreenTag,
+  resolvePackageApplicationId,
+  resolvePackageIdentityName,
+  resourceLanguageTag,
+  splashScreenTag,
+  substituteManifestMacros,
+} from "./winAppUtil.js"
 import _fsExtra from "fs-extra"
-const { emptyDir, readdir, readFile, writeFile } = _fsExtra
-
-const APPX_ASSETS_DIR_NAME = "appx"
-
-const vendorAssetsForDefaultAssets: Record<string, string> = {
-  "StoreLogo.png": "SampleAppx.50x50.png",
-  "Square150x150Logo.png": "SampleAppx.150x150.png",
-  "Square44x44Logo.png": "SampleAppx.44x44.png",
-  "Wide310x150Logo.png": "SampleAppx.310x150.png",
-}
-
-const restrictedApplicationIdValues = [
-  "CON",
-  "PRN",
-  "AUX",
-  "NUL",
-  "COM1",
-  "COM2",
-  "COM3",
-  "COM4",
-  "COM5",
-  "COM6",
-  "COM7",
-  "COM8",
-  "COM9",
-  "LPT1",
-  "LPT2",
-  "LPT3",
-  "LPT4",
-  "LPT5",
-  "LPT6",
-  "LPT7",
-  "LPT8",
-  "LPT9",
-]
-
-const DEFAULT_RESOURCE_LANG = "en-US"
+const { readFile, writeFile } = _fsExtra
 
 export default class AppXTarget extends Target {
   readonly options: AppXOptions = this.packager.getOptionsForTarget<AppXOptions>("appx")
@@ -66,144 +39,12 @@ export default class AppXTarget extends Target {
   }
 
   // https://docs.microsoft.com/en-us/windows/uwp/packaging/create-app-package-with-makeappx-tool#mapping-files
-  async build(appOutDir: string, arch: Arch): Promise<any> {
-    const packager = this.packager
-    const artifactName = packager.expandArtifactBeautyNamePattern(this.options, "appx", arch)
-    const artifactPath = path.join(this.outDir, artifactName)
-    await packager.emitArtifactBuildStarted({
-      targetPresentableName: "AppX",
-      file: artifactPath,
-      arch,
+  build(appOutDir: string, arch: Arch): Promise<any> {
+    return buildAppxPackage(this, this.packager, this.options, appOutDir, arch, {
+      kind: "appx",
+      presentableName: "AppX",
+      writeManifest: (manifestFile, a, publisher, userAssets) => this.writeManifest(manifestFile, a, publisher, userAssets),
     })
-
-    const vendorPath = await getWindowsKitsBundle({ winCodeSign: this.packager.config.toolsets?.winCodeSign, resourcesDir: this.packager.buildResourcesDir })
-    const vm = await packager.vm.value
-
-    const stageDir = await createStageDir(this, packager, arch)
-
-    const mappingFile = stageDir.getTempFile("mapping.txt")
-    const makeAppXArgs = ["pack", "/o" /* overwrite the output file if it exists */, "/f", vm.toVmFile(mappingFile), "/p", vm.toVmFile(artifactPath)]
-    if (packager.compression === "store") {
-      makeAppXArgs.push("/nc")
-    }
-
-    const mappingList: Array<Array<string>> = []
-    mappingList.push(
-      await Promise.all(
-        (await walk(appOutDir)).map(file => {
-          let appxPath = file.substring(appOutDir.length + 1)
-          if (path.sep !== "\\") {
-            appxPath = appxPath.replace(/\//g, "\\")
-          }
-          return `"${vm.toVmFile(file)}" "app\\${appxPath}"`
-        })
-      )
-    )
-
-    const userAssetDir = await this.packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
-    const assetInfo = await AppXTarget.computeUserAssets(vm, vendorPath.appxAssets, userAssetDir)
-    const userAssets = assetInfo.userAssets
-
-    const manifestFile = stageDir.getTempFile("AppxManifest.xml")
-    await this.writeManifest(manifestFile, arch, await this.computePublisherName(), userAssets)
-
-    await packager.emitAppxManifestCreated(manifestFile)
-    mappingList.push(assetInfo.mappings)
-    mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
-
-    if (isScaledAssetsProvided(userAssets)) {
-      const outFile = vm.toVmFile(stageDir.getTempFile("resources.pri"))
-      const makePriExe = path.join(vendorPath.kit, "makepri.exe")
-      const makePriPath = vm.toVmFile(makePriExe)
-
-      const assetRoot = stageDir.getTempFile("appx/assets")
-      await emptyDir(assetRoot)
-      await Promise.all(assetInfo.allAssets.map(it => copyOrLinkFile(it, path.join(assetRoot, path.basename(it)))))
-
-      // Wait out any transient AV/share lock on the freshly-extracted kit binary (see ensureNotBusy).
-      await ensureNotBusy(makePriExe)
-      await vm.exec(makePriPath, [
-        "new",
-        "/Overwrite",
-        "/Manifest",
-        vm.toVmFile(manifestFile),
-        "/ProjectRoot",
-        vm.toVmFile(path.dirname(assetRoot)),
-        "/ConfigXml",
-        vm.toVmFile(path.join(getTemplatePath("appx"), "priconfig.xml")),
-        "/OutputFile",
-        outFile,
-      ])
-
-      // in addition to resources.pri, resources.scale-140.pri and other such files will be generated
-      for (const resourceFile of (await readdir(stageDir.dir)).filter(it => it.startsWith("resources.")).sort()) {
-        mappingList.push([`"${vm.toVmFile(stageDir.getTempFile(resourceFile))}" "${resourceFile}"`])
-      }
-      makeAppXArgs.push("/l")
-    }
-
-    let mapping = "[Files]"
-    for (const list of mappingList) {
-      mapping += "\r\n" + list.join("\r\n")
-    }
-    await writeFile(mappingFile, mapping)
-    packager.debugLogger.add("appx.mapping", mapping)
-
-    if (this.options.makeappxArgs != null) {
-      makeAppXArgs.push(...this.options.makeappxArgs)
-    }
-    this.buildQueueManager.add(async () => {
-      const makeAppxExe = path.join(vendorPath.kit, "makeappx.exe")
-      // The kit binary is often freshly extracted to a cold cache; on Windows an AV scanner can hold a
-      // deny-write lock on it just long enough that CreateProcess fails with `spawn UNKNOWN`. Wait for
-      // the lock to clear before spawning. See ensureNotBusy.
-      await ensureNotBusy(makeAppxExe)
-      await vm.exec(vm.toVmFile(makeAppxExe), makeAppXArgs)
-      await packager.signIf(artifactPath)
-
-      await stageDir.cleanup()
-
-      await packager.emitArtifactBuildCompleted({
-        file: artifactPath,
-        packager,
-        arch,
-        safeArtifactName: packager.computeSafeArtifactName(artifactName, "appx"),
-        target: this,
-        isWriteUpdateInfo: this.options.electronUpdaterAware,
-      })
-    })
-  }
-
-  private static async computeUserAssets(vm: VmManager, vendorPath: string, userAssetDir: string | null) {
-    const mappings: Array<string> = []
-    let userAssets: Array<string>
-    const allAssets: Array<string> = []
-    if (userAssetDir == null) {
-      userAssets = []
-    } else {
-      userAssets = (await readdir(userAssetDir)).filter(it => !it.startsWith(".") && !it.endsWith(".db") && it.includes("."))
-      for (const name of userAssets) {
-        mappings.push(`"${vm.toVmFile(userAssetDir)}${vm.pathSep}${name}" "assets\\${name}"`)
-        allAssets.push(path.join(userAssetDir, name))
-      }
-    }
-
-    for (const defaultAsset of Object.keys(vendorAssetsForDefaultAssets)) {
-      if (userAssets.length === 0 || !isDefaultAssetIncluded(userAssets, defaultAsset)) {
-        const file = sanitizeDirPath(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]), vendorPath)
-        mappings.push(`"${vm.toVmFile(file)}" "assets\\${defaultAsset}"`)
-        allAssets.push(file)
-      }
-    }
-
-    // we do not use process.arch to build path to tools, because even if you are on x64, ia32 appx tool must be used if you build appx for ia32
-    return { userAssets, mappings, allAssets }
-  }
-
-  private async computePublisherName() {
-    const signtoolManager = await this.packager.signingManager.value
-    // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
-    return signtoolManager.computePublisherName(this, this.options.publisher ?? null)
   }
 
   private async writeManifest(outFile: string, arch: Arch, publisher: string, userAssets: Array<string>) {
@@ -220,85 +61,38 @@ export default class AppXTarget extends Target {
       log.info({ manifestPath: log.filePath(customManifestPath) }, "custom appx manifest found")
     }
     const manifestFileContent = await readFile(customManifestPath || path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8")
-    const manifest = manifestFileContent.replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
+    const manifest = substituteManifestMacros(manifestFileContent, (p1): string => {
       switch (p1) {
         case "publisher":
-          return escapeForXml(publisher)
+          return publisher
 
         case "publisherDisplayName": {
           const name = options.publisherDisplayName || appInfo.companyName
           if (name == null) {
             throw new InvalidConfigurationError(`Please specify "author" in the application package.json — it is required because "appx.publisherDisplayName" is not set.`)
           }
-          return escapeForXml(name)
+          return name
         }
 
         case "version":
           return appInfo.getVersionInWeirdWindowsForm(options.setBuildNumber === true)
 
-        case "applicationId": {
-          const validCharactersRegex = /^([A-Za-z][A-Za-z0-9]*)(\.[A-Za-z][A-Za-z0-9]*)*$/
-          const identitynumber = parseInt(options.identityName as string, 10) || NaN
-          let result: string
-          if (options.applicationId) {
-            result = options.applicationId
-          } else if (!isNaN(identitynumber) && options.identityName !== null && options.identityName !== undefined) {
-            if (options.identityName[0] === "0") {
-              log.warn(`Remove the 0${identitynumber}`)
-              result = options.identityName.replace("0" + identitynumber.toString(), "")
-            } else {
-              log.warn(`Remove the ${identitynumber}`)
-              result = options.identityName.replace(identitynumber.toString(), "")
-            }
-          } else {
-            result = options.identityName || appInfo.name
-          }
+        case "applicationId":
+          // Shared with MSIX: consistent "AppX" label, correct validation messages, and identical
+          // numeric-prefix stripping / validation logic (see winAppUtil.resolvePackageApplicationId).
+          return resolvePackageApplicationId(options.applicationId, options.identityName, appInfo.name, "AppX")
 
-          if (result.length < 1 || result.length > 64) {
-            const message = `Appx Application.Id must be between 1 and 64 characters in length: ${result}`
-            throw new InvalidConfigurationError(message)
-          } else if (!validCharactersRegex.test(result)) {
-            const message = `AppX Application.Id cannot contain alpha-numeric, period, and dash characters: ${result}"`
-            throw new InvalidConfigurationError(message)
-          } else if (restrictedApplicationIdValues.includes(result.toUpperCase())) {
-            const message = `AppX Application.Id cannot contain restricted values ${JSON.stringify(restrictedApplicationIdValues)}: ${result}`
-            throw new InvalidConfigurationError(message)
-          } else if (result == null && options.applicationId == null) {
-            const message = `Please set appx.applicationId (or correct appx.identityName or name)`
-            throw new InvalidConfigurationError(message)
-          }
-
-          return result
-        }
-
-        case "identityName": {
-          const result = options.identityName || appInfo.name
-          const validCharactersRegex = /^[a-zA-Z0-9.-]+$/
-          if (result.length < 3 || result.length > 50) {
-            const message = `Appx identityName.Id must be between 3 and 50 characters in length: ${result}`
-            throw new InvalidConfigurationError(message)
-          } else if (!validCharactersRegex.test(result)) {
-            const message = `AppX identityName.Id cannot contain of alpha-numeric, period, and dash characters: ${result}`
-            throw new InvalidConfigurationError(message)
-          } else if (restrictedApplicationIdValues.includes(result.toUpperCase())) {
-            const message = `AppX identityName.Id cannot contain restricted values ${JSON.stringify(restrictedApplicationIdValues)}: ${result}`
-            throw new InvalidConfigurationError(message)
-          } else if (result == null && options.identityName == null) {
-            const message = `Please set appx.identityName or name`
-            throw new InvalidConfigurationError(message)
-          }
-
-          return result
-        }
+        case "identityName":
+          return resolvePackageIdentityName(options.identityName, appInfo.name, "AppX")
 
         case "executable":
           return executable
 
         case "displayName":
-          return escapeForXml(displayName)
+          return displayName
 
         case "description":
-          return escapeForXml(appInfo.description || appInfo.productName)
+          return appInfo.description || appInfo.productName
 
         case "backgroundColor":
           return options.backgroundColor || "#464646"
@@ -347,134 +141,22 @@ export default class AppXTarget extends Target {
   }
 
   private getCapabilities(): string {
-    const caps = asArray(this.options.capabilities)
-
-    const capSet = new Set(caps)
-
-    const invalid = Array.from(capSet).filter(cap => !isValidCapabilityName(cap))
-    if (invalid.length > 0) {
-      throw new Error(`invalid windows capabilit${invalid.length === 1 ? "y" : "ies"} specified: ${invalid.join(", ")}`)
-    }
-
-    // Ensure runFullTrust is always included
-    capSet.add("runFullTrust")
-
-    // Filter and map in one pass
-    const capabilityStrings = CAPABILITIES.filter(cap => capSet.has(cap.name)).map(cap => `  ${cap.toXMLString()}`)
-
-    return `<Capabilities>\n${capabilityStrings.join("\n")}\n</Capabilities>`
+    return `<Capabilities>\n${buildCapabilitiesXml(this.options.capabilities)}\n</Capabilities>`
   }
 
-  private async getExtensions(executable: string, displayName: string): Promise<string> {
-    const uriSchemes = asArray(this.packager.config.protocols).concat(asArray(this.packager.platformOptions.protocols))
-
-    const fileAssociations = asArray(this.packager.config.fileAssociations).concat(asArray(this.packager.platformOptions.fileAssociations))
-
-    let isAddAutoLaunchExtension = this.options.addAutoLaunchExtension
-    if (isAddAutoLaunchExtension === undefined) {
-      const deps = this.packager.metadata.dependencies
-      isAddAutoLaunchExtension = deps != null && deps["electron-winstore-auto-launch"] != null
-    }
-
-    if (!isAddAutoLaunchExtension && uriSchemes.length === 0 && fileAssociations.length === 0 && this.options.customExtensionsPath === undefined) {
-      return ""
-    }
-
-    let extensions = "<Extensions>"
-
-    if (isAddAutoLaunchExtension) {
-      extensions += `
-        <desktop:Extension Category="windows.startupTask" Executable="${executable}" EntryPoint="Windows.FullTrustApplication">
-          <desktop:StartupTask TaskId="SlackStartup" Enabled="true" DisplayName="${displayName}" />
-        </desktop:Extension>`
-    }
-
-    for (const protocol of uriSchemes) {
-      for (const scheme of asArray(protocol.schemes)) {
-        extensions += `
-          <uap:Extension Category="windows.protocol">
-            <uap:Protocol Name="${scheme}">
-               <uap:DisplayName>${protocol.name}</uap:DisplayName>
-             </uap:Protocol>
-          </uap:Extension>`
-      }
-    }
-
-    for (const fileAssociation of fileAssociations) {
-      for (const ext of asArray(fileAssociation.ext)) {
-        extensions += `
-          <uap:Extension Category="windows.fileTypeAssociation">
-            <uap:FileTypeAssociation Name="${ext}">
-              <uap:SupportedFileTypes>
-                <uap:FileType>.${ext}</uap:FileType>
-              </uap:SupportedFileTypes>
-            </uap:FileTypeAssociation>
-          </uap:Extension>`
-      }
-    }
-
-    if (this.options.customExtensionsPath !== undefined) {
-      const extensionsPath = path.resolve(this.packager.appDir, this.options.customExtensionsPath)
-      extensions += await readFile(extensionsPath, "utf8")
-    }
-
-    extensions += "</Extensions>"
-    return extensions
+  private getExtensions(executable: string, displayName: string): Promise<string> {
+    // Delegate to the shared, XML-escaped helper so AppX and MSIX produce identical (and safely
+    // escaped) extension XML and cannot drift. Raw interpolation here previously left protocol
+    // schemes/names, file-association extensions, displayName and executable unescaped.
+    return buildExtensionsXml({
+      protocols: asArray(this.packager.config.protocols).concat(asArray(this.packager.platformOptions.protocols)),
+      fileAssociations: asArray(this.packager.config.fileAssociations).concat(asArray(this.packager.platformOptions.fileAssociations)),
+      addAutoLaunchExtension: this.options.addAutoLaunchExtension,
+      customExtensionsPath: this.options.customExtensionsPath,
+      appDir: this.packager.appDir,
+      executable,
+      displayName,
+      dependencyNames: this.packager.metadata.dependencies,
+    })
   }
-}
-
-// get the resource - language tag, see https://docs.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest
-function resourceLanguageTag(userLanguages: Array<string> | Nullish): string {
-  if (userLanguages == null || userLanguages.length === 0) {
-    userLanguages = [DEFAULT_RESOURCE_LANG]
-  }
-  return userLanguages.map(it => `<Resource Language="${it.trim().replace(/_/g, "-")}" />`).join("\n")
-}
-
-function lockScreenTag(userAssets: Array<string>): string {
-  if (isDefaultAssetIncluded(userAssets, "BadgeLogo.png")) {
-    return '<uap:LockScreen Notification="badgeAndTileText" BadgeLogo="assets\\BadgeLogo.png" />'
-  } else {
-    return ""
-  }
-}
-
-function defaultTileTag(userAssets: Array<string>, showNameOnTiles: boolean): string {
-  const defaultTiles: Array<string> = ["<uap:DefaultTile", 'Wide310x150Logo="assets\\Wide310x150Logo.png"']
-
-  if (isDefaultAssetIncluded(userAssets, "LargeTile.png")) {
-    defaultTiles.push('Square310x310Logo="assets\\LargeTile.png"')
-  }
-  if (isDefaultAssetIncluded(userAssets, "SmallTile.png")) {
-    defaultTiles.push('Square71x71Logo="assets\\SmallTile.png"')
-  }
-
-  if (showNameOnTiles) {
-    defaultTiles.push(">")
-    defaultTiles.push("<uap:ShowNameOnTiles>")
-    defaultTiles.push("<uap:ShowOn", 'Tile="wide310x150Logo"', "/>")
-    defaultTiles.push("<uap:ShowOn", 'Tile="square150x150Logo"', "/>")
-    defaultTiles.push("</uap:ShowNameOnTiles>")
-    defaultTiles.push("</uap:DefaultTile>")
-  } else {
-    defaultTiles.push("/>")
-  }
-  return defaultTiles.join(" ")
-}
-
-function splashScreenTag(userAssets: Array<string>): string {
-  if (isDefaultAssetIncluded(userAssets, "SplashScreen.png")) {
-    return '<uap:SplashScreen Image="assets\\SplashScreen.png" />'
-  } else {
-    return ""
-  }
-}
-
-function isDefaultAssetIncluded(userAssets: Array<string>, defaultAsset: string) {
-  const defaultAssetName = defaultAsset.substring(0, defaultAsset.indexOf("."))
-  return userAssets.some(it => it.includes(defaultAssetName))
-}
-
-function isScaledAssetsProvided(userAssets: Array<string>) {
-  return userAssets.some(it => it.includes(".scale-") || it.includes(".targetsize-"))
 }

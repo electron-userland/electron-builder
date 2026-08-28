@@ -46,14 +46,45 @@ export function serializeToYaml(object: any, skipInvalid = false, noRefs = false
   })
 }
 
+// Sensitive parameter stems — any of `-`, `--`, or `/` prefix is accepted for all stems.
+// `pass:` is intentionally absent; the dedicated pass: handler in removePassword covers it without double-processing.
+// `key`/`k` cover osslsigncode `-key <pkcs11-uri>` (a URI may embed `pin-value=<PIN>`) and `security … -k <password>`.
+const SENSITIVE_FLAG_STEMS = ["accessKey", "secretKey", "privateToken", "apiKey", "passphrase", "password", "secret", "token", "String", "key", "pass", "p", "k"]
+const SENSITIVE_STEM_ALT = SENSITIVE_FLAG_STEMS.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")
+// Matches a standalone flag argument (e.g. `-P`, `-k`, `--password`, `/p`) whose secret *value* is the next argv element.
+const SENSITIVE_FLAG_ONLY_RE = new RegExp(`^(?:--?|/)(?:${SENSITIVE_STEM_ALT})$`, "i")
+
+/**
+ * Redacts secrets from a spawn/exec argv for logging. Redacts **per-argument**, so a secret value that
+ * contains whitespace is hashed in full instead of leaking every token after the first — which is what
+ * happens when the argv is joined into one string first (the argument boundary is lost, and the flag
+ * pattern can only capture up to the next space). Inline forms (`pass:value`, `/b … /c`) still go
+ * through {@link removePassword}.
+ */
+export function removePasswordFromArgs(args: Array<string>): string {
+  const joined = args
+    .map((arg, index) => {
+      const prev = index > 0 ? args[index - 1] : null
+      if (prev != null && SENSITIVE_FLAG_ONLY_RE.test(prev)) {
+        // `/p \\Mac\Host\...` is a Parallels UNC path passed to signtool, not a secret
+        if (prev.toLowerCase() === "/p" && arg.startsWith("\\\\Mac\\Host\\")) {
+          return arg
+        }
+        return hashSensitiveValue(arg)
+      }
+      return removePassword(arg)
+    })
+    .join(" ")
+  // `/b <cert> /c` spans separate argv elements, so redact the block on the joined string.
+  // The value is a single token (a cert thumbprint), so `\S+` — not `.*?` between two `\s+` — keeps
+  // this linear and ReDoS-safe (CodeQL: polynomial regexp on `/b ` + many spaces).
+  return joined.replace(/(\/b\s+)(\S+)(\s+\/c)/g, (_match, p1, p2, p3) => `${p1}${hashSensitiveValue(p2)}${p3}`)
+}
+
 export function removePassword(input: string): string {
-  // Sensitive parameter stems — any of `-`, `--`, or `/` prefix is accepted for all stems.
-  // `pass:` is intentionally absent; the dedicated pass: handler below covers it without double-processing.
-  const sensitiveStems = ["accessKey", "secretKey", "privateToken", "apiKey", "passphrase", "password", "secret", "token", "String", "pass", "p"]
-  const stemAlt = sensitiveStems.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")
   // (?:--?|/) matches -, --, or / prefix. Longest stems listed first to minimise backtracking.
   // (?<!\S) / (?=[\s"']|$) word-boundary guards prevent matching -path, -StringLength, etc.
-  const flagPattern = new RegExp(`(?<!\\S)((?:--?|/)(?:${stemAlt}))(?=[\\s"']|$)\\s*(?:(["'])(.*?)\\2|([^\\s]+))`, "gi")
+  const flagPattern = new RegExp(`(?<!\\S)((?:--?|/)(?:${SENSITIVE_STEM_ALT}))(?=[\\s"']|$)\\s*(?:(["'])(.*?)\\2|([^\\s]+))`, "gi")
 
   input = input.replace(flagPattern, (_match, prefix, quote, quotedVal, unquotedVal) => {
     const value = quotedVal ?? unquotedVal
@@ -72,8 +103,8 @@ export function removePassword(input: string): string {
     return quote ? `pass:${quote}${hashSensitiveValue(value)}${quote}` : `pass:${hashSensitiveValue(value)}`
   })
 
-  // /b … /c block format
-  return input.replace(/(\/b\s+)(.*?)(\s+\/c)/g, (_match, p1, p2, p3) => {
+  // /b … /c block format. `\S+` (single-token value) not `.*?` between two `\s+` — ReDoS-safe.
+  return input.replace(/(\/b\s+)(\S+)(\s+\/c)/g, (_match, p1, p2, p3) => {
     return `${p1}${hashSensitiveValue(p2)}${p3}`
   })
 }
@@ -140,7 +171,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
   if (log.isDebugEnabled) {
     const logFields: any = {
       file,
-      args: args == null ? "" : removePassword(args.join(" ")),
+      args: args == null ? "" : removePasswordFromArgs(args),
     }
     if (options != null) {
       if (options.cwd != null) {
@@ -232,9 +263,9 @@ function logSpawn(command: string, args: Array<string>, options: SpawnOptions) {
     return
   }
 
-  const argsString = removePassword(args.join(" "))
+  const argsString = removePasswordFromArgs(args)
   const logFields: any = {
-    command: command + " " + (command === "docker" ? argsString : removePassword(argsString)),
+    command: command + " " + argsString,
   }
   if (options != null && options.cwd != null) {
     logFields.cwd = options.cwd

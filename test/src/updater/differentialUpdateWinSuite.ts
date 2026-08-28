@@ -26,7 +26,7 @@ export function registerDifferentialWinTests(toolsets: ToolsetConfig): void {
       path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z")
     )
 
-    await testBlockMap(expect, outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, archFromString(process.arch))
+    await testBlockMap(expect, outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, archFromString(process.arch), { disableWebInstaller: false })
   })
 
   test("nsis", async ({ expect }) => {
