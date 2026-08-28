@@ -88,6 +88,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); tune the set via `ignoredProductionDependencies`. If you set `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` (removed) to bundle `electron-builder`, override the list instead; `electron-prebuilt`/`electron-rebuild` no longer error and now ship if declared — remove them from `dependencies` |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
 | [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | v27 warns but still downloads if you never set it; opt in with `disableWebInstaller: false` before v28 enforces it |
+| [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | — | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
 | [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | — | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
 | [`quitAndInstall` takes an options object (electron-updater)](#quitandinstall-takes-an-options-object) | — | Replace positional args: `quitAndInstall(true, false)` → `quitAndInstall({ isSilent: true, isForceRunAfter: false })` |
 | [`autoInstallOnAppQuit` replaced by `autoInstallEvent` enum (electron-updater)](#autoinstallevent-replaces-autoinstallonappquit) | — | `autoInstallOnAppQuit = false` → `autoInstallEvent = "manual"`; default `"onQuit"` preserves behavior |
@@ -695,6 +696,21 @@ The v26 hard error also rejected `electron-prebuilt` and `electron-rebuild` in `
 - Otherwise: move them to `devDependencies`, or add them to `ignoredProductionDependencies` (e.g. `["electron", "electron-builder", "electron-prebuilt", "electron-nightly"]`) if they must stay declared as production dependencies for tooling.
 
 This is a runtime behavior change, not a config-key rename, so `electron-builder migrate-schema` does not modify your config for it.
+
+---
+
+### Suffixed update channels now expand to lower channels
+
+With `generateUpdatesFilesForAllChannels` enabled and a non-GitHub provider, `beta` published `beta.yml` + `alpha.yml` and `latest` published all three — but only when the channel was *exactly* `alpha`, `beta`, or `latest`. A channel with a suffix, such as the per-arch `channel: "${channel}-${arch}"` pattern that resolves to `beta-arm64`, fell through and published a single file, so suffixed pre-release users were never promoted.
+
+v27 reads the base channel off the front of the name and reattaches the suffix:
+
+- `beta-arm64` → `beta-arm64.yml`, `alpha-arm64.yml`
+- `latest-arm64` → `latest-arm64.yml`, `alpha-arm64.yml`, `beta-arm64.yml`
+- `alpha-arm64` → unchanged (lowest channel)
+- bare `alpha` / `beta` / `latest` → unchanged
+
+**This only affects you if you use `generateUpdatesFilesForAllChannels` with a suffixed channel name on a non-GitHub provider.** In that case a suffixed channel now writes 2–3 update files where it previously wrote one, and a `latest-x64` publish overwrites `beta-x64.yml` / `alpha-x64.yml` in the same bucket — changing what live `beta-x64` users are offered. That is the same behaviour bare `latest` has always had, but it is new for suffixed channels. Set `generateUpdatesFilesForAllChannels: false` if you want suffixed channels to keep publishing a single file.
 
 ---
 
