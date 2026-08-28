@@ -43,7 +43,7 @@ import asyncPool from "tiny-async-pool"
 import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js"
 import _fsExtra from "fs-extra"
 const { chmod, mkdirs, outputFile } = _fsExtra
-import { setSevenZipPath } from "./toolsets/7zip.js"
+import { setSevenZipPath, setSevenZipVersion } from "./toolsets/7zip.js"
 import { getCustomToolsetPath } from "./toolsets/custom.js"
 
 type PackagerEvents = {
@@ -454,6 +454,8 @@ export class Packager {
         await chmod(bin, 0o755)
       }
       setSevenZipPath(bin)
+    } else {
+      setSevenZipVersion(sevenZipConfig)
     }
 
     const taskManager = new AsyncTaskManager(this.cancellationToken)
