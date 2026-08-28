@@ -2,7 +2,7 @@ import { writeFile } from "fs/promises"
 import * as path from "path"
 import { afterEach, test, vi } from "vitest"
 import { PM } from "app-builder-lib/internal"
-import { getYarnBerryNpmAuthTokenEnv, installDependencies } from "app-builder-lib/src/util/installOrRebuild.js"
+import { getYarnBerryNpmAuthEnv, installDependencies } from "app-builder-lib/src/util/installOrRebuild.js"
 import { detectPackageManager } from "app-builder-lib/src/node-module-collector/packageManager.js"
 import { rebuild } from "app-builder-lib/src/util/rebuild.js"
 import { streamSpawnToFile } from "app-builder-lib/src/util/streamSpawnToFile.js"
@@ -19,14 +19,38 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-test("preserves the environment variable referenced by a Yarn Berry npmAuthToken", async ({ expect, tmpDir }) => {
+test("preserves environment variables referenced by Yarn Berry npm auth settings", async ({ expect, tmpDir }) => {
   const projectDir = await tmpDir.createTempDir({ prefix: "electron-builder-yarn-registry-env-" })
-  await writeFile(path.join(projectDir, ".yarnrc.yml"), ["npmRegistries:", '  "https://registry.example.test":', '    npmAuthToken: "${XXX_NPM_TOKEN}"'].join("\n"))
+  await writeFile(
+    path.join(projectDir, ".yarnrc.yml"),
+    [
+      'npmAuthIdent: "${ROOT_AUTH_IDENT}"',
+      "npmScopes:",
+      "  example:",
+      '    npmAuthIdent: "${SCOPED_AUTH_IDENT}"',
+      "npmRegistries:",
+      '  "https://registry.example.test":',
+      '    npmAuthToken: "${REGISTRY_AUTH_TOKEN}"',
+      '    npmAuthIdent: "${REGISTRY_AUTH_IDENT}"',
+    ].join("\n")
+  )
 
-  expect(await getYarnBerryNpmAuthTokenEnv(projectDir, { XXX_NPM_TOKEN: "registry-token" })).toEqual({ XXX_NPM_TOKEN: "registry-token" })
+  expect(
+    await getYarnBerryNpmAuthEnv(projectDir, {
+      ROOT_AUTH_IDENT: "root-ident",
+      SCOPED_AUTH_IDENT: "scoped-ident",
+      REGISTRY_AUTH_TOKEN: "registry-token",
+      REGISTRY_AUTH_IDENT: "registry-ident",
+    })
+  ).toEqual({
+    ROOT_AUTH_IDENT: "root-ident",
+    SCOPED_AUTH_IDENT: "scoped-ident",
+    REGISTRY_AUTH_TOKEN: "registry-token",
+    REGISTRY_AUTH_IDENT: "registry-ident",
+  })
 })
 
-test("does not preserve sensitive variables referenced outside Yarn npmAuthToken settings", async ({ expect, tmpDir }) => {
+test("does not preserve sensitive variables referenced outside Yarn npm auth settings", async ({ expect, tmpDir }) => {
   const projectDir = await tmpDir.createTempDir({ prefix: "electron-builder-yarn-registry-env-" })
   await writeFile(
     path.join(projectDir, ".yarnrc.yml"),
@@ -34,7 +58,7 @@ test("does not preserve sensitive variables referenced outside Yarn npmAuthToken
   )
 
   expect(
-    await getYarnBerryNpmAuthTokenEnv(projectDir, {
+    await getYarnBerryNpmAuthEnv(projectDir, {
       ROOT_NPM_TOKEN: "root-token",
       SCOPED_NPM_TOKEN: "scoped-token",
       GITHUB_TOKEN: "publish-token",
@@ -60,7 +84,7 @@ test("matches Yarn's own interpolation grammar", async ({ expect, tmpDir }) => {
   )
 
   expect(
-    await getYarnBerryNpmAuthTokenEnv(projectDir, {
+    await getYarnBerryNpmAuthEnv(projectDir, {
       PRIMARY_TOKEN: "primary",
       FALLBACK_TOKEN: "fallback",
       BARE_TOKEN: "bare",
@@ -69,7 +93,7 @@ test("matches Yarn's own interpolation grammar", async ({ expect, tmpDir }) => {
   ).toEqual({ PRIMARY_TOKEN: "primary", FALLBACK_TOKEN: "fallback" })
 })
 
-test("passes only Yarn npmAuthToken variables to the Yarn Berry install child", async ({ expect, tmpDir }) => {
+test("passes only Yarn npm auth variables to the Yarn Berry install child", async ({ expect, tmpDir }) => {
   const projectDir = await tmpDir.createTempDir({ prefix: "electron-builder-yarn-registry-env-" })
   await writeFile(path.join(projectDir, ".yarnrc.yml"), ['npmAuthToken: "${XXX_NPM_TOKEN}"', 'npmRegistryServer: "${GITHUB_TOKEN}"'].join("\n"))
   vi.stubEnv("XXX_NPM_TOKEN", "registry-token")

@@ -100,26 +100,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === "object" && !Array.isArray(value)
 }
 
-function getYarnNpmAuthTokenValues(config: unknown): Array<string> {
+function getYarnNpmAuthValues(config: unknown): Array<string> {
   if (!isRecord(config)) {
     return []
   }
 
-  const values = [config.npmAuthToken]
+  const values = [config.npmAuthToken, config.npmAuthIdent]
   for (const scopes of [config.npmScopes, config.npmRegistries]) {
     if (isRecord(scopes)) {
-      values.push(...Object.values(scopes).map(scope => (isRecord(scope) ? scope.npmAuthToken : undefined)))
+      values.push(...Object.values(scopes).flatMap(scope => (isRecord(scope) ? [scope.npmAuthToken, scope.npmAuthIdent] : [])))
     }
   }
   return values.filter((value): value is string => typeof value === "string")
 }
 
 /**
- * Returns the environment variables explicitly referenced by Yarn's npmAuthToken configuration.
+ * Returns the environment variables explicitly referenced by Yarn's npm authentication configuration.
  * This keeps the default child-process credential deny-list intact while allowing Yarn Berry to
  * resolve a registry credential that the project has explicitly configured it to use.
  */
-export async function getYarnBerryNpmAuthTokenEnv(projectDir: string, env: NodeJS.ProcessEnv): Promise<NodeJS.ProcessEnv> {
+export async function getYarnBerryNpmAuthEnv(projectDir: string, env: NodeJS.ProcessEnv): Promise<NodeJS.ProcessEnv> {
   let config: unknown
   try {
     config = load(await readFile(path.join(projectDir, ".yarnrc.yml"), "utf8"))
@@ -128,7 +128,7 @@ export async function getYarnBerryNpmAuthTokenEnv(projectDir: string, env: NodeJ
   }
 
   const names = new Set<string>()
-  for (const value of getYarnNpmAuthTokenValues(config)) {
+  for (const value of getYarnNpmAuthValues(config)) {
     for (const match of value.matchAll(YARN_ENV_VAR_REFERENCE_RE)) {
       if (match[1] != null) {
         names.add(match[1])
@@ -193,10 +193,10 @@ export async function installDependencies(
     execArgs.push(...additionalArgs)
   }
 
-  const yarnNpmAuthTokenEnv = pm === PM.YARN_BERRY ? await getYarnBerryNpmAuthTokenEnv(_resolvedWorkspaceDir ?? projectDir, process.env) : {}
+  const yarnNpmAuthEnv = pm === PM.YARN_BERRY ? await getYarnBerryNpmAuthEnv(_resolvedWorkspaceDir ?? projectDir, process.env) : {}
   const spawnEnv = {
     ...getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
-    ...yarnNpmAuthTokenEnv,
+    ...yarnNpmAuthEnv,
     ...env,
     // Silence corepack's activation/download chatter so a `pnpm install` doesn't flood the build log;
     // strict=0 so the app's `packageManager` pin can't abort the install, download prompt/notice off.
