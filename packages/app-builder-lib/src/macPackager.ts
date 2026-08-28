@@ -25,6 +25,7 @@ import * as path from "path"
 import { AppInfo } from "./appInfo.js"
 import { assertSafeHelperName } from "./electron/mac/electronMacUtils.js"
 import { CodeSigningInfo, createKeychain, CreateKeychainOptions, Identity, isSignAllowed, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
+import { combineSignResults, isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
 import { MacTargetHelper, MasPlatformType, PlatformType } from "./targets/mac/MacTargetHelper.js"
@@ -384,7 +385,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         })
         MacTargetHelper.assertSafePathForCommandUsage(this.appInfo.productFilename, "product filename")
       }
-      const signed = await this.sign(appPath, arch, platformType)
+      const signResult = await this.sign(appPath, arch, platformType)
+      const signed = isSignResultSigned(signResult)
 
       // The MAS flow packs with sign:false and signs here, bypassing doSignAfterPack — the only other
       // emitAfterSign site. Mirror its contract: fire afterSign after codesigning succeeded, but before
@@ -446,11 +448,12 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
   /**
    * Main signing method with platform awareness. Protected so tests can stub signing
-   * (`isSignAllowed()` short-circuits it on non-mac hosts).
+   * (`isSignAllowed()` short-circuits it on non-mac hosts). Failures are thrown, never returned.
    */
-  protected async sign(appPath: string, arch: Arch, targetPlatform: PlatformType): Promise<boolean> {
+  protected async sign(appPath: string, arch: Arch, targetPlatform: PlatformType): Promise<SigningResult> {
     if (!isSignAllowed()) {
-      return false
+      // non-mac host, or the pull-request CI guard — signing cannot happen in this environment
+      return "skipped:unsupported"
     }
 
     // getPlatformConfig cascades mac → mas → masDev, so `sign` (and `sign.identity`) is already merged for this flavor.
@@ -476,7 +479,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const identity = await this.helper.findSigningIdentity(targetPlatform, qualifier, keychainFile, hasCustomSign, signOpts)
 
     if (!identity) {
-      return false
+      return "skipped:no-certificate"
     }
 
     if (!isMacOsHighSierra()) {
@@ -491,7 +494,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       await this.helper.notarizeIfProvided(appPath)
     }
 
-    return true
+    return hasCustomSign ? "signed:custom" : "signed"
   }
 
   //noinspection JSMethodCanBeStatic
@@ -614,36 +617,36 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     }
   }
 
-  protected async signApp(packContext: AfterPackContext, isAsar: boolean, platformType?: PlatformType): Promise<boolean> {
+  protected async signApp(packContext: AfterPackContext, isAsar: boolean, platformType?: PlatformType): Promise<SigningResult> {
     const targetPlatform: PlatformType = platformType ?? (packContext.electronPlatformName === "mas" ? "mas" : "mac")
-    const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<boolean> => {
+    const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<Array<SigningResult>> => {
       const normalizedSourceDirectory = path.resolve(sourceDirectory)
       MacTargetHelper.assertSafePathForCommandUsage(normalizedSourceDirectory, "application output directory")
-      await Promise.all(
-        directories.map(async (file: string) => {
-          if (shouldSign(file)) {
+      return await Promise.all(
+        directories
+          .filter(file => shouldSign(file))
+          .map(async (file: string) => {
             const entryName = path.basename(file)
             if (file !== entryName) {
               throw new InvalidConfigurationError(`Invalid entry name in source directory: ${file}`)
             }
             const signTarget = path.resolve(normalizedSourceDirectory, entryName)
             const safeSignTarget = sanitizeDirPath(signTarget, normalizedSourceDirectory)
-            await this.sign(safeSignTarget, packContext.arch, targetPlatform)
-          }
-        })
+            return await this.sign(safeSignTarget, packContext.arch, targetPlatform)
+          })
       )
-      return true
     }
 
     const appFileName = `${this.appInfo.productFilename}.app`
-    await readDirectoryAndSign(packContext.appOutDir, await readdir(packContext.appOutDir), file => file === appFileName)
+    // the combined result gates the `afterSign` hook — a signed result wins (see PlatformPackager.doSignAfterPack)
+    const results = await readDirectoryAndSign(packContext.appOutDir, await readdir(packContext.appOutDir), file => file === appFileName)
     if (!isAsar) {
-      return true
+      return combineSignResults(results)
     }
 
     const outResourcesDir = path.join(packContext.appOutDir, "resources", "app.asar.unpacked")
-    await readDirectoryAndSign(outResourcesDir, await orIfFileNotExist(readdir(outResourcesDir), []), file => file.endsWith(".app"))
+    results.push(...(await readDirectoryAndSign(outResourcesDir, await orIfFileNotExist(readdir(outResourcesDir), []), file => file.endsWith(".app"))))
 
-    return true
+    return combineSignResults(results)
   }
 }

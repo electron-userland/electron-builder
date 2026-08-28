@@ -1,22 +1,25 @@
 import { log, retry } from "builder-util"
 import { resolveWindowsSigningConfiguration, WindowsConfiguration } from "../../options/winOptions.js"
 import { WinPackager } from "../../winPackager.js"
+import { SignFileResult } from "../signResult.js"
 
 export interface WindowsSignOptions {
   readonly path: string
   readonly options: WindowsConfiguration
 }
 
-export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
+export async function signWindows(options: WindowsSignOptions, packager: WinPackager): Promise<SignFileResult> {
   const signing = resolveWindowsSigningConfiguration(options.options)
   const packageManager = await packager.signingManager.value
 
   const path = log.filePath(options.path)
-  log.info(`Signing ${path}...`)
-  const didSign = await signWithRetry(async () => packageManager.signFile(options))
+  // no "signing..." pre-log here: the sign managers already log "signing" with certificate details right before executing
+  const result = await signWithRetry(async () => packageManager.signFile(options))
 
-  if (!didSign) {
-    log.debug({ path }, "signing skipped (no signing configuration found)")
+  if (result === "skipped:no-certificate") {
+    log.info({ path, reason: "no code signing certificate configured" }, "signing skipped")
+  } else if (result === "signed:custom") {
+    log.info({ path }, "signed with custom `sign` hook")
   } else if (signing?.type === "azure") {
     log.info({ path }, "signed with Azure Trusted Signing")
   } else if (signing?.type === "hsm") {
@@ -27,10 +30,10 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
     log.info({ path }, "signed with signtool.exe")
   }
 
-  return didSign
+  return result
 }
 
-function signWithRetry(signer: () => Promise<boolean>): Promise<boolean> {
+function signWithRetry<T>(signer: () => Promise<T>): Promise<T> {
   return retry(signer, {
     retries: 3,
     interval: 1000,

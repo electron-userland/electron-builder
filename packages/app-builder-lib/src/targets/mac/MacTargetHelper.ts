@@ -4,6 +4,7 @@ import { Arch, InvalidConfigurationError, log, statOrNull } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as path from "path"
 import { CertType, findIdentity, Identity, reportError } from "../../codeSign/mac/macCodeSign.js"
+import { SigningResult } from "../../codeSign/signResult.js"
 import type { MacPackager } from "../../macPackager.js"
 import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
 import { parsePlistFile, PlistObject } from "../../util/mac/plist.js"
@@ -15,12 +16,12 @@ export type PlatformType = MasPlatformType | "mac"
 export class MacTargetHelper {
   constructor(private packager: MacPackager) {}
 
-  handleNullIdentity(): boolean {
+  handleNullIdentity(): SigningResult {
     if (this.packager.forceCodeSigning) {
       throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
     }
     log.info({ reason: "identity explicitly is set to null" }, "skipped macOS code signing")
-    return false
+    return "skipped:disabled"
   }
 
   async findSigningIdentity(
