@@ -131,10 +131,10 @@ describe("buildBlockMap", () => {
   })
 
   it("chunk checksums match BLAKE2b-18 of chunk content", async () => {
-    const blake2bPath = require.resolve("@noble/hashes/blake2.js", {
+    const blake2bPath = require.resolve("@noble/hashes/blake2b.js", {
       paths: [require.resolve("app-builder-lib/out/targets/blockmap/blockmap")],
     })
-    const { blake2b } = require(blake2bPath) as typeof import("@noble/hashes/blake2")
+    const { blake2b } = require(blake2bPath) as typeof import("@noble/hashes/blake2b")
     const data = makeTestData(50_000)
     const inFile = path.join(tmpDir, "checksum.bin")
     const outFile = path.join(tmpDir, "checksum.blockmap")
