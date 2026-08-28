@@ -17,6 +17,21 @@ RUN pacman-key --init \
  && pacman -Scc --noconfirm \
  && rm -rf /var/lib/pacman/sync/* /var/cache/pacman/pkg/*
 
+# create a non-root user for makepkg
+RUN useradd -m builder && echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
+
+USER builder
+WORKDIR /home/builder
+
+# Build http-parser from AUR: linuxUpdaterTest installs a pre-built .pacman release asset
+# from mmaietta/electron-builder-test that was packaged with an older electron-builder whose
+# default `depends` still listed http-parser (AUR-only, so `pacman -Sy` cannot satisfy it).
+# Packages built from this repo no longer depend on it (see test/src/linux/fpmTest.ts).
+RUN git clone https://aur.archlinux.org/http-parser.git \
+ && cd http-parser \
+ && makepkg -si --noconfirm
+
+USER root
 WORKDIR /project
 
 RUN npm --silent install --global --depth 0 pnpm corepack \
