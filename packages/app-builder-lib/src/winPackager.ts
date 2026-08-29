@@ -154,7 +154,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     const result = await signWindows(signOptions, this)
     if (!isSignResultSigned(result) && this.forceCodeSigning) {
       throw new InvalidConfigurationError(
-        `App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`
+        `App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/docs/features/code-signing`
       )
     }
     return result

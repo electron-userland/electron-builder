@@ -202,7 +202,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * - **{@link ElectronSignOptions}**: options forwarded directly to `@electron/osx-sign`.
    *
    * @see {@link ElectronSignOptions}
-   * @see https://www.electron.build/code-signing
+   * @see https://www.electron.build/docs/features/code-signing
    */
   readonly sign?: CustomMacSign | ElectronSignOptions | string | null
 
