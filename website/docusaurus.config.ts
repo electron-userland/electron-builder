@@ -21,17 +21,28 @@ const docsDir = join(__dirname, "docs")
 // are declared once.
 type DocsVersion = { label: string; path: string; ref?: string; current?: boolean }
 
-const docsVersions: DocsVersion[] = (
-  JSON.parse(readFileSync(join(__dirname, "docs-versions.json"), "utf8")).versions as DocsVersion[]
-).map(version => ({
-  ...version,
-  // normalize to a leading + trailing slash so hrefs are stable
-  path: `/${version.path.replace(/^\/+/, "").replace(/\/+$/, "")}/`.replace(/^\/\/$/, "/"),
-}))
+// normalize to a leading + trailing slash so hrefs are stable
+const normalizePath = (path: string) => `/${path.replace(/^\/+/, "").replace(/\/+$/, "")}/`.replace(/^\/\/$/, "/")
+
+const docsVersionsFile = join(__dirname, "docs-versions.json")
+const docsVersions: DocsVersion[] = (() => {
+  let versions: unknown
+  try {
+    versions = JSON.parse(readFileSync(docsVersionsFile, "utf8")).versions
+  } catch (e: any) {
+    throw new Error(`cannot read ${docsVersionsFile}: ${e.message}`)
+  }
+  if (!Array.isArray(versions) || versions.length === 0) {
+    throw new Error(`${docsVersionsFile} must declare a non-empty "versions" array`)
+  }
+  return (versions as DocsVersion[]).map(version => ({ ...version, path: normalizePath(version.path) }))
+})()
 
 // Base URL of *this* instance. build-versioned-site.sh sets DOCS_BASE_URL per
 // sub-site build; it defaults to the path of the entry marked `current`.
-const baseUrl = process.env.DOCS_BASE_URL || docsVersions.find(v => v.current)?.path || "/"
+// Normalized like the docsVersions paths so a value without a trailing slash
+// still matches its entry.
+const baseUrl = normalizePath(process.env.DOCS_BASE_URL || docsVersions.find(v => v.current)?.path || "/")
 
 // Which declared version this build is, so the dropdown can name itself.
 const activeVersion = docsVersions.find(v => v.path === baseUrl) ?? docsVersions.find(v => v.current)

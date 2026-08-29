@@ -174,7 +174,14 @@ log "building current checkout at $ROOT_BASE_URL"
 build_tree "$ROOT" "$ROOT_BASE_URL"
 
 # --- 3. build each extra version and compose it into the output tree ---------
-WORK="${DOCS_VERSIONS_WORKDIR:-$(mktemp -d)}"
+if [ -n "${DOCS_VERSIONS_WORKDIR:-}" ]; then
+  WORK="$DOCS_VERSIONS_WORKDIR"
+else
+  # the script owns this temp dir, so clean it up on exit (a user-supplied
+  # DOCS_VERSIONS_WORKDIR is left alone)
+  WORK="$(mktemp -d)"
+  trap 'rm -rf "$WORK"' EXIT
+fi
 while IFS=$'\t' read -r ref path_seg; do
   [ -n "$ref" ] || continue
   [ -n "$path_seg" ] || die "no output path resolved for ref '$ref'"
@@ -184,7 +191,7 @@ while IFS=$'\t' read -r ref path_seg; do
   materialize_ref "$ref" "$src" || die "could not materialize ref '$ref'"
   # A tree that ignores DOCS_BASE_URL builds at baseUrl "/" and is silently
   # broken when served under /$path_seg/ — refuse to compose it.
-  grep -q 'DOCS_BASE_URL' "$src/website/docusaurus.config.ts" 2>/dev/null ||
+  grep -q 'process\.env\.DOCS_BASE_URL' "$src/website/docusaurus.config.ts" 2>/dev/null ||
     die "ref '$ref': website/docusaurus.config.ts does not read DOCS_BASE_URL, so it cannot build at /$path_seg/. Merge the versioned-site config support into '$ref' first, or point this entry's ref at a branch that has it."
   build_tree "$src" "/$path_seg/" || die "build failed for ref '$ref'"
   [ -d "$src/website/build" ] || die "ref '$ref' produced no website/build output"
