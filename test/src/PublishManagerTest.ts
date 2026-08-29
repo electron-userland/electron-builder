@@ -3,6 +3,7 @@ import { Arch, createTargets, Platform } from "electron-builder"
 import fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
+import { vi } from "vitest"
 import { assertThat } from "./helpers/fileAssert.js"
 import { app, checkDirContents } from "./helpers/packTester.js"
 
@@ -125,25 +126,32 @@ test.ifNotWindows("github and r2 (publishAutoUpdate)", ({ expect }) =>
   })
 )
 
-test.ifEnv(process.env.KEYGEN_TOKEN)("mac artifactName ", ({ expect }) =>
-  app(
-    expect,
-    {
-      targets: Platform.LINUX.createTarget("zip", Arch.x64),
-      config: {
-        // tslint:disable-next-line:no-invalid-template-strings
-        artifactName: "${productName}_${version}_${os}.${ext}",
-        mac: {
-          electronUpdaterCompatibility: ">=2.16",
+// nothing is uploaded here (publish: undefined) — KeygenPublisher merely requires KEYGEN_TOKEN to be
+// present at construction time, so a dummy value keeps this packaging test fully offline
+test("mac artifactName ", async ({ expect }) => {
+  vi.stubEnv("KEYGEN_TOKEN", "dummy-keygen-token-for-offline-test")
+  try {
+    await app(
+      expect,
+      {
+        targets: Platform.LINUX.createTarget("zip", Arch.x64),
+        config: {
+          // tslint:disable-next-line:no-invalid-template-strings
+          artifactName: "${productName}_${version}_${os}.${ext}",
+          mac: {
+            electronUpdaterCompatibility: ">=2.16",
+          },
+          publish: [spacesPublisher(), keygenPublisher()],
         },
-        publish: [spacesPublisher(), keygenPublisher()],
       },
-    },
-    {
-      publish: undefined,
-    }
-  )
-)
+      {
+        publish: undefined,
+      }
+    )
+  } finally {
+    vi.unstubAllEnvs()
+  }
+})
 
 // otherwise test "os macro" always failed for pull requests
 process.env.PUBLISH_FOR_PULL_REQUEST = "true"
