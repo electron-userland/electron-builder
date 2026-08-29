@@ -1,17 +1,10 @@
 import * as path from "path"
 import * as fs from "fs-extra"
-import { copyOrLinkFile, log } from "builder-util"
+import { copyOrLinkFile, log, escapeForXml } from "builder-util"
 import { AppImageBuilderOptions } from "./appImageUtil"
 
 const ICON_DIR_RELATIVE_PATH = "usr/share/icons/hicolor"
 const MIME_TYPE_DIR_RELATIVE_PATH = "usr/share/mime/packages"
-
-/**
- * Escapes special XML characters to prevent injection
- */
-function xmlEscape(str: string): string {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;")
-}
 
 export async function copyIcons(options: AppImageBuilderOptions): Promise<void> {
   const { stageDir, options: configuration } = options
@@ -80,8 +73,8 @@ export async function copyMimeTypes(
     }
 
     // XML-escape to prevent injection
-    mimeTypeParts.push(`<mime-type type="${xmlEscape(fileAssociation.mimeType)}">`)
-    mimeTypeParts.push(`  <comment>${xmlEscape(productName)} document</comment>`)
+    mimeTypeParts.push(`<mime-type type="${escapeForXml(fileAssociation.mimeType)}">`)
+    mimeTypeParts.push(`  <comment>${escapeForXml(productName)} document</comment>`)
 
     // Handle extension(s)
     const extensions = Array.isArray(fileAssociation.ext) ? fileAssociation.ext : [fileAssociation.ext]
@@ -92,7 +85,7 @@ export async function copyMimeTypes(
         log.warn({ extension: ext }, `file extension contains unexpected characters and will be skipped`)
         continue
       }
-      mimeTypeParts.push(`  <glob pattern="*.${xmlEscape(ext)}"/>`)
+      mimeTypeParts.push(`  <glob pattern="*.${escapeForXml(ext)}"/>`)
     }
 
     mimeTypeParts.push('  <generic-icon name="x-office-document"/>')

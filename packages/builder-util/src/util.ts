@@ -15,7 +15,7 @@ if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
 }
 
-export { isEmptyOrSpaces } from "./stringUtil"
+export { isEmptyOrSpaces, escapeForXml } from "./stringUtil"
 export { safeStringifyJson, retry } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export * from "./arch"
