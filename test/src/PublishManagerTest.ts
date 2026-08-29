@@ -127,8 +127,10 @@ test.ifNotWindows("github and r2 (publishAutoUpdate)", ({ expect }) =>
 )
 
 // nothing is uploaded here (publish: undefined) — KeygenPublisher merely requires KEYGEN_TOKEN to be
-// present at construction time, so a dummy value keeps this packaging test fully offline
-test("mac artifactName ", async ({ expect }) => {
+// present at construction time, so a dummy value keeps this packaging test fully offline.
+// ifNotWindows like the sibling tests: the previous KEYGEN_TOKEN gate meant this never ran on
+// Windows shards, and building the Linux zip target there is untested territory.
+test.ifNotWindows("mac artifactName ", async ({ expect }) => {
   vi.stubEnv("KEYGEN_TOKEN", "dummy-keygen-token-for-offline-test")
   try {
     await app(
