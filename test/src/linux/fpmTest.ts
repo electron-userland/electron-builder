@@ -10,6 +10,23 @@ describe("fpm default depends", () => {
     const defaults: string[] = FpmTarget.prototype["getDefaultDepends"].call(null, "pacman")
     expect(defaults).not.toContain("http-parser")
   })
+
+  test(`"default" in depends expands in place to the target's default list`, ({ expect }) => {
+    const fpmTarget: any = Object.create(FpmTarget.prototype)
+    for (const target of ["deb", "rpm", "pacman"]) {
+      const defaults: string[] = fpmTarget["getDefaultDepends"](target)
+      const expanded: string[] = fpmTarget["expandDependsDefaults"](["default", "foo"], target)
+      expect(expanded).toEqual([...defaults, "foo"])
+      expect(expanded).not.toContain("default")
+    }
+  })
+
+  test(`"default" expansion dedupes the final list`, ({ expect }) => {
+    const fpmTarget: any = Object.create(FpmTarget.prototype)
+    const defaults: string[] = fpmTarget["getDefaultDepends"]("pacman")
+    const expanded: string[] = fpmTarget["expandDependsDefaults"](["default", defaults[0], "foo", "foo"], "pacman")
+    expect(expanded).toEqual([...defaults, "foo"])
+  })
 })
 
 // "apk" is very slow, don't test for now

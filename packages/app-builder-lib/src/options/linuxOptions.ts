@@ -110,6 +110,9 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
    * Package dependencies.
    * `rpm` defaults to `["gtk3", "libnotify", "nss", "libXScrnSaver", "(libXtst or libXtst6)", "xdg-utils", "at-spi2-core", "(libuuid or libuuid1)"]`
    * `pacman` defaults to `["c-ares", "ffmpeg", "gtk3", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"]`
+   *
+   * Use the `"default"` keyword to extend the target's default list instead of replacing it:
+   * `["default", "my-extra-lib"]` appends `my-extra-lib` to the defaults. The resulting list is deduplicated.
    */
   readonly depends?: Array<string> | null
 
@@ -161,6 +164,9 @@ export interface DebOptions extends LinuxTargetSpecificOptions {
    * Package dependencies.
    * If need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).
    * If need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2).
+   *
+   * Use the `"default"` keyword to extend the default list instead of replacing it:
+   * `["default", "my-extra-lib"]` appends `my-extra-lib` to the defaults. The resulting list is deduplicated.
    * @default ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils", "libatspi2.0-0", "libuuid1", "libsecret-1-0"]
    */
   readonly depends?: Array<string> | null
