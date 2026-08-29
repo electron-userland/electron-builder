@@ -1,5 +1,11 @@
 # builder-util
 
+## 26.16.0
+
+### Patch Changes
+
+- Feat: backport escape xml for appxmanifest _[`#10099`](https://github.com/electron-userland/electron-builder/pull/10099) [`e426aca`](https://github.com/electron-userland/electron-builder/commit/e426acae9f340bb8431969ea26b5c03acf454df6) [@regnete](https://github.com/regnete)_
+
 ## 26.15.3
 
 ### Patch Changes

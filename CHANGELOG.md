@@ -1,3 +1,25 @@
+# [26.16.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.7...electron-builder@26.16.0) (2026-08-29)
+
+
+### Bug Fixes
+
+* emit afterSign hook for mas/mas-dev builds (v26) ([#10072](https://github.com/electron-userland/electron-builder/issues/10072)) ([e3d9744](https://github.com/electron-userland/electron-builder/commit/e3d974459cdaafe9ac141a93d2a94d26d809ce48))
+* **linux:** bump linux-tools-mac toolset to 1.0.1 so its binaries run on macOS 15+ (v26) ([#10102](https://github.com/electron-userland/electron-builder/issues/10102)) ([cc691c3](https://github.com/electron-userland/electron-builder/commit/cc691c33de035cf2086804469a46f55150d4fa5f))
+* **mac:** bump icons toolset to 1.2.3 so small ICNS sizes are written as ic04/ic05 ARGB (v26) ([#10088](https://github.com/electron-userland/electron-builder/issues/10088)) ([92332cc](https://github.com/electron-userland/electron-builder/commit/92332ccf69966a895f98894675d532506c8ef1ea))
+* **nsis:** accept base64 SHA-512 checksums for custom NSIS toolset downloads ([#10041](https://github.com/electron-userland/electron-builder/issues/10041)) ([cc8e783](https://github.com/electron-userland/electron-builder/commit/cc8e7833388c2e2591eb77c2ce72548a34eba9d3))
+* **nsis:** run PowerShell with -NoProfile -NonInteractive in allowOnlyOneInstallerInstance checks (v26 backport of [#10051](https://github.com/electron-userland/electron-builder/issues/10051)) ([#10053](https://github.com/electron-userland/electron-builder/issues/10053)) ([88b45b1](https://github.com/electron-userland/electron-builder/commit/88b45b11a45066fb352d599accf074018a9a9134))
+* pin @noble/hashes to v1 so blockmap generation works on Node < 20.19 ([#10108](https://github.com/electron-userland/electron-builder/issues/10108)) ([be75d14](https://github.com/electron-userland/electron-builder/commit/be75d14a7ceb80c3370c75a944aed351c5768a05))
+* v26 backport of [#10050](https://github.com/electron-userland/electron-builder/issues/10050) ([#10052](https://github.com/electron-userland/electron-builder/issues/10052)) ([12add99](https://github.com/electron-userland/electron-builder/commit/12add992b703db522c21d14f871e8517472484b4))
+
+
+### Features
+
+* add `allowMissingDependencies` to fail builds on missing production deps (v26, warn-only default) ([#10074](https://github.com/electron-userland/electron-builder/issues/10074)) ([ec4f39b](https://github.com/electron-userland/electron-builder/commit/ec4f39b33663f4f7a602f25330737c16af8b9cea))
+* backport escape xml for appxmanifest ([#10099](https://github.com/electron-userland/electron-builder/issues/10099)) ([e426aca](https://github.com/electron-userland/electron-builder/commit/e426acae9f340bb8431969ea26b5c03acf454df6))
+* **v26:** offline checksum validation via locally seeded SHASUMS256.txt for air-gapped builds ([#10047](https://github.com/electron-userland/electron-builder/issues/10047)) ([ee1d282](https://github.com/electron-userland/electron-builder/commit/ee1d2828600f807887135e0a5a7d01d8d5d28c30))
+
+
+
 ## [26.15.7](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.6...electron-builder@26.15.7) (2026-07-12)
 
 
