@@ -2,7 +2,7 @@ import { createHash } from "crypto"
 import { createReadStream } from "fs"
 import { appendFile, writeFile } from "fs/promises"
 import * as zlib from "zlib"
-import { blake2b } from "@noble/hashes/blake2.js"
+import { blake2b } from "@noble/hashes/blake2b.js"
 import { BlockMapDataHolder } from "builder-util-runtime"
 
 // Rabin fingerprinting constants from github.com/aclements/go-rabin:
