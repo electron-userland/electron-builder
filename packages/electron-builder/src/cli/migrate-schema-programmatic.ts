@@ -1,6 +1,6 @@
 import { createRequire } from "node:module"
 import * as path from "path"
-import { AZURE_KNOWN_FIELDS, ELECTRON_DOWNLOAD_DROPPED, MAC_SIGN_FIELDS, MAC_UNIVERSAL_FIELDS, SNAP_BASES } from "./migrate-schema.js"
+import { AZURE_KNOWN_FIELDS, ELECTRON_DOWNLOAD_DROPPED, MAC_SIGN_FIELDS, MAC_UNIVERSAL_FIELDS, NSIS_WEB_ADVISORY, SNAP_BASES } from "./migrate-schema.js"
 import type { MigrationChange } from "./migrate-schema.js"
 
 const _require = createRequire(import.meta.url)
@@ -28,6 +28,8 @@ export interface ProgrammaticMigrationResult {
   readonly code: string
   readonly changes: MigrationChange[]
   readonly warnings: string[]
+  /** Informational notices that are not config changes — they never affect `status` or trigger a file write. */
+  readonly advisories: string[]
   readonly status: ProgrammaticMigrationStatus
   /** Set when status === "unsupported": why the config could not be auto-migrated. */
   readonly unsupportedReason?: string
@@ -52,7 +54,7 @@ interface Edit {
 export function migrateProgrammaticSource(sourceText: string, fileName: string): ProgrammaticMigrationResult {
   const ts = loadTypeScript()
   if (ts == null) {
-    return { code: sourceText, changes: [], warnings: [], status: "unsupported", unsupportedReason: "typescript-not-installed" }
+    return { code: sourceText, changes: [], warnings: [], advisories: [], status: "unsupported", unsupportedReason: "typescript-not-installed" }
   }
 
   const scriptKind = scriptKindFor(ts, fileName)
@@ -61,14 +63,14 @@ export function migrateProgrammaticSource(sourceText: string, fileName: string):
   const codemod = new ConfigCodemod(ts, sf, sourceText)
   const located = codemod.locateConfigObject()
   if (located.objLit == null) {
-    return { code: sourceText, changes: [], warnings: [], status: "unsupported", unsupportedReason: located.reason }
+    return { code: sourceText, changes: [], warnings: [], advisories: [], status: "unsupported", unsupportedReason: located.reason }
   }
 
   codemod.run(located.objLit)
   if (codemod.edits.length === 0) {
-    return { code: sourceText, changes: codemod.changes, warnings: codemod.warnings, status: "no-op" }
+    return { code: sourceText, changes: codemod.changes, warnings: codemod.warnings, advisories: codemod.advisories, status: "no-op" }
   }
-  return { code: codemod.apply(), changes: codemod.changes, warnings: codemod.warnings, status: "migrated" }
+  return { code: codemod.apply(), changes: codemod.changes, warnings: codemod.warnings, advisories: codemod.advisories, status: "migrated" }
 }
 
 function scriptKindFor(ts: any, fileName: string): any {
@@ -91,6 +93,7 @@ class ConfigCodemod {
   readonly edits: Edit[] = []
   readonly changes: MigrationChange[] = []
   readonly warnings: string[] = []
+  readonly advisories: string[] = []
   private indentUnit = "  "
 
   constructor(
@@ -320,6 +323,16 @@ class ConfigCodemod {
     this.indentUnit = this.detectIndentUnit(root)
     this.ruleRemoveKeys(root, ["electronCompile"], "removed electronCompile (unsupported since v27; migrate to electron-vite, esbuild, or webpack)")
     this.ruleRemoveKeys(root, ["framework", "nodeVersion", "launchUiVersion"], key => `removed ${key} (Electron is the only supported framework in v27)`)
+    const disableDefaultIgnoredFilesDesc = "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `files` glob, e.g. `**/*.obj`)"
+    this.ruleRemoveKeys(root, ["disableDefaultIgnoredFiles"], disableDefaultIgnoredFilesDesc)
+    // mas/masDev are MacConfiguration-derived, so they accept the (now-removed) key too.
+    for (const platform of ["mac", "mas", "masDev", "win", "linux"]) {
+      const p = this.getObjectProp(root, platform)
+      if (p != null) {
+        this.ruleRemoveKeys(p, ["disableDefaultIgnoredFiles"], disableDefaultIgnoredFilesDesc)
+      }
+    }
+    this.ruleSyncDesktopName(root)
     this.ruleNativeModules(root)
     this.ruleAsar(root)
     this.ruleAppImageSystemIntegration(root)
@@ -342,9 +355,45 @@ class ConfigCodemod {
       }
     }
     this.ruleElectronDownload(root)
+    this.ruleNsisWebAdvisory(root)
   }
 
   // ── Rules ───────────────────────────────────────────────────────────────
+
+  // Advisory only — adds no edit, so an nsis-web-only config stays a "no-op" and is never rewritten.
+  private ruleNsisWebAdvisory(root: any): void {
+    const ts = this.ts
+    const win = this.getObjectProp(root, "win")
+    const winTarget = win != null ? this.getProp(win, "target") : null
+    const globalTarget = this.getProp(root, "target")
+    for (const prop of [winTarget, globalTarget]) {
+      if (prop != null && ts.isPropertyAssignment(prop) && this.hasNsisWebInTarget(this.unwrap(prop.initializer))) {
+        this.advisories.push(NSIS_WEB_ADVISORY)
+        return
+      }
+    }
+  }
+
+  private hasNsisWebInTarget(value: any): boolean {
+    const ts = this.ts
+    if (value == null) {
+      return false
+    }
+    if (ts.isStringLiteral(value)) {
+      return value.text === "nsis-web"
+    }
+    if (ts.isArrayLiteralExpression(value)) {
+      return value.elements.some((el: any) => this.hasNsisWebInTarget(this.unwrap(el)))
+    }
+    if (ts.isObjectLiteralExpression(value)) {
+      const targetProp = this.getProp(value, "target")
+      if (targetProp != null && ts.isPropertyAssignment(targetProp)) {
+        const inner = this.unwrap(targetProp.initializer)
+        return ts.isStringLiteral(inner) && inner.text === "nsis-web"
+      }
+    }
+    return false
+  }
 
   private ruleRemoveKeys(obj: any, keys: string[], description: string | ((key: string) => string)): void {
     for (const key of keys) {
@@ -354,6 +403,31 @@ class ConfigCodemod {
         this.changes.push({ key, description: typeof description === "function" ? description(key) : description })
       }
     }
+  }
+
+  // linux.syncDesktopName was removed in v27 (desktop-name syncing is now always on). Remove the key;
+  // warn when it was explicitly false, since that changed behaviour (the installed .desktop filename now syncs).
+  private ruleSyncDesktopName(root: any): void {
+    const ts = this.ts
+    const linux = this.getObjectProp(root, "linux")
+    if (linux == null) {
+      return
+    }
+    const prop = this.getProp(linux, "syncDesktopName")
+    if (prop == null || !ts.isPropertyAssignment(prop)) {
+      return
+    }
+    if (prop.initializer.kind === ts.SyntaxKind.FalseKeyword) {
+      this.warnings.push(
+        "linux.syncDesktopName: false disabled desktop-name syncing in v26. In v27 the installed .desktop filename is always derived from `desktopName` " +
+          "(falling back to executableName). If you relied on the old filename, set `desktopName` explicitly to control it."
+      )
+    }
+    this.removeProp(prop)
+    this.changes.push({
+      key: "linux.syncDesktopName",
+      description: "removed linux.syncDesktopName (the installed .desktop filename is always synced from desktopName in v27)",
+    })
   }
 
   private ruleNativeModules(root: any): void {
@@ -522,15 +596,13 @@ class ConfigCodemod {
         const isFalse = vPrefixed.initializer.kind === ts.SyntaxKind.FalseKeyword
         this.replaceRange(this.start(vPrefixed), vPrefixed.end, `tagNamePrefix: ${isFalse ? '""' : '"v"'}`)
         changed = true
-      } else if (provider === "gitlab") {
-        this.removeProp(vPrefixed)
-        changed = true
       }
+      // GitLab keeps vPrefixedTagName in v27 (no tagNamePrefix equivalent) — leave it untouched.
     }
     if (changed) {
       this.changes.push({
         key: `${prefix}${key}[].vPrefixedTagName`,
-        description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries; removed from GitLab entries",
+        description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries",
       })
     }
   }

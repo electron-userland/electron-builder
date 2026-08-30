@@ -15,7 +15,7 @@ import { ExpectStatic } from "vitest"
 export async function expectUpdateMetadata(expect: ExpectStatic, context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
   const data = load(await fs.readFile(path.join(context.getResources(Platform.WINDOWS, arch), "app-update.yml"), "utf-8")) as any
   if (requireCodeSign) {
-    expect(data.publisherName).toEqual(["Foo, Inc"])
+    expect(data.publisherName).toEqual(["Foo, Inc", "CN=EB Test Code Signing"])
     delete data.publisherName
   }
 
@@ -23,6 +23,9 @@ export async function expectUpdateMetadata(expect: ExpectStatic, context: Packed
 }
 
 export async function checkHelpers(expect: ExpectStatic, resourceDir: string, isPackElevateHelper: boolean) {
+  // elevate.exe is copied into win-unpacked/resources only after every target has finished reading
+  // appOutDir, so the dir-target output still ships it while concurrent targets (Squirrel, ZIP,
+  // appx) never capture it mid-build (#9852).
   const elevateHelperExecutable = path.join(resourceDir, "elevate.exe")
   if (isPackElevateHelper) {
     await assertThat(expect, elevateHelperExecutable).isFile()

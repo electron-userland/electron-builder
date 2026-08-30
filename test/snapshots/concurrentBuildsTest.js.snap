@@ -465,6 +465,128 @@ exports[`mac/win/linux concurrent 8`] = `
 
 exports[`mac/win/linux concurrent 9`] = `"Test Application (test quite “ #378)"`;
 
+exports[`nsis + zip concurrent: elevate.exe reaches win-unpacked but never leaks into sibling targets (#9852) 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.exe",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "Test Concurrent-1.1.0-x64.zip",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.zip",
+    },
+    {
+      "file": "Test Concurrent-1.1.0-x64.exe.blockmap",
+      "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe.blockmap",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`nsis + zip concurrent: elevate.exe reaches win-unpacked but never leaks into sibling targets (#9852) 2`] = `
+[
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "d3dcompiler_47.dll",
+  "dxcompiler.dll",
+  "dxil.dll",
+  "ffmpeg.dll",
+  "icudtl.dat",
+  "libEGL.dll",
+  "libGLESv2.dll",
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "locales/",
+  "locales/af.pak",
+  "locales/am.pak",
+  "locales/ar.pak",
+  "locales/bg.pak",
+  "locales/bn.pak",
+  "locales/ca.pak",
+  "locales/cs.pak",
+  "locales/da.pak",
+  "locales/de.pak",
+  "locales/el.pak",
+  "locales/en-GB.pak",
+  "locales/en-US.pak",
+  "locales/es-419.pak",
+  "locales/es.pak",
+  "locales/et.pak",
+  "locales/fa.pak",
+  "locales/fi.pak",
+  "locales/fil.pak",
+  "locales/fr.pak",
+  "locales/gu.pak",
+  "locales/he.pak",
+  "locales/hi.pak",
+  "locales/hr.pak",
+  "locales/hu.pak",
+  "locales/id.pak",
+  "locales/it.pak",
+  "locales/ja.pak",
+  "locales/kn.pak",
+  "locales/ko.pak",
+  "locales/lt.pak",
+  "locales/lv.pak",
+  "locales/ml.pak",
+  "locales/mr.pak",
+  "locales/ms.pak",
+  "locales/nb.pak",
+  "locales/nl.pak",
+  "locales/pl.pak",
+  "locales/pt-BR.pak",
+  "locales/pt-PT.pak",
+  "locales/ro.pak",
+  "locales/ru.pak",
+  "locales/sk.pak",
+  "locales/sl.pak",
+  "locales/sr.pak",
+  "locales/sv.pak",
+  "locales/sw.pak",
+  "locales/ta.pak",
+  "locales/te.pak",
+  "locales/th.pak",
+  "locales/tr.pak",
+  "locales/uk.pak",
+  "locales/ur.pak",
+  "locales/vi.pak",
+  "locales/zh-CN.pak",
+  "locales/zh-TW.pak",
+  "resources/",
+  "resources/app.asar",
+  "resources.pak",
+  "snapshot_blob.bin",
+  "Test Concurrent.exe",
+  "v8_context_snapshot.bin",
+  "vk_swiftshader.dll",
+  "vk_swiftshader_icd.json",
+  "vulkan-1.dll",
+]
+`;
+
+exports[`nsis + zip concurrent: elevate.exe reaches win-unpacked but never leaks into sibling targets (#9852) 3`] = `
+[
+  {
+    "alg": "SHA256",
+    "file": "resources\\app.asar",
+    "value": "hash",
+  },
+]
+`;
+
 exports[`win concurrent - all targets 1`] = `
 {
   "win": [

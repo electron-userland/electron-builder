@@ -17,6 +17,9 @@
           "$ref": "#/definitions/SpacesOptions"
         },
         {
+          "$ref": "#/definitions/R2Options"
+        },
+        {
           "$ref": "#/definitions/GenericServerOptions"
         },
         {
@@ -135,6 +138,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -302,6 +308,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -451,7 +460,7 @@
     },
     "BitbucketOptions": {
       "additionalProperties": false,
-      "description": "Bitbucket options.\nhttps://bitbucket.org/\nDefine `BITBUCKET_TOKEN` environment variable.\n\nFor converting an app password to a usable token, you can utilize this\n```typescript\nconvertAppPassword(owner: string, appPassword: string) {\nconst base64encodedData = Buffer.from(`${owner}:${appPassword.trim()}`).toString(\"base64\")\nreturn `Basic ${base64encodedData}`\n}\n```",
+      "description": "Bitbucket options.\nhttps://bitbucket.org/\nDefine `BITBUCKET_TOKEN` environment variable.\n\nBitbucket Cloud is [retiring app passwords](https://www.atlassian.com/blog/bitbucket/bitbucket-cloud-transitions-to-api-tokens) in favor of API tokens and access tokens. Authentication is selected by whether a `username` is provided:\n- With `username` — the token is sent via HTTP Basic auth. Use a Bitbucket username + [app password](https://bitbucket.org/account/settings/app-passwords), or an Atlassian account email + [API token](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/).\n- Without `username` — the token is sent as a repository/project/workspace [access token](https://support.atlassian.com/bitbucket-cloud/docs/using-access-tokens/) via Bearer auth.\n\nFor the auto-updater on a private repository, pass the matching header to `autoUpdater.addAuthHeader(...)`:\n```typescript\n// access token (no username)\nautoUpdater.addAuthHeader(`Bearer ${token}`)\n// app password or API token (with username)\nautoUpdater.addAuthHeader(`Basic ${Buffer.from(`${username}:${token}`).toString(\"base64\")}`)\n```",
       "properties": {
         "channel": {
           "default": "latest",
@@ -505,7 +514,7 @@
           ]
         },
         "token": {
-          "description": "The [app password](https://bitbucket.org/account/settings/app-passwords) to support auto-update from private bitbucket repositories.",
+          "description": "The token to support auto-update from private bitbucket repositories. Depending on `username`, this is a Bitbucket [app password](https://bitbucket.org/account/settings/app-passwords), an Atlassian [API token](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/), or a repository/project/workspace [access token](https://support.atlassian.com/bitbucket-cloud/docs/using-access-tokens/).",
           "type": [
             "null",
             "string"
@@ -525,7 +534,7 @@
           ]
         },
         "username": {
-          "description": "The user name to support auto-update from private bitbucket repositories.",
+          "description": "The user name to support auto-update from private bitbucket repositories. Provide a Bitbucket username (for an app password) or an Atlassian account email (for an API token) to authenticate with HTTP Basic auth. Leave unset to send `token` as a Bearer access token.",
           "type": [
             "null",
             "string"
@@ -861,6 +870,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -1008,19 +1020,20 @@
               "type": "null"
             }
           ],
-          "default": "HFS+",
-          "description": "The filesystem for the DMG volume (e.g. `\"APFS\"` or `\"HFS+\"`)\nThis will be changed to APFS in the next major release, so it is recommended to set it explicitly to HFS+ if you want to keep using HFS+ (e.g. for better compatibility with older macOS versions)."
+          "default": "APFS",
+          "description": "The filesystem for the DMG volume (e.g. `\"APFS\"` or `\"HFS+\"`)\nAs of v27 this defaults to APFS. Set it explicitly to `\"HFS+\"` if you need compatibility with older macOS versions (pre-10.13 High Sierra cannot mount APFS volumes)."
         },
         "format": {
           "default": "UDZO",
-          "description": "The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).",
+          "description": "The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)). `ULMO` (lzma-compressed image (macOS 10.15+ only)).",
           "enum": [
             "UDBZ",
             "UDCO",
             "UDRO",
             "UDRW",
             "UDZO",
-            "ULFO"
+            "ULFO",
+            "ULMO"
           ],
           "type": "string"
         },
@@ -1079,6 +1092,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -1217,7 +1233,7 @@
     },
     "ElectronSignOptions": {
       "additionalProperties": false,
-      "description": "Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control\nitself — `app`, `keychain`, `platform`, `version`, `optionsForFile`, and `type` (derived from the\nbuild flavor: `mas-dev` → `development`, otherwise `distribution`) — and forwards everything else.\n\nAdditionally exposes a small set of per-file convenience fields that electron-builder maps\ninternally through `optionsForFile`.",
+      "description": "Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control\nitself — `app`, `keychain`, `platform`, `version`, and `optionsForFile` — and forwards everything else.\n\nAdditionally exposes a small set of per-file convenience fields that electron-builder maps\ninternally through `optionsForFile`.",
       "properties": {
         "additionalArguments": {
           "anyOf": [
@@ -1266,7 +1282,7 @@
           ]
         },
         "hardenedRuntime": {
-          "description": "Whether to enable [Hardened Runtime](https://developer.apple.com/documentation/security/hardened_runtime).\n\nHardened Runtime is a prerequisite for notarization (mandatory on macOS 10.15+).\nDefaults to `true` for `darwin` builds and `false` for `mas-dev`.",
+          "description": "Whether to enable [Hardened Runtime](https://developer.apple.com/documentation/security/hardened_runtime).\n\nHardened Runtime is a prerequisite for notarization (mandatory on macOS 10.15+).\nDefaults to `true` for `darwin` builds and `false` for MAS builds (`mas` and `mas-dev`).",
           "type": "boolean"
         },
         "identity": {
@@ -1329,6 +1345,14 @@
             "null",
             "string"
           ]
+        },
+        "type": {
+          "description": "The type of certificate to use when signing: `development` or `distribution`.\n\nDefaults to a value derived from the build flavor: `mas-dev` → `development`, otherwise `distribution`.\nSet it explicitly to override — e.g. `development` on a darwin build signs with a `Mac Developer` or\n`Apple Development` certificate instead of `Developer ID Application` and embeds a matching\ndevelopment provisioning profile.\n\nDevelopment-signed apps are blocked by Gatekeeper on other machines; users must use the\nright-click → Open workaround documented at https://support.apple.com/en-us/guide/mac-help/mh40616/mac.\nSuch builds are not suitable for production distribution and cannot be notarized.",
+          "enum": [
+            "development",
+            "distribution"
+          ],
+          "type": "string"
         }
       },
       "type": "object"
@@ -1577,6 +1601,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -1798,7 +1825,7 @@
           ]
         },
         "private": {
-          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](https://www.electron.build/auto-update#private-github-update-repo).",
+          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](https://www.electron.build/docs/features/auto-update#private-github-update-repo).",
           "type": [
             "null",
             "boolean"
@@ -1885,7 +1912,7 @@
           ]
         },
         "token": {
-          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](https://www.electron.build/auto-update#appupdatersetfeedurloptions).",
+          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](https://www.electron.build/docs/features/auto-update#custom-options-instantiating-updater-directly).",
           "type": [
             "null",
             "string"
@@ -2215,14 +2242,6 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.\nThis does *not* apply to github publishing, which will [never auto-detect the update channel](https://github.com/electron-userland/electron-builder/issues/8589).",
           "type": "boolean"
         },
-        "disableDefaultIgnoredFiles": {
-          "default": false,
-          "description": "Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.",
-          "type": [
-            "null",
-            "boolean"
-          ]
-        },
         "electronLanguages": {
           "anyOf": [
             {
@@ -2238,7 +2257,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -2358,7 +2377,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
           "default": false,
@@ -2430,6 +2449,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -2496,7 +2518,7 @@
             }
           ],
           "default": "AppImage",
-          "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](https://www.electron.build/multi-platform-build#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
+          "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](https://www.electron.build/docs/features/multi-platform-build#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
         },
         "updateManifest": {
           "anyOf": [
@@ -2719,6 +2741,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -2872,14 +2897,6 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.\nThis does *not* apply to github publishing, which will [never auto-detect the update channel](https://github.com/electron-userland/electron-builder/issues/8589).",
           "type": "boolean"
         },
-        "disableDefaultIgnoredFiles": {
-          "default": false,
-          "description": "Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.",
-          "type": [
-            "null",
-            "boolean"
-          ]
-        },
         "electronLanguages": {
           "anyOf": [
             {
@@ -2895,7 +2912,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -3021,7 +3038,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
           "default": false,
@@ -3127,6 +3144,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -3369,14 +3389,6 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.\nThis does *not* apply to github publishing, which will [never auto-detect the update channel](https://github.com/electron-userland/electron-builder/issues/8589).",
           "type": "boolean"
         },
-        "disableDefaultIgnoredFiles": {
-          "default": false,
-          "description": "Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.",
-          "type": [
-            "null",
-            "boolean"
-          ]
-        },
         "electronLanguages": {
           "anyOf": [
             {
@@ -3392,7 +3404,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -3518,7 +3530,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
           "default": false,
@@ -3624,6 +3636,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -3872,6 +3887,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -4001,6 +4019,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -4061,6 +4082,259 @@
           ]
         }
       },
+      "type": "object"
+    },
+    "MsixOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "addAutoLaunchExtension": {
+          "description": "Whether to add auto launch extension. Defaults to `true` if electron-winstore-auto-launch is in the dependencies.",
+          "type": "boolean"
+        },
+        "applicationId": {
+          "description": "The application id. Defaults to `identityName`. This string contains alpha-numeric fields separated by periods.\nEach field must begin with an ASCII alphabetic character.",
+          "type": "string"
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "backgroundColor": {
+          "default": "#464646",
+          "description": "The background color of the app tile.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "capabilities": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [
+            "runFullTrust"
+          ],
+          "description": "The list of capabilities to be added to the AppxManifest.xml.\nThe `runFullTrust` capability is obligatory for Electron apps and will be auto-added if not specified."
+        },
+        "createMsixbundle": {
+          "default": true,
+          "description": "Whether to produce a .msixbundle when more than one architecture is built.",
+          "type": "boolean"
+        },
+        "createMsixupload": {
+          "default": false,
+          "description": "Whether to produce a .msixupload archive suitable for submission to the Microsoft Store Partner Center.",
+          "type": "boolean"
+        },
+        "customExtensionsPath": {
+          "description": "Relative path to custom extensions xml to be included in the AppxManifest.xml.",
+          "type": "string"
+        },
+        "customManifestPath": {
+          "description": "Relative path to a custom AppxManifest.xml template located in the build resources directory.\nSupports the same `${}` template macros as the default template, including the MSIX-specific\n`${packageIntegrity}` macro. Windows services are injected via the `${extensions}` macro\nalongside protocol/file-association extensions.",
+          "type": "string"
+        },
+        "displayName": {
+          "description": "A friendly name displayed to users. Corresponds to Properties.DisplayName. Defaults to the application product name.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "electronUpdaterAware": {
+          "type": "boolean"
+        },
+        "enforcePackageIntegrity": {
+          "default": false,
+          "description": "Enforce package integrity (uap10:PackageIntegrity). Requires Windows 10 version 2004 (build 19041) or later.\nWhen enabled, Windows verifies that no files have been tampered with after the package was signed.",
+          "type": "boolean"
+        },
+        "identityName": {
+          "description": "The package identity name. Corresponds to Identity.Name. Defaults to the application name.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "languages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "default": [
+            "en-US"
+          ],
+          "description": "The list of supported languages listed in the Windows Store. The first entry (index 0) will be the default language."
+        },
+        "makeappxArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maxVersionTested": {
+          "default": "same as minVersion",
+          "description": "Set the MaxVersionTested field in the AppxManifest.xml.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "minVersion": {
+          "default": "\"10.0.17763.0\" (Windows 10 version 1809 — minimum for Store submissions)",
+          "description": "Set the MinVersion field in the AppxManifest.xml.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/GitlabOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllPublishOptions"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "publisher": {
+          "description": "The Windows Store publisher. Not used if MSIX is built for testing.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publisherDisplayName": {
+          "description": "A friendly name for the publisher displayed to users. Corresponds to Properties.PublisherDisplayName.\nDefaults to company name from the application metadata.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "setBuildNumber": {
+          "default": false,
+          "description": "Whether to set the build number in the version field.",
+          "type": "boolean"
+        },
+        "showNameOnTiles": {
+          "default": false,
+          "description": "Whether to overlay the app's name on top of tile images on the Start screen.",
+          "type": "boolean"
+        },
+        "windowsServices": {
+          "description": "Windows Services to register with the MSIX package (desktop6 namespace).\nRequires Windows 10 version 1903 or later, and the `packagedServices` (or `localSystemServices`)\nrestricted capability declared via `capabilities`.",
+          "items": {
+            "$ref": "#/definitions/MsixWindowsService"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "MsixWindowsService": {
+      "additionalProperties": false,
+      "properties": {
+        "arguments": {
+          "description": "Optional command-line arguments passed to the service executable.",
+          "type": "string"
+        },
+        "executable": {
+          "description": "Relative path to the service executable within the package.\nDefaults to the main app executable.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The service name used in the Windows Service Control Manager.",
+          "type": "string"
+        },
+        "startAccount": {
+          "default": "localSystem",
+          "description": "The account the service runs under. Required by the desktop6 schema.",
+          "enum": [
+            "localService",
+            "localSystem",
+            "networkService"
+          ],
+          "type": "string"
+        },
+        "startupType": {
+          "default": "manual",
+          "description": "How Windows starts the service. Required by the desktop6 schema.",
+          "enum": [
+            "auto",
+            "disabled",
+            "manual"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
       "type": "object"
     },
     "NativeModulesConfig": {
@@ -4318,6 +4592,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -4671,6 +4948,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -5398,6 +5678,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -5562,7 +5845,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.",
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/docs/features/code-signing) instead of specifying this option.",
           "type": [
             "null",
             "string"
@@ -5656,6 +5939,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -5778,6 +6064,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -5881,6 +6170,105 @@
       ],
       "type": "object"
     },
+    "R2Options": {
+      "additionalProperties": false,
+      "description": "[Cloudflare R2](https://developers.cloudflare.com/r2/) options.\nCredentials are required; define `CF_R2_ACCESS_KEY_ID` and `CF_R2_SECRET_ACCESS_KEY` environment variables\nwith an R2 API token (see https://developers.cloudflare.com/r2/api/s3/tokens/).\n\n**Public access for auto-updates:** R2 buckets are private by default. The S3-compatible API endpoint\nalways requires authentication, so `electron-updater` cannot download updates directly from it.\nYou must either enable a custom domain or an r2.dev subdomain for the bucket in the Cloudflare\ndashboard (see https://developers.cloudflare.com/r2/buckets/public-buckets/) and then set\n`publicUrl` to that base URL so the updater knows where to fetch update metadata and binaries.\n\n**ACLs:** R2 does not support S3 ACLs. The `acl` option from `BaseS3Options` is intentionally\nexcluded here. Configure public bucket access in the Cloudflare dashboard instead.\n\nExample configuration:\n\n```json\n{\n\"build\": {\n \"publish\": {\n   \"provider\": \"r2\",\n   \"bucket\": \"my-releases\",\n   \"accountId\": \"abcdef1234567890abcdef1234567890\",\n   \"publicUrl\": \"https://pub-abcdef1234567890abcdef1234567890.r2.dev\"\n }\n}\n}\n```",
+      "properties": {
+        "accountId": {
+          "description": "Your Cloudflare account ID (32-character hex string). Found on the R2 overview page\nin the Cloudflare dashboard. Used to construct the S3-compatible upload endpoint:\n`https://<accountId>.r2.cloudflarestorage.com`",
+          "type": "string"
+        },
+        "bucket": {
+          "description": "The R2 bucket name.",
+          "type": "string"
+        },
+        "channel": {
+          "default": "latest",
+          "description": "The update channel.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "jurisdiction": {
+          "anyOf": [
+            {
+              "enum": [
+                "eu",
+                "fedramp"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The jurisdiction of the R2 bucket, if the bucket was created with a jurisdictional\nrestriction. Buckets created in a jurisdiction live on a separate endpoint —\n`https://<accountId>.<jurisdiction>.r2.cloudflarestorage.com` — so this must match\nthe jurisdiction the bucket was created with. Omit for regular buckets.\n\nSee https://developers.cloudflare.com/r2/reference/data-location/#jurisdictional-restrictions"
+        },
+        "path": {
+          "default": "/",
+          "description": "The directory path.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "provider": {
+          "const": "r2",
+          "description": "The provider. Must be `r2`.",
+          "type": "string"
+        },
+        "publicUrl": {
+          "description": "The public base URL from which `electron-updater` will download update metadata and\nbinaries. This must be the URL of your bucket's **custom domain** or **r2.dev subdomain**\n(e.g. `https://pub-xxx.r2.dev` or `https://cdn.example.com`).\n\nRequired when `publishAutoUpdate` is not `false`. The R2 S3 API endpoint requires\nauthentication and cannot serve unauthenticated download requests.\n\nSee https://developers.cloudflare.com/r2/buckets/public-buckets/",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publishAutoUpdate": {
+          "default": true,
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "type": "boolean"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requestHeaders": {
+          "$ref": "#/definitions/OutgoingHttpHeaders",
+          "description": "Any custom request headers"
+        },
+        "timeout": {
+          "default": 120000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
+        "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "accountId",
+        "bucket",
+        "provider"
+      ],
+      "type": "object"
+    },
     "Record<string,App>": {
       "type": "object",
       "additionalProperties": {}
@@ -5973,7 +6361,7 @@
     },
     "RemoteBuildOptions": {
       "additionalProperties": false,
-      "description": "Configuration for a remote snap build on [Launchpad](https://launchpad.net/).\nRemote builds run on Canonical's infrastructure without requiring native hardware or nested virtualisation.\n\nEach electron-builder build invocation targets exactly one architecture — to build for multiple\narchitectures, configure the top-level `arch` option (e.g. `arch: [\"x64\", \"arm64\"]`); each arch\nspawns a separate `snapcraft remote-build` job on Launchpad.\n\nAuthentication is resolved in this order:\n1. `cscLink` config field — base64-encoded credentials or a file path\n2. `SNAP_CSC_LINK` environment variable — same format as `cscLink`\n   (CI-recommended; follows the same pattern as `WIN_CSC_LINK` for Windows code signing)\n3. `SNAPCRAFT_STORE_CREDENTIALS` environment variable (read directly by snapcraft)\n4. An active interactive `snapcraft login` session\n\n**CI setup** (set once as a CI secret):\n```sh\nexport SNAP_CSC_LINK=$(snapcraft export-login - | base64 -w0)\n```\nThe resolved credentials are injected only into the spawned `snapcraft` subprocess\nenvironment and never exposed through `process.env`.",
+      "description": "Configuration for a remote snap build on [Launchpad](https://launchpad.net/).\nRemote builds run on Canonical's infrastructure without requiring native hardware or nested virtualisation.\n\nA single remote build can target one or more architectures. Set `buildFor` to a string for one\narch, or to an array (e.g. `[\"amd64\", \"arm64\"]`) to build several architectures in a single\n`snapcraft remote-build` job on Launchpad that emits a separate snap artifact per arch.\nAlternatively, the top-level `arch` option (e.g. `arch: [\"x64\", \"arm64\"]`) spawns a separate\nremote-build job per architecture — do not combine that with a `buildFor` array (mutually exclusive).\n\nAuthentication is resolved in this order:\n1. `cscLink` config field — base64-encoded credentials or a file path\n2. `SNAP_CSC_LINK` environment variable — same format as `cscLink`\n   (CI-recommended; follows the same pattern as `WIN_CSC_LINK` for Windows code signing)\n3. `SNAPCRAFT_STORE_CREDENTIALS` environment variable (read directly by snapcraft)\n4. An active interactive `snapcraft login` session\n\n**CI setup** (set once as a CI secret):\n```sh\nexport SNAP_CSC_LINK=$(snapcraft export-login - | base64 -w0)\n```\nThe resolved credentials are injected only into the spawned `snapcraft` subprocess\nenvironment and never exposed through `process.env`.",
       "properties": {
         "acceptPublicUpload": {
           "description": "Suppress the Launchpad public-upload consent prompt by automatically accepting it.\nYour source code will be uploaded to a **public** Launchpad repository.\nSet to `true` in CI once you understand the implications.",
@@ -6193,6 +6581,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -6671,6 +7062,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -6708,7 +7102,7 @@
               "type": "null"
             }
           ],
-          "description": "Configuration for a remote build on [Launchpad](https://launchpad.net/).\nEnables cross-architecture builds in CI without native hardware or nested virtualisation.\nEach build invocation targets one arch; use `arch: [\"x64\", \"arm64\"]` to build for multiple."
+          "description": "Configuration for a remote build on [Launchpad](https://launchpad.net/).\nEnables cross-architecture builds in CI without native hardware or nested virtualisation.\nSet `remoteBuild.buildFor: [\"amd64\", \"arm64\"]` to build several architectures in one Launchpad\njob, or the top-level `arch: [\"x64\", \"arm64\"]` option to spawn a separate job per architecture\n(the two are mutually exclusive)."
         },
         "slots": {
           "anyOf": [
@@ -7067,6 +7461,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -7337,6 +7734,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -7777,6 +8177,9 @@
               "$ref": "#/definitions/SpacesOptions"
             },
             {
+              "$ref": "#/definitions/R2Options"
+            },
+            {
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
@@ -7906,14 +8309,14 @@
             },
             {
               "enum": [
-                "1.2.1",
+                "1.2.3",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.2.1\"` | `wasm-vips` + `@resvg/resvg-wasm` |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md"
+          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.2.3\"` | Writes 16px/32px ICNS entries as `ic04`/`ic05` ARGB (fixes corrupt small icons in Finder) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md"
         },
         "linuxToolsMac": {
           "anyOf": [
@@ -7923,13 +8326,14 @@
             {
               "enum": [
                 "1.0.0",
+                "1.0.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md"
+          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |\n| `\"1.0.1\"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md"
         },
         "nsis": {
           "anyOf": [
@@ -7956,13 +8360,14 @@
             {
               "enum": [
                 "1.0.0",
+                "1.0.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.\n\nSet to a {@link ToolsetCustom} object to supply your own 7za binary.\nThe `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains\n`bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).\n\n**Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive\n(or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because\nextracting them requires 7za — a circular dependency."
+          "description": "Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.\n\nSet to a {@link ToolsetCustom} object to supply your own 7za binary.\nThe `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains\n`bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).\n\n**Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive\n(or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because\nextracting them requires 7za — a circular dependency.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | Shipped the 32-bit `7za.exe` for every Windows arch (1.75 GiB memory cap, no LZMA2 multithreading on x64/arm64) |\n| `\"1.0.1\"` | Correct per-arch Windows binaries (x64, ia32, arm64) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/7zip/CHANGELOG.md"
         },
         "winCodeSign": {
           "anyOf": [
@@ -8010,7 +8415,7 @@
       "description": "A custom toolset bundle supplied by the user in place of a built-in versioned bundle.\n\nThe bundle must mirror the expected directory layout of the corresponding built-in bundle.\nSee the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.\n\nFile formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.",
       "properties": {
         "checksum": {
-          "description": "SHA checksum of the custom toolset bundle for verification.\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching.",
+          "description": "SHA-256 checksum of the custom toolset bundle for verification, as a lowercase hex string\n(e.g. the output of `shasum -a 256 bundle.tar.gz`) — not the base64 values GitHub release\nnotes may show.\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching.",
           "type": "string"
         },
         "url": {
@@ -8179,14 +8584,6 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.\nThis does *not* apply to github publishing, which will [never auto-detect the update channel](https://github.com/electron-userland/electron-builder/issues/8589).",
           "type": "boolean"
         },
-        "disableDefaultIgnoredFiles": {
-          "default": false,
-          "description": "Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.",
-          "type": [
-            "null",
-            "boolean"
-          ]
-        },
         "electronLanguages": {
           "anyOf": [
             {
@@ -8202,7 +8599,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -8308,7 +8705,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
           "default": false,
@@ -8362,6 +8759,9 @@
             },
             {
               "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/R2Options"
             },
             {
               "$ref": "#/definitions/GenericServerOptions"
@@ -8436,7 +8836,7 @@
               "type": "null"
             }
           ],
-          "description": "Code signing configuration. Code signing stamps every installer and executable\nelectron-builder produces with an Authenticode signature, so that Windows (SmartScreen / UAC)\nand your auto-updater can verify the publisher and that the files were not tampered with.\n\nHow this option behaves:\n- Leave **unset** to sign using credentials discovered from the environment — primarily a\n  certificate supplied via `WIN_CSC_LINK` (or `CSC_LINK`) with its password in\n  `WIN_CSC_KEY_PASSWORD` (or `CSC_KEY_PASSWORD`). `WIN_CSC_LINK` accepts a file path, an\n  `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.\n- Set to `false` or `null` to **disable** code signing entirely (executable resources such as\n  the icon and metadata are still edited).\n- Set to an **object** to configure signing explicitly. The `type` field selects the signing\n  backend (`signtool` is the implicit default) and dispatches to a dedicated sign manager;\n  provide exactly one of the modes below. Each output artifact is signed individually, and by\n  default executables are dual-signed (see `signingHashAlgorithms`).\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and\n  `osslsigncode` on macOS/Linux.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires a modern `winCodeSign` toolset (the default — only the legacy\n  `\"0.0.0\"` pin is unsupported). Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication.\n\nSee [Code Signing](https://www.electron.build/code-signing)."
+          "description": "Code signing configuration. Code signing stamps every installer and executable\nelectron-builder produces with an Authenticode signature, so that Windows (SmartScreen / UAC)\nand your auto-updater can verify the publisher and that the files were not tampered with.\n\nHow this option behaves:\n- Leave **unset** to sign using credentials discovered from the environment — primarily a\n  certificate supplied via `WIN_CSC_LINK` (or `CSC_LINK`) with its password in\n  `WIN_CSC_KEY_PASSWORD` (or `CSC_KEY_PASSWORD`). `WIN_CSC_LINK` accepts a file path, an\n  `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.\n- Set to `false` or `null` to **disable** code signing entirely (executable resources such as\n  the icon and metadata are still edited).\n- Set to an **object** to configure signing explicitly. The **required** `type` field selects the\n  signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign\n  manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`\n  backend is used with env-discovered credentials. Each output artifact is signed individually,\n  and by default executables are dual-signed (see `signingHashAlgorithms`).\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and\n  `osslsigncode` on macOS/Linux.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires a modern `winCodeSign` toolset (the default — only the legacy\n  `\"0.0.0\"` pin is unsupported). Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication.\n\nSee [Code Signing](https://www.electron.build/docs/features/code-signing)."
         },
         "signExts": {
           "anyOf": [
@@ -8479,7 +8879,7 @@
             }
           ],
           "default": "nsis",
-          "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable]https://www.electron.build/nsis#portable) app without installation), `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX package can be built only on Windows 10.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
+          "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable app](https://www.electron.build/nsis#portable) without installation), `appx`, `msix`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX and MSIX packages can be built on Windows 10 or Windows Server 2012 R2 (version 6.3+) or later, and on macOS via Parallels Desktop.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
         },
         "updateManifest": {
           "anyOf": [
@@ -8576,7 +8976,7 @@
               ]
             }
           ],
-          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/code-signing)."
+          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing)."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -8681,7 +9081,7 @@
               ]
             }
           ],
-          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/code-signing)."
+          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing)."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -8735,7 +9135,7 @@
           ]
         },
         "certificateFile": {
-          "description": "Path to the PKCS#12 certificate file (`.pfx` or `.p12`) holding both the signing certificate\nand its private key. Passed to signtool via `/f` (or osslsigncode via `-pkcs12`).\n\nPrefer supplying this out-of-band via the `WIN_CSC_LINK` (or `CSC_LINK`) environment variable\ninstead of hardcoding a path — that variable also accepts an `https://` URL or a base64-encoded\ncertificate, which is safer and more convenient on CI. See\n[Code Signing](https://www.electron.build/code-signing).",
+          "description": "Path to the PKCS#12 certificate file (`.pfx` or `.p12`) holding both the signing certificate\nand its private key. Passed to signtool via `/f` (or osslsigncode via `-pkcs12`).\n\nPrefer supplying this out-of-band via the `WIN_CSC_LINK` (or `CSC_LINK`) environment variable\ninstead of hardcoding a path — that variable also accepts an `https://` URL or a base64-encoded\ncertificate, which is safer and more convenient on CI. See\n[Code Signing](https://www.electron.build/docs/features/code-signing).",
           "type": [
             "null",
             "string"
@@ -8799,7 +9199,7 @@
               ]
             }
           ],
-          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/code-signing)."
+          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing)."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -8897,6 +9297,24 @@
         }
       ],
       "description": "Called after code signing but **before** the signed app is packed into the final\ndistributable format (e.g. before `dmg` is created from the signed `.app`).\n\nUse this hook to perform post-sign validation or to add signed resources that are not part of\nthe main app bundle.\n\nReceives an {@link AfterPackContext}."
+    },
+    "allowMissingDependencies": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        }
+      ],
+      "default": false,
+      "description": "Whether production dependencies that cannot be resolved during node-module collection are\nallowed — i.e. whether the build should continue with a warning instead of failing.\n\nDuring collection every production dependency must resolve to an installed package on disk. A\ndependency that does not resolve (`cannot find path for dependency` / `dependency not found on\ndisk`) is not bundled, which typically breaks the packaged app at runtime with\n`MODULE_NOT_FOUND`.\n\n- `false` or `null` (default): the build fails after dependency collection completes,\n  reporting the **complete** list of missing production dependencies at once.\n- `string[]`: the listed dependency names are allowed to be missing; any other missing\n  production dependency still fails the build. Entries match the package name of the reported\n  `name@version` entry (e.g. `some-native-module`, `@scope/pkg`), or an exact `name@version`\n  string to allow only that resolved version to be missing.\n- `true`: missing production dependencies are only logged as warnings (the electron-builder\n  ≤ 26 behavior).\n\nMissing *optional* dependencies (declared in `optionalDependencies`, e.g. `fsevents` on\nLinux/Windows, or platform-specific packages) are always allowed and never fail the build.\n\nIndependent of {@link ignoredProductionDependencies}, which controls which dependencies are\nexcluded from the copied `node_modules`; this option only controls validation of the\ncollection result."
     },
     "apk": {
       "anyOf": [
@@ -9124,14 +9542,6 @@
       ],
       "description": "Overrides for input/output directory paths used during the build."
     },
-    "disableDefaultIgnoredFiles": {
-      "default": false,
-      "description": "Whether to exclude all default ignored files(https://www.electron.build/contents#files) and options. Defaults to `false`.",
-      "type": [
-        "null",
-        "boolean"
-      ]
-    },
     "dmg": {
       "anyOf": [
         {
@@ -9163,7 +9573,7 @@
           ]
         }
       ],
-      "description": "Override the source of the Electron distribution to stage.\n\nShould return the path to either:\n- A **directory** containing a pre-built, unpacked Electron app (e.g. `~/electron/out/R`).\n- A **directory** containing Electron zip archives following the naming convention\n  `electron-v${version}-${platformName}-${arch}.zip`.\n\nWhen not set, electron-builder downloads the official Electron release from GitHub (or the\nmirror configured via `electronDownload`).\n\nReceives a {@link PrepareApplicationStageDirectoryOptions}."
+      "description": "Override the source of the Electron distribution to stage.\n\nShould return the path to either:\n- A **directory** containing a pre-built, unpacked Electron app (e.g. `~/electron/out/R`).\n- A **directory** containing Electron zip archives following the naming convention\n  `electron-v${version}-${platformName}-${arch}.zip`.\n\nWhen not set, electron-builder downloads the official Electron release from GitHub (or the\nmirror configured via `electronGet`).\n\nReceives a {@link PrepareApplicationStageDirectoryOptions}."
     },
     "electronFuses": {
       "anyOf": [
@@ -9185,7 +9595,7 @@
           "type": "null"
         }
       ],
-      "description": "Options forwarded to [`@electron/get`](https://github.com/electron/get) when downloading the\nElectron distribution to package."
+      "description": "Options forwarded to [`@electron/get`](https://github.com/electron/get) when downloading the\nElectron distribution to package.\n\n`checksums` (a map of artifact file name → SHA-256 hex) makes checksum validation fully offline —\nwithout it, `@electron/get` fetches `SHASUMS256.txt` from the network on every build, even when the\nartifact itself is already cached. When `checksums` is not configured, electron-builder automatically\npicks up a locally seeded `SHASUMS256.txt-<version>` (or `SHASUMS256.txt`) file at the root of the\nElectron cache directory. See the\n[air-gapped / offline builds guide](https://www.electron.build/tutorials/offline-air-gapped-builds)."
     },
     "electronLanguages": {
       "anyOf": [
@@ -9202,7 +9612,7 @@
       "description": "The electron locales to keep. By default, all Electron locales used as-is."
     },
     "electronUpdaterCompatibility": {
-      "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+      "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
       "type": [
         "null",
         "string"
@@ -9335,7 +9745,7 @@
           ]
         }
       ],
-      "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+      "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
     },
     "flatpak": {
       "anyOf": [
@@ -9374,6 +9784,24 @@
         "null",
         "string"
       ]
+    },
+    "ignoredProductionDependencies": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": [
+        "electron",
+        "electron-builder"
+      ],
+      "description": "Names of production dependencies that are excluded from the copied `node_modules`, even if they\nare declared in the `dependencies` section of `package.json`.\n\nelectron-builder copies the resolved production dependency tree into the app. Some packages —\nnotably `electron` — are already provided another way (the Electron runtime is embedded\nseparately), so copying them would just duplicate what is already there. Such packages are\nexcluded from the copy rather than rejected: they remain valid production dependencies for\ntooling purposes (e.g. SBOM, license, and vulnerability tracking) without being shipped twice.\n\nOnly dependencies **declared by the app itself** are eligible: a listed name and the transitive\ndependencies required *only* by it are dropped, while anything also required by another (kept)\nproduction dependency stays bundled. A matching name that appears solely as a transitive\ndependency of a kept package is never excluded. Note that a kept package which `require()`s an\nexcluded name at runtime *without declaring it* (relying on hoisting) will fail with\n`MODULE_NOT_FOUND` — declare such a dependency properly or remove the name from this list.\n\nMatching is by the dependency name as declared in `package.json`: an npm alias\n(`\"custom-electron\": \"npm:electron@^30.0.0\"`) is matched by its alias key (`custom-electron`),\nnever by the underlying package name.\n\nOverriding this option **replaces** the default list, so include `electron` and `electron-builder`\nunless you intend to ship them. The most common reason to override is to *add* a dependency that a\nbundler (Vite, webpack, esbuild, …) already inlines into your app code: keep it in `dependencies`\nso SBOM/license tooling still sees it, and list it here so a duplicate copy is not packaged — e.g.\n`[\"electron\", \"electron-builder\", \"react\", \"react-dom\"]`. Removing a default name keeps that\npackage in the copied `node_modules`. Setting the option to `null` (or omitting it) applies the\ndefault list; to disable exclusion entirely, set it to an empty array `[]`. Each excluded package\nis logged once during packaging."
     },
     "includePdb": {
       "default": false,
@@ -9459,6 +9887,17 @@
         }
       ],
       "description": "MSI-wrapped NSIS installer options.\n\nWraps the standard NSIS installer inside an MSI package so that it can be deployed via\nGroup Policy or other MSI-only channels while preserving the NSIS installer UX."
+    },
+    "msix": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/MsixOptions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "MSIX package options. MSIX is the modern successor to AppX with additional deployment features."
     },
     "nativeModules": {
       "anyOf": [
@@ -9604,6 +10043,9 @@
           "$ref": "#/definitions/SpacesOptions"
         },
         {
+          "$ref": "#/definitions/R2Options"
+        },
+        {
           "$ref": "#/definitions/GenericServerOptions"
         },
         {
@@ -9716,7 +10158,7 @@
           "type": "null"
         }
       ],
-      "description": "Pinned versions of the binary toolsets electron-builder downloads and uses internally.\n\nEach property selects a specific release of the corresponding tool bundle. Set a property to\n`\"0.0.0\"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set to\n`null`) to use the modern default for that toolset."
+      "description": "Pinned versions of the binary toolsets electron-builder downloads and uses internally.\n\nEach property selects a specific release of the corresponding tool bundle. Set a property to\n`\"0.0.0\"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set it to\n`\"latest\"`) to use the modern default (newest bundle) for that toolset.\n\nNote: Toolset versioning can drop intermediate releases (such as if a problem is discovered in a bundle). If you need to pin to a specific release, check the release notes for the toolset to ensure the version you specify is valid."
     },
     "updateManifest": {
       "anyOf": [

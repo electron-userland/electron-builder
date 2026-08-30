@@ -12,6 +12,7 @@ import { WineVmManager } from "../../vm/WineVm.js"
 import { WinPackager } from "../../winPackager.js"
 import { SignManager } from "./signManager.js"
 import { WindowsSignOptions } from "./windowsCodeSign.js"
+import { SignFileResult } from "../signResult.js"
 import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager.js"
 import semver from "semver"
 
@@ -88,11 +89,11 @@ export class WindowsSignAzureManager implements SignManager {
     _selected => Promise.resolve(null)
   )
 
-  async signFile(options: WindowsSignOptions): Promise<boolean> {
+  async signFile(options: WindowsSignOptions): Promise<SignFileResult> {
     return this.isLegacyMode() ? this.signFileLegacy(options) : this.signFileWithDlib(options)
   }
 
-  private async signFileLegacy(options: WindowsSignOptions): Promise<boolean> {
+  private async signFileLegacy(options: WindowsSignOptions): Promise<SignFileResult> {
     const { signing } = this
     const vm = await this.packager.vm.value
     const ps = await vm.powershellCommand.value
@@ -131,10 +132,10 @@ export class WindowsSignAzureManager implements SignManager {
     const psCommand = `Invoke-TrustedSigning ${paramsString}`
     const encodedCommand = Buffer.from(psCommand, "utf16le").toString("base64")
     await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-EncodedCommand", encodedCommand])
-    return true
+    return "signed"
   }
 
-  private async signFileWithDlib(options: WindowsSignOptions): Promise<boolean> {
+  private async signFileWithDlib(options: WindowsSignOptions): Promise<SignFileResult> {
     const { signing } = this
     const winCodeSign = this.packager.config.toolsets?.winCodeSign
     const isCustom = typeof winCodeSign === "object" && winCodeSign != null
@@ -205,6 +206,6 @@ export class WindowsSignAzureManager implements SignManager {
     // back to the same location on the host filesystem.
     const execOptions = dotnetRootPath != null ? { env: { DOTNET_ROOT: this.vm.toVmFile(dotnetRootPath) } } : undefined
     await this.vm.exec(signtoolPath, args, execOptions)
-    return true
+    return "signed"
   }
 }

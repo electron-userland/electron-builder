@@ -296,6 +296,46 @@ describe("TraversalNodeModulesCollector", { sequential: true }, () => {
     })
   })
 
+  describe("workspace sub-package with hoisted dependencies (issue #9945)", () => {
+    test("resolves a sub-package's production deps hoisted to the workspace root", async ({ expect }) => {
+      // Reproduces the Yarn-Berry `nmHoistingLimits: workspaces` layout: the Electron app is a
+      // workspace member at packages/app, and its production dependencies are hoisted up to the
+      // workspace-root node_modules rather than living under packages/app/node_modules.
+      root = await buildPackageTree({
+        "package.json": {
+          name: "workspace-root",
+          version: "1.0.0",
+          private: true,
+          workspaces: ["packages/*"],
+        },
+        "packages/app/package.json": {
+          name: "app",
+          version: "1.0.0",
+          dependencies: { minimist: "^1.2.8", "fs-extra": "^11.0.0" },
+        },
+        // Hoisted to the workspace root, not packages/app/node_modules.
+        "node_modules/minimist/package.json": { name: "minimist", version: "1.2.8" },
+        "node_modules/fs-extra/package.json": {
+          name: "fs-extra",
+          version: "11.2.0",
+          dependencies: { "graceful-fs": "^4.0.0" },
+        },
+        "node_modules/graceful-fs/package.json": { name: "graceful-fs", version: "4.2.11" },
+      })
+
+      const collector = new TraversalNodeModulesCollector(path.join(root, "packages", "app"), mockTmpDir)
+      const { nodeModules } = await collector.getNodeModules({ packageName: "app" })
+      const names = nodeModules.map(m => m.name)
+
+      expect(names).toContain("minimist")
+      expect(names).toContain("fs-extra")
+      // transitive dependency of fs-extra, also hoisted to the workspace root
+      expect(names).toContain("graceful-fs")
+      // the workspace root itself must not be collected as a dependency of the app
+      expect(names).not.toContain("workspace-root")
+    })
+  })
+
   describe("circular dependency and self-reference handling", () => {
     test("handles self-referential dependencies gracefully (does not loop)", async ({ expect }) => {
       root = await buildPackageTree({

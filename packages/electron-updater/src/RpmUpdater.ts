@@ -38,7 +38,7 @@ export class RpmUpdater extends LinuxUpdater {
     const priorityList = ["zypper", "dnf", "yum", "rpm"]
     const packageManager = this.detectPackageManager(priorityList)
     try {
-      RpmUpdater.installWithCommandRunner(packageManager as any, installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger, this.requireSignedLinuxPackages)
+      RpmUpdater.installWithCommandRunner(packageManager as any, installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger, this.allowUnverifiedLinuxPackages)
     } catch (error: any) {
       this.dispatchError(error)
       return false
@@ -54,53 +54,37 @@ export class RpmUpdater extends LinuxUpdater {
     installerPath: string,
     commandRunner: (commandWithArgs: string[]) => void,
     logger: Logger,
-    requireSigned = false
+    allowUnverified = true
   ) {
-    if (requireSigned) {
-      logger.info("requireSignedLinuxPackages is enabled — the package manager will enforce RPM signature verification")
-    }
-    const warnUnsigned = (flag: string) => {
-      logger.warn(
-        `installing .rpm without distro signature verification (${flag}). Artifact integrity is still checked via the update manifest sha512. Set requireSignedLinuxPackages=true to enforce distro signatures.`
-      )
+    const logVerificationMode = () => {
+      if (allowUnverified) {
+        logger.info(
+          "Installing .rpm with GPG/signature verification bypassed (allowUnverifiedLinuxPackages defaults to true since electron-builder does not sign Linux packages). Set it to false to enforce verification if you sign your packages."
+        )
+      } else {
+        logger.info("Installing .rpm with GPG/signature verification enforced (allowUnverifiedLinuxPackages=false).")
+      }
     }
     if (packageManager === "zypper") {
-      const args = ["zypper", "--non-interactive", "--no-refresh", "install"]
-      if (!requireSigned) {
-        warnUnsigned("--allow-unsigned-rpm")
-        args.push("--allow-unsigned-rpm")
-      }
-      args.push("-f", installerPath)
-      return commandRunner(args)
+      logVerificationMode()
+      return commandRunner(["zypper", "--non-interactive", "--no-refresh", "install", ...(allowUnverified ? ["--allow-unsigned-rpm"] : []), "-f", installerPath])
     }
-    if (packageManager === "dnf") {
-      const args = ["dnf", "install"]
-      if (!requireSigned) {
-        warnUnsigned("--nogpgcheck")
-        args.push("--nogpgcheck")
-      }
-      args.push("-y", installerPath)
-      return commandRunner(args)
-    }
-    if (packageManager === "yum") {
-      const args = ["yum", "install"]
-      if (!requireSigned) {
-        warnUnsigned("--nogpgcheck")
-        args.push("--nogpgcheck")
-      }
-      args.push("-y", installerPath)
-      return commandRunner(args)
+    if (packageManager === "dnf" || packageManager === "yum") {
+      logVerificationMode()
+      // Local package files are governed by localpkg_gpgcheck, which defaults to False on dnf4, dnf5, and yum,
+      // so enforcement must enable it explicitly — merely omitting --nogpgcheck would not enforce anything.
+      return commandRunner([packageManager, "install", ...(allowUnverified ? ["--nogpgcheck"] : ["--setopt=localpkg_gpgcheck=1"]), "-y", installerPath])
     }
     if (packageManager === "rpm") {
-      logger.warn("Installing with rpm only (no dependency resolution).")
-      // --nodeps is about dependency resolution, not signatures; rpm still checks the package signature
-      // when a matching GPG key is imported. Keep replace flags; only drop --nodeps when signatures are required.
-      const args = ["rpm", "-Uvh", "--replacepkgs", "--replacefiles"]
-      if (!requireSigned) {
-        args.push("--nodeps")
+      if (!allowUnverified) {
+        logger.warn(
+          'allowUnverifiedLinuxPackages=false cannot be enforced via the CLI when installing with bare rpm: the default %_pkgverify_level is "digest", so unsigned or untrusted packages still install. Configure "%_pkgverify_level signature" on the target system to enforce it. The install command is unchanged.'
+        )
       }
-      args.push(installerPath)
-      return commandRunner(args)
+      // --nodeps is a dependency-resolution bypass, not a signature bypass, and the rpm branch is the
+      // no-resolver fallback, so it is left in place regardless of allowUnverifiedLinuxPackages.
+      logger.warn("Installing with rpm only (no dependency resolution).")
+      return commandRunner(["rpm", "-Uvh", "--replacepkgs", "--replacefiles", "--nodeps", installerPath])
     }
     throw new Error(`Package manager ${packageManager} not supported`)
   }

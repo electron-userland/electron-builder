@@ -51,7 +51,7 @@ exports[`LinuxPackager > AppImage - deprecated systemIntegration 1`] = `
 
 Please check the documentation to ensure that your configuration matches the expected schema: https://www.electron.build/configuration
 If you recently upgraded electron-builder to v27, please run \`electron-builder migrate-schema\` to automatically update your configuration.
-Check the release notes for breaking changes: https://www.electron.build/docs/migration/v26-to-v27"
+Check the release notes for breaking changes: https://www.electron.build/docs/migration/v27-breaking-changes"
 `;
 
 exports[`LinuxPackager > AppImage - desktopName drives installed filename (reverse-DNS) 1`] = `
@@ -197,9 +197,7 @@ exports[`LinuxPackager > AppImage - explicit zstd compression override 1`] = `
             "url": "Test App ßW-1.1.0.AppImage",
           },
         ],
-        "path": "Test App ßW-1.1.0.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -277,9 +275,7 @@ exports[`LinuxPackager > AppImage - store compression maps to gzip 1`] = `
             "url": "Test App ßW-1.1.0.AppImage",
           },
         ],
-        "path": "Test App ßW-1.1.0.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -311,9 +307,7 @@ exports[`LinuxPackager > AppImage 1`] = `
             "url": "Test App ßW-1.1.0.AppImage",
           },
         ],
-        "path": "Test App ßW-1.1.0.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -345,9 +339,7 @@ exports[`LinuxPackager > AppImage arm, max compression 1`] = `
             "url": "Test App ßW-1.1.0-armv7l.AppImage",
           },
         ],
-        "path": "Test App ßW-1.1.0-armv7l.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },

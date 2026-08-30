@@ -41,7 +41,7 @@ export class DebUpdater extends LinuxUpdater {
     const priorityList = ["dpkg", "apt"]
     const packageManager = this.detectPackageManager(priorityList)
     try {
-      DebUpdater.installWithCommandRunner(packageManager as any, installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger, this.requireSignedLinuxPackages)
+      DebUpdater.installWithCommandRunner(packageManager as any, installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger, this.allowUnverifiedLinuxPackages)
     } catch (error: any) {
       this.dispatchError(error)
       return false
@@ -57,11 +57,16 @@ export class DebUpdater extends LinuxUpdater {
     installerPath: string,
     commandRunner: (commandWithArgs: string[]) => void,
     logger: Logger,
-    requireSigned = false
+    allowUnverified = true
   ) {
     if (packageManager === "dpkg") {
+      if (!allowUnverified) {
+        logger.warn(
+          "allowUnverifiedLinuxPackages=false has no effect when installing with dpkg: dpkg performs no signature verification. Enforcing .deb signature verification requires a debsig-verify/debsigs policy on the target system."
+        )
+      }
       try {
-        // Primary: Install unsigned .deb directly with dpkg
+        // Primary: Install .deb directly with dpkg (dpkg performs no signature verification regardless of allowUnverified)
         commandRunner(["dpkg", "-i", installerPath])
       } catch (error: any) {
         // Handle missing dependencies via apt-get
@@ -70,19 +75,22 @@ export class DebUpdater extends LinuxUpdater {
         commandRunner(["apt-get", "install", "-f", "-y"])
       }
     } else if (packageManager === "apt") {
-      // Fallback: Use apt for direct install (less safe for unsigned .deb)
-      logger.warn("Using apt to install a local .deb. This may fail for unsigned packages unless properly configured.")
-      const args = ["apt", "install", "-y", "--allow-downgrades", "--allow-change-held-packages"]
-      if (requireSigned) {
-        logger.info("requireSignedLinuxPackages is enabled — apt will enforce package signature verification")
-      } else {
-        logger.warn(
-          "installing .deb without distro signature verification (--allow-unauthenticated). Artifact integrity is still checked via the update manifest sha512. Set requireSignedLinuxPackages=true to enforce distro signatures."
+      if (allowUnverified) {
+        logger.info(
+          "Installing a local .deb with apt; package signature verification is bypassed (allowUnverifiedLinuxPackages defaults to true since electron-builder does not sign Linux packages). Set it to false to enforce verification if you sign your packages."
         )
-        args.push("--allow-unauthenticated") // needed for unsigned .debs
+      } else {
+        logger.info("Installing a local .deb with apt with package signature verification enforced (allowUnverifiedLinuxPackages=false).")
       }
-      args.push(installerPath)
-      commandRunner(args)
+      commandRunner([
+        "apt",
+        "install",
+        "-y",
+        ...(allowUnverified ? ["--allow-unauthenticated"] : []), // unsigned .debs only when explicitly opted in
+        "--allow-downgrades", // allow lower version installs
+        "--allow-change-held-packages",
+        installerPath,
+      ])
     } else {
       throw new Error(`Package manager ${packageManager} not supported`)
     }

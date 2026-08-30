@@ -18,6 +18,8 @@ export interface MigrationResult {
   readonly migrated: Record<string, any>
   readonly changes: MigrationChange[]
   readonly warnings: string[]
+  /** Informational notices that are not config changes — they never flip `modified` or trigger a file write. */
+  readonly advisories: string[]
   readonly modified: boolean
 }
 
@@ -59,6 +61,34 @@ export const MAC_SIGN_FIELDS = [
 // Universal-build fields that moved from the platform root into the `universal` (ElectronUniversalOptions) bag.
 export const MAC_UNIVERSAL_FIELDS = ["mergeASARs", "singleArchFiles", "x64ArchFiles"] as const
 
+// Advisory surfaced (informational only — never rewrites the config) when a project builds an nsis-web target. As of v27,
+// AppUpdater.disableWebInstaller defaults to true, so the auto-updater no longer downloads web-installer packages unless the app opts in at runtime.
+export const NSIS_WEB_ADVISORY =
+  "nsis-web target detected. In v27, autoUpdater.disableWebInstaller defaults to true, so NSIS web-installer packages are not downloaded by default. " +
+  "If your app relies on nsis-web installers for auto-updates, set autoUpdater.disableWebInstaller = false in your main process (this is an electron-updater runtime setting, not a build-config key)."
+
+/** True when `target` (a string, a `{ target }` object, or an array of either) selects the nsis-web target. */
+function hasNsisWebTarget(target: any): boolean {
+  if (target == null) {
+    return false
+  }
+  if (typeof target === "string") {
+    return target === "nsis-web"
+  }
+  if (Array.isArray(target)) {
+    return target.some(hasNsisWebTarget)
+  }
+  if (typeof target === "object") {
+    return target.target === "nsis-web"
+  }
+  return false
+}
+
+/** True when the build config produces an nsis-web installer (via win.target or the global target). */
+function detectNsisWebTarget(config: Record<string, any>): boolean {
+  return hasNsisWebTarget(config.win?.target) || hasNsisWebTarget(config.target)
+}
+
 /**
  * Applies all v26→v27 config transformations to a parsed config object.
  * Pure function — no I/O, safe to call in tests.
@@ -67,6 +97,7 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   const c: Record<string, any> = JSON.parse(JSON.stringify(raw))
   const changes: MigrationChange[] = []
   const warnings: string[] = []
+  const advisories: string[] = []
 
   // ── 1. electronCompile ────────────────────────────────────────────────────
   if ("electronCompile" in c) {
@@ -79,6 +110,36 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     if (key in c) {
       delete c[key]
       changes.push({ key, description: `removed ${key} (Electron is the only supported framework in v27)` })
+    }
+  }
+
+  // ── 2b. disableDefaultIgnoredFiles removed (root + platform configs) ──────
+  // mas/masDev are MacConfiguration-derived, so they accept the (now-removed) key too.
+  for (const obj of [c, c.mac, c.mas, c.masDev, c.win, c.linux]) {
+    if (obj != null && typeof obj === "object" && "disableDefaultIgnoredFiles" in obj) {
+      delete obj.disableDefaultIgnoredFiles
+      changes.push({
+        key: "disableDefaultIgnoredFiles",
+        description: "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `files` glob, e.g. `**/*.obj`)",
+      })
+    }
+  }
+
+  // ── 2c. linux.syncDesktopName removed (always-on in v27) ──────────────────
+  // The flag is gone from the type; the behaviour it gated (deriving the installed .desktop filename
+  // from desktopName) is now always on. Leaving the key would fail v27 schema validation (noExtraProps).
+  if (c.linux != null && typeof c.linux === "object" && "syncDesktopName" in c.linux) {
+    const wasDisabled = c.linux.syncDesktopName === false
+    delete c.linux.syncDesktopName
+    changes.push({
+      key: "linux.syncDesktopName",
+      description: "removed linux.syncDesktopName (the installed .desktop filename is always synced from desktopName in v27)",
+    })
+    if (wasDisabled) {
+      warnings.push(
+        "linux.syncDesktopName: false disabled desktop-name syncing in v26. In v27 the installed .desktop filename is always derived from `desktopName` " +
+          "(falling back to executableName). If you relied on the old filename, set `desktopName` explicitly to control it."
+      )
     }
   }
 
@@ -310,7 +371,12 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     migrateElectronDownload(c, changes, warnings)
   }
 
-  return { migrated: c, changes, warnings, modified: changes.length > 0 || warnings.length > 0 }
+  // Advisory (not a config change): nsis-web builders must opt back into web installers at runtime as of v27.
+  if (detectNsisWebTarget(c)) {
+    advisories.push(NSIS_WEB_ADVISORY)
+  }
+
+  return { migrated: c, changes, warnings, advisories, modified: changes.length > 0 || warnings.length > 0 }
 }
 
 /**
@@ -434,13 +500,11 @@ function migratePublishEntries(parent: Record<string, any>, key: string, changes
       delete entry.vPrefixedTagName
       changed = true
     }
-    if (entry != null && entry.provider === "gitlab" && "vPrefixedTagName" in entry) {
-      delete entry.vPrefixedTagName
-      changed = true
-    }
+    // GitLab keeps vPrefixedTagName in v27 — it remains in the type, scheme, and runtime
+    // (gitlabPublisher honors it) and has no tagNamePrefix equivalent, so leave it untouched.
   }
   if (changed) {
-    changes.push({ key: `${key}[].vPrefixedTagName`, description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries; removed from GitLab entries" })
+    changes.push({ key: `${key}[].vPrefixedTagName`, description: "replaced vPrefixedTagName with tagNamePrefix on GitHub publish entries" })
   }
 }
 
@@ -666,23 +730,29 @@ export async function migrateSchema(args: any): Promise<void> {
   const isToml = found.format === "toml"
 
   const result = migrateConfig(found.parsed)
-  const { migrated, warnings } = result
+  const { migrated, warnings, advisories } = result
   const changes = [...result.changes]
   if (found.rootDirectoriesMoved) {
     changes.push({ key: "directories", description: "moved package.json root-level directories → build.directories" })
   }
   const modified = result.modified || found.rootDirectoriesMoved === true
 
-  if (!modified) {
-    log.info(null, "config is already up to date — no changes needed")
-    return
-  }
-
   for (const change of changes) {
     log.info({ key: change.key }, change.description)
   }
   for (const warning of warnings) {
     log.warn(null, warning)
+  }
+  // Advisories are informational and surface even when nothing changed; they never cause a rewrite.
+  for (const advisory of advisories) {
+    log.warn(null, advisory)
+  }
+
+  if (!modified) {
+    if (advisories.length === 0) {
+      log.info(null, "config is already up to date — no changes needed")
+    }
+    return
   }
 
   if (isToml) {
@@ -715,14 +785,24 @@ async function migrateProgrammaticConfigFile(found: FoundConfig, location: strin
 
   const result = migrateProgrammaticSource(found.rawText, found.configFile!)
 
+  const printAdvisories = () => {
+    for (const advisory of result.advisories) {
+      log.warn(null, advisory)
+    }
+  }
+
   if (result.status === "unsupported") {
     log.warn({ file: location, reason: result.unsupportedReason }, "this programmatic config could not be auto-migrated; apply these changes manually:")
     printManualSteps()
+    printAdvisories()
     return
   }
 
   if (result.status === "no-op") {
-    log.info(null, "config is already up to date — no changes needed")
+    if (result.advisories.length === 0) {
+      log.info(null, "config is already up to date — no changes needed")
+    }
+    printAdvisories()
     return
   }
 
@@ -732,6 +812,7 @@ async function migrateProgrammaticConfigFile(found: FoundConfig, location: strin
   for (const warning of result.warnings) {
     log.warn(null, warning)
   }
+  printAdvisories()
 
   if (dryRun) {
     log.info(null, "dry run — no files written")
@@ -754,6 +835,7 @@ function printManualSteps() {
     "• Move disableAsarIntegrity → asar.disableIntegrity",
     "• Replace asar: true with an asar object (e.g. asar: {} or omit entirely - asar is enabled by default)",
     "• Remove appImage.systemIntegration",
+    "• Remove linux.syncDesktopName (the installed .desktop filename is always synced from desktopName in v27)",
     "• Rename snap → snapcraft; nest options under a base-named sub-key (default base: core20)",
     "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries ('v' is the default prefix - just like before - but can now be customized with tagNamePrefix)",
     "• Move win.signtoolOptions → win.sign: { type: 'signtool', ...fields }",
@@ -767,7 +849,8 @@ function printManualSteps() {
     "• Move root-level package.json directories → build.directories",
     "",
     "• For programmatic configs (JS/TS/MJS/CJS), apply the above changes manually to your config object",
-    "• For additional guidance, check the migration guide: https://www.electron.build/docs/migration/v26-to-v27",
+    "• For additional guidance, check the migration walkthrough: https://www.electron.build/docs/migration/v26-to-v27",
+    "• Full list of breaking changes: https://www.electron.build/docs/migration/v27-breaking-changes",
   ]
   for (const step of steps) {
     process.stdout.write(`  ${step}\n`)

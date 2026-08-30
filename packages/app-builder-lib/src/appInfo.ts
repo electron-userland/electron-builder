@@ -37,8 +37,7 @@ export class AppInfo {
   constructor(
     private readonly info: Packager,
     buildVersion: string | Nullish,
-    private readonly platformSpecificOptions: PlatformSpecificBuildOptions | null = null,
-    normalizeNfd = false
+    private readonly platformSpecificOptions: PlatformSpecificBuildOptions | null = null
   ) {
     this.description = smarten(this.info.metadata.description || "")
     this.version = info.metadata.version!
@@ -72,10 +71,10 @@ export class AppInfo {
     }
 
     this.productName = info.config.productName || info.metadata.productName || info.metadata.name!
-    this.sanitizedProductName = sanitizeFileName(this.productName, normalizeNfd)
+    this.sanitizedProductName = sanitizeFileName(this.productName)
 
     const executableName = platformSpecificOptions?.executableName ?? info.config.executableName
-    this.productFilename = executableName != null ? sanitizeFileName(executableName, normalizeNfd) : this.sanitizedProductName
+    this.productFilename = executableName != null ? sanitizeFileName(executableName) : this.sanitizedProductName
   }
 
   get channel(): string | null {

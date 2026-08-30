@@ -1,4 +1,4 @@
-import { sanitizeDirPath } from "builder-util"
+import { InvalidConfigurationError, sanitizeDirPath } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as os from "os"
 import * as path from "path"
@@ -130,6 +130,18 @@ export function isOldWin6() {
   return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
 
+/**
+ * True only for the explicit legacy winCodeSign pin (`"0.0.0"` → winCodeSign-2.6.0). That bundle lacks
+ * the modern Windows Kits SDK (no MSIX-capable `makeappx`/`makepri`), so it cannot build MSIX — only the
+ * MSIX target gates on this. AppX still builds fine with the legacy bundle (it has its own legacy-bundle
+ * `signtool` handling in `getWindowsSignToolExe`). Unset / `null` / `"latest"` and any modern version pin
+ * resolve to a modern bundle; a custom `{ url, … }` toolset is the caller's responsibility and is not
+ * treated as legacy.
+ */
+export function isLegacyWinCodeSign(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish): boolean {
+  return typeof winCodeSign !== "object" && resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST) === "0.0.0"
+}
+
 async function getWindowsSignToolExe({ winCodeSign, resourcesDir = "" }: { winCodeSign: ToolsetConfig["winCodeSign"] | Nullish; resourcesDir?: string }) {
   if (typeof winCodeSign !== "object" && resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST) === "0.0.0") {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
@@ -146,13 +158,18 @@ async function getWindowsSignToolExe({ winCodeSign, resourcesDir = "" }: { winCo
 }
 
 async function getOsslSigncodeBundle(winCodeSign: ToolsetConfig["winCodeSign"] | Nullish, resourcesDir = "") {
-  if (process.platform === "win32") {
-    return { path: "osslsigncode" }
-  }
-
+  // A custom toolset is an explicit user override — honored on every platform, before any platform default/fallback.
   if (typeof winCodeSign === "object" && winCodeSign != null) {
     const vendorPath = sanitizeDirPath(await getCustomToolsetPath(winCodeSign, resourcesDir), resourcesDir || undefined)
     return { path: path.join(vendorPath, "osslsigncode") }
+  }
+
+  if (process.platform === "win32") {
+    // Unreachable in normal flow: osslsigncode is only requested when the host is not Windows (Windows signs via
+    // signtool). Kept as defense-in-depth — fail loudly instead of resolving a bare `osslsigncode` from $PATH.
+    throw new InvalidConfigurationError(
+      `osslsigncode is not used on Windows (signing uses signtool). To override, configure a custom toolset: toolsets: { winCodeSign: { url: "file:///absolute/path/to/dir" } }`
+    )
   }
 
   const version = resolveToolsetVersion(winCodeSign, WIN_CODESIGN_LATEST)

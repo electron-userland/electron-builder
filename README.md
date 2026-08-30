@@ -1,5 +1,5 @@
 # electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder)
-A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box. 📦
+A complete solution to package and build a ready for distribution [Electron](https://electronjs.org) app for macOS, Windows and Linux with “auto update” support out of the box. 📦
 
 Always looking for community contributions! 👀 Setting up a [dev environment](https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md) is easy to do 🪩
 
@@ -72,7 +72,7 @@ See the full documentation on [electron.build](https://www.electron.build).
     * [Native application dependencies](https://electron.atom.io/docs/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
     * Development dependencies are never included. You don't need to ignore them explicitly.
     * [Two package.json structure](https://www.electron.build/docs/tutorials/two-package-structure) is supported, but you are not forced to use it even if you have native production dependencies.
-* [Code Signing](https://www.electron.build/docs/features/code-signing/code-signing) on a CI server or development machine.
+* [Code Signing](https://www.electron.build/docs/features/code-signing) on a CI server or development machine.
 * [Auto Update](https://www.electron.build/docs/features/auto-update) ready application packaging.
 * Numerous target formats:
     * All platforms: `7z`, `zip`, `tar.xz`, `tar.7z`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
@@ -97,11 +97,13 @@ See the full documentation on [electron.build](https://www.electron.build).
 
 **Node.js >=22.12.0** is required for v27.
 
-> **Upgrading from v26?** Run the automated migration command first — it rewrites your static config in place:
+> **⚠️ Upgrading from v26?** v27 is a major release with breaking changes (native ESM, Node >=22.12, and removed deprecated APIs). Start with **[What's New in v27](https://www.electron.build/docs/migration/whats-new-v27)** for the highlights and the silent default changes, then **read the full [breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes)** before upgrading.
+>
+> Then run the automated migration command — it rewrites your config in place:
 > ```bash
 > electron-builder migrate-schema
 > ```
-> Full details: **[v26 → v27 migration guide](./MIGRATION.md)** · [electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27)
+> Step-by-step walkthrough: **[v26 → v27 migration guide](./MIGRATION.md)** · [electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27)
 
 ## Installation
 ```
@@ -143,7 +145,7 @@ This instructs Yarn to use node-modules instead of PnP.
    See [all options](https://www.electron.build/docs/configuration). Option [files](https://www.electron.build/docs/contents#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
    You can also use separate configuration files, such as `js`, `ts`, `yml`, and `json`/`json5`. See [read-config-file](https://www.npmjs.com/package/read-config-file) for supported extensions. [JS Example for programmatic API](https://www.electron.build/docs/programmatic-usage)
 
-4. Add [icons](https://www.electron.build/docs/features/icons).
+4. Add [icons](https://www.electron.build/docs/features/icons-and-images).
 
 5. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json
@@ -156,11 +158,11 @@ This instructs Yarn to use node-modules instead of PnP.
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
-6. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build/docs/configuration) to `true`.
+6. If you have native addons of your own that are part of the application (not as a dependency), set [nativeModules.nodeGypRebuild](https://www.electron.build/docs/configuration) to `true`.
 
 Please note that everything is packaged into an asar archive [by default](https://www.electron.build/docs/configuration).
 
-For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://www.electron.build/docs/features/code-signing/code-signing#where-to-buy-code-signing-certificate).
+For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://www.electron.build/docs/features/code-signing#certificate-types).
 
 ## Programmatic Usage
 TypeScript types are provided and can be found [here](https://www.electron.build/docs/api/index). See the full [programmatic usage guide](https://www.electron.build/docs/programmatic-usage).

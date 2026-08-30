@@ -39,6 +39,14 @@ describe("nsisEscapeString", () => {
     expect(nsisEscapeString('say "hello"')).toBe('say $\\"hello$\\"')
   })
 
+  test("escapes backtick to prevent breaking out of backtick-delimited macro strings", ({ expect }) => {
+    expect(nsisEscapeString("a`b")).toBe("a$\\`b")
+  })
+
+  test("escapes multiple backticks", ({ expect }) => {
+    expect(nsisEscapeString("`x`")).toBe("$\\`x$\\`")
+  })
+
   test("handles combined special characters", ({ expect }) => {
     expect(nsisEscapeString('Copyright © 2024 "Acme" $Corp\r\nAll rights reserved')).toBe('Copyright © 2024 $\\"Acme$\\" $$Corp All rights reserved')
   })

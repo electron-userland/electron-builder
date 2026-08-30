@@ -27,7 +27,7 @@ async function testMac(expect: ExpectStatic, arch: Arch) {
     await move(path.join(oldDir, blockmap), path.join(outDirs[1], blockmap))
     await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "update.zip"))
 
-    await testBlockMap(expect, outDirs[0], outDirs[1], MacUpdater, Platform.MAC, arch, "Test App ßW")
+    await testBlockMap(expect, outDirs[0], outDirs[1], MacUpdater, Platform.MAC, arch, { productFilename: "Test App ßW" })
   } finally {
     await tmpDir.cleanup()
   }

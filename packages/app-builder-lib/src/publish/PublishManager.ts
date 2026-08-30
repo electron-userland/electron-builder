@@ -37,6 +37,7 @@ import {
   PublishContext,
   Publisher,
   PublishOptions,
+  R2Publisher,
   S3Publisher,
   SnapStorePublisher,
   SpacesPublisher,
@@ -80,7 +81,7 @@ function checkOptions(publishPolicy: any) {
 }
 
 export class PublishManager implements PublishContext {
-  private readonly nameToPublisher = new Map<string, Publisher | null>()
+  private readonly nameToPublisher = new Map<string, Promise<Publisher | null>>()
 
   private readonly taskManager: AsyncTaskManager
 
@@ -226,14 +227,21 @@ export class PublishManager implements PublishContext {
     }
   }
 
-  private async getOrCreatePublisher(publishConfig: PublishConfiguration, appInfo: AppInfo): Promise<Publisher | null> {
+  private getOrCreatePublisher(publishConfig: PublishConfiguration, appInfo: AppInfo): Promise<Publisher | null> {
     // to not include token into cache key
     const providerCacheKey = safeStringifyJson(publishConfig)
     let publisher = this.nameToPublisher.get(providerCacheKey)
     if (publisher == null) {
-      publisher = await createPublisher(this, appInfo.version, publishConfig, this.publishOptions, this.packager)
+      publisher = createPublisher(this, appInfo.version, publishConfig, this.publishOptions, this.packager).then(it => {
+        if (it != null) {
+          log.info({ publisher: it.toString() }, "publishing")
+        }
+        return it
+      })
+      // cache the pending promise synchronously — concurrent scheduleUpload calls must share one publisher (and thus one release) instead of racing to create duplicates
       this.nameToPublisher.set(providerCacheKey, publisher)
-      log.info({ publisher: publisher!.toString() }, "publishing")
+      // on failure, evict so that a subsequent call can retry (the rejection still propagates to the caller)
+      publisher.catch(() => this.nameToPublisher.delete(providerCacheKey))
     }
     return publisher
   }
@@ -412,6 +420,9 @@ async function requireProviderClass(provider: string, packager: { buildResources
     case "spaces":
       return SpacesPublisher
 
+    case "r2":
+      return R2Publisher
+
     case "bitbucket":
       return BitbucketPublisher
 
@@ -558,6 +569,50 @@ function isDetectUpdateChannel(platformSpecificConfiguration: PlatformSpecificBu
   return value == null ? configuration.detectUpdateChannel !== false : value
 }
 
+// keyed by the build's CancellationToken (one instance per Packager) so that a build reports a given feed once - getResolvedPublishConfig
+// is called per target and arch - without leaking state between programmatic builds running in the same process
+const reportedInferredUpdateFeeds = new WeakMap<CancellationToken, Set<string>>()
+
+// the inferred repository becomes the publish/update destination and, for auto-update-capable targets, is written
+// verbatim into app-update.yml inside every shipped build as its permanent update feed - so the developer has to be
+// told which repository they are committing to. A repository taken from package.json "repository" is deliberate
+// configuration (info); one picked up from the CI environment or .git/config is not (warn).
+function logInferredUpdateFeed(
+  buildId: CancellationToken,
+  provider: PublishProvider,
+  owner: string,
+  project: string,
+  source: string | undefined,
+  inferredFields: Array<string>
+): void {
+  let reported = reportedInferredUpdateFeeds.get(buildId)
+  if (reported == null) {
+    reported = new Set<string>()
+    reportedInferredUpdateFeeds.set(buildId, reported)
+  }
+
+  const feed = `${provider}:${owner}/${project}`
+  if (reported.has(feed)) {
+    return
+  }
+  reported.add(feed)
+
+  const fields = {
+    reason: `${inferredFields.join(" and ")} not specified in the publish configuration`,
+    source: source ?? "unknown",
+    provider,
+    owner,
+    ...(provider === "bitbucket" ? { slug: project } : { repo: project }),
+  }
+  const message =
+    "update feed inferred from repository info; it will be used as the publish/update destination (written to app-update.yml in auto-update-capable targets) - specify it explicitly to be sure it stays under your control"
+  if (source === "package.json") {
+    log.info(fields, message)
+  } else {
+    log.warn(fields, message)
+  }
+}
+
 async function getResolvedPublishConfig(
   platformPackager: PlatformPackager<any> | null,
   options: PublishConfiguration,
@@ -639,12 +694,17 @@ async function getResolvedPublishConfig(
       return null
     }
 
+    const inferredFields: Array<string> = []
     if (!owner) {
       owner = info.user
+      inferredFields.push("owner")
     }
     if (!project) {
       project = info.project
+      inferredFields.push(isGithub ? "repo" : "slug")
     }
+
+    logInferredUpdateFeed(ctx.cancellationToken, provider, owner, project, info.source, inferredFields)
   }
 
   if (isGithub) {

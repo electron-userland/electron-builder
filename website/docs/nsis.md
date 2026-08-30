@@ -13,7 +13,11 @@ Unicode enabled by default. Large strings are supported (maximum string length o
 ## 32 bit + 64 bit
 
 If you build both ia32 and x64 arch (`--x64 --ia32`), you will always get one installer. The appropriate arch will be installed automatically.
-The same applied to web installer (`nsis-web` [target](win.md#target)).
+The same applied to web installer (`nsis-web` [target](win.md#target)). The same dual-arch installer mechanism also applies to `--x64 --arm64`.
+
+:::note[ia32 requires Electron <= 43]
+[Electron 44 removed Windows ia32 builds](https://github.com/electron/electron/pull/51816) — building ia32 requires `electronVersion` <= 43.x (supported until the v43 series reaches end-of-life in January 2027).
+:::
 
 ## Web Installer
 
@@ -31,6 +35,10 @@ If for some reasons web installer cannot download (antivirus, offline):
 Two options are available — [include](#include) and [script](#script). `script` allows you to provide completely different NSIS script. For most cases it is not required as you need only to customise some aspects, but still use well-tested and maintained default NSIS script. So, `include` is recommended.
 
 Keep in mind — if you customize the NSIS script, you should always mention it in issue reports. And don't expect that your issue will be resolved.
+
+:::warning[v27: file-association ProgID format changed]
+NSIS installers now register each `fileAssociations` entry under a unique generated **ProgID** (`<program>.<component>`, derived from `productName` + the app GUID) instead of using the association `name`/extension verbatim, which could collide with unrelated apps. `fileAssociations` and its `name`/`ext`/`description` fields are unchanged and nothing needs migrating — **but** if your custom `include`/`script` (or external tooling) hard-codes the old ProgID (the association name or extension) to add shell verbs or registry keys, update it to the new generated value. See [v27 Breaking Changes → NSIS file-association ProgID](./migration/v27-breaking-changes.md#nsis-file-association-progid-format-changed).
+:::
 
 1. Add file `build/installer.nsh`.
 2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`, `customInstallMode`, `customWelcomePage`, `customUnWelcomePage`, `customUnInstallSection`.

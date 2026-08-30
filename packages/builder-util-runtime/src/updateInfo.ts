@@ -48,11 +48,19 @@ export interface UpdateInfo {
 
   readonly files: Array<UpdateFileInfo>
 
-  /** @deprecated */
-  readonly path: string
+  /**
+   * Legacy top-level download descriptor for electron-updater 1.x – 2.15.0. Modern clients read `files`.
+   * Only emitted when `electronUpdaterCompatibility` includes legacy clients, so it may be absent.
+   * @deprecated
+   */
+  readonly path?: string
 
-  /** @deprecated */
-  readonly sha512: string
+  /**
+   * Legacy top-level checksum for electron-updater 1.x – 2.15.0. Modern clients read `files[].sha512`.
+   * Only emitted when `electronUpdaterCompatibility` includes legacy clients, so it may be absent.
+   * @deprecated
+   */
+  readonly sha512?: string
 
   /**
    * The release name.
@@ -70,7 +78,7 @@ export interface UpdateInfo {
   releaseDate: string
 
   /**
-   * The [staged rollout](https://www.electron.build/auto-update#staged-rollouts) percentage, 0-100.
+   * The [staged rollout](https://www.electron.build/docs/features/auto-update#staged-rollouts) percentage, 0-100.
    */
   readonly stagingPercentage?: number
 

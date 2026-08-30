@@ -23,10 +23,12 @@ import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { AppInfo } from "./appInfo.js"
+import { assertSafeHelperName } from "./electron/mac/electronMacUtils.js"
 import { CodeSigningInfo, createKeychain, CreateKeychainOptions, Identity, isSignAllowed, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
+import { combineSignResults, isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
-import { MacTargetHelper, PlatformType } from "./targets/mac/MacTargetHelper.js"
+import { MacTargetHelper, MasPlatformType, PlatformType } from "./targets/mac/MacTargetHelper.js"
 import { ElectronSignOptions, MacConfiguration, MasConfiguration } from "./options/macOptions.js"
 import { Packager } from "./packager.js"
 import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackager.js"
@@ -46,9 +48,9 @@ function isElectronSignOptions(sign: MacConfiguration["sign"]): sign is Electron
   return typeof sign === "object" && sign !== null
 }
 
-interface PlatformConfig {
+interface PlatformConfig<C extends MacConfiguration | MasConfiguration = MacConfiguration | MasConfiguration> {
   type: PlatformType
-  config: MacConfiguration | MasConfiguration
+  config: C
   platformName: ElectronPlatformName
 }
 
@@ -99,8 +101,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   }
 
   /**
-   * Get the merged configuration for a specific platform type
+   * Get the merged configuration for a specific platform type. Calls statically known to be a MAS
+   * flavor (`mas` / `mas-dev`) get a `MasConfiguration` back, so no cast is needed downstream.
    */
+  getPlatformConfig(platformType: MasPlatformType): PlatformConfig<MasConfiguration>
+  getPlatformConfig(platformType: PlatformType): PlatformConfig
   getPlatformConfig(platformType: PlatformType): PlatformConfig {
     let config: MacConfiguration | MasConfiguration
     let platformName: ElectronPlatformName
@@ -139,8 +144,17 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
-    // codesign requires the filename to be normalized to the NFD form
-    return new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions, true)
+    const macAppInfo = new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions)
+    // Electron discovers its helper apps via `${CFBundleName} Helper.app`. We use the product name
+    // verbatim for `CFBundleName` and for the on-disk helper/app bundle names, so a name that
+    // filename sanitization would change must be rejected (otherwise the two would diverge and break
+    // helper discovery). Fail fast during setup.
+    assertSafeHelperName(macAppInfo.productName, "productName")
+    const executableName = this.platformSpecificBuildOptions.executableName ?? this.info.config.executableName
+    if (executableName != null) {
+      assertSafeHelperName(executableName, "executableName")
+    }
+    return macAppInfo
   }
 
   async getIconPath(): Promise<string | null> {
@@ -286,7 +300,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     await this.doAddElectronFuses(packContext)
 
     // Mirror the base-class guard: skip signing when the caller explicitly set sign:false
-    // (e.g. packMasTargets passes sign:false so that signMas() is the sole signing step).
+    // (e.g. packMasTargets passes sign:false so that its own sign() call is the sole signing step).
     if (config.options?.sign ?? true) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, platformType, arch, platformSpecificBuildOptions, targets)
     }
@@ -371,7 +385,33 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         })
         MacTargetHelper.assertSafePathForCommandUsage(this.appInfo.productFilename, "product filename")
       }
-      await this.signMas(appPath, targetOutDir, arch, platformType)
+      const signResult = await this.sign(appPath, arch, platformType)
+      const signed = isSignResultSigned(signResult)
+
+      // The MAS flow packs with sign:false and signs here, bypassing doSignAfterPack — the only other
+      // emitAfterSign site. Mirror its contract: fire afterSign after codesigning succeeded, but before
+      // the .pkg installer is built, and warn when signing was skipped (#9997).
+      const packContext: AfterPackContext = {
+        appOutDir: path.dirname(appPath),
+        outDir: resolvedOutDir,
+        arch,
+        targets: [target],
+        packager: this,
+        electronPlatformName: platformConfig.platformName,
+      }
+      if (signed) {
+        await this.info.emitAfterSign(packContext)
+      } else if (this.info.filterPackagerEventListeners("afterSign", "user").length) {
+        log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
+      }
+
+      // A development-signed build (mas-dev, or an explicit sign.type "development" — see
+      // MacTargetHelper.shouldCreateMasInstaller) produces no installer
+      const masSignConfig = platformConfig.config.sign
+      const masSignOpts = isElectronSignOptions(masSignConfig) ? masSignConfig : undefined
+      if (signed && MacTargetHelper.shouldCreateMasInstaller(platformType, masSignOpts?.type)) {
+        await this.createMasInstaller(appPath, targetOutDir, arch, platformType)
+      }
     }
   }
 
@@ -394,17 +434,26 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     this.packageInDistributableFormat(appPath, arch, targets, taskManager)
   }
 
-  private async signMas(appPath: string, outDir: string, arch: Arch, targetPlatform: PlatformType): Promise<boolean> {
-    const signed = await this.sign(appPath, outDir, arch, targetPlatform)
-    return signed
+  /**
+   * Creates the signed MAS installer .pkg for an already codesigned app. Kept separate from `sign()`
+   * so that the `afterSign` hook can run between codesigning and installer creation (see `packMasTargets`).
+   */
+  protected async createMasInstaller(appPath: string, outDir: string, arch: Arch, targetPlatform: MasPlatformType): Promise<void> {
+    const config = this.getPlatformConfig(targetPlatform).config
+    const signConfig = config.sign
+    const signOpts = isElectronSignOptions(signConfig) ? signConfig : undefined
+    const keychainFile = (await this.codeSigningInfo.value).keychainFile
+    await this.helper.createMasInstaller(appPath, outDir, config, keychainFile, targetPlatform, arch, signOpts?.identity)
   }
 
   /**
-   * Main signing method with platform awareness
+   * Main signing method with platform awareness. Protected so tests can stub signing
+   * (`isSignAllowed()` short-circuits it on non-mac hosts). Failures are thrown, never returned.
    */
-  private async sign(appPath: string, outDir: string | null, arch: Arch, targetPlatform: PlatformType): Promise<boolean> {
+  protected async sign(appPath: string, arch: Arch, targetPlatform: PlatformType): Promise<SigningResult> {
     if (!isSignAllowed()) {
-      return false
+      // non-mac host, or the pull-request CI guard — signing cannot happen in this environment
+      return "skipped:unsupported"
     }
 
     // getPlatformConfig cascades mac → mas → masDev, so `sign` (and `sign.identity`) is already merged for this flavor.
@@ -426,12 +475,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     // `config` is a custom fn/string module path when it's non-null and not an options object
     const hasCustomSign = config != null && !signOpts
     const isMas = MacTargetHelper.isMasTarget(targetPlatform)
-    const isDevelopment = MacTargetHelper.isMasDevelopment(targetPlatform)
 
     const identity = await this.helper.findSigningIdentity(targetPlatform, qualifier, keychainFile, hasCustomSign, signOpts)
 
     if (!identity) {
-      return false
+      return "skipped:no-certificate"
     }
 
     if (!isMacOsHighSierra()) {
@@ -441,17 +489,12 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const signOptions = await this.helper.buildSignOptions(appPath, identity, signOpts, keychainFile, arch, targetPlatform)
     await this.doSign(signOptions, config, identity)
 
-    // Handle MAS installer creation
-    if (isMas && !isDevelopment && outDir) {
-      await this.helper.createMasInstaller(appPath, outDir, this.getPlatformConfig(targetPlatform).config as MasConfiguration, keychainFile, targetPlatform, arch, qualifier)
-    }
-
     // Handle notarization for non-MAS builds
     if (!isMas) {
       await this.helper.notarizeIfProvided(appPath)
     }
 
-    return true
+    return hasCustomSign ? "signed:custom" : "signed"
   }
 
   //noinspection JSMethodCanBeStatic
@@ -513,7 +556,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const configuredIcon = this.platformSpecificBuildOptions.icon
     const isIconComposer = typeof configuredIcon === "string" && configuredIcon.toLowerCase().endsWith(".icon")
 
-    // Set the app name
+    // Set the app name. The product name is used verbatim (it is validated in `prepareAppInfo` to
+    // require no filename sanitization), so `CFBundleName` matches the on-disk helper bundle names
+    // that Electron resolves as `${CFBundleName} Helper.app`.
     appPlist.CFBundleName = appInfo.productName
     appPlist.CFBundleDisplayName = appInfo.productName
 
@@ -572,36 +617,36 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     }
   }
 
-  protected async signApp(packContext: AfterPackContext, isAsar: boolean, platformType?: PlatformType): Promise<boolean> {
+  protected async signApp(packContext: AfterPackContext, isAsar: boolean, platformType?: PlatformType): Promise<SigningResult> {
     const targetPlatform: PlatformType = platformType ?? (packContext.electronPlatformName === "mas" ? "mas" : "mac")
-    const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<boolean> => {
+    const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], shouldSign: (file: string) => boolean): Promise<Array<SigningResult>> => {
       const normalizedSourceDirectory = path.resolve(sourceDirectory)
       MacTargetHelper.assertSafePathForCommandUsage(normalizedSourceDirectory, "application output directory")
-      await Promise.all(
-        directories.map(async (file: string) => {
-          if (shouldSign(file)) {
+      return await Promise.all(
+        directories
+          .filter(file => shouldSign(file))
+          .map(async (file: string) => {
             const entryName = path.basename(file)
             if (file !== entryName) {
               throw new InvalidConfigurationError(`Invalid entry name in source directory: ${file}`)
             }
             const signTarget = path.resolve(normalizedSourceDirectory, entryName)
             const safeSignTarget = sanitizeDirPath(signTarget, normalizedSourceDirectory)
-            await this.sign(safeSignTarget, null, packContext.arch, targetPlatform)
-          }
-        })
+            return await this.sign(safeSignTarget, packContext.arch, targetPlatform)
+          })
       )
-      return true
     }
 
     const appFileName = `${this.appInfo.productFilename}.app`
-    await readDirectoryAndSign(packContext.appOutDir, await readdir(packContext.appOutDir), file => file === appFileName)
+    // the combined result gates the `afterSign` hook — a signed result wins (see PlatformPackager.doSignAfterPack)
+    const results = await readDirectoryAndSign(packContext.appOutDir, await readdir(packContext.appOutDir), file => file === appFileName)
     if (!isAsar) {
-      return true
+      return combineSignResults(results)
     }
 
     const outResourcesDir = path.join(packContext.appOutDir, "resources", "app.asar.unpacked")
-    await readDirectoryAndSign(outResourcesDir, await orIfFileNotExist(readdir(outResourcesDir), []), file => file.endsWith(".app"))
+    results.push(...(await readDirectoryAndSign(outResourcesDir, await orIfFileNotExist(readdir(outResourcesDir), []), file => file.endsWith(".app"))))
 
-    return true
+    return combineSignResults(results)
   }
 }

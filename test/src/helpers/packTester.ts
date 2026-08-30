@@ -407,6 +407,8 @@ function getFileTypePriority(file: string): number {
  * 3. Tertiary: Filename (alphabetical)
  * 4. Quaternary: Presence of updateInfo (with updateInfo < without updateInfo)
  * 5. Quinary: Safe artifact name (alphabetical)
+ * 6. Senary: Publish provider (alphabetical)
+ * 7. Final: File content bytes — same provider may be configured multiple times
  */
 function sortArtifacts(a: ArtifactCreated, b: ArtifactCreated): number {
   // Primary sort: by file extension type
@@ -442,11 +444,22 @@ function sortArtifacts(a: ArtifactCreated, b: ArtifactCreated): number {
     return hasUpdateInfoA - hasUpdateInfoB
   }
 
-  // Quinary sort: by safeArtifactName (final tiebreaker)
-  const safeNameA = a.safeArtifactName ?? ""
-  const safeNameB = b.safeArtifactName ?? ""
+  // Quinary sort: by safeArtifactName
+  const safeNameCompare = (a.safeArtifactName ?? "").localeCompare(b.safeArtifactName ?? "", "en")
+  if (safeNameCompare !== 0) {
+    return safeNameCompare
+  }
 
-  return safeNameA.localeCompare(safeNameB, "en")
+  // Senary sort: by publish provider. Update-info yml files emitted per publisher share
+  // basename/arch/updateInfo/safeArtifactName, so without this their relative order depends on
+  // async write completion in writeUpdateInfoFiles (asyncPool) and is nondeterministic.
+  const providerCompare = (a.publishConfig?.provider ?? "").localeCompare(b.publishConfig?.provider ?? "", "en")
+  if (providerCompare !== 0) {
+    return providerCompare
+  }
+
+  // Final tiebreaker: file content bytes (same provider can be configured multiple times)
+  return Buffer.compare(a.fileContent ?? Buffer.alloc(0), b.fileContent ?? Buffer.alloc(0))
 }
 
 async function packAndCheck(

@@ -26,6 +26,7 @@ import type { TmpDir } from "temp-file"
 import type { Metadata } from "./options/metadata.js"
 import type { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { AppInfo } from "./appInfo.js"
+import { isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
 import { checkFileInArchive } from "./asar/asarFileChecker.js"
 import { AsarPackager } from "./asar/asarUtil.js"
 import { AsarIntegrity, computeData } from "./asar/integrity.js"
@@ -141,8 +142,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.info.tempDirManager
   }
 
+  addBuildFinalizeTask(task: () => Promise<void>): void {
+    this.info.addBuildFinalizeTask(task)
+  }
+
   get metadata(): Metadata {
     return this.info.metadata
+  }
+
+  get originalMetadata(): Metadata {
+    return this.info.originalMetadata
   }
 
   get framework(): Framework {
@@ -559,8 +568,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       packager: this,
       electronPlatformName: platformName,
     }
-    const didSign = await this.signApp(packContext, isAsar, platformType)
-    if (didSign) {
+    const signResult = await this.signApp(packContext, isAsar, platformType)
+    if (isSignResultSigned(signResult)) {
       await this.info.emitAfterSign(packContext)
     } else if (this.info.filterPackagerEventListeners("afterSign", "user").length) {
       log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
@@ -660,8 +669,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected signApp(packContext: AfterPackContext, isAsar: boolean, _platformType?: PlatformType): Promise<boolean> {
-    return Promise.resolve(false)
+  protected signApp(packContext: AfterPackContext, isAsar: boolean, _platformType?: PlatformType): Promise<SigningResult> {
+    // the base packager implements no signing (e.g. Linux) — WinPackager and MacPackager override this
+    return Promise.resolve("skipped:unsupported")
   }
 
   getIconPath(): Promise<string | null> {

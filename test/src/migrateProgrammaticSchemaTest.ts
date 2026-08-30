@@ -89,6 +89,44 @@ describe("migrateProgrammaticSource — locate shapes", () => {
   }
 })
 
+describe("migrateProgrammaticSource — linux.syncDesktopName", () => {
+  test("removes linux.syncDesktopName: true, preserving other linux props", () => {
+    const result = run(`export default {\n  linux: {\n    target: "deb",\n    syncDesktopName: true,\n  },\n}\n`)
+    expect(result.status).toBe("migrated")
+    expect(result.code).not.toContain("syncDesktopName")
+    expect(result.code).toContain(`target: "deb"`)
+    expect(result.changes.some(c => c.key === "linux.syncDesktopName")).toBe(true)
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  test("removes linux.syncDesktopName: false and warns", () => {
+    const result = run(`export default {\n  linux: {\n    syncDesktopName: false,\n  },\n}\n`)
+    expect(result.status).toBe("migrated")
+    expect(result.code).not.toContain("syncDesktopName")
+    expect(result.warnings.some(w => w.includes("syncDesktopName") && w.includes("desktopName"))).toBe(true)
+  })
+})
+
+describe("migrateProgrammaticSource — disableDefaultIgnoredFiles", () => {
+  test("strips the root-level key, preserving surrounding properties", () => {
+    const result = run(`export default {\n  appId: "com.a.b",\n  disableDefaultIgnoredFiles: true,\n  files: ["dist/**/*"],\n}\n`)
+    expect(result.status).toBe("migrated")
+    expect(result.code).not.toContain("disableDefaultIgnoredFiles")
+    expect(result.code).toContain(`appId: "com.a.b"`)
+    expect(result.code).toContain(`files: ["dist/**/*"]`)
+    expect(result.changes.some(c => c.key === "disableDefaultIgnoredFiles")).toBe(true)
+  })
+
+  test("strips the key from platform config objects too (win/mas/masDev)", () => {
+    const result = run(
+      `export default {\n  win: {\n    target: "nsis",\n    disableDefaultIgnoredFiles: true,\n  },\n  mas: {\n    disableDefaultIgnoredFiles: true,\n  },\n  masDev: {\n    disableDefaultIgnoredFiles: true,\n  },\n}\n`
+    )
+    expect(result.status).toBe("migrated")
+    expect(result.code).not.toContain("disableDefaultIgnoredFiles")
+    expect(result.code).toContain(`target: "nsis"`)
+  })
+})
+
 describe("migrateProgrammaticSource — unsupported shapes (bail with reason)", () => {
   test("spread is unsupported", () => {
     const result = run(`const base = {}\nexport default {\n  ...base,\n  npmRebuild: true,\n}\n`)
@@ -209,6 +247,7 @@ describe("migrateProgrammaticSource — per-rule coverage (CJS, drift-checked vs
     snapBase: `module.exports = { snap: { base: "core22", confinement: "strict" } }\n`,
     snapNoBase: `module.exports = { snap: { confinement: "strict" } }\n`,
     publishGithub: `module.exports = { publish: [{ provider: "github", vPrefixedTagName: false }] }\n`,
+    publishGithubGitlab: `module.exports = { publish: [{ provider: "github", vPrefixedTagName: false }, { provider: "gitlab", vPrefixedTagName: false }] }\n`,
     electronDownload: `module.exports = { electronDownload: { mirror: "https://m", isVerifyChecksum: false, cache: "/tmp" } }\n`,
   }
 
@@ -235,5 +274,40 @@ describe("migrateProgrammaticSource — warnings", () => {
     expect(result.warnings.some(w => w.includes("cache"))).toBe(true)
     expect(result.code).toContain("electronGet")
     expect(result.code).toContain("mirrorOptions")
+  })
+})
+
+describe("migrateProgrammaticSource — nsis-web advisory", () => {
+  test("nsis-web-only config is a no-op but still emits the advisory (code unchanged)", () => {
+    const source = `export default {\n  win: { target: "nsis-web" },\n}\n`
+    const result = run(source)
+    expect(result.status).toBe("no-op")
+    expect(result.advisories).toHaveLength(1)
+    expect(result.advisories[0]).toMatch(/nsis-web/)
+    expect(result.advisories[0]).toMatch(/disableWebInstaller = false/)
+    expect(result.code).toBe(source)
+  })
+
+  test("advisory is emitted alongside a real migration (status 'migrated')", () => {
+    const result = run(`export default {\n  electronCompile: true,\n  win: { target: "nsis-web" },\n}\n`)
+    expect(result.status).toBe("migrated")
+    expect(result.advisories).toHaveLength(1)
+    expect(result.code).not.toContain("electronCompile")
+  })
+
+  test("array target form is detected", () => {
+    const result = run(`export default {\n  win: { target: ["nsis", "nsis-web"] },\n}\n`)
+    expect(result.advisories).toHaveLength(1)
+  })
+
+  test("object target form is detected", () => {
+    const result = run(`export default {\n  win: { target: [{ target: "nsis-web", arch: "x64" }] },\n}\n`)
+    expect(result.advisories).toHaveLength(1)
+  })
+
+  test("non-web target yields no advisory", () => {
+    const result = run(`export default {\n  win: { target: "nsis" },\n}\n`)
+    expect(result.advisories).toHaveLength(0)
+    expect(result.status).toBe("no-op")
   })
 })

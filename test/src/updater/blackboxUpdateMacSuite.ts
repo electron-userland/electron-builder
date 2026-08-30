@@ -3,7 +3,7 @@ import { TestContext } from "vitest"
 import { optionsForFlakyE2E, runTest } from "./blackboxUpdateHelpers"
 
 export function registerBlackboxMacTests(): void {
-  describe.skip("mac auto-update", () => {
+  describe("mac auto-update", () => {
     test("x64", optionsForFlakyE2E, async (context: TestContext) => {
       await runTest(context, "zip", "", Arch.x64)
     })

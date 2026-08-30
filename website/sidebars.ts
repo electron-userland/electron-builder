@@ -17,7 +17,11 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Reference",
-      items: [{ type: "doc", id: "glossary", label: "Glossary" }],
+      collapsed: false,
+      items: [
+        { type: "doc", id: "environment-variables", label: "Environment Variables" },
+        { type: "doc", id: "glossary", label: "Glossary" },
+      ],
     },
 
     { type: "doc", id: "donate", label: "Donate" },
@@ -28,6 +32,7 @@ const sidebars: SidebarsConfig = {
     { type: "doc", id: "contents", label: "App Contents" },
     { type: "doc", id: "file-patterns", label: "File Patterns" },
     { type: "doc", id: "architecture", label: "Build Architectures" },
+    { type: "doc", id: "toolsets", label: "Toolsets" },
     { type: "doc", id: "publish", label: "Publish" },
   ],
 
@@ -50,6 +55,7 @@ const sidebars: SidebarsConfig = {
         { type: "doc", id: "win", label: "Windows" },
         { type: "doc", id: "nsis", label: "NSIS" },
         { type: "doc", id: "appx", label: "AppX" },
+        { type: "doc", id: "msix", label: "MSIX" },
         { type: "doc", id: "msi", label: "MSI" },
         { type: "doc", id: "msi-wrapped", label: "MSI Wrapped" },
         { type: "doc", id: "squirrel-windows", label: "Squirrel Windows" },
@@ -72,6 +78,7 @@ const sidebars: SidebarsConfig = {
     { type: "doc", id: "features/hooks", label: "Hooks" },
     { type: "doc", id: "features/icons-and-images", label: "Icons & Images" },
     { type: "doc", id: "features/auto-update", label: "Auto Update" },
+    { type: "doc", id: "features/security", label: "Security & Hardening" },
     {
       type: "category",
       label: "Code Signing",
@@ -88,7 +95,9 @@ const sidebars: SidebarsConfig = {
   ],
 
   migrationSidebar: [
-    { type: "doc", id: "migration/v26-to-v27", label: "v26 → v27" },
+    { type: "doc", id: "migration/whats-new-v27", label: "What's New in v27" },
+    { type: "doc", id: "migration/v26-to-v27", label: "v26 → v27 Walkthrough" },
+    { type: "doc", id: "migration/v27-breaking-changes", label: "v27 Breaking Changes" },
   ],
 
   tutorialsSidebar: [
@@ -96,6 +105,7 @@ const sidebars: SidebarsConfig = {
     { type: "doc", id: "tutorials/code-signing-windows-apps-on-unix", label: "Code Signing Windows Apps on Unix" },
     { type: "doc", id: "tutorials/loading-app-dependencies-manually", label: "Loading App Dependencies Manually" },
     { type: "doc", id: "tutorials/macos-kernel-extensions", label: "macOS Kernel Extensions" },
+    { type: "doc", id: "tutorials/offline-air-gapped-builds", label: "Offline / Air-Gapped Builds" },
     { type: "doc", id: "tutorials/release-using-channels", label: "Release Using Channels" },
     { type: "doc", id: "tutorials/test-update-on-s3-locally", label: "Test Update on S3 Locally" },
     { type: "doc", id: "tutorials/two-package-structure", label: "Two Package Structure" },

@@ -39,7 +39,7 @@ jobs:
       - name: Determine dist-tag and changeset config
         id: dist-tag
         run: |
-          BRANCH="${{ github.ref_name }}"
+          BRANCH="${GITHUB_REF_NAME}"
 
           if [ "$BRANCH" == "master" ]; then
             echo "tag=next" >> $GITHUB_OUTPUT
@@ -76,7 +76,7 @@ jobs:
 
       - name: Link changeset config for this branch
         run: |
-          CONFIG_FILE="${{ steps.dist-tag.outputs.config_file }}"
+          CONFIG_FILE="${STEPS_DIST_TAG_OUTPUTS_CONFIG_FILE}"
           CONFIG_PATH=".changeset/$CONFIG_FILE"
 
           # Verify config exists
@@ -121,6 +121,8 @@ jobs:
           else
             echo "Using default config: $CONFIG_PATH (no symlink needed)"
           fi
+        env:
+          STEPS_DIST_TAG_OUTPUTS_CONFIG_FILE: ${{ steps.dist-tag.outputs.config_file }}
 
       - name: Update npm to support OIDC token authentication for publishing
         run: |
@@ -149,13 +151,17 @@ jobs:
         run: |
           echo "## 📦 Published Packages" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Dist-tag:** \`${{ steps.dist-tag.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Type:** \`${{ steps.dist-tag.outputs.branch_type }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${GITHUB_REF_NAME}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Dist-tag:** \`${STEPS_DIST_TAG_OUTPUTS_TAG}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Type:** \`${STEPS_DIST_TAG_OUTPUTS_BRANCH_TYPE}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
-          echo '${{ steps.changesets.outputs.publishedPackages }}' >> $GITHUB_STEP_SUMMARY
+          echo '${STEPS_CHANGESETS_OUTPUTS_PUBLISHEDPACKAGES}' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+        env:
+          STEPS_DIST_TAG_OUTPUTS_TAG: ${{ steps.dist-tag.outputs.tag }}
+          STEPS_DIST_TAG_OUTPUTS_BRANCH_TYPE: ${{ steps.dist-tag.outputs.branch_type }}
+          STEPS_CHANGESETS_OUTPUTS_PUBLISHEDPACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
 
       - name: No changes to publish
         if: steps.changesets.outputs.published != 'true'
