@@ -52,8 +52,8 @@ describe("AppUpdater.verifyManifestSignature (A1)", () => {
     const updater = makeUpdater(publicKeyPem)
     const info = makeInfo()
     info.signature = signUpdateManifest(info, privateKeyPem)
-    info.files[0].sha512 = "tampered"
-    await expect(verify(updater, info)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+    const tampered: UpdateInfo = { ...info, files: [{ ...info.files[0], sha512: "tampered" }] }
+    await expect(verify(updater, tampered)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
   })
 
   it("throws ERR_UPDATER_MANIFEST_NOT_SIGNED when a key is configured but the manifest is unsigned", async () => {
