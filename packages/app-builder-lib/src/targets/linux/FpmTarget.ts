@@ -233,7 +233,7 @@ export default class FpmTarget extends Target {
     const depends = options.depends
     if (depends != null) {
       if (Array.isArray(depends)) {
-        fpmConfiguration.customDepends = depends
+        fpmConfiguration.customDepends = this.expandDependsDefaults(depends, target)
       } else if (typeof depends === "string") {
         fpmConfiguration.customDepends = [depends as string]
       } else {
@@ -408,6 +408,24 @@ export default class FpmTarget extends Target {
     return ["deb", "rpm", "pacman"].includes(target)
   }
 
+  /**
+   * Expand the `"default"` keyword in a user-provided `depends` array to the target's default
+   * depends list, so extras can be appended without repeating (and having to keep in sync) the
+   * defaults — same convention as the snap target's `plugs`/`stagePackages`/`buildPackages`.
+   * The result is deduplicated while preserving order.
+   */
+  private expandDependsDefaults(depends: string[], target: string): string[] {
+    const result: string[] = []
+    for (const item of depends) {
+      if (item === "default") {
+        result.push(...this.getDefaultDepends(target))
+      } else {
+        result.push(item)
+      }
+    }
+    return Array.from(new Set(result))
+  }
+
   private getDefaultDepends(target: string): string[] {
     switch (target) {
       case "deb":
@@ -426,7 +444,7 @@ export default class FpmTarget extends Target {
         ]
 
       case "pacman":
-        return ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"]
+        return ["c-ares", "ffmpeg", "gtk3", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"]
 
       default:
         return []
