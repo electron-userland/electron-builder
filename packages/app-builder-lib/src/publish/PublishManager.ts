@@ -293,11 +293,14 @@ export async function getAppUpdatePublishConfiguration(
   // Explicit publicKey wins; otherwise derive it from the configured signing private key so the
   // user only manages one secret.
   const updateManifestConfig = packager.platformOptions.updateManifest ?? packager.config.updateManifest
-  if (updateManifestConfig != null && publishConfig.updateManifestPublicKey == null) {
-    if (updateManifestConfig.publicKey) {
+  if (publishConfig.updateManifestPublicKey == null) {
+    if (updateManifestConfig?.publicKey) {
       publishConfig.updateManifestPublicKey = updateManifestConfig.publicKey
     } else {
-      const signingKeyPem = loadUpdateSigningKey(updateManifestConfig)
+      // loadUpdateSigningKey falls back to EP_UPDATE_SIGN_KEY / EP_UPDATE_SIGN_KEY_FILE, so env-var-only
+      // signing (no `updateManifest` config block) embeds the matching public key too — the same key
+      // resolution updateInfoBuilder uses to decide whether manifests get signed.
+      const signingKeyPem = loadUpdateSigningKey(updateManifestConfig ?? undefined)
       if (signingKeyPem != null) {
         publishConfig.updateManifestPublicKey = derivePublicKeyPem(signingKeyPem)
       }

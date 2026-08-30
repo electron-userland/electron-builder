@@ -7,6 +7,7 @@ import { load as yamlLoad } from "js-yaml"
 import { vi } from "vitest"
 import { generateUpdateSigningKeypair } from "builder-util"
 import { verifyManifestSignature } from "builder-util-runtime"
+import { getAppUpdatePublishConfiguration } from "app-builder-lib/src/publish/PublishManager"
 
 const basePublishConfig = { provider: "s3", bucket: "test-bucket" } as const
 
@@ -265,6 +266,67 @@ test("per-task signing: only the task whose platformOptions configures a key is 
     expect((await readYml(path.join(dir, "latest-linux.yml"))).signature).toBeDefined()
     expect((await readYml(path.join(dir, "latest-mac.yml"))).signature).toBeUndefined()
   })
+})
+
+// ── A1: env-var-only signing (EP_UPDATE_SIGN_KEY, no `updateManifest` config block) ──
+
+async function withEnvSigningKey<T>(privateKeyPem: string, fn: () => Promise<T>): Promise<T> {
+  const saved = { key: process.env.EP_UPDATE_SIGN_KEY, file: process.env.EP_UPDATE_SIGN_KEY_FILE }
+  process.env.EP_UPDATE_SIGN_KEY = privateKeyPem
+  delete process.env.EP_UPDATE_SIGN_KEY_FILE
+  try {
+    return await fn()
+  } finally {
+    for (const [name, value] of [
+      ["EP_UPDATE_SIGN_KEY", saved.key],
+      ["EP_UPDATE_SIGN_KEY_FILE", saved.file],
+    ] as const) {
+      if (value == null) {
+        delete process.env[name]
+      } else {
+        process.env[name] = value
+      }
+    }
+  }
+}
+
+// minimal PlatformPackager stub for getAppUpdatePublishConfiguration (generic provider avoids any network/token resolution)
+function makeAppUpdateConfigPackager(): any {
+  return {
+    platform: Platform.LINUX,
+    platformOptions: {},
+    config: { publish: { provider: "generic", url: "https://example.com/updates" } },
+    appInfo: { updaterCacheDirName: "test-app", channel: null, version: "1.0.0" },
+    expandMacro: (value: string) => value,
+  }
+}
+
+test("manifest is signed via EP_UPDATE_SIGN_KEY even when no updateManifest config block exists", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    await withEnvSigningKey(privateKeyPem, async () => {
+      // packager carries no `updateManifest` config at all — the key comes from the environment only
+      await writeUpdateInfoFiles([makeTask(dir, "App-1.0.0.exe", "sha-universal", null)], makePackager() as any)
+      const yml = await readYml(path.join(dir, "latest.yml"))
+      expect(yml.signature).toBeDefined()
+      expect(verifyManifestSignature(yml, publicKeyPem)).toBe(true)
+    })
+  })
+})
+
+test("app-update.yml embeds the public key derived from EP_UPDATE_SIGN_KEY when no updateManifest config block exists", async ({ expect }) => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  await withEnvSigningKey(privateKeyPem, async () => {
+    const publishConfig = await getAppUpdatePublishConfiguration(makeAppUpdateConfigPackager(), null, Arch.x64, false)
+    // signing (updateInfoBuilder) and embedding (PublishManager) must resolve the key identically,
+    // otherwise env-var-only users would publish signed manifests that clients never verify
+    expect(publishConfig?.updateManifestPublicKey).toBe(publicKeyPem)
+  })
+})
+
+test("app-update.yml carries no public key when neither config nor env vars provide a signing key", async ({ expect }) => {
+  const publishConfig = await getAppUpdatePublishConfiguration(makeAppUpdateConfigPackager(), null, Arch.x64, false)
+  expect(publishConfig?.updateManifestPublicKey).toBeUndefined()
 })
 
 test("no signature field is written when no signing key is configured", async ({ expect }) => {

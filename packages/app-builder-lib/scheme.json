@@ -6255,6 +6255,13 @@
             "number"
           ]
         },
+        "updateManifestPublicKey": {
+          "description": "Ed25519 public key (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled. Do not set manually — it is populated from the configured signing key.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
