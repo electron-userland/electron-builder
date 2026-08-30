@@ -347,17 +347,13 @@ jobs:
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
-      - name: Write Docker secrets env file
+      # The updater tests no longer hit live provider endpoints, so no provider tokens are injected.
+      # The file must always exist (even empty) because docker --env-file fails on a missing file
+      # and the R2 append step below is skipped on forks.
+      - name: Create Docker secrets env file
         run: |
-          printf 'KEYGEN_TOKEN=%s\nBITBUCKET_TOKEN=%s\nGH_TOKEN=%s\nGITLAB_TOKEN=%s\n' \
-            "$KEYGEN_TOKEN_SECRET" "$BITBUCKET_TOKEN_SECRET" "$GH_TOKEN_SECRET" "$GITLAB_TOKEN_SECRET" \
-            > "${{ runner.temp }}/docker-secrets.env"
+          : > "${{ runner.temp }}/docker-secrets.env"
           chmod 600 "${{ runner.temp }}/docker-secrets.env"
-        env:
-          KEYGEN_TOKEN_SECRET: ${{ secrets.KEYGEN_TOKEN }}
-          BITBUCKET_TOKEN_SECRET: ${{ secrets.BITBUCKET_TOKEN }}
-          GH_TOKEN_SECRET: ${{ secrets.GH_TOKEN }}
-          GITLAB_TOKEN_SECRET: ${{ secrets.GITLAB_TOKEN }}
 
       # Gated on the upstream repository so forks cannot substitute their own R2 credentials;
       # without these vars the R2 live smoke test is skipped (test.ifEnv).
@@ -379,7 +375,7 @@ jobs:
           echo $TEST_RUNNER_IMAGE_TAG
           pnpm test:linux
         env:
-          TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,GitlabPublisher.integration.test,R2PublisherTest
+          TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,R2PublisherTest
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
           ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
 

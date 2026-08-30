@@ -11,7 +11,7 @@ import { TestContext, TestOptions } from "vitest"
 import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext, readDebCompression } from "../helpers/packTester"
 import { readAppImageCompression } from "../helpers/fileAssert"
-import { ELECTRON_VERSION } from "../helpers/testConfig"
+import { ELECTRON_VERSION, PACMAN_TEST_DEPENDS } from "../helpers/testConfig"
 import { OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 const optionsForInstall: TestOptions = { sequential: true, retry: 0, timeout: EXTENDED_TIMEOUT }
@@ -103,6 +103,9 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
         version: OLD_VERSION_NUMBER,
       },
       electronUpdaterCompatibility: ">=2.16",
+      pacman: {
+        depends: PACMAN_TEST_DEPENDS,
+      },
       electronFuses: {
         runAsNode: false,
         enableCookieEncryption: false, // don't enable cookie encryption for testing because it adds an additional decryption step to the update process which requires user interaction to unlock the keychain on macOS and can cause timeouts in CI, especially on older macOS versions with slower crypto performance
