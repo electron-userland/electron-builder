@@ -49,7 +49,7 @@ export class MacTargetHelper {
           log.warn(
             null,
             "ad-hoc signing with hardenedRuntime enabled requires the com.apple.security.cs.disable-library-validation entitlement " +
-              "to prevent app launch failures due to library validation. See https://electron.build/code-signing for details."
+              "to prevent app launch failures due to library validation. See https://electron.build/docs/features/code-signing for details."
           )
         }
         identity = new Identity("-", undefined)
@@ -190,7 +190,7 @@ export class MacTargetHelper {
     const masInstallerIdentity = await findIdentity(certType, identityQualifier, keychainFile)
 
     if (masInstallerIdentity == null) {
-      throw new InvalidConfigurationError(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/code-signing`)
+      throw new InvalidConfigurationError(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/docs/features/code-signing`)
     }
 
     MacTargetHelper.assertSafePathForCommandUsage(outDir, "output directory")

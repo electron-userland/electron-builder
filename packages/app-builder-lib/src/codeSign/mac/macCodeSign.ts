@@ -67,7 +67,7 @@ export async function reportError(isMas: boolean, certificateTypes: CertType[], 
         isMas ? "" : ` or custom non-Apple code signing certificate, it could cause some undefined behaviour, e.g. macOS localized description not visible`
       }`
     }
-    logFields.reason += ", see https://electron.build/code-signing"
+    logFields.reason += ", see https://electron.build/docs/features/code-signing"
     if (!isAutoDiscoveryCodeSignIdentity()) {
       logFields.CSC_IDENTITY_AUTO_DISCOVERY = false
     }

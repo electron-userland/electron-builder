@@ -470,7 +470,7 @@ export class Packager {
       }
 
       if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
-        throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/multi-platform-build")
+        throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/docs/features/multi-platform-build")
       }
 
       const packager = await this.createHelper(platform)

@@ -54,7 +54,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    * - `{ type: "azure", ... }` — Sign via Azure Trusted Signing (cloud service). Requires
    *   Azure Entra ID environment variables for authentication.
    *
-   * See [Code Signing](https://www.electron.build/code-signing).
+   * See [Code Signing](https://www.electron.build/docs/features/code-signing).
    */
   readonly sign?: WindowsSigningConfiguration | false | null
 
@@ -183,7 +183,7 @@ interface WindowsSigningSharedOptions {
    * whether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper
    * that returns the default arguments electron-builder would otherwise have used. Use this to
    * integrate an external or cloud signing service. See
-   * [Code Signing](https://www.electron.build/code-signing).
+   * [Code Signing](https://www.electron.build/docs/features/code-signing).
    */
   readonly sign?: CustomWindowsSign | string | null
 }
@@ -208,7 +208,7 @@ export interface WindowsSigntoolSigningConfig extends WindowsSigningSharedOption
    * Prefer supplying this out-of-band via the `WIN_CSC_LINK` (or `CSC_LINK`) environment variable
    * instead of hardcoding a path — that variable also accepts an `https://` URL or a base64-encoded
    * certificate, which is safer and more convenient on CI. See
-   * [Code Signing](https://www.electron.build/code-signing).
+   * [Code Signing](https://www.electron.build/docs/features/code-signing).
    */
   readonly certificateFile?: string | null
 
