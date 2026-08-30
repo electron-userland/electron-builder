@@ -1,33 +1,75 @@
-import { GithubOptions } from "builder-util-runtime"
+import { isEmptyOrSpaces, TmpDir } from "builder-util"
+import { GenericServerOptions } from "builder-util-runtime"
 import { execSync } from "child_process"
+import { Arch } from "electron-builder"
 import { AppUpdater, DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
-import { afterEach, expect, ExpectStatic, test } from "vitest"
+import { afterAll, afterEach, expect, ExpectStatic, test } from "vitest"
 import { assertThat } from "../helpers/fileAssert"
-import { createTestAppAdapter, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { createLocalServer } from "../helpers/launchAppCrossPlatform"
+import { EXTENDED_TIMEOUT } from "../helpers/packTester"
+import { createTestAppAdapter, NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { ApplicationUpdatePaths, doBuild } from "./blackboxUpdateHelpers"
 
 type UpdateFileExtension = "deb" | "rpm" | "AppImage" | "pacman"
 
+// The update packages are built in-job with the checked-out electron-builder (no external fixture
+// repo). A single build per target is shared by every package-manager variant in the same run.
+const buildTmpDir = new TmpDir("linux-updater-test-build")
+const builtUpdateDirPromises = new Map<UpdateFileExtension, Promise<string>>()
+
+afterAll(async () => {
+  await buildTmpDir.cleanup()
+})
+
+function buildUpdatePackage(expect: ExpectStatic, extension: UpdateFileExtension): Promise<string> {
+  let dirPromise = builtUpdateDirPromises.get(extension)
+  if (dirPromise == null) {
+    dirPromise = (async () => {
+      const outDirs: Array<ApplicationUpdatePaths> = []
+      // only the new version needs to exist on the update server — the "installed" old version is
+      // simulated by the TestAppAdapter below
+      await doBuild(expect, outDirs, extension, Arch.x64, buildTmpDir, false, null, [NEW_VERSION_NUMBER])
+      return outDirs[0].dir
+    })()
+    builtUpdateDirPromises.set(extension, dirPromise)
+  }
+  return dirPromise
+}
+
 const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtension: UpdateFileExtension) => {
-  const testAppAdapter = await createTestAppAdapter("1.0.1")
-  const updater = new updaterClass(null, testAppAdapter)
-  tuneTestUpdater(updater, { platform: "linux" })
+  // serve the freshly built artifacts (installer + latest-linux.yml) from a localhost static server
+  // via the generic provider — the same download code path the s3/spaces providers resolve to
+  const updateDir = await buildUpdatePackage(expect, expectedExtension)
+  const { server, port } = await createLocalServer(updateDir)
+  try {
+    const testAppAdapter = await createTestAppAdapter(OLD_VERSION_NUMBER)
+    const updater = new updaterClass(null, testAppAdapter)
+    tuneTestUpdater(updater, { platform: "linux" })
 
-  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
-    provider: "github",
-    owner: "mmaietta",
-    repo: "electron-builder-test",
-  })
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
+      provider: "generic",
+      url: `http://127.0.0.1:${port}`,
+    })
 
-  const updateCheckResult = await validateDownload(expect, updater)
+    const actualEvents = trackEvents(updater)
 
-  const files = await updateCheckResult?.downloadPromise
-  expect(files!.length).toEqual(1)
-  const installer = files![0]
-  expect(installer.endsWith(`.${expectedExtension}`)).toBeTruthy()
-  await assertThat(expect, installer).isFile()
+    const updateCheckResult = await updater.checkForUpdates()
+    // updateInfo is produced by the in-job build (sha512/size/releaseDate vary per build), so assert
+    // the stable fields explicitly instead of snapshotting
+    expect(updateCheckResult?.updateInfo.version).toBe(NEW_VERSION_NUMBER)
 
-  const didUpdate = updater.install(true, false)
-  expect(didUpdate).toBeTruthy()
+    const files = await updateCheckResult?.downloadPromise
+    expect(files!.length).toEqual(1)
+    const installer = files![0]
+    expect(installer.endsWith(`.${expectedExtension}`)).toBeTruthy()
+    await assertThat(expect, installer).isFile()
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "update-downloaded"])
+
+    const didUpdate = updater.install(true, false)
+    expect(didUpdate).toBeTruthy()
+  } finally {
+    server.close()
+  }
 }
 
 const determineEnvironment = (target: string) => {
@@ -129,12 +171,19 @@ describe("LinuxUpdater.detectPackageManager", { sequential: true }, () => {
   })
 })
 
-describe.ifLinux("Linux Updater Test", () => {
+// sequential: ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER is process-global; extended timeout: the update
+// package is built in-job on first use
+describe.ifLinux("Linux Updater Test", { sequential: true, timeout: EXTENDED_TIMEOUT }, () => {
   for (const distro in packageManagerMap) {
     const { pms, updater: Updater, extension } = packageManagerMap[distro as keyof typeof packageManagerMap]
     for (const pm of pms) {
       test(`test ${distro} download and install (${pm})`, async context => {
         if (!determineEnvironment(distro)) {
+          context.skip()
+        }
+        // honor the CI matrix package-manager pin (mirrors blackboxUpdateLinuxSuite) so each matrix
+        // entry builds/installs only its own package manager variant
+        if (!isEmptyOrSpaces(process.env.PACKAGE_MANAGER_TO_TEST) && process.env.PACKAGE_MANAGER_TO_TEST !== pm) {
           context.skip()
         }
         process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER = pm

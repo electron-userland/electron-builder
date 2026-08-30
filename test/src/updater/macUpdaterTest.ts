@@ -1,7 +1,12 @@
-import { configureRequestOptionsFromUrl, GithubOptions } from "builder-util-runtime"
+import { serializeToYaml, TmpDir } from "builder-util"
+import { configureRequestOptionsFromUrl, GenericServerOptions } from "builder-util-runtime"
+import { createHash } from "crypto"
 import { MacUpdater } from "electron-updater"
 import { EventEmitter } from "events"
+import fsExtra from "fs-extra"
+import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
+import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { createTestAppAdapter, httpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 
@@ -39,27 +44,50 @@ test.ifMac("mac updates", async ({ expect }) => {
     autoUpdater: mockNativeUpdater,
   })
 
-  const updater = new MacUpdater(undefined, await createTestAppAdapter())
-  const options: GithubOptions = {
-    provider: "github",
-    owner: "develar",
-    repo: "onshape-desktop-shell",
+  // serve a synthetic mac update (latest-mac.yml + zip) from a localhost static server via the
+  // generic provider — MacUpdater then proxies the downloaded zip to the (mocked) Squirrel.Mac updater
+  const zipName = "TestApp-1.1.0-mac.zip"
+  const zipContent = Buffer.from("electron-builder localhost update-server test zip payload — not a real archive")
+  const sha512 = createHash("sha512").update(zipContent).digest("base64")
+  const tmpDir = new TmpDir("mac-updater-test")
+  const root = await tmpDir.getTempDir()
+  await fsExtra.outputFile(
+    path.join(root, "latest-mac.yml"),
+    serializeToYaml({
+      version: "1.1.0",
+      files: [{ url: zipName, sha512, size: zipContent.length }],
+      path: zipName,
+      sha512,
+      releaseDate: "2024-01-01T00:00:00.000Z",
+    })
+  )
+  await fsExtra.outputFile(path.join(root, zipName), zipContent)
+  const { server, port } = await createLocalServer(root)
+
+  try {
+    const updater = new MacUpdater(undefined, await createTestAppAdapter())
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
+      provider: "generic",
+      url: `http://127.0.0.1:${port}`,
+    })
+
+    updater.on("download-progress", () => {
+      // console.log(JSON.stringify(data))
+    })
+
+    tuneTestUpdater(updater)
+    ;(updater as any)._testOnlyOptions.platform = process.platform
+    const actualEvents = trackEvents(updater)
+
+    const updateCheckResult = await updater.checkForUpdates()
+    // todo when will be updated to use files
+    // expect(removeUnstableProperties(updateCheckResult?.updateInfo.files)).toMatchSnapshot()
+    const files = await updateCheckResult?.downloadPromise
+    expect(files!.length).toEqual(1)
+    await assertThat(expect, files![0]).isFile()
+    expect(actualEvents).toMatchSnapshot()
+  } finally {
+    server.close()
+    await tmpDir.cleanup()
   }
-  updater.updateConfigPath = await writeUpdateConfig(options)
-
-  updater.on("download-progress", () => {
-    // console.log(JSON.stringify(data))
-  })
-
-  tuneTestUpdater(updater)
-  ;(updater as any)._testOnlyOptions.platform = process.platform
-  const actualEvents = trackEvents(updater)
-
-  const updateCheckResult = await updater.checkForUpdates()
-  // todo when will be updated to use files
-  // expect(removeUnstableProperties(updateCheckResult?.updateInfo.files)).toMatchSnapshot()
-  const files = await updateCheckResult?.downloadPromise
-  expect(files!.length).toEqual(1)
-  await assertThat(expect, files![0]).isFile()
-  expect(actualEvents).toMatchSnapshot()
 })
