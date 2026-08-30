@@ -12,6 +12,8 @@ Several security-relevant defaults changed in v27 — auto-update web installers
 
 ## Update security (electron-updater)
 
+- **Signed update manifests (opt-in).** The `latest*.yml` update metadata can be Ed25519-signed at publish time and verified by electron-updater — before any download — against a public key embedded in the app. When a key is configured, verification fails closed on unsigned or tampered manifests. See [Signed Update Manifests](./signed-update-manifests.md).
+
 - **Web-installer payloads are disabled by default.** `AppUpdater.disableWebInstaller` now defaults to **`true`**. NSIS *web* installers (the small installer that downloads its full payload at install time from a manifest-supplied URL) are no longer loaded unless you opt in, because that payload may not undergo signature verification. v27 ships a one-major grace period: if a web-installer update is received and you never set the flag, the updater logs a warning and still downloads it. Set `autoUpdater.disableWebInstaller = false` only if you intentionally ship a web installer.
 
 - **Linux package signatures.** `AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**) preserves historical behavior, since electron-builder does not sign Linux packages itself. Set it to **`false`** to enforce GPG signature checks when installing `.deb` / `.rpm` auto-updates on package managers that support verification.
