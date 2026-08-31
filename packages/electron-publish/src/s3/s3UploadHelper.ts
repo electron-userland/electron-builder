@@ -99,9 +99,20 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
 
   let resolvePromise!: () => void
   let rejectPromise!: (err: Error) => void
+  let settled = false
   const done = new Promise<void>((res, rej) => {
-    resolvePromise = res
-    rejectPromise = rej
+    resolvePromise = () => {
+      if (!settled) {
+        settled = true
+        res()
+      }
+    }
+    rejectPromise = error => {
+      if (!settled) {
+        settled = true
+        rej(error)
+      }
+    }
   })
 
   const req = transport.request(
@@ -113,6 +124,8 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
       headers: signed.headers,
     },
     res => {
+      res.on("aborted", () => rejectPromise(new Error("S3 PutObject response aborted")))
+      res.on("error", rejectPromise)
       if (res.statusCode === 200) {
         res.resume()
         res.on("end", resolvePromise)
@@ -133,7 +146,10 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
 
   req.on("error", rejectPromise)
   const fileStream = fs.createReadStream(params.file)
-  fileStream.on("error", rejectPromise)
+  fileStream.on("error", error => {
+    req.destroy(error)
+    rejectPromise(error)
+  })
   req.on("close", () => fileStream.destroy())
   fileStream.pipe(req)
 

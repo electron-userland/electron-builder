@@ -353,6 +353,25 @@ describe("BaseS3Publisher.upload — key construction and S3 request", { sequent
     await uploadPromise.catch(() => null)
     expect(destroyCalled).toBe(true)
   })
+
+  it("rejects when the S3 response is aborted", async ({ expect }) => {
+    vi.mocked(https.request).mockImplementationOnce((_opts: unknown, callback: unknown) => {
+      const req = new EventEmitter() as ReturnType<typeof https.request>
+      ;(req as any).end = vi.fn()
+      ;(req as any).destroy = vi.fn()
+      ;(req as any).write = vi.fn()
+      setImmediate(() => {
+        const res = new EventEmitter() as any
+        res.statusCode = 200
+        res.resume = vi.fn()
+        ;(callback as (response: unknown) => void)(res)
+        setImmediate(() => res.emit("aborted"))
+      })
+      return req
+    })
+
+    await expect(makeS3Publisher().upload(makeTask(testFile))).rejects.toThrow("response aborted")
+  })
 })
 
 // ─── Upload — test mode bypass ────────────────────────────────────────────────
