@@ -65,7 +65,7 @@ export class BitbucketPublisher extends HttpPublisher {
   async deleteRelease(filename: string): Promise<void> {
     const req: RequestOptions = {
       hostname: this.hostname,
-      path: `${this.basePath}/${filename}`,
+      path: `${this.basePath}/${encodeURIComponent(filename)}`,
       timeout: this.info.timeout || undefined,
     }
     await httpExecutor.request(configureRequestOptions(req, this.auth, "DELETE"), this.context.cancellationToken)
