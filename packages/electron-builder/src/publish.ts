@@ -69,13 +69,27 @@ export async function publishArtifactsWithOptions(
   const buildOptions: BuildOptions = normalizeOptions({ config, publish: publishOptions?.publish })
   checkBuildRequestOptions(buildOptions)
 
-  const uniqueUploads = Array.from(new Set(uploadOptions))
-  const tasks: UploadTask[] = uniqueUploads.map(({ file, arch }) => {
-    const filename = path.basename(file)
-    return { file, arch: arch ? archFromString(arch) : null, safeArtifactName: computeSafeArtifactNameIfNeeded(filename, () => filename) }
-  })
+  const tasks = createUploadTasks(uploadOptions)
 
   return publishPackageWithTasks(buildOptions, tasks, buildVersion)
+}
+
+/** @internal */
+export function createUploadTasks(uploadOptions: { file: string; arch: string | null }[]): UploadTask[] {
+  const seen = new Set<string>()
+  return uploadOptions
+    .filter(({ file, arch }) => {
+      const key = `${file}\0${arch ?? ""}`
+      if (seen.has(key)) {
+        return false
+      }
+      seen.add(key)
+      return true
+    })
+    .map(({ file, arch }) => {
+      const filename = path.basename(file)
+      return { file, arch: arch ? archFromString(arch) : null, safeArtifactName: computeSafeArtifactNameIfNeeded(filename, () => filename) }
+    })
 }
 
 async function publishPackageWithTasks(
