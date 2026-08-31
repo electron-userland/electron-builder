@@ -486,8 +486,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return true
     }
 
-    stagingPercentage = parseInt(stagingPercentage as any, 10)
-    if (isNaN(stagingPercentage)) {
+    stagingPercentage = Number(stagingPercentage)
+    if (!Number.isFinite(stagingPercentage)) {
       this._logger.warn(`Staging percentage is NaN: ${rawStagingPercentage}`)
       return true
     }
