@@ -288,7 +288,7 @@ export class MacUpdater extends AppUpdater {
       this.handleUpdateDownloaded()
     } else {
       // Quit and install as soon as Squirrel get the update
-      this.nativeUpdater.on("update-downloaded", () => this.handleUpdateDownloaded())
+      this.nativeUpdater.once("update-downloaded", () => this.handleUpdateDownloaded())
 
       if (this.autoInstallEvent === "manual") {
         /**
