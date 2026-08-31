@@ -27,11 +27,8 @@ async function readEmbeddedBlockMapData(file: string): Promise<BlockMap> {
 
     const dataBuffer = Buffer.allocUnsafe(sizeBuffer.readUInt32BE(0))
     await fsExtra.read(fd, dataBuffer, 0, dataBuffer.length, fileSize - sizeBuffer.length - dataBuffer.length)
-    await fsExtra.close(fd)
-
     return readBlockMap(dataBuffer)
-  } catch (e: any) {
+  } finally {
     await fsExtra.close(fd)
-    throw e
   }
 }
