@@ -149,6 +149,16 @@ describe("SnapStorePublisher", { sequential: true }, () => {
       expectSpawnCall(["upload", FILE, "--release", "stable,beta"])(expect)
     })
 
+    test("trims and removes empty comma-separated channels", async ({ expect }) => {
+      await makePublisher(" stable, beta, ,edge ").upload(makeTask())
+      expectSpawnCall(["upload", FILE, "--release", "stable,beta,edge"])(expect)
+    })
+
+    test("empty string omits --release flag", async ({ expect }) => {
+      await makePublisher("  ").upload(makeTask())
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith("snapcraft", ["upload", FILE], expect.objectContaining(STDIO))
+    })
+
     test("handles single-element array", async ({ expect }) => {
       await makePublisher(["candidate"]).upload(makeTask())
       expectSpawnCall(["upload", FILE, "--release", "candidate"])(expect)
