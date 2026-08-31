@@ -10,7 +10,7 @@ const _dynamicImportMaybe: (modulePath: string) => Promise<any> = _require("../.
 
 export async function resolveModule<T>(type: string | undefined, name: string): Promise<T> {
   try {
-    return _dynamicImportMaybe(name)
+    return await _dynamicImportMaybe(name)
   } catch (error: any) {
     log.error({ moduleName: name, message: error.message ?? error.stack }, "Unable to dynamically `import` or `require`")
     throw error
