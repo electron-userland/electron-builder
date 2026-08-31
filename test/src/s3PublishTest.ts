@@ -272,6 +272,20 @@ describe("BaseS3Publisher.upload — key construction and S3 request", { sequent
     expect(capturedOpts()?.hostname).toBe("minio.example.com")
   })
 
+  it("preserves IPv6 custom endpoint hosts and ports", async () => {
+    const { capturedOpts } = mockSuccessfulUpload()
+    const publisher = makeS3Publisher({ endpoint: "https://[::1]:9000" })
+    await publisher.upload(makeTask(testFile))
+    expect(capturedOpts()?.hostname).toBe("::1")
+    expect(capturedOpts()?.port).toBe(9000)
+    expect(capturedOpts()?.headers?.Host).toBe("[::1]:9000")
+  })
+
+  it("rejects custom endpoint protocols other than HTTP and HTTPS", async ({ expect }) => {
+    await expect(makeS3Publisher({ endpoint: "ftp://minio.example.com" }).upload(makeTask(testFile))).rejects.toThrow("Unsupported S3 endpoint protocol: ftp:")
+    expect(vi.mocked(https.request)).not.toHaveBeenCalled()
+  })
+
   it("sets x-amz-acl header when ACL is public-read", async () => {
     const { capturedOpts } = mockSuccessfulUpload()
     await makeS3Publisher({ acl: "public-read" }).upload(makeTask(testFile))
