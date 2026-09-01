@@ -12,9 +12,20 @@ function preparePowerShellExec(command: string, timeout?: number) {
   //   join commands using & https://github.com/electron-userland/electron-builder/issues/8162
   const executable = `set "PSModulePath=" & chcp 65001 >NUL & powershell.exe`
   const args = ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", command]
+  // Also strip PSModulePath from the inherited environment on the Node side (belt-and-suspenders
+  // to the `set "PSModulePath="` above). Windows environment variable names are case-insensitive,
+  // but plain JS object keys are not — spreading process.env produces a plain object — so every
+  // casing of the key must be removed, not just the canonical one.
+  const env: NodeJS.ProcessEnv = { ...process.env }
+  for (const key of Object.keys(env)) {
+    if (key.toLowerCase() === "psmodulepath") {
+      delete env[key]
+    }
+  }
   const options: ExecFileOptions = {
     shell: true,
     timeout,
+    env,
   }
   return [executable, args, options] as const
 }

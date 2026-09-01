@@ -72,7 +72,7 @@ describe("PnpmNodeModulesCollector link: dependency bundling", () => {
     return [...names].sort()
   }
 
-  test("bundles a link: package and its transitive deps, resolved to the real source dir", async ({ expect, tmpDir }) => {
+  test("bundles a link: package and its transitive deps, resolved to the real source dir", { timeout: 120_000 }, async ({ expect, tmpDir }) => {
     root = await tmpDir.createTempDir()
     const appDir = path.join(root, "app")
     await fse.ensureDir(appDir)
@@ -126,5 +126,5 @@ describe("PnpmNodeModulesCollector link: dependency bundling", () => {
     expect(utilEntry?.[1]?.path).toBe(utilPath)
     const nmJunction = path.join(appDir, "node_modules")
     expect(updaterEntry![1].path.startsWith(nmJunction)).toBe(false)
-  }, 120000)
+  })
 })
