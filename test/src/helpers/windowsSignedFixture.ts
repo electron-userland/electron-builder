@@ -45,9 +45,12 @@ function psQuote(value: string): string {
 // Runs a script with real PowerShell, bypassing the test file's vi.mock("child_process") — the mocks'
 // implementations are cleared between tests (and before afterAll), so this must never go through them.
 // PowerShell 5.1 compatible; -NonInteractive + -EncodedCommand, no prompts, throws on non-zero exit.
+// Microsoft.PowerShell.Security (Set-AuthenticodeSignature) is imported explicitly by its $PSHOME path,
+// mirroring the production verifier: PSModulePath is stripped from the env below, and without it module
+// AUTO-loading fails on Windows Server 2025 runners ("the module could not be loaded", CouldNotAutoloadMatchingModule).
 async function runPowerShell(script: string, timeout: number): Promise<string> {
   const { execFileSync } = await vi.importActual<typeof import("child_process")>("child_process")
-  const fullScript = `$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; ${script}`
+  const fullScript = `$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'; Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Security"; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; ${script}`
   const encodedCommand = Buffer.from(fullScript, "utf16le").toString("base64")
   const env = { ...process.env }
   delete env.PSModulePath
