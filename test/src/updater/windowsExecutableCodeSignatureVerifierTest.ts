@@ -1,6 +1,6 @@
 // vi.mock calls are hoisted to the top by vitest's transformer.
 // They must appear before any imports that depend on them.
-import { afterEach, expect, vi, type TestContext } from "vitest"
+import { afterAll, afterEach, expect, vi, type TestContext } from "vitest"
 
 vi.mock("child_process", async importOriginal => {
   const mod = await importOriginal<typeof import("child_process")>()
@@ -19,6 +19,7 @@ import * as path from "path"
 import type { TmpDir } from "temp-file"
 import type { Logger } from "electron-updater/src/types"
 import { verifySignature } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
+import { cleanupWindowsSignedFixture, createSignedExecutable, getWindowsSignedFixture } from "../helpers/windowsSignedFixture"
 
 // =============================================================================
 // Constants
@@ -693,79 +694,148 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
   })
 
   // -------------------------------------------------------------------------
-  // Tests against a Microsoft-signed system binary.
+  // Tests against a copy of a real system PE signed with an ephemeral
+  // self-signed certificate installed into Cert:\LocalMachine\Root.
   //
-  // The exact Subject DN varies across Windows versions so we discover it at
-  // runtime in each test rather than hardcoding it.
+  // Unlike the previously used notepad.exe, the certificate subject is fully
+  // deterministic (CN=Electron Builder Verifier Test, O=EB Test Org, C=US), so
+  // these tests exercise the DN matching semantics with known values, and they
+  // produce REAL verification positives (Status 0/Valid) through the whole
+  // PowerShell pipeline — spawn, escaping, UTF-8 decode, JSON parse, DN match.
+  //
+  // Fixture provisioning (cert generation + machine-global store install) is a
+  // lazily initialized module-level idempotent promise in windowsSignedFixture.ts;
+  // each test signs its own executable copy inside its own per-test tmpDir and
+  // uses its own setup() logger — no describe-level mutable state is fed by hooks.
+  // Every test skips dynamically when provisioning failed (e.g. not elevated).
   // -------------------------------------------------------------------------
-  describe("Microsoft-signed system binary (notepad.exe)", () => {
-    const NOTEPAD = "C:\\Windows\\System32\\notepad.exe"
+  describe("really-signed executable (self-signed certificate in LocalMachine Root)", () => {
+    afterAll(() => cleanupWindowsSignedFixture())
 
-    // Discovers notepad.exe's signer Subject DN with real PowerShell. Returns undefined
-    // when notepad is inaccessible or discovery fails — callers skip the test then.
-    async function discoverNotepadSubject(realExecFileSync: (typeof import("child_process"))["execFileSync"]): Promise<string | undefined> {
+    test("full DN publisher match (subject as reported by PowerShell) returns null", { timeout: 120_000 }, async (context: TestContext) => {
+      const { logger } = await setup()
+      const fixture = await getWindowsSignedFixture()
+      if (fixture == null) {
+        context.skip()
+        return
+      }
+      const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
+      expect(await verifySignature([fixture.subject], exe, logger)).toBeNull()
+    })
+
+    test("full DN match is RDN-order-insensitive (parseDn compares per key)", { timeout: 120_000 }, async (context: TestContext) => {
+      const { logger } = await setup()
+      const fixture = await getWindowsSignedFixture()
+      if (fixture == null) {
+        context.skip()
+        return
+      }
+      const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
+      // .NET may render the subject RDNs in a different order than requested from OpenSSL;
+      // matching is per-key, so the canonical requested order must match either way.
+      expect(await verifySignature([`CN=${fixture.commonName}, O=EB Test Org, C=US`], exe, logger)).toBeNull()
+    })
+
+    test("CN-only match returns null and logs the deprecation warning", { timeout: 120_000 }, async (context: TestContext) => {
+      const { logger } = await setup()
+      const fixture = await getWindowsSignedFixture()
+      if (fixture == null) {
+        context.skip()
+        return
+      }
+      const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
+      expect(await verifySignature([fixture.commonName], exe, logger)).toBeNull()
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining(fixture.commonName))
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Distinguished Name"))
+    })
+
+    test("partial DN (subset of the subject's keys) matches when all provided keys agree", { timeout: 120_000 }, async (context: TestContext) => {
+      const { logger } = await setup()
+      const fixture = await getWindowsSignedFixture()
+      if (fixture == null) {
+        context.skip()
+        return
+      }
+      const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
+      // C=US is present in the certificate subject but omitted here — extra subject keys
+      // beyond the publisherName spec do not prevent a match.
+      expect(await verifySignature([`CN=${fixture.commonName}, O=EB Test Org`], exe, logger)).toBeNull()
+    })
+
+    test("wrong publisher returns a non-null error string naming the mismatch", { timeout: 120_000 }, async (context: TestContext) => {
+      const { logger } = await setup()
+      const fixture = await getWindowsSignedFixture()
+      if (fixture == null) {
+        context.skip()
+        return
+      }
+      const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
+      const result = await verifySignature(["CN=Definitely Not The Publisher, O=Evil Org, C=US"], exe, logger)
+      expect(result).not.toBeNull()
+      expect(result).toContain("Definitely Not The Publisher")
+    })
+
+    test("signed exe inside a directory with smart quote and spaces verifies (real positive through the escaping)", { timeout: 120_000 }, async (context: TestContext) => {
+      const { logger } = await setup()
+      const fixture = await getWindowsSignedFixture()
+      if (fixture == null) {
+        context.skip()
+        return
+      }
+      // U+2019 is a PowerShell string delimiter — without the doubling escape the -LiteralPath
+      // string would terminate early. The path tests above only prove "no crash" on unsigned
+      // files; this proves a genuine Valid + DN-match positive through the same escaping.
+      const dir = path.join(await context.tmpDir.createTempDir(), "D’Andre’s signed updates")
+      await fs.mkdir(dir, { recursive: true })
+      const exe = await createSignedExecutable(fixture, dir)
+      expect(await verifySignature([fixture.subject], exe, logger)).toBeNull()
+    })
+
+    test("symlink to a validly-signed exe never yields a publisher mismatch — LiteralPath guard or genuine pass", { timeout: 120_000 }, async (context: TestContext) => {
+      const { logger } = await setup()
+      const fixture = await getWindowsSignedFixture()
+      if (fixture == null) {
+        context.skip()
+        return
+      }
+      const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
+      const symlinkPath = path.join(path.dirname(exe), "symlink.exe")
       try {
-        await fs.access(NOTEPAD)
-        const raw = realExecFileSync(
-          "powershell.exe",
-          [
-            "-NoProfile",
-            "-NonInteractive",
-            "-InputFormat",
-            "None",
-            "-Command",
-            `$OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; Get-AuthenticodeSignature -LiteralPath '${NOTEPAD}' | ConvertTo-Json -Compress`,
-          ],
-          { shell: false, env: { ...process.env, PSModulePath: "" }, timeout: 15_000 }
-        ).toString()
-        return JSON.parse(raw)?.SignerCertificate?.Subject
+        await fs.symlink(exe, symlinkPath)
       } catch {
-        return undefined
-      }
-    }
-
-    test("full DN publisher match returns null", { timeout: 30_000 }, async (context: TestContext) => {
-      const { logger, realExecFileSync } = await setup()
-      const notepadSubject = await discoverNotepadSubject(realExecFileSync)
-      if (!notepadSubject) {
-        context.skip()
+        context.skip() // symlink creation can require extra privileges on Windows
         return
       }
-      expect(await verifySignature([notepadSubject], NOTEPAD, logger)).toBeNull()
+
+      let result: string | null
+      try {
+        result = await verifySignature([fixture.subject], symlinkPath, logger)
+      } catch (error) {
+        // PowerShell reported the resolved target path — the LiteralPath guard must be the rejection reason.
+        expect(String(error)).toMatch(/LiteralPath/)
+        return
+      }
+      // PowerShell echoed the symlink's own literal path: the guard sees a match and the signature
+      // genuinely covers the bytes behind the link, so this is a pass, not a bypass. Anything else
+      // (publisher mismatch, invalid status) would surface here as a non-null string.
+      expect(result).toBeNull()
     })
 
-    test("wrong publisher returns non-null error string", { timeout: 30_000 }, async (context: TestContext) => {
-      const { logger, realExecFileSync } = await setup()
-      const notepadSubject = await discoverNotepadSubject(realExecFileSync)
-      if (!notepadSubject) {
+    test("tampered signed exe (appended bytes) returns a non-null error string", { timeout: 120_000 }, async (context: TestContext) => {
+      const { logger } = await setup()
+      const fixture = await getWindowsSignedFixture()
+      if (fixture == null) {
         context.skip()
         return
       }
-      expect(await verifySignature(["Definitely Not Microsoft"], NOTEPAD, logger)).not.toBeNull()
-    })
-
-    test("CN-only match returns null and logs deprecation warning", { timeout: 30_000 }, async (context: TestContext) => {
-      const { logger, realExecFileSync } = await setup()
-      const notepadSubject = await discoverNotepadSubject(realExecFileSync)
-      const cnOnly = notepadSubject?.match(/CN=([^,]+)/)?.[1]?.trim()
-      if (!cnOnly) {
-        context.skip()
-        return
-      }
-      expect(await verifySignature([cnOnly], NOTEPAD, logger)).toBeNull()
-      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining(cnOnly))
-    })
-
-    test("partial DN (subset of keys) matches when provided keys all agree", { timeout: 30_000 }, async (context: TestContext) => {
-      const { logger, realExecFileSync } = await setup()
-      const notepadSubject = await discoverNotepadSubject(realExecFileSync)
-      const cn = notepadSubject?.match(/CN=[^,]+/)?.[0]
-      const c = notepadSubject?.match(/C=[A-Z]+/)?.[0]
-      if (!cn || !c) {
-        context.skip()
-        return
-      }
-      expect(await verifySignature([`${cn}, ${c}`], NOTEPAD, logger)).toBeNull()
+      const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
+      // Sanity: the untouched copy verifies, so a failure below is caused by the tampering alone.
+      expect(await verifySignature([fixture.subject], exe, createLogger())).toBeNull()
+      await fs.appendFile(exe, Buffer.from("tampered"))
+      // Appended bytes break the Authenticode hash → Status HashMismatch → non-null error string.
+      const result = await verifySignature([fixture.subject], exe, logger)
+      expect(result).not.toBeNull()
+      expect(typeof result).toBe("string")
     })
   })
 
