@@ -36,24 +36,29 @@ function preparePowerShellExec(command: string, timeout?: number) {
   return ["powershell.exe", args, options] as const
 }
 
-// Returns true if path verification passed or was skipped (missing data.Path).
-// Returns false and calls reject() if a LiteralPath mismatch is detected.
-function checkLiteralPath(data: any, unescapedTempUpdateFile: string, logger: Logger, reject: (reason: any) => void): boolean {
+// Thrown when the Path reported by Get-AuthenticodeSignature does not match the expected
+// update file path. Signals verifySignature to reject directly, without running the
+// ConvertTo-Json availability probe in handleError.
+class LiteralPathMismatchError extends Error {}
+
+// Throws LiteralPathMismatchError if a LiteralPath mismatch is detected.
+// Returns normally if path verification passed or was skipped (missing data.Path).
+function checkLiteralPath(data: any, unescapedTempUpdateFile: string, logger: Logger): void {
+  let normalizedDataPath: string
   try {
-    const normalizedDataPath = path.normalize(data.Path)
-    const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
-    logger.info(`LiteralPath: ${normalizedDataPath}. Update Path: ${normalizedTempUpdateFile}`)
-    if (normalizedDataPath !== normalizedTempUpdateFile) {
-      reject(new Error(`LiteralPath of ${normalizedDataPath} is different than ${normalizedTempUpdateFile}`))
-      return false
-    }
+    normalizedDataPath = path.normalize(data.Path)
   } catch (error: any) {
     logger.warn(
       `Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}. ` +
         "This fail-open behavior is deprecated: electron-builder v28 will treat a missing/mismatched LiteralPath as a verification failure (fail-closed)."
     )
+    return
   }
-  return true
+  const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
+  logger.info(`LiteralPath: ${normalizedDataPath}. Update Path: ${normalizedTempUpdateFile}`)
+  if (normalizedDataPath !== normalizedTempUpdateFile) {
+    throw new LiteralPathMismatchError(`LiteralPath of ${normalizedDataPath} is different than ${normalizedTempUpdateFile}`)
+  }
 }
 
 // Returns true if any entry in publisherNames matches the signing certificate subject.
@@ -77,14 +82,12 @@ function matchPublisher(data: any, publisherNames: string[], logger: Logger): bo
 
 // Parses Get-AuthenticodeSignature JSON, checks the LiteralPath guard, and
 // matches against publisherNames. Returns null on success or a diagnostic
-// string on failure. When checkLiteralPath detects a mismatch it calls
-// reject() directly and this function returns null.
-function evaluateSignatureResult(stdout: string, publisherNames: string[], unescapedTempUpdateFile: string, logger: Logger, reject: (reason: any) => void): string | null {
+// string on failure. Throws LiteralPathMismatchError when checkLiteralPath
+// detects a mismatch.
+function evaluateSignatureResult(stdout: string, publisherNames: string[], unescapedTempUpdateFile: string, logger: Logger): string | null {
   const data = parseOut(stdout)
   if (data.Status === 0) {
-    if (!checkLiteralPath(data, unescapedTempUpdateFile, logger, reject)) {
-      return null
-    }
+    checkLiteralPath(data, unescapedTempUpdateFile, logger)
     if (matchPublisher(data, publisherNames, logger)) {
       return null
     }
@@ -99,8 +102,11 @@ function evaluateSignatureResult(stdout: string, publisherNames: string[], unesc
 // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
 export function verifySignature(publisherNames: Array<string>, unescapedTempUpdateFile: string, logger: Logger): Promise<string | null> {
   // Single quotes in the path are doubled for PS single-quoted strings ('don''t' → don't).
+  // PowerShell also treats the Unicode single-quote variants U+2018–U+201B (‘ ’ ‚ ‛) as
+  // string delimiters, so they must be doubled as well or a path like C:\Users\D’Andre
+  // would terminate the string early ("The string is missing the terminator").
   // Other PS metacharacters ($, `, \) are literal inside single-quoted strings.
-  const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''")
+  const tempUpdateFile = unescapedTempUpdateFile.replace(/['\u2018\u2019\u201A\u201B]/g, "$&$&")
   logger.info(`Verifying signature ${tempUpdateFile}`)
   return new Promise<string | null>((resolve, reject) => {
     execFile(...preparePowerShellExec(`Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress`, 20 * 1000), (error, stdout, stderr) => {
@@ -111,8 +117,14 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
         return
       }
       try {
-        resolve(evaluateSignatureResult(stdout, publisherNames, unescapedTempUpdateFile, logger, reject))
+        resolve(evaluateSignatureResult(stdout, publisherNames, unescapedTempUpdateFile, logger))
       } catch (e: any) {
+        if (e instanceof LiteralPathMismatchError) {
+          // Reject directly — the signature data was parsed successfully, so the
+          // ConvertTo-Json availability probe in handleError is not applicable.
+          reject(e)
+          return
+        }
         if (handleError(logger, e, null, reject)) {
           resolve(null)
         }

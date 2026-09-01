@@ -1,6 +1,6 @@
 // vi.mock calls are hoisted to the top by vitest's transformer.
 // They must appear before any imports that depend on them.
-import { afterAll, afterEach, beforeAll, beforeEach, expect, vi } from "vitest"
+import { afterAll, afterEach, beforeAll, beforeEach, expect, vi, type TestContext } from "vitest"
 
 vi.mock("child_process", async importOriginal => {
   const mod = await importOriginal<typeof import("child_process")>()
@@ -501,6 +501,25 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       expect(cmd).toContain("it''s-really-it''s.exe")
     })
 
+    test("typographic apostrophe (U+2019) in path is doubled (PS treats smart quotes as string delimiters)", async () => {
+      // https://github.com/electron-userland/electron-builder/pull/9764#issuecomment-5435910678
+      const smartQuotePath = path.join(path.dirname(defaultFile), "D’Andre-update.exe")
+      mockPsSuccess(makeJson({ filePath: smartQuotePath }))
+      await verifySignature([DEFAULT_SUBJECT], smartQuotePath, logger)
+      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
+      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
+      expect(cmd).toContain("D’’Andre-update.exe")
+    })
+
+    test("all Unicode single-quote variants (U+2018-U+201B) are doubled", async () => {
+      const trickyPath = path.join(path.dirname(defaultFile), "‘a’b‚c‛d.exe")
+      mockPsSuccess(makeJson({ filePath: trickyPath }))
+      await verifySignature([DEFAULT_SUBJECT], trickyPath, logger)
+      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
+      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
+      expect(cmd).toContain("‘‘a’’b‚‚c‛‛d.exe")
+    })
+
     test("path without special characters is passed through unchanged inside single quotes", async () => {
       mockPsSuccess(makeJson())
       await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
@@ -585,22 +604,22 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     return p
   }
 
-  test("unsigned file returns a non-null error string", async () => {
+  test("unsigned file returns a non-null error string", { timeout: 30_000 }, async () => {
     const p = await createUnsignedExe()
     const result = await verifySignature(["Any Publisher"], p, logger)
     expect(result).not.toBeNull()
     expect(typeof result).toBe("string")
-  }, 30_000)
+  })
 
-  test("path with spaces is handled without crashing", async () => {
+  test("path with spaces is handled without crashing", { timeout: 30_000 }, async () => {
     const dir = await tmpDir.getTempDir({ prefix: "path with spaces" })
     const p = path.join(dir, "my update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
     const result = await verifySignature(["Any Publisher"], p, logger)
     expect(result).not.toBeNull() // Unsigned → non-null error; key assertion is no crash
-  }, 30_000)
+  })
 
-  test("path with single quote does not crash (injection prevention)", async () => {
+  test("path with single quote does not crash (injection prevention)", { timeout: 30_000 }, async () => {
     const parent = await tmpDir.getTempDir()
     const quotedDir = path.join(parent, "it's a test")
     await fs.mkdir(quotedDir, { recursive: true })
@@ -609,9 +628,21 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     // Should not throw — the single quote must be escaped before entering the PS command string.
     const result = await verifySignature(["Any Publisher"], p, logger)
     expect(typeof result === "string" || result === null).toBe(true)
-  }, 30_000)
+  })
 
-  test("path with non-ASCII characters does not crash (UTF-8 encoding, issue #8162)", async () => {
+  test("path with typographic apostrophe (U+2019) does not crash (PS smart-quote delimiter)", { timeout: 30_000 }, async () => {
+    const parent = await tmpDir.getTempDir()
+    const smartQuoteDir = path.join(parent, "D’Andre")
+    await fs.mkdir(smartQuoteDir, { recursive: true })
+    const p = path.join(smartQuoteDir, "update.exe")
+    await fs.writeFile(p, Buffer.from("not a PE"))
+    // PowerShell treats U+2019 as a single-quote delimiter, so it must be escaped
+    // like ' or the -LiteralPath string terminates early with a parse error.
+    const result = await verifySignature(["Any Publisher"], p, logger)
+    expect(typeof result === "string" || result === null).toBe(true)
+  })
+
+  test("path with non-ASCII characters does not crash (UTF-8 encoding, issue #8162)", { timeout: 30_000 }, async () => {
     const parent = await tmpDir.getTempDir()
     const unicodeDir = path.join(parent, "üñícodé-path")
     await fs.mkdir(unicodeDir, { recursive: true })
@@ -620,7 +651,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     // The $OutputEncoding + [Console]::OutputEncoding setup must handle non-ASCII dir names.
     const result = await verifySignature(["Any Publisher"], p, logger)
     expect(typeof result === "string" || result === null).toBe(true)
-  }, 30_000)
+  })
 
   // -------------------------------------------------------------------------
   // Tests against a Microsoft-signed system binary.
@@ -655,48 +686,46 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
           ).toString()
           notepadSubject = JSON.parse(raw)?.SignerCertificate?.Subject
         } catch {
-          // Discovery failed — each individual test will early-return via the guard below
+          // Discovery failed — each individual test will skip via the guard below
         }
       }
     })
 
-    test("full DN publisher match returns null", async () => {
+    test("full DN publisher match returns null", { timeout: 30_000 }, async (context: TestContext) => {
       if (!notepadSubject) {
+        context.skip()
         return
       }
       expect(await verifySignature([notepadSubject], NOTEPAD, logger)).toBeNull()
-    }, 30_000)
+    })
 
-    test("wrong publisher returns non-null error string", async () => {
+    test("wrong publisher returns non-null error string", { timeout: 30_000 }, async (context: TestContext) => {
       if (!notepadSubject) {
+        context.skip()
         return
       }
       expect(await verifySignature(["Definitely Not Microsoft"], NOTEPAD, logger)).not.toBeNull()
-    }, 30_000)
+    })
 
-    test("CN-only match returns null and logs deprecation warning", async () => {
-      if (!notepadSubject) {
-        return
-      }
-      const cnOnly = notepadSubject.match(/CN=([^,]+)/)?.[1]?.trim()
+    test("CN-only match returns null and logs deprecation warning", { timeout: 30_000 }, async (context: TestContext) => {
+      const cnOnly = notepadSubject?.match(/CN=([^,]+)/)?.[1]?.trim()
       if (!cnOnly) {
+        context.skip()
         return
       }
       expect(await verifySignature([cnOnly], NOTEPAD, logger)).toBeNull()
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining(cnOnly))
-    }, 30_000)
+    })
 
-    test("partial DN (subset of keys) matches when provided keys all agree", async () => {
-      if (!notepadSubject) {
-        return
-      }
-      const cn = notepadSubject.match(/CN=[^,]+/)?.[0]
-      const c = notepadSubject.match(/C=[A-Z]+/)?.[0]
+    test("partial DN (subset of keys) matches when provided keys all agree", { timeout: 30_000 }, async (context: TestContext) => {
+      const cn = notepadSubject?.match(/CN=[^,]+/)?.[0]
+      const c = notepadSubject?.match(/C=[A-Z]+/)?.[0]
       if (!cn || !c) {
+        context.skip()
         return
       }
       expect(await verifySignature([`${cn}, ${c}`], NOTEPAD, logger)).toBeNull()
-    }, 30_000)
+    })
   })
 
   // -------------------------------------------------------------------------
@@ -704,7 +733,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
   // invocation (shell: true) but are now safe with shell: false + -EncodedCommand.
   // Each test verifies no crash / spurious rejection on an unsigned file.
 
-  test("directory name with & does not crash or reject (was dangerous with cmd.exe shell)", async () => {
+  test("directory name with & does not crash or reject (was dangerous with cmd.exe shell)", { timeout: 30_000 }, async () => {
     const parent = await tmpDir.getTempDir()
     const andDir = path.join(parent, "AT&T Updates")
     await fs.mkdir(andDir, { recursive: true })
@@ -712,9 +741,9 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     await fs.writeFile(p, Buffer.from("not a PE"))
     const result = await verifySignature(["Any Publisher"], p, logger)
     expect(typeof result === "string" || result === null).toBe(true)
-  }, 30_000)
+  })
 
-  test("directory name with %VAR% does not crash or reject (was expanded by cmd.exe)", async () => {
+  test("directory name with %VAR% does not crash or reject (was expanded by cmd.exe)", { timeout: 30_000 }, async () => {
     const parent = await tmpDir.getTempDir()
     const pctDir = path.join(parent, "%USERNAME% Updates")
     await fs.mkdir(pctDir, { recursive: true })
@@ -722,9 +751,9 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     await fs.writeFile(p, Buffer.from("not a PE"))
     const result = await verifySignature(["Any Publisher"], p, logger)
     expect(typeof result === "string" || result === null).toBe(true)
-  }, 30_000)
+  })
 
-  test("directory name with $ does not crash or reject (safe in PS single-quoted string)", async () => {
+  test("directory name with $ does not crash or reject (safe in PS single-quoted string)", { timeout: 30_000 }, async () => {
     const parent = await tmpDir.getTempDir()
     const dollarDir = path.join(parent, "$Updates")
     await fs.mkdir(dollarDir, { recursive: true })
@@ -732,9 +761,9 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     await fs.writeFile(p, Buffer.from("not a PE"))
     const result = await verifySignature(["Any Publisher"], p, logger)
     expect(typeof result === "string" || result === null).toBe(true)
-  }, 30_000)
+  })
 
-  test("directory name with backtick does not crash or reject (safe in PS single-quoted string)", async () => {
+  test("directory name with backtick does not crash or reject (safe in PS single-quoted string)", { timeout: 30_000 }, async () => {
     const parent = await tmpDir.getTempDir()
     const backtickDir = path.join(parent, "`Updates")
     await fs.mkdir(backtickDir, { recursive: true })
@@ -742,16 +771,18 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     await fs.writeFile(p, Buffer.from("not a PE"))
     const result = await verifySignature(["Any Publisher"], p, logger)
     expect(typeof result === "string" || result === null).toBe(true)
-  }, 30_000)
+  })
 
   // -------------------------------------------------------------------------
-  test("symlink to a different file: LiteralPath mismatch prevents a silent pass", async () => {
+  test("symlink to a different file: LiteralPath mismatch prevents a silent pass", { timeout: 30_000 }, async (context: TestContext) => {
     const realFile = await createUnsignedExe("real.exe")
     const symlinkPath = path.join(path.dirname(realFile), "symlink.exe")
     try {
       await fs.symlink(realFile, symlinkPath)
     } catch {
-      return // Symlinks may require elevated privileges on Windows — skip gracefully
+      // Symlinks may require elevated privileges on Windows
+      context.skip()
+      return
     }
 
     // When PowerShell resolves the symlink, data.Path === realFile ≠ symlinkPath.
@@ -763,5 +794,5 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
       return // Rejection is the expected security behavior — verification did NOT silently pass
     }
     expect(result).not.toBeNull()
-  }, 30_000)
+  })
 })
