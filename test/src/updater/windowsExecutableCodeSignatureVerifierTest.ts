@@ -597,7 +597,8 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
   afterAll(() => tmpDir.cleanup())
 
   async function createUnsignedExe(name = "unsigned.exe"): Promise<string> {
-    const dir = await tmpDir.getTempDir()
+    // createTempDir (not getTempDir) — getTempDir only reserves a path without creating the directory.
+    const dir = await tmpDir.createTempDir()
     const p = path.join(dir, name)
     // Minimal fake MZ header — enough to produce a path, not enough to be a valid PE signature.
     await fs.writeFile(p, Buffer.from("MZ" + "0".repeat(60)))
@@ -612,7 +613,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
   })
 
   test("path with spaces is handled without crashing", { timeout: 30_000 }, async () => {
-    const dir = await tmpDir.getTempDir({ prefix: "path with spaces" })
+    const dir = await tmpDir.createTempDir({ prefix: "path with spaces" })
     const p = path.join(dir, "my update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
     const result = await verifySignature(["Any Publisher"], p, logger)
