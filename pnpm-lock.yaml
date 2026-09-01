@@ -232,8 +232,8 @@ importers:
         specifier: 3.1.0
         version: 3.1.0
       '@types/hosted-git-info':
-        specifier: 3.0.2
-        version: 3.0.2
+        specifier: 3.0.5
+        version: 3.0.5
       '@types/js-yaml':
         specifier: 4.0.3
         version: 4.0.3
@@ -4148,8 +4148,8 @@ packages:
   '@types/history@4.7.11':
     resolution: {integrity: sha512-qjDJRrmvBMiTx+jyLxvLfJU7UznFuokDv4f3WRuriHKERccVpFU+8XMQUAbDzoiJCsmexxRExQeMwwCdamSKDA==}
 
-  '@types/hosted-git-info@3.0.2':
-    resolution: {integrity: sha512-RURNTeEFUwF+ifnp7kK3WLLlTmBSlRynLNS9jeAsI6RHtSrupV0l0nO6kmpaz75EUJVexy348bR452SvmH98vQ==}
+  '@types/hosted-git-info@3.0.5':
+    resolution: {integrity: sha512-Dmngh7U003cOHPhKGyA7LWqrnvcTyILNgNPmNCxlx7j8MIi54iBliiT8XqVLIQ3GchoOjVAyBzNJVyuaJjqokg==}
 
   '@types/html-minifier-terser@6.1.0':
     resolution: {integrity: sha512-oh/6byDPnL1zeNXFrDXFLyZjkr1MsBG667IM792caf1L2UPOOMf65NFzjUH/ltyfwjAGfs1rsX1eftK0jC/KIg==}
@@ -14999,7 +14999,7 @@ snapshots:
 
   '@types/history@4.7.11': {}
 
-  '@types/hosted-git-info@3.0.2': {}
+  '@types/hosted-git-info@3.0.5': {}
 
   '@types/html-minifier-terser@6.1.0': {}
 
