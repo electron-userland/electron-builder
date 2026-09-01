@@ -322,8 +322,8 @@ importers:
         specifier: 4.0.3
         version: 4.0.3
       '@types/source-map-support':
-        specifier: 0.5.4
-        version: 0.5.4
+        specifier: 0.5.10
+        version: 0.5.10
       '@types/tiny-async-pool':
         specifier: ^1.0.5
         version: 1.0.5
@@ -4289,8 +4289,8 @@ packages:
   '@types/sockjs@0.3.36':
     resolution: {integrity: sha512-MK9V6NzAS1+Ud7JV9lJLFqW85VbC9dq3LmwZCuBe4wBDgKC0Kj/jd8Xl+nSviU+Qc3+m7umHHyHg//2KSa0a0Q==}
 
-  '@types/source-map-support@0.5.4':
-    resolution: {integrity: sha512-9zGujX1sOPg32XLyfgEB/0G9ZnrjthL/Iv1ZfuAjj8LEilHZEpQSQs1scpRXPhHzGYgWiLz9ldF1cI8JhL+yMw==}
+  '@types/source-map-support@0.5.10':
+    resolution: {integrity: sha512-tgVP2H469x9zq34Z0m/fgPewGhg/MLClalNOiPIzQlXrSS2YrKu/xCdSCKnEDwkFha51VKEKB6A9wW26/ZNwzA==}
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
@@ -15149,7 +15149,7 @@ snapshots:
     dependencies:
       '@types/node': 22.13.17
 
-  '@types/source-map-support@0.5.4':
+  '@types/source-map-support@0.5.10':
     dependencies:
       source-map: 0.6.1
 
