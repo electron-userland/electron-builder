@@ -30,3 +30,5 @@
   - changed-files:
     - any-glob-to-any-file:
       - packages/electron-updater/**/*
+  release/v26:
+  - base-branch: '^release/v26$'
