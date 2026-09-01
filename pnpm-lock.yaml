@@ -229,8 +229,8 @@ importers:
         specifier: 4.1.7
         version: 4.1.7
       '@types/ejs':
-        specifier: 3.1.0
-        version: 3.1.0
+        specifier: 3.1.5
+        version: 3.1.5
       '@types/hosted-git-info':
         specifier: 3.0.2
         version: 3.0.2
@@ -4103,8 +4103,8 @@ packages:
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
 
-  '@types/ejs@3.1.0':
-    resolution: {integrity: sha512-DCg+Ka+uDQ31lJ/UtEXVlaeV3d6t81gifaVWKJy4MYVVgvJttyX/viREy+If7fz+tK/gVxTGMtyrFPnm4gjrVA==}
+  '@types/ejs@3.1.5':
+    resolution: {integrity: sha512-nv+GSx77ZtXiJzwKdsASqi+YQ5Z7vwHsTP0JY2SiQgjGckkBRKZnk8nIM+7oUZ1VCtuTz0+By4qVR7fqzp/Dfg==}
 
   '@types/eslint-scope@3.7.7':
     resolution: {integrity: sha512-MzMFlSLBqNF2gcHWO0G1vP/YQyfvrxZ0bF+u7mzUdZ1/xK4A4sru+nraZz5i3iEIk1l1uyicaDVTB4QbbEkAYg==}
@@ -14942,7 +14942,7 @@ snapshots:
 
   '@types/deep-eql@4.0.2': {}
 
-  '@types/ejs@3.1.0': {}
+  '@types/ejs@3.1.5': {}
 
   '@types/eslint-scope@3.7.7':
     dependencies:
