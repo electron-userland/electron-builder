@@ -425,8 +425,8 @@ importers:
         version: 5.4.0
     devDependencies:
       '@types/archiver':
-        specifier: 5.3.1
-        version: 5.3.1
+        specifier: 5.3.4
+        version: 5.3.4
       '@types/fs-extra':
         specifier: 9.0.13
         version: 9.0.13
@@ -3974,8 +3974,8 @@ packages:
   '@types/adm-zip@0.5.6':
     resolution: {integrity: sha512-lRlcSLg5Yoo7C2H2AUiAoYlvifWoCx/se7iUNiCBTfEVVYFVn+Tr9ZGed4K73tYgLe9O4PjdJvbxlkdAOx/qiw==}
 
-  '@types/archiver@5.3.1':
-    resolution: {integrity: sha512-wKYZaSXaDvTZuInAWjCeGG7BEAgTWG2zZW0/f7IYFcoHB2X2d9lkVFnrOlXl3W6NrvO6Ml3FLLu8Uksyymcpnw==}
+  '@types/archiver@5.3.4':
+    resolution: {integrity: sha512-Lj7fLBIMwYFgViVVZHEdExZC3lVYsl+QL0VmdNdIzGZH544jHveYWij6qdnBgJQDnR7pMKliN9z2cPZFEbhyPw==}
 
   '@types/aws4@1.11.6':
     resolution: {integrity: sha512-5CnVUkHNyLGpD9AnOcK66YyP0qvIh6nhJJoeK8zSl5YKikUcUbdB7SlHevUYVqicgeh6j5AJa1qa/h08dSZHoA==}
@@ -4133,9 +4133,6 @@ packages:
   '@types/geojson@7946.0.16':
     resolution: {integrity: sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==}
 
-  '@types/glob@8.1.0':
-    resolution: {integrity: sha512-IO+MJPVhoqz+28h1qLAcBEH2+xHMK6MTyHJc7MTnnYb6wsoLR29POVGJ7LycmVXIqyy/4/2ShP5sUwTXuOwb/w==}
-
   '@types/graceful-fs@4.1.9':
     resolution: {integrity: sha512-olP3sd1qOEe5dXTSaFvQG+02VdRXcdytWLAZsAq1PecU8uqQAhkrnbli7DagjtXKW/Bl7YJbUsa8MPcuc8LHEQ==}
 
@@ -4205,9 +4202,6 @@ packages:
   '@types/minimatch@3.0.5':
     resolution: {integrity: sha512-Klz949h02Gz2uZCMGwDUSDS1YBlTdDDgbWHi+81l29tQALUtvz4rAYi5uoVhE5Lagoq6DeqAUlbrHvW/mXDgdQ==}
 
-  '@types/minimatch@5.1.2':
-    resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
-
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
 
@@ -4255,6 +4249,9 @@ packages:
 
   '@types/react@19.2.14':
     resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
+
+  '@types/readdir-glob@1.1.5':
+    resolution: {integrity: sha512-raiuEPUYqXu+nvtY2Pe8s8FEmZ3x5yAH4VkLdihcPdalvsHltomrRC9BzuStrJ9yk06470hS0Crw0f1pXqD+Hg==}
 
   '@types/request@2.48.13':
     resolution: {integrity: sha512-FGJ6udDNUCjd19pp0Q3iTiDkwhYup7J8hpMW9c4k53NrccQFFWKRho6hvtPPEhnXWKvukfwAlB6DbDz4yhH5Gg==}
@@ -14775,9 +14772,9 @@ snapshots:
     dependencies:
       '@types/node': 22.13.17
 
-  '@types/archiver@5.3.1':
+  '@types/archiver@5.3.4':
     dependencies:
-      '@types/glob': 8.1.0
+      '@types/readdir-glob': 1.1.5
 
   '@types/aws4@1.11.6':
     dependencies:
@@ -14982,11 +14979,6 @@ snapshots:
 
   '@types/geojson@7946.0.16': {}
 
-  '@types/glob@8.1.0':
-    dependencies:
-      '@types/minimatch': 5.1.2
-      '@types/node': 22.13.17
-
   '@types/graceful-fs@4.1.9':
     dependencies:
       '@types/node': 22.13.17
@@ -15051,8 +15043,6 @@ snapshots:
 
   '@types/minimatch@3.0.5': {}
 
-  '@types/minimatch@5.1.2': {}
-
   '@types/ms@2.1.0': {}
 
   '@types/node@12.20.55': {}
@@ -15104,6 +15094,10 @@ snapshots:
   '@types/react@19.2.14':
     dependencies:
       csstype: 3.2.3
+
+  '@types/readdir-glob@1.1.5':
+    dependencies:
+      '@types/node': 22.13.17
 
   '@types/request@2.48.13':
     dependencies:
