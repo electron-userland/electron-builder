@@ -1,6 +1,6 @@
 // vi.mock calls are hoisted to the top by vitest's transformer.
 // They must appear before any imports that depend on them.
-import { afterAll, afterEach, beforeAll, beforeEach, expect, vi, type TestContext } from "vitest"
+import { afterEach, beforeAll, beforeEach, expect, vi, type TestContext } from "vitest"
 
 vi.mock("child_process", async importOriginal => {
   const mod = await importOriginal<typeof import("child_process")>()
@@ -16,7 +16,7 @@ import { execFile, execFileSync } from "child_process"
 import * as fs from "fs/promises"
 import { release as osRelease } from "os"
 import * as path from "path"
-import { TmpDir } from "temp-file"
+import type { TmpDir } from "temp-file"
 import type { Logger } from "electron-updater/src/types"
 import { verifySignature } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
 
@@ -96,7 +96,6 @@ function makeSignatureJson(opts: SignatureJsonOpts = {}): string {
 // =============================================================================
 
 describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
-  const tmpDir = new TmpDir("verifier-unit")
   let defaultFile = ""
   let logger: Logger
 
@@ -104,7 +103,8 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
   // An explicit filePath in opts still wins (used by path-injection tests).
   const makeJson = (opts: SignatureJsonOpts = {}) => makeSignatureJson({ filePath: defaultFile, ...opts })
 
-  beforeEach(async () => {
+  // `tmpDir` comes from the per-test context fixture in vitest-tmpdir.ts (auto-cleaned after each test).
+  beforeEach(async ({ tmpDir }) => {
     defaultFile = path.join(await tmpDir.getTempDir(), "test-update-1.0.1.exe")
     logger = createLogger()
     vi.clearAllMocks()
@@ -117,8 +117,6 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
   afterEach(() => {
     vi.clearAllMocks()
   })
-
-  afterAll(() => tmpDir.cleanup())
 
   // -- helpers that drive the execFile mock -----------------------------------
 
@@ -565,7 +563,6 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
 // =============================================================================
 
 describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell)", () => {
-  const tmpDir = new TmpDir("verifier-e2e")
   let logger: Logger
   let realExecFile: (typeof import("child_process"))["execFile"]
   let realExecFileSync: (typeof import("child_process"))["execFileSync"]
@@ -594,9 +591,8 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     vi.clearAllMocks()
   })
 
-  afterAll(() => tmpDir.cleanup())
-
-  async function createUnsignedExe(name = "unsigned.exe"): Promise<string> {
+  // `tmpDir` is the per-test context fixture from vitest-tmpdir.ts (auto-cleaned after each test).
+  async function createUnsignedExe(tmpDir: TmpDir, name = "unsigned.exe"): Promise<string> {
     // createTempDir (not getTempDir) — getTempDir only reserves a path without creating the directory.
     const dir = await tmpDir.createTempDir()
     const p = path.join(dir, name)
@@ -605,14 +601,14 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     return p
   }
 
-  test("unsigned file returns a non-null error string", { timeout: 30_000 }, async () => {
-    const p = await createUnsignedExe()
+  test("unsigned file returns a non-null error string", { timeout: 30_000 }, async ({ tmpDir }) => {
+    const p = await createUnsignedExe(tmpDir)
     const result = await verifySignature(["Any Publisher"], p, logger)
     expect(result).not.toBeNull()
     expect(typeof result).toBe("string")
   })
 
-  test("path with spaces is handled without crashing", { timeout: 30_000 }, async () => {
+  test("path with spaces is handled without crashing", { timeout: 30_000 }, async ({ tmpDir }) => {
     const dir = await tmpDir.createTempDir({ prefix: "path with spaces" })
     const p = path.join(dir, "my update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
@@ -620,7 +616,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     expect(result).not.toBeNull() // Unsigned → non-null error; key assertion is no crash
   })
 
-  test("path with single quote does not crash (injection prevention)", { timeout: 30_000 }, async () => {
+  test("path with single quote does not crash (injection prevention)", { timeout: 30_000 }, async ({ tmpDir }) => {
     const parent = await tmpDir.getTempDir()
     const quotedDir = path.join(parent, "it's a test")
     await fs.mkdir(quotedDir, { recursive: true })
@@ -631,7 +627,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     expect(typeof result === "string" || result === null).toBe(true)
   })
 
-  test("path with typographic apostrophe (U+2019) does not crash (PS smart-quote delimiter)", { timeout: 30_000 }, async () => {
+  test("path with typographic apostrophe (U+2019) does not crash (PS smart-quote delimiter)", { timeout: 30_000 }, async ({ tmpDir }) => {
     const parent = await tmpDir.getTempDir()
     const smartQuoteDir = path.join(parent, "D’Andre")
     await fs.mkdir(smartQuoteDir, { recursive: true })
@@ -643,7 +639,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     expect(typeof result === "string" || result === null).toBe(true)
   })
 
-  test("path with non-ASCII characters does not crash (UTF-8 encoding, issue #8162)", { timeout: 30_000 }, async () => {
+  test("path with non-ASCII characters does not crash (UTF-8 encoding, issue #8162)", { timeout: 30_000 }, async ({ tmpDir }) => {
     const parent = await tmpDir.getTempDir()
     const unicodeDir = path.join(parent, "üñícodé-path")
     await fs.mkdir(unicodeDir, { recursive: true })
@@ -734,7 +730,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
   // invocation (shell: true) but are now safe with shell: false + -EncodedCommand.
   // Each test verifies no crash / spurious rejection on an unsigned file.
 
-  test("directory name with & does not crash or reject (was dangerous with cmd.exe shell)", { timeout: 30_000 }, async () => {
+  test("directory name with & does not crash or reject (was dangerous with cmd.exe shell)", { timeout: 30_000 }, async ({ tmpDir }) => {
     const parent = await tmpDir.getTempDir()
     const andDir = path.join(parent, "AT&T Updates")
     await fs.mkdir(andDir, { recursive: true })
@@ -744,7 +740,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     expect(typeof result === "string" || result === null).toBe(true)
   })
 
-  test("directory name with %VAR% does not crash or reject (was expanded by cmd.exe)", { timeout: 30_000 }, async () => {
+  test("directory name with %VAR% does not crash or reject (was expanded by cmd.exe)", { timeout: 30_000 }, async ({ tmpDir }) => {
     const parent = await tmpDir.getTempDir()
     const pctDir = path.join(parent, "%USERNAME% Updates")
     await fs.mkdir(pctDir, { recursive: true })
@@ -754,7 +750,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     expect(typeof result === "string" || result === null).toBe(true)
   })
 
-  test("directory name with $ does not crash or reject (safe in PS single-quoted string)", { timeout: 30_000 }, async () => {
+  test("directory name with $ does not crash or reject (safe in PS single-quoted string)", { timeout: 30_000 }, async ({ tmpDir }) => {
     const parent = await tmpDir.getTempDir()
     const dollarDir = path.join(parent, "$Updates")
     await fs.mkdir(dollarDir, { recursive: true })
@@ -764,7 +760,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     expect(typeof result === "string" || result === null).toBe(true)
   })
 
-  test("directory name with backtick does not crash or reject (safe in PS single-quoted string)", { timeout: 30_000 }, async () => {
+  test("directory name with backtick does not crash or reject (safe in PS single-quoted string)", { timeout: 30_000 }, async ({ tmpDir }) => {
     const parent = await tmpDir.getTempDir()
     const backtickDir = path.join(parent, "`Updates")
     await fs.mkdir(backtickDir, { recursive: true })
@@ -776,7 +772,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
 
   // -------------------------------------------------------------------------
   test("symlink to a different file: LiteralPath mismatch prevents a silent pass", { timeout: 30_000 }, async (context: TestContext) => {
-    const realFile = await createUnsignedExe("real.exe")
+    const realFile = await createUnsignedExe(context.tmpDir, "real.exe")
     const symlinkPath = path.join(path.dirname(realFile), "symlink.exe")
     try {
       await fs.symlink(realFile, symlinkPath)
