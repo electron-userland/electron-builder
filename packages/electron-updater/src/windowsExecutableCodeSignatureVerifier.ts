@@ -14,7 +14,9 @@ function preparePowerShellExec(command: string, timeout?: number) {
   // https://github.com/electron-userland/electron-builder/issues/7127
   //
   // PSModulePath is stripped from the inherited env on the Node side so it is never
-  // present when PowerShell starts.
+  // present when PowerShell starts. Windows environment variable names are case-insensitive,
+  // but plain JS object keys are not — spreading process.env produces a plain object — so
+  // every casing of the key must be removed, not just the canonical one.
   //
   // UTF-8 output encoding is configured inside PowerShell itself rather than via `chcp 65001`
   // (which required cmd.exe as the host). Both $OutputEncoding and [Console]::OutputEncoding
@@ -27,7 +29,11 @@ function preparePowerShellExec(command: string, timeout?: number) {
   const encodedCommand = Buffer.from(script, "utf16le").toString("base64")
   const args = ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-EncodedCommand", encodedCommand]
   const env: NodeJS.ProcessEnv = { ...process.env }
-  delete env.PSModulePath
+  for (const key of Object.keys(env)) {
+    if (key.toLowerCase() === "psmodulepath") {
+      delete env[key]
+    }
+  }
   const options: ExecFileOptions = {
     shell: false,
     timeout,
