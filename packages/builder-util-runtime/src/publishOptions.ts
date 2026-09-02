@@ -41,7 +41,7 @@ export interface PublishConfiguration {
    * signing is enabled. Do not set manually — it is populated from the configured signing key.
    * @private
    */
-  updateManifestPublicKey?: string | null
+  readonly updateManifestPublicKey?: string | null
 
   /**
    * Whether to publish auto update info files.

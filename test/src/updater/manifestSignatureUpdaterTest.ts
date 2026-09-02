@@ -27,6 +27,11 @@ function makeInfo(): UpdateInfo {
   }
 }
 
+/** Returns a copy of `info` carrying a valid signature for `privateKeyPem` (UpdateInfo.signature is readonly). */
+function signed(info: UpdateInfo, privateKeyPem: string): UpdateInfo {
+  return { ...info, signature: signUpdateManifest(info, privateKeyPem) }
+}
+
 // verifyManifestSignature is a private method on AppUpdater; DebUpdater is a concrete subclass.
 // The runtime property updateManifestPublicKey takes precedence over app-update.yml, so we set it directly.
 // Each test builds its own updater instance — tests in this suite run concurrently, so a shared
@@ -43,15 +48,13 @@ describe("AppUpdater.verifyManifestSignature (A1)", () => {
 
   it("passes a correctly signed manifest", async () => {
     const updater = makeUpdater(publicKeyPem)
-    const info = makeInfo()
-    info.signature = signUpdateManifest(info, privateKeyPem)
+    const info = signed(makeInfo(), privateKeyPem)
     await expect(verify(updater, info)).resolves.toBeUndefined()
   })
 
   it("throws ERR_UPDATER_MANIFEST_SIGNATURE_INVALID when sha512 is tampered after signing", async () => {
     const updater = makeUpdater(publicKeyPem)
-    const info = makeInfo()
-    info.signature = signUpdateManifest(info, privateKeyPem)
+    const info = signed(makeInfo(), privateKeyPem)
     const tampered: UpdateInfo = { ...info, files: [{ ...info.files[0], sha512: "tampered" }] }
     await expect(verify(updater, tampered)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
   })
@@ -76,8 +79,7 @@ describe("AppUpdater.verifyManifestSignature (A1)", () => {
 
   it("rejects a manifest signed by a different key", async () => {
     const updater = makeUpdater(generateUpdateSigningKeypair().publicKeyPem)
-    const info = makeInfo()
-    info.signature = signUpdateManifest(info, privateKeyPem)
+    const info = signed(makeInfo(), privateKeyPem)
     await expect(verify(updater, info)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
   })
 })

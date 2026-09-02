@@ -240,11 +240,9 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     // The key is resolved per task (not once for the batch) so each manifest is signed iff that
     // platform's config requires it, matching the per-platform public-key embedding in PublishManager.
     const signingKey = await task.packager.updateSigningKey.value
-    if (signingKey != null) {
-      task.info.signature = signUpdateManifest(task.info, signingKey)
-    }
+    const info: UpdateInfo = signingKey == null ? task.info : { ...task.info, signature: signUpdateManifest(task.info, signingKey) }
 
-    const fileContent = Buffer.from(serializeToYaml(task.info, false, true))
+    const fileContent = Buffer.from(serializeToYaml(info, false, true))
     await fsExtra.outputFile(task.file, fileContent)
     await packager.emitArtifactCreated({
       file: task.file,

@@ -93,7 +93,7 @@ export interface UpdateInfo {
    * publish time when update manifest signing is enabled. Verified by electron-updater against the
    * configured `updateManifestPublicKey` before any download starts. See `canonicalizeForSigning`.
    */
-  signature?: string
+  readonly signature?: string
 }
 
 export interface WindowsUpdateInfo extends UpdateInfo {

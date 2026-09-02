@@ -13,6 +13,11 @@ function makeInfo(overrides: Partial<UpdateInfo> = {}): UpdateInfo {
   }
 }
 
+/** Returns a copy of `info` carrying a valid signature for `privateKeyPem` (UpdateInfo.signature is readonly). */
+function signed(info: UpdateInfo, privateKeyPem: string): UpdateInfo {
+  return { ...info, signature: signUpdateManifest(info, privateKeyPem) }
+}
+
 describe("canonicalizeForSigning", () => {
   test("is stable regardless of file order", () => {
     const a = makeInfo({
@@ -50,49 +55,41 @@ describe("sign / verify round-trip", () => {
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
 
   test("verifies a correctly signed manifest", () => {
-    const info = makeInfo()
-    info.signature = signUpdateManifest(info, privateKeyPem)
+    const info = signed(makeInfo(), privateKeyPem)
     expect(verifyManifestSignature(info, publicKeyPem)).toBe(true)
   })
 
   test("derived public key matches the generated one for verification", () => {
-    const info = makeInfo()
-    info.signature = signUpdateManifest(info, privateKeyPem)
+    const info = signed(makeInfo(), privateKeyPem)
     expect(verifyManifestSignature(info, derivePublicKeyPem(privateKeyPem))).toBe(true)
   })
 
   test("rejects a tampered sha512", () => {
-    const info = makeInfo()
-    info.signature = signUpdateManifest(info, privateKeyPem)
-    const tampered = makeInfo({ files: [{ url: "App-1.2.3.exe", sha512: "EVIL", size: 8123456 }] })
-    tampered.signature = info.signature
+    const info = signed(makeInfo(), privateKeyPem)
+    const tampered = makeInfo({ files: [{ url: "App-1.2.3.exe", sha512: "EVIL", size: 8123456 }], signature: info.signature })
     expect(verifyManifestSignature(tampered, publicKeyPem)).toBe(false)
   })
 
   test("rejects a tampered version", () => {
-    const info = makeInfo()
-    info.signature = signUpdateManifest(info, privateKeyPem)
-    const tampered = makeInfo({ version: "9.9.9" })
-    tampered.signature = info.signature
+    const info = signed(makeInfo(), privateKeyPem)
+    const tampered = makeInfo({ version: "9.9.9", signature: info.signature })
     expect(verifyManifestSignature(tampered, publicKeyPem)).toBe(false)
   })
 
   test("rejects an added file", () => {
-    const info = makeInfo()
-    info.signature = signUpdateManifest(info, privateKeyPem)
+    const info = signed(makeInfo(), privateKeyPem)
     const tampered = makeInfo({
       files: [
         { url: "App-1.2.3.exe", sha512: "abc123", size: 8123456 },
         { url: "evil.exe", sha512: "deadbeef", size: 10 },
       ],
+      signature: info.signature,
     })
-    tampered.signature = info.signature
     expect(verifyManifestSignature(tampered, publicKeyPem)).toBe(false)
   })
 
   test("rejects a wrong key", () => {
-    const info = makeInfo()
-    info.signature = signUpdateManifest(info, privateKeyPem)
+    const info = signed(makeInfo(), privateKeyPem)
     const otherKey = generateUpdateSigningKeypair().publicKeyPem
     expect(verifyManifestSignature(info, otherKey)).toBe(false)
   })
@@ -107,10 +104,8 @@ describe("sign / verify round-trip", () => {
   })
 
   test("staging percentage is covered by the signature", () => {
-    const info = makeInfo({ stagingPercentage: 10 })
-    info.signature = signUpdateManifest(info, privateKeyPem)
-    const tampered = makeInfo({ stagingPercentage: 100 })
-    tampered.signature = info.signature
+    const info = signed(makeInfo({ stagingPercentage: 10 }), privateKeyPem)
+    const tampered = makeInfo({ stagingPercentage: 100, signature: info.signature })
     expect(verifyManifestSignature(tampered, publicKeyPem)).toBe(false)
   })
 })
