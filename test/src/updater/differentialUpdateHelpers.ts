@@ -81,14 +81,17 @@ export async function checkResult(expect: ExpectStatic, updater: BaseUpdater) {
   const downloadPromise = updateCheckResult?.downloadPromise
   // noinspection JSIgnoredPromiseFromCall
   expect(downloadPromise).not.toBeNull()
-  const files = await downloadPromise
+  const { updateFile, packageFile } = (await downloadPromise)!
+  // differential updates never ship a web-installer package
+  expect(packageFile).toBeUndefined()
   const fileInfo: any = updateCheckResult?.updateInfo.files[0]
 
   // delete url because port is random
   expect(fileInfo.url).toBeDefined()
   delete fileInfo.url
   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
-  expect(files!.map(it => path.basename(it))).toMatchSnapshot()
+  // the snapshot keeps the historical one-element array shape of the downloaded files
+  expect([path.basename(updateFile)]).toMatchSnapshot()
 }
 
 class TestNativeUpdater extends EventEmitter {
