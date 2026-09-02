@@ -8276,7 +8276,6 @@
             },
             {
               "enum": [
-                "1.1.0",
                 "1.1.1",
                 "latest"
               ],
@@ -8284,7 +8283,7 @@
             }
           ],
           "default": "latest",
-          "description": "Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.\n\nThe bundle ships the Squirrel vendor toolset under `electron-winstaller/vendor/`:\n- **`Squirrel.exe`** / **`Squirrel-Mono.exe`** — releasify the app into `Setup.exe` (and an optional MSI).\n- **`SyncReleases.exe`** — downloads prior releases to produce delta packages.\n- **`nuget.exe`**, **`7z`** — pack the app into a `.nupkg` and compress release assets.\n\n`rcedit.exe` is provisioned from the {@link winCodeSign} toolset at runtime (on every platform;\nunder Wine on non-Windows hosts). Building an MSI additionally uses the shared WiX toolset.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.0\"` | Squirrel.Windows 2.0.1 (patched); ships a Chocolatey `nuget.exe` shim that fails once relocated |\n| `\"1.1.1\"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |\n\nSet to a {@link ToolsetCustom} object to supply your own bundle — it must contain the\n`electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/squirrel.windows/CHANGELOG.md"
+          "description": "Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.\n\nThe bundle ships the Squirrel vendor toolset under `electron-winstaller/vendor/`:\n- **`Squirrel.exe`** / **`Squirrel-Mono.exe`** — releasify the app into `Setup.exe` (and an optional MSI).\n- **`SyncReleases.exe`** — downloads prior releases to produce delta packages.\n- **`nuget.exe`**, **`7z`** — pack the app into a `.nupkg` and compress release assets.\n\n`rcedit.exe` is provisioned from the {@link winCodeSign} toolset at runtime (on every platform;\nunder Wine on non-Windows hosts). Building an MSI additionally uses the shared WiX toolset.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.1\"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |\n\nSet to a {@link ToolsetCustom} object to supply your own bundle — it must contain the\n`electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/squirrel.windows/CHANGELOG.md"
         },
         "winCodeSign": {
           "anyOf": [

@@ -5,9 +5,6 @@ import { downloadBuilderToolset, getCustomToolsetPath, resolveToolsetVersion } f
 const SQUIRREL_LATEST = "1.1.1"
 
 export const squirrelWindowsChecksums = {
-  "1.1.0": {
-    "squirrel.windows-2.0.1-patched.zip": "86e6c3e9ebf10e29cfde99dfff98f3738c29c9562495c540270129ffde1f79cf",
-  },
   "1.1.1": {
     "squirrel.windows-2.0.1-patched.zip": "77cc2c451639c3b0bd68fde67111f726a236e6750d15f521c79e606fd7119e72",
   },

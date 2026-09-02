@@ -805,7 +805,6 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Notes |
    * |---------|-------|
-   * | `"1.1.0"` | Squirrel.Windows 2.0.1 (patched); ships a Chocolatey `nuget.exe` shim that fails once relocated |
    * | `"1.1.1"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |
    *
    * Set to a {@link ToolsetCustom} object to supply your own bundle — it must contain the
@@ -815,7 +814,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly squirrel?: "1.1.0" | "1.1.1" | ToolsetCustom | "latest"
+  readonly squirrel?: "1.1.1" | ToolsetCustom | "latest"
 }
 
 /**
