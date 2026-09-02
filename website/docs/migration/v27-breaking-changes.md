@@ -242,7 +242,7 @@ Removed. v27 inlines the Squirrel.Windows installer logic and drops the `electro
 The shape and behaviour differ, so this is not a 1-to-1 rename:
 
 - The old `customSquirrelVendorDir` pointed at a directory **whose contents were the vendor files** (`Squirrel.exe`, `nuget.exe`, …) and was copied verbatim, bypassing all provisioning.
-- `toolsets.squirrel` accepts a version pin (`"1.1.0"` / `"latest"`) **or** a `ToolsetCustom` object whose `url` points at a bundle that **contains an `electron-winstaller/vendor/` subtree**. The bundle still goes through normal provisioning: a working `nuget.exe` is ensured (no download when your `vendor/` already ships a real, non-shim one) and, on Windows, `rcedit.exe` is supplied from the `winCodeSign` toolset.
+- `toolsets.squirrel` accepts a version pin (`"1.1.1"` / `"latest"`) **or** a `ToolsetCustom` object whose `url` points at a bundle that **contains an `electron-winstaller/vendor/` subtree**. The bundle still goes through normal provisioning: on every platform `rcedit.exe` is supplied from the `winCodeSign` toolset (it runs under Wine on non-Windows hosts), and for `msi: true` the shared WiX toolset is merged in.
 
 ```json5
 // Before (removed):
@@ -252,7 +252,7 @@ The shape and behaviour differ, so this is not a 1-to-1 rename:
 { "toolsets": { "squirrel": { "url": "file:///abs/path/to/squirrel-toolset" } } }
 ```
 
-For a fully offline build, point `toolsets.squirrel` at a bundle whose `vendor/` already contains a real (multi-MB, non-shim) `nuget.exe` — the runtime nuget download is then skipped entirely.
+For a fully offline build, seed the `squirrel.windows@<version>` archive (plus `winCodeSign` and, for MSI, the WiX bundle) in the toolset cache or point `toolsets.squirrel` at a local bundle — see [Offline / Air-Gapped Builds](../tutorials/offline-air-gapped-builds.md). Nothing is downloaded outside the checksummed toolset bundles.
 
 ### `GithubOptions` / `GitlabOptions` `vPrefixedTagName` {#githuboptions-gitlaboptions-vprefixedtagname}
 

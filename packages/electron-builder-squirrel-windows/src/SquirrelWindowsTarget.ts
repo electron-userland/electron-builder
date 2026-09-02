@@ -5,7 +5,7 @@ import { sanitizeFileName } from "builder-util/internal"
 import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
-import { getSquirrelToolsetPath, getWixToolsetPath, prepareNugetExe } from "./toolset.js"
+import { getSquirrelToolsetPath, getWixToolsetPath } from "./toolset.js"
 import { InstallerOptions, convertVersion, createWindowsInstaller } from "./windowsInstaller.js"
 
 export default class SquirrelWindowsTarget extends Target {
@@ -28,12 +28,6 @@ export default class SquirrelWindowsTarget extends Target {
     // custom/local bundle (e.g. for air-gapped builds) via `toolsets.squirrel` (a ToolsetCustom object).
     const squirrelToolset = await getSquirrelToolsetPath(this.packager.config.toolsets?.squirrel, this.packager.buildResourcesDir)
     await fs.promises.cp(path.join(squirrelToolset, "electron-winstaller", "vendor"), tmpVendorDirectory, { recursive: true })
-
-    // TEMPORARY: the published squirrel.windows@1.1.0 bundle ships the Chocolatey shim for nuget.exe,
-    // which resolves the real binary relative to its own install path and fails once relocated to a
-    // temp vendor directory. Replace it with a standalone portable nuget.exe (no-op when the bundle
-    // already ships a real one). Remove once squirrel.windows bundles it (electron-builder-binaries#203).
-    await prepareNugetExe(tmpVendorDirectory)
 
     // Both Squirrel.exe and Squirrel-Mono.exe shell out to rcedit.exe (via setPEVersionInfoAndIcon)
     // during --releasify to stamp version info and the app icon into Setup.exe, so rcedit must live in

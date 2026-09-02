@@ -24,10 +24,12 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 | `linuxToolsMac` | Building Linux targets / `.tar.lz` archives on macOS (`ar`, `lzip`, `gtar`) | `1.0.0` |
 | `sevenZip` | Extracting `.7z` and `.tar.xz` archives internally | `1.0.0` |
 | `icons` | Converting source images to `.icns`, `.ico`, and PNG icon sets | `1.2.1` |
+| `squirrel` | Building Squirrel.Windows installers (`Squirrel.exe`, `SyncReleases.exe`, `nuget.exe`, `7z`) — requires `electron-builder-squirrel-windows` | `1.1.1` |
 
 :::note[Platform notes]
 - **`wine`** is only needed to build **Windows targets on a non-Windows machine**. On Windows it has no effect. On **Linux**, electron-builder uses the **host-installed `wine`** (no bundle is shipped for Linux); the version pin applies to **macOS**, where the bundled Wine 11.0 runs — including on arm64 via Rosetta.
 - **`winCodeSign`** is used on all platforms (`signtool.exe` on Windows, `osslsigncode` on macOS/Linux).
+- **`squirrel`** is only used by the `squirrelWindows` target. It runs natively on Windows; on macOS/Linux it needs a host-installed `mono`, and `rcedit` (from `winCodeSign`) runs under Wine.
 - **`fpm`**, **`linuxToolsMac`**, and **`sevenZip`** each have only one published version today, so `"latest"` and the listed version are equivalent.
 :::
 
