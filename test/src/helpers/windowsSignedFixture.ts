@@ -1,4 +1,4 @@
-import { copyFile, writeFile } from "fs/promises"
+import { appendFile, copyFile, writeFile } from "fs/promises"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { vi } from "vitest"
@@ -114,15 +114,30 @@ export function getWindowsSignedFixture(): Promise<WindowsSignedFixture | null> 
 /**
  * Copies a real, known-good system PE (cmd.exe — Set-AuthenticodeSignature refuses non-PE files) to
  * `directory/<name>` and Authenticode-signs the copy with the fixture certificate. Throws when signing does
- * not produce a `Valid` signature: once the fixture provisioned successfully, a signing failure is a real bug.
+ * not produce a `Valid` signature reported for OUR certificate: once the fixture provisioned successfully,
+ * a signing failure is a real bug.
  */
 export async function createSignedExecutable(fixture: WindowsSignedFixture, directory: string, name = "signed-update.exe"): Promise<string> {
   const targetPath = path.join(directory, name)
   await copyFile(path.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "cmd.exe"), targetPath)
+  // De-catalog the copy BEFORE signing. OS binaries are catalog-signed: the Windows security catalog stores
+  // the Authenticode hash, which excludes the embedded certificate table — so a byte-identical copy of
+  // cmd.exe (even after embedding a new signature!) still hash-matches Microsoft's catalog, and
+  // Get-AuthenticodeSignature reports the CATALOG signer ("CN=Microsoft Windows", Status Valid) in
+  // preference to the embedded one (observed on windows-2025 runners). Appending marker bytes changes the
+  // Authenticode hash so no catalog can match; the marker is then covered by the embedded signature's own
+  // hash — the same layout as signed NSIS installers, which carry appended archive data.
+  await appendFile(targetPath, "electron-builder windowsSignedFixture de-catalog marker\n")
   await runPowerShell(
     `$pfx = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(${psQuote(fixture.pfxPath)}, '', 'Exportable'); ` +
       `$result = Set-AuthenticodeSignature -LiteralPath ${psQuote(targetPath)} -Certificate $pfx -HashAlgorithm SHA256; ` +
-      `if ($result.Status -ne 'Valid') { throw ('signing failed: ' + $result.Status + ' ' + $result.StatusMessage) }`,
+      `if ($result.Status -ne 'Valid') { throw ('signing failed: ' + $result.Status + ' ' + $result.StatusMessage) }; ` +
+      // Loud round-trip check: what verification will actually see must be OUR certificate — this throws
+      // (instead of letting tests fail on confusing publisher mismatches) if a catalog signature ever
+      // trumps the embedded one again, or signing silently does not take effect.
+      `$check = Get-AuthenticodeSignature -LiteralPath ${psQuote(targetPath)}; ` +
+      `if ($check.Status -ne 'Valid' -or $null -eq $check.SignerCertificate -or $check.SignerCertificate.Thumbprint -ne $pfx.Thumbprint) { ` +
+      `throw ('signed file does not verify with the fixture certificate: status=' + $check.Status + ', signer=' + $(if ($null -ne $check.SignerCertificate) { $check.SignerCertificate.Subject } else { '<none>' })) }`,
     60_000
   )
   return targetPath
