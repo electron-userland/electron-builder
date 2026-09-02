@@ -75,7 +75,7 @@ export function getTestUpdaterCacheDir(oldDir: string) {
 
 export async function checkResult(expect: ExpectStatic, updater: BaseUpdater) {
   // disable automatic install otherwise mac updater will permanently wait on mocked electron's native updater to receive update (mocked server can't install)
-  updater.autoInstallOnAppQuit = false
+  updater.autoInstallEvent = "manual"
 
   const updateCheckResult = await updater.checkForUpdates()
   const downloadPromise = updateCheckResult?.downloadPromise
@@ -108,7 +108,16 @@ class TestNativeUpdater extends EventEmitter {
   }
 }
 
-export async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir: string, updaterClass: any, platform: Platform, arch: Arch, productFilename?: string) {
+export async function testBlockMap(
+  expect: ExpectStatic,
+  oldDir: string,
+  newDir: string,
+  updaterClass: any,
+  platform: Platform,
+  arch: Arch,
+  options: { productFilename?: string; disableWebInstaller?: boolean } = {}
+) {
+  const { productFilename, disableWebInstaller } = options
   const appUpdateConfigPath = path.join(
     `${platform.buildConfigurationKey}${getArchSuffix(arch)}${platform === Platform.MAC ? "" : "-unpacked"}`,
     platform === Platform.MAC ? `${productFilename}.app` : ""
@@ -125,6 +134,10 @@ export async function testBlockMap(expect: ExpectStatic, oldDir: string, newDir:
     server.on("error", reject)
 
     const updater = new updaterClass(null, new TestAppAdapter(OLD_VERSION_NUMBER, getTestUpdaterCacheDir(oldDir)))
+    // disableWebInstaller defaults to true as of v27; the web-installer (nsis-web) test must opt back in to download web installer packages
+    if (disableWebInstaller != null) {
+      updater.disableWebInstaller = disableWebInstaller
+    }
     updater._appUpdateConfigPath = path.join(
       oldDir,
       updaterClass === MacUpdater ? `${appUpdateConfigPath}/Contents/Resources` : `${appUpdateConfigPath}/resources`,

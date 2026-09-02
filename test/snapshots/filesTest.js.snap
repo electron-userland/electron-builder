@@ -47,6 +47,8 @@ exports[`extraResources on Windows 2`] = `
   "lib/net45/chrome_100_percent.pak",
   "lib/net45/chrome_200_percent.pak",
   "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/dxcompiler.dll",
+  "lib/net45/dxil.dll",
   "lib/net45/ffmpeg.dll",
   "lib/net45/icudtl.dat",
   "lib/net45/libEGL.dll",

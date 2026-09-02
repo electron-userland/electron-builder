@@ -3,7 +3,7 @@ import { execFileSync } from "child_process"
 import fsExtra from "fs-extra"
 import { unlinkSync } from "fs"
 import * as path from "path"
-import { DownloadUpdateOptions } from "./AppUpdater.js"
+import { DownloadExecutorResult, DownloadUpdateOptions } from "./AppUpdater.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
@@ -27,8 +27,13 @@ export class AppImageUpdater extends BaseUpdater {
     return super.isUpdaterActive()
   }
 
+  // replacing the AppImage file needs no elevation, so the automatic install at startup is allowed
+  protected get isAutoInstallOnNextLaunchSupported(): boolean {
+    return true
+  }
+
   /*** @private */
-  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "AppImage", ["rpm", "deb", "pacman"])!
     return this.executeDownload({

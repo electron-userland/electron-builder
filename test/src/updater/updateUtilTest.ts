@@ -1,12 +1,16 @@
 import * as semver from "semver"
-import { parseXml } from "builder-util-runtime"
+import { parseXml, XElement } from "builder-util-runtime"
 import { computeReleaseNotes } from "electron-updater/src/providers/GitHubProvider"
 import { expect } from "vitest"
+
+function parseReleaseFeed(xmlFeed: string): XElement[] {
+  return parseXml(xmlFeed).getElements("entry")
+}
 
 describe("GitHub Provider", () => {
   describe("computeReleaseNotes", () => {
     it("returns single release notes string when full changelog is false", () => {
-      const feed = parseXml(`
+      const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/1.0.1"/>
@@ -14,13 +18,13 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-      const latest = feed.element("entry")
-      const result = computeReleaseNotes(semver.parse("1.0.0")!, false, feed, latest)
+      const latest = releaseEntries[0]
+      const result = computeReleaseNotes(semver.parse("1.0.0")!, false, releaseEntries, latest)
       expect(result).toEqual("Release 1.0.1 notes")
     })
 
     it('treats "No content." as empty string when full changelog is false', () => {
-      const feed = parseXml(`
+      const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/1.0.2"/>
@@ -28,13 +32,13 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-      const latest = feed.element("entry")
-      const result = computeReleaseNotes(semver.parse("1.0.0")!, false, feed, latest)
+      const latest = releaseEntries[0]
+      const result = computeReleaseNotes(semver.parse("1.0.0")!, false, releaseEntries, latest)
       expect(result).toEqual("")
     })
 
     it("returns an array of release notes between currentVersion (exclusive) and latestVersion (inclusive), sorted desc", () => {
-      const feed = parseXml(`
+      const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/v1.3.0"/>
@@ -54,9 +58,8 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-      const entries = feed.getElements("entry")
-      const latest = entries[0] // v1.3.0
-      const result = computeReleaseNotes(semver.parse("1.0.0")!, true, feed, latest)
+      const latest = releaseEntries[0] // v1.3.0
+      const result = computeReleaseNotes(semver.parse("1.0.0")!, true, releaseEntries, latest)
       expect(result).deep.equal([
         { version: "1.3.0", note: "Notes v1.3.0" },
         { version: "1.2.0", note: "Notes 1.2.0" },
@@ -64,7 +67,7 @@ describe("GitHub Provider", () => {
     })
 
     it("returns null when latest release tag cannot be parsed to a version", () => {
-      const feed = parseXml(`
+      const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/not-a-version"/>
@@ -76,27 +79,27 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-      const latest = feed.element("entry")
-      const result = computeReleaseNotes(semver.parse("1.0.0")!, true, feed, latest)
+      const latest = releaseEntries[0]
+      const result = computeReleaseNotes(semver.parse("1.0.0")!, true, releaseEntries, latest)
       expect(result).toEqual(null)
     })
   })
 
   it("handles missing <content> element when full changelog is false", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/1.0.1"/>
         </entry>
       </feed>
     `)
-    const latest = feed.element("entry")
-    const result = computeReleaseNotes(semver.parse("1.0.0")!, false, feed, latest)
+    const latest = releaseEntries[0]
+    const result = computeReleaseNotes(semver.parse("1.0.0")!, false, releaseEntries, latest)
     expect(result).toEqual("")
   })
 
   it("includes prerelease entries when they are > currentVersion and <= latestVersion", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/v1.2.0"/>
@@ -112,8 +115,8 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const latest = feed.getElements("entry")[0]
-    const result = computeReleaseNotes(semver.parse("1.0.0")!, true, feed, latest) as any[]
+    const latest = releaseEntries[0]
+    const result = computeReleaseNotes(semver.parse("1.0.0")!, true, releaseEntries, latest) as any[]
     expect(result).deep.equal([
       { version: "1.2.0", note: "Release v1.2.0" },
       { version: "1.2.0-beta.2", note: "Beta notes" },
@@ -122,7 +125,7 @@ describe("GitHub Provider", () => {
   })
 
   it("excludes versions that are <= currentVersion", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/1.2.0"/>
@@ -134,13 +137,13 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const latest = feed.element("entry")
-    const result = computeReleaseNotes(semver.parse("1.2.0")!, true, feed, latest)
+    const latest = releaseEntries[0]
+    const result = computeReleaseNotes(semver.parse("1.2.0")!, true, releaseEntries, latest)
     expect(result).toEqual([])
   })
 
   it("supports tags with build metadata and sorts results correctly", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/v1.3.0+build.1"/>
@@ -156,8 +159,8 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const latest = feed.getElements("entry")[2]
-    const result = computeReleaseNotes(semver.parse("1.2.0")!, true, feed, latest) as any[]
+    const latest = releaseEntries[2]
+    const result = computeReleaseNotes(semver.parse("1.2.0")!, true, releaseEntries, latest) as any[]
     expect(result).deep.equal([
       { version: "1.3.0+build.1", note: "1.3.0 build" },
       { version: "1.3.0", note: "latest" },
@@ -166,7 +169,7 @@ describe("GitHub Provider", () => {
   })
 
   it("ignores entries whose link does not contain /tag/ (regex mismatch)", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/1.4.0"/>
@@ -178,13 +181,13 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const latest = feed.getElements("entry")[1]
-    const result = computeReleaseNotes(semver.parse("1.3.0")!, true, feed, latest) as any[]
+    const latest = releaseEntries[1]
+    const result = computeReleaseNotes(semver.parse("1.3.0")!, true, releaseEntries, latest) as any[]
     expect(result).deep.equal([{ version: "1.4.0", note: "Good" }])
   })
 
   it("includes entry that is equal to latestVersion (latest included)", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/2.0.0"/>
@@ -196,8 +199,8 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const latest = feed.element("entry")
-    const result = computeReleaseNotes(semver.parse("1.8.0")!, true, feed, latest) as any[]
+    const latest = releaseEntries[0]
+    const result = computeReleaseNotes(semver.parse("1.8.0")!, true, releaseEntries, latest) as any[]
     expect(result).deep.equal([
       { version: "2.0.0", note: "Latest notes" },
       { version: "1.9.0", note: "1.9.0 notes" },
@@ -206,7 +209,7 @@ describe("GitHub Provider", () => {
 
   // regression test for issue #9570: entries with versions ABOVE latestVersion must be excluded
   it("excludes entries with versions above latestVersion (core regression for #9570)", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/2.3.0"/>
@@ -226,9 +229,8 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const entries = feed.getElements("entry")
-    const latest = entries[1] // 2.2.0 is latest — 2.3.0 exists but should not appear
-    const result = computeReleaseNotes(semver.parse("2.0.0")!, true, feed, latest) as any[]
+    const latest = releaseEntries[1] // 2.2.0 is latest — 2.3.0 exists but should not appear
+    const result = computeReleaseNotes(semver.parse("2.0.0")!, true, releaseEntries, latest) as any[]
     expect(result).deep.equal([
       { version: "2.2.0", note: "2.2.0 notes" },
       { version: "2.1.0", note: "2.1.0 notes" },
@@ -236,7 +238,7 @@ describe("GitHub Provider", () => {
   })
 
   it("returns empty array when latestVersion equals currentVersion", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/1.2.0"/>
@@ -244,13 +246,13 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const latest = feed.element("entry")
-    const result = computeReleaseNotes(semver.parse("1.2.0")!, true, feed, latest)
+    const latest = releaseEntries[0]
+    const result = computeReleaseNotes(semver.parse("1.2.0")!, true, releaseEntries, latest)
     expect(result).deep.equal([])
   })
 
   it("returns empty array when latestVersion is older than currentVersion", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/1.5.0"/>
@@ -262,13 +264,13 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const latest = feed.element("entry") // 1.5.0 is latest, but currentVersion is 2.0.0
-    const result = computeReleaseNotes(semver.parse("2.0.0")!, true, feed, latest)
+    const latest = releaseEntries[0] // 1.5.0 is latest, but currentVersion is 2.0.0
+    const result = computeReleaseNotes(semver.parse("2.0.0")!, true, releaseEntries, latest)
     expect(result).deep.equal([])
   })
 
   it("excludes the entry exactly at currentVersion (uses gt, not gte)", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/1.2.0"/>
@@ -280,14 +282,13 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const entries = feed.getElements("entry")
-    const latest = entries[0] // 1.2.0
-    const result = computeReleaseNotes(semver.parse("1.1.0")!, true, feed, latest) as any[]
+    const latest = releaseEntries[0] // 1.2.0
+    const result = computeReleaseNotes(semver.parse("1.1.0")!, true, releaseEntries, latest) as any[]
     expect(result).deep.equal([{ version: "1.2.0", note: "1.2.0 notes" }])
   })
 
   it("skips non-semver entries interspersed between valid versions", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/v2.0.0"/>
@@ -311,8 +312,8 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const latest = feed.element("entry") // v2.0.0
-    const result = computeReleaseNotes(semver.parse("1.7.0")!, true, feed, latest) as any[]
+    const latest = releaseEntries[0] // v2.0.0
+    const result = computeReleaseNotes(semver.parse("1.7.0")!, true, releaseEntries, latest) as any[]
     expect(result).deep.equal([
       { version: "2.0.0", note: "2.0.0 notes" },
       { version: "1.9.0", note: "1.9.0 notes" },
@@ -321,7 +322,7 @@ describe("GitHub Provider", () => {
   })
 
   it("returns the single latestRelease entry when it is the only one above currentVersion", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/1.5.0"/>
@@ -329,13 +330,13 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const latest = feed.element("entry")
-    const result = computeReleaseNotes(semver.parse("1.4.0")!, true, feed, latest) as any[]
+    const latest = releaseEntries[0]
+    const result = computeReleaseNotes(semver.parse("1.4.0")!, true, releaseEntries, latest) as any[]
     expect(result).deep.equal([{ version: "1.5.0", note: "1.5.0 notes" }])
   })
 
   it("handles a prerelease as the latestRelease, excluding versions not in range", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/v1.2.0-beta.2"/>
@@ -351,9 +352,8 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const entries = feed.getElements("entry")
-    const latest = entries[0] // v1.2.0-beta.2
-    const result = computeReleaseNotes(semver.parse("1.1.0")!, true, feed, latest) as any[]
+    const latest = releaseEntries[0] // v1.2.0-beta.2
+    const result = computeReleaseNotes(semver.parse("1.1.0")!, true, releaseEntries, latest) as any[]
     expect(result).deep.equal([
       { version: "1.2.0-beta.2", note: "beta.2 notes" },
       { version: "1.2.0-beta.1", note: "beta.1 notes" },
@@ -361,7 +361,7 @@ describe("GitHub Provider", () => {
   })
 
   it("strips v prefix from versions in the result regardless of tag URL format", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/v2.0.0"/>
@@ -373,14 +373,14 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const latest = feed.element("entry") // v2.0.0
-    const result = computeReleaseNotes(semver.parse("1.8.0")!, true, feed, latest) as any[]
+    const latest = releaseEntries[0] // v2.0.0
+    const result = computeReleaseNotes(semver.parse("1.8.0")!, true, releaseEntries, latest) as any[]
     expect(result[0].version).toBe("2.0.0")
     expect(result[1].version).toBe("1.9.0")
   })
 
   it("includes both occurrences when the same version appears twice in the feed", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/1.2.0"/>
@@ -392,8 +392,8 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const latest = feed.element("entry")
-    const result = computeReleaseNotes(semver.parse("1.1.0")!, true, feed, latest) as any[]
+    const latest = releaseEntries[0]
+    const result = computeReleaseNotes(semver.parse("1.1.0")!, true, releaseEntries, latest) as any[]
     expect(result).deep.equal([
       { version: "1.2.0", note: "first 1.2.0" },
       { version: "1.2.0", note: "second 1.2.0" },
@@ -401,7 +401,7 @@ describe("GitHub Provider", () => {
   })
 
   it("converts No content. to empty string in the full changelog array", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/1.3.0"/>
@@ -413,8 +413,8 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const latest = feed.element("entry") // 1.3.0
-    const result = computeReleaseNotes(semver.parse("1.1.0")!, true, feed, latest) as any[]
+    const latest = releaseEntries[0] // 1.3.0
+    const result = computeReleaseNotes(semver.parse("1.1.0")!, true, releaseEntries, latest) as any[]
     expect(result).deep.equal([
       { version: "1.3.0", note: "" },
       { version: "1.2.0", note: "Real notes" },
@@ -422,7 +422,7 @@ describe("GitHub Provider", () => {
   })
 
   it("returns descending order even when feed entries are in ascending order", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/1.1.0"/>
@@ -438,9 +438,8 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const entries = feed.getElements("entry")
-    const latest = entries[2] // 1.3.0
-    const result = computeReleaseNotes(semver.parse("1.0.0")!, true, feed, latest) as any[]
+    const latest = releaseEntries[2] // 1.3.0
+    const result = computeReleaseNotes(semver.parse("1.0.0")!, true, releaseEntries, latest) as any[]
     expect(result).deep.equal([
       { version: "1.3.0", note: "1.3.0 notes" },
       { version: "1.2.0", note: "1.2.0 notes" },
@@ -449,7 +448,7 @@ describe("GitHub Provider", () => {
   })
 
   it("returns null when latestRelease link is missing the /tag/ segment", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/1.0.1"/>
@@ -457,13 +456,13 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const latest = feed.element("entry")
-    const result = computeReleaseNotes(semver.parse("1.0.0")!, true, feed, latest)
+    const latest = releaseEntries[0]
+    const result = computeReleaseNotes(semver.parse("1.0.0")!, true, releaseEntries, latest)
     expect(result).toBeNull()
   })
 
   it("returns empty array when all feed entries are either above latestVersion or equal to currentVersion", () => {
-    const feed = parseXml(`
+    const releaseEntries = parseReleaseFeed(`
       <feed>
         <entry>
           <link href="https://github.com/owner/repo/releases/tag/3.0.0"/>
@@ -479,10 +478,9 @@ describe("GitHub Provider", () => {
         </entry>
       </feed>
     `)
-    const entries = feed.getElements("entry")
-    const latest = entries[2] // 2.0.0 is latest; 3.0.0 and 2.5.0 are above it
+    const latest = releaseEntries[2] // 2.0.0 is latest; 3.0.0 and 2.5.0 are above it
     // currentVersion = 2.0.0 → 3.0.0 and 2.5.0 fail lte(latest) check; 2.0.0 fails gt(current) check
-    const result = computeReleaseNotes(semver.parse("2.0.0")!, true, feed, latest)
+    const result = computeReleaseNotes(semver.parse("2.0.0")!, true, releaseEntries, latest)
     expect(result).deep.equal([])
   })
 })

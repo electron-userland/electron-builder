@@ -36,9 +36,13 @@ const canRunInstallTests = () => process.platform === "linux" && which.sync("uns
 
 // Optional core filter: SNAP_TEST_CORES=core24  (comma-separated)
 // When unset every core is tested.
+// Non-selected cores must still REGISTER their tests (as skipped) instead of not
+// registering at all: vitest marks skipped tests' snapshot keys as checked, so the
+// per-core CI matrix jobs don't report the other cores' committed snapshots as
+// obsolete and fail the suite.
 const requestedCores = process.env.SNAP_TEST_CORES ? process.env.SNAP_TEST_CORES.split(",").map(s => s.trim()) : null
 const allCores = ["core24", "core22", "core20", "core18"]
-const testCores = requestedCores ? allCores.filter(c => requestedCores.includes(c)) : allCores
+const isCoreSelected = (core: string) => requestedCores == null || requestedCores.includes(core)
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -175,11 +179,11 @@ async function runInstallLaunchTest(expect: any, core: "core18" | "core20" | "co
 // ─── test suites ─────────────────────────────────────────────────────────────
 
 describe.heavy.ifEnv(hasSnapInstalled())("snap heavy", options, () => {
-  for (const _core of testCores) {
+  for (const _core of allCores) {
     const core = _core as any
 
     // ── build-only test (always runs when snap tooling is present) ───────────
-    test(`snap full (${core})`, options, ({ expect }) =>
+    test.ifEnv(isCoreSelected(core))(`snap full (${core})`, options, ({ expect }) =>
       app(expect, {
         targets: snapTarget,
         config: {
@@ -206,12 +210,12 @@ describe.heavy.ifEnv(hasSnapInstalled())("snap heavy", options, () => {
     )
 
     // ── install+launch integration (requires unsquashfs) ────────────────────
-    test.ifEnv(canRunInstallTests())(`snap install+launch (${core})`, options, async ({ expect }) => {
+    test.ifEnv(isCoreSelected(core) && canRunInstallTests())(`snap install+launch (${core})`, options, async ({ expect }) => {
       await runInstallLaunchTest(expect, core as "core18" | "core20" | "core22" | "core24", snapYamlCallback(expect))
     })
 
     // armhf cross-compilation is not supported for core24 in host/destructive-mode
-    test.ifEnv(core !== "core24")(`snap full (${core} armhf)`, options, ({ expect }) =>
+    test.ifEnv(isCoreSelected(core) && core !== "core24")(`snap full (${core} armhf)`, options, ({ expect }) =>
       app(expect, {
         targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
         config: {

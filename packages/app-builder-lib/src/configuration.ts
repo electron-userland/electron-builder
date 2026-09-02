@@ -20,6 +20,18 @@ import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis
 import { ElectronGetOptions } from "./util/electronGet.js"
 import { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 
+/**
+ * Production dependencies that are excluded from the copied `node_modules` by default. These are
+ * still legitimate production dependencies (for SBOM, license, and vulnerability tracking), but
+ * electron-builder already provides them another way — notably the Electron runtime, which is
+ * embedded separately — so copying them into the app would just duplicate what is already there.
+ * Users can override the set via {@link CommonConfiguration.ignoredProductionDependencies}.
+ *
+ * Declared next to the option so the code constant, the jsdoc `@default`, and the generated
+ * `scheme.json` stay in one place; a test asserts the generated schema matches this constant.
+ */
+export const DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES: ReadonlyArray<string> = ["electron", "electron-builder"]
+
 // duplicate appId here because it is important
 /**
  * Configuration options shared across all platforms.
@@ -79,8 +91,10 @@ export interface CommonConfiguration {
    * Pinned versions of the binary toolsets electron-builder downloads and uses internally.
    *
    * Each property selects a specific release of the corresponding tool bundle. Set a property to
-   * `"0.0.0"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set to
-   * `null`) to use the modern default for that toolset.
+   * `"0.0.0"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set it to
+   * `"latest"`) to use the modern default (newest bundle) for that toolset.
+   *
+   * Note: Toolset versioning can drop intermediate releases (such as if a problem is discovered in a bundle). If you need to pin to a specific release, check the release notes for the toolset to ensure the version you specify is valid.
    *
    * @see {@link ToolsetConfig}
    */
@@ -288,6 +302,69 @@ export interface CommonConfiguration {
   readonly npmArgs?: Array<string> | string | null
 
   /**
+   * Names of production dependencies that are excluded from the copied `node_modules`, even if they
+   * are declared in the `dependencies` section of `package.json`.
+   *
+   * electron-builder copies the resolved production dependency tree into the app. Some packages —
+   * notably `electron` — are already provided another way (the Electron runtime is embedded
+   * separately), so copying them would just duplicate what is already there. Such packages are
+   * excluded from the copy rather than rejected: they remain valid production dependencies for
+   * tooling purposes (e.g. SBOM, license, and vulnerability tracking) without being shipped twice.
+   *
+   * Only dependencies **declared by the app itself** are eligible: a listed name and the transitive
+   * dependencies required *only* by it are dropped, while anything also required by another (kept)
+   * production dependency stays bundled. A matching name that appears solely as a transitive
+   * dependency of a kept package is never excluded. Note that a kept package which `require()`s an
+   * excluded name at runtime *without declaring it* (relying on hoisting) will fail with
+   * `MODULE_NOT_FOUND` — declare such a dependency properly or remove the name from this list.
+   *
+   * Matching is by the dependency name as declared in `package.json`: an npm alias
+   * (`"custom-electron": "npm:electron@^30.0.0"`) is matched by its alias key (`custom-electron`),
+   * never by the underlying package name.
+   *
+   * Overriding this option **replaces** the default list, so include `electron` and `electron-builder`
+   * unless you intend to ship them. The most common reason to override is to *add* a dependency that a
+   * bundler (Vite, webpack, esbuild, …) already inlines into your app code: keep it in `dependencies`
+   * so SBOM/license tooling still sees it, and list it here so a duplicate copy is not packaged — e.g.
+   * `["electron", "electron-builder", "react", "react-dom"]`. Removing a default name keeps that
+   * package in the copied `node_modules`. Setting the option to `null` (or omitting it) applies the
+   * default list; to disable exclusion entirely, set it to an empty array `[]`. Each excluded package
+   * is logged once during packaging.
+   *
+   * @default ["electron", "electron-builder"]
+   */
+  readonly ignoredProductionDependencies?: Array<string> | null
+
+  /**
+   * Whether production dependencies that cannot be resolved during node-module collection are
+   * allowed — i.e. whether the build should continue with a warning instead of failing.
+   *
+   * During collection every production dependency must resolve to an installed package on disk. A
+   * dependency that does not resolve (`cannot find path for dependency` / `dependency not found on
+   * disk`) is not bundled, which typically breaks the packaged app at runtime with
+   * `MODULE_NOT_FOUND`.
+   *
+   * - `false` or `null` (default): the build fails after dependency collection completes,
+   *   reporting the **complete** list of missing production dependencies at once.
+   * - `string[]`: the listed dependency names are allowed to be missing; any other missing
+   *   production dependency still fails the build. Entries match the package name of the reported
+   *   `name@version` entry (e.g. `some-native-module`, `@scope/pkg`), or an exact `name@version`
+   *   string to allow only that resolved version to be missing.
+   * - `true`: missing production dependencies are only logged as warnings (the electron-builder
+   *   ≤ 26 behavior).
+   *
+   * Missing *optional* dependencies (declared in `optionalDependencies`, e.g. `fsevents` on
+   * Linux/Windows, or platform-specific packages) are always allowed and never fail the build.
+   *
+   * Independent of {@link ignoredProductionDependencies}, which controls which dependencies are
+   * excluded from the copied `node_modules`; this option only controls validation of the
+   * collection result.
+   *
+   * @default false
+   */
+  readonly allowMissingDependencies?: boolean | Array<string> | null
+
+  /**
    * Configuration for native Node.js module installation and rebuilding.
    *
    * Groups all options that control how electron-builder handles native modules — from forcing
@@ -424,6 +501,13 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
   /**
    * Options forwarded to [`@electron/get`](https://github.com/electron/get) when downloading the
    * Electron distribution to package.
+   *
+   * `checksums` (a map of artifact file name → SHA-256 hex) makes checksum validation fully offline —
+   * without it, `@electron/get` fetches `SHASUMS256.txt` from the network on every build, even when the
+   * artifact itself is already cached. When `checksums` is not configured, electron-builder automatically
+   * picks up a locally seeded `SHASUMS256.txt-<version>` (or `SHASUMS256.txt`) file at the root of the
+   * Electron cache directory. See the
+   * [air-gapped / offline builds guide](https://www.electron.build/tutorials/offline-air-gapped-builds).
    */
   readonly electronGet?: ElectronGetOptions | null
 
@@ -659,12 +743,13 @@ export interface ToolsetConfig {
    * | Version | Notes |
    * |---------|-------|
    * | `"1.0.0"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |
+   * | `"1.0.1"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly linuxToolsMac?: "1.0.0" | ToolsetCustom | "latest"
+  readonly linuxToolsMac?: "1.0.0" | "1.0.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.
@@ -677,9 +762,17 @@ export interface ToolsetConfig {
    * (or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because
    * extracting them requires 7za — a circular dependency.
    *
+   * Available versions:
+   * | Version | Notes |
+   * |---------|-------|
+   * | `"1.0.0"` | Shipped the 32-bit `7za.exe` for every Windows arch (1.75 GiB memory cap, no LZMA2 multithreading on x64/arm64) |
+   * | `"1.0.1"` | Correct per-arch Windows binaries (x64, ia32, arm64) |
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/7zip/CHANGELOG.md
+   *
    * @default "latest"
    */
-  readonly sevenZip?: "1.0.0" | ToolsetCustom | "latest"
+  readonly sevenZip?: "1.0.0" | "1.0.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,
@@ -690,13 +783,13 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Notes |
    * |---------|-------|
-   * | `"1.2.1"` | `wasm-vips` + `@resvg/resvg-wasm` |
+   * | `"1.2.3"` | Writes 16px/32px ICNS entries as `ic04`/`ic05` ARGB (fixes corrupt small icons in Finder) |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly icons?: "1.2.1" | ToolsetCustom | "latest"
+  readonly icons?: "1.2.3" | ToolsetCustom | "latest"
 
   /**
    * Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.
@@ -759,7 +852,9 @@ export interface ToolsetCustom {
   readonly url: string
 
   /**
-   * SHA checksum of the custom toolset bundle for verification.
+   * SHA-256 checksum of the custom toolset bundle for verification, as a lowercase hex string
+   * (e.g. the output of `shasum -a 256 bundle.tar.gz`) — not the base64 values GitHub release
+   * notes may show.
    * Required for remote (`https://`) URLs and local archive files (`file://`).
    * Not needed for bare directory paths — the directory is used as-is with no caching.
    */
@@ -924,7 +1019,7 @@ export interface Hooks {
    *   `electron-v${version}-${platformName}-${arch}.zip`.
    *
    * When not set, electron-builder downloads the official Electron release from GitHub (or the
-   * mirror configured via `electronDownload`).
+   * mirror configured via `electronGet`).
    *
    * Receives a {@link PrepareApplicationStageDirectoryOptions}.
    */

@@ -46,4 +46,21 @@ export class ElectronAppAdapter implements AppAdapter {
   onQuit(handler: (exitCode: number) => void): void {
     this.app.once("quit", (_: Electron.Event, exitCode: number) => handler(exitCode))
   }
+
+  onSessionEnd(handler: () => void): void {
+    // powerMonitor can only be used after the app is ready
+    void this.whenReady().then(() => {
+      const electron = require("electron")
+      // `shutdown` is only emitted on macOS and Linux
+      if (process.platform !== "win32") {
+        electron.powerMonitor.on("shutdown", () => handler())
+        return
+      }
+      // Windows has no app-level session-end signal; `session-end` is only emitted on BrowserWindow instances,
+      // so windowless (e.g. tray-only) apps cannot be covered here
+      const attachToWindow = (window: Electron.BrowserWindow) => window.on("session-end", () => handler())
+      electron.BrowserWindow.getAllWindows().forEach(attachToWindow)
+      this.app.on("browser-window-created", (_event: Electron.Event, window: Electron.BrowserWindow) => attachToWindow(window))
+    })
+  }
 }

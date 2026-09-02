@@ -92,6 +92,8 @@ function fixTypedocAnchors(siteDir: string): void {
         return headings.has(slug) ? `[${text}](#${slug})` : text
       })
       fixed = fixed.replace(/\[([^\]]+)\]\((?:\.\/)?([^)#/]+)\.md(#[^)]*)?\)/g, (_match, text, filename, anchor = "") => `[${text}](/docs/api/${filename}${anchor})`)
+      // GFM `~~` doesn't strike through inside MDX headings
+      fixed = fixed.replace(/~~(.+?)~~/g, "<del>$1</del>")
       result.push(fixed)
     }
 

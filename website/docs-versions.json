@@ -1,0 +1,33 @@
+{
+  "_comment": [
+    "Single source of truth for the multi-version documentation site.",
+    "Consumed by website/scripts/build-versioned-site.sh (which git refs to build, and at which URL path)",
+    "and by website/docusaurus.config.ts (the navbar version dropdown labels + hrefs), so a version is",
+    "declared once instead of being duplicated between the build and the UI.",
+    "",
+    "Entry fields:",
+    "  label   - text shown in the navbar version dropdown (e.g. \"next (v27)\", \"v26\").",
+    "  path    - URL path the sub-site is published under, leading and trailing slash (\"/\", \"/v26/\").",
+    "  ref     - git branch or tag the sub-site is built from.",
+    "  current - true for the single entry built from the checkout itself and published at the site root.",
+    "",
+    "Every branch listed here builds its own sub-site from its own tree, so this file has to be kept in",
+    "sync across master and each release/v* branch that appears in it.",
+    "",
+    "Deliberately not named versions.json: that filename is reserved by Docusaurus' own versioned-docs",
+    "feature, which this site does not use (each major line is a separate Docusaurus build)."
+  ],
+  "versions": [
+    {
+      "label": "next (v27)",
+      "path": "/",
+      "ref": "master",
+      "current": true
+    },
+    {
+      "label": "v26",
+      "path": "/v26/",
+      "ref": "release/v26"
+    }
+  ]
+}

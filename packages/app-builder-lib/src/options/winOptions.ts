@@ -36,10 +36,11 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    *   `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.
    * - Set to `false` or `null` to **disable** code signing entirely (executable resources such as
    *   the icon and metadata are still edited).
-   * - Set to an **object** to configure signing explicitly. The `type` field selects the signing
-   *   backend (`signtool` is the implicit default) and dispatches to a dedicated sign manager;
-   *   provide exactly one of the modes below. Each output artifact is signed individually, and by
-   *   default executables are dual-signed (see `signingHashAlgorithms`).
+   * - Set to an **object** to configure signing explicitly. The **required** `type` field selects the
+   *   signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign
+   *   manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`
+   *   backend is used with env-discovered credentials. Each output artifact is signed individually,
+   *   and by default executables are dual-signed (see `signingHashAlgorithms`).
    *
    * - `{ type: "signtool", ... }` — Sign with a local certificate file (.pfx/.p12) or a
    *   certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and
@@ -53,7 +54,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    * - `{ type: "azure", ... }` — Sign via Azure Trusted Signing (cloud service). Requires
    *   Azure Entra ID environment variables for authentication.
    *
-   * See [Code Signing](https://www.electron.build/code-signing).
+   * See [Code Signing](https://www.electron.build/docs/features/code-signing).
    */
   readonly sign?: WindowsSigningConfiguration | false | null
 
@@ -182,7 +183,7 @@ interface WindowsSigningSharedOptions {
    * whether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper
    * that returns the default arguments electron-builder would otherwise have used. Use this to
    * integrate an external or cloud signing service. See
-   * [Code Signing](https://www.electron.build/code-signing).
+   * [Code Signing](https://www.electron.build/docs/features/code-signing).
    */
   readonly sign?: CustomWindowsSign | string | null
 }
@@ -207,7 +208,7 @@ export interface WindowsSigntoolSigningConfig extends WindowsSigningSharedOption
    * Prefer supplying this out-of-band via the `WIN_CSC_LINK` (or `CSC_LINK`) environment variable
    * instead of hardcoding a path — that variable also accepts an `https://` URL or a base64-encoded
    * certificate, which is safer and more convenient on CI. See
-   * [Code Signing](https://www.electron.build/code-signing).
+   * [Code Signing](https://www.electron.build/docs/features/code-signing).
    */
   readonly certificateFile?: string | null
 

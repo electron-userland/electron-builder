@@ -1,5 +1,85 @@
 # electron-builder
 
+## 27.0.0-alpha.8
+
+### Patch Changes
+
+- Docs: fix broken electron.build documentation links in readmes, TSDoc comments, and error messages — point auto-update, code-signing, and multi-platform-build references at their new `/docs/features/` locations, repair the `electron.build./` domain typo, and replace anchors that no longer exist (#10107) _[`#10111`](https://github.com/electron-userland/electron-builder/pull/10111) [`cf39086`](https://github.com/electron-userland/electron-builder/commit/cf39086fbb71e34d1fef0359a026697153e6ee3b) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`e2077cd`](https://github.com/electron-userland/electron-builder/commit/e2077cd8f7b0fb143ecd6c9574460a92a001ae46) [`44a10d4`](https://github.com/electron-userland/electron-builder/commit/44a10d43c486fbde12c5a19b04a2ce65e017c628) [`cf39086`](https://github.com/electron-userland/electron-builder/commit/cf39086fbb71e34d1fef0359a026697153e6ee3b) [`7abb30e`](https://github.com/electron-userland/electron-builder/commit/7abb30e393326676237862163a115c96e2f0e80d) [`f7e400b`](https://github.com/electron-userland/electron-builder/commit/f7e400ba6766165cce896b53fc55142bb48597d8) [`16559d4`](https://github.com/electron-userland/electron-builder/commit/16559d4f214b184b6edd0812db97e41ecb79ab42) [`1d7b489`](https://github.com/electron-userland/electron-builder/commit/1d7b4890f32fef6e02215ae5137626a84d8259d9) [`8e95ad0`](https://github.com/electron-userland/electron-builder/commit/8e95ad0e00c866c8389ae295ac802ebd9954d2ca) [`4b455f7`](https://github.com/electron-userland/electron-builder/commit/4b455f7577c5a7112c7c00bfcb9cb26e3259a87f) [`64c2398`](https://github.com/electron-userland/electron-builder/commit/64c2398b4e749b0695e3efe4071c2b884bff4ba4) [`4070ce7`](https://github.com/electron-userland/electron-builder/commit/4070ce731159ede8239b8129fa9f177e2193b1ad) [`f2cfd5f`](https://github.com/electron-userland/electron-builder/commit/f2cfd5f3c147410495030e66f22dc1b336a5faec) [`c5c4ea1`](https://github.com/electron-userland/electron-builder/commit/c5c4ea138cfe5e17f7d80c0ba1a26bb99799861d) [`4f84c6e`](https://github.com/electron-userland/electron-builder/commit/4f84c6e972e443d155cf80bbc849443060f120be) [`038ea9f`](https://github.com/electron-userland/electron-builder/commit/038ea9f82c1b1967f742b012269d58c8b3cdfaf5) [`4273546`](https://github.com/electron-userland/electron-builder/commit/427354611fe82b3106d0645a1e25e2de95330fdc) [`5ce1625`](https://github.com/electron-userland/electron-builder/commit/5ce1625642794f1f7bf8cf9fe51dc73fc39451ad)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.8`
+- `builder-util-runtime@10.0.0-alpha.7`
+- `dmg-builder@27.0.0-alpha.8`
+- `builder-util@27.0.0-alpha.8`
+- `electron-publish@27.0.0-alpha.8`
+
+</details>
+
+## 27.0.0-alpha.7
+
+### Patch Changes
+
+- Security hardening and a migrate-schema fix: _[`#10036`](https://github.com/electron-userland/electron-builder/pull/10036) [`b87a0b7`](https://github.com/electron-userland/electron-builder/commit/b87a0b7a533eef1711e600864f2540dc163176d7) [@mmaietta](https://github.com/mmaietta)_
+  - `builder-util` `removePassword`: redact single-letter/URI secret flags (`security … -k <password>`, `osslsigncode -key <pkcs11-uri?pin-value=…>`) and whitespace-containing secrets in debug logs, and make the `/b … /c` block-redaction regex ReDoS-safe.
+  - `builder-util-runtime` `httpExecutor`: fix the non-functional `maxRedirects` guard (the redirect counter was never advanced), so a redirect loop from a malicious feed/mirror no longer hangs the updater.
+  - `electron-updater` `GitLabProvider`: only forward the GitLab token to the channel-file request when its URL is same-origin as the API host, so an off-host/`http://` `direct_asset_url` in the release JSON cannot exfiltrate the token.
+  - `app-builder-lib`: defense-in-depth hardening — validate `executableName` before interpolating it into the generated Flatpak launcher, contain custom-toolset extraction within the cache dir, and XML-escape MSI file-association `ext`/`description`.
+  - `electron-builder` `migrate-schema`: auto-remove the removed `linux.syncDesktopName` flag.
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`362a01f`](https://github.com/electron-userland/electron-builder/commit/362a01f802d4c89d4a586c1704ecd81325f7b2de) [`2158350`](https://github.com/electron-userland/electron-builder/commit/21583509ffdbb4a3225b7b3a40c275855d15beba) [`f39edbb`](https://github.com/electron-userland/electron-builder/commit/f39edbbea6b349b51d3569da15377bac8e60fbfd) [`e37cb17`](https://github.com/electron-userland/electron-builder/commit/e37cb170efe643ddd5a7e28e1a7fcb3271300e97) [`c8d24ae`](https://github.com/electron-userland/electron-builder/commit/c8d24aea5e4c03c073a076ec6a1e22ac5b892802) [`0fdb4cb`](https://github.com/electron-userland/electron-builder/commit/0fdb4cb4fd08a2adb7a64dce2a0c347b235e8192) [`b276f7a`](https://github.com/electron-userland/electron-builder/commit/b276f7a859b32721b0c9950484bbef8597bad8f7) [`2158350`](https://github.com/electron-userland/electron-builder/commit/21583509ffdbb4a3225b7b3a40c275855d15beba) [`331afdd`](https://github.com/electron-userland/electron-builder/commit/331afdd30bd59aa0185f7df31b5712e62a5acfbf) [`0011184`](https://github.com/electron-userland/electron-builder/commit/0011184b69300a2e69fa322139e0343796620c57) [`951e177`](https://github.com/electron-userland/electron-builder/commit/951e17796d98a72d0058bf629d1ca492f06e50c5) [`075efcf`](https://github.com/electron-userland/electron-builder/commit/075efcf2725a733aa25bb115801dee62e85a5594) [`b87a0b7`](https://github.com/electron-userland/electron-builder/commit/b87a0b7a533eef1711e600864f2540dc163176d7) [`c0b8235`](https://github.com/electron-userland/electron-builder/commit/c0b8235d7f86d90ffe7218765115b6948b180739) [`f5babad`](https://github.com/electron-userland/electron-builder/commit/f5babad91b1dea5370aa7a28b727b31e6172b6a1)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.7`
+- `builder-util@27.0.0-alpha.7`
+- `builder-util-runtime@10.0.0-alpha.6`
+- `dmg-builder@27.0.0-alpha.7`
+- `electron-publish@27.0.0-alpha.7`
+
+</details>
+
+## 27.0.0-alpha.6
+
+### Major Changes
+
+- Feat: build-time packages (`electron`, `electron-builder`) listed in `dependencies` are now excluded from the packaged app (logged once) instead of failing the build, configurable via the new `ignoredProductionDependencies` option. BREAKING: removed the `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` env var — `electron-builder` is excluded by default; drop a name from `ignoredProductionDependencies` to bundle it. _[`#9994`](https://github.com/electron-userland/electron-builder/pull/9994) [`0721e95`](https://github.com/electron-userland/electron-builder/commit/0721e95e844a8b09179ffc3cbdfd905e1f301f9e) [@liamcmitchell](https://github.com/liamcmitchell)_
+- Feat!: `createTargets(..., arch: "all")` now expands to x64 + arm64 on Windows and Linux instead of x64 + ia32. Electron 44 removed Windows ia32 builds, and Linux ia32 zips already ended at Electron 19, so the old expansion produced broken or impossible builds on current Electron. Request `ia32` explicitly to keep building it on Electron <= 43. _[`#10032`](https://github.com/electron-userland/electron-builder/pull/10032) [`d56ada4`](https://github.com/electron-userland/electron-builder/commit/d56ada42fc3a4317dd83b8920abac3e07d967222) [@claude](https://github.com/apps/claude)_
+
+### Minor Changes
+
+- Feat(migrate-schema): advise on `autoUpdater.disableWebInstaller` when an `nsis-web` target is detected _[`#9979`](https://github.com/electron-userland/electron-builder/pull/9979) [`7a0abca`](https://github.com/electron-userland/electron-builder/commit/7a0abca14439514fc817da609a169b9973c38864) [@mmaietta](https://github.com/mmaietta)_
+
+  `electron-builder migrate-schema` now prints an advisory when the config builds an `nsis-web` target, reminding you that `AppUpdater.disableWebInstaller` defaults to `true` as of v27 and that you must set `autoUpdater.disableWebInstaller = false` in your main process to keep downloading web installers. The advisory is informational only — it surfaces on the JSON/YAML and programmatic (JS/TS) paths and never rewrites the config (`disableWebInstaller` is an electron-updater runtime setting, not a build-config key).
+
+### Patch Changes
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`6d55fad`](https://github.com/electron-userland/electron-builder/commit/6d55fadaa7bdd94fdcc323f638ed54b774f86f3a) [`c5806fe`](https://github.com/electron-userland/electron-builder/commit/c5806fee5f4f2c4be66b50cbfaac4e6da4153db6) [`0721e95`](https://github.com/electron-userland/electron-builder/commit/0721e95e844a8b09179ffc3cbdfd905e1f301f9e) [`d94a099`](https://github.com/electron-userland/electron-builder/commit/d94a0999a5a77636319be6ce115cea8e9394ee8d) [`eacce87`](https://github.com/electron-userland/electron-builder/commit/eacce87a177bdc8de9bd6bc7dce03ca48b3149dd) [`a086ef3`](https://github.com/electron-userland/electron-builder/commit/a086ef37855406d0abe418ca1beeca605608b510) [`e5db1a0`](https://github.com/electron-userland/electron-builder/commit/e5db1a0ba2674a1c5dc81fad9aeb107d57a245b1) [`50d2296`](https://github.com/electron-userland/electron-builder/commit/50d2296e001e222723977b2ca8591a69d97d64f6) [`7a0abca`](https://github.com/electron-userland/electron-builder/commit/7a0abca14439514fc817da609a169b9973c38864) [`d56ada4`](https://github.com/electron-userland/electron-builder/commit/d56ada42fc3a4317dd83b8920abac3e07d967222) [`40ebb23`](https://github.com/electron-userland/electron-builder/commit/40ebb232810680ea661b327f5edf04ac2f0b814b) [`39df92f`](https://github.com/electron-userland/electron-builder/commit/39df92fd14d9a3788add09a3963028a48eed176e) [`d853e19`](https://github.com/electron-userland/electron-builder/commit/d853e193ff4c15ef7dec7596c771c7bff27081bf) [`eeabbcb`](https://github.com/electron-userland/electron-builder/commit/eeabbcb85e6eb519af8543af861d10bf2bb79aa3) [`e0bec44`](https://github.com/electron-userland/electron-builder/commit/e0bec44e7fb8e6449ab0462bac2671117d2aafeb) [`65f0403`](https://github.com/electron-userland/electron-builder/commit/65f04035f722199c7bbd5360f7ecbf2bf352a645) [`2c10f1f`](https://github.com/electron-userland/electron-builder/commit/2c10f1fe9c409379208aa5c0a5bc102689fb5cb6)
+
+</small>
+
+- `electron-publish@27.0.0-alpha.6`
+- `app-builder-lib@27.0.0-alpha.6`
+- `dmg-builder@27.0.0-alpha.6`
+- `builder-util-runtime@10.0.0-alpha.5`
+- `builder-util@27.0.0-alpha.6`
+
+</details>
+
 ## 27.0.0-alpha.5
 
 ### Major Changes

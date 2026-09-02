@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "27.0.0-alpha.5",
+  "version": "27.0.0-alpha.8",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
@@ -78,8 +78,8 @@
     "chromium-pickle-js": "^0.2.0",
     "ci-info": "4.3.1",
     "debug": "^4.3.4",
-    "dotenv": "^16.4.5",
-    "dotenv-expand": "^11.0.6",
+    "dotenv": "^17.4.2",
+    "dotenv-expand": "^13.0.0",
     "ejs": "^3.1.8",
     "electron-publish": "workspace:*",
     "fs-extra": "^11.3.0",

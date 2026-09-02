@@ -38,7 +38,7 @@
     "generate:schema": "typescript-json-schema packages/app-builder-lib/tsconfig-scheme.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
     "generate:all": "pnpm generate:schema && pnpm prettier",
     "docs:prebuild": "docker build -t docs-dockerfile -f website/dockerfile .",
-    "docs:build": "pnpm compile && docker run --rm -v ${PWD}:/app -w /app/website -v $(pwd)/node-modules-docker-web:/app/node_modules docs-dockerfile sh -c 'pnpm install --frozen-lockfile && pnpm build'",
+    "docs:build": "docker run --rm -e RELEASE_TAGS -e DOCS_BASE_URL -v ${PWD}:/app -w /app -v $(pwd)/node-modules-docker-web:/app/node_modules docs-dockerfile bash website/scripts/build-versioned-site.sh",
     "docs:preview": "docker run --rm -p 3000:3000 -v ${PWD}/website/build:/app -v $(pwd)/node-modules-docker-web:/app/node_modules docs-dockerfile sh -c 'npx serve /app'",
     "docs:dev": "cd website && pnpm build && pnpm start",
     "docs:all": "pnpm docs:prebuild && pnpm docs:build"
@@ -74,5 +74,5 @@
     "node": ">=22.12.0",
     "pnpm": ">=11.1.0"
   },
-  "packageManager": "pnpm@11.1.0+sha512.0c44e842e5686b2c061a81adda8b2258bd8818e9704b2cf2c63d56b931a7b2e910092e085027003b96ca3911ab56a07f6df5abaed2be9925034cdd686a535b14"
+  "packageManager": "pnpm@11.9.0+sha512.bd682d5d03fe525ef7c9fd6780c6884d1e756ac4c9c9fe00c538782824310dcf90e3ddc4f53835f06dfaebd5085e41855e0bcbb3b60de2ac5bbab89e5036f03b"
 }

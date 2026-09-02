@@ -23,6 +23,7 @@ import type { WinPackager } from "../../winPackager.js"
 import { importCertificate } from "../codesign.js"
 import type { SignManager } from "./signManager.js"
 import { WindowsSignOptions } from "./windowsCodeSign.js"
+import { SignFileResult } from "../signResult.js"
 const { rename } = _fsExtra
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
@@ -78,6 +79,25 @@ export function getSigntoolFamilyConfig(config: WindowsConfiguration): WindowsSi
   return s
 }
 
+/**
+ * Matches configured publisher names against a certificate subject using the same semantics as
+ * electron-updater's update signature verifier (windowsExecutableCodeSignatureVerifier): a name that
+ * parses as a Distinguished Name (DN) must match every RDN it specifies against the certificate
+ * subject (extra subject RDNs are ignored); otherwise it is compared strictly against the
+ * certificate's Common Name (CN). Passes when ANY configured name matches — multiple names are
+ * supported for certificate rotation.
+ */
+export function publisherNameMatchesCertificate(publisherNames: Array<string>, certInfo: CertificateInfo): boolean {
+  const subject = parseDn(certInfo.bloodyMicrosoftSubjectDn)
+  return publisherNames.some(name => {
+    const dn = parseDn(name)
+    if (dn.size) {
+      return Array.from(dn.keys()).every(key => dn.get(key) === subject.get(key))
+    }
+    return name === certInfo.commonName
+  })
+}
+
 export abstract class SigntoolBaseSignManager implements SignManager {
   protected readonly platformSpecificBuildOptions: WindowsConfiguration
 
@@ -91,6 +111,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     if (publisherName === null) {
       return null
     } else if (publisherName != null) {
+      await this.explicitPublisherNameValidation.value
       return asArray(publisherName)
     }
 
@@ -128,6 +149,60 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       return await readCertInfoFromX509(cscFile)
     }
   )
+
+  // Memoized so the check runs once per build even though signFile is invoked once per file.
+  private readonly explicitPublisherNameValidation = new Lazy<void>(() => this.validateExplicitPublisherName())
+
+  /**
+   * When `publisherName` is explicitly configured and the subject of the local code signing
+   * certificate is known, fail the build if none of the configured names match the certificate.
+   * This catches signing with the wrong certificate at build time — otherwise the mismatch only
+   * surfaces at update time, when electron-updater rejects every update signed with that
+   * certificate.
+   *
+   * The check is intentionally skipped whenever the actual signing certificate's subject is not
+   * genuinely known: custom `sign` hooks, PKCS#11 without an extractable certificate file,
+   * x509 certificate files without a CN, or any error while reading certificate info.
+   * An explicit `publisherName: null` remains a pure opt-out (nothing to validate).
+   */
+  protected async validateExplicitPublisherName(): Promise<void> {
+    const signing = getSigntoolFamilyConfig(this.platformSpecificBuildOptions)
+    const publisherName = signing?.publisherName
+    if (publisherName == null) {
+      // not configured (auto-derive) or explicit `null` opt-out — nothing to validate
+      return
+    }
+    if (signing?.sign != null) {
+      // custom sign hook: electron-builder does not know which certificate the hook actually signs with
+      return
+    }
+    const publisherNames = asArray(publisherName)
+    if (publisherNames.length === 0) {
+      return
+    }
+
+    let certInfo: CertificateInfo | null
+    try {
+      certInfo = await this.lazyCertInfo.value
+    } catch (e: any) {
+      // this check must only fire when the signing certificate's subject is genuinely known
+      log.debug({ error: e.message || e }, "skipping publisherName validation against the signing certificate (cannot read certificate info)")
+      return
+    }
+    if (certInfo == null) {
+      return
+    }
+
+    if (!publisherNameMatchesCertificate(publisherNames, certInfo)) {
+      throw new InvalidConfigurationError(
+        `The configured publisherName does not match the subject of the code signing certificate. ` +
+          `This usually means the build is signing with the wrong certificate (for example, a code signing certificate for another platform or team leaked into WIN_CSC_LINK/CSC_LINK in CI) — electron-updater would reject every update signed with it.\n` +
+          `  Configured publisherName: ${publisherNames.join(" | ")}\n` +
+          `  Certificate subject: ${certInfo.bloodyMicrosoftSubjectDn}\n` +
+          `Fix win.publisherName (or sign with the intended certificate). To opt out of update signature verification entirely, set publisherName to null.`
+      )
+    }
+  }
 
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
     () => this.platformSpecificBuildOptions,
@@ -220,7 +295,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     return !customSign // default: skip when no cert and no custom sign hook
   }
 
-  async signFile(options: WindowsSignOptions): Promise<boolean> {
+  async signFile(options: WindowsSignOptions): Promise<SignFileResult> {
     const signing = getSigntoolFamilyConfig(options.options)
     let hashes = signing?.signingHashAlgorithms
     // msi does not support dual-signing
@@ -257,9 +332,12 @@ export abstract class SigntoolBaseSignManager implements SignManager {
         }
       }
       log.info(logInfo, "signing")
+      // validate an explicitly configured publisherName against the signing certificate before the
+      // first file is signed, so a wrong-certificate build fails even when no publish config exists
+      await this.explicitPublisherNameValidation.value
     } else if (this.handleNullCscInfo(customSign)) {
-      log.debug({ signHook: !!customSign, cscInfo }, "no signing info identified, signing is skipped")
-      return false
+      // the canonical "signing skipped" message is logged once in signWindows, which receives this reason
+      return "skipped:no-certificate"
     }
 
     const executor = customSign || ((config: CustomWindowsSignTaskConfiguration, packager: WinPackager) => this.doSign(config, packager))
@@ -281,7 +359,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       }
     }
 
-    return true
+    return customSign ? "signed:custom" : "signed"
   }
 
   async getCertInfo(file: string, password: string): Promise<CertificateInfo> {

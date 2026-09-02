@@ -10,7 +10,10 @@ import { getPath7za } from "../toolsets/7zip.js"
 import _fsExtra from "fs-extra"
 const { move } = _fsExtra
 
-const ALLOWED_7Z_FILTERS = new Set(["BCJ", "BCJ2", "ARM", "ARMT", "IA64", "PPC", "SPARC", "DELTA"])
+// Values accepted by ELECTRON_BUILDER_7Z_FILTER (passed through as `-mf=<value>`). "OFF" disables the
+// branch/exec filter entirely (plain LZMA2); the rest are 7-Zip branch converters. 7za matches these
+// case-insensitively, so the value is canonicalized to uppercase before use.
+const ALLOWED_7Z_FILTERS = new Set(["OFF", "BCJ", "BCJ2", "ARM", "ARMT", "IA64", "PPC", "SPARC", "DELTA"])
 
 function validateCompressionLevel(level: string): void {
   if (!/^[0-9]$/.test(level)) {
@@ -97,6 +100,18 @@ export interface ArchiveOptions {
    * @default false
    */
   preserveSymlinks?: boolean
+
+  /**
+   * Restrict the 7z filter to one the install-time extractor (the self-vendored Nsis7z plugin) can
+   * decode. Modern 7za (24.09) auto-applies a CPU branch converter to executable content at
+   * `-mx>=1` — `BCJ2` on x86/x64 and `ARM64` on arm64 — which that decoder silently skips, dropping
+   * every executable from the install. When set, the archive is pinned to the single-stream `BCJ`
+   * filter while compressing (decodable, and the best-ratio filter that decoder supports) and to
+   * plain `Copy` while storing. Deliberately NOT overridable by `ELECTRON_BUILDER_7Z_FILTER`, which
+   * could otherwise reintroduce an unreadable archive. Only affects the 7z format. See #9983.
+   * @default false
+   */
+  installTimeDecodable?: boolean
 }
 
 /**
@@ -107,6 +122,22 @@ export interface ArchiveOptions {
  */
 export function shouldPreserveSymlinks(platform: Platform): boolean {
   return platform !== Platform.WINDOWS
+}
+
+/**
+ * Builds the exclude switches for the given masks, rejecting any pattern that contains a path
+ * traversal sequence. `prefix` is the tool-specific flag (`-xr!` for 7za, `-x` for native zip).
+ */
+function buildExcludeArgs(excluded: Array<string> | null | undefined, prefix: string): Array<string> {
+  if (excluded == null) {
+    return []
+  }
+  return excluded.map(mask => {
+    if (mask.includes("..")) {
+      throw new Error(`Excluded archive pattern contains path traversal sequence: "${mask}"`)
+    }
+    return `${prefix}${mask}`
+  })
 }
 
 export function compute7zCompressArgs(format: string, options: ArchiveOptions = {}) {
@@ -150,12 +181,25 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
       args.push("-mhc=off")
     }
 
-    const sevenZFilter = process.env.ELECTRON_BUILDER_7Z_FILTER
-    if (sevenZFilter) {
-      if (!ALLOWED_7Z_FILTERS.has(sevenZFilter.toUpperCase())) {
-        throw new Error(`ELECTRON_BUILDER_7Z_FILTER must be one of: ${[...ALLOWED_7Z_FILTERS].join(", ")}`)
+    // Branch/exec filter selection. installTimeDecodable archives are unpacked by the self-vendored
+    // Nsis7z extractor, whose decoder only understands plain LZMA2/Copy and the single-stream BCJ
+    // filter — not the CPU branch converters modern 7za auto-applies (BCJ2 on x86/x64, ARM64 on
+    // arm64). So pin them to BCJ while compressing (the best filter that decoder can read; Copy
+    // needs none) and do not honor ELECTRON_BUILDER_7Z_FILTER, which could reintroduce an unreadable
+    // archive. Any other 7z archive may use ELECTRON_BUILDER_7Z_FILTER, else 7za's auto-selection.
+    if (options.installTimeDecodable) {
+      if (!storeOnly) {
+        args.push("-mf=BCJ")
       }
-      args.push(`-mf=${sevenZFilter}`)
+    } else {
+      const sevenZFilter = process.env.ELECTRON_BUILDER_7Z_FILTER
+      if (sevenZFilter) {
+        const canonicalFilter = sevenZFilter.toUpperCase()
+        if (!ALLOWED_7Z_FILTERS.has(canonicalFilter)) {
+          throw new Error(`ELECTRON_BUILDER_7Z_FILTER must be one of: ${[...ALLOWED_7Z_FILTERS].join(", ")}`)
+        }
+        args.push(`-mf=${canonicalFilter}`)
+      }
     }
 
     args.push("-mtm=off", "-mta=off")
@@ -202,14 +246,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     }
     await unlinkIfExists(outFile)
     args.push(outFile, options.withoutDir ? "." : path.basename(dirToArchive))
-    if (options.excluded != null) {
-      for (const mask of options.excluded) {
-        if (mask.includes("..")) {
-          throw new Error(`Excluded archive pattern contains path traversal sequence: "${mask}"`)
-        }
-        args.push(`-xr!${mask}`)
-      }
-    }
+    args.push(...buildExcludeArgs(options.excluded, "-xr!"))
 
     try {
       await exec(await getPath7za(), args, { cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive) }, debug7z.enabled)
@@ -233,14 +270,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     }
     await unlinkIfExists(outFile)
     args.push(outFile, options.withoutDir ? "." : path.basename(dirToArchive))
-    if (options.excluded != null) {
-      for (const mask of options.excluded) {
-        if (mask.includes("..")) {
-          throw new Error(`Excluded archive pattern contains path traversal sequence: "${mask}"`)
-        }
-        args.push(`-x${mask}`)
-      }
-    }
+    args.push(...buildExcludeArgs(options.excluded, "-x"))
     await exec("zip", args, { cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive) }, debug7z.enabled)
   }
 

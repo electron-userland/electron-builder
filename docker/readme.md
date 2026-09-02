@@ -1,4 +1,4 @@
-It is developer documentation. See [user documentation](https://www.electron.build/multi-platform-build#docker).
+It is developer documentation. See [user documentation](https://www.electron.build/docs/features/multi-platform-build#docker).
 
 # Build
 

@@ -14,9 +14,14 @@ describe("resolveBuilderBinaryUrl", { sequential: true }, () => {
       expect(url).toBe(`${BASE_URL}nsis-3.0.4.1/nsis-3.0.4.1.7z`)
     })
 
-    test("uses caller-supplied overrideUrl when no env vars are set", () => {
-      const url = resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL, "https://override.example.com/custom-path")
+    test("uses caller-supplied overrideUrl as-is — it already points at the file (#10084)", () => {
+      const url = resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL, "https://override.example.com/custom-path/nsis-3.0.4.1.7z")
       expect(url).toBe("https://override.example.com/custom-path/nsis-3.0.4.1.7z")
+    })
+
+    test("does not append the filename to overrideUrl (would double the last path segment)", () => {
+      const url = resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL, "https://override.example.com/nsis.7z?signature=abc123")
+      expect(url).toBe("https://override.example.com/nsis.7z?signature=abc123")
     })
   })
 

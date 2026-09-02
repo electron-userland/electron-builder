@@ -35,7 +35,17 @@ import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
-import { DOWNLOAD_PROGRESS, Logger, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./types.js"
+import {
+  AutoInstallEvent,
+  DOWNLOAD_PROGRESS,
+  Logger,
+  QuitAndInstallOptions,
+  ResolvedUpdateFileInfo,
+  UPDATE_DOWNLOADED,
+  UpdateCheckResult,
+  UpdateDownloadedEvent,
+  UpdaterSignal,
+} from "./types.js"
 import { VerifyUpdateSupport } from "./index.js"
 
 const require = createRequire(import.meta.url)
@@ -60,10 +70,48 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   autoDownload = true
 
   /**
-   * Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
-   * @default true
+   * When a downloaded update is automatically installed (if `quitAndInstall` was not called before).
+   *
+   * - `"onQuit"` (default) — install on app quit by spawning the installer while the app exits.
+   * - `"onNextLaunch"` — defer the install: any app quit persists an install-on-next-launch marker for the downloaded
+   *   update; on the next launch the updater re-validates the cached installer against freshly fetched update info and
+   *   installs it (see `installPendingUpdateIfAvailable`). This avoids the class of failures where the on-quit installer
+   *   process is killed by the OS before it finishes — most notably Windows terminating the detached NSIS installer during
+   *   session end (log off / shutdown / restart), which can leave the app uninstalled but not re-installed
+   *   (see https://github.com/electron-userland/electron-builder/issues/7807). The automatic install at startup only runs
+   *   for targets that can install without an elevation prompt: NSIS (per-user, `isAdminRightsRequired === false`) and
+   *   AppImage. Linux package targets (deb, rpm, pacman) always elevate via pkexec/sudo, and NSIS per-machine installs
+   *   trigger a UAC prompt, so for those the pending update is kept and `installPendingUpdateIfAvailable()` must be called
+   *   explicitly at a moment the app controls.
+   * - `"manual"` — never auto-install; the downloaded update stays cached until an explicit `quitAndInstall()`.
+   *
+   * `"onNextLaunch"` is planned to become the DEFAULT in v28 to resolve this class of bug once and for all.
+   * @default "onQuit"
    */
-  autoInstallOnAppQuit = true
+  autoInstallEvent: AutoInstallEvent = "onQuit"
+
+  /**
+   * Installs an update that a previous launch marked as pending (see `autoInstallEvent: "onNextLaunch"` and
+   * `quitAndInstall({ waitUntilNextLaunch: true })`), then quits the app.
+   *
+   * The cached installer is never trusted blindly: a fresh update-info fetch is performed first and the cached file
+   * is validated against it (checksum, and code signature where applicable). The pending update is only installed
+   * when its version is an installable change from the running app — newer, or older when `allowDowngrade` is set
+   * (a loop guard, mirroring `isUpdateAvailable`); otherwise the pending state is cleared.
+   *
+   * Unlike the automatic startup install, an explicit call is also allowed for targets whose install requires
+   * elevation: NSIS per-machine installations (`isAdminRightsRequired === true`) and Linux package targets
+   * (deb, rpm, pacman — installed via pkexec/sudo).
+   *
+   * On macOS this resolves to `false`: Squirrel.Mac already stages downloaded updates natively and applies them when
+   * the app is relaunched after quit, so there is no pending-install state managed by electron-updater.
+   *
+   * @returns `true` if a pending update was validated and its installation was initiated (the app will quit).
+   */
+  installPendingUpdateIfAvailable(): Promise<boolean> {
+    this._logger.info("installPendingUpdateIfAvailable is not supported by this updater implementation, skipping")
+    return Promise.resolve(false)
+  }
 
   /**
    * Whether to run the app after finish install when run the installer is NOT in silent mode.
@@ -94,14 +142,45 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   allowDowngrade = false
 
   /**
-   * Web installer files might not have signature verification, this switch prevents to load them unless it is needed.
+   * *Linux only.* Whether to allow installing unverified (unsigned / failing-GPG) `.deb` and `.rpm` packages during auto-update.
    *
-   * Currently false to prevent breaking the current API, but it should be changed to default true at some point that
-   * breaking changes are allowed.
+   * electron-builder does not sign Linux packages, so this defaults to `true` to preserve working auto-updates: the
+   * package manager's signature/GPG checks are bypassed where a bypass flag exists (`--allow-unauthenticated` for the
+   * apt fallback, `--allow-unsigned-rpm` for zypper, `--nogpgcheck` for dnf/yum), which is the historical behavior.
    *
-   * @default false
+   * What `false` enforces depends on the package manager used on the target system:
+   * - dpkg (the default for `.deb`): no effect — dpkg performs no signature verification (a warning is logged);
+   *   enforcing `.deb` signatures requires a debsig-verify/debsigs policy on the target system.
+   * - apt (`.deb` fallback): `--allow-unauthenticated` is omitted.
+   * - zypper: enforced — unsigned/untrusted packages fail to install.
+   * - dnf/yum: enforced via `--setopt=localpkg_gpgcheck=1` (local package files are not GPG-checked by default).
+   * - bare rpm (fallback): cannot be enforced via the CLI (a warning is logged); admins must configure
+   *   `%_pkgverify_level signature` on the target system.
+   *
+   * pacman and AppImage targets are not affected by this option: `pacman -U` has no per-invocation bypass flag
+   * (local-file policy is `LocalFileSigLevel` in `pacman.conf`), and AppImage updates are verified only via the
+   * update-manifest checksum.
+   *
+   * @default true
    */
-  disableWebInstaller = false
+  allowUnverifiedLinuxPackages = true
+
+  private _disableWebInstaller: boolean | undefined = undefined
+
+  /**
+   * Whether to block NSIS web-installer packages. Web installer files might not have signature verification, so they are disabled by default as of v27.
+   *
+   * v27 grace period: apps that do not explicitly set this property will warn (but still download) if a web-installer update is received. In v28 the warning becomes an error and the download is blocked (`ERR_UPDATER_WEB_INSTALLER_DISABLED`). Apps that explicitly set this to `true` throw immediately. Set it to `false` only if you intentionally publish and rely on NSIS web-installer packages.
+   *
+   * @default true
+   */
+  get disableWebInstaller(): boolean {
+    return this._disableWebInstaller ?? true
+  }
+
+  set disableWebInstaller(value: boolean) {
+    this._disableWebInstaller = value
+  }
 
   /**
    * *NSIS only* Disable differential downloads and always perform full download of installer.
@@ -260,7 +339,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
 
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null = null
-  private downloadPromise: Promise<Array<string>> | null = null
+  private downloadPromise: Promise<DownloadExecutorResult> | null = null
 
   protected readonly app: AppAdapter
 
@@ -560,7 +639,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (this.downloadPromise != null) {
       this._logger.info("Downloading update (already in progress)")
-      return this.downloadPromise
+      return this.downloadPromise.then(toDownloadedFilesArray)
     }
 
     this._logger.info(
@@ -585,7 +664,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       updateInfoAndProvider,
       requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
       cancellationToken,
-      disableWebInstaller: this.disableWebInstaller,
+      disableWebInstaller: this._disableWebInstaller,
       disableDifferentialDownload: this.disableDifferentialDownload,
     })
       .catch((e: any) => {
@@ -595,7 +674,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         this.downloadPromise = null
       })
 
-    return this.downloadPromise
+    return this.downloadPromise.then(toDownloadedFilesArray)
   }
 
   protected dispatchError(e: Error): void {
@@ -606,7 +685,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.emit(UPDATE_DOWNLOADED, event)
   }
 
-  protected abstract doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>>
+  protected abstract doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult>
 
   /**
    * Restarts the app and installs the update after it has been downloaded.
@@ -615,11 +694,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * **Note:** `autoUpdater.quitAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that.
    * This is different from the normal quit event sequence.
    *
-   * @param isSilent *windows-only* Runs the installer in silent mode. Defaults to `false`.
-   * @param isForceRunAfter Run the app after finish even on silent install. Not applicable for macOS.
-   * Ignored if `isSilent` is set to `false`(In this case you can still set `autoRunAppAfterInstall` to `false` to prevent run the app after finish).
+   * @param options See {@link QuitAndInstallOptions}. When omitted, the installer runs non-silent and the deferred
+   * install-on-next-launch flow is not used (same behavior as before the options object was introduced).
    */
-  abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
+  abstract quitAndInstall(options?: QuitAndInstallOptions): void
 
   private async loadUpdateConfig(): Promise<any> {
     if (this._appUpdateConfigPath == null) {
@@ -690,7 +768,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   _testOnlyOptions: TestOnlyUpdaterOptions | null = null
 
-  private async getOrCreateDownloadHelper(): Promise<DownloadedUpdateHelper> {
+  protected async getOrCreateDownloadHelper(): Promise<DownloadedUpdateHelper> {
     let result = this.downloadedUpdateHelper
     if (result == null) {
       const dirName = (await this.configOnDisk.value).updaterCacheDirName
@@ -709,8 +787,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     return result
   }
 
-  protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
+  protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
     const fileInfo = taskOptions.fileInfo
+    if (fileInfo.info.sha512 == null && (fileInfo.info as any).sha2 != null) {
+      this._logger.warn(
+        "Update artifact is validated with a SHA-256 (sha2) checksum only. SHA-256 update checksums are deprecated; electron-builder v28 will require SHA-512 and reject SHA-256-only update metadata (fail-closed). Regenerate latest*.yml with a current electron-builder and avoid pinning electronUpdaterCompatibility to a legacy (<2.15 / 1.x) range."
+      )
+    }
     const downloadOptions: DownloadOptions = {
       headers: taskOptions.downloadUpdateOptions.requestHeaders,
       cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
@@ -745,17 +828,24 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     let updateFile = path.join(cacheDir, updateFileName)
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
 
+    const pendingBlockMapFile = path.join(cacheDir, "current.blockmap")
+    const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
     const done = async (isSaveCache: boolean) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
       await taskOptions.done!({
         ...updateInfo,
         downloadedFile: updateFile,
       })
-      const currentBlockMapFile = path.join(cacheDir, "current.blockmap")
-      if (await fsExtra.pathExists(currentBlockMapFile)) {
-        await fsExtra.copyFile(currentBlockMapFile, path.join(downloadedUpdateHelper.cacheDir, "current.blockmap"))
+      if (await fsExtra.pathExists(pendingBlockMapFile)) {
+        await fsExtra.copyFile(pendingBlockMapFile, cachedBlockMapFile)
+      } else if (!taskOptions.downloadUpdateOptions.disableDifferentialDownload) {
+        // this download did not produce a blockmap, but `taskOptions.done` above refreshes the cached installer —
+        // remove the cached blockmap too, so a stale one cannot sit next to a fresh file and poison the next
+        // differential download with a wrong copy plan (https://github.com/electron-userland/electron-builder/issues/10097).
+        // The differential downloader re-fetches the old blockmap from the server when no cached one exists.
+        await fsExtra.remove(cachedBlockMapFile)
       }
-      return packageFile == null ? [updateFile] : [updateFile, packageFile]
+      return packageFile == null ? { updateFile } : { updateFile, packageFile }
     }
 
     const log = this._logger
@@ -773,6 +863,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         // ignore
       })
     }
+
+    // a fresh download starts — drop any blockmap left over from a previous update round, so that when this round
+    // does not produce a new one (e.g. the differential download is skipped), the leftover cannot be promoted to the
+    // cache next to a file it does not describe
+    await fsExtra.remove(pendingBlockMapFile)
 
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
@@ -794,6 +889,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       if (e instanceof CancellationError) {
         log.info("cancelled")
         this.emit("update-cancelled", updateInfo)
+      } else if (e.code === "ERR_CHECKSUM_MISMATCH") {
+        // a differential-download failure never escapes the task (it falls back to a full download),
+        // so a checksum mismatch here means the fully downloaded file itself failed verification
+        log.warn(
+          `sha512 checksum mismatch after full download of ${updateFileName}: the downloaded file is corrupted or the published update metadata does not match the uploaded file`
+        )
       }
       throw e
     }
@@ -808,6 +909,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     provider: Provider<any>,
     oldInstallerFileName: string
   ): Promise<boolean> {
+    let isOldBlockMapFromCache = false
     try {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
@@ -874,13 +976,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
       // get old blockmap from cache dir first, if not found, download it
       let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
+      isOldBlockMapFromCache = oldBlockMapData != null
       if (oldBlockMapData == null) {
+        this._logger.info(`No cached blockmap for the old installer, downloading it from "${blockmapFileUrls[0]}"`)
         oldBlockMapData = await downloadBlockMap(blockmapFileUrls[0])
       }
 
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
       return false
     } catch (e: any) {
+      if (e.code === "ERR_CHECKSUM_MISMATCH") {
+        this._logger.warn(
+          `sha512 checksum mismatch after differential download (old blockmap ${
+            isOldBlockMapFromCache ? "was read from the local cache" : "was downloaded from the server"
+          }): cached "${oldInstallerFileName}" is likely out of sync with the old blockmap, e.g. because one of them was replaced or evicted independently of the other`
+        )
+      }
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
       if (this._testOnlyOptions != null) {
         // test mode
@@ -934,6 +1045,15 @@ export interface DownloadExecutorTask {
   readonly task: (destinationFile: string, downloadOptions: DownloadOptions, packageFile: string | null, removeTempDirIfAny: () => Promise<any>) => Promise<any>
 
   readonly done?: (event: UpdateDownloadedEvent) => Promise<any>
+}
+
+export interface DownloadExecutorResult {
+  readonly updateFile: string
+  readonly packageFile?: string
+}
+
+function toDownloadedFilesArray({ updateFile, packageFile }: DownloadExecutorResult): Array<string> {
+  return packageFile == null ? [updateFile] : [updateFile, packageFile]
 }
 
 export interface DownloadNotification {

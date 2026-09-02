@@ -105,7 +105,7 @@ async function main() {
     // smart sharding
     __dirname + "/vitest-config/vitest-smart-reporter.ts",
     // output report/summary for printing in Test workflow OUTPUT_SUMMARY
-    ["json", { outputFile: `test-results/results-${reportId}.json` }]
+    ["json", { outputFile: `test-results/results-${reportId}.json` }],
   ].concat(process.env.VITEST_COVERAGE === "true" ? [["blob", { outputFile: `vitest-blobs/blob-${reportId}.json` }]] : [])
 
   // Opt-in v8 coverage (VITEST_COVERAGE=true, set by the collect-coverage workflow input). Each shard
@@ -128,12 +128,20 @@ async function main() {
         }
       : {}
 
+  // Vitest reads process.env.UPDATE_SNAPSHOT itself (`resolved.update || process.env.UPDATE_SNAPSHOT`)
+  // and treats ANY non-empty value — including "false" — as update-all mode, even on CI. Only an
+  // explicit "true" opts in; scrub anything else so CI enforces snapshots instead of rewriting them.
+  const updateSnapshot = process.env.UPDATE_SNAPSHOT === "true"
+  if (!updateSnapshot) {
+    delete process.env.UPDATE_SNAPSHOT
+  }
+
   return startVitest(
     "test",
     selectedFiles,
     {
       allowOnly: !isCI, // Prevent accidental commit of `test.only` in CI
-      update: process.env.UPDATE_SNAPSHOT === "true",
+      update: updateSnapshot,
 
       // we manually set `globalThis.test` and `globalThis.describe` in vitest-setup.ts to make sure everything works correctly
       globals: false,
