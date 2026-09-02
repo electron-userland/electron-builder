@@ -72,6 +72,54 @@ exports[`custom include 1`] = `
 }
 `;
 
+exports[`custom include as array 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`custom include with sibling include and customUnInstall 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`custom script 1`] = `
 {
   "win": [
@@ -284,6 +332,18 @@ exports[`perMachine, no run after finish 2`] = `
   "provider": "generic",
   "updaterCacheDirName": "testapp-updater",
   "url": "https://develar.s3.amazonaws.com/test/win/ia32",
+}
+`;
+
+exports[`portable custom include 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW 1.1.0.exe",
+      "safeArtifactName": "TestApp-1.1.0.exe",
+    },
+  ],
 }
 `;
 
