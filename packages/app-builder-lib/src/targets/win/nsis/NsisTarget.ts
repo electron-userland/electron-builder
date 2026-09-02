@@ -708,43 +708,70 @@ export class NsisTarget extends Target {
 
     const includeDir = path.join(nsisTemplatesDir, "include")
     scriptGenerator.addIncludeDir(includeDir)
+    // allow custom scripts to `!include` sibling files from the build resources directory
+    scriptGenerator.addIncludeDir(packager.buildResourcesDir)
     scriptGenerator.flags(["updated", "force-run", "keep-shortcuts", "no-desktop-shortcut", "delete-app-data", "allusers", "currentuser"])
 
     createAddLangsMacro(scriptGenerator, langConfigurator)
 
     const taskManager = new AsyncTaskManager(packager.cancellationToken)
 
-    const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
+    const bundledPluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
-      scriptGenerator.addPluginDir(pluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis, this.packager.buildResourcesDir), pluginArch))
+      scriptGenerator.addPluginDir(bundledPluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis, this.packager.buildResourcesDir), bundledPluginArch))
     })
 
-    taskManager.add(async () => {
-      const userPluginDir = path.join(packager.buildResourcesDir, pluginArch)
-      const stat = await statOrNull(userPluginDir)
-      if (stat != null && stat.isDirectory()) {
-        scriptGenerator.addPluginDir(pluginArch, userPluginDir)
-      }
-    })
-
-    taskManager.addTask(addCustomMessageFileInclude("messages.yml", packager, scriptGenerator, langConfigurator))
-
-    if (!this.isPortable) {
-      if (options.oneClick === false) {
-        taskManager.addTask(addCustomMessageFileInclude("assistedMessages.yml", packager, scriptGenerator, langConfigurator))
-      }
-
+    for (const pluginArch of ["x86-unicode", "x86-ansi"]) {
       taskManager.add(async () => {
-        const customInclude = await packager.getResource(this.options.include, "installer.nsh")
-        if (customInclude != null) {
-          scriptGenerator.addIncludeDir(packager.buildResourcesDir)
-          scriptGenerator.include(customInclude)
+        const userPluginDir = path.join(packager.buildResourcesDir, pluginArch)
+        const stat = await statOrNull(userPluginDir)
+        if (stat != null && stat.isDirectory()) {
+          scriptGenerator.addPluginDir(pluginArch, userPluginDir)
         }
       })
     }
 
+    taskManager.addTask(addCustomMessageFileInclude("messages.yml", packager, scriptGenerator, langConfigurator))
+
+    if (!this.isPortable && options.oneClick === false) {
+      taskManager.addTask(addCustomMessageFileInclude("assistedMessages.yml", packager, scriptGenerator, langConfigurator))
+    }
+
+    taskManager.add(async () => {
+      for (const customInclude of await this.resolveCustomIncludes()) {
+        scriptGenerator.include(customInclude)
+      }
+    })
+
     await taskManager.awaitTasks()
     return scriptGenerator.build()
+  }
+
+  /**
+   * Resolves the `include` option to a list of NSIS script paths.
+   *
+   * `include` may be a single path or an array of paths — each is resolved relative to the build resources directory first and then relative to the project directory.
+   * When the option is not set, `build/installer.nsh` is auto-discovered — except for the portable target, which only ever includes explicitly configured scripts
+   * (an auto-discovered `installer.nsh` is usually written for the installer target and must not silently leak into portable builds).
+   */
+  private async resolveCustomIncludes(): Promise<Array<string>> {
+    const include = this.options.include
+    if (Array.isArray(include)) {
+      const result: Array<string> = []
+      for (const entry of include) {
+        const resolved = await this.packager.getResource(entry)
+        if (resolved != null) {
+          result.push(resolved)
+        }
+      }
+      return result
+    }
+
+    if (this.isPortable && include == null) {
+      return []
+    }
+    const resolved = this.isPortable ? await this.packager.getResource(include) : await this.packager.getResource(include, "installer.nsh")
+    return resolved == null ? [] : [resolved]
   }
 
   private async computeFinalScript(originalScript: string, isInstaller: boolean, archs: Map<Arch, string>): Promise<string> {
