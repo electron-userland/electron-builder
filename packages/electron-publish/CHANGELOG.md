@@ -1,5 +1,22 @@
 # electron-publish
 
+## 27.0.0-alpha.8
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`cf39086`](https://github.com/electron-userland/electron-builder/commit/cf39086fbb71e34d1fef0359a026697153e6ee3b)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.7`
+- `builder-util@27.0.0-alpha.8`
+
+</details>
+
 ## 27.0.0-alpha.7
 
 ### Patch Changes
