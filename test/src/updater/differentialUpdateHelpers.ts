@@ -82,16 +82,14 @@ export async function checkResult(expect: ExpectStatic, updater: BaseUpdater) {
   // noinspection JSIgnoredPromiseFromCall
   expect(downloadPromise).not.toBeNull()
   const { updateFile, packageFile } = (await downloadPromise)!
-  // differential updates never ship a web-installer package
-  expect(packageFile).toBeUndefined()
   const fileInfo: any = updateCheckResult?.updateInfo.files[0]
 
   // delete url because port is random
   expect(fileInfo.url).toBeDefined()
   delete fileInfo.url
   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
-  // the snapshot keeps the historical one-element array shape of the downloaded files
-  expect([path.basename(updateFile)]).toMatchSnapshot()
+  // the snapshot keeps the historical array shape of the downloaded files: [installer] or, for the web installer, [installer, package]
+  expect([updateFile, packageFile].filter((it): it is string => it != null).map(it => path.basename(it))).toMatchSnapshot()
 }
 
 class TestNativeUpdater extends EventEmitter {
