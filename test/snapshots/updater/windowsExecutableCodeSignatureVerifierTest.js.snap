@@ -1,0 +1,14 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`windowsExecutableCodeSignatureVerifier (unit) > preparePowerShellExec params > exe and decoded command match snapshot 1`] = `
+[
+  "powershell.exe",
+  [
+    "-NoProfile",
+    "-NonInteractive",
+    "-InputFormat",
+    "None",
+    "$ProgressPreference = 'SilentlyContinue'; Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Security"; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; Get-AuthenticodeSignature -LiteralPath '<UPDATE_PATH>' | ConvertTo-Json -Compress",
+  ],
+]
+`;
