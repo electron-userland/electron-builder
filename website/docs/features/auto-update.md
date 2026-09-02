@@ -224,6 +224,8 @@ Two `AppUpdater` settings changed or were added in v27. See the [Security & Hard
 
 The update manifest (`latest*.yml`) itself can also be cryptographically signed and verified before any download — see [Signed Update Manifests](./signed-update-manifests.md).
 
+Changing a signing key or certificate that installs in the field already trust requires a transition release — see [Key Rotation](./key-rotation.md).
+
 ### `disableWebInstaller` (now defaults to `true`)
 
 NSIS **web** installers download their full payload at install time from a manifest-supplied URL, which may not undergo signature verification. As of v27, `AppUpdater.disableWebInstaller` defaults to **`true`**, so a web-installer update is not loaded unless you opt in.

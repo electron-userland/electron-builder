@@ -82,7 +82,13 @@ Verification is enforced by the *installed* app. Ship at least one release that 
 
 ## Key rotation
 
-The public key an install trusts is fixed at build time. To rotate keys: publish a release signed with the **old** key whose binaries embed the **new** public key, and once users are migrated, switch publishing to the new private key. Keep the old private key until you no longer need to serve updates to installs that trust it.
+The public key an install trusts is fixed at build time: `updateManifestPublicKey` in `app-update.yml` is a single value, electron-updater never fetches a replacement from the update server, and there is no list of accepted keys. Simply switching the private key would therefore make every existing install reject your manifests with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`. Rotation instead relies on the fact that the embedded public key can be set independently of the signing key (`updateManifest.publicKey` takes precedence over derivation), which lets you ship a **bridge release** that is still verified with the old key but teaches installs to trust the new one:
+
+1. **Bridge release:** keep signing with the **old** private key (for example via `EP_UPDATE_SIGN_KEY_FILE`) and set `updateManifest.publicKey` to the **new** public key, so this release's `app-update.yml` embeds the new key.
+2. **Wait** until the bridge release has reached the installs you care about, continuing to publish with the old key and the new `publicKey` in the meantime.
+3. **Switch** the environment to the new private key and remove the explicit `publicKey`. Installs that took the bridge release verify the new signatures; installs that never did stop updating and must be reinstalled or served from a separate feed still signed with the old key.
+
+Keep the old private key only for as long as you still sign a feed with it, then delete it from CI. The full procedure — including compromise handling, key storage advice, and the equivalent steps for Windows, macOS, and Linux code-signing keys — is in the [Key Rotation](./key-rotation.md) runbook.
 
 ## Related: Linux package signature enforcement
 
