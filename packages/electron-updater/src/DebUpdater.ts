@@ -1,6 +1,6 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter"
-import { DownloadUpdateOptions } from "./AppUpdater"
+import { DownloadExecutorResult, DownloadUpdateOptions } from "./AppUpdater"
 import { InstallOptions } from "./BaseUpdater"
 import { findFile } from "./providers/Provider"
 import { DOWNLOAD_PROGRESS, Logger } from "./types"
@@ -12,7 +12,7 @@ export class DebUpdater extends LinuxUpdater {
   }
 
   /*** @private */
-  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "deb", ["AppImage", "rpm", "pacman"])!
     return this.executeDownload({
