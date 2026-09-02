@@ -7,7 +7,6 @@ import {
   InvalidConfigurationError,
   isEmptyOrSpaces,
   isPullRequest,
-  loadUpdateSigningKey,
   log,
   safeStringifyJson,
   serializeToYaml,
@@ -297,12 +296,12 @@ export async function getAppUpdatePublishConfiguration(
     if (updateManifestConfig?.publicKey) {
       publishConfig.updateManifestPublicKey = updateManifestConfig.publicKey
     } else {
-      // loadUpdateSigningKey falls back to EP_UPDATE_SIGN_KEY / EP_UPDATE_SIGN_KEY_FILE, so env-var-only
-      // signing (no `updateManifest` config block) embeds the matching public key too — the same key
-      // resolution updateInfoBuilder uses to decide whether manifests get signed.
-      const signingKeyPem = loadUpdateSigningKey(updateManifestConfig ?? undefined)
-      if (signingKeyPem != null) {
-        publishConfig.updateManifestPublicKey = derivePublicKeyPem(signingKeyPem)
+      // The very same key updateInfoBuilder signs `latest*.yml` with, so env-var-only signing
+      // (no `updateManifest` config block) embeds the matching public key too, and the two sides
+      // cannot disagree about whether signing is enabled.
+      const signingKey = await packager.updateSigningKey.value
+      if (signingKey != null) {
+        publishConfig.updateManifestPublicKey = derivePublicKeyPem(signingKey)
       }
     }
   }
