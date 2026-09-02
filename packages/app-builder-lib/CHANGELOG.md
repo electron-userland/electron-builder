@@ -1,5 +1,39 @@
 # app-builder-lib
 
+## 26.16.0
+
+### Minor Changes
+
+- Feat: add `allowMissingDependencies?: boolean | string[] | null` configuration (issue #10058). When node-module collection completes and a production dependency could not be resolved (`cannot find path for dependency` / `dependency not found on disk`), the option controls whether the build fails: `true` or omitted (the v26 default) keeps today's warn-only behavior, `false`/`null` fails the build with an error listing the complete set of missing dependencies, and a `string[]` allows only the listed dependency names to be missing (bare package name, or exact `name@version`) while any other missing production dependency fails. Missing optional dependencies (e.g. `fsevents` on Linux/Windows) are always allowed. Note: electron-builder 27+ flips the default to `false` (fail-closed); the stable 26.x line keeps warn-only by default to avoid breaking existing builds. _[`#10074`](https://github.com/electron-userland/electron-builder/pull/10074) [`ec4f39b`](https://github.com/electron-userland/electron-builder/commit/ec4f39b33663f4f7a602f25330737c16af8b9cea) [@claude](https://github.com/apps/claude)_
+
+### Patch Changes
+
+- Feat: support fully offline (air-gapped) Electron downloads by picking up a locally seeded `SHASUMS256.txt-<version>` at the Electron cache root and passing it to `@electron/get` as inline checksums, suppressing the mandatory network fetch of `SHASUMS256.txt` that failed air-gapped builds even with a fully seeded cache. Also recognise a user-provided `electronDownload.checksums` so it is forwarded instead of silently dropped (#10039) _[`#10047`](https://github.com/electron-userland/electron-builder/pull/10047) [`ee1d282`](https://github.com/electron-userland/electron-builder/commit/ee1d2828600f807887135e0a5a7d01d8d5d28c30) [@claude](https://github.com/apps/claude)_
+- Fix: allow parentheses in AppImage executable, product, and license file names. Before, product names like `Zoo Design Studio (Staging)` failed AppImage builds with "productFilename contains characters that cannot be safely used in file paths" — a regression from the Go pipeline, which accepted them. After, names containing `(` and `)` build again; parentheses are legal in Linux filenames and inert inside the double-quoted bash strings of the generated AppRun launcher, while genuinely dangerous characters (`$`, backticks, quotes, slashes) remain rejected. _[`#10052`](https://github.com/electron-userland/electron-builder/pull/10052) [`12add99`](https://github.com/electron-userland/electron-builder/commit/12add992b703db522c21d14f871e8517472484b4) [@claude](https://github.com/apps/claude)_
+- Fix(mac): bump icons toolset to 1.2.3 so small ICNS sizes are written as ic04/ic05 ARGB instead of PNG-in-icp4/icp5/icp6, which macOS renders as noise at 16/32px (fixes corrupted Finder/DMG icons) _[`#10088`](https://github.com/electron-userland/electron-builder/pull/10088) [`92332cc`](https://github.com/electron-userland/electron-builder/commit/92332ccf69966a895f98894675d532506c8ef1ea) [@claude](https://github.com/apps/claude)_
+- Fix(linux): bump linux-tools-mac toolset to 1.0.1 so its binaries run on macOS 15+ instead of requiring macOS 26 (fixes fpm-based deb/rpm/pacman builds on older macOS hosts) _[`#10102`](https://github.com/electron-userland/electron-builder/pull/10102) [`cc691c3`](https://github.com/electron-userland/electron-builder/commit/cc691c33de035cf2086804469a46f55150d4fa5f) [@claude](https://github.com/apps/claude)_
+- Fix: emit `afterSign` hook for `mas`/`mas-dev` builds again. The MAS flow packs with `sign: false` and codesigns separately, which skipped the only `emitAfterSign` call site — the hook now fires after codesigning and before the installer `.pkg` is created, and the standard "skipping afterSign" warning is logged when signing does not occur (#9997) _[`#10072`](https://github.com/electron-userland/electron-builder/pull/10072) [`e3d9744`](https://github.com/electron-userland/electron-builder/commit/e3d974459cdaafe9ac141a93d2a94d26d809ce48) [@claude](https://github.com/apps/claude)_
+- Fix: accept base64-encoded SHA-512 checksums for custom toolset downloads again. `customNsisBinary`/`customNsisResources` configs using the historically documented base64 SHA-512 checksums failed on 26.15.x with `Could not parse checksum file at line 1` because the checksum was forwarded to `@electron/get`, whose sumchecker only understands SHA-256 hex. Base64 SHA-512 checksums are now verified by electron-builder itself after the download (and on archive-cache hits); SHA-256 hex checksums keep being verified by `@electron/get`. Unrecognized or mixed checksum formats now fail fast with a clear configuration error instead of a mid-download parse error. _[`#10041`](https://github.com/electron-userland/electron-builder/pull/10041) [`cc8e783`](https://github.com/electron-userland/electron-builder/commit/cc8e7833388c2e2591eb77c2ce72548a34eba9d3) [@claude](https://github.com/apps/claude)_
+- Fix `ERR_REQUIRE_ESM` when generating blockmaps on Node < 20.19 by pinning `@noble/hashes` to the dual CJS/ESM v1.8 and importing its `blake2b.js` entry. _[`#10108`](https://github.com/electron-userland/electron-builder/pull/10108) [`be75d14`](https://github.com/electron-userland/electron-builder/commit/be75d14a7ceb80c3370c75a944aed351c5768a05) [@claude](https://github.com/apps/claude)_
+- Fix: classify missing declared-optional dependencies (e.g. `fsevents` on Linux/Windows) as missing optional dependencies in the pnpm collector, instead of warning `dependency not found on disk` _[`#10074`](https://github.com/electron-userland/electron-builder/pull/10074) [`ec4f39b`](https://github.com/electron-userland/electron-builder/commit/ec4f39b33663f4f7a602f25330737c16af8b9cea) [@claude](https://github.com/apps/claude)_
+- Fix NSIS installer hang when the user's PowerShell profile contains interactive commands: run powershell.exe with -NoProfile -NonInteractive in allowOnlyOneInstallerInstance checks _[`#10053`](https://github.com/electron-userland/electron-builder/pull/10053) [`88b45b1`](https://github.com/electron-userland/electron-builder/commit/88b45b11a45066fb352d599accf074018a9a9134) [@claude](https://github.com/apps/claude)_
+- Feat: backport escape xml for appxmanifest _[`#10099`](https://github.com/electron-userland/electron-builder/pull/10099) [`e426aca`](https://github.com/electron-userland/electron-builder/commit/e426acae9f340bb8431969ea26b5c03acf454df6) [@regnete](https://github.com/regnete)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`e426aca`](https://github.com/electron-userland/electron-builder/commit/e426acae9f340bb8431969ea26b5c03acf454df6)
+
+</small>
+
+- `builder-util@26.16.0`
+- `dmg-builder@26.16.0`
+- `electron-builder-squirrel-windows@26.16.0`
+- `electron-publish@26.16.0`
+
+</details>
+
 ## 26.15.7
 
 ### Patch Changes
