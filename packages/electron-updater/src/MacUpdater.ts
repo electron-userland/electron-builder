@@ -7,7 +7,7 @@ import { createReadStream } from "fs"
 import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
 import { AppAdapter } from "./AppAdapter.js"
-import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
+import { AppUpdater, DownloadExecutorResult, DownloadUpdateOptions } from "./AppUpdater.js"
 import { QuitAndInstallOptions, ResolvedUpdateFileInfo } from "./types.js"
 import { UpdateDownloadedEvent } from "./types.js"
 import { findFile } from "./providers/Provider.js"
@@ -63,7 +63,7 @@ export class MacUpdater extends AppUpdater {
     }
   }
 
-  protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+  protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     let files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info)
 
     const log = this._logger
