@@ -9,7 +9,7 @@
 feat(security): signed update manifests (Ed25519)
 
 Optional Ed25519 signing of auto-update manifests (`latest*.yml`). When a signing key is configured
-(`updateManifest.signingKey`/`signingKeyFile` in config, or `EP_UPDATE_SIGN_KEY`/`EP_UPDATE_SIGN_KEY_FILE`
+(`updateManifest.signingKey`/`signingKeyFile` in config, or `ELECTRON_BUILDER_UPDATE_SIGN_KEY`/`ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`
 env vars), each manifest is signed over its integrity-critical fields and the matching public key is
 embedded into `app-update.yml` (both resolved from a single key on the platform packager, so signing and
 embedding cannot disagree). electron-updater verifies the signature before downloading and refuses to

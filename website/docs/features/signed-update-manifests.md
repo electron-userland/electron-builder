@@ -27,9 +27,9 @@ This writes `update-private-key.pem` (mode `0600`) to the current directory (use
 
 ```sh
 # either the PEM content itself…
-EP_UPDATE_SIGN_KEY="$(cat update-private-key.pem)" electron-builder --publish always
+ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(cat update-private-key.pem)" electron-builder --publish always
 # …or a path to the key file
-EP_UPDATE_SIGN_KEY_FILE=/run/secrets/update-private-key.pem electron-builder --publish always
+ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=/run/secrets/update-private-key.pem electron-builder --publish always
 ```
 
 No configuration block is required for the environment-variable route: when a key is present, every generated `latest*.yml` gains a base64 `signature` field, and the derived public key is embedded into the app's `app-update.yml` as `updateManifestPublicKey` automatically.
@@ -42,7 +42,7 @@ Instead of (or in addition to) the environment variables, you can configure sign
 
 ```yaml
 updateManifest:
-  # Ed25519 private key, PEM (PKCS#8). Secret — prefer EP_UPDATE_SIGN_KEY in CI.
+  # Ed25519 private key, PEM (PKCS#8). Secret — prefer ELECTRON_BUILDER_UPDATE_SIGN_KEY in CI.
   signingKey: null
   # Path to a file containing the private key. Alternative to signingKey.
   signingKeyFile: null
@@ -51,7 +51,7 @@ updateManifest:
   publicKey: null
 ```
 
-Key resolution order is the same for signing and for embedding the public key: `signingKey` → `signingKeyFile` → `EP_UPDATE_SIGN_KEY` → `EP_UPDATE_SIGN_KEY_FILE`. An explicit `publicKey` takes precedence over derivation — useful if the private key is held by an HSM/KMS-style signer and only the public half is available to the build.
+Key resolution order is the same for signing and for embedding the public key: `signingKey` → `signingKeyFile` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. An explicit `publicKey` takes precedence over derivation — useful if the private key is held by an HSM/KMS-style signer and only the public half is available to the build.
 
 At runtime you can also set the key on the updater directly; it overrides the value from `app-update.yml`:
 
@@ -84,7 +84,7 @@ Verification is enforced by the *installed* app. Ship at least one release that 
 
 The public key an install trusts is fixed at build time: `updateManifestPublicKey` in `app-update.yml` is a single value, electron-updater never fetches a replacement from the update server, and there is no list of accepted keys. Simply switching the private key would therefore make every existing install reject your manifests with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`. Rotation instead relies on the fact that the embedded public key can be set independently of the signing key (`updateManifest.publicKey` takes precedence over derivation), which lets you ship a **bridge release** that is still verified with the old key but teaches installs to trust the new one:
 
-1. **Bridge release:** keep signing with the **old** private key (for example via `EP_UPDATE_SIGN_KEY_FILE`) and set `updateManifest.publicKey` to the **new** public key, so this release's `app-update.yml` embeds the new key.
+1. **Bridge release:** keep signing with the **old** private key (for example via `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`) and set `updateManifest.publicKey` to the **new** public key, so this release's `app-update.yml` embeds the new key.
 2. **Wait** until the bridge release has reached the installs you care about, continuing to publish with the old key and the new `publicKey` in the meantime.
 3. **Switch** the environment to the new private key and remove the explicit `publicKey`. Installs that took the bridge release verify the new signatures; installs that never did stop updating and must be reinstalled or served from a separate feed still signed with the old key.
 

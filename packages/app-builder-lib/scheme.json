@@ -2529,7 +2529,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `EP_UPDATE_SIGN_KEY` / `EP_UPDATE_SIGN_KEY_FILE` environment variables in CI."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
         },
         "vendor": {
           "description": "The vendor. Defaults to [author](https://www.electron.build/configuration#author).",
@@ -3275,7 +3275,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `EP_UPDATE_SIGN_KEY` / `EP_UPDATE_SIGN_KEY_FILE` environment variables in CI."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
         }
       },
       "type": "object"
@@ -3767,7 +3767,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `EP_UPDATE_SIGN_KEY` / `EP_UPDATE_SIGN_KEY_FILE` environment variables in CI."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
         }
       },
       "type": "object"
@@ -8450,7 +8450,7 @@
           ]
         },
         "signingKey": {
-          "description": "Ed25519 private key in PEM (PKCS#8) format used to sign the update manifest.\nSecret — prefer the `EP_UPDATE_SIGN_KEY` environment variable in CI over committing this to config.",
+          "description": "Ed25519 private key in PEM (PKCS#8) format used to sign the update manifest.\nSecret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable in CI over committing this to config.",
           "type": [
             "null",
             "string"
@@ -8897,7 +8897,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `EP_UPDATE_SIGN_KEY` / `EP_UPDATE_SIGN_KEY_FILE` environment variables in CI."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
         },
         "verifyUpdateCodeSignature": {
           "default": true,
@@ -10176,7 +10176,7 @@
           "type": "null"
         }
       ],
-      "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `EP_UPDATE_SIGN_KEY` / `EP_UPDATE_SIGN_KEY_FILE` environment variables in CI."
+      "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
     },
     "win": {
       "anyOf": [

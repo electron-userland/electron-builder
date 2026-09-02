@@ -15,7 +15,10 @@ export async function createUpdateKey(outFile?: string) {
   await writeFile(privateKeyPath, privateKeyPem + "\n", { mode: 0o600 })
 
   log.info({ file: privateKeyPath }, "Ed25519 private key written (keep this secret — store it in a CI secret)")
-  log.info(null, `Provide it at publish time via the ${chalk.bold("EP_UPDATE_SIGN_KEY")} (PEM literal) or ${chalk.bold("EP_UPDATE_SIGN_KEY_FILE")} (path) environment variable.`)
+  log.info(
+    null,
+    `Provide it at publish time via the ${chalk.bold("ELECTRON_BUILDER_UPDATE_SIGN_KEY")} (PEM literal) or ${chalk.bold("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE")} (path) environment variable.`
+  )
   log.info(null, "The matching public key is embedded into app-update.yml automatically; you do not need to configure it manually.\n")
 
   process.stdout.write(`${chalk.bold("Public key")} (for reference — auto-embedded into app-update.yml):\n${publicKeyPem}\n`)

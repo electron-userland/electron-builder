@@ -209,7 +209,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   /**
    * Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed
    * and electron-updater verifies the signature (against the embedded public key) before downloading an update.
-   * Prefer supplying the key via the `EP_UPDATE_SIGN_KEY` / `EP_UPDATE_SIGN_KEY_FILE` environment variables in CI.
+   * Prefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI.
    */
   readonly updateManifest?: UpdateManifestSigningOptions | null
 
@@ -246,7 +246,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
 export interface UpdateManifestSigningOptions {
   /**
    * Ed25519 private key in PEM (PKCS#8) format used to sign the update manifest.
-   * Secret — prefer the `EP_UPDATE_SIGN_KEY` environment variable in CI over committing this to config.
+   * Secret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable in CI over committing this to config.
    */
   readonly signingKey?: string | null
 

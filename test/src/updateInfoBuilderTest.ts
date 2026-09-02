@@ -265,8 +265,8 @@ test("per-task signing: only the task whose packager yields a key is signed", as
 
 // ── A1: PlatformPackager.updateSigningKey resolution ─────────────────────────
 
-async function withSigningEnv<T>(env: { EP_UPDATE_SIGN_KEY?: string; EP_UPDATE_SIGN_KEY_FILE?: string }, fn: () => Promise<T>): Promise<T> {
-  const names = ["EP_UPDATE_SIGN_KEY", "EP_UPDATE_SIGN_KEY_FILE"] as const
+async function withSigningEnv<T>(env: { ELECTRON_BUILDER_UPDATE_SIGN_KEY?: string; ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE?: string }, fn: () => Promise<T>): Promise<T> {
+  const names = ["ELECTRON_BUILDER_UPDATE_SIGN_KEY", "ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE"] as const
   const saved = names.map(name => [name, process.env[name]] as const)
   for (const name of names) {
     const value = env[name]
@@ -326,15 +326,15 @@ test("updateSigningKey prefers platform-specific updateManifest over the root co
   expect(derivePublicKeyPem((await packager.updateSigningKey.value)!)).toBe(platform.publicKeyPem)
 })
 
-test("updateSigningKey falls back to EP_UPDATE_SIGN_KEY when no updateManifest config block exists", async ({ expect }) => {
+test("updateSigningKey falls back to ELECTRON_BUILDER_UPDATE_SIGN_KEY when no updateManifest config block exists", async ({ expect }) => {
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
-  await withSigningEnv({ EP_UPDATE_SIGN_KEY: privateKeyPem }, async () => {
+  await withSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: privateKeyPem }, async () => {
     const key = await new TestPackager({}).updateSigningKey.value
     expect(derivePublicKeyPem(key!)).toBe(publicKeyPem)
   })
 })
 
-test("updateSigningKey reads a PEM file from signingKeyFile and from EP_UPDATE_SIGN_KEY_FILE", async ({ expect }) => {
+test("updateSigningKey reads a PEM file from signingKeyFile and from ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", async ({ expect }) => {
   await withTmpDir(async dir => {
     const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
     const keyFile = path.join(dir, "update-key.pem")
@@ -343,7 +343,7 @@ test("updateSigningKey reads a PEM file from signingKeyFile and from EP_UPDATE_S
     const fromConfig = await new TestPackager({ updateManifest: { signingKeyFile: keyFile } }).updateSigningKey.value
     expect(derivePublicKeyPem(fromConfig!)).toBe(publicKeyPem)
 
-    await withSigningEnv({ EP_UPDATE_SIGN_KEY_FILE: keyFile }, async () => {
+    await withSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: keyFile }, async () => {
       const fromEnv = await new TestPackager({}).updateSigningKey.value
       expect(derivePublicKeyPem(fromEnv!)).toBe(publicKeyPem)
     })

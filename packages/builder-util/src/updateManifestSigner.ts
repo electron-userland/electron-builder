@@ -35,8 +35,8 @@ export function derivePublicKeyPem(privateKey: string | KeyObject): string {
  * Resolves the Ed25519 signing private key (PEM) from, in precedence order:
  *   1. explicit `signingKey` config value (PEM literal)
  *   2. `signingKeyFile` config value (path to a PEM file)
- *   3. `EP_UPDATE_SIGN_KEY` env (PEM literal — preferred for CI secrets)
- *   4. `EP_UPDATE_SIGN_KEY_FILE` env (path to a PEM file)
+ *   3. `ELECTRON_BUILDER_UPDATE_SIGN_KEY` env (PEM literal — preferred for CI secrets)
+ *   4. `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` env (path to a PEM file)
  * Returns null when none are set, meaning manifest signing is disabled.
  */
 export function loadUpdateSigningKey(config?: { signingKey?: string | null; signingKeyFile?: string | null }): string | null {
@@ -46,10 +46,10 @@ export function loadUpdateSigningKey(config?: { signingKey?: string | null; sign
   if (config?.signingKeyFile) {
     return readFileSync(config.signingKeyFile, "utf8")
   }
-  if (process.env.EP_UPDATE_SIGN_KEY) {
-    return process.env.EP_UPDATE_SIGN_KEY
+  if (process.env.ELECTRON_BUILDER_UPDATE_SIGN_KEY) {
+    return process.env.ELECTRON_BUILDER_UPDATE_SIGN_KEY
   }
-  const file = process.env.EP_UPDATE_SIGN_KEY_FILE
+  const file = process.env.ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE
   if (file) {
     return readFileSync(file, "utf8")
   }

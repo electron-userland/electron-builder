@@ -31,7 +31,7 @@ Rotation is much calmer when it is routine. Decide in advance how you will measu
 
 electron-builder signs `latest*.yml` with an Ed25519 private key and embeds the matching public key into `app-update.yml`; electron-updater verifies the manifest with that public key before downloading anything. See [Signed Update Manifests](./signed-update-manifests.md) for the feature itself. Three facts drive the rotation procedure:
 
-1. **The private key is resolved from, in order:** `updateManifest.signingKey` → `updateManifest.signingKeyFile` → `EP_UPDATE_SIGN_KEY` → `EP_UPDATE_SIGN_KEY_FILE`. Whichever is found first signs every manifest for that platform.
+1. **The private key is resolved from, in order:** `updateManifest.signingKey` → `updateManifest.signingKeyFile` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. Whichever is found first signs every manifest for that platform.
 2. **The embedded public key is either explicit or derived.** If `updateManifest.publicKey` is set it is embedded as-is; otherwise the public half of the signing key is derived and embedded. This is what makes a bridge release possible: you can sign with key A while embedding key B.
 3. **An install trusts exactly one key.** `updateManifestPublicKey` is a single value. There is no list of accepted keys and no grace period; verification is fail-closed as soon as a key is configured.
 
@@ -63,7 +63,7 @@ updateManifest:
 
 ```sh
 # OLD private key still signs latest*.yml
-EP_UPDATE_SIGN_KEY_FILE=/run/secrets/update-private-key.old.pem electron-builder --publish always
+ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=/run/secrets/update-private-key.old.pem electron-builder --publish always
 ```
 
 Installs in the field verify this release's manifest with the old key, accept it, and after updating trust the new key. Nothing else about the release needs to change; combine it with a normal feature release if you like.
@@ -73,7 +73,7 @@ Installs in the field verify this release's manifest with the old key, accept it
 **4. Switch the signing key.** Point the environment at the new private key and remove the explicit `publicKey` (derivation now yields the same key):
 
 ```sh
-EP_UPDATE_SIGN_KEY_FILE=/run/secrets/update-private-key.new.pem electron-builder --publish always
+ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=/run/secrets/update-private-key.new.pem electron-builder --publish always
 ```
 
 From this release on, manifests are signed with the new key. Installs that took the bridge release verify them; installs that skipped it fail with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` and stop updating.
@@ -97,7 +97,7 @@ An attacker holding the private key can produce a `latest*.yml` that every curre
 
 ### Key storage
 
-- **Never commit the private key.** `updateManifest.signingKey` exists for completeness; in practice use `EP_UPDATE_SIGN_KEY` (PEM contents) or `EP_UPDATE_SIGN_KEY_FILE` (path to a mounted secret file) from your CI secret store.
+- **Never commit the private key.** `updateManifest.signingKey` exists for completeness; in practice use `ELECTRON_BUILDER_UPDATE_SIGN_KEY` (PEM contents) or `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (path to a mounted secret file) from your CI secret store.
 - Prefer the `_FILE` variant where your CI can mount secrets as files; it keeps the key out of process listings and environment dumps.
 - If the private key lives in an HSM or KMS that signs on your behalf, electron-builder cannot call it directly. Sign `latest*.yml` in a post-publish step of your own, and set `updateManifest.publicKey` so the correct public key is still embedded.
 - Use one key per app (or per release channel if channels are operated by different teams). Sharing a key across unrelated apps means one compromise affects all of them.
