@@ -251,7 +251,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, _
   return selectElectron(resolvedDist)
 }
 
-function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOptions, distMacOsAppName: string, isFullCleanup: boolean) {
+export function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOptions, distMacOsAppName: string, isFullCleanup: boolean) {
   const out = prepareOptions.appOutDir
   const isMac = prepareOptions.packager.platform === Platform.MAC
   const resourcesPath = isMac ? path.join(out, distMacOsAppName, "Contents", "Resources") : path.join(out, "resources")
@@ -259,10 +259,20 @@ function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOpti
   return Promise.all([
     isFullCleanup ? unlinkIfExists(path.join(resourcesPath, "default_app.asar")) : Promise.resolve(),
     isFullCleanup ? unlinkIfExists(path.join(out, "version")) : Promise.resolve(),
-    isMac
-      ? Promise.resolve()
-      : rename(path.join(out, "LICENSE"), path.join(out, "LICENSE.electron.txt")).catch(() => {
-          /* ignore */
-        }),
+    retainElectronLicenseFiles(out, resourcesPath, isMac),
   ])
+}
+
+/**
+ * The Electron dist ships Electron's own `LICENSE` and Chromium's `LICENSES.chromium.html` next to the binary, and both licenses require them to be
+ * retained in distributables. On win/linux they stay next to the executable, but on macOS they sit outside the `.app` bundle, which is the only thing
+ * packaged into the artifacts, so move them into `Contents/Resources`. See https://github.com/electron-userland/electron-builder/issues/9407
+ */
+async function retainElectronLicenseFiles(appOutDir: string, resourcesPath: string, isMac: boolean) {
+  const destinationDir = isMac ? resourcesPath : appOutDir
+  const move = (name: string, newName: string = name) =>
+    rename(path.join(appOutDir, name), path.join(destinationDir, newName)).catch(() => {
+      /* a custom Electron distribution may not ship license files */
+    })
+  await Promise.all([move("LICENSE", "LICENSE.electron.txt"), ...(isMac ? [move("LICENSES.chromium.html")] : [])])
 }
