@@ -13,8 +13,6 @@ export async function signWindows(options: WindowsSignOptions, packager: WinPack
       log.warn(null, "ignoring signtool options, using Azure Trusted Signing; please only configure one")
     }
     log.info({ path: log.filePath(options.path) }, "signing with Azure Trusted Signing")
-  } else {
-    log.info({ path: log.filePath(options.path) }, "signing with signtool.exe")
   }
   const packageManager = await packager.signingManager.value
   return signWithRetry(async () => packageManager.signFile(options))

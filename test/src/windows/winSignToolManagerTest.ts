@@ -1,9 +1,11 @@
 import { WindowsSignToolManager } from "app-builder-lib"
-import { WindowsSignTaskConfiguration } from "app-builder-lib/out/codeSign/windowsSignToolManager"
+import { WindowsSignOptions } from "app-builder-lib/out/codeSign/windowsCodeSign"
+import { FileCodeSigningInfo, WindowsSignTaskConfiguration } from "app-builder-lib/out/codeSign/windowsSignToolManager"
+import { log } from "builder-util"
 import { mkdtemp, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 function makeManager(winCodeSign?: string): WindowsSignToolManager {
   const manager = Object.create(WindowsSignToolManager.prototype) as WindowsSignToolManager
@@ -246,5 +248,51 @@ describe("getToolPath", () => {
     const toolInfo = await manager.getToolPath(true)
     expect(typeof toolInfo.path).toBe("string")
     expect(toolInfo.path.length).toBeGreaterThan(0)
+  })
+})
+
+// ─── signFile logging (#10168) ───────────────────────────────────────────────
+
+describe("signFile logging", () => {
+  function makeSignFileManager(cscInfo: FileCodeSigningInfo | null): WindowsSignToolManager {
+    const manager = makeManager("1.1.0")
+    ;(manager as any).packager = {
+      config: { toolsets: { winCodeSign: "1.1.0" } },
+      appInfo: { type: undefined, productName: "My App", computePackageUrl: () => Promise.resolve(null) },
+      info: { getWorkspaceRoot: () => Promise.resolve(process.cwd()) },
+    }
+    ;(manager as any).cscInfo = { value: Promise.resolve(cscInfo) }
+    ;(manager as any).doSign = vi.fn(() => Promise.resolve())
+    return manager
+  }
+
+  const signOptions: WindowsSignOptions = { path: "/app/dist/file.exe", options: { signtoolOptions: {} } as any }
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test("does not claim to sign with signtool.exe when no certificate is configured", async () => {
+    const info = vi.spyOn(log, "info").mockImplementation(() => log as any)
+    const manager = makeSignFileManager(null)
+
+    await expect(manager.signFile(signOptions)).resolves.toBe(false)
+
+    const messages = info.mock.calls.map(call => call[1])
+    expect(messages).not.toContain("signing with signtool.exe")
+    expect(messages).toContain("no code signing certificate configured, signing is skipped")
+    expect((manager as any).doSign).not.toHaveBeenCalled()
+  })
+
+  test("logs signing with signtool.exe when a certificate is configured", async () => {
+    const info = vi.spyOn(log, "info").mockImplementation(() => log as any)
+    const manager = makeSignFileManager({ file: "/certs/cert.pfx", password: "s3cr3t" })
+
+    await expect(manager.signFile(signOptions)).resolves.toBe(true)
+
+    const messages = info.mock.calls.map(call => call[1])
+    expect(messages).toContain("signing with signtool.exe")
+    expect(messages).not.toContain("no code signing certificate configured, signing is skipped")
+    expect((manager as any).doSign).toHaveBeenCalled()
   })
 })
