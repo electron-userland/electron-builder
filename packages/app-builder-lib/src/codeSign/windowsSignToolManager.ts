@@ -195,6 +195,9 @@ export class WindowsSignToolManager implements SignManager {
 
     const cscInfo = await this.cscInfo.value
     if (cscInfo) {
+      if (!customSign) {
+        log.info({ path: log.filePath(options.path) }, "signing with signtool.exe")
+      }
       let logInfo: any = {
         file: log.filePath(options.path),
       }
@@ -214,7 +217,7 @@ export class WindowsSignToolManager implements SignManager {
       }
       log.info(logInfo, "signing")
     } else if (!customSign) {
-      log.debug({ signHook: !!customSign, cscInfo }, "no signing info identified, signing is skipped")
+      log.info({ path: log.filePath(options.path) }, "no code signing certificate configured, signing is skipped")
       return false
     }
 
