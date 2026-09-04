@@ -232,7 +232,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * `allowDowngrade` will be automatically set to `true`. If this behavior is not suitable for you, simple set `allowDowngrade` explicitly after.
    */
   set channel(value: string | null) {
-    if (this._channel != null) {
+    if (value != null) {
       // noinspection SuspiciousTypeOfGuard
       if (typeof value !== "string") {
         throw newError(`Channel must be a string, but got: ${value}`, "ERR_UPDATER_INVALID_CHANNEL")

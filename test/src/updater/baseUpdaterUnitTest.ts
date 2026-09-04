@@ -19,6 +19,29 @@ const stubApp: AppAdapter = {
 
 const installOpts: InstallOptions = { isSilent: false, isForceRunAfter: false, isAdminRightsRequired: false }
 
+describe("AppUpdater channel validation", () => {
+  let updater: DebUpdater
+
+  beforeEach(() => {
+    updater = new DebUpdater(null, stubApp)
+  })
+
+  it("rejects an empty initial channel", () => {
+    expect(() => (updater.channel = "")).toThrow(/Channel must be not an empty string/)
+  })
+
+  it("rejects a non-string initial channel", () => {
+    expect(() => (updater.channel = 1 as any)).toThrow(/Channel must be a string/)
+  })
+
+  it("allows a configured channel to be reset", () => {
+    updater.channel = "beta"
+    updater.channel = null
+
+    expect(updater.channel).toBeNull()
+  })
+})
+
 // ─── BaseUpdater.sanitizeEnvPath — PATH sanitization ─────────────────────────
 // Tests the extracted helper directly (vi.spyOn on ESM module exports is not
 // possible; testing the pure function avoids that limitation entirely).
