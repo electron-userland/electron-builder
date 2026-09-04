@@ -43,6 +43,23 @@ const ALLOWLIST = resolvePaths([
 ])
 
 /** @internal */
+export async function withElectronAsarLogging<T>(task: () => Promise<T>): Promise<T> {
+  // override logger temporarily to clean up console (electron/asar does some internal logging that blogs up the default electron-builder logs)
+  const consoleLogger = console.log
+  console.log = (...args) => {
+    if (args[0] === "Ordering file has 100% coverage.") {
+      return // no need to log, this means our ordering logic is working correctly
+    }
+    log.info({ args }, "logging @electron/asar")
+  }
+  try {
+    return await task()
+  } finally {
+    console.log = consoleLogger
+  }
+}
+
+/** @internal */
 export class AsarPackager {
   private readonly outFile: string
 
@@ -72,17 +89,10 @@ export class AsarPackager {
   }
 
   private async executeElectronAsar(streams: AsarStreamType[]) {
-    // override logger temporarily to clean up console (electron/asar does some internal logging that blogs up the default electron-builder logs)
-    const consoleLogger = console.log
-    console.log = (...args) => {
-      if (args[0] === "Ordering file has 100% coverage.") {
-        return // no need to log, this means our ordering logic is working correctly
-      }
-      log.info({ args }, "logging @electron/asar")
-    }
-    const { createPackageFromStreams } = await dynamicImport<typeof import("@electron/asar")>("@electron/asar")
-    await createPackageFromStreams(this.outFile, streams)
-    console.log = consoleLogger
+    await withElectronAsarLogging(async () => {
+      const { createPackageFromStreams } = await dynamicImport<typeof import("@electron/asar")>("@electron/asar")
+      await createPackageFromStreams(this.outFile, streams)
+    })
   }
 
   private async processFileSets(fileSets: ResolvedFileSet[]): Promise<AsarStreamType[]> {
