@@ -1,3 +1,15 @@
+## [26.16.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.16.0...electron-builder@26.16.1) (2026-09-04)
+
+
+### Bug Fixes
+
+* **mac:** Retain Electron and Chromium license files on macOS (v26 backport of [#10174](https://github.com/electron-userland/electron-builder/issues/10174)) ([#10177](https://github.com/electron-userland/electron-builder/issues/10177)) ([a4ec75f](https://github.com/electron-userland/electron-builder/commit/a4ec75f919b839c0a4afcee3f7fa526681e128d4))
+* **mac:** use keychain password for set-key-partition-list (v26 backport of [#10101](https://github.com/electron-userland/electron-builder/issues/10101)) ([#10172](https://github.com/electron-userland/electron-builder/issues/10172)) ([b9b2e8a](https://github.com/electron-userland/electron-builder/commit/b9b2e8afe5bfb975c8551b19a3cf8a68e58df4a5))
+* **squirrel:** backport elevate.exe appOutDir race fix to v26 ([#9852](https://github.com/electron-userland/electron-builder/issues/9852)) ([#10157](https://github.com/electron-userland/electron-builder/issues/10157)) ([d6d4125](https://github.com/electron-userland/electron-builder/commit/d6d4125ba636ad2edcd7ddb01d74ddf75a855727))
+* **win:** only log "signing with signtool.exe" when signing actually runs ([#10171](https://github.com/electron-userland/electron-builder/issues/10171)) ([5ae5a02](https://github.com/electron-userland/electron-builder/commit/5ae5a02f7ce83e7f47e1bfa660b2dc7e95081d24))
+
+
+
 # [26.16.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.15.7...electron-builder@26.16.0) (2026-08-29)
 
 

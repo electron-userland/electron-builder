@@ -1,5 +1,25 @@
 # app-builder-lib
 
+## 26.16.1
+
+### Patch Changes
+
+- Fix(mac): pass the temporary keychain's own password to `security set-key-partition-list -k` instead of the certificate's import password. The import password is only valid for `security import -P`; `set-key-partition-list` authenticates against the keychain itself, so on macOS versions that verify the password, `CSC_LINK`-based signing failed with `SecKeychainUnlock: The user name or passphrase you entered is not correct` (see #10066). _[`#10172`](https://github.com/electron-userland/electron-builder/pull/10172) [`b9b2e8a`](https://github.com/electron-userland/electron-builder/commit/b9b2e8afe5bfb975c8551b19a3cf8a68e58df4a5) [@claude](https://github.com/apps/claude)_
+- Fix(win): flaky `appOutDir` mutation created `elevate.exe` race condition for concurrent builds that included Squirrel target _[`#10157`](https://github.com/electron-userland/electron-builder/pull/10157) [`d6d4125`](https://github.com/electron-userland/electron-builder/commit/d6d4125ba636ad2edcd7ddb01d74ddf75a855727) [@claude](https://github.com/apps/claude)_
+- Fix(mac): retain Electron's `LICENSE.electron.txt` and Chromium's `LICENSES.chromium.html` in the macOS `.app` bundle (`Contents/Resources`) instead of dropping them outside the bundle, matching the license files already shipped on Windows and Linux (#9407) _[`#10177`](https://github.com/electron-userland/electron-builder/pull/10177) [`a4ec75f`](https://github.com/electron-userland/electron-builder/commit/a4ec75f919b839c0a4afcee3f7fa526681e128d4) [@claude](https://github.com/apps/claude)_
+- Fix(win): only log "signing with signtool.exe" when a certificate is configured and signing actually runs; report at info level when signing is skipped because no certificate is configured (#10168) _[`#10171`](https://github.com/electron-userland/electron-builder/pull/10171) [`5ae5a02`](https://github.com/electron-userland/electron-builder/commit/5ae5a02f7ce83e7f47e1bfa660b2dc7e95081d24) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.16.1`
+- `electron-builder-squirrel-windows@26.16.1`
+
+</details>
+
 ## 26.16.0
 
 ### Minor Changes
