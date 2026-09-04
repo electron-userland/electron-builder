@@ -545,6 +545,12 @@ function isDetectUpdateChannel(platformSpecificConfiguration: PlatformSpecificBu
 // is called per target and arch - without leaking state between programmatic builds running in the same process
 const reportedInferredUpdateFeeds = new WeakMap<CancellationToken, Set<string>>()
 
+/** @internal */
+export function parseGithubRepoShorthand(repo: string): { owner: string; repo: string } | null {
+  const separator = repo.indexOf("/")
+  return separator > 0 ? { owner: repo.substring(0, separator), repo: repo.substring(separator + 1) } : null
+}
+
 // the inferred repository becomes the publish/update destination and, for auto-update-capable targets, is written
 // verbatim into app-update.yml inside every shipped build as its permanent update feed - so the developer has to be
 // told which repository they are committing to. A repository taken from package.json "repository" is deliberate
@@ -636,11 +642,10 @@ async function getResolvedPublishConfig(
   let project = isGithub ? (options as GithubOptions).repo : (options as BitbucketOptions).slug
 
   if (isGithub && owner == null && project != null) {
-    const index = project.indexOf("/")
-    if (index > 0) {
-      const repo = project
-      project = repo.substring(0, index)
-      owner = repo.substring(index + 1)
+    const shorthand = parseGithubRepoShorthand(project)
+    if (shorthand != null) {
+      owner = shorthand.owner
+      project = shorthand.repo
     }
   }
 
