@@ -1,5 +1,22 @@
 # electron-builder
 
+## 27.0.0-alpha.9
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`de70642`](https://github.com/electron-userland/electron-builder/commit/de70642c688044e5dbbe9259b7923e6d83964a22)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.9`
+- `dmg-builder@27.0.0-alpha.9`
+
+</details>
+
 ## 27.0.0-alpha.8
 
 ### Patch Changes

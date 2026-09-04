@@ -1,3 +1,19 @@
+# [27.0.0-alpha.9](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.8...electron-builder@27.0.0-alpha.9) (2026-09-04)
+
+
+### Bug Fixes
+
+* **electron-updater:** keep cached blockmap consistent with cached installer to avoid stale sha512 mismatches ([#10098](https://github.com/electron-userland/electron-builder/issues/10098)) ([9306160](https://github.com/electron-userland/electron-builder/commit/93061602d9ee89d824834cef0b06c75353fa6a4a))
+* **mac:** Retain Electron and Chromium license files on macOS ([#10174](https://github.com/electron-userland/electron-builder/issues/10174)) ([de70642](https://github.com/electron-userland/electron-builder/commit/de70642c688044e5dbbe9259b7923e6d83964a22))
+* **test:** throw on legacy test signature; case-insensitive PSModulePath removal in updater verifier ([#10159](https://github.com/electron-userland/electron-builder/issues/10159)) ([61bd5f6](https://github.com/electron-userland/electron-builder/commit/61bd5f6044ff8c09f44d443b956a96e0aba105b2))
+
+
+### Features
+
+* **updater:** robust PowerShell invocation for Windows code-signature verification ([#9764](https://github.com/electron-userland/electron-builder/issues/9764)) ([df1bce3](https://github.com/electron-userland/electron-builder/commit/df1bce3eb032194c970c605286ab9b11655469dd))
+
+
+
 # [27.0.0-alpha.8](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.7...electron-builder@27.0.0-alpha.8) (2026-09-01)
 
 
