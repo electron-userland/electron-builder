@@ -273,7 +273,7 @@ export default class SquirrelWindowsTarget extends Target {
     options.fixUpPaths = true
     options.setupExe = setupFile
     if (this.options.msi) {
-      options.setupMsi = setupFile.replace(".exe", ".msi")
+      options.setupMsi = replaceExecutableExtension(setupFile)
     }
 
     if (isEmptyOrSpaces(options.description)) {
@@ -307,6 +307,11 @@ export default class SquirrelWindowsTarget extends Target {
 
     return options
   }
+}
+
+/** @internal */
+export function replaceExecutableExtension(fileName: string): string {
+  return fileName.replace(/\.exe$/i, ".msi")
 }
 
 function checkConflictingOptions(options: any) {
