@@ -62,11 +62,11 @@ export class ModuleManager {
   /** For logging purposes, just track all dependencies for each key */
   readonly logSummary: LogSummaryCache
 
-  private readonly jsonMap: Map<string, PackageJson | null> = new Map()
-  private readonly realPathMap: Map<string, string> = new Map()
-  private readonly existsMap: Map<string, boolean> = new Map()
-  private readonly lstatMap: Map<string, fs.Stats | null> = new Map()
-  private readonly packageDataMap: Map<string, Package | null> = new Map()
+  private readonly jsonMap = new Map<string, Promise<PackageJson | null>>()
+  private readonly realPathMap = new Map<string, Promise<string>>()
+  private readonly existsMap = new Map<string, Promise<boolean>>()
+  private readonly lstatMap = new Map<string, Promise<fs.Stats | null>>()
+  private readonly packageDataMap = new Map<string, Promise<Package | null>>()
   private readonly logSummaryMap: Map<LogMessageByKey, string[]> = new Map()
 
   constructor() {
@@ -116,19 +116,24 @@ export class ModuleManager {
 
   // this allows dot-notation access while still supporting async retrieval
   // e.g., cache.packageJson[somePath] returns Promise<PackageJson>
-  private createAsyncProxy<T>(map: Map<string, T>, compute: (key: string) => T | Promise<T>): Record<string, Promise<T>> {
+  private createAsyncProxy<T>(map: Map<string, Promise<T>>, compute: (key: string) => T | Promise<T>): Record<string, Promise<T>> {
     return new Proxy({} as Record<string, Promise<T>>, {
-      async get(_, key: string) {
-        if (map.has(key)) {
-          return Promise.resolve(map.get(key)!)
+      get(_, key: string) {
+        const cached = map.get(key)
+        if (cached != null) {
+          return cached
         }
-        return await Promise.resolve(compute(key)).then(value => {
-          map.set(key, value)
-          return value
-        })
+        const pending = Promise.resolve()
+          .then(() => compute(key))
+          .catch(error => {
+            map.delete(key)
+            throw error
+          })
+        map.set(key, pending)
+        return pending
       },
       set(_, key: string, value: T) {
-        map.set(key, value)
+        map.set(key, Promise.resolve(value))
         return true
       },
       has(_, key: string) {
