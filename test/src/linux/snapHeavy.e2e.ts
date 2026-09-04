@@ -163,7 +163,7 @@ async function runInstallLaunchTest(expect: any, core: "core18" | "core20" | "co
         const desktopContent = readFileSync(path.join(extractDir, "meta", "gui", "se-wo-template.desktop"), "utf8")
         expect(desktopContent).toContain("[Desktop Entry]")
         expect(desktopContent).toContain("Type=Application")
-        expect(desktopContent).toContain("Exec=")
+        expect(desktopContent).toContain("Exec=se-wo-template %U")
         log.info({ extractDir }, "snap structure validated")
 
         // ── 3. launch binary (must stay inside packed callback) ────────────

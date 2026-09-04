@@ -218,7 +218,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
 
     const snapMetaDir = path.join(stageDir, this.isUseTemplateApp ? "meta" : "snap")
     const desktopFile = path.join(snapMetaDir, "gui", `${this.helper.getDesktopFileName(snap.name)}.desktop`)
-    await this.helper.writeDesktopEntry(this.options, this.packager.executableName + " %U", desktopFile, {
+    await this.helper.writeDesktopEntry(this.options, snap.name + " %U", desktopFile, {
       Icon: "${SNAP}/meta/gui/icon.png",
     })
 
