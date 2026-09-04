@@ -1,7 +1,7 @@
 import { outputFile, readFile } from "fs-extra"
 import * as path from "path"
 import * as which from "which"
-import { app, appThrows, assertPack, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
+import { app, appThrows, assertPack, EXTENDED_TIMEOUT, modifyPackageJson, snapTarget } from "../helpers/packTester"
 // Inline so snapcraftTest.ts does NOT import from snapHeavyTest.ts — importing that file
 // causes all its describe() blocks to execute here, registering heavy tests twice.
 //
@@ -266,6 +266,35 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
         return Promise.resolve(true)
       },
     }))
+
+  // apps.<app>.desktop makes snapcraft render a second meta/gui entry named after the
+  // app, duplicating the snap/gui/<desktopName>.desktop file the build itself writes
+  // (#10077); the generated file alone keeps the desktopName filename desktop
+  // environments match against the Wayland app_id (#10173).
+  test("core24 omits the app desktop mapping (single desktop entry)", ({ expect }) => {
+    const appName = "sep"
+    return app(
+      expect,
+      {
+        targets: snapTarget,
+        config: {
+          extraMetadata: { name: appName },
+          productName: "Sep",
+          snapcraft: { base: "core24" },
+        },
+        effectiveOptionComputed: async ({ snap }) => {
+          expect(snap.apps?.[appName]?.desktop).toBeUndefined()
+          return Promise.resolve(true)
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "com.example.sep.desktop"
+          }),
+      }
+    )
+  })
 
   test("core24 wayland disabled", ({ expect }) => {
     const appName = "sep"

@@ -257,6 +257,13 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     this.commandArgs = extraArgs
 
     // Create the app configuration
+    //
+    // `desktop` is intentionally omitted: snapcraft renders apps.<app>.desktop as a
+    // SECOND meta/gui entry (renamed to <app>.desktop) on top of the snap/gui file
+    // written in buildSnap, so setting both produced two identical launcher entries
+    // (#10077). The generated file alone carries the desktopName filename Wayland
+    // desktop environments match against the app_id (#10173), matching SnapCoreLegacy,
+    // which never sets this key.
     const desktopBaseName = this.helper.getDesktopFileName(appName)
     const app: App = {
       command: SNAP_COMMAND_LAUNCHER,
@@ -264,7 +271,6 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       plugs: appPlugs,
       slots: appSlots,
       autostart: options.autoStart ? `${desktopBaseName}.desktop` : undefined,
-      desktop: `meta/gui/${desktopBaseName}.desktop`,
       extensions: resolvedExtensions,
     }
 
