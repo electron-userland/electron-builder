@@ -25,6 +25,8 @@ exports[`macPackager > extraFiles are placed in product app bundle Contents, not
   "Info.plist",
   "PkgInfo",
   "extraTestFile.txt",
+  "Resources/LICENSE.electron.txt",
+  "Resources/LICENSES.chromium.html",
   "Resources/app.asar",
   "Resources/icon.icns",
   "MacOS/Test App ßW",
@@ -373,6 +375,8 @@ exports[`macPackager > extraFiles are placed in product app bundle Contents, not
 
 exports[`macPackager > extraFiles are placed in product app bundle Contents, not Electron.app 4`] = `
 [
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
   "app.asar",
   "icon.icns",
 ]
@@ -535,6 +539,8 @@ exports[`macPackager > multiple asar resources 2`] = `
 
 exports[`macPackager > multiple asar resources 3`] = `
 [
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
   "app.asar",
   "extraAsar.asar",
   "icon.icns",
@@ -880,6 +886,8 @@ exports[`macPackager > two-package 2`] = `
 
 exports[`macPackager > two-package 3`] = `
 [
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
@@ -964,6 +972,8 @@ exports[`macPackager > two-package 5`] = `
 
 exports[`macPackager > two-package 6`] = `
 [
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
@@ -1048,6 +1058,8 @@ exports[`macPackager > two-package 8`] = `
 
 exports[`macPackager > two-package 9`] = `
 [
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
@@ -2121,6 +2133,8 @@ exports[`macPackager > yarn two package.json w/ native module 3`] = `
 
 exports[`macPackager > yarn two package.json w/ native module 4`] = `
 [
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
   "app.asar",
   "electron.icns",
   "app.asar.unpacked/node_modules/node-pty/LICENSE",
