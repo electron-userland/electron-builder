@@ -46,4 +46,12 @@ describe("cleanupAfterUnpack", () => {
     await mkdir(path.join(appOutDir, DIST_MAC_OS_APP_NAME, "Contents", "Resources"), { recursive: true })
     await expect(cleanupAfterUnpack(fakeOptions(Platform.MAC, appOutDir), DIST_MAC_OS_APP_NAME, false)).resolves.toBeDefined()
   })
+
+  test("propagates errors other than a missing license file", async ({ expect, tmpDir }) => {
+    const appOutDir = await tmpDir.getTempDir()
+    const resourcesDir = await createElectronDist(appOutDir, true)
+    // a directory squatting on the destination makes the rename fail with something other than ENOENT
+    await mkdir(path.join(resourcesDir, "LICENSE.electron.txt"))
+    await expect(cleanupAfterUnpack(fakeOptions(Platform.MAC, appOutDir), DIST_MAC_OS_APP_NAME, false)).rejects.toThrow()
+  })
 })

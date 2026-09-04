@@ -1,4 +1,4 @@
-import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, sanitizeDirPath, statOrNull, unlinkIfExists } from "builder-util"
+import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, orIfFileNotExist, sanitizeDirPath, statOrNull, unlinkIfExists } from "builder-util"
 import _fsExtra from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
@@ -270,9 +270,7 @@ export function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirect
  */
 async function retainElectronLicenseFiles(appOutDir: string, resourcesPath: string, isMac: boolean) {
   const destinationDir = isMac ? resourcesPath : appOutDir
-  const move = (name: string, newName: string = name) =>
-    rename(path.join(appOutDir, name), path.join(destinationDir, newName)).catch(() => {
-      /* a custom Electron distribution may not ship license files */
-    })
+  // a custom Electron distribution may not ship license files, so only a missing source file is tolerated; any other error propagates
+  const move = (name: string, newName: string = name) => orIfFileNotExist(rename(path.join(appOutDir, name), path.join(destinationDir, newName)), undefined)
   await Promise.all([move("LICENSE", "LICENSE.electron.txt"), ...(isMac ? [move("LICENSES.chromium.html")] : [])])
 }
