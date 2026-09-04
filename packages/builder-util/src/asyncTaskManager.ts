@@ -5,6 +5,7 @@ import { NestedError } from "./promise.js"
 export class AsyncTaskManager {
   readonly tasks: Array<Promise<any>> = []
   private readonly errors: Array<Error> = []
+  private readonly cancellableTasks = new Set<Promise<any> & { cancel: () => void }>()
 
   constructor(private readonly cancellationToken: CancellationToken) {}
 
@@ -23,21 +24,30 @@ export class AsyncTaskManager {
       return
     }
 
+    const cancellableTask = "cancel" in promise ? (promise as Promise<any> & { cancel: () => void }) : null
+    if (cancellableTask != null) {
+      this.cancellableTasks.add(cancellableTask)
+    }
     this.tasks.push(
-      promise.catch(it => {
-        log.debug({ error: it.message || it.toString() }, "async task error")
-        this.errors.push(it)
-        return Promise.resolve(null)
-      })
+      promise
+        .catch(it => {
+          log.debug({ error: it.message || it.toString() }, "async task error")
+          this.errors.push(it)
+          return Promise.resolve(null)
+        })
+        .finally(() => {
+          if (cancellableTask != null) {
+            this.cancellableTasks.delete(cancellableTask)
+          }
+        })
     )
   }
 
   cancelTasks() {
-    for (const task of this.tasks) {
-      if ("cancel" in task) {
-        ;(task as any).cancel()
-      }
+    for (const task of this.cancellableTasks) {
+      task.cancel()
     }
+    this.cancellableTasks.clear()
     this.tasks.length = 0
   }
 
