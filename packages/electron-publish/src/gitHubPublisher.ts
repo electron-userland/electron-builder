@@ -164,7 +164,7 @@ export class GitHubPublisher extends HttpPublisher {
       return
     }
 
-    const parsedUrl = parseUrl(`${release.upload_url.substring(0, release.upload_url.indexOf("{"))}?name=${fileName}`)
+    const parsedUrl = getUploadUrl(release.upload_url, fileName)
     return await this.doUploadFile(0, parsedUrl, fileName, dataLength, requestProcessor, release)
   }
 
@@ -294,4 +294,12 @@ export class GitHubPublisher extends HttpPublisher {
   toString() {
     return `Github (owner: ${this.info.owner}, project: ${this.info.repo}, version: ${this.version})`
   }
+}
+
+/** @internal */
+export function getUploadUrl(uploadUrl: string, fileName: string): UrlWithStringQuery {
+  const templateIndex = uploadUrl.indexOf("{")
+  const url = new URL(templateIndex === -1 ? uploadUrl : uploadUrl.slice(0, templateIndex))
+  url.searchParams.set("name", fileName)
+  return parseUrl(url.toString())
 }
