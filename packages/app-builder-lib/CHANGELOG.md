@@ -1,5 +1,22 @@
 # app-builder-lib
 
+## 27.0.0-alpha.9
+
+### Patch Changes
+
+- Fix(mac): retain Electron's `LICENSE.electron.txt` and Chromium's `LICENSES.chromium.html` in the macOS `.app` bundle (`Contents/Resources`) instead of dropping them outside the bundle, matching the license files already shipped on Windows and Linux (#9407) _[`#10174`](https://github.com/electron-userland/electron-builder/pull/10174) [`de70642`](https://github.com/electron-userland/electron-builder/commit/de70642c688044e5dbbe9259b7923e6d83964a22) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@27.0.0-alpha.9`
+- `electron-builder-squirrel-windows@27.0.0-alpha.9`
+
+</details>
+
 ## 27.0.0-alpha.8
 
 ### Major Changes

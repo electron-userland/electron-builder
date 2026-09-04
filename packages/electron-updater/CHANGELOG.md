@@ -1,5 +1,16 @@
 ## 4.3.0
 
+## 7.0.0-alpha.8
+
+### Minor Changes
+
+- Feat(updater): improve PowerShell invocation reliability for Windows code-signature verification _[`#9764`](https://github.com/electron-userland/electron-builder/pull/9764) [`df1bce3`](https://github.com/electron-userland/electron-builder/commit/df1bce3eb032194c970c605286ab9b11655469dd) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix: strip `PSModulePath` from the PowerShell child environment case-insensitively during Windows code-signature verification. Windows environment variable names are case-insensitive but JS object keys are not, so a differently-cased key (e.g. `PSMODULEPATH`) could previously survive into the spawned PowerShell process. _[`#10159`](https://github.com/electron-userland/electron-builder/pull/10159) [`61bd5f6`](https://github.com/electron-userland/electron-builder/commit/61bd5f6044ff8c09f44d443b956a96e0aba105b2) [@claude](https://github.com/apps/claude)_
+- Fix: keep the cached blockmap consistent with the cached installer. A download round that did not produce a new blockmap (e.g. the differential download was skipped because the cached installer was evicted) now removes the cached `current.blockmap` instead of leaving a stale one next to the freshly cached file, which poisoned the next differential download and surfaced as a generic sha512 checksum mismatch before falling back to a full download (#10097). Leftover pending blockmaps from previous update rounds are also cleared before a fresh download. sha512-mismatch logging now distinguishes a differential download that failed against stale/corrupt cached inputs (including whether the old blockmap came from the local cache or the server) from a genuine checksum failure of a fully downloaded file. _[`#10098`](https://github.com/electron-userland/electron-builder/pull/10098) [`9306160`](https://github.com/electron-userland/electron-builder/commit/93061602d9ee89d824834cef0b06c75353fa6a4a) [@claude](https://github.com/apps/claude)_
+
 ## 7.0.0-alpha.7
 
 ### Patch Changes
