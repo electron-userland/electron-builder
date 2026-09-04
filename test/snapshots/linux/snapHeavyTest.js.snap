@@ -5,7 +5,6 @@ exports[`snap core24 native > core24 build + install + launch 1`] = `
   "apps": {
     "se-wo-template": {
       "command": "command.sh",
-      "desktop": "meta/gui/se-wo-template.desktop",
       "plugs": [
         "desktop",
         "desktop-legacy",
@@ -85,7 +84,6 @@ exports[`snap core24 native > core24 destructive-mode (no gnome extension) 1`] =
   "apps": {
     "se-wo-template": {
       "command": "command.sh",
-      "desktop": "meta/gui/se-wo-template.desktop",
       "plugs": [
         "desktop",
         "desktop-legacy",
@@ -165,7 +163,6 @@ exports[`snap core24 native > core24 with custom stagePackages 1`] = `
   "apps": {
     "se-wo-template": {
       "command": "command.sh",
-      "desktop": "meta/gui/se-wo-template.desktop",
       "plugs": [
         "desktop",
         "desktop-legacy",
@@ -691,7 +688,6 @@ exports[`snap heavy > snap full (core24) 1`] = `
   "apps": {
     "se-wo-template": {
       "command": "command.sh",
-      "desktop": "meta/gui/se-wo-template.desktop",
       "plugs": [
         "desktop",
         "desktop-legacy",
@@ -990,7 +986,6 @@ exports[`snap heavy > snap install+launch (core24) 1`] = `
   "apps": {
     "se-wo-template": {
       "command": "command.sh",
-      "desktop": "meta/gui/se-wo-template.desktop",
       "plugs": [
         "desktop",
         "desktop-legacy",
