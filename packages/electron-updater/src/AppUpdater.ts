@@ -43,6 +43,7 @@ import {
   ResolvedUpdateFileInfo,
   UPDATE_DOWNLOADED,
   UpdateCheckResult,
+  DownloadExecutorResult,
   UpdateDownloadedEvent,
   UpdaterSignal,
 } from "./types.js"
@@ -627,9 +628,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
-   * @returns {Promise<Array<string>>} Paths to downloaded files.
+   * @returns {Promise<DownloadExecutorResult>} The downloaded files: `updateFile` is the path to the downloaded update (installer, AppImage, zip, ...),
+   * `packageFile` is the path to the NSIS web installer package and is only set for web installers.
    */
-  downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<Array<string>> {
+  downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<DownloadExecutorResult> {
     const updateInfoAndProvider = this.updateInfoAndProvider
     if (updateInfoAndProvider == null) {
       const error = new Error("Please check update first")
@@ -639,7 +641,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     if (this.downloadPromise != null) {
       this._logger.info("Downloading update (already in progress)")
-      return this.downloadPromise.then(toDownloadedFilesArray)
+      return this.downloadPromise
     }
 
     this._logger.info(
@@ -674,7 +676,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         this.downloadPromise = null
       })
 
-    return this.downloadPromise.then(toDownloadedFilesArray)
+    return this.downloadPromise
   }
 
   protected dispatchError(e: Error): void {
@@ -835,6 +837,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       await taskOptions.done!({
         ...updateInfo,
         downloadedFile: updateFile,
+        ...(packageFile == null ? {} : { packageFile }),
       })
       if (await fsExtra.pathExists(pendingBlockMapFile)) {
         await fsExtra.copyFile(pendingBlockMapFile, cachedBlockMapFile)
@@ -1045,15 +1048,6 @@ export interface DownloadExecutorTask {
   readonly task: (destinationFile: string, downloadOptions: DownloadOptions, packageFile: string | null, removeTempDirIfAny: () => Promise<any>) => Promise<any>
 
   readonly done?: (event: UpdateDownloadedEvent) => Promise<any>
-}
-
-export interface DownloadExecutorResult {
-  readonly updateFile: string
-  readonly packageFile?: string
-}
-
-function toDownloadedFilesArray({ updateFile, packageFile }: DownloadExecutorResult): Array<string> {
-  return packageFile == null ? [updateFile] : [updateFile, packageFile]
 }
 
 export interface DownloadNotification {

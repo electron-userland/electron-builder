@@ -7,8 +7,8 @@ import { createReadStream } from "fs"
 import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
 import { AppAdapter } from "./AppAdapter.js"
-import { AppUpdater, DownloadExecutorResult, DownloadUpdateOptions } from "./AppUpdater.js"
-import { QuitAndInstallOptions, ResolvedUpdateFileInfo } from "./types.js"
+import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
+import { QuitAndInstallOptions, ResolvedUpdateFileInfo, DownloadExecutorResult } from "./types.js"
 import { UpdateDownloadedEvent } from "./types.js"
 import { findFile } from "./providers/Provider.js"
 type AutoUpdater = Electron.AutoUpdater
@@ -141,7 +141,7 @@ export class MacUpdater extends AppUpdater {
     })
   }
 
-  private async updateDownloaded(zipFileInfo: ResolvedUpdateFileInfo, event: UpdateDownloadedEvent): Promise<Array<string>> {
+  private async updateDownloaded(zipFileInfo: ResolvedUpdateFileInfo, event: UpdateDownloadedEvent): Promise<void> {
     const downloadedFile = event.downloadedFile
     const updateFileSize = zipFileInfo.info.size ?? (await fsExtra.stat(downloadedFile)).size
 
@@ -164,7 +164,7 @@ export class MacUpdater extends AppUpdater {
       return `http://127.0.0.1:${address?.port}`
     }
 
-    return await new Promise<Array<string>>((resolve, reject) => {
+    return await new Promise<void>((resolve, reject) => {
       const pass = randomBytes(64).toString("base64").replace(/\//g, "_").replace(/\+/g, "-")
       const authInfo = Buffer.from(`autoupdater:${pass}`, "ascii")
 
@@ -214,7 +214,7 @@ export class MacUpdater extends AppUpdater {
         response.on("finish", () => {
           if (!errorOccurred) {
             this.nativeUpdater.removeListener("error", reject)
-            resolve([])
+            resolve()
           }
         })
 
@@ -259,7 +259,7 @@ export class MacUpdater extends AppUpdater {
           // This will trigger fetching and installing the file on Squirrel side
           this.nativeUpdater.checkForUpdates()
         } else {
-          resolve([])
+          resolve()
         }
       })
     })

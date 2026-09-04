@@ -4,8 +4,8 @@ import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion } from "semver"
 import { AppAdapter } from "./AppAdapter.js"
-import { AppUpdater, DownloadExecutorResult, DownloadExecutorTask } from "./AppUpdater.js"
-import { QuitAndInstallOptions } from "./types.js"
+import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"
+import { QuitAndInstallOptions, DownloadExecutorResult } from "./types.js"
 
 const require = createRequire(import.meta.url)
 
