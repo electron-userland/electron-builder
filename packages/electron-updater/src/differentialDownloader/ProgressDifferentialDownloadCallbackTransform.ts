@@ -65,7 +65,7 @@ export class ProgressDifferentialDownloadCallbackTransform extends Transform {
         delta: this.delta,
         transferred: this.transferred,
         percent: (this.transferred / this.progressDifferentialDownloadInfo.grandTotal) * 100,
-        bytesPerSecond: Math.round(this.transferred / ((now - this.start) / 1000)),
+        bytesPerSecond: this.getBytesPerSecond(now),
       })
       this.delta = 0
     }
@@ -91,8 +91,9 @@ export class ProgressDifferentialDownloadCallbackTransform extends Transform {
         delta: this.delta,
         transferred: this.transferred,
         percent: (this.transferred / this.progressDifferentialDownloadInfo.grandTotal) * 100,
-        bytesPerSecond: Math.round(this.transferred / ((Date.now() - this.start) / 1000)),
+        bytesPerSecond: this.getBytesPerSecond(),
       })
+      this.delta = 0
     }
   }
 
@@ -108,11 +109,15 @@ export class ProgressDifferentialDownloadCallbackTransform extends Transform {
       delta: this.delta,
       transferred: this.transferred,
       percent: 100,
-      bytesPerSecond: Math.round(this.transferred / ((Date.now() - this.start) / 1000)),
+      bytesPerSecond: this.getBytesPerSecond(),
     })
     this.delta = 0
     this.transferred = 0
 
     callback(null)
+  }
+
+  private getBytesPerSecond(now = Date.now()): number {
+    return Math.round((this.transferred * 1000) / Math.max(now - this.start, 1))
   }
 }
