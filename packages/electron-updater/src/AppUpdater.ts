@@ -809,22 +809,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const version = updateInfo.version
     const packageInfo = fileInfo.packageInfo
 
-    function getCacheUpdateFileName(): string {
-      // NodeJS URL doesn't decode automatically
-      const urlPath = decodeURIComponent(taskOptions.fileInfo.url.pathname)
-      if (urlPath.toLowerCase().endsWith(`.${taskOptions.fileExtension.toLowerCase()}`)) {
-        return path.basename(urlPath)
-      } else {
-        // url like /latest — use basename so a server-supplied path like "../../etc/evil"
-        // cannot escape the cache directory via path.join
-        return path.basename(taskOptions.fileInfo.info.url)
-      }
-    }
-
     const downloadedUpdateHelper = await this.getOrCreateDownloadHelper()
     const cacheDir = downloadedUpdateHelper.cacheDirForPendingUpdate
     await fsExtra.mkdir(cacheDir, { recursive: true })
-    const updateFileName = getCacheUpdateFileName()
+    const updateFileName = getCacheUpdateFileName(taskOptions.fileInfo, taskOptions.fileExtension)
     let updateFile = path.join(cacheDir, updateFileName)
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
 
@@ -1000,6 +988,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return true
     }
   }
+}
+
+/** @internal */
+export function getCacheUpdateFileName(fileInfo: ResolvedUpdateFileInfo, fileExtension: string): string {
+  // NodeJS URL doesn't decode automatically
+  const urlPath = decodeURIComponent(fileInfo.url.pathname)
+  const fileName = path.basename(urlPath.toLowerCase().endsWith(`.${fileExtension.toLowerCase()}`) ? urlPath : fileInfo.info.url)
+  // basename(".") and basename("..") remain traversal segments. Reject them explicitly,
+  // along with values that cannot be represented as a single portable filename.
+  if (fileName.length === 0 || fileName === "." || fileName === ".." || fileName.includes("\0") || fileName.includes("/") || fileName.includes("\\")) {
+    throw newError(`Invalid update file name: ${JSON.stringify(fileName)}`, "ERR_UPDATER_INVALID_FILE_NAME")
+  }
+  return fileName
 }
 
 export interface DownloadUpdateOptions {
