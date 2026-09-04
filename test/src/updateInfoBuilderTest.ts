@@ -5,8 +5,19 @@ import { Platform } from "app-builder-lib"
 import { Arch, TmpDir } from "builder-util"
 import { load as yamlLoad } from "js-yaml"
 import { vi } from "vitest"
+import { KeyObject } from "crypto"
+import { derivePublicKeyPem, generateUpdateSigningKeypair, parsePrivateKey } from "builder-util"
+import { verifyManifestSignature } from "builder-util-runtime"
+import { getAppUpdatePublishConfiguration } from "app-builder-lib/src/publish/PublishManager"
+import { PlatformPackager } from "app-builder-lib/src/platformPackager"
 
 const basePublishConfig = { provider: "s3", bucket: "test-bucket" } as const
+
+// writeUpdateInfoFiles only needs the `updateSigningKey` seam off the packager; resolving the key
+// from config/env is PlatformPackager's job and is covered separately below.
+function makeTaskPackager(signingKey: KeyObject | null = null): any {
+  return { updateSigningKey: { value: Promise.resolve(signingKey) } }
+}
 
 function makeTask(dir: string, url: string, sha512: string, arch: Arch | null, filename = "latest.yml"): UpdateInfoFileTask {
   return {
@@ -18,7 +29,7 @@ function makeTask(dir: string, url: string, sha512: string, arch: Arch | null, f
       sha512,
     } as any,
     publishConfiguration: basePublishConfig as any,
-    packager: {} as any,
+    packager: makeTaskPackager(),
     arch,
   }
 }
@@ -220,6 +231,178 @@ test("emitArtifactCreated is called once per unique yml file", async ({ expect }
     await writeUpdateInfoFiles(tasks, mockPackager as any)
     // latest.yml (universal + x64 merged) + beta.yml = 2 writes
     expect(mockPackager.emitArtifactCreated).toHaveBeenCalledTimes(2)
+  })
+})
+
+// ── A1: update manifest signing ──────────────────────────────────────────────
+
+test("manifest is signed when the packager yields a signing key, and the signature verifies", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    const task = { ...makeTask(dir, "App-1.0.0.exe", "sha-universal", null), packager: makeTaskPackager(parsePrivateKey(privateKeyPem)) }
+    await writeUpdateInfoFiles([task], makePackager() as any)
+    const yml = await readYml(path.join(dir, "latest.yml"))
+    expect(yml.signature).toBeDefined()
+    expect(verifyManifestSignature(yml, publicKeyPem)).toBe(true)
+  })
+})
+
+test("per-task signing: only the task whose packager yields a key is signed", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { privateKeyPem } = generateUpdateSigningKeypair()
+    // two distinct yml files: linux configures signing, mac does not
+    const linuxTask = {
+      ...makeTask(dir, "App-1.0.0.AppImage", "sha-linux", null),
+      file: path.join(dir, "latest-linux.yml"),
+      packager: makeTaskPackager(parsePrivateKey(privateKeyPem)),
+    }
+    const macTask = { ...makeTask(dir, "App-1.0.0.zip", "sha-mac", null), file: path.join(dir, "latest-mac.yml") }
+    await writeUpdateInfoFiles([linuxTask, macTask], makePackager() as any)
+    expect((await readYml(path.join(dir, "latest-linux.yml"))).signature).toBeDefined()
+    expect((await readYml(path.join(dir, "latest-mac.yml"))).signature).toBeUndefined()
+  })
+})
+
+// ── A1: PlatformPackager.updateSigningKey resolution ─────────────────────────
+
+async function withSigningEnv<T>(env: { ELECTRON_BUILDER_UPDATE_SIGN_KEY?: string; ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE?: string }, fn: () => Promise<T>): Promise<T> {
+  const names = ["ELECTRON_BUILDER_UPDATE_SIGN_KEY", "ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE"] as const
+  const saved = names.map(name => [name, process.env[name]] as const)
+  for (const name of names) {
+    const value = env[name]
+    if (value == null) {
+      delete process.env[name]
+    } else {
+      process.env[name] = value
+    }
+  }
+  try {
+    return await fn()
+  } finally {
+    for (const [name, value] of saved) {
+      if (value == null) {
+        delete process.env[name]
+      } else {
+        process.env[name] = value
+      }
+    }
+  }
+}
+
+// PlatformPackager is abstract with only two abstract members, so the real class (and therefore the
+// real `updateSigningKey` MemoLazy) can be exercised without standing up a full Packager.
+class TestPackager extends PlatformPackager<any> {
+  constructor(config: any) {
+    super({ config } as any, Platform.LINUX)
+  }
+
+  protected override prepareAppInfo(): any {
+    return null
+  }
+
+  get defaultTarget(): Array<string> {
+    return []
+  }
+
+  createTargets(): void {
+    // not used
+  }
+}
+
+test("updateSigningKey resolves the key from the root config", async ({ expect }) => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const key = await new TestPackager({ updateManifest: { signingKey: privateKeyPem } }).updateSigningKey.value
+  expect(key).not.toBeNull()
+  expect(derivePublicKeyPem(key!)).toBe(publicKeyPem)
+})
+
+test("updateSigningKey prefers platform-specific updateManifest over the root config", async ({ expect }) => {
+  const root = generateUpdateSigningKeypair()
+  const platform = generateUpdateSigningKeypair()
+  const packager = new TestPackager({
+    updateManifest: { signingKey: root.privateKeyPem },
+    linux: { updateManifest: { signingKey: platform.privateKeyPem } },
+  })
+  expect(derivePublicKeyPem((await packager.updateSigningKey.value)!)).toBe(platform.publicKeyPem)
+})
+
+test("updateSigningKey falls back to ELECTRON_BUILDER_UPDATE_SIGN_KEY when no updateManifest config block exists", async ({ expect }) => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  await withSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: privateKeyPem }, async () => {
+    const key = await new TestPackager({}).updateSigningKey.value
+    expect(derivePublicKeyPem(key!)).toBe(publicKeyPem)
+  })
+})
+
+test("updateSigningKey reads a PEM file from signingKeyFile and from ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    const keyFile = path.join(dir, "update-key.pem")
+    await fsp.writeFile(keyFile, privateKeyPem)
+
+    const fromConfig = await new TestPackager({ updateManifest: { signingKeyFile: keyFile } }).updateSigningKey.value
+    expect(derivePublicKeyPem(fromConfig!)).toBe(publicKeyPem)
+
+    await withSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: keyFile }, async () => {
+      const fromEnv = await new TestPackager({}).updateSigningKey.value
+      expect(derivePublicKeyPem(fromEnv!)).toBe(publicKeyPem)
+    })
+  })
+})
+
+test("updateSigningKey is null when neither config nor env vars provide a key", async ({ expect }) => {
+  await withSigningEnv({}, async () => {
+    expect(await new TestPackager({}).updateSigningKey.value).toBeNull()
+  })
+})
+
+test("updateSigningKey parses the PEM once and memoizes the result", async ({ expect }) => {
+  const { privateKeyPem } = generateUpdateSigningKeypair()
+  const packager = new TestPackager({ updateManifest: { signingKey: privateKeyPem } })
+  // same KeyObject identity across reads => the creator ran only once
+  expect(await packager.updateSigningKey.value).toBe(await packager.updateSigningKey.value)
+})
+
+// ── A1: app-update.yml public key embedding ──────────────────────────────────
+
+// minimal PlatformPackager stub for getAppUpdatePublishConfiguration (generic provider avoids any network/token resolution)
+function makeAppUpdateConfigPackager(signingKey: KeyObject | null = null, updateManifest?: any): any {
+  return {
+    platform: Platform.LINUX,
+    platformOptions: updateManifest == null ? {} : { updateManifest },
+    config: { publish: { provider: "generic", url: "https://example.com/updates" } },
+    appInfo: { updaterCacheDirName: "test-app", channel: null, version: "1.0.0" },
+    expandMacro: (value: string) => value,
+    updateSigningKey: { value: Promise.resolve(signingKey) },
+  }
+}
+
+test("app-update.yml embeds the public key derived from the packager's signing key", async ({ expect }) => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  // signing (updateInfoBuilder) and embedding (PublishManager) read the same packager.updateSigningKey,
+  // so they cannot disagree about whether manifests are signed
+  const publishConfig = await getAppUpdatePublishConfiguration(makeAppUpdateConfigPackager(parsePrivateKey(privateKeyPem)), null, Arch.x64, false)
+  expect(publishConfig?.updateManifestPublicKey).toBe(publicKeyPem)
+})
+
+test("app-update.yml prefers an explicitly configured publicKey over the derived one", async ({ expect }) => {
+  const { privateKeyPem } = generateUpdateSigningKeypair()
+  const explicit = generateUpdateSigningKeypair().publicKeyPem
+  const packager = makeAppUpdateConfigPackager(parsePrivateKey(privateKeyPem), { publicKey: explicit })
+  const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
+  expect(publishConfig?.updateManifestPublicKey).toBe(explicit)
+})
+
+test("app-update.yml carries no public key when the packager has no signing key", async ({ expect }) => {
+  const publishConfig = await getAppUpdatePublishConfiguration(makeAppUpdateConfigPackager(), null, Arch.x64, false)
+  expect(publishConfig?.updateManifestPublicKey).toBeUndefined()
+})
+
+test("no signature field is written when no signing key is configured", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    await writeUpdateInfoFiles([makeTask(dir, "App-1.0.0.exe", "sha", null)], makePackager() as any)
+    const yml = await readYml(path.join(dir, "latest.yml"))
+    expect(yml.signature).toBeUndefined()
   })
 })
 

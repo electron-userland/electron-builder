@@ -1,5 +1,5 @@
 import asyncPool from "tiny-async-pool"
-import { Arch, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, log, safeStringifyJson, serializeToYaml, signUpdateManifest } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -216,6 +216,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
   }
 
   const releaseDate = new Date().toISOString()
+
   const concurrency = 4
   await asyncPool<UpdateInfoFileTask, void>(concurrency, Array.from(updateChannelFileToInfo.values()), async task => {
     const publishConfig = task.publishConfiguration
@@ -234,7 +235,14 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
       task.info.releaseDate = releaseDate
     }
 
-    const fileContent = Buffer.from(serializeToYaml(task.info, false, true))
+    // Sign last: `signature` must cover the final version/files/stagingPercentage. releaseDate is
+    // excluded from the signed payload, so setting it above does not affect the signature.
+    // The key is resolved per task (not once for the batch) so each manifest is signed iff that
+    // platform's config requires it, matching the per-platform public-key embedding in PublishManager.
+    const signingKey = await task.packager.updateSigningKey.value
+    const info: UpdateInfo = signingKey == null ? task.info : { ...task.info, signature: signUpdateManifest(task.info, signingKey) }
+
+    const fileContent = Buffer.from(serializeToYaml(info, false, true))
     await fsExtra.outputFile(task.file, fileContent)
     await packager.emitArtifactCreated({
       file: task.file,

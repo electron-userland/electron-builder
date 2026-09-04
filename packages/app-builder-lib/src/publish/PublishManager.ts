@@ -1,4 +1,16 @@
-import { Arch, asArray, AsyncTaskManager, exists, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import {
+  Arch,
+  asArray,
+  AsyncTaskManager,
+  derivePublicKeyPem,
+  exists,
+  InvalidConfigurationError,
+  isEmptyOrSpaces,
+  isPullRequest,
+  log,
+  safeStringifyJson,
+  serializeToYaml,
+} from "builder-util"
 import {
   BitbucketOptions,
   CancellationToken,
@@ -273,6 +285,24 @@ export async function getAppUpdatePublishConfiguration(
     const publisherName = winPackager.isForceCodeSigningVerification ? await (await winPackager.signingManager.value).computedPublisherName.value : undefined
     if (publisherName != null) {
       publishConfig.publisherName = publisherName
+    }
+  }
+
+  // Embed the update-manifest verification public key so the updater can verify signed manifests.
+  // Explicit publicKey wins; otherwise derive it from the configured signing private key so the
+  // user only manages one secret.
+  const updateManifestConfig = packager.platformOptions.updateManifest ?? packager.config.updateManifest
+  if (publishConfig.updateManifestPublicKey == null) {
+    if (updateManifestConfig?.publicKey) {
+      publishConfig.updateManifestPublicKey = updateManifestConfig.publicKey
+    } else {
+      // The very same key updateInfoBuilder signs `latest*.yml` with, so env-var-only signing
+      // (no `updateManifest` config block) embeds the matching public key too, and the two sides
+      // cannot disagree about whether signing is enabled.
+      const signingKey = await packager.updateSigningKey.value
+      if (signingKey != null) {
+        publishConfig.updateManifestPublicKey = derivePublicKeyPem(signingKey)
+      }
     }
   }
   return publishConfig
