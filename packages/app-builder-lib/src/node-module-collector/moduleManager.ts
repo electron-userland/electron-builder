@@ -307,9 +307,10 @@ export class ModuleManager {
     const visited = new Set<string>()
     const queue: Array<{ dir: string; depth: number }> = [{ dir: start, depth: 0 }]
     let explored = 0
+    let queueIndex = 0
 
-    while (queue.length > 0) {
-      const { dir, depth } = queue.shift()!
+    while (queueIndex < queue.length) {
+      const { dir, depth } = queue[queueIndex++]
       if (explored++ > maxExplored) {
         break
       }
