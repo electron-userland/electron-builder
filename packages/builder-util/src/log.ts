@@ -1,6 +1,7 @@
 import chalk from "chalk"
 import { Chalk } from "chalk"
 import _debug from "debug"
+import * as path from "path"
 type WritableStream = NodeJS.WritableStream
 
 let printer: ((message: string) => void) | null = null
@@ -28,7 +29,8 @@ export class Logger {
 
   filePath(file: string) {
     const cwd = process.cwd()
-    return file.startsWith(cwd) ? file.substring(cwd.length + 1) : file
+    const relative = path.relative(cwd, file)
+    return relative === "" || (!path.isAbsolute(relative) && relative !== ".." && !relative.startsWith(`..${path.sep}`)) ? relative : file
   }
 
   // noinspection JSMethodCanBeStatic
