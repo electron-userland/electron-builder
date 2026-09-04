@@ -4383,11 +4383,21 @@
           ]
         },
         "include": {
-          "description": "The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The path to NSIS include script to customize installer, or an array of such paths to include multiple scripts. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).\n\nEach path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.\nWhen an array is provided, all scripts are included in the specified order."
         },
         "installerHeader": {
           "default": "build/installerHeader.bmp",
@@ -4739,11 +4749,21 @@
           ]
         },
         "include": {
-          "description": "The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The path to NSIS include script to customize installer, or an array of such paths to include multiple scripts. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).\n\nEach path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.\nWhen an array is provided, all scripts are included in the specified order."
         },
         "installerHeader": {
           "default": "build/installerHeader.bmp",
@@ -5973,6 +5993,23 @@
             "null",
             "string"
           ]
+        },
+        "include": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The path to NSIS include script to customize the portable launcher, or an array of such paths to include multiple scripts. See [Custom NSIS script](#custom-nsis-script).\n\nEach path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.\nWhen an array is provided, all scripts are included in the specified order.\n\nUnlike the installer targets, the portable target does **not** fall back to `build/installer.nsh` — a custom script is only included when this option is explicitly set."
         },
         "publish": {
           "anyOf": [
