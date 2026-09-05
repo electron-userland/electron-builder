@@ -132,6 +132,7 @@ exports[`override targets in the config - only arch 1`] = `
       },
     },
     {
+      "arch": "ia32",
       "file": "beta-TestApp.exe.blockmap",
       "updateInfo": {
         "sha512": "@sha512",

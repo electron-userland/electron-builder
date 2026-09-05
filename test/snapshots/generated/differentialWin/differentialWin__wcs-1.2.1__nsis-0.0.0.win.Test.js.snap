@@ -13,6 +13,7 @@ exports[`differential-win > nsis 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW Setup 1.0.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.0.0.exe.blockmap",
       "updateInfo": {

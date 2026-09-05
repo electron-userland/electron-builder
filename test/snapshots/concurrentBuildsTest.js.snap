@@ -57,6 +57,7 @@ exports[`mac concurrent 1`] = `
       },
     },
     {
+      "arch": "arm64",
       "file": "Test Concurrent-1.1.0-arm64.zip.blockmap",
       "safeArtifactName": "Test Concurrent-1.1.0-arm64.zip.blockmap",
       "updateInfo": {
@@ -65,6 +66,7 @@ exports[`mac concurrent 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.zip.blockmap",
       "safeArtifactName": "Test Concurrent-1.1.0-x64.zip.blockmap",
       "updateInfo": {
@@ -182,6 +184,7 @@ exports[`mac/win/linux concurrent 1`] = `
       },
     },
     {
+      "arch": "arm64",
       "file": "Test Concurrent-1.1.0-arm64.zip.blockmap",
       "safeArtifactName": "Test Concurrent-1.1.0-arm64.zip.blockmap",
       "updateInfo": {
@@ -190,6 +193,7 @@ exports[`mac/win/linux concurrent 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.zip.blockmap",
       "safeArtifactName": "Test Concurrent-1.1.0-x64.zip.blockmap",
       "updateInfo": {
@@ -226,6 +230,7 @@ exports[`mac/win/linux concurrent 1`] = `
       },
     },
     {
+      "arch": "arm64",
       "file": "Test Concurrent-1.1.0-arm64.exe.blockmap",
       "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe.blockmap",
       "updateInfo": {
@@ -234,6 +239,7 @@ exports[`mac/win/linux concurrent 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.exe.blockmap",
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe.blockmap",
       "updateInfo": {
@@ -484,6 +490,7 @@ exports[`nsis + zip concurrent: elevate.exe reaches win-unpacked but never leaks
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.zip",
     },
     {
+      "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.exe.blockmap",
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe.blockmap",
       "updateInfo": {
@@ -709,6 +716,7 @@ exports[`win concurrent - all targets 1`] = `
       "file": "concurrent-1.1.0-full.nupkg",
     },
     {
+      "arch": "arm64",
       "file": "Test Concurrent-1.1.0-arm64.exe.blockmap",
       "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe.blockmap",
       "updateInfo": {
@@ -717,6 +725,7 @@ exports[`win concurrent - all targets 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.exe.blockmap",
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe.blockmap",
       "updateInfo": {
@@ -850,6 +859,7 @@ exports[`win concurrent 1`] = `
       },
     },
     {
+      "arch": "arm64",
       "file": "Test Concurrent-1.1.0-arm64.exe.blockmap",
       "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe.blockmap",
       "updateInfo": {
@@ -858,6 +868,7 @@ exports[`win concurrent 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.exe.blockmap",
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe.blockmap",
       "updateInfo": {
@@ -929,6 +940,7 @@ exports[`win/linux concurrent 1`] = `
       },
     },
     {
+      "arch": "arm64",
       "file": "Test Concurrent-1.1.0-arm64.exe.blockmap",
       "safeArtifactName": "Test-Concurrent-1.1.0-arm64.exe.blockmap",
       "updateInfo": {
@@ -937,6 +949,7 @@ exports[`win/linux concurrent 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test Concurrent-1.1.0-x64.exe.blockmap",
       "safeArtifactName": "Test-Concurrent-1.1.0-x64.exe.blockmap",
       "updateInfo": {

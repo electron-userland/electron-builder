@@ -230,6 +230,7 @@ exports[`hooks as file - cjs 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
@@ -309,6 +310,7 @@ exports[`hooks as file - mjs exported functions 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
@@ -388,6 +390,7 @@ exports[`hooks as functions 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
