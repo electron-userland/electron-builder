@@ -4,7 +4,7 @@ import { DownloadExecutorResult, DownloadUpdateOptions } from "./AppUpdater.js"
 import { InstallOptions } from "./BaseUpdater.js"
 import { DOWNLOAD_PROGRESS, Logger } from "./types.js"
 import { findFile } from "./providers/Provider.js"
-import { LinuxUpdater } from "./LinuxUpdater.js"
+import { InstallPlan, LinuxUpdater, runInstallPlan } from "./LinuxUpdater.js"
 
 export class PacmanUpdater extends LinuxUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
@@ -29,13 +29,12 @@ export class PacmanUpdater extends LinuxUpdater {
   }
 
   protected doInstall(options: InstallOptions): boolean {
-    const installerPath = this.installerPath
-    if (installerPath == null) {
-      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
+    const plan = this.planInstall(this.installerPath)
+    if (plan == null) {
       return false
     }
     try {
-      PacmanUpdater.installWithCommandRunner(installerPath, this.runCommandWithSudoIfNeeded.bind(this), this._logger)
+      runInstallPlan(plan, this.runCommandWithSudoIfNeeded.bind(this), this._logger)
     } catch (error: any) {
       this.dispatchError(error)
       return false
@@ -46,22 +45,38 @@ export class PacmanUpdater extends LinuxUpdater {
     return true
   }
 
-  static installWithCommandRunner(installerPath: string, commandRunner: (commandWithArgs: string[]) => void, logger: Logger) {
-    try {
-      commandRunner(["pacman", "-U", "--noconfirm", installerPath])
-    } catch (error: any) {
-      logger.warn(error.message ?? error)
-      logger.warn("pacman installation failed, attempting to update package database and retry")
-
-      try {
-        // Update package database (not a full upgrade, just sync)
-        commandRunner(["pacman", "-Sy", "--noconfirm"])
-        // Retry installation
-        commandRunner(["pacman", "-U", "--noconfirm", installerPath])
-      } catch (retryError: any) {
-        logger.error("Retry after pacman -Sy failed")
-        throw retryError
-      }
+  protected async doInstallAsync(options: InstallOptions): Promise<boolean> {
+    const plan = this.planInstall(this.asyncInstallerPath)
+    if (plan == null) {
+      return false
     }
+    try {
+      await this.runInstallPlanWithSudoIfNeededAsync(plan)
+    } catch (error: any) {
+      this.dispatchError(error)
+      return false
+    }
+    if (options.isForceRunAfter) {
+      this.app.relaunch()
+    }
+    return true
+  }
+
+  private planInstall(installerPath: string | null): InstallPlan | null {
+    if (installerPath == null) {
+      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
+      return null
+    }
+    return PacmanUpdater.planInstall(installerPath)
+  }
+
+  static installWithCommandRunner(installerPath: string, commandRunner: (commandWithArgs: string[]) => void, logger: Logger) {
+    runInstallPlan(PacmanUpdater.planInstall(installerPath), commandRunner, logger)
+  }
+
+  static planInstall(installerPath: string): InstallPlan {
+    const install = ["pacman", "-U", "--noconfirm", installerPath]
+    // if the install fails, refresh the package database (not a full upgrade, just sync) and retry once
+    return [[install], [["pacman", "-Sy", "--noconfirm"], install]]
   }
 }

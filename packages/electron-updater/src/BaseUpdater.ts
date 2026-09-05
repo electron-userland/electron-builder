@@ -37,16 +37,17 @@ export abstract class BaseUpdater extends AppUpdater {
     }
     this._logger.info(`Install on explicit quitAndInstall`)
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
-    const isInstalled = this.install(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
-    if (isInstalled) {
-      setImmediate(() => {
-        // this event is normally emitted when calling quitAndInstall, this emulates that
-        require("electron").autoUpdater.emit("before-quit-for-update")
-        this.app.quit()
-      })
-    } else {
-      this.quitAndInstallCalled = false
-    }
+    void this.installAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall).then(isInstalled => {
+      if (isInstalled) {
+        setImmediate(() => {
+          // this event is normally emitted when calling quitAndInstall, this emulates that
+          require("electron").autoUpdater.emit("before-quit-for-update")
+          this.app.quit()
+        })
+      } else {
+        this.quitAndInstallCalled = false
+      }
+    })
   }
 
   installPendingUpdateIfAvailable(): Promise<boolean> {
@@ -80,11 +81,18 @@ export abstract class BaseUpdater extends AppUpdater {
   // must be sync
   protected abstract doInstall(options: InstallOptions): boolean
 
-  // must be sync (because quit even handler is not async)
-  install(isSilent = false, isForceRunAfter = false): boolean {
+  /**
+   * Installs without blocking the main process. Defaults to the synchronous {@link doInstall}; targets whose
+   * install shows an elevation dialog override it.
+   */
+  protected doInstallAsync(options: InstallOptions): Promise<boolean> {
+    return Promise.resolve(this.doInstall(options))
+  }
+
+  private beginInstall(isSilent: boolean, isForceRunAfter: boolean): InstallOptions | null {
     if (this.quitAndInstallCalled) {
       this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
-      return false
+      return null
     }
 
     const downloadedUpdateHelper = this.downloadedUpdateHelper
@@ -92,19 +100,49 @@ export abstract class BaseUpdater extends AppUpdater {
     const downloadedFileInfo = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.downloadedFileInfo
     if (installerPath == null || downloadedFileInfo == null) {
       this.dispatchError(new Error("No update filepath provided, can't quit and install"))
-      return false
+      return null
     }
 
     // prevent calling several times
     this.quitAndInstallCalled = true
 
+    this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}`)
+    return {
+      isSilent,
+      isForceRunAfter,
+      isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
+    }
+  }
+
+  // must be sync (because quit even handler is not async)
+  install(isSilent = false, isForceRunAfter = false): boolean {
+    const options = this.beginInstall(isSilent, isForceRunAfter)
+    if (options == null) {
+      return false
+    }
+
     try {
-      this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}`)
-      return this.doInstall({
-        isSilent,
-        isForceRunAfter,
-        isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
-      })
+      return this.doInstall(options)
+    } catch (e: any) {
+      this.dispatchError(e)
+      return false
+    }
+  }
+
+  /**
+   * Same as {@link install}, without blocking the main process while the install runs. Targets whose install
+   * shows an elevation dialog need it: a synchronous spawn freezes the app for as long as the dialog is open,
+   * and the desktop reports it as not responding. Targets that do not override {@link doInstallAsync} keep
+   * installing synchronously, so their timing is unchanged.
+   */
+  async installAsync(isSilent = false, isForceRunAfter = false): Promise<boolean> {
+    const options = this.beginInstall(isSilent, isForceRunAfter)
+    if (options == null) {
+      return false
+    }
+
+    try {
+      return await this.doInstallAsync(options)
     } catch (e: any) {
       this.dispatchError(e)
       return false
@@ -194,7 +232,7 @@ export abstract class BaseUpdater extends AppUpdater {
     await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
     this.updateInfoAndProvider = updateInfoAndProvider
     this._logger.info(`Installing pending update ${latestInfo.version} on launch`)
-    const isInstalled = this.install(true, true)
+    const isInstalled = await this.installAsync(true, true)
     if (isInstalled) {
       setImmediate(() => this.app.quit())
     } else {
@@ -324,6 +362,39 @@ export abstract class BaseUpdater extends AppUpdater {
    */
   // https://github.com/electron-userland/electron-builder/issues/1129
   // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
+  /**
+   * {@link spawnSyncLog} without blocking the main process, awaited instead.
+   *
+   * `useShell` is opt-out: without a shell the arguments are passed as an argv array, so nothing has to be
+   * escaped and Node's DEP0190 warning about `shell: true` does not apply.
+   */
+  protected spawnAsyncLog(cmd: string, args: string[] = [], env = {}, useShell = true): Promise<string> {
+    this._logger.info(`Executing: ${cmd} with args: ${args}`)
+    const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
+    return new Promise<string>((resolve, reject) => {
+      const child = spawn(cmd, args, {
+        env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
+        shell: useShell,
+        stdio: ["ignore", "pipe", "pipe"],
+      })
+
+      let stdout = ""
+      let stderr = ""
+      child.stdout?.on("data", (chunk: Buffer) => (stdout += chunk.toString()))
+      child.stderr?.on("data", (chunk: Buffer) => (stderr += chunk.toString()))
+
+      child.on("error", error => reject(error))
+      child.on("close", status => {
+        if (status === 0) {
+          resolve(stdout.trim())
+          return
+        }
+        this._logger.error(stderr)
+        reject(new Error(`Command ${cmd} exited with code ${status}`))
+      })
+    })
+  }
+
   protected async spawnLog(cmd: string, args: string[] = [], env: any = undefined, stdio: StdioOptions = "ignore"): Promise<boolean> {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     return new Promise<boolean>((resolve, reject) => {
