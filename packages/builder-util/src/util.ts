@@ -512,11 +512,14 @@ export function getPlatformIconFileName(value: string | Nullish, isMac: boolean)
     return null
   }
 
-  if (!value.includes(".")) {
-    return `${value}.${isMac ? "icns" : "ico"}`
+  const targetExtension = isMac ? ".icns" : ".ico"
+  const sourceExtension = isMac ? ".ico" : ".icns"
+  const extension = path.extname(value)
+  if (extension === "") {
+    return value + targetExtension
   }
 
-  return value.replace(isMac ? ".ico" : ".icns", isMac ? ".icns" : ".ico")
+  return extension.toLowerCase() === sourceExtension ? value.slice(0, -extension.length) + targetExtension : value
 }
 
 export function isPullRequest() {
