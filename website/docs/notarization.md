@@ -85,7 +85,7 @@ This approach requires credentials to be pre-stored on the build machine and is 
 
 Notarization requires **Hardened Runtime** (`mac.sign.hardenedRuntime: true`). This restricts what your app process can do unless you explicitly declare entitlements.
 
-Electron requires at minimum:
+Modern Electron needs exactly one exception, and electron-builder grants it by default — **no entitlements file is required to notarize a stock Electron app**:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -94,23 +94,23 @@ Electron requires at minimum:
 <dict>
   <key>com.apple.security.cs.allow-jit</key>
   <true/>
-  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-  <true/>
 </dict>
 </plist>
 ```
 
-Save this as `build/entitlements.mac.plist`.
+Write that to `build/entitlements.mac.plist` only if you need to add capabilities of your own; your file replaces the default rather than extending it, so keep `com.apple.security.cs.allow-jit` in it.
 
-For the inherit entitlements file (`build/entitlements.mac.inherit.plist`), use the same content — it applies to child processes (helper processes, renderer, etc.).
+Do **not** add `com.apple.security.cs.allow-unsigned-executable-memory` out of habit. It was needed by Electron versions from the 2019 era, is deprecated by Apple on macOS 14+, and weakens the Hardened Runtime for no benefit on current Electron.
+
+Leave `build/entitlements.mac.inherit.plist` absent unless you truly need it. Without it, each nested binary is signed with [`@electron/osx-sign`](https://github.com/electron/osx-sign)'s per-file defaults, which mirror Chromium's own entitlements — renderer and GPU helpers get only `allow-jit`, and the looser exceptions go to the plugin helper alone. Supplying the file applies one plist to every nested binary instead.
 
 ### Common Entitlements
 
 | Entitlement | When Needed |
 |---|---|
-| `com.apple.security.cs.allow-jit` | Required by Electron (V8 JIT) |
-| `com.apple.security.cs.allow-unsigned-executable-memory` | Required by some Electron versions |
-| `com.apple.security.cs.disable-library-validation` | When loading third-party frameworks or plugins |
+| `com.apple.security.cs.allow-jit` | Required by Electron (V8 JIT) — granted by default |
+| `com.apple.security.cs.allow-unsigned-executable-memory` | Legacy Electron only — deprecated on macOS 14+, not needed by modern V8 |
+| `com.apple.security.cs.disable-library-validation` | Loading frameworks/native modules signed by another team, or unsigned |
 | `com.apple.security.network.client` | Outbound network access |
 | `com.apple.security.network.server` | Incoming connections |
 | `com.apple.security.files.user-selected.read-write` | Read/write files the user selects |

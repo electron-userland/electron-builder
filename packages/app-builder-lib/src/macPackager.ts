@@ -489,6 +489,12 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const signOptions = await this.helper.buildSignOptions(appPath, identity, signOpts, keychainFile, arch, targetPlatform)
     await this.doSign(signOptions, config, identity)
 
+    // now that everything is signed, flag binaries that still carry a foreign (or missing) signature and would
+    // fail library validation at launch — the case the old blanket entitlements default used to mask
+    if (!hasCustomSign) {
+      await this.helper.warnAboutForeignSignedBinaries(appPath, identity, targetPlatform, signOpts)
+    }
+
     // Handle notarization for non-MAS builds
     if (!isMas) {
       await this.helper.notarizeIfProvided(appPath)

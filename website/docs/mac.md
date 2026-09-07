@@ -111,7 +111,24 @@ If you disable code signing, you should also disable Hardened Runtime (`mac.sign
 
 ## Entitlements
 
-Entitlements are required when using Hardened Runtime and for notarization. Create `build/entitlements.mac.plist`:
+**You usually do not need to write an entitlements file at all.** The defaults are already minimal and correct for a stock Electron app:
+
+| File being signed | Default entitlements |
+|---|---|
+| The app bundle | `com.apple.security.cs.allow-jit` |
+| Renderer / GPU helpers | `com.apple.security.cs.allow-jit` |
+| Plugin helper | `allow-jit`, `allow-unsigned-executable-memory`, `disable-library-validation` |
+| Frameworks, native modules, unpacked binaries | inherited from the app |
+
+The nested binaries are handed to [`@electron/osx-sign`](https://github.com/electron/osx-sign), whose per-file defaults mirror Chromium's own entitlements — so the looser exceptions are granted only to the plugin helper that actually needs them, exactly as Chrome ships them.
+
+:::warning[Changed in v27]
+Earlier versions applied a single entitlements file to the app **and** every nested binary, granting `com.apple.security.cs.allow-unsigned-executable-memory` and `com.apple.security.cs.disable-library-validation` to every process. Modern Electron does not need either in the main process, and both materially weaken the Hardened Runtime, so they are no longer granted by default. If your app depends on them, add them to your own `build/entitlements.mac.plist` — see [Loading third-party or unsigned binaries](#loading-third-party-or-unsigned-binaries) below.
+:::
+
+### Supplying your own entitlements
+
+Create `build/entitlements.mac.plist` to override the app-level defaults:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -121,30 +138,24 @@ Entitlements are required when using Hardened Runtime and for notarization. Crea
   <!-- Required for JIT compilation (e.g., V8 in Electron) -->
   <key>com.apple.security.cs.allow-jit</key>
   <true/>
-  <!-- Required for unsigned executable memory (some Electron internals) -->
-  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-  <true/>
-  <!-- Allow DYLD environment variables (debugging) — REMOVE for production -->
-  <!-- <key>com.apple.security.cs.allow-dyld-environment-variables</key> -->
+  <!-- Add only the capabilities your app actually uses, e.g.: -->
+  <!-- <key>com.apple.security.device.camera</key> -->
   <!-- <true/> -->
 </dict>
 </plist>
 ```
 
-And `build/entitlements.mac.inherit.plist` for helper processes:
+Your file **replaces** the default rather than extending it, so remember to keep `com.apple.security.cs.allow-jit`.
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>com.apple.security.cs.allow-jit</key>
-  <true/>
-  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-  <true/>
-</dict>
-</plist>
-```
+Add `build/entitlements.mac.inherit.plist` only if you need to override what nested binaries get. Doing so applies one plist to every nested binary and gives up the per-file defaults described above, so prefer leaving it absent.
+
+### Loading third-party or unsigned binaries
+
+`com.apple.security.cs.disable-library-validation` turns off macOS library validation for the whole process. Grant it only when your app loads a framework, plugin, or native module signed by a **different** Team ID (or not signed at all) — for example a sidecar binary downloaded at runtime, or one excluded from signing via `mac.sign.ignore`.
+
+After signing, electron-builder inspects the Mach-O binaries in `app.asar.unpacked` and warns if any of them carry a foreign or missing signature while the entitlement is absent, so you find out at build time rather than from a launch crash.
+
+Ad-hoc builds (`mac.sign.identity: "-"`) are handled automatically: an ad-hoc signature carries no Team ID, so electron-builder applies a built-in ad-hoc entitlements file that includes `disable-library-validation` for the app and its nested binaries.
 
 electron-builder auto-detects `build/entitlements.mac.plist` and `build/entitlements.mac.inherit.plist` when present. To point at custom paths, set them under `mac.sign`:
 
@@ -159,8 +170,9 @@ Common entitlements for Electron apps:
 
 | Entitlement | When Needed |
 |---|---|
-| `com.apple.security.cs.allow-jit` | Always — V8 requires JIT |
-| `com.apple.security.cs.allow-unsigned-executable-memory` | Some Electron internals |
+| `com.apple.security.cs.allow-jit` | Always — V8 requires JIT (granted by default) |
+| `com.apple.security.cs.allow-unsigned-executable-memory` | Legacy Electron only — deprecated by Apple on macOS 14+ and not needed by modern V8 |
+| `com.apple.security.cs.disable-library-validation` | Loading frameworks/native modules signed by another team, or unsigned |
 | `com.apple.security.network.client` | Outgoing network connections (sandboxed apps) |
 | `com.apple.security.network.server` | Listening for connections (sandboxed apps) |
 | `com.apple.security.files.user-selected.read-write` | Open/save panels (sandboxed apps) |

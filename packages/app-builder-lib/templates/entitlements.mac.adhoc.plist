@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <!-- Default entitlements for ad-hoc (`identity: "-"`) signing with the hardened runtime enabled.
+         Ad-hoc signatures carry no Team ID, so library validation rejects every framework and native module in
+         the bundle and the app fails to launch. Disabling it is required for such builds to run at all — which
+         is why this template exists separately from `entitlements.mac.plist` and is never used for builds
+         signed with a real identity. -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+  </dict>
+</plist>
