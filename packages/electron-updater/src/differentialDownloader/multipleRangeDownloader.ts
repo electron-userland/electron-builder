@@ -93,17 +93,40 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
 
   const requestOptions = differentialDownloader.createRequestOptions()
   requestOptions.headers!.Range = ranges.substring(0, ranges.length - 2)
+  let responseEndTimer: NodeJS.Timeout | undefined
+  let isSettled = false
+  const complete = () => {
+    if (isSettled) {
+      return
+    }
+    isSettled = true
+    if (responseEndTimer != null) {
+      clearTimeout(responseEndTimer)
+    }
+    resolve()
+  }
+  const fail = (error: Error) => {
+    if (isSettled) {
+      return
+    }
+    isSettled = true
+    if (responseEndTimer != null) {
+      clearTimeout(responseEndTimer)
+    }
+    reject(error)
+  }
   const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
-    response.on("error", reject)
+    response.on("error", fail)
+    response.on("aborted", () => fail(new Error("response has been aborted by the server")))
 
-    if (!checkIsRangesSupported(response, reject)) {
+    if (!checkIsRangesSupported(response, fail)) {
       return
     }
 
     const contentType = safeGetHeader(response, "content-type")
     const m = /^multipart\/.+?\s*;\s*boundary=(?:"([^"]+)"|([^\s";]+))\s*$/i.exec(contentType)
     if (m == null) {
-      reject(new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`))
+      fail(new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`))
       return
     }
 
@@ -113,22 +136,25 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       partIndexToTaskIndex,
       m[1] || m[2],
       partIndexToLength,
-      resolve,
+      complete,
       grandTotalBytes,
       differentialDownloader.options.onProgress,
       differentialDownloader.logger
     )
-    dicer.on("error", reject)
+    dicer.on("error", fail)
     response.pipe(dicer)
 
     response.on("end", () => {
-      setTimeout(() => {
+      if (isSettled) {
+        return
+      }
+      responseEndTimer = setTimeout(() => {
         request.abort()
-        reject(new Error("Response ends without calling any handlers"))
+        fail(new Error("Response ends without calling any handlers"))
       }, 10000)
     })
   })
-  differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
+  differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, fail)
   request.end()
 }
 
