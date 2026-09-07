@@ -267,6 +267,26 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
       const { result } = await compute({ squirrelWindows: { remoteToken: null } })
       expect(result.remoteToken).toBe("env-github")
     })
+
+    test.each([
+      ["empty string", ""],
+      ["whitespace", "  "],
+    ])("%s is treated as unset and falls back to the environment", async (_label, remoteToken) => {
+      process.env.GH_TOKEN = "env-gh"
+      process.env.GITHUB_TOKEN = "env-github"
+      const { result } = await compute({ squirrelWindows: { remoteToken } })
+      expect(result.remoteToken).toBe("env-gh")
+    })
+
+    test("empty string and no token in the environment → unset", async () => {
+      const { result } = await compute({ squirrelWindows: { remoteToken: "" } })
+      expect(result.remoteToken).toBeUndefined()
+    })
+
+    test("surrounding whitespace is trimmed", async () => {
+      const { result } = await compute({ squirrelWindows: { remoteToken: "  explicit-token \n" } })
+      expect(result.remoteToken).toBe("explicit-token")
+    })
   })
 
   describe("iconUrl", () => {
@@ -354,6 +374,12 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
       const { result } = await compute({ squirrelWindows: { artifactName: "Squirrel-${version}.${ext}", msi: true } })
       expect(result.setupExe).toBe("Squirrel-1.1.0.exe")
       expect(result.setupMsi).toBe("Squirrel-1.1.0.msi")
+    })
+
+    test('".exe" inside the artifact name is kept; only the trailing extension becomes .msi', async () => {
+      const { result } = await compute({ squirrelWindows: { artifactName: "my.exe.app-Setup.${ext}", msi: true } })
+      expect(result.setupExe).toBe("my.exe.app-Setup.exe")
+      expect(result.setupMsi).toBe("my.exe.app-Setup.msi")
     })
   })
 

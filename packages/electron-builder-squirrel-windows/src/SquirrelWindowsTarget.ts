@@ -320,13 +320,20 @@ export default class SquirrelWindowsTarget extends Target {
       msi: this.options.msi,
       fixUpPaths: true,
       setupExe: setupFile,
-      setupMsi: this.options.msi ? setupFile.replace(".exe", ".msi") : undefined,
+      setupMsi: this.options.msi ? setupFile.replace(/\.exe$/i, ".msi") : undefined,
       loadingGif,
       remoteReleases,
-      remoteToken: this.options.remoteToken ?? process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN,
+      remoteToken: firstNonBlank(this.options.remoteToken, process.env.GH_TOKEN, process.env.GITHUB_TOKEN),
       createTempDir: opts => this.packager.tempDirManager.createTempDir(opts),
     }
   }
+}
+
+// `remoteToken: ""` (or whitespace) in the config counts as unset: fall through to the environment
+// instead of shadowing GH_TOKEN/GITHUB_TOKEN with a value SyncReleases would drop anyway.
+function firstNonBlank(...values: Array<string | null | undefined>): string | undefined {
+  const value = values.find(it => !isEmptyOrSpaces(it))
+  return value == null ? undefined : value.trim()
 }
 
 function normalizeSquirrelOptions(options: any) {
