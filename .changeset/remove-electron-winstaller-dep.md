@@ -1,5 +1,6 @@
 ---
 "electron-builder-squirrel-windows": major
+"app-builder-lib": major
 ---
 
 feat(squirrel-windows)!: inline installer logic; remove electron-winstaller dependency and its vendored binaries
