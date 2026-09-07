@@ -9,6 +9,7 @@ vi.mock("app-builder-lib/src/util/electronGet", async importOriginal => {
 })
 
 import { downloadBuilderToolset } from "app-builder-lib/internal"
+import { InvalidConfigurationError } from "builder-util"
 import { getSquirrelToolsetPath, squirrelWindowsChecksums } from "electron-builder-squirrel-windows/src/toolset"
 import { mkdtemp, rm } from "fs/promises"
 import { tmpdir } from "os"
@@ -62,15 +63,13 @@ describe("getSquirrelToolsetPath", () => {
     expect(downloadBuilderToolset).toHaveBeenCalledWith(pinnedDescriptor)
   })
 
-  test("an unknown pinned version is forwarded to the downloader without a checksum", async () => {
-    // There is no local allow-list: resolution only maps the sentinel, so an unknown version reaches
-    // downloadBuilderToolset (which then fails on the missing release / disabled checksum).
-    await getSquirrelToolsetPath("9.9.9" as any, tmpDir)
-    expect(downloadBuilderToolset).toHaveBeenCalledWith({
-      releaseName: "squirrel.windows@9.9.9",
-      filenameWithExt: "squirrel.windows-2.0.1-patched.zip",
-      checksums: undefined,
-    })
+  test("an unknown pinned version is rejected before any download", async () => {
+    // Without a checksum entry the downloader would run with integrity verification disabled, so an
+    // unknown version (only reachable through a programmatic / unvalidated config) must fail fast.
+    const promise = getSquirrelToolsetPath("9.9.9" as any, tmpDir)
+    await expect(promise).rejects.toBeInstanceOf(InvalidConfigurationError)
+    await expect(promise).rejects.toThrow(/Unknown toolsets\.squirrel version "9\.9\.9"\. Known versions: 1\.1\.1 \(or "latest"\)/)
+    expect(downloadBuilderToolset).not.toHaveBeenCalled()
   })
 
   test("download failures propagate", async () => {

@@ -1,5 +1,6 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { downloadBuilderToolset, getCustomToolsetPath, resolveToolsetVersion } from "app-builder-lib/internal"
+import { InvalidConfigurationError } from "builder-util"
 
 // Newest squirrel.windows bundle — selected when `toolsets.squirrel` is unset / null / "latest".
 const SQUIRREL_LATEST = "1.1.1"
@@ -24,10 +25,20 @@ export async function getSquirrelToolsetPath(toolset: ToolsetConfig["squirrel"],
     return getCustomToolsetPath(toolset, resourcesDir)
   }
   const version = resolveToolsetVersion(toolset, SQUIRREL_LATEST)
+  // The `toolsets.squirrel` type and scheme.json only admit known versions, but a programmatic config
+  // bypasses both. Never forward an unknown version: without a checksum entry the downloader would run
+  // with integrity verification disabled.
+  const checksums = (squirrelWindowsChecksums as Partial<Record<string, Record<string, string>>>)[version]
+  if (checksums == null) {
+    throw new InvalidConfigurationError(
+      `Unknown toolsets.squirrel version "${version}". Known versions: ${Object.keys(squirrelWindowsChecksums).join(", ")} (or "latest"). ` +
+        `To use a custom bundle, set toolsets.squirrel to a ToolsetCustom object (url + checksum) instead.`
+    )
+  }
   return downloadBuilderToolset({
     releaseName: `squirrel.windows@${version}`,
     filenameWithExt: "squirrel.windows-2.0.1-patched.zip",
-    checksums: squirrelWindowsChecksums[version],
+    checksums,
   })
 }
 
