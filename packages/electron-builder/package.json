@@ -18,6 +18,7 @@
   },
   "files": [
     "dist",
+    "assert-node-version.js",
     "cli.js",
     "install-app-deps.js"
   ],
