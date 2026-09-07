@@ -1,9 +1,21 @@
 import { PublishManager } from "app-builder-lib"
 import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
 import { AsarIntegrity, computeArchToTargetNamesMap, getLinuxToolsMacToolset, parsePlistFile, PlistObject } from "app-builder-lib/internal"
-import { addValue, copyDir, exec, executeFinally, exists, FileCopier, log, retry, USE_HARD_LINKS, walk } from "builder-util"
+import { addValue, copyDir, exec, executeFinally, exists, FileCopier, isEmptyOrSpaces, log, retry, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, deepAssign, UpdateFileInfo } from "builder-util-runtime"
-import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
+import {
+  Arch,
+  ArtifactCreated,
+  Configuration,
+  DIR_TARGET,
+  getArchSuffix,
+  MacOsTargetName,
+  Packager,
+  PackagerOptions,
+  Platform,
+  SquirrelWindowsOptions,
+  Target,
+} from "electron-builder"
 import { convertVersion } from "electron-builder-squirrel-windows/src/windowsInstaller"
 import { PublishPolicy } from "electron-publish"
 import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
@@ -670,28 +682,40 @@ async function checkMacResult(expect: ExpectStatic, packager: Packager, packager
 }
 
 async function checkWindowsResult(expect: ExpectStatic, packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<string, Target>) {
-  function checkSquirrelResult() {
+  async function checkSquirrelResult() {
     const appInfo = packager.appInfo
-    const { zip } = checkResult(expect, artifacts, "-full.nupkg")
+    const { zip, allFiles } = checkResult(expect, artifacts, "-full.nupkg")
 
-    if (checkOptions == null) {
-      const expectedSpec = zip.readAsText("TestApp.nuspec").replace(/\r\n/g, "\n")
-      // console.log(expectedSpec)
-      expect(expectedSpec).toEqual(`<?xml version="1.0"?>
-<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
-  <metadata>
-    <id>TestApp</id>
-    <version>${convertVersion(appInfo.version)}</version>
-    <title>${appInfo.productName}</title>
-    <authors>Foo Bar</authors>
-    <owners>Foo Bar</owners>
-    <iconUrl>https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico</iconUrl>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Test Application (test quite “ #378)</description>
-    <copyright>Copyright © ${new Date().getFullYear()} Foo Bar</copyright>
-    <projectUrl>http://foo.example.com</projectUrl>
-  </metadata>
-</package>`)
+    // nuget.exe re-serializes the manifest when it packs (own schema namespace, element order, no <files>
+    // block), so the packed .nuspec is not byte-comparable with the rendered template. Assert the metadata
+    // fields that SquirrelWindowsTarget derives from the config instead.
+    const nuspecEntry = allFiles.find(it => it.endsWith(".nuspec"))
+    expect(nuspecEntry).toBeDefined()
+    const nuspec = zip.readAsText(nuspecEntry!).replace(/\r\n/g, "\n")
+
+    // XmlWriter escapes only these in text nodes (quotes are written verbatim)
+    const xmlText = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    const squirrelOptions: SquirrelWindowsOptions = packager.config.squirrelWindows ?? {}
+    const expectedId = squirrelOptions.useAppIdAsId ? appInfo.id : squirrelOptions.name || appInfo.name
+    const expectedAuthors = appInfo.companyName || ""
+    const expectedDescription = isEmptyOrSpaces(appInfo.description) ? squirrelOptions.name || appInfo.productName : appInfo.description
+    const expectedProjectUrl = await appInfo.computePackageUrl()
+
+    expect(nuspecEntry).toBe(`${expectedId}.nuspec`)
+    expect(nuspec).toContain(`<id>${xmlText(expectedId)}</id>`)
+    expect(nuspec).toContain(`<version>${convertVersion(appInfo.version)}</version>`)
+    expect(nuspec).toContain(`<title>${xmlText(appInfo.productName)}</title>`)
+    expect(nuspec).toContain(`<authors>${xmlText(expectedAuthors)}</authors>`)
+    expect(nuspec).toContain(`<owners>${xmlText(expectedAuthors)}</owners>`)
+    if (squirrelOptions.iconUrl != null) {
+      expect(nuspec).toContain(`<iconUrl>${xmlText(squirrelOptions.iconUrl)}</iconUrl>`)
+    }
+    expect(nuspec).toContain(`<description>${xmlText(expectedDescription)}</description>`)
+    expect(nuspec).toContain(`<copyright>${xmlText(appInfo.copyright)}</copyright>`)
+    if (expectedProjectUrl != null) {
+      expect(nuspec).toContain(`<projectUrl>${xmlText(expectedProjectUrl)}</projectUrl>`)
+    } else {
+      expect(nuspec).not.toContain("<projectUrl>")
     }
   }
 
