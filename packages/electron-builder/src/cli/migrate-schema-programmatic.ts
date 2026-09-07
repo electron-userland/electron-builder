@@ -1,6 +1,6 @@
 import { createRequire } from "node:module"
 import * as path from "path"
-import { AZURE_KNOWN_FIELDS, ELECTRON_DOWNLOAD_DROPPED, MAC_SIGN_FIELDS, MAC_UNIVERSAL_FIELDS, NSIS_WEB_ADVISORY, SNAP_BASES } from "./migrate-schema.js"
+import { AZURE_KNOWN_FIELDS, ELECTRON_DOWNLOAD_DROPPED, MAC_SIGN_FIELDS, MAC_SIGN_REMOVED_FIELDS, MAC_UNIVERSAL_FIELDS, NSIS_WEB_ADVISORY, SNAP_BASES } from "./migrate-schema.js"
 import type { MigrationChange } from "./migrate-schema.js"
 
 const _require = createRequire(import.meta.url)
@@ -826,6 +826,19 @@ class ConfigCodemod {
 
   private ruleMacSigning(platform: any, name: string): void {
     const ts = this.ts
+
+    // Removed outright, not moved: ElectronSignOptions omits these and the schema rejects them.
+    for (const field of MAC_SIGN_REMOVED_FIELDS) {
+      const prop = this.getProp(platform, field)
+      if (prop != null) {
+        this.removeProp(prop)
+        this.changes.push({
+          key: `${name}.${field}`,
+          description: `removed ${name}.${field} (@electron/osx-sign 2.x dropped the spctl --assess step; there is no ${name}.sign.${field})`,
+        })
+      }
+    }
+
     const present = MAC_SIGN_FIELDS.filter(f => this.getProp(platform, f) != null)
     const signIgnore = this.getProp(platform, "signIgnore")
     const hasSignIgnore = signIgnore != null

@@ -65,6 +65,7 @@ export {
   formatLegacyOptionMessage,
 } from "./util/config/legacyOptions.js"
 export type { LegacyConfigOption, ResolvedLegacyConfigOption } from "./util/config/legacyOptions.js"
+export { checkLegacyConfiguration } from "./util/config/legacyConfigGuard.js"
 export { validateSchema } from "./util/config/schemaValidator.js"
 export {
   ArtifactDownloadOptions,
