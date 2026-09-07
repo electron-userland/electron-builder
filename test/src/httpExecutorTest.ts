@@ -885,7 +885,7 @@ describe("HttpExecutor redirect limit", () => {
     await expect(executor.doApiRequest({ protocol: "https:", hostname: "example.com", path: "/start" }, new CancellationToken(), request => request.end())).rejects.toThrow(
       /Too many redirects/
     )
-    // guard is `redirectCount > maxRedirects`, allowing one extra hop before rejecting
-    expect(executor.requestCount).toBe(executor["maxRedirects"] + 2)
+    // Same limit as doDownload: maxRedirects recursions + the initial request
+    expect(executor.requestCount).toBe(executor["maxRedirects"] + 1)
   })
 })

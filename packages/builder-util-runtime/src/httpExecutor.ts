@@ -221,7 +221,7 @@ Please double check that your authentication token is correct. Due to security r
     const shouldRedirect = code >= 300 && code < 400
     const redirectUrl = safeGetHeader(response, "location")
     if (shouldRedirect && redirectUrl != null) {
-      if (redirectCount > this.maxRedirects) {
+      if (redirectCount >= this.maxRedirects) {
         reject(this.createMaxRedirectError())
         return
       }
