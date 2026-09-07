@@ -32,6 +32,7 @@ import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packag
 import { PlatformPackager } from "./platformPackager.js"
 import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
+import { assertNoRemovedEnvVars } from "./util/flags.js"
 import { expandMacro } from "./util/macroExpander.js"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
 import { getRepositoryInfo } from "./util/repositoryInfo.js"
@@ -356,6 +357,10 @@ export class Packager {
 
   // external caller of this method always uses isTwoPackageJsonProjectLayoutUsed=false and appDir=projectDir, no way (and need) to use another values
   async build(repositoryInfo?: SourceRepositoryInfo): Promise<BuildResult> {
+    // Removed env vars are checked before anything else: nothing validates process.env, so a CI
+    // image still exporting one silently gets a different toolchain than it asked for.
+    assertNoRemovedEnvVars()
+
     await this.validateConfig()
 
     if (repositoryInfo != null) {

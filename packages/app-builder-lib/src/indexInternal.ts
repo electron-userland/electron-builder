@@ -66,6 +66,7 @@ export {
 } from "./util/config/legacyOptions.js"
 export type { LegacyConfigOption, ResolvedLegacyConfigOption } from "./util/config/legacyOptions.js"
 export { checkLegacyConfiguration } from "./util/config/legacyConfigGuard.js"
+export { assertNoRemovedEnvVars, checkRemovedEnvVars, resetRemovedEnvVarsCheck } from "./util/flags.js"
 export { validateSchema } from "./util/config/schemaValidator.js"
 export {
   ArtifactDownloadOptions,
