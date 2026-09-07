@@ -143,3 +143,20 @@ describe("checkLegacyConfiguration — structural checks", () => {
     expect(expectRejected({ win: { publish: { provider: "github", owner: "o", repo: "r", vPrefixedTagName: false } } })).toContain("win.publish.vPrefixedTagName")
   })
 })
+
+describe("PackagerOptions — removed programmatic fields", () => {
+  // v26 accepted these as siblings of `config`. `build()` rejected them with a bare
+  // `Unknown option "devMetadata"`, and a directly constructed Packager ignored them entirely.
+  test.each([
+    ["devMetadata", "config"],
+    ["extraMetadata", "config.extraMetadata"],
+  ])("new Packager({ %s }) names the replacement", async (key, replacement) => {
+    const { Packager } = await import("app-builder-lib")
+    expect(() => new Packager({ projectDir: process.cwd(), [key]: { foo: 1 } } as any)).toThrow(new RegExp(replacement.replace(".", "\\.")))
+  })
+
+  test("a valid v27 options object is accepted", async () => {
+    const { Packager } = await import("app-builder-lib")
+    expect(() => new Packager({ projectDir: process.cwd(), config: { extraMetadata: { foo: 1 } } } as any)).not.toThrow()
+  })
+})
