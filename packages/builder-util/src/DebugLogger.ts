@@ -15,25 +15,20 @@ export class DebugLogger {
 
     const dataPath = key.split(".")
     let o = this.data
-    let lastName: string | null = null
+    const lastName = dataPath.pop()!
     for (const p of dataPath) {
-      if (p === dataPath[dataPath.length - 1]) {
-        lastName = p
-        break
-      } else {
-        if (!o.has(p)) {
-          o.set(p, new Map<string, any>())
-        } else if (typeof o.get(p) === "string") {
-          o.set(p, [o.get(p)])
-        }
-        o = o.get(p)
+      if (!o.has(p)) {
+        o.set(p, new Map<string, any>())
+      } else if (typeof o.get(p) === "string") {
+        o.set(p, [o.get(p)])
       }
+      o = o.get(p)
     }
 
-    if (Array.isArray(o.get(lastName!))) {
-      o.set(lastName!, [...o.get(lastName!), value])
+    if (Array.isArray(o.get(lastName))) {
+      o.set(lastName, [...o.get(lastName), value])
     } else {
-      o.set(lastName!, value)
+      o.set(lastName, value)
     }
   }
 
