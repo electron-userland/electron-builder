@@ -20,6 +20,7 @@ import _debug from "debug"
 import * as path from "path"
 import { Target } from "../../../core.js"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../../options/CommonWindowsInstallerConfiguration.js"
+import { FileAssociation } from "../../../options/FileAssociation.js"
 import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../../platformPackager.js"
 import { hashFile } from "../../../util/hash.js"
 import { isMacOsCatalina } from "../../../util/mac/macosVersion.js"
@@ -747,6 +748,41 @@ export class NsisTarget extends Target {
     return scriptGenerator.build()
   }
 
+  /**
+   * v27 registers each file association under a generated ProgID instead of the association name or
+   * extension verbatim, so the old value could collide with an unrelated app. Nothing needs to change
+   * in config — but a custom NSIS script that hard-codes the old ProgID to add shell verbs or extra
+   * registry entries now writes them under a key nothing reads.
+   *
+   * Only warns when a custom script is actually supplied; the generated ProgID is invisible otherwise.
+   */
+  private async warnAboutProgIdFormatChange(fileAssociations: Array<FileAssociation>, progIdMaker: ProgIdMaker): Promise<void> {
+    if (this.progIdWarningEmitted) {
+      return
+    }
+    const packager = this.packager
+    const hasCustomScript = (await packager.getResource(this.options.include, "installer.nsh")) != null || (await packager.getResource(this.options.script, "installer.nsi")) != null
+    if (!hasCustomScript) {
+      return
+    }
+    this.progIdWarningEmitted = true
+    const examples = fileAssociations
+      .slice(0, 3)
+      .map(item => {
+        const ext = asArray(item.ext).map(normalizeExt)[0]
+        return `${item.name || ext} -> ${progIdMaker.progId(item.name || ext)}`
+      })
+      .join(", ")
+    log.warn(
+      { progIds: examples, solution: "update any registry keys, shell verbs, or external tooling that references the old ProgID" },
+      "NSIS file associations now register a generated ProgID instead of the association name or extension. " +
+        "You ship a custom NSIS script (nsis.include / nsis.script), which may reference the old value. " +
+        "See https://www.electron.build/docs/migration/v27-breaking-changes#nsis-file-association-progid-format-changed"
+    )
+  }
+
+  private progIdWarningEmitted = false
+
   private async computeFinalScript(originalScript: string, isInstaller: boolean, archs: Map<Arch, string>): Promise<string> {
     const packager = this.packager
     const options = this.options
@@ -777,6 +813,7 @@ export class NsisTarget extends Target {
     if (fileAssociations.length !== 0) {
       scriptGenerator.include(path.join(path.join(nsisTemplatesDir, "include"), "FileAssociation.nsh"))
       const progIdMaker = new ProgIdMaker(this.appGuid, packager.appInfo.productFilename)
+      await this.warnAboutProgIdFormatChange(fileAssociations, progIdMaker)
       if (isInstaller) {
         const registerFileAssociationsScript = new NsisScriptGenerator()
         for (const item of fileAssociations) {

@@ -54,14 +54,37 @@ function computeChannelNames(packager: PlatformPackager<any>, publishConfig: Pub
 
   switch (baseChannel) {
     case "beta":
-      return [currentChannel, `alpha${suffix}`]
+      return warnAboutSuffixedChannelExpansion(currentChannel, suffix, [currentChannel, `alpha${suffix}`])
 
     case "latest":
-      return [currentChannel, `alpha${suffix}`, `beta${suffix}`]
+      return warnAboutSuffixedChannelExpansion(currentChannel, suffix, [currentChannel, `alpha${suffix}`, `beta${suffix}`])
 
     default:
       return [currentChannel]
   }
+}
+
+/** Emitted once per suffixed channel — computeChannelNames runs per artifact. */
+const suffixedChannelWarnings = new Set<string>()
+
+/**
+ * v26 only expanded a channel to its lower channels when the name was exactly alpha/beta/latest, so a
+ * suffixed channel (the per-arch `${channel}-${arch}` pattern) published a single file. v27 reads the
+ * base channel off the front and reattaches the suffix, which means a `latest-x64` publish now
+ * overwrites `beta-x64.yml` in the same bucket — changing what live beta-x64 users are offered.
+ */
+function warnAboutSuffixedChannelExpansion(currentChannel: string, suffix: string, channels: Array<string>): Array<string> {
+  if (suffix.length === 0 || suffixedChannelWarnings.has(currentChannel)) {
+    return channels
+  }
+  suffixedChannelWarnings.add(currentChannel)
+  log.warn(
+    { channel: currentChannel, writes: channels.map(it => `${it}.yml`).join(", "), solution: "set generateUpdatesFilesForAllChannels: false to keep publishing a single file per suffixed channel" },
+    `the suffixed channel "${currentChannel}" now expands to its lower channels — electron-builder <= 26 wrote only one file for suffixed channels. ` +
+      "A later publish on a higher channel will overwrite these in the same bucket, changing what existing pre-release users are offered. " +
+      "See https://www.electron.build/docs/migration/v27-breaking-changes#suffixed-update-channels-now-expand-to-lower-channels"
+  )
+  return channels
 }
 
 function getUpdateInfoFileName(channel: string, packager: PlatformPackager<any>, arch: Arch | null): string {
@@ -104,6 +127,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const needsLegacyPathSha512 = semver.intersects(electronUpdaterCompatibility, "<2.16.0")
   // electron-updater < 2.0.0 on macOS reads the legacy <channel>-mac.json instead of <channel>-mac.yml
   const needsLegacyMacJsonCompatibility = semver.intersects(electronUpdaterCompatibility, "<2.0.0")
+  warnAboutLegacyUpdaterCompatibility(electronUpdaterCompatibility, needsLegacyPathSha512)
   for (const publishConfiguration of publishConfigs) {
     let dir = outDir
     if (publishConfigs.length > 1 && publishConfiguration !== publishConfigs[0]) {
@@ -279,4 +303,26 @@ async function writeOldMacInfo(
       publishConfig,
     })
   }
+}
+
+/** Emitted once per process — createUpdateInfoTasks runs per artifact. */
+let legacyCompatibilityWarningEmitted = false
+
+/**
+ * The default `electronUpdaterCompatibility` moved to ">=2.16", which is what stops the deprecated
+ * top-level path/sha512 descriptor from being written. A range pinned below that keeps emitting it —
+ * along with the SHA-256 `sha2` checksum on Windows, which v28 will reject outright. Nothing said so.
+ */
+function warnAboutLegacyUpdaterCompatibility(electronUpdaterCompatibility: string, needsLegacyPathSha512: boolean): void {
+  if (!needsLegacyPathSha512 || legacyCompatibilityWarningEmitted) {
+    return
+  }
+  legacyCompatibilityWarningEmitted = true
+  log.warn(
+    { electronUpdaterCompatibility, solution: 'drop the pin (the default is ">=2.16") unless you still ship apps embedding electron-updater 1.x-2.15' },
+    "electronUpdaterCompatibility includes electron-updater versions below 2.16.0, so the deprecated top-level path/sha512 descriptor is still written to latest*.yml " +
+      "(and, on Windows, the legacy SHA-256 sha2 checksum). Metadata validated only by sha2 is deprecated and v28 will reject it. " +
+      "Every electron-updater since 2.16.0 reads files[] and ignores these fields. " +
+      "See https://www.electron.build/docs/migration/v27-breaking-changes#latestyml-drops-legacy-top-level-pathsha512"
+  )
 }
