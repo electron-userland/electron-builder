@@ -92,6 +92,30 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   autoInstallEvent: AutoInstallEvent = "onQuit"
 
   /**
+   * @deprecated Removed in v27 — use {@link autoInstallEvent}. This accessor is a compatibility shim
+   * and will be deleted in v28.
+   *
+   * A boolean cannot express the three install timings, so `autoInstallOnAppQuit` was replaced rather
+   * than extended. Without this shim the property assignment silently no-ops on a plain object: an app
+   * that set `autoInstallOnAppQuit = false` to opt *out* of install-on-quit would keep the `"onQuit"`
+   * default and install on quit anyway — the exact opposite of what it asked for.
+   */
+  get autoInstallOnAppQuit(): boolean {
+    return this.autoInstallEvent === "onQuit"
+  }
+
+  set autoInstallOnAppQuit(value: boolean) {
+    const mapped: AutoInstallEvent = value ? "onQuit" : "manual"
+    this._logger.warn(
+      `autoInstallOnAppQuit was removed in electron-updater 7 (electron-builder v27) — use autoInstallEvent instead. ` +
+        `Mapping autoInstallOnAppQuit = ${value} to autoInstallEvent = "${mapped}". ` +
+        `This compatibility shim is removed in v28. ` +
+        `https://www.electron.build/docs/migration/v27-breaking-changes#autoinstallevent-replaces-autoinstallonappquit`
+    )
+    this.autoInstallEvent = mapped
+  }
+
+  /**
    * Installs an update that a previous launch marked as pending (see `autoInstallEvent: "onNextLaunch"` and
    * `quitAndInstall({ waitUntilNextLaunch: true })`), then quits the app.
    *
@@ -701,6 +725,30 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   abstract quitAndInstall(options?: QuitAndInstallOptions): void
 
+  /**
+   * Accepts the v26 positional call shape, `quitAndInstall(isSilent, isForceRunAfter)`.
+   *
+   * TypeScript callers get a compile error, but plain JavaScript does not: the boolean lands in the
+   * destructured options parameter, every field reads back `undefined`, and the defaults silently take
+   * over — so `quitAndInstall(true)` performs a NON-silent install. Warn and map instead of ignoring.
+   *
+   * @internal
+   */
+  protected normalizeQuitAndInstallOptions(options?: QuitAndInstallOptions | boolean, legacyIsForceRunAfter?: boolean): QuitAndInstallOptions {
+    if (typeof options !== "boolean" && typeof legacyIsForceRunAfter !== "boolean") {
+      return options ?? {}
+    }
+    const isSilent = typeof options === "boolean" ? options : false
+    const isForceRunAfter = legacyIsForceRunAfter === true
+    this._logger.warn(
+      `quitAndInstall(isSilent, isForceRunAfter) was replaced by quitAndInstall({ isSilent, isForceRunAfter }) in electron-updater 7 (electron-builder v27). ` +
+        `Interpreting the positional arguments as { isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter} }. ` +
+        `This compatibility shim is removed in v28. ` +
+        `https://www.electron.build/docs/migration/v27-breaking-changes#quitandinstall-takes-an-options-object`
+    )
+    return { isSilent, isForceRunAfter }
+  }
+
   private async loadUpdateConfig(): Promise<any> {
     if (this._appUpdateConfigPath == null) {
       this._appUpdateConfigPath = this.app.appUpdateConfigPath
@@ -848,7 +896,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         // The differential downloader re-fetches the old blockmap from the server when no cached one exists.
         await fsExtra.remove(cachedBlockMapFile)
       }
-      return packageFile == null ? { updateFile } : { updateFile, packageFile }
+      return withLegacyArrayCompat(packageFile == null ? { updateFile } : { updateFile, packageFile }, this._logger)
     }
 
     const log = this._logger
@@ -1060,4 +1108,35 @@ export interface TestOnlyUpdaterOptions {
   platform: ProviderPlatform
 
   isUseDifferentialDownload?: boolean
+}
+
+/**
+ * Adds a warning `Symbol.iterator` to a {@link DownloadExecutorResult}, for callers still written
+ * against v26's `Array<string>` return.
+ *
+ * `const [installer] = await downloadUpdate()` otherwise throws a bare
+ * `TypeError: ... is not iterable`, which names neither `downloadUpdate` nor the replacement, and
+ * `files[0]` silently evaluates to `undefined`. Yielding the same positional order the array had
+ * ([updateFile, packageFile]) keeps those call sites working for one major while they migrate.
+ *
+ * Non-enumerable so the object still serializes and compares as a plain `{ updateFile, packageFile }`.
+ */
+function withLegacyArrayCompat(result: DownloadExecutorResult, logger: Logger): DownloadExecutorResult {
+  return Object.defineProperty(result, Symbol.iterator, {
+    enumerable: false,
+    configurable: true,
+    writable: true,
+    value: function* () {
+      logger.warn(
+        "downloadUpdate() resolves with a DownloadExecutorResult object in electron-updater 7 (electron-builder v27), not an array. " +
+          "Replace `const [updateFile] = await downloadUpdate()` with `const { updateFile } = await downloadUpdate()`. " +
+          "This compatibility shim is removed in v28. " +
+          "https://www.electron.build/docs/migration/v27-breaking-changes#downloadupdate-resolves-with-a-downloadexecutorresult-object"
+      )
+      yield result.updateFile
+      if (result.packageFile != null) {
+        yield result.packageFile
+      }
+    },
+  })
 }
