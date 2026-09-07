@@ -713,7 +713,11 @@ async function checkWindowsResult(expect: ExpectStatic, packager: Packager, chec
     expect(nuspec).toContain(`<description>${xmlText(expectedDescription)}</description>`)
     expect(nuspec).toContain(`<copyright>${xmlText(appInfo.copyright)}</copyright>`)
     if (expectedProjectUrl != null) {
-      expect(nuspec).toContain(`<projectUrl>${xmlText(expectedProjectUrl)}</projectUrl>`)
+      // nuget.exe round-trips the URL through System.Uri, which appends "/" to a bare authority
+      // (http://foo.example.com -> http://foo.example.com/), so compare without a trailing slash
+      const projectUrl = /<projectUrl>([^<]*)<\/projectUrl>/.exec(nuspec)?.[1]
+      expect(projectUrl).toBeDefined()
+      expect(projectUrl!.replace(/\/$/, "")).toBe(xmlText(expectedProjectUrl).replace(/\/$/, ""))
     } else {
       expect(nuspec).not.toContain("<projectUrl>")
     }
