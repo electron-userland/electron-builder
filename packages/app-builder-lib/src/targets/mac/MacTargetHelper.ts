@@ -24,8 +24,11 @@ export class MacTargetHelper {
     // null meant "no custom signer" and the app was still signed normally; now it means "do not sign".
     // A v26 config carried over unchanged therefore ships an UNSIGNED app with no other signal.
     log.warn(
-      { reason: "identity explicitly is set to null", solution: "remove `sign: null` to sign normally, or set `mac.sign.identity` — keep it only if you intend to ship an unsigned app" },
-      "skipped macOS code signing. Note this changed in v27: `mac.sign: null` now means \"do not sign\", whereas in v26 it only meant \"no custom signer\" and the app was still signed. " +
+      {
+        reason: "identity explicitly is set to null",
+        solution: "remove `sign: null` to sign normally, or set `mac.sign.identity` — keep it only if you intend to ship an unsigned app",
+      },
+      'skipped macOS code signing. Note this changed in v27: `mac.sign: null` now means "do not sign", whereas in v26 it only meant "no custom signer" and the app was still signed. ' +
         "See https://www.electron.build/docs/migration/v27-breaking-changes#macos-signing-macsign"
     )
     return "skipped:disabled"

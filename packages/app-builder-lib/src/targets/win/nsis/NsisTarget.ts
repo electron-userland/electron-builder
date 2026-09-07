@@ -761,7 +761,8 @@ export class NsisTarget extends Target {
       return
     }
     const packager = this.packager
-    const hasCustomScript = (await packager.getResource(this.options.include, "installer.nsh")) != null || (await packager.getResource(this.options.script, "installer.nsi")) != null
+    const hasCustomScript =
+      (await packager.getResource(this.options.include, "installer.nsh")) != null || (await packager.getResource(this.options.script, "installer.nsi")) != null
     if (!hasCustomScript) {
       return
     }

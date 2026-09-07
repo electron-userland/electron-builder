@@ -79,7 +79,11 @@ function warnAboutSuffixedChannelExpansion(currentChannel: string, suffix: strin
   }
   suffixedChannelWarnings.add(currentChannel)
   log.warn(
-    { channel: currentChannel, writes: channels.map(it => `${it}.yml`).join(", "), solution: "set generateUpdatesFilesForAllChannels: false to keep publishing a single file per suffixed channel" },
+    {
+      channel: currentChannel,
+      writes: channels.map(it => `${it}.yml`).join(", "),
+      solution: "set generateUpdatesFilesForAllChannels: false to keep publishing a single file per suffixed channel",
+    },
     `the suffixed channel "${currentChannel}" now expands to its lower channels — electron-builder <= 26 wrote only one file for suffixed channels. ` +
       "A later publish on a higher channel will overwrite these in the same bucket, changing what existing pre-release users are offered. " +
       "See https://www.electron.build/docs/migration/v27-breaking-changes#suffixed-update-channels-now-expand-to-lower-channels"

@@ -139,7 +139,14 @@ describe("checkLegacyConfiguration — structural checks", () => {
   })
 
   test("vPrefixedTagName is found in publish arrays and under platform keys", () => {
-    expect(expectRejected({ publish: [{ provider: "s3", bucket: "b" }, { provider: "github", owner: "o", repo: "r", vPrefixedTagName: true }] })).toContain("tagNamePrefix")
+    expect(
+      expectRejected({
+        publish: [
+          { provider: "s3", bucket: "b" },
+          { provider: "github", owner: "o", repo: "r", vPrefixedTagName: true },
+        ],
+      })
+    ).toContain("tagNamePrefix")
     expect(expectRejected({ win: { publish: { provider: "github", owner: "o", repo: "r", vPrefixedTagName: false } } })).toContain("win.publish.vPrefixedTagName")
   })
 })
