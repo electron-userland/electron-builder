@@ -25,7 +25,7 @@ export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   const src = fileSet.src
   const dest = fileSet.destination
   // get node_modules path relative to src and then append to dest
-  if (file.startsWith(src)) {
+  if (file.startsWith(src + path.sep)) {
     return path.join(dest, path.relative(src, file))
   }
   return dest
