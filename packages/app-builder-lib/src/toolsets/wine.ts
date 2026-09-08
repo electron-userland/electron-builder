@@ -9,7 +9,7 @@ const githubOrgRepo = "electron-userland/electron-builder-binaries"
 
 // Newest wine bundle — downloaded only when the config explicitly names a bundle version.
 // It is not what "latest" resolves to: "latest" (and an unset config) uses the host wine.
-const WINE_BUNDLE_LATEST = "1.0.1"
+const WINE_BUNDLE_LATEST = "system"
 
 const wineToolsChecksums: Record<string, Record<string, string>> = {
   "0.0.0": {
