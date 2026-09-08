@@ -7,9 +7,10 @@ import { getCustomToolsetPath } from "./custom.js"
 
 const githubOrgRepo = "electron-userland/electron-builder-binaries"
 
-// Newest wine bundle — downloaded only when the config explicitly names a bundle version.
-// It is not what "latest" resolves to: "latest" (and an unset config) uses the host wine.
-const WINE_BUNDLE_LATEST = "system"
+// Newest downloadable wine bundle — used only when the config explicitly names a bundle version.
+// It is not what "latest" resolves to: "latest", "system", and an unset config resolve to the host
+// wine in the branch below, before this constant is ever consulted.
+const WINE_BUNDLE_VERSION = "1.0.1"
 
 const wineToolsChecksums: Record<string, Record<string, string>> = {
   "0.0.0": {
@@ -54,9 +55,9 @@ export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, reso
     // Explicit "1.0.1" (and any unrecognized string) → bundled wine@1.0.1 (wine 11; arm64 macOS via Rosetta).
     const file = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
     toolsetPath = await downloadBuilderToolset({
-      releaseName: `wine@${WINE_BUNDLE_LATEST}`,
+      releaseName: `wine@${WINE_BUNDLE_VERSION}`,
       filenameWithExt: file,
-      checksums: wineToolsChecksums[WINE_BUNDLE_LATEST],
+      checksums: wineToolsChecksums[WINE_BUNDLE_VERSION],
       githubOrgRepo,
     })
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
