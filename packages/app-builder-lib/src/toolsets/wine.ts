@@ -34,8 +34,10 @@ export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, reso
     // Custom toolset — honored on every platform (never overridden by the Linux host-wine fallback below).
     toolsetPath = await getCustomToolsetPath(wine, resourcesDir)
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
-  } else if (process.platform === "linux") {
-    // Linux ships no portable bundle for string/null configs → fall back to the host wine binary.
+  } else if (wine === "system" || process.platform === "linux") {
+    // Host wine on PATH. Linux ships no portable bundle for string/null configs so it always lands
+    // here; other platforms opt in explicitly with `toolsets.wine: "system"` — the replacement for
+    // the `USE_SYSTEM_WINE` env var removed in v27.
     return { execPath: "wine", env: defaultEnv }
   } else if (wine === "0.0.0") {
     // Explicit opt-in to the legacy wine-4.0.1-mac bundle (pre-v27).

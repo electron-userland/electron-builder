@@ -91,3 +91,15 @@ describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env me
     expect(result.execPath).toBe(path.join(FAKE_WINE_DIR, "bin", "wine64"))
   })
 })
+
+describe.ifNotWindows('getWineToolset — "system"', { sequential: true }, () => {
+  test("resolves the host wine on PATH and downloads no bundle", async ({ expect }) => {
+    const result = await getWineToolset("system", "")
+    expect(result.execPath).toBe("wine")
+  })
+
+  test("sets no WINEPREFIX or library paths, so the host wine uses its own defaults", async ({ expect }) => {
+    const result = await getWineToolset("system", "")
+    expect(result.env).toStrictEqual({ WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" })
+  })
+})

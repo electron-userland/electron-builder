@@ -709,6 +709,10 @@ export interface ToolsetConfig {
    * |---------|-------------|-----------------|-------|
    * | `"0.0.0"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |
    * | `"1.0.1"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |
+   * | `"system"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |
+   *
+   * `"system"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27. On
+   * Linux it is already the default, because no portable bundle is published for Linux.
    *
    * To use a custom Wine binary, use a `ToolsetCustom` object.
    *
@@ -716,7 +720,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly wine?: "0.0.0" | "1.0.1" | ToolsetCustom | "latest"
+  readonly wine?: "0.0.0" | "1.0.1" | "system" | ToolsetCustom | "latest"
 
   /**
    * Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)
