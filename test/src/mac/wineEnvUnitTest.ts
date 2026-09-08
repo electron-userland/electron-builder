@@ -102,4 +102,14 @@ describe.ifNotWindows('getWineToolset — "system"', { sequential: true }, () =>
     const result = await getWineToolset("system", "")
     expect(result.env).toStrictEqual({ WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" })
   })
+
+  // `null` / `undefined` / "latest" are aliases for WINE_LATEST. Resolving that alias only inside the
+  // download branch made every bundle request ask for a `wine@<WINE_LATEST>` release that does not
+  // exist, so assert the alias reaches the same place an explicit "system" does.
+  for (const value of [undefined, null, "latest"] as const) {
+    test(`${value} resolves through the WINE_LATEST alias without downloading`, async ({ expect }) => {
+      const result = await getWineToolset(value, "")
+      expect(result.execPath).toBe("wine")
+    })
+  }
 })

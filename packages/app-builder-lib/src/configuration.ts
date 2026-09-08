@@ -711,8 +711,10 @@ export interface ToolsetConfig {
    * | `"1.0.1"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |
    * | `"system"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |
    *
-   * `"system"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27. On
-   * Linux it is already the default, because no portable bundle is published for Linux.
+   * `"system"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and
+   * is what `"latest"` (the default) currently resolves to on every platform: the published `"1.0.1"`
+   * bundles ship no PE builtins, so a host Wine installation is required to build Windows targets on
+   * macOS or Linux.
    *
    * To use a custom Wine binary, use a `ToolsetCustom` object.
    *
