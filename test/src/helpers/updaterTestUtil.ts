@@ -1,6 +1,6 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, DownloadOptions } from "builder-util-runtime"
-import { AppUpdater, MacUpdater, NsisUpdater } from "electron-updater"
+import { AppUpdater, NsisUpdater } from "electron-updater"
 import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
 import fsExtra from "fs-extra"
 import * as path from "path"
@@ -44,11 +44,7 @@ export async function validateDownload(expect: ExpectStatic, updater: AppUpdater
     // noinspection JSIgnoredPromiseFromCall
     expect(updateCheckResult?.downloadPromise).toBeDefined()
     const downloadResult = await updateCheckResult?.downloadPromise
-    if (updater instanceof MacUpdater) {
-      expect(downloadResult).toEqual([])
-    } else {
-      await assertThat(expect, path.join(downloadResult![0])).isFile()
-    }
+    await assertThat(expect, downloadResult!.updateFile).isFile()
   } else {
     // noinspection JSIgnoredPromiseFromCall
     expect(updateCheckResult?.downloadPromise).toBeUndefined()

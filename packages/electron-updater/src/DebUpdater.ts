@@ -1,9 +1,9 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter.js"
-import { DownloadExecutorResult, DownloadUpdateOptions } from "./AppUpdater.js"
+import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { InstallOptions } from "./BaseUpdater.js"
 import { findFile } from "./providers/Provider.js"
-import { DOWNLOAD_PROGRESS, Logger } from "./types.js"
+import { DOWNLOAD_PROGRESS, Logger, DownloadExecutorResult } from "./types.js"
 import { LinuxUpdater } from "./LinuxUpdater.js"
 
 export class DebUpdater extends LinuxUpdater {

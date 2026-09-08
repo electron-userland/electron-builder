@@ -148,7 +148,7 @@ test("file url generic - manual download", config, async ({ expect }) => {
     expect(updateCheckResult?.downloadPromise).toBeNull()
     expect(actualEvents).toMatchSnapshot()
 
-    await assertThat(expect, path.join((await updater.downloadUpdate())[0])).isFile()
+    await assertThat(expect, (await updater.downloadUpdate()).updateFile).isFile()
   } finally {
     await close()
   }
@@ -185,7 +185,7 @@ test("checkForUpdates several times", config, async ({ expect }) => {
 })
 
 async function checkDownloadPromise(expect: ExpectStatic, updateCheckResult: UpdateCheckResult | null) {
-  return await assertThat(expect, path.join((await updateCheckResult?.downloadPromise)![0])).isFile()
+  return await assertThat(expect, (await updateCheckResult?.downloadPromise)!.updateFile).isFile()
 }
 
 test("test error", config, async ({ expect }) => {

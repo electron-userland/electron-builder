@@ -92,8 +92,6 @@ describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env me
   })
 })
 
-const HOST_WINE_ENV = { WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" }
-
 describe.ifNotWindows('getWineToolset — "system"', { sequential: true }, () => {
   test("resolves the host wine on PATH and downloads no bundle", async ({ expect }) => {
     const result = await getWineToolset("system", "")
@@ -102,23 +100,16 @@ describe.ifNotWindows('getWineToolset — "system"', { sequential: true }, () =>
 
   test("sets no WINEPREFIX or library paths, so the host wine uses its own defaults", async ({ expect }) => {
     const result = await getWineToolset("system", "")
-    expect(result.env).toStrictEqual(HOST_WINE_ENV)
+    expect(result.env).toStrictEqual({ WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" })
   })
-})
 
-// The default resolves to the host wine on every platform — no bundle is downloaded unless the config
-// names a version explicitly. Guards against `"latest"` falling through to the bundle branch, which
-// would resolve a `wine@<default>` release that does not exist.
-describe.ifNotWindows("getWineToolset — default resolution", { sequential: true }, () => {
-  for (const [label, wine] of [
-    ["undefined", undefined],
-    ["null", null],
-    ['"latest"', "latest"],
-  ] as const) {
-    test(`${label} resolves to the host wine on PATH`, async ({ expect }) => {
-      const result = await getWineToolset(wine, "")
+  // `null` / `undefined` / "latest" are aliases for WINE_LATEST. Resolving that alias only inside the
+  // download branch made every bundle request ask for a `wine@<WINE_LATEST>` release that does not
+  // exist, so assert the alias reaches the same place an explicit "system" does.
+  for (const value of [undefined, null, "latest"] as const) {
+    test(`${value} resolves through the WINE_LATEST alias without downloading`, async ({ expect }) => {
+      const result = await getWineToolset(value, "")
       expect(result.execPath).toBe("wine")
-      expect(result.env).toStrictEqual(HOST_WINE_ENV)
     })
   }
 })

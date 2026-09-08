@@ -80,7 +80,11 @@ export interface UpdateCheckResult {
 
   readonly updateInfo: UpdateInfo
 
-  readonly downloadPromise?: Promise<Array<string>> | null
+  /**
+   * Resolves with the downloaded files once the automatic download has finished (see `autoDownload`).
+   * `null` when `autoDownload` is `false` — call `downloadUpdate()` to start the download manually.
+   */
+  readonly downloadPromise?: Promise<DownloadExecutorResult> | null
 
   readonly cancellationToken?: CancellationToken
 
@@ -90,6 +94,24 @@ export interface UpdateCheckResult {
 
 export interface UpdateDownloadedEvent extends UpdateInfo {
   downloadedFile: string
+  /**
+   * Path to the downloaded NSIS web installer package (`package-<version>.7z`). Only set for web installers.
+   */
+  packageFile?: string
+}
+
+/**
+ * The files produced by a finished download — resolved by `downloadUpdate()` and by `UpdateCheckResult.downloadPromise`.
+ */
+export interface DownloadExecutorResult {
+  /**
+   * Path to the downloaded update file (installer, AppImage, zip, ...).
+   */
+  readonly updateFile: string
+  /**
+   * Path to the downloaded NSIS web installer package (`package-<version>.7z`). Only set for web installers.
+   */
+  readonly packageFile?: string
 }
 
 export interface ResolvedUpdateFileInfo {

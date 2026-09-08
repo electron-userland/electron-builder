@@ -93,6 +93,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | — | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
 | [`quitAndInstall` takes an options object (electron-updater)](#quitandinstall-takes-an-options-object) | — | Replace positional args: `quitAndInstall(true, false)` → `quitAndInstall({ isSilent: true, isForceRunAfter: false })` |
 | [`autoInstallOnAppQuit` replaced by `autoInstallEvent` enum (electron-updater)](#autoinstallevent-replaces-autoinstallonappquit) | — | `autoInstallOnAppQuit = false` → `autoInstallEvent = "manual"`; default `"onQuit"` preserves behavior |
+| [`downloadUpdate()` resolves with an object, not an array (electron-updater)](#downloadupdate-resolves-with-a-downloadexecutorresult-object) | — | `const [installer] = await downloadUpdate()` → `const { updateFile } = await downloadUpdate()`; same for `checkForUpdates()` → `downloadPromise` |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | — | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | — | Use the `snapcraft` config shape / Electron framework |
 
@@ -587,7 +588,7 @@ The `url` accepts an `https://` URL (downloaded and cached automatically) or a `
 { "build": { "toolsets": { "appimage": { "url": "file:///path/to/my-appimage-tools-dir" } } } }
 ```
 
-> **Wine note:** `toolsets.wine` now defaults to `"system"` — the host-installed `wine` on `PATH` — on **both** macOS and Linux. That is the replacement for `USE_SYSTEM_WINE`, and it means a macOS host building Windows targets needs Wine installed (`brew install --cask wine-stable`); set `toolsets.wine: "1.0.1"` to keep downloading the Wine 11.0 bundle instead. To point at a custom Wine build, supply a `ToolsetCustom` object on `toolsets.wine`; note that such a directory must contain a prebuilt `wine-home` prefix alongside `bin/` and `lib/`, so `"system"` is the simpler option for a stock Wine installation.
+> **Wine note:** Linux uses the host-installed `wine` by default (no bundle is shipped for Linux), and macOS uses the downloaded Wine 11.0 bundle. Set `toolsets.wine: "system"` to use the host-installed `wine` on `PATH` on any platform — that is the replacement for `USE_SYSTEM_WINE`. To point at a custom Wine build instead, supply a `ToolsetCustom` object on `toolsets.wine`; note that such a directory must contain a prebuilt `wine-home` prefix alongside `bin/` and `lib/`, so `"system"` is the simpler option for a stock Wine installation.
 
 Supported archive formats: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`. **Exception for `sevenZip`**: because 7-Zip is used to extract `.7z` and `.tar.xz` archives, a custom `sevenZip` bundle can only be supplied as a `.tar.gz`, `.zip`, or bare `file://` directory.
 
@@ -830,6 +831,36 @@ autoUpdater.autoInstallEvent = "manual"
 ```
 
 The default `"onQuit"` preserves prior behavior, so most apps need no change. `"onNextLaunch"` defers the install to the next launch to avoid the OS killing the installer during session end, and is planned to become the default in v28 — see [Install on Next Launch](../features/auto-update#install-on-next-launch-windowslinux).
+
+### `downloadUpdate()` resolves with a `DownloadExecutorResult` object
+
+`AppUpdater.downloadUpdate()` — and `UpdateCheckResult.downloadPromise`, the same promise handed back by `checkForUpdates()` when `autoDownload` is enabled — used to resolve with a positional `Array<string>`: `[updateFile]`, or `[updateFile, packageFile]` for NSIS *web* installers. It now resolves with a **`DownloadExecutorResult`** object (exported from `electron-updater`) that names both files:
+
+```ts
+interface DownloadExecutorResult {
+  readonly updateFile: string // the downloaded installer / AppImage / zip
+  readonly packageFile?: string // the NSIS web-installer package, only set for web installers
+}
+```
+
+This is a **hard compile break in TypeScript**; plain JavaScript callers that index the result (`files[0]`) receive `undefined` and must update by hand:
+
+```ts
+// Before (v26 / electron-updater 6)
+const files = await autoUpdater.downloadUpdate()
+const installer = files[0]
+
+const result = await autoUpdater.checkForUpdates()
+const [downloaded] = (await result?.downloadPromise) ?? []
+
+// After (v27 / electron-updater 7)
+const { updateFile, packageFile } = await autoUpdater.downloadUpdate()
+
+const result = await autoUpdater.checkForUpdates()
+const downloaded = (await result?.downloadPromise)?.updateFile
+```
+
+Code that only awaits the promise for its side effects, or that relies on the `update-downloaded` event, needs no change. Additively, the `update-downloaded` event payload (`UpdateDownloadedEvent`) now also carries `packageFile` for web installers, next to the existing `downloadedFile`.
 
 ---
 
