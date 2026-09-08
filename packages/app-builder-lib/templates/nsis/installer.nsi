@@ -111,15 +111,33 @@ Section "install" INSTALL_SECTION_ID
               # PR description for citations. This directory+registry writability check
               # is a simpler, narrower mechanism suited to apps that don't want to ship a
               # separate service.) Only actually elevate if a live check shows it's still
-              # needed. Both must hold: registryAddInstallInfo writes
-              # InstallLocation to SHELL_CONTEXT (HKLM here), and that WriteRegStr fails
-              # silently when unelevated -- checking $INSTDIR alone would let this
-              # section "succeed" while quietly wiping the per-machine registration that
-              # the next launch's initMultiUser relies on.
+              # needed. All of the following must hold: registryAddInstallInfo writes
+              # InstallLocation etc. to INSTALL_REGISTRY_KEY *and* the Programs-and-Features
+              # metadata (DisplayVersion, UninstallString, ...) to the separate
+              # UNINSTALL_REGISTRY_KEY, both under SHELL_CONTEXT (HKLM here) -- and both
+              # WriteRegStr calls fail silently when unelevated. installSection.nsh also
+              # (re)creates the Start Menu / desktop shortcuts under the same all-users
+              # SHELL_CONTEXT via CreateShortCut, which likewise fails silently without
+              # elevation. Checking $INSTDIR alone would let this section "succeed" while
+              # quietly wiping the per-machine registration that the next launch's
+              # initMultiUser relies on, leaving Programs-and-Features metadata stale, or
+              # leaving shortcuts unrefreshed.
               !insertmacro IsDirWritable $INSTDIR $R7
               !insertmacro IsRegKeyWritable HKLM "${INSTALL_REGISTRY_KEY}" $R8
+              !insertmacro IsRegKeyWritable HKLM "${UNINSTALL_REGISTRY_KEY}" $R6
+              StrCpy $R5 "1"
+              !ifndef DO_NOT_CREATE_START_MENU_SHORTCUT
+                !insertmacro IsDirWritable $SMPROGRAMS $R5
+              !endif
+              StrCpy $R4 "1"
+              !ifndef DO_NOT_CREATE_DESKTOP_SHORTCUT
+                !insertmacro IsDirWritable $DESKTOP $R4
+              !endif
               ${if} $R7 == "0"
               ${orIf} $R8 == "0"
+              ${orIf} $R6 == "0"
+              ${orIf} $R5 == "0"
+              ${orIf} $R4 == "0"
                 ShowWindow $HWNDPARENT ${SW_HIDE}
                 !insertmacro UAC_RunElevated
                 ${Switch} $0
