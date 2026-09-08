@@ -8,7 +8,7 @@ import { getCustomToolsetPath } from "./custom.js"
 const githubOrgRepo = "electron-userland/electron-builder-binaries"
 
 // Newest wine bundle — selected when the config is unset / null / "latest".
-const WINE_LATEST = "1.0.1"
+const WINE_LATEST = "system"
 
 const wineToolsChecksums: Record<string, Record<string, string>> = {
   "0.0.0": {
