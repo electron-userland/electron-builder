@@ -27,7 +27,7 @@ This handles every change marked **Auto ✓** below. See the [walkthrough](./v26
 :::info[Toolsets now default to the newest bundle ("latest")]
 In v27 every `toolsets.*` property defaults to **`"latest"`** — an **unset** property, `null`, and the literal `"latest"` all resolve to the **newest published bundle** for that toolset (previously each property defaulted to a fixed pinned version). No config change is required, but the effective defaults moved:
 
-- **`wine` → `1.0.1`** — Wine 11.0 (was Wine 4.0.1); macOS arm64 via Rosetta. Linux still uses host-installed `wine`.
+- **`wine` → `"system"`** — the **host-installed `wine`** on `PATH`, on macOS as well as Linux (v26 downloaded a Wine 4.0.1 bundle on macOS). Set `toolsets.wine: "1.0.1"` to download the Wine 11.0 bundle instead — macOS arm64 via Rosetta.
 - **`winCodeSign` → `1.3.0`** — Windows Kits 10.0.26100.0, `osslsigncode` 2.11 (native arm64), and the Azure Trusted Signing `dlib` + .NET 8 payload.
 - **`appimage` → `1.1.0`** — static FUSE3-compatible runtime; adds `unsquashfs` support.
 - `icons` → `1.2.1` — newer `wasm-vips` / `@resvg/resvg-wasm` bundle (was `1.1.0`).
@@ -540,7 +540,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 
 | Toolset | v26 default | v27 `"latest"` resolves to | What the upgrade entails |
 |---------|-------------|----------------------------|--------------------------|
-| `wine` | `0.0.0` (Wine 4.0.1, macOS only) | `1.0.1` | Wine 11.0; macOS arm64 via Rosetta. Linux uses host-installed `wine` (no bundle shipped) |
+| `wine` | `0.0.0` (Wine 4.0.1, macOS only) | `system` | Host-installed `wine` on `PATH`, on macOS and Linux. **Requires a host Wine on macOS** — see the note below. Pin `"1.0.1"` for the Wine 11.0 bundle (macOS arm64 via Rosetta) |
 | `winCodeSign` | `0.0.0` (winCodeSign 2.6.0) | `1.3.0` | Windows Kits 10.0.26100.0; `osslsigncode` 2.11 + native arm64; bundles the Azure Trusted Signing `dlib` + .NET 8 runtime |
 | `appimage` | `0.0.0` (FUSE2 runtime) | `1.1.0` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support |
 | `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `1.2.1` | NSIS 3.12; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR` |
@@ -549,7 +549,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 | `linuxToolsMac` | `1.0.0` | `1.0.0` | Unchanged — gnu-tar, lzip, binutils, etc. (macOS → Linux archives) |
 | `sevenZip` | `1.0.0` | `1.0.0` | Unchanged — only published version |
 
-**No action required** for most projects — the new bundles are drop-in replacements and produce identical output. If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
+**No action required** for most projects — the new bundles are drop-in replacements and produce identical output. **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`) or an explicit `toolsets.wine: "1.0.1"`. If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
 
 ```json5
 { "build": { "toolsets": { "winCodeSign": "0.0.0", "nsis": "0.0.0", "appimage": "0.0.0", "wine": "0.0.0" } } }
@@ -575,7 +575,7 @@ This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias ma
 | `USE_SYSTEM_OSSLSIGNCODE` | Forced the host `osslsigncode` instead of the bundled one |
 | `USE_SYSTEM_FPM` | Forced the host-installed `fpm` instead of the bundled FPM |
 
-The three signing `USE_SYSTEM_*` variables (`USE_SYSTEM_WINE`, `USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var replacement** — configure signing through [`win.sign`](#windows-signing-winsign) and the `winCodeSign` toolset instead. `USE_SYSTEM_FPM` is now **also removed** (it was still functional in earlier v27 prereleases): supply a custom FPM via `toolsets.fpm: { url: "file:///path/to/dir" }`. On Windows there is no bundled FPM, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` and otherwise throws a clear configuration error (previously it silently fell back to a host `fpm` on `PATH`).
+The two signing `USE_SYSTEM_*` variables (`USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var replacement** — configure signing through [`win.sign`](#windows-signing-winsign) and the `winCodeSign` toolset instead. `USE_SYSTEM_WINE` is replaced by the config value `toolsets.wine: "system"`. `USE_SYSTEM_FPM` is now **also removed** (it was still functional in earlier v27 prereleases): supply a custom FPM via `toolsets.fpm: { url: "file:///path/to/dir" }`. On Windows there is no bundled FPM, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` and otherwise throws a clear configuration error (previously it silently fell back to a host `fpm` on `PATH`).
 
 The `url` accepts an `https://` URL (downloaded and cached automatically) or a `file://` path (used as-is). The bundle must mirror the directory layout of the corresponding built-in bundle (see [electron-builder-binaries/packages](https://github.com/electron-userland/electron-builder-binaries/tree/master/packages)).
 
@@ -587,7 +587,7 @@ The `url` accepts an `https://` URL (downloaded and cached automatically) or a `
 { "build": { "toolsets": { "appimage": { "url": "file:///path/to/my-appimage-tools-dir" } } } }
 ```
 
-> **Wine note:** with `USE_SYSTEM_WINE` gone, Linux uses the host-installed `wine` by default (no bundle is shipped for Linux), and macOS uses the downloaded Wine 11.0 bundle. To point at a custom Wine build, supply a `ToolsetCustom` object on `toolsets.wine`.
+> **Wine note:** `toolsets.wine` now defaults to `"system"` — the host-installed `wine` on `PATH` — on **both** macOS and Linux. That is the replacement for `USE_SYSTEM_WINE`, and it means a macOS host building Windows targets needs Wine installed (`brew install --cask wine-stable`); set `toolsets.wine: "1.0.1"` to keep downloading the Wine 11.0 bundle instead. To point at a custom Wine build, supply a `ToolsetCustom` object on `toolsets.wine`; note that such a directory must contain a prebuilt `wine-home` prefix alongside `bin/` and `lib/`, so `"system"` is the simpler option for a stock Wine installation.
 
 Supported archive formats: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`. **Exception for `sevenZip`**: because 7-Zip is used to extract `.7z` and `.tar.xz` archives, a custom `sevenZip` bundle can only be supplied as a `.tar.gz`, `.zip`, or bare `file://` directory.
 

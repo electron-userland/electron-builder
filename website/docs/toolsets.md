@@ -19,7 +19,7 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 | `winCodeSign` | Windows code signing & resource editing (`signtool` / `osslsigncode`, `rcedit`, Windows Kits for AppX/MSIX) | `1.3.0` |
 | `appimage` | Building `.AppImage` files (`mksquashfs`, `unsquashfs`, the self-executing runtime) | `1.1.0` |
 | `nsis` | Compiling Windows installers (`makensis`, plugin DLLs, `elevate.exe`) | `1.2.1` |
-| `wine` | Running Windows tools (NSIS, rcedit, signtool) on non-Windows hosts | `1.0.1` |
+| `wine` | Running Windows tools (NSIS, rcedit, signtool) on non-Windows hosts | `system` (host `wine` on `PATH`) |
 | `fpm` | Building Linux packages (`.deb`, `.rpm`, `.pacman`, …) on macOS & Linux | `2.2.1` |
 | `linuxToolsMac` | Building Linux targets / `.tar.lz` archives on macOS (`ar`, `lzip`, `gtar`) | `1.0.0` |
 | `sevenZip` | Extracting `.7z` and `.tar.xz` archives internally | `1.0.0` |
@@ -27,7 +27,7 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 | `squirrel` | Building Squirrel.Windows installers (`Squirrel.exe`, `SyncReleases.exe`, `nuget.exe`, `7z`) — requires `electron-builder-squirrel-windows` | `1.1.1` |
 
 :::note[Platform notes]
-- **`wine`** is only needed to build **Windows targets on a non-Windows machine**. On Windows it has no effect. On **Linux**, electron-builder uses the **host-installed `wine`** (no bundle is shipped for Linux); the version pin applies to **macOS**, where the bundled Wine 11.0 runs — including on arm64 via Rosetta.
+- **`wine`** is only needed to build **Windows targets on a non-Windows machine**. On Windows it has no effect. It defaults to the **host-installed `wine`** on `PATH` (`"system"`) on both macOS and Linux — no bundle is shipped for Linux, and macOS no longer downloads one unless you ask for it. Set `toolsets.wine: "1.0.1"` to use the bundled Wine 11.0 on macOS instead, including on arm64 via Rosetta.
 - **`winCodeSign`** is used on all platforms (`signtool.exe` on Windows, `osslsigncode` on macOS/Linux).
 - **`squirrel`** is only used by the `squirrelWindows` target. It runs natively on Windows; on macOS/Linux it needs a host-installed `mono`, and `rcedit` (from `winCodeSign`) runs under Wine.
 - **`fpm`**, **`linuxToolsMac`**, and **`sevenZip`** each have only one published version today, so `"latest"` and the listed version are equivalent.
@@ -138,7 +138,7 @@ v27 **removes** the toolset environment-variable overrides. Replace each with a 
 | `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` | NSIS resources/plugins | `toolsets.nsis: { url }` |
 | `CUSTOM_NSIS_RESOURCES` | Alternate NSIS resources | `toolsets.nsis: { url }` |
 | `ELECTRON_BUILDER_WINE_TOOLSET_DIR` | Wine bundle | `toolsets.wine: { url }` |
-| `USE_SYSTEM_WINE` | Host Wine instead of the bundle | `toolsets.wine: { url }` |
+| `USE_SYSTEM_WINE` | Host Wine instead of the bundle | `toolsets.wine: "system"` |
 | `USE_SYSTEM_SIGNCODE` | Host `signtool`/`signcode` | Configure via [`win.sign`](./features/code-signing/code-signing-win.md) + `winCodeSign` |
 | `USE_SYSTEM_OSSLSIGNCODE` | Host `osslsigncode` | Configure via [`win.sign`](./features/code-signing/code-signing-win.md) + `winCodeSign` |
 | `USE_SYSTEM_FPM` | Host `fpm` instead of the bundle | `toolsets.fpm: { url }` |
@@ -151,7 +151,7 @@ v27 **removes** the toolset environment-variable overrides. Replace each with a 
 ```
 
 :::warning[No env-var replacement for the signing overrides]
-The three signing `USE_SYSTEM_*` variables (`USE_SYSTEM_WINE`, `USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var equivalent** — configure signing through [`win.sign`](./features/code-signing/code-signing-win.md) and the `winCodeSign` toolset instead.
+The two signing `USE_SYSTEM_*` variables (`USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var equivalent** — configure signing through [`win.sign`](./features/code-signing/code-signing-win.md) and the `winCodeSign` toolset instead. `USE_SYSTEM_WINE` is replaced by the config value `toolsets.wine: "system"`.
 
 `USE_SYSTEM_FPM` is likewise removed. On **Windows there is no bundled FPM**, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` (`{ url: "file:///path/to/dir" }`) and otherwise throws a clear configuration error — previously it silently fell back to a host `fpm` on `PATH`.
 :::

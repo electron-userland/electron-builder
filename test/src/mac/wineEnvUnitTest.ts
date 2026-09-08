@@ -91,3 +91,34 @@ describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env me
     expect(result.execPath).toBe(path.join(FAKE_WINE_DIR, "bin", "wine64"))
   })
 })
+
+const HOST_WINE_ENV = { WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" }
+
+describe.ifNotWindows('getWineToolset — "system"', { sequential: true }, () => {
+  test("resolves the host wine on PATH and downloads no bundle", async ({ expect }) => {
+    const result = await getWineToolset("system", "")
+    expect(result.execPath).toBe("wine")
+  })
+
+  test("sets no WINEPREFIX or library paths, so the host wine uses its own defaults", async ({ expect }) => {
+    const result = await getWineToolset("system", "")
+    expect(result.env).toStrictEqual(HOST_WINE_ENV)
+  })
+})
+
+// The default resolves to the host wine on every platform — no bundle is downloaded unless the config
+// names a version explicitly. Guards against `"latest"` falling through to the bundle branch, which
+// would resolve a `wine@<default>` release that does not exist.
+describe.ifNotWindows("getWineToolset — default resolution", { sequential: true }, () => {
+  for (const [label, wine] of [
+    ["undefined", undefined],
+    ["null", null],
+    ['"latest"', "latest"],
+  ] as const) {
+    test(`${label} resolves to the host wine on PATH`, async ({ expect }) => {
+      const result = await getWineToolset(wine, "")
+      expect(result.execPath).toBe("wine")
+      expect(result.env).toStrictEqual(HOST_WINE_ENV)
+    })
+  }
+})

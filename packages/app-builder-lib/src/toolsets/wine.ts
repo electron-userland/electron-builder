@@ -7,8 +7,9 @@ import { getCustomToolsetPath } from "./custom.js"
 
 const githubOrgRepo = "electron-userland/electron-builder-binaries"
 
-// Newest wine bundle — selected when the config is unset / null / "latest".
-const WINE_LATEST = "1.0.1"
+// Newest wine bundle — downloaded only when the config explicitly names a bundle version.
+// It is not what "latest" resolves to: "latest" (and an unset config) uses the host wine.
+const WINE_BUNDLE_LATEST = "1.0.1"
 
 const wineToolsChecksums: Record<string, Record<string, string>> = {
   "0.0.0": {
@@ -34,8 +35,11 @@ export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, reso
     // Custom toolset — honored on every platform (never overridden by the Linux host-wine fallback below).
     toolsetPath = await getCustomToolsetPath(wine, resourcesDir)
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
-  } else if (process.platform === "linux") {
-    // Linux ships no portable bundle for string/null configs → fall back to the host wine binary.
+  } else if (wine == null || wine === "latest" || wine === "system" || process.platform === "linux") {
+    // Host wine on PATH — the default, and the replacement for the `USE_SYSTEM_WINE` env var removed
+    // in v27. Linux ships no portable bundle for string/null configs so it always lands here; macOS
+    // reaches it for the default / "latest" / "system" configs. A bundle is downloaded only when the
+    // config names a version explicitly ("0.0.0" or "1.0.1").
     return { execPath: "wine", env: defaultEnv }
   } else if (wine === "0.0.0") {
     // Explicit opt-in to the legacy wine-4.0.1-mac bundle (pre-v27).
@@ -47,13 +51,12 @@ export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, reso
     })
     execSubPath = path.join("bin", "wine64")
   } else {
-    // Default (null / undefined / "latest") and explicit "1.0.1" → bundled wine@1.0.1
-    // (wine 11; arm64 macOS via Rosetta).
+    // Explicit "1.0.1" (and any unrecognized string) → bundled wine@1.0.1 (wine 11; arm64 macOS via Rosetta).
     const file = process.platform === "darwin" ? "wine-11.0-darwin-x86_64.tar.xz" : "wine-11.0-linux-x86_64.tar.xz"
     toolsetPath = await downloadBuilderToolset({
-      releaseName: `wine@${WINE_LATEST}`,
+      releaseName: `wine@${WINE_BUNDLE_LATEST}`,
       filenameWithExt: file,
-      checksums: wineToolsChecksums[WINE_LATEST],
+      checksums: wineToolsChecksums[WINE_BUNDLE_LATEST],
       githubOrgRepo,
     })
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
