@@ -8303,13 +8303,14 @@
               "enum": [
                 "0.0.0",
                 "1.0.1",
-                "latest"
+                "latest",
+                "system"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n\nTo use a custom Wine binary, use a `ToolsetCustom` object.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
+          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n| `\"system\"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |\n\n`\"system\"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and\nis what `\"latest\"` (the default) currently resolves to on every platform: the published `\"1.0.1\"`\nbundles ship no PE builtins, so a host Wine installation is required to build Windows targets on\nmacOS or Linux.\n\nTo use a custom Wine binary, use a `ToolsetCustom` object.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
         }
       },
       "type": "object"

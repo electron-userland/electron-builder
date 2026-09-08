@@ -556,7 +556,7 @@ This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias ma
 | `USE_SYSTEM_OSSLSIGNCODE` | Forced the host `osslsigncode` instead of the bundled one |
 | `USE_SYSTEM_FPM` | Forced the host-installed `fpm` instead of the bundled FPM |
 
-The three signing `USE_SYSTEM_*` variables (`USE_SYSTEM_WINE`, `USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var replacement** — configure signing through [`win.sign`](#windows-signing-winsign) and the `winCodeSign` toolset instead. `USE_SYSTEM_FPM` is now **also removed** (it was still functional in earlier v27 prereleases): supply a custom FPM via `toolsets.fpm: { url: "file:///path/to/dir" }`. On Windows there is no bundled FPM, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` and otherwise throws a clear configuration error (previously it silently fell back to a host `fpm` on `PATH`).
+The two signing `USE_SYSTEM_*` variables (`USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var replacement** — configure signing through [`win.sign`](#windows-signing-winsign) and the `winCodeSign` toolset instead. `USE_SYSTEM_WINE` is replaced by the config value `toolsets.wine: "system"`. `USE_SYSTEM_FPM` is now **also removed** (it was still functional in earlier v27 prereleases): supply a custom FPM via `toolsets.fpm: { url: "file:///path/to/dir" }`. On Windows there is no bundled FPM, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` and otherwise throws a clear configuration error (previously it silently fell back to a host `fpm` on `PATH`).
 
 The `url` accepts an `https://` URL (downloaded and cached automatically) or a `file://` path (used as-is). The bundle must mirror the directory layout of the corresponding built-in bundle (see [electron-builder-binaries/packages](https://github.com/electron-userland/electron-builder-binaries/tree/master/packages)).
 
@@ -568,7 +568,7 @@ The `url` accepts an `https://` URL (downloaded and cached automatically) or a `
 { "build": { "toolsets": { "appimage": { "url": "file:///path/to/my-appimage-tools-dir" } } } }
 ```
 
-> **Wine note:** with `USE_SYSTEM_WINE` gone, Linux uses the host-installed `wine` by default (no bundle is shipped for Linux), and macOS uses the downloaded Wine 11.0 bundle. To point at a custom Wine build, supply a `ToolsetCustom` object on `toolsets.wine`.
+> **Wine note:** Linux uses the host-installed `wine` by default (no bundle is shipped for Linux), and macOS uses the downloaded Wine 11.0 bundle. Set `toolsets.wine: "system"` to use the host-installed `wine` on `PATH` on any platform — that is the replacement for `USE_SYSTEM_WINE`. To point at a custom Wine build instead, supply a `ToolsetCustom` object on `toolsets.wine`; note that such a directory must contain a prebuilt `wine-home` prefix alongside `bin/` and `lib/`, so `"system"` is the simpler option for a stock Wine installation.
 
 Supported archive formats: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`. **Exception for `sevenZip`**: because 7-Zip is used to extract `.7z` and `.tar.xz` archives, a custom `sevenZip` bundle can only be supplied as a `.tar.gz`, `.zip`, or bare `file://` directory.
 
