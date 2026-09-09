@@ -201,6 +201,7 @@ export abstract class HttpExecutor<T extends Request> {
     // we handle any other >= 400 error on request end (read detailed message in the response body)
     if (response.statusCode === 404) {
       // error is clear, we don't need to read detailed error description
+      response.resume()
       reject(
         createHttpError(
           response,
@@ -213,6 +214,7 @@ Please double check that your authentication token is correct. Due to security r
       return
     } else if (response.statusCode === 204) {
       // on DELETE request
+      response.resume()
       resolve()
       return
     }
@@ -221,6 +223,7 @@ Please double check that your authentication token is correct. Due to security r
     const shouldRedirect = code >= 300 && code < 400
     const redirectUrl = safeGetHeader(response, "location")
     if (shouldRedirect && redirectUrl != null) {
+      response.resume()
       if (redirectCount > this.maxRedirects) {
         reject(this.createMaxRedirectError())
         return
@@ -310,6 +313,7 @@ Please double check that your authentication token is correct. Due to security r
   protected doDownload(requestOptions: RequestOptions, options: DownloadCallOptions, redirectCount: number) {
     const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
       if (response.statusCode! >= 400) {
+        response.resume()
         options.callback(
           new Error(
             `Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`
@@ -325,6 +329,7 @@ Please double check that your authentication token is correct. Due to security r
       // this code not relevant for Electron (redirect event instead handled)
       const redirectUrl = safeGetHeader(response, "location")
       if (redirectUrl != null) {
+        response.resume()
         if (redirectCount < this.maxRedirects) {
           this.doDownload(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions), options, redirectCount + 1)
         } else {
