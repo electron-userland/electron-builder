@@ -751,6 +751,23 @@ exports[`macPackager > two-package 1`] = `
       },
     },
     {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-mac-x64.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-mac-x64.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-x64.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
       "arch": "arm64",
       "file": "TestApp-1.1.0-mac-arm64.dmg.blockmap",
       "updateInfo": {
@@ -779,23 +796,6 @@ exports[`macPackager > two-package 1`] = `
       "arch": "universal",
       "file": "TestApp-1.1.0-mac-universal.zip.blockmap",
       "safeArtifactName": "TestApp-1.1.0-mac-universal.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.1.0-mac-x64.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.1.0-mac-x64.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-mac-x64.zip.blockmap",
       "updateInfo": {
         "sha512": "@sha512",
         "size": "@size",
