@@ -27,7 +27,7 @@ This handles every change marked **Auto ✓** below. See the [walkthrough](./v26
 :::info[Toolsets now default to the newest bundle ("latest")]
 In v27 every `toolsets.*` property defaults to **`"latest"`** — an **unset** property, `null`, and the literal `"latest"` all resolve to the **newest published bundle** for that toolset (previously each property defaulted to a fixed pinned version). No config change is required, but the effective defaults moved:
 
-- **`wine` → `1.0.1`** — Wine 11.0 (was Wine 4.0.1); macOS arm64 via Rosetta. Linux still uses host-installed `wine`.
+- **`wine` → `"system"`** — the **host-installed `wine`** on `PATH`, on macOS as well as Linux (v26 downloaded a Wine 4.0.1 bundle on macOS). Set `toolsets.wine: "1.0.1"` to download the Wine 11.0 bundle instead — macOS arm64 via Rosetta.
 - **`winCodeSign` → `1.3.0`** — Windows Kits 10.0.26100.0, `osslsigncode` 2.11 (native arm64), and the Azure Trusted Signing `dlib` + .NET 8 payload.
 - **`appimage` → `1.1.0`** — static FUSE3-compatible runtime; adds `unsquashfs` support.
 - `icons` → `1.2.1` — newer `wasm-vips` / `@resvg/resvg-wasm` bundle (was `1.1.0`).
@@ -66,6 +66,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Root-level `directories` removed](#root-level-directories-in-packagejson) | ✓ | Move under `build.directories` |
 | [`build.helper-bundle-id` removed](#buildhelper-bundle-id) | ✓ | Moved to `mac.helperBundleId` |
 | [`squirrelWindows.noMsi` removed](#squirrelwindowsnomsi) | ✓ | Replaced by `msi` (inverted) |
+| [`squirrelWindows.customSquirrelVendorDir` removed](#squirrelwindowscustomsquirrelvendordir) | — | Supply a custom Squirrel bundle via `toolsets.squirrel` (a `ToolsetCustom` object) |
 | [`GithubOptions.vPrefixedTagName` removed](#githuboptions-gitlaboptions-vprefixedtagname) | ✓ | Use `tagNamePrefix` |
 | [`GitlabOptions.vPrefixedTagName` retained](#githuboptions-gitlaboptions-vprefixedtagname) | — | None — still functional; the migrator leaves GitLab entries untouched |
 | [`devMetadata` / `extraMetadata` in `PackagerOptions` removed](#devmetadata-extrametadata-programmatic-packageroptions) | — | Use `config` / `config.extraMetadata` |
@@ -234,6 +235,25 @@ The `noMsi` boolean is removed in favor of its inverse, `msi`.
 { "build": { "squirrelWindows": { "noMsi": true } } }   // Before
 { "build": { "squirrelWindows": { "msi": false } } }    // After
 ```
+
+### `squirrelWindows.customSquirrelVendorDir`
+
+Removed. v27 inlines the Squirrel.Windows installer logic and drops the `electron-winstaller` npm dependency (and its vendored binaries); the Squirrel vendor toolset is now fetched from the maintained `squirrel.windows` electron-builder-binaries bundle. To pin a version or supply a custom/local bundle — for example an air-gapped mirror — use the standard `toolsets.squirrel` setting instead, the same way you would pin `toolsets.nsis` or `toolsets.winCodeSign`.
+
+The shape and behaviour differ, so this is not a 1-to-1 rename:
+
+- The old `customSquirrelVendorDir` pointed at a directory **whose contents were the vendor files** (`Squirrel.exe`, `nuget.exe`, …) and was copied verbatim, bypassing all provisioning.
+- `toolsets.squirrel` accepts a version pin (`"1.1.1"` / `"latest"`) **or** a `ToolsetCustom` object whose `url` points at a bundle that **contains an `electron-winstaller/vendor/` subtree**. The bundle still goes through normal provisioning: on every platform `rcedit.exe` is supplied from the `winCodeSign` toolset (it runs under Wine on non-Windows hosts), and for `msi: true` the shared WiX toolset is merged in.
+
+```json5
+// Before (removed):
+{ "squirrelWindows": { "customSquirrelVendorDir": "./my-vendor" } }
+// After: a custom toolset bundle whose electron-winstaller/vendor/ holds the binaries.
+// A bare file:// directory is used as-is (no checksum); a remote/archive url needs a checksum.
+{ "toolsets": { "squirrel": { "url": "file:///abs/path/to/squirrel-toolset" } } }
+```
+
+For a fully offline build, seed the `squirrel.windows@<version>` archive (plus `winCodeSign` and, for MSI, the WiX bundle) in the toolset cache or point `toolsets.squirrel` at a local bundle — see [Offline / Air-Gapped Builds](../tutorials/offline-air-gapped-builds.md). Nothing is downloaded outside the checksummed toolset bundles.
 
 ### `GithubOptions` / `GitlabOptions` `vPrefixedTagName` {#githuboptions-gitlaboptions-vprefixedtagname}
 
@@ -521,7 +541,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 
 | Toolset | v26 default | v27 `"latest"` resolves to | What the upgrade entails |
 |---------|-------------|----------------------------|--------------------------|
-| `wine` | `0.0.0` (Wine 4.0.1, macOS only) | `1.0.1` | Wine 11.0; macOS arm64 via Rosetta. Linux uses host-installed `wine` (no bundle shipped) |
+| `wine` | `0.0.0` (Wine 4.0.1, macOS only) | `system` | Host-installed `wine` on `PATH`, on macOS and Linux. **Requires a host Wine on macOS** — see the note below. Pin `"1.0.1"` for the Wine 11.0 bundle (macOS arm64 via Rosetta) |
 | `winCodeSign` | `0.0.0` (winCodeSign 2.6.0) | `1.3.0` | Windows Kits 10.0.26100.0; `osslsigncode` 2.11 + native arm64; bundles the Azure Trusted Signing `dlib` + .NET 8 runtime |
 | `appimage` | `0.0.0` (FUSE2 runtime) | `1.1.0` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support |
 | `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `1.2.1` | NSIS 3.12; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR` |
@@ -530,7 +550,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 | `linuxToolsMac` | `1.0.0` | `1.0.0` | Unchanged — gnu-tar, lzip, binutils, etc. (macOS → Linux archives) |
 | `sevenZip` | `1.0.0` | `1.0.0` | Unchanged — only published version |
 
-**No action required** for most projects — the new bundles are drop-in replacements and produce identical output. If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
+**No action required** for most projects — the new bundles are drop-in replacements and produce identical output. **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`) or an explicit `toolsets.wine: "1.0.1"`. If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
 
 ```json5
 { "build": { "toolsets": { "winCodeSign": "0.0.0", "nsis": "0.0.0", "appimage": "0.0.0", "wine": "0.0.0" } } }
