@@ -111,15 +111,29 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
     ))
 
   test("AppImage - deprecated systemIntegration", ({ expect }) =>
-    appThrows(expect, {
-      targets: appImageTarget,
-      config: {
-        toolsets,
-        appImage: {
-          systemIntegration: "doNotAsk",
-        } as any,
+    appThrows(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          appImage: {
+            systemIntegration: "doNotAsk",
+          } as any,
+        },
       },
-    }))
+      {},
+      // Asserted explicitly rather than snapshotted: the removed-option guard throws an
+      // InvalidConfigurationError, and the snapshot helper records `error.code` in preference to
+      // `error.message`, so a snapshot here would collapse to the generic
+      // ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION and stop covering the message entirely.
+      error => {
+        expect(error.message).toContain("`appImage.systemIntegration` was removed in electron-builder v27")
+        expect(error.message).toContain("AppImageLauncher")
+        expect(error.message).toContain("electron-builder migrate-schema")
+        expect(error.message).toContain("v27-breaking-changes#appimagesystemintegration")
+      }
+    ))
 
   test("text license and file associations", ({ expect }) =>
     app(

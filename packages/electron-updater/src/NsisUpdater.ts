@@ -6,7 +6,7 @@ import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
-import { DOWNLOAD_PROGRESS } from "./types.js"
+import { DOWNLOAD_PROGRESS, DownloadExecutorResult } from "./types.js"
 import { VerifyUpdateCodeSignature } from "./index.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import fsExtra from "fs-extra"
@@ -65,7 +65,7 @@ export class NsisUpdater extends BaseUpdater {
   }
 
   /*** @private */
-  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")!
     return this.executeDownload({

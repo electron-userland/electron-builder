@@ -89,6 +89,7 @@ $ELECTRON_BUILDER_CACHE/<toolset>@<version>/<archive>
 # e.g. ~/.cache/electron-builder/appimage@1.1.0/appimage-tools-runtime-20251108.tar.gz
 #      ~/.cache/electron-builder/fpm@2.2.1/fpm-1.17.0-ruby-3.4.3-linux-amd64.7z
 #      ~/.cache/electron-builder/7zip@1.0.1/7zip-linux-x64.tar.gz
+#      ~/.cache/electron-builder/squirrel.windows@1.1.1/squirrel.windows-2.0.1-patched.zip
 ```
 
 The default cache directory (when `ELECTRON_BUILDER_CACHE` is not set) is `~/.cache/electron-builder` on Linux (respecting `$XDG_CACHE_HOME`), `~/Library/Caches/electron-builder` on macOS, and `%LOCALAPPDATA%\electron-builder\Cache` on Windows.
@@ -98,6 +99,7 @@ Notes on the contract:
 - The archive's SHA-256 is verified **locally** against the checksum pinned in electron-builder — no checksum file is fetched.
 - Extraction happens locally on first use; you do **not** need to seed extracted directories or `.state` marker files.
 - Archive names and versions for your electron-builder version can be read from the toolset modules in [`packages/app-builder-lib/src/toolsets`](https://github.com/electron-userland/electron-builder/tree/master/packages/app-builder-lib/src/toolsets), or captured by warming the cache once online.
+- **Squirrel.Windows:** the `squirrelWindows` target needs the `squirrel.windows` bundle plus `winCodeSign` (for `rcedit`); `msi: true` additionally needs the `wix-4.0.0.5512.2` bundle.
 - **7-Zip bootstrap:** extracting any `.7z` toolset (fpm, NSIS, winCodeSign, the legacy FUSE2 AppImage runtime, Wine) requires the `7zip@1.0.1` toolset. Seed its `.tar.gz` archive as well (it extracts without 7-Zip), or configure `toolsets.sevenZip` with a custom local path.
 
 :::warning[Cache layouts from electron-builder < 26.15 are not read]

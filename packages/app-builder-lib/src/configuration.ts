@@ -709,6 +709,12 @@ export interface ToolsetConfig {
    * |---------|-------------|-----------------|-------|
    * | `"0.0.0"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |
    * | `"1.0.1"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |
+   * | `"system"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |
+   *
+   * `"system"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and
+   * is what `"latest"` (the default) currently resolves to on every platform: the published `"1.0.1"`
+   * bundles ship no PE builtins, so a host Wine installation is required to build Windows targets on
+   * macOS or Linux.
    *
    * To use a custom Wine binary, use a `ToolsetCustom` object.
    *
@@ -716,7 +722,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly wine?: "0.0.0" | "1.0.1" | ToolsetCustom | "latest"
+  readonly wine?: "0.0.0" | "1.0.1" | "system" | ToolsetCustom | "latest"
 
   /**
    * Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)
@@ -790,6 +796,31 @@ export interface ToolsetConfig {
    * @default "latest"
    */
   readonly icons?: "1.2.3" | ToolsetCustom | "latest"
+
+  /**
+   * Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.
+   *
+   * The bundle ships the Squirrel vendor toolset under `electron-winstaller/vendor/`:
+   * - **`Squirrel.exe`** / **`Squirrel-Mono.exe`** — releasify the app into `Setup.exe` (and an optional MSI).
+   * - **`SyncReleases.exe`** — downloads prior releases to produce delta packages.
+   * - **`nuget.exe`**, **`7z`** — pack the app into a `.nupkg` and compress release assets.
+   *
+   * `rcedit.exe` is provisioned from the {@link winCodeSign} toolset at runtime (on every platform;
+   * under Wine on non-Windows hosts). Building an MSI additionally uses the shared WiX toolset.
+   *
+   * Available versions:
+   * | Version | Notes |
+   * |---------|-------|
+   * | `"1.1.1"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |
+   *
+   * Set to a {@link ToolsetCustom} object to supply your own bundle — it must contain the
+   * `electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/squirrel.windows/CHANGELOG.md
+   *
+   * @default "latest"
+   */
+  readonly squirrel?: "1.1.1" | ToolsetCustom | "latest"
 }
 
 /**

@@ -744,6 +744,8 @@ exports[`pkg scripts 3`] = `
   "Test App ßW.app/Contents/Resources/ja.lproj",
   "Test App ßW.app/Contents/Resources/kn.lproj",
   "Test App ßW.app/Contents/Resources/ko.lproj",
+  "Test App ßW.app/Contents/Resources/LICENSE.electron.txt",
+  "Test App ßW.app/Contents/Resources/LICENSES.chromium.html",
   "Test App ßW.app/Contents/Resources/lt.lproj",
   "Test App ßW.app/Contents/Resources/lv.lproj",
   "Test App ßW.app/Contents/Resources/ml.lproj",

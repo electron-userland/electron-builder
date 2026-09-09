@@ -14,7 +14,7 @@ export function registerWineToolsetTests(toolsets: ToolsetConfig): void {
         // Linux ships no portable bundle for string/null configs — falls back to the host wine binary.
         expect(result.execPath).toBe("wine")
       } else {
-        // macOS downloads a bundle (legacy 4.0.1 for null/0.0.0, or wine@1.0.1) → absolute path.
+        // macOS downloads a bundle for the explicit versions (legacy 4.0.1 for 0.0.0, or wine@1.0.1) → absolute path.
         expect(path.isAbsolute(result.execPath)).toBe(true)
         expect(await exists(result.execPath)).toBe(true)
       }
