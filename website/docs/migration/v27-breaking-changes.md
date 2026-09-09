@@ -588,7 +588,7 @@ The `url` accepts an `https://` URL (downloaded and cached automatically) or a `
 { "build": { "toolsets": { "appimage": { "url": "file:///path/to/my-appimage-tools-dir" } } } }
 ```
 
-> **Wine note:** Linux uses the host-installed `wine` by default (no bundle is shipped for Linux), and macOS uses the downloaded Wine 11.0 bundle. Set `toolsets.wine: "system"` to use the host-installed `wine` on `PATH` on any platform — that is the replacement for `USE_SYSTEM_WINE`. To point at a custom Wine build instead, supply a `ToolsetCustom` object on `toolsets.wine`; note that such a directory must contain a prebuilt `wine-home` prefix alongside `bin/` and `lib/`, so `"system"` is the simpler option for a stock Wine installation.
+> **Wine note:** `toolsets.wine` defaults to `"system"` on every platform — an unset value, `null`, and `"latest"` all resolve to the host-installed `wine` on `PATH`, so no Wine bundle is downloaded unless you pin one explicitly. `"system"` is the replacement for `USE_SYSTEM_WINE`. On macOS, pin `toolsets.wine: "1.0.1"` to download the Wine 11.0 bundle instead (arm64 via Rosetta), or `"0.0.0"` for the legacy Wine 4.0.1 bundle; Linux always uses the host `wine` (no bundle is shipped for it). To point at a custom Wine build, supply a `ToolsetCustom` object on `toolsets.wine`; note that such a directory must contain a prebuilt `wine-home` prefix alongside `bin/` and `lib/`, so `"system"` is the simpler option for a stock Wine installation.
 
 Supported archive formats: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`. **Exception for `sevenZip`**: because 7-Zip is used to extract `.7z` and `.tar.xz` archives, a custom `sevenZip` bundle can only be supplied as a `.tar.gz`, `.zip`, or bare `file://` directory.
 
