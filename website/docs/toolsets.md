@@ -21,16 +21,16 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 | `nsis` | Compiling Windows installers (`makensis`, plugin DLLs, `elevate.exe`) | `1.2.1` |
 | `wine` | Running Windows tools (NSIS, rcedit, signtool) on non-Windows hosts | `system` (host `wine` on `PATH`) |
 | `fpm` | Building Linux packages (`.deb`, `.rpm`, `.pacman`, …) on macOS & Linux | `2.2.1` |
-| `linuxToolsMac` | Building Linux targets / `.tar.lz` archives on macOS (`ar`, `lzip`, `gtar`) | `1.0.0` |
-| `sevenZip` | Extracting `.7z` and `.tar.xz` archives internally | `1.0.0` |
-| `icons` | Converting source images to `.icns`, `.ico`, and PNG icon sets | `1.2.1` |
+| `linuxToolsMac` | Building Linux targets / `.tar.lz` archives on macOS (`ar`, `lzip`, `gtar`) | `1.0.1` |
+| `sevenZip` | Extracting `.7z` and `.tar.xz` archives internally | `1.0.1` |
+| `icons` | Converting source images to `.icns`, `.ico`, and PNG icon sets | `1.2.3` |
 | `squirrel` | Building Squirrel.Windows installers (`Squirrel.exe`, `SyncReleases.exe`, `nuget.exe`, `7z`) — requires `electron-builder-squirrel-windows` | `1.1.1` |
 
 :::note[Platform notes]
 - **`wine`** is only needed to build **Windows targets on a non-Windows machine**. On Windows it has no effect. It defaults to the **host-installed `wine`** on `PATH` (`"system"`) on both macOS and Linux — no bundle is shipped for Linux, and macOS no longer downloads one unless you ask for it. Set `toolsets.wine: "1.0.1"` to use the bundled Wine 11.0 on macOS instead, including on arm64 via Rosetta.
 - **`winCodeSign`** is used on all platforms (`signtool.exe` on Windows, `osslsigncode` on macOS/Linux).
 - **`squirrel`** is only used by the `squirrelWindows` target. It runs natively on Windows; on macOS/Linux it needs a host-installed `mono`, and `rcedit` (from `winCodeSign`) runs under Wine.
-- **`fpm`**, **`linuxToolsMac`**, and **`sevenZip`** each have only one published version today, so `"latest"` and the listed version are equivalent.
+- **`fpm`** has only one published version today (`2.2.1`), so `"latest"` and that version are equivalent. **`linuxToolsMac`** and **`sevenZip`** also accept the earlier `"1.0.0"` bundle as an explicit pin.
 :::
 
 For the full version-by-version breakdown of what each `"latest"` bundle upgrades from — and which are drop-in replacements versus behavior changes — see the migration table in [Toolset defaults resolve to `"latest"`](./migration/v27-breaking-changes.md#toolset-defaults-resolve-to-latest-newest-bundle).
