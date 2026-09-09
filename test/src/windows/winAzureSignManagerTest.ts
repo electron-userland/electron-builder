@@ -164,9 +164,9 @@ describe("WindowsSignAzureManager.signFile", { sequential: true }, () => {
     expect(psCommand).toContain(`-Files 'C:\\user''s documents\\app.exe'`)
   })
 
-  test("returns true on success", async ({ expect }) => {
+  test(`returns "signed" on success`, async ({ expect }) => {
     const result = await manager.signFile(signOptions)
-    expect(result).toBe(true)
+    expect(result).toBe("signed")
   })
 
   test("the encoded command round-trips correctly through Base64 UTF-16LE", async ({ expect }) => {

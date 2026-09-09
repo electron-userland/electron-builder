@@ -244,6 +244,29 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       },
     }))
 
+  test("core24 classic confinement omits plugs and layout", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "cl-co-app" },
+        productName: "Snap Electron App (classic confinement)",
+        snapcraft: {
+          base: "core24",
+          // extensions: [] exercises the non-extension path, where default plugs and layout used to be generated
+          core24: { confinement: "classic", extensions: [] },
+        },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        expect(snap.confinement).toBe("classic")
+        // Snap store review rejects classic snaps that declare plugs or layout
+        expect(snap.plugs).toBeUndefined()
+        expect(snap.layout).toBeUndefined()
+        expect(snap.apps?.["cl-co-app"]).toBeDefined()
+        expect(snap.apps?.["cl-co-app"]?.plugs).toBeUndefined()
+        return Promise.resolve(true)
+      },
+    }))
+
   test("core24 wayland disabled", ({ expect }) => {
     const appName = "sep"
     return app(expect, {

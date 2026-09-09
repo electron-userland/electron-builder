@@ -1,8 +1,13 @@
-import { describe, test } from "vitest"
-import { collectionMatchesAppDependencies, resolveFirstMatchingCollection } from "app-builder-lib/src/util/appFileCopier"
+import { afterEach, describe, test, vi } from "vitest"
+import { log } from "builder-util"
+import { TmpDir } from "temp-file"
+import * as fse from "fs-extra"
+import * as path from "path"
+import { collectionMatchesAppDependencies, collectNodeModulesWithLogging, resolveFirstMatchingCollection } from "app-builder-lib/src/util/appFileCopier"
 import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
 import type { NodeModuleInfo } from "app-builder-lib/src/node-module-collector/types"
 import type { ModuleManager } from "app-builder-lib/src/node-module-collector/moduleManager"
+import type { PlatformPackager } from "app-builder-lib"
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -168,5 +173,76 @@ describe("resolveFirstMatchingCollection", () => {
     })
     // The mismatched YARN_BERRY result (tried first across both dirs) must not win.
     expect(result?.nodeModules.map(m => m.name)).toEqual(["minimist", "fs-extra"])
+  })
+
+  test("a zero-dependency app skips its empty node_modules and vacuously accepts a workspace-root tree (issue #10033)", async ({ expect }) => {
+    // Documents the interaction the zero-dependency guard in collectNodeModulesWithLogging exists
+    // for: the app's own empty collection is skipped, the search climbs to the workspace root, and
+    // the vacuous match accepts the entire hoisted workspace tree.
+    const result = await resolveFirstMatchingCollection({
+      pmApproaches: [PM.YARN_BERRY, PM.TRAVERSAL],
+      searchDirectories: ["/app", "/workspace-root"],
+      dependencies: {},
+      run: (_pm, dir) => Promise.resolve(dir === "/workspace-root" ? collection(NPM_INTERNALS) : collection([])),
+    })
+    expect(result?.nodeModules.map(m => m.name)).toEqual(NPM_INTERNALS)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// collectNodeModulesWithLogging — zero-dependency guard (issue #10033)
+// ---------------------------------------------------------------------------
+
+describe("collectNodeModulesWithLogging", () => {
+  const ZERO_DEPS_MESSAGE = "app has no production dependencies, skipping node_modules bundling"
+  const projectTmpDir = new TmpDir("eb-collect-nm-test")
+
+  const makePackager = (options: { appDir: string; originalDependencies?: Record<string, string>; metadataDependencies?: Record<string, string> }) =>
+    ({
+      tempDirManager: { getTempFile: vi.fn(), getTempDir: vi.fn() },
+      appDir: options.appDir,
+      projectDir: options.appDir,
+      getWorkspaceRoot: () => Promise.resolve(""),
+      getPackageManager: () => Promise.resolve(PM.TRAVERSAL),
+      config: {},
+      originalMetadata: { dependencies: options.originalDependencies },
+      metadata: { dependencies: options.metadataDependencies },
+      nodePackageName: "test-app",
+    }) as unknown as PlatformPackager<any>
+
+  afterEach(async () => {
+    vi.restoreAllMocks()
+    await projectTmpDir.cleanup()
+  })
+
+  test("returns no modules without searching when the app declares no production dependencies", async ({ expect }) => {
+    const infoSpy = vi.spyOn(log, "info")
+    // Non-existent appDir: reaching any collector would throw, proving the guard short-circuits.
+    const result = await collectNodeModulesWithLogging(makePackager({ appDir: "/virtual/does-not-exist" }), null)
+    expect(result).toEqual([])
+    expect(infoSpy).toHaveBeenCalledWith(null, ZERO_DEPS_MESSAGE)
+  })
+
+  test("searches for node modules when dependencies are declared only via extraMetadata", async ({ expect }) => {
+    const appDir = await projectTmpDir.createTempDir()
+    await fse.writeJson(path.join(appDir, "package.json"), { name: "test-app", version: "1.0.0" })
+    const infoSpy = vi.spyOn(log, "info")
+    // `metadata` reflects extraMetadata overrides; `originalMetadata` is the on-disk package.json.
+    const result = await collectNodeModulesWithLogging(makePackager({ appDir, metadataDependencies: { minimist: "^1.2.8" } }), null)
+    // Nothing is installed, so nothing is collected — but the search must have run.
+    expect(result).toEqual([])
+    expect(infoSpy.mock.calls.some(call => call[1] === ZERO_DEPS_MESSAGE)).toBe(false)
+    expect(infoSpy.mock.calls.some(call => call[1] === "searching for node modules")).toBe(true)
+  })
+
+  test("searches for node modules when only originalMetadata declares dependencies", async ({ expect }) => {
+    // e.g. extraMetadata cleared `dependencies` — the as-declared originalMetadata still counts.
+    const appDir = await projectTmpDir.createTempDir()
+    await fse.writeJson(path.join(appDir, "package.json"), { name: "test-app", version: "1.0.0" })
+    const infoSpy = vi.spyOn(log, "info")
+    const result = await collectNodeModulesWithLogging(makePackager({ appDir, originalDependencies: { minimist: "^1.2.8" } }), null)
+    expect(result).toEqual([])
+    expect(infoSpy.mock.calls.some(call => call[1] === ZERO_DEPS_MESSAGE)).toBe(false)
+    expect(infoSpy.mock.calls.some(call => call[1] === "searching for node modules")).toBe(true)
   })
 })

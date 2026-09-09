@@ -23,7 +23,7 @@ export async function createSelfSignedCert(publisher: string) {
     const pfx = path.join(targetDir, `${sanitizeFileName(publisher)}.pfx`)
     await unlinkIfExists(pfx)
     await exec(path.join(vendorPath, "pvk2pfx.exe"), ["-pvk", pvk, "-spc", cer, "-pfx", pfx])
-    log.info({ file: pfx }, `created. Please see https://electron.build/code-signing how to use it to sign.`)
+    log.info({ file: pfx }, `created. Please see https://electron.build/docs/features/code-signing how to use it to sign.`)
 
     const certLocation = "Cert:\\LocalMachine\\TrustedPeople"
     log.info({ file: pfx, certLocation }, `importing. Operation will be succeed only if runned from root. Otherwise import  file manually.`)

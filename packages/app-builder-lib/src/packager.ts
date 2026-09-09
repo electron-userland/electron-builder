@@ -32,6 +32,7 @@ import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packag
 import { PlatformPackager } from "./platformPackager.js"
 import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
+import { assertNoRemovedEnvVars } from "./util/flags.js"
 import { expandMacro } from "./util/macroExpander.js"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
 import { getRepositoryInfo } from "./util/repositoryInfo.js"
@@ -43,7 +44,7 @@ import asyncPool from "tiny-async-pool"
 import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js"
 import _fsExtra from "fs-extra"
 const { chmod, mkdirs, outputFile } = _fsExtra
-import { setSevenZipPath } from "./toolsets/7zip.js"
+import { setSevenZipPath, setSevenZipVersion } from "./toolsets/7zip.js"
 import { getCustomToolsetPath } from "./toolsets/custom.js"
 
 type PackagerEvents = {
@@ -61,6 +62,27 @@ type PackagerEvents = {
 
   // internal-use only, prefer usage of `artifactBuildCompleted`
   artifactCreated: Hook<ArtifactCreated, void>
+}
+
+/**
+ * `devMetadata` and `extraMetadata` were removed from `PackagerOptions` in v27 (they had thrown since
+ * v22). `build()` rejected them with a bare `Unknown option "…"` that named no replacement, and a
+ * directly constructed Packager ignored them entirely — the key simply sat unread on `options`.
+ */
+function checkRemovedPackagerOptions(options: PackagerOptions): void {
+  const removed: Array<[key: string, replacement: string]> = [
+    ["devMetadata", "config"],
+    ["extraMetadata", "config.extraMetadata"],
+  ]
+  for (const [key, replacement] of removed) {
+    if ((options as any)[key] !== undefined) {
+      throw new InvalidConfigurationError(
+        `\`${key}\` was removed from PackagerOptions in electron-builder v27. Pass \`${replacement}\` instead, ` +
+          `e.g. build({ targets, config: ${key === "devMetadata" ? "{ … }" : "{ extraMetadata: { … } }"} }).\n` +
+          "https://www.electron.build/docs/migration/v27-breaking-changes#devmetadata-extrametadata-programmatic-packageroptions"
+      )
+    }
+  }
 }
 
 export class Packager {
@@ -186,6 +208,10 @@ export class Packager {
     options: PackagerOptions,
     readonly cancellationToken = new CancellationToken()
   ) {
+    // Checked here rather than only in `checkBuildRequestOptions` so a directly constructed Packager
+    // is covered too — that path reads neither field, so a v26 caller was silently ignored.
+    checkRemovedPackagerOptions(options)
+
     const targets = options.targets || new Map<Platform, Map<Arch, Array<string>>>()
     if (options.targets == null) {
       options.targets = targets
@@ -356,6 +382,10 @@ export class Packager {
 
   // external caller of this method always uses isTwoPackageJsonProjectLayoutUsed=false and appDir=projectDir, no way (and need) to use another values
   async build(repositoryInfo?: SourceRepositoryInfo): Promise<BuildResult> {
+    // Removed env vars are checked before anything else: nothing validates process.env, so a CI
+    // image still exporting one silently gets a different toolchain than it asked for.
+    assertNoRemovedEnvVars()
+
     await this.validateConfig()
 
     if (repositoryInfo != null) {
@@ -454,6 +484,8 @@ export class Packager {
         await chmod(bin, 0o755)
       }
       setSevenZipPath(bin)
+    } else {
+      setSevenZipVersion(sevenZipConfig)
     }
 
     const taskManager = new AsyncTaskManager(this.cancellationToken)
@@ -468,7 +500,7 @@ export class Packager {
       }
 
       if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
-        throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/multi-platform-build")
+        throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/docs/features/multi-platform-build")
       }
 
       const packager = await this.createHelper(platform)

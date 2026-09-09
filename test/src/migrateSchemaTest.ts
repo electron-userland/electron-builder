@@ -573,6 +573,13 @@ describe("migrateConfig — mac signing consolidation", () => {
     expect(result.changes.some(c => c.key === "mac.identity")).toBe(true)
   })
 
+  test("moves mac.type → sign.type", () => {
+    const result = migrateConfig({ mac: { type: "development" } })
+    expect("type" in result.migrated.mac).toBe(false)
+    expect(result.migrated.mac.sign).toEqual({ type: "development" })
+    expect(result.changes.some(c => c.key === "mac.type")).toBe(true)
+  })
+
   test("renames signIgnore → sign.ignore", () => {
     const result = migrateConfig({ mac: { signIgnore: ["foo", "bar"] } })
     expect("signIgnore" in result.migrated.mac).toBe(false)
@@ -685,5 +692,68 @@ describe("migrateConfig — nsis-web advisory", () => {
     expect(result.modified).toBe(true)
     expect(result.changes.some(c => c.key === "electronCompile")).toBe(true)
     expect(result.advisories).toHaveLength(1)
+  })
+})
+
+describe("migrateConfig — mac.gatekeeperAssess is removed, not moved", () => {
+  // @electron/osx-sign 2.x dropped the spctl --assess step; ElectronSignOptions omits the field and
+  // the schema rejects it, so moving it under `sign` produced a config that failed the next build.
+  test.each(["mac", "mas", "masDev"] as const)("%s.gatekeeperAssess is deleted", platform => {
+    const result = migrateConfig({ [platform]: { gatekeeperAssess: false, identity: "Developer ID Application: Acme (TEAM)" } })
+    const migrated = result.migrated[platform]
+    expect(migrated.gatekeeperAssess).toBeUndefined()
+    expect(migrated.sign.gatekeeperAssess).toBeUndefined()
+    expect(migrated.sign.identity).toBe("Developer ID Application: Acme (TEAM)")
+    expect(result.changes.some(c => c.key === `${platform}.gatekeeperAssess`)).toBe(true)
+  })
+
+  test("gatekeeperAssess alone still migrates (no other sign fields present)", () => {
+    const result = migrateConfig({ mac: { gatekeeperAssess: true } })
+    expect(result.migrated.mac.gatekeeperAssess).toBeUndefined()
+    expect(result.modified).toBe(true)
+  })
+})
+
+describe("migrateConfig — round-trip: migrator output passes v27 schema validation", () => {
+  // The migrator is the documented upgrade path, so anything it emits must validate. This is the
+  // test that would have caught gatekeeperAssess being relocated into a bag that rejects it.
+  const v26Configs: Array<[string, Record<string, any>]> = [
+    ["mac signing", { mac: { identity: "Developer ID Application: Acme (TEAM)", hardenedRuntime: true, gatekeeperAssess: false, signIgnore: ["**/*.txt"] } }],
+    ["mac universal", { mac: { mergeASARs: true, singleArchFiles: "*.node", x64ArchFiles: "*.node" } }],
+    ["mas signing", { mas: { entitlements: "build/e.plist", provisioningProfile: "build/embedded.provisionprofile", gatekeeperAssess: true } }],
+    ["asar options", { asarUnpack: ["**/*.node"], disableSanityCheckAsar: true, disableAsarIntegrity: true }],
+    ["native modules", { buildDependenciesFromSource: true, nodeGypRebuild: false, npmRebuild: true, nativeRebuilder: "parallel" }],
+    ["npmSkipBuildFromSource", { npmSkipBuildFromSource: true }],
+    ["win signtool", { win: { signtoolOptions: { certificateFile: "cert.pfx", publisherName: "CN=ACME Inc" } } }],
+    [
+      "win azure",
+      {
+        win: {
+          azureSignOptions: {
+            endpoint: "https://weu.codesigning.azure.net/",
+            certificateProfileName: "p",
+            codeSigningAccountName: "acct",
+            publisherName: "CN=ACME Inc",
+            ExcludeCredentials: "ManagedIdentityCredential",
+          },
+        },
+      },
+    ],
+    ["win signExecutable", { win: { signExecutable: false } }],
+    ["electronDownload", { electronDownload: { mirror: "https://my-mirror/", isVerifyChecksum: false } }],
+    ["snap", { snap: { confinement: "strict", stagePackages: ["libfoo"], base: "core22" } }],
+    ["squirrelWindows", { squirrelWindows: { noMsi: true } }],
+    ["helper-bundle-id", { "helper-bundle-id": "com.example.helper" }],
+    ["removed root keys", { electronCompile: true, framework: "electron", nodeVersion: "current", launchUiVersion: "0.1.0" }],
+    ["linux.syncDesktopName", { linux: { syncDesktopName: false } }],
+    ["appImage.systemIntegration", { appImage: { systemIntegration: "doNotAsk" } }],
+    ["github publish", { publish: { provider: "github", owner: "o", repo: "r", vPrefixedTagName: false } }],
+  ]
+
+  test.each(v26Configs)("%s", async (_name, input) => {
+    const { migrated } = migrateConfig({ appId: "com.example.app", productName: "MyApp", ...input })
+    const { validateConfiguration } = await import("app-builder-lib/internal")
+    const { DebugLogger } = await import("builder-util")
+    await expect(validateConfiguration(migrated as any, new DebugLogger(false))).resolves.toBeUndefined()
   })
 })

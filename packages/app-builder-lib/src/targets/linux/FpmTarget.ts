@@ -1,4 +1,4 @@
-import { Arch, asArray, exec, getArchSuffix, log, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
+import { Arch, asArray, exec, getArchSuffix, InvalidConfigurationError, log, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 
 import { objectToArgs } from "builder-util-runtime"
@@ -233,7 +233,7 @@ export default class FpmTarget extends Target {
     const depends = options.depends
     if (depends != null) {
       if (Array.isArray(depends)) {
-        fpmConfiguration.customDepends = depends
+        fpmConfiguration.customDepends = this.expandDependsDefaults(depends, target)
       } else if (typeof depends === "string") {
         fpmConfiguration.customDepends = [depends as string]
       } else {
@@ -290,6 +290,16 @@ export default class FpmTarget extends Target {
 
     const env = {
       ...stripSensitiveEnvVars(process.env),
+    }
+
+    // fpm compresses the deb data.tar by piping GNU tar -J, which exports only
+    // XZ_OPT=-<level> — so xz runs single-threaded regardless of the machine,
+    // while rpm already defaults to multithreaded "xzmt" (measured on one
+    // 6.4 GiB tree in one run: deb 1059s vs rpm 171s). xz parses XZ_DEFAULTS
+    // before XZ_OPT, so -T0 multithreads the deb pack at the unchanged
+    // compression level; an operator-provided XZ_DEFAULTS wins. Fixes #10045.
+    if (target === "deb" && process.env.XZ_DEFAULTS == null) {
+      env.XZ_DEFAULTS = "-T0"
     }
 
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
@@ -398,6 +408,24 @@ export default class FpmTarget extends Target {
     return ["deb", "rpm", "pacman"].includes(target)
   }
 
+  /**
+   * Expand the `"default"` keyword in a user-provided `depends` array to the target's default
+   * depends list, so extras can be appended without repeating (and having to keep in sync) the
+   * defaults — same convention as the snap target's `plugs`/`stagePackages`/`buildPackages`.
+   * The result is deduplicated while preserving order.
+   */
+  private expandDependsDefaults(depends: string[], target: string): string[] {
+    const result: string[] = []
+    for (const item of depends) {
+      if (item === "default") {
+        result.push(...this.getDefaultDepends(target))
+      } else {
+        result.push(item)
+      }
+    }
+    return Array.from(new Set(result))
+  }
+
   private getDefaultDepends(target: string): string[] {
     switch (target) {
       case "deb":
@@ -416,7 +444,7 @@ export default class FpmTarget extends Target {
         ]
 
       case "pacman":
-        return ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"]
+        return ["c-ares", "ffmpeg", "gtk3", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"]
 
       default:
         return []
@@ -453,6 +481,31 @@ interface FpmConfiguration {
   compression?: LinuxTargetSpecificOptions["compression"]
 }
 
+/**
+ * Legacy EJS interpolation, removed in v27 in favour of shell-style `${var}`.
+ *
+ * This has to be detected explicitly: the substitution below is a plain `${var}` regex, so an
+ * `<%= executable %>` left in a template does not match, is copied verbatim into the maintainer
+ * script, and ships inside the .deb/.rpm. The build stays green and every install runs a broken
+ * postinst/postrm — so this fails the build rather than warning.
+ */
+const LEGACY_EJS_TAG = /<%[-=]?\s*([\w.]+)\s*%>/
+
+function assertNoLegacyEjsTemplate(templatePath: string, template: string): void {
+  const match = LEGACY_EJS_TAG.exec(template)
+  if (match == null) {
+    return
+  }
+  const [tag, name] = match
+  throw new InvalidConfigurationError(
+    `${templatePath} uses the EJS template syntax \`${tag}\`, which was removed in electron-builder v27.\n` +
+      `Use the shell-style form instead: \${${name}}\n` +
+      "Left as-is the tag is copied verbatim into the generated maintainer script and shipped inside the package, " +
+      "so every install would run a broken postinst/postrm.\n" +
+      "https://www.electron.build/docs/migration/v27-breaking-changes#linux-maintainer-script-ejs-template-syntax"
+  )
+}
+
 async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: any): Promise<string> {
   //noinspection JSUnusedLocalSymbols
   function replacer(match: string, p1: string) {
@@ -462,7 +515,9 @@ async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: an
       throw new Error(`Macro ${p1} is not defined`)
     }
   }
-  const config = (await readFile(templatePath, "utf8")).replace(/\${([a-zA-Z]+)}/g, replacer)
+  const template = await readFile(templatePath, "utf8")
+  assertNoLegacyEjsTemplate(templatePath, template)
+  const config = template.replace(/\${([a-zA-Z]+)}/g, replacer)
 
   const outputPath = await tmpDir.getTempFile({ suffix: path.basename(templatePath, ".tpl") })
   await outputFile(outputPath, config)

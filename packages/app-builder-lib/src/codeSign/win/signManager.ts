@@ -8,13 +8,14 @@ import { Pkcs11SignManager } from "./pkcs11SignManager.js"
 import { CertificateFromStoreInfo, FileCodeSigningInfo, SigntoolSignManager } from "./signtoolBaseSignManager.js"
 import { WindowsSignAzureManager } from "./windowsSignAzureManager.js"
 import { WindowsSignOptions } from "./windowsCodeSign.js"
+import { SignFileResult } from "../signResult.js"
 
 export interface SignManager {
   readonly computedPublisherName: Lazy<Array<string> | null>
   readonly cscInfo: MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>
   computePublisherName(target: Target, publisherName: string | null): Promise<string>
   initialize(): Promise<void>
-  signFile(options: WindowsSignOptions): Promise<boolean>
+  signFile(options: WindowsSignOptions): Promise<SignFileResult>
 }
 
 export function createSignManager(packager: WinPackager): SignManager {

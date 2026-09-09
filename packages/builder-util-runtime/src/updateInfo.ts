@@ -78,7 +78,7 @@ export interface UpdateInfo {
   releaseDate: string
 
   /**
-   * The [staged rollout](https://www.electron.build/auto-update#staged-rollouts) percentage, 0-100.
+   * The [staged rollout](https://www.electron.build/docs/features/auto-update#staged-rollouts) percentage, 0-100.
    */
   readonly stagingPercentage?: number
 

@@ -1,6 +1,6 @@
 import { HsmSignManager } from "app-builder-lib/src/codeSign/win/hsmSignManager"
 import { Pkcs11SignManager } from "app-builder-lib/src/codeSign/win/pkcs11SignManager"
-import { SigntoolSignManager } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
+import { publisherNameMatchesCertificate, SigntoolSignManager } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
 import { WindowsSignTaskConfiguration } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
 import { readCertInfoFromX509 } from "app-builder-lib/src/codeSign/certInfo"
 import { WindowsSignAzureManager } from "app-builder-lib/src/codeSign/win/windowsSignAzureManager"
@@ -789,5 +789,118 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     const tmpDirPath = await tmpDir.createTempDir()
     const { dotnetRoot } = await signedInfo(tmpDirPath, "x64", wineToVmFile)
     expect(dotnetRoot).toBe(path.win32.join("Z:", "/mock-dotnet-runtime"))
+  })
+})
+
+// ─── publisherName ↔ signing certificate validation ──────────────────────────
+
+const acmeCertInfo = {
+  commonName: "Acme Corp",
+  bloodyMicrosoftSubjectDn: "CN=Acme Corp, O=Acme Corporation, L=San Francisco, S=California, C=US",
+}
+
+describe("publisherNameMatchesCertificate", () => {
+  test("plain string matches the certificate CN strictly", () => {
+    expect(publisherNameMatchesCertificate(["Acme Corp"], acmeCertInfo)).toBe(true)
+  })
+
+  test("plain string with a different CN does not match", () => {
+    expect(publisherNameMatchesCertificate(["Evil Corp"], acmeCertInfo)).toBe(false)
+    // strict equality — no substring/case-insensitive matching
+    expect(publisherNameMatchesCertificate(["acme corp"], acmeCertInfo)).toBe(false)
+    expect(publisherNameMatchesCertificate(["Acme"], acmeCertInfo)).toBe(false)
+  })
+
+  test("DN matches when every configured RDN equals the subject's value (subset match)", () => {
+    expect(publisherNameMatchesCertificate(["CN=Acme Corp, O=Acme Corporation"], acmeCertInfo)).toBe(true)
+    // full DN, different RDN order
+    expect(publisherNameMatchesCertificate(["O=Acme Corporation, CN=Acme Corp, C=US, S=California, L=San Francisco"], acmeCertInfo)).toBe(true)
+  })
+
+  test("DN with one mismatched RDN value does not match", () => {
+    expect(publisherNameMatchesCertificate(["CN=Acme Corp, O=Other Org"], acmeCertInfo)).toBe(false)
+  })
+
+  test("DN with an RDN key absent from the subject does not match", () => {
+    expect(publisherNameMatchesCertificate(["CN=Acme Corp, OU=Engineering"], acmeCertInfo)).toBe(false)
+  })
+
+  test("any of multiple configured names matching passes (certificate rotation)", () => {
+    expect(publisherNameMatchesCertificate(["Old Corp Name", "Acme Corp"], acmeCertInfo)).toBe(true)
+    expect(publisherNameMatchesCertificate(["CN=Old Corp, O=Old Org", "CN=Acme Corp, O=Acme Corporation"], acmeCertInfo)).toBe(true)
+  })
+
+  test("no configured name matching fails even with multiple names", () => {
+    expect(publisherNameMatchesCertificate(["Old Corp Name", "Other Corp"], acmeCertInfo)).toBe(false)
+  })
+})
+
+describe("validateExplicitPublisherName", () => {
+  function makeValidationManager(sign: any, certInfo: unknown | null, options: { certInfoRejects?: boolean } = {}) {
+    const manager: any = Object.create(SigntoolSignManager.prototype)
+    manager.platformSpecificBuildOptions = { sign }
+    manager.lazyCertInfo = {
+      value: options.certInfoRejects ? Promise.reject(new Error("cannot read cert")) : Promise.resolve(certInfo),
+    }
+    return manager
+  }
+
+  const validate = (manager: any) => manager.validateExplicitPublisherName()
+
+  test("passes when the configured name matches the certificate CN", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: "Acme Corp" }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("passes when a configured DN subset matches the certificate subject", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: "CN=Acme Corp, O=Acme Corporation" }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("throws on mismatch, naming both the configured value and the certificate subject", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: "Evil Corp" }, acmeCertInfo)
+    await expect(validate(manager)).rejects.toThrow(/Evil Corp/)
+    await expect(validate(manager)).rejects.toThrow(/CN=Acme Corp, O=Acme Corporation, L=San Francisco, S=California, C=US/)
+    await expect(validate(manager)).rejects.toThrow(/wrong certificate/)
+  })
+
+  test("passes when any of multiple configured names matches (certificate rotation)", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: ["Old Corp Name", "Acme Corp"] }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("throws when none of multiple configured names matches", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: ["Old Corp Name", "Other Corp"] }, acmeCertInfo)
+    await expect(validate(manager)).rejects.toThrow(/Old Corp Name \| Other Corp/)
+  })
+
+  test("skips when certificate info is unavailable (null)", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: "Evil Corp" }, null)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("skips when certificate info cannot be read (rejects)", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: "Evil Corp" }, null, { certInfoRejects: true })
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("skips when a custom sign hook is configured (actual signing certificate unknown)", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: "Evil Corp", sign: "./my-sign-hook.js" }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("skips when publisherName is not configured (auto-derive path)", async () => {
+    const manager = makeValidationManager({ type: "signtool" }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("skips on explicit publisherName: null opt-out", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: null }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("skips for azure signing config (no local certificate)", async () => {
+    const manager = makeValidationManager({ type: "azure", publisherName: "Evil Corp" }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
   })
 })

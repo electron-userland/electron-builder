@@ -336,6 +336,35 @@ export interface CommonConfiguration {
   readonly ignoredProductionDependencies?: Array<string> | null
 
   /**
+   * Whether production dependencies that cannot be resolved during node-module collection are
+   * allowed — i.e. whether the build should continue with a warning instead of failing.
+   *
+   * During collection every production dependency must resolve to an installed package on disk. A
+   * dependency that does not resolve (`cannot find path for dependency` / `dependency not found on
+   * disk`) is not bundled, which typically breaks the packaged app at runtime with
+   * `MODULE_NOT_FOUND`.
+   *
+   * - `false` or `null` (default): the build fails after dependency collection completes,
+   *   reporting the **complete** list of missing production dependencies at once.
+   * - `string[]`: the listed dependency names are allowed to be missing; any other missing
+   *   production dependency still fails the build. Entries match the package name of the reported
+   *   `name@version` entry (e.g. `some-native-module`, `@scope/pkg`), or an exact `name@version`
+   *   string to allow only that resolved version to be missing.
+   * - `true`: missing production dependencies are only logged as warnings (the electron-builder
+   *   ≤ 26 behavior).
+   *
+   * Missing *optional* dependencies (declared in `optionalDependencies`, e.g. `fsevents` on
+   * Linux/Windows, or platform-specific packages) are always allowed and never fail the build.
+   *
+   * Independent of {@link ignoredProductionDependencies}, which controls which dependencies are
+   * excluded from the copied `node_modules`; this option only controls validation of the
+   * collection result.
+   *
+   * @default false
+   */
+  readonly allowMissingDependencies?: boolean | Array<string> | null
+
+  /**
    * Configuration for native Node.js module installation and rebuilding.
    *
    * Groups all options that control how electron-builder handles native modules — from forcing
@@ -680,6 +709,12 @@ export interface ToolsetConfig {
    * |---------|-------------|-----------------|-------|
    * | `"0.0.0"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |
    * | `"1.0.1"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |
+   * | `"system"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |
+   *
+   * `"system"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and
+   * is what `"latest"` (the default) currently resolves to on every platform: the published `"1.0.1"`
+   * bundles ship no PE builtins, so a host Wine installation is required to build Windows targets on
+   * macOS or Linux.
    *
    * To use a custom Wine binary, use a `ToolsetCustom` object.
    *
@@ -687,7 +722,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly wine?: "0.0.0" | "1.0.1" | ToolsetCustom | "latest"
+  readonly wine?: "0.0.0" | "1.0.1" | "system" | ToolsetCustom | "latest"
 
   /**
    * Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)
@@ -714,12 +749,13 @@ export interface ToolsetConfig {
    * | Version | Notes |
    * |---------|-------|
    * | `"1.0.0"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |
+   * | `"1.0.1"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly linuxToolsMac?: "1.0.0" | ToolsetCustom | "latest"
+  readonly linuxToolsMac?: "1.0.0" | "1.0.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.
@@ -732,9 +768,17 @@ export interface ToolsetConfig {
    * (or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because
    * extracting them requires 7za — a circular dependency.
    *
+   * Available versions:
+   * | Version | Notes |
+   * |---------|-------|
+   * | `"1.0.0"` | Shipped the 32-bit `7za.exe` for every Windows arch (1.75 GiB memory cap, no LZMA2 multithreading on x64/arm64) |
+   * | `"1.0.1"` | Correct per-arch Windows binaries (x64, ia32, arm64) |
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/7zip/CHANGELOG.md
+   *
    * @default "latest"
    */
-  readonly sevenZip?: "1.0.0" | ToolsetCustom | "latest"
+  readonly sevenZip?: "1.0.0" | "1.0.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,
@@ -745,13 +789,38 @@ export interface ToolsetConfig {
    * Available versions:
    * | Version | Notes |
    * |---------|-------|
-   * | `"1.2.1"` | `wasm-vips` + `@resvg/resvg-wasm` |
+   * | `"1.2.3"` | Writes 16px/32px ICNS entries as `ic04`/`ic05` ARGB (fixes corrupt small icons in Finder) |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly icons?: "1.2.1" | ToolsetCustom | "latest"
+  readonly icons?: "1.2.3" | ToolsetCustom | "latest"
+
+  /**
+   * Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.
+   *
+   * The bundle ships the Squirrel vendor toolset under `electron-winstaller/vendor/`:
+   * - **`Squirrel.exe`** / **`Squirrel-Mono.exe`** — releasify the app into `Setup.exe` (and an optional MSI).
+   * - **`SyncReleases.exe`** — downloads prior releases to produce delta packages.
+   * - **`nuget.exe`**, **`7z`** — pack the app into a `.nupkg` and compress release assets.
+   *
+   * `rcedit.exe` is provisioned from the {@link winCodeSign} toolset at runtime (on every platform;
+   * under Wine on non-Windows hosts). Building an MSI additionally uses the shared WiX toolset.
+   *
+   * Available versions:
+   * | Version | Notes |
+   * |---------|-------|
+   * | `"1.1.1"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |
+   *
+   * Set to a {@link ToolsetCustom} object to supply your own bundle — it must contain the
+   * `electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/squirrel.windows/CHANGELOG.md
+   *
+   * @default "latest"
+   */
+  readonly squirrel?: "1.1.1" | ToolsetCustom | "latest"
 }
 
 /**
@@ -789,7 +858,9 @@ export interface ToolsetCustom {
   readonly url: string
 
   /**
-   * SHA checksum of the custom toolset bundle for verification.
+   * SHA-256 checksum of the custom toolset bundle for verification, as a lowercase hex string
+   * (e.g. the output of `shasum -a 256 bundle.tar.gz`) — not the base64 values GitHub release
+   * notes may show.
    * Required for remote (`https://`) URLs and local archive files (`file://`).
    * Not needed for bare directory paths — the directory is used as-is with no caching.
    */

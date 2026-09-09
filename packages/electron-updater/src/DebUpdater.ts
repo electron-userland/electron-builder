@@ -3,7 +3,7 @@ import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { InstallOptions } from "./BaseUpdater.js"
 import { findFile } from "./providers/Provider.js"
-import { DOWNLOAD_PROGRESS, Logger } from "./types.js"
+import { DOWNLOAD_PROGRESS, Logger, DownloadExecutorResult } from "./types.js"
 import { LinuxUpdater } from "./LinuxUpdater.js"
 
 export class DebUpdater extends LinuxUpdater {
@@ -12,7 +12,7 @@ export class DebUpdater extends LinuxUpdater {
   }
 
   /*** @private */
-  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "deb", ["AppImage", "rpm", "pacman"])!
     return this.executeDownload({

@@ -6,7 +6,7 @@ import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
-import { DOWNLOAD_PROGRESS } from "./types.js"
+import { DOWNLOAD_PROGRESS, DownloadExecutorResult } from "./types.js"
 import { VerifyUpdateCodeSignature } from "./index.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import fsExtra from "fs-extra"
@@ -65,7 +65,7 @@ export class NsisUpdater extends BaseUpdater {
   }
 
   /*** @private */
-  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")!
     return this.executeDownload({
@@ -145,11 +145,16 @@ export class NsisUpdater extends BaseUpdater {
     try {
       publisherName = (await this.configOnDisk.value).publisherName
       if (publisherName == null) {
+        this._logger.warn(
+          "Signature verification of the downloaded update was skipped because no publisherName is present in app-update.yml. " +
+            "Sign your build so electron-builder can derive publisherName from the code signing certificate automatically, or set win.publisherName explicitly. " +
+            "This fail-open behavior is deprecated: electron-builder v28 will treat a missing publisherName as a verification failure (fail-closed)."
+        )
         return null
       }
     } catch (e: any) {
       if (e.code === "ENOENT") {
-        // no app-update.yml
+        // no app-update.yml at all (unpackaged/dev mode) — nothing to verify against, stay silent
         return null
       }
       throw e

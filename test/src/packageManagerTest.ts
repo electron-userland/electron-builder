@@ -469,6 +469,15 @@ describe("Package Managers", { sequential: true }, () => {
             config: {
               files: ["**/*"],
               asar: { unpack: ["**/node_modules/foo/**/*"] },
+              // npm >= 10 (install-links=false) symlinks a `file:` dependency and does NOT install
+              // its transitive deps into the project tree (`npm ls` reports `ms` as missing), and
+              // the traversal collector cannot resolve them from the out-of-tree link target either
+              // — so `ms` is genuinely absent on disk for those package-manager variants. This test
+              // exercises file:-protocol bundling/unpacking, not dependency completeness; allow the
+              // known miss so the fail-closed `allowMissingDependencies` default (issue #10058)
+              // doesn't reject the pack. The pnpm/yarn variants install `ms` normally, making the
+              // allow-list inert there.
+              allowMissingDependencies: ["ms"],
             },
           },
           {

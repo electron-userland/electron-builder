@@ -1,7 +1,8 @@
 import { Arch, Platform } from "electron-builder"
+import { readdir } from "fs/promises"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
-import { app, assertPack, copyTestAsset } from "../helpers/packTester"
+import { app, appThrows, assertPack, copyTestAsset } from "../helpers/packTester"
 import { ToolsetConfig } from "app-builder-lib"
 
 export function registerSquirrelWindowsTests(toolsets: ToolsetConfig): void {
@@ -86,6 +87,28 @@ export function registerSquirrelWindowsTests(toolsets: ToolsetConfig): void {
       { signedWin: true }
     ))
 
+  test("squirrel window x64 no msi", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: Platform.WINDOWS.createTarget("squirrel", Arch.x64),
+        config: {
+          toolsets,
+          squirrelWindows: {
+            msi: false,
+          },
+        },
+      },
+      {
+        signedWin: true,
+        packed: async context => {
+          const files = await readdir(path.join(context.outDir, "squirrel-windows"))
+          expect(files.filter(it => it.endsWith(".msi"))).toEqual([])
+          expect(files).toContain("Test App ßW Setup 1.1.0.exe")
+        },
+      }
+    ))
+
   test("squirrel window ia32 msi", ({ expect }) =>
     app(
       expect,
@@ -124,4 +147,55 @@ export function registerSquirrelWindowsTests(toolsets: ToolsetConfig): void {
       }
     )
   })
+
+  test("useAppIdAsId and explicit loadingGif", ({ expect }) => {
+    let platformPackager: CheckingWinPackager | null = null
+    let loadingGifPath: string | null = null
+
+    return assertPack(
+      expect,
+      "test-app-one",
+      {
+        targets: Platform.WINDOWS.createTarget("squirrel", Arch.x64),
+        platformPackagerFactory: (packager, _platform) => (platformPackager = new CheckingWinPackager(packager)),
+        config: {
+          toolsets,
+          squirrelWindows: {
+            useAppIdAsId: true,
+            loadingGif: "build/custom-spinner.gif",
+          },
+        },
+      },
+      {
+        projectDirCreated: it => {
+          loadingGifPath = path.join(it, "build", "custom-spinner.gif")
+          return copyTestAsset("install-spinner.gif", loadingGifPath)
+        },
+        packed: async () => {
+          const effectiveDistOptions = platformPackager!.effectiveDistOptions
+          // nupkg id follows appId (test-app-one/package.json build.appId) instead of the package name
+          expect(effectiveDistOptions.name).toEqual("org.electron-builder.testApp")
+          expect(effectiveDistOptions.loadingGif).toEqual(loadingGifPath)
+          return Promise.resolve()
+        },
+      }
+    )
+  })
+
+  test("iconUrl not specified", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: Platform.WINDOWS.createTarget("squirrel", Arch.x64),
+        config: {
+          toolsets,
+          squirrelWindows: {
+            // test-app-one/package.json sets iconUrl; unset it. The fixture has no repository, so no GitHub fallback URL can be derived.
+            iconUrl: null,
+          },
+        },
+      },
+      {},
+      error => expect(error.message).toContain("squirrelWindows.iconUrl is not specified")
+    ))
 }

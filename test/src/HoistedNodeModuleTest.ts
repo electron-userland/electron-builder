@@ -39,6 +39,39 @@ describe("node_module collectors", () => {
       }
     ))
 
+  // https://github.com/electron-userland/electron-builder/issues/10033
+  // An app with zero production dependencies must not bundle anything: without the guard in
+  // collectNodeModulesWithLogging, the search skips the app's empty node_modules, climbs to the
+  // workspace root, and vacuously accepts the entire hoisted workspace tree.
+  test("yarn workspace app with zero production dependencies bundles no node_modules", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-yarn-workspace",
+      {
+        targets: linuxDirTarget,
+        projectDir: "packages/test-app",
+      },
+      {
+        packageManager: PM.YARN,
+        projectDirCreated: async projectDir => {
+          // Populate the workspace-root node_modules with production dependencies of its own,
+          // so a walk-up from the app would find a non-empty tree to (wrongly) bundle.
+          await modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "is-odd": "3.0.1",
+            }
+          })
+          await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => {
+            delete data.dependencies
+          })
+        },
+        packed: async context => {
+          const asarFs = await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))
+          expect(asarFs.searchNodeFromDirectory("node_modules", false)).toBeNull()
+        },
+      }
+    ))
+
   test("yarn several workspaces", ({ expect }) =>
     assertPack(
       expect,

@@ -75348,6 +75348,12 @@ exports[`node_module collectors > yarn workspace 2`] = `
 }
 `;
 
+exports[`node_module collectors > yarn workspace app with zero production dependencies bundles no node_modules 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`node_module collectors > yarn workspace for scope name 1`] = `
 {
   "linux": [],

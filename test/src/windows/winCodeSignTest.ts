@@ -1,5 +1,6 @@
 import { parseDn } from "builder-util-runtime"
 import { WinPackager } from "app-builder-lib"
+import { SigningResult } from "app-builder-lib/src/codeSign/signResult"
 import { WindowsSigntoolSigningConfig } from "app-builder-lib/src/options/winOptions"
 import { Configuration, CustomWindowsSign } from "app-builder-lib/internal"
 import { AsyncTaskManager } from "builder-util"
@@ -198,7 +199,7 @@ describe("signing queue", () => {
 
 describe("sign: false (signing disabled)", () => {
   test("signIf skips every file even when a cert is discoverable via env", async ({ expect }) => {
-    const signResults: boolean[] = []
+    const signResults: SigningResult[] = []
 
     class SignDisabledTestPackager extends WinPackager {
       async pack(outDir: string, _arch: Arch, _targets: Array<Target>, _taskManager: AsyncTaskManager): Promise<void> {
@@ -223,6 +224,6 @@ describe("sign: false (signing disabled)", () => {
       { signedWin: true }
     )
 
-    expect(signResults).toEqual([false, false, false])
+    expect(signResults).toEqual(["skipped:disabled", "skipped:disabled", "skipped:disabled"])
   })
 })

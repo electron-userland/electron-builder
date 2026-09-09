@@ -452,6 +452,6 @@ See [Multi Platform Build](/docs/features/multi-platform-build) and [Build Archi
 
 - [Hooks Reference](/docs/features/hooks) — full API for every hook, with examples
 - [File Patterns](/docs/file-patterns) — how `files`, `extraResources`, and `extraFiles` work
-- [Code Signing](/docs/features/code-signing/code-signing) — signing setup for macOS and Windows
+- [Code Signing](/docs/features/code-signing) — signing setup for macOS and Windows
 - [Publish Configuration](/docs/publish) — provider setup and update metadata
 - [Programmatic Usage](/docs/programmatic-usage) — drive the build from Node.js

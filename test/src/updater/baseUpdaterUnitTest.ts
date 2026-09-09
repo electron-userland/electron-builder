@@ -19,6 +19,15 @@ const stubApp: AppAdapter = {
 
 const installOpts: InstallOptions = { isSilent: false, isForceRunAfter: false, isAdminRightsRequired: false }
 
+it("preserves fractional staged rollout percentages", async () => {
+  const updater = new DebUpdater(null, stubApp)
+  Object.defineProperty(updater, "stagingUserIdPromise", {
+    value: { value: Promise.resolve("1aa70172-80f8-5cc4-8131-28f500800000") },
+  })
+
+  await expect((updater as any).isStagingMatch({ stagingPercentage: 0.5 })).resolves.toBe(true)
+})
+
 // ─── BaseUpdater.sanitizeEnvPath — PATH sanitization ─────────────────────────
 // Tests the extracted helper directly (vi.spyOn on ESM module exports is not
 // possible; testing the pure function avoids that limitation entirely).

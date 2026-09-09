@@ -81,7 +81,7 @@ Defaults to:
   "!**\/node_modules/*\/{test,__tests__,tests,powered-test,example,examples}",
   "!**\/node_modules/*.d.ts",
   "!**\/node_modules/.bin",
-  "!**\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+  "!**\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}",
   "!.editorconfig",
   "!**\/._*",
   "!**\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
@@ -184,7 +184,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly forceCodeSigning?: boolean
 
   /**
-   * The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.
+   * The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.
    */
   readonly electronUpdaterCompatibility?: string | null
 

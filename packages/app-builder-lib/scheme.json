@@ -749,7 +749,7 @@
             "libuuid1",
             "libsecret-1-0"
           ],
-          "description": "Package dependencies.\nIf need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).\nIf need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2)."
+          "description": "Package dependencies.\nIf need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).\nIf need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2).\n\nUse the `\"default\"` keyword to extend the default list instead of replacing it:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults. The resulting list is deduplicated."
         },
         "description": {
           "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
@@ -1219,7 +1219,7 @@
     },
     "ElectronSignOptions": {
       "additionalProperties": false,
-      "description": "Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control\nitself — `app`, `keychain`, `platform`, `version`, `optionsForFile`, and `type` (derived from the\nbuild flavor: `mas-dev` → `development`, otherwise `distribution`) — and forwards everything else.\n\nAdditionally exposes a small set of per-file convenience fields that electron-builder maps\ninternally through `optionsForFile`.",
+      "description": "Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control\nitself — `app`, `keychain`, `platform`, `version`, and `optionsForFile` — and forwards everything else.\n\nAdditionally exposes a small set of per-file convenience fields that electron-builder maps\ninternally through `optionsForFile`.",
       "properties": {
         "additionalArguments": {
           "anyOf": [
@@ -1331,6 +1331,14 @@
             "null",
             "string"
           ]
+        },
+        "type": {
+          "description": "The type of certificate to use when signing: `development` or `distribution`.\n\nDefaults to a value derived from the build flavor: `mas-dev` → `development`, otherwise `distribution`.\nSet it explicitly to override — e.g. `development` on a darwin build signs with a `Mac Developer` or\n`Apple Development` certificate instead of `Developer ID Application` and embeds a matching\ndevelopment provisioning profile.\n\nDevelopment-signed apps are blocked by Gatekeeper on other machines; users must use the\nright-click → Open workaround documented at https://support.apple.com/en-us/guide/mac-help/mh40616/mac.\nSuch builds are not suitable for production distribution and cannot be notarized.",
+          "enum": [
+            "development",
+            "distribution"
+          ],
+          "type": "string"
         }
       },
       "type": "object"
@@ -1796,7 +1804,7 @@
           ]
         },
         "private": {
-          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](https://www.electron.build/auto-update#private-github-update-repo).",
+          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](https://www.electron.build/docs/features/auto-update#private-github-update-repo).",
           "type": [
             "null",
             "boolean"
@@ -1883,7 +1891,7 @@
           ]
         },
         "token": {
-          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](https://www.electron.build/auto-update#appupdatersetfeedurloptions).",
+          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](https://www.electron.build/docs/features/auto-update#custom-options-instantiating-updater-directly).",
           "type": [
             "null",
             "string"
@@ -2207,7 +2215,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -2327,7 +2335,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
           "default": false,
@@ -2468,7 +2476,7 @@
             }
           ],
           "default": "AppImage",
-          "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](https://www.electron.build/multi-platform-build#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
+          "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](https://www.electron.build/docs/features/multi-platform-build#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
         },
         "vendor": {
           "description": "The vendor. Defaults to [author](https://www.electron.build/configuration#author).",
@@ -2580,7 +2588,7 @@
               "type": "null"
             }
           ],
-          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
+          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`\n\nUse the `\"default\"` keyword to extend the target's default list instead of replacing it:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults. The resulting list is deduplicated."
         },
         "description": {
           "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
@@ -2851,7 +2859,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -2977,7 +2985,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
           "default": false,
@@ -3332,7 +3340,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -3458,7 +3466,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
           "default": false,
@@ -5495,7 +5503,7 @@
               "type": "null"
             }
           ],
-          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
+          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`\n\nUse the `\"default\"` keyword to extend the target's default list instead of replacing it:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults. The resulting list is deduplicated."
         },
         "description": {
           "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
@@ -5762,7 +5770,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.",
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/docs/features/code-signing) instead of specifying this option.",
           "type": [
             "null",
             "string"
@@ -6400,7 +6408,7 @@
               "type": "null"
             }
           ],
-          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
+          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`\n\nUse the `\"default\"` keyword to extend the target's default list instead of replacing it:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults. The resulting list is deduplicated."
         },
         "description": {
           "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
@@ -8032,10 +8040,6 @@
             "string"
           ]
         },
-        "customSquirrelVendorDir": {
-          "description": "The custom squirrel vendor dir. If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor).\nAfter https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.",
-          "type": "string"
-        },
         "iconUrl": {
           "description": "A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.\n\nPlease note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.\n\nIf you don't plan to build windows installer, you can omit it.\nIf your project repository is public on GitHub, it will be `https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true` by default.",
           "type": [
@@ -8205,14 +8209,14 @@
             },
             {
               "enum": [
-                "1.2.1",
+                "1.2.3",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.2.1\"` | `wasm-vips` + `@resvg/resvg-wasm` |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md"
+          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.2.3\"` | Writes 16px/32px ICNS entries as `ic04`/`ic05` ARGB (fixes corrupt small icons in Finder) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md"
         },
         "linuxToolsMac": {
           "anyOf": [
@@ -8222,13 +8226,14 @@
             {
               "enum": [
                 "1.0.0",
+                "1.0.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md"
+          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |\n| `\"1.0.1\"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md"
         },
         "nsis": {
           "anyOf": [
@@ -8255,13 +8260,30 @@
             {
               "enum": [
                 "1.0.0",
+                "1.0.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.\n\nSet to a {@link ToolsetCustom} object to supply your own 7za binary.\nThe `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains\n`bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).\n\n**Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive\n(or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because\nextracting them requires 7za — a circular dependency."
+          "description": "Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.\n\nSet to a {@link ToolsetCustom} object to supply your own 7za binary.\nThe `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains\n`bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).\n\n**Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive\n(or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because\nextracting them requires 7za — a circular dependency.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | Shipped the 32-bit `7za.exe` for every Windows arch (1.75 GiB memory cap, no LZMA2 multithreading on x64/arm64) |\n| `\"1.0.1\"` | Correct per-arch Windows binaries (x64, ia32, arm64) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/7zip/CHANGELOG.md"
+        },
+        "squirrel": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "enum": [
+                "1.1.1",
+                "latest"
+              ],
+              "type": "string"
+            }
+          ],
+          "default": "latest",
+          "description": "Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.\n\nThe bundle ships the Squirrel vendor toolset under `electron-winstaller/vendor/`:\n- **`Squirrel.exe`** / **`Squirrel-Mono.exe`** — releasify the app into `Setup.exe` (and an optional MSI).\n- **`SyncReleases.exe`** — downloads prior releases to produce delta packages.\n- **`nuget.exe`**, **`7z`** — pack the app into a `.nupkg` and compress release assets.\n\n`rcedit.exe` is provisioned from the {@link winCodeSign} toolset at runtime (on every platform;\nunder Wine on non-Windows hosts). Building an MSI additionally uses the shared WiX toolset.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.1\"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |\n\nSet to a {@link ToolsetCustom} object to supply your own bundle — it must contain the\n`electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/squirrel.windows/CHANGELOG.md"
         },
         "winCodeSign": {
           "anyOf": [
@@ -8293,13 +8315,14 @@
               "enum": [
                 "0.0.0",
                 "1.0.1",
-                "latest"
+                "latest",
+                "system"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n\nTo use a custom Wine binary, use a `ToolsetCustom` object.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
+          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n| `\"system\"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |\n\n`\"system\"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and\nis what `\"latest\"` (the default) currently resolves to on every platform: the published `\"1.0.1\"`\nbundles ship no PE builtins, so a host Wine installation is required to build Windows targets on\nmacOS or Linux.\n\nTo use a custom Wine binary, use a `ToolsetCustom` object.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
         }
       },
       "type": "object"
@@ -8309,7 +8332,7 @@
       "description": "A custom toolset bundle supplied by the user in place of a built-in versioned bundle.\n\nThe bundle must mirror the expected directory layout of the corresponding built-in bundle.\nSee the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.\n\nFile formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.",
       "properties": {
         "checksum": {
-          "description": "SHA checksum of the custom toolset bundle for verification.\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching.",
+          "description": "SHA-256 checksum of the custom toolset bundle for verification, as a lowercase hex string\n(e.g. the output of `shasum -a 256 bundle.tar.gz`) — not the base64 values GitHub release\nnotes may show.\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching.",
           "type": "string"
         },
         "url": {
@@ -8466,7 +8489,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -8572,7 +8595,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
           "default": false,
@@ -8703,7 +8726,7 @@
               "type": "null"
             }
           ],
-          "description": "Code signing configuration. Code signing stamps every installer and executable\nelectron-builder produces with an Authenticode signature, so that Windows (SmartScreen / UAC)\nand your auto-updater can verify the publisher and that the files were not tampered with.\n\nHow this option behaves:\n- Leave **unset** to sign using credentials discovered from the environment — primarily a\n  certificate supplied via `WIN_CSC_LINK` (or `CSC_LINK`) with its password in\n  `WIN_CSC_KEY_PASSWORD` (or `CSC_KEY_PASSWORD`). `WIN_CSC_LINK` accepts a file path, an\n  `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.\n- Set to `false` or `null` to **disable** code signing entirely (executable resources such as\n  the icon and metadata are still edited).\n- Set to an **object** to configure signing explicitly. The **required** `type` field selects the\n  signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign\n  manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`\n  backend is used with env-discovered credentials. Each output artifact is signed individually,\n  and by default executables are dual-signed (see `signingHashAlgorithms`).\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and\n  `osslsigncode` on macOS/Linux.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires a modern `winCodeSign` toolset (the default — only the legacy\n  `\"0.0.0\"` pin is unsupported). Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication.\n\nSee [Code Signing](https://www.electron.build/code-signing)."
+          "description": "Code signing configuration. Code signing stamps every installer and executable\nelectron-builder produces with an Authenticode signature, so that Windows (SmartScreen / UAC)\nand your auto-updater can verify the publisher and that the files were not tampered with.\n\nHow this option behaves:\n- Leave **unset** to sign using credentials discovered from the environment — primarily a\n  certificate supplied via `WIN_CSC_LINK` (or `CSC_LINK`) with its password in\n  `WIN_CSC_KEY_PASSWORD` (or `CSC_KEY_PASSWORD`). `WIN_CSC_LINK` accepts a file path, an\n  `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.\n- Set to `false` or `null` to **disable** code signing entirely (executable resources such as\n  the icon and metadata are still edited).\n- Set to an **object** to configure signing explicitly. The **required** `type` field selects the\n  signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign\n  manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`\n  backend is used with env-discovered credentials. Each output artifact is signed individually,\n  and by default executables are dual-signed (see `signingHashAlgorithms`).\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and\n  `osslsigncode` on macOS/Linux.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires a modern `winCodeSign` toolset (the default — only the legacy\n  `\"0.0.0\"` pin is unsupported). Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication.\n\nSee [Code Signing](https://www.electron.build/docs/features/code-signing)."
         },
         "signExts": {
           "anyOf": [
@@ -8832,7 +8855,7 @@
               ]
             }
           ],
-          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/code-signing)."
+          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing)."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -8937,7 +8960,7 @@
               ]
             }
           ],
-          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/code-signing)."
+          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing)."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -8991,7 +9014,7 @@
           ]
         },
         "certificateFile": {
-          "description": "Path to the PKCS#12 certificate file (`.pfx` or `.p12`) holding both the signing certificate\nand its private key. Passed to signtool via `/f` (or osslsigncode via `-pkcs12`).\n\nPrefer supplying this out-of-band via the `WIN_CSC_LINK` (or `CSC_LINK`) environment variable\ninstead of hardcoding a path — that variable also accepts an `https://` URL or a base64-encoded\ncertificate, which is safer and more convenient on CI. See\n[Code Signing](https://www.electron.build/code-signing).",
+          "description": "Path to the PKCS#12 certificate file (`.pfx` or `.p12`) holding both the signing certificate\nand its private key. Passed to signtool via `/f` (or osslsigncode via `-pkcs12`).\n\nPrefer supplying this out-of-band via the `WIN_CSC_LINK` (or `CSC_LINK`) environment variable\ninstead of hardcoding a path — that variable also accepts an `https://` URL or a base64-encoded\ncertificate, which is safer and more convenient on CI. See\n[Code Signing](https://www.electron.build/docs/features/code-signing).",
           "type": [
             "null",
             "string"
@@ -9055,7 +9078,7 @@
               ]
             }
           ],
-          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/code-signing)."
+          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing)."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -9153,6 +9176,24 @@
         }
       ],
       "description": "Called after code signing but **before** the signed app is packed into the final\ndistributable format (e.g. before `dmg` is created from the signed `.app`).\n\nUse this hook to perform post-sign validation or to add signed resources that are not part of\nthe main app bundle.\n\nReceives an {@link AfterPackContext}."
+    },
+    "allowMissingDependencies": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        }
+      ],
+      "default": false,
+      "description": "Whether production dependencies that cannot be resolved during node-module collection are\nallowed — i.e. whether the build should continue with a warning instead of failing.\n\nDuring collection every production dependency must resolve to an installed package on disk. A\ndependency that does not resolve (`cannot find path for dependency` / `dependency not found on\ndisk`) is not bundled, which typically breaks the packaged app at runtime with\n`MODULE_NOT_FOUND`.\n\n- `false` or `null` (default): the build fails after dependency collection completes,\n  reporting the **complete** list of missing production dependencies at once.\n- `string[]`: the listed dependency names are allowed to be missing; any other missing\n  production dependency still fails the build. Entries match the package name of the reported\n  `name@version` entry (e.g. `some-native-module`, `@scope/pkg`), or an exact `name@version`\n  string to allow only that resolved version to be missing.\n- `true`: missing production dependencies are only logged as warnings (the electron-builder\n  ≤ 26 behavior).\n\nMissing *optional* dependencies (declared in `optionalDependencies`, e.g. `fsevents` on\nLinux/Windows, or platform-specific packages) are always allowed and never fail the build.\n\nIndependent of {@link ignoredProductionDependencies}, which controls which dependencies are\nexcluded from the copied `node_modules`; this option only controls validation of the\ncollection result."
     },
     "apk": {
       "anyOf": [
@@ -9450,7 +9491,7 @@
       "description": "The electron locales to keep. By default, all Electron locales used as-is."
     },
     "electronUpdaterCompatibility": {
-      "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+      "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
       "type": [
         "null",
         "string"
@@ -9583,7 +9624,7 @@
           ]
         }
       ],
-      "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+      "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
     },
     "flatpak": {
       "anyOf": [

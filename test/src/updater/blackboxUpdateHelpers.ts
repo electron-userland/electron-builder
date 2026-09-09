@@ -10,7 +10,7 @@ import { randomUUID } from "crypto"
 import { ExpectStatic, TestContext } from "vitest"
 import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext } from "../helpers/packTester"
-import { ELECTRON_VERSION } from "../helpers/testConfig"
+import { ELECTRON_VERSION, PACMAN_TEST_DEPENDS } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { cleanupWindowsNative, installWindowsNative, installWindowsVm } from "./blackboxInstallWindows"
 import { cleanupLinux, installLinux } from "./blackboxInstallLinux"
@@ -36,7 +36,8 @@ export async function doBuild(
   arch: Arch,
   tmpDir: TmpDir,
   isWindows: boolean,
-  extraConfiguration?: Configuration | null
+  extraConfiguration?: Configuration | null,
+  versions: Array<string> = [OLD_VERSION_NUMBER, NEW_VERSION_NUMBER]
 ) {
   const currentPlatform = isWindows ? Platform.WINDOWS : Platform.current()
   async function buildApp({
@@ -90,6 +91,9 @@ export async function doBuild(
                 // one click installer required. don't run after install otherwise we lose stdout pipe
                 oneClick: true,
                 runAfterFinish: false,
+              },
+              pacman: {
+                depends: PACMAN_TEST_DEPENDS,
               },
             },
             extraConfig ?? {}
@@ -175,8 +179,12 @@ export async function doBuild(
       },
     })
   try {
-    await build(OLD_VERSION_NUMBER, { ...extraConfiguration, compression: "store" })
-    await build(NEW_VERSION_NUMBER, { ...extraConfiguration, compression: "maximum" }) // validate both compressions work while we're at it
+    // first build uses "store", later builds use "maximum" — validates both compressions work while we're at it
+    let isFirstBuild = true
+    for (const version of versions) {
+      await build(version, { ...extraConfiguration, compression: isFirstBuild ? "store" : "maximum" })
+      isFirstBuild = false
+    }
   } catch (e: any) {
     await tmpDir.cleanup()
     throw e
