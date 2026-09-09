@@ -546,9 +546,9 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 | `appimage` | `0.0.0` (FUSE2 runtime) | `1.1.0` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support |
 | `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `1.2.1` | NSIS 3.12; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR` |
 | `fpm` | `2.2.1` | `2.2.1` | Unchanged — FPM 1.17.0 / Ruby 3.4.3 |
-| `icons` | `1.1.0` | `1.2.1` | Newer bundle — `wasm-vips` + `@resvg/resvg-wasm` |
-| `linuxToolsMac` | `1.0.0` | `1.0.0` | Unchanged — gnu-tar, lzip, binutils, etc. (macOS → Linux archives) |
-| `sevenZip` | `1.0.0` | `1.0.0` | Unchanged — only published version |
+| `icons` | `1.1.0` | `1.2.3` | Newer bundle — `wasm-vips` + `@resvg/resvg-wasm` |
+| `linuxToolsMac` | `1.0.0` | `1.0.1` | Newer bundle — gnu-tar, lzip, binutils, etc. (macOS → Linux archives); accepts an explicit `"1.0.0"` pin for the previous bundle |
+| `sevenZip` | `1.0.0` | `1.0.1` | Newer bundle — accepts an explicit `"1.0.0"` pin for the previous bundle |
 
 **No action required** for most projects — the new bundles are drop-in replacements and produce identical output. **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`) or an explicit `toolsets.wine: "1.0.1"`. If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
 
