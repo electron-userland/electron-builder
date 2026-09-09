@@ -193,7 +193,7 @@ export default class SquirrelWindowsTarget extends Target {
         })
       }
 
-      const packagePrefix = `${this.appName}-${convertVersion(version)}-`
+      const packagePrefix = `${this.nupkgId}-${convertVersion(version)}-`
       await packager.emitArtifactCreated({
         file: path.join(installerOutDir, `${packagePrefix}full.nupkg`),
         target: this,
@@ -221,6 +221,13 @@ export default class SquirrelWindowsTarget extends Target {
 
   private get appName() {
     return this.options.name || this.packager.appInfo.name
+  }
+
+  // The nuspec/nupkg id. Squirrel's --releasify names its outputs after this id
+  // (`<id>-<version>-full.nupkg` / `<id>-<version>-delta.nupkg`), so the emitted artifact paths must be
+  // derived from the same value the nuspec uses — not from appName, which differs once useAppIdAsId is set.
+  private get nupkgId() {
+    return this.options.useAppIdAsId ? this.packager.appInfo.id : this.appName
   }
 
   private get exeName() {
@@ -308,7 +315,7 @@ export default class SquirrelWindowsTarget extends Target {
       appDirectory,
       outputDirectory,
       vendorDirectory,
-      name: this.options.useAppIdAsId ? appInfo.id : this.appName,
+      name: this.nupkgId,
       title: appInfo.productName || appInfo.name,
       version: appInfo.version,
       description,
