@@ -56,7 +56,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`appImage.systemIntegration` removed](#appimagesystemintegration) | ✓ | Removed automatically |
 | [`npmSkipBuildFromSource` removed](#npmskipbuildfromsource) | ✓ | Replaced by `nativeModules.buildDependenciesFromSource` |
 | [Native-module options grouped under `nativeModules`](#native-module-options-nativemodules) | ✓ | `nativeRebuilder` → `rebuildMode` |
-| [ASAR options consolidated under `asar`](#asar-options-asar) | ✓ | `asarUnpack` → `asar.unpack`, etc.; `asar: true` removed |
+| [ASAR options consolidated under `asar`](#asar-options-asar) | ✓ | `asarUnpack` → `asar.unpack`, etc. (`asar: true` is still valid, just redundant) |
 | [macOS signing consolidated under `mac.sign`](#macos-signing-macsign) | ✓ | `identity`/`entitlements`/`hardenedRuntime`/… → `mac.sign.*`; `signIgnore` → `sign.ignore` |
 | [`mac.universal` options consolidated](#macuniversal) | ✓ | `mergeASARs`/`singleArchFiles`/`x64ArchFiles` → `mac.universal.*` |
 | [Windows signing unified under `win.sign`](#windows-signing-winsign) | ✓ | Discriminated union `type: "signtool" \| "hsm" \| "pkcs11" \| "azure"` |
@@ -76,7 +76,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Linux maintainer-script EJS syntax removed](#linux-maintainer-script-ejs-template-syntax) | — | Use `${var}` instead of `<%= var %>` |
 | [NSIS file-association ProgID format changed](#nsis-file-association-progid-format-changed) | — | Update custom NSIS scripts that hard-code the old ProgID |
 | [Toolset defaults resolve to `"latest"`](#toolset-defaults-resolve-to-latest-newest-bundle) | — | No action; pin to `"0.0.0"` to restore a legacy bundle |
-| [Toolset env-var overrides removed](#toolset-env-var-overrides-removed) | — | Replace `APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, … with `toolsets.X: { url, checksum }` |
+| [Toolset env-var overrides removed](#toolset-env-var-overrides-removed) | — | Replace `APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, … with `toolsets.X: { url, checksum }` — setting a removed variable now **fails the build** |
 | [`CI_BUILD_TAG` env var removed](#ci_build_tag-environment-variable) | — | Use `CI_COMMIT_TAG` |
 | [Azure Trusted Signing `/dlib` is the default](#azure-trusted-signing-signtool-dlib-is-the-default) | — | Pin `winCodeSign` below `1.3.0` only to force the legacy PowerShell path |
 | [New: `win.target: "msix"` (beta)](#new-msix-target-beta) | — | Optional, additive — the default `winCodeSign` works (only the legacy `0.0.0` bundle is rejected) |
@@ -87,6 +87,14 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [macOS `productName`/`executableName` validated, not silently sanitized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | A name needing filename sanitization now throws — pick a name that needs none |
 | [Bitbucket Cloud publishing: token without username → Bearer auth](#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth) | — | Set `BITBUCKET_USERNAME` if your token is an app password / API token |
 | [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); tune the set via `ignoredProductionDependencies`. If you set `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` (removed) to bundle `electron-builder`, override the list instead; `electron-prebuilt`/`electron-rebuild` no longer error and now ship if declared — remove them from `dependencies` |
+| [`allowMissingDependencies` now fails the build](#allowmissingdependencies-now-fails-the-build) | — | A missing production dependency is a hard error; set `allowMissingDependencies: true` to restore v26 warn-only behavior |
+| [`extraFiles` / `extraResources` `to` is validated](#extrafiles--extraresources-destinations-are-validated) | — | An absolute `to`, or one escaping the output dir, now throws |
+| [Windows `publisherName` validated against the certificate](#windows-publishername-is-validated-against-the-signing-certificate) | — | Update `publisherName` after a certificate rotation, or drop it |
+| [Custom Windows signing hook moved to `win.sign.sign`](#custom-windows-signing-hooks-move-to-winsignsign) | — | Move `win.sign: "./customSign.js"` under `{ type: "signtool", sign: … }` by hand |
+| [macOS names are no longer NFD-normalized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | Update tooling that matches the normalized on-disk bundle filename |
+| [Linux `executableArgs` field codes are now literal](#linux-launcher-entrypoint) | — | Remove `%F`/`%U` from `executableArgs`; use `linux.desktop.entry.Exec` |
+| [New: Cloudflare R2 publish provider](#new-cloudflare-r2-publish-provider-additive) | — | None — additive; needs `accountId` and an `https` `publicUrl` |
+| [New command: `migrate-schema`](#new-command-migrate-schema) | — | None — run it to apply every **Auto ✓** change above |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
 | [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | v27 warns but still downloads if you never set it; opt in with `disableWebInstaller: false` before v28 enforces it |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | — | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
@@ -200,14 +208,16 @@ Removed. Use `buildDependenciesFromSource` (now under [`nativeModules`](#native-
 { "nativeModules": { "buildDependenciesFromSource": false } }
 ```
 
-### `asar: true` sentinel
+### `asar: true` (still valid — no action needed)
 
-**`asar: true` is no longer valid.** Omit the `asar` key entirely to enable ASAR with defaults, or specify an object. The full ASAR restructuring is documented under [ASAR options → `asar`](#asar-options-asar).
+**`asar: true` remains valid in v27.** The type is `AsarOptions | boolean | null`, the schema accepts a boolean, and the runtime maps `true` to `{}` — so an existing `asar: true` keeps working exactly as before. It is simply redundant, because ASAR is enabled by default:
 
 ```json5
-{ "build": { "asar": true } }  // Before — enable with defaults
-{ "build": { "asar": {} } }    // After — omit entirely (enabled by default) or use an object
+{ "build": { "asar": true } }  // Still works — but redundant
+{ "build": { "asar": {} } }    // Equivalent; or omit the key entirely
 ```
+
+`migrate-schema` drops the redundant `true` when it has other ASAR keys to fold in. The full ASAR restructuring is documented under [ASAR options → `asar`](#asar-options-asar).
 
 ### Root-level `directories` in `package.json`
 
@@ -328,7 +338,7 @@ All ASAR-related configuration is now nested under a single `asar` key. Flat roo
 | `asarUnpack` | `asar.unpack` |
 | `disableSanityCheckAsar` | `asar.disableSanityCheck` |
 | `disableAsarIntegrity` | `asar.disableIntegrity` |
-| `asar: true` | *(removed — absence means enabled)* |
+| `asar: true` | *(still valid — redundant, since absence means enabled)* |
 
 ```json5
 // Before
@@ -363,7 +373,7 @@ All macOS code-signing options now live inside a single `sign` object on `mac` (
 | `binaries` | `sign.binaries` |
 | `requirements` | `sign.requirements` |
 | `hardenedRuntime` | `sign.hardenedRuntime` |
-| `gatekeeperAssess` | `sign.gatekeeperAssess` |
+| `gatekeeperAssess` | *(removed — `@electron/osx-sign` 2.x dropped the `spctl --assess` step; there is no `sign.gatekeeperAssess`)* |
 | `strictVerify` | `sign.strictVerify` |
 | `preAutoEntitlements` | `sign.preAutoEntitlements` |
 | `timestamp` | `sign.timestamp` |
@@ -449,6 +459,17 @@ v27 introduces two new signing modes in `win.sign`:
 
 Both HSM and PKCS#11 are **beta** — the interfaces are stable but real-hardware test coverage is limited.
 
+#### Custom Windows signing hooks move to `win.sign.sign`
+
+v26's `win.sign` was the **custom signer hook** (`CustomWindowsSign | string | null`). v27 reuses the same key for the discriminated union, and the custom hook now lives one level down, inside the signtool-family config:
+
+```json5
+{ "win": { "sign": "./customSign.js" } }                              // Before (v26)
+{ "win": { "sign": { "type": "signtool", "sign": "./customSign.js" } } } // After (v27)
+```
+
+`migrate-schema` only warns about a pre-existing `win.sign` when a legacy sibling key is also present, so a config with a lone `win.sign: "./customSign.js"` passes through untouched and then fails schema validation. Move it by hand.
+
 #### `win.signExecutable` / `win.signAndEditExecutable` removed {#winsignexecutable-winsignandeditexecutable-removed}
 
 | Removed | Replacement |
@@ -470,7 +491,8 @@ The `electronDownload` configuration key is renamed to `electronGet` and reshape
 |---|---|
 | `mirror` | `mirrorOptions.mirror` |
 | `isVerifyChecksum: false` | `unsafelyDisableChecksums: true` |
-| `cache`, `customDir`, `customFilename`, `strictSSL` | *(no equivalent — dropped by `migrate-schema` with a warning)* |
+| `cache` | *(not a config key — set the `ELECTRON_BUILDER_CACHE` environment variable)* |
+| `customDir`, `customFilename`, `strictSSL` | *(no equivalent — dropped by `migrate-schema` with a warning)* |
 
 ```json5
 { "electronDownload": { "mirror": "https://my-mirror/" } }                  // Before
@@ -537,7 +559,7 @@ v27 adds an opt-in `provider: "r2"` publish target (Cloudflare R2, an S3-compati
 
 ### Toolset defaults resolve to `"latest"` (newest bundle)
 
-In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset property, `null`, or the literal `"latest"` all resolve to the **newest published bundle** for that toolset. (Earlier v27 prereleases pinned a fixed default per toolset; those fixed defaults are gone.) The `null` value is no longer part of the `ToolsetConfig` type — it still works at runtime, but TypeScript/programmatic configs typed against `Configuration` should switch `null` → `"latest"` or omit the key. `migrate-schema` does not rewrite this.
+In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset property, `null`, or the literal `"latest"` all resolve to the **newest published bundle** for that toolset. (Earlier v27 prereleases pinned a fixed default per toolset; those fixed defaults are gone.) The `null` value is no longer part of the `ToolsetConfig` type, and it is **rejected by schema validation** — each `toolsets.*` property is typed as a `ToolsetCustom` object or a version string, with no `null` branch. Switch `null` → `"latest"` or omit the key entirely; both resolve to the newest bundle. `migrate-schema` does not rewrite this.
 
 | Toolset | v26 default | v27 `"latest"` resolves to | What the upgrade entails |
 |---------|-------------|----------------------------|--------------------------|
@@ -575,8 +597,11 @@ This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias ma
 | `USE_SYSTEM_SIGNCODE` | Forced the host `signtool`/`signcode` instead of the bundled `winCodeSign` toolset |
 | `USE_SYSTEM_OSSLSIGNCODE` | Forced the host `osslsigncode` instead of the bundled one |
 | `USE_SYSTEM_FPM` | Forced the host-installed `fpm` instead of the bundled FPM |
+| `SIGNTOOL_PATH` | Path to `signtool.exe` |
+| `ELECTRON_BUILDER_7ZIP_PATH` | The 7-Zip executable |
+| `ELECTRON_BUILDER_ICONS_TOOLSET_DIR` | Icons toolset bundle directory |
 
-The two signing `USE_SYSTEM_*` variables (`USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var replacement** — configure signing through [`win.sign`](#windows-signing-winsign) and the `winCodeSign` toolset instead. `USE_SYSTEM_WINE` is replaced by the config value `toolsets.wine: "system"`. `USE_SYSTEM_FPM` is now **also removed** (it was still functional in earlier v27 prereleases): supply a custom FPM via `toolsets.fpm: { url: "file:///path/to/dir" }`. On Windows there is no bundled FPM, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` and otherwise throws a clear configuration error (previously it silently fell back to a host `fpm` on `PATH`).
+Setting any of these now **fails the build** with a message naming the `toolsets` replacement, rather than being silently ignored. The three signing `USE_SYSTEM_*` variables (`USE_SYSTEM_WINE`, `USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var replacement** — configure signing through [`win.sign`](#windows-signing-winsign) and the `winCodeSign` toolset instead. `USE_SYSTEM_FPM` is now **also removed** (it was still functional in earlier v27 prereleases): supply a custom FPM via `toolsets.fpm: { url: "file:///path/to/dir" }`. On Windows there is no bundled FPM, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` and otherwise throws a clear configuration error (previously it silently fell back to a host `fpm` on `PATH`).
 
 The `url` accepts an `https://` URL (downloaded and cached automatically) or a `file://` path (used as-is). The bundle must mirror the directory layout of the corresponding built-in bundle (see [electron-builder-binaries/packages](https://github.com/electron-userland/electron-builder-binaries/tree/master/packages)).
 
@@ -591,6 +616,18 @@ The `url` accepts an `https://` URL (downloaded and cached automatically) or a `
 > **Wine note:** Linux uses the host-installed `wine` by default (no bundle is shipped for Linux), and macOS uses the downloaded Wine 11.0 bundle. Set `toolsets.wine: "system"` to use the host-installed `wine` on `PATH` on any platform — that is the replacement for `USE_SYSTEM_WINE`. To point at a custom Wine build instead, supply a `ToolsetCustom` object on `toolsets.wine`; note that such a directory must contain a prebuilt `wine-home` prefix alongside `bin/` and `lib/`, so `"system"` is the simpler option for a stock Wine installation.
 
 Supported archive formats: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`. **Exception for `sevenZip`**: because 7-Zip is used to extract `.7z` and `.tar.xz` archives, a custom `sevenZip` bundle can only be supplied as a `.tar.gz`, `.zip`, or bare `file://` directory.
+
+### `pacman` default dependencies changed
+
+`http-parser` was dropped from the default pacman `depends` list. Additionally, `depends` for deb/rpm/pacman now accepts the `"default"` keyword, which expands to the built-in list so you can extend it instead of replacing it:
+
+```json5
+{ "build": { "pacman": { "depends": ["default", "my-extra-package"] } } }
+```
+
+### `ElectronGetOptions.force` removed
+
+The `force` field has no equivalent in `@electron/get` v5 and was dropped from `ElectronGetOptions`. Clear the cache directory instead (or set `ELECTRON_BUILDER_CACHE` to a fresh path) to force a re-download.
 
 ### `CI_BUILD_TAG` environment variable
 
@@ -645,6 +682,8 @@ This makes `executableArgs` apply consistently across all Linux targets and keep
 
 **Action is required only if** you ship a custom `.desktop` override, an AppArmor/snap profile, a MIME handler, or external tooling that hard-codes the `Exec` command or assumes the executable itself is the launch target. Point those at the `*-launcher` script (or the executable, as appropriate).
 
+**Desktop-entry field codes in `executableArgs` are now literal.** v26 passed an argument like `%F` into the `.desktop` `Exec` key unquoted (and skipped appending `%U`). In v27 `executableArgs` are injected into the launcher script and quoted, so `%F` reaches your app as the literal string `"%F"` instead of the file list. If you relied on a field code to receive opened files, remove it from `executableArgs` and set `linux.desktop.entry.Exec` instead. electron-builder warns when it sees one.
+
 **AppImage `--no-sandbox` default changed.** The default `--no-sandbox` launch argument is now injected **only for the legacy FUSE2 runtime** (`toolsets.appimage: "0.0.0"`). With the default static FUSE3 runtime (unset / `"latest"` → `1.1.0`), `--no-sandbox` is no longer added automatically — `AppRun` adds it on its own only when user namespaces are unavailable. If you need the Chromium sandbox disabled unconditionally, set `executableArgs: ["--no-sandbox"]` explicitly.
 
 ### `node_modules` are now arch/os-filtered on every build
@@ -674,6 +713,8 @@ or drop the ia32 target.
 electron-builder now **rejects** a macOS `productName` or `executableName` that would require filename sanitization, throwing an `InvalidConfigurationError` at build start (`assertSafeHelperName`). Previously such names were silently normalized/sanitized, which could make the generated `<Name> Helper.app` bundles diverge from `CFBundleName` and break Electron's helper-process discovery.
 
 **Action is required only if** a build starts failing with an "is not a valid macOS app bundle name" error — choose a `productName`/`executableName` that needs no sanitization (avoid path separators, control characters, and other characters stripped by filename sanitization).
+
+**Names are also no longer NFD-normalized.** The `.app` bundle, the helper bundles, and `CFBundleName` now use the product name exactly as configured. For any name containing accented characters this changes the **bytes** of the on-disk filename, which is what external notarization and upload tooling matches on — update anything that hard-codes the normalized form. Relatedly, archive creation falls back from 7z to zip for NFD-normalized filenames.
 
 ### Redundant production `dependencies` are excluded, not rejected
 
@@ -735,6 +776,37 @@ v27 reads the base channel off the front of the name and reattaches the suffix:
 
 ---
 
+## Dependencies & file copying
+
+### `allowMissingDependencies` now fails the build
+
+A production dependency that cannot be resolved during `node_modules` collection is now a **hard error**. In v26 this logged `cannot find path for dependency` / `dependency not found on disk` warnings and produced a package that failed at runtime with `MODULE_NOT_FOUND`; v27 fails the build up front, listing every missing dependency at once.
+
+```json5
+{ "build": { "allowMissingDependencies": true } }   // restore the v26 warn-only behavior
+{ "build": { "allowMissingDependencies": ["some-pkg"] } }  // allow only specific names
+```
+
+`false` / `null` / omitted (the default) fails on any missing production dependency. Missing **optional** dependencies (declared in `optionalDependencies`, e.g. `fsevents` on Linux/Windows) are always allowed and never fail the build.
+
+**Action:** if a build that previously succeeded now fails here, fix the installation, list the affected names in `allowMissingDependencies`, or set it to `true` to keep the v26 behavior.
+
+### `extraFiles` / `extraResources` destinations are validated {#extrafiles--extraresources-destinations-are-validated}
+
+A `to` path that is absolute (POSIX, drive-letter, or UNC) or that escapes the build output directory now throws an `InvalidConfigurationError`. v26 accepted these and copied files onto the build machine outside the packaged app.
+
+**Action is required only if** a build starts failing here — make the `to` path relative and keep it inside the output directory.
+
+### Windows `publisherName` is validated against the signing certificate
+
+A configured `win.publisherName` that does not match the signing certificate's subject now fails the build instead of producing an installer that electron-updater would reject every update for. The common triggers are a certificate rotation and the wrong certificate leaking into `WIN_CSC_LINK` / `CSC_LINK` in CI.
+
+**Action is required only if** a build fails here — update `win.publisherName` to the new certificate subject, sign with the intended certificate, or set `publisherName` to `null` to opt out of update signature verification entirely.
+
+> Related, on the updater side: an `app-update.yml` with no `publisherName` means signature verification is silently skipped. v27 warns; **v28 will fail closed.**
+
+---
+
 ## macOS DMG
 
 ### DMG `filesystem` defaults to APFS
@@ -767,6 +839,8 @@ v27 ships a one-major-version grace period so existing deployments are not broke
 - **You never set `disableWebInstaller`** (the default): if a web-installer update is received, the updater logs a warning and still downloads it in v27. In **v28** that warning becomes an error and the download is blocked (`ERR_UPDATER_WEB_INSTALLER_DISABLED`).
 - **You explicitly set `disableWebInstaller = true`**: the download throws `ERR_UPDATER_WEB_INSTALLER_DISABLED` immediately (no grace period).
 - **You do not use a web installer** (the common case): no action — this is the safer default and v28 will enforce it.
+
+**Installs produced by a v27 `nsis-web` build opt in automatically.** NSIS installers now write a `resources/package-type` marker, and `NsisUpdater` reads it to default `disableWebInstaller` to `false` for web-installer installs. So the manual opt-in below is needed for **apps already in the field** (installed before v27), not for go-forward installs.
 
 If you publish and rely on an NSIS web installer, opt back in **before v28** by setting `disableWebInstaller: false` in your main process:
 
@@ -950,15 +1024,15 @@ The `snapcraft` shape makes the `base` explicit and nests per-base options under
 
 ### Why consolidate macOS signing under `mac.sign`?
 
-In v26, ~15 signing options were scattered across the root of `MacConfiguration` intermixed with unrelated packaging options. Grouping them under a single `sign` object makes the signing surface self-documenting and matches the Windows `win.sign` grouping. `sign` is now a typed pass-through (`ElectronSignOptions`) to `@electron/osx-sign`, so upstream options are forwarded directly and new osx-sign fields are picked up automatically. `signIgnore` was renamed to `sign.ignore` to match the osx-sign canonical name. The same grouping rationale produced `mac.universal` (a pass-through to `@electron/universal`).
+In v26, ~15 signing options were scattered across the root of `MacConfiguration` intermixed with unrelated packaging options. Grouping them under a single `sign` object makes the signing surface self-documenting and matches the Windows `win.sign` grouping. `sign` is now a typed pass-through (`ElectronSignOptions`) to `@electron/osx-sign`, so upstream options are forwarded directly. Note that `ElectronSignOptions` is a closed type (`additionalProperties: false`): a field added by a newer `@electron/osx-sign` is rejected until electron-builder regenerates its schema, so it is a pass-through of the options that exist, not an open bag. `signIgnore` was renamed to `sign.ignore` to match the osx-sign canonical name. The same grouping rationale produced `mac.universal` (a pass-through to `@electron/universal`).
 
 ### Why rename `electronDownload` to `electronGet`?
 
-v27 upgrades to `@electron/get` v5, which downloads via `fetch` (replacing the `got`-based path) and exposes a `mirrorOptions` object rather than the old flat `mirror`/`customDir` fields. Renaming the config key to `electronGet` and typing it directly as the library's own options removes electron-builder's hand-maintained translation layer — what you set is what `@electron/get` receives. A few legacy fields (`cache`, `customDir`, `customFilename`, `strictSSL`) have no v5 equivalent; `migrate-schema` drops them with a warning.
+v27 upgrades to `@electron/get` v5, which downloads via `fetch` (replacing the `got`-based path) and exposes a `mirrorOptions` object rather than the old flat `mirror`/`customDir` fields. Renaming the config key to `electronGet` and typing it directly as the library's own options removes electron-builder's hand-maintained translation layer — what you set is what `@electron/get` receives. A few legacy fields (`customDir`, `customFilename`, `strictSSL`) have no v5 equivalent; `migrate-schema` drops them with a warning. `cache` is not gone — it moved out of the config surface and is set with the `ELECTRON_BUILDER_CACHE` environment variable instead.
 
 ### Why consolidate ASAR options under `asar`?
 
-In v26, `asarUnpack` lived alongside `asar`, and `disableSanityCheckAsar` / `disableAsarIntegrity` lived at the root of `Configuration`. This was confusing: `asarUnpack` is meaningless when `asar: false`, yet nothing in the type system expressed that relationship. Moving all options under a single `asar` key makes the dependency explicit. The `asar: true` sentinel was removed because having both `true` (enable with defaults) and `{}` (same meaning) was redundant.
+In v26, `asarUnpack` lived alongside `asar`, and `disableSanityCheckAsar` / `disableAsarIntegrity` lived at the root of `Configuration`. This was confusing: `asarUnpack` is meaningless when `asar: false`, yet nothing in the type system expressed that relationship. Moving all options under a single `asar` key makes the dependency explicit. The `asar: true` sentinel was left in place — it is redundant next to `{}`, but rejecting it would break working configs for no benefit, so `migrate-schema` merely drops it when folding in other ASAR keys.
 
 ### `PlatformPackager.info` is now protected
 

@@ -67,6 +67,35 @@ function checkOptions(publishPolicy: any) {
   }
 }
 
+/**
+ * v26 published implicitly when it detected a CI tag; v27 requires an explicit `--publish` policy.
+ * Without a signal, a tagged release pipeline goes green and uploads nothing — the build looks
+ * identical to a successful publish. Only warns when the project actually looks like it wanted to
+ * publish (a tag is present and a publish target is configured), so ordinary local builds stay quiet.
+ */
+function warnIfImplicitPublishExpected(packager: Packager): void {
+  const tag = getCiTag()
+  if (tag == null) {
+    return
+  }
+  const config = packager.config
+  const hasPublishConfig =
+    config.publish != null ||
+    (["mac", "win", "linux"] as const).some(platform => {
+      const platformConfig = config[platform] as { publish?: unknown } | Nullish
+      return platformConfig != null && platformConfig.publish != null
+    })
+  if (!hasPublishConfig) {
+    return
+  }
+  log.warn(
+    { tag, solution: "pass --publish <always|onTag|onTagOrDraft|never>, or set the `publish` policy in your build configuration" },
+    "a publish configuration and a CI tag are present, but no publish policy was given — nothing will be uploaded. " +
+      "electron-builder v27 removed implicit publishing (v26 auto-published when it detected a CI tag). " +
+      "See https://www.electron.build/docs/migration/v27-breaking-changes#implicit-publish-removed"
+  )
+}
+
 export class PublishManager implements PublishContext {
   private readonly nameToPublisher = new Map<string, Promise<Publisher | null>>()
 
@@ -93,6 +122,9 @@ export class PublishManager implements PublishContext {
       this.isPublish = publishPolicy != null && publishOptions.publish !== "never" && (publishPolicy !== "onTag" || getCiTag() != null)
       if (this.isPublish && forcePublishForPr) {
         log.warn(publishForPrWarning)
+      }
+      if (publishPolicy == null) {
+        warnIfImplicitPublishExpected(packager)
       }
     } else if (publishOptions.publish !== "never") {
       log.info(

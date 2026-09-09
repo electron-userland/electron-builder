@@ -53,6 +53,22 @@ export { getRceditBundle, getWindowsKitsBundle } from "./toolsets/winCodeSign.js
 export { CacheState } from "./util/cacheState.js"
 export { computeDefaultAppDirectory, createProjectMetadataLazy, doMergeConfigs, getConfig, validateConfiguration } from "./util/config/config.js"
 export { loadEnv, orNullIfFileNotExist } from "./util/config/load.js"
+export {
+  ALL_PLATFORM_KEYS,
+  AZURE_KNOWN_FIELDS,
+  BREAKING_CHANGES_URL,
+  ELECTRON_DOWNLOAD_DROPPED,
+  LEGACY_CONFIG_OPTIONS,
+  MAC_PLATFORM_KEYS,
+  MAC_SIGN_FIELDS,
+  MAC_SIGN_REMOVED_FIELDS,
+  MAC_UNIVERSAL_FIELDS,
+  RESOLVED_LEGACY_CONFIG_OPTIONS,
+  formatLegacyOptionMessage,
+} from "./util/config/legacyOptions.js"
+export type { LegacyConfigOption, ResolvedLegacyConfigOption } from "./util/config/legacyOptions.js"
+export { checkLegacyConfiguration } from "./util/config/legacyConfigGuard.js"
+export { assertNoRemovedEnvVars, checkRemovedEnvVars, resetRemovedEnvVarsCheck } from "./util/flags.js"
 export { validateSchema } from "./util/config/schemaValidator.js"
 export {
   ArtifactDownloadOptions,
