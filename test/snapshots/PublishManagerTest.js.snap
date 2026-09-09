@@ -720,15 +720,6 @@ exports[`os macro 2`] = `
 }
 `;
 
-exports[`os macro 3`] = `
-[
-  "latest/mac/Test App ßW-1.1.0-mac.zip",
-  "latest/mac/Test App ßW-1.1.0-mac.zip.blockmap",
-  "latest/mac/latest-mac.yml",
-  "latest/linux/TestApp-1.1.0.zip",
-]
-`;
-
 exports[`r2 as first publisher writes provider r2 to app-update.yml 1`] = `
 {
   "mac": [
