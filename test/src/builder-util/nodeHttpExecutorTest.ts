@@ -163,6 +163,21 @@ describe("NodeHttpExecutor.createRequest", { sequential: true }, () => {
       expect(options.agent?.constructor?.name).toBe("HttpProxyAgent")
     })
 
+    test("sets HttpsProxyAgent when HTTPS_PROXY is set", ({ expect }) => {
+      vi.stubEnv("HTTPS_PROXY", "https://proxy.example.com:8080")
+      const options: any = { protocol: "https:" }
+      callCreateRequest(executor, options)
+      expect(options.agent?.constructor?.name).toBe("HttpsProxyAgent")
+    })
+
+    test("falls back to lowercase proxy when the uppercase value is whitespace", ({ expect }) => {
+      vi.stubEnv("HTTP_PROXY", "   ")
+      vi.stubEnv("http_proxy", "http://proxy.example.com:3128")
+      const options: any = { protocol: "http:" }
+      callCreateRequest(executor, options)
+      expect(options.agent?.constructor?.name).toBe("HttpProxyAgent")
+    })
+
     test("does not set agent when no proxy env vars are set", ({ expect }) => {
       const options: any = { protocol: "https:" }
       callCreateRequest(executor, options)
