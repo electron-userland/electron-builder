@@ -80,6 +80,7 @@ export class DataSplitter extends Writable {
   _write(data: Buffer, encoding: string, callback: (error?: Error) => void): void {
     if (this.isFinished) {
       this.logger?.error?.(`Trailing ignored data: ${data.length} bytes`)
+      callback()
       return
     }
 
@@ -217,18 +218,18 @@ export class DataSplitter extends Writable {
   }
 
   private searchHeaderListEnd(chunk: Buffer, readOffset: number): number {
-    const headerListEnd = chunk.indexOf(DOUBLE_CRLF, readOffset)
+    const partialChunk = readOffset === 0 ? chunk : chunk.subarray(readOffset)
+    const bufferedLength = this.headerListBuffer?.length ?? 0
+    const searchBuffer = this.headerListBuffer == null ? partialChunk : Buffer.concat([this.headerListBuffer, partialChunk])
+    const headerListEnd = searchBuffer.indexOf(DOUBLE_CRLF)
     if (headerListEnd !== -1) {
-      return headerListEnd + DOUBLE_CRLF.length
+      return readOffset + headerListEnd + DOUBLE_CRLF.length - bufferedLength
     }
 
-    // not all headers data were received, save to buffer
-    const partialChunk = readOffset === 0 ? chunk : chunk.slice(readOffset)
-    if (this.headerListBuffer == null) {
-      this.headerListBuffer = partialChunk
-    } else {
-      this.headerListBuffer = Buffer.concat([this.headerListBuffer, partialChunk])
-    }
+    // Only the delimiter prefix at the end can affect the next chunk. Copying at most
+    // three bytes avoids retaining whole network chunks or repeatedly joining headers.
+    const suffixLength = Math.min(DOUBLE_CRLF.length - 1, searchBuffer.length)
+    this.headerListBuffer = Buffer.from(searchBuffer.subarray(searchBuffer.length - suffixLength))
     return -1
   }
 
