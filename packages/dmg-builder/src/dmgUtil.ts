@@ -245,14 +245,20 @@ export async function transformBackgroundFileIfNeed(file: string, tmpDir: TmpDir
     return file
   }
 
-  const retinaFile = file.replace(/\.([a-z]+)$/, "@2x.$1")
-  if (await exists(retinaFile)) {
+  const retinaFile = getRetinaFilePath(file)
+  if (retinaFile != null && (await exists(retinaFile))) {
     const tiffFile = await tmpDir.getTempFile({ suffix: ".tiff" })
     await exec("tiffutil", ["-cathidpicheck", file, retinaFile, "-out", tiffFile])
     return tiffFile
   }
 
   return file
+}
+
+/** @internal */
+export function getRetinaFilePath(file: string): string | null {
+  const extension = path.extname(file)
+  return extension === "" ? null : `${file.slice(0, -extension.length)}@2x${extension}`
 }
 
 export async function getImageSizeUsingSips(background: string) {
