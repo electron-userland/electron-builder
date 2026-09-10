@@ -229,6 +229,71 @@ test.ifNotWindows("custom include", { timeout: EXTENDED_TIMEOUT }, ({ expect }) 
   )
 )
 
+test.ifNotWindows("custom include as array", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: nsisTarget,
+      config: {
+        nsis: {
+          include: ["installer-include-a.nsh", "installer-include-b.nsh"],
+        },
+      },
+    },
+    {
+      projectDirCreated: projectDir =>
+        Promise.all([
+          copyTestAsset("installer-include-a.nsh", path.join(projectDir, "build", "installer-include-a.nsh")),
+          copyTestAsset("installer-include-b.nsh", path.join(projectDir, "build", "installer-include-b.nsh")),
+        ]).then(() => undefined),
+      packed: context =>
+        Promise.all([
+          assertThat(expect, path.join(context.projectDir, "build", "customIncludeA")).isFile(),
+          assertThat(expect, path.join(context.projectDir, "build", "customIncludeB")).isFile(),
+        ]),
+    }
+  )
+)
+
+test.ifNotWindows("custom include with sibling include and customUnInstall", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+  app(
+    expect,
+    { targets: nsisTarget },
+    {
+      projectDirCreated: projectDir =>
+        Promise.all([
+          copyTestAsset("installer-with-sibling.nsh", path.join(projectDir, "build", "installer.nsh")),
+          copyTestAsset("included-sibling.nsh", path.join(projectDir, "build", "included-sibling.nsh")),
+        ]).then(() => undefined),
+      packed: context =>
+        Promise.all([
+          // proves that the build resources dir is registered via !addincludedir (sibling included by bare name)
+          assertThat(expect, path.join(context.projectDir, "build", "siblingIncluded")).isFile(),
+          // fires during the uninstaller compile pass
+          assertThat(expect, path.join(context.projectDir, "build", "customUnInstallMarker")).isFile(),
+        ]),
+    }
+  )
+)
+
+test.ifNotWindows("portable custom include", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget(["portable"], Arch.x64),
+      config: {
+        portable: {
+          include: "portable-include.nsh",
+        },
+      },
+    },
+    {
+      projectDirCreated: projectDir => copyTestAsset("portable-include.nsh", path.join(projectDir, "build", "portable-include.nsh")),
+      packed: context => assertThat(expect, path.join(context.projectDir, "build", "portableInclude")).isFile(),
+    }
+  )
+)
+
 test.skip("big file pack", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
     expect,

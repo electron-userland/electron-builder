@@ -75,6 +75,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`linux.syncDesktopName` removed](#linuxsyncdesktopname-always-synced) | ✓ | Removed automatically; behaviour is always on. If it was `false`, set `desktopName` to control the filename |
 | [Linux maintainer-script EJS syntax removed](#linux-maintainer-script-ejs-template-syntax) | — | Use `${var}` instead of `<%= var %>` |
 | [NSIS file-association ProgID format changed](#nsis-file-association-progid-format-changed) | — | Update custom NSIS scripts that hard-code the old ProgID |
+| [NSIS `customInstallMode` macro guard casing corrected](#nsis-custominstallmode-macro-guard-casing-corrected) | — | Rename a `customInstallmode` (lowercase `m`) macro definition in custom NSIS scripts to the documented `customInstallMode` |
 | [Toolset defaults resolve to `"latest"`](#toolset-defaults-resolve-to-latest-newest-bundle) | — | No action; pin to `"0.0.0"` to restore a legacy bundle |
 | [Toolset env-var overrides removed](#toolset-env-var-overrides-removed) | — | Replace `APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, … with `toolsets.X: { url, checksum }` — setting a removed variable now **fails the build** |
 | [`CI_BUILD_TAG` env var removed](#ci_build_tag-environment-variable) | — | Use `CI_COMMIT_TAG` |
@@ -670,6 +671,20 @@ The generated ProgID has the form `<program>.<component>`: `<program>` is derive
 **Action is required only if** you ship a custom NSIS script (`nsis.include` / `nsis.script`) or external tooling that hard-codes the old ProgID — the association `name` or extension — for example to add extra shell verbs or registry entries under that key. Update those references to the new generated value.
 
 > On upgrade, an installer built with v27 registers the new ProgID. One-click installers run the previous version's uninstaller during the upgrade, which removes the old-format entry; with assisted installers that do not uninstall the prior version first, the old ProgID may remain in the registry until that version is removed.
+
+### NSIS `customInstallMode` macro guard casing corrected {#nsis-custominstallmode-macro-guard-casing-corrected}
+
+The guard around the `customInstallMode` macro in `multiUserUi.nsh` previously checked `!ifmacrodef customInstallmode` (lowercase `m`), while the [documentation](../nsis.md) and the adjacent `!insertmacro customInstallMode` call use `customInstallMode`. In v27 the guard checks the documented name, `customInstallMode`.
+
+**No action is required if** your custom NSIS script (`build/installer.nsh` or `nsis.include`) defines the macro with the documented casing — it is now reliably applied on the install-mode page of assisted multi-user installers (e.g. to set `$isForceMachineInstall`).
+
+**Action is required only if** you defined the macro under the exact lowercase name `customInstallmode`, which relied on the undocumented casing of the old guard — rename the definition to `customInstallMode`:
+
+```nsis
+!macro customInstallMode
+  # set $isForceCurrentInstall or $isForceMachineInstall here
+!macroend
+```
 
 ### Linux launcher entrypoint
 
