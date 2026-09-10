@@ -3,7 +3,7 @@ import { Platform } from "app-builder-lib/src/core"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { afterEach, vi } from "vitest"
-import { listArchiveEntries, listArchiveMethods, NON_DECODABLE_NSIS_FILTER } from "./helpers/archiveHelper"
+import { listArchiveEntries, listArchiveEntryMethods, listArchiveMethods, NON_DECODABLE_NSIS_FILTER } from "./helpers/archiveHelper"
 
 async function makeSrcDir(tmpDir: string, files: Record<string, string> = { "hello.txt": "hello world", "sub/nested.txt": "nested" }): Promise<string> {
   const src = path.join(tmpDir, "src")
@@ -380,5 +380,110 @@ describe("archive() exclude masks", () => {
       entries.some(e => e.endsWith(".log")),
       `no *.log should remain, got: ${entries.join(", ")}`
     ).toBe(false)
+  })
+})
+
+// ─── archive() — storedPaths (differential-friendly Copy members) ────────────
+// The differential updater diffs the *compressed* archive with a content-defined blockmap; a large
+// compressed member (the asar) diverges wholesale on any change, so the delta costs the whole
+// member. storedPaths keeps such members byte-identical between builds by excluding them from the
+// compressed pass and appending them with -mx=0 (Copy). NsisTarget wires resources/app.asar through
+// this when nsis.differentialPackageStoreAsar is set.
+
+describe("archive() storedPaths", { sequential: true }, () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  const appFiles = {
+    "app.txt": "compressible ".repeat(2000),
+    "resources/app.asar": "asar-payload-".repeat(2000),
+  }
+
+  test("stored member is appended with Copy while the rest stays compressed", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const dir = await makeSrcDir(tmpDirPath, appFiles)
+    const outFile = path.join(tmpDirPath, "stored.7z")
+    await archive("7z", outFile, dir, { withoutDir: true, solid: false, storedPaths: ["resources/app.asar"] })
+
+    const methods = await listArchiveEntryMethods(outFile)
+    expect(methods.get("resources/app.asar")).toBe("Copy")
+    expect(methods.get("app.txt")).toMatch(/LZMA/)
+    // exactly once: excluded from the compressed pass, added only by the append pass
+    const entries = await listArchiveEntries(outFile)
+    expect(entries.filter(e => e === "resources/app.asar")).toHaveLength(1)
+  })
+
+  // The blockmap-relevant property, asserted directly: a Copy member's payload sits verbatim in the
+  // archive, so regions of it that don't change between releases stay byte-identical (downloadable
+  // as ranges of the old file). A recompressed member would never contain the raw bytes.
+  test("stored member's raw bytes appear verbatim in the archive", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const dir = await makeSrcDir(tmpDirPath, appFiles)
+    const outFile = path.join(tmpDirPath, "verbatim.7z")
+    await archive("7z", outFile, dir, { withoutDir: true, storedPaths: ["resources/app.asar"] })
+
+    const asarBytes = await fs.readFile(path.join(dir, "resources", "app.asar"))
+    const archiveBytes = await fs.readFile(outFile)
+    expect(archiveBytes.includes(asarBytes)).toBe(true)
+  })
+
+  test("works with the exact differential-aware NSIS options (Copy is install-time decodable)", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const dir = await makeSrcDir(tmpDirPath, appFiles)
+    const outFile = path.join(tmpDirPath, "differential.7z")
+    // the options NsisTarget passes for a differential-aware app package
+    // (configureDifferentialAwareArchiveOptions + installTimeDecodable) plus storedPaths
+    await archive("7z", outFile, dir, {
+      withoutDir: true,
+      installTimeDecodable: true,
+      dictSize: 1,
+      solid: false,
+      compression: "normal",
+      storedPaths: ["resources/app.asar"],
+    })
+
+    const methods = await listArchiveEntryMethods(outFile)
+    expect(methods.get("resources/app.asar")).toBe("Copy")
+    expect([...methods.values()].join("\n")).not.toMatch(NON_DECODABLE_NSIS_FILTER)
+  })
+
+  test("stored paths that do not exist are skipped", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const dir = await makeSrcDir(tmpDirPath, appFiles)
+    const outFile = path.join(tmpDirPath, "missing.7z")
+    await archive("7z", outFile, dir, { withoutDir: true, storedPaths: ["resources/app.asar", "missing.bin"] })
+
+    const entries = await listArchiveEntries(outFile)
+    expect(entries).not.toContain("missing.bin")
+    expect((await listArchiveEntryMethods(outFile)).get("resources/app.asar")).toBe("Copy")
+  })
+
+  test("stored path with '..' throws", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const dir = await makeSrcDir(tmpDirPath, appFiles)
+    await expect(archive("7z", path.join(tmpDirPath, "traversal.7z"), dir, { withoutDir: true, storedPaths: ["../secret"] })).rejects.toThrow("path traversal sequence")
+  })
+
+  test("without withoutDir the stored member is prefixed with the directory name", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir()
+    const dir = await makeSrcDir(tmpDirPath, appFiles) // lands at <tmp>/src
+    const outFile = path.join(tmpDirPath, "prefixed.7z")
+    await archive("7z", outFile, dir, { storedPaths: ["resources/app.asar"] })
+
+    const methods = await listArchiveEntryMethods(outFile)
+    expect(methods.get("src/resources/app.asar")).toBe("Copy")
+    expect((await listArchiveEntries(outFile)).filter(e => e.endsWith("resources/app.asar"))).toHaveLength(1)
+  })
+
+  // Byte-stability is the point: the compression-level override must not recompress stored members.
+  test("ELECTRON_BUILDER_COMPRESSION_LEVEL does not reach stored members", async ({ expect, tmpDir }) => {
+    vi.stubEnv("ELECTRON_BUILDER_COMPRESSION_LEVEL", "9")
+    const tmpDirPath = await tmpDir.createTempDir()
+    const dir = await makeSrcDir(tmpDirPath, appFiles)
+    const outFile = path.join(tmpDirPath, "env-override.7z")
+    await archive("7z", outFile, dir, { withoutDir: true, storedPaths: ["resources/app.asar"] })
+
+    expect((await listArchiveEntryMethods(outFile)).get("resources/app.asar")).toBe("Copy")
   })
 })

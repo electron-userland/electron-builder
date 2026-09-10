@@ -212,6 +212,21 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly differentialPackage?: boolean
 
   /**
+   * Store the app's `resources/app.asar` uncompressed (7-Zip `Copy`) inside the differential-aware app package.
+   *
+   * The differential updater diffs the *compressed* package with a content-defined blockmap, and the asar is a
+   * single compressed member — so any change to app code re-downloads the entire compressed asar (~100% of the
+   * member; its header rewrite alone diverges every block). Storing it keeps unchanged regions byte-identical
+   * between releases, making the delta proportional to what actually changed (measured on a ~32 MB asar: a
+   * one-line source change cost 0.2% instead of 100%).
+   *
+   * Trade-off: the installer grows by roughly what compressing the asar saved. Has no effect when
+   * `differentialPackage` is `false`.
+   * @default false
+   */
+  readonly differentialPackageStoreAsar?: boolean
+
+  /**
    * Whether to display a language selection dialog. Not recommended (by default will be detected using OS language).
    * @default false
    */

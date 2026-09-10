@@ -102,6 +102,18 @@ export interface ArchiveOptions {
   preserveSymlinks?: boolean
 
   /**
+   * Paths, relative to the archived directory, to append as uncompressed (`Copy`) members instead of
+   * compressing them with the rest of the archive. Differential updates diff the *compressed* archive
+   * with a content-defined blockmap, and a large compressed member (an asar) diverges wholesale from
+   * its previous version on any change — storing it keeps unchanged regions byte-identical between
+   * builds, so the delta stays proportional to what actually changed. The stored members are excluded
+   * from the main (compressed) pass and appended in a second 7za invocation with `-mx=0`; the
+   * `ELECTRON_BUILDER_COMPRESSION_LEVEL` override deliberately does not apply to them (byte-stability
+   * is the point). Paths that do not exist are skipped. Not supported by the native-zip NFD fallback.
+   */
+  storedPaths?: Array<string> | null
+
+  /**
    * Restrict the 7z filter to one the install-time extractor (the self-vendored Nsis7z plugin) can
    * decode. Modern 7za (24.09) auto-applies a CPU branch converter to executable content at
    * `-mx>=1` — `BCJ2` on x86/x64 and `ARM64` on arm64 — which that decoder silently skips, dropping
@@ -235,6 +247,22 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     use7z = false
   }
 
+  // Resolve storedPaths before the main pass so they can be excluded from it. Member names are
+  // native-separator, relative to the 7za cwd (which differs with withoutDir), so the same string
+  // works as both the exact `-x!` exclude mask and the append argument.
+  const storedMembers: Array<string> = []
+  for (const storedPath of options.storedPaths ?? []) {
+    if (storedPath.includes("..")) {
+      throw new Error(`Stored archive path contains path traversal sequence: "${storedPath}"`)
+    }
+    if (await exists(path.join(dirToArchive, storedPath))) {
+      storedMembers.push(path.normalize(options.withoutDir ? storedPath : path.join(path.basename(dirToArchive), storedPath)))
+    }
+  }
+  if (storedMembers.length > 0 && !use7z) {
+    throw new Error("storedPaths is not supported with the native zip fallback")
+  }
+
   if (use7z) {
     const args = compute7zCompressArgs(format, options)
     // Modern 7-Zip (24.09) dereferences symlinks by default; the 7-Zip 16.02 bundled before
@@ -247,15 +275,35 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     await unlinkIfExists(outFile)
     args.push(outFile, options.withoutDir ? "." : path.basename(dirToArchive))
     args.push(...buildExcludeArgs(options.excluded, "-xr!"))
+    // `-x!` (exact, non-recursive) so only the member itself is skipped, never a same-named sibling
+    args.push(...storedMembers.map(member => `-x!${member}`))
 
+    const cwd = options.withoutDir ? dirToArchive : path.dirname(dirToArchive)
     try {
-      await exec(await getPath7za(), args, { cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive) }, debug7z.enabled)
+      await exec(await getPath7za(), args, { cwd }, debug7z.enabled)
     } catch (e: any) {
       if (e.code === "ENOENT" && !(await exists(dirToArchive))) {
         throw new Error(`Cannot create archive: "${dirToArchive}" doesn't exist`)
       } else {
         throw e
       }
+    }
+
+    if (storedMembers.length > 0) {
+      // Second pass: append the stored members with no compression. -mx=0 unconditionally — the
+      // compression-level env override must not reach these members (see storedPaths docs).
+      const appendArgs = debug7zArgs("a")
+      appendArgs.push("-mx=0")
+      if (!options.isRegularFile) {
+        appendArgs.push("-mtc=off")
+      }
+      if (format === "7z" || format.endsWith(".7z")) {
+        appendArgs.push("-mtm=off", "-mta=off")
+      } else if (format === "zip") {
+        appendArgs.push("-mm=Copy", "-mcu")
+      }
+      appendArgs.push(outFile, ...storedMembers)
+      await exec(await getPath7za(), appendArgs, { cwd }, debug7z.enabled)
     }
   } else {
     // macOS native zip (NFD fallback): -y preserves symlinks

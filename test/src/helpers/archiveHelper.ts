@@ -39,3 +39,22 @@ export async function listArchiveMethods(archivePath: string): Promise<Array<str
     .map(line => line.slice("Method = ".length).trim())
     .filter(method => method.length > 0)
 }
+
+// Maps each entry path to its reported codec (the `Path = …` line followed by that entry's
+// `Method = …` line in the `-slt` technical listing). The archive-level summary block (whose Path
+// is the archive file itself) is skipped. Entries stored with no compression report `Copy`.
+export async function listArchiveEntryMethods(archivePath: string): Promise<Map<string, string>> {
+  const stdout = await exec(await getPath7za(), ["l", "-slt", archivePath])
+  const archiveAsEntry = archivePath.replace(/\\/g, "/")
+  const result = new Map<string, string>()
+  let current: string | null = null
+  for (const line of stdout.split(/\r?\n/)) {
+    if (line.startsWith("Path = ")) {
+      const entry = line.slice("Path = ".length).trim().replace(/\\/g, "/")
+      current = entry === archiveAsEntry ? null : entry
+    } else if (line.startsWith("Method = ") && current != null) {
+      result.set(current, line.slice("Method = ".length).trim())
+    }
+  }
+  return result
+}

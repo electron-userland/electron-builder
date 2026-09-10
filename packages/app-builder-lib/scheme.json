@@ -4362,6 +4362,11 @@
           "description": "Marks the package as built with differential download support for the update server.",
           "type": "boolean"
         },
+        "differentialPackageStoreAsar": {
+          "default": false,
+          "description": "Store the app's `resources/app.asar` uncompressed (7-Zip `Copy`) inside the differential-aware app package.\n\nThe differential updater diffs the *compressed* package with a content-defined blockmap, and the asar is a\nsingle compressed member — so any change to app code re-downloads the entire compressed asar (~100% of the\nmember; its header rewrite alone diverges every block). Storing it keeps unchanged regions byte-identical\nbetween releases, making the delta proportional to what actually changed (measured on a ~32 MB asar: a\none-line source change cost 0.2% instead of 100%).\n\nTrade-off: the installer grows by roughly what compressing the asar saved. Has no effect when\n`differentialPackage` is `false`.",
+          "type": "boolean"
+        },
         "displayLanguageSelector": {
           "default": false,
           "description": "Whether to display a language selection dialog. Not recommended (by default will be detected using OS language).",
@@ -4716,6 +4721,11 @@
         },
         "differentialPackage": {
           "description": "Marks the package as built with differential download support for the update server.",
+          "type": "boolean"
+        },
+        "differentialPackageStoreAsar": {
+          "default": false,
+          "description": "Store the app's `resources/app.asar` uncompressed (7-Zip `Copy`) inside the differential-aware app package.\n\nThe differential updater diffs the *compressed* package with a content-defined blockmap, and the asar is a\nsingle compressed member — so any change to app code re-downloads the entire compressed asar (~100% of the\nmember; its header rewrite alone diverges every block). Storing it keeps unchanged regions byte-identical\nbetween releases, making the delta proportional to what actually changed (measured on a ~32 MB asar: a\none-line source change cost 0.2% instead of 100%).\n\nTrade-off: the installer grows by roughly what compressing the asar saved. Has no effect when\n`differentialPackage` is `false`.",
           "type": "boolean"
         },
         "displayLanguageSelector": {
