@@ -935,7 +935,8 @@
           "enum": [
             "dir",
             "file",
-            "link"
+            "link",
+            "position"
           ],
           "type": "string"
         },
