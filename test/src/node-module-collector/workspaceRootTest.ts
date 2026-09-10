@@ -10,13 +10,14 @@ import { determinePackageManagerEnv, findWorkspaceRoot } from "app-builder-lib/s
 // Helpers
 // ---------------------------------------------------------------------------
 
-const projectTmpDir = new TmpDir("eb-workspace-root-test")
-
 type Files = Record<string, string | object>
 
-/** Writes `files` (relative path → JSON object or raw text) under a fresh temp dir and returns that dir. */
-async function buildTempTree(files: Files): Promise<string> {
-  const root = await projectTmpDir.createTempDir()
+/**
+ * Writes `files` (relative path → JSON object or raw text) under a fresh temp dir owned by the per-test `tmpDir`
+ * fixture (auto-cleaned after the test) and returns that dir.
+ */
+async function buildTempTree(tmpDir: TmpDir, files: Files): Promise<string> {
+  const root = await tmpDir.getTempDir({ prefix: "eb-workspace-root-test" })
   for (const [rel, content] of Object.entries(files)) {
     const absPath = path.join(root, rel)
     await fse.ensureDir(path.dirname(absPath))
@@ -36,17 +37,8 @@ const appPkg = { name: "app", version: "1.0.0", packageManager: "pnpm@11.0.0" }
 // ---------------------------------------------------------------------------
 
 describe("findWorkspaceRoot", { sequential: true }, () => {
-  let root = ""
-  afterEach(async () => {
-    vi.restoreAllMocks()
-    if (root) {
-      await fse.rm(root, { recursive: true, force: true })
-      root = ""
-    }
-  })
-
-  test("pnpm: pnpm-workspace.yaml in a parent directory is detected as the workspace root (no shell-out)", async ({ expect }) => {
-    root = await buildTempTree({
+  test("pnpm: pnpm-workspace.yaml in a parent directory is detected as the workspace root (no shell-out)", async ({ expect, tmpDir }) => {
+    const root = await buildTempTree(tmpDir, {
       "pnpm-workspace.yaml": "packages:\n  - apps/*\n",
       "package.json": { name: "monorepo", version: "0.0.0", private: true },
       "apps/app/package.json": appPkg,
@@ -54,8 +46,8 @@ describe("findWorkspaceRoot", { sequential: true }, () => {
     expect(await findWorkspaceRoot(PM.PNPM, path.join(root, "apps", "app"))).toBe(root)
   })
 
-  test("pnpm: pnpm-workspace.yaml wins over a nearer package.json `workspaces` field, which pnpm ignores", async ({ expect }) => {
-    root = await buildTempTree({
+  test("pnpm: pnpm-workspace.yaml wins over a nearer package.json `workspaces` field, which pnpm ignores", async ({ expect, tmpDir }) => {
+    const root = await buildTempTree(tmpDir, {
       "pnpm-workspace.yaml": "packages:\n  - apps/*\n",
       "apps/package.json": { name: "apps", version: "0.0.0", workspaces: ["*"] },
       "apps/app/package.json": appPkg,
@@ -63,16 +55,16 @@ describe("findWorkspaceRoot", { sequential: true }, () => {
     expect(await findWorkspaceRoot(PM.PNPM, path.join(root, "apps", "app"))).toBe(root)
   })
 
-  test("pnpm: still falls back to a package.json `workspaces` field when there is no pnpm-workspace.yaml", async ({ expect }) => {
-    root = await buildTempTree({
+  test("pnpm: still falls back to a package.json `workspaces` field when there is no pnpm-workspace.yaml", async ({ expect, tmpDir }) => {
+    const root = await buildTempTree(tmpDir, {
       "package.json": { name: "monorepo", version: "0.0.0", workspaces: ["apps/*"] },
       "apps/app/package.json": appPkg,
     })
     expect(await findWorkspaceRoot(PM.PNPM, path.join(root, "apps", "app"))).toBe(root)
   })
 
-  test("pnpm: returns undefined when no workspace config exists above the project", async ({ expect }) => {
-    root = await buildTempTree({
+  test("pnpm: returns undefined when no workspace config exists above the project", async ({ expect, tmpDir }) => {
+    const root = await buildTempTree(tmpDir, {
       "package.json": appPkg,
     })
     expect(await findWorkspaceRoot(PM.PNPM, root)).toBeUndefined()
@@ -80,17 +72,12 @@ describe("findWorkspaceRoot", { sequential: true }, () => {
 })
 
 describe("determinePackageManagerEnv", { sequential: true }, () => {
-  let root = ""
-  afterEach(async () => {
+  afterEach(() => {
     vi.restoreAllMocks()
-    if (root) {
-      await fse.rm(root, { recursive: true, force: true })
-      root = ""
-    }
   })
 
-  test("pnpm workspace: workspaceRoot resolves to the directory holding pnpm-workspace.yaml", async ({ expect }) => {
-    root = await buildTempTree({
+  test("pnpm workspace: workspaceRoot resolves to the directory holding pnpm-workspace.yaml", async ({ expect, tmpDir }) => {
+    const root = await buildTempTree(tmpDir, {
       "pnpm-workspace.yaml": "packages:\n  - apps/*\n",
       "pnpm-lock.yaml": "lockfileVersion: '9.0'\n",
       "package.json": { name: "monorepo", version: "0.0.0", private: true },
@@ -105,10 +92,10 @@ describe("determinePackageManagerEnv", { sequential: true }, () => {
     expect(warn).not.toHaveBeenCalled()
   })
 
-  test("pnpm workspace: keeps the located root and warns when the package manager cannot be re-detected there", async ({ expect }) => {
+  test("pnpm workspace: keeps the located root and warns when the package manager cannot be re-detected there", async ({ expect, tmpDir }) => {
     // No lockfile and no `packageManager` field at the root: `detectPackageManager([root])` falls through to the process
     // environment and resolves no directory. The located root must survive instead of collapsing to the app dir (#10187).
-    root = await buildTempTree({
+    const root = await buildTempTree(tmpDir, {
       "pnpm-workspace.yaml": "packages:\n  - apps/*\n",
       "package.json": { name: "monorepo", version: "0.0.0", private: true },
       "apps/app/package.json": appPkg,
@@ -123,8 +110,8 @@ describe("determinePackageManagerEnv", { sequential: true }, () => {
     expect(warn.mock.calls[0][1]).toMatch(/workspace root located/)
   })
 
-  test("no workspace: workspaceRoot falls back to the project dir", async ({ expect }) => {
-    root = await buildTempTree({
+  test("no workspace: workspaceRoot falls back to the project dir", async ({ expect, tmpDir }) => {
+    const root = await buildTempTree(tmpDir, {
       "package.json": appPkg,
       "pnpm-lock.yaml": "lockfileVersion: '9.0'\n",
     })
