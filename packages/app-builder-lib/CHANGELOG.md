@@ -1,5 +1,22 @@
 # app-builder-lib
 
+## 26.16.2
+
+### Patch Changes
+
+- Fix: resolve the pnpm workspace root by walking up for `pnpm-workspace.yaml` instead of running `pnpm --workspace-root exec pwd`. `pwd` is POSIX-only, so on Windows the root silently resolved to `undefined`, `@electron/rebuild` searched only the app directory, and cross-architecture builds (e.g. `--x64 --arm64`) shipped transitive native modules such as `keytar` for the wrong architecture. When a workspace root is located but the package manager cannot be re-detected there, the located root is now kept and a warning is logged instead of dropping it. _[`#10189`](https://github.com/electron-userland/electron-builder/pull/10189) [`59f6364`](https://github.com/electron-userland/electron-builder/commit/59f63644f80381f018c91246762caee7586ab126) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.16.2`
+- `electron-builder-squirrel-windows@26.16.2`
+
+</details>
+
 ## 26.16.1
 
 ### Patch Changes
