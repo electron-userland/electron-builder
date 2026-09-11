@@ -1,10 +1,16 @@
 import { afterEach, describe, test, vi } from "vitest"
 import * as fse from "fs-extra"
+import * as os from "os"
 import * as path from "path"
-import { TmpDir } from "temp-file"
 import { log } from "builder-util"
-import { PM } from "app-builder-lib/internal"
-import { determinePackageManagerEnv, findWorkspaceRoot } from "app-builder-lib/src/node-module-collector/index"
+import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
+import * as collectorModule from "app-builder-lib/src/node-module-collector/index"
+
+const { determinePackageManagerEnv } = collectorModule
+// findWorkspaceRoot is @internal and stripped from type declarations by stripInternal:true.
+// Import as namespace then cast so vitest's TypeScript transform still resolves the real source
+// export while TypeScript type-checking is satisfied.
+const { findWorkspaceRoot } = collectorModule as any as { findWorkspaceRoot: (pm: PM, cwd: string) => Promise<string | undefined> }
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -13,11 +19,11 @@ import { determinePackageManagerEnv, findWorkspaceRoot } from "app-builder-lib/s
 type Files = Record<string, string | object>
 
 /**
- * Writes `files` (relative path → JSON object or raw text) under a fresh temp dir owned by the per-test `tmpDir`
- * fixture (auto-cleaned after the test) and returns that dir.
+ * Writes `files` (relative path → JSON object or raw text) under a fresh temp dir and returns that dir.
+ * Callers own cleanup (see the `afterEach` hooks below).
  */
-async function buildTempTree(tmpDir: TmpDir, files: Files): Promise<string> {
-  const root = await tmpDir.getTempDir({ prefix: "eb-workspace-root-test" })
+async function buildTempTree(files: Files): Promise<string> {
+  const root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-workspace-root-test-"))
   for (const [rel, content] of Object.entries(files)) {
     const absPath = path.join(root, rel)
     await fse.ensureDir(path.dirname(absPath))
@@ -37,8 +43,16 @@ const appPkg = { name: "app", version: "1.0.0", packageManager: "pnpm@11.0.0" }
 // ---------------------------------------------------------------------------
 
 describe("findWorkspaceRoot", { sequential: true }, () => {
-  test("pnpm: pnpm-workspace.yaml in a parent directory is detected as the workspace root (no shell-out)", async ({ expect, tmpDir }) => {
-    const root = await buildTempTree(tmpDir, {
+  let root = ""
+  afterEach(async () => {
+    if (root) {
+      await fse.rm(root, { recursive: true, force: true })
+      root = ""
+    }
+  })
+
+  test("pnpm: pnpm-workspace.yaml in a parent directory is detected as the workspace root (no shell-out)", async ({ expect }) => {
+    root = await buildTempTree({
       "pnpm-workspace.yaml": "packages:\n  - apps/*\n",
       "package.json": { name: "monorepo", version: "0.0.0", private: true },
       "apps/app/package.json": appPkg,
@@ -46,8 +60,8 @@ describe("findWorkspaceRoot", { sequential: true }, () => {
     expect(await findWorkspaceRoot(PM.PNPM, path.join(root, "apps", "app"))).toBe(root)
   })
 
-  test("pnpm: pnpm-workspace.yaml wins over a nearer package.json `workspaces` field, which pnpm ignores", async ({ expect, tmpDir }) => {
-    const root = await buildTempTree(tmpDir, {
+  test("pnpm: pnpm-workspace.yaml wins over a nearer package.json `workspaces` field, which pnpm ignores", async ({ expect }) => {
+    root = await buildTempTree({
       "pnpm-workspace.yaml": "packages:\n  - apps/*\n",
       "apps/package.json": { name: "apps", version: "0.0.0", workspaces: ["*"] },
       "apps/app/package.json": appPkg,
@@ -55,16 +69,16 @@ describe("findWorkspaceRoot", { sequential: true }, () => {
     expect(await findWorkspaceRoot(PM.PNPM, path.join(root, "apps", "app"))).toBe(root)
   })
 
-  test("pnpm: still falls back to a package.json `workspaces` field when there is no pnpm-workspace.yaml", async ({ expect, tmpDir }) => {
-    const root = await buildTempTree(tmpDir, {
+  test("pnpm: still falls back to a package.json `workspaces` field when there is no pnpm-workspace.yaml", async ({ expect }) => {
+    root = await buildTempTree({
       "package.json": { name: "monorepo", version: "0.0.0", workspaces: ["apps/*"] },
       "apps/app/package.json": appPkg,
     })
     expect(await findWorkspaceRoot(PM.PNPM, path.join(root, "apps", "app"))).toBe(root)
   })
 
-  test("pnpm: returns undefined when no workspace config exists above the project", async ({ expect, tmpDir }) => {
-    const root = await buildTempTree(tmpDir, {
+  test("pnpm: returns undefined when no workspace config exists above the project", async ({ expect }) => {
+    root = await buildTempTree({
       "package.json": appPkg,
     })
     expect(await findWorkspaceRoot(PM.PNPM, root)).toBeUndefined()
@@ -72,12 +86,17 @@ describe("findWorkspaceRoot", { sequential: true }, () => {
 })
 
 describe("determinePackageManagerEnv", { sequential: true }, () => {
-  afterEach(() => {
+  let root = ""
+  afterEach(async () => {
     vi.restoreAllMocks()
+    if (root) {
+      await fse.rm(root, { recursive: true, force: true })
+      root = ""
+    }
   })
 
-  test("pnpm workspace: workspaceRoot resolves to the directory holding pnpm-workspace.yaml", async ({ expect, tmpDir }) => {
-    const root = await buildTempTree(tmpDir, {
+  test("pnpm workspace: workspaceRoot resolves to the directory holding pnpm-workspace.yaml", async ({ expect }) => {
+    root = await buildTempTree({
       "pnpm-workspace.yaml": "packages:\n  - apps/*\n",
       "pnpm-lock.yaml": "lockfileVersion: '9.0'\n",
       "package.json": { name: "monorepo", version: "0.0.0", private: true },
@@ -92,10 +111,10 @@ describe("determinePackageManagerEnv", { sequential: true }, () => {
     expect(warn).not.toHaveBeenCalled()
   })
 
-  test("pnpm workspace: keeps the located root and warns when the package manager cannot be re-detected there", async ({ expect, tmpDir }) => {
+  test("pnpm workspace: keeps the located root and warns when the package manager cannot be re-detected there", async ({ expect }) => {
     // No lockfile and no `packageManager` field at the root: `detectPackageManager([root])` falls through to the process
     // environment and resolves no directory. The located root must survive instead of collapsing to the app dir (#10187).
-    const root = await buildTempTree(tmpDir, {
+    root = await buildTempTree({
       "pnpm-workspace.yaml": "packages:\n  - apps/*\n",
       "package.json": { name: "monorepo", version: "0.0.0", private: true },
       "apps/app/package.json": appPkg,
@@ -110,8 +129,8 @@ describe("determinePackageManagerEnv", { sequential: true }, () => {
     expect(warn.mock.calls[0][1]).toMatch(/workspace root located/)
   })
 
-  test("no workspace: workspaceRoot falls back to the project dir", async ({ expect, tmpDir }) => {
-    const root = await buildTempTree(tmpDir, {
+  test("no workspace: workspaceRoot falls back to the project dir", async ({ expect }) => {
+    root = await buildTempTree({
       "package.json": appPkg,
       "pnpm-lock.yaml": "lockfileVersion: '9.0'\n",
     })
