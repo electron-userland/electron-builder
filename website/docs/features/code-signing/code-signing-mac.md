@@ -38,15 +38,16 @@ To skip signing, leave all `CSC_*` environment variables unset and set `CSC_IDEN
 
 ## Ad-hoc Signing (`mac.sign.identity: "-"`)
 
-Ad-hoc signing applies a self-generated signature with no Apple Team ID. It is useful for local development when you do not have a Developer ID certificate. Because Electron's pre-built frameworks carry Apple's Team ID, ad-hoc signing requires one of the following to prevent an app launch failure:
+Ad-hoc signing applies a self-generated signature with no Apple Team ID. It is useful for local development when you do not have a Developer ID certificate. Because Electron's pre-built frameworks carry Apple's Team ID, library validation would reject them, so ad-hoc builds need the [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation) entitlement to launch at all.
 
-* Add the [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation) entitlement to your entitlements file — **preferred**, keeps hardened runtime active.
-* Set `mac.sign.hardenedRuntime: false` — disables hardened runtime entirely, which weakens security protections.
+electron-builder handles this for you: when `mac.sign.identity` is `"-"` and hardened runtime is enabled, it signs the app **and** its nested binaries with a built-in ad-hoc entitlements file that grants `allow-jit` and `disable-library-validation`. This applies only to ad-hoc builds — builds signed with a real identity keep library validation on.
+
+If you supply your own `build/entitlements.mac.plist`, it replaces that default, so add `disable-library-validation` to it yourself; electron-builder warns at build time if it is missing. Alternatively, set `mac.sign.hardenedRuntime: false` — this disables hardened runtime entirely and weakens security protections.
 
 :::warning[Ad-hoc signing caveats]
 The following issues can occur when using ad-hoc signing (`mac.sign.identity: "-"`) with the default `mac.sign.hardenedRuntime: true`:
 
-* **App launch failure** — crash report contains `[framework] not valid for use in process: mapping process and mapped file (non-platform) have different Team IDs`: add the [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation) entitlement.
+* **App launch failure** — crash report contains `[framework] not valid for use in process: mapping process and mapped file (non-platform) have different Team IDs`: your own entitlements file is overriding the built-in ad-hoc default; add the [`com.apple.security.cs.disable-library-validation`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.disable-library-validation) entitlement to it.
 * **Electron Framework crash**: add the [`com.apple.security.cs.allow-jit`](https://developer.apple.com/documentation/BundleResources/Entitlements/com.apple.security.cs.allow-jit) entitlement, which Electron requires.
 * **Sensor or sensitive-data access failures**: add the [appropriate entitlement](https://developer.apple.com/documentation/Security/hardened-runtime#Resource-Access) for the resource you need.
 :::
@@ -60,7 +61,7 @@ Setting `mac.sign.identity` to `null` (or leaving signing unconfigured with no c
 | Scenario | Recommended approach |
 |---|---|
 | Local dev, no certificate | Leave identity unconfigured or set `mac.sign.identity: null` |
-| Local dev, want a runnable ad-hoc build | `mac.sign.identity: "-"` + `com.apple.security.cs.disable-library-validation` entitlement |
+| Local dev, want a runnable ad-hoc build | `mac.sign.identity: "-"` — the required `com.apple.security.cs.disable-library-validation` entitlement is applied automatically |
 | CI/production distribution | Configure a Developer ID certificate via `CSC_LINK` / keychain |
 
 ## Code Signing and Notarization Tutorial
