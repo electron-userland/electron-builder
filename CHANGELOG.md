@@ -1,3 +1,12 @@
+## [26.16.2](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.16.1...electron-builder@26.16.2) (2026-09-11)
+
+
+### Bug Fixes
+
+* detect pnpm workspace root on Windows without shelling out to pwd (v26 backport) ([#10189](https://github.com/electron-userland/electron-builder/issues/10189)) ([59f6364](https://github.com/electron-userland/electron-builder/commit/59f63644f80381f018c91246762caee7586ab126))
+
+
+
 ## [26.16.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.16.0...electron-builder@26.16.1) (2026-09-07)
 
 
