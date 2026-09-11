@@ -2,7 +2,7 @@ import { AllPublishOptions } from "builder-util-runtime"
 import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter"
-import { AppUpdater, DownloadExecutorTask } from "./AppUpdater"
+import { AppUpdater, DownloadExecutorResult, DownloadExecutorTask } from "./AppUpdater"
 
 export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false
@@ -27,7 +27,7 @@ export abstract class BaseUpdater extends AppUpdater {
     }
   }
 
-  protected executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
+  protected executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
     return super.executeDownload({
       ...taskOptions,
       done: event => {
