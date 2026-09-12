@@ -34,6 +34,34 @@ const RABIN_HASH_MASK = RABIN_AVG - 1 // 0x3FFF
 
 export type CompressionFormat = "deflate" | "gzip"
 
+/** Rabin content-defined chunker parameters. `avg` must be a power of two; `min` < `avg` <= `max`. */
+export interface ChunkerParams {
+  min: number
+  avg: number
+  max: number
+}
+
+/** Default chunker (go-rabin defaults): 8 KB min / 16 KB avg / 32 KB max. */
+export const DEFAULT_CHUNKER: ChunkerParams = { min: RABIN_MIN, avg: RABIN_AVG, max: RABIN_MAX }
+
+/**
+ * A byte range of the input that should be chunked with its own parameters — e.g. a stored
+ * (uncompressed) archive member that is expected to change in small, localized ways between
+ * releases, where finer blocks make a differential download proportional to the change.
+ * Chunk boundaries are forced at both edges of every region, so the blocks inside a region
+ * depend only on the region's own bytes.
+ */
+export interface BlockMapRegion {
+  offset: number
+  size: number
+  chunker: ChunkerParams
+}
+
+export interface BuildBlockMapOptions {
+  /** Non-overlapping, ascending. Bytes outside every region use `DEFAULT_CHUNKER`. */
+  regions?: Array<BlockMapRegion> | null
+}
+
 interface BlockMap {
   version: "2"
   files: Array<{
@@ -61,7 +89,9 @@ function compress(data: Buffer, format: CompressionFormat): Buffer {
  *
  * Returned `sha512` is SHA-512 of the full file as it exists after the call.
  */
-export async function buildBlockMap(inFile: string, compressionFormat: CompressionFormat, outFile?: string): Promise<BlockMapDataHolder> {
+export async function buildBlockMap(inFile: string, compressionFormat: CompressionFormat, outFile?: string, options?: BuildBlockMapOptions): Promise<BlockMapDataHolder> {
+  // TODO(regions): honored by the region-aware chunker; the default chunker ignores it for now.
+  void options
   const fileHash = createHash("sha512")
   const checksums: string[] = []
   const sizes: number[] = []

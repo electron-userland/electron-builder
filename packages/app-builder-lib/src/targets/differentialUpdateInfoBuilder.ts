@@ -4,7 +4,7 @@ import * as path from "path"
 import { Target } from "../core.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ArchiveOptions } from "./archive.js"
-import { buildBlockMap } from "./blockmap/blockmap.js"
+import { buildBlockMap, BuildBlockMapOptions } from "./blockmap/blockmap.js"
 
 export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
 
@@ -62,9 +62,9 @@ export function configureDifferentialAwareArchiveOptions(archiveOptions: Archive
   return archiveOptions
 }
 
-export async function appendBlockmap(file: string): Promise<BlockMapDataHolder> {
+export async function appendBlockmap(file: string, options?: BuildBlockMapOptions): Promise<BlockMapDataHolder> {
   log.info({ file: log.filePath(file) }, "building embedded block map")
-  return buildBlockMap(file, "deflate")
+  return buildBlockMap(file, "deflate", undefined, options)
 }
 
 export async function createBlockmap(
@@ -72,11 +72,12 @@ export async function createBlockmap(
   target: Target,
   packager: PlatformPackager<any>,
   safeArtifactName: string | null,
-  arch: Arch | null = null
+  arch: Arch | null = null,
+  options?: BuildBlockMapOptions
 ): Promise<BlockMapDataHolder> {
   const blockMapFile = `${file}${BLOCK_MAP_FILE_SUFFIX}`
   log.info({ blockMapFile: log.filePath(blockMapFile) }, "building block map")
-  const updateInfo = await buildBlockMap(file, "gzip", blockMapFile)
+  const updateInfo = await buildBlockMap(file, "gzip", blockMapFile, options)
   await packager.emitArtifactBuildCompleted({
     file: blockMapFile,
     safeArtifactName: safeArtifactName == null ? null : `${safeArtifactName}${BLOCK_MAP_FILE_SUFFIX}`,
