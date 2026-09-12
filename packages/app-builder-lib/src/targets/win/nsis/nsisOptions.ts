@@ -210,9 +210,22 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly deleteAppDataOnUninstall?: boolean
 
   /**
-   * Marks the package as built with differential download support for the update server.
+   * Marks the package as built with differential download support for the update server, and selects how the
+   * app package is compressed:
+   *
+   * - `false` — no differential download support.
+   * - `"store-asar"` — differential-aware, with the app's `resources/app.asar` stored uncompressed (7-Zip
+   *   `Copy`) inside the package. The differential updater diffs the *compressed* package with a
+   *   content-defined blockmap, and the asar is a single compressed member — so any change to app code
+   *   re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every
+   *   block). Storing it keeps unchanged regions byte-identical between releases, making the delta
+   *   proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%
+   *   instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar
+   *   saved.
+   * - anything else (`true`, `"compressed"`, `null`, unset) — differential-aware, whole package compressed.
+   * @default true
    */
-  readonly differentialPackage?: boolean
+  readonly differentialPackage?: boolean | "compressed" | "store-asar" | null
 
   /**
    * Whether to display a language selection dialog. Not recommended (by default will be detected using OS language).
