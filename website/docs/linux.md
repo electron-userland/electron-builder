@@ -116,6 +116,35 @@ Files must be named `NxN.png` (e.g., `256x256.png`, `512x512.png`). If not speci
 
 Recommended sizes: 16, 24, 32, 48, 64, 96, 128, 256, 512 pixels.
 
+## AppStream Metainfo (`metainfo`)
+
+[AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) files describe your application to Linux software centers (GNOME Software, KDE Discover, Flathub, AppImageHub, etc.) — screenshots, long description, release notes, content rating. Point `linux.metainfo` at a metainfo XML file you maintain (path resolved relative to the project directory) and electron-builder installs it into the right place for each target:
+
+```yaml
+linux:
+  metainfo: build/com.example.MyApp.metainfo.xml
+```
+
+| Target | Install location |
+|---|---|
+| `deb`, `rpm`, `pacman` | `/usr/share/metainfo/` |
+| `AppImage` | `usr/share/metainfo/` inside the image |
+| `flatpak` | `share/metainfo/` in the app prefix |
+| `snap` | **not supported** — the option is ignored (snap store listings are managed via the Snap Store) |
+
+Because the option cascades from `linux` into each target's options, you can also set it per target (e.g. only under `appImage`) or opt a single target out with `null`:
+
+```yaml
+linux:
+  metainfo: build/com.example.MyApp.metainfo.xml
+appImage:
+  metainfo: null   # skip staging for AppImage only
+```
+
+**Installed file name:** your basename is kept when it ends in `.metainfo.xml` (AppStream spec naming) or `.appdata.xml` (legacy naming — still the convention appimagetool/AppImageHub look for in AppImages; both are accepted). Any other name is normalized to `<component-id>.metainfo.xml`.
+
+**Validation:** the file is checked at build time. The build fails for a missing/unreadable file, malformed XML, a root element other than `<component type="desktop-application">` (the legacy `desktop` type alias is accepted), or a missing/empty `<id>`, `<name>`, `<summary>`, `<description>` or `<metadata_license>`. Non-fatal warnings are logged when the `<id>` is not reverse-DNS-shaped, differs from your `appId`, or when `<launchable type="desktop-id">` is missing or doesn't match the `.desktop` file the target installs. If `appstreamcli` is available on `PATH`, `appstreamcli validate --no-net` is additionally run and its findings are reported as warnings (never fatal). Set `linux.disableMetainfoValidation: true` to skip all validation — the file is still staged.
+
 ## Debian Package (`deb`)
 
 The `deb` target creates a `.deb` package installable via `apt` on Debian, Ubuntu, Mint, and other Debian-based distributions.

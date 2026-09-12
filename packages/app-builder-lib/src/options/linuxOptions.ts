@@ -102,6 +102,23 @@ export interface CommonLinuxOptions {
    * The executable parameters. Pass to executableName
    */
   readonly executableArgs?: Array<string> | null
+
+  /**
+   * The path to a user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file, relative to the project directory.
+   *
+   * Supported targets: `deb`, `rpm`, `pacman` (installed into `/usr/share/metainfo`), `AppImage` (staged into `usr/share/metainfo` inside the image) and `flatpak` (staged into `share/metainfo`).
+   * The `snap` target does not consume this option (snap store listings are managed separately) — setting it at the `linux` level is safe, it is simply ignored for snap.
+   *
+   * The installed file name keeps your basename when it ends in `.metainfo.xml` or `.appdata.xml`, and is otherwise normalized to `<component-id>.metainfo.xml`.
+   * The file is validated at build time — see `disableMetainfoValidation` to opt out. Set to `null` on a specific target to opt that target out of staging.
+   */
+  readonly metainfo?: string | null
+
+  /**
+   * Whether to skip build-time validation of the `metainfo` file (structure checks and the optional `appstreamcli validate --no-net` run). The file is still staged into the package.
+   * @default false
+   */
+  readonly disableMetainfoValidation?: boolean
 }
 
 // fpm-only specific options
