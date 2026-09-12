@@ -29,6 +29,22 @@ async function buildTempTree(packages: Record<string, { name: string; version: s
 // ---------------------------------------------------------------------------
 
 describe("ModuleManager.locatePackageVersion", () => {
+  test("shares in-flight cache lookups for the same key", async ({ expect }) => {
+    const manager = new ModuleManager()
+    const root = await projectTmpDir.createTempDir()
+    const file = path.join(root, "missing")
+
+    try {
+      const first = manager.exists[file]
+      const second = manager.exists[file]
+
+      expect(second).toBe(first)
+      await expect(first).resolves.toBe(false)
+    } finally {
+      await fse.rm(root, { recursive: true, force: true })
+    }
+  })
+
   describe("basic resolution", () => {
     test("returns null when parentDir is undefined", async ({ expect }) => {
       const manager = new ModuleManager()
