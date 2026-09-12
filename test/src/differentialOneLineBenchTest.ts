@@ -10,6 +10,18 @@
 //   BENCH_FILES           number of files in the synthetic app          (default 3000)
 //   BENCH_RANGE_OVERHEAD  per-HTTP-range overhead in bytes              (default 120)
 //   BENCH_OUT             directory to write results.json / results.md  (default: console only)
+//   BENCH_ASAR_ALIGN      asar content alignment in bytes, 0 = off      (default 0; e.g. 512, 4096)
+//
+// BENCH_ASAR_ALIGN simulates an asar whose content region is laid out with every file's content
+// start aligned to a fixed granularity (zero padding between files). The asar JSON header stores each
+// file's `offset` as a decimal string, so a length change of ONE file shifts the offset of EVERY later
+// file and re-downloads most of the header. With alignment, a small growth stays inside the file's own
+// padding and no later offset moves (unless it crosses an alignment boundary). @electron/asar cannot
+// lay out with padding today, so the asar produced by createPackage is re-laid out by a post-pass
+// (`alignAsar` below) into `<name>.aligned.asar`, which is then used for the stored-asar rows (the
+// compressed control keeps the original). The aligned asar is read back with @electron/asar's
+// extractFile and compared byte-for-byte to the sources — a spec-conforming reader only follows the
+// header's offset/size, so gaps between files are tolerated.
 //
 // Wire cost model (per update):
 //   download bytes (sum of DOWNLOAD operations from electron-updater's computeOperations)
@@ -44,6 +56,7 @@ const ASAR_MB = Number(process.env.BENCH_ASAR_MB ?? 32)
 const FILE_COUNT = Number(process.env.BENCH_FILES ?? 3000)
 const RANGE_OVERHEAD = Number(process.env.BENCH_RANGE_OVERHEAD ?? 120)
 const BENCH_OUT = process.env.BENCH_OUT
+const ASAR_ALIGN = Number(process.env.BENCH_ASAR_ALIGN ?? 0)
 
 const KiB = 1024
 const DEFAULT_CONFIG_NAME = "default (8/16/32 KiB everywhere)"
@@ -255,11 +268,125 @@ function changeMiddleLine(content: string, edit: (line: string) => string): stri
 
 interface AsarApi {
   createPackage(src: string, dest: string): Promise<void>
+  extractFile(archive: string, filename: string): Buffer
 }
 
 /** asar layout: [0,8) size pickle, [8, 8+headerSize) header pickle (JSON), then file contents. */
 function readAsarHeaderBytes(asar: Buffer): number {
   return 8 + asar.readUInt32LE(4)
+}
+
+interface AsarFileNode {
+  offset?: string
+  size?: number
+  unpacked?: boolean
+  link?: string
+  files?: Record<string, AsarFileNode>
+}
+
+/**
+ * Parses the asar header JSON. Pickle framing (chromium-pickle-js, as @electron/asar writes it):
+ *   size pickle   = uint32 LE payload size (4) + uint32 LE header pickle length            → 8 bytes
+ *   header pickle = uint32 LE payload size + int32 LE string byte length + utf8 bytes + zero padding to 4
+ */
+function parseAsarHeader(asar: Buffer): { headerPickle: Buffer; json: string } {
+  const headerPickle = asar.subarray(8, readAsarHeaderBytes(asar))
+  const stringLength = headerPickle.readInt32LE(4)
+  return { headerPickle, json: headerPickle.toString("utf8", 8, 8 + stringLength) }
+}
+
+function serializeAsarHeader(json: string): Buffer {
+  const stringLength = Buffer.byteLength(json)
+  const payloadSize = 4 + stringLength + ((4 - (stringLength % 4)) % 4)
+  const headerPickle = Buffer.alloc(4 + payloadSize)
+  headerPickle.writeUInt32LE(payloadSize, 0)
+  headerPickle.writeInt32LE(stringLength, 4)
+  headerPickle.write(json, 8)
+  const sizePickle = Buffer.alloc(8)
+  sizePickle.writeUInt32LE(4, 0)
+  sizePickle.writeUInt32LE(headerPickle.length, 4)
+  return Buffer.concat([sizePickle, headerPickle])
+}
+
+/** All packed file nodes (in-archive content, i.e. neither unpacked nor links) keyed by archive path. */
+function collectPackedFiles(root: AsarFileNode): Map<string, AsarFileNode> {
+  const out = new Map<string, AsarFileNode>()
+  const walk = (node: AsarFileNode, prefix: string) => {
+    for (const [name, child] of Object.entries(node.files ?? {})) {
+      const p = prefix === "" ? name : `${prefix}/${name}`
+      if (child.files != null) {
+        walk(child, p)
+      } else if (child.offset != null && !child.unpacked && child.link == null) {
+        out.set(p, child)
+      }
+    }
+  }
+  walk(root, "")
+  return out
+}
+
+/** Packed files whose header `offset` differs between two asars (the entries whose header bytes must move). */
+function countShiftedOffsets(oldAsar: Buffer, newAsar: Buffer): { shifted: number; total: number } {
+  const oldFiles = collectPackedFiles(JSON.parse(parseAsarHeader(oldAsar).json))
+  const newFiles = collectPackedFiles(JSON.parse(parseAsarHeader(newAsar).json))
+  let shifted = 0
+  for (const [p, node] of newFiles) {
+    if (oldFiles.get(p)?.offset !== node.offset) {
+      shifted++
+    }
+  }
+  return { shifted, total: newFiles.size }
+}
+
+interface AlignedAsar {
+  file: string
+  originalBytes: number
+  alignedBytes: number
+  paddingBytes: number
+  headerBytesBefore: number
+  headerBytesAfter: number
+}
+
+/**
+ * Re-lays out an asar so that every packed file's content starts at a multiple of `align` within the
+ * content region (zero padding in between). Only the header `offset` strings change; `size` and
+ * `integrity` describe the content and are kept as-is.
+ */
+async function alignAsar(src: string, dest: string, align: number): Promise<AlignedAsar> {
+  const original = await fs.readFile(src)
+  const { headerPickle, json } = parseAsarHeader(original)
+  // self-check of the hand-rolled pickle framing against what @electron/asar wrote
+  if (!serializeAsarHeader(json).subarray(8).equals(headerPickle)) {
+    throw new Error(`pickle re-serialization of ${src} does not round-trip`)
+  }
+  const header = JSON.parse(json) as AsarFileNode
+  const contentStart = readAsarHeaderBytes(original)
+  const files = [...collectPackedFiles(header).values()].sort((a, b) => parseInt(a.offset!, 10) - parseInt(b.offset!, 10))
+  const chunks: Array<Buffer> = []
+  let cursor = 0
+  let contentBytes = 0
+  for (const node of files) {
+    const aligned = Math.ceil(cursor / align) * align
+    if (aligned > cursor) {
+      chunks.push(Buffer.alloc(aligned - cursor))
+    }
+    const start = contentStart + parseInt(node.offset!, 10)
+    chunks.push(original.subarray(start, start + node.size!))
+    node.offset = String(aligned)
+    cursor = aligned + node.size!
+    contentBytes += node.size!
+  }
+  const newHeader = serializeAsarHeader(JSON.stringify(header))
+  const aligned = Buffer.concat([newHeader, ...chunks])
+  await fs.writeFile(dest, aligned)
+  return {
+    file: dest,
+    originalBytes: original.length,
+    alignedBytes: aligned.length,
+    paddingBytes: cursor - contentBytes,
+    headerBytesBefore: contentStart,
+    headerBytesAfter: newHeader.length,
+  }
 }
 
 /** Byte offset of the verbatim asar inside the 7z, or -1 when it is not stored verbatim. */
@@ -323,6 +450,8 @@ interface Row {
 interface VariantResult {
   variant: string
   description: string
+  /** header entries whose `offset` string differs from v1, in the asar the stored rows use (aligned when BENCH_ASAR_ALIGN is set) */
+  offsetsShifted: { shifted: number; total: number }
   stored: Array<Row>
   compressed: Array<Row>
 }
@@ -458,37 +587,89 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
         `file ${asarOrderIndex + 1}/${app.files.size} in asar order) [${elapsed()}]`
     )
 
+    // 1b. optional alignment post-pass: the stored rows use `<name>.aligned.asar`. Every aligned asar
+    //     is read back through @electron/asar (extractFile) and compared byte-for-byte to the source
+    //     tree it was packed from — this also shows a spec-conforming reader tolerates the gaps.
+    const alignedAsars = new Map<string, AlignedAsar>()
+    const alignAndVerify = async (file: string, expected: Map<string, string>): Promise<string> => {
+      if (!(ASAR_ALIGN > 0)) {
+        return file
+      }
+      const out = file.replace(/\.asar$/, ".aligned.asar")
+      const info = await alignAsar(file, out, ASAR_ALIGN)
+      alignedAsars.set(file, info)
+      for (const [rel, content] of expected) {
+        expect(asar.extractFile(out, rel).equals(Buffer.from(content)), `aligned ${path.basename(out)}: extractFile("${rel}") must match the source`).toBe(true)
+      }
+      console.log(
+        `[bench] aligned ${path.basename(file)} to ${ASAR_ALIGN} B: ${fmt(info.originalBytes)} → ${fmt(info.alignedBytes)} B ` +
+          `(+${fmt(info.paddingBytes)} B padding, ${pct(info.paddingBytes, info.originalBytes)}; header ${fmt(info.headerBytesBefore)} → ${fmt(info.headerBytesAfter)} B); ` +
+          `extractFile verified ${expected.size} files [${elapsed()}]`
+      )
+      return out
+    }
+    // v1: every file; v2 variants: a sample around the change (the target itself is compared to its mutated content)
+    const v1StoredAsar = await alignAndVerify(v1Asar, app.files)
+    const sampleFiles = (mutated: Map<string, string>): Map<string, string> => {
+      const paths = [...mutated.keys()]
+      const picks = new Set([0, Math.max(0, asarOrderIndex - 1), asarOrderIndex, Math.min(paths.length - 1, asarOrderIndex + 1), paths.length - 1])
+      const out = new Map<string, string>([["package.json", mutated.get("package.json")!]])
+      for (const i of picks) {
+        out.set(paths[i], mutated.get(paths[i])!)
+      }
+      for (const [rel, content] of mutated) {
+        if (app.files.get(rel) !== content) {
+          out.set(rel, content)
+        }
+      }
+      return out
+    }
+
     // 2. v2 variants (pack from the same tree, mutating then restoring the one file)
-    const variants: Array<{ id: string; description: string; asar: string }> = []
-    const packVariant = async (id: string, description: string, mutate: () => Promise<void>, restore: () => Promise<void>) => {
+    const variants: Array<{ id: string; description: string; asar: string; storedAsar: string }> = []
+    const packVariant = async (id: string, description: string, mutated: Map<string, string>, mutate: () => Promise<void>, restore: () => Promise<void>) => {
       await mutate()
       const out = path.join(asarDir, `v2-${id}.asar`)
       await asar.createPackage(srcDir, out)
       await restore()
-      variants.push({ id, description, asar: out })
+      const storedAsar = await alignAndVerify(out, sampleFiles(mutated))
+      variants.push({ id, description, asar: out, storedAsar })
     }
+    const withTarget = (content: string): Map<string, string> => new Map([...app.files, [target, content]])
     const targetAbs = path.join(srcDir, target)
+    const sameLength = changeMiddleLine(targetContent, editLineSameLength)
     await packVariant(
       "same-length",
       "one line changed in a mid-sized file, same length",
-      () => fs.writeFile(targetAbs, changeMiddleLine(targetContent, editLineSameLength)),
+      withTarget(sameLength),
+      () => fs.writeFile(targetAbs, sameLength),
       () => fs.writeFile(targetAbs, targetContent)
     )
+    const plus7 = changeMiddleLine(targetContent, line => line + " // fix")
     await packVariant(
       "plus-7-bytes",
       "one line changed with +7 bytes (shifts every later offset in header and content)",
-      () =>
-        fs.writeFile(
-          targetAbs,
-          changeMiddleLine(targetContent, line => line + " // fix")
-        ),
+      withTarget(plus7),
+      () => fs.writeFile(targetAbs, plus7),
       () => fs.writeFile(targetAbs, targetContent)
     )
-    const addedAbs = path.join(path.dirname(targetAbs), "added-feature.js")
+    // +600 B on one line: larger than a 512 B alignment slot, so with BENCH_ASAR_ALIGN=512 the file is
+    // guaranteed to spill into the next slot and every later offset shifts again (the failure mode).
+    const plus600 = changeMiddleLine(targetContent, line => line + " // " + "fix ".repeat(149))
+    await packVariant(
+      "plus-600-bytes",
+      "one line changed with +600 bytes (crosses a 512 B alignment boundary)",
+      withTarget(plus600),
+      () => fs.writeFile(targetAbs, plus600),
+      () => fs.writeFile(targetAbs, targetContent)
+    )
+    const addedRel = path.posix.join(path.posix.dirname(target), "added-feature.js")
+    const addedAbs = path.join(srcDir, addedRel)
     const addedContent = makeJsFile(mulberry32(7), makeIdentifiers(mulberry32(8), 50), 2 * KiB)
     await packVariant(
       "new-small-file",
       `new ${fmt(addedContent.length)} B file added next to the target file`,
+      new Map([...app.files, [addedRel, addedContent]]),
       () => fs.writeFile(addedAbs, addedContent),
       () => fs.rm(addedAbs)
     )
@@ -530,11 +711,11 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
       )
       return { file, size: pkg.length, asarOffset, asarSize: asarBytes.length, asarHeaderBytes: readAsarHeaderBytes(asarBytes) }
     }
-    const v1Stored = await buildPackage("v1", v1Asar, true)
+    const v1Stored = await buildPackage("v1", v1StoredAsar, true)
     const v1Compressed = await buildPackage("v1", v1Asar, false)
     const v2Packages = new Map<string, { stored: PackageInfo; compressed: PackageInfo }>()
     for (const v of variants) {
-      v2Packages.set(v.id, { stored: await buildPackage(`v2-${v.id}`, v.asar, true), compressed: await buildPackage(`v2-${v.id}`, v.asar, false) })
+      v2Packages.set(v.id, { stored: await buildPackage(`v2-${v.id}`, v.storedAsar, true), compressed: await buildPackage(`v2-${v.id}`, v.asar, false) })
     }
     console.log(`[bench] all packages built [${elapsed()}]`)
 
@@ -570,8 +751,10 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
     const v1CompressedMap = await buildMap(v1Compressed, null)
 
     const results: Array<VariantResult> = []
+    const v1StoredAsarBytes = await fs.readFile(v1StoredAsar)
     for (const v of variants) {
       const pkgs = v2Packages.get(v.id)!
+      const offsetsShifted = countShiftedOffsets(v1StoredAsarBytes, await fs.readFile(v.storedAsar))
       const stored: Array<Row> = []
       for (const c of configs) {
         const newMap = await buildMap(pkgs.stored, c.asarChunker)
@@ -583,13 +766,13 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
       }
       const controlMap = await buildMap(pkgs.compressed, null)
       const compressed = [measure(DEFAULT_CONFIG_NAME, v1CompressedMap.map, controlMap.map, pkgs.compressed, controlMap.gzBytes)]
-      results.push({ variant: v.id, description: v.description, stored, compressed })
-      console.log(`[bench] measured variant ${v.id} [${elapsed()}]`)
+      results.push({ variant: v.id, description: v.description, offsetsShifted, stored, compressed })
+      console.log(`[bench] measured variant ${v.id}: ${fmt(offsetsShifted.shifted)}/${fmt(offsetsShifted.total)} header offsets shifted [${elapsed()}]`)
     }
 
     // 6. report
     const md: Array<string> = []
-    md.push(`# Differential update cost of a one-line change under app.asar`)
+    md.push(`# Differential update cost of a one-line change under app.asar${ASAR_ALIGN > 0 ? ` (asar content aligned to ${fmt(ASAR_ALIGN)} B)` : ""}`)
     md.push("")
     md.push(
       `Synthetic app: ${fmt(app.files.size)} files, asar ${fmt(v1AsarBytes.length)} B (header ${fmt(readAsarHeaderBytes(v1AsarBytes))} B); ` +
@@ -600,9 +783,21 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
     md.push(
       "total wire = DOWNLOAD bytes + new blockmap (gz) + #ranges × overhead. Download bytes are classified by where they land in the NEW package: asar header (JSON directory) / asar file contents / outside the asar (7z headers, other members)."
     )
+    const v1Aligned = alignedAsars.get(v1Asar)
+    if (v1Aligned != null) {
+      md.push("")
+      md.push(
+        `Alignment: stored rows use the asar re-laid out with every file's content start at a multiple of ${fmt(ASAR_ALIGN)} B ` +
+          `(compressed control keeps the original). Padding overhead (v1): ${fmt(v1Aligned.paddingBytes)} B, ${pct(v1Aligned.paddingBytes, v1Aligned.originalBytes)} of the original asar ` +
+          `(${fmt(v1Aligned.originalBytes)} → ${fmt(v1Aligned.alignedBytes)} B; header ${fmt(v1Aligned.headerBytesBefore)} → ${fmt(v1Aligned.headerBytesAfter)} B). ` +
+          `Aligned asars read back correctly with @electron/asar extractFile.`
+      )
+    }
     for (const r of results) {
       md.push("")
       md.push(`## ${r.variant} — ${r.description}`)
+      md.push("")
+      md.push(`Header entries whose offset shifted vs v1: ${fmt(r.offsetsShifted.shifted)} / ${fmt(r.offsetsShifted.total)}.`)
       md.push("")
       md.push(`### stored asar (storedPaths: ["resources/app.asar"])`)
       md.push("")
@@ -628,7 +823,15 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
         path.join(BENCH_OUT, "results.json"),
         JSON.stringify(
           {
-            params: { asarMb: ASAR_MB, fileCount: FILE_COUNT, rangeOverhead: RANGE_OVERHEAD, regionsHonored },
+            params: { asarMb: ASAR_MB, fileCount: FILE_COUNT, rangeOverhead: RANGE_OVERHEAD, regionsHonored, asarAlign: ASAR_ALIGN },
+            alignment:
+              v1Aligned == null
+                ? null
+                : {
+                    align: ASAR_ALIGN,
+                    paddingOverhead: `${fmt(v1Aligned.paddingBytes)} B (${pct(v1Aligned.paddingBytes, v1Aligned.originalBytes)} of the original asar)`,
+                    asars: Object.fromEntries([...alignedAsars].map(([src, info]) => [path.basename(src), info])),
+                  },
             app: { files: app.files.size, sourceBytes: app.totalBytes, asarBytes: v1AsarBytes.length, asarHeaderBytes: readAsarHeaderBytes(v1AsarBytes), target },
             packages: { v1Stored, v1Compressed, v2: Object.fromEntries(v2Packages) },
             results,
