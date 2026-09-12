@@ -4359,21 +4359,14 @@
           "type": "boolean"
         },
         "differentialPackage": {
-          "anyOf": [
-            {
-              "enum": [
-                "compressed",
-                false,
-                "store-asar",
-                true
-              ]
-            },
-            {
-              "type": "null"
-            }
-          ],
           "default": true,
-          "description": "Marks the package as built with differential download support for the update server, and selects how the\napp package is compressed:\n\n- `false` — no differential download support.\n- `\"store-asar\"` — differential-aware, with the app's `resources/app.asar` stored uncompressed (7-Zip\n  `Copy`) inside the package. The differential updater diffs the *compressed* package with a\n  content-defined blockmap, and the asar is a single compressed member — so any change to app code\n  re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every\n  block). Storing it keeps unchanged regions byte-identical between releases, making the delta\n  proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%\n  instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar\n  saved.\n- anything else (`true`, `\"compressed\"`, `null`, unset) — differential-aware, whole package compressed."
+          "description": "Marks the package as built with differential download support for the update server, and selects how the\napp package is compressed:\n\n- `false` — no differential download support.\n- `\"store-asar\"` — differential-aware, with the app's `resources/app.asar` stored uncompressed (7-Zip\n  `Copy`) inside the package. The differential updater diffs the *compressed* package with a\n  content-defined blockmap, and the asar is a single compressed member — so any change to app code\n  re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every\n  block). Storing it keeps unchanged regions byte-identical between releases, making the delta\n  proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%\n  instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar\n  saved.\n- anything else (`true`, `\"compressed\"`, unset) — differential-aware, whole package compressed.",
+          "enum": [
+            "compressed",
+            false,
+            "store-asar",
+            true
+          ]
         },
         "displayLanguageSelector": {
           "default": false,
@@ -4728,21 +4721,14 @@
           "type": "boolean"
         },
         "differentialPackage": {
-          "anyOf": [
-            {
-              "enum": [
-                "compressed",
-                false,
-                "store-asar",
-                true
-              ]
-            },
-            {
-              "type": "null"
-            }
-          ],
           "default": true,
-          "description": "Marks the package as built with differential download support for the update server, and selects how the\napp package is compressed:\n\n- `false` — no differential download support.\n- `\"store-asar\"` — differential-aware, with the app's `resources/app.asar` stored uncompressed (7-Zip\n  `Copy`) inside the package. The differential updater diffs the *compressed* package with a\n  content-defined blockmap, and the asar is a single compressed member — so any change to app code\n  re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every\n  block). Storing it keeps unchanged regions byte-identical between releases, making the delta\n  proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%\n  instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar\n  saved.\n- anything else (`true`, `\"compressed\"`, `null`, unset) — differential-aware, whole package compressed."
+          "description": "Marks the package as built with differential download support for the update server, and selects how the\napp package is compressed:\n\n- `false` — no differential download support.\n- `\"store-asar\"` — differential-aware, with the app's `resources/app.asar` stored uncompressed (7-Zip\n  `Copy`) inside the package. The differential updater diffs the *compressed* package with a\n  content-defined blockmap, and the asar is a single compressed member — so any change to app code\n  re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every\n  block). Storing it keeps unchanged regions byte-identical between releases, making the delta\n  proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%\n  instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar\n  saved.\n- anything else (`true`, `\"compressed\"`, unset) — differential-aware, whole package compressed.",
+          "enum": [
+            "compressed",
+            false,
+            "store-asar",
+            true
+          ]
         },
         "displayLanguageSelector": {
           "default": false,

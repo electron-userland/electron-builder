@@ -219,10 +219,10 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    *   proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%
    *   instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar
    *   saved.
-   * - anything else (`true`, `"compressed"`, `null`, unset) — differential-aware, whole package compressed.
+   * - anything else (`true`, `"compressed"`, unset) — differential-aware, whole package compressed.
    * @default true
    */
-  readonly differentialPackage?: boolean | "compressed" | "store-asar" | null
+  readonly differentialPackage?: boolean | "compressed" | "store-asar"
 
   /**
    * Whether to display a language selection dialog. Not recommended (by default will be detected using OS language).
