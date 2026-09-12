@@ -481,8 +481,10 @@ describe("archive() storedPaths", { sequential: true }, () => {
   // verbatim, the file packed streams of an archive built from the same compressed-pass member set
   // (same files, asar absent). 7z layout: the file packed streams sit back-to-back immediately
   // after the 32-byte signature header (the — legitimately differing — archive header lives after
-  // them), so [32, 32 + Σ packed sizes) is exactly the compressed pass's stream region, and the
-  // appended Copy member must follow right behind it.
+  // them), so [32, 32 + Σ packed sizes) of the baseline is exactly the compressed pass's stream
+  // region. 7za orders the members of the rewritten archive itself (the Copy member may land before
+  // or after the compressed streams), so the region is located in the stored archive rather than
+  // assumed at offset 32.
   test("append pass leaves the compressed pass's packed streams byte-identical", async ({ expect, tmpDir }) => {
     const tmpDirPath = await tmpDir.createTempDir()
     const dir = await makeSrcDir(tmpDirPath, appFiles)
@@ -502,10 +504,16 @@ describe("archive() storedPaths", { sequential: true }, () => {
 
     const storedBytes = await fs.readFile(storedOut)
     const baselineBytes = await fs.readFile(baselineOut)
-    expect(storedBytes.subarray(32, 32 + packedStreamsEnd).equals(baselineBytes.subarray(32, 32 + packedStreamsEnd))).toBe(true)
-    // …and the stored member's verbatim bytes start exactly where the compressed streams end.
+    const compressedStreams = baselineBytes.subarray(32, 32 + packedStreamsEnd)
+    const compressedStreamsOffset = storedBytes.indexOf(compressedStreams)
+    expect(compressedStreamsOffset, "compressed pass's packed streams must appear verbatim in the stored archive").toBeGreaterThanOrEqual(32)
+    // …and the stored member's verbatim bytes sit directly next to them (7za decides on which side).
     const asarBytes = await fs.readFile(path.join(dir, "resources", "app.asar"))
-    expect(storedBytes.indexOf(asarBytes)).toBe(32 + packedStreamsEnd)
+    const asarOffset = storedBytes.indexOf(asarBytes)
+    expect(asarOffset).toBeGreaterThanOrEqual(32)
+    const asarFollowsStreams = asarOffset === compressedStreamsOffset + packedStreamsEnd
+    const asarPrecedesStreams = compressedStreamsOffset === asarOffset + asarBytes.length
+    expect(asarFollowsStreams || asarPrecedesStreams, "stored member and compressed streams must be adjacent").toBe(true)
   })
 
   // The append pass rewrites the archive's end header, so it must honor the same header-compression

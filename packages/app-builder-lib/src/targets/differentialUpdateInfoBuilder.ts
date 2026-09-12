@@ -15,10 +15,12 @@ export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
  * changes in small, localized ways between releases, so it is chunked finer than the surrounding
  * compressed streams to keep the differential download proportional to the change.
  *
- * Provisional: the value is set by benchmark (delta size vs. blockmap size across representative asar
- * edits) and will be tuned. `avg` must stay a power of two.
+ * Set by benchmark (`test/src/differentialOneLineBenchTest.ts`, 32 MB asar / 3,001 files): 4/8/16 KiB
+ * minimizes download bytes + new-blockmap bytes for a one-line edit (−5 % same-length, −17 % length-changing
+ * vs. the 8/16/32 default); anything finer is a net loss because the v2 blockmap (~22 B per block, re-downloaded
+ * in full on every update) grows faster than the block savings. `avg` must stay a power of two.
  */
-export const STORED_MEMBER_CHUNKER: ChunkerParams = { min: 2048, avg: 4096, max: 8192 }
+export const STORED_MEMBER_CHUNKER: ChunkerParams = { min: 4096, avg: 8192, max: 16384 }
 
 /**
  * Locates each of `memberFiles` (absolute paths of files stored verbatim inside `artifact`) and returns
