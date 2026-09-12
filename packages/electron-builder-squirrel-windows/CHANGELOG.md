@@ -1,5 +1,28 @@
 # electron-builder-squirrel-windows
 
+## 27.0.0-alpha.9
+
+### Major Changes
+
+- Feat(squirrel-windows)!: inline installer logic; remove electron-winstaller dependency and its vendored binaries _[`#9830`](https://github.com/electron-userland/electron-builder/pull/9830) [`0fdbba6`](https://github.com/electron-userland/electron-builder/commit/0fdbba62d48fe6dcd2fcce5b3e5ac028a96417c9) [@mmaietta](https://github.com/mmaietta)_
+
+  BREAKING: the `squirrelWindows.customSquirrelVendorDir` option has been removed. Supply a custom Squirrel vendor bundle with the `toolsets.squirrel` config (a `ToolsetCustom` object) instead — it goes through the same rcedit/WiX provisioning as the default bundle.
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`6be2795`](https://github.com/electron-userland/electron-builder/commit/6be279576bf22a6f7521b146f89fd7501839bc94) [`318f6fb`](https://github.com/electron-userland/electron-builder/commit/318f6fb93f9a6f92231320aa876db9e66bd78b6a) [`de70642`](https://github.com/electron-userland/electron-builder/commit/de70642c688044e5dbbe9259b7923e6d83964a22) [`f42fbf6`](https://github.com/electron-userland/electron-builder/commit/f42fbf659bf0d3a9fc3a5fa5f269deb3431a5fda) [`66eb52c`](https://github.com/electron-userland/electron-builder/commit/66eb52cd85f975c04f6cfe1cfc89c15fd98cd07d) [`66eb52c`](https://github.com/electron-userland/electron-builder/commit/66eb52cd85f975c04f6cfe1cfc89c15fd98cd07d) [`125cde9`](https://github.com/electron-userland/electron-builder/commit/125cde9acaf70f355345519f2a528342a2bd0dff) [`99b6c7f`](https://github.com/electron-userland/electron-builder/commit/99b6c7f1efe761bbd3d0582e158a8f1705f652a0) [`0fdbba6`](https://github.com/electron-userland/electron-builder/commit/0fdbba62d48fe6dcd2fcce5b3e5ac028a96417c9) [`2a964ee`](https://github.com/electron-userland/electron-builder/commit/2a964eea0e43838cb62494357726f538f5cc2993) [`49cb865`](https://github.com/electron-userland/electron-builder/commit/49cb86582f04e914bd1a234299465e01c7ff68a6)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.9`
+- `builder-util@27.0.0-alpha.9`
+
+</details>
+
 ## 27.0.0-alpha.8
 
 ### Patch Changes

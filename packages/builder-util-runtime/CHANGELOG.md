@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 10.0.0-alpha.8
+
+### Patch Changes
+
+- Fix: stop oversized in-memory downloads at the configured limit _[`#10123`](https://github.com/electron-userland/electron-builder/pull/10123) [`6ab9a8c`](https://github.com/electron-userland/electron-builder/commit/6ab9a8c5fbed759e0c9e26064208c422c612b200) [@OskarEichler](https://github.com/OskarEichler)_
+
 ## 10.0.0-alpha.7
 
 ### Patch Changes

@@ -1,5 +1,28 @@
 # electron-publish
 
+## 27.0.0-alpha.9
+
+### Minor Changes
+
+- Feat: v27 upgrade guardrails: make every breaking change self-announcing _[`#10182`](https://github.com/electron-userland/electron-builder/pull/10182) [`318f6fb`](https://github.com/electron-userland/electron-builder/commit/318f6fb93f9a6f92231320aa876db9e66bd78b6a) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix: normalize Snap Store channels _[`#10155`](https://github.com/electron-userland/electron-builder/pull/10155) [`ce9ee68`](https://github.com/electron-userland/electron-builder/commit/ce9ee68da690305e326e22927126327da6644392) [@OskarEichler](https://github.com/OskarEichler)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`6ab9a8c`](https://github.com/electron-userland/electron-builder/commit/6ab9a8c5fbed759e0c9e26064208c422c612b200)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.8`
+- `builder-util@27.0.0-alpha.9`
+
+</details>
+
 ## 27.0.0-alpha.8
 
 ### Patch Changes

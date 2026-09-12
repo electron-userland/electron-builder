@@ -1,5 +1,61 @@
 ## 4.3.0
 
+## 7.0.0-alpha.8
+
+### Major Changes
+
+- Refactor(updater): `downloadUpdate()` and `UpdateCheckResult.downloadPromise` resolve with a `DownloadExecutorResult` object instead of a positional `Array<string>` _[`#10164`](https://github.com/electron-userland/electron-builder/pull/10164) [`0d47ef5`](https://github.com/electron-userland/electron-builder/commit/0d47ef5c4dda24939e5a6b02927440bdc2da1cd1) [@claude](https://github.com/apps/claude)_
+
+  BREAKING CHANGE: the promise returned by `AppUpdater.downloadUpdate()` (and `UpdateCheckResult.downloadPromise` when `autoDownload` is enabled) now resolves with `{ updateFile, packageFile? }` instead of `[updateFile]` / `[updateFile, packageFile]`. The array shape depended on element order to tell the installer apart from the optional NSIS web-installer package; the new `DownloadExecutorResult` type (exported from `electron-updater`) names both files. `UpdateDownloadedEvent` additionally gains an optional `packageFile` field for web installers.
+
+  ```ts
+  // Before (v6)
+  const files = await autoUpdater.downloadUpdate()
+  const installer = files[0]
+  const webInstallerPackage = files[1] // only for NSIS web installers
+
+  // After (v7)
+  const { updateFile, packageFile } = await autoUpdater.downloadUpdate()
+  ```
+
+  The same applies to the result of `checkForUpdates()`:
+
+  ```ts
+  // Before (v6)
+  const result = await autoUpdater.checkForUpdates()
+  const [installer] = (await result?.downloadPromise) ?? []
+
+  // After (v7)
+  const result = await autoUpdater.checkForUpdates()
+  const download = await result?.downloadPromise
+  const installer = download?.updateFile
+  ```
+
+  The underlying cache-consistency fix from #10098 already produced this object internally; this change stops converting it back to an array at the public API boundary.
+
+### Minor Changes
+
+- Feat: v27 upgrade guardrails: make every breaking change self-announcing _[`#10182`](https://github.com/electron-userland/electron-builder/pull/10182) [`318f6fb`](https://github.com/electron-userland/electron-builder/commit/318f6fb93f9a6f92231320aa876db9e66bd78b6a) [@mmaietta](https://github.com/mmaietta)_
+- Feat(updater): improve PowerShell invocation reliability for Windows code-signature verification _[`#9764`](https://github.com/electron-userland/electron-builder/pull/9764) [`df1bce3`](https://github.com/electron-userland/electron-builder/commit/df1bce3eb032194c970c605286ab9b11655469dd) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix: preserve fractional staged rollout percentages _[`#10114`](https://github.com/electron-userland/electron-builder/pull/10114) [`23bccfb`](https://github.com/electron-userland/electron-builder/commit/23bccfb6accd2eb082633d592d15486e81c89374) [@OskarEichler](https://github.com/OskarEichler)_
+- Fix: strip `PSModulePath` from the PowerShell child environment case-insensitively during Windows code-signature verification. Windows environment variable names are case-insensitive but JS object keys are not, so a differently-cased key (e.g. `PSMODULEPATH`) could previously survive into the spawned PowerShell process. _[`#10159`](https://github.com/electron-userland/electron-builder/pull/10159) [`61bd5f6`](https://github.com/electron-userland/electron-builder/commit/61bd5f6044ff8c09f44d443b956a96e0aba105b2) [@claude](https://github.com/apps/claude)_
+- Fix: keep the cached blockmap consistent with the cached installer. A download round that did not produce a new blockmap (e.g. the differential download was skipped because the cached installer was evicted) now removes the cached `current.blockmap` instead of leaving a stale one next to the freshly cached file, which poisoned the next differential download and surfaced as a generic sha512 checksum mismatch before falling back to a full download (#10097). Leftover pending blockmaps from previous update rounds are also cleared before a fresh download. sha512-mismatch logging now distinguishes a differential download that failed against stale/corrupt cached inputs (including whether the old blockmap came from the local cache or the server) from a genuine checksum failure of a fully downloaded file. _[`#10098`](https://github.com/electron-userland/electron-builder/pull/10098) [`9306160`](https://github.com/electron-userland/electron-builder/commit/93061602d9ee89d824834cef0b06c75353fa6a4a) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`6ab9a8c`](https://github.com/electron-userland/electron-builder/commit/6ab9a8c5fbed759e0c9e26064208c422c612b200)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.8`
+
+</details>
+
 ## 7.0.0-alpha.7
 
 ### Patch Changes
