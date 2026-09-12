@@ -4,9 +4,49 @@ import * as path from "path"
 import { Target } from "../core.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ArchiveOptions } from "./archive.js"
-import { buildBlockMap, BuildBlockMapOptions } from "./blockmap/blockmap.js"
+import { BlockMapRegion, buildBlockMap, BuildBlockMapOptions, ChunkerParams } from "./blockmap/blockmap.js"
+import { findVerbatimRange } from "./blockmap/verbatimRange.js"
 
 export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
+
+/**
+ * Chunker parameters for a stored (`Copy`) archive member — e.g. `resources/app.asar` when
+ * `nsis.differentialPackage` is `"store-asar"` — whose bytes sit verbatim in the artifact. Such a member
+ * changes in small, localized ways between releases, so it is chunked finer than the surrounding
+ * compressed streams to keep the differential download proportional to the change.
+ *
+ * Provisional: the value is set by benchmark (delta size vs. blockmap size across representative asar
+ * edits) and will be tuned. `avg` must stay a power of two.
+ */
+export const STORED_MEMBER_CHUNKER: ChunkerParams = { min: 2048, avg: 4096, max: 8192 }
+
+/**
+ * Locates each of `memberFiles` (absolute paths of files stored verbatim inside `artifact`) and returns
+ * a `STORED_MEMBER_CHUNKER` blockmap region per located file, sorted by offset. A member that cannot be
+ * found verbatim is logged at warn and skipped — the blockmap then falls back to the default chunker for
+ * those bytes; it never fails the build.
+ */
+export async function locateStoredMemberRegions(artifact: string, memberFiles: Array<string>): Promise<Array<BlockMapRegion>> {
+  const regions: Array<BlockMapRegion> = []
+  for (const memberFile of memberFiles) {
+    const range = await findVerbatimRange(artifact, memberFile)
+    if (range == null) {
+      log.warn(
+        { artifact: log.filePath(artifact), member: log.filePath(memberFile) },
+        "stored member not found verbatim in artifact; its bytes will be chunked with the default block map parameters"
+      )
+      continue
+    }
+    log.info({ artifact: log.filePath(artifact), member: log.filePath(memberFile), offset: range.offset, size: range.size }, "located stored member region for block map")
+    regions.push({ ...range, chunker: STORED_MEMBER_CHUNKER })
+  }
+  return regions.sort((a, b) => a.offset - b.offset)
+}
+
+/** `BuildBlockMapOptions` for `regions`, or `undefined` when there are none so the default chunker path is taken unchanged. */
+export function toBlockMapOptions(regions: Array<BlockMapRegion>): BuildBlockMapOptions | undefined {
+  return regions.length === 0 ? undefined : { regions }
+}
 
 export function createNsisWebDifferentialUpdateInfo(artifactPath: string, packageFiles: { [arch: string]: PackageFileInfo }) {
   if (packageFiles == null) {
