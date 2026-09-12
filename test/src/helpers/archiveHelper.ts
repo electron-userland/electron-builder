@@ -40,6 +40,26 @@ export async function listArchiveMethods(archivePath: string): Promise<Array<str
     .filter(method => method.length > 0)
 }
 
+// Maps each entry path to its `Packed Size` from the `-slt` technical listing (the archive-level
+// summary block is skipped). In a 7z archive the file packed streams sit back-to-back right after
+// the 32-byte signature header, so the sum of these is the size of the packed-streams region.
+export async function listArchiveEntryPackedSizes(archivePath: string): Promise<Map<string, number>> {
+  const stdout = await exec(await getPath7za(), ["l", "-slt", archivePath])
+  const archiveAsEntry = archivePath.replace(/\\/g, "/")
+  const result = new Map<string, number>()
+  let current: string | null = null
+  for (const line of stdout.split(/\r?\n/)) {
+    if (line.startsWith("Path = ")) {
+      const entry = line.slice("Path = ".length).trim().replace(/\\/g, "/")
+      current = entry === archiveAsEntry ? null : entry
+    } else if (line.startsWith("Packed Size = ") && current != null) {
+      const value = line.slice("Packed Size = ".length).trim()
+      result.set(current, value.length === 0 ? 0 : parseInt(value, 10))
+    }
+  }
+  return result
+}
+
 // Maps each entry path to its reported codec (the `Path = …` line followed by that entry's
 // `Method = …` line in the `-slt` technical listing). The archive-level summary block (whose Path
 // is the archive file itself) is skipped. Entries stored with no compression report `Copy`.

@@ -109,7 +109,8 @@ export interface ArchiveOptions {
    * builds, so the delta stays proportional to what actually changed. The stored members are excluded
    * from the main (compressed) pass and appended in a second 7za invocation with `-mx=0`; the
    * `ELECTRON_BUILDER_COMPRESSION_LEVEL` override deliberately does not apply to them (byte-stability
-   * is the point). Paths that do not exist are skipped. Not supported by the native-zip NFD fallback.
+   * is the point), while `preserveSymlinks` and `isArchiveHeaderCompressed` are mirrored into the
+   * append pass. Paths that do not exist are skipped. Not supported by the native-zip NFD fallback.
    */
   storedPaths?: Array<string> | null
 
@@ -291,13 +292,21 @@ export async function archive(format: string, outFile: string, dirToArchive: str
 
     if (storedMembers.length > 0) {
       // Second pass: append the stored members with no compression. -mx=0 unconditionally — the
-      // compression-level env override must not reach these members (see storedPaths docs).
+      // compression-level env override must not reach these members (see storedPaths docs). The
+      // main pass's symlink, timestamp, and header-compression flags are mirrored so the option
+      // stays generic: the append rewrites the archive header and may itself store a symlink.
       const appendArgs = debug7zArgs("a")
       appendArgs.push("-mx=0")
+      if (options.preserveSymlinks) {
+        appendArgs.push("-snl")
+      }
       if (!options.isRegularFile) {
         appendArgs.push("-mtc=off")
       }
       if (format === "7z" || format.endsWith(".7z")) {
+        if (options.isArchiveHeaderCompressed === false) {
+          appendArgs.push("-mhc=off")
+        }
         appendArgs.push("-mtm=off", "-mta=off")
       } else if (format === "zip") {
         appendArgs.push("-mm=Copy", "-mcu")

@@ -121,9 +121,10 @@ export class NsisTarget extends Target {
       // install. Pin the payload to a filter it can decode. See #9983.
       installTimeDecodable: true,
       excluded: preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`),
-      // Opt-in: keep the asar a byte-stable Copy member so a differential update pays only for its
-      // changed blocks instead of re-downloading the whole recompressed asar (see nsisOptions docs).
-      storedPaths: isBuildDifferentialAware && options.differentialPackageStoreAsar === true ? ["resources/app.asar"] : null,
+      // Opt-in via differentialPackage: "store-asar" — keep the asar a byte-stable Copy member so a
+      // differential update pays only for its changed blocks instead of re-downloading the whole
+      // recompressed asar (see nsisOptions docs).
+      storedPaths: isBuildDifferentialAware && options.differentialPackage === "store-asar" ? ["resources/app.asar"] : null,
     }
 
     const timer = time(`nsis package, ${Arch[arch]}`)
