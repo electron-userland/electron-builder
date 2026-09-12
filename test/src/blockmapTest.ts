@@ -2,8 +2,9 @@ import { createHash } from "crypto"
 import { readFile, writeFile } from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
-import { describe, it } from "vitest"
-import { buildBlockMap } from "app-builder-lib/src/targets/blockmap/blockmap.js"
+import { describe, expect, it } from "vitest"
+import { BlockMapDataHolder } from "builder-util-runtime"
+import { BlockMapRegion, BuildBlockMapOptions, buildBlockMap, ChunkerParams, DEFAULT_CHUNKER } from "app-builder-lib/src/targets/blockmap/blockmap.js"
 
 function sha512(data: Buffer): string {
   return createHash("sha512").update(data).digest("base64")
@@ -319,5 +320,256 @@ describe("buildBlockMap — JS snapshots and binary golden-output", () => {
     expect(js.files[0].checksums).toMatchSnapshot()
     expect(jsResult.sha512).toMatchSnapshot()
     expect(jsResult.sha512).toBe(expected)
+  })
+})
+
+// ─── Region-aware chunking (BuildBlockMapOptions.regions) ───────────────────
+
+describe("buildBlockMap — regions", () => {
+  const FINE: ChunkerParams = { min: 1024, avg: 4096, max: 16384 }
+
+  interface Built {
+    sizes: number[]
+    checksums: string[]
+    result: BlockMapDataHolder
+  }
+
+  async function build(dir: string, name: string, data: Buffer, options?: BuildBlockMapOptions): Promise<Built> {
+    const inFile = path.join(dir, `${name}.bin`)
+    const outFile = path.join(dir, `${name}.blockmap`)
+    await writeFile(inFile, data)
+    const result = await buildBlockMap(inFile, "gzip", outFile, options)
+    const json = JSON.parse(zlib.gunzipSync(await readFile(outFile)).toString())
+    expect(json.files).toHaveLength(1)
+    expect(json.files[0].name).toBe("file")
+    expect(json.files[0].offset).toBe(0)
+    return { sizes: json.files[0].sizes, checksums: json.files[0].checksums, result }
+  }
+
+  /** Cumulative end offsets of every block: block i covers [ends[i] - sizes[i], ends[i]). */
+  function blockEnds(sizes: number[]): number[] {
+    const ends: number[] = []
+    let sum = 0
+    for (const size of sizes) {
+      sum += size
+      ends.push(sum)
+    }
+    return ends
+  }
+
+  /** Indices [first, last) of the blocks that lie inside [offset, offset + size); asserts both edges are block boundaries. */
+  function blocksInRegion(sizes: number[], offset: number, size: number): { first: number; last: number } {
+    const ends = blockEnds(sizes)
+    const first = offset === 0 ? 0 : ends.indexOf(offset) + 1
+    const last = ends.indexOf(offset + size) + 1
+    expect(offset === 0 || ends.includes(offset)).toBe(true)
+    expect(ends).toContain(offset + size)
+    return { first, last }
+  }
+
+  function expectWithinParams(sizes: number[], params: ChunkerParams) {
+    for (let i = 0; i < sizes.length; i++) {
+      expect(sizes[i]).toBeGreaterThan(0)
+      expect(sizes[i]).toBeLessThanOrEqual(params.max)
+      // Every block but the last of a region must be at least `min` (the last is cut by the forced edge)
+      if (i < sizes.length - 1) {
+        expect(sizes[i]).toBeGreaterThanOrEqual(params.min)
+      }
+    }
+  }
+
+  it("no regions: undefined, {}, null and [] all produce the default blockmap", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const data = makeTestData(300_000, 4242)
+    const baseline = await build(dir, "none", data)
+    for (const [name, options] of [
+      ["empty-options", {}],
+      ["null-regions", { regions: null }],
+      ["empty-regions", { regions: [] }],
+    ] as Array<[string, BuildBlockMapOptions]>) {
+      const built = await build(dir, name, data, options)
+      expect(built.sizes).toEqual(baseline.sizes)
+      expect(built.checksums).toEqual(baseline.checksums)
+      expect(built.result.sha512).toBe(baseline.result.sha512)
+      expect(built.result.size).toBe(baseline.result.size)
+    }
+    // And the default output is exactly what the pre-regions chunker produced
+    expectWithinParams(baseline.sizes, DEFAULT_CHUNKER)
+    expect(baseline.result.sha512).toBe(sha512(data))
+  })
+
+  it("forces chunk boundaries at region start and end", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const data = makeTestData(300_000, 1)
+    const region = { offset: 100_000, size: 120_000, chunker: FINE }
+    const { sizes } = await build(dir, "edges", data, { regions: [region] })
+
+    const ends = blockEnds(sizes)
+    expect(ends).toContain(region.offset)
+    expect(ends).toContain(region.offset + region.size)
+    expect(ends[ends.length - 1]).toBe(data.length)
+
+    const { first, last } = blocksInRegion(sizes, region.offset, region.size)
+    expectWithinParams(sizes.slice(first, last), FINE)
+    expectWithinParams(sizes.slice(0, first), DEFAULT_CHUNKER)
+    expectWithinParams(sizes.slice(last), DEFAULT_CHUNKER)
+  })
+
+  it("region blocks obey min/max and average around avg (~2 MB random region)", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const region = { offset: 262_144, size: 2 * 1024 * 1024, chunker: FINE }
+    const data = makeTestData(region.offset + region.size + 100_000, 777)
+    const { sizes } = await build(dir, "band", data, { regions: [region] })
+
+    const { first, last } = blocksInRegion(sizes, region.offset, region.size)
+    const regionSizes = sizes.slice(first, last)
+    expectWithinParams(regionSizes, FINE)
+    expect(regionSizes.reduce((a, b) => a + b, 0)).toBe(region.size)
+    const average = region.size / regionSizes.length
+    expect(average).toBeGreaterThanOrEqual(FINE.avg / 2)
+    expect(average).toBeLessThanOrEqual(FINE.avg * 2)
+    // Finer than the default chunker: far more blocks than the same span would get by default
+    expect(regionSizes.length).toBeGreaterThan(region.size / DEFAULT_CHUNKER.max)
+  })
+
+  it("region blocks depend only on the region bytes (same bytes, different offset and surroundings)", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const regionBytes = makeTestData(1024 * 1024, 555)
+
+    const offsetA = 50_000
+    const dataA = Buffer.concat([makeTestData(offsetA, 11), regionBytes, makeTestData(70_000, 12)])
+    // Odd offset: the region starts in the middle of what would otherwise be a default chunk's skip/prime phase
+    const offsetB = 123_457
+    const dataB = Buffer.concat([makeTestData(offsetB, 13), regionBytes, makeTestData(10, 14)])
+
+    const a = await build(dir, "a", dataA, { regions: [{ offset: offsetA, size: regionBytes.length, chunker: FINE }] })
+    const b = await build(dir, "b", dataB, { regions: [{ offset: offsetB, size: regionBytes.length, chunker: FINE }] })
+
+    const ra = blocksInRegion(a.sizes, offsetA, regionBytes.length)
+    const rb = blocksInRegion(b.sizes, offsetB, regionBytes.length)
+    const sizesA = a.sizes.slice(ra.first, ra.last)
+    const sizesB = b.sizes.slice(rb.first, rb.last)
+    expect(sizesA.length).toBeGreaterThan(50)
+    expect(sizesB).toEqual(sizesA)
+    expect(b.checksums.slice(rb.first, rb.last)).toEqual(a.checksums.slice(ra.first, ra.last))
+    // Surroundings differ, so the blocks outside the region do not all match
+    expect(a.checksums.slice(0, ra.first)).not.toEqual(b.checksums.slice(0, rb.first))
+  })
+
+  it("rejects invalid regions with clear messages", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const inFile = path.join(dir, "invalid.bin")
+    const outFile = path.join(dir, "invalid.blockmap")
+    await writeFile(inFile, makeTestData(100_000, 5))
+    const ok = { min: 1024, avg: 4096, max: 8192 }
+
+    const cases: Array<[Array<BlockMapRegion>, RegExp]> = [
+      [[{ offset: 0, size: 10_000, chunker: { min: 1024, avg: 3000, max: 8192 } }], /avg must be a power of two/],
+      [[{ offset: 0, size: 10_000, chunker: { min: 4096, avg: 4096, max: 8192 } }], /min < avg <= max/],
+      [[{ offset: 0, size: 10_000, chunker: { min: 1024, avg: 8192, max: 4096 } }], /min < avg <= max/],
+      [[{ offset: 0, size: 10_000, chunker: { min: 64, avg: 4096, max: 8192 } }], /min must be greater than the Rabin window \(64\)/],
+      [[{ offset: 0, size: 10_000, chunker: { min: 1024.5, avg: 4096, max: 8192 } }], /chunker\.min must be a positive integer/],
+      [[{ offset: -1, size: 10_000, chunker: ok }], /offset must be a non-negative integer/],
+      [[{ offset: 0, size: 0, chunker: ok }], /size must be a positive integer/],
+      [
+        [
+          { offset: 50_000, size: 10_000, chunker: ok },
+          { offset: 10_000, size: 10_000, chunker: ok },
+        ],
+        /ascending and non-overlapping/,
+      ],
+      [
+        [
+          { offset: 10_000, size: 10_000, chunker: ok },
+          { offset: 19_999, size: 10_000, chunker: ok },
+        ],
+        /ascending and non-overlapping/,
+      ],
+      [[{ offset: 90_000, size: 10_001, chunker: ok }], /extends past the end of the input \(100000 bytes\)/],
+      [[{ offset: 100_000, size: 1, chunker: ok }], /extends past the end of the input/],
+    ]
+    for (const [regions, message] of cases) {
+      await expect(buildBlockMap(inFile, "gzip", outFile, { regions })).rejects.toThrow(message)
+    }
+    // The error names the offending region
+    await expect(
+      buildBlockMap(inFile, "gzip", outFile, {
+        regions: [
+          { offset: 0, size: 1000, chunker: ok },
+          { offset: 500, size: 1000, chunker: ok },
+        ],
+      })
+    ).rejects.toThrow(/^blockmap region #1:/)
+  })
+
+  it("multiple regions, adjacent regions, a region at offset 0 and a region ending at EOF", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const data = makeTestData(400_000, 31337)
+    const coarse: ChunkerParams = { min: 2048, avg: 8192, max: 65536 }
+    const regions: Array<BlockMapRegion> = [
+      { offset: 0, size: 50_000, chunker: FINE },
+      { offset: 100_000, size: 60_000, chunker: coarse },
+      { offset: 160_000, size: 20_000, chunker: FINE }, // adjacent to the previous one
+      { offset: 340_000, size: 60_000, chunker: FINE }, // ends exactly at EOF
+    ]
+    const { sizes, checksums, result } = await build(dir, "multi", data, { regions })
+
+    expect(sizes.reduce((a, b) => a + b, 0)).toBe(data.length)
+    expect(checksums).toHaveLength(sizes.length)
+    expect(result.size).toBe(data.length)
+    expect(result.sha512).toBe(sha512(data))
+
+    const ends = blockEnds(sizes)
+    for (const region of regions) {
+      if (region.offset > 0) {
+        expect(ends).toContain(region.offset)
+      }
+      expect(ends).toContain(region.offset + region.size)
+      const { first, last } = blocksInRegion(sizes, region.offset, region.size)
+      expect(last).toBeGreaterThan(first)
+      expectWithinParams(sizes.slice(first, last), region.chunker)
+    }
+    // Default spans between regions still obey the default parameters
+    const gap1 = blocksInRegion(sizes, 50_000, 50_000)
+    expectWithinParams(sizes.slice(gap1.first, gap1.last), DEFAULT_CHUNKER)
+    const gap2 = blocksInRegion(sizes, 180_000, 160_000)
+    expectWithinParams(sizes.slice(gap2.first, gap2.last), DEFAULT_CHUNKER)
+
+    // Every checksum is BLAKE2b-18 of the block bytes, regions included
+    const blake2bPath = require.resolve("@noble/hashes/blake2.js", {
+      paths: [path.resolve(__dirname, "../../packages/app-builder-lib/src/targets/blockmap")],
+    })
+    const { blake2b } = require(blake2bPath) as typeof import("@noble/hashes/blake2.js")
+    let offset = 0
+    for (let i = 0; i < sizes.length; i++) {
+      expect(checksums[i]).toBe(Buffer.from(blake2b(data.subarray(offset, offset + sizes[i]), { dkLen: 18 })).toString("base64"))
+      offset += sizes[i]
+    }
+  })
+
+  it("regions do not change sha512 or size (file-output and append modes)", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const data = makeTestData(250_000, 2024)
+    const regions: Array<BlockMapRegion> = [{ offset: 40_000, size: 150_000, chunker: FINE }]
+
+    const plain = await build(dir, "plain", data)
+    const withRegions = await build(dir, "regions", data, { regions })
+    expect(withRegions.sizes).not.toEqual(plain.sizes)
+    expect(withRegions.result.size).toBe(plain.result.size)
+    expect(withRegions.result.size).toBe(data.length)
+    expect(withRegions.result.sha512).toBe(sha512(data))
+
+    // Append mode: sha512 covers the input plus the appended blockmap, and the input is intact
+    const appendFile = path.join(dir, "append.bin")
+    await writeFile(appendFile, data)
+    const meta = await buildBlockMap(appendFile, "deflate", undefined, { regions })
+    const full = await readFile(appendFile)
+    expect(full.subarray(0, data.length).equals(data)).toBe(true)
+    expect(meta.size).toBe(full.length)
+    expect(meta.size).toBe(data.length + (meta.blockMapSize ?? 0) + 4)
+    expect(meta.sha512).toBe(sha512(full))
+    const bm = JSON.parse(zlib.inflateRawSync(full.subarray(full.length - 4 - (meta.blockMapSize ?? 0), full.length - 4)).toString())
+    expect(bm.files[0].sizes).toEqual(withRegions.sizes)
+    expect(bm.files[0].checksums).toEqual(withRegions.checksums)
   })
 })
