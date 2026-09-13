@@ -182,6 +182,10 @@ export class PkgTarget extends Target {
       distInfo = distInfo.replace("</installer-gui-script>", `${startContent}${mustCloseContent}${endContent}`)
     }
 
+    // Must run before the insertion index is computed below: rewriting <options> changes the string length, and every
+    // later insertion (background/welcome/license/conclusion) reuses that index.
+    distInfo = applyRootVolumeOnly(distInfo, options)
+
     const insertIndex = distInfo.lastIndexOf("</installer-gui-script>")
     distInfo =
       distInfo.substring(0, insertIndex) +
@@ -323,4 +327,28 @@ export function resolveScriptsDir(buildResourcesDir: string, scripts: string | n
     return null
   }
   return scripts != null ? path.resolve(buildResourcesDir, scripts) : path.join(buildResourcesDir, "pkg-scripts")
+}
+
+/**
+ * Adds `rootVolumeOnly="true"` to the `<options>` element of a synthesized `distribution.xml`.
+ *
+ * `<domains>` is a deprecated Distribution element. On macOS 26 the Installer probes the current-user-home domain while
+ * parsing it — even with `enable_currentUserHome="false"` — which trips `kTCCServiceSystemPolicyAppData` and makes
+ * Installer.app ask for "data from other apps" before any file is written. `rootVolumeOnly` is the current spelling of
+ * the same restriction and leaves the install-domain decision unchanged.
+ *
+ * Only applied when both user-home install domains are disabled, which is exactly when `<domains>` and
+ * `rootVolumeOnly` express the same thing. The `<domains>` element is left byte-for-byte as generated, so
+ * distributions that rely on it keep working as before.
+ *
+ * Assumes the document contains the `<options …>` element emitted by `productbuild --synthesize`, which is always the
+ * case for a component-based distribution.
+ */
+export function applyRootVolumeOnly(distInfo: string, options: Pick<PkgOptions, "allowAnywhere" | "allowCurrentUserHome">): string {
+  if (options.allowAnywhere !== false || options.allowCurrentUserHome !== false) {
+    return distInfo
+  }
+  // `String.replace` with a string pattern substitutes the first occurrence only, which is the installer-gui-script's
+  // own <options> element.
+  return distInfo.replace("<options ", '<options rootVolumeOnly="true" ')
 }
