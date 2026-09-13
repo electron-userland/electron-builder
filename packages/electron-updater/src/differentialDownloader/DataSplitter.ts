@@ -5,7 +5,33 @@ import { Writable } from "stream"
 import { Operation, OperationKind } from "./downloadPlanBuilder.js"
 import { ProgressInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
 
-const DOUBLE_CRLF = Buffer.from("\r\n\r\n")
+const CRLF_HEADER_LIST_END = Buffer.from("\r\n\r\n")
+// RFC 2046 requires CRLF, but some CDNs (e.g. Qiniu's "web cache") emit bare LF in multipart/byteranges responses.
+const LF_HEADER_LIST_END = Buffer.from("\n\n")
+// A terminator may be split across two chunks: keep this many trailing bytes of an unfinished header list.
+const HEADER_LIST_END_CARRY = CRLF_HEADER_LIST_END.length - 1
+// Parts are separated by "<EOL>--boundary"; these are the sizes of the "<EOL>--" prefix.
+const CRLF_DELIMITER_PREFIX_LENGTH = "\r\n--".length
+const LF_DELIMITER_PREFIX_LENGTH = "\n--".length
+
+interface HeaderListEnd {
+  // offset just past the terminator
+  readonly end: number
+  readonly lineFeedOnly: boolean
+}
+
+function findHeaderListEnd(data: Buffer): HeaderListEnd | null {
+  const crlf = data.indexOf(CRLF_HEADER_LIST_END)
+  // "\r\n\r\n" never contains "\n\n", so whichever terminator comes first tells the line ending in use
+  const lf = data.indexOf(LF_HEADER_LIST_END)
+  if (lf !== -1 && (crlf === -1 || lf < crlf)) {
+    return { end: lf + LF_HEADER_LIST_END.length, lineFeedOnly: true }
+  }
+  if (crlf !== -1) {
+    return { end: crlf + CRLF_HEADER_LIST_END.length, lineFeedOnly: false }
+  }
+  return null
+}
 
 enum ReadState {
   INIT,
@@ -47,12 +73,16 @@ export class DataSplitter extends Writable {
 
   partIndex = -1
 
-  private headerListBuffer: Buffer | null = null
+  // Trailing bytes (at most HEADER_LIST_END_CARRY) of a header list that is not complete yet. Header lists are ignored,
+  // so nothing more needs to be kept — only enough to find a terminator that straddles two chunks.
+  private headerListTail: Buffer | null = null
   private readState = ReadState.INIT
   private ignoreByteCount = 0
   private remainingPartDataCount = 0
 
-  private readonly boundaryLength: number
+  private readonly boundaryTextLength: number
+  // size of "<EOL>--boundary" between parts; corrected once the line ending used by the server is known
+  private boundaryLength: number
 
   constructor(
     private readonly out: Writable,
@@ -67,6 +97,7 @@ export class DataSplitter extends Writable {
   ) {
     super()
 
+    this.boundaryTextLength = boundary.length
     this.boundaryLength = boundary.length + 4 /* size of \r\n-- */
     // first chunk doesn't start with \r\n
     this.ignoreByteCount = this.boundaryLength - 2
@@ -136,8 +167,6 @@ export class DataSplitter extends Writable {
 
       start = headerListEnd
       this.readState = ReadState.BODY
-      // header list is ignored, we don't need it
-      this.headerListBuffer = null
     }
 
     while (true) {
@@ -217,18 +246,20 @@ export class DataSplitter extends Writable {
   }
 
   private searchHeaderListEnd(chunk: Buffer, readOffset: number): number {
-    const headerListEnd = chunk.indexOf(DOUBLE_CRLF, readOffset)
-    if (headerListEnd !== -1) {
-      return headerListEnd + DOUBLE_CRLF.length
+    const tail = this.headerListTail
+    const carried = tail == null ? 0 : tail.length
+    const data = tail == null ? chunk.subarray(readOffset) : Buffer.concat([tail, chunk.subarray(readOffset)])
+    const found = findHeaderListEnd(data)
+    if (found != null) {
+      this.headerListTail = null
+      // the separator size follows the line ending the server actually uses
+      this.boundaryLength = this.boundaryTextLength + (found.lineFeedOnly ? LF_DELIMITER_PREFIX_LENGTH : CRLF_DELIMITER_PREFIX_LENGTH)
+      // the carried bytes were already searched, so the terminator always ends inside the current chunk
+      return readOffset + found.end - carried
     }
 
-    // not all headers data were received, save to buffer
-    const partialChunk = readOffset === 0 ? chunk : chunk.slice(readOffset)
-    if (this.headerListBuffer == null) {
-      this.headerListBuffer = partialChunk
-    } else {
-      this.headerListBuffer = Buffer.concat([this.headerListBuffer, partialChunk])
-    }
+    // not all headers data were received; copy the tail so the chunk itself is not retained
+    this.headerListTail = Buffer.from(data.subarray(Math.max(0, data.length - HEADER_LIST_END_CARRY)))
     return -1
   }
 
