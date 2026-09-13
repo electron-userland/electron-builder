@@ -182,6 +182,10 @@ export class PkgTarget extends Target {
       distInfo = distInfo.replace("</installer-gui-script>", `${startContent}${mustCloseContent}${endContent}`)
     }
 
+    // Applied before the insertion index is computed since rewriting <options> changes the string
+    // length, and every insertion below reuses that index.
+    distInfo = applyRootVolumeOnly(distInfo, options)
+
     const insertIndex = distInfo.lastIndexOf("</installer-gui-script>")
     distInfo =
       distInfo.substring(0, insertIndex) +
@@ -323,4 +327,25 @@ export function resolveScriptsDir(buildResourcesDir: string, scripts: string | n
     return null
   }
   return scripts != null ? path.resolve(buildResourcesDir, scripts) : path.join(buildResourcesDir, "pkg-scripts")
+}
+
+/**
+ * Adds `rootVolumeOnly="true"` to the `<options>` element of a synthesized `distribution.xml`.
+ *
+ * `<domains>` is a deprecated Distribution element. On macOS 26 the Installer probes the
+ * current-user-home domain while parsing it — even with `enable_currentUserHome="false"` — which
+ * trips `kTCCServiceSystemPolicyAppData` and makes Installer.app prompt for "data from other apps"
+ * before any file is written. `rootVolumeOnly` is the current spelling of the same restriction and
+ * leaves the install-domain decision unchanged.
+ *
+ * Only applied when both user-home install domains are disabled, which is exactly when `<domains>`
+ * and `rootVolumeOnly` express the same restriction. The `<domains>` element is left byte-for-byte
+ * as generated, so distributions that rely on it keep working as before.
+ */
+export function applyRootVolumeOnly(distInfo: string, options: Pick<PkgOptions, "allowAnywhere" | "allowCurrentUserHome">): string {
+  if (options.allowAnywhere !== false || options.allowCurrentUserHome !== false) {
+    return distInfo
+  }
+  // A string pattern replaces only the first occurrence — the installer-gui-script's own <options>.
+  return distInfo.replace("<options ", '<options rootVolumeOnly="true" ')
 }
