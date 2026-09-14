@@ -16,9 +16,10 @@ Var installMode
 # Exercise selection, file lookup, hashing and HTTP; stop before installing an app.
 !macroundef extractUsing7za
 !macro extractUsing7za FILE
-  FileOpen $R0 "$EXEDIR/result.txt" w
+  FileOpen $R0 "$EXEDIR\result.txt" w
   FileWrite $R0 "$packageFile$\n$1$\n$packageUrl"
   FileClose $R0
+  SetErrorLevel 0
   Quit
 !macroend
 !macro moveFile FROM TO
