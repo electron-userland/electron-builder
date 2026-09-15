@@ -4,7 +4,7 @@ import { applyRootVolumeOnly, prepareProductBuildArgs, resolvePkgBuildVersion, r
 
 // Only run these tests on macOS since they rely on macOS-specific filesystem structure and conventions.
 // The functions being tested are also only relevant in the context of building macOS pkg installers.
-describe("mac pkg", () => {
+describe.ifMac("mac pkg", () => {
   function plistXml(data: Record<string, string | number | boolean>): string {
     const entries = Object.entries(data)
       .map(([key, value]) => {
@@ -146,51 +146,51 @@ ${entries}
       expect(args).not.toContain("--keychain")
     })
   })
+})
 
   // ---------------------------------------------------------------------------
   // applyRootVolumeOnly
   // ---------------------------------------------------------------------------
 
-  describe("applyRootVolumeOnly", () => {
-    // Trimmed `productbuild --synthesize` output, keeping the elements PkgTarget later works with.
-    const synthesized = `<?xml version="1.0" encoding="utf-8"?>
+describe("applyRootVolumeOnly", () => {
+  // Trimmed `productbuild --synthesize` output, keeping the elements PkgTarget later works with.
+  const synthesized = `<?xml version="1.0" encoding="utf-8"?>
 <installer-gui-script minSpecVersion="1">
-    <options customize="never" require-scripts="false"/>
-    <volume-check>
-        <allowed-os-versions>
-            <os-version min="10.13"/>
-        </allowed-os-versions>
-    </volume-check>
+  <options customize="never" require-scripts="false"/>
+  <volume-check>
+      <allowed-os-versions>
+          <os-version min="10.13"/>
+      </allowed-os-versions>
+  </volume-check>
 </installer-gui-script>
 `
 
-    test("adds rootVolumeOnly when both user-home install domains are disabled", ({ expect }) => {
-      const result = applyRootVolumeOnly(synthesized, { allowAnywhere: false, allowCurrentUserHome: false })
-      expect(result).toContain('<options rootVolumeOnly="true" customize="never" require-scripts="false"/>')
-    })
+  test("adds rootVolumeOnly when both user-home install domains are disabled", ({ expect }) => {
+    const result = applyRootVolumeOnly(synthesized, { allowAnywhere: false, allowCurrentUserHome: false })
+    expect(result).toContain('<options rootVolumeOnly="true" customize="never" require-scripts="false"/>')
+  })
 
-    test("leaves <options> untouched when it can still be installed anywhere", ({ expect }) => {
-      expect(applyRootVolumeOnly(synthesized, { allowAnywhere: true, allowCurrentUserHome: false })).toBe(synthesized)
-    })
+  test("leaves <options> untouched when it can still be installed anywhere", ({ expect }) => {
+    expect(applyRootVolumeOnly(synthesized, { allowAnywhere: true, allowCurrentUserHome: false })).toBe(synthesized)
+  })
 
-    test("leaves <options> untouched when it can still be installed into the user home", ({ expect }) => {
-      expect(applyRootVolumeOnly(synthesized, { allowAnywhere: false, allowCurrentUserHome: true })).toBe(synthesized)
-    })
+  test("leaves <options> untouched when it can still be installed into the user home", ({ expect }) => {
+    expect(applyRootVolumeOnly(synthesized, { allowAnywhere: false, allowCurrentUserHome: true })).toBe(synthesized)
+  })
 
-    test("leaves <options> untouched for the default install domains", ({ expect }) => {
-      expect(applyRootVolumeOnly(synthesized, {})).toBe(synthesized)
-    })
+  test("leaves <options> untouched for the default install domains", ({ expect }) => {
+    expect(applyRootVolumeOnly(synthesized, {})).toBe(synthesized)
+  })
 
-    test("leaves <options> untouched when neither domain is explicitly disabled", ({ expect }) => {
-      expect(applyRootVolumeOnly(synthesized, { allowAnywhere: null, allowCurrentUserHome: null })).toBe(synthesized)
-    })
+  test("leaves <options> untouched when neither domain is explicitly disabled", ({ expect }) => {
+    expect(applyRootVolumeOnly(synthesized, { allowAnywhere: null, allowCurrentUserHome: null })).toBe(synthesized)
+  })
 
-    test("keeps the rest of the distribution document intact", ({ expect }) => {
-      const result = applyRootVolumeOnly(synthesized, { allowAnywhere: false, allowCurrentUserHome: false })
-      expect(result).toBe(synthesized.replace("<options ", '<options rootVolumeOnly="true" '))
-      expect(result).toContain("<volume-check>")
-      expect(result).toContain('<os-version min="10.13"/>')
-      expect(result.trimEnd().endsWith("</installer-gui-script>")).toBe(true)
-    })
+  test("keeps the rest of the distribution document intact", ({ expect }) => {
+    const result = applyRootVolumeOnly(synthesized, { allowAnywhere: false, allowCurrentUserHome: false })
+    expect(result).toBe(synthesized.replace("<options ", '<options rootVolumeOnly="true" '))
+    expect(result).toContain("<volume-check>")
+    expect(result).toContain('<os-version min="10.13"/>')
+    expect(result.trimEnd().endsWith("</installer-gui-script>")).toBe(true)
   })
 })
