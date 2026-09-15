@@ -327,3 +327,66 @@ test("autoDownload=false - does not trigger download", async ({ expect }) => {
 
   assertDownloadNotTriggered(expect, result, actualEvents)
 })
+
+// getBlockMapFiles with uploadTarget=generic_package uses the default Provider strategy:
+// derive both blockmap URLs from the base download URL
+test("getBlockMapFiles - generic_package derives blockmap URLs from the base URL", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy, "1.0.0", { uploadTarget: "generic_package" })
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+  const provider = getProvider<GitLabProvider>(updater)
+
+  const baseUrl = new URL("https://gitlab.com/my-app-Setup-1.1.0.exe")
+  const blockMapUrls = await provider.getBlockMapFiles(baseUrl, "1.0.0", STABLE_VERSION)
+
+  expect(blockMapUrls).toHaveLength(2)
+  expect(blockMapUrls[0].href).toBe("https://gitlab.com/my-app-Setup-1.0.0.exe.blockmap")
+  expect(blockMapUrls[1].href).toBe(`https://gitlab.com/my-app-Setup-${STABLE_VERSION}.exe.blockmap`)
+})
+
+// getBlockMapFiles with uploadTarget=project_upload resolves blockmap URLs from the release assets
+// of each version (the new one comes from the cached latest release, the old one is fetched by tag)
+test("getBlockMapFiles - project_upload resolves blockmap URLs from release assets", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy, "1.0.0", { uploadTarget: "project_upload" })
+
+  requestSpy
+    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
+    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+    // fetchReleaseInfoByVersion("1.0.0") — the old release carries its own uploaded blockmap asset
+    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease("1.0.0")))
+
+  await updater.checkForUpdates()
+  const provider = getProvider<GitLabProvider>(updater)
+
+  const baseUrl = new URL(`${ASSET_BASE}/my-app-Setup-${STABLE_VERSION}.exe`)
+  const blockMapUrls = await provider.getBlockMapFiles(baseUrl, "1.0.0", STABLE_VERSION)
+
+  expect(blockMapUrls).toHaveLength(2)
+  expect(blockMapUrls[0].href).toBe(`${ASSET_BASE}/my-app-Setup-1.0.0.exe.blockmap`)
+  expect(blockMapUrls[1].href).toBe(`${ASSET_BASE}/my-app-Setup-${STABLE_VERSION}.exe.blockmap`)
+})
+
+// project_upload: a release without an uploaded blockmap asset must fail loudly so the differential
+// downloader can fall back to a full download
+test("getBlockMapFiles - project_upload throws ERR_UPDATER_BLOCKMAP_FILE_NOT_FOUND when asset is missing", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy, "1.0.0", { uploadTarget: "project_upload" })
+
+  const oldReleaseWithoutBlockMap = mockGitlabRelease("1.0.0")
+  oldReleaseWithoutBlockMap.assets.links = oldReleaseWithoutBlockMap.assets.links.filter(l => !l.name.endsWith(".blockmap"))
+
+  requestSpy
+    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
+    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+    .mockResolvedValueOnce(JSON.stringify(oldReleaseWithoutBlockMap))
+
+  await updater.checkForUpdates()
+  const provider = getProvider<GitLabProvider>(updater)
+
+  const baseUrl = new URL(`${ASSET_BASE}/my-app-Setup-${STABLE_VERSION}.exe`)
+  await expect(provider.getBlockMapFiles(baseUrl, "1.0.0", STABLE_VERSION)).rejects.toMatchObject({ code: "ERR_UPDATER_BLOCKMAP_FILE_NOT_FOUND" })
+})

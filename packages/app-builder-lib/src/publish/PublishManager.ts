@@ -67,6 +67,35 @@ function checkOptions(publishPolicy: any) {
   }
 }
 
+/**
+ * v26 published implicitly when it detected a CI tag; v27 requires an explicit `--publish` policy.
+ * Without a signal, a tagged release pipeline goes green and uploads nothing — the build looks
+ * identical to a successful publish. Only warns when the project actually looks like it wanted to
+ * publish (a tag is present and a publish target is configured), so ordinary local builds stay quiet.
+ */
+function warnIfImplicitPublishExpected(packager: Packager): void {
+  const tag = getCiTag()
+  if (tag == null) {
+    return
+  }
+  const config = packager.config
+  const hasPublishConfig =
+    config.publish != null ||
+    (["mac", "win", "linux"] as const).some(platform => {
+      const platformConfig = config[platform] as { publish?: unknown } | Nullish
+      return platformConfig != null && platformConfig.publish != null
+    })
+  if (!hasPublishConfig) {
+    return
+  }
+  log.warn(
+    { tag, solution: "pass --publish <always|onTag|onTagOrDraft|never>, or set the `publish` policy in your build configuration" },
+    "a publish configuration and a CI tag are present, but no publish policy was given — nothing will be uploaded. " +
+      "electron-builder v27 removed implicit publishing (v26 auto-published when it detected a CI tag). " +
+      "See https://www.electron.build/docs/migration/v27-breaking-changes#implicit-publish-removed"
+  )
+}
+
 export class PublishManager implements PublishContext {
   private readonly nameToPublisher = new Map<string, Promise<Publisher | null>>()
 
@@ -93,6 +122,9 @@ export class PublishManager implements PublishContext {
       this.isPublish = publishPolicy != null && publishOptions.publish !== "never" && (publishPolicy !== "onTag" || getCiTag() != null)
       if (this.isPublish && forcePublishForPr) {
         log.warn(publishForPrWarning)
+      }
+      if (publishPolicy == null) {
+        warnIfImplicitPublishExpected(packager)
       }
     } else if (publishOptions.publish !== "never") {
       log.info(
@@ -541,6 +573,56 @@ function isDetectUpdateChannel(platformSpecificConfiguration: PlatformSpecificBu
   return value == null ? configuration.detectUpdateChannel !== false : value
 }
 
+// keyed by the build's CancellationToken (one instance per Packager) so that a build reports a given feed once - getResolvedPublishConfig
+// is called per target and arch - without leaking state between programmatic builds running in the same process
+const reportedInferredUpdateFeeds = new WeakMap<CancellationToken, Set<string>>()
+
+/** @internal */
+export function parseGithubRepoShorthand(repo: string): { owner: string; repo: string } | null {
+  const separator = repo.indexOf("/")
+  return separator > 0 ? { owner: repo.substring(0, separator), repo: repo.substring(separator + 1) } : null
+}
+
+// the inferred repository becomes the publish/update destination and, for auto-update-capable targets, is written
+// verbatim into app-update.yml inside every shipped build as its permanent update feed - so the developer has to be
+// told which repository they are committing to. A repository taken from package.json "repository" is deliberate
+// configuration (info); one picked up from the CI environment or .git/config is not (warn).
+function logInferredUpdateFeed(
+  buildId: CancellationToken,
+  provider: PublishProvider,
+  owner: string,
+  project: string,
+  source: string | undefined,
+  inferredFields: Array<string>
+): void {
+  let reported = reportedInferredUpdateFeeds.get(buildId)
+  if (reported == null) {
+    reported = new Set<string>()
+    reportedInferredUpdateFeeds.set(buildId, reported)
+  }
+
+  const feed = `${provider}:${owner}/${project}`
+  if (reported.has(feed)) {
+    return
+  }
+  reported.add(feed)
+
+  const fields = {
+    reason: `${inferredFields.join(" and ")} not specified in the publish configuration`,
+    source: source ?? "unknown",
+    provider,
+    owner,
+    ...(provider === "bitbucket" ? { slug: project } : { repo: project }),
+  }
+  const message =
+    "update feed inferred from repository info; it will be used as the publish/update destination (written to app-update.yml in auto-update-capable targets) - specify it explicitly to be sure it stays under your control"
+  if (source === "package.json") {
+    log.info(fields, message)
+  } else {
+    log.warn(fields, message)
+  }
+}
+
 async function getResolvedPublishConfig(
   platformPackager: PlatformPackager<any> | null,
   options: PublishConfiguration,
@@ -592,11 +674,10 @@ async function getResolvedPublishConfig(
   let project = isGithub ? (options as GithubOptions).repo : (options as BitbucketOptions).slug
 
   if (isGithub && owner == null && project != null) {
-    const index = project.indexOf("/")
-    if (index > 0) {
-      const repo = project
-      project = repo.substring(0, index)
-      owner = repo.substring(index + 1)
+    const shorthand = parseGithubRepoShorthand(project)
+    if (shorthand != null) {
+      owner = shorthand.owner
+      project = shorthand.repo
     }
   }
 
@@ -622,12 +703,17 @@ async function getResolvedPublishConfig(
       return null
     }
 
+    const inferredFields: Array<string> = []
     if (!owner) {
       owner = info.user
+      inferredFields.push("owner")
     }
     if (!project) {
       project = info.project
+      inferredFields.push(isGithub ? "repo" : "slug")
     }
+
+    logInferredUpdateFeed(ctx.cancellationToken, provider, owner, project, info.source, inferredFields)
   }
 
   if (isGithub) {

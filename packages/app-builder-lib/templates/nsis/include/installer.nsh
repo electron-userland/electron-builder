@@ -64,7 +64,7 @@
           ${if} $3 == $1
             Goto fun_extract
           ${else}
-            MessageBox MB_OK "Package file $4 found locally, but checksum doesn't match — expected $1, actual $3.$\r$\nLocal file is ignored and package will be downloaded from Internet."
+            MessageBox MB_OK "Package file $4 found locally, but checksum doesn't match — expected $1, actual $3.$\r$\nLocal file is ignored and package will be downloaded from Internet." /SD IDOK
           ${endIf}
         ${endIf}
       ${endIf}

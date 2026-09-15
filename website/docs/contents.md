@@ -15,7 +15,7 @@ By default, electron-builder includes all files matching `**/*` from the app dir
 
 **Always excluded:**
 - `node_modules` dev dependencies (only production dependencies are included)
-- `*.iml`, `*.o`, `*.hprof`, `*.pyc`, `*.pyo`, `*.rbc`, `*.swp`, `.csproj`, `.sln`, `.xproj`
+- `*.iml`, `*.o`, `*.hprof`, `*.pyc`, `*.pyo`, `*.rbc`, `*.swp`, `.csproj`, `.sln`, `.slnx`, `.xproj`
 - `.editorconfig`, `._*`, `.DS_Store`, `.git`, `.hg`, `.svn`, `.gitignore`, `.gitattributes`
 - `__pycache__`, `.flowconfig`, `.idea`, `.vs`, `.nyc_output`
 - `appveyor.yml`, `.travis.yml`, `circle.yml`

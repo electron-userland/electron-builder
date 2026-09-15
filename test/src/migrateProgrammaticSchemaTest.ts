@@ -169,11 +169,12 @@ describe("migrateProgrammaticSource — formatting & comment fidelity", () => {
     expect(result.status).toBe("migrated")
     // Compare parsed objects, not whitespace: the signing fields are grouped under mac.sign,
     // everything else is preserved, and the top-level shape is unchanged.
+    // gatekeeperAssess is removed, not moved: @electron/osx-sign 2.x dropped the spctl --assess
+    // step, so mac.sign.gatekeeperAssess does not exist and the schema rejects it.
     expect(objFromCjs(result.code)).toEqual({
       mac: {
         sign: {
           hardenedRuntime: true,
-          gatekeeperAssess: true,
         },
         target: "dmg",
         extendInfo: {
@@ -181,6 +182,7 @@ describe("migrateProgrammaticSource — formatting & comment fidelity", () => {
         },
       },
     })
+    expect(result.changes.some(c => c.key === "mac.gatekeeperAssess")).toBe(true)
   })
 
   test("preserves comments, imports, and functions on untouched code", () => {

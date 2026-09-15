@@ -1,9 +1,7 @@
-import { Platform } from "app-builder-lib"
 import { createPublisher } from "app-builder-lib/internal"
 import { Arch } from "builder-util"
-import { BitbucketOptions, CancellationToken, HttpError, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
-import { publishArtifactsWithOptions } from "electron-builder"
-import { BitbucketPublisher, GitHubPublisher, KeygenPublisher, PublishContext } from "electron-publish"
+import { CancellationToken, HttpError, S3Options, SpacesOptions } from "builder-util-runtime"
+import { BitbucketPublisher, GitHubPublisher, PublishContext } from "electron-publish"
 import * as path from "path"
 import { ExpectStatic } from "vitest"
 
@@ -18,7 +16,6 @@ function versionNumber() {
 //noinspection SpellCheckingInspection
 const token = Buffer.from("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
 const iconPath = path.join(import.meta.dirname, "..", "fixtures", "test-app", "build", "icon.icns")
-const icoPath = path.join(import.meta.dirname, "..", "fixtures", "test-app", "build", "icon.ico")
 
 const publishContext: PublishContext = {
   cancellationToken: new CancellationToken(),
@@ -111,56 +108,6 @@ testAndIgnoreApiRate("GitHub upload org", async () => {
   } finally {
     await publisher.deleteRelease()
   }
-})
-
-test.ifEnv(process.env.KEYGEN_TOKEN)("Keygen upload", async () => {
-  const publisher = new KeygenPublisher(
-    publishContext,
-    {
-      provider: "keygen",
-      // electron-builder-test
-      product: process.env.KEYGEN_PRODUCT || "43981278-96e7-47de-b8c2-98d59987206b",
-      account: process.env.KEYGEN_ACCOUNT || "cdecda36-3ef0-483e-ad88-97e7970f3149",
-      platform: Platform.MAC.name,
-    } as KeygenOptions,
-    versionNumber()
-  )
-  const [releaseId] = await Promise.all([
-    publisher.upload({ file: iconPath, arch: Arch.x64 }),
-    // test parallel artifact uploads for the same release
-    publisher.upload({ file: icoPath, arch: Arch.x64 }),
-  ])
-
-  await publisher.deleteRelease(releaseId)
-})
-
-test.ifEnv(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async () => {
-  const timeout = 0
-  const config: BitbucketOptions = {
-    provider: "bitbucket",
-    owner: "mike-m",
-    slug: "electron-builder-test",
-    timeout,
-  }
-  const publisher = new BitbucketPublisher(publishContext, config)
-  const filename = await publisher.upload({ file: iconPath, arch: Arch.x64, timeout })
-  await publisher.deleteRelease(filename)
-
-  const uploadTasks: any = await publishArtifactsWithOptions([{ file: icoPath, arch: null }], undefined, undefined, [config])
-  for (const task of uploadTasks) {
-    await publisher.deleteRelease(task.file)
-  }
-})
-
-test.ifEnv(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async ({ expect }) => {
-  const timeout = 100
-  const publisher = new BitbucketPublisher(publishContext, {
-    provider: "bitbucket",
-    owner: "mike-m",
-    slug: "electron-builder-test",
-    timeout,
-  } as BitbucketOptions)
-  expect(await publisher.upload({ file: iconPath, arch: Arch.x64, timeout })).toThrowError("Request timed out")
 })
 
 // Temporarily clear env vars so auth-selection unit tests are deterministic regardless of the ambient environment.

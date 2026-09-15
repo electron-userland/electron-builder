@@ -91,7 +91,7 @@ export class PkgTarget extends Target {
     )[0]
 
     if (identity == null && packager.forceCodeSigning) {
-      throw new Error(`Cannot find valid "${certType}" to sign standalone installer, please see https://electron.build/code-signing`)
+      throw new Error(`Cannot find valid "${certType}" to sign standalone installer, please see https://electron.build/docs/features/code-signing`)
     }
 
     const args = prepareProductBuildArgs(identity, keychainFile)

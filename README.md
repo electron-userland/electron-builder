@@ -72,7 +72,7 @@ See the full documentation on [electron.build](https://www.electron.build).
     * [Native application dependencies](https://electron.atom.io/docs/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
     * Development dependencies are never included. You don't need to ignore them explicitly.
     * [Two package.json structure](https://www.electron.build/docs/tutorials/two-package-structure) is supported, but you are not forced to use it even if you have native production dependencies.
-* [Code Signing](https://www.electron.build/docs/features/code-signing/code-signing) on a CI server or development machine.
+* [Code Signing](https://www.electron.build/docs/features/code-signing) on a CI server or development machine.
 * [Auto Update](https://www.electron.build/docs/features/auto-update) ready application packaging.
 * Numerous target formats:
     * All platforms: `7z`, `zip`, `tar.xz`, `tar.7z`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
@@ -145,7 +145,7 @@ This instructs Yarn to use node-modules instead of PnP.
    See [all options](https://www.electron.build/docs/configuration). Option [files](https://www.electron.build/docs/contents#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
    You can also use separate configuration files, such as `js`, `ts`, `yml`, and `json`/`json5`. See [read-config-file](https://www.npmjs.com/package/read-config-file) for supported extensions. [JS Example for programmatic API](https://www.electron.build/docs/programmatic-usage)
 
-4. Add [icons](https://www.electron.build/docs/features/icons).
+4. Add [icons](https://www.electron.build/docs/features/icons-and-images).
 
 5. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json
@@ -162,7 +162,7 @@ This instructs Yarn to use node-modules instead of PnP.
 
 Please note that everything is packaged into an asar archive [by default](https://www.electron.build/docs/configuration).
 
-For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://www.electron.build/docs/features/code-signing/code-signing#where-to-buy-code-signing-certificate).
+For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://www.electron.build/docs/features/code-signing#certificate-types).
 
 ## Programmatic Usage
 TypeScript types are provided and can be found [here](https://www.electron.build/docs/api/index). See the full [programmatic usage guide](https://www.electron.build/docs/programmatic-usage).

@@ -4,22 +4,34 @@ import { Arch, InvalidConfigurationError, log, statOrNull } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as path from "path"
 import { CertType, findIdentity, Identity, reportError } from "../../codeSign/mac/macCodeSign.js"
+import { SigningResult } from "../../codeSign/signResult.js"
 import type { MacPackager } from "../../macPackager.js"
 import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
 import { parsePlistFile, PlistObject } from "../../util/mac/plist.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 
-export type PlatformType = "mas" | "mas-dev" | "mac"
+export type MasPlatformType = "mas" | "mas-dev"
+export type PlatformType = MasPlatformType | "mac"
 
 export class MacTargetHelper {
   constructor(private packager: MacPackager) {}
 
-  handleNullIdentity(): boolean {
+  handleNullIdentity(): SigningResult {
     if (this.packager.forceCodeSigning) {
       throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
     }
-    log.info({ reason: "identity explicitly is set to null" }, "skipped macOS code signing")
-    return false
+    // The meaning of `mac.sign: null` flipped in v27. In v26 `sign` was only a custom-signer hook, so
+    // null meant "no custom signer" and the app was still signed normally; now it means "do not sign".
+    // A v26 config carried over unchanged therefore ships an UNSIGNED app with no other signal.
+    log.warn(
+      {
+        reason: "identity explicitly is set to null",
+        solution: "remove `sign: null` to sign normally, or set `mac.sign.identity` — keep it only if you intend to ship an unsigned app",
+      },
+      'skipped macOS code signing. Note this changed in v27: `mac.sign: null` now means "do not sign", whereas in v26 it only meant "no custom signer" and the app was still signed. ' +
+        "See https://www.electron.build/docs/migration/v27-breaking-changes#macos-signing-macsign"
+    )
+    return "skipped:disabled"
   }
 
   async findSigningIdentity(
@@ -30,7 +42,7 @@ export class MacTargetHelper {
     signOpts: ElectronSignOptions | null | undefined
   ): Promise<Identity | null> {
     const isMas = MacTargetHelper.isMasTarget(targetPlatform)
-    const certificateTypes = MacTargetHelper.getCertificateTypes(targetPlatform)
+    const certificateTypes = MacTargetHelper.getCertificateTypes(targetPlatform, MacTargetHelper.resolveSigningType(targetPlatform, signOpts?.type))
 
     let identity: Identity | null = null
     for (const certificateType of certificateTypes) {
@@ -47,7 +59,7 @@ export class MacTargetHelper {
           log.warn(
             null,
             "ad-hoc signing with hardenedRuntime enabled requires the com.apple.security.cs.disable-library-validation entitlement " +
-              "to prevent app launch failures due to library validation. See https://electron.build/code-signing for details."
+              "to prevent app launch failures due to library validation. See https://electron.build/docs/features/code-signing for details."
           )
         }
         identity = new Identity("-", undefined)
@@ -89,8 +101,7 @@ export class MacTargetHelper {
     targetPlatform: PlatformType
   ): Promise<SignOptions> {
     const isMas = MacTargetHelper.isMasTarget(targetPlatform)
-    // `type` is derived from the build flavor, never from user config: mas-dev → development, otherwise distribution.
-    const type: SigningDistributionType = MacTargetHelper.isMasDevelopment(targetPlatform) ? "development" : "distribution"
+    const type = MacTargetHelper.resolveSigningType(targetPlatform, config?.type)
 
     let binaries = config?.binaries || undefined
     if (binaries) {
@@ -189,7 +200,7 @@ export class MacTargetHelper {
     const masInstallerIdentity = await findIdentity(certType, identityQualifier, keychainFile)
 
     if (masInstallerIdentity == null) {
-      throw new InvalidConfigurationError(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/code-signing`)
+      throw new InvalidConfigurationError(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/docs/features/code-signing`)
     }
 
     MacTargetHelper.assertSafePathForCommandUsage(outDir, "output directory")
@@ -256,15 +267,27 @@ export class MacTargetHelper {
     }
   }
 
-  static getCertificateTypes(targetPlatform: PlatformType): CertType[] {
-    switch (targetPlatform) {
-      case "mas-dev":
-        return ["Mac Developer", "Apple Development"]
-      case "mas":
-        return ["Apple Distribution", "3rd Party Mac Developer Application"]
-      default:
-        return ["Developer ID Application"]
+  /**
+   * The effective signing type: an explicit `sign.type` wins, otherwise derived from the build flavor
+   * (`mas-dev` → `development`, otherwise `distribution`).
+   */
+  static resolveSigningType(targetPlatform: PlatformType, configType: SigningDistributionType | Nullish): SigningDistributionType {
+    return configType ?? (MacTargetHelper.isMasDevelopment(targetPlatform) ? "development" : "distribution")
+  }
+
+  static getCertificateTypes(targetPlatform: PlatformType, type: SigningDistributionType): CertType[] {
+    if (type === "development") {
+      return ["Mac Developer", "Apple Development"]
     }
+    return MacTargetHelper.isMasTarget(targetPlatform) ? ["Apple Distribution", "3rd Party Mac Developer Application"] : ["Developer ID Application"]
+  }
+
+  /**
+   * The MAS `.pkg` installer is only built for distribution signing — a development-signed build
+   * (`mas-dev`, or an explicit `sign.type: "development"` on a `mas` build) is installed directly.
+   */
+  static shouldCreateMasInstaller(targetPlatform: PlatformType, configType: SigningDistributionType | Nullish): targetPlatform is MasPlatformType {
+    return MacTargetHelper.isMasTarget(targetPlatform) && MacTargetHelper.resolveSigningType(targetPlatform, configType) !== "development"
   }
 
   static isMasTarget(targetName: string): boolean {

@@ -23,6 +23,7 @@ export default [{
       "**/main.js",
       "test/vitest-setup.ts",
       "packages/app-builder-lib/helpers",
+      "packages/electron-builder/assert-node-version.js",
       "packages/electron-builder/cli.js",
       "packages/electron-builder/install-app-deps.js",
       "packages/app-builder-lib/src/node-module-collector/hoist.ts", // @yarn/pkg vendor code
