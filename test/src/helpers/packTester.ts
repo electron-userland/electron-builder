@@ -41,12 +41,12 @@ import { detectPackageManager } from "app-builder-lib/src/node-module-collector/
 import { SelfSignedIdentity } from "./selfSignedIdentity"
 
 const PACKAGE_MANAGER_VERSION_MAP = {
-  [PM.NPM]: { cli: "npm", version: "9.8.1" },
-  [PM.YARN]: { cli: "yarn", version: "1.22.19" },
-  [PM.YARN_BERRY]: { cli: "yarn", version: "3.5.0" },
-  [PM.PNPM]: { cli: "pnpm", version: "10.18.0" },
-  [PM.BUN]: { cli: "bun", version: "1.3.2" },
-  [PM.TRAVERSAL]: { cli: "npm", version: "9.8.1" }, // use npm to install, we're testing manual node traversal, but we still need something to install the dependencies
+  [PM.NPM]: { cli: "npm", version: "12.0.2" },
+  [PM.YARN]: { cli: "yarn", version: "1.22.22" },
+  [PM.YARN_BERRY]: { cli: "yarn", version: "4.18.0" },
+  [PM.PNPM]: { cli: "pnpm", version: "10.34.5" },
+  [PM.BUN]: { cli: "bun", version: "1.4.2" },
+  [PM.TRAVERSAL]: { cli: "npm", version: "12.0.2" }, // use npm to install, we're testing manual node traversal, but we still need something to install the dependencies
 }
 
 // `fs.promises.realpath` keeps 8.3 short components on Windows; only the `.native` variant
