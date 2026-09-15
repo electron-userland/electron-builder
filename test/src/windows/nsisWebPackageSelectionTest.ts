@@ -4,7 +4,6 @@ import { createHash } from "crypto"
 import * as fs from "fs/promises"
 import { createServer } from "http"
 import * as path from "path"
-import { WineManager } from "../helpers/wine"
 
 const templates = path.resolve(__dirname, "../../../packages/app-builder-lib/templates/nsis/include")
 const fixture = path.resolve(__dirname, "../../fixtures/nsis-web-package-selection/installer.nsi")
@@ -22,7 +21,7 @@ const payload = (arch: string) => `package for ${arch}`
 const hash = (arch: string) => createHash("sha512").update(payload(arch)).digest("hex").toUpperCase()
 
 for (const { packages, expected, completeUrl } of [...cases.map(value => ({ ...value, completeUrl: false })), { ...cases[0], completeUrl: true }]) {
-  test.ifWindowsOrWine(`NSIS web package selection: ${packages.join(" + ")}${completeUrl ? " (complete URL)" : ""}`, async ({ expect, tmpDir }) => {
+  test.ifWindows(`NSIS web package selection: ${packages.join(" + ")}${completeUrl ? " (complete URL)" : ""}`, async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir()
     const installer = path.join(dir, "installer.exe")
     const requests: string[] = []
@@ -32,7 +31,6 @@ for (const { packages, expected, completeUrl } of [...cases.map(value => ({ ...v
       res.writeHead(arch != null && packages.includes(arch) ? 200 : 404)
       res.end(arch == null ? "invalid package" : payload(arch))
     })
-    const wine = process.platform === "win32" ? null : new WineManager()
     try {
       await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
       const address = server.address()
@@ -54,16 +52,11 @@ for (const { packages, expected, completeUrl } of [...cases.map(value => ({ ...v
       ].join("\n")
       // Undefined package constants must fail compilation, even if the bad branch isn't taken.
       await spawnAndWriteWithOutput(makensis.path, ["-WX", "-V2", "-"], script, { env: { ...process.env, ...makensis.env } })
-      await wine?.prepare()
       const run = async (arch: string, packageFile?: string) => {
         requests.length = 0
         await fs.rm(path.join(dir, "result.txt"), { force: true })
         const args = ["/S", `--arch=${arch}`, ...(packageFile == null ? [] : [`--package-file=${packageFile}`])]
-        if (wine == null) {
-          await exec(installer, args)
-        } else {
-          await wine.exec(installer, ...args)
-        }
+        await exec(installer, args)
         return (await fs.readFile(path.join(dir, "result.txt"), "utf8")).split("\n")
       }
       for (const [index, machine] of machines.entries()) {
@@ -88,18 +81,16 @@ for (const { packages, expected, completeUrl } of [...cases.map(value => ({ ...v
       // Explicit packages bypass filename selection and checksum verification.
       const explicit = path.join(dir, "explicit.7z")
       await fs.writeFile(explicit, "user supplied package")
-      const explicitPath = wine == null ? explicit : `Z:${explicit.replace(/\//g, "\\")}`
-      const local = await run("ARM64", explicitPath)
+      const local = await run("ARM64", explicit)
       expect(requests).toEqual([])
-      expect(local[0]).toBe(explicitPath)
+      expect(local[0]).toBe(explicit)
 
       // A missing explicit file must still select the correct download independently.
       await fs.rm(explicit)
-      await run("ARM64", explicitPath)
+      await run("ARM64", explicit)
       expect(requests).toEqual([`/app-${expected[2]}.7z`])
     } finally {
       await new Promise<void>((resolve, reject) => server.close(error => (error ? reject(error) : resolve())))
-      await wine?.dispose()
     }
   })
 }
