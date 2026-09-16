@@ -12,16 +12,16 @@ Every install in the field trusts exactly what it was built with. electron-updat
 
 | Trust anchor | Where it is fixed | What checks it |
 | --- | --- | --- |
-| Update-manifest public key (`updateManifestPublicKey`) | `app-update.yml`, written at build time | electron-updater, on every platform, before any download ([Signed Update Manifests](./signed-update-manifests.md)) |
+| Update-manifest trust list (`updateManifestPublicKey`, one or more Ed25519 public keys) | `app-update.yml`, written at build time | electron-updater, on every platform, before any download ([Signed Update Manifests](./signed-update-manifests.md)) |
 | Windows publisher name (`publisherName`) | `app-update.yml`, written at build time | electron-updater (NSIS target), against the Authenticode signature of the downloaded installer |
 | macOS Team ID | The running app's code signature | Squirrel.Mac, when it installs the downloaded update |
 | Linux repository GPG key | The user's package-manager keyring | `apt` / `dnf` / `zypper`, only when `allowUnverifiedLinuxPackages` is `false` |
 
-Because the anchor travels *inside* the previous release, you cannot simply start signing with a new key: installs that trust the old anchor would reject everything you publish from that point on. Rotation is therefore always a **transition window**: you first ship a release that installs the new anchor while still passing the old check, wait for it to reach your users, and only then switch.
+Because the anchor travels *inside* the previous release, you cannot simply start signing with a new key: installs that trust only the old anchor would reject everything you publish from that point on. Rotation is therefore always a **transition window**: you first ship a release that installs the new anchor while still passing the old check, wait for it to reach your users, and only then switch.
 
 ### The bridge release
 
-Throughout this page, a **bridge release** is an ordinary release with one property: it is *verified with the old key* and *carries the new trust anchor*. Users who install it will accept updates signed with the new key; users who never install it stay pinned to the old key. The remaining sections describe what "carries the new anchor" means for each mechanism, and how long you may need to keep the old key alive.
+Throughout this page, a **bridge release** is an ordinary release with one property: it is *verified with the old key* and *carries the new trust anchor*. Users who install it will accept updates signed with the new key; users who never install it stay pinned to the old key. Where the anchor is a **list** (the manifest trust list, Windows `publisherName`), a bridge release simply lists both old and new, and the switch itself needs no flag day. The remaining sections describe what "carries the new anchor" means for each mechanism, and how long you may need to keep the old key alive.
 
 :::tip[Plan the window before you need it]
 Rotation is much calmer when it is routine. Decide in advance how you will measure adoption of a bridge release (download counts on your update server, telemetry, or simply time elapsed against your `stagingPercentage` schedule) and what you will do with installs that never update.
@@ -29,17 +29,38 @@ Rotation is much calmer when it is routine. Decide in advance how you will measu
 
 ## Rotating the update-manifest signing key (Ed25519)
 
-electron-builder signs `latest*.yml` with an Ed25519 private key and embeds the matching public key into `app-update.yml`; electron-updater verifies the manifest with that public key before downloading anything. See [Signed Update Manifests](./signed-update-manifests.md) for the feature itself. Three facts drive the rotation procedure:
+electron-builder signs `latest*.yml` with one or more Ed25519 private keys and embeds the matching public keys into `app-update.yml`; electron-updater verifies the manifest against that list before downloading anything. See [Signed Update Manifests](./signed-update-manifests.md) for the feature itself. Four facts drive the rotation procedure:
 
-1. **The private key is resolved from, in order:** `updateManifest.signingKey` → `updateManifest.signingKeyFile` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. Whichever is found first signs every manifest for that platform.
-2. **The embedded public key is either explicit or derived.** If `updateManifest.publicKey` is set it is embedded as-is; otherwise the public half of the signing key is derived and embedded. This is what makes a bridge release possible: you can sign with key A while embedding key B.
-3. **An install trusts exactly one key.** `updateManifestPublicKey` is a single value. There is no list of accepted keys and no grace period; verification is fail-closed as soon as a key is configured.
+1. **An install trusts a LIST of keys.** `updateManifestPublicKey` in `app-update.yml` is either a single public key or a list of them. A manifest is accepted when *any* listed key validates *any* signature it carries. Verification is fail-closed as soon as at least one key is configured, and electron-updater never fetches replacement keys from the update server.
+2. **A manifest may carry several signatures.** Every configured signing key signs each `latest*.yml`; the result is written as a `signatures` list (one `{ keyId, signature }` entry per key) plus the legacy single `signature` field holding the first key's signature. `keyId` is the hex SHA-256 of the public key's SPKI DER encoding (printed by `create-update-key`), so you can see at a glance which keys signed a release.
+3. **The private keys are resolved from, in order:** `updateManifest.signingKey` → `updateManifest.signingKeyFile` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. The first source that is set wins, but that source may hold several keys: config values accept an array, a PEM value may contain several concatenated `-----BEGIN PRIVATE KEY-----` blocks, and `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` accepts several paths joined with the OS path delimiter (`:` on Linux/macOS, `;` on Windows).
+4. **The embedded trust list is either explicit or derived.** If `updateManifest.publicKey` is set (string or array) it is embedded as-is; otherwise the public half of *every* signing key is derived and embedded. This lets you trust a key before you sign with it.
 
 :::note[Platform blocks replace, they don't merge]
 A platform-specific `updateManifest` block (for example `linux.updateManifest`) *replaces* the top-level `updateManifest` block for that platform rather than being merged with it. If you set `publicKey` at the top level but also have a per-platform block, put `publicKey` in the per-platform block too.
 :::
 
-### Step by step
+### Recommended steady state: always trust the next key
+
+The cheapest rotation is the one you prepared for. Generate the *next* key today, keep its private half offline, and embed both public keys in every release:
+
+```yaml
+# electron-builder.yml
+updateManifest:
+  publicKey:
+    - |               # CURRENT key — the one CI signs with
+      -----BEGIN PUBLIC KEY-----
+      MCowBQYDK2VwAyEA...
+      -----END PUBLIC KEY-----
+    - |               # NEXT key — private half stored offline, not yet used
+      -----BEGIN PUBLIC KEY-----
+      MCowBQYDK2VwAyEA...
+      -----END PUBLIC KEY-----
+```
+
+Every install in the field then already trusts a successor. If the current key leaks, you can start signing with the next key immediately: no bridge release, no waiting for adoption. Rotation becomes "promote next to current, generate a new next", and the bridge release described below collapses into an ordinary release.
+
+### Planned rotation, step by step
 
 **1. Generate the new keypair.** Run this on a trusted machine, not in a shared CI log:
 
@@ -47,59 +68,46 @@ A platform-specific `updateManifest` block (for example `linux.updateManifest`) 
 npx electron-builder create-update-key --out ./update-private-key.new.pem
 ```
 
-The private key is written with mode `0600`; the public key is printed to stdout. Copy the public key (the whole `-----BEGIN PUBLIC KEY-----` block) somewhere you can paste it into config, and store the private key as a **new** CI secret alongside the old one. Do not replace the old secret yet.
+The private key is written with mode `0600`; the public key and its key id are printed to stdout. Store the private key as a **new** CI secret alongside the old one. Do not replace the old secret yet.
 
-**2. Ship the bridge release: sign with the OLD key, embed the NEW public key.** Keep the old private key in the environment as before, and add the new public key to your build configuration:
-
-```yaml
-# electron-builder.yml
-updateManifest:
-  # NEW public key, embedded into app-update.yml of this release
-  publicKey: |
-    -----BEGIN PUBLIC KEY-----
-    MCowBQYDK2VwAyEA...
-    -----END PUBLIC KEY-----
-```
+**2. Ship the bridge release: sign with BOTH keys, trust BOTH keys.** Provide both private keys to the build. The trust list is derived automatically, so no `publicKey` config is needed:
 
 ```sh
-# OLD private key still signs latest*.yml
-ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=/run/secrets/update-private-key.old.pem electron-builder --publish always
+# two files, joined with the OS path delimiter (":" on Linux/macOS, ";" on Windows)
+ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=/run/secrets/update-key.old.pem:/run/secrets/update-key.new.pem electron-builder --publish always
+
+# or both PEMs concatenated in one variable
+ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(cat update-key.old.pem update-key.new.pem)" electron-builder --publish always
 ```
 
-Installs in the field verify this release's manifest with the old key, accept it, and after updating trust the new key. Nothing else about the release needs to change; combine it with a normal feature release if you like.
+Put the **old** key first: its signature also fills the legacy `signature` field, which is what installs built before trust lists existed verify. The resulting `latest*.yml` carries two entries in `signatures`; installs in the field verify it with the old key, and after updating trust `[old, new]`. Nothing else about the release needs to change.
 
-**3. Wait for adoption.** Until the bridge release has reached the installs you care about, keep publishing with the old key (and keep `updateManifest.publicKey` pointing at the new key, so every release in this window is also a bridge release).
+**3. Keep dual-signing for your support window.** Every release you publish while both keys are configured is a bridge release: old installs verify it via the old signature, updated installs via either. How long to keep the old key depends on how far back you support updating from; measure adoption of the first dual-signed release and decide.
 
-**4. Switch the signing key.** Point the environment at the new private key and remove the explicit `publicKey` (derivation now yields the same key):
+**4. Drop the old key.** Remove the old private key from the environment. From this release on, manifests are signed by the new key only and `app-update.yml` trusts only the new key. Installs that took any dual-signed release verify them; installs that skipped the whole window fail with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` and stop updating.
 
-```sh
-ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=/run/secrets/update-private-key.new.pem electron-builder --publish always
-```
-
-From this release on, manifests are signed with the new key. Installs that took the bridge release verify them; installs that skipped it fail with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` and stop updating.
-
-**5. Deal with stragglers.** A `latest*.yml` carries one signature, so a single feed cannot satisfy both old and new installs after the switch. Your options are:
+**5. Deal with stragglers.** Installs older than the first dual-signed release trust only the old key. Your options are:
 
 - **Accept it** and tell users on very old versions to reinstall from your download page.
-- **Serve a separate feed.** Keep an additional channel or URL (for example `latest-legacy.yml` on a different `channel`) whose manifests are still signed with the old key, and have the old app builds point at it. This only works if the old builds can be steered there (`autoUpdater.channel`, `setFeedURL`, or a feed URL you controlled at the time).
-- **Runtime override.** Newer app code can set `autoUpdater.updateManifestPublicKey` explicitly; this overrides the value from `app-update.yml`, which is useful if the key must change between builds without a rebuild of `app-update.yml`, but it does not help installs that are already in the field.
+- **Keep dual-signing longer**, or serve them a separate feed (for example a `latest-legacy.yml` on a different `channel`) whose manifests are still signed with the old key. This only works if the old builds can be steered there (`autoUpdater.channel`, `setFeedURL`, or a feed URL you controlled at the time).
+- **Runtime override.** Newer app code can set `autoUpdater.updateManifestPublicKey` to a list explicitly; this overrides the value from `app-update.yml`, which helps if the trust list must change without rebuilding `app-update.yml`, but it does not help installs that are already in the field.
 
-**6. Retire the old key.** Once no feed is signed with it, delete the old private key from CI. Keep the *public* key on file for auditing.
+**6. Retire the old key.** Once no feed is signed with it, delete the old private key from CI. Keep the *public* key and its key id on file for auditing.
 
 ### If the private key is compromised
 
-An attacker holding the private key can produce a `latest*.yml` that every current install will accept, provided they can also place it (and a payload) on your update server or intercept the connection. Rotation is the only remedy; there is no revocation mechanism.
+An attacker holding a private key that installs still trust can produce a `latest*.yml` those installs will accept, provided they can also place it (and a payload) on your update server or intercept the connection. A trust list does **not** protect against the leaked key itself: as long as an install lists that key, a signature made with it verifies. The remedy is to get the leaked key out of the trust list on every install, and to stop signing with it, as fast as possible.
 
 1. **Lock down the feed first.** Revoke the publish credentials (`GH_TOKEN`, S3/R2 keys, and so on) and audit the manifests currently served. The manifest signature protects the metadata, but only if the storage it is served from has not already been overwritten.
-2. **Ship the bridge release immediately** (steps 1–2 above). It must still be signed with the compromised key, because that is the only key the installs trust; you are racing the attacker, so publish from a clean pipeline.
-3. **Switch to the new key as soon as adoption allows** (step 4) and never sign with the old key again.
-4. Because verification is fail-closed, once installs trust the new key, anything the attacker signs with the old one is rejected with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`. Unsigned manifests are rejected with `ERR_UPDATER_MANIFEST_NOT_SIGNED`.
+2. **If installs already trust a successor key** (the recommended steady state above): switch signing to that key now, embed `[successor, new-next]`, and never sign with the leaked key again. Every install that trusts the successor is protected from this point on.
+3. **If they do not:** ship a bridge release immediately. It must still be signed with the compromised key — that is the only key the installs trust — so sign with `[compromised, new]` and publish from a clean pipeline; you are racing the attacker. Follow with a release signed by the new key only as soon as adoption allows.
+4. **Remove the leaked key from the trust list** in the very next release (stop providing its private key; if you list keys explicitly, delete its entry). Until an install has taken that release it remains exposed to the leaked key; verification is otherwise fail-closed, so once it has, anything the attacker signs is rejected with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`, and unsigned manifests with `ERR_UPDATER_MANIFEST_NOT_SIGNED`.
 
 ### Key storage
 
-- **Never commit the private key.** `updateManifest.signingKey` exists for completeness; in practice use `ELECTRON_BUILDER_UPDATE_SIGN_KEY` (PEM contents) or `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (path to a mounted secret file) from your CI secret store.
-- Prefer the `_FILE` variant where your CI can mount secrets as files; it keeps the key out of process listings and environment dumps.
-- If the private key lives in an HSM or KMS that signs on your behalf, electron-builder cannot call it directly. Sign `latest*.yml` in a post-publish step of your own, and set `updateManifest.publicKey` so the correct public key is still embedded.
+- **Never commit private keys.** `updateManifest.signingKey` exists for completeness; in practice use `ELECTRON_BUILDER_UPDATE_SIGN_KEY` (PEM contents) or `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (paths to mounted secret files) from your CI secret store.
+- Prefer the `_FILE` variant where your CI can mount secrets as files; it keeps the keys out of process listings and environment dumps.
+- If a private key lives in an HSM or KMS that signs on your behalf, electron-builder cannot call it directly. Sign `latest*.yml` in a post-publish step of your own (append an entry to `signatures` with the matching `keyId`, or set `signature`), and list the public key in `updateManifest.publicKey` so it is embedded. electron-builder warns at build time when none of the keys it signs with is in an explicit `publicKey` list, since such a release cannot verify its own manifests.
 - Use one key per app (or per release channel if channels are operated by different teams). Sharing a key across unrelated apps means one compromise affects all of them.
 
 ## Windows: code-signing certificate rotation
@@ -193,23 +201,23 @@ Use this as a template for a rotation ticket.
 
 **Bridge release** (verified with the old key, carries the new anchor)
 
-- [ ] Ed25519: `updateManifest.publicKey` = new public key; sign with the old private key.
+- [ ] Ed25519: sign with `[old, new]` private keys (old first); the derived trust list embeds both. If you list keys explicitly, `updateManifest.publicKey` = `[old, new]`.
 - [ ] Windows: `win.sign.publisherName` = `[old subject, new subject]`; sign with the old certificate.
 - [ ] Linux GPG (if enforced): package installs the new public key; sign with the old GPG key.
 - [ ] macOS: nothing to bridge for a same-Team certificate change; announce a Team ID change in-app.
-- [ ] Verify the built `app-update.yml` contains the new `updateManifestPublicKey` / both `publisherName` entries before publishing.
+- [ ] Verify the built `app-update.yml` lists both keys under `updateManifestPublicKey` / both `publisherName` entries, and `latest*.yml` has two `signatures` entries, before publishing.
 
 **Switch**
 
 - [ ] Point CI at the new private key / certificate.
-- [ ] Ed25519: drop the explicit `publicKey` (or set it to the new key).
+- [ ] Ed25519: keep dual-signing for the support window, then remove the old private key (and its `publicKey` entry, if explicit). Consider embedding the *next* key already.
 - [ ] Windows: keep both names until the window closes.
 - [ ] Confirm an install on the bridge release updates successfully from the first release signed with the new key.
 
 **After**
 
 - [ ] Remove the old subject from `publisherName`, the old GPG key from the keyring.
-- [ ] Delete the old private key / certificate from CI; keep public halves for audit.
+- [ ] Delete the old private key / certificate from CI; keep public halves (and the Ed25519 key id) for audit.
 - [ ] Record the rotation date and the last version signed with the old key.
 
 ## Related
