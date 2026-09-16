@@ -201,11 +201,13 @@ describe("AppUpdater.verifyManifestSignature: minimumSystemVersion and packages"
     // getUpdateInfoAndProvider verifies right after getLatestVersion(), before any provider resolves URLs
     await expect(verify(updater, info)).resolves.toBeUndefined()
     const resolved = resolveFiles(info, new URL("https://example.com/feed/"))
+    // resolveFiles picks packages[process.arch] and falls back to ia32 (e.g. on the arm64 macOS runner)
+    const expectedArch = process.arch in info.packages! ? process.arch : "ia32"
     // resolveFiles copies packageInfo into a new object with an absolute URL...
-    expect((resolved[0] as any).packageInfo.path).toBe("https://example.com/feed/App-2.0.0-x64.nsis.7z")
+    expect((resolved[0] as any).packageInfo.path).toBe(`https://example.com/feed/App-2.0.0-${expectedArch}.nsis.7z`)
     expect(resolved[0].url.href).toBe("https://example.com/feed/App-2.0.0.exe")
     // ...and leaves the parsed manifest untouched, so the signed payload is the same on both sides
-    expect(info.packages!.x64.path).toBe("App-2.0.0-x64.nsis.7z")
+    expect(info.packages![expectedArch].path).toBe(`App-2.0.0-${expectedArch}.nsis.7z`)
     expect(info.files[0].url).toBe("App-2.0.0.exe")
     await expect(verify(updater, info)).resolves.toBeUndefined()
   })
