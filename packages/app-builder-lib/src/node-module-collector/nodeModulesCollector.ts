@@ -95,8 +95,17 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     return retry(
       async () => {
-        await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
+        const { code, stderr } = await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await fs.readFile(tempOutputFile, { encoding: "utf8" })
+        if (shellOutput.trim().length === 0) {
+          // Parsing an empty string would only yield a misleading "No JSON content found in output" (#10208).
+          // With npm this usually means npm itself threw while writing its buffered JSON tree at exit: npm's exit
+          // handler swallows that exception and exits 1 with nothing on stdout and only `verbose exit 1` in its log.
+          throw new Error(
+            `\`${[path.basename(command), ...args].join(" ")}\` (cwd: ${this.rootDir}) exited with code ${code} and produced no output on stdout; ` +
+              `with npm this usually means npm itself failed while writing its JSON dependency tree. stderr: ${stderr.trim().length > 0 ? stderr.trim() : "(empty)"}`
+          )
+        }
         const result = await Promise.resolve(this.parseDependenciesTree(shellOutput))
         return result
       },
@@ -377,10 +386,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * @param args - Array of command-line arguments
    * @param cwd - The working directory to execute the command in
    * @param tempOutputFile - The path to the temporary file where stdout will be written
-   * @returns Promise that resolves when the command completes successfully or rejects if it fails
-   * @throws {Error} If the child process spawn fails or exits with a non-zero code
+   * @returns Promise that resolves with the exit code and captured stderr when the command completes
+   * successfully (or with a tolerated exit code), or rejects if it fails
+   * @throws {Error} If the child process spawn fails or exits with a non-zero, unexpected code
    */
-  protected async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+  protected async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string): Promise<{ code: number; stderr: string }> {
     // Derive execName from the original command so the npm-list shouldIgnore check below keys off the
     // real invocation (e.g. "npm"), not the "powershell" wrapper we spawn on Windows.
     const execName = path.basename(command, path.extname(command))
@@ -393,7 +403,7 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     // directly with no shell. See buildPowerShellEncodedArgs for the UTF-8 / exit-code handling.
     const [spawnCommand, spawnArgs] = process.platform === "win32" ? (["powershell.exe", buildPowerShellEncodedArgs(command, args)] as const) : ([command, args] as const)
 
-    await new Promise<void>((resolve, reject) => {
+    return await new Promise<{ code: number; stderr: string }>((resolve, reject) => {
       const outStream = createWriteStream(tempOutputFile)
 
       const child = childProcess.spawn(spawnCommand, spawnArgs, {
@@ -460,7 +470,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         }
         settled = true
         const shouldResolve = code === 0 || shouldIgnore
-        return shouldResolve ? resolve() : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
+        // `code` is 0 or the tolerated `npm list` 1 whenever we resolve, so it is never null here.
+        return shouldResolve ? resolve({ code: code as number, stderr }) : reject(new Error(`Node module collector process exited with code ${code}:\n${stderr}`))
       }
 
       outStream.on("error", err => fail(new Error(`Node module collector failed writing output (${command}): ${err.message}`)))

@@ -1,4 +1,5 @@
-import { describe, test } from "vitest"
+import { describe, test, vi } from "vitest"
+import { log } from "builder-util"
 import { collectionMatchesAppDependencies, resolveFirstMatchingCollection } from "app-builder-lib/src/util/appFileCopier"
 import { PM } from "app-builder-lib/src/node-module-collector/packageManager"
 import type { NodeModuleInfo } from "app-builder-lib/src/util/packageDependencies"
@@ -149,6 +150,68 @@ describe("resolveFirstMatchingCollection", () => {
       run: () => Promise.resolve(collection([])),
     })
     expect(result).toBeUndefined()
+  })
+
+  test("falls through to the next approach with a warning when a collector throws (issue #10208)", async ({ expect }) => {
+    // npm exiting 1 with an empty stdout used to abort the build before TRAVERSAL ever ran.
+    const warnSpy = vi.spyOn(log, "warn")
+    const calls: Array<{ pm: PM; dir: string }> = []
+    const result = await resolveFirstMatchingCollection({
+      pmApproaches: [PM.NPM, PM.TRAVERSAL],
+      searchDirectories: ["/app"],
+      dependencies: appDeps,
+      run: (pm, dir) => {
+        calls.push({ pm, dir })
+        return pm === PM.NPM ? Promise.reject(new Error("`npm list` exited with code 1 and produced no output on stdout")) : Promise.resolve(collection(["minimist", "fs-extra"]))
+      },
+    })
+    expect(result?.nodeModules.map(m => m.name)).toEqual(["minimist", "fs-extra"])
+    expect(calls).toEqual([
+      { pm: PM.NPM, dir: "/app" },
+      { pm: PM.TRAVERSAL, dir: "/app" },
+    ])
+    expect(warnSpy).toHaveBeenCalledWith(
+      { pm: PM.NPM, searchDir: "/app", error: "`npm list` exited with code 1 and produced no output on stdout" },
+      "node module collection failed, trying next search directory/approach"
+    )
+    warnSpy.mockRestore()
+  })
+
+  test("rethrows the first error when every approach throws", async ({ expect }) => {
+    const warnSpy = vi.spyOn(log, "warn")
+    const promise = resolveFirstMatchingCollection({
+      pmApproaches: [PM.NPM, PM.TRAVERSAL],
+      searchDirectories: ["/app"],
+      dependencies: appDeps,
+      run: pm => Promise.reject(new Error(`${pm} failed`)),
+    })
+    await expect(promise).rejects.toThrow("npm failed")
+    expect(warnSpy).toHaveBeenCalledTimes(2)
+    warnSpy.mockRestore()
+  })
+
+  test("rethrows the collector error instead of silently reporting no node modules when the remaining approaches are empty", async ({ expect }) => {
+    const warnSpy = vi.spyOn(log, "warn")
+    const promise = resolveFirstMatchingCollection({
+      pmApproaches: [PM.NPM, PM.TRAVERSAL],
+      searchDirectories: ["/app"],
+      dependencies: appDeps,
+      run: pm => (pm === PM.NPM ? Promise.reject(new Error("npm failed")) : Promise.resolve(collection([]))),
+    })
+    await expect(promise).rejects.toThrow("npm failed")
+    warnSpy.mockRestore()
+  })
+
+  test("still returns a mismatched fallback collection when an earlier approach threw", async ({ expect }) => {
+    const warnSpy = vi.spyOn(log, "warn")
+    const result = await resolveFirstMatchingCollection({
+      pmApproaches: [PM.NPM, PM.TRAVERSAL],
+      searchDirectories: ["/app"],
+      dependencies: appDeps,
+      run: pm => (pm === PM.NPM ? Promise.reject(new Error("npm failed")) : Promise.resolve(collection(NPM_INTERNALS))),
+    })
+    expect(result?.nodeModules.map(m => m.name)).toEqual(NPM_INTERNALS)
+    warnSpy.mockRestore()
   })
 
   test("prefers a matching collection over an earlier mismatched fallback across directories", async ({ expect }) => {

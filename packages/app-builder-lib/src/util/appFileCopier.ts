@@ -252,6 +252,11 @@ export function collectionMatchesAppDependencies(nodeModules: NodeModuleInfo[], 
  * {@link collectionMatchesAppDependencies}). A non-empty collection that does NOT match — e.g. a
  * workspace-root tree returned for a sub-package — is retained only as a last-resort fallback so a
  * later approach (notably {@link PM.TRAVERSAL}) can supply the correct modules.
+ *
+ * An approach that throws (e.g. the package manager exited without producing its dependency tree,
+ * issue #10208) is logged as a warning and skipped so the remaining approaches still run. If every
+ * approach fails to produce a collection and at least one threw, the first error is rethrown rather
+ * than silently reporting "no node modules".
  */
 export async function resolveFirstMatchingCollection(options: {
   pmApproaches: PM[]
@@ -261,11 +266,19 @@ export async function resolveFirstMatchingCollection(options: {
 }): Promise<CollectedNodeModules | undefined> {
   const { pmApproaches, searchDirectories, dependencies, run } = options
   let fallback: CollectedNodeModules | undefined
+  let firstError: Error | undefined
 
   for (const pm of pmApproaches) {
     for (const dir of searchDirectories) {
       log.info({ pm, searchDir: dir }, "searching for node modules")
-      const deps = await run(pm, dir)
+      let deps: CollectedNodeModules
+      try {
+        deps = await run(pm, dir)
+      } catch (error: any) {
+        log.warn({ pm, searchDir: dir, error: error?.message ?? String(error) }, "node module collection failed, trying next search directory/approach")
+        firstError ??= error instanceof Error ? error : new Error(String(error))
+        continue
+      }
       if (deps.nodeModules.length === 0) {
         log.info({ pm, searchDir: dir }, "no node modules found in collection, trying next search directory")
         continue
@@ -277,6 +290,9 @@ export async function resolveFirstMatchingCollection(options: {
       log.info({ pm, searchDir: dir }, "collected node modules do not match the target package, trying next search directory/approach")
       fallback ??= deps
     }
+  }
+  if (fallback == null && firstError != null) {
+    throw firstError
   }
   return fallback
 }
