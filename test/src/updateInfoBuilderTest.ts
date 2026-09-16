@@ -6,7 +6,7 @@ import { Arch, TmpDir } from "builder-util"
 import { load as yamlLoad } from "js-yaml"
 import { vi } from "vitest"
 import { generateKeyPairSync, KeyObject } from "crypto"
-import { derivePublicKeyPem, generateUpdateSigningKeypair, loadUpdateSigningKeys, log, parsePrivateKey } from "builder-util"
+import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, loadUpdateSigningKeys, log, parsePrivateKey } from "builder-util"
 import { computeUpdateManifestKeyId, verifyManifestSignature, verifyManifestSignatures } from "builder-util-runtime"
 import { getAppUpdatePublishConfiguration } from "app-builder-lib/src/publish/PublishManager"
 import { PlatformPackager } from "app-builder-lib/src/platformPackager"
@@ -538,6 +538,20 @@ test("app-update.yml prefers an explicitly configured publicKey over the derived
 test("app-update.yml carries no public key when the packager has no signing key", async ({ expect }) => {
   const publishConfig = await getAppUpdatePublishConfiguration(makeAppUpdateConfigPackager(), null, Arch.x64, false)
   expect(publishConfig?.updateManifestPublicKey).toBeUndefined()
+})
+
+test("app-update.yml rejects a manually configured publish.updateManifestPublicKey", async ({ expect }) => {
+  // the trust list is owned by electron-builder (derived from the signing keys or taken from
+  // updateManifest.publicKey); a hand-set value would bypass validation and could silently shadow the derived one
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const packager = makeAppUpdateConfigPackager([parsePrivateKey(privateKeyPem)])
+  packager.config.publish.updateManifestPublicKey = publicKeyPem
+  const error = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false).then(
+    () => null,
+    (e: Error) => e
+  )
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toBe("publish.updateManifestPublicKey is managed by electron-builder and must not be set; configure updateManifest.publicKey instead")
 })
 
 test("no signature field is written when no signing key is configured", async ({ expect }) => {

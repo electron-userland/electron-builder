@@ -39,8 +39,9 @@ export interface PublishConfiguration {
    * Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update
    * manifest before downloading — the install's trust list. A manifest is accepted when any listed key
    * validates one of its signatures. Embedded into `app-update.yml` at build time when update manifest
-   * signing is enabled: a single string for one key, an array for several. Do not set manually — it is
-   * populated from `updateManifest.publicKey` or derived from the configured signing key(s).
+   * signing is enabled: a single string for one key, an array for several. Managed by electron-builder —
+   * populated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it
+   * manually in the `publish` configuration is rejected as a configuration error.
    * @private
    */
   readonly updateManifestPublicKey?: string | Array<string> | null

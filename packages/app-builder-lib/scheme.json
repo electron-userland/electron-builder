@@ -535,7 +535,7 @@
               ]
             }
           ],
-          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -686,7 +686,7 @@
               ]
             }
           ],
-          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updateProvider": {
           "description": "The Provider to provide UpdateInfo regarding available updates.  Required\nto use custom providers with electron-updater.",
@@ -1805,7 +1805,7 @@
               ]
             }
           ],
-          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -1964,7 +1964,7 @@
               ]
             }
           ],
-          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -2063,7 +2063,7 @@
               ]
             }
           ],
-          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -2191,7 +2191,7 @@
               ]
             }
           ],
-          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -6380,7 +6380,7 @@
               ]
             }
           ],
-          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -6901,7 +6901,7 @@
               ]
             }
           ],
-          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -7773,7 +7773,7 @@
               ]
             }
           ],
-          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -8267,7 +8267,7 @@
               ]
             }
           ],
-          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [

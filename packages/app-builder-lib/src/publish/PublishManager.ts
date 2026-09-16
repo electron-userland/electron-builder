@@ -327,25 +327,30 @@ export async function getAppUpdatePublishConfiguration(
   // so the user only manages the secrets. One key is written as a plain string (byte-identical to the
   // single-key format), several as a YAML list.
   const updateManifestConfig = packager.platformOptions.updateManifest ?? packager.config.updateManifest
-  if (publishConfig.updateManifestPublicKey == null) {
-    // The very same keys updateInfoBuilder signs `latest*.yml` with, so env-var-only signing
-    // (no `updateManifest` config block) embeds the matching public keys too, and the two sides
-    // cannot disagree about whether signing is enabled.
-    const signingKeys = await packager.updateSigningKeys.value
-    const explicitKeys = normalizeExplicitPublicKeys(updateManifestConfig?.publicKey)
-    const trustedKeys = explicitKeys.length > 0 ? explicitKeys : signingKeys.map(derivePublicKeyPem)
-    if (trustedKeys.length > 0) {
-      publishConfig.updateManifestPublicKey = trustedKeys.length === 1 ? trustedKeys[0] : trustedKeys
-    }
-    if (signingKeys.length > 0 && explicitKeys.length > 0) {
-      const trustedIds = new Set(trustedKeys.map(computeUpdateManifestKeyId))
-      if (!signingKeys.some(key => trustedIds.has(computeUpdateManifestKeyId(key)))) {
-        log.warn(
-          { platform: packager.platform.name, trustedKeys: trustedKeys.length },
-          "none of the update-manifest signing keys is in updateManifest.publicKey: installs of this release will not be able to verify manifests signed with the current key(s). " +
-            "Intended only for a deliberate bridge release; otherwise add the current public key to updateManifest.publicKey."
-        )
-      }
+  // `updateManifestPublicKey` is only ever assigned right below, on this fresh copy, so a value that is
+  // already present can only have come from the user's `publish` configuration. Rejecting it (rather than
+  // taking it as-is) keeps the trust list on the single validated path and stops a stale hand-copied key
+  // from silently shadowing the derived one.
+  if (publishConfig.updateManifestPublicKey != null) {
+    throw new InvalidConfigurationError("publish.updateManifestPublicKey is managed by electron-builder and must not be set; configure updateManifest.publicKey instead")
+  }
+  // The very same keys updateInfoBuilder signs `latest*.yml` with, so env-var-only signing
+  // (no `updateManifest` config block) embeds the matching public keys too, and the two sides
+  // cannot disagree about whether signing is enabled.
+  const signingKeys = await packager.updateSigningKeys.value
+  const explicitKeys = normalizeExplicitPublicKeys(updateManifestConfig?.publicKey)
+  const trustedKeys = explicitKeys.length > 0 ? explicitKeys : signingKeys.map(derivePublicKeyPem)
+  if (trustedKeys.length > 0) {
+    publishConfig.updateManifestPublicKey = trustedKeys.length === 1 ? trustedKeys[0] : trustedKeys
+  }
+  if (signingKeys.length > 0 && explicitKeys.length > 0) {
+    const trustedIds = new Set(trustedKeys.map(computeUpdateManifestKeyId))
+    if (!signingKeys.some(key => trustedIds.has(computeUpdateManifestKeyId(key)))) {
+      log.warn(
+        { platform: packager.platform.name, trustedKeys: trustedKeys.length },
+        "none of the update-manifest signing keys is in updateManifest.publicKey: installs of this release will not be able to verify manifests signed with the current key(s). " +
+          "Intended only for a deliberate bridge release; otherwise add the current public key to updateManifest.publicKey."
+      )
     }
   }
   return publishConfig
