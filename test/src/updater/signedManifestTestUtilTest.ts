@@ -1,7 +1,7 @@
 import { afterAll } from "vitest"
 import { generateUpdateSigningKeypair, serializeToYaml, TmpDir } from "builder-util"
 import { collectManifestSignatures, computeUpdateManifestKeyId, UpdateInfo, verifyManifestSignatures } from "builder-util-runtime"
-import { ensureDir, outputFile, readFile } from "fs-extra"
+import { copy, emptyDir, ensureDir, ensureSymlink, outputFile, readFile, readlink } from "fs-extra"
 import { load } from "js-yaml"
 import path from "path"
 import { removeUnstableProperties } from "../helpers/packTester"
@@ -101,6 +101,26 @@ describe("served manifest files", () => {
     const empty = await tmpDir.getTempDir({ prefix: "empty" })
     await ensureDir(empty)
     await expect(readEmbeddedUpdateConfig(empty)).rejects.toThrow(/No app-update\.yml/)
+  })
+})
+
+describe("serving several dists from one server root", () => {
+  // The unpacked mac app carries relative framework symlinks (`Versions/Current -> A`). fs-extra `copy` with
+  // `overwrite` refuses to replace such a symlink with an identical one (it compares the link targets, 'A' == 'A'),
+  // so a second dist can only be copied into the served root after it was emptied — see runKeyRotationTest.
+  test("a dist with relative symlinks can only be copied over a previous one after emptyDir", async ({ expect }) => {
+    const base = await tmpDir.getTempDir({ prefix: "symlink-dist" })
+    const dist = path.join(base, "dist")
+    const serverRoot = path.join(base, "server-root")
+    await outputFile(path.join(dist, "TestApp.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework"), "v2")
+    await ensureSymlink("A", path.join(dist, "TestApp.app/Contents/Frameworks/Electron Framework.framework/Versions/Current"))
+
+    await copy(dist, serverRoot, { recursive: true, overwrite: true })
+    await expect(copy(dist, serverRoot, { recursive: true, overwrite: true })).rejects.toThrow(/Cannot copy 'A' to a subdirectory of itself/)
+
+    await emptyDir(serverRoot)
+    await copy(dist, serverRoot, { recursive: true, overwrite: true })
+    expect(await readlink(path.join(serverRoot, "TestApp.app/Contents/Frameworks/Electron Framework.framework/Versions/Current"))).toBe("A")
   })
 })
 

@@ -3,7 +3,7 @@ import { getWindowsVm, ParallelsVmManager, PM, VmManager } from "app-builder-lib
 import { computeUpdateManifestKeyId, GenericServerOptions, Nullish, UpdateInfo, verifyManifestSignatures } from "builder-util-runtime"
 import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, spawn, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
-import { copy, existsSync, move, outputFile, readJsonSync, remove } from "fs-extra"
+import { copy, emptyDir, existsSync, move, outputFile, readJsonSync, remove } from "fs-extra"
 import { homedir } from "os"
 import path from "path"
 import { randomUUID } from "crypto"
@@ -18,8 +18,9 @@ import { installMac } from "./blackboxInstallMac"
 import { readEmbeddedUpdateConfig, readUpdateManifest, resignManifest, rewriteServedManifests } from "./signedManifestTestUtil"
 
 export const optionsForFlakyE2E = { sequential: true, retry: 2, timeout: EXTENDED_TIMEOUT } as const
-// Three builds and two update hops (plus negative launches) instead of two builds and one hop.
-export const optionsForFlakyMultiHopE2E = { ...optionsForFlakyE2E, timeout: EXTENDED_TIMEOUT * 1.5 } as const
+// Three builds and two update hops (plus negative launches) instead of two builds and one hop: 15-25 min per
+// attempt, so a single retry keeps a genuine failure within the 60-minute job cap of the mac runner.
+export const optionsForFlakyMultiHopE2E = { ...optionsForFlakyE2E, retry: 1, timeout: EXTENDED_TIMEOUT * 1.5 } as const
 
 /** Third version for multi-hop (key rotation) update tests: 1.0.0 → 1.0.1 → 1.0.2 */
 export const THIRD_VERSION_NUMBER = "1.0.2"
@@ -894,7 +895,10 @@ export async function runKeyRotationTest(context: TestContext, target: string, p
       expect(updateManifestPublicKey).toEqual([keyA.publicKeyPem, keyB.publicKeyPem])
       await writeServedUpdateConfig(updateConfigPath, { ...serverConfig, updateManifestPublicKey })
 
-      // Hop 2: v3 is signed by B only.
+      // Hop 2: v3 is signed by B only. Reset the served root first: fs-extra `copy` cannot overwrite the relative
+      // framework symlinks of the unpacked mac app (`Versions/Current -> A`) with themselves and throws
+      // "Cannot copy 'A' to a subdirectory of itself". Nothing is running between hops and the server reads lazily.
+      await emptyDir(rootDirectory)
       await copy(outDirs[2].dir, rootDirectory, { recursive: true, overwrite: true })
       assertManifestSignedBy(expect, await readUpdateManifest(rootDirectory), THIRD_VERSION_NUMBER, [keyB.publicKeyPem])
       await updateHop(expect, {
