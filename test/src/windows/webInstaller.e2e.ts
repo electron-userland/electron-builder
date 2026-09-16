@@ -2,10 +2,10 @@ import { Arch, Platform } from "electron-builder"
 import * as path from "path"
 import * as fs from "fs/promises"
 import { archiveContains, listArchiveEntries, listArchiveMethods, NON_DECODABLE_NSIS_FILTER } from "../helpers/archiveHelper"
-import { app, assertPack } from "../helpers/packTester"
+import { app } from "../helpers/packTester"
 
 // nsis-web builds: the web installer plus the *.nsis.7z app packages are built and inspected (or listed in the artifact
-// snapshot incl. latest.yml). The define-only tests (`effectiveOptionComputed`) live in webInstallerTest.ts.
+// snapshot incl. latest.yml). APP_PACKAGE_URL define resolution is unit-tested offline in webInstallerTest.ts.
 
 test("web installer", ({ expect }) =>
   app(
@@ -89,15 +89,3 @@ test("web installer, safe name on github", ({ expect }) =>
       },
     },
   }))
-
-// When publish is null and no appPackageUrl is given, the build must throw rather than produce a
-// silent broken installer.
-test("web installer, publish: null without appPackageUrl throws error", ({ expect }) =>
-  expect(
-    assertPack(expect, "test-app-one", {
-      targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
-      config: {
-        publish: null,
-      },
-    })
-  ).rejects.toThrow("Cannot compute app package download URL"))
