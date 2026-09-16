@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { log, walk } from "builder-util"
 import { GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, KeygenOptions, R2Options, SpacesOptions } from "builder-util-runtime"
 import { Arch, createTargets, Platform } from "electron-builder"
 import fsExtra from "fs-extra"
@@ -6,7 +6,7 @@ import { load } from "js-yaml"
 import * as path from "path"
 import { vi } from "vitest"
 import { assertThat } from "./helpers/fileAssert.js"
-import { app, checkDirContents } from "./helpers/packTester.js"
+import { app, toSystemIndependentPath } from "./helpers/packTester.js"
 
 function spacesPublisher(publishAutoUpdate = true): SpacesOptions {
   return {
@@ -251,6 +251,8 @@ test.ifNotWindows("mac artifactName ", async ({ expect }) => {
 // otherwise test "os macro" always failed for pull requests
 process.env.PUBLISH_FOR_PULL_REQUEST = "true"
 
+// ${arch} has to expand identically for an artifact and its blockmap: electron-updater resolves the blockmap as
+// `<artifact URL>.blockmap`, so a blockmap published to an arch-stripped path is never found (#9582).
 test.ifNotWindows("os macro", ({ expect }) =>
   app(
     expect,
@@ -261,7 +263,7 @@ test.ifNotWindows("os macro", ({ expect }) =>
           provider: "s3",
           bucket: "my bucket",
           // tslint:disable-next-line:no-invalid-template-strings
-          path: "${channel}/${os}",
+          path: "${channel}/${os}/${arch}",
         },
       },
     },
@@ -274,7 +276,13 @@ test.ifNotWindows("os macro", ({ expect }) =>
       packed: async context => {
         const dir = path.join(context.projectDir, "dist/s3")
         await assertThat(expect, dir).isDirectory()
-        await checkDirContents(expect, dir)
+        const uploaded = (await walk(dir, file => !path.basename(file).startsWith("."))).map(it => toSystemIndependentPath(path.relative(dir, it))).sort()
+        expect(uploaded).toEqual([
+          "latest/linux/x64/TestApp-1.1.0.zip",
+          "latest/mac/x64/Test App ßW-1.1.0-mac.zip",
+          "latest/mac/x64/Test App ßW-1.1.0-mac.zip.blockmap",
+          "latest/mac/x64/latest-mac.yml",
+        ])
       },
     }
   )

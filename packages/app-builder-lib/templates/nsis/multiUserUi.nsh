@@ -38,7 +38,7 @@ Var isForceCurrentInstall
 
 		StrCpy $isForceMachineInstall "0"
 		StrCpy $isForceCurrentInstall "0"
-		!ifmacrodef customInstallmode
+		!ifmacrodef customInstallMode
 		  !insertmacro customInstallMode
 		!endif
 

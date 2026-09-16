@@ -392,5 +392,32 @@ export async function collectNodeModulesWithLogging(platformPackager: PlatformPa
     log.warn({ dependencies: bundledDefaultIgnored }, "copied dependencies that shouldn't be needed, see ignoredProductionDependencies")
   }
 
+  warnAboutDeprecatedElectronPackages(deps.nodeModules)
+
   return deps.nodeModules
+}
+
+/**
+ * Long-deprecated Electron packages that v26 rejected outright as production dependencies.
+ *
+ * v27 dropped that guard without adding them to the default ignore list, so they are now copied into
+ * the app instead of failing the build — and `electron-prebuilt` drags a full second Electron binary
+ * (hundreds of MB) into app.asar with nothing in the log to explain the size jump.
+ */
+const DEPRECATED_ELECTRON_PACKAGES: Record<string, string> = {
+  "electron-prebuilt": "renamed to `electron` in 2016 — replace it with `electron`",
+  "electron-rebuild": "moved to `@electron/rebuild` — replace it and move it to devDependencies",
+  "electron-nightly": "a full Electron distribution — move it to devDependencies if it is not meant to ship",
+}
+
+function warnAboutDeprecatedElectronPackages(nodeModules: Array<{ name: string; excluded?: boolean }>): void {
+  const bundled = nodeModules.filter(it => !it.excluded && it.name in DEPRECATED_ELECTRON_PACKAGES)
+  for (const { name } of bundled) {
+    log.warn(
+      { dependency: name, solution: `add "${name}" to ignoredProductionDependencies, or move it to devDependencies` },
+      `${name} is declared in dependencies and is being packaged into your app (${DEPRECATED_ELECTRON_PACKAGES[name]}). ` +
+        "electron-builder <= 26 rejected this outright; v27 removed that guard and does not exclude it by default. " +
+        "See https://www.electron.build/docs/migration/v27-breaking-changes#electron-prebuilt-electron-rebuild-no-longer-error-and-are-not-excluded"
+    )
+  }
 }

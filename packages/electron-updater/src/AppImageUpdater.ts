@@ -8,7 +8,7 @@ import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
 import { findFile, Provider } from "./providers/Provider.js"
-import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./types.js"
+import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo, DownloadExecutorResult } from "./types.js"
 
 export class AppImageUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
@@ -33,7 +33,7 @@ export class AppImageUpdater extends BaseUpdater {
   }
 
   /*** @private */
-  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "AppImage", ["rpm", "deb", "pacman"])!
     return this.executeDownload({
