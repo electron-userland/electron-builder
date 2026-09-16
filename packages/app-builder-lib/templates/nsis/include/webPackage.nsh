@@ -1,3 +1,34 @@
+# Keep the downloaded package and the adjacent package's filename/hash in sync.
+!macro selectWebPackage FILE HASH
+  !ifdef APP_64_NAME
+    !ifdef APP_32_NAME
+      ${if} ${RunningX64}
+        StrCpy ${FILE} "${APP_64_NAME}"
+        StrCpy ${HASH} "${APP_64_HASH}"
+      ${else}
+        StrCpy ${FILE} "${APP_32_NAME}"
+        StrCpy ${HASH} "${APP_32_HASH}"
+      ${endif}
+    !else
+      StrCpy ${FILE} "${APP_64_NAME}"
+      StrCpy ${HASH} "${APP_64_HASH}"
+    !endif
+  !else ifdef APP_32_NAME
+    StrCpy ${FILE} "${APP_32_NAME}"
+    StrCpy ${HASH} "${APP_32_HASH}"
+  !else ifdef APP_ARM64_NAME
+    StrCpy ${FILE} "${APP_ARM64_NAME}"
+    StrCpy ${HASH} "${APP_ARM64_HASH}"
+  !endif
+
+  !ifdef APP_ARM64_NAME
+    ${if} ${IsNativeARM64}
+      StrCpy ${FILE} "${APP_ARM64_NAME}"
+      StrCpy ${HASH} "${APP_ARM64_HASH}"
+    ${endif}
+  !endif
+!macroend
+
 !macro downloadApplicationFiles
   Var /GLOBAL packageUrl
   Var /GLOBAL packageArch
@@ -6,29 +37,8 @@
   StrCpy $packageArch "${APP_PACKAGE_URL}"
 
   !ifdef APP_PACKAGE_URL_IS_INCOMPLETE
-    !ifdef APP_64_NAME
-      !ifdef APP_32_NAME
-	    	!ifdef APP_ARM64_NAME
-	  		  ${if} ${IsNativeARM64}
-	          StrCpy $packageUrl "$packageUrl/${APP_ARM64_NAME}"
-	        ${elseif} ${IsNativeAMD64}
-	          StrCpy $packageUrl "$packageUrl/${APP_64_NAME}"
-	        ${else}
-	          StrCpy $packageUrl "$packageUrl/${APP_32_NAME}"
-	        ${endif}
-		    !else
-	        ${if} ${IsNativeAMD64}
-	          StrCpy $packageUrl "$packageUrl/${APP_64_NAME}"
-	        ${else}
-	          StrCpy $packageUrl "$packageUrl/${APP_32_NAME}"
-	        ${endif}
-	     	!endif
-      !else
-        StrCpy $packageUrl "$packageUrl/${APP_64_NAME}"
-      !endif
-    !else
-      StrCpy $packageUrl "$packageUrl/${APP_32_NAME}"
-    !endif
+    !insertmacro selectWebPackage $0 $1
+    StrCpy $packageUrl "$packageUrl/$0"
   !endif
 
   ${if} ${IsNativeARM64}
