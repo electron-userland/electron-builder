@@ -26,7 +26,9 @@
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
     "dist",
-    "template.nuspectemplate"
+    "template.nuspectemplate",
+    "template.wxs",
+    "install-spinner.gif"
   ],
   "engines": {
     "node": ">=22.12.0"
@@ -37,12 +39,7 @@
   },
   "dependencies": {
     "app-builder-lib": "workspace:*",
-    "builder-util": "workspace:*",
-    "electron-winstaller": "5.4.0"
-  },
-  "devDependencies": {
-    "@types/archiver": "5.3.1",
-    "@types/fs-extra": "9.0.13"
+    "builder-util": "workspace:*"
   },
   "types": "./dist/SquirrelWindowsTarget.d.ts"
 }

@@ -25,8 +25,8 @@ export abstract class BaseUpdater extends AppUpdater {
     })
   }
 
-  quitAndInstall(options: QuitAndInstallOptions = {}): void {
-    const { isSilent = false, isForceRunAfter = false, waitUntilNextLaunch = false } = options
+  quitAndInstall(options: QuitAndInstallOptions | boolean = {}, legacyIsForceRunAfter?: boolean): void {
+    const { isSilent = false, isForceRunAfter = false, waitUntilNextLaunch = false } = this.normalizeQuitAndInstallOptions(options, legacyIsForceRunAfter)
     if (waitUntilNextLaunch) {
       this._logger.info(`Deferring install to next launch on explicit quitAndInstall (waitUntilNextLaunch)`)
       if (this.markPendingInstallOnNextLaunch()) {
