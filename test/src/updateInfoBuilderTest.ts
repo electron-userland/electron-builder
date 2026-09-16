@@ -806,3 +806,36 @@ test("alpha channel with arch suffix does not expand", async ({ expect }) => {
     expect(tasks.map(t => path.basename(t.file))).toEqual(["alpha-arm64.yml"])
   })
 })
+
+test("web installer: `packages` and `minimumSystemVersion` are signed as written to YAML and tampering them fails verification", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    const base = makeTask(dir, "App-1.0.0.exe", "sha-web", null)
+    const task: UpdateInfoFileTask = {
+      ...base,
+      packager: makeTaskPackager(parsePrivateKey(privateKeyPem)),
+      info: {
+        ...base.info,
+        minimumSystemVersion: "10.0.19041",
+        // as produced by createNsisWebDifferentialUpdateInfo: basename path plus the untyped `file` mirror
+        packages: {
+          x64: { path: "App-1.0.0-x64.nsis.7z", file: "App-1.0.0-x64.nsis.7z", sha512: "p64", size: 5000, blockMapSize: 120 },
+          ia32: { path: "App-1.0.0-ia32.nsis.7z", file: "App-1.0.0-ia32.nsis.7z", sha512: "p32", size: 4000, blockMapSize: 100 },
+        },
+      } as any,
+    }
+    await writeUpdateInfoFiles([task], makePackager() as any)
+    const yml = await readYml(path.join(dir, "latest.yml"))
+    expect(yml.minimumSystemVersion).toBe("10.0.19041")
+    expect(yml.packages.x64).toMatchObject({ path: "App-1.0.0-x64.nsis.7z", sha512: "p64", size: 5000, blockMapSize: 120 })
+    // the parsed YAML (what the updater sees) verifies against the signature computed before serialization
+    expect(verifyManifestSignature(yml, publicKeyPem)).toBe(true)
+    expect(verifyManifestSignature({ ...yml, packages: { ...yml.packages, x64: { ...yml.packages.x64, sha512: "evil" } } }, publicKeyPem)).toBe(false)
+    expect(verifyManifestSignature({ ...yml, packages: { x64: yml.packages.x64 } }, publicKeyPem)).toBe(false)
+    expect(verifyManifestSignature({ ...yml, minimumSystemVersion: "6.1.7601" }, publicKeyPem)).toBe(false)
+    const { minimumSystemVersion: _dropped, ...withoutMin } = yml
+    expect(verifyManifestSignature(withoutMin, publicKeyPem)).toBe(false)
+    // cosmetic fields stay editable after signing
+    expect(verifyManifestSignature({ ...yml, releaseNotes: "edited later", releaseName: "Renamed", releaseDate: "2099-01-01T00:00:00.000Z" }, publicKeyPem)).toBe(true)
+  })
+})

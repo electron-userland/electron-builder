@@ -263,8 +263,8 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
       task.info.releaseDate = releaseDate
     }
 
-    // Sign last: the signatures must cover the final version/files/stagingPercentage. releaseDate is
-    // excluded from the signed payload, so setting it above does not affect them.
+    // Sign last: the signatures must cover the final version/files/packages/stagingPercentage/minimumSystemVersion.
+    // releaseDate is excluded from the signed payload, so setting it above does not affect them.
     // The keys are resolved per task (not once for the batch) so each manifest is signed iff that
     // platform's config requires it, matching the per-platform public-key embedding in PublishManager.
     // Every configured key signs (dual-signing during key rotation): `signatures` holds one tagged entry

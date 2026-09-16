@@ -9,6 +9,7 @@ import {
   UPDATE_MANIFEST_SIGNATURE_VERSION,
   verifyManifestSignature,
   verifyManifestSignatures,
+  WindowsUpdateInfo,
 } from "builder-util-runtime"
 import { createUpdateManifestSignatures, derivePublicKeyPem, generateUpdateSigningKeypair, parsePrivateKey, signUpdateManifest } from "builder-util"
 import { createPublicKey, generateKeyPairSync } from "crypto"
@@ -309,5 +310,135 @@ describe("collectManifestSignatures", () => {
   test("is empty for an unsigned manifest", () => {
     expect(collectManifestSignatures(makeInfo())).toEqual([])
     expect(collectManifestSignatures(makeInfo({ signature: "", signatures: [] }))).toEqual([])
+  })
+})
+
+// ── minimumSystemVersion and NSIS web-installer packages ─────────────────────
+
+/** A web-installer manifest the way updateInfoBuilder writes it: `packages[arch].path` is the package basename. */
+function makeWebInfo(overrides: Partial<WindowsUpdateInfo> = {}): WindowsUpdateInfo {
+  return {
+    ...makeInfo({ minimumSystemVersion: "10.0.19041" }),
+    packages: {
+      x64: { path: "App-1.2.3-x64.nsis.7z", sha512: "p64", size: 5000, blockMapSize: 120, isAdminRightsRequired: true },
+      ia32: { path: "App-1.2.3-ia32.nsis.7z", sha512: "p32", size: 4000 },
+    },
+    ...overrides,
+  }
+}
+
+describe("canonicalizeForSigning: minimumSystemVersion and packages", () => {
+  test("pins the exact wire format (EBUM1) including the minos and package lines", () => {
+    const info = makeWebInfo({ stagingPercentage: 25, minimumSystemVersion: "10.0.22631", releaseNotes: "irrelevant" })
+    expect(canonicalizeForSigning(info)).toBe(
+      [
+        "EBUM1",
+        "version:1.2.3",
+        "staging:25",
+        "minos:10.0.22631",
+        "file:App-1.2.3.exe\tabc123\t8123456",
+        // packages sorted by arch; unset optional fields are empty columns, isAdminRightsRequired is "1" or ""
+        "package:ia32\tApp-1.2.3-ia32.nsis.7z\tp32\t4000\t\t",
+        "package:x64\tApp-1.2.3-x64.nsis.7z\tp64\t5000\t120\t1",
+      ].join("\n")
+    )
+  })
+
+  test("pins the exact wire format for a manifest with neither field: empty minos line, no package lines", () => {
+    const expected = ["EBUM1", "version:1.2.3", "staging:-", "minos:", "file:App-1.2.3.exe\tabc123\t8123456"].join("\n")
+    expect(canonicalizeForSigning(makeInfo())).toBe(expected)
+    // null / empty `packages` (non-web NSIS manifests, YAML `packages: null`) canonicalize identically
+    expect(canonicalizeForSigning({ ...makeInfo(), packages: null } as WindowsUpdateInfo)).toBe(expected)
+    expect(canonicalizeForSigning({ ...makeInfo(), packages: {} } as WindowsUpdateInfo)).toBe(expected)
+    expect(canonicalizeForSigning({ ...makeInfo(), minimumSystemVersion: undefined })).toBe(expected)
+  })
+
+  test("is stable regardless of package (arch key) order", () => {
+    const a = makeWebInfo()
+    const b = makeWebInfo({ packages: { ia32: a.packages!.ia32, x64: a.packages!.x64 } })
+    expect(Object.keys(a.packages!)).not.toEqual(Object.keys(b.packages!))
+    expect(canonicalizeForSigning(a)).toBe(canonicalizeForSigning(b))
+  })
+
+  test("isAdminRightsRequired is signed as a strict boolean true only", () => {
+    const withTrue = canonicalizeForSigning(makeWebInfo())
+    const withFalse = canonicalizeForSigning(makeWebInfo({ packages: { ...makeWebInfo().packages, x64: { ...makeWebInfo().packages!.x64, isAdminRightsRequired: false } } }))
+    const withUnset = canonicalizeForSigning(makeWebInfo({ packages: { ...makeWebInfo().packages, x64: { ...makeWebInfo().packages!.x64, isAdminRightsRequired: undefined } } }))
+    expect(withTrue).not.toBe(withFalse)
+    expect(withFalse).toBe(withUnset)
+  })
+
+  test("untyped extra package fields (the `file` mirror written by the NSIS target) are not signed", () => {
+    const info = makeWebInfo()
+    const withFile = makeWebInfo({ packages: { ...info.packages, x64: { ...info.packages!.x64, file: "App-1.2.3-x64.nsis.7z" } as any } })
+    expect(canonicalizeForSigning(withFile)).toBe(canonicalizeForSigning(info))
+  })
+
+  test("a null package entry does not throw and yields a distinct payload", () => {
+    const info = makeWebInfo({ packages: { x64: null as any } })
+    expect(() => canonicalizeForSigning(info)).not.toThrow()
+    expect(canonicalizeForSigning(info)).toContain("package:x64\t\t\t\t\t")
+    expect(canonicalizeForSigning(info)).not.toBe(canonicalizeForSigning(makeWebInfo({ packages: {} })))
+  })
+})
+
+describe("sign / verify: minimumSystemVersion and packages are covered", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+
+  test("verifies a correctly signed web-installer manifest carrying minimumSystemVersion", () => {
+    const info = signed(makeWebInfo(), privateKeyPem)
+    expect(verifyManifestSignature(info, publicKeyPem)).toBe(true)
+    expect(verifyManifestSignatures(info, [publicKeyPem]).ok).toBe(true)
+  })
+
+  test.each([
+    ["path", { path: "evil.nsis.7z" }],
+    ["sha512", { sha512: "EVIL" }],
+    ["size", { size: 5001 }],
+    ["blockMapSize", { blockMapSize: 121 }],
+    ["isAdminRightsRequired", { isAdminRightsRequired: false }],
+  ])("rejects a package entry whose %s was tampered", (_field, patch) => {
+    const info = signed(makeWebInfo(), privateKeyPem) as WindowsUpdateInfo
+    const tampered: WindowsUpdateInfo = { ...info, packages: { ...info.packages, x64: { ...info.packages!.x64, ...patch } } }
+    expect(verifyManifestSignature(tampered, publicKeyPem)).toBe(false)
+  })
+
+  test("rejects an added package entry", () => {
+    const info = signed(makeWebInfo(), privateKeyPem) as WindowsUpdateInfo
+    const tampered: WindowsUpdateInfo = { ...info, packages: { ...info.packages, arm64: { path: "App-1.2.3-arm64.nsis.7z", sha512: "evil", size: 1 } } }
+    expect(verifyManifestSignature(tampered, publicKeyPem)).toBe(false)
+  })
+
+  test("rejects a removed package entry", () => {
+    const info = signed(makeWebInfo(), privateKeyPem) as WindowsUpdateInfo
+    const { ia32: _dropped, ...rest } = info.packages!
+    const tampered: Array<WindowsUpdateInfo> = [
+      { ...info, packages: rest },
+      { ...info, packages: {} },
+      { ...info, packages: null },
+    ]
+    for (const it of tampered) {
+      expect(verifyManifestSignature(it, publicKeyPem)).toBe(false)
+    }
+  })
+
+  test("rejects a changed, removed or added minimumSystemVersion", () => {
+    const withMin = signed(makeInfo({ minimumSystemVersion: "10.0.19041" }), privateKeyPem)
+    expect(verifyManifestSignature(withMin, publicKeyPem)).toBe(true)
+    expect(verifyManifestSignature({ ...withMin, minimumSystemVersion: "6.1.7601" }, publicKeyPem)).toBe(false)
+    const { minimumSystemVersion: _dropped, ...removed } = withMin
+    expect(verifyManifestSignature(removed, publicKeyPem)).toBe(false)
+    expect(verifyManifestSignature({ ...withMin, minimumSystemVersion: undefined }, publicKeyPem)).toBe(false)
+
+    const without = signed(makeInfo(), privateKeyPem)
+    expect(verifyManifestSignature(without, publicKeyPem)).toBe(true)
+    expect(verifyManifestSignature({ ...without, minimumSystemVersion: "10.0.19041" }, publicKeyPem)).toBe(false)
+  })
+
+  test("a manifest with neither field still signs and verifies", () => {
+    const info = signed(makeInfo(), privateKeyPem)
+    expect(info.minimumSystemVersion).toBeUndefined()
+    expect((info as WindowsUpdateInfo).packages).toBeUndefined()
+    expect(verifyManifestSignature(info, publicKeyPem)).toBe(true)
   })
 })

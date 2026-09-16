@@ -1,5 +1,5 @@
 import { createHash, createPublicKey, KeyObject, verify as cryptoVerify } from "crypto"
-import { UpdateInfo, UpdateManifestSignature } from "./updateInfo.js"
+import { PackageFileInfo, UpdateInfo, UpdateManifestSignature, WindowsUpdateInfo } from "./updateInfo.js"
 
 /**
  * Version tag of the canonical signing format. Prefixed onto the signed payload so the
@@ -14,24 +14,52 @@ export const UPDATE_MANIFEST_SIGNATURE_VERSION = "EBUM1"
  * Produces the exact byte string that is Ed25519-signed at publish time and verified at update time.
  *
  * Only integrity- and rollout-critical fields are covered:
- *   - `version`            — prevents version downgrade/substitution
- *   - `stagingPercentage`  — prevents tampering with staged-rollout gating
+ *   - `version`               — prevents version downgrade/substitution
+ *   - `stagingPercentage`     — prevents tampering with staged-rollout gating
+ *   - `minimumSystemVersion`  — prevents bypassing or forging the OS-version gate (its absence is signed too,
+ *                               so one cannot be added after the fact)
  *   - each file's `url`, `sha512`, `size` — the artifact identity + integrity hash the updater enforces
+ *   - each NSIS web-installer package's `path`, `sha512`, `size`, `blockMapSize`, `isAdminRightsRequired`
+ *     (`WindowsUpdateInfo.packages`, keyed by arch) — the payload the web installer downloads and verifies
  *
- * Cosmetic/operational fields (`releaseDate`, `releaseNotes`, `releaseName`, `minimumSystemVersion`)
- * are intentionally excluded so they can be edited post-signing without invalidating the signature.
+ * Cosmetic/operational fields (`releaseDate`, `releaseNotes`, `releaseName`) are intentionally excluded so
+ * they can be edited post-signing without invalidating the signature. The `signature`/`signatures` fields are
+ * not part of the payload either, so signatures can be added or removed independently of one another.
  *
- * The format is deterministic regardless of object key order or YAML formatting: files are sorted by
- * url, fields are tab-separated, records are newline-separated, and a version prefix anchors the scheme.
- * Both the signer (build) and verifier (runtime) MUST call this identical function — it is a wire contract.
+ * The format is deterministic regardless of object key order or YAML formatting: files are sorted by url,
+ * packages by arch, fields are tab-separated, records are newline-separated, and a version prefix anchors the
+ * scheme. Both the signer (build) and verifier (runtime) MUST call this identical function — it is a wire
+ * contract — and both operate on the manifest exactly as written to `latest*.yml`: the signer runs on the
+ * final `UpdateInfo` right before serialization, the verifier on the parsed manifest before the provider
+ * resolves `files[].url` / `packages[arch].path` against the feed base URL.
  */
 export function canonicalizeForSigning(info: UpdateInfo): string {
-  const lines: string[] = [UPDATE_MANIFEST_SIGNATURE_VERSION, `version:${info.version}`, `staging:${info.stagingPercentage == null ? "-" : info.stagingPercentage}`]
+  const lines: string[] = [
+    UPDATE_MANIFEST_SIGNATURE_VERSION,
+    `version:${info.version}`,
+    `staging:${info.stagingPercentage == null ? "-" : info.stagingPercentage}`,
+    // always emitted (empty when unset) so that adding a minimumSystemVersion to a signed manifest is detected
+    `minos:${info.minimumSystemVersion ?? ""}`,
+  ]
 
   const files = (info.files ?? []).map(f => `file:${f.url}\t${f.sha512}\t${f.size == null ? "-" : f.size}`)
   // Sort so file ordering in the manifest cannot change the signed payload.
   files.sort()
   lines.push(...files)
+
+  // NSIS web installer only: the app payload is a separate per-arch package that the installer downloads.
+  // Nothing is emitted when there are no packages, so every other manifest is unaffected by this section.
+  const packages = (info as WindowsUpdateInfo).packages
+  if (packages != null) {
+    const packageLines = Object.keys(packages).map(arch => {
+      // a null/garbage entry still yields a (distinct) line rather than a crash, so verification fails cleanly
+      const p: Partial<PackageFileInfo> = packages[arch] ?? {}
+      return `package:${arch}\t${p.path ?? ""}\t${p.sha512 ?? ""}\t${p.size ?? ""}\t${p.blockMapSize ?? ""}\t${p.isAdminRightsRequired === true ? "1" : ""}`
+    })
+    // Sort so package (arch key) ordering in the manifest cannot change the signed payload.
+    packageLines.sort()
+    lines.push(...packageLines)
+  }
 
   return lines.join("\n")
 }

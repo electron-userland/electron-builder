@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest"
 import { DebUpdater } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
-import type { UpdateInfo } from "builder-util-runtime"
+import type { UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { resolveFiles } from "electron-updater/src/providers/Provider"
 import { computeUpdateManifestKeyId } from "builder-util-runtime"
 import { createUpdateManifestSignatures, generateUpdateSigningKeypair, signUpdateManifest } from "builder-util"
 
@@ -148,5 +149,64 @@ describe("AppUpdater.verifyManifestSignature (A1)", () => {
   it("treats an empty runtime trust list like no runtime override (falls back to config, here: none)", async () => {
     const updater = makeUpdater([])
     await expect(verify(updater, makeInfo())).resolves.toBeUndefined()
+  })
+})
+
+// ── minimumSystemVersion + NSIS web-installer packages, end to end through AppUpdater ──
+
+/** A web-installer manifest as written by updateInfoBuilder: raw basenames in `files[].url` and `packages[arch].path`. */
+function makeWebInfo(): WindowsUpdateInfo {
+  return {
+    ...makeInfo(),
+    minimumSystemVersion: "10.0.19041",
+    packages: {
+      x64: { path: "App-2.0.0-x64.nsis.7z", sha512: "p64", size: 5000, blockMapSize: 120, isAdminRightsRequired: true },
+      ia32: { path: "App-2.0.0-ia32.nsis.7z", sha512: "p32", size: 4000 },
+    },
+  }
+}
+
+describe("AppUpdater.verifyManifestSignature: minimumSystemVersion and packages", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+
+  const makeUpdater = () => {
+    const updater = new DebUpdater(null, stubApp)
+    updater.updateManifestPublicKey = publicKeyPem
+    return updater
+  }
+  const verify = (updater: DebUpdater, info: UpdateInfo) => (updater as any).verifyManifestSignature(info)
+
+  it("passes a correctly signed web-installer manifest", async () => {
+    await expect(verify(makeUpdater(), signed(makeWebInfo(), privateKeyPem))).resolves.toBeUndefined()
+  })
+
+  it("throws ERR_UPDATER_MANIFEST_SIGNATURE_INVALID when a package's sha512 or path is tampered", async () => {
+    const info = signed(makeWebInfo(), privateKeyPem) as WindowsUpdateInfo
+    const shaTampered: WindowsUpdateInfo = { ...info, packages: { ...info.packages, x64: { ...info.packages!.x64, sha512: "tampered" } } }
+    await expect(verify(makeUpdater(), shaTampered)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+    const pathTampered: WindowsUpdateInfo = { ...info, packages: { ...info.packages, x64: { ...info.packages!.x64, path: "evil.nsis.7z" } } }
+    await expect(verify(makeUpdater(), pathTampered)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+  })
+
+  it("throws ERR_UPDATER_MANIFEST_SIGNATURE_INVALID when minimumSystemVersion is changed or removed", async () => {
+    const info = signed(makeWebInfo(), privateKeyPem)
+    await expect(verify(makeUpdater(), { ...info, minimumSystemVersion: "6.1.7601" })).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+    const { minimumSystemVersion: _dropped, ...removed } = info
+    await expect(verify(makeUpdater(), removed)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+  })
+
+  it("verifies against the raw manifest: Provider.resolveFiles does not mutate `files`/`packages`, so verification passes before and after it", async () => {
+    const info = signed(makeWebInfo(), privateKeyPem) as WindowsUpdateInfo
+    const updater = makeUpdater()
+    // getUpdateInfoAndProvider verifies right after getLatestVersion(), before any provider resolves URLs
+    await expect(verify(updater, info)).resolves.toBeUndefined()
+    const resolved = resolveFiles(info, new URL("https://example.com/feed/"))
+    // resolveFiles copies packageInfo into a new object with an absolute URL...
+    expect((resolved[0] as any).packageInfo.path).toBe("https://example.com/feed/App-2.0.0-x64.nsis.7z")
+    expect(resolved[0].url.href).toBe("https://example.com/feed/App-2.0.0.exe")
+    // ...and leaves the parsed manifest untouched, so the signed payload is the same on both sides
+    expect(info.packages!.x64.path).toBe("App-2.0.0-x64.nsis.7z")
+    expect(info.files[0].url).toBe("App-2.0.0.exe")
+    await expect(verify(updater, info)).resolves.toBeUndefined()
   })
 })

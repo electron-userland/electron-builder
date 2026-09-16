@@ -93,7 +93,7 @@ Both fields are always written, even with a single key, so the manifest shape do
 
 ## What is signed
 
-Every signature covers the integrity-critical fields of the manifest: `version`, `stagingPercentage`, and every file entry's `url`, `sha512`, and `size` (in a canonical, order-independent form). Cosmetic fields such as `releaseDate` and release notes are not covered, so editing release notes after publishing does not invalidate the signature. The `signature`/`signatures` fields themselves (including `keyId`) are not part of the signed payload, so signatures can be added or removed without invalidating the others.
+Every signature covers the integrity-critical fields of the manifest: `version`, `stagingPercentage`, `minimumSystemVersion` (its absence is signed too, so an OS-version gate cannot be added or removed after signing), every file entry's `url`, `sha512`, and `size`, and — for the NSIS web installer — every `packages` entry's `path`, `sha512`, `size`, `blockMapSize`, and `isAdminRightsRequired` (all in a canonical, order-independent form). Cosmetic fields — `releaseName`, `releaseNotes`, and `releaseDate` — are not covered, so they remain editable after publishing without invalidating the signature. The `signature`/`signatures` fields themselves (including `keyId`) are not part of the signed payload, so signatures can be added or removed without invalidating the others.
 
 ## Verification behavior in electron-updater
 
