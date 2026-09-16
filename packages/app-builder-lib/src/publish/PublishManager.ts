@@ -14,6 +14,7 @@ import {
 import {
   BitbucketOptions,
   CancellationToken,
+  computeUpdateManifestKeyId,
   GenericServerOptions,
   getS3LikeProviderBaseUrl,
   GithubOptions,
@@ -21,6 +22,7 @@ import {
   githubUrl,
   GitlabOptions,
   KeygenOptions,
+  normalizePublicKeyList,
   Nullish,
   PublishConfiguration,
   PublishProvider,
@@ -320,24 +322,56 @@ export async function getAppUpdatePublishConfiguration(
     }
   }
 
-  // Embed the update-manifest verification public key so the updater can verify signed manifests.
-  // Explicit publicKey wins; otherwise derive it from the configured signing private key so the
-  // user only manages one secret.
+  // Embed the update-manifest trust list so the updater can verify signed manifests. An explicit
+  // `publicKey` list wins as-is; otherwise the public half of every configured signing key is derived
+  // so the user only manages the secrets. One key is written as a plain string (byte-identical to the
+  // single-key format), several as a YAML list.
   const updateManifestConfig = packager.platformOptions.updateManifest ?? packager.config.updateManifest
   if (publishConfig.updateManifestPublicKey == null) {
-    if (updateManifestConfig?.publicKey) {
-      publishConfig.updateManifestPublicKey = updateManifestConfig.publicKey
-    } else {
-      // The very same key updateInfoBuilder signs `latest*.yml` with, so env-var-only signing
-      // (no `updateManifest` config block) embeds the matching public key too, and the two sides
-      // cannot disagree about whether signing is enabled.
-      const signingKey = await packager.updateSigningKey.value
-      if (signingKey != null) {
-        publishConfig.updateManifestPublicKey = derivePublicKeyPem(signingKey)
+    // The very same keys updateInfoBuilder signs `latest*.yml` with, so env-var-only signing
+    // (no `updateManifest` config block) embeds the matching public keys too, and the two sides
+    // cannot disagree about whether signing is enabled.
+    const signingKeys = await packager.updateSigningKeys.value
+    const explicitKeys = normalizeExplicitPublicKeys(updateManifestConfig?.publicKey)
+    const trustedKeys = explicitKeys.length > 0 ? explicitKeys : signingKeys.map(derivePublicKeyPem)
+    if (trustedKeys.length > 0) {
+      publishConfig.updateManifestPublicKey = trustedKeys.length === 1 ? trustedKeys[0] : trustedKeys
+    }
+    if (signingKeys.length > 0 && explicitKeys.length > 0) {
+      const trustedIds = new Set(trustedKeys.map(computeUpdateManifestKeyId))
+      if (!signingKeys.some(key => trustedIds.has(computeUpdateManifestKeyId(key)))) {
+        log.warn(
+          { platform: packager.platform.name, trustedKeys: trustedKeys.length },
+          "none of the update-manifest signing keys is in updateManifest.publicKey: installs of this release will not be able to verify manifests signed with the current key(s). " +
+            "Intended only for a deliberate bridge release; otherwise add the current public key to updateManifest.publicKey."
+        )
       }
     }
   }
   return publishConfig
+}
+
+/**
+ * Normalizes the configured `updateManifest.publicKey` (string, multi-PEM string, or array) into distinct,
+ * validated Ed25519 public keys, preserving order. Duplicates and non-Ed25519 keys are configuration errors.
+ */
+function normalizeExplicitPublicKeys(value: string | Array<string> | null | undefined): Array<string> {
+  const keys = normalizePublicKeyList(value)
+  const seen = new Map<string, number>()
+  keys.forEach((key, index) => {
+    let keyId: string
+    try {
+      keyId = computeUpdateManifestKeyId(key)
+    } catch (e: any) {
+      throw new InvalidConfigurationError(`updateManifest.publicKey #${index + 1} is not a valid Ed25519 public key: ${e.message || e}`)
+    }
+    const previous = seen.get(keyId)
+    if (previous != null) {
+      throw new InvalidConfigurationError(`updateManifest.publicKey #${index + 1} duplicates entry #${previous + 1} (key id ${keyId}). List each trusted key once.`)
+    }
+    seen.set(keyId, index)
+  })
+  return keys
 }
 
 export async function writeAppUpdateYaml(resourcesDir: string, publishConfig: PublishConfiguration): Promise<void> {

@@ -11,7 +11,7 @@ import {
   getArtifactArchName,
   InvalidConfigurationError,
   isEmptyOrSpaces,
-  loadUpdateSigningKey,
+  loadUpdateSigningKeys,
   log,
   orIfFileNotExist,
   parsePrivateKey,
@@ -121,22 +121,24 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   private readonly _resourceList = new Lazy<Array<string>>(() => orIfFileNotExist(readdir(this.info.buildResourcesDir), []))
 
   /**
-   * Ed25519 private key used to sign auto-update manifests, or null when signing is disabled.
+   * Ed25519 private key(s) used to sign auto-update manifests; empty when signing is disabled.
    * Single source of truth for both consumers - updateInfoBuilder (signing `latest*.yml`) and
-   * PublishManager (embedding the derived public key in `app-update.yml`) - so the two can no longer
-   * disagree about whether signing is on. MemoLazy rather than Lazy so a hook mutating
-   * `updateManifest` between packs re-resolves, while a normal build parses the PEM once.
+   * PublishManager (embedding the derived public keys in `app-update.yml`) - so the two can no longer
+   * disagree about whether signing is on or which keys are in play. Several keys mean every manifest is
+   * signed by each of them (dual-signing during key rotation); the first key is the one written to the
+   * legacy single `signature` field. MemoLazy rather than Lazy so a hook mutating `updateManifest`
+   * between packs re-resolves, while a normal build parses the PEMs once.
    */
-  readonly updateSigningKey = new MemoLazy<UpdateManifestSigningOptions | null, KeyObject | null>(
+  readonly updateSigningKeys = new MemoLazy<UpdateManifestSigningOptions | null, Array<KeyObject>>(
     () => this.platformOptions.updateManifest ?? this.config.updateManifest ?? null,
     // resolution is fully synchronous (env/readFileSync + createPrivateKey); MemoLazy just wants a promise
     selected => {
-      const pem = loadUpdateSigningKey(selected ?? undefined)
-      if (pem == null) {
-        return Promise.resolve(null)
+      const pems = loadUpdateSigningKeys(selected)
+      if (pems.length === 0) {
+        return Promise.resolve([])
       }
-      log.info({ platform: this.platform.name }, "signing update manifests with Ed25519 key")
-      return Promise.resolve(parsePrivateKey(pem))
+      log.info({ platform: this.platform.name, keys: pems.length }, "signing update manifests with Ed25519 key(s)")
+      return Promise.resolve(pems.map(parsePrivateKey))
     }
   )
 

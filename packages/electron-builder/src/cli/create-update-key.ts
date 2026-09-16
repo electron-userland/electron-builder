@@ -1,4 +1,5 @@
 import { generateUpdateSigningKeypair, log } from "builder-util"
+import { computeUpdateManifestKeyId } from "builder-util-runtime"
 import chalk from "chalk"
 import { writeFile } from "fs/promises"
 import * as path from "path"
@@ -22,4 +23,5 @@ export async function createUpdateKey(outFile?: string) {
   log.info(null, "The matching public key is embedded into app-update.yml automatically; you do not need to configure it manually.\n")
 
   process.stdout.write(`${chalk.bold("Public key")} (for reference — auto-embedded into app-update.yml):\n${publicKeyPem}\n`)
+  process.stdout.write(`${chalk.bold("Key id")} (appears as \`keyId\` in the \`signatures\` list of each signed latest*.yml):\n${computeUpdateManifestKeyId(publicKeyPem)}\n`)
 }

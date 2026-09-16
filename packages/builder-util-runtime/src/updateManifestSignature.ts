@@ -1,5 +1,5 @@
-import { createPublicKey, KeyObject, verify as cryptoVerify } from "crypto"
-import { UpdateInfo } from "./updateInfo.js"
+import { createHash, createPublicKey, KeyObject, verify as cryptoVerify } from "crypto"
+import { UpdateInfo, UpdateManifestSignature } from "./updateInfo.js"
 
 /**
  * Version tag of the canonical signing format. Prefixed onto the signed payload so the
@@ -51,19 +51,87 @@ export function parsePublicKey(value: string): KeyObject {
 }
 
 /**
- * Verifies that `info.signature` is a valid Ed25519 signature over {@link canonicalizeForSigning}(info)
- * for the given public key. Returns a boolean and never throws on a bad signature — the caller decides
- * whether an unverified manifest is fatal. (Malformed keys still throw, since that is a configuration error.)
+ * Splits a text that may contain several concatenated PEM blocks into one string per block.
+ * Text without any `-----BEGIN` marker (e.g. a raw base64 SPKI key) is returned as a single entry.
+ * Whitespace-only input yields an empty array.
  */
-export function verifyManifestSignature(info: UpdateInfo, publicKey: string | KeyObject): boolean {
-  if (info.signature == null || info.signature.length === 0) {
-    return false
+export function splitPemBlocks(text: string): Array<string> {
+  const trimmed = text.trim()
+  if (trimmed.length === 0) {
+    return []
   }
-  const key = typeof publicKey === "string" ? parsePublicKey(publicKey) : publicKey
-  const data = Buffer.from(canonicalizeForSigning(info), "utf8")
+  if (!trimmed.includes("-----BEGIN")) {
+    return [trimmed]
+  }
+  const blocks = trimmed.match(/-----BEGIN [^-]+-----[\s\S]*?-----END [^-]+-----/g)
+  if (blocks == null || blocks.length === 0) {
+    // has a BEGIN marker but no complete block — hand it to the key parser so the error names the real problem
+    return [trimmed]
+  }
+  return blocks.map(it => it.trim())
+}
+
+/**
+ * Normalizes a configured public-key value (`updateManifestPublicKey` in `app-update.yml`, or the
+ * runtime override) into a flat list of key strings. A single string may itself contain several
+ * concatenated PEM blocks. `null`/`undefined` and blank entries yield an empty list.
+ */
+export function normalizePublicKeyList(value: string | Array<string> | null | undefined): Array<string> {
+  if (value == null) {
+    return []
+  }
+  const entries = Array.isArray(value) ? value : [value]
+  const result: Array<string> = []
+  for (const entry of entries) {
+    if (typeof entry === "string") {
+      result.push(...splitPemBlocks(entry))
+    }
+  }
+  return result
+}
+
+/**
+ * Stable identifier of an Ed25519 key: lowercase hex SHA-256 of the SPKI DER encoding of its public half.
+ * Recorded next to each signature in `UpdateInfo.signatures` so an updater holding several trusted keys can
+ * pick the matching signature without trial verification, and so humans can tell which key signed a release.
+ * Accepts a public key (PEM or base64 SPKI) or a public/private {@link KeyObject}.
+ */
+export function computeUpdateManifestKeyId(publicKey: string | KeyObject): string {
+  let key = typeof publicKey === "string" ? parsePublicKey(publicKey) : publicKey
+  if (key.type === "private") {
+    key = createPublicKey(key)
+  }
+  if (key.asymmetricKeyType !== "ed25519") {
+    throw new Error(`Update manifest key must be Ed25519, got: ${key.asymmetricKeyType}`)
+  }
+  return createHash("sha256")
+    .update(key.export({ type: "spki", format: "der" }))
+    .digest("hex")
+}
+
+/**
+ * Every signature carried by a manifest, as candidates for verification: the entries of
+ * `info.signatures` (each tagged with the id of the key that produced it) plus the legacy
+ * top-level `info.signature` (untagged) when it is set and not already present in the list.
+ * Blank entries are dropped. An empty result means the manifest is unsigned.
+ */
+export function collectManifestSignatures(info: UpdateInfo): Array<{ readonly keyId?: string; readonly signature: string }> {
+  const result: Array<{ readonly keyId?: string; readonly signature: string }> = []
+  for (const entry of info.signatures ?? []) {
+    if (entry != null && typeof entry.signature === "string" && entry.signature.length > 0) {
+      result.push({ keyId: typeof entry.keyId === "string" && entry.keyId.length > 0 ? entry.keyId : undefined, signature: entry.signature })
+    }
+  }
+  if (typeof info.signature === "string" && info.signature.length > 0 && !result.some(it => it.signature === info.signature)) {
+    result.push({ signature: info.signature })
+  }
+  return result
+}
+
+function verifySignatureBytes(data: Buffer, key: KeyObject, signature: string): boolean {
   let signatureBuffer: Buffer
   try {
-    signatureBuffer = Buffer.from(info.signature, "base64")
+    signatureBuffer = Buffer.from(signature, "base64")
   } catch {
     return false
   }
@@ -74,4 +142,53 @@ export function verifyManifestSignature(info: UpdateInfo, publicKey: string | Ke
     // Node versions — treat it as a verification failure, not a crash.
     return false
   }
+}
+
+/**
+ * Verifies a manifest against a trust list of Ed25519 public keys. The manifest is accepted when ANY
+ * trusted key validates ANY of the signatures it carries (see {@link collectManifestSignatures}); this is
+ * what lets a release be dual-signed during key rotation and an install trust `[old, new]`.
+ *
+ * For each trusted key, signatures tagged with that key's {@link computeUpdateManifestKeyId} are tried
+ * first, then untagged (legacy `signature`) entries — so a stale or foreign `keyId` never prevents a
+ * legitimately signed manifest from verifying. Never throws on a bad signature; malformed *keys* still
+ * throw, since that is a configuration error. Returns the id of the trusted key that verified, if any.
+ */
+export function verifyManifestSignatures(info: UpdateInfo, publicKeys: Array<string | KeyObject>): { ok: boolean; keyId?: string } {
+  const candidates = collectManifestSignatures(info)
+  if (candidates.length === 0 || publicKeys.length === 0) {
+    return { ok: false }
+  }
+  const data = Buffer.from(canonicalizeForSigning(info), "utf8")
+  const seen = new Set<string>()
+  for (const publicKey of publicKeys) {
+    const key = typeof publicKey === "string" ? parsePublicKey(publicKey) : publicKey
+    const keyId = computeUpdateManifestKeyId(key)
+    if (seen.has(keyId)) {
+      continue
+    }
+    seen.add(keyId)
+    const tagged = candidates.filter(it => it.keyId === keyId)
+    const untagged = candidates.filter(it => it.keyId == null)
+    for (const candidate of [...tagged, ...untagged]) {
+      if (verifySignatureBytes(data, key, candidate.signature)) {
+        return { ok: true, keyId }
+      }
+    }
+  }
+  return { ok: false }
+}
+
+/**
+ * Single-key convenience over {@link verifyManifestSignatures}: true when `publicKey` validates the
+ * legacy `info.signature` or any entry of `info.signatures`. Returns a boolean and never throws on a bad
+ * signature — the caller decides whether an unverified manifest is fatal. (Malformed keys still throw.)
+ */
+export function verifyManifestSignature(info: UpdateInfo, publicKey: string | KeyObject): boolean {
+  return verifyManifestSignatures(info, [publicKey]).ok
+}
+
+/** Builds the `signatures` entry for one key: the key's id next to its base64 signature. */
+export function createManifestSignatureEntry(publicKey: string | KeyObject, signature: string): UpdateManifestSignature {
+  return { keyId: computeUpdateManifestKeyId(publicKey), signature }
 }

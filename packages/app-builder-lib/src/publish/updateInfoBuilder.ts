@@ -1,5 +1,5 @@
 import asyncPool from "tiny-async-pool"
-import { Arch, log, safeStringifyJson, serializeToYaml, signUpdateManifest } from "builder-util"
+import { Arch, createUpdateManifestSignatures, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -263,12 +263,19 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
       task.info.releaseDate = releaseDate
     }
 
-    // Sign last: `signature` must cover the final version/files/stagingPercentage. releaseDate is
-    // excluded from the signed payload, so setting it above does not affect the signature.
-    // The key is resolved per task (not once for the batch) so each manifest is signed iff that
+    // Sign last: the signatures must cover the final version/files/stagingPercentage. releaseDate is
+    // excluded from the signed payload, so setting it above does not affect them.
+    // The keys are resolved per task (not once for the batch) so each manifest is signed iff that
     // platform's config requires it, matching the per-platform public-key embedding in PublishManager.
-    const signingKey = await task.packager.updateSigningKey.value
-    const info: UpdateInfo = signingKey == null ? task.info : { ...task.info, signature: signUpdateManifest(task.info, signingKey) }
+    // Every configured key signs (dual-signing during key rotation): `signatures` holds one tagged entry
+    // per key and the legacy single `signature` field repeats the first key's signature, so the manifest
+    // shape is the same whether one or several keys are configured.
+    const signingKeys = await task.packager.updateSigningKeys.value
+    let info: UpdateInfo = task.info
+    if (signingKeys.length > 0) {
+      const signatures = createUpdateManifestSignatures(task.info, signingKeys)
+      info = { ...task.info, signature: signatures[0].signature, signatures }
+    }
 
     const fileContent = Buffer.from(serializeToYaml(info, false, true))
     await fsExtra.outputFile(task.file, fileContent)

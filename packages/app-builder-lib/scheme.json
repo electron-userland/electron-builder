@@ -521,11 +521,21 @@
           ]
         },
         "updateManifestPublicKey": {
-          "description": "Ed25519 public key (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled. Do not set manually — it is populated from the configured signing key.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
         },
         "updaterCacheDirName": {
           "type": [
@@ -662,11 +672,21 @@
           ]
         },
         "updateManifestPublicKey": {
-          "description": "Ed25519 public key (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled. Do not set manually — it is populated from the configured signing key.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
         },
         "updateProvider": {
           "description": "The Provider to provide UpdateInfo regarding available updates.  Required\nto use custom providers with electron-updater.",
@@ -1771,11 +1791,21 @@
           ]
         },
         "updateManifestPublicKey": {
-          "description": "Ed25519 public key (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled. Do not set manually — it is populated from the configured signing key.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
         },
         "updaterCacheDirName": {
           "type": [
@@ -1920,11 +1950,21 @@
           ]
         },
         "updateManifestPublicKey": {
-          "description": "Ed25519 public key (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled. Do not set manually — it is populated from the configured signing key.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
         },
         "updaterCacheDirName": {
           "type": [
@@ -2009,11 +2049,21 @@
           ]
         },
         "updateManifestPublicKey": {
-          "description": "Ed25519 public key (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled. Do not set manually — it is populated from the configured signing key.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
         },
         "updaterCacheDirName": {
           "type": [
@@ -2127,11 +2177,21 @@
           ]
         },
         "updateManifestPublicKey": {
-          "description": "Ed25519 public key (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled. Do not set manually — it is populated from the configured signing key.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
         },
         "updaterCacheDirName": {
           "type": [
@@ -6306,11 +6366,21 @@
           ]
         },
         "updateManifestPublicKey": {
-          "description": "Ed25519 public key (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled. Do not set manually — it is populated from the configured signing key.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
         },
         "updaterCacheDirName": {
           "type": [
@@ -6817,11 +6887,21 @@
           ]
         },
         "updateManifestPublicKey": {
-          "description": "Ed25519 public key (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled. Do not set manually — it is populated from the configured signing key.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
         },
         "updaterCacheDirName": {
           "type": [
@@ -7679,11 +7759,21 @@
           ]
         },
         "updateManifestPublicKey": {
-          "description": "Ed25519 public key (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled. Do not set manually — it is populated from the configured signing key.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
         },
         "updaterCacheDirName": {
           "type": [
@@ -8163,11 +8253,21 @@
           ]
         },
         "updateManifestPublicKey": {
-          "description": "Ed25519 public key (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled. Do not set manually — it is populated from the configured signing key.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Do not set manually — it is\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s)."
         },
         "updaterCacheDirName": {
           "type": [
@@ -8506,25 +8606,55 @@
       "additionalProperties": false,
       "properties": {
         "publicKey": {
-          "description": "The Ed25519 public key (PEM or base64 SPKI) embedded into `app-update.yml` for the updater to verify with.\nOptional — when omitted it is derived automatically from the configured private key.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.\nThe updater accepts a manifest when any listed key validates one of its signatures. Optional — when\nomitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust\nadditional keys ahead of a rotation (for example `[current, next]`) or when the private key is held by an\nexternal signer."
         },
         "signingKey": {
-          "description": "Ed25519 private key in PEM (PKCS#8) format used to sign the update manifest.\nSecret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable in CI over committing this to config.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 private key(s) in PEM (PKCS#8) format used to sign the update manifest. A single PEM string may\ncontain several concatenated keys, or pass an array with one key each; the manifest is signed by every key\n(dual-signing for [key rotation](https://www.electron.build/features/key-rotation)) and the first key also\nfills the legacy single `signature` field.\nSecret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable in CI over committing this to config."
         },
         "signingKeyFile": {
-          "description": "Path to a file containing the Ed25519 private key (PEM, PKCS#8). Alternative to `signingKey`.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Path(s) to file(s) containing the Ed25519 private key (PEM, PKCS#8). Alternative to `signingKey`.\nAn array signs with every listed key, in order."
         }
       },
       "type": "object"

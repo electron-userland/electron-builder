@@ -245,21 +245,28 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
 
 export interface UpdateManifestSigningOptions {
   /**
-   * Ed25519 private key in PEM (PKCS#8) format used to sign the update manifest.
+   * Ed25519 private key(s) in PEM (PKCS#8) format used to sign the update manifest. A single PEM string may
+   * contain several concatenated keys, or pass an array with one key each; the manifest is signed by every key
+   * (dual-signing for [key rotation](https://www.electron.build/features/key-rotation)) and the first key also
+   * fills the legacy single `signature` field.
    * Secret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable in CI over committing this to config.
    */
-  readonly signingKey?: string | null
+  readonly signingKey?: string | Array<string> | null
 
   /**
-   * Path to a file containing the Ed25519 private key (PEM, PKCS#8). Alternative to `signingKey`.
+   * Path(s) to file(s) containing the Ed25519 private key (PEM, PKCS#8). Alternative to `signingKey`.
+   * An array signs with every listed key, in order.
    */
-  readonly signingKeyFile?: string | null
+  readonly signingKeyFile?: string | Array<string> | null
 
   /**
-   * The Ed25519 public key (PEM or base64 SPKI) embedded into `app-update.yml` for the updater to verify with.
-   * Optional — when omitted it is derived automatically from the configured private key.
+   * The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.
+   * The updater accepts a manifest when any listed key validates one of its signatures. Optional — when
+   * omitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust
+   * additional keys ahead of a rotation (for example `[current, next]`) or when the private key is held by an
+   * external signer.
    */
-  readonly publicKey?: string | null
+  readonly publicKey?: string | Array<string> | null
 }
 
 export interface ReleaseInfo {
