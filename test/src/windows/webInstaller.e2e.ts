@@ -101,3 +101,22 @@ test("web installer, publish: null without appPackageUrl throws error", ({ expec
       },
     })
   ).rejects.toThrow("Cannot compute app package download URL"))
+
+test("web installer architecture variants with custom include", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64, Arch.arm64),
+      config: {
+        publish: { provider: "generic", url: "https://example.com/releases" },
+        nsisWeb: { include: "custom-installer.nsh", artifactName: "${productName}-${arch}.${ext}" },
+      },
+    },
+    {
+      projectDirCreated: projectDir =>
+        fs.writeFile(path.join(projectDir, "build", "custom-installer.nsh"), '!macro customInit\n!appendfile "${BUILD_RESOURCES_DIR}/custom-include-used" "included"\n!macroend'),
+      packed: async context => {
+        expect(await fs.readFile(path.join(context.projectDir, "build", "custom-include-used"), "utf8")).toContain("included")
+      },
+    }
+  ))
