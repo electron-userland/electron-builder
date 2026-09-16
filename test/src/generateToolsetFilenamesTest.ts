@@ -6,7 +6,7 @@ import { GENERATED_TESTS_DIR } from "../vitest-scripts/runtime-tests/generate-to
 import { detectFilePlatforms, getAllTestFiles, isE2eTestFile, platformAllowed } from "../vitest-scripts/vitest-config/file-discovery"
 import { resolveCachedMs } from "../vitest-scripts/vitest-config/shard-builder"
 import type { FileStats } from "../vitest-scripts/vitest-config/cache"
-import type { SupportedPlatforms } from "../vitest-scripts/vitest-config/smart-config"
+import { getTestFilesOverride, type SupportedPlatforms } from "../vitest-scripts/vitest-config/smart-config"
 
 // Collect all generated test filenames recursively (`*Test.ts` and `*.e2e.ts`)
 function collectGeneratedFiles(dir: string): string[] {
@@ -196,8 +196,9 @@ describe("TEST_MODE file discovery", () => {
     generateTests()
   })
 
-  // TEST_FILES forces inclusion regardless of mode, so the partition only holds without an override.
-  const withoutOverride = process.env.TEST_FILES ? it.skip : it
+  // TEST_FILES forces inclusion regardless of mode, so the partition only holds without a real override (a blank
+  // TEST_FILES, as docker/run-tests.sh passes for an unset variable, is not one).
+  const withoutOverride = getTestFilesOverride() ? it.skip : it
 
   for (const platform of ["linux", "darwin", "win32"] as SupportedPlatforms[]) {
     withoutOverride(`unit and e2e are disjoint and partition all on ${platform}`, () => {
@@ -217,6 +218,34 @@ describe("TEST_MODE file discovery", () => {
       }
     })
   }
+
+  // docker/run-tests.sh forwards `-e TEST_FILES="${TEST_FILES:-}"`, so an unset variable reaches discovery as "". That must
+  // behave exactly like unset: `"".split(",")` → `[""]` would make every directory entry (helpers, .sh, dockerfiles) an
+  // "override match" and inflate the file universe (253 files / 14 shards on Linux instead of 201 / 11).
+  it('TEST_FILES="" (blank) is not an override and discovers the same files as unset', () => {
+    const original = process.env.TEST_FILES
+    try {
+      delete process.env.TEST_FILES
+      expect(getTestFilesOverride()).toBeUndefined()
+      const unset = getAllTestFiles("linux", "all")
+
+      for (const blank of ["", "   ", " , ,"]) {
+        process.env.TEST_FILES = blank
+        expect(getTestFilesOverride(), `TEST_FILES=${JSON.stringify(blank)}`).toBeUndefined()
+        expect(getAllTestFiles("linux", "all"), `TEST_FILES=${JSON.stringify(blank)}`).toEqual(unset)
+      }
+      expect(unset.some(f => f.endsWith("/helpers/packTester.ts") || f.endsWith(".sh"))).toBe(false)
+
+      process.env.TEST_FILES = " snapHeavy , webInstaller "
+      expect(getTestFilesOverride()).toEqual(["snapHeavy", "webInstaller"])
+    } finally {
+      if (original == null) {
+        delete process.env.TEST_FILES
+      } else {
+        process.env.TEST_FILES = original
+      }
+    }
+  })
 
   it("hand-written e2e files are discovered next to their unit-level siblings", () => {
     const e2e = getAllTestFiles("linux", "e2e")

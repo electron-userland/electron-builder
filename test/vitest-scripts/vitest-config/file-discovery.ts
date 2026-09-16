@@ -1,6 +1,6 @@
 import * as fs from "fs"
 import * as path from "path"
-import { PLATFORM, SupportedPlatforms, TargetPlatform, TEST_MODE, TEST_ROOT, TestMode, skipPerOSTests, skippedTests } from "./smart-config.js"
+import { getTestFilesOverride, PLATFORM, SupportedPlatforms, TargetPlatform, TEST_MODE, TEST_ROOT, TestMode, skipPerOSTests, skippedTests } from "./smart-config.js"
 
 export function platformAllowed(file: string, platform: TargetPlatform = "current"): boolean {
   const resolved: SupportedPlatforms = platform === "current" ? PLATFORM : platform
@@ -94,8 +94,6 @@ export function detectFilePlatforms(file: string): Set<SupportedPlatforms> | nul
   return sawBlock ? allowed : null
 }
 
-const testOverride = process.env.TEST_FILES?.trim()?.split(",")
-
 /**
  * e2e test files build the installer/archive and inspect it; everything else stops at the app directory. Hand-written
  * files are `<name>.e2e.ts`; generated toolset files carry the platform marker in front of the tail, so an ungated suite
@@ -120,7 +118,7 @@ function modeAllows(name: string, mode: TestMode): boolean {
   }
 }
 
-function collectTests(dir: string, platform: TargetPlatform = "current", mode: TestMode = TEST_MODE, out: string[] = []): string[] {
+function collectTests(dir: string, platform: TargetPlatform, mode: TestMode, testOverride: string[] | undefined, out: string[] = []): string[] {
   if (!fs.existsSync(dir)) {
     return out
   }
@@ -135,7 +133,7 @@ function collectTests(dir: string, platform: TargetPlatform = "current", mode: T
     const full = path.join(dir, name)
 
     if (!name.startsWith(".") && fs.statSync(full).isDirectory()) {
-      collectTests(full, platform, mode, out)
+      collectTests(full, platform, mode, testOverride, out)
     } else {
       if (isOverrideMatch || (isTestFile(name) && modeAllows(name, mode))) {
         out.push(normalizePath(full))
@@ -147,7 +145,8 @@ function collectTests(dir: string, platform: TargetPlatform = "current", mode: T
 }
 
 export function getAllTestFiles(platform: TargetPlatform = "current", mode: TestMode = TEST_MODE): string[] {
-  return collectTests(TEST_ROOT, platform, mode).filter(file => platformAllowed(file, platform))
+  // blank / unset TEST_FILES is "no override" (see getTestFilesOverride) — never a match-everything `[""]`
+  return collectTests(TEST_ROOT, platform, mode, getTestFilesOverride()).filter(file => platformAllowed(file, platform))
 }
 
 function isSkippedTest(file: string, platform: TargetPlatform): boolean {

@@ -4,9 +4,25 @@ export type TargetPlatform = "darwin" | "win32" | "linux" | "current"
 export type SupportedPlatforms = Exclude<TargetPlatform, "current">
 
 export const TEST_ROOT = "test/src"
+
+/**
+ * The `TEST_FILES` override as a list of trimmed, non-empty filename substrings, or `undefined` when it is unset or
+ * blank. A blank value is not an override: docker/run-tests.sh always passes `-e TEST_FILES="${TEST_FILES:-}"`, so inside
+ * the container an unset variable arrives as `""` — and `"".split(",")` would yield `[""]`, which `name.includes("")`
+ * matches for every directory entry (helpers, shell scripts, dockerfiles …). Every reader of `TEST_FILES` goes through
+ * this helper so they agree on what "no override" means. Read on each call so tests can stub the variable.
+ */
+export function getTestFilesOverride(): string[] | undefined {
+  const tokens = (process.env.TEST_FILES ?? "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean)
+  return tokens.length > 0 ? tokens : undefined
+}
+
 // Each token expands to `<token>.ts`, `<token>*Test.ts`, `<token>*.e2e.ts` and `<token>*__e2e.ts` in run-vitest.ts, so the
 // default admits every hand-written and generated test file (see isE2eTestFile in file-discovery.ts for the e2e spellings).
-export const TEST_FILES_PATTERN = process.env.TEST_FILES?.trim() || "*Test,*test,*.e2e,*__e2e"
+export const TEST_FILES_PATTERN = getTestFilesOverride()?.join(",") ?? "*Test,*test,*.e2e,*__e2e"
 
 /**
  * Which class of test files discovery admits (see file-discovery.ts):
