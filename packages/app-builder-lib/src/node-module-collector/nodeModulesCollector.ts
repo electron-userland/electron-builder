@@ -115,8 +115,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
         const shellOutput = await _fsExtra.readFile(tempOutputFile, { encoding: "utf8" })
         if (shellOutput.trim().length === 0) {
           // Parsing an empty string would only yield a misleading "No JSON content found in output" (#10208).
-          // With npm this usually means npm itself failed while writing its JSON tree (the exception is
-          // swallowed and the process exits 1 with nothing on stdout, https://github.com/npm/npm/issues/17624).
+          // With npm this usually means npm itself threw while writing its buffered JSON tree at exit: npm's exit
+          // handler swallows that exception and exits 1 with nothing on stdout and only `verbose exit 1` in its log.
           throw new Error(
             `\`${[path.basename(command), ...args].join(" ")}\` (cwd: ${this.rootDir}) exited with code ${code} and produced no output on stdout; ` +
               `with npm this usually means npm itself failed while writing its JSON dependency tree. stderr: ${stderr.trim().length > 0 ? stderr.trim() : "(empty)"}`
