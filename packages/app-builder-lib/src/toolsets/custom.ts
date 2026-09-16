@@ -1,5 +1,5 @@
 import { exists, sanitizeDirPath, validateSecuredUrl } from "builder-util"
-import { mkdir, rmdir, stat } from "fs/promises"
+import { mkdir, rm, stat } from "fs/promises"
 import * as path from "path"
 import { ToolsetCustom } from "../configuration.js"
 import { cacheDirectoryOverrideAllowed, downloadBuilderToolset, extractArchive, hashUrlSafe } from "../util/electronGet.js"
@@ -85,7 +85,7 @@ async function _resolveCustomToolsetPath(custom: ToolsetCustom, resourcesDir?: s
     // config field, so a `../…` value must not let rmdir/extract escape the cache directory.
     const toolsetTarget = sanitizeDirPath(path.join(customToolsetDir, releaseName), customToolsetDir)
     if (await exists(toolsetTarget)) {
-      await rmdir(toolsetTarget, { recursive: true })
+      await rm(toolsetTarget, { recursive: true })
     }
     await extractArchive(resolveFilePath(toolset.url, resourcesDir), toolsetTarget)
     return toolsetTarget
