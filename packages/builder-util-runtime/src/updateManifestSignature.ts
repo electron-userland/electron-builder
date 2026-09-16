@@ -39,7 +39,7 @@ export function canonicalizeForSigning(info: UpdateInfo): string {
     `version:${info.version}`,
     `staging:${info.stagingPercentage == null ? "-" : info.stagingPercentage}`,
     // always emitted (empty when unset) so that adding a minimumSystemVersion to a signed manifest is detected
-    `minos:${info.minimumSystemVersion ?? ""}`,
+    `minimumSystemVersion:${info.minimumSystemVersion ?? ""}`,
   ]
 
   const files = (info.files ?? []).map(f => `file:${f.url}\t${f.sha512}\t${f.size == null ? "-" : f.size}`)

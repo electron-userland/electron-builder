@@ -328,14 +328,14 @@ function makeWebInfo(overrides: Partial<WindowsUpdateInfo> = {}): WindowsUpdateI
 }
 
 describe("canonicalizeForSigning: minimumSystemVersion and packages", () => {
-  test("pins the exact wire format (EBUM1) including the minos and package lines", () => {
+  test("pins the exact wire format (EBUM1) including the minimumSystemVersion and package lines", () => {
     const info = makeWebInfo({ stagingPercentage: 25, minimumSystemVersion: "10.0.22631", releaseNotes: "irrelevant" })
     expect(canonicalizeForSigning(info)).toBe(
       [
         "EBUM1",
         "version:1.2.3",
         "staging:25",
-        "minos:10.0.22631",
+        "minimumSystemVersion:10.0.22631",
         "file:App-1.2.3.exe\tabc123\t8123456",
         // packages sorted by arch; unset optional fields are empty columns, isAdminRightsRequired is "1" or ""
         "package:ia32\tApp-1.2.3-ia32.nsis.7z\tp32\t4000\t\t",
@@ -344,8 +344,8 @@ describe("canonicalizeForSigning: minimumSystemVersion and packages", () => {
     )
   })
 
-  test("pins the exact wire format for a manifest with neither field: empty minos line, no package lines", () => {
-    const expected = ["EBUM1", "version:1.2.3", "staging:-", "minos:", "file:App-1.2.3.exe\tabc123\t8123456"].join("\n")
+  test("pins the exact wire format for a manifest with neither field: empty minimumSystemVersion line, no package lines", () => {
+    const expected = ["EBUM1", "version:1.2.3", "staging:-", "minimumSystemVersion:", "file:App-1.2.3.exe\tabc123\t8123456"].join("\n")
     expect(canonicalizeForSigning(makeInfo())).toBe(expected)
     // null / empty `packages` (non-web NSIS manifests, YAML `packages: null`) canonicalize identically
     expect(canonicalizeForSigning({ ...makeInfo(), packages: null } as WindowsUpdateInfo)).toBe(expected)
