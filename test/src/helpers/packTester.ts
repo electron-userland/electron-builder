@@ -85,6 +85,14 @@ function getUnlockedInstallArgs(pm: PM): Array<string> | undefined {
   return undefined
 }
 
+// Fixture dependencies come straight from the registry and must never run their own install hooks (supply chain).
+// Nothing is lost: native modules are built by electron-builder's own @electron/rebuild step right after the
+// install, which is the product feature under test. npm, yarn 1, pnpm and bun all take `--ignore-scripts` on
+// `install`; yarn berry has no such flag and is handled through YARN_ENABLE_SCRIPTS on the install env instead.
+function getIgnoreScriptsInstallArgs(pm: PM): Array<string> {
+  return pm === PM.YARN_BERRY ? [] : ["--ignore-scripts"]
+}
+
 function getLockfileFixtureNameCandidates(currentTestName: string): Array<string> {
   const names: Array<string> = []
   const normalizedTestName = currentTestName.trim()
@@ -293,7 +301,11 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
-      const additionalInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : checkOptions.storeDepsLockfileSnapshot ? getUnlockedInstallArgs(pm) : undefined
+      const lockfileInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : checkOptions.storeDepsLockfileSnapshot ? getUnlockedInstallArgs(pm) : undefined
+      const additionalInstallArgs = [...getIgnoreScriptsInstallArgs(pm), ...(lockfileInstallArgs ?? [])]
+      // Scoped to this install only: `runtimeEnv` also reaches the packager, whose install-or-rebuild path must keep
+      // building natives. YARN_ENABLE_SCRIPTS is read by yarn berry alone (see getIgnoreScriptsInstallArgs).
+      const installEnv = pm === PM.YARN_BERRY ? { ...runtimeEnv, YARN_ENABLE_SCRIPTS: "0" } : runtimeEnv
 
       await installDependencies(
         configuration,
@@ -306,7 +318,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
           frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
           additionalArgs: additionalInstallArgs,
         },
-        runtimeEnv
+        installEnv
       )
 
       if (typeof postNodeModulesInstallHook === "function") {
