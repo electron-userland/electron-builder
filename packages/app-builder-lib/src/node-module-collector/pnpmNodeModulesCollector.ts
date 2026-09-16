@@ -3,6 +3,7 @@ import { LogMessageByKey, type Package } from "./moduleManager"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { getPackageManagerCommand, PM } from "./packageManager"
 import { PnpmDependency } from "./types"
+import { isValidKey } from "builder-util"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   public readonly installOptions = {
@@ -36,6 +37,10 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
    */
   private readonly collectedDeps: Set<string> = new Set()
 
+  /** Reverse index of `allDependencies` keyed by package name (without version). Built once on
+   *  first access inside `extractProductionDependencyGraph`, after `allDependencies` is settled. */
+  private _allDepsByName: Map<string, PnpmDependency> | null = null
+
   /**
    * Returns the workspace packages to iterate over, gated by detected pnpm version:
    * - pnpm v11+: multi-entry workspace output → return the full parsed array
@@ -50,6 +55,19 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
   protected getArgs(): string[] {
     return ["list", "--prod", "--json", "--depth", "Infinity", "--silent", "--loglevel=error"]
+  }
+
+  private getAllDepsByName(): Map<string, PnpmDependency> {
+    if (!this._allDepsByName) {
+      this._allDepsByName = new Map()
+      for (const [id, dep] of this.allDependencies.entries()) {
+        const { name } = this.parseNameVersion(id)
+        if (!this._allDepsByName.has(name)) {
+          this._allDepsByName.set(name, dep)
+        }
+      }
+    }
+    return this._allDepsByName
   }
 
   /**
@@ -118,7 +136,22 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     const all = packageJson ? { ...packageJson.dependencies, ...packageJson.optionalDependencies } : { ...tree.dependencies, ...tree.optionalDependencies }
     const optional = packageJson ? { ...packageJson.optionalDependencies } : {}
 
-    const deps = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
+    const deps: Record<string, PnpmDependency> = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
+
+    // pnpm --prod omits sub-deps for link: packages (and synthetic entries derived from them), and pnpm
+    // 10.29.3+ prints a repeated subtree only once, so every later occurrence is a childless `deduped`
+    // stub (which is what `tree` is when the stub was the first occurrence collected). For any dep
+    // declared in the package.json (all) that pnpm left out of the tree, recover the resolved entry
+    // from allDependencies so it lands in the production graph.
+    for (const [depName, declaredRange] of Object.entries(all)) {
+      if (!deps[depName]) {
+        const dep = await this.resolveOmittedDependency(depName, declaredRange, tree.path)
+        if (dep && isValidKey(depName)) {
+          deps[depName] = dep
+        }
+      }
+    }
+
     this.productionGraph[dependencyId] = { dependencies: [] }
     const depPromises = Object.entries(deps).map(async ([packageName, dependency]) => {
       // First check if it's in production dependencies
@@ -149,6 +182,25 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       }
     }
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
+  }
+
+  /**
+   * Resolve a dependency that `pnpm list` left out of a package's tree to its `allDependencies` entry.
+   * The lookup goes through the copy node itself would load from `parentPath` (the package's real store
+   * directory), filtered by the declared range, and falls back to a name-only match only when nothing on
+   * disk resolves to a collected entry (a `link:` dep, whose entry is keyed by its `link:` version).
+   *
+   * A name-only lookup returns whichever version was collected first, which is wrong as soon as two
+   * versions of the package are installed: with the app pinning es5-ext@0.10.53 while its transitive
+   * d@1.0.2 needs es5-ext ^0.10.64, `d` was wired to 0.10.53 and the nested 0.10.64 copy (with its own
+   * esniff / event-emitter / next-tick@1.1.0 closure) vanished from the asar (#8493). pnpm 10.29.3+
+   * made this common, because its deduped output routes every repeated package through this recovery.
+   */
+  private async resolveOmittedDependency(depName: string, declaredRange: unknown, parentPath: string | undefined): Promise<PnpmDependency | undefined> {
+    const range = typeof declaredRange === "string" ? declaredRange : undefined
+    const located = await this.locateFromDepOrRoot(depName, parentPath, range)
+    const exact = located ? this.allDependencies.get(`${depName}@${located.packageJson.version}`) : undefined
+    return exact ?? this.getAllDepsByName().get(depName)
   }
 
   protected async collectAllDependencies(_tree: PnpmDependency, _appPackageName: string): Promise<void> {
