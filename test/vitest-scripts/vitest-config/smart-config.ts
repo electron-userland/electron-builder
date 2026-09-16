@@ -56,10 +56,10 @@ export const skippedTests =
     .filter(Boolean) ||
   [
     // These tests require running on a native Linux environment with Flatpak support
-    // "flatpakTest",
+    // "flatpak.e2e",
     // These tests are run separately due to different docker images used for testing, and they are currently unstable in the CI environment
     // Test via `./test/src/linux/test-snap.sh`
-    // "snapHeavyTest",
+    // "snapHeavy.e2e",
     // "snapTest",
     // General instability tests are below
     // None currently, but this is where we would add any test that is currently unstable in the CI environment and needs to be excluded from smart sharding until it can be fixed.
