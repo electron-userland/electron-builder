@@ -133,7 +133,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     () => this.platformOptions.updateManifest ?? this.config.updateManifest ?? null,
     // resolution is fully synchronous (env/readFileSync + createPrivateKey); MemoLazy just wants a promise
     selected => {
-      const pems = loadUpdateSigningKeys(selected)
+      // relative signingKeyFile paths are project-relative, like every other path in the configuration
+      const pems = loadUpdateSigningKeys(selected, this.projectDir)
       if (pems.length === 0) {
         return Promise.resolve([])
       }

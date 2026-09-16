@@ -8654,7 +8654,7 @@
               ]
             }
           ],
-          "description": "Path(s) to file(s) containing the Ed25519 private key (PEM, PKCS#8). Alternative to `signingKey`.\nAn array signs with every listed key, in order."
+          "description": "Path(s) to file(s) containing the Ed25519 private key (PEM, PKCS#8). Alternative to `signingKey`.\nAn array signs with every listed key, in order. Relative paths are resolved against the project directory."
         }
       },
       "type": "object"

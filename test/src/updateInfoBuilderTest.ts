@@ -319,8 +319,8 @@ async function withSigningEnv<T>(env: { ELECTRON_BUILDER_UPDATE_SIGN_KEY?: strin
 // PlatformPackager is abstract with only two abstract members, so the real class (and therefore the
 // real `updateSigningKeys` MemoLazy) can be exercised without standing up a full Packager.
 class TestPackager extends PlatformPackager<any> {
-  constructor(config: any) {
-    super({ config } as any, Platform.LINUX)
+  constructor(config: any, projectDir?: string) {
+    super({ config, projectDir } as any, Platform.LINUX)
   }
 
   protected override prepareAppInfo(): any {
@@ -371,6 +371,27 @@ test("updateSigningKeys reads a PEM file from signingKeyFile and from ELECTRON_B
 
     await withSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: keyFile }, async () => {
       expect(publicKeysOf(await new TestPackager({}).updateSigningKeys.value)).toEqual([publicKeyPem])
+    })
+  })
+})
+
+test("a relative signingKeyFile resolves against the project directory, a relative ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE against cwd", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    const relativeKeyFile = path.join("build", "update-key.pem")
+    await fsp.mkdir(path.join(dir, "build"))
+    await fsp.writeFile(path.join(dir, relativeKeyFile), privateKeyPem)
+
+    await withSigningEnv({}, async () => {
+      // the config path is project-relative like every other path in the build configuration...
+      expect(loadUpdateSigningKeys({ signingKeyFile: relativeKeyFile }, dir).map(derivePublicKeyPem)).toEqual([publicKeyPem])
+      expect(publicKeysOf(await new TestPackager({ updateManifest: { signingKeyFile: relativeKeyFile } }, dir).updateSigningKeys.value)).toEqual([publicKeyPem])
+      // ...so it is NOT looked up relative to the current working directory (where it does not exist)
+      expect(() => loadUpdateSigningKeys({ signingKeyFile: relativeKeyFile })).toThrow(/ENOENT/)
+    })
+    // the env var keeps ordinary environment-variable semantics: baseDir does not apply to it
+    await withSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: relativeKeyFile }, async () => {
+      expect(() => loadUpdateSigningKeys(null, dir)).toThrow(/ENOENT/)
     })
   })
 })

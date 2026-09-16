@@ -46,6 +46,7 @@ updateManifest:
   # A string (which may contain several concatenated PEM blocks) or an array of strings.
   signingKey: null
   # Path(s) to file(s) containing private key(s). Alternative to signingKey. String or array.
+  # Relative paths resolve against the project directory.
   signingKeyFile: null
   # Public key(s) (PEM or base64 SPKI) embedded into app-update.yml as the updater's trust list.
   # Optional — derived automatically from the private key(s) when omitted. String or array.
@@ -59,6 +60,8 @@ Key resolution order is: `signingKey` → `signingKeyFile` → `ELECTRON_BUILDER
 | `signingKey` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY` | concatenate the PEM blocks (`cat a.pem b.pem`), or use an array in config |
 | `signingKeyFile` | an array of paths in config |
 | `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` | join the paths with the OS path delimiter: `a.pem:b.pem` on Linux/macOS, `a.pem;b.pem` on Windows |
+
+A relative `signingKeyFile` path resolves against the project directory (where the build configuration lives), like every other path in the configuration; a relative `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` resolves against the current working directory, as environment-variable paths usually do.
 
 Every key must be a distinct Ed25519 key; duplicates and other key types fail the build. When several keys are configured, **each manifest is signed by all of them** and the trust list embeds all of their public keys — this is the dual-signing used during [key rotation](#key-rotation).
 

@@ -255,7 +255,7 @@ export interface UpdateManifestSigningOptions {
 
   /**
    * Path(s) to file(s) containing the Ed25519 private key (PEM, PKCS#8). Alternative to `signingKey`.
-   * An array signs with every listed key, in order.
+   * An array signs with every listed key, in order. Relative paths are resolved against the project directory.
    */
   readonly signingKeyFile?: string | Array<string> | null
 

@@ -62,7 +62,8 @@ function toList(value: string | Array<string> | null | undefined): Array<string>
 /**
  * Resolves the Ed25519 signing private key(s) (PEM) from, in precedence order:
  *   1. explicit `signingKey` config value (PEM literal, or an array of them)
- *   2. `signingKeyFile` config value (path to a PEM file, or an array of paths)
+ *   2. `signingKeyFile` config value (path to a PEM file, or an array of paths; relative paths are resolved
+ *      against `baseDir` — the project directory — when given, like every other path in the build configuration)
  *   3. `ELECTRON_BUILDER_UPDATE_SIGN_KEY` env (PEM literal — preferred for CI secrets)
  *   4. `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` env (path to a PEM file; several paths may be joined with
  *      `path.delimiter`, i.e. `:` on POSIX and `;` on Windows)
@@ -71,8 +72,10 @@ function toList(value: string | Array<string> | null | undefined): Array<string>
  * forms hold one key each. Every key is validated (Ed25519, no duplicates) and returned in configured order —
  * the first key is the one written to the legacy single `signature` field.
  * Returns an empty array when nothing is set, meaning manifest signing is disabled.
+ * `baseDir` only affects config `signingKeyFile` entries; an `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` path
+ * keeps the usual environment-variable semantics and is resolved against the current working directory.
  */
-export function loadUpdateSigningKeys(config?: UpdateSigningKeySources | null): Array<string> {
+export function loadUpdateSigningKeys(config?: UpdateSigningKeySources | null, baseDir?: string | null): Array<string> {
   let pems: Array<string>
   let source: string
   const configKeys = toList(config?.signingKey)
@@ -84,7 +87,7 @@ export function loadUpdateSigningKeys(config?: UpdateSigningKeySources | null): 
     pems = configKeys.flatMap(splitPemBlocks)
   } else if (configFiles.length > 0) {
     source = "updateManifest.signingKeyFile"
-    pems = configFiles.flatMap(file => splitPemBlocks(readFileSync(file, "utf8")))
+    pems = configFiles.flatMap(file => splitPemBlocks(readFileSync(baseDir == null ? file : path.resolve(baseDir, file), "utf8")))
   } else if (envKey != null && envKey.trim().length > 0) {
     source = "ELECTRON_BUILDER_UPDATE_SIGN_KEY"
     pems = splitPemBlocks(envKey)
@@ -124,8 +127,8 @@ function validateSigningKeys(pems: Array<string>, source: string): Array<string>
  * Single-key convenience over {@link loadUpdateSigningKeys}: the first configured signing key (PEM), or
  * null when manifest signing is disabled.
  */
-export function loadUpdateSigningKey(config?: UpdateSigningKeySources | null): string | null {
-  return loadUpdateSigningKeys(config)[0] ?? null
+export function loadUpdateSigningKey(config?: UpdateSigningKeySources | null, baseDir?: string | null): string | null {
+  return loadUpdateSigningKeys(config, baseDir)[0] ?? null
 }
 
 /** Generates a fresh Ed25519 keypair as PEM strings, backing the `create-update-key` CLI helper. */
