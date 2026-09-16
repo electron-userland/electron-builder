@@ -25,6 +25,7 @@ exports[`assisted > allowToChangeInstallationDirectory 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test Custom Installation Dir Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
@@ -75,6 +76,7 @@ exports[`assisted > assisted 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
@@ -116,6 +118,7 @@ exports[`assisted > assisted, only perMachine 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
@@ -141,6 +144,7 @@ exports[`assisted > assisted, only perMachine and elevated 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {

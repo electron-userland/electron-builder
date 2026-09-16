@@ -135,6 +135,7 @@ exports[`extraDistFiles 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
@@ -208,6 +209,7 @@ exports[`only zip 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
@@ -744,6 +746,8 @@ exports[`pkg scripts 3`] = `
   "Test App ßW.app/Contents/Resources/ja.lproj",
   "Test App ßW.app/Contents/Resources/kn.lproj",
   "Test App ßW.app/Contents/Resources/ko.lproj",
+  "Test App ßW.app/Contents/Resources/LICENSE.electron.txt",
+  "Test App ßW.app/Contents/Resources/LICENSES.chromium.html",
   "Test App ßW.app/Contents/Resources/lt.lproj",
   "Test App ßW.app/Contents/Resources/lv.lproj",
   "Test App ßW.app/Contents/Resources/ml.lproj",
@@ -1539,6 +1543,7 @@ exports[`zip preserves .framework symlinks (#9846) 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {

@@ -81,14 +81,15 @@ export async function checkResult(expect: ExpectStatic, updater: BaseUpdater) {
   const downloadPromise = updateCheckResult?.downloadPromise
   // noinspection JSIgnoredPromiseFromCall
   expect(downloadPromise).not.toBeNull()
-  const files = await downloadPromise
+  const { updateFile, packageFile } = (await downloadPromise)!
   const fileInfo: any = updateCheckResult?.updateInfo.files[0]
 
   // delete url because port is random
   expect(fileInfo.url).toBeDefined()
   delete fileInfo.url
   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
-  expect(files!.map(it => path.basename(it))).toMatchSnapshot()
+  // the snapshot keeps the historical array shape of the downloaded files: [installer] or, for the web installer, [installer, package]
+  expect([updateFile, packageFile].filter((it): it is string => it != null).map(it => path.basename(it))).toMatchSnapshot()
 }
 
 class TestNativeUpdater extends EventEmitter {

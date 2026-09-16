@@ -79,7 +79,10 @@ export class ModuleManager {
     this.realPath = this.createAsyncProxy(this.realPathMap, async (p: string) => {
       const filePath = path.resolve(p)
       const stat = await this.lstat[filePath]
-      return stat?.isSymbolicLink() ? fs.realpath(filePath) : filePath
+      // A dangling link, or a Windows junction pointing at another drive, makes `realpath` throw.
+      // Degrading to the path we were given keeps collection going with the next-best answer
+      // instead of failing the whole build.
+      return stat?.isSymbolicLink() ? fs.realpath(filePath).catch(() => filePath) : filePath
     })
   }
 
