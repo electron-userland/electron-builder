@@ -6936,6 +6936,9 @@ exports[`failed peer dep 2`] = `
                     "af.js": {
                       "size": "<size>",
                     },
+                    "am-et.js": {
+                      "size": "<size>",
+                    },
                     "ar-dz.js": {
                       "size": "<size>",
                     },
@@ -7227,6 +7230,9 @@ exports[`failed peer dep 2`] = `
                     "pl.js": {
                       "size": "<size>",
                     },
+                    "ps.js": {
+                      "size": "<size>",
+                    },
                     "pt-br.js": {
                       "size": "<size>",
                     },
@@ -7351,12 +7357,18 @@ exports[`failed peer dep 2`] = `
                 },
               },
             },
+            "dojo.profile.js": {
+              "size": "<size>",
+            },
             "ender.js": {
               "size": "<size>",
             },
             "locale": {
               "files": {
                 "af.js": {
+                  "size": "<size>",
+                },
+                "am-et.js": {
                   "size": "<size>",
                 },
                 "ar-dz.js": {
@@ -7650,6 +7662,9 @@ exports[`failed peer dep 2`] = `
                 "pl.js": {
                   "size": "<size>",
                 },
+                "ps.js": {
+                  "size": "<size>",
+                },
                 "pt-br.js": {
                   "size": "<size>",
                 },
@@ -7798,9 +7813,6 @@ exports[`failed peer dep 2`] = `
               },
             },
             "moment.js": {
-              "size": "<size>",
-            },
-            "package.js": {
               "size": "<size>",
             },
             "package.json": {
@@ -8176,6 +8188,9 @@ exports[`failed peer dep 2`] = `
                     "af.js": {
                       "size": "<size>",
                     },
+                    "am-et.js": {
+                      "size": "<size>",
+                    },
                     "ar-dz.js": {
                       "size": "<size>",
                     },
@@ -8465,6 +8480,9 @@ exports[`failed peer dep 2`] = `
                       "size": "<size>",
                     },
                     "pl.js": {
+                      "size": "<size>",
+                    },
+                    "ps.js": {
                       "size": "<size>",
                     },
                     "pt-br.js": {

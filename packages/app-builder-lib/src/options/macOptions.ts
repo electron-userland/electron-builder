@@ -396,7 +396,7 @@ export interface DmgContent {
    * The device-independent pixel offset from the top of the window to the **center** of the icon.
    */
   y: number
-  type?: "link" | "file" | "dir"
+  type?: "link" | "file" | "dir" | "position"
 
   /**
    * The name of the file within the DMG. Defaults to basename of `path`.

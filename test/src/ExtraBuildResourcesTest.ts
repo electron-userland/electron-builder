@@ -1,3 +1,4 @@
+import { spawn } from "builder-util"
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
 import * as fs from "fs"
 import { readdir } from "fs/promises"
@@ -232,7 +233,7 @@ test.ifLinux("electronDist as standard path to node_modules electron", ({ expect
       },
     },
     {
-      projectDirCreated: async projectDir => {
+      projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
         await modifyPackageJson(projectDir, data => {
           data.devDependencies = {
             ...data.devDependencies,
@@ -240,6 +241,11 @@ test.ifLinux("electronDist as standard path to node_modules electron", ({ expect
           }
           delete data.build.electronVersion
         })
+        // `node_modules/electron/dist` is produced by electron's postinstall (install.js), which the fixture
+        // install never runs: dependency lifecycle scripts are disabled there, and npm 12 blocks them by
+        // default anyway. That directory is exactly what this test points `electronDist` at, so run that
+        // one script explicitly once node_modules exists.
+        return () => spawn(process.execPath, ["install.js"], { cwd: path.join(projectDir, "node_modules", "electron"), env: testEnv })
       },
       packed: async context => {
         const contents = await readdir(context.getAppPath(Platform.LINUX, Arch.x64))
