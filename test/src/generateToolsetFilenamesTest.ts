@@ -3,18 +3,19 @@ import * as path from "path"
 import { describe, it, expect, beforeAll } from "vitest"
 import { generateTests } from "../vitest-scripts/generate-tests"
 import { GENERATED_TESTS_DIR } from "../vitest-scripts/runtime-tests/generate-toolset-tests-shared"
-import { detectFilePlatforms, platformAllowed } from "../vitest-scripts/vitest-config/file-discovery"
+import { detectFilePlatforms, getAllTestFiles, isE2eTestFile, platformAllowed } from "../vitest-scripts/vitest-config/file-discovery"
 import { resolveCachedMs } from "../vitest-scripts/vitest-config/shard-builder"
 import type { FileStats } from "../vitest-scripts/vitest-config/cache"
+import type { SupportedPlatforms } from "../vitest-scripts/vitest-config/smart-config"
 
-// Collect all generated test filenames recursively
+// Collect all generated test filenames recursively (`*Test.ts` and `*.e2e.ts`)
 function collectGeneratedFiles(dir: string): string[] {
   const results: string[] = []
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name)
     if (entry.isDirectory()) {
       results.push(...collectGeneratedFiles(full))
-    } else if (entry.name.endsWith("Test.ts")) {
+    } else if (entry.name.endsWith("Test.ts") || isE2eTestFile(entry.name)) {
       results.push(full.split(path.sep).join("/"))
     }
   }
@@ -120,7 +121,7 @@ describe("Generated toolset test filenames", () => {
 
   // Union across top-level blocks: ifMac + ifNotWindows ⇒ runs on darwin and linux, skips win32.
   it("detectFilePlatforms unions mixed gates and only excludes the common platform", () => {
-    const platforms = detectFilePlatforms("test/src/mac/macArchiveTest.ts")
+    const platforms = detectFilePlatforms("test/src/mac/macArchive.e2e.ts")
     expect(platforms).not.toBeNull()
     expect([...platforms!].sort()).toEqual(["darwin", "linux"])
   })
@@ -138,12 +139,92 @@ describe("Generated toolset test filenames", () => {
     expect(platformAllowed(file, "win32")).toBe(false)
   })
 
-  it("all generated Test.ts files end with Test.ts (discoverable)", () => {
+  it("all generated files end with Test.ts or e2e.ts (discoverable)", () => {
     const files = collectGeneratedFiles(GENERATED_TESTS_DIR)
     expect(files.length).toBeGreaterThan(0)
     for (const f of files) {
-      expect(path.basename(f), `${f} must end with Test.ts`).toMatch(/Test\.ts$/)
+      expect(path.basename(f), `${f} must end with Test.ts, .e2e.ts or __e2e.ts`).toMatch(/(?:Test|\.e2e|__e2e)\.ts$/)
     }
+  })
+
+  // Suites that build and inspect installers are emitted as `*.e2e.ts` (TEST_MODE=e2e); the platform suffix
+  // logic is unchanged, so `.win.e2e.ts` and `__e2e.ts` both occur.
+  it("installer-building suites are emitted as .e2e.ts files, app-directory suites as Test.ts files", () => {
+    const files = collectGeneratedFiles(GENERATED_TESTS_DIR)
+    const e2eSuites = ["portable", "assistedInstaller", "msi", "msiWrapped", "squirrelWindows", "appx", "msix", "differentialWin", "blackboxWin", "nsisWine"]
+    for (const suite of e2eSuites) {
+      const suiteFiles = files.filter(f => f.includes(`/${suite}/`))
+      expect(suiteFiles.length, `${suite} should have generated files`).toBeGreaterThan(0)
+      for (const f of suiteFiles) {
+        expect(isE2eTestFile(f), `${f} must be an e2e file (.e2e.ts / __e2e.ts)`).toBe(true)
+        expect(path.basename(f), `${suite} file must not end with Test.ts`).not.toMatch(/Test\.ts$/)
+      }
+    }
+    const unitSuites = ["winPackager", "winCodeSign", "wineToolset", "linuxPackager", "blackboxLinux", "differentialLinux"]
+    for (const suite of unitSuites) {
+      const suiteFiles = files.filter(f => f.includes(`/${suite}/`))
+      expect(suiteFiles.length, `${suite} should have generated files`).toBeGreaterThan(0)
+      for (const f of suiteFiles) {
+        expect(path.basename(f), `${suite} file must end with Test.ts`).toMatch(/Test\.ts$/)
+      }
+    }
+    expect(
+      files.some(f => f.endsWith(".win.e2e.ts")),
+      "a .win. gated e2e suite (portable)"
+    ).toBe(true)
+    expect(
+      files.some(f => f.endsWith("__e2e.ts")),
+      "an ungated e2e suite (nsisWine, assistedInstaller)"
+    ).toBe(true)
+    // the wine dimension is stripped from the snapshot path, so both wine variants share `<stem>__e2e.js.snap`
+    expect(files.some(f => f.endsWith("__wine-0.0.0__e2e.ts") && f.includes("/assistedInstaller/"))).toBe(true)
+  })
+
+  it("platformAllowed honours the .win. infix on .e2e.ts files", () => {
+    const winE2eFiles = collectGeneratedFiles(GENERATED_TESTS_DIR).filter(f => f.endsWith(".win.e2e.ts"))
+    expect(winE2eFiles.length).toBeGreaterThan(0)
+    for (const f of winE2eFiles) {
+      expect(platformAllowed(f, "linux"), `${f} must not be allowed on Linux`).toBe(false)
+      expect(platformAllowed(f, "darwin"), `${f} must not be allowed on macOS`).toBe(false)
+      expect(platformAllowed(f, "win32"), `${f} must be allowed on win32`).toBe(true)
+    }
+  })
+})
+
+describe("TEST_MODE file discovery", () => {
+  beforeAll(() => {
+    generateTests()
+  })
+
+  // TEST_FILES forces inclusion regardless of mode, so the partition only holds without an override.
+  const withoutOverride = process.env.TEST_FILES ? it.skip : it
+
+  for (const platform of ["linux", "darwin", "win32"] as SupportedPlatforms[]) {
+    withoutOverride(`unit and e2e are disjoint and partition all on ${platform}`, () => {
+      const all = getAllTestFiles(platform, "all")
+      const unit = getAllTestFiles(platform, "unit")
+      const e2e = getAllTestFiles(platform, "e2e")
+
+      expect(unit.length).toBeGreaterThan(0)
+      expect(e2e.length).toBeGreaterThan(0)
+      expect(unit.filter(f => e2e.includes(f))).toEqual([])
+      expect([...unit, ...e2e].sort()).toEqual([...all].sort())
+      for (const f of e2e) {
+        expect(isE2eTestFile(f), `${f} selected by TEST_MODE=e2e must be a .e2e.ts file`).toBe(true)
+      }
+      for (const f of unit) {
+        expect(isE2eTestFile(f), `${f} selected by TEST_MODE=unit must not be a .e2e.ts file`).toBe(false)
+      }
+    })
+  }
+
+  it("hand-written e2e files are discovered next to their unit-level siblings", () => {
+    const e2e = getAllTestFiles("linux", "e2e")
+    expect(e2e).toContain("test/src/windows/oneClickInstaller.e2e.ts")
+    expect(e2e).toContain("test/src/PublishManager.e2e.ts")
+    const unit = getAllTestFiles("linux", "unit")
+    expect(unit).toContain("test/src/windows/oneClickInstallerTest.ts")
+    expect(unit).toContain("test/src/PublishManagerTest.ts")
   })
 })
 

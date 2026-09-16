@@ -6,7 +6,7 @@ import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./vitest-config/file-discovery.js"
 import { generateTests } from "./generate-tests.js"
 import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./vitest-config/shard-builder.js"
-import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./vitest-config/smart-config.js"
+import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN, TEST_MODE } from "./vitest-config/smart-config.js"
 import SmartSequencer from "./vitest-config/vitest-smart-sequencer.js"
 
 const PACKAGES_DIR = path.join(__dirname, "..", "..", "packages")
@@ -54,15 +54,21 @@ const workspaceSourceAliases = [
 const testPatterns = TEST_FILES_PATTERN.split(",")
   .map(s => s.trim())
   .filter(Boolean)
-const includeGlob = `(${testPatterns.join("|")}|${testPatterns.map(t => `${t}*Test`).join("|")})`
+// A TEST_FILES token is a filename substring: it admits `<token>.ts`, `<token>*Test.ts` and both e2e spellings
+// (`<token>*.e2e.ts` hand-written / platform-gated generated, `<token>*__e2e.ts` ungated generated — see isE2eTestFile),
+// so `TEST_FILES=oneClickInstaller` runs oneClickInstallerTest.ts and oneClickInstaller.e2e.ts alike. Discovery only ever
+// *adds* TEST_FILES matches; this glob is what scopes the vitest run down to them.
+const includeGlob = `(${["", "*Test", "*.e2e", "*__e2e"].map(suffix => testPatterns.map(t => `${t}${suffix}`).join("|")).join("|")})`
 console.log("TEST_FILES pattern", includeGlob)
+console.log("TEST_MODE", TEST_MODE)
 
 async function main() {
   if (!process.env.SKIP_GENERATE) {
     generateTests()
   }
 
-  const files = getAllTestFiles()
+  // Discovery applies TEST_MODE (all | unit | e2e) and TEST_FILES; the list below is the whole file universe vitest sees.
+  const files = getAllTestFiles("current", TEST_MODE)
   const currentPlatform = process.platform as SupportedPlatforms
 
   console.log(`Platform: ${currentPlatform}`)
@@ -149,6 +155,7 @@ async function main() {
       // Allow test metadata
       includeTaskLocation: true,
       setupFiles: [__dirname + "/vitest-config/vitest-setup.ts", __dirname + "/vitest-config/vitest-heavy-mutex.ts", __dirname + "/vitest-config/vitest-tmpdir.ts"],
+      // Which of the admitted files run is decided by the discovery list above (TEST_MODE + sharding).
       include: [`test/src/**/${includeGlob}.ts`],
 
       runner: __dirname + "/vitest-config/vitest-network-retry-runner.ts",
@@ -173,6 +180,8 @@ async function main() {
       resolveSnapshotPath: (testPath, snapshotExtension) => {
         const snapshotPath = testPath
           .replace(/\.[tj]s$/, `.js${snapshotExtension}`)
+          // (`foo.e2e.ts` → `foo.e2e.js.snap`, next to the `fooTest.js.snap` of its unit-level sibling; generated
+          // `foo__e2e.ts` → `foo__e2e.js.snap`.)
           // Wine-variant test files share snapshots with the non-wine variants — the wine
           // dimension is an execution detail (run via Wine vs natively), not a content
           // dimension.  Strip the `__wine-X.Y.Z` segment before computing the snapshot path so

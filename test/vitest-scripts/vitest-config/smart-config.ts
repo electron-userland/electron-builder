@@ -4,7 +4,26 @@ export type TargetPlatform = "darwin" | "win32" | "linux" | "current"
 export type SupportedPlatforms = Exclude<TargetPlatform, "current">
 
 export const TEST_ROOT = "test/src"
-export const TEST_FILES_PATTERN = process.env.TEST_FILES?.trim() || "*Test,*test"
+// Each token expands to `<token>.ts`, `<token>*Test.ts`, `<token>*.e2e.ts` and `<token>*__e2e.ts` in run-vitest.ts, so the
+// default admits every hand-written and generated test file (see isE2eTestFile in file-discovery.ts for the e2e spellings).
+export const TEST_FILES_PATTERN = process.env.TEST_FILES?.trim() || "*Test,*test,*.e2e,*__e2e"
+
+/**
+ * Which class of test files discovery admits (see file-discovery.ts):
+ *  - `all`  (default) — every `*Test.ts` plus every e2e file (`*.e2e.ts`, generated `*__e2e.ts`)
+ *  - `unit` — only `*Test.ts`: tests that stop once the app directory is assembled (dir targets,
+ *             `afterPackTestHook`, `effectiveOptionComputed`, thrown-config tests)
+ *  - `e2e`  — only the e2e files: tests that build the installer / archive and read it back
+ *
+ * `TEST_FILES` is an explicit override and always wins over the mode.
+ */
+export type TestMode = "all" | "unit" | "e2e"
+const TEST_MODES: ReadonlyArray<TestMode> = ["all", "unit", "e2e"]
+const rawTestMode = process.env.TEST_MODE?.trim() || "all"
+if (!TEST_MODES.includes(rawTestMode as TestMode)) {
+  throw new Error(`Invalid TEST_MODE "${rawTestMode}" — expected one of ${TEST_MODES.join(", ")}`)
+}
+export const TEST_MODE = rawTestMode as TestMode
 
 export const CACHE_FILE = process.env.VITEST_SMART_CACHE_FILE || path.resolve(__dirname, "_vitest-smart-cache.json")
 
@@ -46,7 +65,7 @@ export const skippedTests =
     // None currently, but this is where we would add any test that is currently unstable in the CI environment and needs to be excluded from smart sharding until it can be fixed.
   ]
 export const skipPerOSTests: Record<SupportedPlatforms, string[]> = {
-  darwin: ["fpmTest"],
+  darwin: ["fpm.e2e"],
   linux: [],
   win32: [],
 }

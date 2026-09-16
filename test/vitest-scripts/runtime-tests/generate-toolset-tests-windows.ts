@@ -13,7 +13,16 @@ import type * as _SquirrelWindowsSuite from "../../src/windows/squirrelWindowsTe
 import type * as _WinCodeSignSuite from "../../src/windows/winCodeSignTestSuite.js"
 import type * as _WinPackagerSuite from "../../src/windows/winPackagerTestSuite.js"
 import type { SuiteConfig } from "./generate-toolset-tests-shared.js"
-import { buildDescribeCall, cleanAndEnsureDir, GENERATED_TESTS_DIR, getPlatformSuffix, namedFn, resolveImportPath, TEST_SRC_DIR } from "./generate-toolset-tests-shared.js"
+import {
+  buildDescribeCall,
+  cleanAndEnsureDir,
+  GENERATED_TESTS_DIR,
+  getPlatformSuffix,
+  getTestFileSuffix,
+  namedFn,
+  resolveImportPath,
+  TEST_SRC_DIR,
+} from "./generate-toolset-tests-shared.js"
 import { NSIS_VERSIONS, WINE_VERSIONS, WIN_CODE_SIGN_VERSIONS } from "./generate-toolset-versions.js"
 
 interface WindowsSuiteConfig extends SuiteConfig {
@@ -34,6 +43,7 @@ const SUITES: WindowsSuiteConfig[] = [
   },
   {
     name: "portable",
+    e2e: true,
     registerFn: namedFn("registerPortableTests" satisfies keyof typeof _PortableSuite),
     importPath: "windows/portableTestSuite",
     describeConfig: { name: "portable", chain: ["ifWindows"] },
@@ -41,6 +51,7 @@ const SUITES: WindowsSuiteConfig[] = [
   },
   {
     name: "assistedInstaller",
+    e2e: true,
     registerFn: namedFn("registerAssistedInstallerTests" satisfies keyof typeof _AssistedInstallerSuite),
     importPath: "windows/assistedInstallerTestSuite",
     describeConfig: { name: "assisted", chain: ["ifWindowsOrWine"] },
@@ -51,6 +62,7 @@ const SUITES: WindowsSuiteConfig[] = [
   },
   {
     name: "msi",
+    e2e: true,
     registerFn: namedFn("registerMsiTests" satisfies keyof typeof _MsiSuite),
     importPath: "windows/msiTestSuite",
     describeConfig: { name: "msi", chain: ["ifWindows"] },
@@ -61,6 +73,7 @@ const SUITES: WindowsSuiteConfig[] = [
   },
   {
     name: "msiWrapped",
+    e2e: true,
     registerFn: namedFn("registerMsiWrappedTests" satisfies keyof typeof _MsiWrappedSuite),
     importPath: "windows/msiWrappedTestSuite",
     describeConfig: { name: "msiWrapped", chain: ["ifWindows"] },
@@ -70,6 +83,7 @@ const SUITES: WindowsSuiteConfig[] = [
   },
   {
     name: "squirrelWindows",
+    e2e: true,
     registerFn: namedFn("registerSquirrelWindowsTests" satisfies keyof typeof _SquirrelWindowsSuite),
     importPath: "windows/squirrelWindowsTestSuite",
     describeConfig: { name: "squirrel-windows", chain: ["ifWindows"] },
@@ -77,6 +91,7 @@ const SUITES: WindowsSuiteConfig[] = [
   },
   {
     name: "appx",
+    e2e: true,
     registerFn: namedFn("registerAppxTests" satisfies keyof typeof _AppxSuite),
     importPath: "windows/appxTestSuite",
     describeConfig: { name: "AppX", chain: ["ifWindows"] },
@@ -84,6 +99,7 @@ const SUITES: WindowsSuiteConfig[] = [
   },
   {
     name: "msix",
+    e2e: true,
     registerFn: namedFn("registerMsixTests" satisfies keyof typeof _MsixSuite),
     importPath: "windows/msixTestSuite",
     describeConfig: { name: "MSIX", chain: ["ifWindows"] },
@@ -91,6 +107,7 @@ const SUITES: WindowsSuiteConfig[] = [
   },
   {
     name: "differentialWin",
+    e2e: true,
     registerFn: namedFn("registerDifferentialWinTests" satisfies keyof typeof _DifferentialWinSuite),
     importPath: "updater/differentialUpdateWinSuite",
     describeConfig: { name: "differential-win", chain: ["ifWindows"] },
@@ -99,6 +116,7 @@ const SUITES: WindowsSuiteConfig[] = [
   },
   {
     name: "blackboxWin",
+    e2e: true,
     registerFn: namedFn("registerBlackboxWinTests" satisfies keyof typeof _BlackboxWinSuite),
     importPath: "updater/blackboxUpdateWinSuite",
     describeConfig: { name: "blackboxWin" },
@@ -112,6 +130,7 @@ const SUITES: WindowsSuiteConfig[] = [
     importPath: "windows/winCodeSignTestSuite",
     describeConfig: { name: "winCodeSign" },
     describeOptions: { sequential: true },
+    // dir targets / stub packagers only — unit-level like winPackager, so no `e2e` flag.
   },
 ]
 
@@ -161,6 +180,7 @@ export function generateWindowsToolsetTests(): void {
     const generatedDir = path.resolve(GENERATED_TESTS_DIR, suite.name)
     cleanAndEnsureDir(generatedDir)
     const platformSuffix = getPlatformSuffix(suite.describeConfig.chain)
+    const fileSuffix = getTestFileSuffix(suite)
 
     const wcsVersions = suite.winCodeSignVersions ?? WIN_CODE_SIGN_VERSIONS
     const nsisVersions = suite.nsisVersions
@@ -170,22 +190,22 @@ export function generateWindowsToolsetTests(): void {
         for (const wcs of wcsVersions) {
           if (wineVersions) {
             for (const wine of wineVersions) {
-              const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}__wine-${wine}${platformSuffix}Test.ts`
+              const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}__wine-${wine}${platformSuffix}${fileSuffix}`
               fs.writeFileSync(path.join(generatedDir, filename), renderFile({ suite, winCodeSign: wcs, nsis, wine }), "utf8")
             }
           } else {
-            const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}${platformSuffix}Test.ts`
+            const filename = `${suite.name}__wcs-${wcs}__nsis-${nsis}${platformSuffix}${fileSuffix}`
             fs.writeFileSync(path.join(generatedDir, filename), renderFile({ suite, winCodeSign: wcs, nsis }), "utf8")
           }
         }
       }
     } else if (wcsVersions.length === 0) {
       // No version dimensions — generate a single file with empty toolsets (e.g. msi suite)
-      const filename = `${suite.name}${platformSuffix}Test.ts`
+      const filename = `${suite.name}${platformSuffix}${fileSuffix}`
       fs.writeFileSync(path.join(generatedDir, filename), renderFile({ suite, winCodeSign: undefined }), "utf8")
     } else {
       for (const wcs of wcsVersions) {
-        const filename = `${suite.name}__wcs-${wcs}${platformSuffix}Test.ts`
+        const filename = `${suite.name}__wcs-${wcs}${platformSuffix}${fileSuffix}`
         fs.writeFileSync(path.join(generatedDir, filename), renderFile({ suite, winCodeSign: wcs }), "utf8")
       }
     }

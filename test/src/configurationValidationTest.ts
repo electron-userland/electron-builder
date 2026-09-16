@@ -1,6 +1,6 @@
 import { validateConfiguration } from "app-builder-lib/internal"
 import { Arch, DebugLogger } from "builder-util"
-import { CliOptions, Configuration, Platform } from "electron-builder"
+import { CliOptions, Configuration, DIR_TARGET, Platform } from "electron-builder"
 import { configureBuildCommand, createYargs, normalizeOptions } from "electron-builder/src/builder"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester.js"
 import { ElectronSignOptions } from "app-builder-lib/src/options/macOptions.js"
@@ -32,9 +32,11 @@ test.ifNotWindows("appId as object", ({ expect }) =>
 )
 
 // https://github.com/electron-userland/electron-builder/issues/1302
+// extraFiles are copied into the app directory; the explicit dir target overrides `linux.target` below, so the config
+// value is only validated, not built.
 test.ifNotWindows("extraFiles", ({ expect }) =>
   app(expect, {
-    targets: Platform.LINUX.createTarget("appimage", Arch.x64),
+    targets: Platform.LINUX.createTarget(DIR_TARGET, Arch.x64),
     config: {
       linux: {
         target: "zip:ia32",

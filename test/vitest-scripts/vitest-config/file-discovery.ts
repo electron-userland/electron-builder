@@ -1,11 +1,11 @@
 import * as fs from "fs"
 import * as path from "path"
-import { PLATFORM, SupportedPlatforms, TargetPlatform, TEST_ROOT, skipPerOSTests, skippedTests } from "./smart-config.js"
+import { PLATFORM, SupportedPlatforms, TargetPlatform, TEST_MODE, TEST_ROOT, TestMode, skipPerOSTests, skippedTests } from "./smart-config.js"
 
 export function platformAllowed(file: string, platform: TargetPlatform = "current"): boolean {
   const resolved: SupportedPlatforms = platform === "current" ? PLATFORM : platform
 
-  // Filename infix gate (e.g. "*.mac.Test.ts" only runs on macOS)
+  // Filename infix gate (e.g. "*.mac.Test.ts" / "*.mac.e2e.ts" only runs on macOS)
   if (file.includes(".mac.")) {
     return resolved === "darwin"
   }
@@ -96,12 +96,37 @@ export function detectFilePlatforms(file: string): Set<SupportedPlatforms> | nul
 
 const testOverride = process.env.TEST_FILES?.trim()?.split(",")
 
-function collectTests(dir: string, platform: TargetPlatform = "current", out: string[] = []): string[] {
+/**
+ * e2e test files build the installer/archive and inspect it; everything else stops at the app directory. Hand-written
+ * files are `<name>.e2e.ts`; generated toolset files carry the platform marker in front of the tail, so an ungated suite
+ * yields `<suite>__<dims>__e2e.ts` and a gated one `<suite>__<dims>.win.e2e.ts` (see getTestFileSuffix).
+ */
+export function isE2eTestFile(name: string): boolean {
+  return name.endsWith(".e2e.ts") || name.endsWith("__e2e.ts")
+}
+
+function isTestFile(name: string): boolean {
+  return name.endsWith("Test.ts") || name.endsWith("test.ts") || isE2eTestFile(name)
+}
+
+function modeAllows(name: string, mode: TestMode): boolean {
+  switch (mode) {
+    case "unit":
+      return !isE2eTestFile(name)
+    case "e2e":
+      return isE2eTestFile(name)
+    default:
+      return true
+  }
+}
+
+function collectTests(dir: string, platform: TargetPlatform = "current", mode: TestMode = TEST_MODE, out: string[] = []): string[] {
   if (!fs.existsSync(dir)) {
     return out
   }
 
   for (const name of fs.readdirSync(dir)) {
+    // A TEST_FILES match is an explicit request: it bypasses the skip lists and the TEST_MODE filter alike.
     const isOverrideMatch = testOverride?.some(toMatch => name.includes(toMatch)) ?? false
     if ([".ts.map", ".js.map", ".d.ts", ".snap"].some(ext => name.endsWith(ext)) || ["node_modules", "out"].includes(name) || (!isOverrideMatch && isSkippedTest(name, platform))) {
       continue
@@ -110,9 +135,9 @@ function collectTests(dir: string, platform: TargetPlatform = "current", out: st
     const full = path.join(dir, name)
 
     if (!name.startsWith(".") && fs.statSync(full).isDirectory()) {
-      collectTests(full, platform, out)
+      collectTests(full, platform, mode, out)
     } else {
-      if (isOverrideMatch || name.endsWith("Test.ts") || name.endsWith("test.ts")) {
+      if (isOverrideMatch || (isTestFile(name) && modeAllows(name, mode))) {
         out.push(normalizePath(full))
       }
     }
@@ -121,8 +146,8 @@ function collectTests(dir: string, platform: TargetPlatform = "current", out: st
   return out
 }
 
-export function getAllTestFiles(platform: TargetPlatform = "current"): string[] {
-  return collectTests(TEST_ROOT, platform).filter(file => platformAllowed(file, platform))
+export function getAllTestFiles(platform: TargetPlatform = "current", mode: TestMode = TEST_MODE): string[] {
+  return collectTests(TEST_ROOT, platform, mode).filter(file => platformAllowed(file, platform))
 }
 
 function isSkippedTest(file: string, platform: TargetPlatform): boolean {
