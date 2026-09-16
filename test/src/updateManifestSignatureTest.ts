@@ -168,6 +168,29 @@ describe("splitPemBlocks / normalizePublicKeyList", () => {
     expect(splitPemBlocks("  \n ")).toEqual([])
   })
 
+  test("ignores text outside blocks, handles CRLF and skips malformed markers", () => {
+    const crlf = a.replace(/\n/g, "\r\n")
+    expect(splitPemBlocks(`# comment\r\n${crlf}\r\ntrailing junk\n${b}\n`)).toEqual([crlf, b])
+    // a dangling BEGIN before a complete block is swallowed into that block (BEGIN ... first END), as before
+    expect(splitPemBlocks(`-----BEGIN X-----\n${a}`)).toEqual([`-----BEGIN X-----\n${a}`])
+    // an END marker with an empty or dashed label is not a terminator
+    expect(splitPemBlocks(`${a}\n-----BEGIN K-----\nabc\n-----END -----\n-----END A-B-----\n-----END K-----`)).toEqual([
+      a,
+      "-----BEGIN K-----\nabc\n-----END -----\n-----END A-B-----\n-----END K-----",
+    ])
+    // a BEGIN marker with an empty label is skipped, the next well-formed one starts the block
+    expect(splitPemBlocks(`-----BEGIN -----\n${a}`)).toEqual([a])
+  })
+
+  test("handles many unterminated BEGIN markers in linear time (CodeQL js/polynomial-redos)", () => {
+    const hostile = "-----BEGIN ,-----".repeat(10_000)
+    const start = Date.now()
+    // no complete block: the whole (trimmed) input is handed back so the key parser reports the real problem
+    expect(splitPemBlocks(hostile)).toEqual([hostile])
+    expect(splitPemBlocks(`${hostile}\n${a}`)).toEqual([`${hostile}\n${a}`])
+    expect(Date.now() - start).toBeLessThan(2_000)
+  })
+
   test("normalizes null, a string, a multi-PEM string and an array to a flat list", () => {
     expect(normalizePublicKeyList(null)).toEqual([])
     expect(normalizePublicKeyList(undefined)).toEqual([])

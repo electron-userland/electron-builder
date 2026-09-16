@@ -50,10 +50,34 @@ export function parsePublicKey(value: string): KeyObject {
   return key
 }
 
+const PEM_BEGIN_MARKER = "-----BEGIN "
+const PEM_END_MARKER = "-----END "
+const PEM_MARKER_DASHES = "-----"
+
+/**
+ * Given the index of a `-----BEGIN ` / `-----END ` marker prefix in `text`, returns the index just past the
+ * marker's closing `-----`, or -1 when the label is empty or contains a dash (i.e. this is not a well-formed
+ * marker). Each call does at most one `indexOf` forward from the label start, so callers stay linear.
+ */
+function findPemMarkerEnd(text: string, markerStart: number, markerPrefix: string): number {
+  const labelStart = markerStart + markerPrefix.length
+  const dash = text.indexOf("-", labelStart)
+  if (dash <= labelStart || !text.startsWith(PEM_MARKER_DASHES, dash)) {
+    return -1
+  }
+  return dash + PEM_MARKER_DASHES.length
+}
+
 /**
  * Splits a text that may contain several concatenated PEM blocks into one string per block.
  * Text without any `-----BEGIN` marker (e.g. a raw base64 SPKI key) is returned as a single entry.
  * Whitespace-only input yields an empty array.
+ *
+ * Each block runs from a well-formed `-----BEGIN <label>-----` marker through the next well-formed
+ * `-----END <label>-----` marker (inclusive); text outside blocks is ignored and order is preserved.
+ * Implemented as a single forward scan with `indexOf` rather than a regular expression, because the
+ * input is untrusted (key material from config/env/files) and a backtracking regex over many repeated
+ * `-----BEGIN` prefixes without a matching `-----END` runs in polynomial time (CodeQL js/polynomial-redos).
  */
 export function splitPemBlocks(text: string): Array<string> {
   const trimmed = text.trim()
@@ -63,12 +87,46 @@ export function splitPemBlocks(text: string): Array<string> {
   if (!trimmed.includes("-----BEGIN")) {
     return [trimmed]
   }
-  const blocks = trimmed.match(/-----BEGIN [^-]+-----[\s\S]*?-----END [^-]+-----/g)
-  if (blocks == null || blocks.length === 0) {
+
+  const blocks: Array<string> = []
+  let position = 0
+  while (position < trimmed.length) {
+    const beginAt = trimmed.indexOf(PEM_BEGIN_MARKER, position)
+    if (beginAt < 0) {
+      break
+    }
+    const beginEnd = findPemMarkerEnd(trimmed, beginAt, PEM_BEGIN_MARKER)
+    if (beginEnd < 0) {
+      // not a well-formed BEGIN marker (e.g. `-----BEGIN -----`) — keep scanning after it
+      position = beginAt + 1
+      continue
+    }
+
+    let endAt = -1
+    let endEnd = -1
+    let searchFrom = beginEnd
+    while (endAt < 0 || endEnd < 0) {
+      endAt = trimmed.indexOf(PEM_END_MARKER, searchFrom)
+      if (endAt < 0) {
+        break
+      }
+      endEnd = findPemMarkerEnd(trimmed, endAt, PEM_END_MARKER)
+      searchFrom = endAt + 1
+    }
+    if (endAt < 0) {
+      // no well-formed END marker anywhere after this BEGIN — nor after any later BEGIN
+      break
+    }
+
+    blocks.push(trimmed.substring(beginAt, endEnd))
+    position = endEnd
+  }
+
+  if (blocks.length === 0) {
     // has a BEGIN marker but no complete block — hand it to the key parser so the error names the real problem
     return [trimmed]
   }
-  return blocks.map(it => it.trim())
+  return blocks
 }
 
 /**
