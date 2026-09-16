@@ -296,7 +296,8 @@ describe("streamCollectorCommandToFile", { sequential: true }, () => {
       stderrDataCb?.("npm error A complete log of this run can be found in: /home/user/.npm/_logs/debug-1.log\n")
       closeCb!(1)
 
-      await expect(p).rejects.toThrow(/`npm(\.cmd)? list --json` \(cwd: \/rootDir\) exited with code 1 and produced no output on stdout/)
+      // win32 resolves `npm` via which.sync, so the basename is `npm.cmd` or `npm.CMD` depending on the runner's PATHEXT casing
+      await expect(p).rejects.toThrow(/`npm(\.cmd)? list --json` \(cwd: \/rootDir\) exited with code 1 and produced no output on stdout/i)
       await expect(p).rejects.toThrow("stderr: npm error A complete log of this run can be found in")
       await expect(p).rejects.not.toThrow("No JSON content found in output")
       expect(vi.mocked(childProcess.spawn)).toHaveBeenCalledTimes(2)
