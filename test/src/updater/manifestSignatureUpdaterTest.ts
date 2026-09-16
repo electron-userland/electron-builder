@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from "vitest"
 import { DebUpdater } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import type { UpdateInfo } from "builder-util-runtime"
-import { generateUpdateSigningKeypair, signUpdateManifest } from "builder-util"
+import { computeUpdateManifestKeyId } from "builder-util-runtime"
+import { createUpdateManifestSignatures, generateUpdateSigningKeypair, signUpdateManifest } from "builder-util"
 
 const stubApp: AppAdapter = {
   name: "TestApp",
@@ -32,6 +33,12 @@ function signed(info: UpdateInfo, privateKeyPem: string): UpdateInfo {
   return { ...info, signature: signUpdateManifest(info, privateKeyPem) }
 }
 
+/** Returns a copy of `info` signed by every key, the way updateInfoBuilder writes it (`signatures` + legacy `signature`). */
+function multiSigned(info: UpdateInfo, privateKeyPems: Array<string>): UpdateInfo {
+  const signatures = createUpdateManifestSignatures(info, privateKeyPems)
+  return { ...info, signature: signatures[0].signature, signatures }
+}
+
 // verifyManifestSignature is a private method on AppUpdater; DebUpdater is a concrete subclass.
 // The runtime property updateManifestPublicKey takes precedence over app-update.yml, so we set it directly.
 // Each test builds its own updater instance — tests in this suite run concurrently, so a shared
@@ -39,7 +46,7 @@ function signed(info: UpdateInfo, privateKeyPem: string): UpdateInfo {
 describe("AppUpdater.verifyManifestSignature (A1)", () => {
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
 
-  const makeUpdater = (publicKey: string | null) => {
+  const makeUpdater = (publicKey: string | Array<string> | null) => {
     const updater = new DebUpdater(null, stubApp)
     updater.updateManifestPublicKey = publicKey
     return updater
@@ -81,5 +88,65 @@ describe("AppUpdater.verifyManifestSignature (A1)", () => {
     const updater = makeUpdater(generateUpdateSigningKeypair().publicKeyPem)
     const info = signed(makeInfo(), privateKeyPem)
     await expect(verify(updater, info)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+  })
+
+  // ── trust lists + multi-signature manifests (key rotation) ──
+
+  it("accepts a dual-signed manifest when the install trusts only the OLD key", async () => {
+    const newKey = generateUpdateSigningKeypair()
+    const updater = makeUpdater(publicKeyPem)
+    // own logger instance: the default is the global console, which must not be mutated by a concurrent test
+    const debugSpy = vi.fn()
+    updater.logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: debugSpy }
+    const info = multiSigned(makeInfo(), [privateKeyPem, newKey.privateKeyPem])
+    await expect(verify(updater, info)).resolves.toBeUndefined()
+    expect(debugSpy.mock.calls.some(c => String(c[0]).includes(computeUpdateManifestKeyId(publicKeyPem)))).toBe(true)
+  })
+
+  it("accepts a dual-signed manifest when the install trusts only the NEW key", async () => {
+    const newKey = generateUpdateSigningKeypair()
+    const updater = makeUpdater(newKey.publicKeyPem)
+    const info = multiSigned(makeInfo(), [privateKeyPem, newKey.privateKeyPem])
+    await expect(verify(updater, info)).resolves.toBeUndefined()
+  })
+
+  it("accepts a legacy single-signature manifest when the install trusts a LIST containing the signer", async () => {
+    const nextKey = generateUpdateSigningKeypair()
+    const updater = makeUpdater([nextKey.publicKeyPem, publicKeyPem])
+    const info = signed(makeInfo(), privateKeyPem)
+    expect(info.signatures).toBeUndefined()
+    await expect(verify(updater, info)).resolves.toBeUndefined()
+  })
+
+  it("accepts a manifest signed only by the NEXT key once the install trusts [current, next]", async () => {
+    const nextKey = generateUpdateSigningKeypair()
+    const updater = makeUpdater([publicKeyPem, nextKey.publicKeyPem])
+    const info = multiSigned(makeInfo(), [nextKey.privateKeyPem])
+    await expect(verify(updater, info)).resolves.toBeUndefined()
+  })
+
+  it("rejects a dual-signed manifest when none of the trusted keys signed it (fail-closed)", async () => {
+    const updater = makeUpdater([generateUpdateSigningKeypair().publicKeyPem, generateUpdateSigningKeypair().publicKeyPem])
+    const info = multiSigned(makeInfo(), [privateKeyPem, generateUpdateSigningKeypair().privateKeyPem])
+    await expect(verify(updater, info)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+  })
+
+  it("rejects a manifest whose `signatures` entries are all tampered even when a trust list is configured", async () => {
+    const newKey = generateUpdateSigningKeypair()
+    const updater = makeUpdater([publicKeyPem, newKey.publicKeyPem])
+    const info = multiSigned(makeInfo(), [privateKeyPem, newKey.privateKeyPem])
+    const tampered: UpdateInfo = { ...info, version: "9.9.9" }
+    await expect(verify(updater, tampered)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+  })
+
+  it("throws ERR_UPDATER_MANIFEST_NOT_SIGNED for an unsigned manifest when a trust list is configured", async () => {
+    const updater = makeUpdater([publicKeyPem, generateUpdateSigningKeypair().publicKeyPem])
+    await expect(verify(updater, makeInfo())).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_NOT_SIGNED" })
+    await expect(verify(updater, { ...makeInfo(), signatures: [] })).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_NOT_SIGNED" })
+  })
+
+  it("treats an empty runtime trust list like no runtime override (falls back to config, here: none)", async () => {
+    const updater = makeUpdater([])
+    await expect(verify(updater, makeInfo())).resolves.toBeUndefined()
   })
 })
