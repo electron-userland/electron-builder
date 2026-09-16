@@ -1,7 +1,7 @@
 import { Arch } from "builder-util"
 import { PublishConfiguration } from "builder-util-runtime"
 import { UploadTask } from "electron-publish"
-import { Configuration } from "./configuration.js"
+import type { AfterPackContext, Configuration } from "./configuration.js"
 import { Platform, Target } from "./core.js"
 import { Packager } from "./packager.js"
 import { PlatformPackager } from "./platformPackager.js"
@@ -20,6 +20,14 @@ export interface PackagerOptions {
   readonly config?: Configuration | string | null
 
   readonly effectiveOptionComputed?: (options: any) => Promise<boolean>
+
+  /**
+   * @internal Test-only. Invoked once per platform/arch after the app directory has been fully assembled
+   * (asar, extra resources, `afterPack`, fuses, signing) and before any target is built. Return `true`
+   * to skip building the targets for that arch (the same effect as `effectiveOptionComputed`, but at
+   * the app-directory stage). Not part of `Configuration`; programmatic API only.
+   */
+  readonly afterPackTestHook?: (context: AfterPackContext) => Promise<boolean>
 
   readonly prepackaged?: string | null
 }

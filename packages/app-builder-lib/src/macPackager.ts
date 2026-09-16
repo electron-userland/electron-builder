@@ -405,6 +405,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
       }
 
+      // test-only early exit (see PackagerOptions.afterPackTestHook); a no-op unless the option is set
+      if (await this.info.shouldSkipTargetsAfterPack(packContext)) {
+        continue
+      }
+
       // A development-signed build (mas-dev, or an explicit sign.type "development" — see
       // MacTargetHelper.shouldCreateMasInstaller) produces no installer
       const masSignConfig = platformConfig.config.sign
@@ -429,6 +434,20 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         platformSpecificBuildOptions: platformConfig.config,
         targets,
       })
+    }
+
+    // test-only early exit (see PackagerOptions.afterPackTestHook); a no-op unless the option is set
+    if (
+      await this.info.shouldSkipTargetsAfterPack({
+        appOutDir: path.dirname(appPath),
+        outDir,
+        arch,
+        targets,
+        packager: this,
+        electronPlatformName: this.platform.nodeName as ElectronPlatformName,
+      })
+    ) {
+      return
     }
 
     this.packageInDistributableFormat(appPath, arch, targets, taskManager)
