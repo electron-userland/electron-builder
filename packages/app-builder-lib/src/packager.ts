@@ -163,19 +163,23 @@ export class Packager {
 
   // Targets whose build was skipped by `afterPackTestHook`. Their `finishBuild()` must not run either:
   // NsisTarget and MsiWrappedTarget assume `build()` populated per-arch state first.
+  // Target instances are shared across archs (`createTargets` reuses `nameToTarget`), so a target may be
+  // skipped for one arch and built for another — track both and only skip `finishBuild()` when it never built.
   private readonly targetsSkippedByTestHook = new Set<Target>()
+  private readonly targetsBuiltAfterPack = new Set<Target>()
 
   /** @internal see PackagerOptions.afterPackTestHook */
   async shouldSkipTargetsAfterPack(context: AfterPackContext): Promise<boolean> {
     const hook = this.options.afterPackTestHook
-    if (hook == null || !(await hook(context))) {
-      return false
-    }
+    const skip = hook != null && (await hook(context))
+    const recordInto = skip ? this.targetsSkippedByTestHook : this.targetsBuiltAfterPack
     for (const target of context.targets) {
-      this.targetsSkippedByTestHook.add(target)
+      recordInto.add(target)
     }
-    log.debug({ platform: context.packager.platform.name, arch: Arch[context.arch] }, "afterPackTestHook requested early exit; skipping target builds")
-    return true
+    if (skip) {
+      log.debug({ platform: context.packager.platform.name, arch: Arch[context.arch] }, "afterPackTestHook requested early exit; skipping target builds")
+    }
+    return skip
   }
 
   private _repositoryInfo = new Lazy<SourceRepositoryInfo | null>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
@@ -571,7 +575,7 @@ export class Packager {
       }
 
       for (const target of nameToTarget.values()) {
-        if (this.targetsSkippedByTestHook.has(target)) {
+        if (this.targetsSkippedByTestHook.has(target) && !this.targetsBuiltAfterPack.has(target)) {
           continue
         }
         if (target.isAsyncSupported) {

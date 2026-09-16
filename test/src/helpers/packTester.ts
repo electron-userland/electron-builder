@@ -122,6 +122,9 @@ export interface AssertPackOptions {
    * Test-only early exit. Called once per platform/arch after the app directory is assembled and signed but before any
    * target (nsis/dmg/deb/zip…) is built. Return `true` to skip the target builds for that arch; the artifact snapshot then
    * records an empty list (like a `dir` target) and the target post-checks are skipped. `packed` still runs afterwards.
+   *
+   * Fires once per platform/arch, plus once per `mas`/`mas-dev` target on macOS — `toMatchSnapshot` calls inside the hook
+   * produce one snapshot key per invocation.
    */
   readonly afterPackTestHook?: (context: PackedContext & { readonly arch: Arch; readonly packContext: AfterPackContext }) => Promise<boolean>
   readonly expectedArtifacts?: Array<string>
@@ -534,6 +537,7 @@ async function packAndCheck(
   if (testHook != null) {
     effectivePackagerOptions = {
       ...packagerOptions,
+      // closes over `packager` (declared below); safe because the hook only runs inside `packager.build()`
       afterPackTestHook: async packContext => {
         const platform = packContext.packager.platform
         const skip = await testHook({

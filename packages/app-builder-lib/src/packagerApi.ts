@@ -26,6 +26,9 @@ export interface PackagerOptions {
    * (asar, extra resources, `afterPack`, fuses, signing) and before any target is built. Return `true`
    * to skip building the targets for that arch (the same effect as `effectiveOptionComputed`, but at
    * the app-directory stage). Not part of `Configuration`; programmatic API only.
+   *
+   * Fires once per `doPack` invocation: once per platform/arch, plus once per `mas`/`mas-dev` target on macOS
+   * (those are packed separately from the other mac targets).
    */
   readonly afterPackTestHook?: (context: AfterPackContext) => Promise<boolean>
 
