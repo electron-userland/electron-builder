@@ -1,10 +1,22 @@
 import { PublishManager } from "app-builder-lib"
 import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
 import { AsarIntegrity, computeArchToTargetNamesMap, getLinuxToolsMacToolset, parsePlistFile, PlistObject } from "app-builder-lib/internal"
-import { addValue, copyDir, exec, executeFinally, exists, FileCopier, log, retry, USE_HARD_LINKS, walk } from "builder-util"
+import { addValue, copyDir, exec, executeFinally, exists, FileCopier, isEmptyOrSpaces, log, retry, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, deepAssign, UpdateFileInfo } from "builder-util-runtime"
-import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
-import { convertVersion } from "electron-winstaller"
+import {
+  Arch,
+  ArtifactCreated,
+  Configuration,
+  DIR_TARGET,
+  getArchSuffix,
+  MacOsTargetName,
+  Packager,
+  PackagerOptions,
+  Platform,
+  SquirrelWindowsOptions,
+  Target,
+} from "electron-builder"
+import { convertVersion } from "electron-builder-squirrel-windows/src/windowsInstaller"
 import { PublishPolicy } from "electron-publish"
 import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
@@ -29,12 +41,13 @@ import { detectPackageManager } from "app-builder-lib/src/node-module-collector/
 import { SelfSignedIdentity } from "./selfSignedIdentity"
 
 const PACKAGE_MANAGER_VERSION_MAP = {
-  [PM.NPM]: { cli: "npm", version: "9.8.1" },
-  [PM.YARN]: { cli: "yarn", version: "1.22.19" },
-  [PM.YARN_BERRY]: { cli: "yarn", version: "3.5.0" },
-  [PM.PNPM]: { cli: "pnpm", version: "10.18.0" },
-  [PM.BUN]: { cli: "bun", version: "1.3.2" },
-  [PM.TRAVERSAL]: { cli: "npm", version: "9.8.1" }, // use npm to install, we're testing manual node traversal, but we still need something to install the dependencies
+  [PM.NPM]: { cli: "npm", version: "12.0.2" },
+  [PM.YARN]: { cli: "yarn", version: "1.22.22" },
+  [PM.YARN_BERRY]: { cli: "yarn", version: "4.18.0" },
+  // pnpm >= 10.29.3 emits deduped subtrees in `pnpm list --json` as childless stubs, which the pnpm collector does not resolve yet (fix on branch fix/pnpm-deduped-list-collector)
+  [PM.PNPM]: { cli: "pnpm", version: "10.28.2" },
+  [PM.BUN]: { cli: "bun", version: "1.4.2" },
+  [PM.TRAVERSAL]: { cli: "npm", version: "12.0.2" }, // use npm to install, we're testing manual node traversal, but we still need something to install the dependencies
 }
 
 // `fs.promises.realpath` keeps 8.3 short components on Windows; only the `.native` variant
@@ -71,6 +84,14 @@ function getUnlockedInstallArgs(pm: PM): Array<string> | undefined {
     return ["--no-frozen-lockfile"]
   }
   return undefined
+}
+
+// Fixture dependencies come straight from the registry and must never run their own install hooks (supply chain).
+// Nothing is lost: native modules are built by electron-builder's own @electron/rebuild step right after the
+// install, which is the product feature under test. npm, yarn 1, pnpm and bun all take `--ignore-scripts` on
+// `install`; yarn berry has no such flag and is handled through YARN_ENABLE_SCRIPTS on the install env instead.
+function getIgnoreScriptsInstallArgs(pm: PM): Array<string> {
+  return pm === PM.YARN_BERRY ? [] : ["--ignore-scripts"]
 }
 
 function getLockfileFixtureNameCandidates(currentTestName: string): Array<string> {
@@ -281,7 +302,11 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
-      const additionalInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : checkOptions.storeDepsLockfileSnapshot ? getUnlockedInstallArgs(pm) : undefined
+      const lockfileInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : checkOptions.storeDepsLockfileSnapshot ? getUnlockedInstallArgs(pm) : undefined
+      const additionalInstallArgs = [...getIgnoreScriptsInstallArgs(pm), ...(lockfileInstallArgs ?? [])]
+      // Scoped to this install only: `runtimeEnv` also reaches the packager, whose install-or-rebuild path must keep
+      // building natives. YARN_ENABLE_SCRIPTS is read by yarn berry alone (see getIgnoreScriptsInstallArgs).
+      const installEnv = pm === PM.YARN_BERRY ? { ...runtimeEnv, YARN_ENABLE_SCRIPTS: "0" } : runtimeEnv
 
       await installDependencies(
         configuration,
@@ -294,7 +319,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
           frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
           additionalArgs: additionalInstallArgs,
         },
-        runtimeEnv
+        installEnv
       )
 
       if (typeof postNodeModulesInstallHook === "function") {
@@ -670,28 +695,44 @@ async function checkMacResult(expect: ExpectStatic, packager: Packager, packager
 }
 
 async function checkWindowsResult(expect: ExpectStatic, packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<string, Target>) {
-  function checkSquirrelResult() {
+  async function checkSquirrelResult() {
     const appInfo = packager.appInfo
-    const { zip } = checkResult(expect, artifacts, "-full.nupkg")
+    const { zip, allFiles } = checkResult(expect, artifacts, "-full.nupkg")
 
-    if (checkOptions == null) {
-      const expectedSpec = zip.readAsText("TestApp.nuspec").replace(/\r\n/g, "\n")
-      // console.log(expectedSpec)
-      expect(expectedSpec).toEqual(`<?xml version="1.0"?>
-<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
-  <metadata>
-    <id>TestApp</id>
-    <version>${convertVersion(appInfo.version)}</version>
-    <title>${appInfo.productName}</title>
-    <authors>Foo Bar</authors>
-    <owners>Foo Bar</owners>
-    <iconUrl>https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico</iconUrl>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Test Application (test quite “ #378)</description>
-    <copyright>Copyright © ${new Date().getFullYear()} Foo Bar</copyright>
-    <projectUrl>http://foo.example.com</projectUrl>
-  </metadata>
-</package>`)
+    // nuget.exe re-serializes the manifest when it packs (own schema namespace, element order, no <files>
+    // block), so the packed .nuspec is not byte-comparable with the rendered template. Assert the metadata
+    // fields that SquirrelWindowsTarget derives from the config instead.
+    const nuspecEntry = allFiles.find(it => it.endsWith(".nuspec"))
+    expect(nuspecEntry).toBeDefined()
+    const nuspec = zip.readAsText(nuspecEntry!).replace(/\r\n/g, "\n")
+
+    // XmlWriter escapes only these in text nodes (quotes are written verbatim)
+    const xmlText = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    const squirrelOptions: SquirrelWindowsOptions = packager.config.squirrelWindows ?? {}
+    const expectedId = squirrelOptions.useAppIdAsId ? appInfo.id : squirrelOptions.name || appInfo.name
+    const expectedAuthors = appInfo.companyName || ""
+    const expectedDescription = isEmptyOrSpaces(appInfo.description) ? squirrelOptions.name || appInfo.productName : appInfo.description
+    const expectedProjectUrl = await appInfo.computePackageUrl()
+
+    expect(nuspecEntry).toBe(`${expectedId}.nuspec`)
+    expect(nuspec).toContain(`<id>${xmlText(expectedId)}</id>`)
+    expect(nuspec).toContain(`<version>${convertVersion(appInfo.version)}</version>`)
+    expect(nuspec).toContain(`<title>${xmlText(appInfo.productName)}</title>`)
+    expect(nuspec).toContain(`<authors>${xmlText(expectedAuthors)}</authors>`)
+    expect(nuspec).toContain(`<owners>${xmlText(expectedAuthors)}</owners>`)
+    if (squirrelOptions.iconUrl != null) {
+      expect(nuspec).toContain(`<iconUrl>${xmlText(squirrelOptions.iconUrl)}</iconUrl>`)
+    }
+    expect(nuspec).toContain(`<description>${xmlText(expectedDescription)}</description>`)
+    expect(nuspec).toContain(`<copyright>${xmlText(appInfo.copyright)}</copyright>`)
+    if (expectedProjectUrl != null) {
+      // nuget.exe round-trips the URL through System.Uri, which appends "/" to a bare authority
+      // (http://foo.example.com -> http://foo.example.com/), so compare without a trailing slash
+      const projectUrl = /<projectUrl>([^<]*)<\/projectUrl>/.exec(nuspec)?.[1]
+      expect(projectUrl).toBeDefined()
+      expect(projectUrl!.replace(/\/$/, "")).toBe(xmlText(expectedProjectUrl).replace(/\/$/, ""))
+    } else {
+      expect(nuspec).not.toContain("<projectUrl>")
     }
   }
 

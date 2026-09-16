@@ -1,4 +1,5 @@
 import { createRequire } from "node:module"
+import { AZURE_KNOWN_FIELDS, ELECTRON_DOWNLOAD_DROPPED, MAC_SIGN_FIELDS, MAC_SIGN_REMOVED_FIELDS, MAC_UNIVERSAL_FIELDS } from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
 import { promises as fs } from "fs"
 import * as path from "path"
@@ -25,41 +26,10 @@ export interface MigrationResult {
 
 // ─── Pure migration logic ─────────────────────────────────────────────────────
 
-// Azure Trusted Signing typed fields in v27 (everything else is an extra key → additionalMetadata).
-// "type" is included so it is not mistakenly moved to additionalMetadata if already present.
-export const AZURE_KNOWN_FIELDS = new Set([
-  "type",
-  "endpoint",
-  "codeSigningAccountName",
-  "certificateProfileName",
-  "publisherName",
-  "fileDigest",
-  "timestampRfc3161",
-  "timestampDigest",
-  "additionalMetadata",
-])
-
-// macOS signing fields that moved from the platform root into the `sign` (ElectronSignOptions) bag.
-// `signIgnore` is renamed to `sign.ignore` separately (the @electron/osx-sign canonical name).
-export const MAC_SIGN_FIELDS = [
-  "identity",
-  "entitlements",
-  "entitlementsInherit",
-  "entitlementsLoginHelper",
-  "provisioningProfile",
-  "type",
-  "binaries",
-  "requirements",
-  "hardenedRuntime",
-  "gatekeeperAssess",
-  "strictVerify",
-  "preAutoEntitlements",
-  "timestamp",
-  "additionalArguments",
-] as const
-
-// Universal-build fields that moved from the platform root into the `universal` (ElectronUniversalOptions) bag.
-export const MAC_UNIVERSAL_FIELDS = ["mergeASARs", "singleArchFiles", "x64ArchFiles"] as const
+// The v26 -> v27 key mapping is owned by app-builder-lib so the runtime guard
+// (`checkLegacyConfiguration`) and this migrator cannot drift apart. Re-exported here because these
+// names are part of this module's existing public surface.
+export { AZURE_KNOWN_FIELDS, ELECTRON_DOWNLOAD_DROPPED, MAC_SIGN_FIELDS, MAC_SIGN_REMOVED_FIELDS, MAC_UNIVERSAL_FIELDS } from "app-builder-lib/internal"
 
 // Advisory surfaced (informational only — never rewrites the config) when a project builds an nsis-web target. As of v27,
 // AppUpdater.disableWebInstaller defaults to true, so the auto-updater no longer downloads web-installer packages unless the app opts in at runtime.
@@ -265,7 +235,7 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
       } else {
         delete c.asar
       }
-      changes.push({ key: "asar", description: "replaced asar: true with asar object (true is no longer a valid value)" })
+      changes.push({ key: "asar", description: "removed redundant asar: true (asar is enabled by default; the explicit `true` is not needed)" })
     } else if (Object.keys(asarSub).length > 0) {
       c.asar = asarSub
     }
@@ -391,6 +361,15 @@ function migrateMacSigning(platform: Record<string, any>, name: string, changes:
   const existingSign = platform.sign
   const signIsCustom = typeof existingSign === "string" || typeof existingSign === "function"
 
+  // Removed outright, not moved: ElectronSignOptions omits these and the schema rejects them, so
+  // relocating them under `sign` would emit a config that fails validation on the next build.
+  for (const field of MAC_SIGN_REMOVED_FIELDS) {
+    if (field in platform) {
+      delete platform[field]
+      changes.push({ key: `${name}.${field}`, description: `removed ${name}.${field} (@electron/osx-sign 2.x dropped the spctl --assess step; there is no ${name}.sign.${field})` })
+    }
+  }
+
   if (present.length === 0 && !hasSignIgnore) {
     // Only thing to fix is a semantically-flipped bare null
     if (existingSign === null) {
@@ -437,9 +416,6 @@ function migrateMacUniversal(platform: Record<string, any>, name: string, change
   }
   platform.universal = universalObj
 }
-
-// electronDownload fields with no equivalent in the v27 ElectronGetOptions (@electron/get v5) shape.
-export const ELECTRON_DOWNLOAD_DROPPED = ["cache", "customDir", "customFilename", "strictSSL", "platform", "arch", "version"] as const
 
 /**
  * Renames `electronDownload` → `electronGet` and reshapes it to ElectronGetOptions.

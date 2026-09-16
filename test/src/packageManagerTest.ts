@@ -10,6 +10,7 @@ import * as which from "which"
 
 const yarnVersion = getPackageManagerWithVersion(PM.YARN).prepareEntry
 const yarnBerryVersion = getPackageManagerWithVersion(PM.YARN_BERRY).prepareEntry
+const npmVersion = getPackageManagerWithVersion(PM.NPM).prepareEntry
 
 const hasBun = !isEmptyOrSpaces(which.sync("bun", { nothrow: true }))
 
@@ -201,7 +202,7 @@ describe("Package Managers", { sequential: true }, () => {
             data =>
               packageConfig(
                 data,
-                "pnpm@10.18.0+sha512.e804f889f1cecc40d572db084eec3e4881739f8dec69c0ff10d2d1beff9a4e309383ba27b5b750059d7f4c149535b6cd0d2cb1ed3aeb739239a4284a68f40cfa"
+                "pnpm@10.28.2+sha512.41872f037ad22f7348e3b1debbaf7e867cfd448f2726d9cf74c08f19507c31d2c8e7a11525b983febc2df640b5438dee6023ebb1f84ed43cc2d654d2bc326264"
               ),
             false
           ),
@@ -218,7 +219,7 @@ describe("Package Managers", { sequential: true }, () => {
       {
         storeDepsLockfileSnapshot: true,
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-        projectDirCreated: projectDir => modifyPackageJson(projectDir, data => packageConfig(data, "npm@9.8.1"), false),
+        projectDirCreated: projectDir => modifyPackageJson(projectDir, data => packageConfig(data, npmVersion), false),
       }
     ))
 

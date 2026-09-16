@@ -1,3 +1,26 @@
+# [27.0.0-alpha.8](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.7...electron-builder@27.0.0-alpha.8) (2026-09-01)
+
+
+### Bug Fixes
+
+* **app-builder-lib:** expand lower channels when channel name has a suffix ([#9998](https://github.com/electron-userland/electron-builder/issues/9998)) ([e2077cd](https://github.com/electron-userland/electron-builder/commit/e2077cd8f7b0fb143ecd6c9574460a92a001ae46))
+* **app-builder-lib:** return sign result instead of boolean from windows signing chain ([#10104](https://github.com/electron-userland/electron-builder/issues/10104)) ([5ce1625](https://github.com/electron-userland/electron-builder/commit/5ce1625642794f1f7bf8cf9fe51dc73fc39451ad))
+* emit afterSign hook for mas/mas-dev builds ([#10071](https://github.com/electron-userland/electron-builder/issues/10071)) ([1d7b489](https://github.com/electron-userland/electron-builder/commit/1d7b4890f32fef6e02215ae5137626a84d8259d9))
+* exclude `.slnx` files ([#9969](https://github.com/electron-userland/electron-builder/issues/9969)) ([4273546](https://github.com/electron-userland/electron-builder/commit/427354611fe82b3106d0645a1e25e2de95330fdc))
+* **linux:** remove http-parser from default pacman depends; support "default" keyword in depends ([#10109](https://github.com/electron-userland/electron-builder/issues/10109)) ([64c2398](https://github.com/electron-userland/electron-builder/commit/64c2398b4e749b0695e3efe4071c2b884bff4ba4))
+* **mac:** bump linux-tools-mac toolset to 1.0.1 (macOS 15+) and stop mangling custom toolset URLs ([#10100](https://github.com/electron-userland/electron-builder/issues/10100)) ([f7e400b](https://github.com/electron-userland/electron-builder/commit/f7e400ba6766165cce896b53fc55142bb48597d8))
+* **mac:** pass the keychain password to security set-key-partition-list ([#10101](https://github.com/electron-userland/electron-builder/issues/10101)) ([7abb30e](https://github.com/electron-userland/electron-builder/commit/7abb30e393326676237862163a115c96e2f0e80d))
+* **nsis:** default the uninstall-failure dialog in silent installs so auto-update cannot hang ([#10034](https://github.com/electron-userland/electron-builder/issues/10034)) ([4b455f7](https://github.com/electron-userland/electron-builder/commit/4b455f7577c5a7112c7c00bfcb9cb26e3259a87f))
+* **nsis:** detect running app in previous install locations when checking/closing processes ([#10024](https://github.com/electron-userland/electron-builder/issues/10024)) ([8e95ad0](https://github.com/electron-userland/electron-builder/commit/8e95ad0e00c866c8389ae295ac802ebd9954d2ca))
+* **nsis:** run PowerShell with -NoProfile -NonInteractive in allowOnlyOneInstallerInstance checks ([#10051](https://github.com/electron-userland/electron-builder/issues/10051)) ([4070ce7](https://github.com/electron-userland/electron-builder/commit/4070ce731159ede8239b8129fa9f177e2193b1ad))
+* Only logs that we've signed a file if we actually did ([#10082](https://github.com/electron-userland/electron-builder/issues/10082)) ([4f84c6e](https://github.com/electron-userland/electron-builder/commit/4f84c6e972e443d155cf80bbc849443060f120be))
+* preserve Yarn Berry registry credentials ([#10079](https://github.com/electron-userland/electron-builder/issues/10079)) ([16559d4](https://github.com/electron-userland/electron-builder/commit/16559d4f214b184b6edd0812db97e41ecb79ab42))
+* **publish:** report the repository detected for app-update.yml at build time ([#10081](https://github.com/electron-userland/electron-builder/issues/10081)) ([f2cfd5f](https://github.com/electron-userland/electron-builder/commit/f2cfd5f3c147410495030e66f22dc1b336a5faec))
+* retry Electron/binaries downloads on transient errors; cache Windows toolset and self-heal the Electron zip cache ([#10105](https://github.com/electron-userland/electron-builder/issues/10105)) ([c5c4ea1](https://github.com/electron-userland/electron-builder/commit/c5c4ea138cfe5e17f7d80c0ba1a26bb99799861d))
+* update 7zip toolset to 1.0.1 with correct per-arch Windows binaries ([#10103](https://github.com/electron-userland/electron-builder/issues/10103)) ([44a10d4](https://github.com/electron-userland/electron-builder/commit/44a10d43c486fbde12c5a19b04a2ce65e017c628))
+
+
+
 # [27.0.0-alpha.7](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.6...electron-builder@27.0.0-alpha.7) (2026-08-17)
 
 
