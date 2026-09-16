@@ -161,6 +161,23 @@ export class Packager {
     this.buildFinalizeTasks.push(task)
   }
 
+  // Targets whose build was skipped by `afterPackTestHook`. Their `finishBuild()` must not run either:
+  // NsisTarget and MsiWrappedTarget assume `build()` populated per-arch state first.
+  private readonly targetsSkippedByTestHook = new Set<Target>()
+
+  /** @internal see PackagerOptions.afterPackTestHook */
+  async shouldSkipTargetsAfterPack(context: AfterPackContext): Promise<boolean> {
+    const hook = this.options.afterPackTestHook
+    if (hook == null || !(await hook(context))) {
+      return false
+    }
+    for (const target of context.targets) {
+      this.targetsSkippedByTestHook.add(target)
+    }
+    log.debug({ platform: context.packager.platform.name, arch: Arch[context.arch] }, "afterPackTestHook requested early exit; skipping target builds")
+    return true
+  }
+
   private _repositoryInfo = new Lazy<SourceRepositoryInfo | null>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
 
   readonly options: PackagerOptions
@@ -554,6 +571,9 @@ export class Packager {
       }
 
       for (const target of nameToTarget.values()) {
+        if (this.targetsSkippedByTestHook.has(target)) {
+          continue
+        }
         if (target.isAsyncSupported) {
           taskManager.addTask(target.finishBuild())
         } else {

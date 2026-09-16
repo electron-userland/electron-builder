@@ -28,8 +28,9 @@ const SUITES: WindowsSuiteConfig[] = [
     registerFn: namedFn("registerWinPackagerTests" satisfies keyof typeof _WinPackagerSuite),
     importPath: "windows/winPackagerTestSuite",
     describeConfig: { name: "winPackager", chain: ["ifWindowsOrWine"] },
-    nsisVersions: NSIS_VERSIONS,
-    wineVersions: WINE_VERSIONS,
+    // Every test in this suite either builds a dir target or exits early via afterPackTestHook once the app
+    // directory is assembled, so no NSIS installer is built and wine is never needed — only the winCodeSign
+    // toolset (signing happens in doPack) varies the outcome.
   },
   {
     name: "portable",
