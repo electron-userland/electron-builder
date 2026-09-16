@@ -20,9 +20,12 @@ export function getTestFilesOverride(): string[] | undefined {
   return tokens.length > 0 ? tokens : undefined
 }
 
-// Each token expands to `<token>.ts`, `<token>*Test.ts`, `<token>*.e2e.ts` and `<token>*__e2e.ts` in run-vitest.ts, so the
-// default admits every hand-written and generated test file (see isE2eTestFile in file-discovery.ts for the e2e spellings).
-export const TEST_FILES_PATTERN = getTestFilesOverride()?.join(",") ?? "*Test,*test,*.e2e,*__e2e"
+/**
+ * Basename globs (without `.ts`) of the four test-file classes vitest admits when there is no `TEST_FILES` override:
+ * `*Test` / `*test` (unit-level) and `*.e2e` / `*__e2e` (installer-reading, see isE2eTestFile in file-discovery.ts).
+ * With an override, run-vitest.ts expands each token instead (see buildIncludeGlobs there).
+ */
+export const DEFAULT_TEST_FILE_GLOBS: ReadonlyArray<string> = ["*Test", "*test", "*.e2e", "*__e2e"]
 
 /**
  * Which class of test files discovery admits (see file-discovery.ts):

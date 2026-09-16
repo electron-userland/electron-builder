@@ -6,7 +6,7 @@ import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./vitest-config/file-discovery.js"
 import { generateTests } from "./generate-tests.js"
 import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./vitest-config/shard-builder.js"
-import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN, TEST_MODE } from "./vitest-config/smart-config.js"
+import { DEFAULT_TEST_FILE_GLOBS, getTestFilesOverride, SHARD_INDEX, SupportedPlatforms, TEST_MODE } from "./vitest-config/smart-config.js"
 import SmartSequencer from "./vitest-config/vitest-smart-sequencer.js"
 
 const PACKAGES_DIR = path.join(__dirname, "..", "..", "packages")
@@ -51,14 +51,22 @@ const workspaceSourceAliases = [
   },
 ]
 
-const testPatterns = TEST_FILES_PATTERN.split(",")
-  .map(s => s.trim())
-  .filter(Boolean)
-// A TEST_FILES token is a filename substring: it admits `<token>.ts`, `<token>*Test.ts` and both e2e spellings
-// (`<token>*.e2e.ts` hand-written / platform-gated generated, `<token>*__e2e.ts` ungated generated — see isE2eTestFile),
-// so `TEST_FILES=oneClickInstaller` runs oneClickInstallerTest.ts and oneClickInstaller.e2e.ts alike. Discovery only ever
-// *adds* TEST_FILES matches; this glob is what scopes the vitest run down to them.
-const includeGlob = `(${["", "*Test", "*.e2e", "*__e2e"].map(suffix => testPatterns.map(t => `${t}${suffix}`).join("|")).join("|")})`
+/**
+ * Basename globs (without `.ts`) vitest may run. Without a `TEST_FILES` override these are exactly the four test-file
+ * classes (`*Test`, `*test`, `*.e2e`, `*__e2e`). A `TEST_FILES` token is a filename substring, so each token `t` expands
+ * to `t` itself, `t*Test`, `t*test` and both e2e spellings (`t*.e2e` hand-written / platform-gated generated, `t*__e2e`
+ * ungated generated — see isE2eTestFile): `TEST_FILES=oneClickInstaller` runs oneClickInstallerTest.ts and
+ * oneClickInstaller.e2e.ts alike, `TEST_FILES=snapHeavy` finds snapHeavy.e2e.ts. Discovery only ever *adds* TEST_FILES
+ * matches; this glob is what scopes the vitest run down to them.
+ */
+function buildIncludeGlobs(override: ReadonlyArray<string> | undefined): ReadonlyArray<string> {
+  if (override == null) {
+    return DEFAULT_TEST_FILE_GLOBS
+  }
+  return override.flatMap(t => [t, ...DEFAULT_TEST_FILE_GLOBS.map(glob => `${t}${glob}`)])
+}
+
+const includeGlob = `(${buildIncludeGlobs(getTestFilesOverride()).join("|")})`
 console.log("TEST_FILES pattern", includeGlob)
 console.log("TEST_MODE", TEST_MODE)
 
