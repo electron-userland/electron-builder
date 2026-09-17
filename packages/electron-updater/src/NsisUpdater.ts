@@ -247,7 +247,7 @@ export class NsisUpdater extends BaseUpdater {
         oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_APP_PACKAGE_FILE_NAME),
         logger: this._logger,
         newFile: packagePath,
-        requestHeaders: this.requestHeaders,
+        requestHeaders: downloadUpdateOptions.requestHeaders,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
         cancellationToken: downloadUpdateOptions.cancellationToken,
       }
