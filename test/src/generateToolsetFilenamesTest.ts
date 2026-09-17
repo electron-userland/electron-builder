@@ -247,6 +247,27 @@ describe("TEST_MODE file discovery", () => {
     }
   })
 
+  // flatpak.e2e.ts is in skippedTests: it only runs natively in the Test Flatpak job (TEST_FILES=flatpak), and its
+  // `describe.ifEnv` skip inside the docker shards would otherwise record a ~0 ms linux run that ties with the real one
+  // in merge-smart-cache.ts. TEST_FILES is an explicit request and must still select it there.
+  it("flatpak.e2e is excluded from default discovery but still selected by TEST_FILES=flatpak", () => {
+    const original = process.env.TEST_FILES
+    try {
+      delete process.env.TEST_FILES
+      expect(getAllTestFiles("linux", "all")).not.toContain("test/src/linux/flatpak.e2e.ts")
+      expect(getAllTestFiles("linux", "e2e")).not.toContain("test/src/linux/flatpak.e2e.ts")
+
+      process.env.TEST_FILES = "flatpak"
+      expect(getAllTestFiles("linux", "all")).toContain("test/src/linux/flatpak.e2e.ts")
+    } finally {
+      if (original == null) {
+        delete process.env.TEST_FILES
+      } else {
+        process.env.TEST_FILES = original
+      }
+    }
+  })
+
   it("hand-written e2e files are discovered next to their unit-level siblings", () => {
     const e2e = getAllTestFiles("linux", "e2e")
     expect(e2e).toContain("test/src/windows/oneClickInstaller.e2e.ts")
