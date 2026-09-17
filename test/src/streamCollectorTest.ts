@@ -3,6 +3,7 @@ import { NodeModulesCollector } from "app-builder-lib/src/node-module-collector/
 import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
 import { PM } from "app-builder-lib/internal"
 import * as childProcess from "child_process"
+import * as fse from "fs-extra"
 import * as nodeFs from "node:fs"
 import { EventEmitter } from "events"
 import type { TmpDir } from "builder-util"
@@ -19,13 +20,16 @@ vi.mock("node:fs", async () => {
 class TestCollector extends NodeModulesCollector<any, any> {
   readonly installOptions = { manager: PM.NPM, lockfile: "package-lock.json" }
   protected getArgs() {
-    return []
+    return ["list", "--json"]
   }
   protected async extractProductionDependencyGraph() {}
   protected async collectAllDependencies() {}
   // expose protected members for testing
   streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
     return super.streamCollectorCommandToFile(command, args, cwd, tempOutputFile)
+  }
+  getDependenciesTree(pm: PM) {
+    return super.getDependenciesTree(pm)
   }
   get logSummary() {
     return this.cache.logSummary
@@ -64,6 +68,16 @@ async function waitForCloseCb() {
   }
   if (closeCb === undefined) {
     throw new Error("spawn never registered close callback")
+  }
+}
+
+// Like waitForCloseCb, but tolerates the multi-second retry back-off of getDependenciesTree before the next spawn.
+async function waitForRetrySpawn() {
+  for (let i = 0; i < 1000 && closeCb === undefined; i++) {
+    await new Promise(resolve => setTimeout(resolve, 10))
+  }
+  if (closeCb === undefined) {
+    throw new Error("retry never spawned the command again")
   }
 }
 
@@ -260,6 +274,33 @@ describe("streamCollectorCommandToFile", { sequential: true }, () => {
       closeCb!(1)
       await p
       expect(collector.logSummary[LogMessageByKey.PKG_COLLECTOR_OUTPUT]).toHaveLength(0)
+    })
+  })
+
+  describe("getDependenciesTree: empty output", () => {
+    test("npm list exit code 1 with EMPTY stdout: rejects with a clear error after the single retry (issue #10208)", { timeout: 30_000 }, async ({ expect }) => {
+      // npm swallowed an exception while flushing its JSON tree: nothing on stdout, exit code 1. Parsing the
+      // empty file used to surface only the misleading "No JSON content found in output".
+      await fse.writeFile(OUTPUT_FILE, "")
+      const tmpDir = { getTempFile: vi.fn().mockResolvedValue(OUTPUT_FILE) } as unknown as TmpDir
+      const emptyOutputCollector = new TestCollector("/rootDir", tmpDir)
+
+      const p = emptyOutputCollector.getDependenciesTree(PM.NPM)
+      await waitForCloseCb()
+      stderrDataCb?.("npm error A complete log of this run can be found in: /home/user/.npm/_logs/debug-0.log\n")
+      closeCb!(1)
+
+      // the empty output is treated as transient once: the command is spawned a second time
+      closeCb = undefined
+      await waitForRetrySpawn()
+      stderrDataCb?.("npm error A complete log of this run can be found in: /home/user/.npm/_logs/debug-1.log\n")
+      closeCb!(1)
+
+      // win32 resolves `npm` via which.sync, so the basename is `npm.cmd` or `npm.CMD` depending on the runner's PATHEXT casing
+      await expect(p).rejects.toThrow(/`npm(\.cmd)? list --json` \(cwd: \/rootDir\) exited with code 1 and produced no output on stdout/i)
+      await expect(p).rejects.toThrow("stderr: npm error A complete log of this run can be found in")
+      await expect(p).rejects.not.toThrow("No JSON content found in output")
+      expect(vi.mocked(childProcess.spawn)).toHaveBeenCalledTimes(2)
     })
   })
 

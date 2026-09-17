@@ -1075,7 +1075,8 @@ export async function checkDirContents(expect: ExpectStatic, dir: string) {
 export function removeUnstableProperties(data: any) {
   return JSON.parse(
     JSON.stringify(data, (name, value) => {
-      if (name.includes("size") || name.includes("Size") || name.startsWith("sha") || name === "releaseDate") {
+      // `signature`/`keyId`: Ed25519 update-manifest signatures over hashes/sizes and the (runtime-generated) key's id
+      if (name.includes("size") || name.includes("Size") || name.startsWith("sha") || name === "releaseDate" || name === "signature" || name === "keyId") {
         // to ensure that some property exists
         return `@${name}`
       }

@@ -11,12 +11,15 @@ import {
   getArtifactArchName,
   InvalidConfigurationError,
   isEmptyOrSpaces,
+  loadUpdateSigningKeys,
   log,
   orIfFileNotExist,
+  parsePrivateKey,
   sanitizeDirPath,
   statOrNull,
 } from "builder-util"
-import { CancellationToken, deepAssign, Nullish } from "builder-util-runtime"
+import { CancellationToken, deepAssign, MemoLazy, Nullish } from "builder-util-runtime"
+import type { KeyObject } from "crypto"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
@@ -24,6 +27,8 @@ import * as path from "path"
 import * as fs from "fs/promises"
 import type { TmpDir } from "temp-file"
 import type { Metadata } from "./options/metadata.js"
+// not re-exported from ./index.js, and a type-only import keeps the barrel-cycle guard below intact
+import type { UpdateManifestSigningOptions } from "./options/PlatformSpecificBuildOptions.js"
 import type { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { AppInfo } from "./appInfo.js"
 import { isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
@@ -114,6 +119,29 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private readonly _resourceList = new Lazy<Array<string>>(() => orIfFileNotExist(readdir(this.info.buildResourcesDir), []))
+
+  /**
+   * Ed25519 private key(s) used to sign auto-update manifests; empty when signing is disabled.
+   * Single source of truth for both consumers - updateInfoBuilder (signing `latest*.yml`) and
+   * PublishManager (embedding the derived public keys in `app-update.yml`) - so the two can no longer
+   * disagree about whether signing is on or which keys are in play. Several keys mean every manifest is
+   * signed by each of them (dual-signing during key rotation); the first key is the one written to the
+   * legacy single `signature` field. MemoLazy rather than Lazy so a hook mutating `updateManifest`
+   * between packs re-resolves, while a normal build parses the PEMs once.
+   */
+  readonly updateSigningKeys = new MemoLazy<UpdateManifestSigningOptions | null, Array<KeyObject>>(
+    () => this.platformOptions.updateManifest ?? this.config.updateManifest ?? null,
+    // resolution is fully synchronous (env/readFileSync + createPrivateKey); MemoLazy just wants a promise
+    selected => {
+      // relative signingKeyFile paths are project-relative, like every other path in the configuration
+      const pems = loadUpdateSigningKeys(selected, this.projectDir)
+      if (pems.length === 0) {
+        return Promise.resolve([])
+      }
+      log.info({ platform: this.platform.name, keys: pems.length }, "signing update manifests with Ed25519 key(s)")
+      return Promise.resolve(pems.map(parsePrivateKey))
+    }
+  )
 
   readonly appInfo: AppInfo
 
