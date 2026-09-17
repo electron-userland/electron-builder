@@ -1,7 +1,7 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { getWindowsVm, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
 import { GenericServerOptions, Nullish } from "builder-util-runtime"
-import { archFromString, deepAssign, DebugLogger, log, serializeToYaml, spawn, TmpDir } from "builder-util"
+import { archFromString, deepAssign, DebugLogger, log, serializeToYaml, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { copy, existsSync, move, outputFile, readJsonSync, remove } from "fs-extra"
 import { homedir } from "os"
@@ -115,10 +115,17 @@ export async function doBuild(
         signedWin: isWindows,
         packed,
         packageManager: PM.PNPM,
-        projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
-          // Write .npmrc to app/ — installDependencies runs pnpm with cwd=appDir, so pnpm 10
-          // reads this file and uses hoisted layout for the main install.
-          await outputFile(path.join(projectDir, "app", ".npmrc"), "node-linker=hoisted")
+        projectDirCreated: async projectDir => {
+          // pnpm 11 reads its own settings from pnpm-workspace.yaml alone: neither `node-linker` in .npmrc nor the `pnpm` key of
+          // package.json is consulted any more (pnpm 10 still honored both). installDependencies runs pnpm with cwd=appDir, so the
+          // file lives in app/ and the main install is hoisted from the start. That also keeps the sqlite3 binary that @electron/rebuild
+          // produces right after the install: a second `pnpm install --config.node-linker=hoisted` re-links node_modules from the
+          // store and drops it, and under pnpm 11 it fails outright with ERR_PNPM_IGNORED_BUILDS for sqlite3 (strictDepBuilds).
+          // packTester merges its allowBuilds entry into this file before installing.
+          await outputFile(
+            path.join(projectDir, "app", "pnpm-workspace.yaml"),
+            serializeToYaml({ nodeLinker: "hoisted", supportedArchitectures: { os: ["current"], cpu: ["x64", "arm64"] } })
+          )
 
           await modifyPackageJson(
             projectDir,
@@ -142,23 +149,6 @@ export async function doBuild(
             },
             true
           )
-          await modifyPackageJson(
-            projectDir,
-            data => {
-              data.pnpm = {
-                supportedArchitectures: {
-                  os: ["current"],
-                  cpu: ["x64", "arm64"],
-                },
-              }
-            },
-            false
-          )
-          // Return a post-install hook so the explicit flag runs AFTER installDependencies.
-          // pnpm 11 ignores node-linker from .npmrc; the CLI flag here handles that case.
-          return async () => {
-            await spawn("pnpm", ["install", "--config.node-linker=hoisted"], { cwd: path.join(projectDir, "app"), stdio: "inherit", env: runtimeEnv })
-          }
         },
       }
     )
