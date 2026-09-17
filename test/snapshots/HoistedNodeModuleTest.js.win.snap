@@ -22364,16 +22364,12 @@ exports[`node_module collectors > pnpm node-linker=hoisted 1`] = `
 exports[`node_module collectors > pnpm node-linker=hoisted 2`] = `
 {
   "files": {
-    ".npmrc": {
-      "offset": 524910,
-      "size": 20,
-    },
     "index.html": {
-      "offset": 524920,
+      "offset": 524910,
       "size": 380,
     },
     "index.js": {
-      "offset": 525300,
+      "offset": 525280,
       "size": 620,
     },
     "node_modules": {
@@ -24029,7 +24025,7 @@ exports[`node_module collectors > pnpm node-linker=hoisted 2`] = `
       },
     },
     "package.json": {
-      "offset": 525920,
+      "offset": 525900,
       "size": 370,
     },
   },
@@ -24150,16 +24146,12 @@ exports[`node_module collectors > pnpm public-hoist-pattern=* 1`] = `
 exports[`node_module collectors > pnpm public-hoist-pattern=* 2`] = `
 {
   "files": {
-    ".npmrc": {
-      "offset": 524910,
-      "size": 30,
-    },
     "index.html": {
-      "offset": 524930,
+      "offset": 524910,
       "size": 380,
     },
     "index.js": {
-      "offset": 525310,
+      "offset": 525280,
       "size": 620,
     },
     "node_modules": {
@@ -25815,7 +25807,7 @@ exports[`node_module collectors > pnpm public-hoist-pattern=* 2`] = `
       },
     },
     "package.json": {
-      "offset": 525920,
+      "offset": 525900,
       "size": 370,
     },
   },
@@ -25831,16 +25823,12 @@ exports[`node_module collectors > pnpm shamefully-hoist=true 1`] = `
 exports[`node_module collectors > pnpm shamefully-hoist=true 2`] = `
 {
   "files": {
-    ".npmrc": {
-      "offset": 524910,
-      "size": 30,
-    },
     "index.html": {
-      "offset": 524930,
+      "offset": 524910,
       "size": 380,
     },
     "index.js": {
-      "offset": 525300,
+      "offset": 525280,
       "size": 620,
     },
     "node_modules": {
@@ -27496,7 +27484,7 @@ exports[`node_module collectors > pnpm shamefully-hoist=true 2`] = `
       },
     },
     "package.json": {
-      "offset": 525920,
+      "offset": 525900,
       "size": 370,
     },
   },

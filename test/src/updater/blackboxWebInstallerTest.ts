@@ -12,7 +12,6 @@ import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTes
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 import { optionsForFlakyE2E, windowsVmPromise } from "./blackboxUpdateHelpers"
 import { PM } from "app-builder-lib/internal"
-import { spawn } from "builder-util"
 
 // ---------------------------------------------------------------------------
 // Web installer blackbox E2E test
@@ -123,7 +122,9 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
             builtDir = await tmpDir.getTempDir({ prefix: "built" })
             await move(ctx.outDir, builtDir)
           },
-          projectDirCreated: async (projectDir: string, _tmpDir: TmpDir, runtimeEnv: NodeJS.ProcessEnv) => {
+          // pnpm 11 reads its settings from pnpm-workspace.yaml only (not the `pnpm` key of package.json); packTester writes this for the install
+          pnpmSettings: { supportedArchitectures: { os: ["current"], cpu: ["x64"] } },
+          projectDirCreated: async (projectDir: string) => {
             await modifyPackageJson(
               projectDir,
               data => {
@@ -131,16 +132,6 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
               },
               true
             )
-            await modifyPackageJson(
-              projectDir,
-              data => {
-                data.pnpm = {
-                  supportedArchitectures: { os: ["current"], cpu: ["x64"] },
-                }
-              },
-              false
-            )
-            await spawn("pnpm", ["install"], { cwd: projectDir, stdio: "inherit", env: runtimeEnv })
           },
         }
       )

@@ -19,7 +19,7 @@ import * as path from "path"
 import { afterAll, beforeAll, TestContext } from "vitest"
 import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
-import { spawn, TmpDir } from "builder-util"
+import { TmpDir } from "builder-util"
 import { optionsForFlakyE2E, windowsVmPromise } from "./blackboxUpdateHelpers"
 import { installMsixInVm, installMsixNative, launchMsixAppInVm, uninstallMsixInVm, uninstallMsixNative } from "./blackboxInstallMsix"
 import type { MsixInstallResult } from "./blackboxInstallMsix"
@@ -109,7 +109,9 @@ async function buildMsixApp(
       signedWin: false,
       packageManager: PM.PNPM,
       packed,
-      projectDirCreated: async (projectDir, _dir, runtimeEnv) => {
+      // pnpm 11 reads its settings from pnpm-workspace.yaml only (not the `pnpm` key of package.json); packTester writes this for the install
+      pnpmSettings: { supportedArchitectures: { os: ["current"], cpu: ["x64"] } },
+      projectDirCreated: async projectDir => {
         await modifyPackageJson(
           projectDir,
           data => {
@@ -117,16 +119,6 @@ async function buildMsixApp(
           },
           true
         )
-        await modifyPackageJson(
-          projectDir,
-          data => {
-            data.pnpm = {
-              supportedArchitectures: { os: ["current"], cpu: ["x64"] },
-            }
-          },
-          false
-        )
-        await spawn("pnpm", ["install"], { cwd: projectDir, stdio: "inherit", env: runtimeEnv })
       },
     }
   )
