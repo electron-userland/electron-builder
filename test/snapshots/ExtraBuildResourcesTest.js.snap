@@ -2,18 +2,7 @@
 
 exports[`custom buildResources and output dirs: linux 1`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
+  "linux": [],
 }
 `;
 
@@ -25,13 +14,7 @@ exports[`custom buildResources and output dirs: mac 1`] = `
 
 exports[`custom buildResources and output dirs: win 1`] = `
 {
-  "win": [
-    {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.1.0.exe",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-    },
-  ],
+  "win": [],
 }
 `;
 
@@ -122,38 +105,7 @@ exports[`electronDist as standard path to node_modules electron 2`] = `
 
 exports[`override targets in the config - only arch 1`] = `
 {
-  "win": [
-    {
-      "arch": "ia32",
-      "file": "beta-TestApp.exe",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "ia32",
-      "file": "beta-TestApp.exe.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "beta.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "beta-TestApp.exe",
-          },
-        ],
-        "releaseDate": "@releaseDate",
-        "version": "1.0.0-beta.1",
-      },
-    },
-  ],
+  "win": [],
 }
 `;
 

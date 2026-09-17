@@ -164,8 +164,7 @@ async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
     expect,
     "test-app-one",
     {
-      // to check NuGet package
-      targets: platform.createTarget(platform === Platform.WINDOWS ? "squirrel" : DIR_TARGET),
+      targets: platform.createTarget(DIR_TARGET),
       config: {
         extraResources: ["foo", "bar/hello.txt", "./dir-relative/f.txt", "bar/${arch}.txt", "${os}/${arch}.txt"],
         [osName]: {
@@ -203,10 +202,8 @@ async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
   )
 }
 
+// The Windows variant builds a Squirrel.Windows package to check the NuGet payload — see files.e2e.ts.
 test.ifNotWindows("extraResources on Linux", ({ expect }) => doExtraResourcesTest(expect, Platform.LINUX))
-
-// wine arm64 currently throws a native crash when running the test, so we skip on arm64 for now
-test.ifLinux.ifEnv(process.arch !== "arm64")("extraResources on Windows", ({ expect }) => doExtraResourcesTest(expect, Platform.WINDOWS))
 
 test.ifMac("extraResources on macOS", ({ expect }) => doExtraResourcesTest(expect, Platform.MAC))
 

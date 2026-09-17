@@ -38,6 +38,7 @@ docker run --rm \
   -e UPDATE_SNAPSHOT="${UPDATE_SNAPSHOT:-}" \
   -e UPDATE_LOCKFILE_FIXTURES="${UPDATE_LOCKFILE_FIXTURES:-false}" \
   -e TEST_FILES="${TEST_FILES:-}" \
+  -e TEST_MODE="${TEST_MODE:-}" \
   -e TEST_SEQUENTIAL_FILES="${TEST_SEQUENTIAL_FILES:-}" \
   -w /project \
   -v "$(pwd):/project" \
