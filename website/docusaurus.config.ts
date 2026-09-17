@@ -69,10 +69,11 @@ const versionBanner =
             .replace(/^-+|-+$/g, "")}`,
           content: `You are reading the documentation for <b>${activeVersion.label}</b>, which has not been released yet. For the current stable release, see the <a href="${stableVersion.path}">${stableVersion.label} documentation</a>.`,
           isCloseable: false,
-          // Docusaurus applies these as inline styles (defaulting to #fff/#000),
-          // so use the theme's own palette to stay readable in dark mode too.
-          backgroundColor: "var(--ifm-color-primary)",
-          textColor: "var(--ifm-color-white)",
+          // Docusaurus applies these as inline styles (defaulting to #fff/#000).
+          // The banner uses its own variables (defined per theme in custom.css)
+          // so that both light and dark mode meet WCAG AA (>= 4.5:1) contrast.
+          backgroundColor: "var(--eb-version-banner-bg)",
+          textColor: "var(--eb-version-banner-fg)",
         },
       }
     : {}
