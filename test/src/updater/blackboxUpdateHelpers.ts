@@ -130,7 +130,7 @@ export async function doBuild(
         // start, the install keeps the sqlite3 binary that @electron/rebuild produces right after it: the former follow-up
         // `pnpm install --config.node-linker=hoisted` re-linked node_modules from the store (dropping that binary) and, under pnpm 11,
         // failed outright with ERR_PNPM_IGNORED_BUILDS for sqlite3 (strictDepBuilds).
-        pnpmSettings: { nodeLinker: "hoisted", supportedArchitectures: { os: ["current"], cpu: ["x64", "arm64"] } },
+        packageManagerSettings: { nodeLinker: "hoisted", supportedArchitectures: { os: ["current"], cpu: ["x64", "arm64"] } },
         projectDirCreated: async projectDir => {
           await modifyPackageJson(
             projectDir,

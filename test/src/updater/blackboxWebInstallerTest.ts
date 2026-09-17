@@ -123,7 +123,7 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
             await move(ctx.outDir, builtDir)
           },
           // pnpm 11 reads its settings from pnpm-workspace.yaml only (not the `pnpm` key of package.json); packTester writes this for the install
-          pnpmSettings: { supportedArchitectures: { os: ["current"], cpu: ["x64"] } },
+          packageManagerSettings: { supportedArchitectures: { os: ["current"], cpu: ["x64"] } },
           projectDirCreated: async (projectDir: string) => {
             await modifyPackageJson(
               projectDir,

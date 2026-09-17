@@ -110,7 +110,7 @@ async function buildMsixApp(
       packageManager: PM.PNPM,
       packed,
       // pnpm 11 reads its settings from pnpm-workspace.yaml only (not the `pnpm` key of package.json); packTester writes this for the install
-      pnpmSettings: { supportedArchitectures: { os: ["current"], cpu: ["x64"] } },
+      packageManagerSettings: { supportedArchitectures: { os: ["current"], cpu: ["x64"] } },
       projectDirCreated: async projectDir => {
         await modifyPackageJson(
           projectDir,

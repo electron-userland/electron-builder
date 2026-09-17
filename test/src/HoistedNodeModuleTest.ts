@@ -174,7 +174,7 @@ describe("node_module collectors", () => {
         signedMac: false,
         packageManager: PM.PNPM,
         // Force pnpm to install the platform packages for BOTH macOS arches, not just the build host's.
-        pnpmSettings: { supportedArchitectures: { os: ["darwin"], cpu: ["x64", "arm64"] } },
+        packageManagerSettings: { supportedArchitectures: { os: ["darwin"], cpu: ["x64", "arm64"] } },
         projectDirCreated: projectDir =>
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
@@ -706,7 +706,7 @@ describe("node_module collectors", () => {
       {
         storeDepsLockfileSnapshot: true,
         packageManager: PM.PNPM,
-        pnpmSettings: { nodeLinker: "hoisted" },
+        packageManagerSettings: { nodeLinker: "hoisted" },
         projectDirCreated: projectDir =>
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
@@ -726,7 +726,7 @@ describe("node_module collectors", () => {
       {
         storeDepsLockfileSnapshot: true,
         packageManager: PM.PNPM,
-        pnpmSettings: { shamefullyHoist: true },
+        packageManagerSettings: { shamefullyHoist: true },
         projectDirCreated: projectDir =>
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
@@ -746,7 +746,7 @@ describe("node_module collectors", () => {
       {
         storeDepsLockfileSnapshot: true,
         packageManager: PM.PNPM,
-        pnpmSettings: { publicHoistPattern: ["*"] },
+        packageManagerSettings: { publicHoistPattern: ["*"] },
         projectDirCreated: projectDir =>
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
