@@ -212,3 +212,49 @@ describe("AppUpdater.verifyManifestSignature: minimumSystemVersion and packages"
     await expect(verify(updater, info)).resolves.toBeUndefined()
   })
 })
+
+describe("AppUpdater.verifyManifestSignature: malformed signed manifests", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+
+  const makeUpdater = () => {
+    const updater = new DebUpdater(null, stubApp)
+    updater.updateManifestPublicKey = publicKeyPem
+    return updater
+  }
+  const verify = (updater: DebUpdater, info: UpdateInfo) => (updater as any).verifyManifestSignature(info)
+
+  it("rejects the files-into-minimumSystemVersion forgery before any download could use the legacy path", async () => {
+    const original = multiSigned(makeInfo(), [privateKeyPem])
+    // reuse the genuine signature; move the signed `file:` records into minimumSystemVersion, empty `files`,
+    // and point the unsigned legacy `path`/`sha512` at attacker-controlled content
+    const forged: UpdateInfo = {
+      version: original.version,
+      files: [],
+      minimumSystemVersion: `\nfile:"App-2.0.0.exe"\t"hash"\t100`,
+      path: "https://evil.example/evil.exe",
+      sha512: "EVILHASH",
+      releaseDate: original.releaseDate,
+      signature: original.signature,
+      signatures: original.signatures,
+    }
+    await expect(verify(makeUpdater(), forged)).rejects.toMatchObject({
+      code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID",
+      message: expect.stringContaining("the signed manifest is malformed (files must be a non-empty array)"),
+    })
+  })
+
+  it("rejects a signed manifest whose fields carry control characters, naming the field", async () => {
+    const info = signed(makeInfo(), privateKeyPem)
+    await expect(verify(makeUpdater(), { ...info, minimumSystemVersion: "10.0\nfile:x" })).rejects.toMatchObject({
+      code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID",
+      message: expect.stringContaining("minimumSystemVersion contains a control character"),
+    })
+  })
+
+  it("does not fall back to the legacy path/sha512 for a signed manifest without files", async () => {
+    const info = signed(makeInfo(), privateKeyPem)
+    await expect(verify(makeUpdater(), { ...info, files: [] })).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+    const { files: _dropped, ...withoutFiles } = info
+    await expect(verify(makeUpdater(), withoutFiles as UpdateInfo)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+  })
+})

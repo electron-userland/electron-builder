@@ -7,6 +7,7 @@ import {
   splitPemBlocks,
   UpdateInfo,
   UPDATE_MANIFEST_SIGNATURE_VERSION,
+  validateSignedManifestShape,
   verifyManifestSignature,
   verifyManifestSignatures,
   WindowsUpdateInfo,
@@ -50,9 +51,9 @@ describe("canonicalizeForSigning", () => {
   test("includes version prefix, version, staging and files; excludes cosmetic fields", () => {
     const canonical = canonicalizeForSigning(makeInfo({ stagingPercentage: 25, releaseNotes: "irrelevant", releaseName: "irrelevant" }))
     expect(canonical.startsWith(UPDATE_MANIFEST_SIGNATURE_VERSION)).toBe(true)
-    expect(canonical).toContain("version:1.2.3")
+    expect(canonical).toContain('version:"1.2.3"')
     expect(canonical).toContain("staging:25")
-    expect(canonical).toContain("file:App-1.2.3.exe\tabc123\t8123456")
+    expect(canonical).toContain('file:"App-1.2.3.exe"\t"abc123"\t8123456')
     expect(canonical).not.toContain("irrelevant")
   })
 
@@ -333,19 +334,21 @@ describe("canonicalizeForSigning: minimumSystemVersion and packages", () => {
     expect(canonicalizeForSigning(info)).toBe(
       [
         "EBUM1",
-        "version:1.2.3",
+        // strings are JSON-quoted (so a value can never contain a raw newline/tab), numbers are bare
+        'version:"1.2.3"',
         "staging:25",
-        "minimumSystemVersion:10.0.22631",
-        "file:App-1.2.3.exe\tabc123\t8123456",
+        'minimumSystemVersion:"10.0.22631"',
+        'file:"App-1.2.3.exe"\t"abc123"\t8123456',
         // packages sorted by arch; unset optional fields are empty columns, isAdminRightsRequired is "1" or ""
-        "package:ia32\tApp-1.2.3-ia32.nsis.7z\tp32\t4000\t\t",
-        "package:x64\tApp-1.2.3-x64.nsis.7z\tp64\t5000\t120\t1",
+        'package:"ia32"\t"App-1.2.3-ia32.nsis.7z"\t"p32"\t4000\t\t',
+        'package:"x64"\t"App-1.2.3-x64.nsis.7z"\t"p64"\t5000\t120\t1',
       ].join("\n")
     )
   })
 
   test("pins the exact wire format for a manifest with neither field: empty minimumSystemVersion line, no package lines", () => {
-    const expected = ["EBUM1", "version:1.2.3", "staging:-", "minimumSystemVersion:", "file:App-1.2.3.exe\tabc123\t8123456"].join("\n")
+    // absent optional fields are empty (no JSON encoding is empty, so "absent" is distinct from the empty string "")
+    const expected = ["EBUM1", 'version:"1.2.3"', "staging:", "minimumSystemVersion:", 'file:"App-1.2.3.exe"\t"abc123"\t8123456'].join("\n")
     expect(canonicalizeForSigning(makeInfo())).toBe(expected)
     // null / empty `packages` (non-web NSIS manifests, YAML `packages: null`) canonicalize identically
     expect(canonicalizeForSigning({ ...makeInfo(), packages: null } as WindowsUpdateInfo)).toBe(expected)
@@ -377,7 +380,7 @@ describe("canonicalizeForSigning: minimumSystemVersion and packages", () => {
   test("a null package entry does not throw and yields a distinct payload", () => {
     const info = makeWebInfo({ packages: { x64: null as any } })
     expect(() => canonicalizeForSigning(info)).not.toThrow()
-    expect(canonicalizeForSigning(info)).toContain("package:x64\t\t\t\t\t")
+    expect(canonicalizeForSigning(info)).toContain('package:"x64"\t\t\t\t\t')
     expect(canonicalizeForSigning(info)).not.toBe(canonicalizeForSigning(makeWebInfo({ packages: {} })))
   })
 })
@@ -440,5 +443,133 @@ describe("sign / verify: minimumSystemVersion and packages are covered", () => {
     expect(info.minimumSystemVersion).toBeUndefined()
     expect((info as WindowsUpdateInfo).packages).toBeUndefined()
     expect(verifyManifestSignature(info, publicKeyPem)).toBe(true)
+  })
+})
+
+// ── injective canonical encoding and signed-manifest shape checks ────────────
+
+/**
+ * The forgery reported against the delimiter-based EBUM1 draft: move the original `file:` records into
+ * `minimumSystemVersion` (which the updater's OS-version gate fails to parse and ignores), empty `files`, and
+ * point the unsigned legacy `path`/`sha512` at attacker-controlled content — all while reusing the signature.
+ */
+function copilotForgery(original: UpdateInfo): UpdateInfo {
+  const fileLines = canonicalizeForSigning(original)
+    .split("\n")
+    .filter(line => line.startsWith("file:"))
+    .join("\n")
+  return {
+    version: original.version,
+    files: [],
+    minimumSystemVersion: `\n${fileLines}`,
+    path: "https://evil.example/evil.exe",
+    sha512: "EVILHASH",
+    releaseDate: original.releaseDate,
+    signature: original.signature,
+    signatures: original.signatures,
+  }
+}
+
+describe("canonicalizeForSigning is injective", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+
+  test("the files-into-minimumSystemVersion forgery does not reproduce the signed bytes and fails verification", () => {
+    const original = multiSigned(makeInfo(), [privateKeyPem])
+    const forged = copilotForgery(original)
+    expect(canonicalizeForSigning(forged)).not.toBe(canonicalizeForSigning(original))
+    expect(verifyManifestSignatures(forged, [publicKeyPem])).toEqual({ ok: false, reason: "files must be a non-empty array" })
+    expect(verifyManifestSignature(forged, publicKeyPem)).toBe(false)
+  })
+
+  test("a newline or tab inside a value cannot forge a record or field boundary", () => {
+    const base = makeInfo()
+    // one file whose url spells out two records, vs. two genuine files
+    const smuggled = makeInfo({ files: [{ url: 'a.exe"\t"h1"\t1\nfile:"b.exe', sha512: "h2", size: 2 }] })
+    const genuine = makeInfo({
+      files: [
+        { url: "a.exe", sha512: "h1", size: 1 },
+        { url: "b.exe", sha512: "h2", size: 2 },
+      ],
+    })
+    expect(canonicalizeForSigning(smuggled)).not.toBe(canonicalizeForSigning(genuine))
+    // every encoded line is exactly one record: no raw newline or tab survives inside a value
+    for (const info of [smuggled, makeInfo({ version: "1.2.3\nstaging:100" }), makeInfo({ minimumSystemVersion: "10\tx" })]) {
+      const lines = canonicalizeForSigning(info).split("\n")
+      expect(lines.length).toBe(canonicalizeForSigning(base).split("\n").length)
+      expect(lines.every(line => /^(EBUM1|version:|staging:|minimumSystemVersion:|file:|package:)/.test(line))).toBe(true)
+    }
+  })
+
+  test("absent, empty-string and numeric-looking values are all distinct", () => {
+    const absent = canonicalizeForSigning(makeInfo())
+    const empty = canonicalizeForSigning(makeInfo({ minimumSystemVersion: "" }))
+    expect(empty).not.toBe(absent)
+    expect(canonicalizeForSigning(makeInfo({ stagingPercentage: 25 }))).not.toBe(canonicalizeForSigning(makeInfo({ stagingPercentage: "25" as any })))
+    expect(canonicalizeForSigning(makeInfo({ files: [{ url: "a", sha512: "h", size: 1 }] }))).not.toBe(
+      canonicalizeForSigning(makeInfo({ files: [{ url: "a", sha512: "h", size: "1" as any }] }))
+    )
+    // an explicitly undefined optional field is the same as an absent one (both are "not present")
+    expect(canonicalizeForSigning(makeInfo({ files: [{ url: "a", sha512: "h" }] }))).toBe(canonicalizeForSigning(makeInfo({ files: [{ url: "a", sha512: "h", size: undefined }] })))
+  })
+
+  test("package arch keys are signed, so a package cannot be re-keyed to another arch", () => {
+    const info = makeWebInfo({ packages: { x64: { path: "p.nsis.7z", sha512: "h", size: 1 } } })
+    const rekeyed = makeWebInfo({ packages: { arm64: { path: "p.nsis.7z", sha512: "h", size: 1 } } })
+    expect(canonicalizeForSigning(info)).not.toBe(canonicalizeForSigning(rekeyed))
+  })
+})
+
+describe("validateSignedManifestShape", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+
+  test("accepts the manifests updateInfoBuilder writes", () => {
+    expect(validateSignedManifestShape(makeInfo())).toBeNull()
+    expect(validateSignedManifestShape(makeInfo({ stagingPercentage: 10, minimumSystemVersion: "10.0.19041" }))).toBeNull()
+    expect(validateSignedManifestShape(makeWebInfo())).toBeNull()
+    expect(validateSignedManifestShape({ ...makeInfo(), packages: null } as WindowsUpdateInfo)).toBeNull()
+  })
+
+  test.each<[string, Partial<UpdateInfo> | Partial<WindowsUpdateInfo>, RegExp]>([
+    ["empty files", { files: [] }, /files must be a non-empty array/],
+    ["missing files", { files: undefined as any }, /files must be a non-empty array/],
+    ["file without sha512", { files: [{ url: "a.exe" } as any] }, /files\[0\] must have a non-empty string url and sha512/],
+    ["file with a non-numeric size", { files: [{ url: "a.exe", sha512: "h", size: "1" as any }] }, /files\[0\]\.size must be a number/],
+    ["non-string version", { version: 1.2 as any }, /version must be a non-empty string/],
+    ["non-numeric stagingPercentage", { stagingPercentage: "25" as any }, /stagingPercentage must be a number/],
+    ["non-string minimumSystemVersion", { minimumSystemVersion: 10 as any }, /minimumSystemVersion must be a string/],
+    ["newline in minimumSystemVersion", { minimumSystemVersion: "\nfile:x" }, /minimumSystemVersion contains a control character/],
+    ["tab in a file url", { files: [{ url: "a\tb.exe", sha512: "h", size: 1 }] }, /files\[0\]\.url contains a control character/],
+    ["NUL in version", { version: `1.2.3${String.fromCharCode(0)}` }, /version contains a control character/],
+    ["DEL in a file sha512", { files: [{ url: "a.exe", sha512: `h${String.fromCharCode(127)}`, size: 1 }] }, /files\[0\]\.sha512 contains a control character/],
+    ["null package entry", { packages: { x64: null as any } }, /packages\.x64 must have a non-empty string path and sha512/],
+    ["package without sha512", { packages: { x64: { path: "p" } as any } }, /packages\.x64 must have a non-empty string path and sha512/],
+    ["package with a non-numeric size", { packages: { x64: { path: "p", sha512: "h", size: "1" as any } } }, /packages\.x64 size and blockMapSize must be numbers/],
+    [
+      "package with a non-boolean isAdminRightsRequired",
+      { packages: { x64: { path: "p", sha512: "h", isAdminRightsRequired: "yes" as any } } },
+      /isAdminRightsRequired must be a boolean/,
+    ],
+    ["control character in a package arch key", { packages: { "x64\n": { path: "p", sha512: "h" } } }, /packages arch key .* contains a control character/],
+    ["control character in a package path", { packages: { x64: { path: "p\nq", sha512: "h" } } }, /packages\.x64\.path contains a control character/],
+    ["packages as an array", { packages: [] as any }, /packages must be an object keyed by arch/],
+  ])("rejects %s", (_name, patch, expected) => {
+    const info = { ...makeInfo(), ...patch } as UpdateInfo
+    expect(validateSignedManifestShape(info)).toMatch(expected)
+    // verification never even reaches the key: the shape problem is the reported reason
+    const result = verifyManifestSignatures({ ...info, signature: signUpdateManifest(makeInfo(), privateKeyPem) }, [publicKeyPem])
+    expect(result.ok).toBe(false)
+    expect(result.reason).toMatch(expected)
+  })
+
+  test("the signer refuses to sign a manifest the verifier would reject", () => {
+    expect(() => signUpdateManifest(makeInfo({ files: [] }), privateKeyPem)).toThrow(/Cannot sign update manifest for version 1.2.3: files must be a non-empty array/)
+    expect(() => createUpdateManifestSignatures(makeInfo({ minimumSystemVersion: "\nfile:x" }), [privateKeyPem])).toThrow(/contains a control character/)
+    // a well-formed manifest still signs and verifies
+    expect(verifyManifestSignature(signed(makeInfo(), privateKeyPem), publicKeyPem)).toBe(true)
+  })
+
+  test("a well-formed but wrongly signed manifest reports no shape reason", () => {
+    const info = signed(makeInfo(), generateUpdateSigningKeypair().privateKeyPem)
+    expect(verifyManifestSignatures(info, [publicKeyPem])).toEqual({ ok: false })
   })
 })

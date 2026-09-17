@@ -53,6 +53,7 @@ export {
   normalizePublicKeyList,
   parsePublicKey,
   splitPemBlocks,
+  validateSignedManifestShape,
   verifyManifestSignature,
   verifyManifestSignatures,
   UPDATE_MANIFEST_SIGNATURE_VERSION,

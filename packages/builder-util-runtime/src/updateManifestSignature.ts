@@ -1,5 +1,5 @@
 import { createHash, createPublicKey, KeyObject, verify as cryptoVerify } from "crypto"
-import { PackageFileInfo, UpdateInfo, UpdateManifestSignature, WindowsUpdateInfo } from "./updateInfo.js"
+import { PackageFileInfo, UpdateFileInfo, UpdateInfo, UpdateManifestSignature, WindowsUpdateInfo } from "./updateInfo.js"
 
 /**
  * Version tag of the canonical signing format. Prefixed onto the signed payload so the
@@ -11,6 +11,25 @@ import { PackageFileInfo, UpdateInfo, UpdateManifestSignature, WindowsUpdateInfo
 export const UPDATE_MANIFEST_SIGNATURE_VERSION = "EBUM1"
 
 /**
+ * Encodes one field value for the canonical payload. Strings are JSON-quoted, which escapes `"`, `\`,
+ * newlines, tabs and every other control character, so a value can never contain the record separator
+ * (`\n`), the field separator (`\t`) or masquerade as a `label:` line. Numbers/booleans are emitted bare
+ * (`25`), so they can never collide with a string (`"25"`). `null`/`undefined` become the empty string,
+ * which no JSON encoding produces — an absent field is therefore distinct from every present one,
+ * including the empty string (`""`). Together this makes {@link canonicalizeForSigning} injective over the
+ * fields it covers: two manifests produce the same bytes only if every signed field is identical.
+ */
+function encodeField(value: unknown): string {
+  if (value === undefined || value === null) {
+    return ""
+  }
+  const encoded = JSON.stringify(value)
+  // JSON.stringify yields undefined for functions/symbols; a parsed YAML manifest never contains those,
+  // but keep the output a string in every case so the signer and verifier can never diverge on a crash
+  return encoded === undefined ? "" : encoded
+}
+
+/**
  * Produces the exact byte string that is Ed25519-signed at publish time and verified at update time.
  *
  * Only integrity- and rollout-critical fields are covered:
@@ -19,30 +38,46 @@ export const UPDATE_MANIFEST_SIGNATURE_VERSION = "EBUM1"
  *   - `minimumSystemVersion`  — prevents bypassing or forging the OS-version gate (its absence is signed too,
  *                               so one cannot be added after the fact)
  *   - each file's `url`, `sha512`, `size` — the artifact identity + integrity hash the updater enforces
- *   - each NSIS web-installer package's `path`, `sha512`, `size`, `blockMapSize`, `isAdminRightsRequired`
+ *   - each NSIS web-installer package's arch key and `path`, `sha512`, `size`, `blockMapSize`, `isAdminRightsRequired`
  *     (`WindowsUpdateInfo.packages`, keyed by arch) — the payload the web installer downloads and verifies
  *
  * Cosmetic/operational fields (`releaseDate`, `releaseNotes`, `releaseName`) are intentionally excluded so
  * they can be edited post-signing without invalidating the signature. The `signature`/`signatures` fields are
- * not part of the payload either, so signatures can be added or removed independently of one another.
+ * not part of the payload either, so signatures can be added or removed independently of one another. The
+ * deprecated top-level `path`/`sha512` mirror of `files[0]` is not signed; instead the verifier refuses a
+ * signed manifest without a non-empty `files` list (see {@link validateSignedManifestShape}), so the updater
+ * never falls back to those legacy fields for a verified manifest.
  *
- * The format is deterministic regardless of object key order or YAML formatting: files are sorted by url,
- * packages by arch, fields are tab-separated, records are newline-separated, and a version prefix anchors the
- * scheme. Both the signer (build) and verifier (runtime) MUST call this identical function — it is a wire
- * contract — and both operate on the manifest exactly as written to `latest*.yml`: the signer runs on the
- * final `UpdateInfo` right before serialization, the verifier on the parsed manifest before the provider
- * resolves `files[].url` / `packages[arch].path` against the feed base URL.
+ * Wire format (`EBUM1`): one record per line, `label:` followed by tab-separated fields, e.g.
+ *
+ *     EBUM1
+ *     version:"1.2.3"
+ *     staging:25
+ *     minimumSystemVersion:"10.0.19041"
+ *     file:"App-1.2.3.exe"<TAB>"<sha512>"<TAB>8123456
+ *     package:"x64"<TAB>"App-1.2.3-x64.nsis.7z"<TAB>"<sha512>"<TAB>5000<TAB>120<TAB>1
+ *
+ * Every value goes through {@link encodeField} (JSON-quoted strings, bare numbers, empty for absent), which is
+ * what makes the encoding injective: a value can never contain an unescaped newline or tab, so no choice of
+ * field values in one manifest can reproduce the record structure of another (e.g. an empty `files` list plus
+ * a `minimumSystemVersion` that spells out the original `file:` lines). The format is deterministic regardless
+ * of object key order or YAML formatting: file records are sorted, package records are sorted, and a version
+ * prefix anchors the scheme. Both the signer (build) and verifier (runtime) MUST call this identical function —
+ * it is a wire contract — and both operate on the manifest exactly as written to `latest*.yml`: the signer runs
+ * on the final `UpdateInfo` right before serialization, the verifier on the parsed manifest before the provider
+ * resolves `files[].url` / `packages[arch].path` against the feed base URL. This function never throws; shape
+ * problems are reported by {@link validateSignedManifestShape} instead.
  */
 export function canonicalizeForSigning(info: UpdateInfo): string {
   const lines: string[] = [
     UPDATE_MANIFEST_SIGNATURE_VERSION,
-    `version:${info.version}`,
-    `staging:${info.stagingPercentage == null ? "-" : info.stagingPercentage}`,
+    `version:${encodeField(info.version)}`,
+    `staging:${encodeField(info.stagingPercentage)}`,
     // always emitted (empty when unset) so that adding a minimumSystemVersion to a signed manifest is detected
-    `minimumSystemVersion:${info.minimumSystemVersion ?? ""}`,
+    `minimumSystemVersion:${encodeField(info.minimumSystemVersion)}`,
   ]
 
-  const files = (info.files ?? []).map(f => `file:${f.url}\t${f.sha512}\t${f.size == null ? "-" : f.size}`)
+  const files = (info.files ?? []).map(f => `file:${encodeField(f?.url)}\t${encodeField(f?.sha512)}\t${encodeField(f?.size)}`)
   // Sort so file ordering in the manifest cannot change the signed payload.
   files.sort()
   lines.push(...files)
@@ -54,7 +89,7 @@ export function canonicalizeForSigning(info: UpdateInfo): string {
     const packageLines = Object.keys(packages).map(arch => {
       // a null/garbage entry still yields a (distinct) line rather than a crash, so verification fails cleanly
       const p: Partial<PackageFileInfo> = packages[arch] ?? {}
-      return `package:${arch}\t${p.path ?? ""}\t${p.sha512 ?? ""}\t${p.size ?? ""}\t${p.blockMapSize ?? ""}\t${p.isAdminRightsRequired === true ? "1" : ""}`
+      return `package:${encodeField(arch)}\t${encodeField(p.path)}\t${encodeField(p.sha512)}\t${encodeField(p.size)}\t${encodeField(p.blockMapSize)}\t${p.isAdminRightsRequired === true ? "1" : ""}`
     })
     // Sort so package (arch key) ordering in the manifest cannot change the signed payload.
     packageLines.sort()
@@ -62,6 +97,98 @@ export function canonicalizeForSigning(info: UpdateInfo): string {
   }
 
   return lines.join("\n")
+}
+
+/** True when `value` contains an ASCII control character (U+0000-U+001F or U+007F). */
+function hasControlCharacter(value: string): boolean {
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i)
+    if (code < 0x20 || code === 0x7f) {
+      return true
+    }
+  }
+  return false
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0
+}
+
+/**
+ * Checks that a manifest has the shape a *signed* manifest must have for its signature to mean anything,
+ * independent of the key material. Returns a human-readable reason when it does not, or `null` when it does.
+ *
+ * Enforced by {@link verifyManifestSignatures} before any signature is checked, and by the build-time signer
+ * so that a manifest the updater would reject is never signed in the first place:
+ *   - `version` is a non-empty string
+ *   - `files` is a non-empty array whose entries have a non-empty string `url` and `sha512` (and a numeric
+ *     `size` when present) — a signed manifest must describe its own files, so the updater never consults the
+ *     unsigned legacy top-level `path`/`sha512` for it
+ *   - `stagingPercentage` is a number when present, `minimumSystemVersion` a string when present
+ *   - every `packages` entry (NSIS web installer) has a non-empty string `path` and `sha512`, numeric
+ *     `size`/`blockMapSize` when present, and a boolean `isAdminRightsRequired` when present
+ *   - no signed string field (including package arch keys) contains a control character (U+0000–U+001F, U+007F)
+ *
+ * The canonical encoding is injective on its own (see {@link canonicalizeForSigning}), so these checks are a
+ * second, independent line of defense: they reject a manifest whose signed fields could only have been crafted
+ * to confuse a parser or a version comparison, rather than relying on every downstream consumer to cope.
+ */
+export function validateSignedManifestShape(info: UpdateInfo): string | null {
+  if (!isNonEmptyString(info.version)) {
+    return "version must be a non-empty string"
+  }
+  const strings: Array<[string, string]> = [["version", info.version]]
+  if (info.stagingPercentage != null && typeof info.stagingPercentage !== "number") {
+    return "stagingPercentage must be a number"
+  }
+  if (info.minimumSystemVersion != null) {
+    if (typeof info.minimumSystemVersion !== "string") {
+      return "minimumSystemVersion must be a string"
+    }
+    strings.push(["minimumSystemVersion", info.minimumSystemVersion])
+  }
+
+  const files = info.files
+  if (!Array.isArray(files) || files.length === 0) {
+    return "files must be a non-empty array"
+  }
+  for (let i = 0; i < files.length; i++) {
+    const file: Partial<UpdateFileInfo> | null = files[i]
+    if (file == null || !isNonEmptyString(file.url) || !isNonEmptyString(file.sha512)) {
+      return `files[${i}] must have a non-empty string url and sha512`
+    }
+    if (file.size != null && typeof file.size !== "number") {
+      return `files[${i}].size must be a number`
+    }
+    strings.push([`files[${i}].url`, file.url], [`files[${i}].sha512`, file.sha512])
+  }
+
+  const packages = (info as WindowsUpdateInfo).packages
+  if (packages != null) {
+    if (typeof packages !== "object" || Array.isArray(packages)) {
+      return "packages must be an object keyed by arch"
+    }
+    for (const arch of Object.keys(packages)) {
+      const p: Partial<PackageFileInfo> | null = packages[arch]
+      if (p == null || !isNonEmptyString(p.path) || !isNonEmptyString(p.sha512)) {
+        return `packages.${arch} must have a non-empty string path and sha512`
+      }
+      if ((p.size != null && typeof p.size !== "number") || (p.blockMapSize != null && typeof p.blockMapSize !== "number")) {
+        return `packages.${arch} size and blockMapSize must be numbers`
+      }
+      if (p.isAdminRightsRequired != null && typeof p.isAdminRightsRequired !== "boolean") {
+        return `packages.${arch}.isAdminRightsRequired must be a boolean`
+      }
+      strings.push([`packages arch key ${JSON.stringify(arch)}`, arch], [`packages.${arch}.path`, p.path], [`packages.${arch}.sha512`, p.sha512])
+    }
+  }
+
+  for (const [name, value] of strings) {
+    if (hasControlCharacter(value)) {
+      return `${name} contains a control character`
+    }
+  }
+  return null
 }
 
 /**
@@ -239,11 +366,21 @@ function verifySignatureBytes(data: Buffer, key: KeyObject, signature: string): 
  * first, then untagged (legacy `signature`) entries — so a stale or foreign `keyId` never prevents a
  * legitimately signed manifest from verifying. Never throws on a bad signature; malformed *keys* still
  * throw, since that is a configuration error. Returns the id of the trusted key that verified, if any.
+ *
+ * Before any signature is tried the manifest must pass {@link validateSignedManifestShape}; a manifest that
+ * does not is rejected with `reason` set, regardless of what it is signed with.
  */
-export function verifyManifestSignatures(info: UpdateInfo, publicKeys: Array<string | KeyObject>): { ok: boolean; keyId?: string } {
+export function verifyManifestSignatures(info: UpdateInfo, publicKeys: Array<string | KeyObject>): { ok: boolean; keyId?: string; reason?: string } {
   const candidates = collectManifestSignatures(info)
   if (candidates.length === 0 || publicKeys.length === 0) {
     return { ok: false }
+  }
+  // A signed manifest must have the shape the signature is meant to protect (non-empty files, plain string
+  // fields, ...) — checked before any cryptography so that a structurally hostile manifest is rejected even
+  // if its bytes happened to be signed.
+  const shapeProblem = validateSignedManifestShape(info)
+  if (shapeProblem != null) {
+    return { ok: false, reason: shapeProblem }
   }
   const data = Buffer.from(canonicalizeForSigning(info), "utf8")
   const seen = new Set<string>()

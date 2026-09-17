@@ -1,17 +1,31 @@
 import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject, sign as cryptoSign } from "crypto"
 import { readFileSync } from "fs"
 import * as path from "path"
-import { canonicalizeForSigning, computeUpdateManifestKeyId, createManifestSignatureEntry, splitPemBlocks, UpdateInfo, UpdateManifestSignature } from "builder-util-runtime"
+import {
+  canonicalizeForSigning,
+  computeUpdateManifestKeyId,
+  createManifestSignatureEntry,
+  splitPemBlocks,
+  UpdateInfo,
+  UpdateManifestSignature,
+  validateSignedManifestShape,
+} from "builder-util-runtime"
 
 /**
  * Build-time counterpart to `verifyManifestSignature`. Lives in builder-util (never bundled into a
  * shipped app) because it handles the private key. Produces the base64 Ed25519 signature embedded as
  * `UpdateInfo.signature`, computed over the same canonical payload the runtime verifier reconstructs.
+ * Throws when the manifest does not have the shape the verifier requires of a signed manifest
+ * (`validateSignedManifestShape`), so a build never publishes a signed manifest the updater would refuse.
  */
 export function signUpdateManifest(info: UpdateInfo, privateKey: string | KeyObject): string {
   const key = typeof privateKey === "string" ? parsePrivateKey(privateKey) : privateKey
   if (key.asymmetricKeyType !== "ed25519") {
     throw new Error(`Update manifest signing key must be Ed25519, got: ${key.asymmetricKeyType}`)
+  }
+  const shapeProblem = validateSignedManifestShape(info)
+  if (shapeProblem != null) {
+    throw new Error(`Cannot sign update manifest for version ${info.version}: ${shapeProblem} (the updater would reject it)`)
   }
   const data = Buffer.from(canonicalizeForSigning(info), "utf8")
   return cryptoSign(null, data, key).toString("base64")

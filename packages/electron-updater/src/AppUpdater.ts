@@ -660,8 +660,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     const result = verifyManifestSignatures(info, trustedKeys)
     if (!result.ok) {
+      // `reason` is set when the manifest fails the structural checks a signed manifest must pass (e.g. an empty
+      // `files` list or control characters in a signed field) — those are rejected before any key is tried.
+      const cause =
+        result.reason == null ? `none of the ${trustedKeys.length} trusted key(s) validates any of its signatures` : `the signed manifest is malformed (${result.reason})`
       throw newError(
-        `Update manifest signature verification failed for version ${info.version}: none of the ${trustedKeys.length} trusted key(s) validates any of its signatures. The update metadata may have been tampered with. Refusing to update.`,
+        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.`,
         "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID"
       )
     }
