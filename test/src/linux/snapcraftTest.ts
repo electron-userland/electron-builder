@@ -267,6 +267,22 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
       },
     }))
 
+  test("core24 omits the app desktop mapping (single desktop entry)", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep", desktopName: "com.example.sep.desktop" },
+        productName: "Sep",
+        linux: { executableName: "Sep" },
+        snapcraft: { base: "core24" },
+      },
+      effectiveOptionComputed: async ({ snap, desktopFile }) => {
+        expect(snap.apps?.sep?.desktop).toBeUndefined()
+        expect(await readFile(desktopFile, "utf8")).toContain("\nExec=sep %U\n")
+        return true
+      },
+    }))
+
   test("core24 wayland disabled", ({ expect }) => {
     const appName = "sep"
     return app(expect, {
