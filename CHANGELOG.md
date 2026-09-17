@@ -1,3 +1,21 @@
+# [26.17.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.16.1...electron-builder@26.17.0) (2026-09-17)
+
+
+### Bug Fixes
+
+* **app-builder-lib:** resolve pnpm deps omitted from deduped list output by declared range (backport [#10200](https://github.com/electron-userland/electron-builder/issues/10200)) ([#10207](https://github.com/electron-userland/electron-builder/issues/10207)) ([d4a4f50](https://github.com/electron-userland/electron-builder/commit/d4a4f501fd136cb6f69339040ada56a0cabc74b6))
+* detect pnpm workspace root on Windows without shelling out to pwd (v26 backport) ([#10189](https://github.com/electron-userland/electron-builder/issues/10189)) ([59f6364](https://github.com/electron-userland/electron-builder/commit/59f63644f80381f018c91246762caee7586ab126))
+* **electron-updater:** keep cached blockmap consistent with cached installer (v26 backport of [#10098](https://github.com/electron-userland/electron-builder/issues/10098)) ([#10163](https://github.com/electron-userland/electron-builder/issues/10163)) ([1dfe1a9](https://github.com/electron-userland/electron-builder/commit/1dfe1a90630efc8df06821f9797067aa20afa5c7))
+* **node-module-collector:** clear error on empty output and fall back to traversal when a collector throws (v26 backport of [#10210](https://github.com/electron-userland/electron-builder/issues/10210)) ([#10213](https://github.com/electron-userland/electron-builder/issues/10213)) ([bae1c8b](https://github.com/electron-userland/electron-builder/commit/bae1c8bcd138c7aa5f575106ca0f8ea22e7dd2a4))
+* **pkg:** add rootVolumeOnly to <options> for macOS 26 Installer prompt (v26 backport of [#10193](https://github.com/electron-userland/electron-builder/issues/10193)) ([#10211](https://github.com/electron-userland/electron-builder/issues/10211)) ([613cd58](https://github.com/electron-userland/electron-builder/commit/613cd587dfc405344989eb0452ddc9281a9164ba))
+
+
+### Features
+
+* **nsis:** "store-asar" mode for proportional differential updates (v26 backport) ([#10201](https://github.com/electron-userland/electron-builder/issues/10201)) ([2a2dd22](https://github.com/electron-userland/electron-builder/commit/2a2dd22c17006ec80acf4704642ca83378e5fdb1))
+
+
+
 ## [26.16.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.16.0...electron-builder@26.16.1) (2026-09-07)
 
 
