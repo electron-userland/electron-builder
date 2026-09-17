@@ -130,9 +130,13 @@ export class MacTargetHelper {
    * inherit the app's signature.
    *
    * Precedence: explicit `sign.entitlementsInherit` → `build/entitlements.{mac,mas}.inherit.plist` → `null`,
-   * which hands the file to `@electron/osx-sign`'s per-file defaults. Those mirror Chromium's own entitlements
-   * (renderer and GPU helpers get only `allow-jit`; the plugin helper gets the looser exceptions it needs), so
-   * they are strictly tighter than applying one blanket plist to every binary.
+   * which hands the file to `@electron/osx-sign`'s per-file defaults, modelled on Chromium's own entitlements:
+   * - renderer and GPU helpers: `allow-jit` only
+   * - plugin helper: `allow-jit`, `allow-unsigned-executable-memory`, `disable-library-validation`
+   * - everything else (frameworks, `.node` modules, unpacked executables): `default.darwin.plist`, i.e. `allow-jit`
+   *   plus Chromium's `device.*` / `personal-information.*` entitlements
+   * Nested binaries therefore do not inherit the app's entitlements, and apart from the plugin helper none of these
+   * defaults grant `disable-library-validation` or `allow-unsigned-executable-memory`.
    */
   async getInheritEntitlements(targetPlatform: PlatformType, signOpts: ElectronSignOptions | Nullish, adHoc: boolean): Promise<string | null> {
     if (signOpts?.entitlementsInherit) {
@@ -496,7 +500,11 @@ async function isMachOFile(file: string): Promise<boolean> {
   }
 }
 
-/** The Team ID of a file's existing code signature, or `null` when it is unsigned or ad-hoc signed. */
+/**
+ * The `TeamIdentifier` of a file's existing code signature as reported by `codesign -d`, or `null` when `codesign`
+ * fails (e.g. the file is unsigned). An ad-hoc signature still succeeds and reports the literal string `"not set"`,
+ * which is returned as-is (and therefore never equals a real Team ID).
+ */
 async function readSigningTeamId(file: string): Promise<string | null> {
   try {
     // `codesign -d` reports on stderr, so stdout alone (as `exec` returns) is not enough

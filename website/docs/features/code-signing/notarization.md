@@ -101,7 +101,7 @@ Modern Electron needs exactly one exception, and electron-builder grants it by d
 
 Write that to `build/entitlements.mac.plist` only if you need to add capabilities of your own; your file replaces the default rather than extending it, so keep `com.apple.security.cs.allow-jit` in it.
 
-Do **not** add `com.apple.security.cs.allow-unsigned-executable-memory` out of habit. It was needed by Electron versions from the 2019 era, is deprecated by Apple on macOS 14+, and weakens the Hardened Runtime for no benefit on current Electron.
+Do **not** add `com.apple.security.cs.allow-unsigned-executable-memory` out of habit. It was needed by Electron versions from the 2019 era, is not needed by modern V8/Electron, and weakens the Hardened Runtime for no benefit.
 
 Leave `build/entitlements.mac.inherit.plist` absent unless you truly need it. Without it, each nested binary is signed with [`@electron/osx-sign`](https://github.com/electron/osx-sign)'s per-file defaults, which mirror Chromium's own entitlements — renderer and GPU helpers get only `allow-jit`, and the looser exceptions go to the plugin helper alone. Supplying the file applies one plist to every nested binary instead.
 
@@ -110,7 +110,7 @@ Leave `build/entitlements.mac.inherit.plist` absent unless you truly need it. Wi
 | Entitlement | When Needed |
 |---|---|
 | `com.apple.security.cs.allow-jit` | Required by Electron (V8 JIT) — granted by default |
-| `com.apple.security.cs.allow-unsigned-executable-memory` | Legacy Electron only — deprecated on macOS 14+, not needed by modern V8 |
+| `com.apple.security.cs.allow-unsigned-executable-memory` | Legacy Electron only — not needed by modern V8/Electron and weakens the Hardened Runtime |
 | `com.apple.security.cs.disable-library-validation` | Loading frameworks/native modules signed by another team, or unsigned |
 | `com.apple.security.network.client` | Outbound network access |
 | `com.apple.security.network.server` | Incoming connections |

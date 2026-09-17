@@ -118,12 +118,12 @@ If you disable code signing, you should also disable Hardened Runtime (`mac.sign
 | The app bundle | `com.apple.security.cs.allow-jit` |
 | Renderer / GPU helpers | `com.apple.security.cs.allow-jit` |
 | Plugin helper | `allow-jit`, `allow-unsigned-executable-memory`, `disable-library-validation` |
-| Frameworks, native modules, unpacked binaries | inherited from the app |
+| Frameworks, native modules, unpacked binaries | `allow-jit` plus osx-sign's Chromium-derived `device.*` / `personal-information.*` entitlements (`default.darwin.plist`) |
 
-The nested binaries are handed to [`@electron/osx-sign`](https://github.com/electron/osx-sign), whose per-file defaults mirror Chromium's own entitlements — so the looser exceptions are granted only to the plugin helper that actually needs them, exactly as Chrome ships them.
+Nested binaries do **not** inherit the app's entitlements. They are handed to [`@electron/osx-sign`](https://github.com/electron/osx-sign), which picks a per-file default modelled on Chromium's own entitlements: the looser exceptions go only to the plugin helper that actually needs them, and every other nested file (frameworks, `.node` modules, executables in `app.asar.unpacked`) receives `default.darwin.plist` — `allow-jit` plus `com.apple.security.device.{audio-input,bluetooth,camera,print,usb}` and `com.apple.security.personal-information.{location,photos-library}`. Outside the plugin helper, none of these defaults grant `disable-library-validation` or `allow-unsigned-executable-memory`.
 
 :::warning[Changed in v27]
-Earlier versions applied a single entitlements file to the app **and** every nested binary, granting `com.apple.security.cs.allow-unsigned-executable-memory` and `com.apple.security.cs.disable-library-validation` to every process. Modern Electron does not need either in the main process, and both materially weaken the Hardened Runtime, so they are no longer granted by default. If your app depends on them, add them to your own `build/entitlements.mac.plist` — see [Loading third-party or unsigned binaries](#loading-third-party-or-unsigned-binaries) below.
+Earlier versions applied a single entitlements file to the app **and** every nested binary, granting `com.apple.security.cs.allow-unsigned-executable-memory` and `com.apple.security.cs.disable-library-validation` to every process. Modern Electron does not need either in the main process, and both materially weaken the Hardened Runtime, so they are no longer granted by default. If your app depends on them, add them to your own `build/entitlements.mac.plist` (and `build/entitlements.mac.inherit.plist` for nested binaries) — see [Loading third-party or unsigned binaries](#loading-third-party-or-unsigned-binaries) below.
 :::
 
 ### Supplying your own entitlements
@@ -147,7 +147,7 @@ Create `build/entitlements.mac.plist` to override the app-level defaults:
 
 Your file **replaces** the default rather than extending it, so remember to keep `com.apple.security.cs.allow-jit`.
 
-Add `build/entitlements.mac.inherit.plist` only if you need to override what nested binaries get. Doing so applies one plist to every nested binary and gives up the per-file defaults described above, so prefer leaving it absent.
+A custom `build/entitlements.mac.plist` applies to the app bundle only — nested binaries keep the per-file defaults described above and do not pick up your custom keys. If a nested binary needs one of them (for example `disable-library-validation` on a sidecar executable in `app.asar.unpacked`), add `build/entitlements.mac.inherit.plist` (or set `mac.sign.entitlementsInherit`). Doing so applies one plist to every nested binary and gives up the per-file defaults, so prefer leaving it absent unless you need it.
 
 ### Loading third-party or unsigned binaries
 
@@ -171,7 +171,7 @@ Common entitlements for Electron apps:
 | Entitlement | When Needed |
 |---|---|
 | `com.apple.security.cs.allow-jit` | Always — V8 requires JIT (granted by default) |
-| `com.apple.security.cs.allow-unsigned-executable-memory` | Legacy Electron only — deprecated by Apple on macOS 14+ and not needed by modern V8 |
+| `com.apple.security.cs.allow-unsigned-executable-memory` | Legacy Electron only — not needed by modern V8/Electron and weakens the Hardened Runtime |
 | `com.apple.security.cs.disable-library-validation` | Loading frameworks/native modules signed by another team, or unsigned |
 | `com.apple.security.network.client` | Outgoing network connections (sandboxed apps) |
 | `com.apple.security.network.server` | Listening for connections (sandboxed apps) |

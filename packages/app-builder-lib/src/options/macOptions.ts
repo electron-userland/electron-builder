@@ -54,13 +54,18 @@ export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFi
   readonly identity?: string | null
   /**
    * Path to the main app entitlements file.
-   * Falls back to `build/entitlements.mac.plist` if it exists, then to `@electron/osx-sign`'s
-   * built-in defaults.
+   * Falls back to `build/entitlements.mac.plist` (or `build/entitlements.mas.plist` for MAS targets) if it exists.
+   * Otherwise `mac` builds use the bundled default, which grants only `com.apple.security.cs.allow-jit`
+   * (ad-hoc builds use a bundled ad-hoc template that also disables library validation), and MAS builds use
+   * `@electron/osx-sign`'s built-in sandboxed `default.mas.plist`.
    */
   readonly entitlements?: string | null
   /**
    * Path to child entitlements inherited by embedded frameworks and bundles.
-   * Falls back to `build/entitlements.mac.inherit.plist` if it exists.
+   * Falls back to `build/entitlements.mac.inherit.plist` (or `build/entitlements.mas.inherit.plist` for MAS targets) if it exists.
+   * Otherwise nested binaries receive `@electron/osx-sign`'s per-file defaults (renderer/GPU helpers: `allow-jit`;
+   * plugin helper: Chromium's looser set; everything else: `default.darwin.plist`); ad-hoc `mac` builds use the
+   * bundled ad-hoc template instead.
    */
   readonly entitlementsInherit?: string | null
   /**

@@ -84,6 +84,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`node_modules` arch/os-filtered on every build](#node_modules-are-now-archos-filtered-on-every-build) | — | Awareness — packages whose `cpu`/`os` mismatch the target are now excluded |
 | [`arch: "all"` now expands to x64 + arm64; 32-bit fails fast on Electron 44+](#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44) | — | `arch: "all"` drops `ia32` — request `ia32` explicitly; ia32/armv7l require `electronVersion` <= 43.x |
 | [macOS `productName`/`executableName` validated, not silently sanitized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | A name needing filename sanitization now throws — pick a name that needs none |
+| [macOS default entitlements tightened](#macos-default-entitlements-tightened) | — | The bundled default now grants only `allow-jit`; add `allow-unsigned-executable-memory` / `disable-library-validation` back in `build/entitlements.mac.plist` (and `.inherit.plist`) only if your app needs them |
 | [Bitbucket Cloud publishing: token without username → Bearer auth](#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth) | — | Set `BITBUCKET_USERNAME` if your token is an app password / API token |
 | [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); tune the set via `ignoredProductionDependencies`. If you set `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` (removed) to bundle `electron-builder`, override the list instead; `electron-prebuilt`/`electron-rebuild` no longer error and now ship if declared — remove them from `dependencies` |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
@@ -362,6 +363,19 @@ To skip signing, use `mac.sign.identity: null` (or `mac.sign: null`). The same s
 :::warning[Custom signing functions]
 If you used `mac.sign` as a **custom signing function or module path** (`sign: "./customSign.js"`) together with sibling fields like `identity`, the two can no longer coexist — `sign` is now a single union. `migrate-schema` leaves your custom signer untouched and prints a warning so you can decide whether to keep the custom function or switch to an `ElectronSignOptions` object.
 :::
+
+### macOS default entitlements tightened {#macos-default-entitlements-tightened}
+
+The bundled default entitlements file (used when neither `mac.sign.entitlements` nor `build/entitlements.mac.plist` is present) now grants **only** `com.apple.security.cs.allow-jit`. `com.apple.security.cs.allow-unsigned-executable-memory` and `com.apple.security.cs.disable-library-validation` are **no longer granted by default** — modern Electron does not need either in the main process, and both materially weaken the Hardened Runtime.
+
+- **Nested binaries** (helpers, frameworks, `.node` modules, executables in `app.asar.unpacked`) are no longer signed with one blanket plist. They now receive [`@electron/osx-sign`](https://github.com/electron/osx-sign)'s per-file defaults — renderer/GPU helpers: `allow-jit`; plugin helper: Chromium's looser set; everything else: `default.darwin.plist` — unless you supply `build/entitlements.mac.inherit.plist` / `mac.sign.entitlementsInherit`.
+- **MAS builds** without a `build/entitlements.mas.plist` fall back to `@electron/osx-sign`'s sandboxed `default.mas.plist` (previously they received the non-sandboxed `mac` template).
+- **Ad-hoc builds** (`mac.sign.identity: "-"`) keep working: a built-in ad-hoc entitlements file that includes `disable-library-validation` is applied to the app and its nested binaries.
+- **New post-sign warning:** after signing, electron-builder lists Mach-O binaries under `Contents/Resources/app.asar.unpacked` whose signature carries a different Team ID (or none) while `disable-library-validation` is not granted — these would fail library validation at launch.
+
+**Action is required only if** your app loads frameworks, plugins, or native modules signed by another Team ID (or unsigned), or still relies on `allow-unsigned-executable-memory`: add the keys back in `build/entitlements.mac.plist` (and in `build/entitlements.mac.inherit.plist` for nested binaries). See [Loading third-party or unsigned binaries](../mac#loading-third-party-or-unsigned-binaries).
+
+This is a runtime default, not a config-key rename, so `migrate-schema` does not change it.
 
 ### `mac.universal`
 

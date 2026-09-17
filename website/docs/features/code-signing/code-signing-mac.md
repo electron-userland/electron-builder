@@ -42,7 +42,7 @@ Ad-hoc signing applies a self-generated signature with no Apple Team ID. It is u
 
 electron-builder handles this for you: when `mac.sign.identity` is `"-"` and hardened runtime is enabled, it signs the app **and** its nested binaries with a built-in ad-hoc entitlements file that grants `allow-jit` and `disable-library-validation`. This applies only to ad-hoc builds — builds signed with a real identity keep library validation on.
 
-If you supply your own `build/entitlements.mac.plist`, it replaces that default, so add `disable-library-validation` to it yourself; electron-builder warns at build time if it is missing. Alternatively, set `mac.sign.hardenedRuntime: false` — this disables hardened runtime entirely and weakens security protections.
+If you supply your own `build/entitlements.mac.plist`, it replaces that default for the app bundle (nested binaries keep the built-in ad-hoc file unless you also supply `build/entitlements.mac.inherit.plist`), so add `disable-library-validation` to it yourself; electron-builder warns at build time if it is missing. Alternatively, set `mac.sign.hardenedRuntime: false` — this disables hardened runtime entirely and weakens security protections.
 
 :::warning[Ad-hoc signing caveats]
 The following issues can occur when using ad-hoc signing (`mac.sign.identity: "-"`) with the default `mac.sign.hardenedRuntime: true`:
