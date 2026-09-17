@@ -100,12 +100,34 @@ function getIgnoreScriptsInstallArgs(pm: PM): Array<string> {
 // or disabling the check, allowlist electron alone: nothing else in a fixture is ever allowed to run its install hooks in
 // CI (natives are built by electron-builder's own @electron/rebuild step). Fixtures that ship or generate their own
 // pnpm-workspace.yaml keep every other key.
-async function allowOnlyElectronBuilds(projectDir: string) {
-  const workspaceFile = path.join(projectDir, "pnpm-workspace.yaml")
+//
+// pnpm locates its workspace root with a plain upward search for pnpm-workspace.yaml, and `pnpm install` run inside a
+// workspace installs the workspace's packages, not the cwd's. installDependencies runs pnpm in `appDir`, so the file has to
+// live there for two-package fixtures such as `test-app`: written to `projectDir` instead, it turned that parent into a
+// workspace root whose only member was the root package.json, and the install in `app/` silently became a no-op that never
+// produced `sqlite3` (updater blackbox suites). Conversely, a fixture that already has a workspace root above `appDir`
+// must keep it, since a second pnpm-workspace.yaml below it would split the workspace, so the nearest existing file between
+// `appDir` and `projectDir` wins.
+async function allowOnlyElectronBuilds(projectDir: string, appDir: string) {
+  const workspaceFile = (await findPnpmWorkspaceFile(appDir, projectDir)) ?? path.join(appDir, "pnpm-workspace.yaml")
   const existing = (await exists(workspaceFile)) ? load(await fs.readFile(workspaceFile, "utf8")) : null
   const config: Record<string, any> = existing != null && typeof existing === "object" ? (existing as Record<string, any>) : {}
   config.allowBuilds = { ...(config.allowBuilds ?? {}), electron: true }
   await fs.writeFile(workspaceFile, dump(config))
+}
+
+// Nearest pnpm-workspace.yaml from `startDir` up to and including `stopDir` (the fixture root), mirroring pnpm's own lookup.
+async function findPnpmWorkspaceFile(startDir: string, stopDir: string): Promise<string | null> {
+  const stop = path.resolve(stopDir)
+  for (let dir = path.resolve(stopDir, startDir); ; dir = path.dirname(dir)) {
+    const candidate = path.join(dir, "pnpm-workspace.yaml")
+    if (await exists(candidate)) {
+      return candidate
+    }
+    if (dir === stop || path.dirname(dir) === dir) {
+      return null
+    }
+  }
 }
 
 function getLockfileFixtureNameCandidates(currentTestName: string): Array<string> {
@@ -277,9 +299,6 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       // Check again. Package manager could have been changed in package.json during `projectDirCreated`
       const { pm, corepackConfig: packageManager } = await detectPackageManager([projectDir])
       const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
-      if (pm === PM.PNPM) {
-        await allowOnlyElectronBuilds(projectDir)
-      }
 
       if (pm === PM.BUN) {
         log.info({ pm, version: version, projectDir }, "installing dependencies with bun; corepack does not support it currently and it must be installed separately")
@@ -328,6 +347,9 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
+      if (pm === PM.PNPM) {
+        await allowOnlyElectronBuilds(projectDir, appDir)
+      }
       const lockfileInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : checkOptions.storeDepsLockfileSnapshot ? getUnlockedInstallArgs(pm) : undefined
       const additionalInstallArgs = [...getIgnoreScriptsInstallArgs(pm), ...(lockfileInstallArgs ?? [])]
       // Scoped to this install only: `runtimeEnv` also reaches the packager, whose install-or-rebuild path must keep
