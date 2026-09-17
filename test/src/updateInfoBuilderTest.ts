@@ -4,7 +4,7 @@ import { createUpdateInfoTasks, writeUpdateInfoFiles, UpdateInfoFileTask } from 
 import { Platform } from "app-builder-lib"
 import { Arch, TmpDir } from "builder-util"
 import { load as yamlLoad } from "js-yaml"
-import { vi } from "vitest"
+import { afterEach, vi } from "vitest"
 import { generateKeyPairSync, KeyObject } from "crypto"
 import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, loadUpdateSigningKeys, log, parsePrivateKey } from "builder-util"
 import { computeUpdateManifestKeyId, verifyManifestSignature, verifyManifestSignatures } from "builder-util-runtime"
@@ -292,29 +292,16 @@ test("dual-signing: every configured key signs, `signature` is the first key's, 
 
 // ── A1: PlatformPackager.updateSigningKeys resolution ─────────────────────────
 
-async function withSigningEnv<T>(env: { ELECTRON_BUILDER_UPDATE_SIGN_KEY?: string; ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE?: string }, fn: () => Promise<T>): Promise<T> {
-  const names = ["ELECTRON_BUILDER_UPDATE_SIGN_KEY", "ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE"] as const
-  const saved = names.map(name => [name, process.env[name]] as const)
-  for (const name of names) {
-    const value = env[name]
-    if (value == null) {
-      delete process.env[name]
-    } else {
-      process.env[name] = value
-    }
-  }
-  try {
-    return await fn()
-  } finally {
-    for (const [name, value] of saved) {
-      if (value == null) {
-        delete process.env[name]
-      } else {
-        process.env[name] = value
-      }
-    }
-  }
+// Point the two signing env vars at exactly the values under test and unset the rest. vi.stubEnv records
+// the original values so the afterEach(vi.unstubAllEnvs) below restores the real environment after each test.
+function stubSigningEnv(env: { ELECTRON_BUILDER_UPDATE_SIGN_KEY?: string; ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE?: string }) {
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", env.ELECTRON_BUILDER_UPDATE_SIGN_KEY)
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", env.ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE)
 }
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
 
 // PlatformPackager is abstract with only two abstract members, so the real class (and therefore the
 // real `updateSigningKeys` MemoLazy) can be exercised without standing up a full Packager.
@@ -356,9 +343,8 @@ test("updateSigningKeys prefers platform-specific updateManifest over the root c
 
 test("updateSigningKeys falls back to ELECTRON_BUILDER_UPDATE_SIGN_KEY when no updateManifest config block exists", async ({ expect }) => {
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
-  await withSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: privateKeyPem }, async () => {
-    expect(publicKeysOf(await new TestPackager({}).updateSigningKeys.value)).toEqual([publicKeyPem])
-  })
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: privateKeyPem })
+  expect(publicKeysOf(await new TestPackager({}).updateSigningKeys.value)).toEqual([publicKeyPem])
 })
 
 test("updateSigningKeys reads a PEM file from signingKeyFile and from ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", async ({ expect }) => {
@@ -369,9 +355,8 @@ test("updateSigningKeys reads a PEM file from signingKeyFile and from ELECTRON_B
 
     expect(publicKeysOf(await new TestPackager({ updateManifest: { signingKeyFile: keyFile } }).updateSigningKeys.value)).toEqual([publicKeyPem])
 
-    await withSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: keyFile }, async () => {
-      expect(publicKeysOf(await new TestPackager({}).updateSigningKeys.value)).toEqual([publicKeyPem])
-    })
+    stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: keyFile })
+    expect(publicKeysOf(await new TestPackager({}).updateSigningKeys.value)).toEqual([publicKeyPem])
   })
 })
 
@@ -382,24 +367,21 @@ test("a relative signingKeyFile resolves against the project directory, a relati
     await fsp.mkdir(path.join(dir, "build"))
     await fsp.writeFile(path.join(dir, relativeKeyFile), privateKeyPem)
 
-    await withSigningEnv({}, async () => {
-      // the config path is project-relative like every other path in the build configuration...
-      expect(loadUpdateSigningKeys({ signingKeyFile: relativeKeyFile }, dir).map(derivePublicKeyPem)).toEqual([publicKeyPem])
-      expect(publicKeysOf(await new TestPackager({ updateManifest: { signingKeyFile: relativeKeyFile } }, dir).updateSigningKeys.value)).toEqual([publicKeyPem])
-      // ...so it is NOT looked up relative to the current working directory (where it does not exist)
-      expect(() => loadUpdateSigningKeys({ signingKeyFile: relativeKeyFile })).toThrow(/ENOENT/)
-    })
+    stubSigningEnv({})
+    // the config path is project-relative like every other path in the build configuration...
+    expect(loadUpdateSigningKeys({ signingKeyFile: relativeKeyFile }, dir).map(derivePublicKeyPem)).toEqual([publicKeyPem])
+    expect(publicKeysOf(await new TestPackager({ updateManifest: { signingKeyFile: relativeKeyFile } }, dir).updateSigningKeys.value)).toEqual([publicKeyPem])
+    // ...so it is NOT looked up relative to the current working directory (where it does not exist)
+    expect(() => loadUpdateSigningKeys({ signingKeyFile: relativeKeyFile })).toThrow(/ENOENT/)
     // the env var keeps ordinary environment-variable semantics: baseDir does not apply to it
-    await withSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: relativeKeyFile }, async () => {
-      expect(() => loadUpdateSigningKeys(null, dir)).toThrow(/ENOENT/)
-    })
+    stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: relativeKeyFile })
+    expect(() => loadUpdateSigningKeys(null, dir)).toThrow(/ENOENT/)
   })
 })
 
 test("updateSigningKeys is empty when neither config nor env vars provide a key", async ({ expect }) => {
-  await withSigningEnv({}, async () => {
-    expect(await new TestPackager({}).updateSigningKeys.value).toEqual([])
-  })
+  stubSigningEnv({})
+  expect(await new TestPackager({}).updateSigningKeys.value).toEqual([])
 })
 
 test("updateSigningKeys parses the PEMs once and memoizes the result", async ({ expect }) => {
@@ -414,19 +396,17 @@ test("updateSigningKeys parses the PEMs once and memoizes the result", async ({ 
 test("loadUpdateSigningKeys: array config yields every key in order", async ({ expect }) => {
   const a = generateUpdateSigningKeypair()
   const b = generateUpdateSigningKeypair()
-  await withSigningEnv({}, async () => {
-    expect(loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, b.privateKeyPem] }).map(derivePublicKeyPem)).toEqual([a.publicKeyPem, b.publicKeyPem])
-    const keys = await new TestPackager({ updateManifest: { signingKey: [a.privateKeyPem, b.privateKeyPem] } }).updateSigningKeys.value
-    expect(publicKeysOf(keys)).toEqual([a.publicKeyPem, b.publicKeyPem])
-  })
+  stubSigningEnv({})
+  expect(loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, b.privateKeyPem] }).map(derivePublicKeyPem)).toEqual([a.publicKeyPem, b.publicKeyPem])
+  const keys = await new TestPackager({ updateManifest: { signingKey: [a.privateKeyPem, b.privateKeyPem] } }).updateSigningKeys.value
+  expect(publicKeysOf(keys)).toEqual([a.publicKeyPem, b.publicKeyPem])
 })
 
 test("loadUpdateSigningKeys: ELECTRON_BUILDER_UPDATE_SIGN_KEY may hold several concatenated PEM blocks", async ({ expect }) => {
   const a = generateUpdateSigningKeypair()
   const b = generateUpdateSigningKeypair()
-  await withSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: `${a.privateKeyPem}\n${b.privateKeyPem}\n` }, async () => {
-    expect(loadUpdateSigningKeys().map(derivePublicKeyPem)).toEqual([a.publicKeyPem, b.publicKeyPem])
-  })
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: `${a.privateKeyPem}\n${b.privateKeyPem}\n` })
+  expect(loadUpdateSigningKeys().map(derivePublicKeyPem)).toEqual([a.publicKeyPem, b.publicKeyPem])
 })
 
 test("loadUpdateSigningKeys: ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE may hold several paths joined with path.delimiter", async ({ expect }) => {
@@ -437,13 +417,11 @@ test("loadUpdateSigningKeys: ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE may hold seve
     const fileB = path.join(dir, "b.pem")
     await fsp.writeFile(fileA, a.privateKeyPem)
     await fsp.writeFile(fileB, b.privateKeyPem)
-    await withSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: [fileA, fileB].join(path.delimiter) }, async () => {
-      expect(loadUpdateSigningKeys().map(derivePublicKeyPem)).toEqual([a.publicKeyPem, b.publicKeyPem])
-    })
+    stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: [fileA, fileB].join(path.delimiter) })
+    expect(loadUpdateSigningKeys().map(derivePublicKeyPem)).toEqual([a.publicKeyPem, b.publicKeyPem])
     // and signingKeyFile accepts an array of paths
-    await withSigningEnv({}, async () => {
-      expect(loadUpdateSigningKeys({ signingKeyFile: [fileB, fileA] }).map(derivePublicKeyPem)).toEqual([b.publicKeyPem, a.publicKeyPem])
-    })
+    stubSigningEnv({})
+    expect(loadUpdateSigningKeys({ signingKeyFile: [fileB, fileA] }).map(derivePublicKeyPem)).toEqual([b.publicKeyPem, a.publicKeyPem])
   })
 })
 
@@ -451,19 +429,17 @@ test("loadUpdateSigningKeys: the first configured SOURCE wins even when a later 
   const a = generateUpdateSigningKeypair()
   const b = generateUpdateSigningKeypair()
   const c = generateUpdateSigningKeypair()
-  await withSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: `${b.privateKeyPem}\n${c.privateKeyPem}` }, async () => {
-    expect(loadUpdateSigningKeys({ signingKey: a.privateKeyPem }).map(derivePublicKeyPem)).toEqual([a.publicKeyPem])
-  })
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: `${b.privateKeyPem}\n${c.privateKeyPem}` })
+  expect(loadUpdateSigningKeys({ signingKey: a.privateKeyPem }).map(derivePublicKeyPem)).toEqual([a.publicKeyPem])
 })
 
 test("loadUpdateSigningKeys rejects duplicate keys and non-Ed25519 keys with a clear error", async ({ expect }) => {
   const a = generateUpdateSigningKeypair()
-  await withSigningEnv({}, async () => {
-    expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, a.privateKeyPem] })).toThrow(/duplicates key #1/)
-    const rsa = generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey.export({ type: "pkcs8", format: "pem" }).toString()
-    expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, rsa] })).toThrow(/key #2 from updateManifest\.signingKey is not a valid Ed25519/)
-    expect(() => loadUpdateSigningKeys({ signingKey: "garbage" })).toThrow(/not a valid Ed25519/)
-  })
+  stubSigningEnv({})
+  expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, a.privateKeyPem] })).toThrow(/duplicates key #1/)
+  const rsa = generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey.export({ type: "pkcs8", format: "pem" }).toString()
+  expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, rsa] })).toThrow(/key #2 from updateManifest\.signingKey is not a valid Ed25519/)
+  expect(() => loadUpdateSigningKeys({ signingKey: "garbage" })).toThrow(/not a valid Ed25519/)
 })
 
 // ── A1: app-update.yml public key embedding ──────────────────────────────────
