@@ -44,6 +44,10 @@ describe("macPackager", { sequential: true }, () => {
       },
       {
         signedMac: true,
+        // Universal merge, fuses, languages and signing are all asserted on the .app bundles, so stop before the
+        // 3 dmg + 3 zip targets are built. The full build (artifactName macros, multi-arch latest-mac.yml) is kept
+        // as "two-package (e2e)" in macPackager.e2e.ts.
+        afterPackTestHook: async () => true,
         checkMacApp: async appDir => {
           const resources = await fs.readdir(path.join(appDir, "Contents", "Resources"))
           expect(resources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()

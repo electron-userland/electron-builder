@@ -89,7 +89,7 @@ New features and bug fixes need tests. Tests live under [`test/src`](https://git
 The full suite is very slow. Scope your run to the tests you touched with `TEST_FILES` (comma-separated, no file extension):
 
 ```sh
-TEST_FILES=oneClickInstallerTest,assistedInstallerTest pnpm ci:test
+TEST_FILES=oneClickInstaller,assistedInstaller pnpm ci:test
 ```
 
 Set `TEST_APP_TMP_DIR` to inspect the build output afterwards:
@@ -295,12 +295,13 @@ Always run `pnpm compile` before executing tests — it generates the toolset te
 
 ```sh
 pnpm compile
-TEST_APP_TMP_DIR=/tmp/electron-builder-test TEST_FILES=oneClickInstallerTest,assistedInstallerTest,webInstallerTest pnpm ci:test
+TEST_APP_TMP_DIR=/tmp/electron-builder-test TEST_FILES=oneClickInstaller,assistedInstaller,webInstaller pnpm ci:test
 ```
 
 | Variable | Purpose |
 | --- | --- |
-| `TEST_FILES` | Comma-separated test filenames without extension (e.g. `oneClickInstallerTest`). Scopes the run — the full suite is very slow. |
+| `TEST_FILES` | Comma-separated test filenames without extension (e.g. `oneClickInstallerTest`). Scopes the run — the full suite is very slow. Matched as a substring, so `snapHeavy` selects `snapHeavy.e2e.ts`. |
+| `TEST_MODE` | `all` (default), `unit` or `e2e`. Packaging tests that build an installer/archive and read it back live in `*.e2e.ts` files; `unit` runs only the `*Test.ts` files (app-directory level), `e2e` only the `*.e2e.ts` files. `TEST_FILES` always wins over the mode. |
 | `TEST_APP_TMP_DIR` | Fixed directory for build output so you can inspect and use the test build. Used instead of a random temp directory and **emptied on each run**. Shared by every test — pair it with a single-test `TEST_FILES` only. |
 
 ### VS Code
