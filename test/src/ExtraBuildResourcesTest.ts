@@ -47,8 +47,9 @@ test.ifNotWindows("custom buildResources and output dirs: mac", ({ expect }) =>
     targets: Platform.MAC.createTarget("dir", Arch.x64),
   })
 )
-test.ifNotMac("custom buildResources and output dirs: win", ({ expect }) => createBuildResourcesTest(expect, { targets: Platform.WINDOWS.createTarget("nsis", Arch.x64) }))
-test.ifLinux("custom buildResources and output dirs: linux", ({ expect }) => createBuildResourcesTest(expect, { targets: Platform.LINUX.createTarget("appimage", Arch.x64) }))
+// `customDist/latest` is the output dir itself (created by doPack for the *-unpacked app dir), so a dir target suffices.
+test.ifNotMac("custom buildResources and output dirs: win", ({ expect }) => createBuildResourcesTest(expect, { targets: Platform.WINDOWS.createTarget("dir", Arch.x64) }))
+test.ifLinux("custom buildResources and output dirs: linux", ({ expect }) => createBuildResourcesTest(expect, { targets: Platform.LINUX.createTarget("dir", Arch.x64) }))
 
 test.ifNotWindows("prepackaged", ({ expect }) =>
   app(
@@ -165,6 +166,9 @@ test.ifWindows("override targets in the config - only arch", ({ expect }) =>
       },
     },
     {
+      // the ia32 app dir name and app-update.yml (channel from the prerelease version) are decided before the nsis
+      // target is built, so stop there; nsis stays configured so app-update.yml is written at all
+      afterPackTestHook: async () => true,
       packed: context => {
         return Promise.all([
           assertThat(expect, path.join(context.projectDir, "dist", "win-unpacked")).doesNotExist(),
