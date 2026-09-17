@@ -22,7 +22,7 @@ import { PublishPolicy } from "electron-publish"
 import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { realpath as realpathCb } from "fs"
-import { load } from "js-yaml"
+import { dump, load } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { Format, NtExecutable, NtExecutableResource } from "resedit"
@@ -45,8 +45,7 @@ const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "12.0.2" },
   [PM.YARN]: { cli: "yarn", version: "1.22.22" },
   [PM.YARN_BERRY]: { cli: "yarn", version: "4.18.0" },
-  // pnpm >= 10.29.3 emits deduped subtrees in `pnpm list --json` as childless stubs, which the pnpm collector does not resolve yet (fix on branch fix/pnpm-deduped-list-collector)
-  [PM.PNPM]: { cli: "pnpm", version: "10.28.2" },
+  [PM.PNPM]: { cli: "pnpm", version: "11.26.0" },
   [PM.BUN]: { cli: "bun", version: "1.4.2" },
   [PM.TRAVERSAL]: { cli: "npm", version: "12.0.2" }, // use npm to install, we're testing manual node traversal, but we still need something to install the dependencies
 }
@@ -93,6 +92,20 @@ function getUnlockedInstallArgs(pm: PM): Array<string> | undefined {
 // `install`; yarn berry has no such flag and is handled through YARN_ENABLE_SCRIPTS on the install env instead.
 function getIgnoreScriptsInstallArgs(pm: PM): Array<string> {
   return pm === PM.YARN_BERRY ? [] : ["--ignore-scripts"]
+}
+
+// pnpm >= 11 fails the install with ERR_PNPM_IGNORED_BUILDS when a dependency has a build script that has not been
+// allowlisted (`strictDepBuilds` defaults to true and is only honored from pnpm-workspace.yaml, not from the env).
+// `--ignore-scripts` (see getIgnoreScriptsInstallArgs) skips that check as of pnpm 11.26, but rather than relying on it
+// or disabling the check, allowlist electron alone: nothing else in a fixture is ever allowed to run its install hooks in
+// CI (natives are built by electron-builder's own @electron/rebuild step). Fixtures that ship or generate their own
+// pnpm-workspace.yaml keep every other key.
+async function allowOnlyElectronBuilds(projectDir: string) {
+  const workspaceFile = path.join(projectDir, "pnpm-workspace.yaml")
+  const existing = (await exists(workspaceFile)) ? load(await fs.readFile(workspaceFile, "utf8")) : null
+  const config: Record<string, any> = existing != null && typeof existing === "object" ? (existing as Record<string, any>) : {}
+  config.allowBuilds = { ...(config.allowBuilds ?? {}), electron: true }
+  await fs.writeFile(workspaceFile, dump(config))
 }
 
 function getLockfileFixtureNameCandidates(currentTestName: string): Array<string> {
@@ -264,6 +277,9 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       // Check again. Package manager could have been changed in package.json during `projectDirCreated`
       const { pm, corepackConfig: packageManager } = await detectPackageManager([projectDir])
       const { cli, prepareEntry, version } = getPackageManagerWithVersion(pm, packageManager)
+      if (pm === PM.PNPM) {
+        await allowOnlyElectronBuilds(projectDir)
+      }
 
       if (pm === PM.BUN) {
         log.info({ pm, version: version, projectDir }, "installing dependencies with bun; corepack does not support it currently and it must be installed separately")
