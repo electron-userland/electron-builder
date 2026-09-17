@@ -26,3 +26,16 @@
   display: block;
   overflow-x: auto;
 }
+
+/* Version banner (themeConfig.announcementBar, only set on prerelease builds).
+   Colours come from the config; let the long sentence wrap on narrow screens
+   instead of overflowing the fixed default height. */
+div[class^="announcementBar"] {
+  --docusaurus-announcement-bar-height: auto;
+  font-weight: var(--ifm-font-weight-semibold);
+}
+
+div[class^="announcementBar"] a {
+  color: inherit;
+  text-decoration: underline;
+}
