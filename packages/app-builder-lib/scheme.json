@@ -484,6 +484,23 @@
             "string"
           ]
         },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -617,6 +634,23 @@
             "null",
             "number"
           ]
+        },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updateProvider": {
           "description": "The Provider to provide UpdateInfo regarding available updates.  Required\nto use custom providers with electron-updater.",
@@ -1618,6 +1652,23 @@
             "number"
           ]
         },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -1759,6 +1810,23 @@
             "string"
           ]
         },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -1845,6 +1913,23 @@
             "null",
             "string"
           ]
+        },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -1956,6 +2041,23 @@
             "null",
             "number"
           ]
+        },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -2371,6 +2473,17 @@
           ],
           "default": "AppImage",
           "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](https://www.electron.build/multi-platform-build#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
+        },
+        "updateManifest": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/UpdateManifestSigningOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
         },
         "vendor": {
           "description": "The vendor. Defaults to [author](https://www.electron.build/configuration#author).",
@@ -3254,6 +3367,17 @@
           "default": "distribution",
           "description": "Whether to sign app for development or for distribution."
         },
+        "updateManifest": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/UpdateManifestSigningOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
+        },
         "x64ArchFiles": {
           "description": "Minimatch pattern of paths that are allowed to be x64 binaries in both\nASAR files\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
           "type": [
@@ -3891,6 +4015,17 @@
           ],
           "default": "distribution",
           "description": "Whether to sign app for development or for distribution."
+        },
+        "updateManifest": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/UpdateManifestSigningOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
         },
         "x64ArchFiles": {
           "description": "Minimatch pattern of paths that are allowed to be x64 binaries in both\nASAR files\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
@@ -6458,6 +6593,23 @@
             "number"
           ]
         },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -7660,6 +7812,23 @@
             "number"
           ]
         },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -8134,6 +8303,23 @@
             "number"
           ]
         },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -8352,6 +8538,63 @@
           ],
           "default": "0.0.0",
           "description": "`wine` bundle version to use for running Windows tools on non-Windows platforms.\nLocated at https://github.com/electron-userland/electron-builder-binaries/releases?q=wine&expanded=true\n0.0.0 - legacy toolset (wine 4.0.1 portable; mac-only support)\n\nBeta:\n1.0.1 - Wine 11 bundle (unified wine binary, ia32 via WoW64)"
+        }
+      },
+      "type": "object"
+    },
+    "UpdateManifestSigningOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "publicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.\nThe updater accepts a manifest when any listed key validates one of its signatures. Optional — when\nomitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust\nadditional keys ahead of a rotation (for example `[current, next]`) or when the private key is held by an\nexternal signer."
+        },
+        "signingKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 private key(s) in PEM (PKCS#8) format used to sign the update manifest. A single PEM string may\ncontain several concatenated keys, or pass an array with one key each; the manifest is signed by every key\n(dual-signing for [key rotation](https://www.electron.build/features/key-rotation)) and the first key also\nfills the legacy single `signature` field.\nSecret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable in CI over committing this to config."
+        },
+        "signingKeyFile": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Path(s) to file(s) containing the Ed25519 private key (PEM, PKCS#8). Alternative to `signingKey`.\nAn array signs with every listed key, in order. Relative paths are resolved against the project directory."
         }
       },
       "type": "object"
@@ -8801,6 +9044,17 @@
           ],
           "default": "nsis",
           "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable]https://www.electron.build/nsis#portable) app without installation), `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX package can be built only on Windows 10.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
+        },
+        "updateManifest": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/UpdateManifestSigningOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
         },
         "verifyUpdateCodeSignature": {
           "default": true,
@@ -9900,6 +10154,17 @@
         }
       ],
       "description": "Configuration of toolsets utilized by electron-builder"
+    },
+    "updateManifest": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/UpdateManifestSigningOptions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
     },
     "win": {
       "anyOf": [

@@ -33,6 +33,16 @@ export * from "./fs"
 
 export { generateKsuid } from "./ksuid"
 export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink"
+export {
+  signUpdateManifest,
+  createUpdateManifestSignatures,
+  parsePrivateKey,
+  derivePublicKeyPem,
+  loadUpdateSigningKey,
+  loadUpdateSigningKeys,
+  UpdateSigningKeySources,
+  generateUpdateSigningKeypair,
+} from "./updateManifestSigner"
 
 export const debug7z = _debug("electron-builder:7z")
 

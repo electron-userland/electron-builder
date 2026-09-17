@@ -41,7 +41,20 @@ export {
 } from "./publishOptions"
 export { retry } from "./retry"
 export { parseDn } from "./rfc2253Parser"
-export { BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "./updateInfo"
+export { BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo, UpdateFileInfo, UpdateInfo, UpdateManifestSignature, WindowsUpdateInfo } from "./updateInfo"
+export {
+  canonicalizeForSigning,
+  collectManifestSignatures,
+  computeUpdateManifestKeyId,
+  createManifestSignatureEntry,
+  normalizePublicKeyList,
+  parsePublicKey,
+  splitPemBlocks,
+  validateSignedManifestShape,
+  verifyManifestSignature,
+  verifyManifestSignatures,
+  UPDATE_MANIFEST_SIGNATURE_VERSION,
+} from "./updateManifestSignature"
 export { UUID } from "./uuid"
 export { parseXml, XElement } from "./xml"
 export { isValidKey, mapToObject, asArray, Nullish, deepAssign, objectToArgs } from "./objects"

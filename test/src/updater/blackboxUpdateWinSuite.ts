@@ -7,8 +7,47 @@ import { spawn as nodeSpawn } from "child_process"
 import * as path from "path"
 import { TestContext } from "vitest"
 import { deepAssign, TmpDir } from "builder-util/out/util"
-import { ApplicationUpdatePaths, doBuild, optionsForFlakyE2E, runTest, windowsVmPromise } from "./blackboxUpdateHelpers"
+import { NSIS_VERSIONS, WIN_CODE_SIGN_VERSIONS } from "../../vitest-scripts/generate-toolset-versions"
+import {
+  ApplicationUpdatePaths,
+  doBuild,
+  optionsForFlakyE2E,
+  optionsForFlakyMultiHopE2E,
+  runKeyRotationTest,
+  runSignedManifestTest,
+  runTest,
+  windowsVmPromise,
+} from "./blackboxUpdateHelpers"
 import { installWindowsVm } from "./blackboxInstallWindows"
+
+/** Highest dotted version string in the list (custom, non-string toolset entries are ignored). */
+function latestVersion(versions: ReadonlyArray<unknown>): string | undefined {
+  const compare = (a: string, b: string) => {
+    const pa = a.split(".").map(Number)
+    const pb = b.split(".").map(Number)
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+      const diff = (pa[i] ?? 0) - (pb[i] ?? 0)
+      if (diff !== 0) {
+        return diff
+      }
+    }
+    return 0
+  }
+  return versions
+    .filter((it): it is string => typeof it === "string")
+    .sort(compare)
+    .at(-1)
+}
+
+/**
+ * True for exactly one generated blackboxWin file: the one built against the newest version of every toolset
+ * dimension of the matrix (generate-toolset-tests-windows.ts × generate-toolset-versions.ts). Tests that do
+ * not exercise the toolsets themselves (e.g. update-manifest signing) run only there instead of once per
+ * toolset combination.
+ */
+export function isLatestToolset(toolsets: Required<Pick<ToolsetConfig, "winCodeSign" | "nsis">>): boolean {
+  return toolsets.winCodeSign === latestVersion(WIN_CODE_SIGN_VERSIONS) && toolsets.nsis === latestVersion(NSIS_VERSIONS)
+}
 
 // Spawn a process whose IMAGE NAME contains `appExeName` (e.g. "TestApp-helper.exe" when
 // app is "TestApp.exe").  Returns cleanup and assertAlive functions.  This is used to
@@ -113,6 +152,25 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
       } finally {
         await cleanup()
       }
+    })
+
+    // Ed25519-signed latest.yml (runtime-generated key): the installed app verifies the manifest before updating.
+    // Gated to the latest toolset combination only — the toolsets do not take part in manifest signing.
+    test.ifEnv(isLatestToolset(toolsets))("nsis - signed update manifest", optionsForFlakyE2E, async (context: TestContext) => {
+      const vm = await windowsVmPromise
+      if (process.platform !== "win32" && vm == null) {
+        context.skip()
+      }
+      await runSignedManifestTest(context, "nsis", "", Arch.x64, toolsets)
+    })
+
+    // Key rotation A → [A, B] → B over three builds, including manifests the installed app must refuse.
+    test.ifEnv(isLatestToolset(toolsets))("nsis - key rotation", optionsForFlakyMultiHopE2E, async (context: TestContext) => {
+      const vm = await windowsVmPromise
+      if (process.platform !== "win32" && vm == null) {
+        context.skip()
+      }
+      await runKeyRotationTest(context, "nsis", "", Arch.x64, toolsets)
     })
 
     // Full per-machine update cycle: install old → trigger update → verify new version.

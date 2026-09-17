@@ -162,6 +162,12 @@ e.g. `>= 2.16`, `>=1.0.0`. Defaults to `>=2.15`
 * `2.15.0` path
 * `2.16.0` files
 
+## Signed update manifests
+
+The update manifest (`latest*.yml`) itself can be cryptographically signed at publish time and verified by electron-updater before any download — see [Signed Update Manifests](./signed-update-manifests.md).
+
+Changing a signing key or certificate that installs in the field already trust requires a transition release — see [Key Rotation](./key-rotation.md).
+
 ## Staged Rollouts
 
 Staged rollouts allow you to distribute the latest version of your app to a subset of users that you can increase over time, similar to rollouts on platforms like Google Play.

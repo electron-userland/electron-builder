@@ -8,6 +8,7 @@ import { configurePublishCommand, publish } from "../publish"
 import { clearCache } from "./clear-cache"
 import { wrap } from "./cli-util"
 import { createSelfSignedCert } from "./create-self-signed-cert"
+import { createUpdateKey } from "./create-update-key"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps"
 import { start } from "./start"
 
@@ -42,6 +43,18 @@ void createYargs()
     "Clear the electron-builder default cache directory",
     yargs => yargs,
     wrap(() => clearCache())
+  )
+  .command(
+    "create-update-key",
+    "Generate an Ed25519 keypair for signing auto-update manifests",
+    yargs =>
+      yargs.option("out", {
+        alias: ["o"],
+        type: "string",
+        requiresArg: true,
+        description: "Path to write the private key PEM (default: ./update-private-key.pem)",
+      }),
+    wrap(argv => createUpdateKey(argv.out))
   )
   .help()
   .epilog(`See ${chalk.underline("https://electron.build")} for more documentation.`)
