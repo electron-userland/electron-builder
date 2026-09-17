@@ -172,6 +172,7 @@ Without this option, electron-builder proceeds without signing if no credentials
 - **[macOS Code Signing](code-signing-mac.md)** — exporting certificates, keychain setup, disabling signing, ad-hoc signing
 - **[Windows Code Signing](code-signing-win.md)** — OV vs. EV certificates, Azure Trusted Signing setup
 - **[macOS Notarization](notarization.md)** — notarizing apps for macOS 10.15+, Hardened Runtime requirements
+- **[Key Rotation](../key-rotation.md)** — replacing a code-signing certificate or update-manifest key without stranding installs that trust the old one
 
 ## Troubleshooting
 
