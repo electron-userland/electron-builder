@@ -101,6 +101,10 @@ function getIgnoreScriptsInstallArgs(pm: PM): Array<string> {
 // CI (natives are built by electron-builder's own @electron/rebuild step). Fixtures that ship or generate their own
 // pnpm-workspace.yaml keep every other key.
 //
+// pnpm 11 also stopped reading its own settings from `.npmrc` and from the `pnpm` key of package.json, so a test's install
+// settings (`nodeLinker`, `shamefullyHoist`, `publicHoistPattern`, `supportedArchitectures`, ...) go into the same file, via
+// AssertPackOptions.pnpmSettings.
+//
 // pnpm locates its workspace root with a plain upward search for pnpm-workspace.yaml, and `pnpm install` run inside a
 // workspace installs the workspace's packages, not the cwd's. installDependencies runs pnpm in `appDir`, so the file has to
 // live there for two-package fixtures such as `test-app`: written to `projectDir` instead, it turned that parent into a
@@ -108,12 +112,27 @@ function getIgnoreScriptsInstallArgs(pm: PM): Array<string> {
 // produced `sqlite3` (updater blackbox suites). Conversely, a fixture that already has a workspace root above `appDir`
 // must keep it, since a second pnpm-workspace.yaml below it would split the workspace, so the nearest existing file between
 // `appDir` and `projectDir` wins.
-async function allowOnlyElectronBuilds(projectDir: string, appDir: string) {
+//
+// The returned function undoes the write (removes the file, or puts the fixture's own bytes back) and runs once the install
+// is done: the file is only needed by `pnpm install` (the packager's rebuild step is @electron/rebuild, and the pnpm
+// collector's `pnpm list` reads the lockfile and node_modules), pnpm appends placeholder `allowBuilds` entries for every
+// unreviewed build script it met, and for single-package fixtures `appDir` is the packaged directory, so leaving the file
+// there would add it to app.asar and shift every offset in the asar snapshots.
+async function writePnpmInstallSettings(projectDir: string, appDir: string, settings: Record<string, unknown> | undefined): Promise<() => Promise<void>> {
   const workspaceFile = (await findPnpmWorkspaceFile(appDir, projectDir)) ?? path.join(appDir, "pnpm-workspace.yaml")
-  const existing = (await exists(workspaceFile)) ? load(await fs.readFile(workspaceFile, "utf8")) : null
+  const original = (await exists(workspaceFile)) ? await fs.readFile(workspaceFile, "utf8") : null
+  const existing = original == null ? null : load(original)
   const config: Record<string, any> = existing != null && typeof existing === "object" ? (existing as Record<string, any>) : {}
+  Object.assign(config, settings)
   config.allowBuilds = { ...(config.allowBuilds ?? {}), electron: true }
   await fs.writeFile(workspaceFile, dump(config))
+  return async () => {
+    if (original == null) {
+      await fs.rm(workspaceFile, { force: true })
+    } else {
+      await fs.writeFile(workspaceFile, original)
+    }
+  }
 }
 
 // Nearest pnpm-workspace.yaml from `startDir` up to and including `stopDir` (the fixture root), mirroring pnpm's own lookup.
@@ -167,6 +186,12 @@ export interface AssertPackOptions {
   readonly checkMacApp?: (appDir: string, info: any) => Promise<any>
 
   readonly packageManager?: PM
+  /**
+   * pnpm settings for the fixture install, as pnpm-workspace.yaml keys (`nodeLinker`, `shamefullyHoist`, `publicHoistPattern`,
+   * `supportedArchitectures`, ...). pnpm 11 reads them from that file alone, so they are written next to the app's
+   * package.json for the install and removed again before packing (see writePnpmInstallSettings). Ignored for other package managers.
+   */
+  readonly pnpmSettings?: Record<string, unknown>
   readonly useTempDir?: boolean
   readonly signedMac?: boolean
   readonly signedWin?: boolean
@@ -347,9 +372,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
-      if (pm === PM.PNPM) {
-        await allowOnlyElectronBuilds(projectDir, appDir)
-      }
+      const restorePnpmWorkspaceFile = pm === PM.PNPM ? await writePnpmInstallSettings(projectDir, appDir, checkOptions.pnpmSettings) : null
       const lockfileInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : checkOptions.storeDepsLockfileSnapshot ? getUnlockedInstallArgs(pm) : undefined
       const additionalInstallArgs = [...getIgnoreScriptsInstallArgs(pm), ...(lockfileInstallArgs ?? [])]
       // Scoped to this install only: `runtimeEnv` also reaches the packager, whose install-or-rebuild path must keep
@@ -373,6 +396,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       if (typeof postNodeModulesInstallHook === "function") {
         await postNodeModulesInstallHook()
       }
+      await restorePnpmWorkspaceFile?.()
 
       // save or update lockfile fixture
       if (shouldUpdateLockfiles) {

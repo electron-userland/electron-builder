@@ -2,10 +2,10 @@ import { AppImageOptions, Configuration, DebOptions, PacmanOptions, RpmOptions, 
 import { PM } from "app-builder-lib/internal"
 import { Arch, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
-import { archFromString, log, serializeToYaml } from "builder-util"
+import { archFromString, log } from "builder-util"
 import { deepAssign, GenericServerOptions } from "builder-util-runtime"
 import { execSync } from "child_process"
-import { move, outputFile, readJsonSync } from "fs-extra"
+import { move, readJsonSync } from "fs-extra"
 import path from "path"
 import { TestContext, TestOptions } from "vitest"
 import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
@@ -139,18 +139,13 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
         artifactsDir = await tmpDir.getTempDir({ prefix: "artifacts" })
         await move(ctx.outDir, artifactsDir)
       },
+      // pnpm 11 reads its own settings from pnpm-workspace.yaml alone (neither `node-linker` in .npmrc nor the `pnpm` key of
+      // package.json is consulted any more), so packTester writes these next to app/package.json for the install. Hoisted from the
+      // start, the install keeps the sqlite3 binary that @electron/rebuild produces right after it: the former follow-up
+      // `pnpm install --config.node-linker=hoisted` re-linked node_modules from the store (dropping that binary) and, under pnpm 11,
+      // failed outright with ERR_PNPM_IGNORED_BUILDS for sqlite3 (strictDepBuilds).
+      pnpmSettings: { nodeLinker: "hoisted", supportedArchitectures: { os: ["current"], cpu: ["x64", "arm64"] } },
       projectDirCreated: async projectDir => {
-        // pnpm 11 reads its own settings from pnpm-workspace.yaml alone: neither `node-linker` in .npmrc nor the `pnpm` key of
-        // package.json is consulted any more (pnpm 10 still honored both). installDependencies runs pnpm with cwd=appDir, so the
-        // file lives in app/ and the main install is hoisted from the start. That also keeps the sqlite3 binary that @electron/rebuild
-        // produces right after the install: a second `pnpm install --config.node-linker=hoisted` re-links node_modules from the
-        // store and drops it, and under pnpm 11 it fails outright with ERR_PNPM_IGNORED_BUILDS for sqlite3 (strictDepBuilds).
-        // packTester merges its allowBuilds entry into this file before installing.
-        await outputFile(
-          path.join(projectDir, "app", "pnpm-workspace.yaml"),
-          serializeToYaml({ nodeLinker: "hoisted", supportedArchitectures: { os: ["current"], cpu: ["x64", "arm64"] } })
-        )
-
         await modifyPackageJson(
           projectDir,
           data => {
