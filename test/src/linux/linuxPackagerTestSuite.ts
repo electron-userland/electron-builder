@@ -233,6 +233,8 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
             grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
           },
         },
+        // Only the computed desktop entry and the unpacked app dir are asserted — return true so AppImageTarget.build exits before
+        // mksquashfs runs (same for the desktopName tests below; the artifact list in the snapshot is therefore empty).
         effectiveOptionComputed: async it => {
           const content: string = it.desktop
           expect(
@@ -241,7 +243,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
               .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
               .join("\n")
           ).toMatchSnapshot()
-          return Promise.resolve(false)
+          return Promise.resolve(true)
         },
       },
       {
@@ -417,7 +419,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
               .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
               .join("\n")
           ).toMatchSnapshot()
-          return Promise.resolve(false)
+          return Promise.resolve(true)
         },
       },
       {
@@ -445,7 +447,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
               .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
               .join("\n")
           ).toMatchSnapshot()
-          return Promise.resolve(false)
+          return Promise.resolve(true)
         },
       },
       {
@@ -473,7 +475,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
               .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
               .join("\n")
           ).toMatchSnapshot()
-          return Promise.resolve(false)
+          return Promise.resolve(true)
         },
       },
       {
@@ -501,7 +503,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
               .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
               .join("\n")
           ).toMatchSnapshot()
-          return Promise.resolve(false)
+          return Promise.resolve(true)
         },
       },
       {}
@@ -518,7 +520,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
         },
         effectiveOptionComputed: async it => {
           expect(it.desktopFileName).toBe("signal.desktop")
-          return Promise.resolve(false)
+          return Promise.resolve(true)
         },
       },
       {
@@ -540,7 +542,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
         },
         effectiveOptionComputed: async it => {
           expect(it.desktopFileName).toBe("com.example.Signal.desktop")
-          return Promise.resolve(false)
+          return Promise.resolve(true)
         },
       },
       {
@@ -562,7 +564,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
         },
         effectiveOptionComputed: async it => {
           expect(it.desktopFileName).toBe("testapp.desktop")
-          return Promise.resolve(false)
+          return Promise.resolve(true)
         },
       },
       {}
