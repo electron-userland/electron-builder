@@ -1,5 +1,90 @@
 # app-builder-lib
 
+## 27.0.0-alpha.9
+
+### Major Changes
+
+- Fix(nsis): correct the `customInstallMode` macro guard casing in `multiUserUi.nsh`. The guard previously checked `!ifmacrodef customInstallmode` (lowercase `m`) while the documentation and the adjacent `!insertmacro customInstallMode` call use `customInstallMode`; it now checks `customInstallMode`, matching the documented macro name. Applications that define the macro with the documented casing now have it reliably applied on the install-mode page of assisted multi-user installers. Applications that defined the macro under the exact lowercase name `customInstallmode` relied on undocumented behavior — rename the definition in your custom NSIS scripts (e.g. `build/installer.nsh`) to `customInstallMode`. _[`#10161`](https://github.com/electron-userland/electron-builder/pull/10161) [`66eb52c`](https://github.com/electron-userland/electron-builder/commit/66eb52cd85f975c04f6cfe1cfc89c15fd98cd07d) [@claude](https://github.com/apps/claude)_
+- Feat(squirrel-windows)!: inline installer logic; remove electron-winstaller dependency and its vendored binaries _[`#9830`](https://github.com/electron-userland/electron-builder/pull/9830) [`0fdbba6`](https://github.com/electron-userland/electron-builder/commit/0fdbba62d48fe6dcd2fcce5b3e5ac028a96417c9) [@mmaietta](https://github.com/mmaietta)_
+
+  BREAKING: the `squirrelWindows.customSquirrelVendorDir` option has been removed. Supply a custom Squirrel vendor bundle with the `toolsets.squirrel` config (a `ToolsetCustom` object) instead — it goes through the same rcedit/WiX provisioning as the default bundle.
+
+### Minor Changes
+
+- Feat(nsis): `differentialPackage: "store-asar"` — store `resources/app.asar` uncompressed (7-Zip `Copy`) in the differential-aware app package so a small app-code change costs a proportionally small differential download instead of re-downloading the entire recompressed asar (measured on a ~32 MB asar: 0.2% instead of 100% for a one-line change). `nsis.differentialPackage` is widened to `boolean | "compressed" | "store-asar"`: `false` disables differential support as before, `"store-asar"` opts into the stored asar, and everything else (`true`, `"compressed"`, unset) keeps today's fully compressed differential package. Backed by a generic `ArchiveOptions.storedPaths` in `archive()`. _[`#10186`](https://github.com/electron-userland/electron-builder/pull/10186) [`c53a27f`](https://github.com/electron-userland/electron-builder/commit/c53a27fdab0a92fd05cb5d095935da90318ba87e) [@imlucas](https://github.com/imlucas)_
+- Feat: v27 upgrade guardrails: make every breaking change self-announcing _[`#10182`](https://github.com/electron-userland/electron-builder/pull/10182) [`318f6fb`](https://github.com/electron-userland/electron-builder/commit/318f6fb93f9a6f92231320aa876db9e66bd78b6a) [@mmaietta](https://github.com/mmaietta)_
+- Feat(dmg): allow "position" as a dmg.contents type3 _[`#10183`](https://github.com/electron-userland/electron-builder/pull/10183) [`e331645`](https://github.com/electron-userland/electron-builder/commit/e3316455022434d9153dd7f61c6e853068715482) [@Laruxo](https://github.com/Laruxo)_
+- Feat(nsis): more flexible custom script includes (#9112) _[`#10161`](https://github.com/electron-userland/electron-builder/pull/10161) [`66eb52c`](https://github.com/electron-userland/electron-builder/commit/66eb52cd85f975c04f6cfe1cfc89c15fd98cd07d) [@claude](https://github.com/apps/claude)_
+  - `nsis.include` (and `nsisWeb.include`) now also accepts an array of paths — every entry is resolved relative to the build resources directory first, then the project directory, and all scripts are included in order.
+  - The build resources directory is now always registered via `!addincludedir`, so custom scripts can `!include` sibling files by name even when the main include is auto-discovered.
+  - The portable target now honors an explicitly set `portable.include` (string or array). It still does **not** auto-discover `build/installer.nsh`, so existing portable builds are unaffected.
+  - Both `build/x86-unicode` and `build/x86-ansi` user plugin directories are now registered (each when it exists) instead of only the one matching the `unicode` option, matching the documented behavior.
+  - Fixed the `!ifmacrodef customInstallmode` case mismatch in `multiUserUi.nsh` to match the documented `customInstallMode` macro name (NSIS macro-name matching is case-insensitive, so this is a consistency fix).
+
+- Feat(security): signed update manifests (Ed25519) with trust lists and multi-signature manifests _[`#9877`](https://github.com/electron-userland/electron-builder/pull/9877) [`d45536f`](https://github.com/electron-userland/electron-builder/commit/d45536f74e63e5c19dd4a590238521f6315812f5) [@mmaietta](https://github.com/mmaietta)_
+
+  Optional Ed25519 signing of auto-update manifests (`latest*.yml`). When signing keys are configured
+  (`updateManifest.signingKey`/`signingKeyFile` in config, or `ELECTRON_BUILDER_UPDATE_SIGN_KEY`/`ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`
+  env vars), each manifest is signed over its integrity-critical fields and the matching public keys are
+  embedded into `app-update.yml` (both resolved from the same keys on the platform packager, so signing and
+  embedding cannot disagree). electron-updater verifies the signature before downloading and refuses to
+  update on tamper/missing-signature (fail-closed). Opt-in: when no public key is configured, verification is
+  skipped with a one-time warning. New CLI: `electron-builder create-update-key` (prints the public key and its key id).
+
+  Key rotation without a flag day: an install trusts a **list** of public keys (`updateManifestPublicKey` is a
+  string or an array; `updateManifest.publicKey`, `signingKey` and `signingKeyFile` accept arrays, a PEM value may
+  hold several concatenated keys, and `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` accepts several paths joined with
+  the OS path delimiter), and a manifest may carry **several signatures** (`signatures: [{ keyId, signature }]`,
+  one per signing key, next to the legacy `signature` of the first key). A manifest is accepted when any trusted
+  key validates any of its signatures, so a release signed with `[old, new]` verifies on installs that trust
+  either. `AppUpdater.updateManifestPublicKey` accepts a string or an array. A build-time warning flags an
+  explicit `publicKey` list that contains none of the signing keys.
+
+  Gating of the Linux package-manager signature-bypass flags landed separately as
+  `AppUpdater.allowUnverifiedLinuxPackages` (#9990).
+
+- Feat(toolsets)!: add `toolsets.wine: "system"` and make it what `"latest"` resolves to _[`#10184`](https://github.com/electron-userland/electron-builder/pull/10184) [`49cb865`](https://github.com/electron-userland/electron-builder/commit/49cb86582f04e914bd1a234299465e01c7ff68a6) [@mmaietta](https://github.com/mmaietta)_
+
+  `"system"` runs Windows tools with the host `wine` on `PATH`, restoring the capability of the `USE_SYSTEM_WINE` env var removed in v27. The host-wine branch already existed but was reachable only on Linux, so macOS had no way to opt out of the downloaded bundle: `ToolsetCustom` requires the directory to contain a prebuilt `wine-home` prefix, which a real Wine installation does not have.
+
+  **Behaviour change:** `"latest"` — the default — now resolves to `"system"` rather than the `"1.0.1"` bundle, so building a Windows target on macOS requires Wine to be installed (`brew install --cask wine-stable`). The published `wine@1.0.1` bundles ship no PE builtins (`lib/wine/<arch>-windows` is deleted at package time), so they cannot execute any Windows binary; `toolsets.wine: "1.0.1"` still resolves and downloads for anyone pinning it explicitly. Linux already defaulted to the host Wine.
+
+  fix(msi): only emit `Icon="…"` on shortcuts and ProgIds when the app has an icon
+
+  The MSI template declares `<Icon Id="…"/>` only when `iconPath` is set, but `MsiTarget` referenced that id unconditionally, so building an MSI for an app without an icon failed in `light.exe` with `LGHT0094: The identifier 'Icon:<Product>Icon.exe' could not be found`.
+
+### Patch Changes
+
+- Add internal `afterPackTestHook` packager option (test-only) that skips target builds once the app directory is assembled. _[`#10202`](https://github.com/electron-userland/electron-builder/pull/10202) [`7935fd5`](https://github.com/electron-userland/electron-builder/commit/7935fd536e31705cdd9a923cd36c68122130d614) [@claude](https://github.com/apps/claude)_
+- Fix(node-module-collector): report empty package-manager output clearly and fall back to node*modules traversal when a collector throws (#10208) *[`#10210`](https://github.com/electron-userland/electron-builder/pull/10210) [`e87e86e`](https://github.com/electron-userland/electron-builder/commit/e87e86ea650d4368849ff4a918332310bb5c8200) [@claude](https://github.com/apps/claude)\_
+- Fix: select the ARM64 application package in Windows ARM64 web installers, including ARM64-only and combined x64/ARM64 builds. Keep download and adjacent-package selection consistent. _[`#10196`](https://github.com/electron-userland/electron-builder/pull/10196) [`e68f9ce`](https://github.com/electron-userland/electron-builder/commit/e68f9ce400f6ade26ce871947b045172c0a6bf2e) [@davej](https://github.com/davej)_
+- Ensure arch is passed to blockmap path macro expansion _[`#10075`](https://github.com/electron-userland/electron-builder/pull/10075) [`6be2795`](https://github.com/electron-userland/electron-builder/commit/6be279576bf22a6f7521b146f89fd7501839bc94) [@eliotschu](https://github.com/eliotschu)_
+- Fix(mac): retain Electron's `LICENSE.electron.txt` and Chromium's `LICENSES.chromium.html` in the macOS `.app` bundle (`Contents/Resources`) instead of dropping them outside the bundle, matching the license files already shipped on Windows and Linux (#9407) _[`#10174`](https://github.com/electron-userland/electron-builder/pull/10174) [`de70642`](https://github.com/electron-userland/electron-builder/commit/de70642c688044e5dbbe9259b7923e6d83964a22) [@mmaietta](https://github.com/mmaietta)_
+- Fix: parse GitHub repo shorthand correctly _[`#10153`](https://github.com/electron-userland/electron-builder/pull/10153) [`f42fbf6`](https://github.com/electron-userland/electron-builder/commit/f42fbf659bf0d3a9fc3a5fa5f269deb3431a5fda) [@OskarEichler](https://github.com/OskarEichler)_
+- Fix: suppress the macOS 26 "Installer would like to access data from other apps" prompt when building `pkg` installers. macOS 26's Installer probes the current-user-home install domain while parsing the deprecated `<domains>` element — even when that domain is disabled — which makes Installer.app request `kTCCServiceSystemPolicyAppData` as soon as the user leaves the Introduction pane. `rootVolumeOnly="true"` is now added to `<options>` when both `allowAnywhere` and `allowCurrentUserHome` are `false`; the install domains reported by `installer -volinfo` / `-dominfo` are unchanged, and `<domains>` is still emitted verbatim. _[`#10193`](https://github.com/electron-userland/electron-builder/pull/10193) [`94814ed`](https://github.com/electron-userland/electron-builder/commit/94814ed3dfdb131fd45160f0b8dc618dd1a501d8) [@FE-Acmen](https://github.com/FE-Acmen)_
+- Fix: resolve pnpm dependencies omitted from the `pnpm list --json` output by their declared range. Since pnpm 10.29.3 a repeated subtree is printed once and every later occurrence is a childless entry flagged `deduped: true`; the node-module collector recovered such an entry's dependencies by package name only, so when two versions of one package were installed the nested, version-conflicted copy was wired to the wrong version and its whole closure vanished from the packaged `node_modules` (the #8493 regression, e.g. `es5-ext@0.10.64` with `esniff`, `event-emitter` and `next-tick@1.1.0` dropped while the app pins `es5-ext@0.10.53`). The collector now resolves an omitted dependency against the dependent's declared range from its real store directory and takes the exact `name@version` entry, keeping the name-only match only as a fallback for `link:` dependencies, so version-conflicted transitive dependencies are no longer dropped with pnpm >= 10.29.3, 11 and 12. _[`#10200`](https://github.com/electron-userland/electron-builder/pull/10200) [`83cf98f`](https://github.com/electron-userland/electron-builder/commit/83cf98fb6a63282f284409a6c47bede2a68e16f9) [@claude](https://github.com/apps/claude)_
+- Fix(pnpm): bundle the transitive dependencies of a `link:`ed package. A located package is now resolved to its real directory before its own dependencies are searched for — in an isolated pnpm store those are siblings inside `.pnpm/<name>@<ver>/node_modules/`, reachable only from the link target — and a package that cannot locate itself by name (a workspace directory such as `packages/builder-util-runtime`) now has its dependencies read straight from that directory instead of contributing none. Previously an app whose `electron-updater` came from a local checkout shipped an asar missing `universalify`, `jsonfile` and `argparse`, and died at startup with `Cannot find module 'universalify'`. Dependencies that cannot be resolved are now reported in the collector log summary rather than skipped silently. _[`#10185`](https://github.com/electron-userland/electron-builder/pull/10185) [`125cde9`](https://github.com/electron-userland/electron-builder/commit/125cde9acaf70f355345519f2a528342a2bd0dff) [@mmaietta](https://github.com/mmaietta)_
+- Fix: resolve the pnpm workspace root by walking up for `pnpm-workspace.yaml` instead of running `pnpm --workspace-root exec pwd`. `pwd` is POSIX-only, so on Windows the root silently resolved to `undefined`, `@electron/rebuild` searched only the app directory, and cross-architecture builds (e.g. `--x64 --arm64`) shipped transitive native modules such as `keytar` for the wrong architecture. When a workspace root is located but the package manager cannot be re-detected there, the located root is now kept and a warning is logged instead of dropping it. _[`#10188`](https://github.com/electron-userland/electron-builder/pull/10188) [`99b6c7f`](https://github.com/electron-userland/electron-builder/commit/99b6c7f1efe761bbd3d0582e158a8f1705f652a0) [@claude](https://github.com/apps/claude)_
+- Chore(deps): update dependency toml to v4 [security] _[`#10175`](https://github.com/electron-userland/electron-builder/pull/10175) [`7f5014d`](https://github.com/electron-userland/electron-builder/commit/7f5014ddfd89f5eae83b433727cf6fb6addf1e5f) [@renovate](https://github.com/apps/renovate)_
+- Fix: log dynamic import failures _[`#10154`](https://github.com/electron-userland/electron-builder/pull/10154) [`2a964ee`](https://github.com/electron-userland/electron-builder/commit/2a964eea0e43838cb62494357726f538f5cc2993) [@OskarEichler](https://github.com/OskarEichler)_
+- Extract the nsis-web `APP_PACKAGE_URL` define resolution into an internal `configureWebInstallerAppPackageUrl` helper (no behaviour change) so it can be unit-tested without packaging. _[`#10205`](https://github.com/electron-userland/electron-builder/pull/10205) [`77dff15`](https://github.com/electron-userland/electron-builder/commit/77dff159e835124accd647c6fa326f5340f38df6) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`6be2795`](https://github.com/electron-userland/electron-builder/commit/6be279576bf22a6f7521b146f89fd7501839bc94) [`ce9ee68`](https://github.com/electron-userland/electron-builder/commit/ce9ee68da690305e326e22927126327da6644392) [`318f6fb`](https://github.com/electron-userland/electron-builder/commit/318f6fb93f9a6f92231320aa876db9e66bd78b6a) [`e331645`](https://github.com/electron-userland/electron-builder/commit/e3316455022434d9153dd7f61c6e853068715482) [`0fdbba6`](https://github.com/electron-userland/electron-builder/commit/0fdbba62d48fe6dcd2fcce5b3e5ac028a96417c9) [`206b2a6`](https://github.com/electron-userland/electron-builder/commit/206b2a66569a593772d0e79d7f6ff7a81e2833a3) [`d45536f`](https://github.com/electron-userland/electron-builder/commit/d45536f74e63e5c19dd4a590238521f6315812f5) [`6ab9a8c`](https://github.com/electron-userland/electron-builder/commit/6ab9a8c5fbed759e0c9e26064208c422c612b200)
+
+</small>
+
+- `dmg-builder@27.0.0-alpha.9`
+- `electron-publish@27.0.0-alpha.9`
+- `electron-builder-squirrel-windows@27.0.0-alpha.9`
+- `builder-util-runtime@10.0.0-alpha.8`
+- `builder-util@27.0.0-alpha.9`
+
+</details>
+
 ## 27.0.0-alpha.8
 
 ### Major Changes

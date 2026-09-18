@@ -1,5 +1,35 @@
 # builder-util-runtime
 
+## 10.0.0-alpha.8
+
+### Minor Changes
+
+- Feat(security): signed update manifests (Ed25519) with trust lists and multi-signature manifests _[`#9877`](https://github.com/electron-userland/electron-builder/pull/9877) [`d45536f`](https://github.com/electron-userland/electron-builder/commit/d45536f74e63e5c19dd4a590238521f6315812f5) [@mmaietta](https://github.com/mmaietta)_
+
+  Optional Ed25519 signing of auto-update manifests (`latest*.yml`). When signing keys are configured
+  (`updateManifest.signingKey`/`signingKeyFile` in config, or `ELECTRON_BUILDER_UPDATE_SIGN_KEY`/`ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`
+  env vars), each manifest is signed over its integrity-critical fields and the matching public keys are
+  embedded into `app-update.yml` (both resolved from the same keys on the platform packager, so signing and
+  embedding cannot disagree). electron-updater verifies the signature before downloading and refuses to
+  update on tamper/missing-signature (fail-closed). Opt-in: when no public key is configured, verification is
+  skipped with a one-time warning. New CLI: `electron-builder create-update-key` (prints the public key and its key id).
+
+  Key rotation without a flag day: an install trusts a **list** of public keys (`updateManifestPublicKey` is a
+  string or an array; `updateManifest.publicKey`, `signingKey` and `signingKeyFile` accept arrays, a PEM value may
+  hold several concatenated keys, and `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` accepts several paths joined with
+  the OS path delimiter), and a manifest may carry **several signatures** (`signatures: [{ keyId, signature }]`,
+  one per signing key, next to the legacy `signature` of the first key). A manifest is accepted when any trusted
+  key validates any of its signatures, so a release signed with `[old, new]` verifies on installs that trust
+  either. `AppUpdater.updateManifestPublicKey` accepts a string or an array. A build-time warning flags an
+  explicit `publicKey` list that contains none of the signing keys.
+
+  Gating of the Linux package-manager signature-bypass flags landed separately as
+  `AppUpdater.allowUnverifiedLinuxPackages` (#9990).
+
+### Patch Changes
+
+- Fix: stop oversized in-memory downloads at the configured limit _[`#10123`](https://github.com/electron-userland/electron-builder/pull/10123) [`6ab9a8c`](https://github.com/electron-userland/electron-builder/commit/6ab9a8c5fbed759e0c9e26064208c422c612b200) [@OskarEichler](https://github.com/OskarEichler)_
+
 ## 10.0.0-alpha.7
 
 ### Patch Changes
