@@ -90,6 +90,11 @@
           ],
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
+        "disableMetainfoValidation": {
+          "default": false,
+          "description": "Whether to skip build-time validation of the `metainfo` file (structure checks and the optional `appstreamcli validate --no-net` run). The file is still staged into the package.",
+          "type": "boolean"
+        },
         "executableArgs": {
           "anyOf": [
             {
@@ -106,6 +111,13 @@
         },
         "license": {
           "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "metainfo": {
+          "description": "The path to a user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file, relative to the project directory.\n\nSupported targets: `deb`, `rpm`, `pacman` (installed into `/usr/share/metainfo`), `AppImage` (staged into `usr/share/metainfo` inside the image) and `flatpak` (staged into `share/metainfo`).\nThe `snap` target does not consume this option (snap store listings are managed separately) — setting it at the `linux` level is safe, it is simply ignored for snap.\n\nThe installed file name keeps your basename when it ends in `.metainfo.xml` or `.appdata.xml`, and is otherwise normalized to `<component-id>.metainfo.xml`.\nThe file is validated at build time — see `disableMetainfoValidation` to opt out. Set to `null` on a specific target to opt that target out of staging.",
           "type": [
             "null",
             "string"
@@ -803,6 +815,11 @@
           ],
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
+        "disableMetainfoValidation": {
+          "default": false,
+          "description": "Whether to skip build-time validation of the `metainfo` file (structure checks and the optional `appstreamcli validate --no-net` run). The file is still staged into the package.",
+          "type": "boolean"
+        },
         "executableArgs": {
           "anyOf": [
             {
@@ -835,6 +852,13 @@
           "type": "string"
         },
         "maintainer": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "metainfo": {
+          "description": "The path to a user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file, relative to the project directory.\n\nSupported targets: `deb`, `rpm`, `pacman` (installed into `/usr/share/metainfo`), `AppImage` (staged into `usr/share/metainfo` inside the image) and `flatpak` (staged into `share/metainfo`).\nThe `snap` target does not consume this option (snap store listings are managed separately) — setting it at the `linux` level is safe, it is simply ignored for snap.\n\nThe installed file name keeps your basename when it ends in `.metainfo.xml` or `.appdata.xml`, and is otherwise normalized to `<component-id>.metainfo.xml`.\nThe file is validated at build time — see `disableMetainfoValidation` to opt out. Set to `null` on a specific target to opt that target out of staging.",
           "type": [
             "null",
             "string"
@@ -1543,6 +1567,11 @@
           ],
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
+        "disableMetainfoValidation": {
+          "default": false,
+          "description": "Whether to skip build-time validation of the `metainfo` file (structure checks and the optional `appstreamcli validate --no-net` run). The file is still staged into the package.",
+          "type": "boolean"
+        },
         "executableArgs": {
           "anyOf": [
             {
@@ -1583,6 +1612,13 @@
         },
         "license": {
           "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "metainfo": {
+          "description": "The path to a user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file, relative to the project directory.\n\nSupported targets: `deb`, `rpm`, `pacman` (installed into `/usr/share/metainfo`), `AppImage` (staged into `usr/share/metainfo` inside the image) and `flatpak` (staged into `share/metainfo`).\nThe `snap` target does not consume this option (snap store listings are managed separately) — setting it at the `linux` level is safe, it is simply ignored for snap.\n\nThe installed file name keeps your basename when it ends in `.metainfo.xml` or `.appdata.xml`, and is otherwise normalized to `<component-id>.metainfo.xml`.\nThe file is validated at build time — see `disableMetainfoValidation` to opt out. Set to `null` on a specific target to opt that target out of staging.",
           "type": [
             "null",
             "string"
@@ -2303,6 +2339,11 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.\nThis does *not* apply to github publishing, which will [never auto-detect the update channel](https://github.com/electron-userland/electron-builder/issues/8589).",
           "type": "boolean"
         },
+        "disableMetainfoValidation": {
+          "default": false,
+          "description": "Whether to skip build-time validation of the `metainfo` file (structure checks and the optional `appstreamcli validate --no-net` run). The file is still staged into the package.",
+          "type": "boolean"
+        },
         "electronLanguages": {
           "anyOf": [
             {
@@ -2456,6 +2497,13 @@
         },
         "maintainer": {
           "description": "The maintainer. Defaults to [author](https://www.electron.build/configuration#author).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "metainfo": {
+          "description": "The path to a user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file, relative to the project directory.\n\nSupported targets: `deb`, `rpm`, `pacman` (installed into `/usr/share/metainfo`), `AppImage` (staged into `usr/share/metainfo` inside the image) and `flatpak` (staged into `share/metainfo`).\nThe `snap` target does not consume this option (snap store listings are managed separately) — setting it at the `linux` level is safe, it is simply ignored for snap.\n\nThe installed file name keeps your basename when it ends in `.metainfo.xml` or `.appdata.xml`, and is otherwise normalized to `<component-id>.metainfo.xml`.\nThe file is validated at build time — see `disableMetainfoValidation` to opt out. Set to `null` on a specific target to opt that target out of staging.",
           "type": [
             "null",
             "string"
@@ -2722,6 +2770,11 @@
           ],
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
+        "disableMetainfoValidation": {
+          "default": false,
+          "description": "Whether to skip build-time validation of the `metainfo` file (structure checks and the optional `appstreamcli validate --no-net` run). The file is still staged into the package.",
+          "type": "boolean"
+        },
         "executableArgs": {
           "anyOf": [
             {
@@ -2754,6 +2807,13 @@
           "type": "string"
         },
         "maintainer": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "metainfo": {
+          "description": "The path to a user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file, relative to the project directory.\n\nSupported targets: `deb`, `rpm`, `pacman` (installed into `/usr/share/metainfo`), `AppImage` (staged into `usr/share/metainfo` inside the image) and `flatpak` (staged into `share/metainfo`).\nThe `snap` target does not consume this option (snap store listings are managed separately) — setting it at the `linux` level is safe, it is simply ignored for snap.\n\nThe installed file name keeps your basename when it ends in `.metainfo.xml` or `.appdata.xml`, and is otherwise normalized to `<component-id>.metainfo.xml`.\nThe file is validated at build time — see `disableMetainfoValidation` to opt out. Set to `null` on a specific target to opt that target out of staging.",
           "type": [
             "null",
             "string"
@@ -5691,6 +5751,11 @@
           ],
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
+        "disableMetainfoValidation": {
+          "default": false,
+          "description": "Whether to skip build-time validation of the `metainfo` file (structure checks and the optional `appstreamcli validate --no-net` run). The file is still staged into the package.",
+          "type": "boolean"
+        },
         "executableArgs": {
           "anyOf": [
             {
@@ -5723,6 +5788,13 @@
           "type": "string"
         },
         "maintainer": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "metainfo": {
+          "description": "The path to a user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file, relative to the project directory.\n\nSupported targets: `deb`, `rpm`, `pacman` (installed into `/usr/share/metainfo`), `AppImage` (staged into `usr/share/metainfo` inside the image) and `flatpak` (staged into `share/metainfo`).\nThe `snap` target does not consume this option (snap store listings are managed separately) — setting it at the `linux` level is safe, it is simply ignored for snap.\n\nThe installed file name keeps your basename when it ends in `.metainfo.xml` or `.appdata.xml`, and is otherwise normalized to `<component-id>.metainfo.xml`.\nThe file is validated at build time — see `disableMetainfoValidation` to opt out. Set to `null` on a specific target to opt that target out of staging.",
           "type": [
             "null",
             "string"
@@ -6630,6 +6702,11 @@
           ],
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
+        "disableMetainfoValidation": {
+          "default": false,
+          "description": "Whether to skip build-time validation of the `metainfo` file (structure checks and the optional `appstreamcli validate --no-net` run). The file is still staged into the package.",
+          "type": "boolean"
+        },
         "executableArgs": {
           "anyOf": [
             {
@@ -6662,6 +6739,13 @@
           "type": "string"
         },
         "maintainer": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "metainfo": {
+          "description": "The path to a user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file, relative to the project directory.\n\nSupported targets: `deb`, `rpm`, `pacman` (installed into `/usr/share/metainfo`), `AppImage` (staged into `usr/share/metainfo` inside the image) and `flatpak` (staged into `share/metainfo`).\nThe `snap` target does not consume this option (snap store listings are managed separately) — setting it at the `linux` level is safe, it is simply ignored for snap.\n\nThe installed file name keeps your basename when it ends in `.metainfo.xml` or `.appdata.xml`, and is otherwise normalized to `<component-id>.metainfo.xml`.\nThe file is validated at build time — see `disableMetainfoValidation` to opt out. Set to `null` on a specific target to opt that target out of staging.",
           "type": [
             "null",
             "string"
@@ -7062,6 +7146,11 @@
           ],
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
+        "disableMetainfoValidation": {
+          "default": false,
+          "description": "Whether to skip build-time validation of the `metainfo` file (structure checks and the optional `appstreamcli validate --no-net` run). The file is still staged into the package.",
+          "type": "boolean"
+        },
         "environment": {
           "anyOf": [
             {
@@ -7145,6 +7234,13 @@
             }
           ],
           "description": "[Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths\ninto the snap's namespace. User-provided layouts always override the extension defaults."
+        },
+        "metainfo": {
+          "description": "The path to a user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file, relative to the project directory.\n\nSupported targets: `deb`, `rpm`, `pacman` (installed into `/usr/share/metainfo`), `AppImage` (staged into `usr/share/metainfo` inside the image) and `flatpak` (staged into `share/metainfo`).\nThe `snap` target does not consume this option (snap store listings are managed separately) — setting it at the `linux` level is safe, it is simply ignored for snap.\n\nThe installed file name keeps your basename when it ends in `.metainfo.xml` or `.appdata.xml`, and is otherwise normalized to `<component-id>.metainfo.xml`.\nThe file is validated at build time — see `disableMetainfoValidation` to opt out. Set to `null` on a specific target to opt that target out of staging.",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "mimeTypes": {
           "anyOf": [
@@ -7482,6 +7578,11 @@
           ],
           "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files)"
         },
+        "disableMetainfoValidation": {
+          "default": false,
+          "description": "Whether to skip build-time validation of the `metainfo` file (structure checks and the optional `appstreamcli validate --no-net` run). The file is still staged into the package.",
+          "type": "boolean"
+        },
         "environment": {
           "anyOf": [
             {
@@ -7544,6 +7645,13 @@
             }
           ],
           "description": "[Snap layouts](https://snapcraft.io/docs/snap-layouts) — bind-mount or symlink host paths\ninto the snap's namespace, making libraries or config at `/usr`, `/var`, `/etc`, etc.\naccessible inside the confined environment."
+        },
+        "metainfo": {
+          "description": "The path to a user-supplied [AppStream metainfo](https://www.freedesktop.org/software/appstream/docs/chap-Quickstart.html) XML file, relative to the project directory.\n\nSupported targets: `deb`, `rpm`, `pacman` (installed into `/usr/share/metainfo`), `AppImage` (staged into `usr/share/metainfo` inside the image) and `flatpak` (staged into `share/metainfo`).\nThe `snap` target does not consume this option (snap store listings are managed separately) — setting it at the `linux` level is safe, it is simply ignored for snap.\n\nThe installed file name keeps your basename when it ends in `.metainfo.xml` or `.appdata.xml`, and is otherwise normalized to `<component-id>.metainfo.xml`.\nThe file is validated at build time — see `disableMetainfoValidation` to opt out. Set to `null` on a specific target to opt that target out of staging.",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "mimeTypes": {
           "anyOf": [
