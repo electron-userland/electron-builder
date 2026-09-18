@@ -1,7 +1,7 @@
-import { afterEach, expect } from "vitest"
+import { afterEach, beforeEach, expect, vi } from "vitest"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { Arch } from "builder-util"
+import { Arch, log } from "builder-util"
 import { MacTargetHelper, parsePlistFile, type PlistObject, type PlatformType } from "app-builder-lib/internal"
 
 describe("MacTargetHelper", () => {
@@ -359,19 +359,63 @@ ${body}
     })
   })
 
-  describe("getTeamIdFromIdentity", () => {
-    const cases: [string, string | null][] = [
-      ["Developer ID Application: Example Inc. (A1B2C3D4E5)", "A1B2C3D4E5"],
-      ["Apple Development: dev@example.com (ABCDE12345)", "ABCDE12345"],
-      // no trailing team id
-      ["Developer ID Application: Example Inc.", null],
-      ["-", null],
-      // not a 10-char alphanumeric team id
-      ["Developer ID Application: Example Inc. (short)", null],
-    ]
+  describe("warnAboutForeignSignedBinaries", () => {
+    // only the host-independent early returns are covered here — everything past them needs /usr/bin/codesign
+    const realIdentity = { name: "Developer ID Application: Example Inc. (A1B2C3D4E5)", hash: "HASH" } as any
+    const adHocIdentity = { name: "-" } as any
 
-    test.each(cases)('"%s" => %s', (name, expected) => {
-      expect(MacTargetHelper.getTeamIdFromIdentity({ name } as any)).toBe(expected)
+    function makeHelper(resourceFiles: string[] = [], buildResourcesDir = "/nonexistent"): MacTargetHelper {
+      return new MacTargetHelper({ resourceList: Promise.resolve(resourceFiles), buildResourcesDir, config: {} } as any)
+    }
+
+    let warn: ReturnType<typeof vi.spyOn>
+    beforeEach(() => {
+      warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    })
+    afterEach(() => {
+      warn.mockRestore()
+    })
+
+    test("skips mas targets", async ({ expect }) => {
+      await expect(makeHelper().warnAboutForeignSignedBinaries("/nonexistent/App.app", realIdentity, "mas", { hardenedRuntime: true })).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
+    })
+
+    test("skips ad-hoc identities", async ({ expect }) => {
+      await expect(makeHelper().warnAboutForeignSignedBinaries("/nonexistent/App.app", adHocIdentity, "mac", undefined)).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
+    })
+
+    test("skips builds with the hardened runtime disabled", async ({ expect }) => {
+      await expect(makeHelper().warnAboutForeignSignedBinaries("/nonexistent/App.app", realIdentity, "mac", { hardenedRuntime: false })).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
+    })
+
+    test("skips apps whose entitlements grant disable-library-validation", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const file = path.join(dir, "entitlements.plist")
+      await fs.writeFile(
+        file,
+        `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+  </dict>
+</plist>
+`,
+        "utf-8"
+      )
+      await expect(makeHelper().warnAboutForeignSignedBinaries("/nonexistent/App.app", realIdentity, "mac", { entitlements: file })).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
+    })
+
+    test("skips apps without an app.asar.unpacked directory", async ({ expect, tmpDir }) => {
+      const appPath = path.join(await tmpDir.createTempDir(), "App.app")
+      await fs.mkdir(path.join(appPath, "Contents", "Resources"), { recursive: true })
+      await expect(makeHelper().warnAboutForeignSignedBinaries(appPath, realIdentity, "mac", undefined)).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
     })
   })
 

@@ -16,20 +16,12 @@ export type PlatformType = MasPlatformType | "mac"
 
 const DISABLE_LIBRARY_VALIDATION = "com.apple.security.cs.disable-library-validation"
 
-// e.g. "Developer ID Application: Example Inc. (A1B2C3D4E5)"
-const TEAM_ID_IN_IDENTITY_NAME = /\(([A-Z0-9]{10})\)\s*$/
-
 export class MacTargetHelper {
   constructor(private packager: MacPackager) {}
 
   /** Ad-hoc signing (`sign.identity: "-"`) produces a signature with no Team ID. */
   static isAdHocIdentity(identity: Identity | Nullish): boolean {
     return identity?.name === "-"
-  }
-
-  /** The Team ID embedded in a signing identity's common name, or `null` for ad-hoc/unnamed identities. */
-  static getTeamIdFromIdentity(identity: Identity | Nullish): string | null {
-    return (identity?.name && TEAM_ID_IN_IDENTITY_NAME.exec(identity.name)?.[1]) || null
   }
 
   handleNullIdentity(): SigningResult {
@@ -250,12 +242,13 @@ export class MacTargetHelper {
   /**
    * Post-sign diagnostic replacing the blanket `com.apple.security.cs.disable-library-validation` default.
    *
-   * Walks the Mach-O binaries under `app.asar.unpacked` and reports the ones this build did not sign with its
-   * own Team ID — typically excluded via `sign.ignore`, or fetched at build time already signed by a third
-   * party. Under the hardened runtime those fail library validation at launch, which is precisely the failure
-   * the old default hid from every user instead of only the affected ones.
+   * Walks the Mach-O binaries under `app.asar.unpacked` and reports the ones whose signature does not carry the
+   * Team ID `codesign` reports for the freshly signed app bundle — typically excluded via `sign.ignore`, or fetched
+   * at build time already signed by a third party. Under the hardened runtime those fail library validation at
+   * launch, which is precisely the failure the old default hid from every user instead of only the affected ones.
    *
-   * Best-effort: never fails the build.
+   * Best-effort: never fails the build, and skips the scan when the app bundle itself has no Team ID (e.g. a
+   * self-signed certificate).
    */
   async warnAboutForeignSignedBinaries(appPath: string, identity: Identity | Nullish, targetPlatform: PlatformType, signOpts: ElectronSignOptions | Nullish): Promise<void> {
     if (
@@ -265,15 +258,21 @@ export class MacTargetHelper {
     ) {
       return
     }
-    const teamId = MacTargetHelper.getTeamIdFromIdentity(identity)
-    if (teamId == null || (await this.grantsDisableLibraryValidation(await this.getAppEntitlements(targetPlatform, signOpts, false)))) {
-      // no Team ID to compare against, or the app already opted out of library validation
+    if (await this.grantsDisableLibraryValidation(await this.getAppEntitlements(targetPlatform, signOpts, false))) {
+      // the app already opted out of library validation
       return
     }
 
     const unpackedDir = path.join(appPath, "Contents", "Resources", "app.asar.unpacked")
     try {
       if ((await statOrNull(unpackedDir)) == null) {
+        return
+      }
+      // the Team ID is read from the signed bundle rather than parsed out of the identity's common name: not every
+      // identity carries a "(TEAMID)" suffix, and a self-signed one can carry it without codesign ever recording it
+      const teamId = await readSigningTeamId(appPath)
+      if (teamId == null) {
+        // no Team ID to compare against (unsigned, or signed without one)
         return
       }
       const files = await walk(unpackedDir)
@@ -500,15 +499,16 @@ async function isMachOFile(file: string): Promise<boolean> {
 }
 
 /**
- * The `TeamIdentifier` of a file's existing code signature as reported by `codesign -d`, or `null` when `codesign`
- * fails (e.g. the file is unsigned). An ad-hoc signature still succeeds and reports the literal string `"not set"`,
- * which is returned as-is (and therefore never equals a real Team ID).
+ * The `TeamIdentifier` of a file's existing code signature as reported by `codesign -d`, or `null` when there is none:
+ * `codesign` fails (e.g. the file is unsigned), the field is absent, or it is the literal `not set` that ad-hoc and
+ * self-signed signatures report.
  */
 async function readSigningTeamId(file: string): Promise<string | null> {
   try {
     // `codesign -d` reports on stderr, so stdout alone (as `exec` returns) is not enough
     const { stderr } = await spawnAndWriteWithOutput("/usr/bin/codesign", ["-d", "--verbose=4", file], "")
-    return /^TeamIdentifier=(.+)$/m.exec(stderr)?.[1].trim() ?? null
+    const teamId = /^TeamIdentifier=(.+)$/m.exec(stderr)?.[1].trim()
+    return teamId == null || teamId === "not set" ? null : teamId
   } catch {
     // unsigned binaries make `codesign -d` exit non-zero
     return null
