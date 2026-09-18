@@ -1,6 +1,6 @@
 import * as fs from "fs"
 import * as path from "path"
-import { describe, it, expect, beforeAll } from "vitest"
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { generateTests } from "../vitest-scripts/generate-tests"
 import { GENERATED_TESTS_DIR } from "../vitest-scripts/runtime-tests/generate-toolset-tests-shared"
 import { detectFilePlatforms, getAllTestFiles, isE2eTestFile, platformAllowed } from "../vitest-scripts/vitest-config/file-discovery"
@@ -196,6 +196,11 @@ describe("TEST_MODE file discovery", () => {
     generateTests()
   })
 
+  // Tests below stub TEST_FILES; the vitest config does not set `unstubEnvs`, so restore the real value explicitly.
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   // TEST_FILES forces inclusion regardless of mode, so the partition only holds without a real override (a blank
   // TEST_FILES, as docker/run-tests.sh passes for an unset variable, is not one).
   const withoutOverride = getTestFilesOverride() ? it.skip : it
@@ -223,49 +228,31 @@ describe("TEST_MODE file discovery", () => {
   // behave exactly like unset: `"".split(",")` → `[""]` would make every directory entry (helpers, .sh, dockerfiles) an
   // "override match" and inflate the file universe (253 files / 14 shards on Linux instead of 201 / 11).
   it('TEST_FILES="" (blank) is not an override and discovers the same files as unset', () => {
-    const original = process.env.TEST_FILES
-    try {
-      delete process.env.TEST_FILES
-      expect(getTestFilesOverride()).toBeUndefined()
-      const unset = getAllTestFiles("linux", "all")
+    vi.stubEnv("TEST_FILES", undefined)
+    expect(getTestFilesOverride()).toBeUndefined()
+    const unset = getAllTestFiles("linux", "all")
 
-      for (const blank of ["", "   ", " , ,"]) {
-        process.env.TEST_FILES = blank
-        expect(getTestFilesOverride(), `TEST_FILES=${JSON.stringify(blank)}`).toBeUndefined()
-        expect(getAllTestFiles("linux", "all"), `TEST_FILES=${JSON.stringify(blank)}`).toEqual(unset)
-      }
-      expect(unset.some(f => f.endsWith("/helpers/packTester.ts") || f.endsWith(".sh"))).toBe(false)
-
-      process.env.TEST_FILES = " snapHeavy , webInstaller "
-      expect(getTestFilesOverride()).toEqual(["snapHeavy", "webInstaller"])
-    } finally {
-      if (original == null) {
-        delete process.env.TEST_FILES
-      } else {
-        process.env.TEST_FILES = original
-      }
+    for (const blank of ["", "   ", " , ,"]) {
+      vi.stubEnv("TEST_FILES", blank)
+      expect(getTestFilesOverride(), `TEST_FILES=${JSON.stringify(blank)}`).toBeUndefined()
+      expect(getAllTestFiles("linux", "all"), `TEST_FILES=${JSON.stringify(blank)}`).toEqual(unset)
     }
+    expect(unset.some(f => f.endsWith("/helpers/packTester.ts") || f.endsWith(".sh"))).toBe(false)
+
+    vi.stubEnv("TEST_FILES", " snapHeavy , webInstaller ")
+    expect(getTestFilesOverride()).toEqual(["snapHeavy", "webInstaller"])
   })
 
   // flatpak.e2e.ts is in skippedTests: it only runs natively in the Test Flatpak job (TEST_FILES=flatpak), and its
   // `describe.ifEnv` skip inside the docker shards would otherwise record a ~0 ms linux run that ties with the real one
   // in merge-smart-cache.ts. TEST_FILES is an explicit request and must still select it there.
   it("flatpak.e2e is excluded from default discovery but still selected by TEST_FILES=flatpak", () => {
-    const original = process.env.TEST_FILES
-    try {
-      delete process.env.TEST_FILES
-      expect(getAllTestFiles("linux", "all")).not.toContain("test/src/linux/flatpak.e2e.ts")
-      expect(getAllTestFiles("linux", "e2e")).not.toContain("test/src/linux/flatpak.e2e.ts")
+    vi.stubEnv("TEST_FILES", undefined)
+    expect(getAllTestFiles("linux", "all")).not.toContain("test/src/linux/flatpak.e2e.ts")
+    expect(getAllTestFiles("linux", "e2e")).not.toContain("test/src/linux/flatpak.e2e.ts")
 
-      process.env.TEST_FILES = "flatpak"
-      expect(getAllTestFiles("linux", "all")).toContain("test/src/linux/flatpak.e2e.ts")
-    } finally {
-      if (original == null) {
-        delete process.env.TEST_FILES
-      } else {
-        process.env.TEST_FILES = original
-      }
-    }
+    vi.stubEnv("TEST_FILES", "flatpak")
+    expect(getAllTestFiles("linux", "all")).toContain("test/src/linux/flatpak.e2e.ts")
   })
 
   it("hand-written e2e files are discovered next to their unit-level siblings", () => {
