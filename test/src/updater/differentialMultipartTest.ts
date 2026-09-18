@@ -1,13 +1,13 @@
 import { DataSplitter, PartListDataTask } from "electron-updater/src/differentialDownloader/DataSplitter"
 import { Operation, OperationKind } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
 import { executeTasksUsingMultipleRangeRequests } from "electron-updater/src/differentialDownloader/multipleRangeDownloader"
-import { closeSync, mkdtempSync, openSync, rmSync, writeFileSync } from "fs"
+import { closeSync, openSync, writeFileSync } from "fs"
 import { createServer, IncomingMessage, request as httpRequest, RequestOptions, Server, ServerResponse } from "http"
 import { AddressInfo } from "net"
-import { tmpdir } from "os"
 import * as path from "path"
 import { Writable } from "stream"
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import type { TmpDir } from "temp-file"
+import { afterEach, describe, expect, test, vi } from "vitest"
 
 // Deterministic, non-repeating content so a misaligned part cannot accidentally produce the expected bytes.
 function patternBuffer(size: number, seed: number): Buffer {
@@ -70,23 +70,16 @@ describe("differential multipart download", () => {
   const fileSize = 8 * 1024
   const newFile = patternBuffer(fileSize, 1)
   const oldFile = patternBuffer(fileSize, 2)
-  let dir: string
-  let oldFileFd: number
 
-  beforeEach(() => {
-    dir = mkdtempSync(path.join(tmpdir(), "differential-multipart-"))
-    const oldFilePath = path.join(dir, "old.bin")
-    writeFileSync(oldFilePath, oldFile)
-    oldFileFd = openSync(oldFilePath, "r")
-  })
-
-  afterEach(() => {
-    closeSync(oldFileFd)
-    rmSync(dir, { recursive: true, force: true })
-  })
+  // Writes `content` into the test's own temp dir and opens it read-only; the caller is responsible for closing the fd.
+  async function openOldFile(tmpDir: TmpDir, content: Buffer): Promise<number> {
+    const oldFilePath = path.join(await tmpDir.createTempDir({ prefix: "differential-multipart" }), "old.bin")
+    writeFileSync(oldFilePath, content)
+    return openSync(oldFilePath, "r")
+  }
 
   // Feeds `body` in `chunkSize` pieces and resolves once the splitter reports the batch finished.
-  async function split(tasks: Array<Operation>, body: Buffer, boundary: string, chunkSize: number): Promise<Buffer> {
+  async function split(oldFileFd: number, tasks: Array<Operation>, body: Buffer, boundary: string, chunkSize: number): Promise<Buffer> {
     const options: PartListDataTask = { oldFileFd, tasks, start: 0, end: tasks.length }
     const partIndexToTaskIndex = new Map<number, number>()
     const partIndexToLength: Array<number> = []
@@ -141,14 +134,19 @@ describe("differential multipart download", () => {
   ]
 
   for (const { name, options } of cases) {
-    test(`splits every part correctly: ${name}, any chunking`, async () => {
+    test(`splits every part correctly: ${name}, any chunking`, async ({ expect, tmpDir }) => {
       const tasks = makeTasks(12, fileSize)
       const ranges = tasks.filter(task => task.kind === OperationKind.DOWNLOAD).map(task => [task.start, task.end - 1] as [number, number])
       const body = multipartBody(ranges, newFile, options)
       const expected = expectedOutput(tasks, oldFile, newFile)
-      for (const chunkSize of chunkSizes) {
-        const actual = await split(tasks, body, options.boundary, chunkSize)
-        expect(actual.equals(expected), `${name}, chunk size ${chunkSize}`).toBe(true)
+      const oldFileFd = await openOldFile(tmpDir, oldFile)
+      try {
+        for (const chunkSize of chunkSizes) {
+          const actual = await split(oldFileFd, tasks, body, options.boundary, chunkSize)
+          expect(actual.equals(expected), `${name}, chunk size ${chunkSize}`).toBe(true)
+        }
+      } finally {
+        closeSync(oldFileFd)
       }
     })
   }
@@ -166,16 +164,13 @@ describe("differential multipart download", () => {
     })
 
     // The watchdog armed when a batch response ends must not fail the download while a later batch is still running.
-    test("a finished batch does not fail a slower next batch", async () => {
+    test("a finished batch does not fail a slower next batch", async ({ expect, tmpDir }) => {
       vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
 
       // > 1000 operations => two range requests
       const tasks = makeTasks(1200, 1200 * 6)
       const bigNewFile = patternBuffer(1200 * 6, 3)
       const bigOldFile = patternBuffer(1200 * 6, 4)
-      const bigOldFilePath = path.join(dir, "big-old.bin")
-      writeFileSync(bigOldFilePath, bigOldFile)
-      const bigOldFileFd = openSync(bigOldFilePath, "r")
 
       const boundary = "batch-boundary"
       const requests: Array<{ ranges: Array<[number, number]>; response: ServerResponse }> = []
@@ -218,27 +213,31 @@ describe("differential multipart download", () => {
         },
       }
 
-      const { out, data } = collector()
-      let failure: Error | null = null
-      const finished = new Promise<void>(resolve => out.on("finish", resolve))
-      executeTasksUsingMultipleRangeRequests(differentialDownloader, tasks, out, bigOldFileFd, error => {
-        failure = error
-      })(0)
+      const bigOldFileFd = await openOldFile(tmpDir, bigOldFile)
+      try {
+        const { out, data } = collector()
+        let failure: Error | null = null
+        const finished = new Promise<void>(resolve => out.on("finish", resolve))
+        executeTasksUsingMultipleRangeRequests(differentialDownloader, tasks, out, bigOldFileFd, error => {
+          failure = error
+        })(0)
 
-      await waitForRequest(1)
-      respond(0)
-      // the second request is only sent after the first batch was fully handled
-      await waitForRequest(2)
+        await waitForRequest(1)
+        respond(0)
+        // the second request is only sent after the first batch was fully handled
+        await waitForRequest(2)
 
-      // well past the 10s grace period of the first batch, while the second batch is still in flight
-      await vi.advanceTimersByTimeAsync(11_000)
-      expect(failure).toBeNull()
+        // well past the 10s grace period of the first batch, while the second batch is still in flight
+        await vi.advanceTimersByTimeAsync(11_000)
+        expect(failure).toBeNull()
 
-      respond(1)
-      await finished
-      expect(failure).toBeNull()
-      expect(data().equals(expectedOutput(tasks, bigOldFile, bigNewFile))).toBe(true)
-      closeSync(bigOldFileFd)
+        respond(1)
+        await finished
+        expect(failure).toBeNull()
+        expect(data().equals(expectedOutput(tasks, bigOldFile, bigNewFile))).toBe(true)
+      } finally {
+        closeSync(bigOldFileFd)
+      }
     })
   })
 })
