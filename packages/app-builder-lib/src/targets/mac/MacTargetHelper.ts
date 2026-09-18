@@ -272,11 +272,10 @@ export class MacTargetHelper {
     }
 
     const unpackedDir = path.join(appPath, "Contents", "Resources", "app.asar.unpacked")
-    if ((await statOrNull(unpackedDir)) == null) {
-      return
-    }
-
     try {
+      if ((await statOrNull(unpackedDir)) == null) {
+        return
+      }
       const files = await walk(unpackedDir)
       const foreign: string[] = []
       for (const file of files) {
