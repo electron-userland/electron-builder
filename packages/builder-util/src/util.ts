@@ -33,8 +33,18 @@ export { escapeForXml, isEmptyOrSpaces } from "./stringUtil.js"
 export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
 export * from "./fs.js"
 
-export { decodeCscLinkBase64, loadCscLink, resolveCscLinkPath } from "./cscLink.js"
 export { generateKsuid } from "./ksuid.js"
+export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink.js"
+export {
+  signUpdateManifest,
+  createUpdateManifestSignatures,
+  parsePrivateKey,
+  derivePublicKeyPem,
+  loadUpdateSigningKey,
+  loadUpdateSigningKeys,
+  UpdateSigningKeySources,
+  generateUpdateSigningKeypair,
+} from "./updateManifestSigner.js"
 
 export const debug7z = _debug("electron-builder:7z")
 

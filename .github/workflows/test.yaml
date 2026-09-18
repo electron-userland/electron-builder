@@ -375,7 +375,7 @@ jobs:
           echo $TEST_RUNNER_IMAGE_TAG
           pnpm test:linux
         env:
-          TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,R2PublisherTest
+          TEST_FILES: nsisUpdaterTest,PublishManager,differentialUpdateTest,GitlabPublisherTest,R2PublisherTest
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
           ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
 
@@ -437,7 +437,7 @@ jobs:
         if: matrix.core == 'core24'
         run: pnpm ci:test
         env:
-          TEST_FILES: snapHeavyTest
+          TEST_FILES: snapHeavy
           SNAP_TEST_CORES: core24
           SNAPCRAFT_BUILD_ENVIRONMENT: host
           RUN_SNAP_TESTS: "true"

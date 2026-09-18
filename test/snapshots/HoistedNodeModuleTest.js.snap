@@ -2193,6 +2193,12 @@ exports[`node_module collectors > npm tar 2`] = `
 }
 `;
 
+exports[`node_module collectors > pnpm es5-ext without hoisted config (pnpm 10.29.3+ deduped list output) 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`node_module collectors > pnpm es5-ext without hoisted config 1`] = `
 {
   "linux": [],
