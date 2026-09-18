@@ -1,8 +1,8 @@
-import { afterEach, expect } from "vitest"
+import { afterEach, beforeEach, expect, vi } from "vitest"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { Arch } from "builder-util"
-import { MacTargetHelper, type PlatformType } from "app-builder-lib/internal"
+import { Arch, log } from "builder-util"
+import { MacTargetHelper, parsePlistFile, type PlistObject, type PlatformType } from "app-builder-lib/internal"
 
 describe("MacTargetHelper", () => {
   describe("getCertificateTypes", () => {
@@ -230,8 +230,192 @@ ${body}
       await expect(makeHelper([resourceName], dir).isLibraryValidationDisabled(targetPlatform, undefined)).resolves.toBe(false)
     })
 
-    test("returns true for the bundled default template (it grants the key)", async () => {
+    test("returns true for the bundled ad-hoc template (it grants the key)", async () => {
       await expect(makeHelper([], "/nonexistent").isLibraryValidationDisabled("mac", undefined)).resolves.toBe(true)
+    })
+
+    test("returns false for mas, which defers to @electron/osx-sign's sandboxed defaults", async () => {
+      await expect(makeHelper([], "/nonexistent").isLibraryValidationDisabled("mas", undefined)).resolves.toBe(false)
+    })
+  })
+
+  describe("entitlement defaults", () => {
+    const LOOSE_ENTITLEMENTS = ["com.apple.security.cs.allow-unsigned-executable-memory", "com.apple.security.cs.disable-library-validation"]
+
+    function makeHelper(resourceFiles: string[] = [], buildResourcesDir = "/nonexistent"): MacTargetHelper {
+      return new MacTargetHelper({ resourceList: Promise.resolve(resourceFiles), buildResourcesDir, config: {} } as any)
+    }
+
+    async function keysOf(file: string | null): Promise<string[]> {
+      expect(file).not.toBeNull()
+      return Object.keys(await parsePlistFile<PlistObject>(file!)).sort()
+    }
+
+    describe("bundled templates", () => {
+      test("the default mac template grants only the JIT exception", async () => {
+        const file = await makeHelper().getAppEntitlements("mac", undefined, false)
+        expect(await keysOf(file)).toEqual(["com.apple.security.cs.allow-jit"])
+      })
+
+      // regression guard for the historical default that weakened every app built by electron-builder
+      test.each(LOOSE_ENTITLEMENTS)("the default mac template does not grant %s", async key => {
+        const file = await makeHelper().getAppEntitlements("mac", undefined, false)
+        expect(await keysOf(file)).not.toContain(key)
+      })
+
+      test("the ad-hoc template additionally disables library validation", async () => {
+        const file = await makeHelper().getAppEntitlements("mac", undefined, true)
+        expect(await keysOf(file)).toEqual(["com.apple.security.cs.allow-jit", "com.apple.security.cs.disable-library-validation"])
+      })
+    })
+
+    describe("getAppEntitlements", () => {
+      test("an explicit sign.entitlements wins over everything", async () => {
+        await expect(makeHelper(["entitlements.mac.plist"], "/res").getAppEntitlements("mac", { entitlements: "/custom.plist" }, true)).resolves.toBe("/custom.plist")
+      })
+
+      test.for<[PlatformType, string]>([
+        ["mac", "entitlements.mac.plist"],
+        ["mas", "entitlements.mas.plist"],
+      ])("%s uses the build-resources file %s when present", async ([targetPlatform, resourceName]) => {
+        await expect(makeHelper([resourceName], "/res").getAppEntitlements(targetPlatform, undefined, false)).resolves.toBe(path.join("/res", resourceName))
+      })
+
+      test.for<[PlatformType]>([["mas"], ["mas-dev"]])("%s falls back to @electron/osx-sign's sandboxed default", async ([targetPlatform]) => {
+        await expect(makeHelper().getAppEntitlements(targetPlatform, undefined, false)).resolves.toBeNull()
+      })
+    })
+
+    describe("getInheritEntitlements", () => {
+      test("an explicit sign.entitlementsInherit wins over everything", async () => {
+        await expect(makeHelper(["entitlements.mac.inherit.plist"], "/res").getInheritEntitlements("mac", { entitlementsInherit: "/inherit.plist" }, true)).resolves.toBe(
+          "/inherit.plist"
+        )
+      })
+
+      test.for<[PlatformType, string]>([
+        ["mac", "entitlements.mac.inherit.plist"],
+        ["mas", "entitlements.mas.inherit.plist"],
+      ])("%s uses the build-resources file %s when present", async ([targetPlatform, resourceName]) => {
+        await expect(makeHelper([resourceName], "/res").getInheritEntitlements(targetPlatform, undefined, false)).resolves.toBe(path.join("/res", resourceName))
+      })
+
+      // the helpers are where the blanket plist did the most damage: renderer/GPU processes were handed
+      // entitlements Chromium only grants to the plugin helper
+      test.for<[PlatformType]>([["mac"], ["mas"]])("%s defers nested binaries to @electron/osx-sign's per-file defaults", async ([targetPlatform]) => {
+        await expect(makeHelper().getInheritEntitlements(targetPlatform, undefined, false)).resolves.toBeNull()
+      })
+
+      test("ad-hoc mac builds apply the ad-hoc template to nested binaries too", async () => {
+        const file = await makeHelper().getInheritEntitlements("mac", undefined, true)
+        expect(await keysOf(file)).toContain("com.apple.security.cs.disable-library-validation")
+      })
+    })
+
+    describe("getOptionsForFile", () => {
+      const appPath = "/project/My.app"
+      const realIdentity = { name: "Developer ID Application: Example Inc. (A1B2C3D4E5)", hash: "HASH" } as any
+      const adHocIdentity = { name: "-" } as any
+
+      test("signs the app with the trimmed default and leaves helpers to @electron/osx-sign", async () => {
+        const optionsForFile = await makeHelper().getOptionsForFile(appPath, "mac", undefined, realIdentity)
+
+        expect(await keysOf(optionsForFile(appPath).entitlements as string)).toEqual(["com.apple.security.cs.allow-jit"])
+        expect(optionsForFile(`${appPath}/Contents/Frameworks/My Helper (Renderer).app`).entitlements).toBeUndefined()
+        expect(optionsForFile(`${appPath}/Contents/Frameworks/Electron Framework.framework`).entitlements).toBeUndefined()
+      })
+
+      test("ad-hoc builds keep library validation disabled everywhere", async () => {
+        const optionsForFile = await makeHelper().getOptionsForFile(appPath, "mac", undefined, adHocIdentity)
+
+        for (const file of [appPath, `${appPath}/Contents/Frameworks/My Helper (Renderer).app`]) {
+          expect(await keysOf(optionsForFile(file).entitlements as string)).toContain("com.apple.security.cs.disable-library-validation")
+        }
+      })
+
+      test("login items still use entitlementsLoginHelper", async () => {
+        const optionsForFile = await makeHelper().getOptionsForFile(appPath, "mac", { entitlementsLoginHelper: "/login.plist" }, realIdentity)
+        expect(optionsForFile(`${appPath}/Contents/Library/LoginItems/Helper.app`).entitlements).toBe("/login.plist")
+      })
+
+      test("mas defers both the app and its children to @electron/osx-sign", async () => {
+        const optionsForFile = await makeHelper().getOptionsForFile(appPath, "mas", undefined, realIdentity)
+        expect(optionsForFile(appPath).entitlements).toBeUndefined()
+        expect(optionsForFile(`${appPath}/Contents/Frameworks/My Helper.app`).entitlements).toBeUndefined()
+      })
+    })
+  })
+
+  describe("isAdHocIdentity", () => {
+    test.each([
+      ["-", true],
+      ["Developer ID Application: Example Inc. (A1B2C3D4E5)", false],
+    ])('"%s" => %s', (name, expected) => {
+      expect(MacTargetHelper.isAdHocIdentity({ name } as any)).toBe(expected)
+    })
+
+    test("null identity is not ad-hoc", () => {
+      expect(MacTargetHelper.isAdHocIdentity(null)).toBe(false)
+    })
+  })
+
+  describe("warnAboutForeignSignedBinaries", () => {
+    // only the host-independent early returns are covered here — everything past them needs /usr/bin/codesign
+    const realIdentity = { name: "Developer ID Application: Example Inc. (A1B2C3D4E5)", hash: "HASH" } as any
+    const adHocIdentity = { name: "-" } as any
+
+    function makeHelper(resourceFiles: string[] = [], buildResourcesDir = "/nonexistent"): MacTargetHelper {
+      return new MacTargetHelper({ resourceList: Promise.resolve(resourceFiles), buildResourcesDir, config: {} } as any)
+    }
+
+    let warn: ReturnType<typeof vi.spyOn>
+    beforeEach(() => {
+      warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    })
+    afterEach(() => {
+      warn.mockRestore()
+    })
+
+    test("skips mas targets", async ({ expect }) => {
+      await expect(makeHelper().warnAboutForeignSignedBinaries("/nonexistent/App.app", realIdentity, "mas", { hardenedRuntime: true })).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
+    })
+
+    test("skips ad-hoc identities", async ({ expect }) => {
+      await expect(makeHelper().warnAboutForeignSignedBinaries("/nonexistent/App.app", adHocIdentity, "mac", undefined)).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
+    })
+
+    test("skips builds with the hardened runtime disabled", async ({ expect }) => {
+      await expect(makeHelper().warnAboutForeignSignedBinaries("/nonexistent/App.app", realIdentity, "mac", { hardenedRuntime: false })).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
+    })
+
+    test("skips apps whose entitlements grant disable-library-validation", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const file = path.join(dir, "entitlements.plist")
+      await fs.writeFile(
+        file,
+        `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+  </dict>
+</plist>
+`,
+        "utf-8"
+      )
+      await expect(makeHelper().warnAboutForeignSignedBinaries("/nonexistent/App.app", realIdentity, "mac", { entitlements: file })).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
+    })
+
+    test("skips apps without an app.asar.unpacked directory", async ({ expect, tmpDir }) => {
+      const appPath = path.join(await tmpDir.createTempDir(), "App.app")
+      await fs.mkdir(path.join(appPath, "Contents", "Resources"), { recursive: true })
+      await expect(makeHelper().warnAboutForeignSignedBinaries(appPath, realIdentity, "mac", undefined)).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
     })
   })
 
