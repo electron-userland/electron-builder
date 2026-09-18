@@ -1,5 +1,30 @@
 # dmg-builder
 
+## 27.0.0-alpha.9
+
+### Minor Changes
+
+- Feat(dmg): allow "position" as a dmg.contents type3 _[`#10183`](https://github.com/electron-userland/electron-builder/pull/10183) [`e331645`](https://github.com/electron-userland/electron-builder/commit/e3316455022434d9153dd7f61c6e853068715482) [@Laruxo](https://github.com/Laruxo)_
+
+### Patch Changes
+
+- Ensure arch is passed to blockmap path macro expansion _[`#10075`](https://github.com/electron-userland/electron-builder/pull/10075) [`6be2795`](https://github.com/electron-userland/electron-builder/commit/6be279576bf22a6f7521b146f89fd7501839bc94) [@eliotschu](https://github.com/eliotschu)_
+- Fix: detach DMGs after mount parsing failures _[`#10151`](https://github.com/electron-userland/electron-builder/pull/10151) [`206b2a6`](https://github.com/electron-userland/electron-builder/commit/206b2a66569a593772d0e79d7f6ff7a81e2833a3) [@OskarEichler](https://github.com/OskarEichler)_
+
+<details><summary>Updated 3 dependencies</summary>
+
+<small>
+
+[`7935fd5`](https://github.com/electron-userland/electron-builder/commit/7935fd536e31705cdd9a923cd36c68122130d614) [`e87e86e`](https://github.com/electron-userland/electron-builder/commit/e87e86ea650d4368849ff4a918332310bb5c8200) [`c53a27f`](https://github.com/electron-userland/electron-builder/commit/c53a27fdab0a92fd05cb5d095935da90318ba87e) [`e68f9ce`](https://github.com/electron-userland/electron-builder/commit/e68f9ce400f6ade26ce871947b045172c0a6bf2e) [`6be2795`](https://github.com/electron-userland/electron-builder/commit/6be279576bf22a6f7521b146f89fd7501839bc94) [`318f6fb`](https://github.com/electron-userland/electron-builder/commit/318f6fb93f9a6f92231320aa876db9e66bd78b6a) [`e331645`](https://github.com/electron-userland/electron-builder/commit/e3316455022434d9153dd7f61c6e853068715482) [`de70642`](https://github.com/electron-userland/electron-builder/commit/de70642c688044e5dbbe9259b7923e6d83964a22) [`f42fbf6`](https://github.com/electron-userland/electron-builder/commit/f42fbf659bf0d3a9fc3a5fa5f269deb3431a5fda) [`66eb52c`](https://github.com/electron-userland/electron-builder/commit/66eb52cd85f975c04f6cfe1cfc89c15fd98cd07d) [`66eb52c`](https://github.com/electron-userland/electron-builder/commit/66eb52cd85f975c04f6cfe1cfc89c15fd98cd07d) [`94814ed`](https://github.com/electron-userland/electron-builder/commit/94814ed3dfdb131fd45160f0b8dc618dd1a501d8) [`83cf98f`](https://github.com/electron-userland/electron-builder/commit/83cf98fb6a63282f284409a6c47bede2a68e16f9) [`125cde9`](https://github.com/electron-userland/electron-builder/commit/125cde9acaf70f355345519f2a528342a2bd0dff) [`99b6c7f`](https://github.com/electron-userland/electron-builder/commit/99b6c7f1efe761bbd3d0582e158a8f1705f652a0) [`0fdbba6`](https://github.com/electron-userland/electron-builder/commit/0fdbba62d48fe6dcd2fcce5b3e5ac028a96417c9) [`d45536f`](https://github.com/electron-userland/electron-builder/commit/d45536f74e63e5c19dd4a590238521f6315812f5) [`6ab9a8c`](https://github.com/electron-userland/electron-builder/commit/6ab9a8c5fbed759e0c9e26064208c422c612b200) [`7f5014d`](https://github.com/electron-userland/electron-builder/commit/7f5014ddfd89f5eae83b433727cf6fb6addf1e5f) [`2a964ee`](https://github.com/electron-userland/electron-builder/commit/2a964eea0e43838cb62494357726f538f5cc2993) [`77dff15`](https://github.com/electron-userland/electron-builder/commit/77dff159e835124accd647c6fa326f5340f38df6) [`49cb865`](https://github.com/electron-userland/electron-builder/commit/49cb86582f04e914bd1a234299465e01c7ff68a6)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.9`
+- `builder-util-runtime@10.0.0-alpha.8`
+- `builder-util@27.0.0-alpha.9`
+
+</details>
+
 ## 27.0.0-alpha.8
 
 ### Patch Changes
