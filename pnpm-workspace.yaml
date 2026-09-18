@@ -20,6 +20,8 @@ minimumReleaseAgeExclude:
   - electron@39.8.10
   # Renovate security update: toml@4.2.0
   - toml@4.2.0
+  # Renovate security update: form-data@4.0.6
+  - form-data@4.0.6
 patchedDependencies:
   '@changesets/cli@2.29.7': patches/@changesets__cli@2.29.7.patch
   '@changesets/assemble-release-plan@6.0.9': patches/@changesets__assemble-release-plan@6.0.9.patch
