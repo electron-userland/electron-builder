@@ -147,11 +147,13 @@ Create `build/entitlements.mac.plist` to override the app-level defaults:
 
 Your file **replaces** the default rather than extending it, so remember to keep `com.apple.security.cs.allow-jit`.
 
-A custom `build/entitlements.mac.plist` applies to the app bundle only — nested binaries keep the per-file defaults described above and do not pick up your custom keys. If a nested binary needs one of them (for example `disable-library-validation` on a sidecar executable in `app.asar.unpacked`), add `build/entitlements.mac.inherit.plist` (or set `mac.sign.entitlementsInherit`). Doing so applies one plist to every nested binary and gives up the per-file defaults, so prefer leaving it absent unless you need it.
+A custom `build/entitlements.mac.plist` applies to the app bundle only — nested binaries keep the per-file defaults described above and do not pick up your custom keys. The inherit plist is for entitlements a *nested process* needs for itself — for example `disable-library-validation` on a sidecar executable in `app.asar.unpacked` that loads third-party libraries of its own, or on a helper process that loads native modules. In that case add `build/entitlements.mac.inherit.plist` (or set `mac.sign.entitlementsInherit`). Doing so applies one plist to every nested binary and gives up the per-file defaults, so prefer leaving it absent unless you need it.
 
 ### Loading third-party or unsigned binaries
 
 `com.apple.security.cs.disable-library-validation` turns off macOS library validation for the whole process. Grant it only when your app loads a framework, plugin, or native module signed by a **different** Team ID (or not signed at all) — for example a sidecar binary downloaded at runtime, or one excluded from signing via `mac.sign.ignore`.
+
+Library validation is enforced by the process that loads the code, based on that process's own entitlements; what the library itself was signed with does not matter. A native module loaded by the main process therefore needs the key in `build/entitlements.mac.plist`; one loaded by a helper process (a `utilityProcess`, or a renderer with `nodeIntegration`) needs it in `build/entitlements.mac.inherit.plist` as well. The post-sign check below is skipped when the app entitlements grant it, because the main process is the usual loader.
 
 After signing, electron-builder inspects the Mach-O libraries and bundles in `app.asar.unpacked` and `Contents/PlugIns` (which electron-builder never re-signs) and warns if any of them carry a foreign or missing signature while the entitlement is absent, so you find out at build time rather than from a launch crash. Executables (such as a bundled `ffmpeg`) are spawned rather than loaded, so they are not subject to library validation and are not flagged.
 

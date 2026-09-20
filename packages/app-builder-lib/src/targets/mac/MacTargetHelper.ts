@@ -266,6 +266,10 @@ export class MacTargetHelper {
    * hardened runtime those fail library validation when loaded, which is precisely the failure the old default hid
    * from every user instead of only the affected ones.
    *
+   * The opt-out is read from the app entitlements (not the inherit ones) because library validation is enforced by
+   * the loading process under its own entitlements — the main process, governed by the app plist, is the usual loader
+   * of these modules, while the inherit plist only governs loads performed by helper processes.
+   *
    * Best-effort: never fails the build, and skips the scan when the app bundle itself has no Team ID (e.g. a
    * self-signed certificate).
    */
