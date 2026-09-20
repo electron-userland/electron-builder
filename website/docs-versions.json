@@ -10,6 +10,8 @@
     "  path    - URL path the sub-site is published under, leading and trailing slash (\"/\", \"/v26/\").",
     "  ref     - git branch or tag the sub-site is built from.",
     "  current - true for the single entry built from the checkout itself and published at the site root.",
+    "  prerelease - true when this line has no stable release yet; the site shows a banner pointing readers",
+    "               at the newest non-prerelease entry.",
     "",
     "Every branch listed here builds its own sub-site from its own tree, so this file has to be kept in",
     "sync across master and each release/v* branch that appears in it.",
@@ -22,7 +24,8 @@
       "label": "next (v27)",
       "path": "/",
       "ref": "master",
-      "current": true
+      "current": true,
+      "prerelease": true
     },
     {
       "label": "v26",
