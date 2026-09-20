@@ -1,6 +1,6 @@
 import { notarize, type NotarizeOptions, type NotaryToolKeychainCredentials } from "@electron/notarize"
 import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign"
-import { Arch, InvalidConfigurationError, log, spawnAndWriteWithOutput, statOrNull, walk } from "builder-util"
+import { Arch, InvalidConfigurationError, log, MAX_FILE_REQUESTS, spawnAndWriteWithOutput, statOrNull, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { open, type FileHandle } from "fs/promises"
 import * as path from "path"
@@ -243,12 +243,15 @@ export class MacTargetHelper {
   /**
    * Post-sign diagnostic replacing the blanket `com.apple.security.cs.disable-library-validation` default.
    *
-   * Walks the Mach-O binaries under `Contents/Resources/app.asar.unpacked` and `Contents/PlugIns` and reports the ones
-   * whose signature does not carry the Team ID `codesign` reports for the freshly signed app bundle — typically
-   * excluded via `sign.ignore`, or fetched at build time already signed by a third party. `Contents/PlugIns` is
-   * covered because `buildSignOptions` never re-signs it, so a bundle there keeps whatever signature it shipped with.
-   * Under the hardened runtime those fail library validation at launch, which is precisely the failure the old
-   * default hid from every user instead of only the affected ones.
+   * Walks the Mach-O libraries and bundles (`MH_DYLIB` / `MH_BUNDLE`) under `Contents/Resources/app.asar.unpacked` and
+   * `Contents/PlugIns` and reports the ones whose signature does not carry the Team ID `codesign` reports for the
+   * freshly signed app bundle — typically excluded via `sign.ignore`, or fetched at build time already signed by a
+   * third party. Only loadable code is checked because library validation applies to what a process loads;
+   * executables (`MH_EXECUTE`, e.g. a bundled ffmpeg) are spawned rather than loaded, so a foreign signature on them is
+   * not a launch failure and reporting them would be a false positive. `Contents/PlugIns` is covered because
+   * `buildSignOptions` never re-signs it, so a bundle there keeps whatever signature it shipped with. Under the
+   * hardened runtime those fail library validation when loaded, which is precisely the failure the old default hid
+   * from every user instead of only the affected ones.
    *
    * Best-effort: never fails the build, and skips the scan when the app bundle itself has no Team ID (e.g. a
    * self-signed certificate).
@@ -291,8 +294,9 @@ export class MacTargetHelper {
         files.push(...(await walk(dir)))
       }
       // bounded concurrency: each check spawns `codesign -d`; results are sorted afterwards so the warning is deterministic
-      const checked = await asyncPool<string, string | null>(4, files, async file => {
-        if (!(await isMachOFile(file))) {
+      const checked = await asyncPool<string, string | null>(MAX_FILE_REQUESTS, files, async file => {
+        // only dylibs and bundles get loaded into a process; executables are spawned and never face library validation
+        if (!isLoadableMachOFileType(await readMachOFileType(file))) {
           return null
         }
         return (await readSigningTeamId(file)) === teamId ? null : path.relative(appPath, file)
@@ -301,7 +305,7 @@ export class MacTargetHelper {
       if (foreign.length > 0) {
         log.warn(
           { files: foreign.join(", "), teamId },
-          `binaries in app.asar.unpacked or Contents/PlugIns are unsigned or signed by another team — under the hardened runtime they will fail library validation at launch. ` +
+          `libraries in app.asar.unpacked or Contents/PlugIns are unsigned or signed by another team — under the hardened runtime they will fail library validation when loaded. ` +
             `Sign them with the same identity, or grant ${DISABLE_LIBRARY_VALIDATION} in build/entitlements.mac.plist ` +
             `(and in build/entitlements.mac.inherit.plist if a helper process such as a utilityProcess or a nodeIntegration renderer loads them)`
         )
@@ -495,41 +499,100 @@ export class MacTargetHelper {
   }
 }
 
-const MACH_O_MAGIC = new Set([0xfeedface, 0xfeedfacf, 0xcefaedfe, 0xcffaedfe, 0xcafebabe, 0xbebafeca])
 /** Big-endian fat/universal magic — the same bytes open a Java class file, so `nfat_arch` has to disambiguate. */
 const FAT_MAGIC = 0xcafebabe
 /** libmagic's heuristic: a fat header has fewer than 30 slices, whereas a Java class file's `major_version` (in the same bytes) is at least 45. */
 const FAT_MAX_ARCH_COUNT = 30
+/** Thin magics as read big-endian: the file is big-endian when the bytes spell the magic out, little-endian when they are byte-swapped. */
+const THIN_MAGIC_BE = new Set([0xfeedface, 0xfeedfacf])
+const THIN_MAGIC_LE = new Set([0xcefaedfe, 0xcffaedfe])
+/** `mach_header.filetype` follows `magic`, `cputype` and `cpusubtype` in both the 32- and 64-bit header. */
+const MACH_HEADER_FILETYPE_OFFSET = 12
+const MACH_HEADER_MIN_LENGTH = 16
+/** The first `fat_arch` (`cputype`, `cpusubtype`, `offset`, `size`, `align` — five big-endian uint32s) follows the 8-byte fat header. */
+const FAT_ARCH_OFFSET = 8
+const FAT_ARCH_LENGTH = 20
+const FAT_ARCH_SLICE_OFFSET_FIELD = FAT_ARCH_OFFSET + 8
+const HEAD_READ_LENGTH = 4096
+
+/** The `mach_header.filetype` values the foreign-signature scan tells apart (see `<mach-o/loader.h>`). */
+export const MachOFileType = {
+  /** Executable — spawned as its own process, never loaded into another one. */
+  MH_EXECUTE: 2,
+  /** Dynamically bound shared library (`.dylib`). */
+  MH_DYLIB: 6,
+  /** Dynamically bound bundle (`.node` native addons, plug-ins). */
+  MH_BUNDLE: 8,
+} as const
 
 /**
- * Reads the 4-byte magic to tell Mach-O executables/dylibs apart from the scripts and data files alongside them; for the
- * fat magic `0xcafebabe`, which Java class files share, `nfat_arch` at offset 4 must also be a plausible slice count.
+ * The `filetype` field of a Mach-O header, or `null` when the file is not Mach-O, too short, or unreadable. Endianness
+ * follows the magic. A fat/universal binary reports the filetype of its first slice (all slices share one filetype);
+ * the fat magic `0xcafebabe` is shared with Java class files, so `nfat_arch` must also be a plausible slice count.
+ *
+ * @internal Exported for tests only.
+ */
+export async function readMachOFileType(file: string): Promise<number | null> {
+  let handle: FileHandle | null = null
+  try {
+    handle = await open(file, "r")
+    const head = Buffer.alloc(HEAD_READ_LENGTH)
+    const { bytesRead } = await handle.read(head, 0, HEAD_READ_LENGTH, 0)
+    if (bytesRead < 4) {
+      return null
+    }
+    if (head.readUInt32BE(0) !== FAT_MAGIC) {
+      return readThinMachOFileType(head.subarray(0, bytesRead))
+    }
+    if (bytesRead < FAT_ARCH_OFFSET + FAT_ARCH_LENGTH) {
+      return null
+    }
+    const archCount = head.readUInt32BE(4)
+    if (archCount === 0 || archCount >= FAT_MAX_ARCH_COUNT) {
+      return null
+    }
+    const sliceOffset = head.readUInt32BE(FAT_ARCH_SLICE_OFFSET_FIELD)
+    const sliceHeader = Buffer.alloc(MACH_HEADER_MIN_LENGTH)
+    const slice = await handle.read(sliceHeader, 0, MACH_HEADER_MIN_LENGTH, sliceOffset)
+    return readThinMachOFileType(sliceHeader.subarray(0, slice.bytesRead))
+  } catch {
+    return null
+  } finally {
+    await handle?.close()
+  }
+}
+
+function readThinMachOFileType(header: Buffer): number | null {
+  if (header.length < MACH_HEADER_MIN_LENGTH) {
+    return null
+  }
+  const magic = header.readUInt32BE(0)
+  if (THIN_MAGIC_BE.has(magic)) {
+    return header.readUInt32BE(MACH_HEADER_FILETYPE_OFFSET)
+  }
+  if (THIN_MAGIC_LE.has(magic)) {
+    return header.readUInt32LE(MACH_HEADER_FILETYPE_OFFSET)
+  }
+  return null
+}
+
+/**
+ * Whether a Mach-O filetype is loaded into a process — a dylib or a bundle — and is therefore subject to library
+ * validation. Executables are spawned, not loaded, so they are not.
+ *
+ * @internal Exported for tests only.
+ */
+export function isLoadableMachOFileType(type: number | null): boolean {
+  return type === MachOFileType.MH_DYLIB || type === MachOFileType.MH_BUNDLE
+}
+
+/**
+ * Whether the file starts with a Mach-O header (thin or fat), regardless of filetype.
  *
  * @internal Exported for tests only.
  */
 export async function isMachOFile(file: string): Promise<boolean> {
-  let handle: FileHandle | null = null
-  try {
-    handle = await open(file, "r")
-    const buffer = Buffer.alloc(8)
-    const { bytesRead } = await handle.read(buffer, 0, 8, 0)
-    if (bytesRead < 4) {
-      return false
-    }
-    const magic = buffer.readUInt32BE(0)
-    if (magic === FAT_MAGIC) {
-      if (bytesRead < 8) {
-        return false
-      }
-      const archCount = buffer.readUInt32BE(4)
-      return archCount > 0 && archCount < FAT_MAX_ARCH_COUNT
-    }
-    return MACH_O_MAGIC.has(magic)
-  } catch {
-    return false
-  } finally {
-    await handle?.close()
-  }
+  return (await readMachOFileType(file)) != null
 }
 
 /**

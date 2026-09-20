@@ -2,7 +2,17 @@ import { afterEach, beforeEach, expect, vi } from "vitest"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { Arch, log } from "builder-util"
-import { isMachOFile, MacTargetHelper, parsePlistFile, parseSigningTeamId, type PlistObject, type PlatformType } from "app-builder-lib/internal"
+import {
+  isLoadableMachOFileType,
+  isMachOFile,
+  MachOFileType,
+  MacTargetHelper,
+  parsePlistFile,
+  parseSigningTeamId,
+  readMachOFileType,
+  type PlistObject,
+  type PlatformType,
+} from "app-builder-lib/internal"
 
 describe("MacTargetHelper", () => {
   describe("getCertificateTypes", () => {
@@ -428,49 +438,120 @@ ${body}
     })
   })
 
-  describe("isMachOFile", () => {
-    async function writeBinary(dir: string, name: string, bytes: number[], padTo = 32): Promise<string> {
+  describe("readMachOFileType", () => {
+    const CPU_TYPE_ARM64 = 0x0100000c
+    const CPU_SUBTYPE_ALL = 0
+
+    /** `magic`, `cputype`, `cpusubtype`, `filetype` — the first 16 bytes of a thin header, in the given byte order. */
+    function thinHeader(filetype: number, endian: "LE" | "BE"): Buffer {
+      const header = Buffer.alloc(32)
+      if (endian === "LE") {
+        Buffer.from([0xcf, 0xfa, 0xed, 0xfe]).copy(header, 0)
+        header.writeUInt32LE(CPU_TYPE_ARM64, 4)
+        header.writeUInt32LE(CPU_SUBTYPE_ALL, 8)
+        header.writeUInt32LE(filetype, 12)
+      } else {
+        Buffer.from([0xfe, 0xed, 0xfa, 0xce]).copy(header, 0)
+        header.writeUInt32BE(CPU_TYPE_ARM64, 4)
+        header.writeUInt32BE(CPU_SUBTYPE_ALL, 8)
+        header.writeUInt32BE(filetype, 12)
+      }
+      return header
+    }
+
+    /** A fat header with one `fat_arch` whose slice (a thin little-endian header) sits at `sliceOffset`. */
+    function fatBinary(filetype: number, sliceOffset: number): Buffer {
+      const fat = Buffer.alloc(sliceOffset + 32)
+      Buffer.from([0xca, 0xfe, 0xba, 0xbe]).copy(fat, 0)
+      fat.writeUInt32BE(1, 4) // nfat_arch
+      fat.writeUInt32BE(CPU_TYPE_ARM64, 8) // cputype
+      fat.writeUInt32BE(CPU_SUBTYPE_ALL, 12) // cpusubtype
+      fat.writeUInt32BE(sliceOffset, 16) // offset
+      fat.writeUInt32BE(32, 20) // size
+      fat.writeUInt32BE(12, 24) // align (2^12)
+      thinHeader(filetype, "LE").copy(fat, sliceOffset)
+      return fat
+    }
+
+    async function writeBinary(dir: string, name: string, bytes: Buffer | number[]): Promise<string> {
       const file = path.join(dir, name)
-      await fs.writeFile(file, Buffer.concat([Buffer.from(bytes), Buffer.alloc(Math.max(0, padTo - bytes.length))]))
+      await fs.writeFile(file, Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes))
       return file
     }
 
-    test("recognizes a 64-bit little-endian thin Mach-O", async ({ expect, tmpDir }) => {
+    test("reads the filetype of a 64-bit little-endian dylib", async ({ expect, tmpDir }) => {
       const dir = await tmpDir.createTempDir()
-      await expect(isMachOFile(await writeBinary(dir, "thin-le.node", [0xcf, 0xfa, 0xed, 0xfe]))).resolves.toBe(true)
+      await expect(readMachOFileType(await writeBinary(dir, "libfoo.dylib", thinHeader(MachOFileType.MH_DYLIB, "LE")))).resolves.toBe(MachOFileType.MH_DYLIB)
     })
 
-    test("recognizes a big-endian thin Mach-O", async ({ expect, tmpDir }) => {
+    test("reads the filetype of a 64-bit little-endian executable", async ({ expect, tmpDir }) => {
       const dir = await tmpDir.createTempDir()
-      await expect(isMachOFile(await writeBinary(dir, "thin-be.node", [0xfe, 0xed, 0xfa, 0xce]))).resolves.toBe(true)
+      await expect(readMachOFileType(await writeBinary(dir, "ffmpeg", thinHeader(MachOFileType.MH_EXECUTE, "LE")))).resolves.toBe(MachOFileType.MH_EXECUTE)
     })
 
-    test("recognizes a fat/universal binary", async ({ expect, tmpDir }) => {
+    test("reads the filetype of a 64-bit little-endian bundle", async ({ expect, tmpDir }) => {
       const dir = await tmpDir.createTempDir()
-      await expect(isMachOFile(await writeBinary(dir, "fat.node", [0xca, 0xfe, 0xba, 0xbe, 0x00, 0x00, 0x00, 0x02]))).resolves.toBe(true)
+      await expect(readMachOFileType(await writeBinary(dir, "foo.node", thinHeader(MachOFileType.MH_BUNDLE, "LE")))).resolves.toBe(MachOFileType.MH_BUNDLE)
     })
 
-    test("rejects a Java class file that shares the fat magic", async ({ expect, tmpDir }) => {
+    test("reads the filetype of a big-endian thin Mach-O", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      await expect(readMachOFileType(await writeBinary(dir, "thin-be.dylib", thinHeader(MachOFileType.MH_DYLIB, "BE")))).resolves.toBe(MachOFileType.MH_DYLIB)
+    })
+
+    test("reads the filetype of a fat/universal binary from its first slice", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      await expect(readMachOFileType(await writeBinary(dir, "fat.node", fatBinary(MachOFileType.MH_DYLIB, 4096)))).resolves.toBe(MachOFileType.MH_DYLIB)
+    })
+
+    test("returns null for a fat header whose slice lies past the end of the file", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      await expect(readMachOFileType(await writeBinary(dir, "truncated.node", fatBinary(MachOFileType.MH_DYLIB, 4096).subarray(0, 4096)))).resolves.toBeNull()
+    })
+
+    test("returns null for a Java class file that shares the fat magic", async ({ expect, tmpDir }) => {
       const dir = await tmpDir.createTempDir()
       // minor_version=0, major_version=65 (JDK 21) sits where a fat header keeps nfat_arch
-      await expect(isMachOFile(await writeBinary(dir, "Foo.class", [0xca, 0xfe, 0xba, 0xbe, 0x00, 0x00, 0x00, 0x41]))).resolves.toBe(false)
+      const classFile = Buffer.concat([Buffer.from([0xca, 0xfe, 0xba, 0xbe, 0x00, 0x00, 0x00, 0x41]), Buffer.alloc(56)])
+      await expect(readMachOFileType(await writeBinary(dir, "Foo.class", classFile))).resolves.toBeNull()
     })
 
-    test("rejects a shell script", async ({ expect, tmpDir }) => {
+    test("returns null for a shell script", async ({ expect, tmpDir }) => {
       const dir = await tmpDir.createTempDir()
       const file = path.join(dir, "run.sh")
       await fs.writeFile(file, "#!/bin/sh\n", "utf-8")
-      await expect(isMachOFile(file)).resolves.toBe(false)
+      await expect(readMachOFileType(file)).resolves.toBeNull()
     })
 
-    test("rejects a file shorter than the magic", async ({ expect, tmpDir }) => {
+    test("returns null for a file shorter than the magic", async ({ expect, tmpDir }) => {
       const dir = await tmpDir.createTempDir()
-      await expect(isMachOFile(await writeBinary(dir, "short.bin", [0xcf, 0xfa], 2))).resolves.toBe(false)
+      await expect(readMachOFileType(await writeBinary(dir, "short.bin", [0xcf, 0xfa]))).resolves.toBeNull()
     })
 
-    test("rejects a nonexistent path", async ({ expect, tmpDir }) => {
+    test("returns null for a nonexistent path", async ({ expect, tmpDir }) => {
       const dir = await tmpDir.createTempDir()
-      await expect(isMachOFile(path.join(dir, "missing.node"))).resolves.toBe(false)
+      await expect(readMachOFileType(path.join(dir, "missing.node"))).resolves.toBeNull()
+    })
+
+    test("isMachOFile reports any Mach-O header regardless of filetype", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      await expect(isMachOFile(await writeBinary(dir, "ffmpeg", thinHeader(MachOFileType.MH_EXECUTE, "LE")))).resolves.toBe(true)
+      await expect(isMachOFile(await writeBinary(dir, "short.bin", [0xcf, 0xfa]))).resolves.toBe(false)
+    })
+  })
+
+  describe("isLoadableMachOFileType", () => {
+    test("treats dylibs and bundles as loadable", () => {
+      expect(isLoadableMachOFileType(MachOFileType.MH_DYLIB)).toBe(true)
+      expect(isLoadableMachOFileType(MachOFileType.MH_BUNDLE)).toBe(true)
+    })
+
+    test("does not treat executables as loadable — they are spawned, not loaded", () => {
+      expect(isLoadableMachOFileType(MachOFileType.MH_EXECUTE)).toBe(false)
+    })
+
+    test("does not treat non-Mach-O files as loadable", () => {
+      expect(isLoadableMachOFileType(null)).toBe(false)
     })
   })
 
