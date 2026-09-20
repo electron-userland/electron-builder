@@ -14,6 +14,47 @@ import {
   type PlatformType,
 } from "app-builder-lib/internal"
 
+// Mach-O fixtures shared by the warnAboutForeignSignedBinaries and readMachOFileType tests
+const CPU_TYPE_ARM64 = 0x0100000c
+const CPU_SUBTYPE_ALL = 0
+
+/** `magic`, `cputype`, `cpusubtype`, `filetype` — the first 16 bytes of a thin header, in the given byte order. */
+function thinHeader(filetype: number, endian: "LE" | "BE"): Buffer {
+  const header = Buffer.alloc(32)
+  if (endian === "LE") {
+    Buffer.from([0xcf, 0xfa, 0xed, 0xfe]).copy(header, 0)
+    header.writeUInt32LE(CPU_TYPE_ARM64, 4)
+    header.writeUInt32LE(CPU_SUBTYPE_ALL, 8)
+    header.writeUInt32LE(filetype, 12)
+  } else {
+    Buffer.from([0xfe, 0xed, 0xfa, 0xce]).copy(header, 0)
+    header.writeUInt32BE(CPU_TYPE_ARM64, 4)
+    header.writeUInt32BE(CPU_SUBTYPE_ALL, 8)
+    header.writeUInt32BE(filetype, 12)
+  }
+  return header
+}
+
+/** A fat header with one `fat_arch` whose slice (a thin little-endian header) sits at `sliceOffset`. */
+function fatBinary(filetype: number, sliceOffset: number): Buffer {
+  const fat = Buffer.alloc(sliceOffset + 32)
+  Buffer.from([0xca, 0xfe, 0xba, 0xbe]).copy(fat, 0)
+  fat.writeUInt32BE(1, 4) // nfat_arch
+  fat.writeUInt32BE(CPU_TYPE_ARM64, 8) // cputype
+  fat.writeUInt32BE(CPU_SUBTYPE_ALL, 12) // cpusubtype
+  fat.writeUInt32BE(sliceOffset, 16) // offset
+  fat.writeUInt32BE(32, 20) // size
+  fat.writeUInt32BE(12, 24) // align (2^12)
+  thinHeader(filetype, "LE").copy(fat, sliceOffset)
+  return fat
+}
+
+async function writeBinary(dir: string, name: string, bytes: Buffer | number[]): Promise<string> {
+  const file = path.join(dir, name)
+  await fs.writeFile(file, Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes))
+  return file
+}
+
 describe("MacTargetHelper", () => {
   describe("getCertificateTypes", () => {
     const cases: [PlatformType, "development" | "distribution", string[]][] = [
@@ -228,19 +269,60 @@ ${body}
       await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements: path.join(dir, "missing.plist") })).resolves.toBe(false)
     })
 
-    test.for<[PlatformType, string]>([
-      ["mac", "entitlements.mac.plist"],
-      ["mas", "entitlements.mas.plist"],
-    ])("uses %s build-resources file %s when no explicit file is set", async ([targetPlatform, resourceName], { tmpDir }) => {
+    test.for<[PlatformType, string, string]>([
+      ["mac", "entitlements.mac.plist", "entitlements.mac.inherit.plist"],
+      ["mas", "entitlements.mas.plist", "entitlements.mas.inherit.plist"],
+    ])("uses %s build-resources files %s and %s when no explicit files are set", async ([targetPlatform, appResource, inheritResource], { tmpDir }) => {
       const dir = await tmpDir.createTempDir()
-      await fs.writeFile(path.join(dir, resourceName), grantingPlist, "utf-8")
-      await expect(makeHelper([resourceName], dir).isLibraryValidationDisabled(targetPlatform, undefined)).resolves.toBe(true)
+      const helper = makeHelper([appResource, inheritResource], dir)
+      await fs.writeFile(path.join(dir, appResource), grantingPlist, "utf-8")
+      await fs.writeFile(path.join(dir, inheritResource), grantingPlist, "utf-8")
+      await expect(helper.isLibraryValidationDisabled(targetPlatform, undefined)).resolves.toBe(true)
 
-      await fs.writeFile(path.join(dir, resourceName), nonGrantingPlist, "utf-8")
-      await expect(makeHelper([resourceName], dir).isLibraryValidationDisabled(targetPlatform, undefined)).resolves.toBe(false)
+      // the app grants it but the helpers do not — under ad-hoc signing they have no Team ID either, so they would crash
+      await fs.writeFile(path.join(dir, inheritResource), nonGrantingPlist, "utf-8")
+      await expect(helper.isLibraryValidationDisabled(targetPlatform, undefined)).resolves.toBe(false)
+
+      await fs.writeFile(path.join(dir, appResource), nonGrantingPlist, "utf-8")
+      await fs.writeFile(path.join(dir, inheritResource), grantingPlist, "utf-8")
+      await expect(helper.isLibraryValidationDisabled(targetPlatform, undefined)).resolves.toBe(false)
     })
 
-    test("returns true for the bundled ad-hoc template (it grants the key)", async () => {
+    test("returns false when the app entitlements grant the key but a custom inherit file does not", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const entitlements = path.join(dir, "entitlements.plist")
+      const entitlementsInherit = path.join(dir, "entitlements.inherit.plist")
+      await fs.writeFile(entitlements, grantingPlist, "utf-8")
+      await fs.writeFile(entitlementsInherit, nonGrantingPlist, "utf-8")
+      await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements, entitlementsInherit })).resolves.toBe(false)
+    })
+
+    test("returns false when a custom inherit file grants the key but the app entitlements do not", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const entitlements = path.join(dir, "entitlements.plist")
+      const entitlementsInherit = path.join(dir, "entitlements.inherit.plist")
+      await fs.writeFile(entitlements, nonGrantingPlist, "utf-8")
+      await fs.writeFile(entitlementsInherit, grantingPlist, "utf-8")
+      await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements, entitlementsInherit })).resolves.toBe(false)
+    })
+
+    test("returns true when both the app and a custom inherit file grant the key", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const entitlements = path.join(dir, "entitlements.plist")
+      const entitlementsInherit = path.join(dir, "entitlements.inherit.plist")
+      await fs.writeFile(entitlements, grantingPlist, "utf-8")
+      await fs.writeFile(entitlementsInherit, grantingPlist, "utf-8")
+      await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements, entitlementsInherit })).resolves.toBe(true)
+    })
+
+    test("returns true when the app entitlements grant the key and the inherit file falls back to the ad-hoc template", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const entitlements = path.join(dir, "entitlements.plist")
+      await fs.writeFile(entitlements, grantingPlist, "utf-8")
+      await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements })).resolves.toBe(true)
+    })
+
+    test("returns true for the bundled ad-hoc templates (both grant the key)", async () => {
       await expect(makeHelper([], "/nonexistent").isLibraryValidationDisabled("mac", undefined)).resolves.toBe(true)
     })
 
@@ -370,35 +452,49 @@ ${body}
   })
 
   describe("warnAboutForeignSignedBinaries", () => {
-    // only the host-independent early returns are covered here — everything past them needs /usr/bin/codesign
     const realIdentity = { name: "Developer ID Application: Example Inc. (A1B2C3D4E5)", hash: "HASH" } as any
     const adHocIdentity = { name: "-" } as any
+    const TEAM_ID = "TEAMID1234"
 
     function makeHelper(resourceFiles: string[] = [], buildResourcesDir = "/nonexistent"): MacTargetHelper {
       return new MacTargetHelper({ resourceList: Promise.resolve(resourceFiles), buildResourcesDir, config: {} } as any)
     }
 
+    async function makeApp(tmpDir: { createTempDir(): Promise<string> }): Promise<string> {
+      const appPath = path.join(await tmpDir.createTempDir(), "App.app")
+      await fs.mkdir(path.join(appPath, "Contents", "Resources"), { recursive: true })
+      return appPath
+    }
+
     let warn: ReturnType<typeof vi.spyOn>
+    let readTeamId: ReturnType<typeof vi.spyOn>
     beforeEach(() => {
       warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+      // `codesign` only exists on macOS: stub the read so the scan itself runs everywhere.
+      // The app bundle reads as signed by TEAM_ID; everything inside it reads as unsigned unless a test says otherwise.
+      readTeamId = vi.spyOn(MacTargetHelper.prototype, "readSigningTeamId").mockImplementation(async (file: string) => (file.endsWith(".app") ? TEAM_ID : null))
     })
     afterEach(() => {
       warn.mockRestore()
+      readTeamId.mockRestore()
     })
 
     test("skips mas targets", async ({ expect }) => {
       await expect(makeHelper().warnAboutForeignSignedBinaries("/nonexistent/App.app", realIdentity, "mas", { hardenedRuntime: true })).resolves.toBeUndefined()
       expect(warn).not.toHaveBeenCalled()
+      expect(readTeamId).not.toHaveBeenCalled()
     })
 
     test("skips ad-hoc identities", async ({ expect }) => {
       await expect(makeHelper().warnAboutForeignSignedBinaries("/nonexistent/App.app", adHocIdentity, "mac", undefined)).resolves.toBeUndefined()
       expect(warn).not.toHaveBeenCalled()
+      expect(readTeamId).not.toHaveBeenCalled()
     })
 
     test("skips builds with the hardened runtime disabled", async ({ expect }) => {
       await expect(makeHelper().warnAboutForeignSignedBinaries("/nonexistent/App.app", realIdentity, "mac", { hardenedRuntime: false })).resolves.toBeUndefined()
       expect(warn).not.toHaveBeenCalled()
+      expect(readTeamId).not.toHaveBeenCalled()
     })
 
     test("skips apps whose entitlements grant disable-library-validation", async ({ expect, tmpDir }) => {
@@ -419,66 +515,88 @@ ${body}
       )
       await expect(makeHelper().warnAboutForeignSignedBinaries("/nonexistent/App.app", realIdentity, "mac", { entitlements: file })).resolves.toBeUndefined()
       expect(warn).not.toHaveBeenCalled()
+      expect(readTeamId).not.toHaveBeenCalled()
     })
 
     test("skips apps without an app.asar.unpacked or Contents/PlugIns directory", async ({ expect, tmpDir }) => {
-      const appPath = path.join(await tmpDir.createTempDir(), "App.app")
-      await fs.mkdir(path.join(appPath, "Contents", "Resources"), { recursive: true })
+      const appPath = await makeApp(tmpDir)
       await expect(makeHelper().warnAboutForeignSignedBinaries(appPath, realIdentity, "mac", undefined)).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
+      expect(readTeamId).not.toHaveBeenCalled()
+    })
+
+    test("skips the scan when the app bundle itself has no Team ID", async ({ expect, tmpDir }) => {
+      readTeamId.mockImplementation(async () => null)
+      const appPath = await makeApp(tmpDir)
+      const dir = path.join(appPath, "Contents", "Resources", "app.asar.unpacked", "node_modules", "x", "build", "Release")
+      await fs.mkdir(dir, { recursive: true })
+      await writeBinary(dir, "x.node", thinHeader(MachOFileType.MH_DYLIB, "LE"))
+      await expect(makeHelper().warnAboutForeignSignedBinaries(appPath, realIdentity, "mac", undefined)).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
+      expect(readTeamId).toHaveBeenCalledTimes(1)
+      expect(readTeamId).toHaveBeenCalledWith(appPath)
+    })
+
+    test("scans a Contents/PlugIns directory even without app.asar.unpacked and reports a foreign-signed bundle", async ({ expect, tmpDir }) => {
+      // Contents/PlugIns is never re-signed by buildSignOptions, so a bundle there keeps whatever signature it shipped with
+      const appPath = await makeApp(tmpDir)
+      const dir = path.join(appPath, "Contents", "PlugIns", "Foo.bundle", "Contents", "MacOS")
+      await fs.mkdir(dir, { recursive: true })
+      const bundle = await writeBinary(dir, "Foo", thinHeader(MachOFileType.MH_BUNDLE, "LE"))
+      await expect(makeHelper().warnAboutForeignSignedBinaries(appPath, realIdentity, "mac", undefined)).resolves.toBeUndefined()
+      expect(readTeamId).toHaveBeenCalledWith(bundle)
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(warn.mock.calls[0][0]).toMatchObject({ files: path.join("Contents", "PlugIns", "Foo.bundle", "Contents", "MacOS", "Foo"), teamId: TEAM_ID })
+    })
+
+    test("reports an unsigned dylib in app.asar.unpacked", async ({ expect, tmpDir }) => {
+      const appPath = await makeApp(tmpDir)
+      const dir = path.join(appPath, "Contents", "Resources", "app.asar.unpacked", "node_modules", "x", "build", "Release")
+      await fs.mkdir(dir, { recursive: true })
+      await writeBinary(dir, "x.node", thinHeader(MachOFileType.MH_DYLIB, "LE"))
+      await expect(makeHelper().warnAboutForeignSignedBinaries(appPath, realIdentity, "mac", undefined)).resolves.toBeUndefined()
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(warn.mock.calls[0][0]).toMatchObject({
+        files: path.join("Contents", "Resources", "app.asar.unpacked", "node_modules", "x", "build", "Release", "x.node"),
+        teamId: TEAM_ID,
+      })
+    })
+
+    test("does not report executables — they are spawned, not loaded, so library validation never applies", async ({ expect, tmpDir }) => {
+      const appPath = await makeApp(tmpDir)
+      const dir = path.join(appPath, "Contents", "Resources", "app.asar.unpacked", "node_modules", "ffmpeg-static")
+      await fs.mkdir(dir, { recursive: true })
+      const ffmpeg = await writeBinary(dir, "ffmpeg", thinHeader(MachOFileType.MH_EXECUTE, "LE"))
+      await expect(makeHelper().warnAboutForeignSignedBinaries(appPath, realIdentity, "mac", undefined)).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
+      // the filetype check short-circuits before codesign is ever consulted for the executable
+      expect(readTeamId).not.toHaveBeenCalledWith(ffmpeg)
+    })
+
+    test("does not report libraries signed by the app's own team", async ({ expect, tmpDir }) => {
+      readTeamId.mockImplementation(async () => TEAM_ID)
+      const appPath = await makeApp(tmpDir)
+      const dir = path.join(appPath, "Contents", "Resources", "app.asar.unpacked", "node_modules", "x", "build", "Release")
+      await fs.mkdir(dir, { recursive: true })
+      const node = await writeBinary(dir, "x.node", thinHeader(MachOFileType.MH_DYLIB, "LE"))
+      await expect(makeHelper().warnAboutForeignSignedBinaries(appPath, realIdentity, "mac", undefined)).resolves.toBeUndefined()
+      expect(readTeamId).toHaveBeenCalledWith(node)
       expect(warn).not.toHaveBeenCalled()
     })
 
-    test("scans a Contents/PlugIns directory even without app.asar.unpacked", async ({ expect, tmpDir }) => {
-      // Contents/PlugIns is never re-signed by buildSignOptions, so it must get past the "nothing to scan" early return;
-      // the directory is empty, so the walk finds no Mach-O files and nothing is reported
-      const appPath = path.join(await tmpDir.createTempDir(), "App.app")
-      await fs.mkdir(path.join(appPath, "Contents", "PlugIns"), { recursive: true })
+    test("ignores non-Mach-O files such as scripts and text", async ({ expect, tmpDir }) => {
+      const appPath = await makeApp(tmpDir)
+      const dir = path.join(appPath, "Contents", "Resources", "app.asar.unpacked", "node_modules", "x")
+      await fs.mkdir(dir, { recursive: true })
+      await fs.writeFile(path.join(dir, "run.sh"), "#!/bin/sh\necho hi\n", "utf-8")
+      await fs.writeFile(path.join(dir, "package.json"), "{}", "utf-8")
       await expect(makeHelper().warnAboutForeignSignedBinaries(appPath, realIdentity, "mac", undefined)).resolves.toBeUndefined()
       expect(warn).not.toHaveBeenCalled()
+      expect(readTeamId).toHaveBeenCalledTimes(1)
     })
   })
 
   describe("readMachOFileType", () => {
-    const CPU_TYPE_ARM64 = 0x0100000c
-    const CPU_SUBTYPE_ALL = 0
-
-    /** `magic`, `cputype`, `cpusubtype`, `filetype` — the first 16 bytes of a thin header, in the given byte order. */
-    function thinHeader(filetype: number, endian: "LE" | "BE"): Buffer {
-      const header = Buffer.alloc(32)
-      if (endian === "LE") {
-        Buffer.from([0xcf, 0xfa, 0xed, 0xfe]).copy(header, 0)
-        header.writeUInt32LE(CPU_TYPE_ARM64, 4)
-        header.writeUInt32LE(CPU_SUBTYPE_ALL, 8)
-        header.writeUInt32LE(filetype, 12)
-      } else {
-        Buffer.from([0xfe, 0xed, 0xfa, 0xce]).copy(header, 0)
-        header.writeUInt32BE(CPU_TYPE_ARM64, 4)
-        header.writeUInt32BE(CPU_SUBTYPE_ALL, 8)
-        header.writeUInt32BE(filetype, 12)
-      }
-      return header
-    }
-
-    /** A fat header with one `fat_arch` whose slice (a thin little-endian header) sits at `sliceOffset`. */
-    function fatBinary(filetype: number, sliceOffset: number): Buffer {
-      const fat = Buffer.alloc(sliceOffset + 32)
-      Buffer.from([0xca, 0xfe, 0xba, 0xbe]).copy(fat, 0)
-      fat.writeUInt32BE(1, 4) // nfat_arch
-      fat.writeUInt32BE(CPU_TYPE_ARM64, 8) // cputype
-      fat.writeUInt32BE(CPU_SUBTYPE_ALL, 12) // cpusubtype
-      fat.writeUInt32BE(sliceOffset, 16) // offset
-      fat.writeUInt32BE(32, 20) // size
-      fat.writeUInt32BE(12, 24) // align (2^12)
-      thinHeader(filetype, "LE").copy(fat, sliceOffset)
-      return fat
-    }
-
-    async function writeBinary(dir: string, name: string, bytes: Buffer | number[]): Promise<string> {
-      const file = path.join(dir, name)
-      await fs.writeFile(file, Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes))
-      return file
-    }
-
     test("reads the filetype of a 64-bit little-endian dylib", async ({ expect, tmpDir }) => {
       const dir = await tmpDir.createTempDir()
       await expect(readMachOFileType(await writeBinary(dir, "libfoo.dylib", thinHeader(MachOFileType.MH_DYLIB, "LE")))).resolves.toBe(MachOFileType.MH_DYLIB)

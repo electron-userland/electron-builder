@@ -58,7 +58,9 @@ export class MacTargetHelper {
           log.warn(
             null,
             `ad-hoc signing with hardenedRuntime enabled requires the ${DISABLE_LIBRARY_VALIDATION} entitlement ` +
-              "to prevent app launch failures due to library validation, but your entitlements file does not grant it. " +
+              "in both the app entitlements (build/entitlements.mac.plist or mac.sign.entitlements) and the inherit entitlements " +
+              "(build/entitlements.mac.inherit.plist or mac.sign.entitlementsInherit) to prevent app launch failures due to library validation, " +
+              "but at least one of your entitlements files does not grant it. " +
               "See https://electron.build/docs/features/code-signing for details."
           )
         }
@@ -73,12 +75,23 @@ export class MacTargetHelper {
   }
 
   /**
-   * Resolves the app entitlements file for an ad-hoc build — same precedence as `getAppEntitlements()` — and
-   * returns whether it grants `com.apple.security.cs.disable-library-validation`.
-   * Fails open: returns false (so callers still warn) when the file cannot be read or parsed.
+   * Resolves the app and inherit entitlements files for an ad-hoc build — same precedence as `getAppEntitlements()` and
+   * `getInheritEntitlements()` — and returns whether both grant `com.apple.security.cs.disable-library-validation`.
+   *
+   * An ad-hoc signature carries no Team ID, so every process in the bundle — the app and each helper — fails library
+   * validation when it loads the Electron framework unless its own entitlements disable it. A user-supplied inherit
+   * plist (e.g. a production `build/entitlements.mac.inherit.plist`) without the key therefore breaks the helpers even
+   * when the app entitlements grant it, which is why both files are checked.
+   *
+   * Fails open: returns false (so callers still warn) when either file cannot be read or parsed, or when no file
+   * resolves at all (`@electron/osx-sign`'s defaults never grant the key).
    */
   async isLibraryValidationDisabled(targetPlatform: PlatformType, signOpts: ElectronSignOptions | Nullish): Promise<boolean> {
-    return this.grantsDisableLibraryValidation(await this.getAppEntitlements(targetPlatform, signOpts, true /* adHoc */))
+    const [appEntitlements, inheritEntitlements] = await Promise.all([
+      this.getAppEntitlements(targetPlatform, signOpts, true /* adHoc */),
+      this.getInheritEntitlements(targetPlatform, signOpts, true /* adHoc */),
+    ])
+    return (await this.grantsDisableLibraryValidation(appEntitlements)) && (await this.grantsDisableLibraryValidation(inheritEntitlements))
   }
 
   private async grantsDisableLibraryValidation(file: string | null): Promise<boolean> {
@@ -284,14 +297,14 @@ export class MacTargetHelper {
       }
       // the Team ID is read from the signed bundle rather than parsed out of the identity's common name: not every
       // identity carries a "(TEAMID)" suffix, and a self-signed one can carry it without codesign ever recording it
-      const teamId = await readSigningTeamId(appPath)
+      const teamId = await this.readSigningTeamId(appPath)
       if (teamId == null) {
         // no Team ID to compare against (unsigned, or signed without one)
         return
       }
-      const files: string[] = []
+      let files: string[] = []
       for (const dir of dirs) {
-        files.push(...(await walk(dir)))
+        files = files.concat(await walk(dir))
       }
       // bounded concurrency: each check spawns `codesign -d`; results are sorted afterwards so the warning is deterministic
       const checked = await asyncPool<string, string | null>(MAX_FILE_REQUESTS, files, async file => {
@@ -299,7 +312,7 @@ export class MacTargetHelper {
         if (!isLoadableMachOFileType(await readMachOFileType(file))) {
           return null
         }
-        return (await readSigningTeamId(file)) === teamId ? null : path.relative(appPath, file)
+        return (await this.readSigningTeamId(file)) === teamId ? null : path.relative(appPath, file)
       })
       const foreign = checked.filter((it): it is string => it != null).sort()
       if (foreign.length > 0) {
@@ -312,6 +325,25 @@ export class MacTargetHelper {
       }
     } catch (e: any) {
       log.debug({ error: e.message }, "cannot inspect app.asar.unpacked and Contents/PlugIns for foreign-signed binaries")
+    }
+  }
+
+  /**
+   * The `TeamIdentifier` of a file's existing code signature as reported by `codesign -d`, or `null` when there is none:
+   * `codesign` fails (e.g. the file is unsigned), the field is absent, or it is the literal `not set` that ad-hoc and
+   * self-signed signatures report.
+   *
+   * @internal An instance method rather than a module-level function so tests can stub the `codesign` invocation, which
+   * only exists on macOS.
+   */
+  async readSigningTeamId(file: string): Promise<string | null> {
+    try {
+      // `codesign -d` reports on stderr, so stdout alone (as `exec` returns) is not enough
+      const { stderr } = await spawnAndWriteWithOutput("/usr/bin/codesign", ["-d", "--verbose=4", file], "")
+      return parseSigningTeamId(stderr)
+    } catch {
+      // unsigned binaries make `codesign -d` exit non-zero
+      return null
     }
   }
 
@@ -604,20 +636,4 @@ export async function isMachOFile(file: string): Promise<boolean> {
 export function parseSigningTeamId(codesignOutput: string): string | null {
   const teamId = /^TeamIdentifier=(.+)$/m.exec(codesignOutput)?.[1].trim()
   return teamId == null || teamId === "not set" ? null : teamId
-}
-
-/**
- * The `TeamIdentifier` of a file's existing code signature as reported by `codesign -d`, or `null` when there is none:
- * `codesign` fails (e.g. the file is unsigned), the field is absent, or it is the literal `not set` that ad-hoc and
- * self-signed signatures report.
- */
-async function readSigningTeamId(file: string): Promise<string | null> {
-  try {
-    // `codesign -d` reports on stderr, so stdout alone (as `exec` returns) is not enough
-    const { stderr } = await spawnAndWriteWithOutput("/usr/bin/codesign", ["-d", "--verbose=4", file], "")
-    return parseSigningTeamId(stderr)
-  } catch {
-    // unsigned binaries make `codesign -d` exit non-zero
-    return null
-  }
 }
