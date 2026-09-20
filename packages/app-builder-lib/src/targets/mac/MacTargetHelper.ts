@@ -482,20 +482,51 @@ export class MacTargetHelper {
 }
 
 const MACH_O_MAGIC = new Set([0xfeedface, 0xfeedfacf, 0xcefaedfe, 0xcffaedfe, 0xcafebabe, 0xbebafeca])
+/** Big-endian fat/universal magic — the same bytes open a Java class file, so `nfat_arch` has to disambiguate. */
+const FAT_MAGIC = 0xcafebabe
+/** libmagic's heuristic: a fat header has fewer than 30 slices, whereas a Java class file's `major_version` (in the same bytes) is at least 45. */
+const FAT_MAX_ARCH_COUNT = 30
 
-/** Reads the 4-byte magic to tell Mach-O executables/dylibs apart from the scripts and data files alongside them. */
-async function isMachOFile(file: string): Promise<boolean> {
+/**
+ * Reads the 4-byte magic to tell Mach-O executables/dylibs apart from the scripts and data files alongside them; for the
+ * fat magic `0xcafebabe`, which Java class files share, `nfat_arch` at offset 4 must also be a plausible slice count.
+ *
+ * @internal Exported for tests only.
+ */
+export async function isMachOFile(file: string): Promise<boolean> {
   let handle: FileHandle | null = null
   try {
     handle = await open(file, "r")
-    const buffer = Buffer.alloc(4)
-    const { bytesRead } = await handle.read(buffer, 0, 4, 0)
-    return bytesRead === 4 && MACH_O_MAGIC.has(buffer.readUInt32BE(0))
+    const buffer = Buffer.alloc(8)
+    const { bytesRead } = await handle.read(buffer, 0, 8, 0)
+    if (bytesRead < 4) {
+      return false
+    }
+    const magic = buffer.readUInt32BE(0)
+    if (magic === FAT_MAGIC) {
+      if (bytesRead < 8) {
+        return false
+      }
+      const archCount = buffer.readUInt32BE(4)
+      return archCount > 0 && archCount < FAT_MAX_ARCH_COUNT
+    }
+    return MACH_O_MAGIC.has(magic)
   } catch {
     return false
   } finally {
     await handle?.close()
   }
+}
+
+/**
+ * Extracts the `TeamIdentifier` from `codesign -d --verbose=4` output, or `null` when the field is absent or the
+ * literal `not set` that ad-hoc and self-signed signatures report.
+ *
+ * @internal Exported for tests only.
+ */
+export function parseSigningTeamId(codesignOutput: string): string | null {
+  const teamId = /^TeamIdentifier=(.+)$/m.exec(codesignOutput)?.[1].trim()
+  return teamId == null || teamId === "not set" ? null : teamId
 }
 
 /**
@@ -507,8 +538,7 @@ async function readSigningTeamId(file: string): Promise<string | null> {
   try {
     // `codesign -d` reports on stderr, so stdout alone (as `exec` returns) is not enough
     const { stderr } = await spawnAndWriteWithOutput("/usr/bin/codesign", ["-d", "--verbose=4", file], "")
-    const teamId = /^TeamIdentifier=(.+)$/m.exec(stderr)?.[1].trim()
-    return teamId == null || teamId === "not set" ? null : teamId
+    return parseSigningTeamId(stderr)
   } catch {
     // unsigned binaries make `codesign -d` exit non-zero
     return null

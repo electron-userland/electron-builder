@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, vi } from "vitest"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { Arch, log } from "builder-util"
-import { MacTargetHelper, parsePlistFile, type PlistObject, type PlatformType } from "app-builder-lib/internal"
+import { isMachOFile, MacTargetHelper, parsePlistFile, parseSigningTeamId, type PlistObject, type PlatformType } from "app-builder-lib/internal"
 
 describe("MacTargetHelper", () => {
   describe("getCertificateTypes", () => {
@@ -416,6 +416,89 @@ ${body}
       await fs.mkdir(path.join(appPath, "Contents", "Resources"), { recursive: true })
       await expect(makeHelper().warnAboutForeignSignedBinaries(appPath, realIdentity, "mac", undefined)).resolves.toBeUndefined()
       expect(warn).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("isMachOFile", () => {
+    async function writeBinary(dir: string, name: string, bytes: number[], padTo = 32): Promise<string> {
+      const file = path.join(dir, name)
+      await fs.writeFile(file, Buffer.concat([Buffer.from(bytes), Buffer.alloc(Math.max(0, padTo - bytes.length))]))
+      return file
+    }
+
+    test("recognizes a 64-bit little-endian thin Mach-O", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      await expect(isMachOFile(await writeBinary(dir, "thin-le.node", [0xcf, 0xfa, 0xed, 0xfe]))).resolves.toBe(true)
+    })
+
+    test("recognizes a big-endian thin Mach-O", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      await expect(isMachOFile(await writeBinary(dir, "thin-be.node", [0xfe, 0xed, 0xfa, 0xce]))).resolves.toBe(true)
+    })
+
+    test("recognizes a fat/universal binary", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      await expect(isMachOFile(await writeBinary(dir, "fat.node", [0xca, 0xfe, 0xba, 0xbe, 0x00, 0x00, 0x00, 0x02]))).resolves.toBe(true)
+    })
+
+    test("rejects a Java class file that shares the fat magic", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      // minor_version=0, major_version=65 (JDK 21) sits where a fat header keeps nfat_arch
+      await expect(isMachOFile(await writeBinary(dir, "Foo.class", [0xca, 0xfe, 0xba, 0xbe, 0x00, 0x00, 0x00, 0x41]))).resolves.toBe(false)
+    })
+
+    test("rejects a shell script", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const file = path.join(dir, "run.sh")
+      await fs.writeFile(file, "#!/bin/sh\n", "utf-8")
+      await expect(isMachOFile(file)).resolves.toBe(false)
+    })
+
+    test("rejects a file shorter than the magic", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      await expect(isMachOFile(await writeBinary(dir, "short.bin", [0xcf, 0xfa], 2))).resolves.toBe(false)
+    })
+
+    test("rejects a nonexistent path", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      await expect(isMachOFile(path.join(dir, "missing.node"))).resolves.toBe(false)
+    })
+  })
+
+  describe("parseSigningTeamId", () => {
+    const codesignOutput = (teamIdLine: string | null) =>
+      [
+        "Executable=/Users/me/App.app/Contents/Resources/app.asar.unpacked/node_modules/foo/build/Release/foo.node",
+        "Identifier=foo",
+        "Format=Mach-O universal (x86_64 arm64)",
+        "CodeDirectory v=20500 size=1234 flags=0x10000(runtime) hashes=30+2 location=embedded",
+        "Hash type=sha256 size=32",
+        "Signature size=8981",
+        "Authority=Developer ID Application: Example Inc. (ABCDE12345)",
+        "Authority=Developer ID Certification Authority",
+        "Authority=Apple Root CA",
+        "Timestamp=1 Jan 2026 at 00:00:00",
+        ...(teamIdLine == null ? [] : [teamIdLine]),
+        "Sealed Resources=none",
+        "Internal requirements count=1 size=180",
+        "",
+      ].join("\n")
+
+    test("returns the TeamIdentifier from verbose codesign output", () => {
+      expect(parseSigningTeamId(codesignOutput("TeamIdentifier=ABCDE12345"))).toBe("ABCDE12345")
+    })
+
+    test("returns null for the `not set` placeholder", () => {
+      expect(parseSigningTeamId(codesignOutput("TeamIdentifier=not set"))).toBeNull()
+    })
+
+    test("returns null when the field is absent", () => {
+      expect(parseSigningTeamId(codesignOutput(null))).toBeNull()
+      expect(parseSigningTeamId("")).toBeNull()
+    })
+
+    test("trims trailing whitespace and carriage returns", () => {
+      expect(parseSigningTeamId(codesignOutput("TeamIdentifier=ABCDE12345 \r"))).toBe("ABCDE12345")
     })
   })
 
