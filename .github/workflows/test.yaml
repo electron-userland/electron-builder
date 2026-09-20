@@ -474,6 +474,10 @@ jobs:
 
       - name: Install flatpak and flatpak-builder
         run: |
+          # Disable background apt services (prevent apt lock contention)
+          sudo systemctl stop unattended-upgrades apt-daily.service apt-daily-upgrade.service || true
+          sudo systemctl disable apt-daily.timer apt-daily-upgrade.timer || true
+          sudo systemctl kill --kill-who=all apt-daily.service apt-daily-upgrade.service || true
           while sudo fuser /var/lib/apt/lists/lock /var/lib/dpkg/lock /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
             echo "Waiting for apt lock to be released…"
             sleep 2
@@ -489,12 +493,17 @@ jobs:
 
       # The flatpak user installation (remote config + installed runtimes/SDKs/base app). The 20.08 SDK
       # alone is well over a GB, so restoring it beats re-downloading from flathub every run. Bump the
-      # suffix whenever the ref list in the install step below changes.
+      # -vN suffix whenever the ref list in the install step below changes.
+      # The key includes run_id so it never exactly matches: the job restores the newest entry via
+      # restore-keys and re-saves at the end. With a static key, actions/cache never saves after an exact
+      # hit, so an incomplete first save (e.g. the 19.08 refs failed to install) would be re-downloaded forever.
       - name: Cache flatpak runtimes
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.local/share/flatpak
-          key: flatpak-user-${{ runner.os }}-fdo-20.08-19.08-electron2-v1
+          key: flatpak-user-${{ runner.os }}-fdo-20.08-19.08-electron2-v1-${{ github.run_id }}
+          restore-keys: |
+            flatpak-user-${{ runner.os }}-fdo-20.08-19.08-electron2-v1-
 
       # Pre-install every ref the suite needs so the bundler's own `flatpak install` inside a test does not
       # eat the test timeout. `flatpak install` is a no-op for refs already restored from the cache.
