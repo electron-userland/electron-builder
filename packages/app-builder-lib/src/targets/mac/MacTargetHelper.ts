@@ -10,6 +10,7 @@ import type { MacPackager } from "../../macPackager.js"
 import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
 import { parsePlistFile, PlistObject } from "../../util/mac/plist.js"
 import { getTemplatePath } from "../../util/pathManager.js"
+import asyncPool from "tiny-async-pool"
 
 export type MasPlatformType = "mas" | "mas-dev"
 export type PlatformType = MasPlatformType | "mac"
@@ -242,10 +243,12 @@ export class MacTargetHelper {
   /**
    * Post-sign diagnostic replacing the blanket `com.apple.security.cs.disable-library-validation` default.
    *
-   * Walks the Mach-O binaries under `app.asar.unpacked` and reports the ones whose signature does not carry the
-   * Team ID `codesign` reports for the freshly signed app bundle — typically excluded via `sign.ignore`, or fetched
-   * at build time already signed by a third party. Under the hardened runtime those fail library validation at
-   * launch, which is precisely the failure the old default hid from every user instead of only the affected ones.
+   * Walks the Mach-O binaries under `Contents/Resources/app.asar.unpacked` and `Contents/PlugIns` and reports the ones
+   * whose signature does not carry the Team ID `codesign` reports for the freshly signed app bundle — typically
+   * excluded via `sign.ignore`, or fetched at build time already signed by a third party. `Contents/PlugIns` is
+   * covered because `buildSignOptions` never re-signs it, so a bundle there keeps whatever signature it shipped with.
+   * Under the hardened runtime those fail library validation at launch, which is precisely the failure the old
+   * default hid from every user instead of only the affected ones.
    *
    * Best-effort: never fails the build, and skips the scan when the app bundle itself has no Team ID (e.g. a
    * self-signed certificate).
@@ -263,9 +266,17 @@ export class MacTargetHelper {
       return
     }
 
-    const unpackedDir = path.join(appPath, "Contents", "Resources", "app.asar.unpacked")
+    // `Contents/PlugIns` is scanned too: `buildSignOptions` unconditionally excludes it from re-signing, so anything
+    // there keeps whatever third-party signature it shipped with — exactly what fails library validation
+    const candidateDirs = [path.join(appPath, "Contents", "Resources", "app.asar.unpacked"), path.join(appPath, "Contents", "PlugIns")]
     try {
-      if ((await statOrNull(unpackedDir)) == null) {
+      const dirs: string[] = []
+      for (const dir of candidateDirs) {
+        if ((await statOrNull(dir)) != null) {
+          dirs.push(dir)
+        }
+      }
+      if (dirs.length === 0) {
         return
       }
       // the Team ID is read from the signed bundle rather than parsed out of the identity's common name: not every
@@ -275,25 +286,28 @@ export class MacTargetHelper {
         // no Team ID to compare against (unsigned, or signed without one)
         return
       }
-      const files = await walk(unpackedDir)
-      const foreign: string[] = []
-      for (const file of files) {
-        if (!(await isMachOFile(file))) {
-          continue
-        }
-        if ((await readSigningTeamId(file)) !== teamId) {
-          foreign.push(path.relative(appPath, file))
-        }
+      const files: string[] = []
+      for (const dir of dirs) {
+        files.push(...(await walk(dir)))
       }
+      // bounded concurrency: each check spawns `codesign -d`; results are sorted afterwards so the warning is deterministic
+      const checked = await asyncPool<string, string | null>(4, files, async file => {
+        if (!(await isMachOFile(file))) {
+          return null
+        }
+        return (await readSigningTeamId(file)) === teamId ? null : path.relative(appPath, file)
+      })
+      const foreign = checked.filter((it): it is string => it != null).sort()
       if (foreign.length > 0) {
         log.warn(
           { files: foreign.join(", "), teamId },
-          `binaries in app.asar.unpacked are unsigned or signed by another team — under the hardened runtime they will fail library validation at launch. ` +
-            `Sign them with the same identity, or grant ${DISABLE_LIBRARY_VALIDATION} in your build/entitlements.mac.plist`
+          `binaries in app.asar.unpacked or Contents/PlugIns are unsigned or signed by another team — under the hardened runtime they will fail library validation at launch. ` +
+            `Sign them with the same identity, or grant ${DISABLE_LIBRARY_VALIDATION} in build/entitlements.mac.plist ` +
+            `(and in build/entitlements.mac.inherit.plist if a helper process such as a utilityProcess or a nodeIntegration renderer loads them)`
         )
       }
     } catch (e: any) {
-      log.debug({ error: e.message }, "cannot inspect app.asar.unpacked for foreign-signed binaries")
+      log.debug({ error: e.message }, "cannot inspect app.asar.unpacked and Contents/PlugIns for foreign-signed binaries")
     }
   }
 

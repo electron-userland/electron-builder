@@ -153,7 +153,7 @@ A custom `build/entitlements.mac.plist` applies to the app bundle only — neste
 
 `com.apple.security.cs.disable-library-validation` turns off macOS library validation for the whole process. Grant it only when your app loads a framework, plugin, or native module signed by a **different** Team ID (or not signed at all) — for example a sidecar binary downloaded at runtime, or one excluded from signing via `mac.sign.ignore`.
 
-After signing, electron-builder inspects the Mach-O binaries in `app.asar.unpacked` and warns if any of them carry a foreign or missing signature while the entitlement is absent, so you find out at build time rather than from a launch crash.
+After signing, electron-builder inspects the Mach-O binaries in `app.asar.unpacked` and `Contents/PlugIns` (which electron-builder never re-signs) and warns if any of them carry a foreign or missing signature while the entitlement is absent, so you find out at build time rather than from a launch crash.
 
 Ad-hoc builds (`mac.sign.identity: "-"`) are handled automatically: an ad-hoc signature carries no Team ID, so electron-builder applies a built-in ad-hoc entitlements file that includes `disable-library-validation` for the app and its nested binaries.
 

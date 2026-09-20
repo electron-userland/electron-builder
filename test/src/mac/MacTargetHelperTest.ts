@@ -411,9 +411,18 @@ ${body}
       expect(warn).not.toHaveBeenCalled()
     })
 
-    test("skips apps without an app.asar.unpacked directory", async ({ expect, tmpDir }) => {
+    test("skips apps without an app.asar.unpacked or Contents/PlugIns directory", async ({ expect, tmpDir }) => {
       const appPath = path.join(await tmpDir.createTempDir(), "App.app")
       await fs.mkdir(path.join(appPath, "Contents", "Resources"), { recursive: true })
+      await expect(makeHelper().warnAboutForeignSignedBinaries(appPath, realIdentity, "mac", undefined)).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
+    })
+
+    test("scans a Contents/PlugIns directory even without app.asar.unpacked", async ({ expect, tmpDir }) => {
+      // Contents/PlugIns is never re-signed by buildSignOptions, so it must get past the "nothing to scan" early return;
+      // the directory is empty, so the walk finds no Mach-O files and nothing is reported
+      const appPath = path.join(await tmpDir.createTempDir(), "App.app")
+      await fs.mkdir(path.join(appPath, "Contents", "PlugIns"), { recursive: true })
       await expect(makeHelper().warnAboutForeignSignedBinaries(appPath, realIdentity, "mac", undefined)).resolves.toBeUndefined()
       expect(warn).not.toHaveBeenCalled()
     })
