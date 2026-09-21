@@ -1,6 +1,6 @@
 import { bundle as bundleFlatpak, FlatpakBundlerBuildOptions, FlatpakManifest } from "@malept/flatpak-bundler"
 import { Arch, copyFile, toLinuxArchString } from "builder-util"
-import { chmod, outputFile } from "fs-extra"
+import { chmod, existsSync, outputFile, readdirSync, rmSync } from "fs-extra"
 import * as path from "path"
 import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
@@ -9,6 +9,7 @@ import { getNotLocalizedLicenseFile } from "../util/license"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir, StageDir } from "./targetUtil"
 import { Nullish } from "builder-util-runtime"
+import { Minimatch } from "minimatch"
 
 export default class FlatpakTarget extends Target {
   readonly options: FlatpakOptions = {
@@ -120,13 +121,41 @@ export default class FlatpakTarget extends Target {
       modules: this.options.modules,
     }
 
+    const rawFiles = (this.options.files || []) as Array<string | [string, string]>
+    const tupleFiles = rawFiles.filter((item): item is [string, string] => Array.isArray(item))
+    const exclusionGlobs = rawFiles.filter((item): item is string => typeof item === "string" && item.startsWith("!")).map(pattern => pattern.slice(1)) // Strip the leading '!' from exclusion statement
+
+    const compiledMatchers = exclusionGlobs.map(pattern => new Minimatch(pattern, { dot: true, matchBase: true }))
+
+    if (compiledMatchers.length > 0) {
+      const pruneDirectory = (currentDir: string): void => {
+        if (!existsSync(currentDir)) {
+          return
+        }
+
+        for (const entry of readdirSync(currentDir, { withFileTypes: true })) {
+          const fullPath = path.join(currentDir, entry.name)
+          const relativePath = path.relative(appOutDir, fullPath)
+
+          const isExcluded = compiledMatchers.some(matcher => matcher.match(relativePath))
+
+          if (isExcluded) {
+            rmSync(fullPath, { recursive: true, force: true })
+          } else if (entry.isDirectory()) {
+            pruneDirectory(fullPath)
+          }
+        }
+      }
+      pruneDirectory(appOutDir)
+    }
+
     const buildOptions: FlatpakBundlerBuildOptions = {
       baseFlatpakref: `app/${manifest.base}/${flatpakArch}/${manifest.baseVersion}`,
       runtimeFlatpakref: `runtime/${manifest.runtime}/${flatpakArch}/${manifest.runtimeVersion}`,
       sdkFlatpakref: `runtime/${manifest.sdk}/${flatpakArch}/${manifest.runtimeVersion}`,
       arch: flatpakArch as any,
       bundlePath: path.join(this.outDir, artifactName),
-      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...(this.options.files || [])],
+      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...(tupleFiles || [])],
       symlinks: [[path.join("/lib", appIdentifier, executableName), path.join("/bin", executableName)], ...(this.options.symlinks || [])],
     }
 
