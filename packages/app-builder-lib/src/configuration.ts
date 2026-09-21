@@ -3,7 +3,7 @@ import { BeforeBuildContext, Target } from "./core.js"
 import { ElectronBrandingOptions } from "./electron/ElectronFramework.js"
 import { PrepareApplicationStageDirectoryOptions } from "./Framework.js"
 import { AppXOptions } from "./options/AppXOptions.js"
-import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions, PacmanOptions, RpmOptions } from "./options/linuxOptions.js"
+import { AppImageOptions, DebOptions, FlatpakOptions, GentooOptions, LinuxConfiguration, LinuxTargetSpecificOptions, PacmanOptions, RpmOptions } from "./options/linuxOptions.js"
 import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions.js"
 import { MsiOptions } from "./options/MsiOptions.js"
 import { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
@@ -285,6 +285,13 @@ export interface CommonConfiguration {
    * Produces an `.apk` archive installable via `apk add --allow-untrusted ./package.apk`.
    */
   readonly apk?: LinuxTargetSpecificOptions | null
+  /**
+   * Gentoo ebuild options.
+   *
+   * Produces an overlay package directory (ebuild, `Manifest` and `files/`) alongside the distfiles it
+   * references, not (yet?) an installable signed binary package. Installable signed binaries soon to be supported.
+   */
+  readonly gentoo?: GentooOptions | null
 
   /**
    * Additional command-line arguments appended to the package manager's `install` command when
