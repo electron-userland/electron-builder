@@ -123,7 +123,13 @@ export default class FlatpakTarget extends Target {
       sdkFlatpakref: `runtime/${manifest.sdk}/${flatpakArch}/${manifest.runtimeVersion}`,
       arch: flatpakArch as any,
       bundlePath: path.join(this.outDir, artifactName),
-      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...(this.options.files || [])],
+      // `this.options` comes from `getOptionsForTarget`, which deep-merges the
+      // shared `linux` config into the flatpak-specific one. `deepAssign` merges
+      // array properties by concatenation rather than replacement, so the
+      // unrelated `linux.files` glob-pattern list (string[]) gets concatenated
+      // onto this `[string, string][]` tuple list whenever both are set,
+      // silently corrupting it. Filter out anything that isn't a real tuple.
+      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...(this.options.files || []).filter((entry): entry is [string, string] => Array.isArray(entry))],
       symlinks: [[path.join("/lib", appIdentifier, executableName), path.join("/bin", executableName)], ...(this.options.symlinks || [])],
     }
 

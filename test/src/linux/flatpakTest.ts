@@ -62,4 +62,20 @@ describe.heavy.ifEnv(which.sync("flatpak", { nothrow: true }) != null)("Linux Fl
         },
       },
     }))
+
+  // Regression test: `linux.files` (a string[] of glob patterns, used by most
+  // real-world Linux configs) used to get merged into FlatpakOptions.files
+  // (a [string, string][] of copy tuples) by getOptionsForTarget's deepAssign,
+  // which concatenates arrays instead of replacing them. flatpak-bundler then
+  // destructured each glob string as [src, dest], producing a bogus path and
+  // crashing the build with ENOENT.
+  test("linux.files does not corrupt the flatpak files option", ({ expect }) =>
+    app(expect, {
+      targets: Platform.LINUX.createTarget("flatpak"),
+      config: {
+        linux: {
+          files: ["**/*", "!**/*.ts"],
+        },
+      },
+    }))
 })
