@@ -123,7 +123,7 @@ export default class FlatpakTarget extends Target {
       sdkFlatpakref: `runtime/${manifest.sdk}/${flatpakArch}/${manifest.runtimeVersion}`,
       arch: flatpakArch as any,
       bundlePath: path.join(this.outDir, artifactName),
-      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...(this.options.files || [])],
+      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...(this.options.files || []).filter(item => Array.isArray(item))],
       symlinks: [[path.join("/lib", appIdentifier, executableName), path.join("/bin", executableName)], ...(this.options.symlinks || [])],
     }
 
