@@ -74,19 +74,27 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
 
       const isTopLevel = dirPath === depPath
       const dirs: Array<string> = []
+      // check if filematcher matches the files array as more important than the default excluded files.
+      // Evaluated lazily and at most once per directory (memoized promise shared by the concurrent pool callbacks):
+      // it is only needed when a child is force-included by the `onNodeModuleFile` hook.
+      let dirMatched: Promise<boolean> | undefined
+      const isDirMatched = () => {
+        if (dirMatched === undefined) {
+          dirMatched = filter == null ? Promise.resolve(false) : fsExtra.lstat(dirPath).then(stat => filter(dirPath, stat))
+        }
+        return dirMatched
+      }
       // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
       const sortedFilePaths = await asyncPool(MAX_FILE_REQUESTS, childNames, async name => {
         const filePath = path.join(dirPath, name)
 
-        const forceIncluded = onNodeModuleFile != null && !!onNodeModuleFile(filePath)
+        const forceIncluded = onNodeModuleFile != null && !!(await Promise.resolve(onNodeModuleFile(filePath)))
 
         if (excludedFiles.has(name) || name.startsWith("._")) {
           return null
         }
 
-        // check if filematcher matches the files array as more important than the default excluded files.
-        const fileMatched = filter != null && filter(dirPath, fsExtra.lstatSync(dirPath))
-        if (!fileMatched || !forceIncluded) {
+        if (!forceIncluded || !(await isDirMatched())) {
           for (const ext of nodeModuleExcludedExts) {
             if (name.endsWith(ext)) {
               return null
