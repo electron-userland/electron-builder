@@ -37,15 +37,39 @@ export abstract class BaseUpdater extends AppUpdater {
     }
     this._logger.info(`Install on explicit quitAndInstall`)
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
-    const isInstalled = this.install(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
-    if (isInstalled) {
-      setImmediate(() => {
-        // this event is normally emitted when calling quitAndInstall, this emulates that
-        require("electron").autoUpdater.emit("before-quit-for-update")
-        this.app.quit()
-      })
+    // A per-machine NSIS install first waits for its elevation trampoline (see NsisUpdater), so the quit is deferred
+    // until the installer is known to be running — quitting earlier would cut that wait short.
+    this.whenInstalled(this.install(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall), isInstalled => {
+      if (isInstalled) {
+        setImmediate(() => {
+          // this event is normally emitted when calling quitAndInstall, this emulates that
+          require("electron").autoUpdater.emit("before-quit-for-update")
+          this.app.quit()
+        })
+      }
+    })
+  }
+
+  /**
+   * Settles an {@link install} result — synchronously for a boolean, once resolved for a Promise — and calls `onSettled`
+   * with it. When the installer was not launched, `quitAndInstallCalled` (set by `install()` before `doInstall`) is reset
+   * first so a later install attempt in this session is not short-circuited. A rejected result is dispatched as an error
+   * and treated as "not installed".
+   */
+  private whenInstalled(result: boolean | Promise<boolean>, onSettled: (isInstalled: boolean) => void): void {
+    const handle = (isInstalled: boolean) => {
+      if (!isInstalled) {
+        this.quitAndInstallCalled = false
+      }
+      onSettled(isInstalled)
+    }
+    if (typeof result === "boolean") {
+      handle(result)
     } else {
-      this.quitAndInstallCalled = false
+      result.then(handle, (e: Error) => {
+        this.dispatchError(e)
+        handle(false)
+      })
     }
   }
 
@@ -77,11 +101,20 @@ export abstract class BaseUpdater extends AppUpdater {
     return this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.file
   }
 
-  // must be sync
-  protected abstract doInstall(options: InstallOptions): boolean
+  /**
+   * Launches the installer. Must start the installer synchronously when `options.isAppQuitting` is set (the app `quit`
+   * handler is not async). May return a Promise when the launch has to be awaited before the app quits — the per-machine
+   * NSIS path waits for its UAC elevation trampoline to report whether the installer is running.
+   */
+  protected abstract doInstall(options: InstallOptions): boolean | Promise<boolean>
 
-  // must be sync (because quit even handler is not async)
-  install(isSilent = false, isForceRunAfter = false): boolean {
+  // must be sync (because quit even handler is not async) — a returned Promise only defers the *result*, the installer
+  // launch itself has already been started
+  install(isSilent = false, isForceRunAfter = false): boolean | Promise<boolean> {
+    return this.startInstall({ isSilent, isForceRunAfter, isAppQuitting: false })
+  }
+
+  private startInstall(options: Omit<InstallOptions, "isAdminRightsRequired">): boolean | Promise<boolean> {
     if (this.quitAndInstallCalled) {
       this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
       return false
@@ -99,10 +132,9 @@ export abstract class BaseUpdater extends AppUpdater {
     this.quitAndInstallCalled = true
 
     try {
-      this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}`)
+      this._logger.info(`Install: isSilent: ${options.isSilent}, isForceRunAfter: ${options.isForceRunAfter}`)
       return this.doInstall({
-        isSilent,
-        isForceRunAfter,
+        ...options,
         isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
       })
     } catch (e: any) {
@@ -194,15 +226,13 @@ export abstract class BaseUpdater extends AppUpdater {
     await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
     this.updateInfoAndProvider = updateInfoAndProvider
     this._logger.info(`Installing pending update ${latestInfo.version} on launch`)
-    const isInstalled = this.install(true, true)
+    // install() sets quitAndInstallCalled = true before doInstall; a failed/throwing install (e.g. AppImage's
+    // sync unlink+mv) would otherwise leave it stuck true and short-circuit every later install this session,
+    // while the pending marker has already been cleared above. whenInstalled resets it so autoInstallEvent: "onQuit" /
+    // an explicit quitAndInstall can still install the cached update (matches the reset in quitAndInstall).
+    const isInstalled = await new Promise<boolean>(resolve => this.whenInstalled(this.install(true, true), resolve))
     if (isInstalled) {
       setImmediate(() => this.app.quit())
-    } else {
-      // install() sets quitAndInstallCalled = true before doInstall; a failed/throwing install (e.g. AppImage's
-      // sync unlink+mv) would otherwise leave it stuck true and short-circuit every later install this session,
-      // while the pending marker has already been cleared above. Reset it so autoInstallEvent: "onQuit" / an explicit
-      // quitAndInstall can still install the cached update (matches the reset in quitAndInstall).
-      this.quitAndInstallCalled = false
     }
     return isInstalled
   }
@@ -267,7 +297,8 @@ export abstract class BaseUpdater extends AppUpdater {
       }
 
       this._logger.info("Auto install update on quit")
-      this.install(true, false)
+      // the process is exiting: the installer is launched fire-and-forget, nothing can wait for a result here
+      void this.startInstall({ isSilent: true, isForceRunAfter: false, isAppQuitting: true })
     })
   }
 
@@ -348,4 +379,9 @@ export interface InstallOptions {
   readonly isSilent: boolean
   readonly isForceRunAfter: boolean
   readonly isAdminRightsRequired: boolean
+  /**
+   * Set when the install is triggered from the app `quit` handler (`autoInstallEvent: "onQuit"`): the process is
+   * exiting, so the installer has to be launched detached, fire-and-forget, and nothing can wait for the result.
+   */
+  readonly isAppQuitting?: boolean
 }
