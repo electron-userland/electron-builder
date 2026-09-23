@@ -164,6 +164,10 @@ The *automatic* install at startup only runs for targets that can install the pe
 | deb / rpm / pacman | skipped — package managers always elevate (pkexec/sudo) | ✓ (auth prompt) |
 | macOS | n/a — Squirrel.Mac stages updates natively and applies them on relaunch | resolves `false` |
 
+#### Per-machine NSIS installs (UAC elevation)
+
+A per-machine install needs administrator rights, so the updater launches the installer through Windows PowerShell (`Start-Process -Verb RunAs`, the same `ShellExecuteEx` `runas` primitive the bundled `elevate.exe` helper uses) and waits for the UAC prompt to be answered before the app quits. If the user declines the prompt, `quitAndInstall()` does not quit: an `error` event with code `ERR_UPDATER_ELEVATION_CANCELLED` is emitted instead and the downloaded update stays cached, so the app can offer to try again later. When PowerShell cannot be started or is blocked (for example by AppLocker or WDAC policies), the updater falls back to the `elevate.exe` helper packed by [`nsis.packElevateHelper`](../nsis.md) (`true` by default), so keep it enabled for per-machine installs. The fire-and-forget install on quit (`autoInstallEvent: "onQuit"`) cannot wait for the prompt and launches the installer detached, as before.
+
 :::note[Planned default change in v28]
 `autoInstallEvent` defaults to `"onQuit"` in v27; `"onNextLaunch"` is planned to become the **default** in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch, without a killable installer process (there `"onQuit"` and `"onNextLaunch"` behave identically).
 :::

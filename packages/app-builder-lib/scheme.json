@@ -4620,7 +4620,7 @@
         },
         "packElevateHelper": {
           "default": true,
-          "description": "Whether to pack the elevate executable (required for electron-updater if per-machine installer used or can be used in the future). Ignored if `perMachine` is set to `true`.",
+          "description": "Whether to pack the `elevate.exe` helper into the app's `resources` directory. electron-updater elevates a per-machine\n(`isAdminRightsRequired`) install through Windows PowerShell (`Start-Process -Verb RunAs`) and uses `elevate.exe` as the\nfallback, so the helper is still required for environments where PowerShell is unavailable or blocked (e.g. AppLocker/WDAC).\nKeep it enabled if a per-machine installer is used or can be used in the future. Ignored if `perMachine` is set to `true`.",
           "type": "boolean"
         },
         "perMachine": {
@@ -4992,7 +4992,7 @@
         },
         "packElevateHelper": {
           "default": true,
-          "description": "Whether to pack the elevate executable (required for electron-updater if per-machine installer used or can be used in the future). Ignored if `perMachine` is set to `true`.",
+          "description": "Whether to pack the `elevate.exe` helper into the app's `resources` directory. electron-updater elevates a per-machine\n(`isAdminRightsRequired`) install through Windows PowerShell (`Start-Process -Verb RunAs`) and uses `elevate.exe` as the\nfallback, so the helper is still required for environments where PowerShell is unavailable or blocked (e.g. AppLocker/WDAC).\nKeep it enabled if a per-machine installer is used or can be used in the future. Ignored if `perMachine` is set to `true`.",
           "type": "boolean"
         },
         "perMachine": {
