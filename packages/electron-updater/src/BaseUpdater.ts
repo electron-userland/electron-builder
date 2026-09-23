@@ -39,7 +39,7 @@ export abstract class BaseUpdater extends AppUpdater {
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
     // A per-machine NSIS install first waits for its elevation trampoline (see NsisUpdater), so the quit is deferred
     // until the installer is known to be running — quitting earlier would cut that wait short.
-    this.whenInstalled(this.install(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall), isInstalled => {
+    this.whenInstalled(this.startInstall({ isSilent, isForceRunAfter: isSilent ? isForceRunAfter : this.autoRunAppAfterInstall, isAppQuitting: false }), isInstalled => {
       if (isInstalled) {
         setImmediate(() => {
           // this event is normally emitted when calling quitAndInstall, this emulates that
@@ -51,7 +51,7 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   /**
-   * Calls `onSettled` with an {@link install} result — synchronously for a boolean, once resolved for a Promise. The
+   * Calls `onSettled` with a {@link startInstall} result — synchronously for a boolean, once resolved for a Promise. The
    * result never rejects (see {@link releaseLatchUnlessInstalled}).
    */
   private whenInstalled(result: boolean | Promise<boolean>, onSettled: (isInstalled: boolean) => void): void {
@@ -97,13 +97,26 @@ export abstract class BaseUpdater extends AppUpdater {
    */
   protected abstract doInstall(options: InstallOptions): boolean | Promise<boolean>
 
-  // must be sync (because quit even handler is not async) — a returned Promise only defers the *result*, the installer
-  // launch itself has already been started. Never rejects: a failed launch is dispatched as an `error` event and
-  // reported as `false`, after which install() may be called again (the declined-UAC retry case).
-  install(isSilent = false, isForceRunAfter = false): boolean | Promise<boolean> {
-    return this.startInstall({ isSilent, isForceRunAfter, isAppQuitting: false })
+  /**
+   * Launches the downloaded installer. Synchronous (the quit event handler is not async): `true` means the installer
+   * launch was started, `false` means nothing was started (no update downloaded, an install already in flight, or the
+   * launch failed synchronously). A launch whose outcome is only known later — the per-machine NSIS install waits for its
+   * UAC elevation trampoline — reports `true` here; if it then turns out not to have started the installer (e.g. the UAC
+   * prompt was declined, `ERR_UPDATER_ELEVATION_CANCELLED`), the failure is dispatched as an `error` event, like every
+   * other asynchronous failure, and {@link install} may be called again.
+   */
+  install(isSilent = false, isForceRunAfter = false): boolean {
+    const result = this.startInstall({ isSilent, isForceRunAfter, isAppQuitting: false })
+    // the Promise never rejects and settles the latch itself (see releaseLatchUnlessInstalled); the launch is under way
+    return typeof result === "boolean" ? result : true
   }
 
+  /**
+   * {@link install} with the outcome exposed: a Promise when the launch has to be awaited before the app may quit (see
+   * {@link doInstall}). Used by {@link quitAndInstall} and the install-on-next-launch path, which must not quit before the
+   * installer is known to be running. Never rejects: a failed launch is dispatched as an `error` event and reported as
+   * `false`, after which the latch is released and the install may be attempted again (the declined-UAC retry case).
+   */
   private startInstall(options: Omit<InstallOptions, "isAdminRightsRequired">): boolean | Promise<boolean> {
     if (this.quitAndInstallCalled) {
       this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
@@ -140,7 +153,8 @@ export abstract class BaseUpdater extends AppUpdater {
    * result (e.g. a declined UAC prompt), a throwing `doInstall` (e.g. AppImage's sync unlink+mv) or a rejected Promise,
    * which is dispatched as an error and treated as "not installed". Without the reset the latch would stay stuck `true`
    * and short-circuit every later install attempt in this session. The reset lives here, next to where the latch is
-   * set, so it applies to every caller of the public {@link install} (not only `quitAndInstall()`), and an ignored call
+   * set, so it applies to every caller of {@link startInstall} (the public {@link install} included, not only
+   * `quitAndInstall()`), and an ignored call
    * (latch already held by an in-flight attempt) can never release that attempt's latch. Resetting is idempotent.
    */
   private releaseLatchUnlessInstalled(result: boolean | Promise<boolean>): boolean | Promise<boolean> {
@@ -245,7 +259,7 @@ export abstract class BaseUpdater extends AppUpdater {
     // the pending marker has already been cleared above; a failed/throwing install (e.g. AppImage's sync unlink+mv)
     // resets quitAndInstallCalled (see releaseLatchUnlessInstalled) so autoInstallEvent: "onQuit" / an explicit
     // quitAndInstall can still install the cached update.
-    const isInstalled = await new Promise<boolean>(resolve => this.whenInstalled(this.install(true, true), resolve))
+    const isInstalled = await new Promise<boolean>(resolve => this.whenInstalled(this.startInstall({ isSilent: true, isForceRunAfter: true, isAppQuitting: false }), resolve))
     if (isInstalled) {
       setImmediate(() => this.app.quit())
     }

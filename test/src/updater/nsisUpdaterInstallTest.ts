@@ -9,7 +9,13 @@ vi.mock("child_process", async importOriginal => {
 
 import { spawn } from "child_process"
 import { NsisUpdater } from "electron-updater"
-import { buildElevatedInstallerInvocation, buildElevatedInstallerScript, quoteWin32CommandLineArg, UAC_CANCELLED_EXIT_CODE } from "electron-updater/src/windowsElevation"
+import {
+  buildElevatedInstallerInvocation,
+  buildElevatedInstallerScript,
+  buildElevationScript,
+  quoteWin32CommandLineArg,
+  UAC_CANCELLED_EXIT_CODE,
+} from "electron-updater/src/windowsElevation"
 import { buildPowerShellArgs, decodePowerShellEncodedCommand, getWindowsPowerShellPath } from "electron-updater/src/windowsPowerShell"
 import { createNsisUpdater } from "../helpers/updaterTestUtil"
 
@@ -73,6 +79,25 @@ describe("windowsElevation script building", () => {
     expect(script).toContain("-ArgumentList @('--updated', '/S', '--force-run') -Verb RunAs -ErrorAction Stop")
     expect(script).toContain(`exit ${UAC_CANCELLED_EXIT_CODE}`)
     expect(script.trimEnd().endsWith("exit 0")).toBe(true)
+  })
+
+  test("buildElevationScript wraps the launch command and maps a nested Win32Exception(1223) to exit 1223, anything else to exit 1", ({ expect }) => {
+    const script = buildElevationScript("Invoke-Launch")
+    const lines = script.split("\n")
+    expect(lines[0]).toBe("try {")
+    expect(lines[1]).toBe("  Invoke-Launch")
+    expect(lines[2]).toBe("} catch {")
+    expect(lines[lines.length - 1]).toBe("exit 0")
+    // the InnerException chain is walked for the Win32Exception carrying ERROR_CANCELLED
+    expect(script).toContain("$e = $_.Exception")
+    expect(script).toContain("$e = $e.InnerException")
+    expect(script).toContain(`if (($e -is [System.ComponentModel.Win32Exception]) -and ($e.NativeErrorCode -eq ${UAC_CANCELLED_EXIT_CODE})) { exit ${UAC_CANCELLED_EXIT_CODE} }`)
+    // any other failure exits 1 — the only other exit inside the catch block
+    expect(script.match(/^\s*exit \d+$/gm)).toEqual(["  exit 1", "exit 0"])
+    // the production script is exactly this wrapper around the Start-Process line
+    expect(buildElevatedInstallerScript(INSTALLER_PATH, ["--updated", "/S"])).toBe(
+      buildElevationScript(`Start-Process -FilePath '${INSTALLER_PATH}' -ArgumentList @('--updated', '/S') -Verb RunAs -ErrorAction Stop`)
+    )
   })
 
   test("installer args containing spaces arrive as a single token (Win32 double quotes inside the PS literal)", ({ expect }) => {
@@ -307,37 +332,44 @@ describe("NsisUpdater.doInstall elevation", () => {
       return { ...created, quit }
     }
 
-    test("install() returns a Promise for a per-machine install that resolves once the trampoline reported", async ({ expect }) => {
-      const { updater } = await createInstallableUpdater()
+    test("install() stays synchronous for a per-machine install: returns true while the trampoline runs, latch held once it reports success", async ({ expect }) => {
+      const { updater, errors } = await createInstallableUpdater()
       const child = mockSpawn()
 
-      const result = updater.install(true, false)
-      expect(result).toBeInstanceOf(Promise)
+      const result: boolean = updater.install(true, false)
+      expect(result).toBe(true)
+      expect(spawnMock).toHaveBeenCalledOnce()
       expect((updater as any).quitAndInstallCalled).toBe(true)
       child.emit("exit", 0, null)
-      await expect(result).resolves.toBe(true)
+      await nextTick()
+      expect((updater as any).quitAndInstallCalled).toBe(true)
+      expect(errors).toEqual([])
     })
 
-    test("install() called directly resets quitAndInstallCalled when the UAC prompt is declined, so a retry is not ignored", async ({ expect }) => {
+    test("install() called directly returns true, then dispatches the error and resets quitAndInstallCalled when the UAC prompt is declined, so a retry is not ignored", async ({
+      expect,
+    }) => {
       const { updater, errors } = await createInstallableUpdater()
       const warn = vi.spyOn((updater as any)._logger, "warn")
       const child = mockSpawn()
 
-      const result = updater.install(true, false)
+      expect(updater.install(true, false)).toBe(true)
       expect((updater as any).quitAndInstallCalled).toBe(true)
+      expect(errors).toEqual([])
       child.emit("exit", UAC_CANCELLED_EXIT_CODE, null)
-      await expect(result).resolves.toBe(false)
+      await nextTick()
       expect(errors.map(it => it.code)).toEqual(["ERR_UPDATER_ELEVATION_CANCELLED"])
       expect((updater as any).quitAndInstallCalled).toBe(false)
 
       // the user accepts the prompt on the second attempt
       const retryChild = mockSpawn()
-      const retry = updater.install(true, false)
+      expect(updater.install(true, false)).toBe(true)
       expect(spawnMock).toHaveBeenCalledTimes(2)
       expect(warn).not.toHaveBeenCalledWith(expect.stringContaining("install call ignored"))
       retryChild.emit("exit", 0, null)
-      await expect(retry).resolves.toBe(true)
+      await nextTick()
       expect((updater as any).quitAndInstallCalled).toBe(true)
+      expect(errors).toHaveLength(1)
     })
 
     test("a second install() while the first elevation is still pending is ignored and does not release the latch", async ({ expect }) => {
@@ -345,14 +377,14 @@ describe("NsisUpdater.doInstall elevation", () => {
       const warn = vi.spyOn((updater as any)._logger, "warn")
       const child = mockSpawn()
 
-      const first = updater.install(true, false)
+      expect(updater.install(true, false)).toBe(true)
       expect(updater.install(true, false)).toBe(false)
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("install call ignored"))
       expect((updater as any).quitAndInstallCalled).toBe(true)
       expect(spawnMock).toHaveBeenCalledOnce()
 
       child.emit("exit", 0, null)
-      await expect(first).resolves.toBe(true)
+      await nextTick()
       expect((updater as any).quitAndInstallCalled).toBe(true)
     })
 
@@ -403,6 +435,26 @@ describe.ifWindows("NsisUpdater.doInstall elevation — Windows integration", ()
       const script = buildElevatedInstallerScript("C:\\fake\\installer.exe", args)
       expect(await countParseErrors(script), `parse errors for args ${JSON.stringify(args)}`).toBe(0)
     }
+  })
+
+  // the exit-code mapping of the trampoline, run against synthetic launch commands so no UAC prompt is involved
+  async function runElevationScript(launchCommand: string): Promise<number> {
+    const { code } = await realExecFile(getWindowsPowerShellPath(), buildPowerShellArgs(buildElevationScript(launchCommand), { modules: [] }))
+    return code
+  }
+
+  test("trampoline maps a Win32Exception(1223) nested in an InvalidOperationException (how Start-Process reports a declined UAC prompt) to exit 1223", async ({ expect }) => {
+    expect(await runElevationScript("throw [System.InvalidOperationException]::new('outer', [System.ComponentModel.Win32Exception]::new(1223))")).toBe(UAC_CANCELLED_EXIT_CODE)
+  })
+
+  test("trampoline maps a directly thrown Win32Exception(1223) to exit 1223", async ({ expect }) => {
+    expect(await runElevationScript("throw [System.ComponentModel.Win32Exception]::new(1223)")).toBe(UAC_CANCELLED_EXIT_CODE)
+  })
+
+  test("trampoline maps any other failure to exit 1 and a completed launch command to exit 0", async ({ expect }) => {
+    expect(await runElevationScript("throw 'other'")).toBe(1)
+    expect(await runElevationScript("throw [System.ComponentModel.Win32Exception]::new(5)")).toBe(1)
+    expect(await runElevationScript("$null = 'started'")).toBe(0)
   })
 
   test("trampoline reports exit 1 (not 0, not 1223) when the installer does not exist — no UAC prompt is shown", async ({ expect }) => {
