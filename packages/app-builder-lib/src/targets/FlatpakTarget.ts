@@ -117,19 +117,18 @@ export default class FlatpakTarget extends Target {
       modules: this.options.modules,
     }
 
+    // `this.options` is `linux` deep-merged with `flatpak`, and deepAssign concatenates arrays, so the
+    // shared `linux.files` globs (string | FileSet | array of either) would leak into this [src, dest] tuple
+    // list. Read the flatpak-specific list from the raw config instead of the merged options.
+    const extraFiles = this.packager.config.flatpak?.files ?? []
+
     const buildOptions: FlatpakBundlerBuildOptions = {
       baseFlatpakref: `app/${manifest.base}/${flatpakArch}/${manifest.baseVersion}`,
       runtimeFlatpakref: `runtime/${manifest.runtime}/${flatpakArch}/${manifest.runtimeVersion}`,
       sdkFlatpakref: `runtime/${manifest.sdk}/${flatpakArch}/${manifest.runtimeVersion}`,
       arch: flatpakArch as any,
       bundlePath: path.join(this.outDir, artifactName),
-      // `this.options` comes from `getOptionsForTarget`, which deep-merges the
-      // shared `linux` config into the flatpak-specific one. `deepAssign` merges
-      // array properties by concatenation rather than replacement, so the
-      // unrelated `linux.files` glob-pattern list (string[]) gets concatenated
-      // onto this `[string, string][]` tuple list whenever both are set,
-      // silently corrupting it. Filter out anything that isn't a real tuple.
-      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...(this.options.files || []).filter((entry): entry is [string, string] => Array.isArray(entry))],
+      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...extraFiles],
       symlinks: [[path.join("/lib", appIdentifier, executableName), path.join("/bin", executableName)], ...(this.options.symlinks || [])],
     }
 
