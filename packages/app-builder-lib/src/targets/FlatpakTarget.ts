@@ -117,13 +117,18 @@ export default class FlatpakTarget extends Target {
       modules: this.options.modules,
     }
 
+    // `this.options` is `linux` deep-merged with `flatpak`, and deepAssign concatenates arrays, so the
+    // shared `linux.files` globs (string | FileSet | array of either) would leak into this [src, dest] tuple
+    // list. Read the flatpak-specific list from the raw config instead of the merged options.
+    const extraFiles = this.packager.config.flatpak?.files ?? []
+
     const buildOptions: FlatpakBundlerBuildOptions = {
       baseFlatpakref: `app/${manifest.base}/${flatpakArch}/${manifest.baseVersion}`,
       runtimeFlatpakref: `runtime/${manifest.runtime}/${flatpakArch}/${manifest.runtimeVersion}`,
       sdkFlatpakref: `runtime/${manifest.sdk}/${flatpakArch}/${manifest.runtimeVersion}`,
       arch: flatpakArch as any,
       bundlePath: path.join(this.outDir, artifactName),
-      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...(this.options.files || [])],
+      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...extraFiles],
       symlinks: [[path.join("/lib", appIdentifier, executableName), path.join("/bin", executableName)], ...(this.options.symlinks || [])],
     }
 
