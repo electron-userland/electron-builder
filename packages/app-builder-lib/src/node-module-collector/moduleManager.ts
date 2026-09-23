@@ -144,6 +144,7 @@ export class ModuleManager {
     pkgName,
     requiredRange,
     skipDownwardSearch = false,
+    skipOverrideFallback = false,
   }: {
     /**
      * The directory to start searching from. Typed optional because pnpm JSON output can omit
@@ -164,6 +165,12 @@ export class ModuleManager {
      * / `lstat` calls and finds nothing.
      */
     skipDownwardSearch?: boolean
+    /**
+     * When true, return null instead of falling back to an out-of-range (override) version.
+     * Callers that search several locations use this to find a range-satisfying version in any
+     * location before settling for an override version from the first location searched.
+     */
+    skipOverrideFallback?: boolean
   }): Promise<Package | null> {
     if (!parentDir || !pkgName) {
       return null
@@ -178,7 +185,7 @@ export class ModuleManager {
     // returns nothing. This handles package manager `overrides` (Bun, npm, pnpm, Yarn) that
     // resolve a transitive dependency to a version intentionally outside its declared range.
     // File-system results are already cached, so this pass costs only JS overhead.
-    if (requiredRange) {
+    if (requiredRange && !skipOverrideFallback) {
       const overrideResult = await this.searchForPackage(parentDir, pkgName, undefined, skipDownwardSearch)
       if (overrideResult) {
         log.debug(

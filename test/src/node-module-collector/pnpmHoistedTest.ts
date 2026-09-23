@@ -2,7 +2,10 @@ import { describe, test, vi, afterEach } from "vitest"
 import * as fse from "fs-extra"
 import * as os from "os"
 import * as path from "path"
-import { ModuleManager } from "app-builder-lib/src/node-module-collector/moduleManager"
+import { LogMessageByKey, ModuleManager } from "app-builder-lib/src/node-module-collector/moduleManager"
+import { PnpmNodeModulesCollector } from "app-builder-lib/src/node-module-collector/pnpmNodeModulesCollector"
+import { Lazy } from "lazy-val"
+import { TmpDir } from "temp-file"
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -84,6 +87,125 @@ describe("PnpmNodeModulesCollector hoisted mode", () => {
     const lines = Object.fromEntries(configLines.split("\n").map(line => line.split("=").map(s => s.trim())))
     expect(lines["node-linker"]).toBeUndefined()
     expect(lines["node-linker"] === "hoisted").toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tests: PnpmNodeModulesCollector.isHoisted detects layout from on-disk structure
+// (pnpm 11 stopped echoing node-linker in `config list`, so detection is realpath-based)
+// ---------------------------------------------------------------------------
+
+const makeCollector = (rootDir: string): any => new (PnpmNodeModulesCollector as any)(rootDir, new TmpDir("test"))
+
+describe("PnpmNodeModulesCollector.isHoisted (on-disk layout detection)", () => {
+  let root = ""
+  afterEach(async () => {
+    if (root) {
+      await fse.rm(root, { recursive: true, force: true })
+    }
+  })
+
+  // Mirror pnpm's isolated store: the real package lives under node_modules/.pnpm/<id>/node_modules,
+  // and the top-level entry is a link (junction on Windows, symlink on POSIX) pointing at it.
+  async function addIsolatedPackage(rootDir: string, name: string, version: string) {
+    const real = path.join(rootDir, "node_modules", ".pnpm", `${name}@${version}`, "node_modules", name)
+    await fse.ensureDir(real)
+    await fse.writeJson(path.join(real, "package.json"), { name, version })
+    await fse.ensureSymlink(real, path.join(rootDir, "node_modules", name), "junction")
+  }
+
+  test("returns false for the isolated .pnpm store (top-level package routes through .pnpm)", async ({ expect }) => {
+    root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-ishoisted-iso-"))
+    await addIsolatedPackage(root, "fs-extra", "11.3.5")
+    expect(await makeCollector(root).isHoisted.value).toBe(false)
+  })
+
+  test("returns true for a hoisted layout (top-level package is a real directory)", async ({ expect }) => {
+    root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-ishoisted-ho-"))
+    const dir = path.join(root, "node_modules", "fs-extra")
+    await fse.ensureDir(dir)
+    await fse.writeJson(path.join(dir, "package.json"), { name: "fs-extra", version: "11.3.5" })
+    expect(await makeCollector(root).isHoisted.value).toBe(true)
+  })
+
+  test("ignores link: packages (which resolve outside .pnpm) and still detects the isolated store", async ({ expect }) => {
+    root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-ishoisted-link-"))
+    // a link: dep resolves to a source dir outside node_modules — never under .pnpm
+    const linkSrc = path.join(root, "packages", "my-linked")
+    await fse.ensureDir(linkSrc)
+    await fse.writeJson(path.join(linkSrc, "package.json"), { name: "my-linked", version: "1.0.0" })
+    await fse.ensureSymlink(linkSrc, path.join(root, "node_modules", "my-linked"), "junction")
+    // a regular dep routes through .pnpm — the scan must keep going past the link to find it
+    await addIsolatedPackage(root, "fs-extra", "11.3.5")
+    expect(await makeCollector(root).isHoisted.value).toBe(false)
+  })
+
+  test("returns false when node_modules is empty or missing (flat default)", async ({ expect }) => {
+    root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-ishoisted-empty-"))
+    expect(await makeCollector(root).isHoisted.value).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tests: locateFromDepOrRoot prefers an in-range copy anywhere over an out-of-range override
+// (GH issue #10228: with `nodeLinker: hoisted`, pnpm reports virtual-store paths that don't
+// exist; an upward walk from one meets the root copy, which must not shadow the nested copy)
+// ---------------------------------------------------------------------------
+
+describe("PnpmNodeModulesCollector.locateFromDepOrRoot (hoisted layout, version-conflicted nested dep)", () => {
+  let root = ""
+  afterEach(async () => {
+    if (root) {
+      await fse.rm(root, { recursive: true, force: true })
+    }
+  })
+
+  // lazystream declares readable-stream@^2; the root copy is 3.x; the correct 2.x copy is nested.
+  const buildConflictTree = () =>
+    buildTempTree({
+      "package.json": { name: "app", version: "1.0.0", dependencies: { lazystream: "^1.0.0", "readable-stream": "^3.6.0" } },
+      "node_modules/readable-stream/package.json": { name: "readable-stream", version: "3.6.2" },
+      "node_modules/lazystream/package.json": { name: "lazystream", version: "1.0.1", dependencies: { "readable-stream": "^2.0.5" } },
+      "node_modules/lazystream/node_modules/readable-stream/package.json": { name: "readable-stream", version: "2.3.8" },
+    })
+
+  // The `path` pnpm reports for a hoisted install is still in virtual-store form and does not exist.
+  const virtualStorePath = (rootDir: string) => path.join(rootDir, "node_modules", ".pnpm", "readable-stream@2.3.8", "node_modules", "readable-stream")
+
+  test("resolves the nested in-range copy instead of accepting the root copy as an override", async ({ expect }) => {
+    root = await buildConflictTree()
+    const collector = makeCollector(root)
+    expect(await collector.isHoisted.value).toBe(true)
+
+    const result = await collector.locateFromDepOrRoot("readable-stream", virtualStorePath(root), "2.3.8")
+
+    expect(result).not.toBeNull()
+    expect(result.packageJson.version).toBe("2.3.8")
+    expect(result.packageDir).toBe(path.join(root, "node_modules", "lazystream", "node_modules", "readable-stream"))
+    expect(collector.cache.logSummary[LogMessageByKey.PKG_VERSION_OVERRIDDEN]).toEqual([])
+  })
+
+  test("with hoisting detected, the dep-path override fallback no longer runs before the root search", async ({ expect }) => {
+    root = await buildConflictTree()
+    const collector = makeCollector(root)
+    // isolate the lookup-order fix from layout detection
+    collector.isHoisted = new Lazy<boolean>(() => Promise.resolve(true))
+
+    const result = await collector.locateFromDepOrRoot("readable-stream", virtualStorePath(root), "^2.0.5")
+
+    expect(result).not.toBeNull()
+    expect(result.packageJson.version).toBe("2.3.8")
+  })
+
+  test("still accepts an out-of-range installed version when no copy satisfies the range (overrides)", async ({ expect }) => {
+    root = await buildConflictTree()
+    const collector = makeCollector(root)
+
+    const result = await collector.locateFromDepOrRoot("readable-stream", virtualStorePath(root), "4.0.0")
+
+    expect(result).not.toBeNull()
+    expect(["2.3.8", "3.6.2"]).toContain(result.packageJson.version)
+    expect(collector.cache.logSummary[LogMessageByKey.PKG_VERSION_OVERRIDDEN]).toHaveLength(1)
   })
 })
 

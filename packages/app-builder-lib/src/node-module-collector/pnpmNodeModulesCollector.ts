@@ -1,4 +1,6 @@
+import * as fs from "fs-extra"
 import { Lazy } from "lazy-val"
+import * as path from "path"
 import { LogMessageByKey, type Package } from "./moduleManager"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { getPackageManagerCommand, PM } from "./packageManager"
@@ -20,6 +22,46 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     const result = await this.asyncExec(getPackageManagerCommand(PM.PNPM), ["--version"])
     const major = parseInt((result.stdout ?? "0").split(".")[0], 10)
     return isNaN(major) ? 0 : major
+  })
+
+  /**
+   * Detect pnpm's installed layout from the on-disk structure rather than `pnpm config list`.
+   * pnpm 11 no longer echoes `node-linker` (from `.npmrc`) in `config list`, so the base-class
+   * config-parsing detection silently reports "not hoisted" for a hoisted install, which would
+   * disable the downward search needed to find version-conflicted nested deps.
+   *
+   * In the default isolated store every regular top-level package resolves — through a symlink
+   * on POSIX, a junction on Windows — into `node_modules/.pnpm/<name>@<ver>/node_modules/<name>`.
+   * In a hoisted layout the same package is a real directory directly under `node_modules`.
+   * `realpath` transparently follows both symlinks and junctions, so a layout is isolated iff
+   * *any* top-level package's real path routes through `.pnpm`. We scan rather than sample the
+   * first entry because `link:` packages resolve to their source (never under `.pnpm`) and could
+   * otherwise mask an isolated store.
+   */
+  protected override isHoisted = new Lazy<boolean>(async () => {
+    const nmDir = path.join(this.rootDir, "node_modules")
+    const entries = await fs.readdir(nmDir).catch(() => [] as string[])
+    let sawPackage = false
+    for (const name of entries) {
+      if (name.startsWith(".")) {
+        continue // .pnpm, .bin, .modules.yaml
+      }
+      const entryPath = path.join(nmDir, name)
+      // A scoped dir (@scope) is not a package itself; descend to its packages.
+      const candidates = name.startsWith("@") ? (await fs.readdir(entryPath).catch(() => [] as string[])).map(s => path.join(entryPath, s)) : [entryPath]
+      for (const candidate of candidates) {
+        const real = await fs.realpath(candidate).catch(() => null)
+        if (real == null) {
+          continue
+        }
+        sawPackage = true
+        if (real.split(path.sep).includes(".pnpm")) {
+          return false // isolated store: a package routes through the virtual store
+        }
+      }
+    }
+    // Packages exist and none route through `.pnpm` → hoisted. No packages → flat default.
+    return sawPackage
   })
 
   /**
@@ -96,6 +138,21 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     // land at `<root>/node_modules/A/node_modules/B` — downward BFS is needed to find them.
     const skipDownwardSearch = !(await this.isHoisted.value)
     const promise = (async (): Promise<Package | null> => {
+      // Phase 1: find a version that SATISFIES requiredRange, trying the dep's own location
+      // first, then the workspace root. Crucially, neither pass accepts an out-of-range override
+      // here — so a wrong-version copy reachable via upward search from `parentPath` (e.g. a
+      // hoisted top-level dep) can't shadow the correct nested copy under root. With
+      // `nodeLinker: hoisted`, pnpm still reports virtual-store `path`s that don't exist on disk;
+      // an upward walk from one meets the root copy, which previously got accepted as an
+      // "override" before the root search (whose downward BFS finds the nested copy) ever ran.
+      const satisfying =
+        (parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch, skipOverrideFallback: true }) : null) ??
+        (await this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange, skipDownwardSearch, skipOverrideFallback: true }))
+      if (satisfying) {
+        return satisfying
+      }
+      // Phase 2: no version satisfies requiredRange (package-manager override, or no range
+      // given). Fall back to the original dep-then-root order, now allowing override versions.
       const fromDep = parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch }) : null
       if (fromDep) {
         return fromDep
