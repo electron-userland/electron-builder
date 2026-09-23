@@ -83,7 +83,7 @@ describe("ModuleManager.locatePackageVersion", () => {
     })
   })
 
-  describe("upward (hoisted) resolution", { sequential: true }, () => {
+  describe("upward (hoisted) resolution", { concurrent: false }, () => {
     let root = ""
     afterEach(async () => {
       if (root) {
@@ -109,7 +109,7 @@ describe("ModuleManager.locatePackageVersion", () => {
     })
   })
 
-  describe("override fallback (two-pass search)", { sequential: true }, () => {
+  describe("override fallback (two-pass search)", { concurrent: false }, () => {
     let root = ""
     afterEach(async () => {
       if (root) {
@@ -195,7 +195,7 @@ describe("ModuleManager.locatePackageVersion", () => {
   })
 })
 
-describe("ModuleManager downward search", { sequential: true }, () => {
+describe("ModuleManager downward search", { concurrent: false }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {
@@ -288,7 +288,7 @@ describe("ModuleManager downward search", { sequential: true }, () => {
   })
 })
 
-describe("ModuleManager.semverSatisfies (via locatePackageVersion)", { sequential: true }, () => {
+describe("ModuleManager.semverSatisfies (via locatePackageVersion)", { concurrent: false }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {

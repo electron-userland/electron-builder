@@ -80,7 +80,7 @@ async function collectWithWarnings(rootDir: string, packageName: string, depende
   }
 }
 
-describe("ignoredProductionDependencies (collector pruning)", { sequential: true }, () => {
+describe("ignoredProductionDependencies (collector pruning)", { concurrent: false }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {
@@ -265,7 +265,7 @@ describe("ignoredProductionDependencies (collector pruning)", { sequential: true
 // matching the app's declared dependencies, and a tree whose every dependency is ignored still counts
 // as a successful (effectively empty) collection rather than triggering the wrong-root fallback or the
 // "no node modules returned" warning.
-describe("ignoredProductionDependencies (exclusion-aware collection validation)", { sequential: true }, () => {
+describe("ignoredProductionDependencies (exclusion-aware collection validation)", { concurrent: false }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {
@@ -325,7 +325,7 @@ describe("ignoredProductionDependencies (exclusion-aware collection validation)"
 // feeds the collector canned `npm list` trees to pin down how exclusion matching interacts with that id
 // format — most notably npm aliases (`"custom-electron": "npm:electron@^30.0.0"`), which are matched by
 // their alias key, never by the underlying package name.
-describe("ignoredProductionDependencies (npm collector graph ids)", { sequential: true }, () => {
+describe("ignoredProductionDependencies (npm collector graph ids)", { concurrent: false }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {

@@ -14,7 +14,7 @@ import { readAppImageCompression } from "../helpers/fileAssert"
 import { ELECTRON_VERSION, PACMAN_TEST_DEPENDS } from "../helpers/testConfig"
 import { OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
-const optionsForInstall: TestOptions = { sequential: true, retry: 0, timeout: EXTENDED_TIMEOUT }
+const optionsForInstall: TestOptions = { concurrent: false, retry: 0, timeout: EXTENDED_TIMEOUT }
 
 const STANDARD_COMPRESSIONS: NonNullable<Configuration["compression"]>[] = ["store", "normal", "maximum"]
 const APPIMAGE_COMPRESSIONS: AppImageOptions["compression"][] = ["xz", "gzip", "zstd"]

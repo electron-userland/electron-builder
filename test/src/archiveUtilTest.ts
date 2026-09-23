@@ -60,7 +60,7 @@ function buildMinimalPE(machine: number, codeSize = 120_000): Buffer {
 
 // ─── compute7zCompressArgs ───────────────────────────────────────────────────
 
-describe("compute7zCompressArgs", { sequential: true }, () => {
+describe("compute7zCompressArgs", { concurrent: false }, () => {
   afterEach(() => {
     vi.unstubAllEnvs()
   })
@@ -390,7 +390,7 @@ describe("archive() exclude masks", () => {
 // compressed pass and appending them with -mx=0 (Copy). NsisTarget wires resources/app.asar through
 // this when nsis.differentialPackage is "store-asar".
 
-describe("archive() storedPaths", { sequential: true }, () => {
+describe("archive() storedPaths", { concurrent: false }, () => {
   afterEach(() => {
     vi.unstubAllEnvs()
   })

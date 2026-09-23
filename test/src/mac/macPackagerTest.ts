@@ -7,7 +7,7 @@ import { app, appThrows, assertPack, checkDirContents, modifyPackageJson, platfo
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
 import { parsePlistFile, PlistObject } from "app-builder-lib/internal"
 
-describe("macPackager", { sequential: true }, () => {
+describe("macPackager", { concurrent: false }, () => {
   test.ifMac("two-package", ({ expect }) =>
     assertPack(
       expect,
