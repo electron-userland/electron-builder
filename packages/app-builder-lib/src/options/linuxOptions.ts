@@ -1,4 +1,5 @@
-import { PlatformSpecificBuildOptions, TargetConfigType, TargetSpecificOptions } from "../index"
+import { TargetConfigType, TargetSpecificOptions } from "../core.js"
+import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
 
 /**
  * Example Spec: https://specifications.freedesktop.org/desktop-entry-spec/latest/example.html
@@ -32,7 +33,7 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   /**
    * Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    *
-   * electron-builder [docker image](https://www.electron.build/multi-platform-build#docker) can be used to build Linux targets on any platform.
+   * electron-builder [docker image](https://www.electron.build/docs/features/multi-platform-build#docker) can be used to build Linux targets on any platform.
    *
    * Please [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz.
    * @default AppImage
@@ -63,6 +64,14 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   readonly packageCategory?: string | null
 }
 
+/**
+ * Desktop-entry and runtime fields shared by all Linux targets and all snap core strategies.
+ *
+ * Fields set under `linux.*` in your build config (i.e. on {@link LinuxConfiguration}) are
+ * automatically cascaded into each snap core's options by `LinuxTargetHelper.getSnapCore()`.
+ * You do not need to duplicate them under `snapcraft.core24.*`, `snapcraft.core22.*`, etc.
+ * Per-core values always take precedence when both are set.
+ */
 export interface CommonLinuxOptions {
   /**
    * The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
@@ -100,7 +109,10 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
   /**
    * Package dependencies.
    * `rpm` defaults to `["gtk3", "libnotify", "nss", "libXScrnSaver", "(libXtst or libXtst6)", "xdg-utils", "at-spi2-core", "(libuuid or libuuid1)"]`
-   * `pacman` defaults to `["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"]`
+   * `pacman` defaults to `["c-ares", "ffmpeg", "gtk3", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"]`
+   *
+   * Use the `"default"` keyword to extend the target's default list instead of replacing it:
+   * `["default", "my-extra-lib"]` appends `my-extra-lib` to the defaults. The resulting list is deduplicated.
    */
   readonly depends?: Array<string> | null
 
@@ -152,6 +164,9 @@ export interface DebOptions extends LinuxTargetSpecificOptions {
    * Package dependencies.
    * If need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).
    * If need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2).
+   *
+   * Use the `"default"` keyword to extend the default list instead of replacing it:
+   * `["default", "my-extra-lib"]` appends `my-extra-lib` to the defaults. The resulting list is deduplicated.
    * @default ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils", "libatspi2.0-0", "libuuid1", "libsecret-1-0"]
    */
   readonly depends?: Array<string> | null
@@ -198,9 +213,10 @@ export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptio
   /**
    * The compression algorithm passed to the AppImage build tool.
    *
-   * **FUSE2 toolset (`"0.0.0"` or unset):** `"xz"` is forwarded as `--compression xz`.
-   * `"gzip"`, `"zstd"`, `null`, and unset all fall through to the root-level `compression` option:
-   * - `"maximum"` → `--compression xz` (overrides any per-target gzip/zstd value)
+   * **FUSE2 toolset (`"0.0.0"` or unset):** only `"xz"` and `"gzip"` are forwarded
+   * to mksquashfs (`-comp <value>`); `"xz"` additionally passes `-Xdict-size 100% -b 1048576`.
+   * `"zstd"`, `null`, and unset fall through to the root-level `compression` option:
+   * - `"maximum"` → `"xz"`
    * - anything else → flag omitted (mksquashfs defaults to gzip)
    *
    * **Static-runtime toolsets (`>= 1.0.0`):** `"gzip"` and `"zstd"` are forwarded

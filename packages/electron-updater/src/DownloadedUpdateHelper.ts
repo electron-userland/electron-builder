@@ -1,11 +1,8 @@
-import { UpdateInfo } from "builder-util-runtime"
-import { createHash } from "crypto"
-import { createReadStream } from "fs"
-// @ts-ignore
-import * as isEqual from "lodash.isequal"
-import { ResolvedUpdateFileInfo } from "./types"
-import { Logger } from "./types"
-import { pathExists, readJson, emptyDir, outputJson, unlink } from "fs-extra"
+import { hashFile, UpdateInfo } from "builder-util-runtime"
+import isEqual from "lodash.isequal"
+import { ResolvedUpdateFileInfo } from "./types.js"
+import { Logger } from "./types.js"
+import fsExtra from "fs-extra"
 import * as path from "path"
 
 /** @private **/
@@ -39,7 +36,7 @@ export class DownloadedUpdateHelper {
     if (this.versionInfo != null && this.file === updateFile && this.fileInfo != null) {
       // update has already been downloaded from this running instance
       // check here only existence, not checksum
-      if (isEqual(this.versionInfo, updateInfo) && isEqual(this.fileInfo.info, fileInfo.info) && (await pathExists(updateFile))) {
+      if (isEqual(this.versionInfo, updateInfo) && isEqual(this.fileInfo.info, fileInfo.info) && (await fsExtra.pathExists(updateFile))) {
         return updateFile
       } else {
         return null
@@ -75,8 +72,77 @@ export class DownloadedUpdateHelper {
     }
 
     if (isSaveCache) {
-      await outputJson(this.getUpdateInfoFile(), this._downloadedFileInfo)
+      await fsExtra.outputJson(this.getUpdateInfoFile(), this._downloadedFileInfo)
     }
+  }
+
+  /**
+   * Marks the already-downloaded update as "install on next launch" by adding a flag to the persisted
+   * `update-info.json`. Synchronous because it must be usable from the app `quit` event handler.
+   * @returns `true` if the marker was persisted.
+   */
+  markInstallOnNextLaunchSync(logger: Logger): boolean {
+    const downloadedFileInfo = this._downloadedFileInfo
+    if (downloadedFileInfo == null) {
+      logger.warn("Cannot mark update for install on next launch: no downloaded update info available")
+      return false
+    }
+    try {
+      this._downloadedFileInfo = { ...downloadedFileInfo, installOnNextLaunch: true }
+      fsExtra.outputJsonSync(this.getUpdateInfoFile(), this._downloadedFileInfo)
+      return true
+    } catch (e: any) {
+      logger.warn(`Cannot persist install-on-next-launch marker: ${e.message || e}`)
+      return false
+    }
+  }
+
+  /**
+   * Reads the persisted update info and returns it only when a previous launch marked it for install on next launch.
+   */
+  async getPendingInstallInfo(): Promise<CachedUpdateInfo | null> {
+    try {
+      const cachedInfo: CachedUpdateInfo = await fsExtra.readJson(this.getUpdateInfoFile())
+      return cachedInfo?.installOnNextLaunch === true && cachedInfo.fileName != null ? cachedInfo : null
+    } catch (_ignored) {
+      return null
+    }
+  }
+
+  /**
+   * Removes the install-on-next-launch marker while keeping the downloaded update cached,
+   * so it can still be installed on quit or re-marked later.
+   */
+  async clearPendingInstallMarker(logger: Logger): Promise<void> {
+    try {
+      const updateInfoFile = this.getUpdateInfoFile()
+      const cachedInfo: CachedUpdateInfo = await fsExtra.readJson(updateInfoFile)
+      if (cachedInfo?.installOnNextLaunch === true) {
+        const { installOnNextLaunch: _cleared, ...rest } = cachedInfo
+        await fsExtra.outputJson(updateInfoFile, rest)
+      }
+      if (this._downloadedFileInfo?.installOnNextLaunch === true) {
+        const { installOnNextLaunch: _clearedInMemory, ...restInMemory } = this._downloadedFileInfo
+        this._downloadedFileInfo = restInMemory
+      }
+    } catch (e: any) {
+      if (e.code !== "ENOENT") {
+        logger.warn(`Cannot clear install-on-next-launch marker: ${e.message || e}`)
+      }
+    }
+  }
+
+  /**
+   * Validates the cached pending update against freshly fetched update info (checksum of the metadata and of the
+   * file on disk) and makes it the current downloaded file, so `installerPath` resolves to it.
+   * @returns Path to the validated installer or `null` if the cache is unusable.
+   */
+  async validateCachedPendingInstall(fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
+    const cachedUpdateFile = await this.getValidCachedUpdateFile(fileInfo, logger)
+    if (cachedUpdateFile != null) {
+      this._file = cachedUpdateFile
+    }
+    return cachedUpdateFile
   }
 
   async clear(): Promise<void> {
@@ -90,7 +156,7 @@ export class DownloadedUpdateHelper {
   private async cleanCacheDirForPendingUpdate(): Promise<void> {
     try {
       // remove stale data
-      await emptyDir(this.cacheDirForPendingUpdate)
+      await fsExtra.emptyDir(this.cacheDirForPendingUpdate)
     } catch (_ignore) {
       // ignore
     }
@@ -104,14 +170,14 @@ export class DownloadedUpdateHelper {
   private async getValidCachedUpdateFile(fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
     const updateInfoFilePath: string = this.getUpdateInfoFile()
 
-    const doesUpdateInfoFileExist = await pathExists(updateInfoFilePath)
+    const doesUpdateInfoFileExist = await fsExtra.pathExists(updateInfoFilePath)
     if (!doesUpdateInfoFileExist) {
       return null
     }
 
     let cachedInfo: CachedUpdateInfo
     try {
-      cachedInfo = await readJson(updateInfoFilePath)
+      cachedInfo = await fsExtra.readJson(updateInfoFilePath)
     } catch (error: any) {
       let message = `No cached update info available`
       if (error.code !== "ENOENT") {
@@ -138,7 +204,7 @@ export class DownloadedUpdateHelper {
     }
 
     const updateFile = path.join(this.cacheDirForPendingUpdate, cachedInfo.fileName)
-    if (!(await pathExists(updateFile))) {
+    if (!(await fsExtra.pathExists(updateFile))) {
       logger.info("Cached update file doesn't exist")
       return null
     }
@@ -158,25 +224,15 @@ export class DownloadedUpdateHelper {
   }
 }
 
-interface CachedUpdateInfo {
+export interface CachedUpdateInfo {
   fileName: string
   sha512: string
   readonly isAdminRightsRequired: boolean
-}
-
-function hashFile(file: string, algorithm = "sha512", encoding: "base64" | "hex" = "base64", options?: any): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const hash = createHash(algorithm)
-    hash.on("error", reject).setEncoding(encoding)
-
-    createReadStream(file, { ...options, highWaterMark: 1024 * 1024 /* better to use more memory but hash faster */ })
-      .on("error", reject)
-      .on("end", () => {
-        hash.end()
-        resolve(hash.read() as string)
-      })
-      .pipe(hash, { end: false })
-  })
+  /**
+   * Set when the app quit with `autoInstallEvent: "onNextLaunch"` (or via `quitAndInstall({ waitUntilNextLaunch: true })`),
+   * meaning the cached update should be installed on the next application launch after successful re-validation.
+   */
+  readonly installOnNextLaunch?: boolean
 }
 
 export async function createTempUpdateFile(name: string, cacheDir: string, log: Logger): Promise<string> {
@@ -185,7 +241,7 @@ export async function createTempUpdateFile(name: string, cacheDir: string, log: 
   let result = path.join(cacheDir, name)
   for (let i = 0; i < 3; i++) {
     try {
-      await unlink(result)
+      await fsExtra.unlink(result)
       return result
     } catch (e: any) {
       if (e.code === "ENOENT") {

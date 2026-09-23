@@ -5,11 +5,6 @@
     "outDir": "out",
     "rootDir": "src"
   },
-  "jsdoc": {
-    "out": "../../scripts/jsdoc/out/builder-util-runtime",
-    "examples": "../../scripts/jsdoc/examples",
-    "access": "public"
-  },
   "include": [
     "src/**/*.ts"
   ]

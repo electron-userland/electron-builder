@@ -1,15 +1,16 @@
 import { Platform } from "app-builder-lib"
-import { PM } from "app-builder-lib/src/node-module-collector"
-import { copyFile, outputFile, rm, writeFile } from "fs-extra"
+import { PM } from "app-builder-lib/internal"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, getFixtureDir, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
-import { ELECTRON_VERSION } from "./helpers/testConfig"
+import { assertThat } from "./helpers/fileAssert.js"
+import { app, assertPack, getFixtureDir, getPackageManagerWithVersion, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester.js"
+import { ELECTRON_VERSION } from "./helpers/testConfig.js"
 import { isEmptyOrSpaces, spawn } from "builder-util"
 import * as which from "which"
 
 const yarnVersion = getPackageManagerWithVersion(PM.YARN).prepareEntry
 const yarnBerryVersion = getPackageManagerWithVersion(PM.YARN_BERRY).prepareEntry
+const npmVersion = getPackageManagerWithVersion(PM.NPM).prepareEntry
 
 const hasBun = !isEmptyOrSpaces(which.sync("bun", { nothrow: true }))
 
@@ -28,7 +29,7 @@ const packageConfig = (data: any, version: string) => {
   return data
 }
 
-describe.ifNotWindows("Package Managers", () => {
+describe("Package Managers", { sequential: true }, () => {
   test("yarn", ({ expect }) =>
     assertPack(
       expect,
@@ -48,10 +49,10 @@ describe.ifNotWindows("Package Managers", () => {
             false
           )
           await modifyPackageJson(projectDir, data => packageConfig(data, yarnVersion), true)
-          await writeFile(path.join(projectDir, "yarn.lock"), "")
-          await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
-          await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
-          await rm(path.join(projectDir, ".yarnrc.yml"))
+          await fsExtra.writeFile(path.join(projectDir, "yarn.lock"), "")
+          await fsExtra.writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+          await fsExtra.copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
+          await fsExtra.rm(path.join(projectDir, ".yarnrc.yml"))
           await spawn("yarn", ["install"], {
             cwd: projectDir,
             env: testEnv,
@@ -85,9 +86,9 @@ describe.ifNotWindows("Package Managers", () => {
             false
           )
           await modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), true)
-          await writeFile(path.join(projectDir, "yarn.lock"), "")
-          await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
-          await copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
+          await fsExtra.writeFile(path.join(projectDir, "yarn.lock"), "")
+          await fsExtra.writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+          await fsExtra.copyFile(path.join(getFixtureDir(), ".pnp.cjs"), path.join(projectDir, ".pnp.cjs"))
           await spawn("yarn", ["install"], {
             cwd: projectDir,
             env: testEnv,
@@ -201,7 +202,7 @@ describe.ifNotWindows("Package Managers", () => {
             data =>
               packageConfig(
                 data,
-                "pnpm@10.18.0+sha512.e804f889f1cecc40d572db084eec3e4881739f8dec69c0ff10d2d1beff9a4e309383ba27b5b750059d7f4c149535b6cd0d2cb1ed3aeb739239a4284a68f40cfa"
+                "pnpm@10.28.2+sha512.41872f037ad22f7348e3b1debbaf7e867cfd448f2726d9cf74c08f19507c31d2c8e7a11525b983febc2df640b5438dee6023ebb1f84ed43cc2d654d2bc326264"
               ),
             false
           ),
@@ -218,7 +219,7 @@ describe.ifNotWindows("Package Managers", () => {
       {
         storeDepsLockfileSnapshot: true,
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-        projectDirCreated: projectDir => modifyPackageJson(projectDir, data => packageConfig(data, "npm@9.8.1"), false),
+        projectDirCreated: projectDir => modifyPackageJson(projectDir, data => packageConfig(data, npmVersion), false),
       }
     ))
 
@@ -255,7 +256,7 @@ describe.ifNotWindows("Package Managers", () => {
                 "left-pad": "1.3.0",
               }
             }),
-            outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "isolated"\n'),
+            fsExtra.outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "isolated"\n'),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -298,7 +299,7 @@ describe.ifNotWindows("Package Managers", () => {
                 "is-bigint": "1.0.4",
               }
             }),
-            outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "isolated"\n'),
+            fsExtra.outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "isolated"\n'),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -339,7 +340,7 @@ describe.ifNotWindows("Package Managers", () => {
                 "left-pad": "1.3.0",
               }
             }),
-            outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "hoisted"\n'),
+            fsExtra.outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "hoisted"\n'),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -382,7 +383,7 @@ describe.ifNotWindows("Package Managers", () => {
                 "is-bigint": "1.0.4",
               }
             }),
-            outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "hoisted"\n'),
+            fsExtra.outputFile(path.join(projectDir, "bunfig.toml"), '[install]\nlinker = "hoisted"\n'),
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
@@ -409,8 +410,8 @@ describe.ifNotWindows("Package Managers", () => {
             false
           )
           await modifyPackageJson(projectDir, data => packageConfig(data, yarnBerryVersion), true)
-          await writeFile(path.join(projectDir, "yarn.lock"), "")
-          await writeFile(path.join(projectDir, "app", "yarn.lock"), "")
+          await fsExtra.writeFile(path.join(projectDir, "yarn.lock"), "")
+          await fsExtra.writeFile(path.join(projectDir, "app", "yarn.lock"), "")
         },
       }
     ))
@@ -468,7 +469,16 @@ describe.ifNotWindows("Package Managers", () => {
             targets: linuxDirTarget,
             config: {
               files: ["**/*"],
-              asarUnpack: ["**/node_modules/foo/**/*"],
+              asar: { unpack: ["**/node_modules/foo/**/*"] },
+              // npm >= 10 (install-links=false) symlinks a `file:` dependency and does NOT install
+              // its transitive deps into the project tree (`npm ls` reports `ms` as missing), and
+              // the traversal collector cannot resolve them from the out-of-tree link target either
+              // — so `ms` is genuinely absent on disk for those package-manager variants. This test
+              // exercises file:-protocol bundling/unpacking, not dependency completeness; allow the
+              // known miss so the fail-closed `allowMissingDependencies` default (issue #10058)
+              // doesn't reject the pack. The pnpm/yarn variants install `ms` normally, making the
+              // allow-list inert there.
+              allowMissingDependencies: ["ms"],
             },
           },
           {
@@ -477,8 +487,8 @@ describe.ifNotWindows("Package Managers", () => {
             projectDirCreated: async (projectDir, tmpDir, testEnv) => {
               const tempDir = await tmpDir.getTempDir()
               const localPath = path.join(tempDir, "foo")
-              await outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
-              await outputFile(path.join(localPath, "index.js"), `module.exports = require("ms")`)
+              await fsExtra.outputFile(path.join(localPath, "package.json"), `{"name":"foo","version":"9.0.0","main":"index.js","license":"MIT","dependencies":{"ms":"2.0.0"}}`)
+              await fsExtra.outputFile(path.join(localPath, "index.js"), `module.exports = require("ms")`)
 
               const pmCommand = getPackageManagerWithVersion(pm).cli
               await spawn(pmCommand, ["install"], {

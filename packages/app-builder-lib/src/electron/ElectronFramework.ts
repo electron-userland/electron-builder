@@ -1,20 +1,21 @@
-import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, exec, getPath7za, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, statOrNull, unlinkIfExists } from "builder-util"
-import { emptyDir, readdir, rename, rm } from "fs-extra"
+import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, orIfFileNotExist, sanitizeDirPath, statOrNull, unlinkIfExists } from "builder-util"
+import _fsExtra from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
-import { Configuration } from "../configuration"
-import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { Packager, Platform } from "../index"
-import { LinuxPackager } from "../linuxPackager"
-import { MacPackager } from "../macPackager"
-import { getTemplatePath } from "../util/pathManager"
-import { resolveFunction } from "../util/resolve"
-import { downloadElectronArtifactZip, ElectronDownloadOptions, ElectronGetOptions, extractArchive } from "../util/electronGet"
-export { ElectronDownloadOptions }
-import { createMacApp } from "./electronMac"
-import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
-import { addWinAsarIntegrity } from "./electronWin"
-import { FFMPEGInjector } from "./injectFFMPEG"
+import { Configuration } from "../configuration.js"
+import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework.js"
+import { Packager, Platform } from "../index.js"
+import { LinuxPackager } from "../linuxPackager.js"
+import { MacPackager } from "../macPackager.js"
+import { PlatformType } from "../targets/mac/MacTargetHelper.js"
+import { downloadElectronArtifactZip, extractArchive } from "../util/electronGet.js"
+import { getTemplatePath } from "../util/pathManager.js"
+import { resolveFunction } from "../util/resolve.js"
+import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion.js"
+import { FFMPEGInjector } from "./injectFFMPEG.js"
+import { createMacApp } from "./mac/electronMac.js"
+import { addWinAsarIntegrity } from "./win/electronWin.js"
+const { emptyDir, readdir, rename, rm } = _fsExtra
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -34,20 +35,6 @@ export function createBrandingOpts(opts: Configuration): Required<ElectronBrandi
   }
 }
 
-function createDownloadOpts(opts: Configuration, platform: ElectronPlatformName, arch: string, electronVersion: string): ElectronDownloadOptions {
-  const base: ElectronDownloadOptions = { platform, arch, version: electronVersion }
-  const dl = opts.electronDownload
-  if (dl == null) {
-    return base
-  }
-  if (Object.hasOwnProperty.call(dl, "mirrorOptions")) {
-    // ElectronGetOptions: flatten mirrorOptions.mirror for the app-builder binary
-    const { mirrorOptions } = dl as ElectronGetOptions
-    return { ...base, mirror: mirrorOptions?.mirror ?? undefined }
-  }
-  return { ...base, ...dl }
-}
-
 async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
   const { appOutDir, packager } = options
   const electronBranding = createBrandingOpts(packager.config)
@@ -62,14 +49,16 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
       await addWinAsarIntegrity(executable, options.asarIntegrity)
     }
   } else {
-    await createMacApp(packager as MacPackager, appOutDir, options.asarIntegrity, (options.platformName as ElectronPlatformName) === "mas")
+    // Prefer the threaded 3-way flavor; fall back to the lossy platformName only if it wasn't provided.
+    const targetPlatform: PlatformType = options.platformType ?? (options.platformName === "mas" ? "mas" : "mac")
+    await createMacApp(packager as MacPackager, appOutDir, options.asarIntegrity, targetPlatform)
   }
   await removeUnusedLanguagesIfNeeded(options)
 }
 
-async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions) {
+export async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions) {
   const { packager, appOutDir } = options
-  const { config, platformSpecificBuildOptions, platform } = packager
+  const { config, platform } = packager
 
   const getLocalesConfig = () => {
     if (platform === Platform.MAC) {
@@ -78,44 +67,49 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
     return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: ".pak" }
   }
 
-  const wantedLanguages = asArray(platformSpecificBuildOptions.electronLanguages || config.electronLanguages)
-    .map(it => it.trim().toLowerCase())
+  // case-insensitive, treating "-" and "_" as the same separator
+  const normalizeLocale = (locale: string) => locale.trim().toLowerCase().replace(/_/g, "-")
+  const wantedLanguages = asArray(packager.platformOptions.electronLanguages || config.electronLanguages)
+    .map(normalizeLocale)
     .filter(it => it.length > 0)
   if (!wantedLanguages.length) {
     return
   }
 
-  const { dirs, langFileExt } = getLocalesConfig()
-  // noinspection SpellCheckingInspection
-  const deleteNonMatchedLanguages: (dir: string) => Promise<Promise<void>[] | undefined> = async (dir: string) => {
-    const files = await readdir(dir)
-    return files.map(async file => {
-      if (path.extname(file) !== langFileExt) {
-        return
-      }
+  // bare wanted "en" keeps "en-US.pak"; region-qualified wanted "en-US" keeps mac's bare "en.lproj"
+  const isLocaleMatch = (wanted: string, language: string) => wanted === language || language.startsWith(`${wanted}-`) || wanted.startsWith(`${language}-`)
 
-      const language = path.basename(file, langFileExt).toLowerCase()
-      const isWantedLocale = wantedLanguages.some(
-        wantedLanguage =>
-          // exact file
-          wantedLanguage === language ||
-          // prefix (e.g. "en" matches "en-US")
-          wantedLanguage.startsWith(`${language}-`) ||
-          // prefix (e.g. "en" matches "en_US")
-          wantedLanguage.startsWith(`${language}_`)
-      )
-      if (isWantedLocale) {
-        return undefined
+  const { dirs, langFileExt } = getLocalesConfig()
+  const matchedWantedLanguages = new Set<string>()
+  const filesToDelete: string[] = []
+  for (const dir of dirs) {
+    const localeFiles = (await readdir(dir)).filter(file => path.extname(file) === langFileExt)
+    const unwantedFiles: string[] = []
+    for (const file of localeFiles) {
+      const language = normalizeLocale(path.basename(file, langFileExt))
+      const matches = wantedLanguages.filter(wanted => isLocaleMatch(wanted, language))
+      if (matches.length === 0) {
+        unwantedFiles.push(path.join(dir, file))
+      } else {
+        matches.forEach(it => matchedWantedLanguages.add(it))
       }
-      return rm(path.join(dir, file), { recursive: true, force: true })
-    })
+    }
+    if (localeFiles.length > 0 && unwantedFiles.length === localeFiles.length) {
+      // an empty locales dir produces an app that crashes at startup (https://github.com/electron/electron/issues/52307)
+      log.warn(
+        { electronLanguages: wantedLanguages, dir },
+        "electronLanguages doesn't match any locale in this directory, skipping cleanup to avoid packaging an app without locales"
+      )
+      continue
+    }
+    filesToDelete.push(...unwantedFiles)
   }
-  const allDeletedFiles = (await Promise.all(dirs.map(deleteNonMatchedLanguages))).flat().filter((it): it is Promise<void> => it != null)
-  if (allDeletedFiles.length === 0) {
-    log.warn({ electronLanguages: wantedLanguages }, "no locales found matching wanted languages, skipping cleanup")
-    return
+
+  const unmatchedLanguages = wantedLanguages.filter(it => !matchedWantedLanguages.has(it))
+  if (unmatchedLanguages.length > 0) {
+    log.warn({ electronLanguages: unmatchedLanguages }, "some electronLanguages don't match any locale, they may be misspelled or unavailable on this platform")
   }
-  await asyncPool(MAX_FILE_REQUESTS, allDeletedFiles, it => it)
+  await asyncPool(MAX_FILE_REQUESTS, filesToDelete, file => rm(file, { recursive: true, force: true }))
 }
 
 class ElectronFramework implements Framework {
@@ -148,8 +142,7 @@ class ElectronFramework implements Framework {
   }
 
   async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
-    const downloadOptions = createDownloadOpts(options.packager.config, options.platformName, options.arch, this.version)
-    const shouldCleanup = await unpack(options, downloadOptions, this.distMacOsAppName)
+    const shouldCleanup = await unpack(options, this.distMacOsAppName)
     await cleanupAfterUnpack(options, this.distMacOsAppName, shouldCleanup)
     if (options.packager.config.downloadAlternateFFmpeg) {
       const injector = new FFMPEGInjector(options, this.version, createBrandingOpts(options.packager.config))
@@ -184,9 +177,9 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
 /**
  * Unpacks a custom or default Electron distribution into the app output directory.
  */
-async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, downloadOptions: ElectronDownloadOptions, distMacOsAppName: string): Promise<boolean> {
+async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, _distMacOsAppName: string): Promise<boolean> {
   async function selectElectron(filepath: string) {
-    const resolvedDist = path.isAbsolute(filepath) ? filepath : path.resolve(packager.projectDir, filepath)
+    const resolvedDist = sanitizeDirPath(path.isAbsolute(filepath) ? filepath : path.resolve(packager.projectDir, filepath))
 
     const electronDistStats = await statOrNull(resolvedDist)
     if (!electronDistStats) {
@@ -197,8 +190,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
 
     if (resolvedDist.endsWith(".zip")) {
       log.info({ zipFile: resolvedDist }, "using custom electronDist zip file")
-      await emptyDir(appOutDir)
-      await exec(await getPath7za(), ["x", "-bd", resolvedDist, `-o${appOutDir}`, "-y"])
+      await extractArchive(resolvedDist, appOutDir)
       return false // do not clean up after unpacking, it's a custom bundle and we should respect its configuration/contents as required
     }
 
@@ -225,8 +217,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
     throw new Error(`The specified electronDist is neither a zip file nor a directory: ${resolvedDist}. Please provide a valid path to the Electron zip file or cache directory.`)
   }
 
-  const { packager, appOutDir, platformName } = prepareOptions
-  const { version, arch } = downloadOptions
+  const { packager, appOutDir, platformName, arch, version } = prepareOptions
   const defaultZipName = `electron-v${version}-${platformName}-${arch}.zip`
 
   const electronDist = packager.config.electronDist
@@ -236,7 +227,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
 
   let resolvedDist: string | null = null
   try {
-    const electronDistHook: any = await resolveFunction(packager.appInfo.type, electronDist, "electronDist", await packager.info.getWorkspaceRoot())
+    const electronDistHook: any = await resolveFunction(packager.appInfo.type, electronDist, "electronDist", await packager.getWorkspaceRoot())
     resolvedDist = typeof electronDistHook === "function" ? await Promise.resolve(electronDistHook(prepareOptions)) : electronDistHook
   } catch (error: any) {
     log.warn({ error }, "Failed to resolve electronDist, using default unpack logic")
@@ -245,12 +236,13 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
   if (resolvedDist == null) {
     // if no custom electronDist is provided, use the default unpack logic
     log.debug(null, "no custom electronDist provided, unpacking default Electron distribution")
+    const downloadOptions = packager.config.electronGet
     const zipPath = await downloadElectronArtifactZip({
-      electronDownload: downloadOptions,
+      options: downloadOptions,
       artifactName: "electron",
-      platformName: downloadOptions.platform ?? prepareOptions.platformName,
-      arch: downloadOptions.arch ?? prepareOptions.arch,
-      version: downloadOptions.version ?? prepareOptions.version,
+      platformName: prepareOptions.platformName,
+      arch: prepareOptions.arch,
+      version: prepareOptions.version,
     })
     await extractArchive(zipPath, appOutDir)
     log.info({ output: appOutDir }, "downloaded electron zip extracted successfully")
@@ -259,7 +251,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, d
   return selectElectron(resolvedDist)
 }
 
-function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOptions, distMacOsAppName: string, isFullCleanup: boolean) {
+export function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOptions, distMacOsAppName: string, isFullCleanup: boolean) {
   const out = prepareOptions.appOutDir
   const isMac = prepareOptions.packager.platform === Platform.MAC
   const resourcesPath = isMac ? path.join(out, distMacOsAppName, "Contents", "Resources") : path.join(out, "resources")
@@ -267,10 +259,18 @@ function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOpti
   return Promise.all([
     isFullCleanup ? unlinkIfExists(path.join(resourcesPath, "default_app.asar")) : Promise.resolve(),
     isFullCleanup ? unlinkIfExists(path.join(out, "version")) : Promise.resolve(),
-    isMac
-      ? Promise.resolve()
-      : rename(path.join(out, "LICENSE"), path.join(out, "LICENSE.electron.txt")).catch(() => {
-          /* ignore */
-        }),
+    retainElectronLicenseFiles(out, resourcesPath, isMac),
   ])
+}
+
+/**
+ * The Electron dist ships Electron's own `LICENSE` and Chromium's `LICENSES.chromium.html` next to the binary, and both licenses require them to be
+ * retained in distributables. On win/linux they stay next to the executable, but on macOS they sit outside the `.app` bundle, which is the only thing
+ * packaged into the artifacts, so move them into `Contents/Resources`. See https://github.com/electron-userland/electron-builder/issues/9407
+ */
+async function retainElectronLicenseFiles(appOutDir: string, resourcesPath: string, isMac: boolean) {
+  const destinationDir = isMac ? resourcesPath : appOutDir
+  // a custom Electron distribution may not ship license files, so only a missing source file is tolerated; any other error propagates
+  const move = (name: string, newName: string = name) => orIfFileNotExist(rename(path.join(appOutDir, name), path.join(destinationDir, newName)), undefined)
+  await Promise.all([move("LICENSE", "LICENSE.electron.txt"), ...(isMac ? [move("LICENSES.chromium.html")] : [])])
 }

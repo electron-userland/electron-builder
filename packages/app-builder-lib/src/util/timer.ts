@@ -15,7 +15,7 @@ export class DevTimer implements Timer {
   }
 
   end(): void {
-    console.info(`${this.label}: ${this.endAndGet()}`)
+    debug(`${this.label}: ${this.endAndGet()}`)
   }
 }
 

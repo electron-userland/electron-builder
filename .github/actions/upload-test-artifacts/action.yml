@@ -1,0 +1,39 @@
+name: 'Upload test artifacts'
+description: "Upload this job's Vitest smart-cache, plus its per-shard JSON + blob reports, for the merge job to consume"
+inputs:
+  name:
+    description: "Unique artifact label for this shard/job (e.g. linux-3, windows-0, updater, snap-core24, e2e-apt)"
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    # Smart-cache timing data → merged by merge-smart-cache.ts to balance future shards. A single
+    # file, kept as its own artifact (vitest-smart-cache-*) so the merge job's existing download
+    # pattern and merge script (which expects _vitest-smart-cache.json at the artifact root) are
+    # unchanged. The relative path resolves on every platform (Windows writes the same file).
+    - name: Upload smart cache artifact
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: vitest-smart-cache-${{ inputs.name }}
+        path: test/vitest-scripts/vitest-config/_vitest-smart-cache.json
+        retention-days: 1
+        if-no-files-found: error
+
+    # Per-shard reports → run summary + failed-tests list (test-summary.ts, from the JSON) and the
+    # combined @vitest/ui HTML + merged coverage (merge-reports.ts, from the blobs). Both dirs are
+    # written under the workspace by run-vitest.ts (docker mounts `-v $(pwd):/project`, so reports
+    # emitted inside the container surface here too). The blob dir is `vitest-blobs/`, NOT vitest's
+    # default `.vitest-reports/`: actions/upload-artifact excludes dot-directories by default
+    # (include-hidden-files=false), which would silently drop every blob. if: always() so the reports
+    # upload even if the cache upload above failed; if-no-files-found: ignore for jobs that produced none.
+    - name: Upload test report
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: vitest-report-${{ inputs.name }}
+        path: |
+          test-results/
+          vitest-blobs/
+        retention-days: 1
+        if-no-files-found: ignore

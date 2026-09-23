@@ -5,6 +5,7 @@ win7Required:
   de: Windows 7 oder höher wird vorausgesetzt
   it: È necessario disporre del sistema operativo Windows 7 e successivi
   fr: Windows 7 (ou une version ultérieure) est requis
+  he: נדרש Windows 7 ומעלה
   ja: Windows 7 以降が必要です
   ko: Windows 7 이상이 필요합니다
   ru: Требуется Windows 7 и выше
@@ -27,6 +28,7 @@ x64WinRequired:
   de: 64-Bit-Windows wird vorausgesetzt
   it: È necessario disporre di un sistema operativo Windows a 64 bit
   fr: Windows 64 bits est requis
+  he: נדרש Windows בגרסת 64 סיביות
   ja: 64 ビット バージョンの Windows が必要です
   ko: 64 비트 버전의 Windows가 필요합니다
   ru: Требуется Windows 64-bit
@@ -132,6 +134,7 @@ installing:
   de: Installation läuft, bitte warten...
   it: Attendere prego. Installazione in corso...
   fr: En cours d’installation... Veuillez patienter s'il vous plaît.
+  he: מתקין, נא להמתין...
   ja: インストールしています。しばらくお待ちください...
   ko: 설치하고 있습니다. 잠시 기다려주십시오...
   ru: Установка, пожалуйста, подождите...
@@ -154,6 +157,7 @@ areYouSureToUninstall:
   de: Sind Sie sicher, dass Sie ${PRODUCT_NAME} deinstallieren möchten?
   it: Sicuro di voler procedere alla disinstallazione di ${PRODUCT_NAME}?
   fr: Etes-vous sûr(e) de vouloir désinstaller ${PRODUCT_NAME}?
+  he: האם אתה בטוח שברצונך להסיר את ${PRODUCT_NAME}?
   ja: ${PRODUCT_NAME} をアンインストールしてもよろしいですか？
   ko: ${PRODUCT_NAME}을(를) 제거 하시겠습니까?
   ru: Вы уверены, что хотите удалить ${PRODUCT_NAME}?
@@ -238,3 +242,4 @@ uninstallFailed:
 appClosing:
   en: "Closing running ${PRODUCT_NAME}..."
   cs: "Ukončuji aplikaci ${PRODUCT_NAME}..."
+  he: "סוגר את ${PRODUCT_NAME} הפעיל..."

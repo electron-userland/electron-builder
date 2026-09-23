@@ -1,11 +1,18 @@
 import { build as _build, Configuration, DIR_TARGET, Packager, PackagerOptions, Platform } from "app-builder-lib"
-import { addValue, Arch, archFromString, deepAssign } from "builder-util"
-import * as chalk from "chalk"
-import { PublishOptions } from "electron-publish"
+import { addTargetsForPlatform } from "app-builder-lib/internal"
+import { Arch, archFromString, log } from "builder-util"
+import { deepAssign } from "builder-util-runtime"
+import chalk from "chalk"
+import type { PublishOptions } from "electron-publish"
+import { hideBin } from "yargs/helpers"
 import * as yargs from "yargs"
 
 export function createYargs(): yargs.Argv<unknown> {
-  return yargs.parserConfiguration({
+  // In ESM, yargs.default is the factory function; call it to create an instance.
+  // In CJS, yargs.default is already an Argv singleton.
+  const factory = (yargs as any).default ?? yargs
+  const instance = typeof factory?.parserConfiguration === "function" ? factory : factory(hideBin(process.argv))
+  return (instance as unknown as yargs.Argv<unknown>).parserConfiguration({
     "camel-case-expansion": false,
   })
 }
@@ -52,30 +59,12 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       return result.length === 0 && currentIfNotSpecified ? [archFromString(process.arch)] : result
     }
 
-    let archToType = targets.get(platform)
-    if (archToType == null) {
-      archToType = new Map<Arch, Array<string>>()
-      targets.set(platform, archToType)
-    }
-
-    if (types.length === 0) {
+    addTargetsForPlatform(targets, platform, types, commonArch, archToType => {
       const defaultTargetValue = args.dir ? [DIR_TARGET] : []
       for (const arch of commonArch(args.dir === true)) {
         archToType.set(arch, defaultTargetValue)
       }
-      return
-    }
-
-    for (const type of types) {
-      const suffixPos = type.lastIndexOf(":")
-      if (suffixPos > 0) {
-        addValue(archToType, archFromString(type.substring(suffixPos + 1)), type.substring(0, suffixPos))
-      } else {
-        for (const arch of commonArch(true)) {
-          addValue(archToType, arch, type)
-        }
-      }
-    }
+    })
   }
 
   if (args.mac != null) {
@@ -147,9 +136,12 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       coerceTypes(config.extraMetadata)
     }
 
-    // ability to disable code sign using -c.mac.identity=null
+    // mac.sign / mac.universal are nested option bags holding booleans and the signing identity
+    // (e.g. sign.identity, sign.hardenedRuntime, universal.mergeASARs). coerceValue recurses into the
+    // objects (so `-c.mac.sign.identity=null` disables code signing) and also handles `-c.mac.sign=null`.
     if (config.mac != null) {
-      coerceValue(config.mac, "identity")
+      coerceValue(config.mac, "sign")
+      coerceValue(config.mac, "universal")
     }
 
     // fix Boolean type by coerceTypes
@@ -192,11 +184,36 @@ export function coerceTypes(host: any): any {
   return host
 }
 
+/** Emitted once per process — createTargets is called per invocation, not per platform. */
+let archAllWarningEmitted = false
+
+/**
+ * `arch: "all"` dropped ia32 in v27. The build stays green and simply produces no 32-bit artifact
+ * (plus an unexpected arm64 one), so the only evidence is a missing file in dist — nothing ties that
+ * back to the upgrade.
+ */
+function warnAboutArchAllExpansion(platforms: Array<Platform>): void {
+  if (archAllWarningEmitted || !platforms.some(platform => platform !== Platform.MAC)) {
+    return
+  }
+  archAllWarningEmitted = true
+  log.warn(
+    { expandsTo: "x64, arm64", previously: "x64, ia32", solution: "request ia32 explicitly (--ia32 / Arch.ia32) with electronVersion <= 43.x if you still ship 32-bit builds" },
+    'arch "all" no longer includes ia32. Electron 44 removed Windows ia32 builds and Linux ia32 zips ended at Electron 19, so the old expansion produced broken builds on current Electron. ' +
+      "See https://www.electron.build/docs/migration/v27-breaking-changes#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44"
+  )
+}
+
 export function createTargets(platforms: Array<Platform>, type?: string | null, arch?: string | null): Map<Platform, Map<Arch, Array<string>>> {
   const targets = new Map<Platform, Map<Arch, Array<string>>>()
+  if (arch === "all") {
+    warnAboutArchAllExpansion(platforms)
+  }
   for (const platform of platforms) {
     const archs =
-      arch === "all" ? (platform === Platform.MAC ? [Arch.x64, Arch.arm64, Arch.universal] : [Arch.x64, Arch.ia32]) : [archFromString(arch == null ? process.arch : arch)]
+      // BREAKING: since Electron 44 removed Windows ia32 and Linux armv7l builds (and linux-ia32 zips ended at Electron 19),
+      // "all" expands to x64 + arm64 on non-mac platforms instead of x64 + ia32. Request ia32 explicitly to build it (Electron <= 43 only).
+      arch === "all" ? (platform === Platform.MAC ? [Arch.x64, Arch.arm64, Arch.universal] : [Arch.x64, Arch.arm64]) : [archFromString(arch == null ? process.arch : arch)]
     const archToType = new Map<Arch, Array<string>>()
     targets.set(platform, archToType)
 
@@ -293,7 +310,7 @@ export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
     .group(["help", "version"], "Other:")
     .example("electron-builder -mwl", "build for macOS, Windows and Linux")
     .example("electron-builder --linux deb tar.xz", "build deb and tar.xz for Linux")
-    .example("electron-builder --win --ia32", "build for Windows ia32")
+    .example("electron-builder --win --arm64", "build for Windows arm64")
     .example("electron-builder -c.extraMetadata.foo=bar", "set package.json property `foo` to `bar`")
     .example("electron-builder --config.nsis.unicode=false", "configure unicode options for NSIS")
 }

@@ -1,7 +1,8 @@
 import { GithubOptions, HttpError } from "builder-util-runtime"
-import { PrivateGitHubProvider, PrivateGitHubUpdateInfo } from "electron-updater/src/providers/PrivateGitHubProvider"
-import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil"
-import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { PrivateGitHubProvider } from "electron-updater/src/providers/PrivateGitHubProvider"
+import type { PrivateGitHubUpdateInfo } from "electron-updater/src/providers/PrivateGitHubProvider"
+import { assertDownloadNotTriggered, getProvider, mockYaml } from "../helpers/providerTestUtil.js"
+import { createMockRequest, createNsisUpdater, trackEvents, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
 const MOCK_TOKEN = "ghp_test-token-12345"
 const MOCK_OWNER = "test-owner"

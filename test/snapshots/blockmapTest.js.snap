@@ -1,0 +1,215 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > append mode (deflate, 80 KB): embedded blockmap content is snapshotted 1`] = `
+[
+  20723,
+  12694,
+  31179,
+  8424,
+  6980,
+]
+`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > append mode (deflate, 80 KB): embedded blockmap content is snapshotted 2`] = `
+[
+  "XmHKShNZehZLRKQuQrL885h6",
+  "FQhcfY+/P/6l+jSQDZGyshbI",
+  "qUfqASANsB0CiKY4iJGkpago",
+  "F3N12HAZPTBooOuTLF3jJ12Y",
+  "NEtS4WKJxFOJ2yB12OVwXPdS",
+]
+`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > append mode (deflate, 80 KB): embedded blockmap content is snapshotted 3`] = `211`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > file-output sha512: returns SHA-512 of the original unmodified file 1`] = `
+[
+  10318,
+  13659,
+  32768,
+  16574,
+  13296,
+  22514,
+  15989,
+  24508,
+  13099,
+  8194,
+  14923,
+  18337,
+  32768,
+  11320,
+  32195,
+  11354,
+  8184,
+]
+`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > file-output sha512: returns SHA-512 of the original unmodified file 2`] = `
+[
+  "QhKJ/1WEOtJWDpgb1h+eunJb",
+  "L1aUYKuVhKwtYCzdYukU/W1T",
+  "M1Tx0T1gB0qSuGP0dPjti9j4",
+  "VDM50w4TqxqsRWD29F39nhJW",
+  "Sw3439Yhk/2BEp9s6ukBgd69",
+  "NWKBHpNhmqcqpTIvh8E04KDj",
+  "qJ0E0HM1IBoDcb1ibBAY4ixx",
+  "ussi77/wzA0fVqovSDR1o3Kp",
+  "exjtxIV7R7N4QAXlv0WRql70",
+  "LWs9M2jCzEuCIcMH+4udtha7",
+  "Vl3eel+WNVK/GnidIAUxMje2",
+  "XZYpi+zF6LuO1HUV06pmnnEy",
+  "UPZlXA+SL6WjUDKg/RRClMbF",
+  "bY4HqFYpQV7fyx01xwuLDMuw",
+  "Kmvx6Ptb8GrVJYXN0GgvS5I/",
+  "O1buq060rMl1JgbZ2S3JaQUc",
+  "ib9gMxECPPDyvlXnVvlLUD0h",
+]
+`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > file-output sha512: returns SHA-512 of the original unmodified file 3`] = `"iaX00D14yw+Aqii54/LWQmRZafkcPpSG16LzkaaVfjBLDrY9RK+dzAVGXkM/VQg8gKABXMd4MIVwjoeB9jPIog=="`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (200 KB, seed 12345): sizes and checksums are snapshotted 1`] = `
+[
+  30249,
+  12777,
+  32768,
+  9241,
+  32768,
+  10079,
+  22204,
+  9611,
+  26166,
+  13321,
+  816,
+]
+`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (200 KB, seed 12345): sizes and checksums are snapshotted 2`] = `
+[
+  "jjPrWepT4mbUfRhNr9tPN8LI",
+  "qkk7qOU2Lijhnw9GObPaEbQq",
+  "4usXGpOKRYror/hJ18ArwseI",
+  "RT9oeAjqbc9VU1w5tOpSQB2I",
+  "o3SOVouSMvLXGcLRrBK73vWh",
+  "MdyGQRq11sa+ma2jKCplL14K",
+  "JFSGxWPZoFfNSA5FqVcwoPoW",
+  "aoVASu0NUy5WDfN1LwAC8Gii",
+  "athb8LUrY6gkvzvkeXFX1WSD",
+  "fKdSUIqhfgwXnPox5pOpQW3W",
+  "bo7E1zkQleS8D5bDYnLfV3gl",
+]
+`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (500 KB, seed 99999): sizes and checksums are snapshotted 1`] = `
+[
+  32768,
+  25825,
+  15929,
+  14877,
+  30492,
+  26559,
+  14477,
+  32768,
+  8824,
+  15215,
+  23197,
+  15024,
+  12986,
+  27560,
+  12130,
+  9777,
+  11918,
+  32768,
+  32768,
+  10627,
+  32768,
+  18290,
+  10152,
+  13006,
+  18099,
+  1196,
+]
+`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > multi-chunk random data (500 KB, seed 99999): sizes and checksums are snapshotted 2`] = `
+[
+  "0370A9zsh++YHXDxFE4oB1AK",
+  "8xHqzquUQiRvNnHd/7Nnn4H7",
+  "5oBh4k7j942VnZslyz6f83Yd",
+  "17T2x8Bcitu26ngiSHZCDvWL",
+  "peKhTG4qGaZGg1REo44VgUvj",
+  "B1jRIIC8zzl7668sVYTkVuKk",
+  "j7LviKwJcI3V74tl0dOw/0V0",
+  "dWaiGoLciSmry1vFCfUyrGBn",
+  "HddH5tyGPqrNN7Oys9ru0uYS",
+  "8ej+gFA8s9Gp4BK/Lcu/nfud",
+  "JDzCX/5HUtyZQ1zP4HgRVy47",
+  "jxsNqWU5Df+CgCrwYOp+YLOl",
+  "doHnGMBjKb4nyBa9nICLUFXI",
+  "pFwx3//R2ycVOTkxa8sQ2VG1",
+  "Oj/qJh2kzcjpUkYpNF16LtqW",
+  "JneA3qqr+E6u6RT2pgXQH2kT",
+  "VocN8aGwrksSvPWt/L+9k2m1",
+  "NhrfNFvCLZEPbTo9n2QCIfwq",
+  "WCgW5HxsaLsCe7jB79kBNCZ/",
+  "yehpX3yS9g0s2G78dB5LSke6",
+  "1XhTC8qgCsZDMdxqZYKjs21d",
+  "2Z35cnNq+Nq4MFEXKq9G9qWW",
+  "rsrZFNqYD6fN1oeszMCVPODV",
+  "bpzLvCCO6NUpTtNz8UBSC5lU",
+  "hjSMFOPFrEi3zDfXd7Y4c4R/",
+  "ytHiI71sskf0YIxC6JdR0AzF",
+]
+`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted 1`] = `
+[
+  13312,
+]
+`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted 2`] = `
+[
+  "gk9YMffcIDK/zN5PKnsMVapv",
+]
+`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > single-chunk file (< MIN): sizes, checksums and sha512 are snapshotted 3`] = `"sxzkSHe86sbp9mgJVoklRspnOI5em4GlV0/aNmG4GEd6uf55qdP5WZB8ltFc8nEXUw2gfiwAxgoXJtMcaWDSnA=="`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > uniformly-filled buffer (150 KB, 0xFF): sizes and checksums are snapshotted 1`] = `
+[
+  32768,
+  32768,
+  32768,
+  32768,
+  18928,
+]
+`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > uniformly-filled buffer (150 KB, 0xFF): sizes and checksums are snapshotted 2`] = `
+[
+  "RJM38wOLt4YjTHQFFAIEwMJP",
+  "RJM38wOLt4YjTHQFFAIEwMJP",
+  "RJM38wOLt4YjTHQFFAIEwMJP",
+  "RJM38wOLt4YjTHQFFAIEwMJP",
+  "nj9R5h34FX79OmzP98zkRRLi",
+]
+`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > uniformly-zero buffer (100 KB): every interior chunk hits MAX=32768 1`] = `
+[
+  32768,
+  32768,
+  32768,
+  1696,
+]
+`;
+
+exports[`buildBlockMap — JS snapshots and binary golden-output > uniformly-zero buffer (100 KB): every interior chunk hits MAX=32768 2`] = `
+[
+  "49YOHSIXFI1QWFU53E3geupX",
+  "49YOHSIXFI1QWFU53E3geupX",
+  "49YOHSIXFI1QWFU53E3geupX",
+  "3LppS7jtIpzEueRwPfZNYt6c",
+]
+`;

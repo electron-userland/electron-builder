@@ -7,8 +7,8 @@ Code signing proves your application's identity and confirms it hasn't been tamp
 | Platform | Without Signing | With Signing |
 |---|---|---|
 | macOS | Gatekeeper blocks app; user must override in System Preferences | Runs normally; no warning |
-| Windows | SmartScreen warning on first run ("Unknown publisher") | Trusted install; SmartScreen learns from reputation |
-| Windows (EV cert) | N/A | Instant trust, no reputation period needed |
+| Windows | SmartScreen warning on first run ("Unknown publisher") | Publisher name shown; SmartScreen warning until reputation builds |
+| Windows (EV cert) | N/A | Same as OV since 2024 — no instant trust (see [Windows Code Signing](code-signing-win.md)) |
 
 On **macOS 10.15+**, notarization is additionally required for apps distributed outside the Mac App Store. An app that is code-signed but not notarized will be blocked by Gatekeeper unless the user explicitly overrides it.
 
@@ -39,11 +39,13 @@ All Apple certificates require membership in the [Apple Developer Program](https
 
 | Certificate Type | Trust | CI/CD Compatible | Notes |
 |---|---|---|---|
-| Standard OV Certificate | After reputation builds (days-weeks) | Yes (exportable) | Most common choice |
-| EV (Extended Validation) Certificate | Immediate | No (hardware dongle) | Best for fast trust; cannot be used in most CI |
-| Azure Trusted Signing | Immediate | Yes | Microsoft's cloud signing service; see [code-signing-win.md](code-signing-win.md) |
+| Standard OV Certificate | After reputation builds (weeks) | Yes (exportable `.pfx`) | Most common choice |
+| EV (Extended Validation) Certificate | After reputation builds — same as OV since 2024 | Yes, via a hardware-token method | Key bound to a hardware dongle/HSM; not exportable to a file |
+| Azure Trusted Signing | After reputation builds | Yes | Microsoft's cloud signing service; see [code-signing-win.md](code-signing-win.md). Microsoft: it "does not provide instant SmartScreen trust" ([source](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/code-signing-options)) |
 
 For Windows, purchase from any major CA (DigiCert, Sectigo, SSL.com). See [Get a Code Signing Certificate](https://msdn.microsoft.com/windows/hardware/drivers/dashboard/get-a-code-signing-certificate) (select "Microsoft Authenticode" platform).
+
+electron-builder picks the signing backend from the `type` field of `win.sign`: a certificate file or the Windows store (`signtool`, the default), a hardware token (`hsm` on Windows, `pkcs11` on macOS/Linux), or cloud signing (`azure`). An EV or other non-exportable key works in CI through the `hsm`, `pkcs11`, or `azure` methods. See [Windows Code Signing](code-signing-win.md) for full configuration.
 
 :::note[Gatekeeper and Apple certificates]
 macOS Gatekeeper only recognizes [Apple-issued certificates](https://developer.apple.com/support/code-signing/). Third-party certificates cannot be used to sign macOS apps for Gatekeeper.
@@ -89,7 +91,7 @@ When cross-compiling Windows on macOS, use `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSW
 | `AZURE_CLIENT_ID` | Application (Client) ID of your App registration |
 | `AZURE_CLIENT_SECRET` | Secret value for your App registration |
 
-See [Windows Code Signing](code-signing-win.md#using-azure-trusted-signing) for full Azure Trusted Signing setup.
+See [Windows Code Signing](code-signing-win.md#azure-trusted-signing-type-azure-beta) for full Azure Trusted Signing setup.
 
 ## Encoding a Certificate for CI
 
@@ -170,6 +172,7 @@ Without this option, electron-builder proceeds without signing if no credentials
 - **[macOS Code Signing](code-signing-mac.md)** — exporting certificates, keychain setup, disabling signing, ad-hoc signing
 - **[Windows Code Signing](code-signing-win.md)** — OV vs. EV certificates, Azure Trusted Signing setup
 - **[macOS Notarization](notarization.md)** — notarizing apps for macOS 10.15+, Hardened Runtime requirements
+- **[Key Rotation](../key-rotation.md)** — replacing a code-signing certificate or update-manifest key without stranding installs that trust the old one
 
 ## Troubleshooting
 
@@ -186,7 +189,7 @@ Without this option, electron-builder proceeds without signing if no credentials
 : The `publisher` in `appx` config must exactly match the Subject of the certificate. Copy it from the certificate properties.
 
 **SmartScreen warning appears even after signing** (Windows)
-: Normal for standard OV certificates. SmartScreen trust builds over time based on download count. EV certificates skip this reputation period. See [Windows Code Signing](code-signing-win.md).
+: Normal for any certificate. SmartScreen trust builds over time from downloads of the file and of other files signed with the same certificate; since 2024, EV certificates no longer skip this period ([Microsoft](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/distribution-feature-status#smartscreen-reputation-ev-certificates-no-longer-grant-instant-bypass)). See [Windows Code Signing](code-signing-win.md).
 
 **"Command requires admin privileges"** (Windows)
 : Some signing tools require elevated permissions. Run from an elevated prompt or check CI runner permissions.

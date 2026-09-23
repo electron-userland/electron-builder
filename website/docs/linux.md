@@ -2,6 +2,8 @@
 title: "Linux"
 ---
 
+{!./partials/_upgrading-from-v26.md!}
+
 The top-level [linux](configuration.md) key contains a set of options instructing electron-builder on how it should build Linux targets. These options are applicable to any Linux target.
 
 ## Linux Target Overview
@@ -45,6 +47,10 @@ linux:
     - --enable-features=WebContentsFocusOnResize
 ```
 
+:::note[v27: launcher entrypoint]
+Every Linux target (deb/rpm, AppImage, snap, flatpak) now launches through a generated `<executableName>-launcher` shell script rather than invoking the executable directly. `executableArgs` (and `forceX11`) are injected into that launcher, and the generated `.desktop` `Exec` key points at it (e.g. `Exec=/opt/MyApp/MyApp-launcher %U`) rather than inlining the args. This makes `executableArgs` apply consistently across all Linux targets. If you ship a custom `.desktop` override, an AppArmor/snap profile, or a MIME handler that hard-codes the `Exec` command, point it at the `*-launcher` script. See [v27 Breaking Changes → Linux launcher entrypoint](./migration/v27-breaking-changes.md#linux-launcher-entrypoint).
+:::
+
 ## Desktop File Customization
 
 All Linux targets include a `.desktop` file for application menu integration. Customize it via `linux.desktop`:
@@ -70,6 +76,30 @@ linux:
 ```
 
 Standard freedesktop.org category values include: `AudioVideo`, `Audio`, `Video`, `Development`, `Education`, `Game`, `Graphics`, `Network`, `Office`, `Science`, `Settings`, `System`, `Utility`.
+
+## Window Association (`desktopName`)
+
+Electron derives its [`app_id`](https://github.com/electron/electron/blob/main/lib/browser/init.ts) — which becomes the window's `WM_CLASS` — from the `desktopName` field in your root `package.json`. Desktop environments (GNOME, KDE, etc.) use `WM_CLASS` to match a running window to its `.desktop` entry for taskbar grouping, dock badges, and launcher highlighting.
+
+**Without `desktopName` set, this association can break**: the fallback `WM_CLASS` may not match the installed `.desktop` filename, so the DE treats the running app as an unknown window.
+
+To fix this, set `desktopName` in `package.json`:
+
+```json title="package.json"
+{
+  "desktopName": "com.example.MyApp"
+}
+```
+
+electron-builder installs the `.desktop` file as `${desktopName}.desktop` (here `com.example.MyApp.desktop`) and sets `StartupWMClass=com.example.MyApp`, both matching Electron's `app_id`. A trailing `.desktop` in `desktopName` is tolerated (stripped before the filename is composed), so configs written for earlier versions keep working. When `desktopName` is absent, the filename falls back to `executableName`.
+
+:::note[Changed in v27]
+The installed `.desktop` filename is now always derived from `desktopName`. The `linux.syncDesktopName` flag that previously gated this behaviour has been removed — see the [v27 breaking changes](./migration/v27-breaking-changes.md#linuxsyncdesktopname-always-synced).
+:::
+
+:::warning[desktopName is required for reliable window association]
+If `desktopName` is absent, electron-builder will log a warning at build time. Without it, desktop environments on GNOME, KDE, and others may not correctly link the running application window to its launcher entry.
+:::
 
 See the [freedesktop.org specification](https://specifications.freedesktop.org/desktop-entry-spec/latest/example.html) for all valid keys.
 
@@ -150,6 +180,10 @@ rpm:
   afterInstall: build/scripts/after-install.sh
   afterRemove: build/scripts/after-remove.sh
 ```
+
+:::note[v27: maintainer-script variable syntax]
+electron-builder interpolates variables into maintainer scripts (`afterInstall` / `afterRemove`) using shell-style `${var}`. The legacy EJS `<%= var %>` interpolation was **removed** in v27 — update any templated maintainer scripts to `${var}`. See [v27 Breaking Changes → Linux maintainer-script EJS syntax](./migration/v27-breaking-changes.md#linux-maintainer-script-ejs-template-syntax).
+:::
 
 ## Pacman Package (`pacman`)
 

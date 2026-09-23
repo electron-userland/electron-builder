@@ -1,5 +1,5 @@
 import { Arch } from "app-builder-lib"
-import { ToolsetConfig } from "app-builder-lib/src/configuration"
+import { ToolsetConfig } from "app-builder-lib/internal"
 import { testLinux } from "./differentialUpdateHelpers"
 
 const supportedArchs = [
@@ -10,7 +10,9 @@ const supportedArchs = [
 
 export function registerDifferentialLinuxTests(toolset: Required<Pick<ToolsetConfig, "appimage">>): void {
   const appimage = toolset.appimage
+  const toolName = typeof appimage === "object" && appimage != null ? "custom" : appimage
+
   for (const arch of supportedArchs) {
-    test(`${Arch[arch]} - toolset: ${appimage}`, ({ expect }) => testLinux(expect, arch, appimage))
+    test(`${Arch[arch]} - toolset: ${toolName}`, ({ expect }) => testLinux(expect, arch, appimage))
   }
 }

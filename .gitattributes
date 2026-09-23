@@ -1,1 +1,8 @@
-* text=auto
+# Normalize all text files to LF in the repo, and force LF in the working tree on every
+# checkout. The `eol=lf` attribute overrides each contributor's `core.autocrlf`/`core.eol`,
+# so files never get CRLF — even when checked out on Windows.
+* text=auto eol=lf
+
+# The Squirrel.Windows NuGet template must keep its original CRLF line endings (and BOM).
+# `-text` opts it out of all line-ending normalization so its exact bytes are preserved.
+packages/electron-builder-squirrel-windows/template.nuspectemplate -text

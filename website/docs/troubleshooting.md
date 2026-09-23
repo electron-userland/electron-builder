@@ -34,7 +34,7 @@ DEBUG=electron-builder electron-builder build
 : You used an Apple Distribution / Mac App Store certificate. Notarization for direct distribution requires a Developer ID Application certificate.
 
 **"The executable does not have the Hardened Runtime enabled"**
-: Add `hardenedRuntime: true` to your `mac` config. Also ensure entitlements include `com.apple.security.cs.allow-jit`.
+: Add `hardenedRuntime: true` to your `mac.sign` config. Also ensure entitlements include `com.apple.security.cs.allow-jit`.
 
 **"Notarization failed: invalid credentials"**
 : The `APPLE_ID` / `APPLE_APP_SPECIFIC_PASSWORD` combination is wrong, or the app-specific password was revoked. Regenerate it at [appleid.apple.com](https://appleid.apple.com).
@@ -58,15 +58,16 @@ DEBUG=electron-builder electron-builder build
 ## ASAR and File Packaging
 
 **Native module crashes at runtime: "Error: Module did not self-register"**
-: The native module (`.node` file) is inside the ASAR archive, but native modules can't load from inside ASAR. Add to `asarUnpack`:
+: The native module (`.node` file) is inside the ASAR archive, but native modules can't load from inside ASAR. Add to `asar.unpack`:
 ```yaml
-asarUnpack:
-  - "node_modules/your-module/**"
-  - "**/*.node"
+asar:
+  unpack:
+    - "node_modules/your-module/**"
+    - "**/*.node"
 ```
 
 **"ENOENT: no such file or directory" at runtime**
-: A file that exists in development is missing from the packaged app. Check if it's being excluded by a `files` pattern or by the default exclusions. Build with `DEBUG=electron-builder` and look for "excluding" log lines. Also check `asarUnpack` — files inside ASAR must be accessed via `app.getAppPath()`, not via `__dirname` relative paths.
+: A file that exists in development is missing from the packaged app. Check if it's being excluded by a `files` pattern or by the default exclusions. Build with `DEBUG=electron-builder` and look for "excluding" log lines. Also check `asar.unpack` — files inside ASAR must be accessed via `app.getAppPath()`, not via `__dirname` relative paths.
 
 **App directory is too large**
 : Profile the ASAR after building:
@@ -97,11 +98,12 @@ files:
 : electron-builder automatically rebuilds native modules for the target Electron version during the build. If you see this error at runtime during development (not during a build), ensure you are running your app via `electron .` from the project root, not from a globally installed Electron binary compiled against a different version.
 
 **Native module works in development but crashes after packaging**
-: The module likely needs to be in `asarUnpack`. Some modules also need their full directory tree unpacked:
+: The module likely needs to be in `asar.unpack`. Some modules also need their full directory tree unpacked:
 ```yaml
-asarUnpack:
-  - "node_modules/better-sqlite3/**"
-  - "node_modules/sharp/**"
+asar:
+  unpack:
+    - "node_modules/better-sqlite3/**"
+    - "node_modules/sharp/**"
 ```
 
 ---
@@ -115,10 +117,10 @@ asarUnpack:
 : electron-builder generates `latest.yml` (Windows), `latest-mac.yml` (macOS), or `latest-linux.yml` only when publishing. Ensure you ran `--publish always` (or `--publish onTagOrDraft`) when building the release.
 
 **"sha512 checksum mismatch"**
-: The downloaded update file is corrupt or the wrong file is being served. Verify that the artifact and the `.yml` metadata file were generated together in the same build and not mixed from different builds.
+: The downloaded update file is corrupt or the wrong file is being served. Verify that the artifact and the `.yml` metadata file were generated together in the same build and not mixed from different builds. As of electron-builder 27, the manifest `sha512` should be base64-encoded — a 128-hex-character "expected" value in the error message is the tell that a hand-rolled manifest still uses hex, which is accepted but deprecated in v27 and will be removed in v28; convert it with `sha512sum file.ext | cut -d' ' -f1 | xxd -r -p | base64 -w0`.
 
 **Delta updates (AppImage / NSIS-Web) fail**
-: For AppImage delta updates, electron-builder embeds a blockmap directly in the AppImage binary — no separate file needs to be published. If delta updates aren't working, verify the AppImage was built with electron-builder and that a publish provider is configured. For NSIS differential packages, `nsis.differentialPackage` must be `true`.
+: For AppImage delta updates, electron-builder embeds a blockmap directly in the AppImage binary — no separate file needs to be published. If delta updates aren't working, verify the AppImage was built with electron-builder and that a publish provider is configured. For NSIS differential packages, `nsis.differentialPackage` must not be `false` (any other value — `true`, `"compressed"`, `"store-asar"`, or unset — builds a differential-aware package; `"store-asar"` additionally stores `resources/app.asar` uncompressed so app-code deltas stay proportional to what changed).
 
 ---
 
@@ -136,6 +138,14 @@ asarUnpack:
 **Out-of-memory error during packaging**
 : Large apps can exhaust memory during ASAR creation. Set `NODE_OPTIONS=--max-old-space-size=4096` before running electron-builder.
 
+**Build fails in an offline / air-gapped environment**
+: electron-builder downloads build toolsets (e.g. WinCodeSign, AppImage tools) the first time they are needed, then caches the archive at `<ELECTRON_BUILDER_CACHE>/<releaseName>/<filename>`. On every subsequent build it reads from that cache and makes no network request.
+
+For a first-time setup in a fully air-gapped environment, run the build once on a machine with internet access so the cache is populated, then copy the entire `ELECTRON_BUILDER_CACHE` directory to the air-gapped machine. Point both machines at the same directory with `ELECTRON_BUILDER_CACHE=/path/to/shared/cache`.
+
+**"Downloading" progress appears for an artifact that should be cached**
+: The toolset archive cache lives inside `ELECTRON_BUILDER_CACHE` (default: `~/Library/Caches/electron-builder` on macOS, `%LOCALAPPDATA%/electron-builder/Cache` on Windows, `~/.cache/electron-builder` on Linux). If this directory is cleared or not persisted between builds (common on ephemeral CI runners), the archive is re-downloaded. Persist the cache directory across CI runs to avoid repeated downloads.
+
 ---
 
 ## Linux-Specific
@@ -144,7 +154,7 @@ asarUnpack:
 : The DEB, RPM, Pacman, APK, FreeBSD, and P5P targets use FPM internally. electron-builder bundles FPM — if it fails to find it, try reinstalling electron-builder or clearing `~/.cache/electron-builder`.
 
 **AppImage won't run: "FUSE not found" / "fusermount not found"**
-: The AppImage runtime requires FUSE. Install it:
+: As of v27 the default AppImage runtime is static and needs no host FUSE, so this affects only builds pinned to the legacy runtime (`toolsets.appimage: "0.0.0"`). Rebuild on the default runtime (remove the `0.0.0` pin), or install FUSE2 on the host:
 ```bash
 # Ubuntu/Debian
 sudo apt install fuse libfuse2
@@ -158,11 +168,7 @@ Or run with `--appimage-extract-and-run`:
 ```
 
 **AppImage won't run: "squashfs: FATAL ERROR aborting"**
-: Try the newer AppImage toolset:
-```yaml
-toolsets:
-  appimage: "1.0.3"
-```
+: This is a symptom of the legacy FUSE2 runtime. Remove any `toolsets.appimage: "0.0.0"` pin so the build uses the default static runtime.
 
 **Flatpak build fails: "runtime not found"**
 : Install the Flatpak runtime before building:
@@ -231,3 +237,4 @@ docker run --rm -ti \
 - Run `DEBUG=electron-builder electron-builder build 2>&1 | tee build.log` to capture full debug output
 - Search [GitHub Issues](https://github.com/electron-userland/electron-builder/issues)
 - Check the [Discussions](https://github.com/electron-userland/electron-builder/discussions)
+- When filing a bug report, use [electron/minimal-repro](https://github.com/electron/minimal-repro) to create a minimal reproduction case — issues with a repro get resolved significantly faster

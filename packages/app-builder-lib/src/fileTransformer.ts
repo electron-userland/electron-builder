@@ -1,27 +1,11 @@
-import { debug, deepAssign, FileTransformer, log } from "builder-util"
+import { debug, FileTransformer, log } from "builder-util"
 import { readFile } from "fs/promises"
 import * as path from "path"
-import { Configuration } from "./configuration"
-import { Packager } from "./packager"
+import { Configuration } from "./configuration.js"
+import { deepAssign } from "builder-util-runtime"
 
 /** @internal */
 export const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`
-
-/** @internal */
-export function isElectronCompileUsed(info: Packager): boolean {
-  if (info.config.electronCompile != null) {
-    return info.config.electronCompile
-  }
-
-  // if in devDependencies - it means that babel is used for precompilation or for some reason user decided to not use electron-compile for production
-  return hasDep("electron-compile", info)
-}
-
-/** @internal */
-export function hasDep(name: string, info: Packager) {
-  const deps = info.metadata.dependencies
-  return deps != null && name in deps
-}
 
 /** @internal */
 export function createTransformer(srcDir: string, configuration: Configuration, extraMetadata: any, extraTransformer: FileTransformer | null): FileTransformer {
@@ -50,19 +34,6 @@ export function createTransformer(srcDir: string, configuration: Configuration, 
       return null
     }
   }
-}
-
-/** @internal */
-export interface CompilerHost {
-  compile(file: string): any
-
-  saveConfiguration(): Promise<any>
-}
-
-/** @internal */
-export function createElectronCompilerHost(projectDir: string, cacheDir: string): Promise<CompilerHost> {
-  const electronCompilePath = path.join(projectDir, "node_modules", "electron-compile", "lib")
-  return require(path.join(electronCompilePath, "config-parser")).createCompilerHostFromProjectRoot(projectDir, cacheDir)
 }
 
 const ignoredPackageMetadataProperties = new Set(["dist", "gitHead", "build", "jspm", "ava", "xo", "nyc", "eslintConfig", "contributors", "bundleDependencies", "tags"])

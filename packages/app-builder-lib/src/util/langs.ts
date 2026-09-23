@@ -22,6 +22,7 @@ export const bundledLanguages = [
   "sk_SK",
   "hu_HU",
   "ar_SA",
+  "he_IL",
   "tr_TR",
   "th_TH",
   "vi_VN",

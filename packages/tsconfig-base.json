@@ -4,7 +4,6 @@
     "composite": true,
     "baseUrl": ".",
     "declaration": true,
-    "stripInternal": true,
-    "skipLibCheck": true
+    "stripInternal": true
   }
 }

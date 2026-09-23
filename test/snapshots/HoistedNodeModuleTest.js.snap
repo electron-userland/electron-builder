@@ -1011,6 +1011,18 @@ exports[`node_module collectors > conflict versions 2`] = `
 }
 `;
 
+exports[`node_module collectors > mac universal build bundles both arch variants when both are installed (pnpm supportedArchitectures) 1`] = `
+{
+  "mac": [],
+}
+`;
+
+exports[`node_module collectors > mac universal build with a single-arch platform-specific optional dependency (esbuild) 1`] = `
+{
+  "mac": [],
+}
+`;
+
 exports[`node_module collectors > npm electron-clear-data 1`] = `
 {
   "win": [],
@@ -2178,6 +2190,12 @@ exports[`node_module collectors > npm tar 2`] = `
       "size": 360,
     },
   },
+}
+`;
+
+exports[`node_module collectors > pnpm es5-ext without hoisted config (pnpm 10.29.3+ deduped list output) 1`] = `
+{
+  "linux": [],
 }
 `;
 
@@ -77227,6 +77245,12 @@ exports[`node_module collectors > yarn workspace 2`] = `
       "size": 320,
     },
   },
+}
+`;
+
+exports[`node_module collectors > yarn workspace app with zero production dependencies bundles no node_modules 1`] = `
+{
+  "linux": [],
 }
 `;
 

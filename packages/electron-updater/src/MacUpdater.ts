@@ -1,14 +1,17 @@
+import { createRequire } from "node:module"
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
-import { pathExistsSync, stat, copyFile } from "fs-extra"
+
+const require = createRequire(import.meta.url)
+import fsExtra from "fs-extra"
 import { createReadStream } from "fs"
 import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
-import { AppAdapter } from "./AppAdapter"
-import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
-import { ResolvedUpdateFileInfo } from "./main"
-import { UpdateDownloadedEvent } from "./types"
-import { findFile } from "./providers/Provider"
-import AutoUpdater = Electron.AutoUpdater
+import { AppAdapter } from "./AppAdapter.js"
+import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
+import { QuitAndInstallOptions, ResolvedUpdateFileInfo, DownloadExecutorResult } from "./types.js"
+import { UpdateDownloadedEvent } from "./types.js"
+import { findFile } from "./providers/Provider.js"
+type AutoUpdater = Electron.AutoUpdater
 import { execFileSync } from "child_process"
 import { randomBytes } from "crypto"
 
@@ -32,6 +35,17 @@ export class MacUpdater extends AppUpdater {
     })
   }
 
+  /** Filters update files to the appropriate architecture.
+   * On arm64 Macs (including Rosetta), arm64 files are preferred when available.
+   * On x64 Macs, arm64 files are excluded. */
+  protected static filterFilesForArch(files: ResolvedUpdateFileInfo[], isArm64Mac: boolean): ResolvedUpdateFileInfo[] {
+    const isArm64File = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64") || file.info.url?.includes("arm64")
+    if (isArm64Mac && files.some(isArm64File)) {
+      return files.filter(file => isArm64Mac === isArm64File(file))
+    }
+    return files.filter(file => !isArm64File(file))
+  }
+
   private debug(message: string): void {
     if (this._logger.debug != null) {
       this._logger.debug(message)
@@ -49,7 +63,7 @@ export class MacUpdater extends AppUpdater {
     }
   }
 
-  protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+  protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     let files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info)
 
     const log = this._logger
@@ -80,12 +94,7 @@ export class MacUpdater extends AppUpdater {
     isArm64Mac = isArm64Mac || process.arch === "arm64" || isRosetta
 
     // allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
-    const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64") || file.info.url?.includes("arm64")
-    if (isArm64Mac && files.some(isArm64)) {
-      files = files.filter(file => isArm64Mac === isArm64(file))
-    } else {
-      files = files.filter(file => !isArm64(file))
-    }
+    files = MacUpdater.filterFilesForArch(files, isArm64Mac)
 
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
 
@@ -103,7 +112,7 @@ export class MacUpdater extends AppUpdater {
       task: async (destinationFile, downloadOptions) => {
         const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
         const canDifferentialDownload = () => {
-          if (!pathExistsSync(cachedUpdateFilePath)) {
+          if (!fsExtra.pathExistsSync(cachedUpdateFilePath)) {
             log.info("Unable to locate previous update.zip for differential download (is this first install?), falling back to full download")
             return false
           }
@@ -122,7 +131,7 @@ export class MacUpdater extends AppUpdater {
         if (!downloadUpdateOptions.disableDifferentialDownload) {
           try {
             const cachedUpdateFilePath = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
-            await copyFile(event.downloadedFile, cachedUpdateFilePath)
+            await fsExtra.copyFile(event.downloadedFile, cachedUpdateFilePath)
           } catch (error: any) {
             this._logger.warn(`Unable to copy file for caching for future differential downloads: ${error.message}`)
           }
@@ -132,9 +141,9 @@ export class MacUpdater extends AppUpdater {
     })
   }
 
-  private async updateDownloaded(zipFileInfo: ResolvedUpdateFileInfo, event: UpdateDownloadedEvent): Promise<Array<string>> {
+  private async updateDownloaded(zipFileInfo: ResolvedUpdateFileInfo, event: UpdateDownloadedEvent): Promise<void> {
     const downloadedFile = event.downloadedFile
-    const updateFileSize = zipFileInfo.info.size ?? (await stat(downloadedFile)).size
+    const updateFileSize = zipFileInfo.info.size ?? (await fsExtra.stat(downloadedFile)).size
 
     const log = this._logger
     const logContext = `fileToProxy=${zipFileInfo.url.href}`
@@ -155,7 +164,7 @@ export class MacUpdater extends AppUpdater {
       return `http://127.0.0.1:${address?.port}`
     }
 
-    return await new Promise<Array<string>>((resolve, reject) => {
+    return await new Promise<void>((resolve, reject) => {
       const pass = randomBytes(64).toString("base64").replace(/\//g, "_").replace(/\+/g, "-")
       const authInfo = Buffer.from(`autoupdater:${pass}`, "ascii")
 
@@ -205,7 +214,7 @@ export class MacUpdater extends AppUpdater {
         response.on("finish", () => {
           if (!errorOccurred) {
             this.nativeUpdater.removeListener("error", reject)
-            resolve([])
+            resolve()
           }
         })
 
@@ -243,12 +252,14 @@ export class MacUpdater extends AppUpdater {
         // The update has been downloaded and is ready to be served to Squirrel
         this.dispatchUpdateDownloaded(event)
 
-        if (this.autoInstallOnAppQuit) {
+        // on macOS both "onQuit" and "onNextLaunch" map to the same native behavior: Squirrel stages the update and
+        // applies it on relaunch after quit. Only "manual" leaves it unstaged until an explicit quitAndInstall().
+        if (this.autoInstallEvent !== "manual") {
           this.nativeUpdater.once("error", reject)
           // This will trigger fetching and installing the file on Squirrel side
           this.nativeUpdater.checkForUpdates()
         } else {
-          resolve([])
+          resolve()
         }
       })
     })
@@ -263,7 +274,16 @@ export class MacUpdater extends AppUpdater {
     this.closeServerIfExists()
   }
 
-  quitAndInstall(): void {
+  quitAndInstall(options: QuitAndInstallOptions | boolean = {}, legacyIsForceRunAfter?: boolean): void {
+    const normalized = this.normalizeQuitAndInstallOptions(options, legacyIsForceRunAfter)
+    if (normalized.waitUntilNextLaunch) {
+      // no deferred-install state is needed on macOS: Squirrel.Mac already stages the downloaded update natively
+      // (ShipIt) and applies it when the app is relaunched after a normal quit, without spawning a killable
+      // detached installer process. Quitting the app is the closest equivalent behavior.
+      this._logger.info("quitAndInstall called with waitUntilNextLaunch: Squirrel.Mac stages updates natively, the staged update is applied on relaunch after quit")
+      this.app.quit()
+      return
+    }
     if (this.squirrelDownloadedUpdate) {
       // update already fetched by Squirrel, it's ready to install
       this.handleUpdateDownloaded()
@@ -271,10 +291,10 @@ export class MacUpdater extends AppUpdater {
       // Quit and install as soon as Squirrel get the update
       this.nativeUpdater.on("update-downloaded", () => this.handleUpdateDownloaded())
 
-      if (!this.autoInstallOnAppQuit) {
+      if (this.autoInstallEvent === "manual") {
         /**
-         * If this was not `true` previously then MacUpdater.doDownloadUpdate()
-         * would not actually initiate the downloading by electron's autoUpdater
+         * In "manual" mode MacUpdater.doDownloadUpdate() would not actually initiate the downloading by electron's
+         * autoUpdater, so kick it off now.
          */
         this.nativeUpdater.checkForUpdates()
       }

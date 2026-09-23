@@ -19,6 +19,7 @@
   "updateInternalDependencies": "patch",
   "ignore": [
     "@electron-builder/test",
-    "@electron-builder/website"
+    "@electron-builder/website",
+    "@electron-builder/app-builder-lib-helpers"
   ]
 }

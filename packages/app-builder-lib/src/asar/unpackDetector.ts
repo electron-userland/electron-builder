@@ -1,7 +1,7 @@
 import { FilterStats, log } from "builder-util"
 import { isBinaryFileSync } from "isbinaryfile"
 import * as path from "path"
-import { ResolvedFileSet } from "../util/appFileCopier"
+import { ResolvedFileSet } from "../util/appFileCopier.js"
 
 export function isLibOrExe(file: string): boolean {
   // https://github.com/electron-userland/electron-builder/issues/3038

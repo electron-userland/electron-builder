@@ -13,7 +13,7 @@
   "build": {
     "appId": "org.electron-builder.testApp2",
     "compression": "store",
-    "npmRebuild": true,
+    "nativeModules": { "npmRebuild": true },
     "directories": {
       "app": "app"
     },
@@ -36,5 +36,5 @@
       "iconUrl": "https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico"
     }
   },
-  "packageManager": "yarn@1.22.19"
+  "packageManager": "yarn@1.22.22"
 }

@@ -1,7 +1,7 @@
 import { Nullish } from "builder-util-runtime"
 import * as path from "path"
-import { PlatformPackager } from "../platformPackager"
-import { langIdToName, toLangWithRegion } from "./langs"
+import { PlatformPackager } from "../platformPackager.js"
+import { langIdToName, toLangWithRegion } from "./langs.js"
 
 export function getLicenseAssets(fileNames: Array<string>, packager: PlatformPackager<any>) {
   return fileNames
@@ -11,7 +11,10 @@ export function getLicenseAssets(fileNames: Array<string>, packager: PlatformPac
       return aW === bW ? a.localeCompare(b) : aW - bW
     })
     .map(file => {
-      let lang = /_([^.]+)\./.exec(file)![1]
+      // Linear parse (first `_` → first `.` after it) avoids the polynomial backtracking of /_([^.]+)\./
+      const underscore = file.indexOf("_")
+      const dot = file.indexOf(".", underscore + 1)
+      let lang = file.substring(underscore + 1, dot)
       let langWithRegion
       if (lang.includes("_")) {
         langWithRegion = lang

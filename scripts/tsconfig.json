@@ -3,15 +3,16 @@
   "compilerOptions": {
     "outDir": "out",
     "noUnusedLocals": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "declaration": false
   },
-  "declaration": false,
   "include": [
     "**/*.ts",
   ],
   "exclude": [
     "node_modules",
     "out",
-    "**/*.spec.ts"
+    "**/*.spec.ts",
+    "renderer/**"
   ]
 }

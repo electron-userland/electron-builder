@@ -1,5 +1,102 @@
 # builder-util-runtime
 
+## 10.0.0-alpha.7
+
+### Patch Changes
+
+- Docs: fix broken electron.build documentation links in readmes, TSDoc comments, and error messages — point auto-update, code-signing, and multi-platform-build references at their new `/docs/features/` locations, repair the `electron.build./` domain typo, and replace anchors that no longer exist (#10107) _[`#10111`](https://github.com/electron-userland/electron-builder/pull/10111) [`cf39086`](https://github.com/electron-userland/electron-builder/commit/cf39086fbb71e34d1fef0359a026697153e6ee3b) [@claude](https://github.com/apps/claude)_
+
+## 10.0.0-alpha.6
+
+### Patch Changes
+
+- Security hardening and a migrate-schema fix: _[`#10036`](https://github.com/electron-userland/electron-builder/pull/10036) [`b87a0b7`](https://github.com/electron-userland/electron-builder/commit/b87a0b7a533eef1711e600864f2540dc163176d7) [@mmaietta](https://github.com/mmaietta)_
+  - `builder-util` `removePassword`: redact single-letter/URI secret flags (`security … -k <password>`, `osslsigncode -key <pkcs11-uri?pin-value=…>`) and whitespace-containing secrets in debug logs, and make the `/b … /c` block-redaction regex ReDoS-safe.
+  - `builder-util-runtime` `httpExecutor`: fix the non-functional `maxRedirects` guard (the redirect counter was never advanced), so a redirect loop from a malicious feed/mirror no longer hangs the updater.
+  - `electron-updater` `GitLabProvider`: only forward the GitLab token to the channel-file request when its URL is same-origin as the API host, so an off-host/`http://` `direct_asset_url` in the release JSON cannot exfiltrate the token.
+  - `app-builder-lib`: defense-in-depth hardening — validate `executableName` before interpolating it into the generated Flatpak launcher, contain custom-toolset extraction within the cache dir, and XML-escape MSI file-association `ext`/`description`.
+  - `electron-builder` `migrate-schema`: auto-remove the removed `linux.syncDesktopName` flag.
+
+## 10.0.0-alpha.5
+
+### Major Changes
+
+- Feat(updater): gate legacy top-level manifest `path`/`sha512` behind `electronUpdaterCompatibility` _[`#9992`](https://github.com/electron-userland/electron-builder/pull/9992) [`2c10f1f`](https://github.com/electron-userland/electron-builder/commit/2c10f1fe9c409379208aa5c0a5bc102689fb5cb6) [@mmaietta](https://github.com/mmaietta)_
+
+  BREAKING CHANGE: The legacy top-level `UpdateInfo.path` / `UpdateInfo.sha512` fields are now written to `latest*.yml` only when the declared `electronUpdaterCompatibility` semver range intersects electron-updater versions `<2.16.0` (previously they were written unconditionally), mirroring how the Windows `sha2` field is gated; the legacy `latest-mac.json` is likewise emitted only when the range intersects `<2.0.0`. The default `electronUpdaterCompatibility` is now `>=2.16` (previously `>=2.15`), so none of the legacy fields are emitted by default. Both fields are now optional on the `UpdateInfo` type. Modern clients (electron-updater >=2.16) read the `files[]` array and are unaffected. If you still ship apps that embed electron-updater 1.x – 2.15, set `electronUpdaterCompatibility` to a range that includes them (e.g. `>=1.0.0`) so the legacy descriptor keeps being emitted.
+
+### Minor Changes
+
+- Feat: add Cloudflare R2 publish provider _[`#9773`](https://github.com/electron-userland/electron-builder/pull/9773) [`a086ef3`](https://github.com/electron-userland/electron-builder/commit/a086ef37855406d0abe418ca1beeca605608b510) [@kyletaylored](https://github.com/kyletaylored)_
+
+### Patch Changes
+
+- Fix(updater): detect legacy hex `sha512` manifest values strictly and deprecate them for removal in v28 _[`#9990`](https://github.com/electron-userland/electron-builder/pull/9990) [`65f0403`](https://github.com/electron-userland/electron-builder/commit/65f04035f722199c7bbd5360f7ecbf2bf352a645) [@mmaietta](https://github.com/mmaietta)_
+
+  The updater previously used a fuzzy heuristic (looking for `+`, `/`, `Z`, or `=` characters) to decide whether a manifest `sha512` was hex- or base64-encoded. It now uses a strict check: a value that is exactly 128 hexadecimal characters is treated as legacy hex; anything else is decoded as base64, which is what electron-builder has emitted since 19.x (2017). The two forms cannot collide — base64-encoded sha512 is always 88 characters ending in `==` — and a wrong pick can only fail closed with a checksum mismatch.
+
+  Hex-encoded `sha512` values (from pre-19.x manifests or hand-rolled manifests built from raw `sha512sum` output) remain accepted in v27 but are deprecated: support will be removed in v28. Emit base64 instead, e.g. `sha512sum file.ext | cut -d' ' -f1 | xxd -r -p | base64 -w0`.
+
+  SHA-256 (`sha2`) update checksums are unchanged here — they remain accepted in v27 under the existing v28-removal grace period.
+
+## 10.0.0-alpha.4
+
+### Patch Changes
+
+- Chore(refactor): reducing duplicate code and extracting helper functions _[`#9947`](https://github.com/electron-userland/electron-builder/pull/9947) [`8f3d9fa`](https://github.com/electron-userland/electron-builder/commit/8f3d9fa442aae342c1c5d2a4448a687de1aff8df) [@mmaietta](https://github.com/mmaietta)_
+
+## 10.0.0-alpha.3
+
+### Minor Changes
+
+- Introduce xml escaping for publisher, publisherDisplayName, displayName, description in appxmanifest.xml to avoid issues with xml preserverd characters _[`#9853`](https://github.com/electron-userland/electron-builder/pull/9853) [`deafee9`](https://github.com/electron-userland/electron-builder/commit/deafee9fe5f7bccbf52e73cd0c6085e767f921ce) [@regnete](https://github.com/regnete)_
+
+## 10.0.0-alpha.2
+
+### Patch Changes
+
+- Fix: declare the missing `electron-publish` dependency on `electron-builder`, and switch type-checking to `nodenext` module resolution so the compiler models Node's real ESM loader _[`#9885`](https://github.com/electron-userland/electron-builder/pull/9885) [`96e47b5`](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e) [@mmaietta](https://github.com/mmaietta)_
+
+## 10.0.0-alpha.1
+
+### Patch Changes
+
+- Fix: resolve runtime ESM/CJS interop for namespace imports of CJS-only packages (`sax`, `which`, `mime`) _[`#9884`](https://github.com/electron-userland/electron-builder/pull/9884) [`7674e60`](https://github.com/electron-userland/electron-builder/commit/7674e6092645df5c7ae0a31530446efe449cd3d6) [@mmaietta](https://github.com/mmaietta)_
+
+## 10.0.0-alpha.0
+
+### Major Changes
+
+- Chore(refactor): remove deprecated `snap` config property and all remaining deprecated APIs. Hard-deletes 14 deprecated features accumulated across the codebase. No migration shims remain. (BREAKING) _[`#9873`](https://github.com/electron-userland/electron-builder/pull/9873) [`9d755c6`](https://github.com/electron-userland/electron-builder/commit/9d755c68f845d169c9b68963c9711d2e75b4800b) [@mmaietta](https://github.com/mmaietta)_
+- Feat!: migrate to native ESM, require Node.js >=22.12.0, remove electron-compile _[`#9544`](https://github.com/electron-userland/electron-builder/pull/9544) [`a5121de`](https://github.com/electron-userland/electron-builder/commit/a5121de49582eaa8870d4c05e6ae55eff160a592) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Chore: Code quality modernization: adopt native Node.js APIs and modern TypeScript patterns across the codebase. _[`#9867`](https://github.com/electron-userland/electron-builder/pull/9867) [`f8feadb`](https://github.com/electron-userland/electron-builder/commit/f8feadb0c39934565197d69248274fd62173a94e) [@mmaietta](https://github.com/mmaietta)_
+
+## 9.7.0
+
+### Minor Changes
+
+- Chore: replace app-builder-bin `node-dep-tree` and `rebuild-node-modules` with pure-TS equivalents; `nativeRebuilder: "legacy"` now routes to `@electron/rebuild` sequential mode _[`#9828`](https://github.com/electron-userland/electron-builder/pull/9828) [`198c10c`](https://github.com/electron-userland/electron-builder/commit/198c10c9693d1244bac80cb11af6b75ad363e5a0) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix: holistic field detection for sha256 hash redaction _[`#9834`](https://github.com/electron-userland/electron-builder/pull/9834) [`22a7532`](https://github.com/electron-userland/electron-builder/commit/22a7532bd01b9fb42cff7c58d599c7ad683569fe) [@mmaietta](https://github.com/mmaietta)_
+
+## 9.6.3
+
+### Patch Changes
+
+- Chore: stabilize flaky CI tests (electron zip ENOENT, 5xx retries, snap timeouts) _[`#9795`](https://github.com/electron-userland/electron-builder/pull/9795) [`59efef1`](https://github.com/electron-userland/electron-builder/commit/59efef1a8b81ed1ead4e8004043726d2b49cf81f) [@mmaietta](https://github.com/mmaietta)_
+
+## 9.6.2
+
+### Patch Changes
+
+- Fix: harden generated-file output, argument construction, and download validation _[`#9778`](https://github.com/electron-userland/electron-builder/pull/9778) [`d6a5aee`](https://github.com/electron-userland/electron-builder/commit/d6a5aee821138449dc0c082606da6a1bf5ba0798) [@mmaietta](https://github.com/mmaietta)_
+- Fix(codeql): resolving GH CodeQL alerts _[`#9783`](https://github.com/electron-userland/electron-builder/pull/9783) [`4866737`](https://github.com/electron-userland/electron-builder/commit/4866737e4fe1f0cca210d318b9ce440f8e978a63) [@mmaietta](https://github.com/mmaietta)_
+
 ## 9.6.1
 
 ### Patch Changes

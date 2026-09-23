@@ -1,0 +1,359 @@
+import { afterEach, describe, test, vi } from "vitest"
+import * as fse from "fs-extra"
+import * as path from "path"
+import { TraversalNodeModulesCollector } from "app-builder-lib/internal"
+import { LogMessageByKey } from "app-builder-lib/src/node-module-collector/moduleManager"
+import { TmpDir } from "builder-util"
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Minimal TmpDir stub — traversal collector never needs actual temp files. */
+const mockTmpDir = { getTempFile: vi.fn(), getTempDir: vi.fn() } as unknown as TmpDir
+
+/**
+ * Writes a package tree under a fresh temp directory.
+ * Keys are relative paths to package.json files; values are the JSON contents.
+ */
+const projectTmpDir = new TmpDir("eb-traversal-test")
+
+async function buildPackageTree(packages: Record<string, object>): Promise<string> {
+  const root = await projectTmpDir.createTempDir()
+  for (const [rel, json] of Object.entries(packages)) {
+    const abs = path.join(root, rel)
+    await fse.ensureDir(path.dirname(abs))
+    await fse.writeJson(abs, json)
+  }
+  return root
+}
+
+async function runCollector(rootDir: string, packageName: string, archFilter?: { cpu: string | null; os: string }) {
+  const collector = new TraversalNodeModulesCollector(rootDir, mockTmpDir)
+  return collector.getNodeModules({ packageName, archFilter })
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+describe("TraversalNodeModulesCollector", { sequential: true }, () => {
+  let root = ""
+  afterEach(async () => {
+    if (root) {
+      await fse.rm(root, { recursive: true, force: true })
+      root = ""
+    }
+  })
+
+  describe("basic dependency collection", () => {
+    test("collects a simple direct dependency", async ({ expect }) => {
+      root = await buildPackageTree({
+        "package.json": {
+          name: "my-app",
+          version: "1.0.0",
+          dependencies: { "prod-dep": "^1.0.0" },
+        },
+        "node_modules/prod-dep/package.json": {
+          name: "prod-dep",
+          version: "1.5.0",
+        },
+      })
+      const { nodeModules } = await runCollector(root, "my-app")
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("prod-dep")
+    })
+
+    test("does not include devDependencies", async ({ expect }) => {
+      root = await buildPackageTree({
+        "package.json": {
+          name: "my-app",
+          version: "1.0.0",
+          dependencies: { "prod-dep": "^1.0.0" },
+          devDependencies: { "dev-only": "^2.0.0" },
+        },
+        "node_modules/prod-dep/package.json": { name: "prod-dep", version: "1.0.0" },
+        "node_modules/dev-only/package.json": { name: "dev-only", version: "2.0.0" },
+      })
+      const { nodeModules } = await runCollector(root, "my-app")
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("prod-dep")
+      expect(names).not.toContain("dev-only")
+    })
+
+    test("skips missing optional dependencies without throwing", async ({ expect }) => {
+      root = await buildPackageTree({
+        "package.json": {
+          name: "my-app",
+          version: "1.0.0",
+          dependencies: { "prod-dep": "^1.0.0" },
+          optionalDependencies: { "optional-native": "^1.0.0" },
+        },
+        "node_modules/prod-dep/package.json": { name: "prod-dep", version: "1.0.0" },
+        // optional-native is intentionally absent
+      })
+      const { nodeModules } = await runCollector(root, "my-app")
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("prod-dep")
+      expect(names).not.toContain("optional-native")
+    })
+
+    test("throws for a genuinely missing production dependency", async ({ expect }) => {
+      root = await buildPackageTree({
+        "package.json": {
+          name: "my-app",
+          version: "1.0.0",
+          dependencies: { "missing-dep": "^1.0.0" },
+        },
+        // missing-dep is deliberately absent
+      })
+      await expect(runCollector(root, "my-app")).rejects.toThrow(/missing-dep/)
+    })
+  })
+
+  describe("package manager override resolution", () => {
+    test("accepts transitive dep resolved to a version outside its declared range", async ({ expect }) => {
+      // Reproduces the exact scenario from GitHub issue #9641:
+      //   keyv-better-sqlite3 declares better-sqlite3@^7.1.1
+      //   but the user has pinned better-sqlite3@12.6.0 via Bun overrides
+      root = await buildPackageTree({
+        "package.json": {
+          name: "my-app",
+          version: "1.0.0",
+          dependencies: {
+            "keyv-better-sqlite3": "^1.1.0",
+            "better-sqlite3": "^12.6.0",
+          },
+          overrides: { "better-sqlite3": "^12.6.0" },
+        },
+        "node_modules/keyv-better-sqlite3/package.json": {
+          name: "keyv-better-sqlite3",
+          version: "1.1.0",
+          dependencies: {
+            // declares old range, but the override installs 12.x
+            "better-sqlite3": "^7.1.1",
+          },
+        },
+        "node_modules/better-sqlite3/package.json": {
+          name: "better-sqlite3",
+          version: "12.6.0", // installed via override, outside declared ^7.1.1
+        },
+      })
+
+      // Must not throw; the overridden package must be included.
+      const { nodeModules, logSummary } = await runCollector(root, "my-app")
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("keyv-better-sqlite3")
+      expect(names).toContain("better-sqlite3")
+
+      // The override should be noted in the log summary at debug level.
+      const overridden: string[] = logSummary[LogMessageByKey.PKG_VERSION_OVERRIDDEN] ?? []
+      expect(Array.isArray(overridden)).toBe(true)
+      expect(overridden.some(s => s.includes("better-sqlite3"))).toBe(true)
+    })
+
+    test("prefers the exact semver match over the override fallback", async ({ expect }) => {
+      // If a version that DOES satisfy the range is installed alongside the
+      // override candidate, the in-range version should be returned.
+      root = await buildPackageTree({
+        "package.json": {
+          name: "my-app",
+          version: "1.0.0",
+          dependencies: { consumer: "^1.0.0" },
+        },
+        "node_modules/consumer/package.json": {
+          name: "consumer",
+          version: "1.0.0",
+          dependencies: { dep: "^7.0.0" },
+        },
+        // A local version inside the consumer that satisfies the range
+        "node_modules/consumer/node_modules/dep/package.json": {
+          name: "dep",
+          version: "7.1.0",
+        },
+        // A hoisted version that is outside the range (override candidate)
+        "node_modules/dep/package.json": {
+          name: "dep",
+          version: "12.0.0",
+        },
+      })
+      const { nodeModules, logSummary } = await runCollector(root, "my-app")
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("dep")
+
+      // Since 7.1.0 satisfies ^7.0.0, no override fallback should be recorded.
+      const overridden: string[] = logSummary[LogMessageByKey.PKG_VERSION_OVERRIDDEN] ?? []
+      expect(overridden.length).toBe(0)
+    })
+
+    test("handles multiple overridden transitive dependencies in the same tree", async ({ expect }) => {
+      root = await buildPackageTree({
+        "package.json": {
+          name: "my-app",
+          version: "1.0.0",
+          dependencies: {
+            "pkg-a": "^1.0.0",
+            "pkg-b": "^1.0.0",
+            "shared-dep": "^10.0.0",
+            "other-dep": "^5.0.0",
+          },
+          overrides: {
+            "shared-dep": "^10.0.0",
+            "other-dep": "^5.0.0",
+          },
+        },
+        "node_modules/pkg-a/package.json": {
+          name: "pkg-a",
+          version: "1.0.0",
+          dependencies: { "shared-dep": "^3.0.0" }, // declared old, installed new via override
+        },
+        "node_modules/pkg-b/package.json": {
+          name: "pkg-b",
+          version: "1.0.0",
+          dependencies: { "other-dep": "^2.0.0" }, // declared old, installed new via override
+        },
+        "node_modules/shared-dep/package.json": { name: "shared-dep", version: "10.1.0" },
+        "node_modules/other-dep/package.json": { name: "other-dep", version: "5.2.0" },
+      })
+      const { nodeModules } = await runCollector(root, "my-app")
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("pkg-a")
+      expect(names).toContain("pkg-b")
+      expect(names).toContain("shared-dep")
+      expect(names).toContain("other-dep")
+    })
+  })
+
+  describe("platform (cpu/os) filtering", () => {
+    const tree = {
+      "package.json": {
+        name: "my-app",
+        version: "1.0.0",
+        dependencies: {
+          lodash: "^1.0.0",
+          "@esbuild/darwin-arm64": "^1.0.0",
+          "@esbuild/darwin-x64": "^1.0.0",
+        },
+      },
+      "node_modules/lodash/package.json": { name: "lodash", version: "1.0.0" }, // plain JS
+      "node_modules/@esbuild/darwin-arm64/package.json": { name: "@esbuild/darwin-arm64", version: "1.0.0", cpu: ["arm64"], os: ["darwin"] },
+      "node_modules/@esbuild/darwin-x64/package.json": { name: "@esbuild/darwin-x64", version: "1.0.0", cpu: ["x64"], os: ["darwin"] },
+    }
+
+    test("drops cpu-mismatched packages for the x64 slice, keeps the matching one and plain deps", async ({ expect }) => {
+      root = await buildPackageTree(tree)
+      const { nodeModules, logSummary } = await runCollector(root, "my-app", { cpu: "x64", os: "darwin" })
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("lodash")
+      expect(names).toContain("@esbuild/darwin-x64")
+      expect(names).not.toContain("@esbuild/darwin-arm64")
+      expect(logSummary[LogMessageByKey.PKG_INCOMPATIBLE_PLATFORM]).toEqual(["@esbuild/darwin-arm64@1.0.0"])
+    })
+
+    test("drops the other variant for the arm64 slice", async ({ expect }) => {
+      root = await buildPackageTree(tree)
+      const { nodeModules } = await runCollector(root, "my-app", { cpu: "arm64", os: "darwin" })
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("@esbuild/darwin-arm64")
+      expect(names).not.toContain("@esbuild/darwin-x64")
+    })
+
+    test("no archFilter keeps every package (back-compat for other callers)", async ({ expect }) => {
+      root = await buildPackageTree(tree)
+      const { nodeModules } = await runCollector(root, "my-app")
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("@esbuild/darwin-arm64")
+      expect(names).toContain("@esbuild/darwin-x64")
+    })
+
+    test("null cpu (universal) applies no cpu filtering", async ({ expect }) => {
+      root = await buildPackageTree(tree)
+      const { nodeModules } = await runCollector(root, "my-app", { cpu: null, os: "darwin" })
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("@esbuild/darwin-arm64")
+      expect(names).toContain("@esbuild/darwin-x64")
+    })
+
+    test("os mismatch drops a package even when cpu is unconstrained", async ({ expect }) => {
+      root = await buildPackageTree({
+        "package.json": { name: "my-app", version: "1.0.0", dependencies: { fsevents: "^1.0.0" } },
+        "node_modules/fsevents/package.json": { name: "fsevents", version: "1.0.0", os: ["darwin"] },
+      })
+      const linux = await runCollector(root, "my-app", { cpu: "x64", os: "linux" })
+      expect(linux.nodeModules.map(m => m.name)).not.toContain("fsevents")
+    })
+
+    test("drops a nested incompatible transitive dependency", async ({ expect }) => {
+      root = await buildPackageTree({
+        "package.json": { name: "my-app", version: "1.0.0", dependencies: { parent: "^1.0.0" } },
+        "node_modules/parent/package.json": { name: "parent", version: "1.0.0", dependencies: { "@swc/core-darwin-arm64": "^1.0.0" } },
+        "node_modules/@swc/core-darwin-arm64/package.json": { name: "@swc/core-darwin-arm64", version: "1.0.0", cpu: ["arm64"], os: ["darwin"] },
+      })
+      const { nodeModules } = await runCollector(root, "my-app", { cpu: "x64", os: "darwin" })
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("parent")
+      expect(names).not.toContain("@swc/core-darwin-arm64")
+    })
+  })
+
+  describe("workspace sub-package with hoisted dependencies (issue #9945)", () => {
+    test("resolves a sub-package's production deps hoisted to the workspace root", async ({ expect }) => {
+      // Reproduces the Yarn-Berry `nmHoistingLimits: workspaces` layout: the Electron app is a
+      // workspace member at packages/app, and its production dependencies are hoisted up to the
+      // workspace-root node_modules rather than living under packages/app/node_modules.
+      root = await buildPackageTree({
+        "package.json": {
+          name: "workspace-root",
+          version: "1.0.0",
+          private: true,
+          workspaces: ["packages/*"],
+        },
+        "packages/app/package.json": {
+          name: "app",
+          version: "1.0.0",
+          dependencies: { minimist: "^1.2.8", "fs-extra": "^11.0.0" },
+        },
+        // Hoisted to the workspace root, not packages/app/node_modules.
+        "node_modules/minimist/package.json": { name: "minimist", version: "1.2.8" },
+        "node_modules/fs-extra/package.json": {
+          name: "fs-extra",
+          version: "11.2.0",
+          dependencies: { "graceful-fs": "^4.0.0" },
+        },
+        "node_modules/graceful-fs/package.json": { name: "graceful-fs", version: "4.2.11" },
+      })
+
+      const collector = new TraversalNodeModulesCollector(path.join(root, "packages", "app"), mockTmpDir)
+      const { nodeModules } = await collector.getNodeModules({ packageName: "app" })
+      const names = nodeModules.map(m => m.name)
+
+      expect(names).toContain("minimist")
+      expect(names).toContain("fs-extra")
+      // transitive dependency of fs-extra, also hoisted to the workspace root
+      expect(names).toContain("graceful-fs")
+      // the workspace root itself must not be collected as a dependency of the app
+      expect(names).not.toContain("workspace-root")
+    })
+  })
+
+  describe("circular dependency and self-reference handling", () => {
+    test("handles self-referential dependencies gracefully (does not loop)", async ({ expect }) => {
+      root = await buildPackageTree({
+        "package.json": {
+          name: "my-app",
+          version: "1.0.0",
+          dependencies: { "my-lib": "^1.0.0" },
+        },
+        "node_modules/my-lib/package.json": {
+          name: "my-lib",
+          version: "1.0.0",
+          dependencies: { "my-lib": "^1.0.0" }, // self-ref
+        },
+      })
+      // Should complete without hanging or throwing.
+      const { nodeModules } = await runCollector(root, "my-app")
+      const names = nodeModules.map(m => m.name)
+      expect(names).toContain("my-lib")
+    })
+  })
+})

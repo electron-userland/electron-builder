@@ -1,8 +1,8 @@
 import { FileConsumer, Filter, FilterStats } from "builder-util"
-import { readlink, stat, Stats } from "fs-extra"
+import fsExtra from "fs-extra"
 import * as path from "path"
-import { FileMatcher } from "../fileMatcher"
-import { Packager } from "../packager"
+import { FileMatcher } from "../fileMatcher.js"
+import { PlatformPackager } from "../platformPackager.js"
 
 function addAllPatternIfNeed(matcher: FileMatcher) {
   if (!matcher.isSpecifiedAsEmptyArray && (matcher.isEmpty() || matcher.containsOnlyIgnore())) {
@@ -12,31 +12,31 @@ function addAllPatternIfNeed(matcher: FileMatcher) {
 }
 
 export abstract class FileCopyHelper {
-  readonly metadata = new Map<string, Stats>()
+  readonly metadata = new Map<string, fsExtra.Stats>()
 
   protected constructor(
     protected readonly matcher: FileMatcher,
     readonly filter: Filter | null,
-    protected readonly packager: Packager
+    protected readonly packager: PlatformPackager<any>
   ) {}
 
-  protected handleFile(file: string, parent: string, fileStat: Stats): Promise<Stats | null> | null {
+  protected handleFile(file: string, parent: string, fileStat: fsExtra.Stats): Promise<fsExtra.Stats | null> | null {
     if (!fileStat.isSymbolicLink()) {
       return null
     }
 
-    return readlink(file).then((linkTarget): any => {
+    return fsExtra.readlink(file).then((linkTarget): any => {
       // http://unix.stackexchange.com/questions/105637/is-symlinks-target-relative-to-the-destinations-parent-directory-and-if-so-wh
       return this.handleSymlink(fileStat, file, parent, linkTarget)
     })
   }
 
-  private handleSymlink(fileStat: Stats, file: string, parent: string, linkTarget: string): Promise<Stats> | null {
+  private handleSymlink(fileStat: fsExtra.Stats, file: string, parent: string, linkTarget: string): Promise<fsExtra.Stats> | null {
     const resolvedLinkTarget = path.resolve(parent, linkTarget)
     const link = path.relative(this.matcher.from, resolvedLinkTarget)
     if (link.startsWith("..")) {
       // outside of project, linked module (https://github.com/electron-userland/electron-builder/issues/675)
-      return stat(resolvedLinkTarget).then(targetFileStat => {
+      return fsExtra.stat(resolvedLinkTarget).then(targetFileStat => {
         this.metadata.set(file, targetFileStat)
         return targetFileStat
       })
@@ -49,7 +49,7 @@ export abstract class FileCopyHelper {
   }
 }
 
-function createAppFilter(matcher: FileMatcher, packager: Packager): Filter | null {
+function createAppFilter(matcher: FileMatcher, packager: PlatformPackager<any>): Filter | null {
   if (packager.areNodeModulesHandledExternally) {
     return matcher.isEmpty() ? null : matcher.createFilter()
   }
@@ -59,14 +59,14 @@ function createAppFilter(matcher: FileMatcher, packager: Packager): Filter | nul
 /** @internal */
 export class AppFileWalker extends FileCopyHelper implements FileConsumer {
   readonly matcherFilter: any
-  constructor(matcher: FileMatcher, packager: Packager) {
+  constructor(matcher: FileMatcher, packager: PlatformPackager<any>) {
     super(addAllPatternIfNeed(matcher), createAppFilter(matcher, packager), packager)
     this.matcherFilter = matcher.createFilter()
   }
 
   // noinspection JSUnusedGlobalSymbols
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  consume(file: string, fileStat: Stats, parent: string, siblingNames: Array<string>): any {
+  consume(file: string, fileStat: fsExtra.Stats, parent: string, siblingNames: Array<string>): any {
     if (fileStat.isDirectory()) {
       const matchesFilter = this.matcherFilter(file, fileStat)
       return !matchesFilter

@@ -1,0 +1,112 @@
+import path from "path"
+import fs from "fs-extra"
+import { copyOrLinkFile, log, escapeForXml } from "builder-util"
+import { AppImageBuilderOptions } from "./appImageUtil.js"
+
+const ICON_DIR_RELATIVE_PATH = "usr/share/icons/hicolor"
+const MIME_TYPE_DIR_RELATIVE_PATH = "usr/share/mime/packages"
+
+export async function copyIcons(options: AppImageBuilderOptions): Promise<void> {
+  const { stageDir, options: configuration } = options
+  const iconCommonDir = path.join(stageDir, ICON_DIR_RELATIVE_PATH)
+
+  await fs.ensureDir(iconCommonDir)
+
+  const icons = configuration.icons
+  if (!icons || icons.length === 0) {
+    throw new Error("At least one icon is required for AppImage")
+  }
+
+  const iconExtWithDot = path.extname(icons[0].file)
+  const iconFileName = `${configuration.executableName}${iconExtWithDot}`
+  const maxIconIndex = icons.length - 1
+
+  const iconInfoList = icons.map(icon => {
+    if (path.extname(icon.file) !== iconExtWithDot) {
+      throw new Error(`All icons must have the same extension: expected ${iconExtWithDot}, but got ${icon.file}`)
+    }
+    let iconSizeDir: string
+
+    if (iconExtWithDot === ".svg") {
+      // SVG icons go in scalable/apps directory per freedesktop icon theme spec
+      iconSizeDir = "scalable/apps"
+    } else {
+      iconSizeDir = `${icon.size}x${icon.size}/apps`
+    }
+
+    const iconRelativeToStageFile = path.join(ICON_DIR_RELATIVE_PATH, iconSizeDir, iconFileName)
+    const iconDir = path.join(iconCommonDir, iconSizeDir)
+    const iconFile = path.join(iconDir, iconFileName)
+    return { icon, iconDir, iconFile, iconRelativeToStageFile }
+  })
+  await Promise.all(
+    iconInfoList.map(async ({ icon, iconDir, iconFile }) => {
+      await fs.ensureDir(iconDir)
+      await copyOrLinkFile(icon.file, iconFile)
+    })
+  )
+  // Create symlinks for the last (largest) icon
+  const { iconRelativeToStageFile } = iconInfoList[maxIconIndex]
+  await fs.symlink(iconRelativeToStageFile, path.join(stageDir, iconFileName))
+  await fs.symlink(iconRelativeToStageFile, path.join(stageDir, ".DirIcon"))
+}
+
+export async function copyMimeTypes(
+  stageDir: string,
+  options: Pick<AppImageBuilderOptions["options"], "fileAssociations" | "productName" | "executableName">
+): Promise<string | null> {
+  const { fileAssociations, productName, executableName } = options
+
+  if (!fileAssociations || fileAssociations.length === 0) {
+    return null
+  }
+
+  if (!fileAssociations || fileAssociations.length === 0) {
+    return null
+  }
+
+  const mimeTypeParts: string[] = []
+
+  for (const fileAssociation of fileAssociations) {
+    if (!fileAssociation.mimeType) {
+      continue
+    }
+
+    // XML-escape to prevent injection
+    mimeTypeParts.push(`<mime-type type="${escapeForXml(fileAssociation.mimeType)}">`)
+    mimeTypeParts.push(`  <comment>${escapeForXml(productName)} document</comment>`)
+
+    // Handle extension(s)
+    const extensions = Array.isArray(fileAssociation.ext) ? fileAssociation.ext : [fileAssociation.ext]
+
+    for (const ext of extensions) {
+      // Validate extension doesn't contain dangerous characters
+      if (!/^[a-zA-Z0-9_-]+$/.test(ext)) {
+        log.warn({ extension: ext }, `file extension contains unexpected characters and will be skipped`)
+        continue
+      }
+      mimeTypeParts.push(`  <glob pattern="*.${escapeForXml(ext)}"/>`)
+    }
+
+    mimeTypeParts.push('  <generic-icon name="x-office-document"/>')
+    mimeTypeParts.push("</mime-type>")
+  }
+
+  // If no mime-types were generated, return null
+  if (mimeTypeParts.length === 0) {
+    return null
+  }
+
+  const mimeTypeDir = path.join(stageDir, MIME_TYPE_DIR_RELATIVE_PATH)
+  const fileName = `${executableName}.xml`
+  const mimeTypeFile = path.join(mimeTypeDir, fileName)
+
+  await fs.ensureDir(mimeTypeDir)
+
+  const xmlContent = ['<?xml version="1.0"?>', '<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">', ...mimeTypeParts, "</mime-info>"].join("\n")
+
+  // Use 0o644 (rw-r--r--) instead of 0o666 to avoid world-writable permissions
+  await fs.writeFile(mimeTypeFile, xmlContent, { mode: 0o644 })
+
+  return path.join(MIME_TYPE_DIR_RELATIVE_PATH, fileName)
+}

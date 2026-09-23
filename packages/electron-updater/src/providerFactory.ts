@@ -11,14 +11,14 @@ import {
   newError,
   PublishConfiguration,
 } from "builder-util-runtime"
-import { AppUpdater } from "./AppUpdater"
-import { BitbucketProvider } from "./providers/BitbucketProvider"
-import { GenericProvider } from "./providers/GenericProvider"
-import { GitHubProvider } from "./providers/GitHubProvider"
-import { GitLabProvider } from "./providers/GitLabProvider"
-import { KeygenProvider } from "./providers/KeygenProvider"
-import { PrivateGitHubProvider } from "./providers/PrivateGitHubProvider"
-import { Provider, ProviderRuntimeOptions } from "./providers/Provider"
+import { AppUpdater } from "./AppUpdater.js"
+import { BitbucketProvider } from "./providers/BitbucketProvider.js"
+import { GenericProvider } from "./providers/GenericProvider.js"
+import { GitHubProvider } from "./providers/GitHubProvider.js"
+import { GitLabProvider } from "./providers/GitLabProvider.js"
+import { KeygenProvider } from "./providers/KeygenProvider.js"
+import { PrivateGitHubProvider } from "./providers/PrivateGitHubProvider.js"
+import { Provider, ProviderRuntimeOptions } from "./providers/Provider.js"
 
 export function isUrlProbablySupportMultiRangeRequests(url: string): boolean {
   return !url.includes("s3.amazonaws.com")
@@ -53,6 +53,7 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
 
     case "s3":
     case "spaces":
+    case "r2":
       return new GenericProvider(
         {
           provider: "generic",

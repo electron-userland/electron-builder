@@ -1,0 +1,12 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`snap parallels vm > core24 snap installs and launches 1`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "TestApp_1.1.0_arm64.snap",
+    },
+  ],
+}
+`;

@@ -6,7 +6,7 @@ import * as path from "path"
 import { assertThat, readAppImageCompression } from "../helpers/fileAssert"
 import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
-import { ToolsetConfig } from "app-builder-lib/src"
+import { ToolsetConfig } from "app-builder-lib/internal"
 
 const appImageTarget = Platform.LINUX.createTarget("appimage", Arch.x64)
 
@@ -103,7 +103,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       },
       {
         packed: async context => {
-          // FUSE2 (0.0.0) does not support zstd; the flag is dropped → mksquashfs defaults to gzip
+          // FUSE2 mksquashfs only supports gzip and xz; zstd is silently dropped → gzip default
           const expectedComp = toolsets.appimage === "0.0.0" ? "gzip" : "zstd"
           expect(await readAppImageCompression(path.join(context.outDir, "Test App ßW-1.1.0.AppImage"))).toBe(expectedComp)
         },
@@ -111,15 +111,29 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
     ))
 
   test("AppImage - deprecated systemIntegration", ({ expect }) =>
-    appThrows(expect, {
-      targets: appImageTarget,
-      config: {
-        toolsets,
-        appImage: {
-          systemIntegration: "doNotAsk",
-        } as any,
+    appThrows(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          appImage: {
+            systemIntegration: "doNotAsk",
+          } as any,
+        },
       },
-    }))
+      {},
+      // Asserted explicitly rather than snapshotted: the removed-option guard throws an
+      // InvalidConfigurationError, and the snapshot helper records `error.code` in preference to
+      // `error.message`, so a snapshot here would collapse to the generic
+      // ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION and stop covering the message entirely.
+      error => {
+        expect(error.message).toContain("`appImage.systemIntegration` was removed in electron-builder v27")
+        expect(error.message).toContain("AppImageLauncher")
+        expect(error.message).toContain("electron-builder migrate-schema")
+        expect(error.message).toContain("v27-breaking-changes#appimagesystemintegration")
+      }
+    ))
 
   test("text license and file associations", ({ expect }) =>
     app(
@@ -219,6 +233,8 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
             grantFileProtocolExtraPrivileges: undefined, // unsupported on current electron version in our tests
           },
         },
+        // Only the computed desktop entry and the unpacked app dir are asserted — return true so AppImageTarget.build exits before
+        // mksquashfs runs (same for the desktopName tests below; the artifact list in the snapshot is therefore empty).
         effectiveOptionComputed: async it => {
           const content: string = it.desktop
           expect(
@@ -227,7 +243,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
               .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
               .join("\n")
           ).toMatchSnapshot()
-          return Promise.resolve(false)
+          return Promise.resolve(true)
         },
       },
       {
@@ -360,7 +376,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
             config: {
               electronVersion: ELECTRON_VERSION,
               compression: "store",
-              npmRebuild: false,
+              nativeModules: { npmRebuild: false },
             },
           })
 
@@ -386,6 +402,174 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
       }
     ))
 
+  test("AppImage - desktopName sets StartupWMClass", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "Signal",
+        },
+        effectiveOptionComputed: async it => {
+          const content: string = it.desktop
+          expect(
+            content
+              .split("\n")
+              .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
+              .join("\n")
+          ).toMatchSnapshot()
+          return Promise.resolve(true)
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "signal.desktop"
+          }),
+      }
+    ))
+
+  test("AppImage - desktopName without .desktop suffix is used as-is for StartupWMClass", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "MyApp",
+        },
+        effectiveOptionComputed: async it => {
+          const content: string = it.desktop
+          expect(
+            content
+              .split("\n")
+              .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
+              .join("\n")
+          ).toMatchSnapshot()
+          return Promise.resolve(true)
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "myapp"
+          }),
+      }
+    ))
+
+  test("AppImage - desktopName with surrounding whitespace is trimmed for StartupWMClass", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "Signal",
+        },
+        effectiveOptionComputed: async it => {
+          const content: string = it.desktop
+          expect(
+            content
+              .split("\n")
+              .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
+              .join("\n")
+          ).toMatchSnapshot()
+          return Promise.resolve(true)
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "  signal.desktop  "
+          }),
+      }
+    ))
+
+  test("AppImage - no desktopName falls back to productName for StartupWMClass", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "My App",
+        },
+        effectiveOptionComputed: async it => {
+          const content: string = it.desktop
+          expect(
+            content
+              .split("\n")
+              .filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version"))
+              .join("\n")
+          ).toMatchSnapshot()
+          return Promise.resolve(true)
+        },
+      },
+      {}
+    ))
+
+  test("AppImage - desktopName drives installed filename", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "Signal",
+        },
+        effectiveOptionComputed: async it => {
+          expect(it.desktopFileName).toBe("signal.desktop")
+          return Promise.resolve(true)
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "signal.desktop"
+          }),
+      }
+    ))
+
+  test("AppImage - desktopName drives installed filename (reverse-DNS)", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "Signal",
+        },
+        effectiveOptionComputed: async it => {
+          expect(it.desktopFileName).toBe("com.example.Signal.desktop")
+          return Promise.resolve(true)
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "com.example.Signal.desktop"
+          }),
+      }
+    ))
+
+  test("AppImage - missing desktopName falls back to executableName", ({ expect }) =>
+    app(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+          productName: "Signal",
+        },
+        effectiveOptionComputed: async it => {
+          expect(it.desktopFileName).toBe("testapp.desktop")
+          return Promise.resolve(true)
+        },
+      },
+      {}
+    ))
+
   test("forbid desktop.Exec", ({ expect }) =>
     appThrows(expect, {
       targets: appImageTarget,
@@ -400,4 +584,58 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
         },
       },
     }))
+
+  test("AppImage - desktopName rejects path traversal", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "../evil.desktop"
+          }),
+      },
+      err => expect(err.message).toContain("produces an invalid .desktop filename")
+    ))
+
+  test("AppImage - desktopName rejects absolute path", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "/etc/passwd.desktop"
+          }),
+      },
+      err => expect(err.message).toContain("produces an invalid .desktop filename")
+    ))
+
+  test("AppImage - desktopName rejects backslash", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: appImageTarget,
+        config: {
+          toolsets,
+        },
+      },
+      {
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.desktopName = "evil\\path.desktop"
+          }),
+      },
+      err => expect(err.message).toContain("produces an invalid .desktop filename")
+    ))
 }

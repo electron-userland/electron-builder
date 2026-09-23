@@ -713,7 +713,7 @@ exports[`Package Managers > npm 2`] = `
     },
     "index.js": {
       "offset": 25660,
-      "size": 4190,
+      "size": 4650,
     },
     "node_modules": {
       "files": {
@@ -768,7 +768,7 @@ exports[`Package Managers > npm 2`] = `
       },
     },
     "package.json": {
-      "offset": 29850,
+      "offset": 30310,
       "size": 370,
     },
   },
@@ -806,7 +806,7 @@ exports[`Package Managers > pnpm 2`] = `
     },
     "index.js": {
       "offset": 25660,
-      "size": 4190,
+      "size": 4650,
     },
     "node_modules": {
       "files": {
@@ -861,7 +861,7 @@ exports[`Package Managers > pnpm 2`] = `
       },
     },
     "package.json": {
-      "offset": 29850,
+      "offset": 30310,
       "size": 510,
     },
   },

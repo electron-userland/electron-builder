@@ -3,7 +3,7 @@ Claude can run these directly to build, test, and lint the codebase:
 
 * **Build:** `pnpm compile` (add `--watch` flag to monitor)
 * **Test:** `TEST_FILES<name of file(s), comma-separated, without extension> pnpm ci:test` (Runs the unit and integration suite)
-* **Lint:** `pnpm lint` for eslint. `pnpm compile` also works to check for syntax and formatting errors
+* **Lint:** `pnpm ci:validate`
 
 ## Verification & Testing Standards
 * **Test Coverage:** Always ensure adding test coverage for new features and logic flows.

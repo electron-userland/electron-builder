@@ -12,20 +12,35 @@ node-modules*
 /.idea/deployment.xml
 /.idea/shelf/
 
-tsconfig.tsbuildinfo
+*.tsbuildinfo
 
 out/
+dist/
 
 site/
 
 .pnpm-store/
 
 coverage
+# Vitest per-shard reports + merged report outputs (test-summary.ts / merge-reports.ts)
+test-results/
+vitest-blobs/
+report-artifacts/
+html-report/
+merged-coverage/
+merged-test-report.json
 test/src/generated/
-/test/test-report.xml
+test/test-report.xml
 _vitest-smart-cache.json
+test/vitest-scripts/_vitest-smart-cache.json
+/test-run-logs
 
 /.yalc/
 yalc.lock
 
 .claude
+
+# Ignore the generated documentation file (copy-pasted from README.md)
+website/docs/introduction.md
+
+temp

@@ -1,4 +1,7 @@
-#!/usr/bin/env node
+#! /usr/bin/env node
 
-// https://github.com/pnpm/pnpm/issues/1801
-require("./out/cli/cli")
+import { assertNodeVersion } from "./assert-node-version.js"
+
+assertNodeVersion()
+
+import("./dist/cli/cli.js")

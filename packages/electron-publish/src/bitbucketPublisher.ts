@@ -1,11 +1,11 @@
 import { Arch, httpExecutor, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { configureRequestOptions, HttpExecutor } from "builder-util-runtime"
-import { BitbucketOptions } from "builder-util-runtime/out/publishOptions"
-import * as FormData from "form-data"
-import { readFile } from "fs-extra"
+import { BitbucketOptions } from "builder-util-runtime"
+import FormData from "form-data"
+import fsExtra from "fs-extra"
 import { ClientRequest, RequestOptions } from "http"
-import { PublishContext } from "./"
-import { HttpPublisher } from "./httpPublisher"
+import { PublishContext } from "./index.js"
+import { HttpPublisher } from "./httpPublisher.js"
 
 export class BitbucketPublisher extends HttpPublisher {
   readonly providerName = "bitbucket"
@@ -25,12 +25,24 @@ export class BitbucketPublisher extends HttpPublisher {
       throw new InvalidConfigurationError(`Bitbucket token is not set using env "BITBUCKET_TOKEN" (see https://www.electron.build/publish#BitbucketOptions)`)
     }
 
-    if (isEmptyOrSpaces(username)) {
-      log.warn('No Bitbucket username provided via "BITBUCKET_USERNAME". Defaulting to use repo owner.')
-    }
-
     this.info = info
-    this.auth = BitbucketPublisher.convertAppPassword(username ?? this.info.owner, token)
+    // Bitbucket Cloud is retiring app passwords (https://www.atlassian.com/blog/bitbucket/bitbucket-cloud-transitions-to-api-tokens).
+    // - With a username, the token is sent as HTTP Basic auth: a Bitbucket username + app password, or an Atlassian account email + API token.
+    // - Without a username, the token is treated as a repository/project/workspace access token and sent as Bearer auth.
+    if (isEmptyOrSpaces(username)) {
+      // Warn rather than inform: v26 always sent Basic auth using the repository owner as the
+      // username, so a CI job supplying an app password / API token with no username silently
+      // switches scheme here and the upload fails authentication.
+      log.warn(
+        'No Bitbucket username provided via "BITBUCKET_USERNAME"; sending the token as an access token (Bearer auth). ' +
+          "This changed in v27 — electron-builder <= 26 always used Basic auth with the repository owner as the username. " +
+          'If your token is an app password or an Atlassian API token, set "BITBUCKET_USERNAME" (or bitbucket.username) or authentication will fail. ' +
+          "See https://www.electron.build/docs/migration/v27-breaking-changes#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth"
+      )
+      this.auth = BitbucketPublisher.convertAccessToken(token)
+    } else {
+      this.auth = BitbucketPublisher.convertAppPassword(username, token)
+    }
     this.basePath = `/2.0/repositories/${this.info.owner}/${this.info.slug}/downloads`
   }
 
@@ -42,7 +54,7 @@ export class BitbucketPublisher extends HttpPublisher {
     file: string
   ): Promise<any> {
     return HttpExecutor.retryOnServerError(async () => {
-      const fileContent = await readFile(file)
+      const fileContent = await fsExtra.readFile(file)
       const form = new FormData()
       form.append("files", fileContent, fileName)
       const upload: RequestOptions = {
@@ -73,5 +85,9 @@ export class BitbucketPublisher extends HttpPublisher {
   static convertAppPassword(username: string, token: string) {
     const base64encodedData = Buffer.from(`${username}:${token.trim()}`).toString("base64")
     return `Basic ${base64encodedData}`
+  }
+
+  static convertAccessToken(token: string) {
+    return `Bearer ${token.trim()}`
   }
 }

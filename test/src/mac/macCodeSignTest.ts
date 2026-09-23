@@ -1,21 +1,18 @@
-import { createKeychain, removeKeychain } from "app-builder-lib/out/codeSign/macCodeSign"
-import { removePassword, TmpDir } from "builder-util"
-import { MAC_CSC_LINK } from "../helpers/codeSignData"
-import { afterEach } from "vitest"
+import { createKeychain, removeKeychain } from "app-builder-lib/internal"
+import { removePassword } from "builder-util"
+import { getMacSigningIdentity } from "../helpers/packTester.js"
 
-describe.ifMac.runIf(MAC_CSC_LINK && process.env.CSC_KEY_PASSWORD)("macos keychain", { sequential: true }, () => {
-  const tmpDir = new TmpDir("mac-code-sign-test")
-
-  afterEach(() => tmpDir.cleanup())
-
-  test("create keychain", async ({ expect }) => {
-    const result = await createKeychain({ tmpDir, cscLink: MAC_CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD!, currentDir: process.cwd() })
+describe.ifMac("macos keychain", { sequential: true }, () => {
+  test("create keychain", async ({ expect, tmpDir }) => {
+    const { p12Base64, password } = await getMacSigningIdentity()
+    const result = await createKeychain({ tmpDir, cscLink: p12Base64, cscKeyPassword: password, currentDir: process.cwd() })
     expect(result.keychainFile).not.toEqual("")
     await removeKeychain(result.keychainFile!)
   })
 
-  test("create keychain with installers", async ({ expect }) => {
-    const result = await createKeychain({ tmpDir, cscLink: MAC_CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD!, currentDir: process.cwd() })
+  test("create keychain with installers", async ({ expect, tmpDir }) => {
+    const { p12Base64, password } = await getMacSigningIdentity()
+    const result = await createKeychain({ tmpDir, cscLink: p12Base64, cscKeyPassword: password, currentDir: process.cwd() })
     expect(result.keychainFile).not.toEqual("")
     await removeKeychain(result.keychainFile!)
   })

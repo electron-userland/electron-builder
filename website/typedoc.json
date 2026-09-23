@@ -1,7 +1,8 @@
 {
   "entryPoints": ["../packages/*"],
   "entryPointStrategy": "packages",
-  "tsconfig": "../tsconfig-base.json",
+  "tsconfig": "../tsconfig-typedoc.json",
+  "skipErrorChecking": true,
   "out": "./docs/api",
   "plugin": ["typedoc-plugin-markdown"],
   "entryFileName": "index",

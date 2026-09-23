@@ -1,5 +1,277 @@
 # electron-publish
 
+## 27.0.0-alpha.8
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`cf39086`](https://github.com/electron-userland/electron-builder/commit/cf39086fbb71e34d1fef0359a026697153e6ee3b)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.7`
+- `builder-util@27.0.0-alpha.8`
+
+</details>
+
+## 27.0.0-alpha.7
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`b87a0b7`](https://github.com/electron-userland/electron-builder/commit/b87a0b7a533eef1711e600864f2540dc163176d7)
+
+</small>
+
+- `builder-util@27.0.0-alpha.7`
+- `builder-util-runtime@10.0.0-alpha.6`
+
+</details>
+
+## 27.0.0-alpha.6
+
+### Minor Changes
+
+- Fix(publish): authenticate Bitbucket Cloud uploads with access tokens (Bearer auth) _[`#10023`](https://github.com/electron-userland/electron-builder/pull/10023) [`6d55fad`](https://github.com/electron-userland/electron-builder/commit/6d55fadaa7bdd94fdcc323f638ed54b774f86f3a) [@mmaietta](https://github.com/mmaietta)_
+
+  Bitbucket Cloud is deprecating app passwords (https://www.atlassian.com/blog/bitbucket/bitbucket-cloud-transitions-to-api-tokens). The Bitbucket publisher now selects the auth scheme by whether a username is set: with a username it sends HTTP Basic auth (Bitbucket username + app password, or Atlassian account email + API token); without a username it sends the token as a repository/project/workspace access token via `Authorization: Bearer`. Previously a token was always sent as Basic auth using the repo owner as the username, so access tokens could not be used.
+
+- Feat: add Cloudflare R2 publish provider _[`#9773`](https://github.com/electron-userland/electron-builder/pull/9773) [`a086ef3`](https://github.com/electron-userland/electron-builder/commit/a086ef37855406d0abe418ca1beeca605608b510) [@kyletaylored](https://github.com/kyletaylored)_
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`a086ef3`](https://github.com/electron-userland/electron-builder/commit/a086ef37855406d0abe418ca1beeca605608b510) [`65f0403`](https://github.com/electron-userland/electron-builder/commit/65f04035f722199c7bbd5360f7ecbf2bf352a645) [`2c10f1f`](https://github.com/electron-userland/electron-builder/commit/2c10f1fe9c409379208aa5c0a5bc102689fb5cb6)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.5`
+- `builder-util@27.0.0-alpha.6`
+
+</details>
+
+## 27.0.0-alpha.5
+
+### Patch Changes
+
+- Chore(refactor): reducing duplicate code and extracting helper functions _[`#9947`](https://github.com/electron-userland/electron-builder/pull/9947) [`8f3d9fa`](https://github.com/electron-userland/electron-builder/commit/8f3d9fa442aae342c1c5d2a4448a687de1aff8df) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`2669c2a`](https://github.com/electron-userland/electron-builder/commit/2669c2a7c7e9b6c3d8f7789362ffa5d7aac3fbf6) [`8f3d9fa`](https://github.com/electron-userland/electron-builder/commit/8f3d9fa442aae342c1c5d2a4448a687de1aff8df)
+
+</small>
+
+- `builder-util@27.0.0-alpha.5`
+- `builder-util-runtime@10.0.0-alpha.4`
+
+</details>
+
+## 27.0.0-alpha.4
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`deafee9`](https://github.com/electron-userland/electron-builder/commit/deafee9fe5f7bccbf52e73cd0c6085e767f921ce)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.3`
+- `builder-util@27.0.0-alpha.4`
+
+</details>
+
+## 27.0.0-alpha.3
+
+### Patch Changes
+
+- Fix: declare the missing `electron-publish` dependency on `electron-builder`, and switch type-checking to `nodenext` module resolution so the compiler models Node's real ESM loader _[`#9885`](https://github.com/electron-userland/electron-builder/pull/9885) [`96e47b5`](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`ef61dd5`](https://github.com/electron-userland/electron-builder/commit/ef61dd5f47ab0b203e76c506394bf4bc1ee9bf00) [`594cfa1`](https://github.com/electron-userland/electron-builder/commit/594cfa1ded3ab4bcb46eac1720b9f9930ed1fbb5) [`96e47b5`](https://github.com/electron-userland/electron-builder/commit/96e47b5b89b76c719b1c06cfdd62a9a17376484e)
+
+</small>
+
+- `builder-util@27.0.0-alpha.3`
+- `builder-util-runtime@10.0.0-alpha.2`
+
+</details>
+
+## 27.0.0-alpha.2
+
+### Patch Changes
+
+- Fix: resolve runtime ESM/CJS interop for namespace imports of CJS-only packages (`sax`, `which`, `mime`) _[`#9884`](https://github.com/electron-userland/electron-builder/pull/9884) [`7674e60`](https://github.com/electron-userland/electron-builder/commit/7674e6092645df5c7ae0a31530446efe449cd3d6) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`7674e60`](https://github.com/electron-userland/electron-builder/commit/7674e6092645df5c7ae0a31530446efe449cd3d6)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.1`
+- `builder-util@27.0.0-alpha.2`
+
+</details>
+
+## 27.0.0-alpha.0
+
+### Major Changes
+
+- Chore(refactor): remove deprecated `snap` config property and all remaining deprecated APIs. Hard-deletes 14 deprecated features accumulated across the codebase. No migration shims remain. (BREAKING) _[`#9873`](https://github.com/electron-userland/electron-builder/pull/9873) [`9d755c6`](https://github.com/electron-userland/electron-builder/commit/9d755c68f845d169c9b68963c9711d2e75b4800b) [@mmaietta](https://github.com/mmaietta)_
+- Feat!: migrate to native ESM, require Node.js >=22.12.0, remove electron-compile _[`#9544`](https://github.com/electron-userland/electron-builder/pull/9544) [`a5121de`](https://github.com/electron-userland/electron-builder/commit/a5121de49582eaa8870d4c05e6ae55eff160a592) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`f8feadb`](https://github.com/electron-userland/electron-builder/commit/f8feadb0c39934565197d69248274fd62173a94e) [`e59504d`](https://github.com/electron-userland/electron-builder/commit/e59504d122c245c08f70218badce057655c1c022) [`02a8042`](https://github.com/electron-userland/electron-builder/commit/02a80426840cda286840f25d28f1ecfce99885db) [`9d755c6`](https://github.com/electron-userland/electron-builder/commit/9d755c68f845d169c9b68963c9711d2e75b4800b) [`a5121de`](https://github.com/electron-userland/electron-builder/commit/a5121de49582eaa8870d4c05e6ae55eff160a592)
+
+</small>
+
+- `builder-util@27.0.0-alpha.0`
+- `builder-util-runtime@10.0.0-alpha.0`
+
+</details>
+
+## 26.15.3
+
+### Patch Changes
+
+- Fix(publish): set x-amz-content-sha256: UNSIGNED-PAYLOAD before SigV4 signing so S3 accepts streaming PutObject uploads _[`#9863`](https://github.com/electron-userland/electron-builder/pull/9863) [`818a89f`](https://github.com/electron-userland/electron-builder/commit/818a89f4c3087ed53498d781bf0bb1ca4807d03d) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`35bfdeb`](https://github.com/electron-userland/electron-builder/commit/35bfdebe47f412c3bf14bc5d1b9d833bfa1ec7d4)
+
+</small>
+
+- `builder-util@26.15.3`
+
+</details>
+
+## 26.15.1
+
+### Patch Changes
+
+- Chore: `ci:validate` lint fixes, `ci:test:fetch-cache` simplification, and code cleanup _[`#9840`](https://github.com/electron-userland/electron-builder/pull/9840) [`588ff48`](https://github.com/electron-userland/electron-builder/commit/588ff4854e9c0efa13539fed14b2711a708c8c7a) [@mmaietta](https://github.com/mmaietta)_
+
+## 26.15.0
+
+### Patch Changes
+
+- Fix: holistic field detection for sha256 hash redaction _[`#9834`](https://github.com/electron-userland/electron-builder/pull/9834) [`22a7532`](https://github.com/electron-userland/electron-builder/commit/22a7532bd01b9fb42cff7c58d599c7ad683569fe) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`198c10c`](https://github.com/electron-userland/electron-builder/commit/198c10c9693d1244bac80cb11af6b75ad363e5a0) [`01b8ba9`](https://github.com/electron-userland/electron-builder/commit/01b8ba979d1db44543e18d07b4ad94953deb10ea) [`22a7532`](https://github.com/electron-userland/electron-builder/commit/22a7532bd01b9fb42cff7c58d599c7ad683569fe)
+
+</small>
+
+- `builder-util-runtime@9.7.0`
+- `builder-util@26.15.0`
+
+</details>
+
+## 26.14.0
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`0e67339`](https://github.com/electron-userland/electron-builder/commit/0e67339e0177e4bacf57845356d27020918803b3)
+
+</small>
+
+- `builder-util@26.14.0`
+
+</details>
+
+## 26.13.0
+
+### Minor Changes
+
+- Feat: migrate app-builder-bin functions to pure JS (`certificate-info`, `ksuid`, `get-bucket-location`, `publish-s3`) _[`#9733`](https://github.com/electron-userland/electron-builder/pull/9733) [`1bc92ff`](https://github.com/electron-userland/electron-builder/commit/1bc92ff4b21003536dfe161fb679b6a76713cd38) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`1bc92ff`](https://github.com/electron-userland/electron-builder/commit/1bc92ff4b21003536dfe161fb679b6a76713cd38) [`59efef1`](https://github.com/electron-userland/electron-builder/commit/59efef1a8b81ed1ead4e8004043726d2b49cf81f)
+
+</small>
+
+- `builder-util@26.13.0`
+- `builder-util-runtime@9.6.3`
+
+</details>
+
+## 26.12.1
+
+### Patch Changes
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`d6a5aee`](https://github.com/electron-userland/electron-builder/commit/d6a5aee821138449dc0c082606da6a1bf5ba0798) [`4866737`](https://github.com/electron-userland/electron-builder/commit/4866737e4fe1f0cca210d318b9ce440f8e978a63)
+
+</small>
+
+- `builder-util-runtime@9.6.2`
+- `builder-util@26.12.1`
+
+</details>
+
+## 26.12.0
+
+### Minor Changes
+
+- Feat: adding support for core24 snapcraft and refactoring support to a new config property `snapcraft` to maintain backward compatibility _[`#9517`](https://github.com/electron-userland/electron-builder/pull/9517) [`059fffd`](https://github.com/electron-userland/electron-builder/commit/059fffd5b9aabd72e9a8b592b9b7cef4a9e063ef) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`059fffd`](https://github.com/electron-userland/electron-builder/commit/059fffd5b9aabd72e9a8b592b9b7cef4a9e063ef) [`bfd1c1b`](https://github.com/electron-userland/electron-builder/commit/bfd1c1bb23b985b3fc44bcb4bb028fa0496d4638) [`2181fd0`](https://github.com/electron-userland/electron-builder/commit/2181fd02850101002fd82e463b9e0ed93d44fc7b)
+
+</small>
+
+- `builder-util@26.12.0`
+
+</details>
+
 ## 26.11.1
 
 ### Patch Changes

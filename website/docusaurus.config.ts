@@ -1,5 +1,6 @@
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
+import { readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { themes as prismThemes } from "prism-react-renderer"
@@ -8,6 +9,74 @@ import remarkInclude from "./src/remark/remark-include.mjs"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const docsDir = join(__dirname, "docs")
+
+// --- multi-version site ------------------------------------------------------
+// The production site composes several independent Docusaurus builds (one per
+// major version line) into a single publish tree: the current line at "/" and
+// each maintenance line under its own sub-path, e.g. "/v26/".
+//
+// docs-versions.json is the single source of truth for that set — the same file
+// tells website/scripts/build-versioned-site.sh which git ref to build at which
+// path, and is read here for the navbar version dropdown, so labels and paths
+// are declared once.
+type DocsVersion = { label: string; path: string; ref?: string; current?: boolean; prerelease?: boolean }
+
+// normalize to a leading + trailing slash so hrefs are stable
+const normalizePath = (path: string) => `/${path.replace(/^\/+/, "").replace(/\/+$/, "")}/`.replace(/^\/\/$/, "/")
+
+const docsVersionsFile = join(__dirname, "docs-versions.json")
+const docsVersions: DocsVersion[] = (() => {
+  let versions: unknown
+  try {
+    versions = JSON.parse(readFileSync(docsVersionsFile, "utf8")).versions
+  } catch (e: any) {
+    throw new Error(`cannot read ${docsVersionsFile}: ${e.message}`)
+  }
+  if (!Array.isArray(versions) || versions.length === 0) {
+    throw new Error(`${docsVersionsFile} must declare a non-empty "versions" array`)
+  }
+  return (versions as DocsVersion[]).map(version => ({ ...version, path: normalizePath(version.path) }))
+})()
+
+// Base URL of *this* instance. build-versioned-site.sh sets DOCS_BASE_URL per
+// sub-site build; it defaults to the path of the entry marked `current`.
+// Normalized like the docsVersions paths so a value without a trailing slash
+// still matches its entry.
+const baseUrl = normalizePath(process.env.DOCS_BASE_URL || docsVersions.find(v => v.current)?.path || "/")
+
+// Which declared version this build is, so the dropdown can name itself.
+const activeVersion = docsVersions.find(v => v.path === baseUrl) ?? docsVersions.find(v => v.current)
+
+// Version banner. The unreleased line is published at the site root, so
+// readers who land on www.electron.build without picking a version are shown
+// docs that may not match the electron-builder they have installed (and copy
+// config that only exists in the newer major). A build of an entry flagged
+// `prerelease` therefore carries a non-dismissible announcement bar that names
+// the version being read and links to the newest stable line — the first entry
+// in file order without `prerelease`. Stable builds get no banner.
+//
+// The link is a plain absolute href: the other version is a separate Docusaurus
+// instance, so it must be a full page load rather than an SPA route (see the
+// version dropdown below for the same reasoning).
+const stableVersion = docsVersions.find(v => !v.prerelease)
+const versionBanner =
+  activeVersion?.prerelease && stableVersion
+    ? {
+        announcementBar: {
+          id: `version-banner-${activeVersion.label
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "")}`,
+          content: `You are reading the documentation for <b>${activeVersion.label}</b>, which has not been released yet. For the current stable release, see the <a href="${stableVersion.path}">${stableVersion.label} documentation</a>.`,
+          isCloseable: false,
+          // Docusaurus applies these as inline styles (defaulting to #fff/#000).
+          // The banner uses its own variables (defined per theme in custom.css)
+          // so that both light and dark mode meet WCAG AA (>= 4.5:1) contrast.
+          backgroundColor: "var(--eb-version-banner-bg)",
+          textColor: "var(--eb-version-banner-fg)",
+        },
+      }
+    : {}
 
 const config: Config = {
   title: "electron-builder",
@@ -19,7 +88,7 @@ const config: Config = {
   },
 
   url: "https://www.electron.build",
-  baseUrl: "/",
+  baseUrl,
 
   organizationName: "electron-userland",
   projectName: "electron-builder",
@@ -83,6 +152,7 @@ const config: Config = {
   themes: ["@docusaurus/theme-mermaid"],
 
   themeConfig: {
+    ...versionBanner,
     colorMode: {
       respectPrefersColorScheme: true,
     },
@@ -123,11 +193,12 @@ const config: Config = {
           label: "Features",
           position: "left",
           items: [
+            { type: "doc", docId: "features/build-lifecycle", label: "Build Lifecycle" },
+            { type: "doc", docId: "features/hooks", label: "Hooks" },
+            { type: "doc", docId: "features/icons-and-images", label: "Icons & Images" },
             { type: "doc", docId: "features/auto-update", label: "Auto Update" },
             { type: "doc", docId: "features/code-signing/code-signing", label: "Code Signing" },
             { type: "doc", docId: "features/multi-platform-build", label: "Multi Platform Build" },
-            { type: "doc", docId: "features/hooks", label: "Hooks" },
-            { type: "doc", docId: "features/icons", label: "Icons" },
             { type: "doc", docId: "features/github-actions", label: "GitHub Actions" },
             { type: "doc", docId: "features/electron-forge", label: "Electron Forge" },
           ],
@@ -156,6 +227,11 @@ const config: Config = {
             },
             {
               type: "doc",
+              docId: "tutorials/offline-air-gapped-builds",
+              label: "Offline / Air-Gapped Builds",
+            },
+            {
+              type: "doc",
               docId: "tutorials/release-using-channels",
               label: "Release Using Channels",
             },
@@ -168,6 +244,37 @@ const config: Config = {
           ],
         },
 
+        {
+          type: "doc",
+          docId: "migration/v27-breaking-changes",
+          position: "left",
+          label: "v27 Breaking Changes",
+        },
+
+        {
+          type: "docSidebar",
+          sidebarId: "migrationSidebar",
+          position: "left",
+          label: "Migration",
+        },
+
+        {
+          // Version switcher, generated from docs-versions.json. Each entry
+          // points at the root of a separate Docusaurus instance, so the links
+          // must escape this instance's SPA router: "pathname://" renders a
+          // plain <a> (full page load) and autoAddBaseUrl: false keeps
+          // Docusaurus from prefixing this instance's baseUrl, so the absolute
+          // paths are emitted as-is.
+          type: "dropdown",
+          label: activeVersion?.label ?? "versions",
+          position: "right",
+          items: docsVersions.map(version => ({
+            label: version.label,
+            href: `pathname://${version.path}`,
+            target: "_self",
+            autoAddBaseUrl: false,
+          })),
+        },
         {
           href: "https://github.com/electron-userland/electron-builder",
           label: "GitHub",
@@ -197,12 +304,8 @@ const config: Config = {
           title: "Donate",
           items: [
             {
-              label: "Sponsor on GitHub",
-              href: "https://github.com/sponsors/electron-userland",
-            },
-            {
-              label: "Donorbox",
-              href: "https://donorbox.org/electron-builder",
+              label: "Donate",
+              href: "https://www.electron.build/docs/donate",
             },
           ],
         },

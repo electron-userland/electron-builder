@@ -1,4 +1,7 @@
-import { log } from "builder-util"
+import { createRequire } from "node:module"
+import { log, orNullIfFileNotExist } from "builder-util"
+
+const require = createRequire(import.meta.url)
 import { parse as parseEnv } from "dotenv"
 import { DotenvParseInput, expand } from "dotenv-expand"
 import { promises as fs } from "fs"
@@ -6,9 +9,9 @@ import { createJiti } from "jiti"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { resolveModule } from "../resolve"
+import { resolveModule } from "../resolve.js"
 
-const jiti = createJiti(__filename)
+const jiti = createJiti(import.meta.filename)
 
 export interface ReadConfigResult<T> {
   readonly result: T
@@ -58,18 +61,8 @@ export async function findAndReadConfig<T>(request: ReadConfigRequest): Promise<
   return null
 }
 
-export function orNullIfFileNotExist<T>(promise: Promise<T>): Promise<T | null> {
-  return orIfFileNotExist(promise, null)
-}
-
-export function orIfFileNotExist<T>(promise: Promise<T>, fallbackValue: T): Promise<T> {
-  return promise.catch(e => {
-    if (e.code === "ENOENT" || e.code === "ENOTDIR") {
-      return fallbackValue
-    }
-    throw e
-  })
-}
+// re-exported for downstream consumers (indexInternal.ts, config.ts, electronVersion.ts) that historically imported it from here
+export { orNullIfFileNotExist }
 
 export interface ReadConfigRequest {
   packageKey: string

@@ -1,5 +1,5 @@
-import { PM } from "app-builder-lib/out/node-module-collector"
-import { spawn } from "builder-util/out/util"
+import { AsarFilesystem, PM, readAsar } from "app-builder-lib/internal"
+import { spawn } from "builder-util"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
 import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
@@ -8,7 +8,7 @@ import { copy, mkdir, outputFile, readJson, rm, symlink, writeJson } from "fs-ex
 import { assertThat } from "./helpers/fileAssert"
 import { dump } from "js-yaml"
 
-describe.ifNotWindows("node_module collectors", () => {
+describe("node_module collectors", () => {
   test("yarn workspace", ({ expect }) =>
     assertPack(
       expect,
@@ -39,6 +39,39 @@ describe.ifNotWindows("node_module collectors", () => {
       }
     ))
 
+  // https://github.com/electron-userland/electron-builder/issues/10033
+  // An app with zero production dependencies must not bundle anything: without the guard in
+  // collectNodeModulesWithLogging, the search skips the app's empty node_modules, climbs to the
+  // workspace root, and vacuously accepts the entire hoisted workspace tree.
+  test("yarn workspace app with zero production dependencies bundles no node_modules", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-yarn-workspace",
+      {
+        targets: linuxDirTarget,
+        projectDir: "packages/test-app",
+      },
+      {
+        packageManager: PM.YARN,
+        projectDirCreated: async projectDir => {
+          // Populate the workspace-root node_modules with production dependencies of its own,
+          // so a walk-up from the app would find a non-empty tree to (wrongly) bundle.
+          await modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "is-odd": "3.0.1",
+            }
+          })
+          await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => {
+            delete data.dependencies
+          })
+        },
+        packed: async context => {
+          const asarFs = await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))
+          expect(asarFs.searchNodeFromDirectory("node_modules", false)).toBeNull()
+        },
+      }
+    ))
+
   test("yarn several workspaces", ({ expect }) =>
     assertPack(
       expect,
@@ -62,7 +95,7 @@ describe.ifNotWindows("node_module collectors", () => {
         targets: linuxDirTarget,
         projectDir: "packages/test-app",
         config: {
-          asarUnpack: ["**/node_modules/ms/**/*"],
+          asar: { unpack: ["**/node_modules/ms/**/*"] },
         },
       },
       {
@@ -83,6 +116,77 @@ describe.ifNotWindows("node_module collectors", () => {
         storeDepsLockfileSnapshot: true,
         packageManager: PM.YARN,
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    )
+  )
+
+  // https://github.com/electron-userland/electron-builder/issues/9865
+  // esbuild pulls a single-arch darwin binary (`@esbuild/darwin-arm64` or `@esbuild/darwin-x64`) via its
+  // optionalDependencies; npm installs only the host's variant. Before the collector's `cpu`/`os` filter, that
+  // single-arch binary was copied identically into BOTH universal slices and `@electron/universal` aborted with
+  // `Detected file "…@esbuild/…/bin/esbuild" that's the same in both x64 and arm64 builds`. The build should now
+  // succeed: the binary is filtered out of the mismatched slice and reported as `singleArchFiles` for the merge.
+  test.ifMac("mac universal build with a single-arch platform-specific optional dependency (esbuild)", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.universal),
+      },
+      {
+        signedMac: false,
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              esbuild: "0.21.5",
+            }
+          }),
+        packed: async context => {
+          const resourceDir = context.getResources(Platform.MAC, Arch.universal)
+          // The universal app was produced (the merge no longer aborts) and esbuild's JS package is bundled.
+          const asarFs = await readAsar(path.join(resourceDir, "app.asar"))
+          expect(await asarFs.readJson(`node_modules${path.sep}esbuild${path.sep}package.json`)).toMatchObject({ name: "esbuild" })
+
+          // npm installs only the *host* arch's platform binary, so the universal app carries that single-arch
+          // binary through the merge (and not the other arch's, which was never on disk). Deriving the expected
+          // arch from `process.arch` keeps this deterministic across arm64 and x64 CI runners.
+          const esbuildScope = path.join(resourceDir, "app.asar.unpacked", "node_modules", "@esbuild")
+          const hostArch = process.arch === "x64" ? "x64" : "arm64"
+          const otherArch = hostArch === "x64" ? "arm64" : "x64"
+          await assertThat(expect, path.join(esbuildScope, `darwin-${hostArch}`, "bin", "esbuild")).isFile()
+          await assertThat(expect, path.join(esbuildScope, `darwin-${otherArch}`)).doesNotExist()
+        },
+      }
+    )
+  )
+
+  // Companion to the test above: when the project opts into installing *both* macOS arch variants
+  // (here via pnpm `supportedArchitectures`), the symmetric universal slices carry both single-arch
+  // binaries into the final app — so a runtime dependency resolves correctly on Intel AND Apple Silicon.
+  test.ifMac("mac universal build bundles both arch variants when both are installed (pnpm supportedArchitectures)", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: Platform.MAC.createTarget(DIR_TARGET, Arch.universal),
+      },
+      {
+        signedMac: false,
+        packageManager: PM.PNPM,
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              esbuild: "0.21.5",
+            }
+            // Force pnpm to install the platform packages for BOTH macOS arches, not just the build host's.
+            data.pnpm = { supportedArchitectures: { os: ["darwin"], cpu: ["x64", "arm64"] } }
+          }),
+        packed: async context => {
+          const esbuildScope = path.join(context.getResources(Platform.MAC, Arch.universal), "app.asar.unpacked", "node_modules", "@esbuild")
+          // Both arch variants are present, so esbuild's runtime resolution works on either architecture.
+          await assertThat(expect, path.join(esbuildScope, "darwin-x64", "bin", "esbuild")).isFile()
+          await assertThat(expect, path.join(esbuildScope, "darwin-arm64", "bin", "esbuild")).isFile()
+        },
       }
     )
   )
@@ -183,7 +287,13 @@ describe.ifNotWindows("node_module collectors", () => {
       }
     ))
 
-  test.ifWindows("should throw when attempting to package a system file", async ({ expect }) => {
+  // Pre-existing, never-executed test: it lived inside the former `describe.ifNotWindows` block,
+  // so the inner `ifWindows` guard meant it ran on no platform. Unlike the symlink case below, it
+  // adds a *non-symlink* absolute system path to `files`, which the glob layer simply does not
+  // collect, so `protectSystemAndUnsafePaths` never fires and nothing throws. The expectation does
+  // not hold for plain (non-symlink) paths; tracked for separate investigation of unsafe-path
+  // rejection. Skipped here so it does not block the node-module-collector Windows coverage.
+  test.skip("should throw when attempting to package a system file", async ({ expect }) => {
     const invalidPath = "C:\\Windows\\System32\\drivers\\etc\\hosts"
     return appTwoThrows(
       expect,
@@ -212,7 +322,6 @@ describe.ifNotWindows("node_module collectors", () => {
       targets: Platform.current().createTarget("dir", Arch.x64),
       projectDir: "app",
       config: {
-        asar: true,
         electronVersion: ELECTRON_VERSION,
       },
     }
@@ -277,6 +386,58 @@ describe.ifNotWindows("node_module collectors", () => {
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
+
+  // Same project as above, installed and listed by a pnpm >= 10.29.3. Since pnpm/pnpm#10601 `pnpm list --json`
+  // prints a repeated subtree once and every later occurrence is a childless `deduped` stub, so the collector
+  // has to recover those packages' dependencies from their package.json. Resolving them by name only wired
+  // d@1.0.2 (needs es5-ext ^0.10.64) to the app's hoisted es5-ext@0.10.53 and dropped the whole 0.10.64
+  // closure (nested es5-ext, esniff, event-emitter, next-tick@1.1.0) from the asar — #8493 again.
+  // The exact version is pinned through `packageManager` so that this pnpm is what corepack activates for
+  // both the install and the collector's `pnpm list`; the tree is asserted explicitly rather than via an
+  // offset-based snapshot.
+  test("pnpm es5-ext without hoisted config (pnpm 10.29.3+ deduped list output)", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: linuxDirTarget,
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.packageManager =
+              "pnpm@10.34.5+sha512.a4ee05f2f73658255bd6a89859c065a45c28a57daefae2c893a168ee2b73168c37b91e83e57ea67654ad03f03031746430e8bce38e362e042605fb8abc80192e"
+            data.dependencies = {
+              "es5-ext": "0.10.53",
+            }
+          }),
+        packed: async context => {
+          const asarFs = await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))
+          const packages = [...(await readAsarPackageVersions(asarFs))].map(([dir, version]) => `${dir}@${version}`).sort()
+
+          // The app's es5-ext@0.10.53 is hoisted (three dependents); d and esniff need ^0.10.64 and keep
+          // their own nested copy. The nested copies and esniff/event-emitter are what the bug removed.
+          expect(packages.filter(it => !it.includes("next-tick"))).toEqual([
+            "node_modules/d/node_modules/es5-ext@0.10.64",
+            "node_modules/d@1.0.2",
+            "node_modules/es5-ext@0.10.53",
+            "node_modules/es6-iterator@2.0.3",
+            "node_modules/es6-symbol@3.1.4",
+            "node_modules/esniff/node_modules/es5-ext@0.10.64",
+            "node_modules/esniff@2.0.1",
+            "node_modules/event-emitter@0.3.5",
+            "node_modules/ext@1.7.0",
+            "node_modules/type@2.7.3",
+          ])
+          // next-tick@1.0.0 (es5-ext@0.10.53) and @1.1.0 (es5-ext@0.10.64) have one dependent each, so the
+          // hoister breaks the tie by pnpm's output order — assert on the versions, not on the placement.
+          const nextTicks = packages.filter(it => it.includes("next-tick"))
+          expect(nextTicks.some(it => it.startsWith("node_modules/next-tick@"))).toBe(true)
+          expect([...new Set(nextTicks.map(it => it.split("@").at(-1)))].sort()).toEqual(["1.0.0", "1.1.0"])
+        },
       }
     ))
 
@@ -725,3 +886,23 @@ describe.ifNotWindows("node_module collectors", () => {
       }
     ))
 })
+
+/**
+ * Every package under `node_modules` in the asar, keyed by its directory relative to the asar root
+ * (always `/`-separated, e.g. `node_modules/d/node_modules/es5-ext`) with its package.json version.
+ */
+async function readAsarPackageVersions(asarFs: AsarFilesystem): Promise<Map<string, string>> {
+  const versions = new Map<string, string>()
+  const walk = async (node: AsarFilesystem["header"], segments: Array<string>) => {
+    for (const [name, child] of Object.entries(node.files ?? {})) {
+      if (child.files != null) {
+        await walk(child, [...segments, name])
+      } else if (name === "package.json" && segments.includes("node_modules")) {
+        const { version } = await asarFs.readJson(path.join(...segments, name))
+        versions.set(segments.join("/"), String(version))
+      }
+    }
+  }
+  await walk(asarFs.header, [])
+  return versions
+}

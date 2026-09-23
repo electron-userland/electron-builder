@@ -1,15 +1,16 @@
-import { createPackageFromStreams, AsarStreamType, AsarDirectory } from "@electron/asar"
-import { isEmptyOrSpaces, log } from "builder-util"
-import { exists, Filter, FilterStats } from "builder-util/out/fs"
-import * as fs from "fs-extra"
-import { readlink } from "fs-extra"
+import type { AsarStreamType, AsarDirectory } from "@electron/asar"
+import { exists, Filter, FilterStats, isEmptyOrSpaces, log } from "builder-util"
+import { dynamicImport } from "../util/dynamicImport.js"
+import fs from "fs-extra"
+
 import * as path from "path"
-import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
-import { PlatformPackager } from "../platformPackager"
-import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
-import { detectUnpackedDirs } from "./unpackDetector"
+import { AsarOptions } from "../options/PlatformSpecificBuildOptions.js"
+import { PlatformPackager } from "../platformPackager.js"
+import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier.js"
+import { detectUnpackedDirs } from "./unpackDetector.js"
 import { Readable } from "stream"
 import * as os from "os"
+const { readlink } = fs
 
 const resolvePath = async (file: string | undefined): Promise<string | undefined> => (file && (await exists(file)) ? fs.realpath(file).catch(() => path.resolve(file)) : undefined)
 const resolvePaths = async (filepaths: (string | undefined)[]) => {
@@ -79,6 +80,7 @@ export class AsarPackager {
       }
       log.info({ args }, "logging @electron/asar")
     }
+    const { createPackageFromStreams } = await dynamicImport<typeof import("@electron/asar")>("@electron/asar")
     await createPackageFromStreams(this.outFile, streams)
     console.log = consoleLogger
   }
@@ -229,7 +231,7 @@ export class AsarPackager {
     }
 
     // verify that the file is not a direct link or symlinked to access/copy a system file
-    await this.protectSystemAndUnsafePaths(file, await this.packager.info.getWorkspaceRoot())
+    await this.protectSystemAndUnsafePaths(file, await this.packager.getWorkspaceRoot())
 
     const baseConfig = {
       path: destination,

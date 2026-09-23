@@ -1,0 +1,5 @@
+export { MacUpdater } from "./MacUpdater.js"
+export { GitHubProvider } from "./providers/GitHubProvider.js"
+export { GitLabProvider } from "./providers/GitLabProvider.js"
+export type { Logger } from "./types.js"
+export * as utils from "./util.js"

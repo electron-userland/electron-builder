@@ -2,12 +2,8 @@
 title: Donate
 ---
 
-electron-builder is free, open-source software maintained by volunteers.
+electron-builder is free, open-source software driven through personal development time and community contributions.
 
-We do this open source work in our free time. If you find it valuable, please consider donating!
+This open-source work is done during free time. If you find it valuable, please consider donating!
 
-[Sponsor electron-builder on GitHub](https://github.com/sponsors/electron-userland) or donate through our [Donorbox](https://donorbox.org/electron-builder).
-
-## Donorbox
-
-<script src="https://donorbox.org/widget.js" paypalExpress="false"></script><iframe src="https://donorbox.org/embed/electron-builder?amount=20" height="685px" width="100%" style="max-width:500px; min-width:310px; max-height:none!important" seamless="seamless" name="donorbox" frameborder="0" scrolling="no" allowpaymentrequest></iframe>
+<iframe src="https://github.com/sponsors/mmaietta/button" title="Sponsor mmaietta" height="32" width="114" style="border: 0; border-radius: 6px;"></iframe>

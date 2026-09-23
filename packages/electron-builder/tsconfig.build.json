@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig-build.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*.ts", "../../typings/*.d.ts"],
+  "references": [
+    {"path": "../app-builder-lib/tsconfig.build.json"},
+    {"path": "../builder-util/tsconfig.build.json"},
+    {"path": "../builder-util-runtime/tsconfig.build.json"},
+    {"path": "../dmg-builder/tsconfig.build.json"}
+  ]
+}

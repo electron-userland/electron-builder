@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    {"path": "./packages/builder-util-runtime/tsconfig.build.json"},
+    {"path": "./packages/builder-util/tsconfig.build.json"},
+    {"path": "./packages/electron-publish/tsconfig.build.json"},
+    {"path": "./packages/app-builder-lib/tsconfig.build.json"},
+    {"path": "./packages/dmg-builder/tsconfig.build.json"},
+    {"path": "./packages/electron-builder-squirrel-windows/tsconfig.build.json"},
+    {"path": "./packages/electron-updater/tsconfig.build.json"},
+    {"path": "./packages/electron-builder/tsconfig.build.json"}
+  ]
+}

@@ -1,6 +1,6 @@
 import { Arch, copyFile, log, orNullIfFileNotExist } from "builder-util"
 import { Hash } from "crypto"
-import { readJson, writeJson } from "fs-extra"
+import fsExtra from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
 
@@ -32,7 +32,7 @@ export class BuildCacheManager {
   async copyIfValid(digest: string): Promise<boolean> {
     this.newDigest = digest
 
-    this.cacheInfo = await orNullIfFileNotExist(readJson(this.cacheInfoFile))
+    this.cacheInfo = await orNullIfFileNotExist(fsExtra.readJson(this.cacheInfoFile))
     const oldDigest = this.cacheInfo == null ? null : this.cacheInfo.executableDigest
     if (oldDigest !== digest) {
       log.debug({ oldDigest, newDigest: digest }, "no valid cached executable found")
@@ -66,7 +66,7 @@ export class BuildCacheManager {
 
     try {
       await mkdir(this.cacheDir, { recursive: true })
-      await Promise.all([writeJson(this.cacheInfoFile, this.cacheInfo), copyFile(this.executableFile, this.cacheFile, false)])
+      await Promise.all([fsExtra.writeJson(this.cacheInfoFile, this.cacheInfo), copyFile(this.executableFile, this.cacheFile, false)])
     } catch (e: any) {
       log.warn({ error: e.stack || e }, `cannot save build cache`)
     }

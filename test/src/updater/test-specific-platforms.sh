@@ -41,7 +41,7 @@ do_run() {
 
   ELECTRON_CACHE_PATH="$ELECTRON_CACHE_PATH" \
     ELECTRON_BUILDER_CACHE_PATH="$ELECTRON_BUILDER_CACHE_PATH" \
-    TEST_RUNNER_IMAGE_TAG="$tag" pnpm test-linux
+    TEST_RUNNER_IMAGE_TAG="$tag" pnpm test:linux
 }
 
 run_archlinux() {
@@ -63,6 +63,10 @@ run_appimage() {
   # appimage must match host arch — no --platform flag
   do_build appimage appimage-updater-test ""
   export ADDITIONAL_DOCKER_ARGS="${ADDITIONAL_DOCKER_ARGS:+$ADDITIONAL_DOCKER_ARGS }-e RUN_APP_IMAGE_TEST=true"
+  # Also run the generated per-toolset-version AppImage blackbox update suites
+  # (test/src/generated/blackboxLinux/blackboxLinux__appimage-*.linux.Test.ts).
+  # They gate on RUN_APP_IMAGE_TEST=true, so this job is the only place they execute.
+  export TEST_FILES="${TEST_FILES},blackboxLinux__appimage"
   do_run appimage-updater-test
 }
 

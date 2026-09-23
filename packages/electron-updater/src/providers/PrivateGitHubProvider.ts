@@ -2,12 +2,12 @@ import { CancellationToken, GithubOptions, HttpError, newError, UpdateInfo } fro
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import * as path from "path"
-import { AppUpdater } from "../AppUpdater"
+import { AppUpdater } from "../AppUpdater.js"
 import { URL } from "url"
-import { getChannelFilename, newUrlFromBase } from "../util"
-import { BaseGitHubProvider } from "./GitHubProvider"
-import { ResolvedUpdateFileInfo } from "../types"
-import { getFileList, ProviderRuntimeOptions } from "./Provider"
+import { getChannelFilename, newUrlFromBase } from "../util.js"
+import { BaseGitHubProvider } from "./GitHubProvider.js"
+import { ResolvedUpdateFileInfo } from "../types.js"
+import { channelFileNotFoundError, getFileList, ProviderRuntimeOptions } from "./Provider.js"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>
@@ -46,7 +46,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       result = load((await this.httpRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken))!)
     } catch (e: any) {
       if (e instanceof HttpError && e.statusCode === 404) {
-        throw newError(`Cannot find ${channelFile} in the latest release artifacts (${url}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+        throw channelFileNotFoundError(channelFile, url, e)
       }
       throw e
     }

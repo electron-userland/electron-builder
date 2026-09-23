@@ -1,16 +1,19 @@
-import { DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
-import { downloadBuilderToolset } from "app-builder-lib/out/util/electronGet"
-import { withToolsetLock } from "app-builder-lib/out/util/toolsetLock"
+import { DmgContent, DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
+import { downloadBuilderToolset, withToolsetLock } from "app-builder-lib/internal"
 import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
+import { sleep } from "builder-util-runtime"
 import { stat } from "fs/promises"
-import { writeFile } from "fs-extra"
+
 import * as path from "path"
-import { DmgBuildConfig } from "./dmg"
-import { hdiUtil, hdiutilTransientExitCodes } from "./hdiuil"
+import { DmgBuildConfig } from "./dmg.js"
+import type { DmgBuildLicenseConfig } from "./dmgLicense.js"
+import { hdiUtil, hdiUtilWithStdin, hdiutilTransientExitCodes } from "./hdiuil.js"
+import _fsExtra from "fs-extra"
+const { writeFile } = _fsExtra
 
-export { DmgTarget } from "./dmg"
+export { DmgTarget } from "./dmg.js"
 
-const root = path.join(__dirname, "..")
+const root = path.join(import.meta.dirname, "..")
 
 export function getDmgTemplatePath() {
   return path.join(root, "templates")
@@ -36,18 +39,15 @@ async function getDmgVendorPath(): Promise<string> {
     return resolvedPath
   }
 
-  // https://github.com/electron-userland/electron-builder-binaries/releases/tag/dmg-builder%401.2.2
-  const config = {
-    "dmgbuild-bundle-arm64-75c8a6c.tar.gz": "28be390d4cfade51d872c42016bc56712bb240525c9f21ebbfa0b413ade1fe0f",
-    "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "97d4ac0d2137383d37d02df3338bf653b6e6095d033508458ef195d567d25071",
-  }
   const arch = process.arch === "arm64" ? "arm64" : "x86_64"
-  const filename: keyof typeof config = `dmgbuild-bundle-${arch}-75c8a6c.tar.gz`
+  // https://github.com/electron-userland/electron-builder-binaries/releases?q=dmg-builder&expanded=true
   const file = await downloadBuilderToolset({
-    releaseName: "dmg-builder@1.2.2",
-    filenameWithExt: filename,
-    checksums: config,
-    githubOrgRepo: "electron-userland/electron-builder-binaries",
+    releaseName: "dmg-builder@1.2.5",
+    filenameWithExt: `dmgbuild-bundle-${arch}-75c8a6c.tar.gz`,
+    checksums: {
+      "dmgbuild-bundle-arm64-75c8a6c.tar.gz": "793404d0c96687e27d5ee40a668d498c92e36a64d6c2906df511031adb33cbeb",
+      "dmgbuild-bundle-x86_64-75c8a6c.tar.gz": "1664972f9cc2d6e8fce3b63e42cd30078aff602669c5856939c4519921200433",
+    },
   })
   return path.resolve(file, "dmgbuild")
 }
@@ -60,44 +60,56 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, forc
   }
 
   args.push(dmgPath)
-  const attachResult = await hdiUtil(args)
-  const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/.exec(attachResult)
+  // Pipe "y\n" to stdin so that hdiutil auto-accepts any SLA/EULA dialog
+  // embedded in the DMG instead of blocking on a terminal prompt.
+  const attachResult = await hdiUtilWithStdin(args, "y\n")
+  // Use multiline flag so ^ matches any line start — the EULA text (if any)
+  // precedes the /dev/... device lines in hdiutil's stdout output.
+  const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/m.exec(attachResult)
   const device = deviceResult == null || deviceResult.length !== 2 ? null : deviceResult[1]
   if (device == null) {
     throw new Error(`Cannot mount: ${attachResult}`)
   }
-  const volumePath = await findMountPath(path.basename(device))
-  if (volumePath == null) {
-    throw new Error(`Cannot find volume mount path for device: ${device}`)
-  }
 
-  return await executeFinally(task(volumePath), () => detach(device, forceDetach))
+  return executeAndDetach(attachResult!, device, forceDetach, task)
 }
 
-/**
- * Find the mount path for a specific device from `hdiutil info`.
- */
-async function findMountPath(devName: string, index: number = 1): Promise<string | null> {
-  const info = await hdiUtil(["info"])
-  const lines = info!.split("\n")
-  const regex = new RegExp(`^/dev/${devName}(s\\d+)?\\s+\\S+\\s+(/Volumes/.+)$`)
-  const matches: string[] = []
+/** @internal */
+export async function executeAndDetach(
+  attachResult: string,
+  device: string,
+  forceDetach: boolean,
+  task: (volumePath: string) => Promise<any>,
+  detacher: (device: string, forceDetach: boolean) => Promise<any> = detach
+) {
+  return executeFinally(
+    (async () => {
+      // Find the volume mount path directly from hdiutil attach output.
+      // APFS images synthesize a new disk device (e.g. disk9) separate from the container disk
+      // (e.g. disk8), so device-name matching via hdiutil info misses the APFS volume.
+      let volumePath: string | null = null
+      for (const line of attachResult.split("\n")) {
+        const match = /\s+(\/Volumes\/.+?)\s*$/.exec(line)
+        if (match) {
+          volumePath = match[1].trim()
+          break
+        }
+      }
+      if (volumePath == null) {
+        throw new Error(`Cannot find volume mount path for device: ${device}`)
+      }
 
-  for (const line of lines) {
-    const result = regex.exec(line)
-    if (result && result.length >= 3) {
-      matches.push(result[2])
-    }
-  }
-
-  return matches.length >= index ? matches[index - 1] : null
+      return task(volumePath)
+    })(),
+    () => detacher(device, forceDetach)
+  )
 }
 
 export async function detach(name: string, alwaysForce: boolean) {
   return hdiUtil(["detach", "-quiet", name]).catch(async e => {
     if (hdiutilTransientExitCodes.has(e.code) || alwaysForce) {
       // Delay then force unmount with verbose output
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      await sleep(3000)
       return hdiUtil(["detach", "-force", name])
     }
     throw e
@@ -133,9 +145,10 @@ type DmgBuilderConfig = {
   volumeName: string
   specification: DmgOptions
   packager: MacPackager
+  licenseData?: DmgBuildLicenseConfig | null
 }
 
-export async function customizeDmg({ appPath, artifactPath, volumeName, specification, packager }: DmgBuilderConfig): Promise<boolean> {
+export async function customizeDmg({ appPath, artifactPath, volumeName, specification, packager, licenseData }: DmgBuilderConfig): Promise<boolean> {
   const isValidIconTextSize = !!specification.iconTextSize && specification.iconTextSize >= 10 && specification.iconTextSize <= 16
   const iconTextSize = isValidIconTextSize ? specification.iconTextSize : 12
   const volumePath = path.join("/Volumes", volumeName)
@@ -147,12 +160,12 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
     "text-size": iconTextSize,
 
     "compression-level": Number(process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"),
-    // filesystem: specification.filesystem || "HFS+",
+    filesystem: specification.filesystem || "APFS",
     format: specification.format,
     size: specification.size,
     shrink: specification.shrink,
     contents:
-      specification.contents?.map(c => ({
+      specification.contents?.map((c: DmgContent) => ({
         path: c.path || appPath, // path is required, when ommitted, appPath is used (backward compatibility
         x: c.x,
         y: c.y,
@@ -189,7 +202,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
       }
     }
   } else {
-    settings.background = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.info.tempDirManager)
+    settings.background = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.tempDirManager)
   }
 
   if (!isEmptyOrSpaces(settings.background)) {
@@ -197,7 +210,7 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
     settings.window = { position: { x: 400, y: Math.round((1440 - size.height) / 2) }, size, ...settings.window }
   }
 
-  const workspaceRoot = await packager.info.getWorkspaceRoot()
+  const workspaceRoot = await packager.getWorkspaceRoot()
   for (const item of settings.contents ?? []) {
     if (item.type === "file" && item.path && path.isAbsolute(item.path)) {
       if (!item.path.startsWith(workspaceRoot + path.sep) && item.path !== appPath) {
@@ -205,6 +218,10 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
         throw new InvalidConfigurationError(`dmg.contents path "${item.path}" is outside the workspace root`)
       }
     }
+  }
+
+  if (licenseData) {
+    settings.license = licenseData
   }
 
   const settingsFile = await packager.getTempFile(".json")

@@ -1,4 +1,4 @@
-import { getCompleteExtname } from "builder-util/out/filename"
+import { getCompleteExtname, sanitizeFileName } from "builder-util/internal"
 
 // [inputFilename, expectedExtname]
 const tests = [
@@ -38,4 +38,28 @@ describe("getCompleteExtname", () => {
       expect(extname).toBe(expected)
     })
   }
+})
+
+describe("sanitizeFileName", () => {
+  test("passes a normal name through unchanged", ({ expect }) => {
+    expect(sanitizeFileName("My App")).toBe("My App")
+  })
+
+  // Composed (NFC) Unicode must be preserved as-is — it must not be decomposed to NFD, otherwise the
+  // on-disk macOS bundle/helper names diverge from CFBundleName.
+  test("preserves composed (NFC) Unicode and does not normalize to NFD", ({ expect }) => {
+    const nfc = "Tést" // "Tést" with a single composed code point
+    const result = sanitizeFileName(nfc)
+    expect(result).toBe(nfc)
+    expect(result).toBe(result.normalize("NFC"))
+    expect(result).not.toBe(nfc.normalize("NFD"))
+  })
+
+  test("preserves the sharp-s character (no canonical decomposition)", ({ expect }) => {
+    expect(sanitizeFileName("Test App ßW")).toBe("Test App ßW")
+  })
+
+  test("strips path separators", ({ expect }) => {
+    expect(sanitizeFileName("a/b\\c")).toBe("abc")
+  })
 })

@@ -1,8 +1,10 @@
 import { Arch, debug } from "builder-util"
+import { isRemoveStageDirEvenIfDebug } from "../util/flags.js"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { AppInfo, Target } from "../"
-import { PlatformPackager } from "../platformPackager"
+import { AppInfo } from "../appInfo.js"
+import { Target } from "../core.js"
+import { PlatformPackager } from "../platformPackager.js"
 
 export class StageDir {
   constructor(readonly dir: string) {}
@@ -12,7 +14,7 @@ export class StageDir {
   }
 
   cleanup() {
-    if (!debug.enabled || process.env.ELECTRON_BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG === "true") {
+    if (!debug.enabled || isRemoveStageDirEvenIfDebug()) {
       return fs.rm(this.dir, { recursive: true, force: true })
     }
     return Promise.resolve()
@@ -28,7 +30,7 @@ export async function createStageDir(target: Target, packager: PlatformPackager<
 }
 
 export async function createStageDirPath(target: Target, packager: PlatformPackager<any>, arch: Arch): Promise<string> {
-  const tempDir = packager.info.stageDirPathCustomizer(target, packager, arch)
+  const tempDir = packager.stageDirPathCustomizer(target, packager, arch)
   await fs.rm(tempDir, { recursive: true, force: true })
   await fs.mkdir(tempDir, { recursive: true })
   return tempDir

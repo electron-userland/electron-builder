@@ -25,11 +25,9 @@ const rebuilder = rebuilder => {
     })
 }
 
-const main = () => {
+const main = async () => {
   const options = JSON.parse(process.argv[2])
-
-  const dynamicImport = require("./dynamic-import").dynamicImportMaybe
-  return dynamicImport("@electron/rebuild").then(module => {
+  return import("@electron/rebuild").then(module => {
     const { rebuild } = module
     return rebuilder(rebuild(options))
   })

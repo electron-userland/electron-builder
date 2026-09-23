@@ -6,6 +6,9 @@ export type PackageJson = {
   peerDependencies?: Record<string, string>
   optionalDependencies?: Record<string, string>
   workspaces?: string[] | { packages: string[] }
+  // npm platform constraints (e.g. `@esbuild/darwin-arm64` declares `cpu: ["arm64"], os: ["darwin"]`)
+  os?: string | string[]
+  cpu?: string | string[]
 }
 
 export interface NodeModuleInfo {
@@ -13,6 +16,7 @@ export interface NodeModuleInfo {
   version: string
   dir: string
   dependencies?: Array<NodeModuleInfo>
+  excluded?: boolean
 }
 
 export type ParsedDependencyTree = {
@@ -58,5 +62,6 @@ export type Dependencies<T, V> = {
 export interface DependencyGraph {
   [packageNameAndVersion: string]: {
     readonly dependencies: string[]
+    excluded?: boolean
   }
 }
