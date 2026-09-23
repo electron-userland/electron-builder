@@ -318,6 +318,44 @@ describe("NsisUpdater.doInstall elevation", () => {
       await expect(result).resolves.toBe(true)
     })
 
+    test("install() called directly resets quitAndInstallCalled when the UAC prompt is declined, so a retry is not ignored", async ({ expect }) => {
+      const { updater, errors } = await createInstallableUpdater()
+      const warn = vi.spyOn((updater as any)._logger, "warn")
+      const child = mockSpawn()
+
+      const result = updater.install(true, false)
+      expect((updater as any).quitAndInstallCalled).toBe(true)
+      child.emit("exit", UAC_CANCELLED_EXIT_CODE, null)
+      await expect(result).resolves.toBe(false)
+      expect(errors.map(it => it.code)).toEqual(["ERR_UPDATER_ELEVATION_CANCELLED"])
+      expect((updater as any).quitAndInstallCalled).toBe(false)
+
+      // the user accepts the prompt on the second attempt
+      const retryChild = mockSpawn()
+      const retry = updater.install(true, false)
+      expect(spawnMock).toHaveBeenCalledTimes(2)
+      expect(warn).not.toHaveBeenCalledWith(expect.stringContaining("install call ignored"))
+      retryChild.emit("exit", 0, null)
+      await expect(retry).resolves.toBe(true)
+      expect((updater as any).quitAndInstallCalled).toBe(true)
+    })
+
+    test("a second install() while the first elevation is still pending is ignored and does not release the latch", async ({ expect }) => {
+      const { updater } = await createInstallableUpdater()
+      const warn = vi.spyOn((updater as any)._logger, "warn")
+      const child = mockSpawn()
+
+      const first = updater.install(true, false)
+      expect(updater.install(true, false)).toBe(false)
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("install call ignored"))
+      expect((updater as any).quitAndInstallCalled).toBe(true)
+      expect(spawnMock).toHaveBeenCalledOnce()
+
+      child.emit("exit", 0, null)
+      await expect(first).resolves.toBe(true)
+      expect((updater as any).quitAndInstallCalled).toBe(true)
+    })
+
     test("quitAndInstall() does not quit and resets quitAndInstallCalled when the UAC prompt is declined", async ({ expect }) => {
       const { updater, quit, errors } = await createInstallableUpdater()
       const child = mockSpawn()
@@ -348,13 +386,22 @@ describe.ifWindows("NsisUpdater.doInstall elevation — Windows integration", ()
     expect(stdout.trim()).toBe("elevation-test-ok")
   })
 
+  // counts the parse errors of `script` without executing it. The script is handed to ParseInput as a Base64 (UTF-16LE)
+  // payload inside a single-quoted literal: Base64 is alphanumeric, so no PowerShell quoting rules apply to the script's
+  // own content (it contains double quotes for the spaced /D= case — a JSON.stringify'd literal is not valid PowerShell).
+  async function countParseErrors(script: string): Promise<number> {
+    const encodedScript = Buffer.from(script, "utf16le").toString("base64")
+    const parseCommand = `$errors = $null; $script = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String('${encodedScript}')); $null = [System.Management.Automation.Language.Parser]::ParseInput($script, [ref]$null, [ref]$errors); exit $errors.Count`
+    const { code } = await realExecFile(getWindowsPowerShellPath(), buildPowerShellArgs(parseCommand, { modules: [] }))
+    return code
+  }
+
   test("generated Start-Process script parses without errors (plain args, args with spaces, quotes)", async ({ expect }) => {
+    // the check is not vacuous: an unterminated string literal is reported as a parse error
+    expect(await countParseErrors("Start-Process -FilePath 'C:\\fake\\installer.exe")).toBeGreaterThan(0)
     for (const args of [["--updated", "/S"], ["--updated", "/D=C:\\Program Files\\My App"], ["--package-file=C:\\Users\\D'Andre\\pkg.7z"], []]) {
       const script = buildElevatedInstallerScript("C:\\fake\\installer.exe", args)
-      // count parse errors without executing the script
-      const parseCommand = `$errors = $null; $null = [System.Management.Automation.Language.Parser]::ParseInput(${JSON.stringify(script)}, [ref]$null, [ref]$errors); exit $errors.Count`
-      const { code } = await realExecFile(getWindowsPowerShellPath(), buildPowerShellArgs(parseCommand, { modules: [] }))
-      expect(code, `parse errors for args ${JSON.stringify(args)}`).toBe(0)
+      expect(await countParseErrors(script), `parse errors for args ${JSON.stringify(args)}`).toBe(0)
     }
   })
 

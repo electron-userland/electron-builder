@@ -51,25 +51,14 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   /**
-   * Settles an {@link install} result — synchronously for a boolean, once resolved for a Promise — and calls `onSettled`
-   * with it. When the installer was not launched, `quitAndInstallCalled` (set by `install()` before `doInstall`) is reset
-   * first so a later install attempt in this session is not short-circuited. A rejected result is dispatched as an error
-   * and treated as "not installed".
+   * Calls `onSettled` with an {@link install} result — synchronously for a boolean, once resolved for a Promise. The
+   * result never rejects (see {@link releaseLatchUnlessInstalled}).
    */
   private whenInstalled(result: boolean | Promise<boolean>, onSettled: (isInstalled: boolean) => void): void {
-    const handle = (isInstalled: boolean) => {
-      if (!isInstalled) {
-        this.quitAndInstallCalled = false
-      }
-      onSettled(isInstalled)
-    }
     if (typeof result === "boolean") {
-      handle(result)
+      onSettled(result)
     } else {
-      result.then(handle, (e: Error) => {
-        this.dispatchError(e)
-        handle(false)
-      })
+      void result.then(onSettled)
     }
   }
 
@@ -109,7 +98,8 @@ export abstract class BaseUpdater extends AppUpdater {
   protected abstract doInstall(options: InstallOptions): boolean | Promise<boolean>
 
   // must be sync (because quit even handler is not async) — a returned Promise only defers the *result*, the installer
-  // launch itself has already been started
+  // launch itself has already been started. Never rejects: a failed launch is dispatched as an `error` event and
+  // reported as `false`, after which install() may be called again (the declined-UAC retry case).
   install(isSilent = false, isForceRunAfter = false): boolean | Promise<boolean> {
     return this.startInstall({ isSilent, isForceRunAfter, isAppQuitting: false })
   }
@@ -133,14 +123,40 @@ export abstract class BaseUpdater extends AppUpdater {
 
     try {
       this._logger.info(`Install: isSilent: ${options.isSilent}, isForceRunAfter: ${options.isForceRunAfter}`)
-      return this.doInstall({
-        ...options,
-        isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
-      })
+      return this.releaseLatchUnlessInstalled(
+        this.doInstall({
+          ...options,
+          isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
+        })
+      )
     } catch (e: any) {
       this.dispatchError(e)
-      return false
+      return this.releaseLatchUnlessInstalled(false)
     }
+  }
+
+  /**
+   * Settles a `doInstall` result and resets `quitAndInstallCalled` when the installer was not launched — a `false`
+   * result (e.g. a declined UAC prompt), a throwing `doInstall` (e.g. AppImage's sync unlink+mv) or a rejected Promise,
+   * which is dispatched as an error and treated as "not installed". Without the reset the latch would stay stuck `true`
+   * and short-circuit every later install attempt in this session. The reset lives here, next to where the latch is
+   * set, so it applies to every caller of the public {@link install} (not only `quitAndInstall()`), and an ignored call
+   * (latch already held by an in-flight attempt) can never release that attempt's latch. Resetting is idempotent.
+   */
+  private releaseLatchUnlessInstalled(result: boolean | Promise<boolean>): boolean | Promise<boolean> {
+    const settle = (isInstalled: boolean): boolean => {
+      if (!isInstalled) {
+        this.quitAndInstallCalled = false
+      }
+      return isInstalled
+    }
+    if (typeof result === "boolean") {
+      return settle(result)
+    }
+    return result.then(settle, (e: Error) => {
+      this.dispatchError(e)
+      return settle(false)
+    })
   }
 
   /**
@@ -226,10 +242,9 @@ export abstract class BaseUpdater extends AppUpdater {
     await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
     this.updateInfoAndProvider = updateInfoAndProvider
     this._logger.info(`Installing pending update ${latestInfo.version} on launch`)
-    // install() sets quitAndInstallCalled = true before doInstall; a failed/throwing install (e.g. AppImage's
-    // sync unlink+mv) would otherwise leave it stuck true and short-circuit every later install this session,
-    // while the pending marker has already been cleared above. whenInstalled resets it so autoInstallEvent: "onQuit" /
-    // an explicit quitAndInstall can still install the cached update (matches the reset in quitAndInstall).
+    // the pending marker has already been cleared above; a failed/throwing install (e.g. AppImage's sync unlink+mv)
+    // resets quitAndInstallCalled (see releaseLatchUnlessInstalled) so autoInstallEvent: "onQuit" / an explicit
+    // quitAndInstall can still install the cached update.
     const isInstalled = await new Promise<boolean>(resolve => this.whenInstalled(this.install(true, true), resolve))
     if (isInstalled) {
       setImmediate(() => this.app.quit())
