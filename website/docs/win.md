@@ -35,23 +35,25 @@ exports.default = async function(configuration) {
 
 ## How do you use a custom verify function to enable nsis signature verification alternatives instead of powershell?
 
-Use the `verifyUpdateCodeSignature` interface:
+Use the `NsisUpdater.verifyUpdateFileAuthenticodeSignature` interface:
 
-```js
-/**
-*  return null if verify signature succeed
-*  return error message if verify signature failed
-*/
-export type verifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>
+```ts
+export type VerifyUpdateFileResult = {
+  response: "success" | "failure"
+  message?: string
+}
+
+export type VerifyUpdateFileAuthenticodeSignature = (
+  publisherName: string[],
+  path: string
+) => Promise<VerifyUpdateFileResult>
 ```
 
 Pass a custom verify function to the nsis updater. For example, if you want to use a native verify function, you can use [win-verify-signature](https://github.com/beyondkmp/win-verify-trust).
 
-
-```js
+```ts
 import { NsisUpdater } from "electron-updater"
 import { verifySignatureByPublishName } from "win-verify-signature"
-// Or MacUpdater, AppImageUpdater
 
 export default class AppUpdater {
     constructor() {
@@ -64,10 +66,9 @@ export default class AppUpdater {
         }
 
         const autoUpdater = new NsisUpdater(options)
-        autoUpdater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
-            const result = verifySignatureByPublishName(path, publisherName);
-            if(result.signed) return Promise.resolve(null);
-            return Promise.resolve(result.message);
+        autoUpdater.verifyUpdateFileAuthenticodeSignature = async (publisherName: string[], path: string) => {
+            const result = verifySignatureByPublishName(path, publisherName)
+            return result.signed ? { response: "success" } : { response: "failure", message: result.message }
         }
         autoUpdater.addAuthHeader(`Bearer ${token}`)
         autoUpdater.checkForUpdatesAndNotify()
@@ -75,6 +76,8 @@ export default class AppUpdater {
 }
 ```
 
+The built-in default uses [`windowsExecutableCodeSignatureVerifier`](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts).
+The older property `verifyUpdateCodeSignature`, which differs only in name and return interface, is deprecated and kept only as a compatibility shim (shall be removed in v28).
 
 ## How do you create a Parallels Windows 10 Virtual Machine?
 

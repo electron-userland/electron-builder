@@ -81,9 +81,12 @@ export const autoUpdater: AppUpdater = new Proxy({} as AppUpdater, {
   },
 })
 
+export type VerifyUpdateFileResult = { response: "success" | "failure"; message?: string }
+// Generic interface to verify a pending update file.
+export type VerifyUpdateFileAuthenticodeSignature = (publisherName: string[], path: string) => Promise<VerifyUpdateFileResult>
 /**
- * return null if verify signature succeed
- * return error message if verify signature failed
+ * @deprecated Use VerifyUpdateFileAuthenticodeSignature instead, which differs in return type.
+ * This is a compatibility shim that keeps the old return type: returns null if verify signature succeeds or returns error message if it failed.
  */
 export type VerifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>
 

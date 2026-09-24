@@ -7,7 +7,7 @@ import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
 import { DOWNLOAD_PROGRESS, DownloadExecutorResult } from "./types.js"
-import { VerifyUpdateCodeSignature } from "./index.js"
+import type { VerifyUpdateCodeSignature, VerifyUpdateFileAuthenticodeSignature, VerifyUpdateFileResult } from "./index.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import fsExtra from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
@@ -47,20 +47,48 @@ export class NsisUpdater extends BaseUpdater {
     }
   }
 
-  protected _verifyUpdateCodeSignature: VerifyUpdateCodeSignature = (publisherNames: Array<string>, unescapedTempUpdateFile: string) =>
+  protected _verifyUpdateFileAuthenticodeSignature: VerifyUpdateFileAuthenticodeSignature = (publisherNames: Array<string>, unescapedTempUpdateFile: string) =>
     verifySignature(publisherNames, unescapedTempUpdateFile, this._logger)
 
   /**
-   * The verifyUpdateCodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust) or another custom verify function: ` (publisherName: string[], path: string) => Promise<string | null>`.
+   * The verifyUpdateFileAuthenticodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust) or another custom verify function: ` (publisherName: string[], path: string) => Promise<{ response: "success" | "failure", message?: string }>`
    * The default verify function uses [windowsExecutableCodeSignatureVerifier](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts)
    */
-  get verifyUpdateCodeSignature(): VerifyUpdateCodeSignature {
-    return this._verifyUpdateCodeSignature
+  get verifyUpdateFileAuthenticodeSignature(): VerifyUpdateFileAuthenticodeSignature {
+    return this._verifyUpdateFileAuthenticodeSignature
   }
 
+  set verifyUpdateFileAuthenticodeSignature(value: VerifyUpdateFileAuthenticodeSignature) {
+    if (value) {
+      this._verifyUpdateFileAuthenticodeSignature = value
+    }
+  }
+
+  /**
+   * @deprecated Use verifyUpdateFileAuthenticodeSignature instead, which differs in return type.
+   * This is a compatibility shim that keeps the old return type: returns null if verify signature succeeds or returns error message if it failed.
+   * Shall be deleted in v28.
+   */
+  get verifyUpdateCodeSignature(): VerifyUpdateCodeSignature {
+    const actualImplementation = this._verifyUpdateFileAuthenticodeSignature
+
+    return async function (this: NsisUpdater, publisherNames: Array<string>, unescapedTempUpdateFile: string) {
+      const result = await actualImplementation.call(this, publisherNames, unescapedTempUpdateFile)
+      return result.response === "success" ? null : (result?.message ?? "unknown error")
+    }
+  }
+
+  /**
+   * @deprecated Use verifyUpdateFileAuthenticodeSignature instead, which differs in return type.
+   * This is a compatibility shim that keeps the old return type: returns null if verify signature succeeds or returns error message if it failed.
+   * Shall be deleted in v28.
+   */
   set verifyUpdateCodeSignature(value: VerifyUpdateCodeSignature) {
     if (value) {
-      this._verifyUpdateCodeSignature = value
+      this._verifyUpdateFileAuthenticodeSignature = async (publisherName: string[], path: string) => {
+        const result = await value.call(this, publisherName, path)
+        return result == null ? { response: "success" } : { response: "failure", message: result }
+      }
     }
   }
 
@@ -105,11 +133,11 @@ export class NsisUpdater extends BaseUpdater {
         }
 
         const signatureVerificationStatus = await this.verifySignature(destinationFile)
-        if (signatureVerificationStatus != null) {
+        if (signatureVerificationStatus?.response !== "success") {
           await removeTempDirIfAny()
           // noinspection ThrowInsideFinallyBlockJS
           throw newError(
-            `New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureVerificationStatus}`,
+            `New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureVerificationStatus?.message ?? "unknown error"}`,
             "ERR_UPDATER_INVALID_SIGNATURE"
           )
         }
@@ -140,7 +168,7 @@ export class NsisUpdater extends BaseUpdater {
   // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
   // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
   // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
-  private async verifySignature(tempUpdateFile: string): Promise<string | null> {
+  private async verifySignature(tempUpdateFile: string): Promise<VerifyUpdateFileResult> {
     let publisherName: Array<string> | string | null
     try {
       publisherName = (await this.configOnDisk.value).publisherName
@@ -150,21 +178,21 @@ export class NsisUpdater extends BaseUpdater {
             "Sign your build so electron-builder can derive publisherName from the code signing certificate automatically, or set win.publisherName explicitly. " +
             "This fail-open behavior is deprecated: electron-builder v28 will treat a missing publisherName as a verification failure (fail-closed)."
         )
-        return null
+        return { response: "success" }
       }
     } catch (e: any) {
       if (e.code === "ENOENT") {
         // no app-update.yml at all (unpackaged/dev mode) — nothing to verify against, stay silent
-        return null
+        return { response: "success" }
       }
       throw e
     }
-    return await this._verifyUpdateCodeSignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile)
+    return await this._verifyUpdateFileAuthenticodeSignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile)
   }
 
   // the cached installer sat on disk since a previous launch, so its Authenticode signature is re-verified before an
   // install-on-next-launch is executed (same check as at download time)
-  protected verifyInstallerSignatureOnLaunch(installerPath: string): Promise<string | null> {
+  protected verifyInstallerSignatureOnLaunch(installerPath: string): Promise<VerifyUpdateFileResult> {
     return this.verifySignature(installerPath)
   }
 

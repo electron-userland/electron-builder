@@ -304,8 +304,8 @@ test.ifWindows("test custom signature verifier", config, async ({ expect }) => {
       url,
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
-    updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
-      return Promise.resolve(null)
+    updater.verifyUpdateFileAuthenticodeSignature = (_publisherName: string[], _path: string) => {
+      return Promise.resolve({ success: true })
     }
     await validateDownload(expect, updater)
   } finally {
@@ -322,8 +322,8 @@ test.ifWindows("test custom signature verifier - signing error message", config,
       url,
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
-    updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
-      return Promise.resolve("signature verification failed")
+    updater.verifyUpdateFileAuthenticodeSignature = (_publisherName: string[], _path: string) => {
+      return Promise.resolve({ success: false, error: "signature verification failed" })
     }
     const actualEvents = trackEvents(updater)
     await assertThat(
@@ -331,6 +331,30 @@ test.ifWindows("test custom signature verifier - signing error message", config,
       updater.checkForUpdates().then((it): any => it?.downloadPromise)
     ).throws()
     expect(actualEvents).toMatchSnapshot()
+  } finally {
+    await close()
+  }
+})
+
+test("malformed custom signature verifier result fails closed", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater("1.0.2")
+    updater.updateConfigPath = await writeUpdateConfig({
+      provider: "generic",
+      url,
+      publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
+    })
+    // @ts-expect-error intentionally violating the verifier contract to cover fail-closed behavior
+    updater.verifyUpdateFileAuthenticodeSignature = async (_publisherName: string[], _path: string) => null
+    const actualEvents = trackEvents(updater)
+    const updateCheckResult = await updater.checkForUpdates()
+
+    await expect(updateCheckResult?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_INVALID_SIGNATURE",
+      message: expect.stringContaining("unknown error"),
+    })
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
   } finally {
     await close()
   }
