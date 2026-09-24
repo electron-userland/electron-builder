@@ -7,7 +7,7 @@ import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
 import { DOWNLOAD_PROGRESS, DownloadExecutorResult } from "./types.js"
-import { VerifyUpdateCodeSignature } from "./index.js"
+import type { VerifyUpdateCodeSignature, VerifyUpdateFileResult } from "./index.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import fsExtra from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
@@ -51,7 +51,7 @@ export class NsisUpdater extends BaseUpdater {
     verifySignature(publisherNames, unescapedTempUpdateFile, this._logger)
 
   /**
-   * The verifyUpdateCodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust) or another custom verify function: ` (publisherName: string[], path: string) => Promise<string | null>`.
+   * The verifyUpdateCodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust) or another custom verify function: ` (publisherName: string[], path: string) => Promise<{ success: true } | { success: false, error: string }>`
    * The default verify function uses [windowsExecutableCodeSignatureVerifier](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts)
    */
   get verifyUpdateCodeSignature(): VerifyUpdateCodeSignature {
@@ -105,11 +105,11 @@ export class NsisUpdater extends BaseUpdater {
         }
 
         const signatureVerificationStatus = await this.verifySignature(destinationFile)
-        if (signatureVerificationStatus != null) {
+        if (!signatureVerificationStatus.success) {
           await removeTempDirIfAny()
           // noinspection ThrowInsideFinallyBlockJS
           throw newError(
-            `New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureVerificationStatus}`,
+            `New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureVerificationStatus.error}`,
             "ERR_UPDATER_INVALID_SIGNATURE"
           )
         }
@@ -140,7 +140,7 @@ export class NsisUpdater extends BaseUpdater {
   // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
   // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
   // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
-  private async verifySignature(tempUpdateFile: string): Promise<string | null> {
+  private async verifySignature(tempUpdateFile: string): Promise<VerifyUpdateFileResult> {
     let publisherName: Array<string> | string | null
     try {
       publisherName = (await this.configOnDisk.value).publisherName
@@ -150,12 +150,12 @@ export class NsisUpdater extends BaseUpdater {
             "Sign your build so electron-builder can derive publisherName from the code signing certificate automatically, or set win.publisherName explicitly. " +
             "This fail-open behavior is deprecated: electron-builder v28 will treat a missing publisherName as a verification failure (fail-closed)."
         )
-        return null
+        return { success: true }
       }
     } catch (e: any) {
       if (e.code === "ENOENT") {
         // no app-update.yml at all (unpackaged/dev mode) — nothing to verify against, stay silent
-        return null
+        return { success: true }
       }
       throw e
     }
@@ -164,7 +164,7 @@ export class NsisUpdater extends BaseUpdater {
 
   // the cached installer sat on disk since a previous launch, so its Authenticode signature is re-verified before an
   // install-on-next-launch is executed (same check as at download time)
-  protected verifyInstallerSignatureOnLaunch(installerPath: string): Promise<string | null> {
+  protected verifyInstallerSignatureOnLaunch(installerPath: string): Promise<VerifyUpdateFileResult> {
     return this.verifySignature(installerPath)
   }
 

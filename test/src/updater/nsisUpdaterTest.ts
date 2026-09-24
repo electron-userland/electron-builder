@@ -305,7 +305,7 @@ test.ifWindows("test custom signature verifier", config, async ({ expect }) => {
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
     updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
-      return Promise.resolve(null)
+      return Promise.resolve({ success: true })
     }
     await validateDownload(expect, updater)
   } finally {
@@ -323,7 +323,7 @@ test.ifWindows("test custom signature verifier - signing error message", config,
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
     updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
-      return Promise.resolve("signature verification failed")
+      return Promise.resolve({ success: false, error: "signature verification failed" })
     }
     const actualEvents = trackEvents(updater)
     await assertThat(

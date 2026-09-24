@@ -294,7 +294,7 @@ describe("install on next launch", { concurrent: false }, () => {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
       const { updater, doInstall } = createUpdater(seeded.updateInfo)
       helper.markInstallOnNextLaunchSync(log)
-      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue("invalid signature")
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ success: false, error: "invalid signature" })
       const errors: Error[] = []
       updater.on("error", error => errors.push(error))
 
@@ -307,7 +307,7 @@ describe("install on next launch", { concurrent: false }, () => {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
       const { updater, app, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
       helper.markInstallOnNextLaunchSync(log)
-      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue(null)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ success: true })
 
       await expect((updater as any).installPendingUpdate(true)).resolves.toBe(true)
       await new Promise(resolve => setImmediate(resolve))
@@ -319,7 +319,7 @@ describe("install on next launch", { concurrent: false }, () => {
     test("automatic startup path skips per-machine installs but explicit call installs them", async () => {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
       const { updater, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
-      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue(null)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ success: true })
       // simulate a per-machine install record
       await helper.setDownloadedFile(
         seeded.installerPath,

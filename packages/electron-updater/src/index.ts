@@ -81,10 +81,8 @@ export const autoUpdater: AppUpdater = new Proxy({} as AppUpdater, {
   },
 })
 
-/**
- * return null if verify signature succeed
- * return error message if verify signature failed
- */
-export type VerifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>
+export type VerifyUpdateFileResult = { success: true } | { success: false; error: string }
+// Generic interface to verify a pending update file.
+export type VerifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<VerifyUpdateFileResult>
 
 export type VerifyUpdateSupport = (updateInfo: UpdateInfo) => boolean | Promise<boolean>
