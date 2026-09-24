@@ -229,7 +229,7 @@ describe("nested dependency resolution (hoisted layout simulation)", { concurren
 // must reach the workspace root; otherwise lazystream got the root readable-stream@3.
 // ---------------------------------------------------------------------------
 
-describe("PnpmNodeModulesCollector hoisted workspace package", () => {
+describe("PnpmNodeModulesCollector hoisted workspace package", { concurrent: false }, () => {
   class StubbedPnpmNodeModulesCollector extends PnpmNodeModulesCollector {
     constructor(
       rootDir: string,
