@@ -122,6 +122,32 @@ export default class AppUpdater {
 }
 ```
 
+### Custom downloaded-file verification
+
+All updater classes inherit `AppUpdater.verifyUpdateFile`, which lets you run your own verification step after the update file has finished downloading.
+The file is downloaded under a temporary name, to prevent accidental execution, and only after a successful verification it is renamed into its original filename.
+If the verification fails, the update is aborted, and temporary file deleted.
+
+This hook is generic and works across updater implementations. On Windows NSIS updates, the built-in Authenticode verification remains available separately as `NsisUpdater.verifyUpdateFileAuthenticodeSignature`.
+
+```ts
+import { NsisUpdater } from "electron-updater"
+
+const updater = new NsisUpdater()
+
+updater.verifyUpdateFile = async ({ temporaryUpdateFilePath, originalUpdateFileName, cancellationToken }) => {
+  try {
+    // Example for your custom code, which can inspect the downloaded file at `temporaryUpdateFilePath`, and can use the expected filename `originalUpdateFileName`:
+    const signatureFile = getCorrespondingSignatureFile(originalUpdateFileName)
+    checkSignature(temporaryUpdateFilePath, signatureFile)
+    return { response: "success" }
+  }
+  catch (err) {
+    return { response: "failure", message: `${err}` }
+  }
+}
+```
+
 ## Install on Next Launch (Windows/Linux)
 
 When a downloaded update is automatically installed is controlled by `autoUpdater.autoInstallEvent` (`"manual" | "onQuit" | "onNextLaunch"`, default `"onQuit"`). With the default `"onQuit"`, the update is installed when the app quits: the updater spawns the installer as a detached process while the app is exiting. If the quit happens because the OS session is ending (shutdown, reboot or log off on Windows), the OS can kill that installer mid-install and leave the app in a broken, partially-uninstalled state ([#7807](https://github.com/electron-userland/electron-builder/issues/7807)).

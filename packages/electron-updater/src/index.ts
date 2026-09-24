@@ -83,6 +83,8 @@ export const autoUpdater: AppUpdater = new Proxy({} as AppUpdater, {
 
 export type VerifyUpdateFileResult = { response: "success" | "failure"; message?: string }
 // Generic interface to verify a pending update file.
+export type VerifyUpdateFile = (params: { temporaryUpdateFilePath: string; originalUpdateFileName: string }) => Promise<VerifyUpdateFileResult>
+// Specific interface to verify a pending Nsis update file for Windows Authenticode signature.
 export type VerifyUpdateFileAuthenticodeSignature = (publisherName: string[], path: string) => Promise<VerifyUpdateFileResult>
 /**
  * @deprecated Use VerifyUpdateFileAuthenticodeSignature instead, which differs in return type.
