@@ -1,7 +1,7 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { getWindowsVm, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
 import { computeUpdateManifestKeyId, GenericServerOptions, Nullish, UpdateInfo, verifyManifestSignatures } from "builder-util-runtime"
-import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, spawn, TmpDir } from "builder-util"
+import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { copy, emptyDir, existsSync, move, outputFile, readJsonSync, remove } from "fs-extra"
 import { homedir } from "os"
@@ -17,7 +17,7 @@ import { cleanupLinux, installLinux } from "./blackboxInstallLinux"
 import { installMac } from "./blackboxInstallMac"
 import { readEmbeddedUpdateConfig, readUpdateManifest, resignManifest, rewriteServedManifests } from "./signedManifestTestUtil"
 
-export const optionsForFlakyE2E = { sequential: true, retry: 2, timeout: EXTENDED_TIMEOUT } as const
+export const optionsForFlakyE2E = { concurrent: false, retry: 2, timeout: EXTENDED_TIMEOUT } as const
 // Three builds and two update hops (plus negative launches) instead of two builds and one hop: 15-25 min per
 // attempt, so a single retry keeps a genuine failure within the 60-minute job cap of the mac runner.
 export const optionsForFlakyMultiHopE2E = { ...optionsForFlakyE2E, retry: 1, timeout: EXTENDED_TIMEOUT * 1.5 } as const
@@ -125,11 +125,13 @@ export async function doBuild(
         signedWin: isWindows,
         packed,
         packageManager: PM.PNPM,
-        projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
-          // Write .npmrc to app/ — installDependencies runs pnpm with cwd=appDir, so pnpm 10
-          // reads this file and uses hoisted layout for the main install.
-          await outputFile(path.join(projectDir, "app", ".npmrc"), "node-linker=hoisted")
-
+        // pnpm 11 reads its own settings from pnpm-workspace.yaml alone (neither `node-linker` in .npmrc nor the `pnpm` key of
+        // package.json is consulted any more), so packTester writes these next to app/package.json for the install. Hoisted from the
+        // start, the install keeps the sqlite3 binary that @electron/rebuild produces right after it: the former follow-up
+        // `pnpm install --config.node-linker=hoisted` re-linked node_modules from the store (dropping that binary) and, under pnpm 11,
+        // failed outright with ERR_PNPM_IGNORED_BUILDS for sqlite3 (strictDepBuilds).
+        packageManagerSettings: { nodeLinker: "hoisted", supportedArchitectures: { os: ["current"], cpu: ["x64", "arm64"] } },
+        projectDirCreated: async projectDir => {
           await modifyPackageJson(
             projectDir,
             data => {
@@ -152,23 +154,6 @@ export async function doBuild(
             },
             true
           )
-          await modifyPackageJson(
-            projectDir,
-            data => {
-              data.pnpm = {
-                supportedArchitectures: {
-                  os: ["current"],
-                  cpu: ["x64", "arm64"],
-                },
-              }
-            },
-            false
-          )
-          // Return a post-install hook so the explicit flag runs AFTER installDependencies.
-          // pnpm 11 ignores node-linker from .npmrc; the CLI flag here handles that case.
-          return async () => {
-            await spawn("pnpm", ["install", "--config.node-linker=hoisted"], { cwd: path.join(projectDir, "app"), stdio: "inherit", env: runtimeEnv })
-          }
         },
       }
     )

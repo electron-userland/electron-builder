@@ -8,7 +8,7 @@ import { createSelfSignedCodeSigningIdentity } from "../helpers/selfSignedIdenti
 // untrusted self-signed certificate by default, and accepts it only when the in-process test-only seam is
 // enabled. There is intentionally no env var or build-config option to enable it in production. No keychain
 // trust / sudo is required.
-describe.ifMac("self-signed identity discovery", { sequential: true }, () => {
+describe.ifMac("self-signed identity discovery", { concurrent: false }, () => {
   const qualifier = "EB Test (TEAMID1234)"
 
   afterEach(() => {

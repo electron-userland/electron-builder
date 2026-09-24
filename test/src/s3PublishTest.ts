@@ -168,7 +168,7 @@ describe("S3Publisher — getUploadExtraParams", () => {
 
 // ─── SpacesPublisher — getS3UploadConfig ─────────────────────────────────────
 
-describe("SpacesPublisher — getS3UploadConfig", { sequential: true }, () => {
+describe("SpacesPublisher — getS3UploadConfig", { concurrent: false }, () => {
   const savedEnv: Record<string, string | undefined> = {}
 
   beforeEach(() => {
@@ -216,7 +216,7 @@ describe("SpacesPublisher — getS3UploadConfig", { sequential: true }, () => {
 
 // ─── Upload — key construction and request params ────────────────────────────
 
-describe("BaseS3Publisher.upload — key construction and S3 request", { sequential: true }, () => {
+describe("BaseS3Publisher.upload — key construction and S3 request", { concurrent: false }, () => {
   let tmpDir: string
   let testFile: string
 
@@ -357,7 +357,7 @@ describe("BaseS3Publisher.upload — key construction and S3 request", { sequent
 
 // ─── Upload — test mode bypass ────────────────────────────────────────────────
 
-describe("BaseS3Publisher.upload — __TEST_S3_PUBLISHER__ bypass", { sequential: true }, () => {
+describe("BaseS3Publisher.upload — __TEST_S3_PUBLISHER__ bypass", { concurrent: false }, () => {
   let testPublisherDir: string
   let srcDir: string
   let srcFile: string
@@ -390,7 +390,7 @@ describe("BaseS3Publisher.upload — __TEST_S3_PUBLISHER__ bypass", { sequential
 
 // ─── Parity contract: Go binary publish-s3 flag → TS header/URL mapping ──────
 
-describe("publish-s3 parity — Go binary flag mapping to HTTP request", { sequential: true }, () => {
+describe("publish-s3 parity — Go binary flag mapping to HTTP request", { concurrent: false }, () => {
   // The Go binary accepted:
   //   --acl         → x-amz-acl header
   //   --storageClass → x-amz-storage-class header

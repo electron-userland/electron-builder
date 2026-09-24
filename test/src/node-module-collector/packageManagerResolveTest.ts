@@ -23,7 +23,7 @@ async function freshImport() {
   return { getPackageManagerCommand, PM, whichSync: vi.mocked(whichMod.default.sync) }
 }
 
-describe("getPackageManagerCommand", { sequential: true }, () => {
+describe("getPackageManagerCommand", { concurrent: false }, () => {
   test("non-Windows: returns pm name without calling which", async ({ expect }) => {
     setPlatform("darwin")
     const { getPackageManagerCommand, PM, whichSync } = await freshImport()

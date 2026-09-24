@@ -235,7 +235,7 @@ ${body}
     })
   })
 
-  describe("getNotarizeOptions", { sequential: true }, () => {
+  describe("getNotarizeOptions", { concurrent: false }, () => {
     const envKeys = [
       "APPLE_ID",
       "APPLE_APP_SPECIFIC_PASSWORD",

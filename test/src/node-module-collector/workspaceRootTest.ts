@@ -36,7 +36,7 @@ const appPkg = { name: "app", version: "1.0.0", packageManager: "pnpm@11.0.0" }
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("findWorkspaceRoot", { sequential: true }, () => {
+describe("findWorkspaceRoot", { concurrent: false }, () => {
   test("pnpm: pnpm-workspace.yaml in a parent directory is detected as the workspace root (no shell-out)", async ({ expect, tmpDir }) => {
     const root = await buildTempTree(tmpDir, {
       "pnpm-workspace.yaml": "packages:\n  - apps/*\n",
@@ -71,7 +71,7 @@ describe("findWorkspaceRoot", { sequential: true }, () => {
   })
 })
 
-describe("determinePackageManagerEnv", { sequential: true }, () => {
+describe("determinePackageManagerEnv", { concurrent: false }, () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })

@@ -1,8 +1,8 @@
 import { PublishManager } from "app-builder-lib"
 import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
 import { computeArchToTargetNamesMap, getLinuxToolsMacToolset, parsePlistFile, PlistObject } from "app-builder-lib/internal"
-import { addValue, copyDir, exec, executeFinally, exists, FileCopier, isEmptyOrSpaces, log, retry, USE_HARD_LINKS, walk } from "builder-util"
-import { CancellationToken, deepAssign, UpdateFileInfo } from "builder-util-runtime"
+import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, isEmptyOrSpaces, log, retry, USE_HARD_LINKS, walk } from "builder-util"
+import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import {
   AfterPackContext,
   Arch,
@@ -22,7 +22,7 @@ import { PublishPolicy } from "electron-publish"
 import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { realpath as realpathCb } from "fs"
-import { load } from "js-yaml"
+import { dump, load } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { Format, NtExecutable, NtExecutableResource } from "resedit"
@@ -45,8 +45,7 @@ const PACKAGE_MANAGER_VERSION_MAP = {
   [PM.NPM]: { cli: "npm", version: "12.0.2" },
   [PM.YARN]: { cli: "yarn", version: "1.22.22" },
   [PM.YARN_BERRY]: { cli: "yarn", version: "4.18.0" },
-  // pnpm >= 10.29.3 emits deduped subtrees in `pnpm list --json` as childless stubs, which the pnpm collector does not resolve yet (fix on branch fix/pnpm-deduped-list-collector)
-  [PM.PNPM]: { cli: "pnpm", version: "10.28.2" },
+  [PM.PNPM]: { cli: "pnpm", version: "11.26.0" },
   [PM.BUN]: { cli: "bun", version: "1.4.2" },
   [PM.TRAVERSAL]: { cli: "npm", version: "12.0.2" }, // use npm to install, we're testing manual node traversal, but we still need something to install the dependencies
 }
@@ -95,6 +94,125 @@ function getIgnoreScriptsInstallArgs(pm: PM): Array<string> {
   return pm === PM.YARN_BERRY ? [] : ["--ignore-scripts"]
 }
 
+// Writes AssertPackOptions.packageManagerSettings into the config file the detected package manager actually reads for the
+// fixture install, and returns a function that undoes the write (removes the file, or puts the fixture's own bytes back).
+// Every merge goes through `deepAssign` so a fixture's existing keys survive, nested objects are merged rather than
+// replaced, arrays are unioned, and `__proto__`/`constructor`/`prototype` keys are dropped (prototype pollution).
+//
+//   pnpm         -> pnpm-workspace.yaml (nearest between `appDir` and `projectDir`, else created in `appDir`), see below
+//   yarn berry   -> .yarnrc.yml in `appDir` (yaml; berry merges every .yarnrc.yml up the tree, the nearest one wins)
+//   npm / yarn 1 -> .npmrc in `appDir` (ini `key=value` lines; comments and unrelated keys of an existing file are kept)
+//   bun          -> bunfig.toml is not supported (no toml writer in the test toolchain), passing settings throws
+//
+// pnpm >= 11 fails the install with ERR_PNPM_IGNORED_BUILDS when a dependency has a build script that has not been
+// allowlisted (`strictDepBuilds` defaults to true and is only honored from pnpm-workspace.yaml, not from the env).
+// `--ignore-scripts` (see getIgnoreScriptsInstallArgs) skips that check as of pnpm 11.26, but rather than relying on it
+// or disabling the check, allowlist electron alone: nothing else in a fixture is ever allowed to run its install hooks in
+// CI (natives are built by electron-builder's own @electron/rebuild step). Fixtures that ship or generate their own
+// pnpm-workspace.yaml keep every other key. The file is therefore always written for pnpm, even without settings.
+//
+// pnpm 11 also stopped reading its own settings from `.npmrc` and from the `pnpm` key of package.json, so a test's install
+// settings (`nodeLinker`, `shamefullyHoist`, `publicHoistPattern`, `supportedArchitectures`, ...) go into the same file.
+//
+// pnpm locates its workspace root with a plain upward search for pnpm-workspace.yaml, and `pnpm install` run inside a
+// workspace installs the workspace's packages, not the cwd's. installDependencies runs pnpm in `appDir`, so the file has to
+// live there for two-package fixtures such as `test-app`: written to `projectDir` instead, it turned that parent into a
+// workspace root whose only member was the root package.json, and the install in `app/` silently became a no-op that never
+// produced `sqlite3` (updater blackbox suites). Conversely, a fixture that already has a workspace root above `appDir`
+// must keep it, since a second pnpm-workspace.yaml below it would split the workspace, so the nearest existing file between
+// `appDir` and `projectDir` wins.
+//
+// The restore runs once the install is done: the file is only needed by the install itself (the packager's rebuild step is
+// @electron/rebuild, and the pnpm collector's `pnpm list` reads the lockfile and node_modules), pnpm appends placeholder
+// `allowBuilds` entries for every unreviewed build script it met, and for single-package fixtures `appDir` is the packaged
+// directory, so leaving the file there would add it to app.asar and shift every offset in the asar snapshots.
+async function writePackageManagerSettings(projectDir: string, appDir: string, pm: PM, settings: Record<string, any> | undefined): Promise<(() => Promise<void>) | null> {
+  switch (pm) {
+    case PM.PNPM: {
+      const workspaceFile = (await findPnpmWorkspaceFile(appDir, projectDir)) ?? path.join(appDir, "pnpm-workspace.yaml")
+      return await writeYamlSettings(workspaceFile, settings, { allowBuilds: { electron: true } })
+    }
+    case PM.YARN_BERRY:
+      return settings == null ? null : await writeYamlSettings(path.join(appDir, ".yarnrc.yml"), settings)
+    case PM.NPM:
+    case PM.YARN:
+    case PM.TRAVERSAL:
+      return settings == null ? null : await writeNpmrcSettings(path.join(appDir, ".npmrc"), settings)
+    case PM.BUN:
+      if (settings != null) {
+        throw new Error(`packageManagerSettings is not supported for ${pm} (bunfig.toml); pass them via the fixture or projectDirCreated instead`)
+      }
+      return null
+  }
+}
+
+// Merges `layers` (left to right) over the yaml document in `file` and returns the restore function.
+async function writeYamlSettings(file: string, ...layers: Array<Record<string, any> | undefined>): Promise<() => Promise<void>> {
+  const original = (await exists(file)) ? await fs.readFile(file, "utf8") : null
+  const existing = original == null ? null : load(original)
+  const config = deepAssign<Record<string, any>>({}, existing != null && typeof existing === "object" ? existing : null, ...layers)
+  await fs.writeFile(file, dump(config))
+  return restoreFile(file, original)
+}
+
+// `.npmrc` is ini: one `key=value` per line, arrays as repeated `key[]=value` lines. Lines for keys that are not being set
+// (and comments/blank lines) are kept verbatim; the settings are appended after them.
+async function writeNpmrcSettings(file: string, settings: Record<string, any>): Promise<() => Promise<void>> {
+  const original = (await exists(file)) ? await fs.readFile(file, "utf8") : null
+  const existing: Record<string, any> = {}
+  const untouchedLines: Array<string> = []
+  for (const line of (original ?? "").split(/\r?\n/)) {
+    const match = /^\s*([^;#=\s][^=]*?)(\[\])?\s*=\s*(.*?)\s*$/.exec(line)
+    if (match == null) {
+      untouchedLines.push(line)
+      continue
+    }
+    const [, key, isArray, value] = match
+    if (isArray != null) {
+      existing[key] = [...(Array.isArray(existing[key]) ? existing[key] : []), value]
+    } else {
+      existing[key] = value
+    }
+  }
+  const merged = deepAssign<Record<string, any>>({}, existing, settings)
+  const lines = untouchedLines.filter((line, index, all) => !(index === all.length - 1 && line === ""))
+  for (const [key, value] of Object.entries(merged)) {
+    if (Array.isArray(value)) {
+      lines.push(...value.map(it => `${key}[]=${String(it)}`))
+    } else if (value != null && typeof value === "object") {
+      throw new Error(`.npmrc setting "${key}" must be a scalar or an array, got ${JSON.stringify(value)}`)
+    } else if (value != null) {
+      lines.push(`${key}=${String(value)}`)
+    }
+  }
+  await fs.writeFile(file, `${lines.join("\n")}\n`)
+  return restoreFile(file, original)
+}
+
+function restoreFile(file: string, original: string | null): () => Promise<void> {
+  return async () => {
+    if (original == null) {
+      await fs.rm(file, { force: true })
+    } else {
+      await fs.writeFile(file, original)
+    }
+  }
+}
+
+// Nearest pnpm-workspace.yaml from `startDir` up to and including `stopDir` (the fixture root), mirroring pnpm's own lookup.
+async function findPnpmWorkspaceFile(startDir: string, stopDir: string): Promise<string | null> {
+  const stop = path.resolve(stopDir)
+  for (let dir = path.resolve(stopDir, startDir); ; dir = path.dirname(dir)) {
+    const candidate = path.join(dir, "pnpm-workspace.yaml")
+    if (await exists(candidate)) {
+      return candidate
+    }
+    if (dir === stop || path.dirname(dir) === dir) {
+      return null
+    }
+  }
+}
+
 function getLockfileFixtureNameCandidates(currentTestName: string): Array<string> {
   const names: Array<string> = []
   const normalizedTestName = currentTestName.trim()
@@ -132,6 +250,13 @@ export interface AssertPackOptions {
   readonly checkMacApp?: (appDir: string, info: any) => Promise<any>
 
   readonly packageManager?: PM
+  /**
+   * Settings merged (with `deepAssign`) into the package manager's own config file for the fixture install and restored
+   * afterwards, before packing (see writePackageManagerSettings): pnpm-workspace.yaml keys for pnpm (`nodeLinker`,
+   * `shamefullyHoist`, `publicHoistPattern`, `supportedArchitectures`, ...), .yarnrc.yml keys for yarn berry, .npmrc keys
+   * for npm and yarn 1. Not supported for bun.
+   */
+  readonly packageManagerSettings?: Record<string, any>
   readonly useTempDir?: boolean
   readonly signedMac?: boolean
   readonly signedWin?: boolean
@@ -312,6 +437,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
+      const restorePackageManagerSettings = await writePackageManagerSettings(projectDir, appDir, pm, checkOptions.packageManagerSettings)
       const lockfileInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : checkOptions.storeDepsLockfileSnapshot ? getUnlockedInstallArgs(pm) : undefined
       const additionalInstallArgs = [...getIgnoreScriptsInstallArgs(pm), ...(lockfileInstallArgs ?? [])]
       // Scoped to this install only: `runtimeEnv` also reaches the packager, whose install-or-rebuild path must keep
@@ -335,6 +461,7 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       if (typeof postNodeModulesInstallHook === "function") {
         await postNodeModulesInstallHook()
       }
+      await restorePackageManagerSettings?.()
 
       // save or update lockfile fixture
       if (shouldUpdateLockfiles) {

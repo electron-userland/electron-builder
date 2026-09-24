@@ -58,7 +58,7 @@ import { configurePublishCommand } from "../../packages/electron-builder/src/pub
 
 // ─── clearCache ───────────────────────────────────────────────────────────────
 
-describe("clearCache", { sequential: true }, () => {
+describe("clearCache", { concurrent: false }, () => {
   beforeEach(() => {
     vi.mocked(getCacheDirectoryInternal).mockReturnValue(Promise.resolve("/home/user/.cache/electron-builder"))
     vi.mocked(access).mockResolvedValue(undefined as any)
@@ -151,7 +151,7 @@ describe("clearCache", { sequential: true }, () => {
 
 // ─── wrap ─────────────────────────────────────────────────────────────────────
 
-describe("wrap", { sequential: true }, () => {
+describe("wrap", { concurrent: false }, () => {
   const savedExitCode = process.exitCode
 
   beforeEach(() => {

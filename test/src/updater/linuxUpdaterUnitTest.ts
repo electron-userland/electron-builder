@@ -15,7 +15,7 @@ const stubApp: AppAdapter = {
   onQuit: () => {},
 }
 
-describe("LinuxUpdater unit tests", { sequential: true }, () => {
+describe("LinuxUpdater unit tests", { concurrent: false }, () => {
   let updater: DebUpdater
 
   beforeEach(() => {
