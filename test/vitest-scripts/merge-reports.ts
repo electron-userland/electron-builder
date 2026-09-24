@@ -15,6 +15,7 @@
  *   tsx test/vitest-scripts/merge-reports.ts [--reports-dir vitest-blobs]
  */
 
+import * as fs from "fs"
 import { startVitest } from "vitest/node"
 
 function parseArgs(): { reportsDir: string } {
@@ -30,6 +31,13 @@ function parseArgs(): { reportsDir: string } {
 
 async function main() {
   const { reportsDir } = parseArgs()
+
+  // Shards only write blobs when VITEST_COVERAGE=true (run-vitest.ts), so push / pull_request runs have none.
+  const blobs = fs.existsSync(reportsDir) ? fs.readdirSync(reportsDir).filter(f => f.endsWith(".json")) : []
+  if (blobs.length === 0) {
+    console.log(`[merge-reports] no blob reports in ${reportsDir} (coverage not collected), skipping merge`)
+    return
+  }
 
   // Programmatic rather than the CLI: since vitest 5 the html reporter takes an `outputDir` option
   // (default `.vitest/`) that has no CLI flag. cwd stays the repo root so blob paths/root match.
