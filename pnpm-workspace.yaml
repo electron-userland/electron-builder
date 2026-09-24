@@ -22,6 +22,8 @@ minimumReleaseAgeExclude:
   - toml@4.2.0
   # Renovate security update: js-yaml@4.3.2
   - js-yaml@4.3.2
+  # Renovate security update: tar@7.5.21
+  - tar@7.5.21
 patchedDependencies:
   '@changesets/cli@2.29.7': patches/@changesets__cli@2.29.7.patch
   '@changesets/assemble-release-plan@6.0.9': patches/@changesets__assemble-release-plan@6.0.9.patch
