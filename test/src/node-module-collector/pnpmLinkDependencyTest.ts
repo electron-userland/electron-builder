@@ -97,8 +97,9 @@ describe("PnpmNodeModulesCollector link: dependency bundling", () => {
       } // won't resolve outside the monorepo; link: above replaces it
     }
     await fse.writeJson(path.join(appDir, "package.json"), { private: true, name: "TestApp", version: "1.1.0", dependencies }, { spaces: 2 })
-    await fse.writeFile(path.join(appDir, ".npmrc"), "node-linker=hoisted")
-    await spawn("pnpm", ["install", "--config.node-linker=hoisted"], { cwd: appDir })
+    // pnpm 11 reads `nodeLinker` from pnpm-workspace.yaml only (no longer from .npmrc)
+    await fse.writeFile(path.join(appDir, "pnpm-workspace.yaml"), "nodeLinker: hoisted\n")
+    await spawn("pnpm", ["install"], { cwd: appDir })
 
     const collector = makeCollector(appDir)
     const { nodeModules } = await collector.getNodeModules({ packageName: "TestApp" })

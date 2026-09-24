@@ -173,13 +173,13 @@ describe("node_module collectors", () => {
       {
         signedMac: false,
         packageManager: PM.PNPM,
+        // Force pnpm to install the platform packages for BOTH macOS arches, not just the build host's.
+        packageManagerSettings: { supportedArchitectures: { os: ["darwin"], cpu: ["x64", "arm64"] } },
         projectDirCreated: projectDir =>
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
               esbuild: "0.21.5",
             }
-            // Force pnpm to install the platform packages for BOTH macOS arches, not just the build host's.
-            data.pnpm = { supportedArchitectures: { os: ["darwin"], cpu: ["x64", "arm64"] } }
           }),
         packed: async context => {
           const esbuildScope = path.join(context.getResources(Platform.MAC, Arch.universal), "app.asar.unpacked", "node_modules", "@esbuild")
@@ -706,16 +706,13 @@ describe("node_module collectors", () => {
       {
         storeDepsLockfileSnapshot: true,
         packageManager: PM.PNPM,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                dayjs: "1.11.13",
-              }
-            }),
-            outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
-          ])
-        },
+        packageManagerSettings: { nodeLinker: "hoisted" },
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       }
     ))
@@ -729,16 +726,13 @@ describe("node_module collectors", () => {
       {
         storeDepsLockfileSnapshot: true,
         packageManager: PM.PNPM,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                dayjs: "1.11.13",
-              }
-            }),
-            outputFile(path.join(projectDir, ".npmrc"), "shamefully-hoist=true"),
-          ])
-        },
+        packageManagerSettings: { shamefullyHoist: true },
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       }
     ))
@@ -752,16 +746,13 @@ describe("node_module collectors", () => {
       {
         storeDepsLockfileSnapshot: true,
         packageManager: PM.PNPM,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                dayjs: "1.11.13",
-              }
-            }),
-            outputFile(path.join(projectDir, ".npmrc"), "public-hoist-pattern=*"),
-          ])
-        },
+        packageManagerSettings: { publicHoistPattern: ["*"] },
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       }
     ))
