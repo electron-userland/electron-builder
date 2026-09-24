@@ -50,7 +50,7 @@ import {
   UpdateDownloadedEvent,
   UpdaterSignal,
 } from "./types.js"
-import { VerifyUpdateSupport } from "./index.js"
+import type { VerifyUpdateFile, VerifyUpdateSupport } from "./index.js"
 
 const require = createRequire(import.meta.url)
 
@@ -337,6 +337,23 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.clientPromise = null
     this._appUpdateConfigPath = value
     this.configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
+  }
+
+  protected _verifyUpdateFile: VerifyUpdateFile = (_path: string) => Promise.resolve({ success: true })
+
+  /**
+   * Allows developer to set custom logic for verifying a freshly downloaded update file, before it is renamed from its temporary path
+   * into the updater cache under its real filename. When the verification fails, the file is instead deleted, and electron-updater will emit an error.
+   * The default behavior is a stub – immediately succeeds.
+   */
+  get verifyUpdateFile(): VerifyUpdateFile {
+    return this._verifyUpdateFile
+  }
+
+  set verifyUpdateFile(value: VerifyUpdateFile) {
+    if (value) {
+      this._verifyUpdateFile = value
+    }
   }
 
   protected _isUpdateSupported: VerifyUpdateSupport = updateInfo => this.checkIfUpdateSupported(updateInfo)
@@ -997,6 +1014,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
+      // TODO delete the file name if verification fails
+      await this.verifyUpdateFile(tempUpdateFile)
       await retry(() => fsExtra.rename(tempUpdateFile, updateFile), {
         retries: 60,
         interval: 500,
