@@ -49,7 +49,7 @@ function flagValue(args: Array<string>, flag: string): string | undefined {
   return index === -1 ? undefined : args[index + 1]
 }
 
-describe("createKeychain security command wiring", { sequential: true }, () => {
+describe("createKeychain security command wiring", { concurrent: false }, () => {
   const cscKeyPassword = "p12-import-password"
 
   // The keychain password is random; recover it from the create-keychain call instead of mocking crypto.

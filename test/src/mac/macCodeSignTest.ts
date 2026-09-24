@@ -2,7 +2,7 @@ import { createKeychain, removeKeychain } from "app-builder-lib/internal"
 import { removePassword } from "builder-util"
 import { getMacSigningIdentity } from "../helpers/packTester.js"
 
-describe.ifMac("macos keychain", { sequential: true }, () => {
+describe.ifMac("macos keychain", { concurrent: false }, () => {
   test("create keychain", async ({ expect, tmpDir }) => {
     const { p12Base64, password } = await getMacSigningIdentity()
     const result = await createKeychain({ tmpDir, cscLink: p12Base64, cscKeyPassword: password, currentDir: process.cwd() })

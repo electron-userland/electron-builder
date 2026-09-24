@@ -20,7 +20,7 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-describe("getPath7za memoization", { sequential: true }, () => {
+describe("getPath7za memoization", { concurrent: false }, () => {
   test("returns the resolved path on success", async ({ expect }) => {
     vi.mocked(downloadBuilderToolset).mockResolvedValueOnce("/fake/tooldir")
     const { getPath7za } = await freshImport()
@@ -55,7 +55,7 @@ describe("getPath7za memoization", { sequential: true }, () => {
   })
 })
 
-describe("setSevenZipVersion pinning", { sequential: true }, () => {
+describe("setSevenZipVersion pinning", { concurrent: false }, () => {
   const downloadedRelease = () => vi.mocked(downloadBuilderToolset).mock.calls.at(-1)![0]
 
   test("default (no pin) downloads the newest bundle with its checksums", async ({ expect }) => {
@@ -107,7 +107,7 @@ describe("setSevenZipVersion pinning", { sequential: true }, () => {
   })
 })
 
-describe("setSevenZipPath override", { sequential: true }, () => {
+describe("setSevenZipPath override", { concurrent: false }, () => {
   test("returns the custom path without downloading", async ({ expect }) => {
     const downloadMock = vi.mocked(downloadBuilderToolset)
     const { getPath7za, setSevenZipPath } = await freshImport()

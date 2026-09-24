@@ -17,7 +17,7 @@ import { cleanupLinux, installLinux } from "./blackboxInstallLinux"
 import { installMac } from "./blackboxInstallMac"
 import { readEmbeddedUpdateConfig, readUpdateManifest, resignManifest, rewriteServedManifests } from "./signedManifestTestUtil"
 
-export const optionsForFlakyE2E = { sequential: true, retry: 2, timeout: EXTENDED_TIMEOUT } as const
+export const optionsForFlakyE2E = { concurrent: false, retry: 2, timeout: EXTENDED_TIMEOUT } as const
 // Three builds and two update hops (plus negative launches) instead of two builds and one hop: 15-25 min per
 // attempt, so a single retry keeps a genuine failure within the 60-minute job cap of the mac runner.
 export const optionsForFlakyMultiHopE2E = { ...optionsForFlakyE2E, retry: 1, timeout: EXTENDED_TIMEOUT * 1.5 } as const

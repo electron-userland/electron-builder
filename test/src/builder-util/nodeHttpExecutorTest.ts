@@ -3,7 +3,7 @@ import { afterEach, beforeEach, vi } from "vitest"
 
 const PROXY_VARS = ["HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy"] as const
 
-describe("buildGotProxyAgent", { sequential: true }, () => {
+describe("buildGotProxyAgent", { concurrent: false }, () => {
   beforeEach(() => {
     for (const key of PROXY_VARS) {
       delete process.env[key]
@@ -125,7 +125,7 @@ describe("buildGotProxyAgent", { sequential: true }, () => {
   })
 })
 
-describe("NodeHttpExecutor.createRequest", { sequential: true }, () => {
+describe("NodeHttpExecutor.createRequest", { concurrent: false }, () => {
   let executor: NodeHttpExecutor
 
   beforeEach(() => {

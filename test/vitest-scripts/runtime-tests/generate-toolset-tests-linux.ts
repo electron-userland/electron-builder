@@ -29,14 +29,14 @@ const SUITES: SuiteConfig[] = [
     registerFn: namedFn("registerBlackboxLinuxTests" satisfies keyof typeof _BlackboxLinuxSuite),
     importPath: "updater/blackboxUpdateLinuxSuite",
     describeConfig: { name: "linux", chain: ["heavy", "ifLinux"] },
-    describeOptions: { sequential: true, retry: 1 },
+    describeOptions: { concurrent: false, retry: 1 },
   },
   {
     name: "differentialLinux",
     registerFn: namedFn("registerDifferentialLinuxTests" satisfies keyof typeof _DifferentialLinuxSuite),
     importPath: "updater/differentialUpdateLinuxSuite",
     describeConfig: { name: "AppImage", chain: ["ifLinux"] },
-    describeOptions: { sequential: true },
+    describeOptions: { concurrent: false },
   },
 ]
 
