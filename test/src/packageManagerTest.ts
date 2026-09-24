@@ -10,6 +10,7 @@ import * as which from "which"
 
 const yarnVersion = getPackageManagerWithVersion(PM.YARN).prepareEntry
 const yarnBerryVersion = getPackageManagerWithVersion(PM.YARN_BERRY).prepareEntry
+const npmVersion = getPackageManagerWithVersion(PM.NPM).prepareEntry
 
 const hasBun = !isEmptyOrSpaces(which.sync("bun", { nothrow: true }))
 
@@ -28,7 +29,7 @@ const packageConfig = (data: any, version: string) => {
   return data
 }
 
-describe("Package Managers", { sequential: true }, () => {
+describe("Package Managers", { concurrent: false }, () => {
   test("yarn", ({ expect }) =>
     assertPack(
       expect,
@@ -201,7 +202,7 @@ describe("Package Managers", { sequential: true }, () => {
             data =>
               packageConfig(
                 data,
-                "pnpm@10.18.0+sha512.e804f889f1cecc40d572db084eec3e4881739f8dec69c0ff10d2d1beff9a4e309383ba27b5b750059d7f4c149535b6cd0d2cb1ed3aeb739239a4284a68f40cfa"
+                "pnpm@11.26.0+sha512.fc0e2bf890b9f983611f1ab68c0637bce914390653699f83c1a78b005ed25f2c81e77920c8fd8eee2ecf0b58b28cdcb00a84d97f69bcf7c56b2f344710238664"
               ),
             false
           ),
@@ -218,7 +219,7 @@ describe("Package Managers", { sequential: true }, () => {
       {
         storeDepsLockfileSnapshot: true,
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
-        projectDirCreated: projectDir => modifyPackageJson(projectDir, data => packageConfig(data, "npm@9.8.1"), false),
+        projectDirCreated: projectDir => modifyPackageJson(projectDir, data => packageConfig(data, npmVersion), false),
       }
     ))
 
@@ -469,6 +470,15 @@ describe("Package Managers", { sequential: true }, () => {
             config: {
               files: ["**/*"],
               asar: { unpack: ["**/node_modules/foo/**/*"] },
+              // npm >= 10 (install-links=false) symlinks a `file:` dependency and does NOT install
+              // its transitive deps into the project tree (`npm ls` reports `ms` as missing), and
+              // the traversal collector cannot resolve them from the out-of-tree link target either
+              // — so `ms` is genuinely absent on disk for those package-manager variants. This test
+              // exercises file:-protocol bundling/unpacking, not dependency completeness; allow the
+              // known miss so the fail-closed `allowMissingDependencies` default (issue #10058)
+              // doesn't reject the pack. The pnpm/yarn variants install `ms` normally, making the
+              // allow-list inert there.
+              allowMissingDependencies: ["ms"],
             },
           },
           {

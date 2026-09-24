@@ -1787,6 +1787,17 @@ exports[`snapcraft > core24 Multipass real build > core24 useMultipass full buil
 }
 `;
 
+exports[`snapcraft > core24 classic confinement omits plugs and layout 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "cl-co-app_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snapcraft > core24 command always points at the launcher script and keeps it at the snap root 1`] = `
 {
   "linux": [
@@ -1803,7 +1814,6 @@ exports[`snapcraft > core24 custom plugs with default expansion 1`] = `
   "apps": {
     "testapp": {
       "command": "command.sh",
-      "desktop": "meta/gui/testapp.desktop",
       "extensions": [
         "gnome",
       ],
@@ -1880,7 +1890,6 @@ exports[`snapcraft > core24 default (gnome extension) 1`] = `
   "apps": {
     "testapp": {
       "command": "command.sh",
-      "desktop": "meta/gui/testapp.desktop",
       "extensions": [
         "gnome",
       ],
@@ -1967,7 +1976,6 @@ exports[`snapcraft > core24 no gnome extension 1`] = `
   "apps": {
     "testapp": {
       "command": "command.sh",
-      "desktop": "meta/gui/testapp.desktop",
       "plugs": [
         "desktop",
         "desktop-legacy",
@@ -2085,6 +2093,17 @@ exports[`snapcraft > core24 no gnome extension 2`] = `
 }
 `;
 
+exports[`snapcraft > core24 omits the app desktop mapping (single desktop entry) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`snapcraft > core24 remoteBuild build mode 1`] = `
 {
   "linux": [
@@ -2145,7 +2164,6 @@ exports[`snapcraft > core24 wayland disabled 1`] = `
   "apps": {
     "sep": {
       "command": "command.sh",
-      "desktop": "meta/gui/sep.desktop",
       "extensions": [
         "gnome",
       ],

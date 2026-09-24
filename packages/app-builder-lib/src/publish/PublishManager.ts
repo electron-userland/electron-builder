@@ -1,7 +1,20 @@
-import { Arch, asArray, AsyncTaskManager, exists, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import {
+  Arch,
+  asArray,
+  AsyncTaskManager,
+  derivePublicKeyPem,
+  exists,
+  InvalidConfigurationError,
+  isEmptyOrSpaces,
+  isPullRequest,
+  log,
+  safeStringifyJson,
+  serializeToYaml,
+} from "builder-util"
 import {
   BitbucketOptions,
   CancellationToken,
+  computeUpdateManifestKeyId,
   GenericServerOptions,
   getS3LikeProviderBaseUrl,
   GithubOptions,
@@ -9,6 +22,7 @@ import {
   githubUrl,
   GitlabOptions,
   KeygenOptions,
+  normalizePublicKeyList,
   Nullish,
   PublishConfiguration,
   PublishProvider,
@@ -67,6 +81,35 @@ function checkOptions(publishPolicy: any) {
   }
 }
 
+/**
+ * v26 published implicitly when it detected a CI tag; v27 requires an explicit `--publish` policy.
+ * Without a signal, a tagged release pipeline goes green and uploads nothing — the build looks
+ * identical to a successful publish. Only warns when the project actually looks like it wanted to
+ * publish (a tag is present and a publish target is configured), so ordinary local builds stay quiet.
+ */
+function warnIfImplicitPublishExpected(packager: Packager): void {
+  const tag = getCiTag()
+  if (tag == null) {
+    return
+  }
+  const config = packager.config
+  const hasPublishConfig =
+    config.publish != null ||
+    (["mac", "win", "linux"] as const).some(platform => {
+      const platformConfig = config[platform] as { publish?: unknown } | Nullish
+      return platformConfig != null && platformConfig.publish != null
+    })
+  if (!hasPublishConfig) {
+    return
+  }
+  log.warn(
+    { tag, solution: "pass --publish <always|onTag|onTagOrDraft|never>, or set the `publish` policy in your build configuration" },
+    "a publish configuration and a CI tag are present, but no publish policy was given — nothing will be uploaded. " +
+      "electron-builder v27 removed implicit publishing (v26 auto-published when it detected a CI tag). " +
+      "See https://www.electron.build/docs/migration/v27-breaking-changes#implicit-publish-removed"
+  )
+}
+
 export class PublishManager implements PublishContext {
   private readonly nameToPublisher = new Map<string, Promise<Publisher | null>>()
 
@@ -93,6 +136,9 @@ export class PublishManager implements PublishContext {
       this.isPublish = publishPolicy != null && publishOptions.publish !== "never" && (publishPolicy !== "onTag" || getCiTag() != null)
       if (this.isPublish && forcePublishForPr) {
         log.warn(publishForPrWarning)
+      }
+      if (publishPolicy == null) {
+        warnIfImplicitPublishExpected(packager)
       }
     } else if (publishOptions.publish !== "never") {
       log.info(
@@ -275,7 +321,62 @@ export async function getAppUpdatePublishConfiguration(
       publishConfig.publisherName = publisherName
     }
   }
+
+  // Embed the update-manifest trust list so the updater can verify signed manifests. An explicit
+  // `publicKey` list wins as-is; otherwise the public half of every configured signing key is derived
+  // so the user only manages the secrets. One key is written as a plain string (byte-identical to the
+  // single-key format), several as a YAML list.
+  const updateManifestConfig = packager.platformOptions.updateManifest ?? packager.config.updateManifest
+  // `updateManifestPublicKey` is only ever assigned right below, on this fresh copy, so a value that is
+  // already present can only have come from the user's `publish` configuration. Rejecting it (rather than
+  // taking it as-is) keeps the trust list on the single validated path and stops a stale hand-copied key
+  // from silently shadowing the derived one.
+  if (publishConfig.updateManifestPublicKey != null) {
+    throw new InvalidConfigurationError("publish.updateManifestPublicKey is managed by electron-builder and must not be set; configure updateManifest.publicKey instead")
+  }
+  // The very same keys updateInfoBuilder signs `latest*.yml` with, so env-var-only signing
+  // (no `updateManifest` config block) embeds the matching public keys too, and the two sides
+  // cannot disagree about whether signing is enabled.
+  const signingKeys = await packager.updateSigningKeys.value
+  const explicitKeys = normalizeExplicitPublicKeys(updateManifestConfig?.publicKey)
+  const trustedKeys = explicitKeys.length > 0 ? explicitKeys : signingKeys.map(derivePublicKeyPem)
+  if (trustedKeys.length > 0) {
+    publishConfig.updateManifestPublicKey = trustedKeys.length === 1 ? trustedKeys[0] : trustedKeys
+  }
+  if (signingKeys.length > 0 && explicitKeys.length > 0) {
+    const trustedIds = new Set(trustedKeys.map(computeUpdateManifestKeyId))
+    if (!signingKeys.some(key => trustedIds.has(computeUpdateManifestKeyId(key)))) {
+      log.warn(
+        { platform: packager.platform.name, trustedKeys: trustedKeys.length },
+        "none of the update-manifest signing keys is in updateManifest.publicKey: installs of this release will not be able to verify manifests signed with the current key(s). " +
+          "Intended only for a deliberate bridge release; otherwise add the current public key to updateManifest.publicKey."
+      )
+    }
+  }
   return publishConfig
+}
+
+/**
+ * Normalizes the configured `updateManifest.publicKey` (string, multi-PEM string, or array) into distinct,
+ * validated Ed25519 public keys, preserving order. Duplicates and non-Ed25519 keys are configuration errors.
+ */
+function normalizeExplicitPublicKeys(value: string | Array<string> | null | undefined): Array<string> {
+  const keys = normalizePublicKeyList(value)
+  const seen = new Map<string, number>()
+  keys.forEach((key, index) => {
+    let keyId: string
+    try {
+      keyId = computeUpdateManifestKeyId(key)
+    } catch (e: any) {
+      throw new InvalidConfigurationError(`updateManifest.publicKey #${index + 1} is not a valid Ed25519 public key: ${e.message || e}`)
+    }
+    const previous = seen.get(keyId)
+    if (previous != null) {
+      throw new InvalidConfigurationError(`updateManifest.publicKey #${index + 1} duplicates entry #${previous + 1} (key id ${keyId}). List each trusted key once.`)
+    }
+    seen.set(keyId, index)
+  })
+  return keys
 }
 
 export async function writeAppUpdateYaml(resourcesDir: string, publishConfig: PublishConfiguration): Promise<void> {
@@ -541,6 +642,56 @@ function isDetectUpdateChannel(platformSpecificConfiguration: PlatformSpecificBu
   return value == null ? configuration.detectUpdateChannel !== false : value
 }
 
+// keyed by the build's CancellationToken (one instance per Packager) so that a build reports a given feed once - getResolvedPublishConfig
+// is called per target and arch - without leaking state between programmatic builds running in the same process
+const reportedInferredUpdateFeeds = new WeakMap<CancellationToken, Set<string>>()
+
+/** @internal */
+export function parseGithubRepoShorthand(repo: string): { owner: string; repo: string } | null {
+  const separator = repo.indexOf("/")
+  return separator > 0 ? { owner: repo.substring(0, separator), repo: repo.substring(separator + 1) } : null
+}
+
+// the inferred repository becomes the publish/update destination and, for auto-update-capable targets, is written
+// verbatim into app-update.yml inside every shipped build as its permanent update feed - so the developer has to be
+// told which repository they are committing to. A repository taken from package.json "repository" is deliberate
+// configuration (info); one picked up from the CI environment or .git/config is not (warn).
+function logInferredUpdateFeed(
+  buildId: CancellationToken,
+  provider: PublishProvider,
+  owner: string,
+  project: string,
+  source: string | undefined,
+  inferredFields: Array<string>
+): void {
+  let reported = reportedInferredUpdateFeeds.get(buildId)
+  if (reported == null) {
+    reported = new Set<string>()
+    reportedInferredUpdateFeeds.set(buildId, reported)
+  }
+
+  const feed = `${provider}:${owner}/${project}`
+  if (reported.has(feed)) {
+    return
+  }
+  reported.add(feed)
+
+  const fields = {
+    reason: `${inferredFields.join(" and ")} not specified in the publish configuration`,
+    source: source ?? "unknown",
+    provider,
+    owner,
+    ...(provider === "bitbucket" ? { slug: project } : { repo: project }),
+  }
+  const message =
+    "update feed inferred from repository info; it will be used as the publish/update destination (written to app-update.yml in auto-update-capable targets) - specify it explicitly to be sure it stays under your control"
+  if (source === "package.json") {
+    log.info(fields, message)
+  } else {
+    log.warn(fields, message)
+  }
+}
+
 async function getResolvedPublishConfig(
   platformPackager: PlatformPackager<any> | null,
   options: PublishConfiguration,
@@ -592,11 +743,10 @@ async function getResolvedPublishConfig(
   let project = isGithub ? (options as GithubOptions).repo : (options as BitbucketOptions).slug
 
   if (isGithub && owner == null && project != null) {
-    const index = project.indexOf("/")
-    if (index > 0) {
-      const repo = project
-      project = repo.substring(0, index)
-      owner = repo.substring(index + 1)
+    const shorthand = parseGithubRepoShorthand(project)
+    if (shorthand != null) {
+      owner = shorthand.owner
+      project = shorthand.repo
     }
   }
 
@@ -622,12 +772,17 @@ async function getResolvedPublishConfig(
       return null
     }
 
+    const inferredFields: Array<string> = []
     if (!owner) {
       owner = info.user
+      inferredFields.push("owner")
     }
     if (!project) {
       project = info.project
+      inferredFields.push(isGithub ? "repo" : "slug")
     }
+
+    logInferredUpdateFeed(ctx.cancellationToken, provider, owner, project, info.source, inferredFields)
   }
 
   if (isGithub) {

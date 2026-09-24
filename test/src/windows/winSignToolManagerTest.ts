@@ -558,7 +558,7 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
 
 // ─── PKCS#11 PIN via env vars ─────────────────────────────────────────────────
 
-describe("PKCS#11 PIN via env var (no cert file)", { sequential: true }, () => {
+describe("PKCS#11 PIN via env var (no cert file)", { concurrent: false }, () => {
   const pkcs11Options = {
     sign: {
       type: "pkcs11" as const,
@@ -690,7 +690,7 @@ o4qne60TB3wolLhOJqQ3uJLPvOmFI5oMnEAmhP0JlwFSBj3SiYoHScLuNP2YQXB+
 // the x64 kit. From v1.3.0 the dlib lives in a separate ats-bundle (not the
 // kits bundle) and the .NET runtime root is injected via DOTNET_ROOT.
 
-describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential: true }, () => {
+describe("WindowsSignAzureManager signFileWithDlib arch selection", { concurrent: false }, () => {
   const originalArch = process.arch
 
   beforeEach(async () => {

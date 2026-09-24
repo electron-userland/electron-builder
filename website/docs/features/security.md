@@ -12,6 +12,8 @@ Several security-relevant defaults changed in v27 — auto-update web installers
 
 ## Update security (electron-updater)
 
+- **Signed update manifests (opt-in).** The `latest*.yml` update metadata can be Ed25519-signed at publish time and verified by electron-updater — before any download — against a public key embedded in the app. When a key is configured, verification fails closed on unsigned or tampered manifests. See [Signed Update Manifests](./signed-update-manifests.md).
+
 - **Web-installer payloads are disabled by default.** `AppUpdater.disableWebInstaller` now defaults to **`true`**. NSIS *web* installers (the small installer that downloads its full payload at install time from a manifest-supplied URL) are no longer loaded unless you opt in, because that payload may not undergo signature verification. v27 ships a one-major grace period: if a web-installer update is received and you never set the flag, the updater logs a warning and still downloads it. Set `autoUpdater.disableWebInstaller = false` only if you intentionally ship a web installer.
 
 - **Linux package signatures.** `AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**) preserves historical behavior, since electron-builder does not sign Linux packages itself. Set it to **`false`** to enforce GPG signature checks when installing `.deb` / `.rpm` auto-updates on package managers that support verification.
@@ -55,6 +57,21 @@ electron-builder --publish always   # explicit — required in v27
 ```
 
 **See also:** [Publish configuration](../publish.md) · [Implicit `--publish` removed](../migration/v27-breaking-changes.md#implicit-publish-removed)
+
+## Update feed ownership
+
+When a GitHub or Bitbucket publish configuration omits `owner`/`repo`, electron-builder fills them in from the repository info (`package.json` `repository`, CI environment variables, then `.git/config`). The result becomes the publish/update destination and, for auto-update-capable targets, is written to `app-update.yml` inside the packaged app, so it is the update feed every installed copy keeps using — long after the build machine is gone. A build reports the repository it resolved to and the `source` it came from (info level for `package.json` `repository`, warn level for CI environment variables or `.git/config`), so read that line and confirm it is correct:
+
+```
+• update feed inferred from repository info; it will be used as the publish/update destination
+  (written to app-update.yml in auto-update-capable targets) - specify it explicitly to be sure
+  it stays under your control  reason=owner and repo not specified in the publish configuration
+  source=.git/config provider=github owner=my-org repo=my-app
+```
+
+That name has to stay yours. GitHub frees an owner or repository name for re-registration as soon as it is renamed, transferred or deleted, and whoever claims it next can publish a release that installed copies of your app will download and run. Set `owner` and `repo` explicitly rather than relying on detection, and do not retire the namespace while builds are still in the field.
+
+**See also:** [GitHub repository detection](../publish.md#github-repository-and-bintray-package)
 
 ## Toolset integrity
 

@@ -120,4 +120,9 @@ export interface SourceRepositoryInfo {
   domain?: string
   user: string
   project: string
+  /**
+   * Where the repository info was detected from: `package.json` (the `repository` field), the name of the CI
+   * environment variable(s) it was read from, or `.git/config`. Absent when the info was supplied programmatically.
+   */
+  source?: string
 }

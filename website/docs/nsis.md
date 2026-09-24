@@ -27,12 +27,16 @@ To customize web installer, use the top-level `nsisWeb` key (not `nsis`).
 
 If for some reasons web installer cannot download (antivirus, offline):
 
-* Download package file into the same directory where installer located. It will be detected automatically and used instead of downloading from the Internet. Please note — only original package file is allowed (checksum is checked).
-* Specify any local package file using `--package-file=path_to_file`.
+- Download package file into the same directory where installer located. It will be detected automatically and used instead of downloading from the Internet. Please note — only original package file is allowed (checksum is checked).
+- Specify any local package file using `--package-file=path_to_file`.
 
 ## Custom NSIS script
 
 Two options are available — [include](#include) and [script](#script). `script` allows you to provide completely different NSIS script. For most cases it is not required as you need only to customise some aspects, but still use well-tested and maintained default NSIS script. So, `include` is recommended.
+
+:::warning[Custom `script` disables built-in safeguards]
+When you provide a custom `script`, electron-builder no longer generates (and signs) the uninstaller for you and skips installer size verification. Prefer `include` unless you really need to replace the whole script.
+:::
 
 Keep in mind — if you customize the NSIS script, you should always mention it in issue reports. And don't expect that your issue will be resolved.
 
@@ -40,10 +44,11 @@ Keep in mind — if you customize the NSIS script, you should always mention it 
 NSIS installers now register each `fileAssociations` entry under a unique generated **ProgID** (`<program>.<component>`, derived from `productName` + the app GUID) instead of using the association `name`/extension verbatim, which could collide with unrelated apps. `fileAssociations` and its `name`/`ext`/`description` fields are unchanged and nothing needs migrating — **but** if your custom `include`/`script` (or external tooling) hard-codes the old ProgID (the association name or extension) to add shell verbs or registry keys, update it to the new generated value. See [v27 Breaking Changes → NSIS file-association ProgID](./migration/v27-breaking-changes.md#nsis-file-association-progid-format-changed).
 :::
 
-1. Add file `build/installer.nsh`.
+1. Add file `build/installer.nsh` (or set [include](#include) explicitly — a single path, or an array of paths that are all included in order, e.g. `"include": ["build/installer.nsh", "build/signing.nsh"]`; each path is resolved relative to the build resources directory first, then relative to the project directory).
 2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`, `customInstallMode`, `customWelcomePage`, `customUnWelcomePage`, `customUnInstallSection`.
 
 :::note[Example]
+
 ```nsis
 !macro customHeader
   !system "echo '' > ${BUILD_RESOURCES_DIR}/customHeader"
@@ -85,13 +90,22 @@ NSIS installers now register each `fileAssociations` entry under a unique genera
   SectionEnd
 !macroend
 ```
+
 :::
 
-* `BUILD_RESOURCES_DIR` and `PROJECT_DIR` are defined.
-* `build` is added as `addincludedir` (i.e. you don't need to use `BUILD_RESOURCES_DIR` to include files).
-* `build/x86-unicode` and `build/x86-ansi` are added as `addplugindir`.
-* File associations macro `registerFileAssociations` and `unregisterFileAssociations` are still defined.
-* All other electron-builder specific flags (e.g. `ONE_CLICK`) are still defined.
+- `BUILD_RESOURCES_DIR` and `PROJECT_DIR` are defined.
+- `build` is added as `addincludedir` (i.e. you don't need to use `BUILD_RESOURCES_DIR` to `!include` sibling files from the build resources directory).
+- `build/x86-unicode` and `build/x86-ansi` are added as `addplugindir` (each one only when the directory exists, regardless of the `unicode` option).
+- File associations macro `registerFileAssociations` and `unregisterFileAssociations` are still defined.
+- All other electron-builder specific flags (e.g. `ONE_CLICK`) are still defined.
+
+:::note[Uninstaller lifecycle — `customUnInstall` changes take effect one version later]
+The uninstaller that runs during an uninstall **or during an update** is the `Uninstall <app>.exe` that was written to disk by the **previously installed** version — not the one embedded in the installer that is currently running. So when you add or change `customUnInstall` (or anything else affecting the uninstaller), the change only becomes active after the _next_ install: version N ships the new uninstaller, and it is first executed when version N is uninstalled or updated to N+1. If your `customUnInstall` "does not fire", it is almost always because the machine still runs the old uninstaller from the previous version.
+:::
+
+:::warning[Uninstall registry key — do not hard-code `...\Uninstall\<appId>`]
+electron-builder registers the uninstall entry under `Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTALL_APP_KEY}`, where `UNINSTALL_APP_KEY` is the application **GUID** (with each `\` replaced by " - ", i.e. space, hyphen, space) — _not_ the `appId`. In a custom script use the provided defines instead of building the path yourself: `${UNINSTALL_REGISTRY_KEY}` (the full key, see `multiUser.nsh`) or `${UNINSTALL_APP_KEY}`. A hard-coded `Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}` points at a key electron-builder never writes.
+:::
 
 If you want to include additional resources for use during installation, such as scripts or additional installers, you can place them in the `build` directory and include them with `File`. For example, to include and run `extramsi.msi` during installation, place it in the `build` directory and use the following:
 
@@ -110,6 +124,7 @@ ${ifNot} ${isUpdated}
   # your code
 ${endIf}
 ```
+
 :::
 
 ## GUID vs Application Name
@@ -131,9 +146,11 @@ To build portable app, set target to `portable` (or pass `--win portable`).
 
 For portable app, following environment variables are available:
 
-* `PORTABLE_EXECUTABLE_FILE` - path to the portable executable.
-* `PORTABLE_EXECUTABLE_DIR` - directory where the portable executable is located.
-* `PORTABLE_EXECUTABLE_APP_FILENAME` - sanitized app name to use in [file paths](https://github.com/electron-userland/electron-builder/issues/3186#issue-345489962).
+- `PORTABLE_EXECUTABLE_FILE` - path to the portable executable.
+- `PORTABLE_EXECUTABLE_DIR` - directory where the portable executable is located.
+- `PORTABLE_EXECUTABLE_APP_FILENAME` - sanitized app name to use in [file paths](https://github.com/electron-userland/electron-builder/issues/3186#issue-345489962).
+
+The portable target also supports a custom NSIS script via `portable.include` (a single path or an array of paths). Unlike the installer targets, `build/installer.nsh` is **not** auto-discovered for portable builds — a custom script is only included when the option is explicitly set, so an `installer.nsh` written for the installer target does not silently leak into portable builds.
 
 ## Common Questions
 
@@ -151,6 +168,7 @@ It is very specific requirement. Do not do if you are not sure. Add [custom macr
   WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
 !macroend
 ```
+
 :::
 
 :::tip[Is it possible to make a single installer that will allow configuring user/machine installation?]
@@ -158,6 +176,7 @@ It is very specific requirement. Do not do if you are not sure. Add [custom macr
 Yes, you need to switch to assisted installer (not default one-click).
 
 package.json
+
 ```json
 "build": {
   "nsis": {
@@ -165,13 +184,16 @@ package.json
   }
 }
 ```
+
 electron-builder.yml
+
 ```yaml
 nsis:
   oneClick: false
 ```
+
 :::
 
 ## Configuration
 
-  {!./app-builder-lib.Interface.NsisOptions.md!}
+{!./app-builder-lib.Interface.NsisOptions.md!}

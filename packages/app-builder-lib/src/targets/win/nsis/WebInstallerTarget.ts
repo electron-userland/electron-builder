@@ -1,6 +1,7 @@
 import { Arch, log } from "builder-util"
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../../../publish/PublishManager.js"
 import { WinPackager } from "../../../winPackager.js"
+import { Defines } from "./Defines.js"
 import { NsisWebOptions } from "./nsisOptions.js"
 import { NsisTarget } from "./NsisTarget.js"
 import { AppPackageHelper } from "./nsisUtil.js"
@@ -19,21 +20,7 @@ export class WebInstallerTarget extends NsisTarget {
     //noinspection ES6MissingAwait
     await (NsisTarget.prototype as WebInstallerTarget).configureDefines.call(this, oneClick, defines)
 
-    const packager = this.packager
-    const options = this.options as NsisWebOptions
-
-    let appPackageUrl = options.appPackageUrl
-    if (appPackageUrl == null) {
-      const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, this.options, null, false), null)
-      if (publishConfigs == null || publishConfigs.length === 0) {
-        throw new Error("Cannot compute app package download URL")
-      }
-
-      appPackageUrl = computeDownloadUrl(publishConfigs[0], null, packager)
-      defines.APP_PACKAGE_URL_IS_INCOMPLETE = null
-    }
-
-    defines.APP_PACKAGE_URL = appPackageUrl
+    await configureWebInstallerAppPackageUrl(this.packager, this.options as NsisWebOptions, defines)
   }
 
   get shouldBuildUniversalInstaller() {
@@ -52,4 +39,29 @@ export class WebInstallerTarget extends NsisTarget {
     const classifier = appInfo.name.toLowerCase() === appInfo.name ? "web-setup" : "WebSetup"
     return `${appInfo.name}-${classifier}-${appInfo.version}.exe`
   }
+}
+
+/**
+ * Sets the web installer's `APP_PACKAGE_URL` define. An explicit `nsisWeb.appPackageUrl` is used verbatim; otherwise the base
+ * URL of the first publish configuration (`nsisWeb.publish` → `win.publish` → `publish`) is used and `APP_PACKAGE_URL_IS_INCOMPLETE`
+ * is defined so the NSIS script appends the arch-specific package file name at install time.
+ * @internal exported for tests
+ */
+export async function configureWebInstallerAppPackageUrl(
+  packager: WinPackager,
+  options: NsisWebOptions,
+  defines: Pick<Defines, "APP_PACKAGE_URL" | "APP_PACKAGE_URL_IS_INCOMPLETE">
+): Promise<void> {
+  let appPackageUrl = options.appPackageUrl
+  if (appPackageUrl == null) {
+    const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, options, null, false), null)
+    if (publishConfigs == null || publishConfigs.length === 0) {
+      throw new Error("Cannot compute app package download URL")
+    }
+
+    appPackageUrl = computeDownloadUrl(publishConfigs[0], null, packager)
+    defines.APP_PACKAGE_URL_IS_INCOMPLETE = null
+  }
+
+  defines.APP_PACKAGE_URL = appPackageUrl
 }

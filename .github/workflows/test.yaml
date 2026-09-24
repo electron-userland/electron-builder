@@ -92,7 +92,7 @@ jobs:
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
-          cache-key: v-39.8.5-linux-electron
+          cache-key: v-39.8.10-linux-electron
           cache-path: ~/.cache/electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
@@ -146,7 +146,7 @@ jobs:
           - platform: linux
             runner: ubuntu-latest
             cache-path: ~/.cache/electron
-            cache-key: v-39.8.5-linux-electron
+            cache-key: v-39.8.10-linux-electron
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
@@ -211,7 +211,7 @@ jobs:
           - platform: windows
             runner: windows-latest
             cache-path: ~\AppData\Local\electron\Cache
-            cache-key: v-39.8.5-windows-electron
+            cache-key: v-39.8.10-windows-electron
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
@@ -260,7 +260,7 @@ jobs:
           - platform: macos
             runner: macos-26
             cache-path: ~/Library/Caches/electron
-            cache-key: v-39.8.5-macos-electron
+            cache-key: v-39.8.10-macos-electron
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
@@ -324,7 +324,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-39.8.5-update-electron
+          cache-key: v-39.8.10-update-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
 
@@ -347,17 +347,13 @@ jobs:
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
-      - name: Write Docker secrets env file
+      # The updater tests no longer hit live provider endpoints, so no provider tokens are injected.
+      # The file must always exist (even empty) because docker --env-file fails on a missing file
+      # and the R2 append step below is skipped on forks.
+      - name: Create Docker secrets env file
         run: |
-          printf 'KEYGEN_TOKEN=%s\nBITBUCKET_TOKEN=%s\nGH_TOKEN=%s\nGITLAB_TOKEN=%s\n' \
-            "$KEYGEN_TOKEN_SECRET" "$BITBUCKET_TOKEN_SECRET" "$GH_TOKEN_SECRET" "$GITLAB_TOKEN_SECRET" \
-            > "${{ runner.temp }}/docker-secrets.env"
+          : > "${{ runner.temp }}/docker-secrets.env"
           chmod 600 "${{ runner.temp }}/docker-secrets.env"
-        env:
-          KEYGEN_TOKEN_SECRET: ${{ secrets.KEYGEN_TOKEN }}
-          BITBUCKET_TOKEN_SECRET: ${{ secrets.BITBUCKET_TOKEN }}
-          GH_TOKEN_SECRET: ${{ secrets.GH_TOKEN }}
-          GITLAB_TOKEN_SECRET: ${{ secrets.GITLAB_TOKEN }}
 
       # Gated on the upstream repository so forks cannot substitute their own R2 credentials;
       # without these vars the R2 live smoke test is skipped (test.ifEnv).
@@ -379,7 +375,7 @@ jobs:
           echo $TEST_RUNNER_IMAGE_TAG
           pnpm test:linux
         env:
-          TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,GitlabPublisher.integration.test,R2PublisherTest
+          TEST_FILES: nsisUpdaterTest,PublishManager,differentialUpdateTest,GitlabPublisherTest,R2PublisherTest
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
           ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
 
@@ -406,7 +402,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-39.8.5-native-electron
+          cache-key: v-39.8.10-native-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
 
@@ -441,7 +437,7 @@ jobs:
         if: matrix.core == 'core24'
         run: pnpm ci:test
         env:
-          TEST_FILES: snapHeavyTest
+          TEST_FILES: snapHeavy
           SNAP_TEST_CORES: core24
           SNAPCRAFT_BUILD_ENVIRONMENT: host
           RUN_SNAP_TESTS: "true"
@@ -453,6 +449,95 @@ jobs:
         uses: ./.github/actions/upload-test-artifacts
         with:
           name: snap-${{ matrix.core }}
+
+  # The flatpak suite (test/src/linux/flatpak.e2e.ts) is gated on a `flatpak` binary being on PATH, so it
+  # silently skips inside the docker shards and on every other runner. It needs flatpak-builder, whose
+  # bubblewrap sandbox wants user namespaces that are painful inside Docker, so it runs natively here.
+  # @malept/flatpak-bundler installs missing refs with `flatpak install --user` (no explicit remote), so
+  # the runtimes are pre-installed into the same user installation from a user-level flathub remote.
+  test-flatpak:
+    name: Test Flatpak
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/.cache/electron
+          cache-key: v-39.8.10-native-electron
+          reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
+          collect-coverage: ${{ inputs.collect-coverage }}
+
+      - name: Install flatpak and flatpak-builder
+        run: |
+          # Disable background apt services (prevent apt lock contention)
+          sudo systemctl stop unattended-upgrades apt-daily.service apt-daily-upgrade.service || true
+          sudo systemctl disable apt-daily.timer apt-daily-upgrade.timer || true
+          sudo systemctl kill --kill-who=all apt-daily.service apt-daily-upgrade.service || true
+          while sudo fuser /var/lib/apt/lists/lock /var/lib/dpkg/lock /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+            echo "Waiting for apt lock to be released…"
+            sleep 2
+          done
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          # Ubuntu 24.04 restricts unprivileged user namespaces via AppArmor; flatpak-builder's bubblewrap
+          # sandbox needs them. The flatpak package ships a bwrap profile, but lift the restriction too so a
+          # runner image without that profile does not fail the build with "setting up uid map: Permission denied".
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+          flatpak --version
+          flatpak-builder --version
+
+      # The flatpak user installation (remote config + installed runtimes/SDKs/base app). The 20.08 SDK
+      # alone is well over a GB, so restoring it beats re-downloading from flathub every run. Bump the
+      # -vN suffix whenever the ref list in the install step below changes.
+      # The key includes run_id so it never exactly matches: the job restores the newest entry via
+      # restore-keys and re-saves at the end. With a static key, actions/cache never saves after an exact
+      # hit, so an incomplete first save (e.g. the 19.08 refs failed to install) would be re-downloaded forever.
+      - name: Cache flatpak runtimes
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.local/share/flatpak
+          key: flatpak-user-${{ runner.os }}-fdo-20.08-19.08-electron2-v1-${{ github.run_id }}
+          restore-keys: |
+            flatpak-user-${{ runner.os }}-fdo-20.08-19.08-electron2-v1-
+
+      # Pre-install every ref the suite needs so the bundler's own `flatpak install` inside a test does not
+      # eat the test timeout. `flatpak install` is a no-op for refs already restored from the cache.
+      # 20.08 is the FlatpakTarget default runtime/base version; 19.08 is what the
+      # "custom runtime and base app version" test asks for. Both branches are end-of-life on flathub,
+      # so the 19.08 trio is installed best-effort: if flathub ever drops it, only that one test fails
+      # (visibly, from the bundler's own install attempt) instead of the whole job before any test runs.
+      - name: Install flatpak runtimes
+        run: |
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y --noninteractive flathub \
+            org.freedesktop.Platform//20.08 \
+            org.freedesktop.Sdk//20.08 \
+            org.electronjs.Electron2.BaseApp//20.08
+          flatpak install --user -y --noninteractive flathub \
+            org.freedesktop.Platform//19.08 \
+            org.freedesktop.Sdk//19.08 \
+            org.electronjs.Electron2.BaseApp//19.08 \
+            || echo "::warning::Could not pre-install the 19.08 refs; the 'custom runtime and base app version' test will try to install them itself"
+          flatpak list --user --columns=ref,size
+
+      - name: Test flatpak
+        run: pnpm ci:test
+        env:
+          TEST_FILES: flatpak
+          DEBUG: "@malept/flatpak-bundler"
+          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
+          RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
+
+      - name: Upload test artifacts
+        if: always()
+        uses: ./.github/actions/upload-test-artifacts
+        with:
+          name: flatpak
 
   test-e2e:
     name: Test e2e Auto Updater Linux
@@ -496,7 +581,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-39.8.5-linux-e2e-electron
+          cache-key: v-39.8.10-linux-e2e-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
 
@@ -523,7 +608,7 @@ jobs:
   # -------------------------
 
   merge-smart-cache:
-    needs: [test-linux, test-windows, test-macos, test-e2e, test-updater, test-snap]
+    needs: [test-linux, test-windows, test-macos, test-e2e, test-updater, test-snap, test-flatpak]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 20

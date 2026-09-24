@@ -17,12 +17,14 @@ import {
   getBinariesMirrorUrl,
   reinitializeProxy,
 } from "app-builder-lib/internal"
+import { HttpError } from "builder-util-runtime"
 import {
   buildElectronArtifactConfig,
   defaultElectronGetCacheRoot,
   getCacheDirectoryInternal,
   parseChecksumFile,
   resolveSeededChecksums,
+  shouldRetryDownloadError,
 } from "app-builder-lib/src/util/electronGet.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
@@ -232,6 +234,79 @@ describe("getBinariesMirrorUrl", () => {
   })
 })
 
+// ─── shouldRetryDownloadError ─────────────────────────────────────────────────
+
+// Regression tests for the CI failures of 2026-08-12 (GitHub release-asset 503s /
+// connection resets): @electron/get v5's FetchDownloader throws its own `HTTPError extends Error`
+// (name "HTTPError", fetch Response on `.response`, NO `.code`), and undici wraps socket errors in
+// `TypeError: fetch failed` with the code on `error.cause.code`. Neither shape matched the old
+// shouldRetry predicate, so transient download failures got zero retries.
+describe("shouldRetryDownloadError", () => {
+  /** Mirrors @electron/get v5's HTTPError shape (Error subclass, name "HTTPError", `.response`, no `.code`). */
+  function electronGetHttpError(status: number): Error {
+    const e = new Error(`Response code ${status} for https://example.com/electron.zip`)
+    e.name = "HTTPError"
+    ;(e as any).response = { status, statusText: "whatever", url: "https://example.com/electron.zip" }
+    return e
+  }
+
+  /** Mirrors undici's fetch error shape: `TypeError: fetch failed` with the real cause nested. */
+  function undiciFetchFailed(causeCode: string): TypeError {
+    const e = new TypeError("fetch failed")
+    ;(e as any).cause = Object.assign(new Error("underlying failure"), { code: causeCode })
+    return e
+  }
+
+  test("retries builder-util-runtime HttpError on 5xx, not on 4xx", ({ expect }) => {
+    expect(shouldRetryDownloadError(new HttpError(503))).toBe(true)
+    expect(shouldRetryDownloadError(new HttpError(500))).toBe(true)
+    expect(shouldRetryDownloadError(new HttpError(404))).toBe(false)
+  })
+
+  test("retries @electron/get HTTPError on 5xx and 429", ({ expect }) => {
+    expect(shouldRetryDownloadError(electronGetHttpError(503))).toBe(true)
+    expect(shouldRetryDownloadError(electronGetHttpError(502))).toBe(true)
+    expect(shouldRetryDownloadError(electronGetHttpError(500))).toBe(true)
+    expect(shouldRetryDownloadError(electronGetHttpError(429))).toBe(true)
+  })
+
+  test("does not retry @electron/get HTTPError on non-transient statuses", ({ expect }) => {
+    expect(shouldRetryDownloadError(electronGetHttpError(404))).toBe(false)
+    expect(shouldRetryDownloadError(electronGetHttpError(403))).toBe(false)
+    expect(shouldRetryDownloadError(electronGetHttpError(400))).toBe(false)
+  })
+
+  test("does not retry an HTTPError-named error without a usable response status", ({ expect }) => {
+    const e = new Error("mystery")
+    e.name = "HTTPError"
+    expect(shouldRetryDownloadError(e)).toBe(false)
+  })
+
+  test("retries undici 'fetch failed' with a transient code on error.cause.code", ({ expect }) => {
+    for (const code of ["UND_ERR_SOCKET", "UND_ERR_CONNECT_TIMEOUT", "ECONNRESET", "ETIMEDOUT", "ECONNREFUSED", "EAI_AGAIN", "EPIPE"]) {
+      expect(shouldRetryDownloadError(undiciFetchFailed(code)), code).toBe(true)
+    }
+  })
+
+  test("does not retry undici 'fetch failed' with a non-transient cause code", ({ expect }) => {
+    expect(shouldRetryDownloadError(undiciFetchFailed("ERR_INVALID_URL"))).toBe(false)
+    expect(shouldRetryDownloadError(new TypeError("fetch failed"))).toBe(false) // no cause at all
+  })
+
+  test("retries plain errors with a transient code directly on error.code", ({ expect }) => {
+    expect(shouldRetryDownloadError(Object.assign(new Error("reset"), { code: "ECONNRESET" }))).toBe(true)
+    expect(shouldRetryDownloadError(Object.assign(new Error("dns"), { code: "ENOTFOUND" }))).toBe(true)
+    expect(shouldRetryDownloadError(Object.assign(new Error("gone"), { code: "ENOENT" }))).toBe(true)
+  })
+
+  test("does not retry generic errors, non-transient codes, or nullish values", ({ expect }) => {
+    expect(shouldRetryDownloadError(new Error("dest already exists"))).toBe(false)
+    expect(shouldRetryDownloadError(Object.assign(new Error("denied"), { code: "EACCES" }))).toBe(false)
+    expect(shouldRetryDownloadError(null)).toBe(false)
+    expect(shouldRetryDownloadError(undefined)).toBe(false)
+  })
+})
+
 // ─── Shared temp cache dir for functional tests ───────────────────────────────
 
 const sharedCacheTmpDir = new TmpDir("eb-electronGet-test")
@@ -258,7 +333,7 @@ const DOWNLOAD_TIMEOUT = { timeout: 120_000 }
 // Running them concurrently causes proper-lockfile contention: the first download holds the lock
 // longer than the retry budget allows. Sequential order ensures test 1 writes the complete state
 // before tests 2 and 3 run, so they hit the pre-lock cache fast-path instead of waiting on the lock.
-describe("downloadBuilderToolset", { sequential: true }, () => {
+describe("downloadBuilderToolset", { concurrent: false }, () => {
   afterEach(() => {
     vi.unstubAllEnvs()
   })
@@ -427,7 +502,7 @@ describe("downloadBuilderToolset: filenameWithExt validation", () => {
 
 // ─── Toolset archive cache (no network) ──────────────────────────────────────
 
-describe("toolset archive cache", { sequential: true }, () => {
+describe("toolset archive cache", { concurrent: false }, () => {
   let freshCache: string
 
   beforeEach(async context => {
@@ -715,7 +790,7 @@ const electronArch = process.arch === "arm64" ? "arm64" : "x64"
 // Expected ffmpeg library filename by platform
 const ffmpegLibName = electronPlatform === "darwin" ? "libffmpeg.dylib" : electronPlatform === "linux" ? "libffmpeg.so" : "ffmpeg.dll"
 
-describe("downloadElectronArtifact", { sequential: true }, () => {
+describe("downloadElectronArtifact", { concurrent: false }, () => {
   test("downloads and extracts electron ffmpeg zip for current platform", DOWNLOAD_TIMEOUT, async ({ expect }) => {
     const options: ArtifactDownloadOptions = {
       artifactName: "ffmpeg",

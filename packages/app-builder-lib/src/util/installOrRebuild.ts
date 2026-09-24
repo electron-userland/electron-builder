@@ -12,6 +12,7 @@ import which from "which"
 import type { RebuildOptions as ElectronRebuildOptions } from "@electron/rebuild"
 import { Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
+import { load } from "js-yaml"
 const { pathExists, readFile } = _fsExtra
 
 export async function installOrRebuild(
@@ -88,6 +89,56 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   }
 }
 
+// Yarn's own grammar, from miscUtils.replaceEnvVariables: only `${NAME}`,
+// `${NAME-default}` and `${NAME:-default}` interpolate, a name starts with a
+// letter, and a backslash escapes the sigil. The escape alternative has to come
+// first so `\${FOO}` is consumed rather than read as a reference, and not
+// requiring the closing brace is what picks up a nested `${A:-${B}}`.
+const YARN_ENV_VAR_REFERENCE_RE = /\\[\\$}]|\$\{([a-zA-Z]\w*)(?::-|-|(?=\}))/g
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === "object" && !Array.isArray(value)
+}
+
+function getYarnNpmAuthValues(config: unknown): Array<string> {
+  if (!isRecord(config)) {
+    return []
+  }
+
+  const values = [config.npmAuthToken, config.npmAuthIdent]
+  for (const scopes of [config.npmScopes, config.npmRegistries]) {
+    if (isRecord(scopes)) {
+      values.push(...Object.values(scopes).flatMap(scope => (isRecord(scope) ? [scope.npmAuthToken, scope.npmAuthIdent] : [])))
+    }
+  }
+  return values.filter((value): value is string => typeof value === "string")
+}
+
+/**
+ * Returns the environment variables explicitly referenced by Yarn's npm authentication configuration.
+ * This keeps the default child-process credential deny-list intact while allowing Yarn Berry to
+ * resolve a registry credential that the project has explicitly configured it to use.
+ */
+export async function getYarnBerryNpmAuthEnv(projectDir: string, env: NodeJS.ProcessEnv): Promise<NodeJS.ProcessEnv> {
+  let config: unknown
+  try {
+    config = load(await readFile(path.join(projectDir, ".yarnrc.yml"), "utf8"))
+  } catch {
+    return {}
+  }
+
+  const names = new Set<string>()
+  for (const value of getYarnNpmAuthValues(config)) {
+    for (const match of value.matchAll(YARN_ENV_VAR_REFERENCE_RE)) {
+      if (match[1] != null) {
+        names.add(match[1])
+      }
+    }
+  }
+
+  return Object.fromEntries(Array.from(names, name => [name, env[name]]).filter(([, value]) => value !== undefined))
+}
+
 /**
  * Whether a failed dependency-install spawn should be retried. Everything not matched here fails fast —
  * a genuine install error (E404, ERESOLVE, EACCES, …) must surface immediately, not after 3 backoff
@@ -142,8 +193,10 @@ export async function installDependencies(
     execArgs.push(...additionalArgs)
   }
 
+  const yarnNpmAuthEnv = pm === PM.YARN_BERRY ? await getYarnBerryNpmAuthEnv(_resolvedWorkspaceDir ?? projectDir, process.env) : {}
   const spawnEnv = {
     ...getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
+    ...yarnNpmAuthEnv,
     ...env,
     // Silence corepack's activation/download chatter so a `pnpm install` doesn't flood the build log;
     // strict=0 so the app's `packageManager` pin can't abort the install, download prompt/notice off.

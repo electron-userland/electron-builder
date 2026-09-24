@@ -283,6 +283,49 @@ export function reinitializeProxy(): void {
   get.initializeProxy()
 }
 
+/**
+ * Error codes considered transient for artifact downloads. Plain node socket errors carry the code
+ * directly on `error.code`; undici (the fetch implementation used by @electron/get v5) wraps them in
+ * a `TypeError: fetch failed` whose code lives on `error.cause.code` — including undici's own
+ * `UND_ERR_*` codes for connection resets and connect timeouts.
+ */
+const TRANSIENT_DOWNLOAD_ERROR_CODES = new Set([
+  "ENOTFOUND",
+  "ETIMEDOUT",
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "EAI_AGAIN",
+  "EPIPE",
+  "ENOENT",
+  "UND_ERR_SOCKET",
+  "UND_ERR_CONNECT_TIMEOUT",
+])
+
+/**
+ * Decides whether a failed @electron/get download should be retried. Handles all three error shapes
+ * seen in practice (exported for tests):
+ * - builder-util-runtime's `HttpError` — retry on 5xx.
+ * - @electron/get v5's `HTTPError` (`FetchDownloader`) — a plain `Error` subclass with the fetch
+ *   `Response` on `.response` and NO `.code`; retry on 5xx and 429. Matched by class and by
+ *   `name === "HTTPError"` as a fallback in case multiple @electron/get copies are loaded.
+ * - transient network errors — code on `error.code`, or on `error.cause.code` for undici's
+ *   `TypeError: fetch failed` wrapper.
+ */
+export function shouldRetryDownloadError(e: any): boolean {
+  if (e == null) {
+    return false
+  }
+  if (e instanceof HttpError) {
+    return e.isServerError()
+  }
+  if (e instanceof get.HTTPError || e.name === "HTTPError") {
+    const status = e.response?.status
+    return typeof status === "number" && (status >= 500 || status === 429)
+  }
+  const code = typeof e.code === "string" ? e.code : typeof e.cause?.code === "string" ? e.cause.code : undefined
+  return code != null && TRANSIENT_DOWNLOAD_ERROR_CODES.has(code)
+}
+
 async function downloadArtifactToFile(config: ElectronArtifactDetails, label: string): Promise<string> {
   // Serialize concurrent downloads of the same artifact across vitest workers to prevent @electron/get's
   // non-atomic putFileInCache (remove + move) from racing with a concurrent reader.
@@ -351,8 +394,7 @@ async function downloadArtifactToFile(config: ElectronArtifactDetails, label: st
         retries: 3,
         interval: 2000,
         backoff: 2000,
-        shouldRetry: (e: any) =>
-          e instanceof HttpError ? e.isServerError() : typeof e?.code === "string" && ["ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EPIPE", "ENOENT"].includes(e.code),
+        shouldRetry: shouldRetryDownloadError,
       })
     } catch (err) {
       if (typeof (err as any)?.message === "string" && (err as any).message.includes("dest already exists")) {
@@ -569,7 +611,7 @@ const CUSTOM_DIR_ENV_VARS = [
  * Resolves the final download URL for a builder binary, honouring:
  *   ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL  – fully replaces the URL directory
  *   ELECTRON_BUILDER_BINARIES_CUSTOM_DIR (and npm_ variants) – replaces releaseName in the path
- *   overrideUrl (caller-supplied)                     – used as-is when no env var is set
+ *   overrideUrl (caller-supplied)                     – the complete file URL, used as-is when no env var is set
  *
  * Exported for unit testing; not part of the public API.
  * @internal
@@ -580,7 +622,9 @@ export function resolveBuilderBinaryUrl(releaseName: string, filenameWithExt: st
     return `${envOverrideUrl}/${filenameWithExt}`
   }
   if (overrideUrl != null) {
-    return `${overrideUrl}/${filenameWithExt}`
+    // The caller-supplied override (ToolsetCustom.url) points directly at the file — appending
+    // filenameWithExt would double the last path segment (e.g. …/bundle.7z/bundle.7z, issue #10084).
+    return overrideUrl
   }
   const customDirEntry = CUSTOM_DIR_ENV_VARS.map(name => ({ name, value: process.env[name] })).find(e => e.value != null)
   if (customDirEntry != null) {
@@ -593,6 +637,24 @@ export function resolveBuilderBinaryUrl(releaseName: string, filenameWithExt: st
  * Downloads a generic artifact (.tar.gz or .zip) from a GitHub release.
  * Used for electron-builder-binaries tools (appimage, etc.).
  */
+/** Toolsets already announced this process, so a multi-target build logs each one once. */
+const announcedToolsets = new Set<string>()
+
+/**
+ * Every `toolsets.*` property now defaults to "latest", which resolves to a newer bundle than v26
+ * pinned (NSIS 3.0.4.1 -> 3.12, winCodeSign 2.6.0 -> 1.3.0, Wine 4.0.1 -> 11.0, AppImage FUSE2 ->
+ * static FUSE3). Nothing recorded which version was used: `downloadBuilderToolset` logged only at
+ * debug level, and on a warm cache it printed nothing at all — so a regression introduced by a new
+ * bundle had no trace in the build log tying it to the toolset.
+ */
+function announceToolsetVersion(releaseName: string): void {
+  if (announcedToolsets.has(releaseName)) {
+    return
+  }
+  announcedToolsets.add(releaseName)
+  log.info({ toolset: releaseName }, "using toolset")
+}
+
 export async function downloadBuilderToolset(options: {
   releaseName: string
   filenameWithExt: string
@@ -601,6 +663,7 @@ export async function downloadBuilderToolset(options: {
   overrideUrl?: string
 }): Promise<string> {
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries", overrideUrl } = options
+  announceToolsetVersion(releaseName)
 
   if (/[/\\]|^\.\./.test(filenameWithExt) || filenameWithExt.includes("..")) {
     throw new Error(`downloadBuilderToolset: unsafe filenameWithExt "${filenameWithExt}" — must be a plain filename with no path separators or traversal sequences`)

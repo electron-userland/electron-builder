@@ -12,6 +12,9 @@ import {
   ProgressInfo,
   BlockMap,
   retry,
+  collectManifestSignatures,
+  normalizePublicKeyList,
+  verifyManifestSignatures,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
@@ -43,6 +46,7 @@ import {
   ResolvedUpdateFileInfo,
   UPDATE_DOWNLOADED,
   UpdateCheckResult,
+  DownloadExecutorResult,
   UpdateDownloadedEvent,
   UpdaterSignal,
 } from "./types.js"
@@ -89,6 +93,30 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * @default "onQuit"
    */
   autoInstallEvent: AutoInstallEvent = "onQuit"
+
+  /**
+   * @deprecated Removed in v27 — use {@link autoInstallEvent}. This accessor is a compatibility shim
+   * and will be deleted in v28.
+   *
+   * A boolean cannot express the three install timings, so `autoInstallOnAppQuit` was replaced rather
+   * than extended. Without this shim the property assignment silently no-ops on a plain object: an app
+   * that set `autoInstallOnAppQuit = false` to opt *out* of install-on-quit would keep the `"onQuit"`
+   * default and install on quit anyway — the exact opposite of what it asked for.
+   */
+  get autoInstallOnAppQuit(): boolean {
+    return this.autoInstallEvent === "onQuit"
+  }
+
+  set autoInstallOnAppQuit(value: boolean) {
+    const mapped: AutoInstallEvent = value ? "onQuit" : "manual"
+    this._logger.warn(
+      `autoInstallOnAppQuit was removed in electron-updater 7 (electron-builder v27) — use autoInstallEvent instead. ` +
+        `Mapping autoInstallOnAppQuit = ${value} to autoInstallEvent = "${mapped}". ` +
+        `This compatibility shim is removed in v28. ` +
+        `https://www.electron.build/docs/migration/v27-breaking-changes#autoinstallevent-replaces-autoinstallonappquit`
+    )
+    this.autoInstallEvent = mapped
+  }
 
   /**
    * Installs an update that a previous launch marked as pending (see `autoInstallEvent: "onNextLaunch"` and
@@ -246,6 +274,20 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
+   * The Ed25519 public key(s) (PEM or base64 SPKI) trusted to have signed the update manifest — the
+   * install's trust list. A single string or an array of keys; a manifest is accepted when any listed key
+   * validates one of its signatures. When set (non-empty), overrides the `updateManifestPublicKey` value
+   * embedded in `app-update.yml`.
+   *
+   * When at least one key is available (here or in config) the manifest signature is enforced and a
+   * download will not start unless verification succeeds. When no key is available, verification is
+   * skipped (opt-in) and a one-time warning is logged.
+   */
+  updateManifestPublicKey: string | Array<string> | null = null
+
+  private manifestVerificationWarned = false
+
+  /**
    *  The request headers.
    */
   requestHeaders: OutgoingHttpHeaders | null = null
@@ -339,7 +381,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
 
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null = null
-  private downloadPromise: Promise<Array<string>> | null = null
+  private downloadPromise: Promise<DownloadExecutorResult> | null = null
 
   protected readonly app: AppAdapter
 
@@ -486,8 +528,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return true
     }
 
-    stagingPercentage = parseInt(stagingPercentage as any, 10)
-    if (isNaN(stagingPercentage)) {
+    stagingPercentage = Number(stagingPercentage)
+    if (!Number.isFinite(stagingPercentage)) {
       this._logger.warn(`Staging percentage is NaN: ${rawStagingPercentage}`)
       return true
     }
@@ -569,10 +611,67 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
+    const info = await client.getLatestVersion()
+    await this.verifyManifestSignature(info)
     return {
-      info: await client.getLatestVersion(),
+      info,
       provider: client,
     }
+  }
+
+  /**
+   * Verifies the Ed25519 signature(s) embedded in the update manifest against the configured trust list.
+   * Provider-agnostic: runs for every provider since it operates on the resolved `UpdateInfo`.
+   *
+   * - No public key configured → verification skipped (opt-in phase), warns once.
+   * - Key(s) configured, manifest carries no signature at all → throws ERR_UPDATER_MANIFEST_NOT_SIGNED.
+   * - Key(s) configured, no trusted key validates any signature → throws ERR_UPDATER_MANIFEST_SIGNATURE_INVALID.
+   *
+   * A manifest may carry several signatures (`signatures`, one per signing key, tagged with the key id) plus
+   * the legacy single `signature`; any trusted key matching any of them is sufficient, which is what allows
+   * a release to be dual-signed while installs trust `[old, new]` during key rotation. Never fails open once
+   * a key is configured. A throw here propagates before any download starts (fail-closed).
+   */
+  private async verifyManifestSignature(info: UpdateInfo): Promise<void> {
+    let trustedKeys = normalizePublicKeyList(this.updateManifestPublicKey)
+    if (trustedKeys.length === 0) {
+      try {
+        trustedKeys = normalizePublicKeyList((await this.configOnDisk.value)?.updateManifestPublicKey)
+      } catch (e: any) {
+        // app-update.yml is read elsewhere too; a missing/unreadable config here just means "no key"
+        if (e.code !== "ENOENT") {
+          this._logger.warn(`Cannot read updateManifestPublicKey from update config: ${e.message || e}`)
+        }
+        trustedKeys = []
+      }
+    }
+
+    if (trustedKeys.length === 0) {
+      if (!this.manifestVerificationWarned) {
+        this.manifestVerificationWarned = true
+        this._logger.warn("update manifest signature verification is disabled. Configure updateManifestPublicKey (and sign manifests at build time) to enable it.")
+      }
+      return
+    }
+
+    if (collectManifestSignatures(info).length === 0) {
+      throw newError(`Update manifest for version ${info.version} is not signed, but updateManifestPublicKey is configured. Refusing to update.`, "ERR_UPDATER_MANIFEST_NOT_SIGNED")
+    }
+
+    const result = verifyManifestSignatures(info, trustedKeys)
+    if (!result.ok) {
+      // `reason` is set when the manifest fails the structural checks a signed manifest must pass (e.g. an empty
+      // `files` list or control characters in a signed field) — those are rejected before any key is tried.
+      const cause =
+        result.reason == null ? `none of the ${trustedKeys.length} trusted key(s) validates any of its signatures` : `the signed manifest is malformed (${result.reason})`
+      throw newError(
+        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.`,
+        "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID"
+      )
+    }
+
+    this._logger.debug?.(`Update manifest for version ${info.version} verified with trusted key ${result.keyId}`)
+    this._logger.info(`Update manifest signature verified for version ${info.version}`)
   }
 
   private createProviderRuntimeOptions() {
@@ -627,9 +726,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
-   * @returns {Promise<Array<string>>} Paths to downloaded files.
+   * @returns {Promise<DownloadExecutorResult>} The downloaded files: `updateFile` is the path to the downloaded update (installer, AppImage, zip, ...),
+   * `packageFile` is the path to the NSIS web installer package and is only set for web installers.
    */
-  downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<Array<string>> {
+  downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<DownloadExecutorResult> {
     const updateInfoAndProvider = this.updateInfoAndProvider
     if (updateInfoAndProvider == null) {
       const error = new Error("Please check update first")
@@ -685,7 +785,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.emit(UPDATE_DOWNLOADED, event)
   }
 
-  protected abstract doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>>
+  protected abstract doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult>
 
   /**
    * Restarts the app and installs the update after it has been downloaded.
@@ -698,6 +798,30 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * install-on-next-launch flow is not used (same behavior as before the options object was introduced).
    */
   abstract quitAndInstall(options?: QuitAndInstallOptions): void
+
+  /**
+   * Accepts the v26 positional call shape, `quitAndInstall(isSilent, isForceRunAfter)`.
+   *
+   * TypeScript callers get a compile error, but plain JavaScript does not: the boolean lands in the
+   * destructured options parameter, every field reads back `undefined`, and the defaults silently take
+   * over — so `quitAndInstall(true)` performs a NON-silent install. Warn and map instead of ignoring.
+   *
+   * @internal
+   */
+  protected normalizeQuitAndInstallOptions(options?: QuitAndInstallOptions | boolean, legacyIsForceRunAfter?: boolean): QuitAndInstallOptions {
+    if (typeof options !== "boolean" && typeof legacyIsForceRunAfter !== "boolean") {
+      return options ?? {}
+    }
+    const isSilent = typeof options === "boolean" ? options : false
+    const isForceRunAfter = legacyIsForceRunAfter === true
+    this._logger.warn(
+      `quitAndInstall(isSilent, isForceRunAfter) was replaced by quitAndInstall({ isSilent, isForceRunAfter }) in electron-updater 7 (electron-builder v27). ` +
+        `Interpreting the positional arguments as { isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter} }. ` +
+        `This compatibility shim is removed in v28. ` +
+        `https://www.electron.build/docs/migration/v27-breaking-changes#quitandinstall-takes-an-options-object`
+    )
+    return { isSilent, isForceRunAfter }
+  }
 
   private async loadUpdateConfig(): Promise<any> {
     if (this._appUpdateConfigPath == null) {
@@ -787,7 +911,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     return result
   }
 
-  protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
+  protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
     const fileInfo = taskOptions.fileInfo
     if (fileInfo.info.sha512 == null && (fileInfo.info as any).sha2 != null) {
       this._logger.warn(
@@ -828,17 +952,25 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     let updateFile = path.join(cacheDir, updateFileName)
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
 
+    const pendingBlockMapFile = path.join(cacheDir, "current.blockmap")
+    const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
     const done = async (isSaveCache: boolean) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
       await taskOptions.done!({
         ...updateInfo,
         downloadedFile: updateFile,
+        ...(packageFile == null ? {} : { packageFile }),
       })
-      const currentBlockMapFile = path.join(cacheDir, "current.blockmap")
-      if (await fsExtra.pathExists(currentBlockMapFile)) {
-        await fsExtra.copyFile(currentBlockMapFile, path.join(downloadedUpdateHelper.cacheDir, "current.blockmap"))
+      if (await fsExtra.pathExists(pendingBlockMapFile)) {
+        await fsExtra.copyFile(pendingBlockMapFile, cachedBlockMapFile)
+      } else if (!taskOptions.downloadUpdateOptions.disableDifferentialDownload) {
+        // this download did not produce a blockmap, but `taskOptions.done` above refreshes the cached installer —
+        // remove the cached blockmap too, so a stale one cannot sit next to a fresh file and poison the next
+        // differential download with a wrong copy plan (https://github.com/electron-userland/electron-builder/issues/10097).
+        // The differential downloader re-fetches the old blockmap from the server when no cached one exists.
+        await fsExtra.remove(cachedBlockMapFile)
       }
-      return packageFile == null ? [updateFile] : [updateFile, packageFile]
+      return withLegacyArrayCompat(packageFile == null ? { updateFile } : { updateFile, packageFile }, this._logger)
     }
 
     const log = this._logger
@@ -856,6 +988,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         // ignore
       })
     }
+
+    // a fresh download starts — drop any blockmap left over from a previous update round, so that when this round
+    // does not produce a new one (e.g. the differential download is skipped), the leftover cannot be promoted to the
+    // cache next to a file it does not describe
+    await fsExtra.remove(pendingBlockMapFile)
 
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
@@ -877,6 +1014,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       if (e instanceof CancellationError) {
         log.info("cancelled")
         this.emit("update-cancelled", updateInfo)
+      } else if (e.code === "ERR_CHECKSUM_MISMATCH") {
+        // a differential-download failure never escapes the task (it falls back to a full download),
+        // so a checksum mismatch here means the fully downloaded file itself failed verification
+        log.warn(
+          `sha512 checksum mismatch after full download of ${updateFileName}: the downloaded file is corrupted or the published update metadata does not match the uploaded file`
+        )
       }
       throw e
     }
@@ -891,6 +1034,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     provider: Provider<any>,
     oldInstallerFileName: string
   ): Promise<boolean> {
+    let isOldBlockMapFromCache = false
     try {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
@@ -957,13 +1101,22 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
       // get old blockmap from cache dir first, if not found, download it
       let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
+      isOldBlockMapFromCache = oldBlockMapData != null
       if (oldBlockMapData == null) {
+        this._logger.info(`No cached blockmap for the old installer, downloading it from "${blockmapFileUrls[0]}"`)
         oldBlockMapData = await downloadBlockMap(blockmapFileUrls[0])
       }
 
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
       return false
     } catch (e: any) {
+      if (e.code === "ERR_CHECKSUM_MISMATCH") {
+        this._logger.warn(
+          `sha512 checksum mismatch after differential download (old blockmap ${
+            isOldBlockMapFromCache ? "was read from the local cache" : "was downloaded from the server"
+          }): cached "${oldInstallerFileName}" is likely out of sync with the old blockmap, e.g. because one of them was replaced or evicted independently of the other`
+        )
+      }
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
       if (this._testOnlyOptions != null) {
         // test mode
@@ -1029,4 +1182,35 @@ export interface TestOnlyUpdaterOptions {
   platform: ProviderPlatform
 
   isUseDifferentialDownload?: boolean
+}
+
+/**
+ * Adds a warning `Symbol.iterator` to a {@link DownloadExecutorResult}, for callers still written
+ * against v26's `Array<string>` return.
+ *
+ * `const [installer] = await downloadUpdate()` otherwise throws a bare
+ * `TypeError: ... is not iterable`, which names neither `downloadUpdate` nor the replacement, and
+ * `files[0]` silently evaluates to `undefined`. Yielding the same positional order the array had
+ * ([updateFile, packageFile]) keeps those call sites working for one major while they migrate.
+ *
+ * Non-enumerable so the object still serializes and compares as a plain `{ updateFile, packageFile }`.
+ */
+function withLegacyArrayCompat(result: DownloadExecutorResult, logger: Logger): DownloadExecutorResult {
+  return Object.defineProperty(result, Symbol.iterator, {
+    enumerable: false,
+    configurable: true,
+    writable: true,
+    value: function* () {
+      logger.warn(
+        "downloadUpdate() resolves with a DownloadExecutorResult object in electron-updater 7 (electron-builder v27), not an array. " +
+          "Replace `const [updateFile] = await downloadUpdate()` with `const { updateFile } = await downloadUpdate()`. " +
+          "This compatibility shim is removed in v28. " +
+          "https://www.electron.build/docs/migration/v27-breaking-changes#downloadupdate-resolves-with-a-downloadexecutorresult-object"
+      )
+      yield result.updateFile
+      if (result.packageFile != null) {
+        yield result.packageFile
+      }
+    },
+  })
 }
