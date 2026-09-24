@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, expect, vi } from "vitest"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { Arch, log } from "builder-util"
+import { Arch, InvalidConfigurationError, log } from "builder-util"
+import { PlatformPackager, type MacPackager } from "app-builder-lib"
 import {
   isLoadableMachOFileType,
   isMachOFile,
@@ -13,6 +14,17 @@ import {
   type PlistObject,
   type PlatformType,
 } from "app-builder-lib/internal"
+
+/** A packager stub that resolves resources with the real `getResource`, so the tests exercise its contract (containment, project-dir fallback, missing-file error). */
+function fakePackager(resourceFiles: string[] = [], buildResourcesDir = "/nonexistent", config: Record<string, unknown> = {}): MacPackager {
+  return {
+    config,
+    info: { buildResourcesDir },
+    projectDir: buildResourcesDir,
+    resourceList: Promise.resolve(resourceFiles),
+    getResource: PlatformPackager.prototype.getResource,
+  } as any
+}
 
 // Mach-O fixtures shared by the warnAboutForeignSignedBinaries and readMachOFileType tests
 const CPU_TYPE_ARM64 = 0x0100000c
@@ -106,12 +118,7 @@ describe("MacTargetHelper", () => {
 
   describe("buildSignOptions", () => {
     function makeHelper(): MacTargetHelper {
-      const packager = {
-        config: { electronVersion: "38.0.0" },
-        resourceList: Promise.resolve([]),
-        buildResourcesDir: "/nonexistent",
-      }
-      return new MacTargetHelper(packager as any)
+      return new MacTargetHelper(fakePackager([], "/nonexistent", { electronVersion: "38.0.0" }))
     }
 
     const identity = { name: "Test Identity", hash: "HASH" } as any
@@ -240,7 +247,7 @@ ${body}
     <true/>`)
 
     function makeHelper(resourceFiles: string[], buildResourcesDir: string): MacTargetHelper {
-      return new MacTargetHelper({ resourceList: Promise.resolve(resourceFiles), buildResourcesDir } as any)
+      return new MacTargetHelper(fakePackager(resourceFiles, buildResourcesDir))
     }
 
     test("returns true when the explicit entitlements file grants the key", async ({ tmpDir }) => {
@@ -264,9 +271,11 @@ ${body}
       await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements: file })).resolves.toBe(false)
     })
 
-    test("returns false when the explicit entitlements file does not exist", async ({ tmpDir }) => {
+    test("throws for an explicit entitlements file that does not exist", async ({ tmpDir }) => {
       const dir = await tmpDir.createTempDir()
-      await expect(makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements: path.join(dir, "missing.plist") })).resolves.toBe(false)
+      const promise = makeHelper([], dir).isLibraryValidationDisabled("mac", { entitlements: path.join(dir, "missing.plist") })
+      await expect(promise).rejects.toThrow(InvalidConfigurationError)
+      await expect(promise).rejects.toThrow("cannot find specified resource")
     })
 
     test.for<[PlatformType, string, string]>([
@@ -335,7 +344,7 @@ ${body}
     const LOOSE_ENTITLEMENTS = ["com.apple.security.cs.allow-unsigned-executable-memory", "com.apple.security.cs.disable-library-validation"]
 
     function makeHelper(resourceFiles: string[] = [], buildResourcesDir = "/nonexistent"): MacTargetHelper {
-      return new MacTargetHelper({ resourceList: Promise.resolve(resourceFiles), buildResourcesDir, config: {} } as any)
+      return new MacTargetHelper(fakePackager(resourceFiles, buildResourcesDir))
     }
 
     async function keysOf(file: string | null): Promise<string[]> {
@@ -361,16 +370,42 @@ ${body}
       })
     })
 
-    describe("getAppEntitlements", () => {
-      test("an explicit sign.entitlements wins over everything", async () => {
-        await expect(makeHelper(["entitlements.mac.plist"], "/res").getAppEntitlements("mac", { entitlements: "/custom.plist" }, true)).resolves.toBe("/custom.plist")
+    // both resolvers share the explicit-path handling; `option` is the `sign.*` key and `convention` the `build/` file name
+    describe.each<{ method: "getAppEntitlements" | "getInheritEntitlements"; option: "entitlements" | "entitlementsInherit"; convention: string }>([
+      { method: "getAppEntitlements", option: "entitlements", convention: "entitlements.mac.plist" },
+      { method: "getInheritEntitlements", option: "entitlementsInherit", convention: "entitlements.mac.inherit.plist" },
+    ])("$method explicit path", ({ method, option, convention }) => {
+      test(`an explicit sign.${option} wins over everything`, async ({ tmpDir }) => {
+        const dir = await tmpDir.createTempDir()
+        const custom = path.join(dir, "custom.plist")
+        await fs.writeFile(custom, "")
+        await expect(makeHelper([convention], dir)[method]("mac", { [option]: custom }, true)).resolves.toBe(custom)
       })
 
+      test("a relative explicit path is resolved against the build resources dir", async ({ tmpDir }) => {
+        const dir = await tmpDir.createTempDir()
+        await fs.writeFile(path.join(dir, "custom.plist"), "")
+        await expect(makeHelper([], dir)[method]("mac", { [option]: "custom.plist" }, true)).resolves.toBe(path.join(dir, "custom.plist"))
+      })
+
+      test("an explicit path that does not exist is a configuration error", async ({ tmpDir }) => {
+        const dir = await tmpDir.createTempDir()
+        await expect(makeHelper([convention], dir)[method]("mac", { [option]: path.join(dir, "missing.plist") }, true)).rejects.toThrow(InvalidConfigurationError)
+      })
+
+      test.for<[string | null]>([[null], [""]])(`sign.${option}: %j falls back to the build-resources convention file`, async ([value], { tmpDir }) => {
+        const dir = await tmpDir.createTempDir()
+        await expect(makeHelper([convention], dir)[method]("mac", { [option]: value }, true)).resolves.toBe(path.join(dir, convention))
+      })
+    })
+
+    describe("getAppEntitlements", () => {
       test.for<[PlatformType, string]>([
         ["mac", "entitlements.mac.plist"],
         ["mas", "entitlements.mas.plist"],
-      ])("%s uses the build-resources file %s when present", async ([targetPlatform, resourceName]) => {
-        await expect(makeHelper([resourceName], "/res").getAppEntitlements(targetPlatform, undefined, false)).resolves.toBe(path.join("/res", resourceName))
+      ])("%s uses the build-resources file %s when present", async ([targetPlatform, resourceName], { tmpDir }) => {
+        const dir = await tmpDir.createTempDir()
+        await expect(makeHelper([resourceName], dir).getAppEntitlements(targetPlatform, undefined, false)).resolves.toBe(path.join(dir, resourceName))
       })
 
       test.for<[PlatformType]>([["mas"], ["mas-dev"]])("%s falls back to @electron/osx-sign's sandboxed default", async ([targetPlatform]) => {
@@ -379,17 +414,12 @@ ${body}
     })
 
     describe("getInheritEntitlements", () => {
-      test("an explicit sign.entitlementsInherit wins over everything", async () => {
-        await expect(makeHelper(["entitlements.mac.inherit.plist"], "/res").getInheritEntitlements("mac", { entitlementsInherit: "/inherit.plist" }, true)).resolves.toBe(
-          "/inherit.plist"
-        )
-      })
-
       test.for<[PlatformType, string]>([
         ["mac", "entitlements.mac.inherit.plist"],
         ["mas", "entitlements.mas.inherit.plist"],
-      ])("%s uses the build-resources file %s when present", async ([targetPlatform, resourceName]) => {
-        await expect(makeHelper([resourceName], "/res").getInheritEntitlements(targetPlatform, undefined, false)).resolves.toBe(path.join("/res", resourceName))
+      ])("%s uses the build-resources file %s when present", async ([targetPlatform, resourceName], { tmpDir }) => {
+        const dir = await tmpDir.createTempDir()
+        await expect(makeHelper([resourceName], dir).getInheritEntitlements(targetPlatform, undefined, false)).resolves.toBe(path.join(dir, resourceName))
       })
 
       // the helpers are where the blanket plist did the most damage: renderer/GPU processes were handed
@@ -457,7 +487,7 @@ ${body}
     const TEAM_ID = "TEAMID1234"
 
     function makeHelper(resourceFiles: string[] = [], buildResourcesDir = "/nonexistent"): MacTargetHelper {
-      return new MacTargetHelper({ resourceList: Promise.resolve(resourceFiles), buildResourcesDir, config: {} } as any)
+      return new MacTargetHelper(fakePackager(resourceFiles, buildResourcesDir))
     }
 
     async function makeApp(tmpDir: { createTempDir(): Promise<string> }): Promise<string> {

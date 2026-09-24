@@ -84,7 +84,9 @@ export class MacTargetHelper {
    * when the app entitlements grant it, which is why both files are checked.
    *
    * Fails open: returns false (so callers still warn) when either file cannot be read or parsed, or when no file
-   * resolves at all (`@electron/osx-sign`'s defaults never grant the key).
+   * resolves at all (`@electron/osx-sign`'s defaults never grant the key). An explicit `sign.entitlements` /
+   * `sign.entitlementsInherit` path that does not exist is a configuration error and throws, like any other missing
+   * build resource.
    */
   async isLibraryValidationDisabled(targetPlatform: PlatformType, signOpts: ElectronSignOptions | Nullish): Promise<boolean> {
     const [appEntitlements, inheritEntitlements] = await Promise.all([
@@ -112,17 +114,17 @@ export class MacTargetHelper {
    * Resolves the entitlements file for the app bundle itself.
    *
    * Precedence: explicit `sign.entitlements` → `build/entitlements.{mac,mas}.plist` → a bundled default.
-   * Returns `null` when no default applies, which lets `@electron/osx-sign` fall back to its own
+   * The explicit path is resolved like every other build resource (build resources dir, then project dir) and
+   * must exist. Returns `null` when no default applies, which lets `@electron/osx-sign` fall back to its own
    * Chromium-derived defaults (`default.mas.plist` for MAS).
    */
   async getAppEntitlements(targetPlatform: PlatformType, signOpts: ElectronSignOptions | Nullish, adHoc: boolean): Promise<string | null> {
-    if (signOpts?.entitlements) {
-      return signOpts.entitlements
-    }
     const isMas = MacTargetHelper.isMasTarget(targetPlatform)
-    const p = `entitlements.${isMas ? "mas" : "mac"}.plist`
-    if ((await this.packager.resourceList).includes(p)) {
-      return path.join(this.packager.buildResourcesDir, p)
+    // an explicit `sign.entitlements` resolves like every other build resource (build resources dir, then project dir);
+    // `null`/empty behave like unset so the `build/entitlements.{mac,mas}.plist` convention still applies
+    const entitlements = await this.packager.getResource(signOpts?.entitlements || undefined, `entitlements.${isMas ? "mas" : "mac"}.plist`)
+    if (entitlements != null) {
+      return entitlements
     }
     if (isMas) {
       // @electron/osx-sign's default.mas.plist enables the App Sandbox, which a MAS build cannot ship without
@@ -136,7 +138,8 @@ export class MacTargetHelper {
    * inherit the app's signature.
    *
    * Precedence: explicit `sign.entitlementsInherit` → `build/entitlements.{mac,mas}.inherit.plist` → `null`,
-   * which hands the file to `@electron/osx-sign`'s per-file defaults, modelled on Chromium's own entitlements:
+   * which hands the file to `@electron/osx-sign`'s per-file defaults, modelled on Chromium's own entitlements
+   * (the explicit path is resolved like every other build resource — build resources dir, then project dir — and must exist):
    * - renderer and GPU helpers: `allow-jit` only
    * - plugin helper: `allow-jit`, `allow-unsigned-executable-memory`, `disable-library-validation`
    * - everything else (frameworks, `.node` modules, unpacked executables): `default.darwin.plist`, i.e. `allow-jit`
@@ -145,13 +148,12 @@ export class MacTargetHelper {
    * defaults grant `disable-library-validation` or `allow-unsigned-executable-memory`.
    */
   async getInheritEntitlements(targetPlatform: PlatformType, signOpts: ElectronSignOptions | Nullish, adHoc: boolean): Promise<string | null> {
-    if (signOpts?.entitlementsInherit) {
-      return signOpts.entitlementsInherit
-    }
     const isMas = MacTargetHelper.isMasTarget(targetPlatform)
-    const p = `entitlements.${isMas ? "mas" : "mac"}.inherit.plist`
-    if ((await this.packager.resourceList).includes(p)) {
-      return path.join(this.packager.buildResourcesDir, p)
+    // an explicit `sign.entitlementsInherit` resolves like every other build resource (build resources dir, then project dir);
+    // `null`/empty behave like unset so the `build/entitlements.{mac,mas}.inherit.plist` convention still applies
+    const entitlements = await this.packager.getResource(signOpts?.entitlementsInherit || undefined, `entitlements.${isMas ? "mas" : "mac"}.inherit.plist`)
+    if (entitlements != null) {
+      return entitlements
     }
     // an ad-hoc signature has no Team ID, so every process in the bundle — not just the main one — needs
     // library validation disabled or it cannot load the Electron framework
