@@ -208,7 +208,7 @@ importers:
         version: 7.7.3
       tar:
         specifier: ^7.5.7
-        version: 7.5.11
+        version: 7.5.21
       temp-file:
         specifier: ^3.4.0
         version: 3.4.0
@@ -649,7 +649,7 @@ importers:
         version: 1.0.0
       tar:
         specifier: ^7.5.7
-        version: 7.5.11
+        version: 7.5.21
       temp-file:
         specifier: ^3.4.0
         version: 3.4.0
@@ -7843,8 +7843,8 @@ packages:
   node-releases@2.0.38:
     resolution: {integrity: sha512-3qT/88Y3FbH/Kx4szpQQ4HzUbVrHPKTLVpVocKiLfoYvw9XSGOX2FmD2d6DrXbVYyAQTF2HeF6My8jmzx7/CRw==}
 
-  node-releases@2.0.55:
-    resolution: {integrity: sha512-mIrE/Cw9y+9Au6dS5vDKDhQza9YvG6w+ZrS6X+ZzA7yFW/soAeaups4Qzn1bL6g5FVy8WtP79+0j82oPIbqRjQ==}
+  node-releases@2.0.56:
+    resolution: {integrity: sha512-x0InOIyzgdk+eyaWaRJFH5snEtiImgBgblZ2CyPrLmqqcuMQkEvcDPHbzqbD8eDsSeJbVOjn+crzyzHaM4D+/A==}
     engines: {node: '>=18'}
 
   nopt@9.0.0:
@@ -9369,8 +9369,8 @@ packages:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
 
-  tar@7.5.11:
-    resolution: {integrity: sha512-ChjMH33/KetonMTAtpYdgUFr0tbz69Fp2v7zWxQfYZX4g5ZN2nOBXm1R2xyA+lMIKrLKIoKAwFj93jE/avX9cQ==}
+  tar@7.5.21:
+    resolution: {integrity: sha512-XdhtCvlMywwxpCW8YEq3lOXBJpUPTR2OHHcwLPO3HwsJqOHa2Ok/oJ7ruGzp+JrKoRPVCzJwAdEjqLW/vNRPHA==}
     engines: {node: '>=18'}
 
   temp-dir@3.0.0:
@@ -16299,7 +16299,7 @@ snapshots:
       baseline-browser-mapping: 2.11.24
       caniuse-lite: 1.0.30001810
       electron-to-chromium: 1.5.430
-      node-releases: 2.0.55
+      node-releases: 2.0.56
       update-browserslist-db: 1.3.3(browserslist@4.29.0)
 
   bser@2.1.1:
@@ -19665,7 +19665,7 @@ snapshots:
       nopt: 9.0.0
       proc-log: 6.1.0
       semver: 7.7.3
-      tar: 7.5.11
+      tar: 7.5.21
       tinyglobby: 0.2.16
       undici: 6.26.0
       which: 6.0.1
@@ -19674,7 +19674,7 @@ snapshots:
 
   node-releases@2.0.38: {}
 
-  node-releases@2.0.55: {}
+  node-releases@2.0.56: {}
 
   nopt@9.0.0:
     dependencies:
@@ -21545,7 +21545,7 @@ snapshots:
 
   tapable@2.3.3: {}
 
-  tar@7.5.11:
+  tar@7.5.21:
     dependencies:
       '@isaacs/fs-minipass': 4.0.1
       chownr: 3.0.0
