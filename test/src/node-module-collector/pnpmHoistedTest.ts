@@ -74,25 +74,11 @@ describe("PnpmNodeModulesCollector hoisted mode", { sequential: true }, () => {
 
     expect(result).toBeNull()
   })
-
-  test("isHoisted detection reads node-linker from pnpm config output", ({ expect }) => {
-    // Verifies the config-parsing logic used in NodeModulesCollector.isHoisted
-    const configLines = ["node-linker=hoisted", "some-other-key=value"].join("\n")
-    const lines = Object.fromEntries(configLines.split("\n").map(line => line.split("=").map(s => s.trim())))
-    expect(lines["node-linker"]).toBe("hoisted")
-  })
-
-  test("isHoisted detection returns false when node-linker is not set", ({ expect }) => {
-    const configLines = ["some-key=value", "another-key=other"].join("\n")
-    const lines = Object.fromEntries(configLines.split("\n").map(line => line.split("=").map(s => s.trim())))
-    expect(lines["node-linker"]).toBeUndefined()
-    expect(lines["node-linker"] === "hoisted").toBe(false)
-  })
 })
 
 // ---------------------------------------------------------------------------
 // Tests: PnpmNodeModulesCollector.isHoisted detects layout from on-disk structure
-// (pnpm 11 stopped echoing node-linker in `config list`, so detection is realpath-based)
+// (pnpm 11 ignores node-linker in .npmrc, so detection is realpath-based)
 // ---------------------------------------------------------------------------
 
 describe("PnpmNodeModulesCollector.isHoisted (on-disk layout detection)", { sequential: true }, () => {
