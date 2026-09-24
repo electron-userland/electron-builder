@@ -5,6 +5,7 @@ import * as path from "path"
 import { LogMessageByKey, ModuleManager } from "app-builder-lib/src/node-module-collector/moduleManager"
 import { PnpmNodeModulesCollector } from "app-builder-lib/src/node-module-collector/pnpmNodeModulesCollector"
 import { Lazy } from "lazy-val"
+import type { NodeModuleInfo, PnpmDependency } from "app-builder-lib/src/node-module-collector/types"
 import { TmpDir } from "temp-file"
 
 // ---------------------------------------------------------------------------
@@ -283,5 +284,108 @@ describe("nested dependency resolution (hoisted layout simulation)", () => {
 
     expect(result).not.toBeNull()
     expect(result!.packageJson.version).toBe("2.2.1")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Tests: hoisted pnpm workspace where the app is a workspace package (#10228)
+//
+// With `nodeLinker: hoisted`, pnpm installs a workspace package's deps into the workspace root's
+// `node_modules`, and the app dir has no `node_modules` of its own unless it needs a conflicting
+// version. The collector runs with `rootDir` = the app dir, so both layout detection and the
+// downward search for a nested `<root>/node_modules/lazystream/node_modules/readable-stream` copy
+// must reach the workspace root; otherwise lazystream got the root readable-stream@3.
+// ---------------------------------------------------------------------------
+
+describe("PnpmNodeModulesCollector hoisted workspace package", () => {
+  class StubbedPnpmNodeModulesCollector extends PnpmNodeModulesCollector {
+    constructor(
+      rootDir: string,
+      tempDirManager: TmpDir,
+      private readonly cannedTree: PnpmDependency
+    ) {
+      super(rootDir, tempDirManager)
+    }
+
+    protected override getDependenciesTree(): Promise<PnpmDependency> {
+      // Mirror parseDependenciesTree's side effect without shelling out to `pnpm list`.
+      ;(this as any)._allWorkspacePackages = [this.cannedTree]
+      return Promise.resolve(this.cannedTree)
+    }
+  }
+
+  let root = ""
+  afterEach(async () => {
+    if (root) {
+      await fse.rm(root, { recursive: true, force: true })
+    }
+  })
+
+  const find = (modules: NodeModuleInfo[] | undefined, name: string): NodeModuleInfo | undefined => modules?.find(it => it.name === name)
+
+  // `installRoot` holds the hoisted node_modules tree; `appDir` is the collector's rootDir.
+  async function buildLayout(installRoot: string, appDir: string) {
+    const nm = path.join(installRoot, "node_modules")
+    await fse.outputJson(path.join(appDir, "package.json"), { name: "ws-app", version: "1.0.0", dependencies: { lazystream: "1.0.1", "readable-stream": "3.6.2" } })
+    await fse.outputJson(path.join(nm, "readable-stream", "package.json"), { name: "readable-stream", version: "3.6.2", dependencies: { inherits: "^2.0.3" } })
+    await fse.outputJson(path.join(nm, "inherits", "package.json"), { name: "inherits", version: "2.0.4" })
+    await fse.outputJson(path.join(nm, "lazystream", "package.json"), { name: "lazystream", version: "1.0.1", dependencies: { "readable-stream": "^2.0.5" } })
+    await fse.outputJson(path.join(nm, "lazystream", "node_modules", "readable-stream", "package.json"), {
+      name: "readable-stream",
+      version: "2.3.8",
+      dependencies: { inherits: "~2.0.3" },
+    })
+
+    // pnpm 11 reports virtual-store paths even for a hoisted install; none of them exist on disk.
+    const store = (name: string, version: string) => path.join(nm, ".pnpm", `${name}@${version}`, "node_modules", name)
+    const inherits = { from: "inherits", version: "2.0.4", path: store("inherits", "2.0.4") }
+    return {
+      name: "ws-app",
+      from: "ws-app",
+      version: "1.0.0",
+      path: appDir,
+      dependencies: {
+        "readable-stream": { from: "readable-stream", version: "3.6.2", path: store("readable-stream", "3.6.2"), dependencies: { inherits } },
+        lazystream: {
+          from: "lazystream",
+          version: "1.0.1",
+          path: store("lazystream", "1.0.1"),
+          dependencies: { "readable-stream": { from: "readable-stream", version: "2.3.8", path: store("readable-stream", "2.3.8"), dependencies: { inherits } } },
+        },
+      },
+      optionalDependencies: {},
+    } as unknown as PnpmDependency
+  }
+
+  async function collect(installRoot: string, appDir: string) {
+    const tree = await buildLayout(installRoot, appDir)
+    const collector = new StubbedPnpmNodeModulesCollector(appDir, new TmpDir("eb-pnpm-hoisted-ws-test"), tree)
+    const { nodeModules } = await collector.getNodeModules({ packageName: "ws-app" })
+    return { collector: collector as any, nodeModules }
+  }
+
+  test("finds the nested in-range copy under the workspace root when the app dir has no node_modules", async ({ expect }) => {
+    root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-pnpm-hoisted-ws-test-"))
+    await fse.outputJson(path.join(root, "package.json"), { name: "ws-root", version: "1.0.0", private: true })
+    await fse.outputFile(path.join(root, "pnpm-workspace.yaml"), "packages:\n  - app\nnodeLinker: hoisted\n")
+    const appDir = path.join(root, "app")
+
+    const { collector, nodeModules } = await collect(root, appDir)
+    expect(await fse.pathExists(path.join(appDir, "node_modules"))).toBe(false)
+    expect(await collector.isHoisted.value).toBe(true)
+
+    expect(find(nodeModules, "readable-stream")).toMatchObject({ version: "3.6.2", dir: path.join(root, "node_modules", "readable-stream") })
+    const nested = find(find(nodeModules, "lazystream")?.dependencies, "readable-stream")
+    expect(nested).toMatchObject({ version: "2.3.8", dir: path.join(root, "node_modules", "lazystream", "node_modules", "readable-stream") })
+  })
+
+  test("still finds the nested copy in a non-workspace hoisted project", async ({ expect }) => {
+    root = await fse.mkdtemp(path.join(os.tmpdir(), "eb-pnpm-hoisted-ws-test-"))
+    const { collector, nodeModules } = await collect(root, root)
+    expect(await collector.isHoisted.value).toBe(true)
+
+    expect(find(nodeModules, "readable-stream")).toMatchObject({ version: "3.6.2", dir: path.join(root, "node_modules", "readable-stream") })
+    const nested = find(find(nodeModules, "lazystream")?.dependencies, "readable-stream")
+    expect(nested).toMatchObject({ version: "2.3.8", dir: path.join(root, "node_modules", "lazystream", "node_modules", "readable-stream") })
   })
 })
