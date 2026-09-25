@@ -12,10 +12,17 @@ export async function retry<T>(
     return await task()
   } catch (error: any) {
     if ((await Promise.resolve(shouldRetry?.(error) ?? true)) && retryCount > 0 && !cancellationToken.cancelled) {
-      await sleep(interval + backoff * attempt)
+      await sleepWithCancellation(interval + backoff * attempt, cancellationToken)
       return await retry(task, { ...options, retries: retryCount - 1, attempt: attempt + 1 })
     } else {
       throw error
     }
   }
+}
+
+function sleepWithCancellation(delay: number, cancellationToken: CancellationToken): Promise<void> {
+  return cancellationToken.createPromise<void>((resolve, _reject, onCancel) => {
+    const timer = setTimeout(resolve, delay)
+    onCancel(() => clearTimeout(timer))
+  })
 }
