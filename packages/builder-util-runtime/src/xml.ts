@@ -103,13 +103,13 @@ export function parseXml(data: string): XElement {
 
   parser.ontext = text => {
     if (elements.length > 0) {
-      elements[elements.length - 1].value = text
+      elements[elements.length - 1].value += text
     }
   }
 
   parser.oncdata = cdata => {
     const element = elements[elements.length - 1]
-    element.value = cdata
+    element.value += cdata
     element.isCData = true
   }
 
@@ -117,6 +117,9 @@ export function parseXml(data: string): XElement {
     throw err
   }
 
-  parser.write(data)
-  return rootElement!
+  parser.write(data).close()
+  if (rootElement == null) {
+    throw newError("No root element", "ERR_XML_MISSED_ELEMENT")
+  }
+  return rootElement
 }
