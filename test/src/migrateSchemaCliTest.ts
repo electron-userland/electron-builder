@@ -14,9 +14,9 @@ test("JS/TS config with only a warn-only key prints the warning, not 'already up
   const info = vi.spyOn(log, "info").mockImplementation(() => undefined)
   try {
     await migrateSchema({ "project-dir": projectDir })
-    const warned = warn.mock.calls.map(call => String(call[1] ?? call[0]))
+    const warned = warn.mock.calls.map(call => call[1] ?? (typeof call[0] === "string" ? call[0] : JSON.stringify(call[0])))
     expect(warned.some(m => m.includes("customSquirrelVendorDir") && m.includes("toolsets.squirrel"))).toBe(true)
-    const infos = info.mock.calls.map(call => String(call[1] ?? call[0]))
+    const infos = info.mock.calls.map(call => call[1] ?? (typeof call[0] === "string" ? call[0] : JSON.stringify(call[0])))
     expect(infos.some(m => m.includes("already up to date"))).toBe(false)
     // Warn-only: the file is never rewritten.
     expect(await fs.readFile(path.join(projectDir, "electron-builder.cjs"), "utf8")).toBe(source)
