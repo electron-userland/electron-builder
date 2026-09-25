@@ -27562,6 +27562,36 @@ exports[`node_module collectors > pnpm shamefully-hoist=true 2`] = `
 }
 `;
 
+exports[`node_module collectors > pnpm v11 hoisted project keeps nested dependency versions 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`node_module collectors > pnpm v11 hoisted workspace keeps nested dependency versions 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`node_module collectors > pnpm v11 isolated project keeps nested dependency versions 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`node_module collectors > pnpm v11 isolated project with a link: dependency keeps nested dependency versions 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`node_module collectors > pnpm v11 project without dependencies 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`node_module collectors > pnpm v11 workspace 1`] = `
 {
   "linux": [],
