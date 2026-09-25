@@ -1,7 +1,8 @@
 import { notarize, type NotarizeOptions, type NotaryToolKeychainCredentials } from "@electron/notarize"
 import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign"
-import { Arch, InvalidConfigurationError, log, statOrNull } from "builder-util"
+import { Arch, InvalidConfigurationError, log, MAX_FILE_REQUESTS, spawnAndWriteWithOutput, statOrNull, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
+import { open, type FileHandle } from "fs/promises"
 import * as path from "path"
 import { CertType, findIdentity, Identity, reportError } from "../../codeSign/mac/macCodeSign.js"
 import { SigningResult } from "../../codeSign/signResult.js"
@@ -9,12 +10,20 @@ import type { MacPackager } from "../../macPackager.js"
 import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
 import { parsePlistFile, PlistObject } from "../../util/mac/plist.js"
 import { getTemplatePath } from "../../util/pathManager.js"
+import asyncPool from "tiny-async-pool"
 
 export type MasPlatformType = "mas" | "mas-dev"
 export type PlatformType = MasPlatformType | "mac"
 
+const DISABLE_LIBRARY_VALIDATION = "com.apple.security.cs.disable-library-validation"
+
 export class MacTargetHelper {
   constructor(private packager: MacPackager) {}
+
+  /** Ad-hoc signing (`sign.identity: "-"`) produces a signature with no Team ID. */
+  static isAdHocIdentity(identity: Identity | Nullish): boolean {
+    return identity?.name === "-"
+  }
 
   handleNullIdentity(): SigningResult {
     if (this.packager.forceCodeSigning) {
@@ -58,8 +67,11 @@ export class MacTargetHelper {
         if (MacTargetHelper.isHardenedRuntimeEnabledForSigning(targetPlatform, signOpts?.hardenedRuntime) && !(await this.isLibraryValidationDisabled(targetPlatform, signOpts))) {
           log.warn(
             null,
-            "ad-hoc signing with hardenedRuntime enabled requires the com.apple.security.cs.disable-library-validation entitlement " +
-              "to prevent app launch failures due to library validation. See https://electron.build/docs/features/code-signing for details."
+            `ad-hoc signing with hardenedRuntime enabled requires the ${DISABLE_LIBRARY_VALIDATION} entitlement ` +
+              "in both the app entitlements (build/entitlements.mac.plist or mac.sign.entitlements) and the inherit entitlements " +
+              "(build/entitlements.mac.inherit.plist or mac.sign.entitlementsInherit) to prevent app launch failures due to library validation, " +
+              "but at least one of your entitlements files does not grant it. " +
+              "See https://electron.build/docs/features/code-signing for details."
           )
         }
         identity = new Identity("-", undefined)
@@ -73,23 +85,89 @@ export class MacTargetHelper {
   }
 
   /**
-   * Resolves the effective app entitlements file — same precedence as `getOptionsForFile()` — and
-   * returns whether it grants `com.apple.security.cs.disable-library-validation`.
-   * Fails open: returns false (so callers still warn) when the file cannot be read or parsed.
+   * Resolves the app and inherit entitlements files for an ad-hoc build — same precedence as `getAppEntitlements()` and
+   * `getInheritEntitlements()` — and returns whether both grant `com.apple.security.cs.disable-library-validation`.
+   *
+   * An ad-hoc signature carries no Team ID, so every process in the bundle — the app and each helper — fails library
+   * validation when it loads the Electron framework unless its own entitlements disable it. A user-supplied inherit
+   * plist (e.g. a production `build/entitlements.mac.inherit.plist`) without the key therefore breaks the helpers even
+   * when the app entitlements grant it, which is why both files are checked.
+   *
+   * Fails open: returns false (so callers still warn) when either file cannot be read or parsed, or when no file
+   * resolves at all (`@electron/osx-sign`'s defaults never grant the key). An explicit `sign.entitlements` /
+   * `sign.entitlementsInherit` path that does not exist is a configuration error and throws, like any other missing
+   * build resource.
    */
   async isLibraryValidationDisabled(targetPlatform: PlatformType, signOpts: ElectronSignOptions | Nullish): Promise<boolean> {
-    let file = signOpts?.entitlements
-    if (!file) {
-      const p = `entitlements.${MacTargetHelper.isMasTarget(targetPlatform) ? "mas" : "mac"}.plist`
-      file = (await this.packager.resourceList).includes(p) ? path.join(this.packager.buildResourcesDir, p) : getTemplatePath("entitlements.mac.plist")
+    const [appEntitlements, inheritEntitlements] = await Promise.all([
+      this.getAppEntitlements(targetPlatform, signOpts, true /* adHoc */),
+      this.getInheritEntitlements(targetPlatform, signOpts, true /* adHoc */),
+    ])
+    return (await this.grantsDisableLibraryValidation(appEntitlements)) && (await this.grantsDisableLibraryValidation(inheritEntitlements))
+  }
+
+  private async grantsDisableLibraryValidation(file: string | null): Promise<boolean> {
+    if (file == null) {
+      // no user-supplied file and no bundled default — @electron/osx-sign's defaults never grant the key
+      return false
     }
     try {
       const entitlements = await parsePlistFile<PlistObject>(file)
-      return entitlements["com.apple.security.cs.disable-library-validation"] === true
+      return entitlements[DISABLE_LIBRARY_VALIDATION] === true
     } catch (e: any) {
       log.debug({ file, error: e.message }, "cannot read entitlements to verify library validation")
       return false
     }
+  }
+
+  /**
+   * Resolves the entitlements file for the app bundle itself.
+   *
+   * Precedence: explicit `sign.entitlements` → `build/entitlements.{mac,mas}.plist` → a bundled default.
+   * The explicit path is resolved like every other build resource (build resources dir, then project dir) and
+   * must exist. Returns `null` when no default applies, which lets `@electron/osx-sign` fall back to its own
+   * Chromium-derived defaults (`default.mas.plist` for MAS).
+   */
+  async getAppEntitlements(targetPlatform: PlatformType, signOpts: ElectronSignOptions | Nullish, adHoc: boolean): Promise<string | null> {
+    const isMas = MacTargetHelper.isMasTarget(targetPlatform)
+    // an explicit `sign.entitlements` resolves like every other build resource (build resources dir, then project dir);
+    // `null`/empty behave like unset so the `build/entitlements.{mac,mas}.plist` convention still applies
+    const entitlements = await this.packager.getResource(signOpts?.entitlements || undefined, `entitlements.${isMas ? "mas" : "mac"}.plist`)
+    if (entitlements != null) {
+      return entitlements
+    }
+    if (isMas) {
+      // @electron/osx-sign's default.mas.plist enables the App Sandbox, which a MAS build cannot ship without
+      return null
+    }
+    return getTemplatePath(adHoc ? "entitlements.mac.adhoc.plist" : "entitlements.mac.plist")
+  }
+
+  /**
+   * Resolves the entitlements file for the nested binaries (helpers, frameworks, unpacked executables) that
+   * inherit the app's signature.
+   *
+   * Precedence: explicit `sign.entitlementsInherit` → `build/entitlements.{mac,mas}.inherit.plist` → `null`,
+   * which hands the file to `@electron/osx-sign`'s per-file defaults, modelled on Chromium's own entitlements
+   * (the explicit path is resolved like every other build resource — build resources dir, then project dir — and must exist):
+   * - renderer and GPU helpers: `allow-jit` only
+   * - plugin helper: `allow-jit`, `allow-unsigned-executable-memory`, `disable-library-validation`
+   * - everything else (frameworks, `.node` modules, unpacked executables): `default.darwin.plist`, i.e. `allow-jit`
+   *   plus Chromium's `device.*` / `personal-information.*` entitlements
+   * Nested binaries therefore do not inherit the app's entitlements, and apart from the plugin helper none of these
+   * defaults grant `disable-library-validation` or `allow-unsigned-executable-memory`.
+   */
+  async getInheritEntitlements(targetPlatform: PlatformType, signOpts: ElectronSignOptions | Nullish, adHoc: boolean): Promise<string | null> {
+    const isMas = MacTargetHelper.isMasTarget(targetPlatform)
+    // an explicit `sign.entitlementsInherit` resolves like every other build resource (build resources dir, then project dir);
+    // `null`/empty behave like unset so the `build/entitlements.{mac,mas}.inherit.plist` convention still applies
+    const entitlements = await this.packager.getResource(signOpts?.entitlementsInherit || undefined, `entitlements.${isMas ? "mas" : "mac"}.inherit.plist`)
+    if (entitlements != null) {
+      return entitlements
+    }
+    // an ad-hoc signature has no Team ID, so every process in the bundle — not just the main one — needs
+    // library validation disabled or it cannot load the Electron framework
+    return adHoc && !isMas ? getTemplatePath("entitlements.mac.adhoc.plist") : null
   }
 
   async buildSignOptions(
@@ -182,8 +260,106 @@ export class MacTargetHelper {
       // https://github.com/electron-userland/electron-builder/issues/1480
       strictVerify: config?.strictVerify,
       preAutoEntitlements: config?.preAutoEntitlements,
-      optionsForFile: await this.getOptionsForFile(appPath, targetPlatform, config),
+      optionsForFile: await this.getOptionsForFile(appPath, targetPlatform, config, identity),
       provisioningProfile: config?.provisioningProfile || undefined,
+    }
+  }
+
+  /**
+   * Post-sign diagnostic replacing the blanket `com.apple.security.cs.disable-library-validation` default.
+   *
+   * Walks the Mach-O libraries and bundles (`MH_DYLIB` / `MH_BUNDLE`) under `Contents/Resources/app.asar.unpacked` and
+   * `Contents/PlugIns` and reports the ones whose signature does not carry the Team ID `codesign` reports for the
+   * freshly signed app bundle — typically excluded via `sign.ignore`, or fetched at build time already signed by a
+   * third party. Only loadable code is checked because library validation applies to what a process loads;
+   * executables (`MH_EXECUTE`, e.g. a bundled ffmpeg) are spawned rather than loaded, so a foreign signature on them is
+   * not a launch failure and reporting them would be a false positive. `Contents/PlugIns` is covered because
+   * `buildSignOptions` never re-signs it, so a bundle there keeps whatever signature it shipped with. Under the
+   * hardened runtime those fail library validation when loaded, which is precisely the failure the old default hid
+   * from every user instead of only the affected ones.
+   *
+   * The opt-out is read from the app entitlements (not the inherit ones) because library validation is enforced by
+   * the loading process under its own entitlements — the main process, governed by the app plist, is the usual loader
+   * of these modules, while the inherit plist only governs loads performed by helper processes.
+   *
+   * Best-effort: never fails the build, and skips the scan when the app bundle itself has no Team ID (e.g. a
+   * self-signed certificate).
+   */
+  async warnAboutForeignSignedBinaries(appPath: string, identity: Identity | Nullish, targetPlatform: PlatformType, signOpts: ElectronSignOptions | Nullish): Promise<void> {
+    if (
+      MacTargetHelper.isMasTarget(targetPlatform) ||
+      MacTargetHelper.isAdHocIdentity(identity) ||
+      !MacTargetHelper.isHardenedRuntimeEnabledForSigning(targetPlatform, signOpts?.hardenedRuntime)
+    ) {
+      return
+    }
+    if (await this.grantsDisableLibraryValidation(await this.getAppEntitlements(targetPlatform, signOpts, false))) {
+      // the app already opted out of library validation
+      return
+    }
+
+    // `Contents/PlugIns` is scanned too: `buildSignOptions` unconditionally excludes it from re-signing, so anything
+    // there keeps whatever third-party signature it shipped with — exactly what fails library validation
+    const candidateDirs = [path.join(appPath, "Contents", "Resources", "app.asar.unpacked"), path.join(appPath, "Contents", "PlugIns")]
+    try {
+      const dirs: string[] = []
+      for (const dir of candidateDirs) {
+        if ((await statOrNull(dir)) != null) {
+          dirs.push(dir)
+        }
+      }
+      if (dirs.length === 0) {
+        return
+      }
+      // the Team ID is read from the signed bundle rather than parsed out of the identity's common name: not every
+      // identity carries a "(TEAMID)" suffix, and a self-signed one can carry it without codesign ever recording it
+      const teamId = await this.readSigningTeamId(appPath)
+      if (teamId == null) {
+        // no Team ID to compare against (unsigned, or signed without one)
+        return
+      }
+      let files: string[] = []
+      for (const dir of dirs) {
+        files = files.concat(await walk(dir))
+      }
+      // bounded concurrency: each check spawns `codesign -d`; results are sorted afterwards so the warning is deterministic
+      const checked = await asyncPool<string, string | null>(MAX_FILE_REQUESTS, files, async file => {
+        // only dylibs and bundles get loaded into a process; executables are spawned and never face library validation
+        if (!isLoadableMachOFileType(await readMachOFileType(file))) {
+          return null
+        }
+        return (await this.readSigningTeamId(file)) === teamId ? null : path.relative(appPath, file)
+      })
+      const foreign = checked.filter((it): it is string => it != null).sort()
+      if (foreign.length > 0) {
+        log.warn(
+          { files: foreign.join(", "), teamId },
+          `libraries in app.asar.unpacked or Contents/PlugIns are unsigned or signed by another team — under the hardened runtime they will fail library validation when loaded. ` +
+            `Sign them with the same identity, or grant ${DISABLE_LIBRARY_VALIDATION} in build/entitlements.mac.plist ` +
+            `(and in build/entitlements.mac.inherit.plist if a helper process such as a utilityProcess or a nodeIntegration renderer loads them)`
+        )
+      }
+    } catch (e: any) {
+      log.debug({ error: e.message }, "cannot inspect app.asar.unpacked and Contents/PlugIns for foreign-signed binaries")
+    }
+  }
+
+  /**
+   * The `TeamIdentifier` of a file's existing code signature as reported by `codesign -d`, or `null` when there is none:
+   * `codesign` fails (e.g. the file is unsigned), the field is absent, or it is the literal `not set` that ad-hoc and
+   * self-signed signatures report.
+   *
+   * @internal An instance method rather than a module-level function so tests can stub the `codesign` invocation, which
+   * only exists on macOS.
+   */
+  async readSigningTeamId(file: string): Promise<string | null> {
+    try {
+      // `codesign -d` reports on stderr, so stdout alone (as `exec` returns) is not enough
+      const { stderr } = await spawnAndWriteWithOutput("/usr/bin/codesign", ["-d", "--verbose=4", file], "")
+      return parseSigningTeamId(stderr)
+    } catch {
+      // unsigned binaries make `codesign -d` exit non-zero
+      return null
     }
   }
 
@@ -220,37 +396,28 @@ export class MacTargetHelper {
     })
   }
 
-  async getOptionsForFile(appPath: string, targetPlatform: PlatformType, customSignOptions: ElectronSignOptions | Nullish): Promise<(filePath: string) => PerFileSignOptions> {
+  async getOptionsForFile(
+    appPath: string,
+    targetPlatform: PlatformType,
+    customSignOptions: ElectronSignOptions | Nullish,
+    identity: Identity | Nullish
+  ): Promise<(filePath: string) => PerFileSignOptions> {
     const isMas = MacTargetHelper.isMasTarget(targetPlatform)
-    const resourceList = await this.packager.resourceList
-    const entitlementsSuffix = isMas ? "mas" : "mac"
+    const adHoc = MacTargetHelper.isAdHocIdentity(identity)
+    const appEntitlements = await this.getAppEntitlements(targetPlatform, customSignOptions, adHoc)
+    const inheritEntitlements = await this.getInheritEntitlements(targetPlatform, customSignOptions, adHoc)
 
     const getEntitlements = (filePath: string) => {
       if (filePath === appPath) {
-        if (customSignOptions?.entitlements) {
-          return customSignOptions.entitlements
-        }
-        const p = `entitlements.${entitlementsSuffix}.plist`
-        if (resourceList.includes(p)) {
-          return path.join(this.packager.buildResourcesDir, p)
-        } else {
-          return getTemplatePath("entitlements.mac.plist")
-        }
+        return appEntitlements
       }
 
       if (filePath.includes("Library/LoginItems")) {
         return customSignOptions?.entitlementsLoginHelper
       }
 
-      if (customSignOptions?.entitlementsInherit) {
-        return customSignOptions.entitlementsInherit
-      }
-      const p = `entitlements.${entitlementsSuffix}.inherit.plist`
-      if (resourceList.includes(p)) {
-        return path.join(this.packager.buildResourcesDir, p)
-      } else {
-        return getTemplatePath("entitlements.mac.plist")
-      }
+      // `null` leaves the file to @electron/osx-sign's per-file defaults, which are tighter than one blanket plist
+      return inheritEntitlements
     }
 
     const requirements = isMas || customSignOptions?.requirements == null ? undefined : await this.packager.getResource(customSignOptions.requirements)
@@ -378,4 +545,111 @@ export class MacTargetHelper {
     await notarize(options)
     log.info(null, "notarization successful")
   }
+}
+
+/** Big-endian fat/universal magic — the same bytes open a Java class file, so `nfat_arch` has to disambiguate. */
+const FAT_MAGIC = 0xcafebabe
+/** libmagic's heuristic: a fat header has fewer than 30 slices, whereas a Java class file's `major_version` (in the same bytes) is at least 45. */
+const FAT_MAX_ARCH_COUNT = 30
+/** Thin magics as read big-endian: the file is big-endian when the bytes spell the magic out, little-endian when they are byte-swapped. */
+const THIN_MAGIC_BE = new Set([0xfeedface, 0xfeedfacf])
+const THIN_MAGIC_LE = new Set([0xcefaedfe, 0xcffaedfe])
+/** `mach_header.filetype` follows `magic`, `cputype` and `cpusubtype` in both the 32- and 64-bit header. */
+const MACH_HEADER_FILETYPE_OFFSET = 12
+const MACH_HEADER_MIN_LENGTH = 16
+/** The first `fat_arch` (`cputype`, `cpusubtype`, `offset`, `size`, `align` — five big-endian uint32s) follows the 8-byte fat header. */
+const FAT_ARCH_OFFSET = 8
+const FAT_ARCH_LENGTH = 20
+const FAT_ARCH_SLICE_OFFSET_FIELD = FAT_ARCH_OFFSET + 8
+const HEAD_READ_LENGTH = 4096
+
+/** The `mach_header.filetype` values the foreign-signature scan tells apart (see `<mach-o/loader.h>`). */
+export const MachOFileType = {
+  /** Executable — spawned as its own process, never loaded into another one. */
+  MH_EXECUTE: 2,
+  /** Dynamically bound shared library (`.dylib`). */
+  MH_DYLIB: 6,
+  /** Dynamically bound bundle (`.node` native addons, plug-ins). */
+  MH_BUNDLE: 8,
+} as const
+
+/**
+ * The `filetype` field of a Mach-O header, or `null` when the file is not Mach-O, too short, or unreadable. Endianness
+ * follows the magic. A fat/universal binary reports the filetype of its first slice (all slices share one filetype);
+ * the fat magic `0xcafebabe` is shared with Java class files, so `nfat_arch` must also be a plausible slice count.
+ *
+ * @internal Exported for tests only.
+ */
+export async function readMachOFileType(file: string): Promise<number | null> {
+  let handle: FileHandle | null = null
+  try {
+    handle = await open(file, "r")
+    const head = Buffer.alloc(HEAD_READ_LENGTH)
+    const { bytesRead } = await handle.read(head, 0, HEAD_READ_LENGTH, 0)
+    if (bytesRead < 4) {
+      return null
+    }
+    if (head.readUInt32BE(0) !== FAT_MAGIC) {
+      return readThinMachOFileType(head.subarray(0, bytesRead))
+    }
+    if (bytesRead < FAT_ARCH_OFFSET + FAT_ARCH_LENGTH) {
+      return null
+    }
+    const archCount = head.readUInt32BE(4)
+    if (archCount === 0 || archCount >= FAT_MAX_ARCH_COUNT) {
+      return null
+    }
+    const sliceOffset = head.readUInt32BE(FAT_ARCH_SLICE_OFFSET_FIELD)
+    const sliceHeader = Buffer.alloc(MACH_HEADER_MIN_LENGTH)
+    const slice = await handle.read(sliceHeader, 0, MACH_HEADER_MIN_LENGTH, sliceOffset)
+    return readThinMachOFileType(sliceHeader.subarray(0, slice.bytesRead))
+  } catch {
+    return null
+  } finally {
+    await handle?.close()
+  }
+}
+
+function readThinMachOFileType(header: Buffer): number | null {
+  if (header.length < MACH_HEADER_MIN_LENGTH) {
+    return null
+  }
+  const magic = header.readUInt32BE(0)
+  if (THIN_MAGIC_BE.has(magic)) {
+    return header.readUInt32BE(MACH_HEADER_FILETYPE_OFFSET)
+  }
+  if (THIN_MAGIC_LE.has(magic)) {
+    return header.readUInt32LE(MACH_HEADER_FILETYPE_OFFSET)
+  }
+  return null
+}
+
+/**
+ * Whether a Mach-O filetype is loaded into a process — a dylib or a bundle — and is therefore subject to library
+ * validation. Executables are spawned, not loaded, so they are not.
+ *
+ * @internal Exported for tests only.
+ */
+export function isLoadableMachOFileType(type: number | null): boolean {
+  return type === MachOFileType.MH_DYLIB || type === MachOFileType.MH_BUNDLE
+}
+
+/**
+ * Whether the file starts with a Mach-O header (thin or fat), regardless of filetype.
+ *
+ * @internal Exported for tests only.
+ */
+export async function isMachOFile(file: string): Promise<boolean> {
+  return (await readMachOFileType(file)) != null
+}
+
+/**
+ * Extracts the `TeamIdentifier` from `codesign -d --verbose=4` output, or `null` when the field is absent or the
+ * literal `not set` that ad-hoc and self-signed signatures report.
+ *
+ * @internal Exported for tests only.
+ */
+export function parseSigningTeamId(codesignOutput: string): string | null {
+  const teamId = /^TeamIdentifier=(.+)$/m.exec(codesignOutput)?.[1].trim()
+  return teamId == null || teamId === "not set" ? null : teamId
 }

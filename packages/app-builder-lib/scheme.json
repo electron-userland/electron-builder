@@ -1282,14 +1282,14 @@
           "type": "array"
         },
         "entitlements": {
-          "description": "Path to the main app entitlements file.\nFalls back to `build/entitlements.mac.plist` if it exists, then to `@electron/osx-sign`'s\nbuilt-in defaults.",
+          "description": "Path to the main app entitlements file. Resolved relative to the build resources directory, then the project directory.\nFalls back to `build/entitlements.mac.plist` (or `build/entitlements.mas.plist` for MAS targets) if it exists.\nOtherwise `mac` builds use the bundled default, which grants only `com.apple.security.cs.allow-jit`\n(ad-hoc builds use a bundled ad-hoc template that also disables library validation), and MAS builds use\n`@electron/osx-sign`'s built-in sandboxed `default.mas.plist`.",
           "type": [
             "null",
             "string"
           ]
         },
         "entitlementsInherit": {
-          "description": "Path to child entitlements inherited by embedded frameworks and bundles.\nFalls back to `build/entitlements.mac.inherit.plist` if it exists.",
+          "description": "Path to child entitlements inherited by embedded frameworks and bundles. Resolved relative to the build resources directory, then the project directory.\nFalls back to `build/entitlements.mac.inherit.plist` (or `build/entitlements.mas.inherit.plist` for MAS targets) if it exists.\nOtherwise nested binaries receive `@electron/osx-sign`'s per-file defaults (renderer/GPU helpers: `allow-jit`;\nplugin helper: Chromium's looser set; everything else: `default.darwin.plist`); ad-hoc `mac` builds use the\nbundled ad-hoc template instead.",
           "type": [
             "null",
             "string"

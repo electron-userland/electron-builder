@@ -25,10 +25,10 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   })
 
   /**
-   * Detect pnpm's installed layout from the on-disk structure rather than `pnpm config list`.
-   * pnpm 11 no longer echoes `node-linker` (from `.npmrc`) in `config list`, so the base-class
-   * config-parsing detection silently reports "not hoisted" for a hoisted install, which would
-   * disable the downward search needed to find version-conflicted nested deps.
+   * Detect pnpm's installed layout from the on-disk structure rather than from config.
+   * pnpm 11 ignores `node-linker` in `.npmrc` (it moved to `nodeLinker` in `pnpm-workspace.yaml`),
+   * so config parsing can report "not hoisted" for a hoisted install, which would disable the
+   * downward search needed to find version-conflicted nested deps.
    *
    * In the default isolated store every regular top-level package resolves — through a symlink
    * on POSIX, a junction on Windows — into `node_modules/.pnpm/<name>@<ver>/node_modules/<name>`.
