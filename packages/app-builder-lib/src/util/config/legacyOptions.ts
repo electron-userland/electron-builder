@@ -56,7 +56,7 @@ export const AZURE_KNOWN_FIELDS = new Set([
 ])
 
 /** `electronDownload` fields with no equivalent in the v27 `ElectronGetOptions` (@electron/get v5) shape. */
-export const ELECTRON_DOWNLOAD_DROPPED = ["cache", "customDir", "customFilename", "strictSSL", "platform", "arch", "version"] as const
+export const ELECTRON_DOWNLOAD_DROPPED = ["cache", "customDir", "customFilename", "strictSSL", "platform", "arch", "version", "force"] as const
 
 /** Platform keys that accept the macOS signing/universal options. */
 export const MAC_PLATFORM_KEYS = ["mac", "mas", "masDev"] as const
@@ -192,6 +192,17 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
     anchor: "squirrelwindowsnomsi",
   },
   {
+    key: "customSquirrelVendorDir",
+    parent: ["squirrelWindows"],
+    replacement: "toolsets.squirrel",
+    autoMigrated: false,
+    severity: "error",
+    detail:
+      "The bundle layout differs: a custom `toolsets.squirrel` bundle (a `ToolsetCustom` object) must contain an `electron-winstaller/vendor/` subtree, " +
+      "whereas `customSquirrelVendorDir` pointed at the vendor files directly. Remove the key to use the default Squirrel bundle.",
+    anchor: "squirrelwindowscustomsquirrelvendordir",
+  },
+  {
     key: "snap",
     replacement: "snapcraft",
     autoMigrated: true,
@@ -261,6 +272,15 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
     severity: "error",
     detail: "@electron/get v5 downloads via `fetch`, which has no equivalent option.",
     anchor: ELECTRON_GET_ANCHOR,
+  },
+  {
+    key: "force",
+    parent: ["electronGet"],
+    replacement: null,
+    autoMigrated: true,
+    severity: "error",
+    detail: "@electron/get v5 has no equivalent. Clear the cache directory (or point `ELECTRON_BUILDER_CACHE` at a fresh path) to force a re-download.",
+    anchor: "electrongetoptionsforce-removed",
   },
 
   // ── Windows signing ───────────────────────────────────────────────────────

@@ -1,6 +1,19 @@
 import { createRequire } from "node:module"
 import * as path from "path"
-import { AZURE_KNOWN_FIELDS, ELECTRON_DOWNLOAD_DROPPED, MAC_SIGN_FIELDS, MAC_SIGN_REMOVED_FIELDS, MAC_UNIVERSAL_FIELDS, NSIS_WEB_ADVISORY, SNAP_BASES } from "./migrate-schema.js"
+import {
+  ASAR_PLATFORM_KEYS,
+  AZURE_KNOWN_FIELDS,
+  ELECTRON_DOWNLOAD_DROPPED,
+  isLegacyElectronDownloadKey,
+  MAC_ENTITLEMENTS_ADVISORY,
+  MAC_NULL_MEANS_UNSET_FIELDS,
+  MAC_SIGN_FIELDS,
+  MAC_SIGN_REMOVED_FIELDS,
+  MAC_UNIVERSAL_FIELDS,
+  NSIS_WEB_ADVISORY,
+  SNAP_BASES,
+  SNAP_CORE24_UNSUPPORTED,
+} from "./migrate-schema.js"
 import type { MigrationChange } from "./migrate-schema.js"
 
 const _require = createRequire(import.meta.url)
@@ -334,13 +347,23 @@ class ConfigCodemod {
     }
     this.ruleSyncDesktopName(root)
     this.ruleNativeModules(root)
+    // Platform asar reads the root keys before ruleAsar edits them (edits only apply at the end, so order is for clarity).
+    for (const platform of ASAR_PLATFORM_KEYS) {
+      const p = this.getObjectProp(root, platform)
+      if (p != null) {
+        this.rulePlatformAsar(root, p, platform)
+      }
+    }
     this.ruleAsar(root)
     this.ruleAppImageSystemIntegration(root)
     this.rulePublish(root, "publish")
-    for (const platform of ["mac", "win", "linux"]) {
-      const p = this.getObjectProp(root, platform)
-      if (p != null) {
-        this.rulePublish(p, "publish", platform + ".")
+    // publish nested in any platform/target section (mac, win, nsis, dmg, …). `snap` is skipped: ruleSnap
+    // re-emits its properties verbatim, which would overlap an edit made inside it.
+    for (const prop of root.properties) {
+      const name = this.propName(prop)
+      const obj = name != null && name !== "snap" ? this.getObjectProp(root, name) : null
+      if (obj != null) {
+        this.rulePublish(obj, "publish", name + ".")
       }
     }
     this.ruleSnap(root)
@@ -355,7 +378,9 @@ class ConfigCodemod {
       }
     }
     this.ruleElectronDownload(root)
+    this.ruleToolsets(root)
     this.ruleNsisWebAdvisory(root)
+    this.ruleMacEntitlementsAdvisory(root)
   }
 
   // ── Rules ───────────────────────────────────────────────────────────────
@@ -370,6 +395,59 @@ class ConfigCodemod {
       if (prop != null && ts.isPropertyAssignment(prop) && this.hasNsisWebInTarget(this.unwrap(prop.initializer))) {
         this.advisories.push(NSIS_WEB_ADVISORY)
         return
+      }
+    }
+  }
+
+  // Advisory only. Mirrors migrateConfig: a mac/mas/masDev object that names no entitlements file (at the v26
+  // location or under `sign`) relies on the bundled default, which v27 tightened.
+  private ruleMacEntitlementsAdvisory(root: any): void {
+    const ts = this.ts
+    const isNullLiteral = (prop: any) => prop != null && ts.isPropertyAssignment(prop) && this.unwrap(prop.initializer).kind === ts.SyntaxKind.NullKeyword
+    const namesEntitlements = (obj: any): boolean => {
+      const prop = obj == null ? null : this.getProp(obj, "entitlements")
+      return prop != null && !isNullLiteral(prop)
+    }
+    // Not signing with electron-builder's defaults at all: a custom signer, or identity: null (skip signing).
+    const bypassesDefaults = (p: any, sign: any): boolean => {
+      const signProp = this.getProp(p, "sign")
+      const custom = signProp != null && ts.isPropertyAssignment(signProp) && sign == null && !isNullLiteral(signProp)
+      return custom || isNullLiteral(this.getProp(p, "identity")) || (sign != null && isNullLiteral(this.getProp(sign, "identity")))
+    }
+    for (const platform of ["mac", "mas", "masDev"]) {
+      const p = this.getObjectProp(root, platform)
+      const sign = p == null ? null : this.getObjectProp(p, "sign")
+      if (p != null && !namesEntitlements(p) && !namesEntitlements(sign) && !bypassesDefaults(p, sign)) {
+        this.advisories.push(MAC_ENTITLEMENTS_ADVISORY)
+        return
+      }
+    }
+  }
+
+  private ruleToolsets(root: any): void {
+    const ts = this.ts
+    const toolsets = this.getObjectProp(root, "toolsets")
+    if (toolsets == null) {
+      return
+    }
+    for (const prop of toolsets.properties) {
+      const name = this.propName(prop)
+      if (name == null || !ts.isPropertyAssignment(prop)) {
+        continue
+      }
+      const value = this.unwrap(prop.initializer)
+      if (value.kind === ts.SyntaxKind.NullKeyword) {
+        this.removeProp(prop)
+        this.changes.push({
+          key: `toolsets.${name}`,
+          description: `removed toolsets.${name}: null (v27 rejects null; unset resolves to "latest", the newest bundle — pin "0.0.0" to keep the legacy bundle v26 used)`,
+        })
+      } else if (name === "appimage" && ts.isStringLiteral(value) && value.text === "1.0.2") {
+        this.replaceValue(prop.initializer, '"1.0.3"')
+        this.changes.push({
+          key: "toolsets.appimage",
+          description: 'replaced toolsets.appimage: "1.0.2" with "1.0.3" (1.0.2 is no longer offered; 1.0.3 is the same runtime with the #9598 fix)',
+        })
       }
     }
   }
@@ -444,7 +522,16 @@ class ConfigCodemod {
 
     const nativeRebuilder = this.getProp(root, "nativeRebuilder")
     if (nativeRebuilder != null) {
-      sources.push({ prop: nativeRebuilder, renameTo: "rebuildMode" })
+      if (this.stringLiteralValue(nativeRebuilder) === "legacy") {
+        // v27 dropped the app-builder binary rebuilder; rebuildMode only selects @electron/rebuild's mode.
+        this.removeProp(nativeRebuilder)
+        this.warnings.push(
+          'nativeRebuilder: "legacy" (the app-builder binary rebuilder) was removed in v27 — native modules are always rebuilt with @electron/rebuild. ' +
+            'The value was dropped, so the default nativeModules.rebuildMode ("sequential") applies.'
+        )
+      } else {
+        sources.push({ prop: nativeRebuilder, renameTo: "rebuildMode" })
+      }
       this.changes.push({ key: "nativeRebuilder", description: "renamed nativeRebuilder → nativeModules.rebuildMode" })
     }
 
@@ -476,8 +563,17 @@ class ConfigCodemod {
     const asarIsObject = asarVal != null && ts.isObjectLiteralExpression(asarVal)
 
     if (asarIsFalse) {
-      if (this.getProp(root, "asar-unpack") != null || this.getProp(root, "asar-unpack-dir") != null || this.getProp(root, "asarUnpack") != null) {
-        this.warnings.push("asar is false but asar-unpack/asarUnpack is also set. asar: false disables packaging entirely; remove the unpack keys or enable asar manually.")
+      const flatKeys = ["asar-unpack", "asar-unpack-dir", "asarUnpack", "disableSanityCheckAsar", "disableAsarIntegrity"].filter(k => this.getProp(root, k) != null)
+      if (flatKeys.length === 0) {
+        return
+      }
+      if (this.platformReEnablesAsar(root)) {
+        // Those root values still applied to the re-enabling platform in v26; rulePlatformAsar already warned.
+        return
+      }
+      for (const key of flatKeys) {
+        this.removeProp(this.getProp(root, key))
+        this.changes.push({ key, description: `removed ${key} (no effect with asar: false)` })
       }
       return
     }
@@ -547,12 +643,111 @@ class ConfigCodemod {
       } else {
         this.replaceValue(asarProp.initializer, this.objectLiteralTextAt(entries, braceIndent))
       }
-      this.changes.push({ key: "asar", description: "replaced asar: true with asar object (true is no longer a valid value)" })
+      this.changes.push({ key: "asar", description: "removed redundant asar: true (asar is enabled by default; the explicit `true` is not needed)" })
       return
     }
 
     // No asar prop yet — create one on root.
     this.createChild(root, "asar", buildEntries(this.propIndentFor(root) + this.indentUnit))
+  }
+
+  /** True when some platform section sets its own `asar` to anything but `false` / `null`. */
+  private platformReEnablesAsar(root: any): boolean {
+    const ts = this.ts
+    return ASAR_PLATFORM_KEYS.some(platform => {
+      const p = this.getObjectProp(root, platform)
+      const prop = p == null ? null : this.getProp(p, "asar")
+      if (prop == null || !ts.isPropertyAssignment(prop)) {
+        return false
+      }
+      const kind = this.unwrap(prop.initializer).kind
+      return kind !== ts.SyntaxKind.FalseKeyword && kind !== ts.SyntaxKind.NullKeyword
+    })
+  }
+
+  /**
+   * Platform-level `asarUnpack` → `<platform>.asar.unpack`. Only the cases where a plain move is exactly the v26
+   * result are rewritten: a platform-level `asar` replaces the root one in v27, so whenever root-level asar
+   * options exist they would have to be copied into the platform object — that is left to the user, with a warning.
+   */
+  private rulePlatformAsar(root: any, platform: any, name: string): void {
+    const ts = this.ts
+    const unpackProp = this.getProp(platform, "asarUnpack")
+    const asarProp = this.getProp(platform, "asar")
+    const asarVal = asarProp != null && ts.isPropertyAssignment(asarProp) ? this.unwrap(asarProp.initializer) : null
+    const rootAsarProp = this.getProp(root, "asar")
+    const rootAsarVal = rootAsarProp != null && ts.isPropertyAssignment(rootAsarProp) ? this.unwrap(rootAsarProp.initializer) : null
+    const rootHasFlat =
+      ["asar-unpack", "asar-unpack-dir", "asarUnpack", "disableSanityCheckAsar", "disableAsarIntegrity"].some(k => this.getProp(root, k) != null) ||
+      (rootAsarVal != null && ts.isObjectLiteralExpression(rootAsarVal) && this.getProp(rootAsarVal, "unpackDir") != null)
+    const ownIsNull = asarVal == null || asarVal.kind === ts.SyntaxKind.NullKeyword
+
+    const manual = (why: string) =>
+      this.warnings.push(
+        `${name}.asar: ${why} In v27 a platform-level asar replaces the root one, so copy the root asar options into ${name}.asar` +
+          (unpackProp != null ? ` and move ${name}.asarUnpack there manually.` : " manually.")
+      )
+    // Shorthand / non-literal values cannot be reasoned about statically.
+    if ((asarProp != null && !ts.isPropertyAssignment(asarProp)) || (rootAsarProp != null && !ts.isPropertyAssignment(rootAsarProp))) {
+      if (unpackProp != null) {
+        manual("the platform or root asar value is not a literal.")
+      }
+      return
+    }
+
+    if (ownIsNull) {
+      if (unpackProp == null) {
+        return
+      }
+      if (rootAsarVal != null && rootAsarVal.kind === ts.SyntaxKind.FalseKeyword) {
+        this.removeProp(unpackProp)
+        this.changes.push({ key: `${name}.asarUnpack`, description: `removed ${name}.asarUnpack (no effect with asar: false)` })
+        return
+      }
+      const rootAsarIsTrivial =
+        rootAsarVal == null ||
+        rootAsarVal.kind === ts.SyntaxKind.TrueKeyword ||
+        rootAsarVal.kind === ts.SyntaxKind.NullKeyword ||
+        (ts.isObjectLiteralExpression(rootAsarVal) && rootAsarVal.properties.length === 0)
+      if (rootHasFlat || !rootAsarIsTrivial) {
+        manual(`${name}.asarUnpack is set alongside root-level asar options.`)
+        return
+      }
+      if (asarProp != null) {
+        this.removeProp(asarProp)
+      }
+      this.moveInto(platform, "asar", [{ prop: unpackProp, renameTo: "unpack" }], [], /* treatNullAsAbsent */ true)
+      this.changes.push({ key: `${name}.asarUnpack`, description: `moved ${name}.asarUnpack → ${name}.asar.unpack` })
+      return
+    }
+
+    if (asarVal.kind === ts.SyntaxKind.FalseKeyword) {
+      if (unpackProp != null) {
+        this.removeProp(unpackProp)
+        this.changes.push({ key: `${name}.asarUnpack`, description: `removed ${name}.asarUnpack (no effect with ${name}.asar: false)` })
+      }
+      return
+    }
+
+    // `asar: true` or an object literal
+    if (rootHasFlat) {
+      manual("root-level asarUnpack / disableSanityCheckAsar / disableAsarIntegrity applied to this platform in v26.")
+      return
+    }
+    if (unpackProp == null) {
+      return
+    }
+    if (asarVal.kind === ts.SyntaxKind.TrueKeyword) {
+      const braceIndent = this.lineIndentAt(this.start(asarProp.initializer))
+      this.replaceValue(asarProp.initializer, this.objectLiteralTextAt([this.entryText(unpackProp, braceIndent + this.indentUnit, "unpack")], braceIndent))
+      this.removeProp(unpackProp)
+    } else if (ts.isObjectLiteralExpression(asarVal) && this.getProp(asarVal, "unpack") == null) {
+      this.moveInto(platform, "asar", [{ prop: unpackProp, renameTo: "unpack" }], [])
+    } else {
+      manual(`${name}.asar is not a plain object literal, or already sets unpack.`)
+      return
+    }
+    this.changes.push({ key: `${name}.asarUnpack`, description: `moved ${name}.asarUnpack → ${name}.asar.unpack` })
   }
 
   private ruleAppImageSystemIntegration(root: any): void {
@@ -588,16 +783,34 @@ class ConfigCodemod {
         continue
       }
       const provider = this.stringLiteralValue(this.getProp(obj, "provider"))
-      const vPrefixed = this.getProp(obj, "vPrefixedTagName")
-      if (vPrefixed == null || !ts.isPropertyAssignment(vPrefixed)) {
+      // GitLab keeps vPrefixedTagName in v27 (no tagNamePrefix equivalent) — leave it untouched.
+      if (provider !== "github") {
         continue
       }
-      if (provider === "github") {
+      const vPrefixed = this.getProp(obj, "vPrefixedTagName")
+      const tagNamePrefix = this.getProp(obj, "tagNamePrefix")
+      const prefixText = this.stringLiteralValue(tagNamePrefix)
+      if (vPrefixed != null && ts.isPropertyAssignment(vPrefixed)) {
+        // v26 githubTagPrefix(): a non-empty tagNamePrefix won; otherwise vPrefixedTagName (default true) chose "v" or "".
         const isFalse = vPrefixed.initializer.kind === ts.SyntaxKind.FalseKeyword
-        this.replaceRange(this.start(vPrefixed), vPrefixed.end, `tagNamePrefix: ${isFalse ? '""' : '"v"'}`)
+        if (tagNamePrefix == null) {
+          this.replaceRange(this.start(vPrefixed), vPrefixed.end, `tagNamePrefix: ${isFalse ? '""' : '"v"'}`)
+        } else {
+          if (prefixText === "") {
+            this.replaceValue(tagNamePrefix.initializer, isFalse ? '""' : '"v"')
+          }
+          this.removeProp(vPrefixed)
+        }
         changed = true
+      } else if (prefixText === "") {
+        // v26 ignored an empty tagNamePrefix and still tagged "v1.2.3"; v27 honors it and would tag "1.2.3".
+        this.replaceValue(tagNamePrefix.initializer, '"v"')
+        changed = true
+        this.warnings.push(
+          'A GitHub publish entry set tagNamePrefix: "". v26 ignored an empty prefix and tagged releases "v<version>"; v27 honors it. ' +
+            'It was rewritten to tagNamePrefix: "v" to keep your existing tag names — set it back to "" if you want unprefixed tags from now on.'
+        )
       }
-      // GitLab keeps vPrefixedTagName in v27 (no tagNamePrefix equivalent) — leave it untouched.
     }
     if (changed) {
       this.changes.push({
@@ -618,6 +831,14 @@ class ConfigCodemod {
       this.removeProp(snapProp)
       this.changes.push({ key: "snap", description: "removed empty snap config (use snapcraft in v27)" })
       return
+    }
+
+    // snap's properties are re-emitted verbatim below, so rulePublish skipped it — flag what it would have rewritten.
+    const snapPublish = this.getProp(snap, "publish")
+    if (snapPublish != null && /\bvPrefixedTagName\b|\btagNamePrefix\s*:\s*(""|'')/.test(this.text.slice(this.start(snapPublish), snapPublish.end))) {
+      this.warnings.push(
+        "snap.publish sets vPrefixedTagName or an empty tagNamePrefix; after the move, apply the GitHub tagNamePrefix change under snapcraft.<base>.publish manually."
+      )
     }
 
     const baseProp = this.getProp(snap, "base")
@@ -644,8 +865,19 @@ class ConfigCodemod {
       assumed = true
     }
 
+    let nestedProps = restProps
+    if (base === "core24") {
+      const unsupported = (SNAP_CORE24_UNSUPPORTED as readonly string[]).filter(k => this.getProp(snap, k) != null)
+      nestedProps = restProps.filter((p: any) => !unsupported.includes(this.propName(p)!))
+      if (unsupported.length > 0) {
+        this.warnings.push(
+          `snap config set [${unsupported.join(", ")}], which the v27 snapcraft.core24 options do not support (core24 builds with the snapcraft CLI directly); they were dropped.`
+        )
+      }
+    }
+
     const baseChildIndent = this.propIndentFor(root) + this.indentUnit + this.indentUnit
-    const nestedEntries = restProps.map((p: any) => this.entryText(p, baseChildIndent))
+    const nestedEntries = nestedProps.map((p: any) => this.entryText(p, baseChildIndent))
     const snapcraftChildIndent = this.propIndentFor(root) + this.indentUnit
     const nestedObject = nestedEntries.length > 0 ? this.objectLiteralTextAt(nestedEntries, snapcraftChildIndent) : "{}"
     const entries = [`base: "${base}"`, `${base}: ${nestedObject}`]
@@ -679,6 +911,14 @@ class ConfigCodemod {
     if (sq == null) {
       return
     }
+    // Not auto-migrated (different bundle layout) — left in place so the build fails with a targeted message.
+    if (this.getProp(sq, "customSquirrelVendorDir") != null) {
+      this.warnings.push(
+        "squirrelWindows.customSquirrelVendorDir was removed in v27 and cannot be migrated automatically. " +
+          'Supply the custom bundle via toolsets.squirrel: { url: "file:///abs/path" } — the bundle must contain an electron-winstaller/vendor/ subtree ' +
+          "(customSquirrelVendorDir pointed at the vendor files directly) — or remove the key to use the default Squirrel bundle."
+      )
+    }
     const noMsi = this.getProp(sq, "noMsi")
     if (noMsi == null || !ts.isPropertyAssignment(noMsi)) {
       return
@@ -698,31 +938,54 @@ class ConfigCodemod {
       return
     }
 
-    let signSet = this.getProp(win, "sign") != null
+    const signNode = this.getProp(win, "sign")
+    const existingSignIsNull = signNode != null && ts.isPropertyAssignment(signNode) && this.unwrap(signNode.initializer).kind === ts.SyntaxKind.NullKeyword
+    // `sign: null` is "not configured" in both versions — it neither blocks nor survives a migration below.
+    let signSet = signNode != null && !existingSignIsNull
 
+    // Either flag set to false skipped ALL signing in v26, so both map to win.sign: false (signAndEditExecutable
+    // also skipped resource editing, which always runs in v27 — that part has no equivalent).
+    const isFalseProp = (prop: any) => prop != null && ts.isPropertyAssignment(prop) && prop.initializer.kind === ts.SyntaxKind.FalseKeyword
     const signAndEdit = this.getProp(win, "signAndEditExecutable")
+    const signExe = this.getProp(win, "signExecutable")
+    const signingDisabled = isFalseProp(signAndEdit) || isFalseProp(signExe)
     if (signAndEdit != null && ts.isPropertyAssignment(signAndEdit)) {
-      const isFalse = signAndEdit.initializer.kind === ts.SyntaxKind.FalseKeyword
       this.removeProp(signAndEdit)
-      if (isFalse) {
+      if (isFalseProp(signAndEdit)) {
         this.warnings.push(
-          "win.signAndEditExecutable: false was used to skip both resource editing and signing. In v27, resource editing always runs. To skip signing only, set win.sign: false. There is no v27 equivalent that also skips resource editing — apply resources manually if needed."
+          "win.signAndEditExecutable: false was used to skip both resource editing and signing. In v27, resource editing always runs; signing is still skipped via win.sign: false. There is no v27 equivalent that also skips resource editing — apply resources manually if needed."
         )
-      } else {
-        this.changes.push({ key: "win.signAndEditExecutable", description: "removed win.signAndEditExecutable (resource editing always runs in v27; was the default)" })
       }
+      this.changes.push({ key: "win.signAndEditExecutable", description: "removed win.signAndEditExecutable (resource editing always runs in v27)" })
+    }
+    if (signExe != null && ts.isPropertyAssignment(signExe)) {
+      this.removeProp(signExe)
+      this.changes.push({ key: "win.signExecutable", description: "removed win.signExecutable (signing is enabled by default when credentials are available)" })
+    }
+    let signIsFalse = isFalseProp(signNode)
+    if (signingDisabled && !signSet) {
+      if (existingSignIsNull) {
+        this.removeProp(signNode)
+      }
+      this.createChild(win, "sign", [], "false")
+      signSet = true
+      signIsFalse = true
+      this.changes.push({ key: "win.sign", description: "set win.sign: false (v26 signExecutable/signAndEditExecutable: false disabled signing; resource editing still runs)" })
     }
 
-    const signExe = this.getProp(win, "signExecutable")
-    if (signExe != null && ts.isPropertyAssignment(signExe)) {
-      const isFalse = signExe.initializer.kind === ts.SyntaxKind.FalseKeyword
-      this.removeProp(signExe)
-      if (isFalse && !signSet) {
-        this.createChild(win, "sign", [], "false")
-        signSet = true
-        this.changes.push({ key: "win.signExecutable", description: "replaced win.signExecutable: false with win.sign: false (disables signing; resource editing still runs)" })
-      } else {
-        this.changes.push({ key: "win.signExecutable", description: "removed win.signExecutable (signing is enabled by default when credentials are available)" })
+    if (signIsFalse) {
+      // Signing is switched off, so the legacy options never applied. Only key names are reported — values can hold passwords.
+      const dropped = ["signtoolOptions", "azureSignOptions"].filter(k => this.getProp(win, k) != null)
+      if (dropped.length > 0) {
+        for (const k of dropped) {
+          this.removeProp(this.getProp(win, k))
+          this.changes.push({ key: `win.${k}`, description: `removed win.${k} (signing is disabled with win.sign: false)` })
+        }
+        this.warnings.push(
+          `win.sign is false (signing disabled), so [${dropped.map(k => `win.${k}`).join(", ")}] had no effect and ${dropped.length === 1 ? "was" : "were"} removed. ` +
+            'To sign in v27, replace win.sign: false with win.sign: { type: "signtool" | "azure", … } carrying those options.'
+        )
+        return
       }
     }
 
@@ -734,13 +997,15 @@ class ConfigCodemod {
       return
     }
 
-    const originalSign = this.getProp(win, "sign")
-    const signAlreadySet = signSet || (originalSign != null && ts.isPropertyAssignment(originalSign) && originalSign.initializer.kind !== ts.SyntaxKind.NullKeyword)
-    if (signAlreadySet) {
+    if (signSet) {
       this.warnings.push(
         `win.sign is already set alongside ${hasAzure ? "win.azureSignOptions" : "win.signtoolOptions"}. Remove the legacy key manually after verifying win.sign is correct.`
       )
       return
+    }
+
+    if (existingSignIsNull) {
+      this.removeProp(signNode)
     }
 
     if (hasAzure && hasSigntool) {
@@ -867,10 +1132,13 @@ class ConfigCodemod {
     const sources: { prop: any; renameTo?: string }[] = []
     for (const f of present) {
       const prop = this.getProp(platform, f)
+      if (this.dropNullField(prop, f, name)) {
+        continue
+      }
       sources.push({ prop })
       this.changes.push({ key: `${name}.${f}`, description: `moved ${name}.${f} → ${name}.sign.${f}` })
     }
-    if (hasSignIgnore) {
+    if (hasSignIgnore && !this.dropNullField(signIgnore, "signIgnore", name)) {
       sources.push({ prop: signIgnore, renameTo: "ignore" })
       this.changes.push({ key: `${name}.signIgnore`, description: `renamed ${name}.signIgnore → ${name}.sign.ignore` })
     }
@@ -878,8 +1146,24 @@ class ConfigCodemod {
     // A bare `sign: null` should be dropped before we build the options object.
     if (signIsNull) {
       this.removeProp(existingSignProp)
+      if (sources.length === 0) {
+        this.changes.push({ key: `${name}.sign`, description: `removed ${name}.sign: null (v26 "no custom signer" = v27 default; sign: null now means skip signing)` })
+      }
     }
-    this.moveInto(platform, "sign", sources, [], /* treatNullAsAbsent */ true)
+    if (sources.length > 0) {
+      this.moveInto(platform, "sign", sources, [], /* treatNullAsAbsent */ true)
+    }
+  }
+
+  /** Drops a v26 `null` ("unset") for a field whose v27 type has no null branch. Returns true when dropped. */
+  private dropNullField(prop: any, field: string, name: string): boolean {
+    const ts = this.ts
+    if (!MAC_NULL_MEANS_UNSET_FIELDS.has(field) || !ts.isPropertyAssignment(prop) || this.unwrap(prop.initializer).kind !== ts.SyntaxKind.NullKeyword) {
+      return false
+    }
+    this.removeProp(prop)
+    this.changes.push({ key: `${name}.${field}`, description: `removed ${name}.${field}: null (null meant "unset" in v26; the v27 option does not accept null)` })
+    return true
   }
 
   private ruleMacUniversal(platform: any, name: string): void {
@@ -887,10 +1171,17 @@ class ConfigCodemod {
     if (present.length === 0) {
       return
     }
-    const sources = present.map(f => {
-      this.changes.push({ key: `${name}.${f}`, description: `moved ${name}.${f} → ${name}.universal.${f}` })
-      return { prop: this.getProp(platform, f) }
-    })
+    const sources: { prop: any }[] = []
+    for (const f of present) {
+      const prop = this.getProp(platform, f)
+      if (!this.dropNullField(prop, f, name)) {
+        this.changes.push({ key: `${name}.${f}`, description: `moved ${name}.${f} → ${name}.universal.${f}` })
+        sources.push({ prop })
+      }
+    }
+    if (sources.length === 0) {
+      return
+    }
     const ok = this.moveInto(platform, "universal", sources, [])
     if (!ok) {
       this.warnings.push(`${name}.universal already exists but is not an object literal; move ${present.join(", ")} into it manually.`)
@@ -899,8 +1190,23 @@ class ConfigCodemod {
 
   private ruleElectronDownload(root: any): void {
     const ts = this.ts
-    const prop = this.getProp(root, "electronDownload")
-    if (prop == null || !ts.isPropertyAssignment(prop)) {
+    let sourceKey: "electronDownload" | "electronGet" = "electronDownload"
+    let prop = this.getProp(root, "electronDownload")
+    if (prop == null) {
+      // A hand-renamed `electronGet` that still carries the v26 shape.
+      const electronGet = this.getObjectProp(root, "electronGet")
+      if (electronGet == null || !electronGet.properties.some((p: any) => isLegacyElectronDownloadKey(this.propName(p) ?? ""))) {
+        return
+      }
+      sourceKey = "electronGet"
+      prop = this.getProp(root, "electronGet")
+    } else if (this.getProp(root, "electronGet") != null) {
+      this.warnings.push(
+        "Both electronDownload and electronGet are set; merge electronDownload into electronGet manually (mirror → mirrorOptions.mirror, isVerifyChecksum: false → unsafelyDisableChecksums: true)."
+      )
+      return
+    }
+    if (!ts.isPropertyAssignment(prop)) {
       return
     }
     const old = this.unwrap(prop.initializer)
@@ -966,8 +1272,11 @@ class ConfigCodemod {
     this.removeProp(prop)
     this.createChild(root, "electronGet", entries)
     this.changes.push({
-      key: "electronDownload",
-      description: "renamed electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum → unsafelyDisableChecksums)",
+      key: sourceKey,
+      description:
+        sourceKey === "electronDownload"
+          ? "renamed electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum → unsafelyDisableChecksums)"
+          : "reshaped electronGet to the v27 options (mirror → mirrorOptions.mirror; isVerifyChecksum → unsafelyDisableChecksums)",
     })
   }
 

@@ -4,24 +4,24 @@
 
 v27 migrates the entire electron-builder package ecosystem to **native ES modules** and requires **Node.js >=22.12.0**. Alongside ESM, this release hard-deletes the deprecated APIs that had accumulated since v22 and reorganizes several configuration properties into clearer groupings.
 
-**Most projects need only a Node.js version bump.** The `build()` API and all exported types are unchanged, and CJS `require()` continues to work on Node >=22.12 — no code changes needed unless you used `electronCompile` or one of the removed config options below.
+**Most projects need only a Node.js version bump plus one command.** The `build()` API is unchanged and CJS `require()` continues to work on Node >=22.12. Renamed or restructured config keys are rewritten by `electron-builder migrate-schema` (Step 0); a few type exports were renamed, and several runtime defaults changed — see the breaking-changes page.
 
 > **⚠️ Read the breaking changes before upgrading:** **[electron.build/docs/migration/v27-breaking-changes](https://www.electron.build/docs/migration/v27-breaking-changes)** — the authoritative catalogue of everything that changed.
 
 Step-by-step walkthrough: **[electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27)**
 
-> **Toolsets now default to `"latest"`.** In v27 every `toolsets.*` property defaults to the **newest published bundle**: an unset property, `null`, and the literal `"latest"` all resolve to the latest version for that toolset. No config change is required, but the effective defaults moved — `wine` → `1.0.1` (Wine 11.0; was 4.0.1), `winCodeSign` → `1.3.0` (was 1.1.0; adds Azure Trusted Signing `dlib` + .NET 8), `appimage` → `1.1.0` (was 1.0.3; adds `unsquashfs`); `nsis` (1.2.1), `fpm` (2.2.1), `icons` (1.2.1), `linuxToolsMac` (1.0.0), `sevenZip` (1.0.0) are unchanged. Pin a toolset to `"0.0.0"` to restore its legacy bundle. Because `winCodeSign` now defaults to `1.3.0`, Azure Trusted Signing uses the faster `signtool /dlib` path automatically — pin `winCodeSign` below `1.3.0` only to force the legacy PowerShell path. The `null` value was dropped from the `ToolsetConfig` type (still works at runtime); TypeScript configs should switch `null` → `"latest"`.
+> **Toolsets now default to `"latest"`.** In v27 every `toolsets.*` property defaults to the **newest published bundle**: an unset property and the literal `"latest"` both resolve to the latest version for that toolset (`null` is rejected by the schema; `migrate-schema` removes it). The effective defaults moved (v26 defaulted to the legacy bundles) — `wine` → `"system"` (the host `wine` on `PATH`; **building Windows targets on macOS now needs Wine installed**), `winCodeSign` → `1.3.0` (adds Azure Trusted Signing `dlib` + .NET 8), `appimage` → `1.1.0` (static FUSE3 runtime, `unsquashfs`), `nsis` → `1.2.1` (NSIS 3.12), `icons` → `1.2.3`, `linuxToolsMac` → `1.0.1`, `sevenZip` → `1.0.1`; `fpm` (2.2.1) is unchanged. Pin a toolset to `"0.0.0"` to restore its legacy bundle. Because `winCodeSign` now defaults to `1.3.0`, Azure Trusted Signing uses the faster `signtool /dlib` path automatically — pin `winCodeSign` below `1.3.0` only to force the legacy PowerShell path.
 
 ### Step 0: run the automated migrator
 
-Before upgrading, let the built-in command rewrite your static config (`package.json` build key, `electron-builder.json`/`.json5`/`.yml`/`.yaml`) in place:
+Before upgrading, let the built-in command rewrite your config (`package.json` build key, `electron-builder.json`/`.json5`/`.yml`/`.yaml`, or a `.js`/`.ts`/`.cjs`/`.mjs` config) in place:
 
 ```bash
 electron-builder migrate-schema           # apply changes
 electron-builder migrate-schema --dry-run # preview only
 ```
 
-It handles **every config-level breaking change** automatically: `electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, the `nativeModules` grouping, ASAR consolidation (`asarUnpack` → `asar.unpack`, `disableSanityCheckAsar` → `asar.disableSanityCheck`, `disableAsarIntegrity` → `asar.disableIntegrity`, legacy `asar-unpack`/`asar.unpackDir` keys), macOS signing consolidation (`mac.identity`/`entitlements`/`hardenedRuntime`/etc. → `mac.sign.*`, `signIgnore` → `sign.ignore`), `mac.universal` consolidation (`mergeASARs`/`singleArchFiles`/`x64ArchFiles` → `mac.universal.*`), `electronDownload` → `electronGet`, `appImage.systemIntegration`, `vPrefixedTagName`, `win.azureSignOptions` extras, `snap` → `snapcraft`, `helper-bundle-id`, `squirrelWindows.noMsi`, and root-level `directories`. Programmatic configs (`.js`/`.ts`/`.cjs`/`.mjs`) and TOML are detected and printed as manual steps instead.
+It handles every config-level breaking change that has a mechanical v27 equivalent: `electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, `disableDefaultIgnoredFiles`, `linux.syncDesktopName`, the `nativeModules` grouping, ASAR consolidation (`asarUnpack` → `asar.unpack` at the root and per platform, `disableSanityCheckAsar` → `asar.disableSanityCheck`, `disableAsarIntegrity` → `asar.disableIntegrity`, legacy `asar-unpack`/`asar.unpackDir` keys), macOS signing consolidation (`mac.identity`/`type`/`entitlements`/`hardenedRuntime`/etc. → `mac.sign.*`, `signIgnore` → `sign.ignore`, `gatekeeperAssess` removed), `mac.universal` consolidation, Windows signing (`win.signtoolOptions` / `win.azureSignOptions` → `win.sign`, `signExecutable` / `signAndEditExecutable`), `electronDownload` → `electronGet`, `appImage.systemIntegration`, GitHub `vPrefixedTagName` → `tagNamePrefix`, `snap` → `snapcraft`, `helper-bundle-id`, `squirrelWindows.noMsi`, `toolsets.*` values v27 rejects, and root-level `directories`. JS/TS configs are rewritten with a comment-preserving codemod; TOML is printed as manual steps. `squirrelWindows.customSquirrelVendorDir` cannot be rewritten and is reported with a warning.
 
 ### Breaking changes at a glance
 
@@ -38,16 +38,18 @@ It handles **every config-level breaking change** automatically: `electronCompil
 | `electronDownload` → `electronGet` | ✓ | Renamed; `mirror` → `mirrorOptions.mirror`, `isVerifyChecksum` → `unsafelyDisableChecksums` |
 | `appImage.systemIntegration` removed | ✓ | Removed automatically |
 | `GithubOptions.vPrefixedTagName` removed | ✓ | Replaced by `tagNamePrefix` |
-| `win.azureSignOptions` index-signature keys | ✓ | Moved into `additionalMetadata` |
+| Windows signing unified under `win.sign` | ✓ | `win.signtoolOptions` / `win.azureSignOptions` → `win.sign: { type, … }` (Azure extra keys → `additionalMetadata`); `win.signExecutable: false` → `win.sign: false` |
 | `snap` config key removed | ✓ | Restructured to `snapcraft` with an explicit `base` |
 | `build.helper-bundle-id` removed | ✓ | Moved to `mac.helperBundleId` |
 | `squirrelWindows.noMsi` removed | ✓ | Replaced by `msi` (inverted) |
 | Root-level `directories` removed | ✓ | Moved under `build.directories` |
+| `squirrelWindows.customSquirrelVendorDir` removed | — | Supply a custom bundle via `toolsets.squirrel` (different layout; `migrate-schema` warns) |
 | Implicit `--publish` removed | — | Pass `--publish` explicitly |
 | `--em.build` / `--em.directories` CLI flags removed | — | Use `-c` / `-c.directories` |
 | `PackagerOptions.devMetadata` / `extraMetadata` removed | — | Use `config` / `config.extraMetadata` |
-| Toolset env-var overrides removed | — | `APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, etc. → `toolsets.X: { url, checksum }` (`ToolsetCustom`) |
-| Toolset defaults now resolve to `"latest"` (newest bundle) | — | No action; pin to `"0.0.0"` to restore a legacy bundle. Effective bumps: `wine` 4.0.1→11.0, `winCodeSign`→1.3.0, `appimage`→1.1.0 |
+| Toolset env-var overrides removed | — | `APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, etc. → `toolsets.X: { url, checksum }` (`ToolsetCustom`); `USE_SYSTEM_WINE` → drop it (host Wine is the default) |
+| Toolset defaults now resolve to `"latest"` (newest bundle) | — | No action; pin to `"0.0.0"` to restore a legacy bundle. `wine` is now the host install (install Wine on macOS build hosts), `winCodeSign`→1.3.0, `appimage`→1.1.0 |
+| Runtime defaults and electron-updater API changes | — | Entitlements, DMG APFS, missing-dependency errors, `quitAndInstall` / `autoInstallEvent` / `downloadUpdate()`, … — see the [breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#breaking-changes-at-a-glance) |
 | `electron-forge-maker-*` are now ESM | — | None — same API, same `export default` shape |
 
 ### 1. Update Node.js

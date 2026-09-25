@@ -538,11 +538,10 @@ describe("migrateConfig — asar consolidation", () => {
     expect(result.migrated.asar).toEqual({ unpack: "**/*.node" })
   })
 
-  test("skips consolidation when asar: false", () => {
+  test("drops the no-op root keys when asar: false (they would fail v27 validation)", () => {
     const result = migrateConfig({ asar: false, asarUnpack: "**/*.node", disableSanityCheckAsar: true })
-    expect(result.migrated.asar).toBe(false)
-    expect("asarUnpack" in result.migrated).toBe(true)
-    expect("disableSanityCheckAsar" in result.migrated).toBe(true)
+    expect(result.migrated).toEqual({ asar: false })
+    expect(result.changes.map(c => c.key)).toEqual(["asarUnpack", "disableSanityCheckAsar"])
   })
 
   test("consolidates all three properties together", () => {
@@ -714,6 +713,194 @@ describe("migrateConfig — mac.gatekeeperAssess is removed, not moved", () => {
   })
 })
 
+describe("migrateConfig — platform-level asarUnpack", () => {
+  test("moves mac.asarUnpack → mac.asar.unpack", () => {
+    const result = migrateConfig({ mac: { asarUnpack: ["**/*.node"] } })
+    expect(result.migrated.mac).toEqual({ asar: { unpack: ["**/*.node"] } })
+    expect(result.changes.some(c => c.key === "mac.asarUnpack")).toBe(true)
+  })
+
+  test.each(["mas", "masDev", "win", "linux"] as const)("applies to %s", platform => {
+    const result = migrateConfig({ [platform]: { asarUnpack: "x" } })
+    expect(result.migrated[platform]).toEqual({ asar: { unpack: "x" } })
+  })
+
+  // v26 concatenated root and platform asarUnpack; a v27 platform-level asar replaces the root one wholesale.
+  test("merges the root asar options into the new platform asar", () => {
+    const result = migrateConfig({ asarUnpack: "root/**", disableAsarIntegrity: true, asar: { smartUnpack: false }, win: { asarUnpack: "w/**" } })
+    expect(result.migrated.asar).toEqual({ smartUnpack: false, unpack: "root/**", disableIntegrity: true })
+    expect(result.migrated.win).toEqual({ asar: { smartUnpack: false, unpack: ["root/**", "w/**"], disableIntegrity: true } })
+  })
+
+  test("folds root-level options into a platform that already overrides asar", () => {
+    const result = migrateConfig({ asarUnpack: "root/**", disableSanityCheckAsar: true, mac: { asar: true } })
+    expect(result.migrated.mac).toEqual({ asar: { unpack: "root/**", disableSanityCheck: true } })
+  })
+
+  test("a platform that re-enables asar keeps the root options even when the root disables it", () => {
+    const result = migrateConfig({ asar: false, asarUnpack: "root/**", mac: { asar: { ordering: "o.txt" } } })
+    expect(result.migrated.asar).toBe(false)
+    expect("asarUnpack" in result.migrated).toBe(false)
+    expect(result.migrated.mac.asar).toEqual({ ordering: "o.txt", unpack: "root/**" })
+  })
+
+  test("drops a platform asarUnpack that has no effect", () => {
+    expect(migrateConfig({ linux: { asar: false, asarUnpack: "x" } }).migrated.linux).toEqual({ asar: false })
+    expect(migrateConfig({ asar: false, linux: { asarUnpack: "x" } }).migrated.linux).toEqual({})
+  })
+
+  test("leaves a platform asar override alone when there is nothing to fold in", () => {
+    const result = migrateConfig({ mac: { asar: { smartUnpack: false } } })
+    expect(result.modified).toBe(false)
+  })
+})
+
+describe("migrateConfig — toolsets", () => {
+  test("removes null toolset values (rejected by the v27 schema)", () => {
+    const result = migrateConfig({ toolsets: { wine: null, nsis: "1.2.1" } })
+    expect(result.migrated.toolsets).toEqual({ nsis: "1.2.1" })
+    expect(result.changes.some(c => c.key === "toolsets.wine" && c.description.includes('"0.0.0"'))).toBe(true)
+  })
+
+  test('remaps the retired appimage "1.0.2" pin to "1.0.3"', () => {
+    const result = migrateConfig({ toolsets: { appimage: "1.0.2" } })
+    expect(result.migrated.toolsets).toEqual({ appimage: "1.0.3" })
+  })
+
+  test("leaves valid pins untouched", () => {
+    const input = { toolsets: { appimage: "0.0.0", wine: "system", winCodeSign: "1.3.0" } }
+    expect(migrateConfig(input).modified).toBe(false)
+  })
+})
+
+describe("migrateConfig — nativeRebuilder: legacy", () => {
+  test("drops the removed legacy rebuilder instead of emitting an invalid rebuildMode", () => {
+    const result = migrateConfig({ nativeRebuilder: "legacy", npmRebuild: false })
+    expect(result.migrated).toEqual({ nativeModules: { npmRebuild: false } })
+    expect(result.warnings.some(w => w.includes("legacy") && w.includes("@electron/rebuild"))).toBe(true)
+  })
+
+  test("does not emit an empty nativeModules object", () => {
+    expect(migrateConfig({ nativeRebuilder: "legacy" }).migrated).toEqual({})
+  })
+})
+
+describe("migrateConfig — v26 null values on mac options", () => {
+  test("drops nulls the v27 sign/universal types reject, keeps identity: null (skip signing)", () => {
+    const result = migrateConfig({ mac: { type: null, provisioningProfile: null, binaries: null, signIgnore: null, singleArchFiles: null, identity: null } })
+    expect(result.migrated.mac).toEqual({ sign: { identity: null } })
+    expect(result.changes.some(c => c.key === "mac.provisioningProfile" && c.description.includes("null"))).toBe(true)
+  })
+
+  test("does not leave a bare sign: null behind when every moved field was a dropped null", () => {
+    const result = migrateConfig({ mac: { sign: null, type: null } })
+    expect(result.migrated.mac).toEqual({})
+  })
+})
+
+describe("migrateConfig — GitHub tag prefix semantics", () => {
+  test("a non-empty tagNamePrefix won over vPrefixedTagName in v26 and is kept", () => {
+    const result = migrateConfig({ publish: { provider: "github", tagNamePrefix: "release-", vPrefixedTagName: false } })
+    expect(result.migrated.publish).toEqual({ provider: "github", tagNamePrefix: "release-" })
+  })
+
+  test('an empty tagNamePrefix was ignored by v26 (tags stayed "v…"), so it is rewritten to "v" with a warning', () => {
+    const result = migrateConfig({ publish: [{ provider: "github", tagNamePrefix: "" }] })
+    expect(result.migrated.publish).toEqual([{ provider: "github", tagNamePrefix: "v" }])
+    expect(result.warnings.some(w => w.includes("tagNamePrefix"))).toBe(true)
+  })
+
+  test("an empty tagNamePrefix with vPrefixedTagName: false keeps no prefix", () => {
+    const result = migrateConfig({ publish: { provider: "github", tagNamePrefix: "", vPrefixedTagName: false } })
+    expect(result.migrated.publish).toEqual({ provider: "github", tagNamePrefix: "" })
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  test("migrates publish entries nested in target sections (nsis, dmg, snap, …)", () => {
+    const result = migrateConfig({
+      nsis: { publish: { provider: "github", vPrefixedTagName: false } },
+      snap: { base: "core22", publish: [{ provider: "github", vPrefixedTagName: true }] },
+    })
+    expect(result.migrated.nsis.publish).toEqual({ provider: "github", tagNamePrefix: "" })
+    expect(result.migrated.snapcraft.core22.publish).toEqual([{ provider: "github", tagNamePrefix: "v" }])
+  })
+
+  test("GitLab entries are untouched", () => {
+    expect(migrateConfig({ publish: { provider: "gitlab", tagNamePrefix: "" } }).modified).toBe(false)
+  })
+})
+
+describe("migrateConfig — squirrelWindows.customSquirrelVendorDir", () => {
+  // Not a 1-to-1 rename (toolsets.squirrel needs an electron-winstaller/vendor/ subtree), so it is left for
+  // the build-time guard to reject with a targeted message rather than silently swapping the vendored binaries.
+  test("warns and leaves the key in place", () => {
+    const result = migrateConfig({ squirrelWindows: { customSquirrelVendorDir: "./vendor", msi: true } })
+    expect(result.migrated.squirrelWindows).toEqual({ customSquirrelVendorDir: "./vendor", msi: true })
+    expect(result.warnings.some(w => w.includes("customSquirrelVendorDir") && w.includes("toolsets.squirrel"))).toBe(true)
+  })
+})
+
+describe("migrateConfig — electronGet leftovers", () => {
+  test("drops electronDownload.force (no @electron/get v5 equivalent)", () => {
+    const result = migrateConfig({ electronDownload: { force: true, mirrorOptions: { mirror: "https://m/" } } })
+    expect(result.migrated.electronGet).toEqual({ mirrorOptions: { mirror: "https://m/" } })
+    expect(result.warnings.some(w => w.includes("force"))).toBe(true)
+  })
+
+  test("reshapes a hand-renamed electronGet that still has the v26 shape", () => {
+    const result = migrateConfig({ electronGet: { mirror: "https://m/", isVerifyChecksum: false, cache: "/c" } })
+    expect(result.migrated.electronGet).toEqual({ mirrorOptions: { mirror: "https://m/" }, unsafelyDisableChecksums: true })
+    expect(result.changes.some(c => c.key === "electronGet")).toBe(true)
+  })
+
+  test("leaves a valid electronGet untouched", () => {
+    expect(migrateConfig({ electronGet: { mirrorOptions: { mirror: "https://m/" }, unsafelyDisableChecksums: true } }).modified).toBe(false)
+  })
+})
+
+describe("migrateConfig — snap core24", () => {
+  test("drops options the core24 shape does not support", () => {
+    const result = migrateConfig({ snap: { base: "core24", allowNativeWayland: true, useTemplateApp: false, grade: "stable" } })
+    expect(result.migrated.snapcraft).toEqual({ base: "core24", core24: { grade: "stable" } })
+    expect(result.warnings.some(w => w.includes("allowNativeWayland") && w.includes("useTemplateApp"))).toBe(true)
+  })
+})
+
+describe("migrateConfig — Windows signing switched off", () => {
+  // Either flag set to false skipped all signing in v26 (winPackager), so v27 must not start signing.
+  test("signAndEditExecutable: false also becomes win.sign: false", () => {
+    const result = migrateConfig({ win: { signAndEditExecutable: false } })
+    expect(result.migrated.win).toEqual({ sign: false })
+  })
+
+  test("legacy signing options under disabled signing are dropped, naming only the keys", () => {
+    const result = migrateConfig({ win: { signExecutable: false, signtoolOptions: { certificateFile: "c.pfx", certificatePassword: "hunter2" } } })
+    expect(result.migrated.win).toEqual({ sign: false })
+    const warning = result.warnings.find(w => w.includes("win.signtoolOptions"))
+    expect(warning).toBeDefined()
+    expect(warning).not.toContain("hunter2")
+  })
+})
+
+describe("migrateConfig — mac default entitlements advisory", () => {
+  test("a mac config without its own entitlements file gets the advisory, without being rewritten", () => {
+    const result = migrateConfig({ mac: { target: "dmg" } })
+    expect(result.modified).toBe(false)
+    expect(result.advisories.some(a => a.includes("allow-jit") && a.includes("entitlements.mac.plist"))).toBe(true)
+  })
+
+  test("no advisory when entitlements are named (v26 location, migrated) or there is no mac config", () => {
+    expect(migrateConfig({ mac: { entitlements: "build/e.plist" } }).advisories).toHaveLength(0)
+    expect(migrateConfig({ mas: { sign: { entitlements: "build/mas.plist" } } }).advisories).toHaveLength(0)
+    expect(migrateConfig({ win: { target: "nsis" } }).advisories).toHaveLength(0)
+  })
+
+  test("no advisory when electron-builder's default signing is bypassed (custom signer, identity: null)", () => {
+    expect(migrateConfig({ mac: { sign: "./customSign.js" } }).advisories).toHaveLength(0)
+    expect(migrateConfig({ mac: { identity: null } }).advisories).toHaveLength(0)
+  })
+})
+
 describe("migrateConfig — round-trip: migrator output passes v27 schema validation", () => {
   // The migrator is the documented upgrade path, so anything it emits must validate. This is the
   // test that would have caught gatekeeperAssess being relocated into a bag that rejects it.
@@ -748,6 +935,91 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
     ["linux.syncDesktopName", { linux: { syncDesktopName: false } }],
     ["appImage.systemIntegration", { appImage: { systemIntegration: "doNotAsk" } }],
     ["github publish", { publish: { provider: "github", owner: "o", repo: "r", vPrefixedTagName: false } }],
+    [
+      "platform asarUnpack",
+      { asarUnpack: "root/**", mac: { asarUnpack: ["m/**"] }, win: { asar: { smartUnpack: false }, asarUnpack: "w/**" }, linux: { asar: false, asarUnpack: "x" } },
+    ],
+    ["asar false with root keys", { asar: false, asarUnpack: ["**/*.node"], disableAsarIntegrity: true, mac: { asar: true } }],
+    ["toolsets null / retired pin", { toolsets: { wine: null, nsis: null, winCodeSign: null, appimage: "1.0.2" } }],
+    ["nativeRebuilder legacy", { nativeRebuilder: "legacy", npmRebuild: false }],
+    ["mac null fields", { mac: { type: null, provisioningProfile: null, binaries: null, signIgnore: null, singleArchFiles: null, x64ArchFiles: null, identity: null } }],
+    ["electronDownload force", { electronDownload: { force: true, mirrorOptions: { mirror: "https://m/" } } }],
+    ["publish in a target section", { nsis: { publish: { provider: "github", vPrefixedTagName: false } }, dmg: { publish: [{ provider: "github", tagNamePrefix: "" }] } }],
+    ["snap core24", { snap: { base: "core24", allowNativeWayland: true, useTemplateApp: false, grade: "stable" } }],
+    [
+      "win signing disabled with legacy options",
+      { win: { signExecutable: false, azureSignOptions: { endpoint: "https://e/", certificateProfileName: "p", codeSigningAccountName: "a" } } },
+    ],
+    [
+      // One v26 config (validated against the v26.15.3 scheme.json) touching every migrated key at once.
+      "kitchen sink",
+      {
+        electronCompile: false,
+        framework: "electron",
+        nodeVersion: "current",
+        launchUiVersion: "0.1.0",
+        disableDefaultIgnoredFiles: true,
+        nodeGypRebuild: false,
+        npmRebuild: true,
+        nativeRebuilder: "parallel",
+        asar: true,
+        asarUnpack: ["**/*.node"],
+        disableSanityCheckAsar: true,
+        disableAsarIntegrity: true,
+        publish: [
+          { provider: "github", owner: "o", repo: "r", vPrefixedTagName: false },
+          { provider: "gitlab", projectId: 1, vPrefixedTagName: false },
+        ],
+        snap: { base: "core22", confinement: "strict", stagePackages: ["libfoo"], publish: { provider: "github", vPrefixedTagName: true } },
+        win: {
+          signtoolOptions: { certificateFile: "c.pfx", publisherName: "CN=A", sign: "./sign.js" },
+          signAndEditExecutable: true,
+          signExecutable: true,
+          asarUnpack: "a.dll",
+          disableDefaultIgnoredFiles: false,
+          publish: [{ provider: "github", vPrefixedTagName: true }],
+        },
+        mac: {
+          sign: null,
+          identity: "Developer ID Application: Acme (TEAM)",
+          type: "distribution",
+          entitlements: "build/e.plist",
+          entitlementsInherit: "build/ei.plist",
+          entitlementsLoginHelper: "build/el.plist",
+          provisioningProfile: "build/p.provisionprofile",
+          binaries: ["a"],
+          requirements: "r",
+          hardenedRuntime: true,
+          gatekeeperAssess: false,
+          strictVerify: true,
+          preAutoEntitlements: true,
+          timestamp: "none",
+          additionalArguments: ["--x"],
+          signIgnore: "foo",
+          mergeASARs: true,
+          singleArchFiles: "*.node",
+          x64ArchFiles: "bin/*",
+          asarUnpack: ["m/**"],
+        },
+        mas: { type: "distribution", entitlements: "mas.plist" },
+        masDev: { type: "development", provisioningProfile: "dev.provisionprofile" },
+        linux: { syncDesktopName: false, asar: false, asarUnpack: "x" },
+        electronDownload: {
+          mirror: "https://mirror/",
+          isVerifyChecksum: false,
+          cache: "/c",
+          customDir: "d",
+          customFilename: "f",
+          strictSSL: true,
+          platform: "linux",
+          arch: "x64",
+          version: "30.0.0",
+        },
+        toolsets: { wine: null, appimage: "1.0.2", nsis: "1.2.1", winCodeSign: "0.0.0" },
+        nsis: { publish: { provider: "github", vPrefixedTagName: false } },
+        dmg: { publish: [{ provider: "github", tagNamePrefix: "" }] },
+      },
+    ],
   ]
 
   test.each(v26Configs)("%s", async (_name, input) => {
