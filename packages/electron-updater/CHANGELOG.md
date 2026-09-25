@@ -1,5 +1,16 @@
 ## 4.3.0
 
+## 6.8.10
+
+### Patch Changes
+
+- Fix: make multi-range differential downloads work on real servers. Three independent defects made `downloadUpdate` fall back to a full download with `Response ends without calling any handlers`: _[`#10219`](https://github.com/electron-userland/electron-builder/pull/10219) [`7dd7f8a`](https://github.com/electron-userland/electron-builder/commit/7dd7f8a875c088cc5a527b85cc113bcff8a008b3) [@claude](https://github.com/apps/claude)_
+  - `DataSplitter` only recognised CRLF. Some CDNs answer `multipart/byteranges` with bare LF line endings, so no part was ever split and the whole response accumulated in memory. Header lists now end at whichever of `\r\n\r\n` / `\n\n` comes first, and the `<EOL>--boundary` separator size follows the line ending the server actually uses.
+  - A header-list terminator split across two chunks was never found: only the new chunk was searched, the buffered bytes never were, so the parser locked onto the next part's header instead. Only the last few bytes of an unfinished header list are now carried over and searched together with the next chunk, instead of accumulating the whole list.
+  - The 10s watchdog armed when a batch response ends was never disarmed after that batch succeeded. With more than 1000 operations (several range requests) it failed the whole download whenever a later batch took longer than the grace period.
+
+- Fix: keep the cached blockmap consistent with the cached installer. A download round that did not produce a new blockmap (e.g. the differential download was skipped because the cached installer was evicted) now removes the cached `current.blockmap` instead of leaving a stale one next to the freshly cached file, which poisoned the next differential download and surfaced as a generic sha512 checksum mismatch before falling back to a full download (#10097). Leftover pending blockmaps from previous update rounds are also cleared before a fresh download. sha512-mismatch logging now distinguishes a differential download that failed against stale/corrupt cached inputs (including whether the old blockmap came from the local cache or the server) from a genuine checksum failure of a fully downloaded file. _[`#10163`](https://github.com/electron-userland/electron-builder/pull/10163) [`1dfe1a9`](https://github.com/electron-userland/electron-builder/commit/1dfe1a90630efc8df06821f9797067aa20afa5c7) [@claude](https://github.com/apps/claude)_
+
 ## 6.8.9
 
 ### Patch Changes
