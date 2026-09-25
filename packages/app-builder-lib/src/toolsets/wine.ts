@@ -23,6 +23,7 @@ const wineToolsChecksums: Record<string, Record<string, string>> = {
 
 export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, resourcesDir: string): Promise<{ execPath: string; env: Record<string, string> }> {
   if (process.platform === "win32") {
+    // oxlint-disable-next-line typescript/no-base-to-string -- pre-existing message; a custom toolset object prints as "[object Object]", changing it is out of scope for the lint migration
     throw new InvalidConfigurationError(`Wine toolset is not supported on Windows, but got: ${wine}`)
   }
 

@@ -129,7 +129,7 @@ test.ifNotWindows("null callback passes validation", async ({ expect }) => {
       {
         afterPack: null,
         beforeBuild: null,
-      } as unknown as Configuration,
+      },
       new DebugLogger()
     )
   ).resolves.toBeUndefined()

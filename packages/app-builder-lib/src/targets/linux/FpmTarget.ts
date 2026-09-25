@@ -235,7 +235,7 @@ export default class FpmTarget extends Target {
       if (Array.isArray(depends)) {
         fpmConfiguration.customDepends = this.expandDependsDefaults(depends, target)
       } else if (typeof depends === "string") {
-        fpmConfiguration.customDepends = [depends as string]
+        fpmConfiguration.customDepends = [depends]
       } else {
         throw new Error(`depends must be Array or String, but specified as: ${depends}`)
       }

@@ -50,8 +50,7 @@ class StubbedNpmNodeModulesCollector extends NpmNodeModulesCollector {
   }
 }
 
-const runNpmCollector = (rootDir: string, tree: NpmDependency) =>
-  new StubbedNpmNodeModulesCollector(rootDir, projectTmpDir as unknown as TmpDir, tree).getNodeModules({ packageName: "my-app" })
+const runNpmCollector = (rootDir: string, tree: NpmDependency) => new StubbedNpmNodeModulesCollector(rootDir, projectTmpDir, tree).getNodeModules({ packageName: "my-app" })
 
 describe("npm collector dependency cycles (issue #10068)", { concurrent: false }, () => {
   let root = ""

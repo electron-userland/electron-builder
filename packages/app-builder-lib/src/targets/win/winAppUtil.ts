@@ -135,16 +135,14 @@ export function assertSafeMappingPath(value: string, kind: string): void {
  * by the AppX and MSIX targets. Each relative path is validated via {@link assertSafeMappingPath}.
  */
 export async function buildAppFileMappings(vm: VmManager, appOutDir: string): Promise<Array<string>> {
-  return Promise.all(
-    (await walk(appOutDir)).map(file => {
-      let relPath = file.substring(appOutDir.length + 1)
-      if (path.sep !== "\\") {
-        relPath = relPath.replace(/\//g, "\\")
-      }
-      assertSafeMappingPath(relPath, "Packaged file path")
-      return `"${vm.toVmFile(file)}" "app\\${relPath}"`
-    })
-  )
+  return (await walk(appOutDir)).map(file => {
+    let relPath = file.substring(appOutDir.length + 1)
+    if (path.sep !== "\\") {
+      relPath = relPath.replace(/\//g, "\\")
+    }
+    assertSafeMappingPath(relPath, "Packaged file path")
+    return `"${vm.toVmFile(file)}" "app\\${relPath}"`
+  })
 }
 
 export function validateApplicationId(result: string, contextLabel: string): void {

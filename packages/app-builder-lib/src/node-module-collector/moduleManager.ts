@@ -120,7 +120,8 @@ export class ModuleManager {
   // this allows dot-notation access while still supporting async retrieval
   // e.g., cache.packageJson[somePath] returns Promise<PackageJson>
   private createAsyncProxy<T>(map: Map<string, Promise<T>>, compute: (key: string) => T | Promise<T>): Record<string, Promise<T>> {
-    return new Proxy({} as Record<string, Promise<T>>, {
+    const target: Record<string, Promise<T>> = {}
+    return new Proxy(target, {
       get(_, key: string) {
         const cached = map.get(key)
         if (cached != null) {

@@ -58,7 +58,7 @@ const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtensio
     // the stable fields explicitly instead of snapshotting
     expect(updateCheckResult?.updateInfo.version).toBe(NEW_VERSION_NUMBER)
 
-    const { updateFile: installer, packageFile } = (await updateCheckResult?.downloadPromise)!
+    const { updateFile: installer, packageFile } = (await updateCheckResult!.downloadPromise)!
     expect(packageFile).toBeUndefined()
     expect(installer.endsWith(`.${expectedExtension}`)).toBeTruthy()
     await assertThat(expect, installer).isFile()

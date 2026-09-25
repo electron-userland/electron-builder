@@ -278,19 +278,19 @@ describe("getFileMatchers – string patterns in config.files", () => {
   }
 
   test("returns null when config has no files and no customBuildOptions.files", ({ expect }) => {
-    const result = getFileMatchers({} as any, "files", "/out", opts)
+    const result = getFileMatchers({}, "files", "/out", opts)
     expect(result).toBeNull()
   })
 
   test("string pattern creates a single default matcher", ({ expect }) => {
-    const result = getFileMatchers({ files: "src/**" } as any, "files", "/out", opts)
+    const result = getFileMatchers({ files: "src/**" }, "files", "/out", opts)
     expect(result).not.toBeNull()
     expect(result!.length).toBe(1)
     expect(result![0].patterns).toContain("src/**")
   })
 
   test("array of strings all go into the default matcher", ({ expect }) => {
-    const result = getFileMatchers({ files: ["src/**", "!src/__tests__/**"] } as any, "files", "/out", opts)
+    const result = getFileMatchers({ files: ["src/**", "!src/__tests__/**"] }, "files", "/out", opts)
     expect(result).not.toBeNull()
     expect(result![0].patterns).toContain("src/**")
     expect(result![0].patterns).toContain("!src/__tests__/**")
@@ -300,7 +300,7 @@ describe("getFileMatchers – string patterns in config.files", () => {
     const result = getFileMatchers(
       {
         files: [{ from: "assets", to: "resources", filter: ["**/*.png"] }],
-      } as any,
+      },
       "files",
       "/out",
       opts
@@ -312,13 +312,13 @@ describe("getFileMatchers – string patterns in config.files", () => {
   })
 
   test("adds !outDir/*-unpacked exclusion to the default matcher", ({ expect }) => {
-    const result = getFileMatchers({ files: ["**/*"] } as any, "files", "/out", opts)
+    const result = getFileMatchers({ files: ["**/*"] }, "files", "/out", opts)
     expect(result![0].patterns.some(p => p.includes("dist/*-unpacked"))).toBe(true)
   })
 
   test("customBuildOptions.files merges into the default matcher", ({ expect }) => {
     const customOpts = { ...opts, customBuildOptions: { files: ["extra/**"] } as any }
-    const result = getFileMatchers({} as any, "files", "/out", customOpts)
+    const result = getFileMatchers({}, "files", "/out", customOpts)
     expect(result).not.toBeNull()
     expect(result![0].patterns).toContain("extra/**")
   })
@@ -374,27 +374,27 @@ describe("getFileMatchers – extraFiles/extraResources `to` destination validat
   })
 
   test("normal relative `to` still works", ({ expect }) => {
-    const result = getFileMatchers({ extraResources: [{ from: "assets", to: "bin" }] } as any, "extraResources", resourcesDir, opts)
+    const result = getFileMatchers({ extraResources: [{ from: "assets", to: "bin" }] }, "extraResources", resourcesDir, opts)
     expect(result).not.toBeNull()
     expect(result![0].to).toBe(path.join(resourcesDir, "bin"))
   })
 
   test("legitimate `../` hop that stays inside the package still works", ({ expect }) => {
     // e.g. macOS: extraResources with to: "../Frameworks" targets Contents/Frameworks inside the .app
-    const result = getFileMatchers({ extraResources: [{ from: "native", to: "../Frameworks" }] } as any, "extraResources", resourcesDir, opts)
+    const result = getFileMatchers({ extraResources: [{ from: "native", to: "../Frameworks" }] }, "extraResources", resourcesDir, opts)
     expect(result).not.toBeNull()
     expect(result![0].to).toBe(path.join(contentsDir, "Frameworks"))
   })
 
   test("omitted `to` is not validated and keeps the default destination", ({ expect }) => {
-    const result = getFileMatchers({ extraFiles: [{ from: "build", filter: "*.dll" }] } as any, "extraFiles", contentsDir, opts)
+    const result = getFileMatchers({ extraFiles: [{ from: "build", filter: "*.dll" }] }, "extraFiles", contentsDir, opts)
     expect(result).not.toBeNull()
     expect(result![0].to).toBe(contentsDir)
   })
 
   test("`files` FileSet `to` is not subject to the containment check", ({ expect }) => {
     // `files` destinations participate in asar-relative math; existing behavior is preserved
-    const result = getFileMatchers({ files: [{ from: "assets", to: "resources" }] } as any, "files", "/out", opts)
+    const result = getFileMatchers({ files: [{ from: "assets", to: "resources" }] }, "files", "/out", opts)
     expect(result).not.toBeNull()
     expect(result![0].to).toBe(path.resolve("/out", "resources"))
   })
@@ -598,7 +598,7 @@ describe("getMainFileMatchers – default exclusions respect `files` re-includes
       config: { files, includePdb: false },
       debugLogger: { isEnabled: false },
     } as any
-    const matchers = getMainFileMatchers(appDir, path.resolve("/out"), noMacro, {} as any, platformPackager, path.join(appDir, "dist"))
+    const matchers = getMainFileMatchers(appDir, path.resolve("/out"), noMacro, {}, platformPackager, path.join(appDir, "dist"))
     return matchers[0].patterns
   }
 
