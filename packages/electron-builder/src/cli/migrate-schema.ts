@@ -37,6 +37,26 @@ export const NSIS_WEB_ADVISORY =
   "nsis-web target detected. In v27, autoUpdater.disableWebInstaller defaults to true, so NSIS web-installer packages are not downloaded by default. " +
   "If your app relies on nsis-web installers for auto-updates, set autoUpdater.disableWebInstaller = false in your main process (this is an electron-updater runtime setting, not a build-config key)."
 
+// Advisory surfaced when a mac/mas/masDev config does not name its own entitlements file. v27 stopped granting
+// allow-unsigned-executable-memory and disable-library-validation in the bundled default, which only fails at runtime.
+export const MAC_ENTITLEMENTS_ADVISORY =
+  "In v27 the bundled default macOS entitlements grant only com.apple.security.cs.allow-jit (allow-unsigned-executable-memory and disable-library-validation are no longer granted). " +
+  "If you rely on the default (no mac.sign.entitlements and no build/entitlements.mac.plist) and your app loads native modules, frameworks, or plugins signed by another Team ID (or unsigned), " +
+  "add those entitlements back in build/entitlements.mac.plist. See https://www.electron.build/docs/migration/v27-breaking-changes#macos-default-entitlements-tightened"
+
+/**
+ * macOS signing/universal fields that v26 accepted as `null` (meaning "unset") but whose v27 type has no `null`
+ * branch, so a moved `null` would fail validation. They are dropped instead of moved. `identity: null` is not in
+ * this list — it means "skip signing" and `sign.identity` still accepts it.
+ */
+export const MAC_NULL_MEANS_UNSET_FIELDS: ReadonlySet<string> = new Set(["type", "provisioningProfile", "binaries", "signIgnore", "singleArchFiles", "x64ArchFiles"])
+
+/** Platform keys that accepted a platform-level `asarUnpack` in v26. */
+export const ASAR_PLATFORM_KEYS = ["mac", "mas", "masDev", "win", "linux"] as const
+
+/** v26 `snap` options that the v27 `snapcraft.core24` shape does not accept (core24 uses the snapcraft CLI directly). */
+export const SNAP_CORE24_UNSUPPORTED = ["allowNativeWayland", "useTemplateApp"] as const
+
 /** True when `target` (a string, a `{ target }` object, or an array of either) selects the nsis-web target. */
 function hasNsisWebTarget(target: any): boolean {
   if (target == null) {
@@ -57,6 +77,28 @@ function hasNsisWebTarget(target: any): boolean {
 /** True when the build config produces an nsis-web installer (via win.target or the global target). */
 function detectNsisWebTarget(config: Record<string, any>): boolean {
   return hasNsisWebTarget(config.win?.target) || hasNsisWebTarget(config.target)
+}
+
+/**
+ * True when a mac/mas/masDev section signs with electron-builder's defaults without naming its own entitlements
+ * file. A custom signer (string/function `sign`) or `sign.identity: null` (skip signing) bypasses the defaults.
+ */
+function detectDefaultMacEntitlements(config: Record<string, any>): boolean {
+  return (["mac", "mas", "masDev"] as const).some(p => {
+    const platform = config[p]
+    if (!isPlainObject(platform)) {
+      return false
+    }
+    const sign = platform.sign
+    if (typeof sign === "string" || typeof sign === "function") {
+      return false
+    }
+    return !(isPlainObject(sign) && (sign.entitlements != null || sign.identity === null))
+  })
+}
+
+function isPlainObject(value: unknown): value is Record<string, any> {
+  return value != null && typeof value === "object" && !Array.isArray(value)
 }
 
 /**
@@ -135,11 +177,21 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
       }
     }
     if ("nativeRebuilder" in c) {
-      sub.rebuildMode = c.nativeRebuilder
+      if (c.nativeRebuilder === "legacy") {
+        // v27 dropped the app-builder binary rebuilder; rebuildMode only selects @electron/rebuild's mode.
+        warnings.push(
+          'nativeRebuilder: "legacy" (the app-builder binary rebuilder) was removed in v27 — native modules are always rebuilt with @electron/rebuild. ' +
+            'The value was dropped, so the default nativeModules.rebuildMode ("sequential") applies.'
+        )
+      } else {
+        sub.rebuildMode = c.nativeRebuilder
+      }
       delete c.nativeRebuilder
       changes.push({ key: "nativeRebuilder", description: "renamed nativeRebuilder → nativeModules.rebuildMode" })
     }
-    c.nativeModules = sub
+    if (Object.keys(sub).length > 0 || c.nativeModules != null) {
+      c.nativeModules = sub
+    }
   }
 
   // ── 5. Legacy asar keys → asarUnpack ─────────────────────────────────────
@@ -174,12 +226,12 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
 
   // ── 7. GithubOptions.vPrefixedTagName → tagNamePrefix ─────────────────────
   if (c.publish != null) {
-    migratePublishEntries(c, "publish", changes)
+    migratePublishEntries(c, "publish", changes, warnings)
   }
-  // Also handle publish nested inside mac/win/linux
-  for (const platform of ["mac", "win", "linux"] as const) {
-    if (c[platform]?.publish != null) {
-      migratePublishEntries(c[platform], "publish", changes)
+  // Also handle publish nested inside any platform/target section (mac, win, nsis, dmg, snap, …)
+  for (const value of Object.values(c)) {
+    if (isPlainObject(value) && value.publish != null) {
+      migratePublishEntries(value, "publish", changes, warnings)
     }
   }
 
@@ -209,10 +261,42 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     changes.push({ key: "squirrelWindows.noMsi", description: "replaced squirrelWindows.noMsi → squirrelWindows.msi (inverted boolean)" })
   }
 
+  // ── 10b. squirrelWindows.customSquirrelVendorDir removed (not auto-migrated) ──
+  // The v27 replacement (a toolsets.squirrel ToolsetCustom bundle) needs a different directory layout, so the
+  // key is left in place: the build then fails with a targeted message instead of silently switching the
+  // vendored Squirrel binaries back to the default bundle.
+  if (isPlainObject(c.squirrelWindows) && "customSquirrelVendorDir" in c.squirrelWindows) {
+    warnings.push(
+      "squirrelWindows.customSquirrelVendorDir was removed in v27 and cannot be migrated automatically. " +
+        'Supply the custom bundle via toolsets.squirrel: { url: "file:///abs/path" } — the bundle must contain an electron-winstaller/vendor/ subtree ' +
+        "(customSquirrelVendorDir pointed at the vendor files directly) — or remove the key to use the default Squirrel bundle."
+    )
+  }
+
   // ── 11. asar consolidation ───────────────────────────────────────────────
   // Move root-level asarUnpack / disableSanityCheckAsar / disableAsarIntegrity
-  // into the asar object. Skip entirely when asar === false (all would be no-ops).
-  if (c.asar !== false) {
+  // into the asar object. In v26 these applied to every platform independently of `asar`; in v27 they live
+  // inside it, and a platform-level `asar` replaces the root one wholesale — so capture them first for step 11b.
+  const rootAsarValue = c.asar
+  const rootFlatAsar: Record<string, any> = {}
+  if ("asarUnpack" in c) {
+    rootFlatAsar.unpack = c.asarUnpack
+  }
+  if ("disableSanityCheckAsar" in c) {
+    rootFlatAsar.disableSanityCheck = c.disableSanityCheckAsar
+  }
+  if ("disableAsarIntegrity" in c) {
+    rootFlatAsar.disableIntegrity = c.disableAsarIntegrity
+  }
+  if (c.asar === false) {
+    // No effect on the root build; step 11b still carries them into any platform that re-enables asar.
+    for (const key of ["asarUnpack", "disableSanityCheckAsar", "disableAsarIntegrity"] as const) {
+      if (key in c) {
+        delete c[key]
+        changes.push({ key, description: `removed ${key} (no effect with asar: false)` })
+      }
+    }
+  } else {
     const asarSub: Record<string, any> = typeof c.asar === "object" && c.asar != null ? { ...c.asar } : {}
     if ("asarUnpack" in c) {
       asarSub.unpack = mergeAsarUnpack(asarSub.unpack, c.asarUnpack)
@@ -232,12 +316,20 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     if (c.asar === true) {
       if (Object.keys(asarSub).length > 0) {
         c.asar = asarSub
+        changes.push({ key: "asar", description: `replaced asar: true with an asar object carrying ${Object.keys(asarSub).join(", ")}` })
       } else {
         delete c.asar
+        changes.push({ key: "asar", description: "removed redundant asar: true (asar is enabled by default; the explicit `true` is not needed)" })
       }
-      changes.push({ key: "asar", description: "removed redundant asar: true (asar is enabled by default; the explicit `true` is not needed)" })
     } else if (Object.keys(asarSub).length > 0) {
       c.asar = asarSub
+    }
+  }
+
+  // ── 11b. platform-level asar ──────────────────────────────────────────────
+  for (const platform of ASAR_PLATFORM_KEYS) {
+    if (isPlainObject(c[platform])) {
+      migratePlatformAsar(c, platform, rootAsarValue, rootFlatAsar, changes)
     }
   }
 
@@ -248,29 +340,43 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   if (c.win != null && typeof c.win === "object") {
     const win: Record<string, any> = c.win
 
-    // Remove defunct flags — signAndEditExecutable/signExecutable no longer exist in v27.
+    // Remove defunct flags — signAndEditExecutable/signExecutable no longer exist in v27. Either one set to
+    // false skipped ALL signing in v26, so both map to win.sign: false (signAndEditExecutable also skipped
+    // resource editing, which always runs in v27 — that part has no equivalent).
+    const signingDisabled = win.signExecutable === false || win.signAndEditExecutable === false
     if ("signAndEditExecutable" in win) {
       const val = win.signAndEditExecutable
       delete win.signAndEditExecutable
       if (val === false) {
         warnings.push(
           "win.signAndEditExecutable: false was used to skip both resource editing and signing. " +
-            "In v27, resource editing always runs. To skip signing only, set win.sign: false. " +
+            "In v27, resource editing always runs; signing is still skipped via win.sign: false. " +
             "There is no v27 equivalent that also skips resource editing — apply resources manually if needed."
         )
-      } else {
-        changes.push({ key: "win.signAndEditExecutable", description: "removed win.signAndEditExecutable (resource editing always runs in v27; was the default)" })
       }
+      changes.push({ key: "win.signAndEditExecutable", description: "removed win.signAndEditExecutable (resource editing always runs in v27)" })
     }
     if ("signExecutable" in win) {
-      const val = win.signExecutable
       delete win.signExecutable
-      if (val === false && !("sign" in win)) {
-        win.sign = false
-        changes.push({ key: "win.signExecutable", description: "replaced win.signExecutable: false with win.sign: false (disables signing; resource editing still runs)" })
-      } else {
-        changes.push({ key: "win.signExecutable", description: "removed win.signExecutable (signing is enabled by default when credentials are available)" })
+      changes.push({ key: "win.signExecutable", description: "removed win.signExecutable (signing is enabled by default when credentials are available)" })
+    }
+    if (signingDisabled && win.sign == null) {
+      win.sign = false
+      changes.push({ key: "win.sign", description: "set win.sign: false (v26 signExecutable/signAndEditExecutable: false disabled signing; resource editing still runs)" })
+    }
+
+    if (win.sign === false && (win.azureSignOptions != null || win.signtoolOptions != null)) {
+      // Signing was switched off, so the legacy options never applied. Only their key names are reported —
+      // the values can hold certificate passwords.
+      const dropped = (["signtoolOptions", "azureSignOptions"] as const).filter(k => win[k] != null)
+      for (const k of dropped) {
+        delete win[k]
+        changes.push({ key: `win.${k}`, description: `removed win.${k} (signing is disabled with win.sign: false)` })
       }
+      warnings.push(
+        `win.sign is false (signing disabled), so [${dropped.map(k => `win.${k}`).join(", ")}] had no effect and ${dropped.length === 1 ? "was" : "were"} removed. ` +
+          'To sign in v27, replace win.sign: false with win.sign: { type: "signtool" | "azure", … } carrying those options.'
+      )
     }
 
     const hasAzure = win.azureSignOptions != null
@@ -338,12 +444,23 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
 
   // ── 14. electronDownload → electronGet ────────────────────────────────────
   if ("electronDownload" in c) {
-    migrateElectronDownload(c, changes, warnings)
+    migrateElectronDownload(c, "electronDownload", changes, warnings)
+  } else if (isPlainObject(c.electronGet) && Object.keys(c.electronGet).some(isLegacyElectronDownloadKey)) {
+    // A hand-renamed `electronGet` that still carries the v26 shape.
+    migrateElectronDownload(c, "electronGet", changes, warnings)
   }
 
-  // Advisory (not a config change): nsis-web builders must opt back into web installers at runtime as of v27.
+  // ── 15. toolsets ──────────────────────────────────────────────────────────
+  if (isPlainObject(c.toolsets)) {
+    migrateToolsets(c.toolsets, changes)
+  }
+
+  // Advisories (not config changes): runtime defaults that changed in v27 and only surface after the build.
   if (detectNsisWebTarget(c)) {
     advisories.push(NSIS_WEB_ADVISORY)
+  }
+  if (detectDefaultMacEntitlements(c)) {
+    advisories.push(MAC_ENTITLEMENTS_ADVISORY)
   }
 
   return { migrated: c, changes, warnings, advisories, modified: changes.length > 0 || warnings.length > 0 }
@@ -390,16 +507,35 @@ function migrateMacSigning(platform: Record<string, any>, name: string, changes:
   // existingSign is null/undefined or already an object → build the merged options bag
   const signObj: Record<string, any> = existingSign != null && typeof existingSign === "object" ? { ...existingSign } : {}
   for (const f of present) {
+    if (dropNullField(platform, f, name, changes)) {
+      continue
+    }
     signObj[f] = platform[f]
     delete platform[f]
     changes.push({ key: `${name}.${f}`, description: `moved ${name}.${f} → ${name}.sign.${f}` })
   }
-  if (hasSignIgnore) {
+  if (hasSignIgnore && !dropNullField(platform, "signIgnore", name, changes)) {
     signObj.ignore = platform.signIgnore
     delete platform.signIgnore
     changes.push({ key: `${name}.signIgnore`, description: `renamed ${name}.signIgnore → ${name}.sign.ignore` })
   }
-  platform.sign = signObj
+  if (Object.keys(signObj).length > 0 || existingSign != null) {
+    platform.sign = signObj
+  } else if (existingSign === null) {
+    // Every moved field was a dropped null — a bare `sign: null` left behind would now mean "skip signing".
+    delete platform.sign
+    changes.push({ key: `${name}.sign`, description: `removed ${name}.sign: null (v26 "no custom signer" = v27 default; sign: null now means skip signing)` })
+  }
+}
+
+/** Drops a v26 `null` ("unset") for a field whose v27 type has no null branch. Returns true when dropped. */
+function dropNullField(platform: Record<string, any>, field: string, name: string, changes: MigrationChange[]): boolean {
+  if (platform[field] !== null || !MAC_NULL_MEANS_UNSET_FIELDS.has(field)) {
+    return false
+  }
+  delete platform[field]
+  changes.push({ key: `${name}.${field}`, description: `removed ${name}.${field}: null (null meant "unset" in v26; the v27 option does not accept null)` })
+  return true
 }
 
 /** Moves universal-build fields from a platform config into the `universal` bag. */
@@ -410,11 +546,113 @@ function migrateMacUniversal(platform: Record<string, any>, name: string, change
   }
   const universalObj: Record<string, any> = platform.universal != null && typeof platform.universal === "object" ? { ...platform.universal } : {}
   for (const f of present) {
+    if (dropNullField(platform, f, name, changes)) {
+      continue
+    }
     universalObj[f] = platform[f]
     delete platform[f]
     changes.push({ key: `${name}.${f}`, description: `moved ${name}.${f} → ${name}.universal.${f}` })
   }
-  platform.universal = universalObj
+  if (Object.keys(universalObj).length > 0 || platform.universal != null) {
+    platform.universal = universalObj
+  }
+}
+
+/**
+ * Moves a platform-level `asarUnpack` into that platform's `asar` object.
+ *
+ * v26 concatenated root and platform `asarUnpack` and always applied the root `disableSanityCheckAsar` /
+ * `disableAsarIntegrity`, whatever the platform's `asar` was. v27 keeps all three inside `asar`, and a
+ * platform-level `asar` replaces the root one entirely — so a platform that overrides `asar` (or gains one
+ * here) gets the root values folded in to keep the v26 result.
+ */
+function migratePlatformAsar(c: Record<string, any>, name: string, rootAsarValue: any, rootFlatAsar: Record<string, any>, changes: MigrationChange[]) {
+  const platform: Record<string, any> = c[name]
+  const hasUnpack = "asarUnpack" in platform
+  const own = platform.asar
+
+  if (own == null) {
+    // Inherits the root asar — only needs an override of its own to carry a platform asarUnpack.
+    if (!hasUnpack) {
+      return
+    }
+    if (rootAsarValue === false) {
+      delete platform.asarUnpack
+      changes.push({ key: `${name}.asarUnpack`, description: `removed ${name}.asarUnpack (no effect with asar: false)` })
+      return
+    }
+    const next: Record<string, any> = isPlainObject(c.asar) ? { ...c.asar } : {}
+    next.unpack = mergeAsarUnpack(next.unpack, platform.asarUnpack)
+    platform.asar = next
+    delete platform.asarUnpack
+    changes.push({
+      key: `${name}.asarUnpack`,
+      description: `moved ${name}.asarUnpack → ${name}.asar.unpack (merged with the root asar options, since a platform-level asar replaces the root one)`,
+    })
+    return
+  }
+
+  if (own === false) {
+    if (hasUnpack) {
+      delete platform.asarUnpack
+      changes.push({ key: `${name}.asarUnpack`, description: `removed ${name}.asarUnpack (no effect with ${name}.asar: false)` })
+    }
+    return
+  }
+
+  // own is true or an AsarOptions object: fold the v26 root-level options (and the platform asarUnpack) into it.
+  const next: Record<string, any> = isPlainObject(own) ? { ...own } : {}
+  const folded: string[] = []
+  if (rootFlatAsar.unpack != null || hasUnpack) {
+    // v26 order: root patterns first, then the platform's own.
+    let unpack: string | string[] | undefined = undefined
+    for (const it of [rootFlatAsar.unpack, next.unpack, hasUnpack ? platform.asarUnpack : undefined]) {
+      if (it != null) {
+        unpack = mergeAsarUnpack(unpack, it)
+      }
+    }
+    if (unpack !== undefined) {
+      next.unpack = unpack
+      folded.push("unpack")
+    }
+  }
+  for (const key of ["disableSanityCheck", "disableIntegrity"] as const) {
+    if (key in rootFlatAsar && !(key in next)) {
+      next[key] = rootFlatAsar[key]
+      folded.push(key)
+    }
+  }
+  if (hasUnpack) {
+    delete platform.asarUnpack
+  }
+  if (folded.length === 0) {
+    return
+  }
+  platform.asar = next
+  changes.push({
+    key: hasUnpack ? `${name}.asarUnpack` : `${name}.asar`,
+    description: `folded ${folded.map(k => `asar.${k}`).join(", ")} into ${name}.asar (a platform-level asar replaces the root one in v27, so the v26 root-level values are copied)`,
+  })
+}
+
+/** Removes `null` toolset values (rejected by the v27 schema) and remaps pins to bundles that are no longer published. */
+function migrateToolsets(toolsets: Record<string, any>, changes: MigrationChange[]) {
+  for (const [key, value] of Object.entries(toolsets)) {
+    if (value === null) {
+      delete toolsets[key]
+      changes.push({
+        key: `toolsets.${key}`,
+        description: `removed toolsets.${key}: null (v27 rejects null; unset resolves to "latest", the newest bundle — pin "0.0.0" to keep the legacy bundle v26 used)`,
+      })
+    }
+  }
+  if (toolsets.appimage === "1.0.2") {
+    toolsets.appimage = "1.0.3"
+    changes.push({
+      key: "toolsets.appimage",
+      description: 'replaced toolsets.appimage: "1.0.2" with "1.0.3" (1.0.2 is no longer offered; 1.0.3 is the same runtime with the #9598 fix)',
+    })
+  }
 }
 
 /**
@@ -422,19 +660,19 @@ function migrateMacUniversal(platform: Record<string, any>, name: string, change
  * `mirror` → `mirrorOptions.mirror`, `isVerifyChecksum: false` → `unsafelyDisableChecksums: true`.
  * Fields with no v5 equivalent are dropped with a warning.
  */
-function migrateElectronDownload(c: Record<string, any>, changes: MigrationChange[], warnings: string[]) {
-  const old = c.electronDownload
-  delete c.electronDownload
+function migrateElectronDownload(c: Record<string, any>, sourceKey: "electronDownload" | "electronGet", changes: MigrationChange[], warnings: string[]) {
+  const old = c[sourceKey]
+  delete c[sourceKey]
 
   if (old == null || typeof old !== "object") {
     changes.push({ key: "electronDownload", description: "renamed electronDownload → electronGet" })
-    if (old != null) {
+    if (old != null && c.electronGet == null) {
       c.electronGet = old
     }
     return
   }
 
-  const next: Record<string, any> = { ...(c.electronGet ?? {}) }
+  const next: Record<string, any> = {}
   if ("mirror" in old && old.mirror != null) {
     next.mirrorOptions = { ...(next.mirrorOptions ?? {}), mirror: old.mirror }
   }
@@ -455,8 +693,45 @@ function migrateElectronDownload(c: Record<string, any>, changes: MigrationChang
     )
   }
 
+  // An electronGet that already exists is the v27 intent: fold the legacy values in underneath it, never over it.
+  const existing = sourceKey === "electronDownload" && isPlainObject(c.electronGet) ? c.electronGet : null
+  if (existing != null) {
+    const conflicts: string[] = []
+    let mergedMirrorOptions: Record<string, any> | undefined
+    for (const [k, v] of Object.entries(next)) {
+      if (k === "mirrorOptions" && isPlainObject(v) && isPlainObject(existing.mirrorOptions)) {
+        const own = existing.mirrorOptions
+        conflicts.push(
+          ...Object.keys(v)
+            .filter(m => m in own && JSON.stringify(own[m]) !== JSON.stringify(v[m]))
+            .map(m => `mirrorOptions.${m}`)
+        )
+        mergedMirrorOptions = { ...v, ...own }
+      } else if (k in existing && JSON.stringify(existing[k]) !== JSON.stringify(v)) {
+        conflicts.push(k)
+      }
+    }
+    Object.assign(next, existing, mergedMirrorOptions != null ? { mirrorOptions: mergedMirrorOptions } : {})
+    if (conflicts.length > 0) {
+      warnings.push(
+        `Both electronDownload and electronGet set [${conflicts.join(", ")}]; kept the existing electronGet values and dropped the electronDownload ones. Verify the merged electronGet.`
+      )
+    }
+  }
+
   c.electronGet = next
-  changes.push({ key: "electronDownload", description: "renamed electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum → unsafelyDisableChecksums)" })
+  changes.push({
+    key: sourceKey,
+    description:
+      sourceKey === "electronDownload"
+        ? "renamed electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum → unsafelyDisableChecksums)"
+        : "reshaped electronGet to the v27 options (mirror → mirrorOptions.mirror; isVerifyChecksum → unsafelyDisableChecksums)",
+  })
+}
+
+/** Keys of the v26 `electronDownload` shape that are not valid v27 `electronGet` keys. */
+export function isLegacyElectronDownloadKey(key: string): boolean {
+  return key === "mirror" || key === "isVerifyChecksum" || (ELECTRON_DOWNLOAD_DROPPED as readonly string[]).includes(key)
 }
 
 function mergeAsarUnpack(existing: string | string[] | undefined, incoming: string | string[]): string | string[] {
@@ -467,14 +742,26 @@ function mergeAsarUnpack(existing: string | string[] | undefined, incoming: stri
   return arr.length === 1 ? arr[0] : arr
 }
 
-function migratePublishEntries(parent: Record<string, any>, key: string, changes: MigrationChange[]) {
+function migratePublishEntries(parent: Record<string, any>, key: string, changes: MigrationChange[], warnings: string[]) {
   const entries: any[] = Array.isArray(parent[key]) ? parent[key] : [parent[key]]
   let changed = false
   for (const entry of entries) {
-    if (entry != null && entry.provider === "github" && "vPrefixedTagName" in entry) {
-      entry.tagNamePrefix = entry.vPrefixedTagName === false ? "" : "v"
+    if (entry == null || entry.provider !== "github") {
+      continue
+    }
+    if ("vPrefixedTagName" in entry) {
+      // v26 githubTagPrefix(): a non-empty tagNamePrefix won; otherwise vPrefixedTagName (default true) chose "v" or "".
+      entry.tagNamePrefix = entry.tagNamePrefix ? entry.tagNamePrefix : entry.vPrefixedTagName === false ? "" : "v"
       delete entry.vPrefixedTagName
       changed = true
+    } else if (entry.tagNamePrefix === "") {
+      // v26 ignored an empty tagNamePrefix and still tagged "v1.2.3"; v27 honors it and would tag "1.2.3".
+      entry.tagNamePrefix = "v"
+      changed = true
+      warnings.push(
+        'A GitHub publish entry set tagNamePrefix: "". v26 ignored an empty prefix and tagged releases "v<version>"; v27 honors it. ' +
+          'It was rewritten to tagNamePrefix: "v" to keep your existing tag names — set it back to "" if you want unprefixed tags from now on.'
+      )
     }
     // GitLab keeps vPrefixedTagName in v27 — it remains in the type, scheme, and runtime
     // (gitlabPublisher honors it) and has no tagNamePrefix equivalent, so leave it untouched.
@@ -523,6 +810,18 @@ function migrateSnap(c: Record<string, any>, changes: MigrationChange[], warning
     }
     base = "core20"
     assumed = true
+  }
+
+  if (base === "core24") {
+    const unsupported = SNAP_CORE24_UNSUPPORTED.filter(k => k in rest)
+    for (const k of unsupported) {
+      delete rest[k]
+    }
+    if (unsupported.length > 0) {
+      warnings.push(
+        `snap config set [${unsupported.join(", ")}], which the v27 snapcraft.core24 options do not support (core24 builds with the snapcraft CLI directly); they were dropped.`
+      )
+    }
   }
 
   snapcraft.base = base
@@ -775,7 +1074,11 @@ async function migrateProgrammaticConfigFile(found: FoundConfig, location: strin
   }
 
   if (result.status === "no-op") {
-    if (result.advisories.length === 0) {
+    // A no-op can still carry warnings for keys that cannot be rewritten (e.g. customSquirrelVendorDir).
+    for (const warning of result.warnings) {
+      log.warn(null, warning)
+    }
+    if (result.advisories.length === 0 && result.warnings.length === 0) {
       log.info(null, "config is already up to date — no changes needed")
     }
     printAdvisories()
@@ -805,23 +1108,26 @@ function printManualSteps() {
     "• Remove electronCompile",
     "• Remove framework, nodeVersion, launchUiVersion",
     "• Rename npmSkipBuildFromSource → buildDependenciesFromSource",
-    "• Move buildDependenciesFromSource, nodeGypRebuild, npmRebuild, nativeRebuilder into nativeModules (rename nativeRebuilder → rebuildMode)",
-    "• Rename asar-unpack / asar-unpack-dir / asar.unpack / asar.unpackDir → asarUnpack; then move asarUnpack → asar.unpack",
+    '• Move buildDependenciesFromSource, nodeGypRebuild, npmRebuild, nativeRebuilder into nativeModules (rename nativeRebuilder → rebuildMode; drop a "legacy" value)',
+    "• Rename asar-unpack / asar-unpack-dir / asar.unpackDir → asarUnpack; then move asarUnpack → asar.unpack",
+    "• Move mac/mas/masDev/win/linux asarUnpack → <platform>.asar.unpack (a platform-level asar replaces the root one, so copy the root asar options into it)",
     "• Move disableSanityCheckAsar → asar.disableSanityCheck",
     "• Move disableAsarIntegrity → asar.disableIntegrity",
     "• Replace asar: true with an asar object (e.g. asar: {} or omit entirely - asar is enabled by default)",
     "• Remove appImage.systemIntegration",
     "• Remove linux.syncDesktopName (the installed .desktop filename is always synced from desktopName in v27)",
     "• Rename snap → snapcraft; nest options under a base-named sub-key (default base: core20)",
-    "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries ('v' is the default prefix - just like before - but can now be customized with tagNamePrefix)",
+    "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries ('v' is the default prefix - just like before - but can now be customized with tagNamePrefix); an empty tagNamePrefix is now honored",
     "• Move win.signtoolOptions → win.sign: { type: 'signtool', ...fields }",
     "• Move win.azureSignOptions → win.sign: { type: 'azure', ...fields }; move untyped extra keys into win.sign.additionalMetadata",
     "• Remove win.signAndEditExecutable (resource editing always runs in v27); replace win.signExecutable: false with win.sign: false",
     "• Move helper-bundle-id → mac.helperBundleId",
     "• Replace squirrelWindows.noMsi with squirrelWindows.msi (inverted)",
-    "• Move mac/mas/masDev signing fields (identity, entitlements, hardenedRuntime, type, requirements, timestamp, binaries, gatekeeperAssess, strictVerify, preAutoEntitlements, provisioningProfile, additionalArguments) into the `sign` object; rename signIgnore → sign.ignore",
+    "• Replace squirrelWindows.customSquirrelVendorDir with a toolsets.squirrel custom bundle (it must contain an electron-winstaller/vendor/ subtree)",
+    "• Move mac/mas/masDev signing fields (identity, entitlements, entitlementsInherit, entitlementsLoginHelper, hardenedRuntime, type, requirements, timestamp, binaries, strictVerify, preAutoEntitlements, provisioningProfile, additionalArguments) into the `sign` object; rename signIgnore → sign.ignore; remove gatekeeperAssess",
     "• Move mac/mas/masDev mergeASARs / singleArchFiles / x64ArchFiles into the `universal` object",
-    "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true)",
+    "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true; drop cache/customDir/customFilename/strictSSL/platform/arch/version/force)",
+    '• Remove toolsets.* entries set to null (unset resolves to "latest"); replace toolsets.appimage "1.0.2" with "1.0.3"',
     "• Move root-level package.json directories → build.directories",
     "",
     "• For programmatic configs (JS/TS/MJS/CJS), apply the above changes manually to your config object",

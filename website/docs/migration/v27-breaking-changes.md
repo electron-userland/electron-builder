@@ -12,9 +12,9 @@ v27 moves the entire electron-builder ecosystem to **native ES modules**, raises
 
 This page is the **canonical reference for _what_ changed** in v27. For the **_how_ — the ordered upgrade steps, the automated migrator, and the checklist** — see the [v26 → v27 migration walkthrough](./v26-to-v27).
 
-- The `build()` API and the **runtime behavior** of your configuration are unchanged; configuration keys that were renamed or restructured are rewritten automatically by `migrate-schema` (see each entry below), and exported types that survive keep their shape.
+- The `build()` API is unchanged; configuration keys that were renamed or restructured are rewritten automatically by `migrate-schema` (see each entry below) and keep their v26 behavior, and exported types that survive keep their shape.
 - CJS `require()` continues to work without code changes on supported Node.js versions.
-- Every **config-level** breaking change below is rewritten automatically by `electron-builder migrate-schema` (look for the **Auto** ✓ marker). Runtime, CLI, env-var, and behavior changes require manual action.
+- Every **config-level** breaking change below that has a mechanical v27 equivalent is rewritten automatically by `electron-builder migrate-schema` (look for the **Auto** ✓ marker). The one config key it cannot rewrite, [`squirrelWindows.customSquirrelVendorDir`](#squirrelwindowscustomsquirrelvendordir), is reported with a warning. Runtime, CLI, env-var, and behavior changes require manual action — see [what `migrate-schema` does and does not do](#new-command-migrate-schema).
 
 :::tip[Run the automated migrator first]
 ```bash
@@ -25,13 +25,14 @@ This handles every change marked **Auto ✓** below. See the [walkthrough](./v26
 :::
 
 :::info[Toolsets now default to the newest bundle ("latest")]
-In v27 every `toolsets.*` property defaults to **`"latest"`** — an **unset** property, `null`, and the literal `"latest"` all resolve to the **newest published bundle** for that toolset (previously each property defaulted to a fixed pinned version). No config change is required, but the effective defaults moved:
+In v27 every `toolsets.*` property defaults to **`"latest"`** — an **unset** property and the literal `"latest"` both resolve to the **newest published bundle** for that toolset (previously each property defaulted to a fixed pinned version; `null` is no longer accepted). No config change is required, but the effective defaults moved:
 
-- **`wine` → `"system"`** — the **host-installed `wine`** on `PATH`, on macOS as well as Linux (v26 downloaded a Wine 4.0.1 bundle on macOS). Set `toolsets.wine: "1.0.1"` to download the Wine 11.0 bundle instead — macOS arm64 via Rosetta.
+- **`wine` → `"system"`** — the **host-installed `wine`** on `PATH`, on macOS as well as Linux (v26 downloaded a Wine 4.0.1 bundle on macOS). **Building Windows targets on macOS now requires Wine on the host** (`brew install --cask wine-stable`). The `"1.0.1"` Wine 11.0 bundle still downloads when pinned explicitly, but the published bundle ships no PE builtins, so it cannot run Windows tools on its own.
 - **`winCodeSign` → `1.3.0`** — Windows Kits 10.0.26100.0, `osslsigncode` 2.11 (native arm64), and the Azure Trusted Signing `dlib` + .NET 8 payload.
 - **`appimage` → `1.1.0`** — static FUSE3-compatible runtime; adds `unsquashfs` support.
-- `icons` → `1.2.1` — newer `wasm-vips` / `@resvg/resvg-wasm` bundle (was `1.1.0`).
-- `nsis` (`1.2.1`), `fpm` (`2.2.1`), `linuxToolsMac` (`1.0.0`), and `sevenZip` (`1.0.0`) are unchanged.
+- `icons` → `1.2.3` — newer `wasm-vips` / `@resvg/resvg-wasm` bundle that writes 16/32 px ICNS entries as ARGB (was `1.1.0`).
+- `linuxToolsMac` → `1.0.1` (runs on macOS 15+) and `sevenZip` → `1.0.1` (correct per-arch Windows binaries).
+- `nsis` (`1.2.1`) and `fpm` (`2.2.1`) are unchanged; the new `squirrel` toolset resolves to `1.1.1`.
 
 To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` now defaults to `1.3.0`, **Azure Trusted Signing uses the faster `signtool /dlib` path out of the box**. Full breakdown in [Toolsets & environment variables](#toolsets-environment-variables).
 :::
@@ -55,8 +56,8 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [ProtonFramework & LibUiFramework removed](#removed-exports) | — | Migrate to an Electron-based build setup |
 | [`appImage.systemIntegration` removed](#appimagesystemintegration) | ✓ | Removed automatically |
 | [`npmSkipBuildFromSource` removed](#npmskipbuildfromsource) | ✓ | Replaced by `nativeModules.buildDependenciesFromSource` |
-| [Native-module options grouped under `nativeModules`](#native-module-options-nativemodules) | ✓ | `nativeRebuilder` → `rebuildMode` |
-| [ASAR options consolidated under `asar`](#asar-options-asar) | ✓ | `asarUnpack` → `asar.unpack`, etc. (`asar: true` is still valid, just redundant) |
+| [Native-module options grouped under `nativeModules`](#native-module-options-nativemodules) | ✓ | `nativeRebuilder` → `rebuildMode`; the `"legacy"` rebuilder is removed (dropped with a warning) |
+| [ASAR options consolidated under `asar`](#asar-options-asar) | ✓ | `asarUnpack` → `asar.unpack`, etc., including platform-level `mac.asarUnpack` → `mac.asar.unpack` (`asar: true` is still valid, just redundant) |
 | [macOS signing consolidated under `mac.sign`](#macos-signing-macsign) | ✓ | `identity`/`entitlements`/`hardenedRuntime`/… → `mac.sign.*`; `signIgnore` → `sign.ignore` |
 | [`mac.universal` options consolidated](#macuniversal) | ✓ | `mergeASARs`/`singleArchFiles`/`x64ArchFiles` → `mac.universal.*` |
 | [Windows signing unified under `win.sign`](#windows-signing-winsign) | ✓ | Discriminated union `type: "signtool" \| "hsm" \| "pkcs11" \| "azure"` |
@@ -66,8 +67,8 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Root-level `directories` removed](#root-level-directories-in-packagejson) | ✓ | Move under `build.directories` |
 | [`build.helper-bundle-id` removed](#buildhelper-bundle-id) | ✓ | Moved to `mac.helperBundleId` |
 | [`squirrelWindows.noMsi` removed](#squirrelwindowsnomsi) | ✓ | Replaced by `msi` (inverted) |
-| [`squirrelWindows.customSquirrelVendorDir` removed](#squirrelwindowscustomsquirrelvendordir) | — | Supply a custom Squirrel bundle via `toolsets.squirrel` (a `ToolsetCustom` object) |
-| [`GithubOptions.vPrefixedTagName` removed](#githuboptions-gitlaboptions-vprefixedtagname) | ✓ | Use `tagNamePrefix` |
+| [`squirrelWindows.customSquirrelVendorDir` removed](#squirrelwindowscustomsquirrelvendordir) | — | Supply a custom Squirrel bundle via `toolsets.squirrel` (a `ToolsetCustom` object); `migrate-schema` warns but cannot rewrite it (different bundle layout) |
+| [`GithubOptions.vPrefixedTagName` removed](#githuboptions-gitlaboptions-vprefixedtagname) | ✓ | Use `tagNamePrefix`; an empty `tagNamePrefix: ""` is now honored (v26 ignored it) |
 | [`GitlabOptions.vPrefixedTagName` retained](#githuboptions-gitlaboptions-vprefixedtagname) | — | None — still functional; the migrator leaves GitLab entries untouched |
 | [`devMetadata` / `extraMetadata` in `PackagerOptions` removed](#devmetadata-extrametadata-programmatic-packageroptions) | — | Use `config` / `config.extraMetadata` |
 | [Implicit `--publish` removed](#implicit-publish-removed) | — | Pass `--publish` explicitly |
@@ -76,7 +77,8 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Linux maintainer-script EJS syntax removed](#linux-maintainer-script-ejs-template-syntax) | — | Use `${var}` instead of `<%= var %>` |
 | [NSIS file-association ProgID format changed](#nsis-file-association-progid-format-changed) | — | Update custom NSIS scripts that hard-code the old ProgID |
 | [NSIS `customInstallMode` macro guard casing corrected](#nsis-custominstallmode-macro-guard-casing-corrected) | — | Rename a `customInstallmode` (lowercase `m`) macro definition in custom NSIS scripts to the documented `customInstallMode` |
-| [Toolset defaults resolve to `"latest"`](#toolset-defaults-resolve-to-latest-newest-bundle) | — | No action; pin to `"0.0.0"` to restore a legacy bundle |
+| [Toolset defaults resolve to `"latest"`](#toolset-defaults-resolve-to-latest-newest-bundle) | — | No action; pin to `"0.0.0"` to restore a legacy bundle. **Wine is now the host install** — building Windows targets on macOS needs Wine installed |
+| [`toolsets.*: null` rejected; `appimage: "1.0.2"` retired](#toolset-defaults-resolve-to-latest-newest-bundle) | ✓ | `null` entries are removed (unset = `"latest"`); `"1.0.2"` becomes `"1.0.3"` |
 | [Toolset env-var overrides removed](#toolset-env-var-overrides-removed) | — | Replace `APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, … with `toolsets.X: { url, checksum }` — setting a removed variable now **fails the build** |
 | [`CI_BUILD_TAG` env var removed](#ci_build_tag-environment-variable) | — | Use `CI_COMMIT_TAG` |
 | [Azure Trusted Signing `/dlib` is the default](#azure-trusted-signing-signtool-dlib-is-the-default) | — | Pin `winCodeSign` below `1.3.0` only to force the legacy PowerShell path |
@@ -92,9 +94,10 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`allowMissingDependencies` now fails the build](#allowmissingdependencies-now-fails-the-build) | — | A missing production dependency is a hard error; set `allowMissingDependencies: true` to restore v26 warn-only behavior |
 | [`extraFiles` / `extraResources` `to` is validated](#extrafiles--extraresources-destinations-are-validated) | — | An absolute `to`, or one escaping the output dir, now throws |
 | [Windows `publisherName` validated against the certificate](#windows-publishername-is-validated-against-the-signing-certificate) | — | Update `publisherName` after a certificate rotation, or drop it |
-| [Custom Windows signing hook moved to `win.sign.sign`](#custom-windows-signing-hooks-move-to-winsignsign) | — | Move `win.sign: "./customSign.js"` under `{ type: "signtool", sign: … }` by hand |
+| [Custom Windows signing hook moved to `win.sign.sign`](#custom-windows-signing-hooks-move-to-winsignsign) | ✓ | `win.signtoolOptions.sign` moves with the rest of `signtoolOptions` to `win.sign.sign` |
 | [macOS names are no longer NFD-normalized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | Update tooling that matches the normalized on-disk bundle filename |
 | [Linux `executableArgs` field codes are now literal](#linux-launcher-entrypoint) | — | Remove `%F`/`%U` from `executableArgs`; use `linux.desktop.entry.Exec` |
+| [`http-parser` dropped from default pacman `depends`](#pacman-default-dependencies-changed) | — | Add it back with `"depends": ["default", "http-parser"]` only if your app really needs it |
 | [New: Cloudflare R2 publish provider](#new-cloudflare-r2-publish-provider-additive) | — | None — additive; needs `accountId` and an `https` `publicUrl` |
 | [New command: `migrate-schema`](#new-command-migrate-schema) | — | None — run it to apply every **Auto ✓** change above |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
@@ -219,7 +222,7 @@ Removed. Use `buildDependenciesFromSource` (now under [`nativeModules`](#native-
 { "build": { "asar": {} } }    // Equivalent; or omit the key entirely
 ```
 
-`migrate-schema` drops the redundant `true` when it has other ASAR keys to fold in. The full ASAR restructuring is documented under [ASAR options → `asar`](#asar-options-asar).
+`migrate-schema` drops the redundant root-level `true` (folding any other ASAR keys into an `asar` object instead). The full ASAR restructuring is documented under [ASAR options → `asar`](#asar-options-asar).
 
 ### Root-level `directories` in `package.json`
 
@@ -265,6 +268,8 @@ The shape and behaviour differ, so this is not a 1-to-1 rename:
 { "toolsets": { "squirrel": { "url": "file:///abs/path/to/squirrel-toolset" } } }
 ```
 
+`migrate-schema` cannot rewrite this key (the bundle layout differs), so it warns and leaves it in place; the next build then fails with a message pointing at `toolsets.squirrel`. Remove the key to use the default bundle, or point `toolsets.squirrel` at a bundle with the layout above.
+
 For a fully offline build, seed the `squirrel.windows@<version>` archive (plus `winCodeSign` and, for MSI, the WiX bundle) in the toolset cache or point `toolsets.squirrel` at a local bundle — see [Offline / Air-Gapped Builds](../tutorials/offline-air-gapped-builds.md). Nothing is downloaded outside the checksummed toolset bundles.
 
 ### `GithubOptions` / `GitlabOptions` `vPrefixedTagName` {#githuboptions-gitlaboptions-vprefixedtagname}
@@ -277,6 +282,8 @@ The `vPrefixedTagName` boolean on `GithubOptions` is removed. Use `tagNamePrefix
 ```
 
 To keep the default `v` prefix, simply remove `vPrefixedTagName` — `tagNamePrefix` defaults to `"v"`.
+
+**An empty `tagNamePrefix` is now honored.** v26 ignored `tagNamePrefix: ""` and still tagged `v1.2.3` (unless `vPrefixedTagName: false`); v27 uses it as-is and tags `1.2.3`. `migrate-schema` rewrites a GitHub `tagNamePrefix: ""` without `vPrefixedTagName: false` to `"v"` — keeping your existing tag names — and warns so you can set it back if unprefixed tags are what you wanted. A non-empty `tagNamePrefix` always won in v26 and is kept. The migrator applies to GitHub publish entries anywhere in the config (root, `mac`/`win`/`linux`, and target sections such as `nsis.publish`).
 
 :::note[GitlabOptions.vPrefixedTagName is not removed]
 Only the **GitHub** field was removed. On **GitLab**, `vPrefixedTagName` is unchanged in v27 — it still exists in the type, the schema, and the runtime, and continues to control the tag prefix (`vPrefixedTagName: false` → `1.2.3`; omit it → `v1.2.3`). It has no `tagNamePrefix` equivalent, so `migrate-schema` leaves GitLab publish entries untouched. No action is required.
@@ -328,6 +335,8 @@ Four root-level configuration properties are moved into a new `nativeModules` su
 
 `npmArgs` is **not** affected — it controls the package-manager install phase and remains at the root level. `npmSkipBuildFromSource` (deprecated in v26) is removed; `migrate-schema` converts it to its inverse, `nativeModules.buildDependenciesFromSource`.
 
+The `"legacy"` value of `nativeRebuilder` (the old app-builder binary rebuilder) is **removed** — `rebuildMode` only accepts `"sequential"` or `"parallel"`, and native modules are always rebuilt with `@electron/rebuild`. `migrate-schema` drops a `"legacy"` value with a warning, so the default `"sequential"` mode applies.
+
 ### ASAR options → `asar` {#asar-options-asar}
 
 All ASAR-related configuration is now nested under a single `asar` key. Flat root-level properties are removed. The `asar` type is now `AsarOptions | false | null`.
@@ -341,6 +350,7 @@ All ASAR-related configuration is now nested under a single `asar` key. Flat roo
 | `disableSanityCheckAsar` | `asar.disableSanityCheck` |
 | `disableAsarIntegrity` | `asar.disableIntegrity` |
 | `asar: true` | *(still valid — redundant, since absence means enabled)* |
+| `mac.asarUnpack` / `win.asarUnpack` / `linux.asarUnpack` / `mas.asarUnpack` / `masDev.asarUnpack` | `<platform>.asar.unpack` |
 
 ```json5
 // Before
@@ -358,7 +368,16 @@ All ASAR-related configuration is now nested under a single `asar` key. Flat roo
 }
 ```
 
-When `asar: false`, all the sub-options are irrelevant and the migrator skips them.
+When `asar: false`, the root-level sub-options have no effect and the migrator removes them.
+
+**Platform-level `asar` now replaces the root one.** In v26 the root `asarUnpack`, `disableSanityCheckAsar`, and `disableAsarIntegrity` applied to every platform, and a platform's own `asarUnpack` was *added* to the root patterns. In v27 all three live inside `asar`, and a platform-level `asar` (e.g. `mac.asar`) replaces the root `asar` object entirely. `migrate-schema` keeps the v26 result: a platform `asarUnpack` becomes `<platform>.asar.unpack` merged with the root patterns and options, and a platform that already overrides `asar` gets the former root-level values copied in. (For programmatic JS/TS configs, the codemod only rewrites the cases where a plain move is equivalent and warns about the rest.)
+
+```json5
+// Before (v26)
+{ "asarUnpack": ["**/*.node"], "mac": { "asarUnpack": ["Resources/**"] } }
+// After (v27)
+{ "asar": { "unpack": ["**/*.node"] }, "mac": { "asar": { "unpack": ["**/*.node", "Resources/**"] } } }
+```
 
 ### macOS signing → `mac.sign` {#macos-signing-macsign}
 
@@ -391,6 +410,8 @@ All macOS code-signing options now live inside a single `sign` object on `mac` (
 ```
 
 To skip signing, use `mac.sign.identity: null` (or `mac.sign: null`). The same structure applies to `mas` and `masDev`.
+
+A few of these accepted `null` in v26 as "unset" but do not in v27 (`type`, `provisioningProfile`, `binaries`, `signIgnore`, `singleArchFiles`, `x64ArchFiles`); `migrate-schema` drops those `null`s instead of moving them. `identity: null` is kept — it still means "skip signing".
 
 :::warning[Custom signing functions]
 If you used `mac.sign` as a **custom signing function or module path** (`sign: "./customSign.js"`) together with sibling fields like `identity`, the two can no longer coexist — `sign` is now a single union. `migrate-schema` leaves your custom signer untouched and prints a warning so you can decide whether to keep the custom function or switch to an `ElectronSignOptions` object.
@@ -476,14 +497,14 @@ Both HSM and PKCS#11 are **beta** — the interfaces are stable but real-hardwar
 
 #### Custom Windows signing hooks move to `win.sign.sign`
 
-v26's `win.sign` was the **custom signer hook** (`CustomWindowsSign | string | null`). v27 reuses the same key for the discriminated union, and the custom hook now lives one level down, inside the signtool-family config:
+In v26 the **custom signer hook** lived at `win.signtoolOptions.sign`. v27 reuses the `win.sign` key for the discriminated union, and the hook lives inside the signtool-family config, so it moves together with the rest of `signtoolOptions`:
 
 ```json5
-{ "win": { "sign": "./customSign.js" } }                              // Before (v26)
+{ "win": { "signtoolOptions": { "sign": "./customSign.js" } } }          // Before (v26)
 { "win": { "sign": { "type": "signtool", "sign": "./customSign.js" } } } // After (v27)
 ```
 
-`migrate-schema` only warns about a pre-existing `win.sign` when a legacy sibling key is also present, so a config with a lone `win.sign: "./customSign.js"` passes through untouched and then fails schema validation. Move it by hand.
+`migrate-schema` performs this move. (A top-level `win.sign: "./customSign.js"` is a pre-v26 shape that v26 already rejected; move it under `{ "type": "signtool", "sign": … }` by hand.)
 
 #### `win.signExecutable` / `win.signAndEditExecutable` removed {#winsignexecutable-winsignandeditexecutable-removed}
 
@@ -492,11 +513,13 @@ v26's `win.sign` was the **custom signer hook** (`CustomWindowsSign | string | n
 | `win.signExecutable: false` | `win.sign: false` (disables signing; resource editing still runs) |
 | `win.signExecutable: true` | *(deleted — signing is enabled by default when credentials are available)* |
 | `win.signAndEditExecutable: true` | *(deleted — resource editing always runs)* |
-| `win.signAndEditExecutable: false` | No direct equivalent — see note below |
+| `win.signAndEditExecutable: false` | `win.sign: false` for the signing half; no equivalent for skipping resource editing — see note below |
 
 :::warning
-`win.signAndEditExecutable: false` formerly skipped both resource editing (icon, metadata) and signing. In v27 resource editing always runs. To skip only signing, use `win.sign: false`. If you need to skip resource editing for a specific artifact, apply resources manually after building.
+`win.signAndEditExecutable: false` formerly skipped both resource editing (icon, metadata) and signing. In v27 resource editing always runs. `migrate-schema` maps the signing half to `win.sign: false` and warns about the rest. If you need to skip resource editing for a specific artifact, apply resources manually after building.
 :::
+
+Both flags set to `false` skipped **all** signing in v26, so any `win.signtoolOptions` / `win.azureSignOptions` next to them never applied. `migrate-schema` removes those blocks (naming them in a warning, without printing their values) rather than turning signing on; to sign in v27, replace `win.sign: false` with a `win.sign: { type: … }` object.
 
 ### `electronDownload` → `electronGet` {#electrondownload-electronget}
 
@@ -507,7 +530,7 @@ The `electronDownload` configuration key is renamed to `electronGet` and reshape
 | `mirror` | `mirrorOptions.mirror` |
 | `isVerifyChecksum: false` | `unsafelyDisableChecksums: true` |
 | `cache` | *(not a config key — set the `ELECTRON_BUILDER_CACHE` environment variable)* |
-| `customDir`, `customFilename`, `strictSSL` | *(no equivalent — dropped by `migrate-schema` with a warning)* |
+| `customDir`, `customFilename`, `strictSSL`, `force`, `platform`, `arch`, `version` | *(no equivalent — dropped by `migrate-schema` with a warning)* |
 
 ```json5
 { "electronDownload": { "mirror": "https://my-mirror/" } }                  // Before
@@ -549,7 +572,15 @@ These flags are removed (they have thrown since v22).
 
 ### New command: `migrate-schema`
 
-v27 adds `electron-builder migrate-schema`, which rewrites your config to v27 form in place and auto-migrates **static** (`json`/`json5`/`yaml`/package.json) **and programmatic** (`.js`/`.ts`/`.cjs`/`.mjs`) configs. See the [walkthrough](./v26-to-v27#step-1-run-the-automated-migrator).
+v27 adds `electron-builder migrate-schema`, which rewrites your config to v27 form in place and auto-migrates **static** (`json`/`json5`/`yaml`/package.json) **and programmatic** (`.js`/`.ts`/`.cjs`/`.mjs`) configs. TOML configs are parsed and the required changes printed, but not written. See the [walkthrough](./v26-to-v27#step-1-run-the-automated-migrator) for flags and the before/after of every rewrite.
+
+**It rewrites** every entry marked **Auto ✓** on this page: removed keys (`electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, `disableDefaultIgnoredFiles`, `appImage.systemIntegration`, `linux.syncDesktopName`, `mac.gatekeeperAssess`), the `nativeModules`, `asar` (root and platform-level), `mac.sign`, `mac.universal`, `win.sign`, `electronGet`, and `snapcraft` restructurings, GitHub `vPrefixedTagName` → `tagNamePrefix`, `helper-bundle-id`, `squirrelWindows.noMsi`, root-level `directories` in `package.json`, and `toolsets.*` values v27 rejects (`null`, the retired `appimage: "1.0.2"`). Values with no v27 equivalent (for example `nativeRebuilder: "legacy"` or `electronDownload.strictSSL`) are dropped with a warning.
+
+**It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom `mac.sign` signer combined with sibling signing options, and (in JS/TS configs) platform-level `asarUnpack` next to root-level ASAR options.
+
+**It prints an advisory** (without changing the config) for runtime defaults you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)) and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
+
+**It does not touch** anything outside the config: CLI flags, environment variables, custom NSIS scripts, Linux maintainer scripts, app code using the electron-updater API, or plugins using `PlatformPackager`. Every other row marked **—** in the [table above](#breaking-changes-at-a-glance) is a manual step.
 
 ---
 
@@ -574,20 +605,21 @@ v27 adds an opt-in `provider: "r2"` publish target (Cloudflare R2, an S3-compati
 
 ### Toolset defaults resolve to `"latest"` (newest bundle)
 
-In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset property, `null`, or the literal `"latest"` all resolve to the **newest published bundle** for that toolset. (Earlier v27 prereleases pinned a fixed default per toolset; those fixed defaults are gone.) The `null` value is no longer part of the `ToolsetConfig` type, and it is **rejected by schema validation** — each `toolsets.*` property is typed as a `ToolsetCustom` object or a version string, with no `null` branch. Switch `null` → `"latest"` or omit the key entirely; both resolve to the newest bundle. `migrate-schema` does not rewrite this.
+In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset property or the literal `"latest"` resolves to the **newest published bundle** for that toolset. (Earlier v27 prereleases pinned a fixed default per toolset; those fixed defaults are gone.) The `null` value is no longer part of the `ToolsetConfig` type, and it is **rejected by schema validation** — each `toolsets.*` property is typed as a `ToolsetCustom` object or a version string, with no `null` branch. Switch `null` → `"latest"` or omit the key entirely; both resolve to the newest bundle. `migrate-schema` removes `null` entries. (In v26 an unset or `null` toolset resolved to the legacy `"0.0.0"` bundle, so pin `"0.0.0"` if you need to stay on it.) The `appimage` `"1.0.2"` pin is no longer offered; `migrate-schema` rewrites it to `"1.0.3"`.
 
 | Toolset | v26 default | v27 `"latest"` resolves to | What the upgrade entails |
 |---------|-------------|----------------------------|--------------------------|
-| `wine` | `0.0.0` (Wine 4.0.1, macOS only) | `system` | Host-installed `wine` on `PATH`, on macOS and Linux. **Requires a host Wine on macOS** — see the note below. Pin `"1.0.1"` for the Wine 11.0 bundle (macOS arm64 via Rosetta) |
+| `wine` | `0.0.0` (Wine 4.0.1, macOS only) | `system` | Host-installed `wine` on `PATH`, on macOS and Linux. **Requires a host Wine on macOS** — see the note below. The `"1.0.1"` Wine 11.0 bundle still downloads when pinned, but ships no PE builtins and cannot run Windows tools on its own |
 | `winCodeSign` | `0.0.0` (winCodeSign 2.6.0) | `1.3.0` | Windows Kits 10.0.26100.0; `osslsigncode` 2.11 + native arm64; bundles the Azure Trusted Signing `dlib` + .NET 8 runtime |
 | `appimage` | `0.0.0` (FUSE2 runtime) | `1.1.0` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support |
 | `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `1.2.1` | NSIS 3.12; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR` |
 | `fpm` | `2.2.1` | `2.2.1` | Unchanged — FPM 1.17.0 / Ruby 3.4.3 |
-| `icons` | `1.1.0` | `1.2.1` | Newer bundle — `wasm-vips` + `@resvg/resvg-wasm` |
-| `linuxToolsMac` | `1.0.0` | `1.0.0` | Unchanged — gnu-tar, lzip, binutils, etc. (macOS → Linux archives) |
-| `sevenZip` | `1.0.0` | `1.0.0` | Unchanged — only published version |
+| `icons` | `1.1.0` | `1.2.3` | Newer bundle — `wasm-vips` + `@resvg/resvg-wasm`; 16/32 px ICNS entries written as ARGB |
+| `linuxToolsMac` | `1.0.0` | `1.0.1` | Same tools rebuilt to run on macOS 15+ (1.0.0 required macOS 26) |
+| `sevenZip` | `1.0.0` | `1.0.1` | Correct per-arch Windows `7za.exe` (x64, ia32, arm64) |
+| `squirrel` | *(electron-winstaller npm package)* | `1.1.1` | New toolset — Squirrel.Windows vendor bundle, replaces the `electron-winstaller` dependency |
 
-**No action required** for most projects — the new bundles are drop-in replacements and produce identical output. **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`) or an explicit `toolsets.wine: "1.0.1"`. If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
+**No action required** for most projects — the new bundles are drop-in replacements and produce identical output. **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`). If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
 
 ```json5
 { "build": { "toolsets": { "winCodeSign": "0.0.0", "nsis": "0.0.0", "appimage": "0.0.0", "wine": "0.0.0" } } }
@@ -608,7 +640,7 @@ This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias ma
 | `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` | NSIS resources/plugins directory |
 | `CUSTOM_NSIS_RESOURCES` | Alternate NSIS resources bundle |
 | `ELECTRON_BUILDER_WINE_TOOLSET_DIR` | Wine bundle directory |
-| `USE_SYSTEM_WINE` | Forced the host-installed Wine instead of the downloaded bundle |
+| `USE_SYSTEM_WINE` | Forced the host-installed Wine instead of the downloaded bundle (now the default — `toolsets.wine: "system"`) |
 | `USE_SYSTEM_SIGNCODE` | Forced the host `signtool`/`signcode` instead of the bundled `winCodeSign` toolset |
 | `USE_SYSTEM_OSSLSIGNCODE` | Forced the host `osslsigncode` instead of the bundled one |
 | `USE_SYSTEM_FPM` | Forced the host-installed `fpm` instead of the bundled FPM |
@@ -616,7 +648,7 @@ This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias ma
 | `ELECTRON_BUILDER_7ZIP_PATH` | The 7-Zip executable |
 | `ELECTRON_BUILDER_ICONS_TOOLSET_DIR` | Icons toolset bundle directory |
 
-Setting any of these now **fails the build** with a message naming the `toolsets` replacement, rather than being silently ignored. The three signing `USE_SYSTEM_*` variables (`USE_SYSTEM_WINE`, `USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var replacement** — configure signing through [`win.sign`](#windows-signing-winsign) and the `winCodeSign` toolset instead. `USE_SYSTEM_FPM` is now **also removed** (it was still functional in earlier v27 prereleases): supply a custom FPM via `toolsets.fpm: { url: "file:///path/to/dir" }`. On Windows there is no bundled FPM, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` and otherwise throws a clear configuration error (previously it silently fell back to a host `fpm` on `PATH`).
+Setting any of these now **fails the build** with a message naming the `toolsets` replacement, rather than being silently ignored. The two signing `USE_SYSTEM_*` variables (`USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var replacement** — configure signing through [`win.sign`](#windows-signing-winsign) and the `winCodeSign` toolset instead. `USE_SYSTEM_WINE` is replaced by `toolsets.wine: "system"`, which is already the default. `USE_SYSTEM_FPM` is now **also removed** (it was still functional in earlier v27 prereleases): supply a custom FPM via `toolsets.fpm: { url: "file:///path/to/dir" }`. On Windows there is no bundled FPM, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` and otherwise throws a clear configuration error (previously it silently fell back to a host `fpm` on `PATH`).
 
 The `url` accepts an `https://` URL (downloaded and cached automatically) or a `file://` path (used as-is). The bundle must mirror the directory layout of the corresponding built-in bundle (see [electron-builder-binaries/packages](https://github.com/electron-userland/electron-builder-binaries/tree/master/packages)).
 
@@ -628,7 +660,7 @@ The `url` accepts an `https://` URL (downloaded and cached automatically) or a `
 { "build": { "toolsets": { "appimage": { "url": "file:///path/to/my-appimage-tools-dir" } } } }
 ```
 
-> **Wine note:** Linux uses the host-installed `wine` by default (no bundle is shipped for Linux), and macOS uses the downloaded Wine 11.0 bundle. Set `toolsets.wine: "system"` to use the host-installed `wine` on `PATH` on any platform — that is the replacement for `USE_SYSTEM_WINE`. To point at a custom Wine build instead, supply a `ToolsetCustom` object on `toolsets.wine`; note that such a directory must contain a prebuilt `wine-home` prefix alongside `bin/` and `lib/`, so `"system"` is the simpler option for a stock Wine installation.
+> **Wine note:** macOS and Linux both use the host-installed `wine` on `PATH` by default (`"latest"` resolves to `"system"`), so `USE_SYSTEM_WINE` can simply be dropped. To point at a custom Wine build instead, supply a `ToolsetCustom` object on `toolsets.wine`; note that such a directory must contain a prebuilt `wine-home` prefix alongside `bin/` and `lib/`, so the host install is the simpler option for a stock Wine installation.
 
 Supported archive formats: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`. **Exception for `sevenZip`**: because 7-Zip is used to extract `.7z` and `.tar.xz` archives, a custom `sevenZip` bundle can only be supplied as a `.tar.gz`, `.zip`, or bare `file://` directory.
 
@@ -642,7 +674,7 @@ Supported archive formats: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`. **Exception for 
 
 ### `ElectronGetOptions.force` removed
 
-The `force` field has no equivalent in `@electron/get` v5 and was dropped from `ElectronGetOptions`. Clear the cache directory instead (or set `ELECTRON_BUILDER_CACHE` to a fresh path) to force a re-download.
+The `force` field has no equivalent in `@electron/get` v5 and was dropped from `ElectronGetOptions`. Clear the cache directory instead (or set `ELECTRON_BUILDER_CACHE` to a fresh path) to force a re-download. `migrate-schema` drops it with a warning.
 
 ### `CI_BUILD_TAG` environment variable
 
@@ -828,9 +860,9 @@ A `to` path that is absolute (POSIX, drive-letter, or UNC) or that escapes the b
 
 ### Windows `publisherName` is validated against the signing certificate
 
-A configured `win.publisherName` that does not match the signing certificate's subject now fails the build instead of producing an installer that electron-updater would reject every update for. The common triggers are a certificate rotation and the wrong certificate leaking into `WIN_CSC_LINK` / `CSC_LINK` in CI.
+A configured `win.sign.publisherName` (v26: `win.signtoolOptions.publisherName` / `win.azureSignOptions.publisherName`) that does not match the signing certificate's subject now fails the build instead of producing an installer that electron-updater would reject every update for. The common triggers are a certificate rotation and the wrong certificate leaking into `WIN_CSC_LINK` / `CSC_LINK` in CI.
 
-**Action is required only if** a build fails here — update `win.publisherName` to the new certificate subject, sign with the intended certificate, or set `publisherName` to `null` to opt out of update signature verification entirely.
+**Action is required only if** a build fails here — update `win.sign.publisherName` to the new certificate subject, sign with the intended certificate, or set `publisherName` to `null` to opt out of update signature verification entirely.
 
 > Related, on the updater side: an `app-update.yml` with no `publisherName` means signature verification is silently skipped. v27 warns; **v28 will fail closed.**
 

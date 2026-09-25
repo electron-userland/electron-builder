@@ -103,7 +103,7 @@ const REMOVED_ENV_VARS: Record<string, RemovedEnvVar> = {
   },
   USE_SYSTEM_WINE: {
     controlled: "forcing the host-installed Wine instead of the downloaded bundle",
-    replacement: 'toolsets.wine: { url: "file:///path/to/wine-dir" } (on Linux the host `wine` is already the default, so you can simply drop this variable)',
+    replacement: 'toolsets.wine: "system" (the host `wine` on PATH is already the default on macOS and Linux, so you can simply drop this variable)',
   },
   USE_SYSTEM_SIGNCODE: {
     controlled: "forcing the host signtool/signcode instead of the bundled winCodeSign toolset",
