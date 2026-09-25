@@ -170,7 +170,7 @@ If your CI sets `BITBUCKET_TOKEN` to an app password / API token **without** a u
 ## Github
 
 :::note[v27: tagNamePrefix replaces vPrefixedTagName]
-The GitHub `vPrefixedTagName` boolean was removed — use `tagNamePrefix` to control the tag prefix (defaults to `"v"`; set `tagNamePrefix: ""` for no prefix). `electron-builder migrate-schema` rewrites it. (On **GitLab**, `vPrefixedTagName` is unchanged and still works.)
+The GitHub `vPrefixedTagName` boolean was removed — use `tagNamePrefix` to control the tag prefix (defaults to `"v"`; set `tagNamePrefix: ""` for no prefix). `electron-builder migrate-schema` rewrites it. Note that v26 ignored an empty `tagNamePrefix` and still tagged `v<version>`; v27 honors it, so the migrator rewrites a v26 `tagNamePrefix: ""` to `"v"` (with a warning) to keep your existing tag names. (On **GitLab**, `vPrefixedTagName` is unchanged and still works.)
 :::
 
   {!./builder-util-runtime.Interface.GithubOptions.md!}

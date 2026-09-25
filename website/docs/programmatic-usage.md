@@ -68,7 +68,6 @@ const options = {
     target: 'dmg',
     sign: {
       hardenedRuntime: true,
-      gatekeeperAssess: true,
     },
     extendInfo: {
       NSAppleEventsUsageDescription: 'Let me use Apple Events.',
