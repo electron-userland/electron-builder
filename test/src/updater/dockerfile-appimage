@@ -2,14 +2,16 @@ FROM buildpack-deps:jammy-curl
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# apt-get update + install, retried: Ubuntu mirror nodes can be out of sync mid security-update (see script)
+COPY test/src/updater/apt-install-retry.sh /usr/local/bin/apt-install-retry
+
 # Enable universe repo to get legacy libraries
-RUN apt-get update && \
-    apt-get install -y software-properties-common && \
+RUN apt-install-retry software-properties-common && \
     add-apt-repository universe && \
     rm -rf /var/lib/apt/lists/*
 
 # Install required libraries for AppImages and legacy binaries
-RUN apt-get update && apt-get install -y \
+RUN apt-install-retry \
     fuse3 \
     libfuse2 \
     libasound2-dev \
@@ -35,14 +37,11 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     zlib1g-dev \
     file \
-    xvfb \
-    && rm -rf /var/lib/apt/lists/*
+    xvfb
 
-RUN apt-get update && apt-get install -y python3.11 python3-setuptools make gcc g++ \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-install-retry python3.11 python3-setuptools make gcc g++
 
-RUN apt-get update && apt-get install -y libvips-dev libglib2.0-dev pkg-config  \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-install-retry libvips-dev libglib2.0-dev pkg-config
 
 ENV PYTHON=/usr/bin/python3.11
 
