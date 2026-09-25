@@ -542,7 +542,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       customSign ? "executing custom sign" : "signing"
     )
 
-    return customSign ? Promise.resolve(customSign(opts, this)) : sign({ ...opts, identity: identity ? identity.name : undefined })
+    return customSign ? Promise.resolve(customSign(opts, this)) : sign({ ...opts, identity: identity ? identity.hash || identity.name : undefined })
   }
 
   //noinspection JSMethodCanBeStatic
