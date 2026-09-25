@@ -317,6 +317,13 @@ describe("migrateProgrammaticSource — v27 audit rules that stay manual", () =>
     expect(result.warnings.some(w => w.includes("toolsets.squirrel"))).toBe(true)
   })
 
+  test("asar: true change log distinguishes a populated replacement from a removal", () => {
+    const replaced = run(`module.exports = { asar: true, asarUnpack: "**/*.node" }\n`).changes.find(c => c.key === "asar")
+    expect(replaced?.description).toBe("replaced asar: true with an asar object carrying unpack")
+    const removed = run(`module.exports = { asar: true }\n`).changes.find(c => c.key === "asar")
+    expect(removed?.description).toContain("removed redundant asar: true")
+  })
+
   test("mac config without entitlements emits the entitlements advisory", () => {
     expect(run(`module.exports = { mac: { target: "dmg" } }\n`).advisories.some(a => a.includes("allow-jit"))).toBe(true)
     expect(run(`module.exports = { mac: { entitlements: "build/e.plist" } }\n`).advisories).toHaveLength(0)

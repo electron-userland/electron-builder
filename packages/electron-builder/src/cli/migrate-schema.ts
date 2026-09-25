@@ -316,10 +316,11 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     if (c.asar === true) {
       if (Object.keys(asarSub).length > 0) {
         c.asar = asarSub
+        changes.push({ key: "asar", description: `replaced asar: true with an asar object carrying ${Object.keys(asarSub).join(", ")}` })
       } else {
         delete c.asar
+        changes.push({ key: "asar", description: "removed redundant asar: true (asar is enabled by default; the explicit `true` is not needed)" })
       }
-      changes.push({ key: "asar", description: "removed redundant asar: true (asar is enabled by default; the explicit `true` is not needed)" })
     } else if (Object.keys(asarSub).length > 0) {
       c.asar = asarSub
     }
@@ -665,13 +666,13 @@ function migrateElectronDownload(c: Record<string, any>, sourceKey: "electronDow
 
   if (old == null || typeof old !== "object") {
     changes.push({ key: "electronDownload", description: "renamed electronDownload → electronGet" })
-    if (old != null) {
+    if (old != null && c.electronGet == null) {
       c.electronGet = old
     }
     return
   }
 
-  const next: Record<string, any> = sourceKey === "electronDownload" ? { ...(c.electronGet ?? {}) } : {}
+  const next: Record<string, any> = {}
   if ("mirror" in old && old.mirror != null) {
     next.mirrorOptions = { ...(next.mirrorOptions ?? {}), mirror: old.mirror }
   }
@@ -690,6 +691,32 @@ function migrateElectronDownload(c: Record<string, any>, sourceKey: "electronDow
     warnings.push(
       `electronGet (formerly electronDownload) dropped [${dropped.join(", ")}] — these have no equivalent in @electron/get v5. Set a mirror via electronGet.mirrorOptions if needed.`
     )
+  }
+
+  // An electronGet that already exists is the v27 intent: fold the legacy values in underneath it, never over it.
+  const existing = sourceKey === "electronDownload" && isPlainObject(c.electronGet) ? c.electronGet : null
+  if (existing != null) {
+    const conflicts: string[] = []
+    let mergedMirrorOptions: Record<string, any> | undefined
+    for (const [k, v] of Object.entries(next)) {
+      if (k === "mirrorOptions" && isPlainObject(v) && isPlainObject(existing.mirrorOptions)) {
+        const own = existing.mirrorOptions
+        conflicts.push(
+          ...Object.keys(v)
+            .filter(m => m in own && JSON.stringify(own[m]) !== JSON.stringify(v[m]))
+            .map(m => `mirrorOptions.${m}`)
+        )
+        mergedMirrorOptions = { ...v, ...own }
+      } else if (k in existing && JSON.stringify(existing[k]) !== JSON.stringify(v)) {
+        conflicts.push(k)
+      }
+    }
+    Object.assign(next, existing, mergedMirrorOptions != null ? { mirrorOptions: mergedMirrorOptions } : {})
+    if (conflicts.length > 0) {
+      warnings.push(
+        `Both electronDownload and electronGet set [${conflicts.join(", ")}]; kept the existing electronGet values and dropped the electronDownload ones. Verify the merged electronGet.`
+      )
+    }
   }
 
   c.electronGet = next
@@ -1047,7 +1074,11 @@ async function migrateProgrammaticConfigFile(found: FoundConfig, location: strin
   }
 
   if (result.status === "no-op") {
-    if (result.advisories.length === 0) {
+    // A no-op can still carry warnings for keys that cannot be rewritten (e.g. customSquirrelVendorDir).
+    for (const warning of result.warnings) {
+      log.warn(null, warning)
+    }
+    if (result.advisories.length === 0 && result.warnings.length === 0) {
       log.info(null, "config is already up to date — no changes needed")
     }
     printAdvisories()

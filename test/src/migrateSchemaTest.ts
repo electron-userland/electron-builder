@@ -858,6 +858,40 @@ describe("migrateConfig — electronGet leftovers", () => {
   })
 })
 
+describe("migrateConfig — electronDownload next to an existing electronGet", () => {
+  test("the existing electronGet wins on conflicts, with a warning", () => {
+    const result = migrateConfig({ electronDownload: { mirror: "https://old/" }, electronGet: { mirrorOptions: { mirror: "https://new/" } } })
+    expect(result.migrated).toEqual({ electronGet: { mirrorOptions: { mirror: "https://new/" } } })
+    expect(result.warnings.some(w => w.includes("mirrorOptions.mirror") && w.includes("kept the existing electronGet"))).toBe(true)
+  })
+
+  test("non-conflicting legacy values are folded in without a warning", () => {
+    const result = migrateConfig({ electronDownload: { isVerifyChecksum: false }, electronGet: { mirrorOptions: { mirror: "https://new/" } } })
+    expect(result.migrated.electronGet).toEqual({ mirrorOptions: { mirror: "https://new/" }, unsafelyDisableChecksums: true })
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  test("a non-object electronDownload never replaces an existing electronGet", () => {
+    const result = migrateConfig({ electronDownload: null, electronGet: { unsafelyDisableChecksums: true } })
+    expect(result.migrated).toEqual({ electronGet: { unsafelyDisableChecksums: true } })
+  })
+})
+
+describe("migrateConfig — asar: true change log", () => {
+  test("says the true was replaced when it becomes a populated object", () => {
+    const result = migrateConfig({ asar: true, asarUnpack: "**/*.node", disableAsarIntegrity: true })
+    const change = result.changes.find(c => c.key === "asar")
+    expect(change?.description).toContain("replaced asar: true")
+    expect(change?.description).toContain("unpack")
+  })
+
+  test("says it was removed only when nothing is folded in", () => {
+    const result = migrateConfig({ asar: true })
+    expect(result.migrated).toEqual({})
+    expect(result.changes.find(c => c.key === "asar")?.description).toContain("removed redundant asar: true")
+  })
+})
+
 describe("migrateConfig — snap core24", () => {
   test("drops options the core24 shape does not support", () => {
     const result = migrateConfig({ snap: { base: "core24", allowNativeWayland: true, useTemplateApp: false, grade: "stable" } })

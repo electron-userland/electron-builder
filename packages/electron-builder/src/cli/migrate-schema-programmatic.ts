@@ -640,10 +640,12 @@ class ConfigCodemod {
       const entries = buildEntries(braceIndent + this.indentUnit)
       if (entries.length === 0) {
         this.removeProp(asarProp)
+        this.changes.push({ key: "asar", description: "removed redundant asar: true (asar is enabled by default; the explicit `true` is not needed)" })
       } else {
         this.replaceValue(asarProp.initializer, this.objectLiteralTextAt(entries, braceIndent))
+        const keys = entries.map(e => e.slice(0, e.indexOf(":")))
+        this.changes.push({ key: "asar", description: `replaced asar: true with an asar object carrying ${keys.join(", ")}` })
       }
-      this.changes.push({ key: "asar", description: "removed redundant asar: true (asar is enabled by default; the explicit `true` is not needed)" })
       return
     }
 
