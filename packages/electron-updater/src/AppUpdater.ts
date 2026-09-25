@@ -1014,8 +1014,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
-      // TODO delete the file name if verification fails
-      await this.verifyUpdateFile(tempUpdateFile)
+      const verificationResult = await this.verifyUpdateFile(tempUpdateFile)
+      if (!verificationResult.success) {
+        throw newError(`Downloaded update file ${updateFileName} failed verification: ${verificationResult.error}`, "ERR_UPDATER_INVALID_UPDATE_FILE")
+      }
       await retry(() => fsExtra.rename(tempUpdateFile, updateFile), {
         retries: 60,
         interval: 500,
