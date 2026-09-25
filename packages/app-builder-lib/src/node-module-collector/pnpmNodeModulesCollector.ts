@@ -5,7 +5,7 @@ import { LogMessageByKey, type Package, readJsonOrNull } from "./moduleManager.j
 import { NodeModulesCollector } from "./nodeModulesCollector.js"
 import { getPackageManagerCommand, PM } from "./packageManager.js"
 import type { PackageJson, PnpmDependency } from "./types.js"
-import { isValidKey } from "builder-util"
+import { exists, isValidKey } from "builder-util"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   public readonly installOptions = {
@@ -39,7 +39,48 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
    * otherwise mask an isolated store.
    */
   protected override isHoisted = new Lazy<boolean>(async () => {
-    const nmDir = path.join(this.rootDir, "node_modules")
+    // A workspace package's own `node_modules` is often absent (or holds only its version
+    // conflicts) in a hoisted workspace, so fall back to the workspace root's `node_modules`.
+    let sawPackage = false
+    for (const dir of await this.layoutRoots.value) {
+      const isolated = await this.scanNodeModulesLayout(path.join(dir, "node_modules"))
+      if (isolated != null) {
+        if (isolated) {
+          return false
+        }
+        sawPackage = true
+      }
+    }
+    // Packages exist and none route through `.pnpm` → hoisted. No packages → flat default.
+    return sawPackage
+  })
+
+  /**
+   * The pnpm workspace root containing `rootDir` (nearest ancestor with `pnpm-workspace.yaml`, as pnpm
+   * itself resolves it), or null outside a workspace or when `rootDir` is the workspace root.
+   */
+  private readonly workspaceRoot = new Lazy<string | null>(async () => {
+    let current = path.resolve(this.rootDir)
+    while (true) {
+      if (await exists(path.join(current, "pnpm-workspace.yaml"))) {
+        return current === path.resolve(this.rootDir) ? null : current
+      }
+      const parent = path.dirname(current)
+      if (parent === current) {
+        return null
+      }
+      current = parent
+    }
+  })
+
+  /** `rootDir`, then the workspace root when `rootDir` is a workspace package. */
+  private readonly layoutRoots = new Lazy<string[]>(async () => {
+    const workspaceRoot = await this.workspaceRoot.value
+    return workspaceRoot == null ? [this.rootDir] : [this.rootDir, workspaceRoot]
+  })
+
+  /** Returns true if `nmDir` is an isolated (`.pnpm`) store, false if hoisted, null if it holds no packages. */
+  private async scanNodeModulesLayout(nmDir: string): Promise<boolean | null> {
     const entries = await _fsExtra.readdir(nmDir).catch(() => [] as string[])
     let sawPackage = false
     for (const name of entries) {
@@ -56,13 +97,12 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
         }
         sawPackage = true
         if (real.split(path.sep).includes(".pnpm")) {
-          return false // isolated store: a package routes through the virtual store
+          return true // isolated store: a package routes through the virtual store
         }
       }
     }
-    // Packages exist and none route through `.pnpm` → hoisted. No packages → flat default.
-    return sawPackage
-  })
+    return sawPackage ? false : null
+  }
 
   /**
    * Memo for `locateFromDepOrRoot`, keyed by `name@version`. pnpm's content-addressed virtual
@@ -149,9 +189,15 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       // `.pnpm` virtual store it stays true (forcing it on there would burn thousands of
       // readdir/lstat calls — and on Windows, where pnpm uses junctions that `lstat` reports as
       // directories, the BFS walks the entire store and resolves the wrong paths).
-      const satisfying =
-        (parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch, skipOverrideFallback: true }) : null) ??
-        (await this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange, skipDownwardSearch, skipOverrideFallback: true }))
+      //
+      // When `rootDir` is a workspace package, a hoisted install keeps the tree — including the
+      // nested `<workspaceRoot>/node_modules/A/node_modules/B` copies — under the workspace root,
+      // which the downward BFS from `rootDir` never reaches (its `node_modules` is often absent),
+      // so search the workspace root last.
+      let satisfying = parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch, skipOverrideFallback: true }) : null
+      for (const dir of await this.layoutRoots.value) {
+        satisfying ??= await this.cache.locatePackageVersion({ pkgName, parentDir: dir, requiredRange, skipDownwardSearch, skipOverrideFallback: true })
+      }
       if (satisfying) {
         return satisfying
       }
