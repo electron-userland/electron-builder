@@ -5,14 +5,8 @@ const path = require("path")
 const knownUnusedDevDependencies = new Set([
   "@babel/plugin-transform-modules-commonjs", // Not sure what this is used for, but keeping just in case (for now)
   "changesets-changelog-clean", // Used in package.json CI/CD logic
-  // Eslint config doesn't get scanned by depCheck
-  "@stylistic/eslint-plugin",
-  "@eslint/js",
-  "@eslint/eslintrc",
-  "@typescript-eslint/eslint-plugin",
-  "@typescript-eslint/parser",
-  "eslint-config-prettier",
-  "eslint-plugin-prettier",
+  // Spawned by `oxlint --type-aware`, never invoked directly
+  "oxlint-tsgolint",
   // Used in test/vitest-scripts/ (test dir is ignored by depcheck) or via pnpm workspace scripts
   "vitest",
   "tsx",
