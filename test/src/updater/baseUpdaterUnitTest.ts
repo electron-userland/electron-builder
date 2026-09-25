@@ -137,8 +137,8 @@ describe("BaseUpdater verifyUpdateFile integration", () => {
     updater.downloadedUpdateHelper = helper
 
     let observedTempPath = ""
-    const verifyUpdateFile = vi.fn(async (updateFile: string) => {
-      observedTempPath = updateFile
+    const verifyUpdateFile = vi.fn(async (params: { temporaryUpdateFilePath: string; originalUpdateFileName: string }) => {
+      observedTempPath = params.temporaryUpdateFilePath
       return { success: false, error: "custom verification failed" }
     })
     updater.verifyUpdateFile = verifyUpdateFile
@@ -180,6 +180,10 @@ describe("BaseUpdater verifyUpdateFile integration", () => {
     */
     expect(done).not.toHaveBeenCalled()
     expect(verifyUpdateFile).toHaveBeenCalledTimes(1)
+    expect(verifyUpdateFile).toHaveBeenCalledWith({
+      temporaryUpdateFilePath: observedTempPath,
+      originalUpdateFileName: "TestApp-2.0.0.AppImage",
+    })
     // The temporary update file was present before its verification, but then deleted.
     expect(observedTempPath).not.toBe("")
     expect(await pathExists(observedTempPath)).toBe(false)

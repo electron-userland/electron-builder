@@ -127,10 +127,11 @@ test.ifMac("mac updates abort when verifyUpdateFile rejects the downloaded temp 
     })
 
     let observedTempPath = ""
-    const verifyUpdateFile = vi.fn(async (updateFile: string) => {
-      observedTempPath = updateFile
-      expect(path.basename(updateFile).startsWith("temp-")).toBe(true)
-      await assertThat(expect, updateFile).isFile()
+    const verifyUpdateFile = vi.fn(async (params: { temporaryUpdateFilePath: string; originalUpdateFileName: string }) => {
+      observedTempPath = params.temporaryUpdateFilePath
+      expect(path.basename(params.temporaryUpdateFilePath).startsWith("temp-")).toBe(true)
+      expect(params.originalUpdateFileName).toBe(zipName)
+      await assertThat(expect, params.temporaryUpdateFilePath).isFile()
       return { success: false as const, error: "custom verification failed" }
     })
     updater.verifyUpdateFile = verifyUpdateFile
