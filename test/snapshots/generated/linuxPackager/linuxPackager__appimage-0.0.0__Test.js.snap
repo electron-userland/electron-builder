@@ -25,64 +25,19 @@ Icon=fooview-new
 
 exports[`LinuxPackager > AppImage - default icon, custom executable and custom desktop 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "boo-Test App ßW",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
+  "linux": [],
 }
-`;
-
-exports[`LinuxPackager > AppImage - deprecated systemIntegration 1`] = `
-"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.
- - configuration.appImage has an unknown property 'systemIntegration'
-     How to fix:
-     1. Open https://www.electron.build/appimage
-     2. Search the option name on the page (or type in into Search to find across the docs).
-       * Not found? The option was deprecated or not exists (check spelling).
-       * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
-
-Please check the documentation to ensure that your configuration matches the expected schema: https://www.electron.build/configuration
-If you recently upgraded electron-builder to v27, please run \`electron-builder migrate-schema\` to automatically update your configuration.
-Check the release notes for breaking changes: https://www.electron.build/docs/migration/v27-breaking-changes"
 `;
 
 exports[`LinuxPackager > AppImage - desktopName drives installed filename (reverse-DNS) 1`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Signal-1.1.0.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
+  "linux": [],
 }
 `;
 
 exports[`LinuxPackager > AppImage - desktopName drives installed filename 1`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Signal-1.1.0.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
+  "linux": [],
 }
 `;
 
@@ -101,17 +56,7 @@ Categories=Development;
 
 exports[`LinuxPackager > AppImage - desktopName sets StartupWMClass 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Signal-1.1.0.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
+  "linux": [],
 }
 `;
 
@@ -130,17 +75,7 @@ Categories=Development;
 
 exports[`LinuxPackager > AppImage - desktopName with surrounding whitespace is trimmed for StartupWMClass 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Signal-1.1.0.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
+  "linux": [],
 }
 `;
 
@@ -159,17 +94,7 @@ Categories=Development;
 
 exports[`LinuxPackager > AppImage - desktopName without .desktop suffix is used as-is for StartupWMClass 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "MyApp-1.1.0.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
+  "linux": [],
 }
 `;
 
@@ -197,9 +122,7 @@ exports[`LinuxPackager > AppImage - explicit zstd compression override 1`] = `
             "url": "Test App ßW-1.1.0.AppImage",
           },
         ],
-        "path": "Test App ßW-1.1.0.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -209,17 +132,7 @@ exports[`LinuxPackager > AppImage - explicit zstd compression override 1`] = `
 
 exports[`LinuxPackager > AppImage - missing desktopName falls back to executableName 1`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "Signal-1.1.0.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
+  "linux": [],
 }
 `;
 
@@ -238,18 +151,7 @@ Categories=Development;
 
 exports[`LinuxPackager > AppImage - no desktopName falls back to productName for StartupWMClass 2`] = `
 {
-  "linux": [
-    {
-      "arch": "x64",
-      "file": "My App-1.1.0.AppImage",
-      "safeArtifactName": "My-App-1.1.0.AppImage",
-      "updateInfo": {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
+  "linux": [],
 }
 `;
 
@@ -277,9 +179,7 @@ exports[`LinuxPackager > AppImage - store compression maps to gzip 1`] = `
             "url": "Test App ßW-1.1.0.AppImage",
           },
         ],
-        "path": "Test App ßW-1.1.0.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -311,9 +211,7 @@ exports[`LinuxPackager > AppImage 1`] = `
             "url": "Test App ßW-1.1.0.AppImage",
           },
         ],
-        "path": "Test App ßW-1.1.0.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -345,9 +243,7 @@ exports[`LinuxPackager > AppImage arm, max compression 1`] = `
             "url": "Test App ßW-1.1.0-armv7l.AppImage",
           },
         ],
-        "path": "Test App ßW-1.1.0-armv7l.AppImage",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },

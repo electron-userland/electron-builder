@@ -35,9 +35,10 @@ docker run --rm \
   -e DEBUG="${DEBUG:-}" \
   -e VITEST_SHARD_INDEX="${VITEST_SHARD_INDEX:-}" \
   -e VITEST_SHARD_COUNT="${VITEST_SHARD_COUNT:-}" \
-  -e UPDATE_SNAPSHOT="${UPDATE_SNAPSHOT:-false}" \
+  -e UPDATE_SNAPSHOT="${UPDATE_SNAPSHOT:-}" \
   -e UPDATE_LOCKFILE_FIXTURES="${UPDATE_LOCKFILE_FIXTURES:-false}" \
   -e TEST_FILES="${TEST_FILES:-}" \
+  -e TEST_MODE="${TEST_MODE:-}" \
   -e TEST_SEQUENTIAL_FILES="${TEST_SEQUENTIAL_FILES:-}" \
   -w /project \
   -v "$(pwd):/project" \

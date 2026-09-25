@@ -162,6 +162,45 @@ test("PRIVATE-TOKEN auth - plain token sent as PRIVATE-TOKEN header", async ({ e
   expect(secondCallHeaders["authorization"]).toBeUndefined()
 })
 
+// SECURITY: a manifest-controlled off-host direct_asset_url must NOT receive the GitLab token
+test("token is not forwarded to an off-host direct_asset_url", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy, "0.0.1", { token: "glpat-abc123" })
+
+  const release = mockGitlabRelease(STABLE_VERSION)
+  // GitLab returns the raw external URL as direct_asset_url when an asset link has no filepath
+  release.assets.links.find(l => l.name === "latest.yml")!.direct_asset_url = "https://attacker.example/collect/latest.yml"
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+
+  // API request (same host as the GitLab API) still carries the token
+  expect((requestSpy.mock.calls[0][0].headers as Record<string, string>)["PRIVATE-TOKEN"]).toBe("glpat-abc123")
+
+  // channel-file request goes to the attacker host WITHOUT any auth header
+  const secondCallHeaders = (requestSpy.mock.calls[1][0].headers as Record<string, string>) ?? {}
+  expect(secondCallHeaders["PRIVATE-TOKEN"]).toBeUndefined()
+  expect(secondCallHeaders["authorization"]).toBeUndefined()
+})
+
+// SECURITY: an http:// downgrade of direct_asset_url (even on the same host) must NOT receive the token
+test("token is not forwarded when direct_asset_url downgrades to http", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy, "0.0.1", { token: "glpat-abc123" })
+
+  const release = mockGitlabRelease(STABLE_VERSION)
+  release.assets.links.find(l => l.name === "latest.yml")!.direct_asset_url = "http://gitlab.com/-/project/99999999/uploads/abc123/latest.yml"
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(release)).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+
+  const secondCallHeaders = (requestSpy.mock.calls[1][0].headers as Record<string, string>) ?? {}
+  expect(secondCallHeaders["PRIVATE-TOKEN"]).toBeUndefined()
+  expect(secondCallHeaders["authorization"]).toBeUndefined()
+})
+
 // Bearer token sent as authorization header when token starts with "Bearer"
 test("Bearer auth - token starting with Bearer sent as authorization header", async ({ expect }) => {
   const requestSpy = createMockRequest()
@@ -287,4 +326,67 @@ test("autoDownload=false - does not trigger download", async ({ expect }) => {
   const result = await updater.checkForUpdates()
 
   assertDownloadNotTriggered(expect, result, actualEvents)
+})
+
+// getBlockMapFiles with uploadTarget=generic_package uses the default Provider strategy:
+// derive both blockmap URLs from the base download URL
+test("getBlockMapFiles - generic_package derives blockmap URLs from the base URL", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy, "1.0.0", { uploadTarget: "generic_package" })
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+  const provider = getProvider<GitLabProvider>(updater)
+
+  const baseUrl = new URL("https://gitlab.com/my-app-Setup-1.1.0.exe")
+  const blockMapUrls = await provider.getBlockMapFiles(baseUrl, "1.0.0", STABLE_VERSION)
+
+  expect(blockMapUrls).toHaveLength(2)
+  expect(blockMapUrls[0].href).toBe("https://gitlab.com/my-app-Setup-1.0.0.exe.blockmap")
+  expect(blockMapUrls[1].href).toBe(`https://gitlab.com/my-app-Setup-${STABLE_VERSION}.exe.blockmap`)
+})
+
+// getBlockMapFiles with uploadTarget=project_upload resolves blockmap URLs from the release assets
+// of each version (the new one comes from the cached latest release, the old one is fetched by tag)
+test("getBlockMapFiles - project_upload resolves blockmap URLs from release assets", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy, "1.0.0", { uploadTarget: "project_upload" })
+
+  requestSpy
+    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
+    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+    // fetchReleaseInfoByVersion("1.0.0") — the old release carries its own uploaded blockmap asset
+    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease("1.0.0")))
+
+  await updater.checkForUpdates()
+  const provider = getProvider<GitLabProvider>(updater)
+
+  const baseUrl = new URL(`${ASSET_BASE}/my-app-Setup-${STABLE_VERSION}.exe`)
+  const blockMapUrls = await provider.getBlockMapFiles(baseUrl, "1.0.0", STABLE_VERSION)
+
+  expect(blockMapUrls).toHaveLength(2)
+  expect(blockMapUrls[0].href).toBe(`${ASSET_BASE}/my-app-Setup-1.0.0.exe.blockmap`)
+  expect(blockMapUrls[1].href).toBe(`${ASSET_BASE}/my-app-Setup-${STABLE_VERSION}.exe.blockmap`)
+})
+
+// project_upload: a release without an uploaded blockmap asset must fail loudly so the differential
+// downloader can fall back to a full download
+test("getBlockMapFiles - project_upload throws ERR_UPDATER_BLOCKMAP_FILE_NOT_FOUND when asset is missing", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy, "1.0.0", { uploadTarget: "project_upload" })
+
+  const oldReleaseWithoutBlockMap = mockGitlabRelease("1.0.0")
+  oldReleaseWithoutBlockMap.assets.links = oldReleaseWithoutBlockMap.assets.links.filter(l => !l.name.endsWith(".blockmap"))
+
+  requestSpy
+    .mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION)))
+    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+    .mockResolvedValueOnce(JSON.stringify(oldReleaseWithoutBlockMap))
+
+  await updater.checkForUpdates()
+  const provider = getProvider<GitLabProvider>(updater)
+
+  const baseUrl = new URL(`${ASSET_BASE}/my-app-Setup-${STABLE_VERSION}.exe`)
+  await expect(provider.getBlockMapFiles(baseUrl, "1.0.0", STABLE_VERSION)).rejects.toMatchObject({ code: "ERR_UPDATER_BLOCKMAP_FILE_NOT_FOUND" })
 })

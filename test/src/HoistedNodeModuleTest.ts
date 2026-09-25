@@ -1,4 +1,4 @@
-import { PM, readAsar } from "app-builder-lib/internal"
+import { AsarFilesystem, PM, readAsar } from "app-builder-lib/internal"
 import { spawn } from "builder-util"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
@@ -36,6 +36,39 @@ describe("node_module collectors", () => {
         storeDepsLockfileSnapshot: true,
         packageManager: PM.YARN,
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
+
+  // https://github.com/electron-userland/electron-builder/issues/10033
+  // An app with zero production dependencies must not bundle anything: without the guard in
+  // collectNodeModulesWithLogging, the search skips the app's empty node_modules, climbs to the
+  // workspace root, and vacuously accepts the entire hoisted workspace tree.
+  test("yarn workspace app with zero production dependencies bundles no node_modules", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-yarn-workspace",
+      {
+        targets: linuxDirTarget,
+        projectDir: "packages/test-app",
+      },
+      {
+        packageManager: PM.YARN,
+        projectDirCreated: async projectDir => {
+          // Populate the workspace-root node_modules with production dependencies of its own,
+          // so a walk-up from the app would find a non-empty tree to (wrongly) bundle.
+          await modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              "is-odd": "3.0.1",
+            }
+          })
+          await modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => {
+            delete data.dependencies
+          })
+        },
+        packed: async context => {
+          const asarFs = await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))
+          expect(asarFs.searchNodeFromDirectory("node_modules", false)).toBeNull()
+        },
       }
     ))
 
@@ -140,13 +173,13 @@ describe("node_module collectors", () => {
       {
         signedMac: false,
         packageManager: PM.PNPM,
+        // Force pnpm to install the platform packages for BOTH macOS arches, not just the build host's.
+        packageManagerSettings: { supportedArchitectures: { os: ["darwin"], cpu: ["x64", "arm64"] } },
         projectDirCreated: projectDir =>
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
               esbuild: "0.21.5",
             }
-            // Force pnpm to install the platform packages for BOTH macOS arches, not just the build host's.
-            data.pnpm = { supportedArchitectures: { os: ["darwin"], cpu: ["x64", "arm64"] } }
           }),
         packed: async context => {
           const esbuildScope = path.join(context.getResources(Platform.MAC, Arch.universal), "app.asar.unpacked", "node_modules", "@esbuild")
@@ -353,6 +386,58 @@ describe("node_module collectors", () => {
           ])
         },
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
+      }
+    ))
+
+  // Same project as above, installed and listed by a pnpm >= 10.29.3. Since pnpm/pnpm#10601 `pnpm list --json`
+  // prints a repeated subtree once and every later occurrence is a childless `deduped` stub, so the collector
+  // has to recover those packages' dependencies from their package.json. Resolving them by name only wired
+  // d@1.0.2 (needs es5-ext ^0.10.64) to the app's hoisted es5-ext@0.10.53 and dropped the whole 0.10.64
+  // closure (nested es5-ext, esniff, event-emitter, next-tick@1.1.0) from the asar — #8493 again.
+  // The exact version is pinned through `packageManager` so that this pnpm is what corepack activates for
+  // both the install and the collector's `pnpm list`; the tree is asserted explicitly rather than via an
+  // offset-based snapshot.
+  test("pnpm es5-ext without hoisted config (pnpm 10.29.3+ deduped list output)", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: linuxDirTarget,
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.packageManager =
+              "pnpm@10.34.5+sha512.a4ee05f2f73658255bd6a89859c065a45c28a57daefae2c893a168ee2b73168c37b91e83e57ea67654ad03f03031746430e8bce38e362e042605fb8abc80192e"
+            data.dependencies = {
+              "es5-ext": "0.10.53",
+            }
+          }),
+        packed: async context => {
+          const asarFs = await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))
+          const packages = [...(await readAsarPackageVersions(asarFs))].map(([dir, version]) => `${dir}@${version}`).sort()
+
+          // The app's es5-ext@0.10.53 is hoisted (three dependents); d and esniff need ^0.10.64 and keep
+          // their own nested copy. The nested copies and esniff/event-emitter are what the bug removed.
+          expect(packages.filter(it => !it.includes("next-tick"))).toEqual([
+            "node_modules/d/node_modules/es5-ext@0.10.64",
+            "node_modules/d@1.0.2",
+            "node_modules/es5-ext@0.10.53",
+            "node_modules/es6-iterator@2.0.3",
+            "node_modules/es6-symbol@3.1.4",
+            "node_modules/esniff/node_modules/es5-ext@0.10.64",
+            "node_modules/esniff@2.0.1",
+            "node_modules/event-emitter@0.3.5",
+            "node_modules/ext@1.7.0",
+            "node_modules/type@2.7.3",
+          ])
+          // next-tick@1.0.0 (es5-ext@0.10.53) and @1.1.0 (es5-ext@0.10.64) have one dependent each, so the
+          // hoister breaks the tie by pnpm's output order — assert on the versions, not on the placement.
+          const nextTicks = packages.filter(it => it.includes("next-tick"))
+          expect(nextTicks.some(it => it.startsWith("node_modules/next-tick@"))).toBe(true)
+          expect([...new Set(nextTicks.map(it => it.split("@").at(-1)))].sort()).toEqual(["1.0.0", "1.1.0"])
+        },
       }
     ))
 
@@ -621,16 +706,13 @@ describe("node_module collectors", () => {
       {
         storeDepsLockfileSnapshot: true,
         packageManager: PM.PNPM,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                dayjs: "1.11.13",
-              }
-            }),
-            outputFile(path.join(projectDir, ".npmrc"), "node-linker=hoisted"),
-          ])
-        },
+        packageManagerSettings: { nodeLinker: "hoisted" },
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       }
     ))
@@ -644,16 +726,13 @@ describe("node_module collectors", () => {
       {
         storeDepsLockfileSnapshot: true,
         packageManager: PM.PNPM,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                dayjs: "1.11.13",
-              }
-            }),
-            outputFile(path.join(projectDir, ".npmrc"), "shamefully-hoist=true"),
-          ])
-        },
+        packageManagerSettings: { shamefullyHoist: true },
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       }
     ))
@@ -667,16 +746,13 @@ describe("node_module collectors", () => {
       {
         storeDepsLockfileSnapshot: true,
         packageManager: PM.PNPM,
-        projectDirCreated: projectDir => {
-          return Promise.all([
-            modifyPackageJson(projectDir, data => {
-              data.dependencies = {
-                dayjs: "1.11.13",
-              }
-            }),
-            outputFile(path.join(projectDir, ".npmrc"), "public-hoist-pattern=*"),
-          ])
-        },
+        packageManagerSettings: { publicHoistPattern: ["*"] },
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              dayjs: "1.11.13",
+            }
+          }),
         packed: context => verifyAsarFileTree(expect, context.getResources(Platform.LINUX)),
       }
     ))
@@ -801,3 +877,23 @@ describe("node_module collectors", () => {
       }
     ))
 })
+
+/**
+ * Every package under `node_modules` in the asar, keyed by its directory relative to the asar root
+ * (always `/`-separated, e.g. `node_modules/d/node_modules/es5-ext`) with its package.json version.
+ */
+async function readAsarPackageVersions(asarFs: AsarFilesystem): Promise<Map<string, string>> {
+  const versions = new Map<string, string>()
+  const walk = async (node: AsarFilesystem["header"], segments: Array<string>) => {
+    for (const [name, child] of Object.entries(node.files ?? {})) {
+      if (child.files != null) {
+        await walk(child, [...segments, name])
+      } else if (name === "package.json" && segments.includes("node_modules")) {
+        const { version } = await asarFs.readJson(path.join(...segments, name))
+        versions.set(segments.join("/"), String(version))
+      }
+    }
+  }
+  await walk(asarFs.header, [])
+  return versions
+}

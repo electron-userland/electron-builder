@@ -228,9 +228,11 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
  * Configuration for a remote snap build on [Launchpad](https://launchpad.net/).
  * Remote builds run on Canonical's infrastructure without requiring native hardware or nested virtualisation.
  *
- * Each electron-builder build invocation targets exactly one architecture — to build for multiple
- * architectures, configure the top-level `arch` option (e.g. `arch: ["x64", "arm64"]`); each arch
- * spawns a separate `snapcraft remote-build` job on Launchpad.
+ * A single remote build can target one or more architectures. Set `buildFor` to a string for one
+ * arch, or to an array (e.g. `["amd64", "arm64"]`) to build several architectures in a single
+ * `snapcraft remote-build` job on Launchpad that emits a separate snap artifact per arch.
+ * Alternatively, the top-level `arch` option (e.g. `arch: ["x64", "arm64"]`) spawns a separate
+ * remote-build job per architecture — do not combine that with a `buildFor` array (mutually exclusive).
  *
  * Authentication is resolved in this order:
  * 1. `cscLink` config field — base64-encoded credentials or a file path
@@ -356,7 +358,9 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
   /**
    * Configuration for a remote build on [Launchpad](https://launchpad.net/).
    * Enables cross-architecture builds in CI without native hardware or nested virtualisation.
-   * Each build invocation targets one arch; use `arch: ["x64", "arm64"]` to build for multiple.
+   * Set `remoteBuild.buildFor: ["amd64", "arm64"]` to build several architectures in one Launchpad
+   * job, or the top-level `arch: ["x64", "arm64"]` option to spawn a separate job per architecture
+   * (the two are mutually exclusive).
    */
   readonly remoteBuild?: RemoteBuildOptions | null
 

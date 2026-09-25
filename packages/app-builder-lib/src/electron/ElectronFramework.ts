@@ -1,4 +1,4 @@
-import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, sanitizeDirPath, statOrNull, unlinkIfExists } from "builder-util"
+import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, orIfFileNotExist, sanitizeDirPath, statOrNull, unlinkIfExists } from "builder-util"
 import _fsExtra from "fs-extra"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
@@ -56,7 +56,7 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
   await removeUnusedLanguagesIfNeeded(options)
 }
 
-async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions) {
+export async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions) {
   const { packager, appOutDir } = options
   const { config, platform } = packager
 
@@ -67,44 +67,49 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
     return { dirs: [path.join(packager.getResourcesDir(appOutDir), "..", "locales")], langFileExt: ".pak" }
   }
 
+  // case-insensitive, treating "-" and "_" as the same separator
+  const normalizeLocale = (locale: string) => locale.trim().toLowerCase().replace(/_/g, "-")
   const wantedLanguages = asArray(packager.platformOptions.electronLanguages || config.electronLanguages)
-    .map(it => it.trim().toLowerCase())
+    .map(normalizeLocale)
     .filter(it => it.length > 0)
   if (!wantedLanguages.length) {
     return
   }
 
-  const { dirs, langFileExt } = getLocalesConfig()
-  // noinspection SpellCheckingInspection
-  const deleteNonMatchedLanguages: (dir: string) => Promise<Promise<void>[] | undefined> = async (dir: string) => {
-    const files = await readdir(dir)
-    return files.map(async file => {
-      if (path.extname(file) !== langFileExt) {
-        return
-      }
+  // bare wanted "en" keeps "en-US.pak"; region-qualified wanted "en-US" keeps mac's bare "en.lproj"
+  const isLocaleMatch = (wanted: string, language: string) => wanted === language || language.startsWith(`${wanted}-`) || wanted.startsWith(`${language}-`)
 
-      const language = path.basename(file, langFileExt).toLowerCase()
-      const isWantedLocale = wantedLanguages.some(
-        wantedLanguage =>
-          // exact file
-          wantedLanguage === language ||
-          // prefix (e.g. "en" matches "en-US")
-          wantedLanguage.startsWith(`${language}-`) ||
-          // prefix (e.g. "en" matches "en_US")
-          wantedLanguage.startsWith(`${language}_`)
-      )
-      if (isWantedLocale) {
-        return undefined
+  const { dirs, langFileExt } = getLocalesConfig()
+  const matchedWantedLanguages = new Set<string>()
+  const filesToDelete: string[] = []
+  for (const dir of dirs) {
+    const localeFiles = (await readdir(dir)).filter(file => path.extname(file) === langFileExt)
+    const unwantedFiles: string[] = []
+    for (const file of localeFiles) {
+      const language = normalizeLocale(path.basename(file, langFileExt))
+      const matches = wantedLanguages.filter(wanted => isLocaleMatch(wanted, language))
+      if (matches.length === 0) {
+        unwantedFiles.push(path.join(dir, file))
+      } else {
+        matches.forEach(it => matchedWantedLanguages.add(it))
       }
-      return rm(path.join(dir, file), { recursive: true, force: true })
-    })
+    }
+    if (localeFiles.length > 0 && unwantedFiles.length === localeFiles.length) {
+      // an empty locales dir produces an app that crashes at startup (https://github.com/electron/electron/issues/52307)
+      log.warn(
+        { electronLanguages: wantedLanguages, dir },
+        "electronLanguages doesn't match any locale in this directory, skipping cleanup to avoid packaging an app without locales"
+      )
+      continue
+    }
+    filesToDelete.push(...unwantedFiles)
   }
-  const allDeletedFiles = (await Promise.all(dirs.map(deleteNonMatchedLanguages))).flat().filter((it): it is Promise<void> => it != null)
-  if (allDeletedFiles.length === 0) {
-    log.warn({ electronLanguages: wantedLanguages }, "no locales found matching wanted languages, skipping cleanup")
-    return
+
+  const unmatchedLanguages = wantedLanguages.filter(it => !matchedWantedLanguages.has(it))
+  if (unmatchedLanguages.length > 0) {
+    log.warn({ electronLanguages: unmatchedLanguages }, "some electronLanguages don't match any locale, they may be misspelled or unavailable on this platform")
   }
-  await asyncPool(MAX_FILE_REQUESTS, allDeletedFiles, it => it)
+  await asyncPool(MAX_FILE_REQUESTS, filesToDelete, file => rm(file, { recursive: true, force: true }))
 }
 
 class ElectronFramework implements Framework {
@@ -246,7 +251,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, _
   return selectElectron(resolvedDist)
 }
 
-function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOptions, distMacOsAppName: string, isFullCleanup: boolean) {
+export function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOptions, distMacOsAppName: string, isFullCleanup: boolean) {
   const out = prepareOptions.appOutDir
   const isMac = prepareOptions.packager.platform === Platform.MAC
   const resourcesPath = isMac ? path.join(out, distMacOsAppName, "Contents", "Resources") : path.join(out, "resources")
@@ -254,10 +259,18 @@ function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOpti
   return Promise.all([
     isFullCleanup ? unlinkIfExists(path.join(resourcesPath, "default_app.asar")) : Promise.resolve(),
     isFullCleanup ? unlinkIfExists(path.join(out, "version")) : Promise.resolve(),
-    isMac
-      ? Promise.resolve()
-      : rename(path.join(out, "LICENSE"), path.join(out, "LICENSE.electron.txt")).catch(() => {
-          /* ignore */
-        }),
+    retainElectronLicenseFiles(out, resourcesPath, isMac),
   ])
+}
+
+/**
+ * The Electron dist ships Electron's own `LICENSE` and Chromium's `LICENSES.chromium.html` next to the binary, and both licenses require them to be
+ * retained in distributables. On win/linux they stay next to the executable, but on macOS they sit outside the `.app` bundle, which is the only thing
+ * packaged into the artifacts, so move them into `Contents/Resources`. See https://github.com/electron-userland/electron-builder/issues/9407
+ */
+async function retainElectronLicenseFiles(appOutDir: string, resourcesPath: string, isMac: boolean) {
+  const destinationDir = isMac ? resourcesPath : appOutDir
+  // a custom Electron distribution may not ship license files, so only a missing source file is tolerated; any other error propagates
+  const move = (name: string, newName: string = name) => orIfFileNotExist(rename(path.join(appOutDir, name), path.join(destinationDir, newName)), undefined)
+  await Promise.all([move("LICENSE", "LICENSE.electron.txt"), ...(isMac ? [move("LICENSES.chromium.html")] : [])])
 }

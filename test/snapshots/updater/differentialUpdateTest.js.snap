@@ -13,6 +13,7 @@ exports[`Mac Intel 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.0.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.0-mac.zip.blockmap",
       "updateInfo": {
@@ -30,9 +31,7 @@ exports[`Mac Intel 1`] = `
             "url": "Test App ßW-1.0.0-mac.zip",
           },
         ],
-        "path": "Test App ßW-1.0.0-mac.zip",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -102,6 +101,7 @@ exports[`Mac Intel 3`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.0.1-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.1-mac.zip.blockmap",
       "updateInfo": {
@@ -119,9 +119,7 @@ exports[`Mac Intel 3`] = `
             "url": "Test App ßW-1.0.1-mac.zip",
           },
         ],
-        "path": "Test App ßW-1.0.1-mac.zip",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.1",
       },
     },
@@ -186,9 +184,7 @@ exports[`Mac Intel 5`] = `
       "size": "@size",
     },
   ],
-  "path": "Test App ßW-1.0.1-mac.zip",
   "releaseDate": "@releaseDate",
-  "sha512": "@sha512",
   "version": "1.0.1",
 }
 `;
@@ -212,6 +208,7 @@ exports[`Mac arm64 1`] = `
       },
     },
     {
+      "arch": "arm64",
       "file": "Test App ßW-1.0.0-arm64-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.0-arm64-mac.zip.blockmap",
       "updateInfo": {
@@ -229,9 +226,7 @@ exports[`Mac arm64 1`] = `
             "url": "Test App ßW-1.0.0-arm64-mac.zip",
           },
         ],
-        "path": "Test App ßW-1.0.0-arm64-mac.zip",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -301,6 +296,7 @@ exports[`Mac arm64 3`] = `
       },
     },
     {
+      "arch": "arm64",
       "file": "Test App ßW-1.0.1-arm64-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.1-arm64-mac.zip.blockmap",
       "updateInfo": {
@@ -318,9 +314,7 @@ exports[`Mac arm64 3`] = `
             "url": "Test App ßW-1.0.1-arm64-mac.zip",
           },
         ],
-        "path": "Test App ßW-1.0.1-arm64-mac.zip",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.1",
       },
     },
@@ -385,9 +379,7 @@ exports[`Mac arm64 5`] = `
       "size": "@size",
     },
   ],
-  "path": "Test App ßW-1.0.1-arm64-mac.zip",
   "releaseDate": "@releaseDate",
-  "sha512": "@sha512",
   "version": "1.0.1",
 }
 `;
@@ -411,6 +403,7 @@ exports[`Mac universal 1`] = `
       },
     },
     {
+      "arch": "universal",
       "file": "Test App ßW-1.0.0-universal-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.0-universal-mac.zip.blockmap",
       "updateInfo": {
@@ -428,9 +421,7 @@ exports[`Mac universal 1`] = `
             "url": "Test App ßW-1.0.0-universal-mac.zip",
           },
         ],
-        "path": "Test App ßW-1.0.0-universal-mac.zip",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -500,6 +491,7 @@ exports[`Mac universal 3`] = `
       },
     },
     {
+      "arch": "universal",
       "file": "Test App ßW-1.0.1-universal-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.1-universal-mac.zip.blockmap",
       "updateInfo": {
@@ -517,9 +509,7 @@ exports[`Mac universal 3`] = `
             "url": "Test App ßW-1.0.1-universal-mac.zip",
           },
         ],
-        "path": "Test App ßW-1.0.1-universal-mac.zip",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.0.1",
       },
     },
@@ -584,9 +574,7 @@ exports[`Mac universal 5`] = `
       "size": "@size",
     },
   ],
-  "path": "Test App ßW-1.0.1-universal-mac.zip",
   "releaseDate": "@releaseDate",
-  "sha512": "@sha512",
   "version": "1.0.1",
 }
 `;

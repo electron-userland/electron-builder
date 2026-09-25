@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url"
 import { isCI as isCi } from "ci-info"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { gte } from "semver"
+import { coerce, gte, major } from "semver"
 import { ELECTRON_VERSION, getElectronCacheDir } from "./testConfig.js"
 
 const require = createRequire(import.meta.url)
@@ -56,6 +56,12 @@ export function downloadAllRequiredElectronVersions(): Promise<any> {
       if (gte(ELECTRON_VERSION, "19.0.0") && platform === "linux" && arch === "ia32") {
         // Chromium dropped support for ia32 linux binaries in 102.0.4999.0
         // https://www.electronjs.org/docs/latest/breaking-changes#removed-ia32-linux-binaries
+        continue
+      }
+      // semver major on the coerced version: the removal covers the whole 44 line including 44.0.0-alpha.x prereleases
+      if (major(coerce(ELECTRON_VERSION)!) >= 44 && ((platform === "win32" && arch === "ia32") || (platform === "linux" && arch === "armv7l"))) {
+        // Electron 44 removed Windows ia32 and Linux armv7l builds
+        // https://github.com/electron/electron/pull/51816
         continue
       }
       versions.push({

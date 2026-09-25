@@ -25,12 +25,14 @@ import { readAsarJson } from "./asar/asar.js"
 import { AfterExtractContext, AfterPackContext, BeforePackContext, Configuration, Hook } from "./configuration.js"
 import { Platform, SourceRepositoryInfo, Target } from "./core.js"
 import { createElectronFrameworkSupport } from "./electron/ElectronFramework.js"
-import { Framework } from "./Framework.js"
+import { assertElectronArchSupported } from "./electron/electronArchSupport.js"
+import { Framework, isElectronBased } from "./Framework.js"
 import { Metadata } from "./options/metadata.js"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
+import { assertNoRemovedEnvVars } from "./util/flags.js"
 import { expandMacro } from "./util/macroExpander.js"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
 import { getRepositoryInfo } from "./util/repositoryInfo.js"
@@ -42,7 +44,7 @@ import asyncPool from "tiny-async-pool"
 import { determinePackageManagerEnv, PM } from "./node-module-collector/index.js"
 import _fsExtra from "fs-extra"
 const { chmod, mkdirs, outputFile } = _fsExtra
-import { setSevenZipPath } from "./toolsets/7zip.js"
+import { setSevenZipPath, setSevenZipVersion } from "./toolsets/7zip.js"
 import { getCustomToolsetPath } from "./toolsets/custom.js"
 
 type PackagerEvents = {
@@ -60,6 +62,27 @@ type PackagerEvents = {
 
   // internal-use only, prefer usage of `artifactBuildCompleted`
   artifactCreated: Hook<ArtifactCreated, void>
+}
+
+/**
+ * `devMetadata` and `extraMetadata` were removed from `PackagerOptions` in v27 (they had thrown since
+ * v22). `build()` rejected them with a bare `Unknown option "…"` that named no replacement, and a
+ * directly constructed Packager ignored them entirely — the key simply sat unread on `options`.
+ */
+function checkRemovedPackagerOptions(options: PackagerOptions): void {
+  const removed: Array<[key: string, replacement: string]> = [
+    ["devMetadata", "config"],
+    ["extraMetadata", "config.extraMetadata"],
+  ]
+  for (const [key, replacement] of removed) {
+    if ((options as any)[key] !== undefined) {
+      throw new InvalidConfigurationError(
+        `\`${key}\` was removed from PackagerOptions in electron-builder v27. Pass \`${replacement}\` instead, ` +
+          `e.g. build({ targets, config: ${key === "devMetadata" ? "{ … }" : "{ extraMetadata: { … } }"} }).\n` +
+          "https://www.electron.build/docs/migration/v27-breaking-changes#devmetadata-extrametadata-programmatic-packageroptions"
+      )
+    }
+  }
 }
 
 export class Packager {
@@ -138,6 +161,27 @@ export class Packager {
     this.buildFinalizeTasks.push(task)
   }
 
+  // Targets whose build was skipped by `afterPackTestHook`. Their `finishBuild()` must not run either:
+  // NsisTarget and MsiWrappedTarget assume `build()` populated per-arch state first.
+  // Target instances are shared across archs (`createTargets` reuses `nameToTarget`), so a target may be
+  // skipped for one arch and built for another — track both and only skip `finishBuild()` when it never built.
+  private readonly targetsSkippedByTestHook = new Set<Target>()
+  private readonly targetsBuiltAfterPack = new Set<Target>()
+
+  /** @internal see PackagerOptions.afterPackTestHook */
+  async shouldSkipTargetsAfterPack(context: AfterPackContext): Promise<boolean> {
+    const hook = this.options.afterPackTestHook
+    const skip = hook != null && (await hook(context))
+    const recordInto = skip ? this.targetsSkippedByTestHook : this.targetsBuiltAfterPack
+    for (const target of context.targets) {
+      recordInto.add(target)
+    }
+    if (skip) {
+      log.debug({ platform: context.packager.platform.name, arch: Arch[context.arch] }, "afterPackTestHook requested early exit; skipping target builds")
+    }
+    return skip
+  }
+
   private _repositoryInfo = new Lazy<SourceRepositoryInfo | null>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
 
   readonly options: PackagerOptions
@@ -185,6 +229,10 @@ export class Packager {
     options: PackagerOptions,
     readonly cancellationToken = new CancellationToken()
   ) {
+    // Checked here rather than only in `checkBuildRequestOptions` so a directly constructed Packager
+    // is covered too — that path reads neither field, so a v26 caller was silently ignored.
+    checkRemovedPackagerOptions(options)
+
     const targets = options.targets || new Map<Platform, Map<Arch, Array<string>>>()
     if (options.targets == null) {
       options.targets = targets
@@ -345,7 +393,7 @@ export class Packager {
     if (this.isTwoPackageJsonProjectLayoutUsed) {
       log.debug({ devPackageFile, appPackageFile }, "two package.json structure is used")
     }
-    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile)
+    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile, projectDir)
 
     await validateConfiguration(configuration, this.debugLogger)
 
@@ -355,6 +403,10 @@ export class Packager {
 
   // external caller of this method always uses isTwoPackageJsonProjectLayoutUsed=false and appDir=projectDir, no way (and need) to use another values
   async build(repositoryInfo?: SourceRepositoryInfo): Promise<BuildResult> {
+    // Removed env vars are checked before anything else: nothing validates process.env, so a CI
+    // image still exporting one silently gets a different toolchain than it asked for.
+    assertNoRemovedEnvVars()
+
     await this.validateConfig()
 
     if (repositoryInfo != null) {
@@ -453,6 +505,8 @@ export class Packager {
         await chmod(bin, 0o755)
       }
       setSevenZipPath(bin)
+    } else {
+      setSevenZipVersion(sevenZipConfig)
     }
 
     const taskManager = new AsyncTaskManager(this.cancellationToken)
@@ -467,7 +521,7 @@ export class Packager {
       }
 
       if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
-        throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/multi-platform-build")
+        throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/docs/features/multi-platform-build")
       }
 
       const packager = await this.createHelper(platform)
@@ -489,6 +543,12 @@ export class Packager {
       for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
         if (this.cancellationToken.cancelled) {
           break
+        }
+
+        // fail fast when the requested arch has no official Electron build anymore (Electron 44 removed win32-ia32 and linux-armv7l);
+        // skipped for prepackaged apps since nothing is downloaded then
+        if (this.options.prepackaged == null && isElectronBased(this.framework)) {
+          assertElectronArchSupported(platform, arch, this.framework.version, this.config)
         }
 
         // support os and arch macro in output value
@@ -515,6 +575,9 @@ export class Packager {
       }
 
       for (const target of nameToTarget.values()) {
+        if (this.targetsSkippedByTestHook.has(target) && !this.targetsBuiltAfterPack.has(target)) {
+          continue
+        }
         if (target.isAsyncSupported) {
           taskManager.addTask(target.finishBuild())
         } else {

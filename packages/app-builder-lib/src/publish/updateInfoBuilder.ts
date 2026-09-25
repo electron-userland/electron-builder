@@ -1,5 +1,5 @@
 import asyncPool from "tiny-async-pool"
-import { Arch, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, createUpdateManifestSignatures, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -45,21 +45,50 @@ function isGenerateUpdatesFilesForAllChannels(packager: PlatformPackager<any>) {
  */
 function computeChannelNames(packager: PlatformPackager<any>, publishConfig: PublishConfiguration): Array<string> {
   const currentChannel: string = (publishConfig as GenericServerOptions).channel || "latest"
+  const baseChannel = ["alpha", "beta", "latest"].find(name => currentChannel === name || currentChannel.startsWith(`${name}-`)) || currentChannel
+  const suffix = currentChannel.slice(baseChannel.length)
   // for GitHub should be pre-release way be used
-  if (currentChannel === "alpha" || publishConfig.provider === "github" || !isGenerateUpdatesFilesForAllChannels(packager)) {
+  if (baseChannel === "alpha" || publishConfig.provider === "github" || !isGenerateUpdatesFilesForAllChannels(packager)) {
     return [currentChannel]
   }
 
-  switch (currentChannel) {
+  switch (baseChannel) {
     case "beta":
-      return [currentChannel, "alpha"]
+      return warnAboutSuffixedChannelExpansion(currentChannel, suffix, [currentChannel, `alpha${suffix}`])
 
     case "latest":
-      return [currentChannel, "alpha", "beta"]
+      return warnAboutSuffixedChannelExpansion(currentChannel, suffix, [currentChannel, `alpha${suffix}`, `beta${suffix}`])
 
     default:
       return [currentChannel]
   }
+}
+
+/** Emitted once per suffixed channel — computeChannelNames runs per artifact. */
+const suffixedChannelWarnings = new Set<string>()
+
+/**
+ * v26 only expanded a channel to its lower channels when the name was exactly alpha/beta/latest, so a
+ * suffixed channel (the per-arch `${channel}-${arch}` pattern) published a single file. v27 reads the
+ * base channel off the front and reattaches the suffix, which means a `latest-x64` publish now
+ * overwrites `beta-x64.yml` in the same bucket — changing what live beta-x64 users are offered.
+ */
+function warnAboutSuffixedChannelExpansion(currentChannel: string, suffix: string, channels: Array<string>): Array<string> {
+  if (suffix.length === 0 || suffixedChannelWarnings.has(currentChannel)) {
+    return channels
+  }
+  suffixedChannelWarnings.add(currentChannel)
+  log.warn(
+    {
+      channel: currentChannel,
+      writes: channels.map(it => `${it}.yml`).join(", "),
+      solution: "set generateUpdatesFilesForAllChannels: false to keep publishing a single file per suffixed channel",
+    },
+    `the suffixed channel "${currentChannel}" now expands to its lower channels — electron-builder <= 26 wrote only one file for suffixed channels. ` +
+      "A later publish on a higher channel will overwrite these in the same bucket, changing what existing pre-release users are offered. " +
+      "See https://www.electron.build/docs/migration/v27-breaking-changes#suffixed-update-channels-now-expand-to-lower-channels"
+  )
+  return channels
 }
 
 function getUpdateInfoFileName(channel: string, packager: PlatformPackager<any>, arch: Arch | null): string {
@@ -82,20 +111,6 @@ export interface UpdateInfoFileTask {
   readonly arch?: Arch | null
 }
 
-function checkUpdaterCompatibility(updaterCompatibility: string | null, publishConfiguration: PublishConfiguration, packager: PlatformPackager<any>) {
-  if (updaterCompatibility != null) {
-    return semver.satisfies("1.0.0", updaterCompatibility)
-  }
-
-  // spaces is a new publish provider, no need to keep backward compatibility
-  if (publishConfiguration.provider === "spaces") {
-    return false
-  }
-
-  const updaterVersion = packager.metadata.dependencies == null ? null : packager.metadata.dependencies["electron-updater"]
-  return updaterVersion == null || semver.lt(updaterVersion, "4.0.0")
-}
-
 export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConfigs: Array<PublishConfiguration>): Promise<Array<UpdateInfoFileTask>> {
   const packager = event.packager
   const publishConfigs = await getPublishConfigsForUpdateInfo(packager, _publishConfigs, event.arch)
@@ -110,39 +125,53 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const createdFiles = new Set<string>()
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const tasks: Array<UpdateInfoFileTask> = []
-  const electronUpdaterCompatibility = packager.platformOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.15"
+  const electronUpdaterCompatibility = packager.platformOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.16"
+  // electron-updater < 2.16.0 predates the files[] array and reads the top-level path/sha512 (and Windows sha2) fields instead
+  // (do not pass includePrerelease — it would make the default ">=2.16" intersect "<2.16.0" at the 2.16.0-0 prerelease point)
+  const needsLegacyPathSha512 = semver.intersects(electronUpdaterCompatibility, "<2.16.0")
+  // electron-updater < 2.0.0 on macOS reads the legacy <channel>-mac.json instead of <channel>-mac.yml
+  const needsLegacyMacJsonCompatibility = semver.intersects(electronUpdaterCompatibility, "<2.0.0")
+  warnAboutLegacyUpdaterCompatibility(electronUpdaterCompatibility, needsLegacyPathSha512)
   for (const publishConfiguration of publishConfigs) {
     let dir = outDir
     if (publishConfigs.length > 1 && publishConfiguration !== publishConfigs[0]) {
       dir = path.join(outDir, publishConfiguration.provider)
     }
 
-    let isElectronUpdater1xCompatibility = checkUpdaterCompatibility(electronUpdaterCompatibility, publishConfiguration, packager)
+    let needsLegacyMacJson = needsLegacyMacJsonCompatibility
 
     let info = sharedInfo
     // noinspection JSDeprecatedSymbols
-    if (isElectronUpdater1xCompatibility && packager.platform === Platform.WINDOWS) {
+    if (needsLegacyPathSha512) {
+      // legacy top-level path/sha512 (and Windows sha2) for electron-updater 1.x – 2.15.0; modern clients read files[]
       info = {
         ...info,
+        path: info.files[0].url,
+        sha512: info.files[0].sha512,
       }
-      // noinspection JSDeprecatedSymbols
-      ;(info as WindowsUpdateInfo).sha2 = await sha2.value
+      if (packager.platform === Platform.WINDOWS) {
+        // noinspection JSDeprecatedSymbols
+        ;(info as WindowsUpdateInfo).sha2 = await sha2.value
+      }
     }
 
     if (event.safeArtifactName != null && publishConfiguration.provider === "github") {
-      const newFiles = info.files.slice()
+      // copy the file entries (not just the array) — `info` is shared across publish configurations,
+      // so mutating an entry here would leak the GitHub-safe artifact name into other providers' update info
+      const newFiles = info.files.map(file => ({ ...file }))
       newFiles[0].url = event.safeArtifactName
       info = {
         ...info,
         files: newFiles,
-        path: event.safeArtifactName,
+        // legacy top-level path mirrors files[0].url; only emitted for pre-2.16 compatibility
+        ...(needsLegacyPathSha512 ? { path: event.safeArtifactName } : {}),
       }
     }
 
     for (const channel of computeChannelNames(packager, publishConfiguration)) {
-      if (isMac && isElectronUpdater1xCompatibility && event.file.endsWith(".zip")) {
+      if (isMac && needsLegacyMacJson && event.file.endsWith(".zip")) {
         // write only for first channel (generateUpdatesFilesForAllChannels is a new functionality, no need to generate old mac update info file)
-        isElectronUpdater1xCompatibility = false
+        needsLegacyMacJson = false
         await writeOldMacInfo(publishConfiguration, outDir, dir, channel, createdFiles, version, packager)
       }
 
@@ -176,10 +205,6 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
     version,
     // @ts-ignore
     files,
-    // @ts-ignore
-    path: url /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
-    // @ts-ignore
-    sha512 /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
     ...(releaseInfo as UpdateInfo),
   }
 
@@ -219,6 +244,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
   }
 
   const releaseDate = new Date().toISOString()
+
   const concurrency = 4
   await asyncPool<UpdateInfoFileTask, void>(concurrency, Array.from(updateChannelFileToInfo.values()), async task => {
     const publishConfig = task.publishConfiguration
@@ -237,7 +263,21 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
       task.info.releaseDate = releaseDate
     }
 
-    const fileContent = Buffer.from(serializeToYaml(task.info, false, true))
+    // Sign last: the signatures must cover the final version/files/packages/stagingPercentage/minimumSystemVersion.
+    // releaseDate is excluded from the signed payload, so setting it above does not affect them.
+    // The keys are resolved per task (not once for the batch) so each manifest is signed iff that
+    // platform's config requires it, matching the per-platform public-key embedding in PublishManager.
+    // Every configured key signs (dual-signing during key rotation): `signatures` holds one tagged entry
+    // per key and the legacy single `signature` field repeats the first key's signature, so the manifest
+    // shape is the same whether one or several keys are configured.
+    const signingKeys = await task.packager.updateSigningKeys.value
+    let info: UpdateInfo = task.info
+    if (signingKeys.length > 0) {
+      const signatures = createUpdateManifestSignatures(task.info, signingKeys)
+      info = { ...task.info, signature: signatures[0].signature, signatures }
+    }
+
+    const fileContent = Buffer.from(serializeToYaml(info, false, true))
     await fsExtra.outputFile(task.file, fileContent)
     await packager.emitArtifactCreated({
       file: task.file,
@@ -282,4 +322,26 @@ async function writeOldMacInfo(
       publishConfig,
     })
   }
+}
+
+/** Emitted once per process — createUpdateInfoTasks runs per artifact. */
+let legacyCompatibilityWarningEmitted = false
+
+/**
+ * The default `electronUpdaterCompatibility` moved to ">=2.16", which is what stops the deprecated
+ * top-level path/sha512 descriptor from being written. A range pinned below that keeps emitting it —
+ * along with the SHA-256 `sha2` checksum on Windows, which v28 will reject outright. Nothing said so.
+ */
+function warnAboutLegacyUpdaterCompatibility(electronUpdaterCompatibility: string, needsLegacyPathSha512: boolean): void {
+  if (!needsLegacyPathSha512 || legacyCompatibilityWarningEmitted) {
+    return
+  }
+  legacyCompatibilityWarningEmitted = true
+  log.warn(
+    { electronUpdaterCompatibility, solution: 'drop the pin (the default is ">=2.16") unless you still ship apps embedding electron-updater 1.x-2.15' },
+    "electronUpdaterCompatibility includes electron-updater versions below 2.16.0, so the deprecated top-level path/sha512 descriptor is still written to latest*.yml " +
+      "(and, on Windows, the legacy SHA-256 sha2 checksum). Metadata validated only by sha2 is deprecated and v28 will reject it. " +
+      "Every electron-updater since 2.16.0 reads files[] and ignores these fields. " +
+      "See https://www.electron.build/docs/migration/v27-breaking-changes#latestyml-drops-legacy-top-level-pathsha512"
+  )
 }

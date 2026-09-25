@@ -1,5 +1,5 @@
 import { bundle as bundleFlatpak, FlatpakBundlerBuildOptions, FlatpakManifest } from "@malept/flatpak-bundler"
-import { Arch, copyFile, toLinuxArchString } from "builder-util"
+import { Arch, copyFile, toLinuxArchString, validateShellEmbeddable } from "builder-util"
 
 import * as path from "path"
 import { Target } from "../../core.js"
@@ -120,13 +120,18 @@ export default class FlatpakTarget extends Target {
       modules: this.options.modules,
     }
 
+    // `this.options` is `linux` deep-merged with `flatpak`, and deepAssign concatenates arrays, so the
+    // shared `linux.files` globs (string | FileSet | array of either) would leak into this [src, dest] tuple
+    // list. Read the flatpak-specific list from the raw config instead of the merged options.
+    const extraFiles = this.packager.config.flatpak?.files ?? []
+
     const buildOptions: FlatpakBundlerBuildOptions = {
       baseFlatpakref: `app/${manifest.base}/${flatpakArch}/${manifest.baseVersion}`,
       runtimeFlatpakref: `runtime/${manifest.runtime}/${flatpakArch}/${manifest.runtimeVersion}`,
       sdkFlatpakref: `runtime/${manifest.sdk}/${flatpakArch}/${manifest.runtimeVersion}`,
       arch: flatpakArch as any,
       bundlePath: path.join(this.outDir, artifactName),
-      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...(this.options.files || [])],
+      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...extraFiles],
       symlinks: [[path.join("/lib", appIdentifier, executableName), path.join("/bin", executableName)], ...(this.options.symlinks || [])],
     }
 
@@ -159,6 +164,9 @@ const flatpakBuilderDefaults: Omit<FlatpakManifest, "id" | "command"> = {
 }
 
 function getElectronWrapperScript(executableName: string, executableArgs: string[] | Nullish, useWaylandFlags: boolean): string {
+  // executableName is interpolated into the generated POSIX wrapper script below; reject shell
+  // metacharacters (matches the snap and AppImage targets) so it cannot inject shell commands.
+  validateShellEmbeddable(executableName, "executableName")
   // Single-quote each arg so embedded characters (spaces, =, quotes) are passed literally,
   // consistent with the other Linux launcher entrypoints.
   const stringifiedExecutableArgs = (executableArgs ?? []).map(shellQuote).join(" ")

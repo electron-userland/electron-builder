@@ -14,7 +14,7 @@ afterEach(() => {
   clearCustomToolsetCache()
 })
 
-describe("getCustomToolsetPath memoization", { sequential: true }, () => {
+describe("getCustomToolsetPath memoization", { concurrent: false }, () => {
   test("returns same Promise for identical args", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir()
     const toolset = dirToolset(dir)

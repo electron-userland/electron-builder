@@ -16,36 +16,7 @@
 
       ${StdUtils.GetParameter} $packageFile "package-file" ""
       ${if} $packageFile == ""
-        !ifdef APP_64_NAME
-          !ifdef APP_32_NAME
-            !ifdef APP_ARM64_NAME
-              ${if} ${IsNativeARM64}
-                StrCpy $packageFile "${APP_ARM64_NAME}"
-                StrCpy $1 "${APP_ARM64_HASH}"
-              ${elseif} ${IsNativeAMD64}
-                StrCpy $packageFile "${APP_64_NAME}"
-                StrCpy $1 "${APP_64_HASH}"
-              ${else}
-                StrCpy $packageFile "${APP_32_NAME}"
-                StrCpy $1 "${APP_32_HASH}"
-              ${endif}
-            !else
-              ${if} ${RunningX64}
-                StrCpy $packageFile "${APP_64_NAME}"
-                StrCpy $1 "${APP_64_HASH}"
-              ${else}
-                StrCpy $packageFile "${APP_32_NAME}"
-                StrCpy $1 "${APP_32_HASH}"
-              ${endif}
-            !endif
-          !else
-            StrCpy $packageFile "${APP_64_NAME}"
-            StrCpy $1 "${APP_64_HASH}"
-          !endif
-        !else
-          StrCpy $packageFile "${APP_32_NAME}"
-          StrCpy $1 "${APP_32_HASH}"
-        !endif
+        !insertmacro selectWebPackage $packageFile $1
         StrCpy $4 "$packageFile"
         StrCpy $packageFile "$EXEDIR/$packageFile"
         StrCpy $isPackageFileExplicitlySpecified "false"
@@ -64,7 +35,7 @@
           ${if} $3 == $1
             Goto fun_extract
           ${else}
-            MessageBox MB_OK "Package file $4 found locally, but checksum doesn't match — expected $1, actual $3.$\r$\nLocal file is ignored and package will be downloaded from Internet."
+            MessageBox MB_OK "Package file $4 found locally, but checksum doesn't match — expected $1, actual $3.$\r$\nLocal file is ignored and package will be downloaded from Internet." /SD IDOK
           ${endIf}
         ${endIf}
       ${endIf}

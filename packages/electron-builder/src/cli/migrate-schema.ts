@@ -1,4 +1,5 @@
 import { createRequire } from "node:module"
+import { AZURE_KNOWN_FIELDS, ELECTRON_DOWNLOAD_DROPPED, MAC_SIGN_FIELDS, MAC_SIGN_REMOVED_FIELDS, MAC_UNIVERSAL_FIELDS } from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
 import { promises as fs } from "fs"
 import * as path from "path"
@@ -18,46 +19,45 @@ export interface MigrationResult {
   readonly migrated: Record<string, any>
   readonly changes: MigrationChange[]
   readonly warnings: string[]
+  /** Informational notices that are not config changes — they never flip `modified` or trigger a file write. */
+  readonly advisories: string[]
   readonly modified: boolean
 }
 
 // ─── Pure migration logic ─────────────────────────────────────────────────────
 
-// Azure Trusted Signing typed fields in v27 (everything else is an extra key → additionalMetadata).
-// "type" is included so it is not mistakenly moved to additionalMetadata if already present.
-export const AZURE_KNOWN_FIELDS = new Set([
-  "type",
-  "endpoint",
-  "codeSigningAccountName",
-  "certificateProfileName",
-  "publisherName",
-  "fileDigest",
-  "timestampRfc3161",
-  "timestampDigest",
-  "additionalMetadata",
-])
+// The v26 -> v27 key mapping is owned by app-builder-lib so the runtime guard
+// (`checkLegacyConfiguration`) and this migrator cannot drift apart. Re-exported here because these
+// names are part of this module's existing public surface.
+export { AZURE_KNOWN_FIELDS, ELECTRON_DOWNLOAD_DROPPED, MAC_SIGN_FIELDS, MAC_SIGN_REMOVED_FIELDS, MAC_UNIVERSAL_FIELDS } from "app-builder-lib/internal"
 
-// macOS signing fields that moved from the platform root into the `sign` (ElectronSignOptions) bag.
-// `signIgnore` is renamed to `sign.ignore` separately (the @electron/osx-sign canonical name).
-export const MAC_SIGN_FIELDS = [
-  "identity",
-  "entitlements",
-  "entitlementsInherit",
-  "entitlementsLoginHelper",
-  "provisioningProfile",
-  "type",
-  "binaries",
-  "requirements",
-  "hardenedRuntime",
-  "gatekeeperAssess",
-  "strictVerify",
-  "preAutoEntitlements",
-  "timestamp",
-  "additionalArguments",
-] as const
+// Advisory surfaced (informational only — never rewrites the config) when a project builds an nsis-web target. As of v27,
+// AppUpdater.disableWebInstaller defaults to true, so the auto-updater no longer downloads web-installer packages unless the app opts in at runtime.
+export const NSIS_WEB_ADVISORY =
+  "nsis-web target detected. In v27, autoUpdater.disableWebInstaller defaults to true, so NSIS web-installer packages are not downloaded by default. " +
+  "If your app relies on nsis-web installers for auto-updates, set autoUpdater.disableWebInstaller = false in your main process (this is an electron-updater runtime setting, not a build-config key)."
 
-// Universal-build fields that moved from the platform root into the `universal` (ElectronUniversalOptions) bag.
-export const MAC_UNIVERSAL_FIELDS = ["mergeASARs", "singleArchFiles", "x64ArchFiles"] as const
+/** True when `target` (a string, a `{ target }` object, or an array of either) selects the nsis-web target. */
+function hasNsisWebTarget(target: any): boolean {
+  if (target == null) {
+    return false
+  }
+  if (typeof target === "string") {
+    return target === "nsis-web"
+  }
+  if (Array.isArray(target)) {
+    return target.some(hasNsisWebTarget)
+  }
+  if (typeof target === "object") {
+    return target.target === "nsis-web"
+  }
+  return false
+}
+
+/** True when the build config produces an nsis-web installer (via win.target or the global target). */
+function detectNsisWebTarget(config: Record<string, any>): boolean {
+  return hasNsisWebTarget(config.win?.target) || hasNsisWebTarget(config.target)
+}
 
 /**
  * Applies all v26→v27 config transformations to a parsed config object.
@@ -67,6 +67,7 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   const c: Record<string, any> = JSON.parse(JSON.stringify(raw))
   const changes: MigrationChange[] = []
   const warnings: string[] = []
+  const advisories: string[] = []
 
   // ── 1. electronCompile ────────────────────────────────────────────────────
   if ("electronCompile" in c) {
@@ -91,6 +92,24 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
         key: "disableDefaultIgnoredFiles",
         description: "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `files` glob, e.g. `**/*.obj`)",
       })
+    }
+  }
+
+  // ── 2c. linux.syncDesktopName removed (always-on in v27) ──────────────────
+  // The flag is gone from the type; the behaviour it gated (deriving the installed .desktop filename
+  // from desktopName) is now always on. Leaving the key would fail v27 schema validation (noExtraProps).
+  if (c.linux != null && typeof c.linux === "object" && "syncDesktopName" in c.linux) {
+    const wasDisabled = c.linux.syncDesktopName === false
+    delete c.linux.syncDesktopName
+    changes.push({
+      key: "linux.syncDesktopName",
+      description: "removed linux.syncDesktopName (the installed .desktop filename is always synced from desktopName in v27)",
+    })
+    if (wasDisabled) {
+      warnings.push(
+        "linux.syncDesktopName: false disabled desktop-name syncing in v26. In v27 the installed .desktop filename is always derived from `desktopName` " +
+          "(falling back to executableName). If you relied on the old filename, set `desktopName` explicitly to control it."
+      )
     }
   }
 
@@ -216,7 +235,7 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
       } else {
         delete c.asar
       }
-      changes.push({ key: "asar", description: "replaced asar: true with asar object (true is no longer a valid value)" })
+      changes.push({ key: "asar", description: "removed redundant asar: true (asar is enabled by default; the explicit `true` is not needed)" })
     } else if (Object.keys(asarSub).length > 0) {
       c.asar = asarSub
     }
@@ -322,7 +341,12 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     migrateElectronDownload(c, changes, warnings)
   }
 
-  return { migrated: c, changes, warnings, modified: changes.length > 0 || warnings.length > 0 }
+  // Advisory (not a config change): nsis-web builders must opt back into web installers at runtime as of v27.
+  if (detectNsisWebTarget(c)) {
+    advisories.push(NSIS_WEB_ADVISORY)
+  }
+
+  return { migrated: c, changes, warnings, advisories, modified: changes.length > 0 || warnings.length > 0 }
 }
 
 /**
@@ -336,6 +360,15 @@ function migrateMacSigning(platform: Record<string, any>, name: string, changes:
   const hasSignIgnore = "signIgnore" in platform
   const existingSign = platform.sign
   const signIsCustom = typeof existingSign === "string" || typeof existingSign === "function"
+
+  // Removed outright, not moved: ElectronSignOptions omits these and the schema rejects them, so
+  // relocating them under `sign` would emit a config that fails validation on the next build.
+  for (const field of MAC_SIGN_REMOVED_FIELDS) {
+    if (field in platform) {
+      delete platform[field]
+      changes.push({ key: `${name}.${field}`, description: `removed ${name}.${field} (@electron/osx-sign 2.x dropped the spctl --assess step; there is no ${name}.sign.${field})` })
+    }
+  }
 
   if (present.length === 0 && !hasSignIgnore) {
     // Only thing to fix is a semantically-flipped bare null
@@ -383,9 +416,6 @@ function migrateMacUniversal(platform: Record<string, any>, name: string, change
   }
   platform.universal = universalObj
 }
-
-// electronDownload fields with no equivalent in the v27 ElectronGetOptions (@electron/get v5) shape.
-export const ELECTRON_DOWNLOAD_DROPPED = ["cache", "customDir", "customFilename", "strictSSL", "platform", "arch", "version"] as const
 
 /**
  * Renames `electronDownload` → `electronGet` and reshapes it to ElectronGetOptions.
@@ -676,23 +706,29 @@ export async function migrateSchema(args: any): Promise<void> {
   const isToml = found.format === "toml"
 
   const result = migrateConfig(found.parsed)
-  const { migrated, warnings } = result
+  const { migrated, warnings, advisories } = result
   const changes = [...result.changes]
   if (found.rootDirectoriesMoved) {
     changes.push({ key: "directories", description: "moved package.json root-level directories → build.directories" })
   }
   const modified = result.modified || found.rootDirectoriesMoved === true
 
-  if (!modified) {
-    log.info(null, "config is already up to date — no changes needed")
-    return
-  }
-
   for (const change of changes) {
     log.info({ key: change.key }, change.description)
   }
   for (const warning of warnings) {
     log.warn(null, warning)
+  }
+  // Advisories are informational and surface even when nothing changed; they never cause a rewrite.
+  for (const advisory of advisories) {
+    log.warn(null, advisory)
+  }
+
+  if (!modified) {
+    if (advisories.length === 0) {
+      log.info(null, "config is already up to date — no changes needed")
+    }
+    return
   }
 
   if (isToml) {
@@ -725,14 +761,24 @@ async function migrateProgrammaticConfigFile(found: FoundConfig, location: strin
 
   const result = migrateProgrammaticSource(found.rawText, found.configFile!)
 
+  const printAdvisories = () => {
+    for (const advisory of result.advisories) {
+      log.warn(null, advisory)
+    }
+  }
+
   if (result.status === "unsupported") {
     log.warn({ file: location, reason: result.unsupportedReason }, "this programmatic config could not be auto-migrated; apply these changes manually:")
     printManualSteps()
+    printAdvisories()
     return
   }
 
   if (result.status === "no-op") {
-    log.info(null, "config is already up to date — no changes needed")
+    if (result.advisories.length === 0) {
+      log.info(null, "config is already up to date — no changes needed")
+    }
+    printAdvisories()
     return
   }
 
@@ -742,6 +788,7 @@ async function migrateProgrammaticConfigFile(found: FoundConfig, location: strin
   for (const warning of result.warnings) {
     log.warn(null, warning)
   }
+  printAdvisories()
 
   if (dryRun) {
     log.info(null, "dry run — no files written")
@@ -764,6 +811,7 @@ function printManualSteps() {
     "• Move disableAsarIntegrity → asar.disableIntegrity",
     "• Replace asar: true with an asar object (e.g. asar: {} or omit entirely - asar is enabled by default)",
     "• Remove appImage.systemIntegration",
+    "• Remove linux.syncDesktopName (the installed .desktop filename is always synced from desktopName in v27)",
     "• Rename snap → snapcraft; nest options under a base-named sub-key (default base: core20)",
     "• Replace vPrefixedTagName with tagNamePrefix on GitHub publish entries ('v' is the default prefix - just like before - but can now be customized with tagNamePrefix)",
     "• Move win.signtoolOptions → win.sign: { type: 'signtool', ...fields }",

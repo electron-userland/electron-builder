@@ -1,6 +1,6 @@
 import { build as _build, Configuration, DIR_TARGET, Packager, PackagerOptions, Platform } from "app-builder-lib"
 import { addTargetsForPlatform } from "app-builder-lib/internal"
-import { Arch, archFromString } from "builder-util"
+import { Arch, archFromString, log } from "builder-util"
 import { deepAssign } from "builder-util-runtime"
 import chalk from "chalk"
 import type { PublishOptions } from "electron-publish"
@@ -184,11 +184,36 @@ export function coerceTypes(host: any): any {
   return host
 }
 
+/** Emitted once per process — createTargets is called per invocation, not per platform. */
+let archAllWarningEmitted = false
+
+/**
+ * `arch: "all"` dropped ia32 in v27. The build stays green and simply produces no 32-bit artifact
+ * (plus an unexpected arm64 one), so the only evidence is a missing file in dist — nothing ties that
+ * back to the upgrade.
+ */
+function warnAboutArchAllExpansion(platforms: Array<Platform>): void {
+  if (archAllWarningEmitted || !platforms.some(platform => platform !== Platform.MAC)) {
+    return
+  }
+  archAllWarningEmitted = true
+  log.warn(
+    { expandsTo: "x64, arm64", previously: "x64, ia32", solution: "request ia32 explicitly (--ia32 / Arch.ia32) with electronVersion <= 43.x if you still ship 32-bit builds" },
+    'arch "all" no longer includes ia32. Electron 44 removed Windows ia32 builds and Linux ia32 zips ended at Electron 19, so the old expansion produced broken builds on current Electron. ' +
+      "See https://www.electron.build/docs/migration/v27-breaking-changes#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44"
+  )
+}
+
 export function createTargets(platforms: Array<Platform>, type?: string | null, arch?: string | null): Map<Platform, Map<Arch, Array<string>>> {
   const targets = new Map<Platform, Map<Arch, Array<string>>>()
+  if (arch === "all") {
+    warnAboutArchAllExpansion(platforms)
+  }
   for (const platform of platforms) {
     const archs =
-      arch === "all" ? (platform === Platform.MAC ? [Arch.x64, Arch.arm64, Arch.universal] : [Arch.x64, Arch.ia32]) : [archFromString(arch == null ? process.arch : arch)]
+      // BREAKING: since Electron 44 removed Windows ia32 and Linux armv7l builds (and linux-ia32 zips ended at Electron 19),
+      // "all" expands to x64 + arm64 on non-mac platforms instead of x64 + ia32. Request ia32 explicitly to build it (Electron <= 43 only).
+      arch === "all" ? (platform === Platform.MAC ? [Arch.x64, Arch.arm64, Arch.universal] : [Arch.x64, Arch.arm64]) : [archFromString(arch == null ? process.arch : arch)]
     const archToType = new Map<Arch, Array<string>>()
     targets.set(platform, archToType)
 
@@ -285,7 +310,7 @@ export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
     .group(["help", "version"], "Other:")
     .example("electron-builder -mwl", "build for macOS, Windows and Linux")
     .example("electron-builder --linux deb tar.xz", "build deb and tar.xz for Linux")
-    .example("electron-builder --win --ia32", "build for Windows ia32")
+    .example("electron-builder --win --arm64", "build for Windows arm64")
     .example("electron-builder -c.extraMetadata.foo=bar", "set package.json property `foo` to `bar`")
     .example("electron-builder --config.nsis.unicode=false", "configure unicode options for NSIS")
 }

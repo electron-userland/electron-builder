@@ -1,259 +1,416 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Linux Updater Test > test debian download and install (apt) 1`] = `
+exports[`Linux Updater Test > test arch download and install (pacman) 1`] = `
 {
-  "files": [
+  "linux": [
     {
-      "blockMapSize": 82581,
-      "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
-      "size": 79016577,
-      "url": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.pacman",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.1",
+      },
     },
     {
-      "sha512": "TUEgrKUlS8RGFW86GlN8YZpuAK5TL0pbVDERmAvv5dPOHXI9VbvrlDEEwCzn0NYrvajVQW03jz64Ik5mhRSCvg==",
-      "size": 56079686,
-      "url": "electron-quick-start-typescript-1.0.4-amd64.deb",
-    },
-    {
-      "sha512": "RRTErNJKHJX+tfxSzE0EItjPgd+Oh7t4okaaRS4EveokyQp1fZgheLmPuxOft4ptKqjZCvFW+m200rvJRuYcWg==",
-      "size": 56055361,
-      "url": "electron-quick-start-typescript-1.0.4-x86_64.rpm",
-    },
-    {
-      "sha512": "2mUqhYKCSlAw1aWUNz2707tsqcp2/xSAsVrUVZtKZyfZEzGus63L/A5sW963i1jfuzrWk0HfdyUqYNFNS2HSWA==",
-      "size": 56075488,
-      "url": "electron-quick-start-typescript-1.0.4-x64.pacman",
+      "arch": "x64",
+      "file": "TestApp.pacman",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
   ],
-  "path": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
-  "releaseDate": "2024-09-08T16:57:10.775Z",
-  "releaseName": "1.0.4",
-  "releaseNotes": "<p>pacman autoupdate release added</p>",
-  "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
-  "tag": "v1.0.4",
-  "version": "1.0.4",
+}
+`;
+
+exports[`Linux Updater Test > test debian download and install (apt) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.deb",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.deb",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.1",
+      },
+    },
+  ],
 }
 `;
 
 exports[`Linux Updater Test > test debian download and install (apt) 2`] = `
 [
-  "checking-for-update",
-  "update-available",
-  "update-downloaded",
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/TestApp/",
+  "/opt/TestApp/chrome-sandbox",
+  "/opt/TestApp/chrome_100_percent.pak",
+  "/opt/TestApp/chrome_200_percent.pak",
+  "/opt/TestApp/chrome_crashpad_handler",
+  "/opt/TestApp/icudtl.dat",
+  "/opt/TestApp/libEGL.so",
+  "/opt/TestApp/libffmpeg.so",
+  "/opt/TestApp/libGLESv2.so",
+  "/opt/TestApp/libvk_swiftshader.so",
+  "/opt/TestApp/libvulkan.so.1",
+  "/opt/TestApp/LICENSE.electron.txt",
+  "/opt/TestApp/LICENSES.chromium.html",
+  "/opt/TestApp/resources.pak",
+  "/opt/TestApp/snapshot_blob.bin",
+  "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
+  "/opt/TestApp/v8_context_snapshot.bin",
+  "/opt/TestApp/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/TestApp/resources/",
+  "/opt/TestApp/resources/app-update.yml",
+  "/opt/TestApp/resources/app.asar",
+  "/opt/TestApp/resources/apparmor-profile",
+  "/opt/TestApp/resources/package-type",
+  "/usr/share/applications/",
+  "/usr/share/applications/TestApp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/opt/TestApp/resources/app.asar.unpacked/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/LICENSE",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/package.json",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/TestApp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/TestApp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/TestApp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/TestApp.png",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/common-sqlite.gypi",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/extract.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite-autoconf-3440200.tar.gz",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite3.gyp",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3-binding.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/trace.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/async.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/backup.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/database.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/gcc-preinclude.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/macros.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/statement.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/threading.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/node_sqlite3.node",
 ]
 `;
 
+exports[`Linux Updater Test > test debian download and install (apt) 3`] = `
+{
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "default",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`Linux Updater Test > test debian download and install (apt) 4`] = `"Test Application (test quite “ #378)"`;
+
 exports[`Linux Updater Test > test debian download and install (dpkg) 1`] = `
 {
-  "files": [
+  "linux": [
     {
-      "blockMapSize": 82581,
-      "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
-      "size": 79016577,
-      "url": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
+      "arch": "x64",
+      "file": "TestApp.deb",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
     {
-      "sha512": "TUEgrKUlS8RGFW86GlN8YZpuAK5TL0pbVDERmAvv5dPOHXI9VbvrlDEEwCzn0NYrvajVQW03jz64Ik5mhRSCvg==",
-      "size": 56079686,
-      "url": "electron-quick-start-typescript-1.0.4-amd64.deb",
-    },
-    {
-      "sha512": "RRTErNJKHJX+tfxSzE0EItjPgd+Oh7t4okaaRS4EveokyQp1fZgheLmPuxOft4ptKqjZCvFW+m200rvJRuYcWg==",
-      "size": 56055361,
-      "url": "electron-quick-start-typescript-1.0.4-x86_64.rpm",
-    },
-    {
-      "sha512": "2mUqhYKCSlAw1aWUNz2707tsqcp2/xSAsVrUVZtKZyfZEzGus63L/A5sW963i1jfuzrWk0HfdyUqYNFNS2HSWA==",
-      "size": 56075488,
-      "url": "electron-quick-start-typescript-1.0.4-x64.pacman",
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.deb",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.1",
+      },
     },
   ],
-  "path": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
-  "releaseDate": "2024-09-08T16:57:10.775Z",
-  "releaseName": "1.0.4",
-  "releaseNotes": "<p>pacman autoupdate release added</p>",
-  "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
-  "tag": "v1.0.4",
-  "version": "1.0.4",
 }
 `;
 
 exports[`Linux Updater Test > test debian download and install (dpkg) 2`] = `
 [
-  "checking-for-update",
-  "update-available",
-  "update-downloaded",
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/TestApp/",
+  "/opt/TestApp/chrome-sandbox",
+  "/opt/TestApp/chrome_100_percent.pak",
+  "/opt/TestApp/chrome_200_percent.pak",
+  "/opt/TestApp/chrome_crashpad_handler",
+  "/opt/TestApp/icudtl.dat",
+  "/opt/TestApp/libEGL.so",
+  "/opt/TestApp/libffmpeg.so",
+  "/opt/TestApp/libGLESv2.so",
+  "/opt/TestApp/libvk_swiftshader.so",
+  "/opt/TestApp/libvulkan.so.1",
+  "/opt/TestApp/LICENSE.electron.txt",
+  "/opt/TestApp/LICENSES.chromium.html",
+  "/opt/TestApp/resources.pak",
+  "/opt/TestApp/snapshot_blob.bin",
+  "/opt/TestApp/TestApp",
+  "/opt/TestApp/TestApp-launcher",
+  "/opt/TestApp/v8_context_snapshot.bin",
+  "/opt/TestApp/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/TestApp/resources/",
+  "/opt/TestApp/resources/app-update.yml",
+  "/opt/TestApp/resources/app.asar",
+  "/opt/TestApp/resources/apparmor-profile",
+  "/opt/TestApp/resources/package-type",
+  "/usr/share/applications/",
+  "/usr/share/applications/TestApp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/opt/TestApp/resources/app.asar.unpacked/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/24x24/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/LICENSE",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/package.json",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/TestApp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/TestApp.png",
+  "/usr/share/icons/hicolor/24x24/apps/",
+  "/usr/share/icons/hicolor/24x24/apps/TestApp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/TestApp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/TestApp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/TestApp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/TestApp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/TestApp.png",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/common-sqlite.gypi",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/extract.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite-autoconf-3440200.tar.gz",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/deps/sqlite3.gyp",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3-binding.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/sqlite3.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/lib/trace.js",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/async.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/backup.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/database.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/gcc-preinclude.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/macros.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/statement.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/src/threading.h",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/",
+  "/opt/TestApp/resources/app.asar.unpacked/node_modules/sqlite3/build/Release/node_sqlite3.node",
 ]
 `;
 
-exports[`Linux Updater Test > test fedora download and install (dnf) 1`] = `
+exports[`Linux Updater Test > test debian download and install (dpkg) 3`] = `
 {
-  "files": [
-    {
-      "blockMapSize": 82581,
-      "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
-      "size": 79016577,
-      "url": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
-    },
-    {
-      "sha512": "TUEgrKUlS8RGFW86GlN8YZpuAK5TL0pbVDERmAvv5dPOHXI9VbvrlDEEwCzn0NYrvajVQW03jz64Ik5mhRSCvg==",
-      "size": 56079686,
-      "url": "electron-quick-start-typescript-1.0.4-amd64.deb",
-    },
-    {
-      "sha512": "RRTErNJKHJX+tfxSzE0EItjPgd+Oh7t4okaaRS4EveokyQp1fZgheLmPuxOft4ptKqjZCvFW+m200rvJRuYcWg==",
-      "size": 56055361,
-      "url": "electron-quick-start-typescript-1.0.4-x86_64.rpm",
-    },
-    {
-      "sha512": "2mUqhYKCSlAw1aWUNz2707tsqcp2/xSAsVrUVZtKZyfZEzGus63L/A5sW963i1jfuzrWk0HfdyUqYNFNS2HSWA==",
-      "size": 56075488,
-      "url": "electron-quick-start-typescript-1.0.4-x64.pacman",
-    },
-  ],
-  "path": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
-  "releaseDate": "2024-09-08T16:57:10.775Z",
-  "releaseName": "1.0.4",
-  "releaseNotes": "<p>pacman autoupdate release added</p>",
-  "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
-  "tag": "v1.0.4",
-  "version": "1.0.4",
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "default",
+  "Vendor": "Foo Bar <foo@example.com>",
 }
 `;
 
-exports[`Linux Updater Test > test fedora download and install (dnf) 2`] = `
-[
-  "checking-for-update",
-  "update-available",
-  "update-downloaded",
-]
+exports[`Linux Updater Test > test debian download and install (dpkg) 4`] = `"Test Application (test quite “ #378)"`;
+
+exports[`Linux Updater Test > test fedora download and install (dnf) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
 `;
 
 exports[`Linux Updater Test > test fedora download and install (rpm) 1`] = `
 {
-  "files": [
+  "linux": [
     {
-      "blockMapSize": 82581,
-      "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
-      "size": 79016577,
-      "url": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
     {
-      "sha512": "TUEgrKUlS8RGFW86GlN8YZpuAK5TL0pbVDERmAvv5dPOHXI9VbvrlDEEwCzn0NYrvajVQW03jz64Ik5mhRSCvg==",
-      "size": 56079686,
-      "url": "electron-quick-start-typescript-1.0.4-amd64.deb",
-    },
-    {
-      "sha512": "RRTErNJKHJX+tfxSzE0EItjPgd+Oh7t4okaaRS4EveokyQp1fZgheLmPuxOft4ptKqjZCvFW+m200rvJRuYcWg==",
-      "size": 56055361,
-      "url": "electron-quick-start-typescript-1.0.4-x86_64.rpm",
-    },
-    {
-      "sha512": "2mUqhYKCSlAw1aWUNz2707tsqcp2/xSAsVrUVZtKZyfZEzGus63L/A5sW963i1jfuzrWk0HfdyUqYNFNS2HSWA==",
-      "size": 56075488,
-      "url": "electron-quick-start-typescript-1.0.4-x64.pacman",
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.1",
+      },
     },
   ],
-  "path": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
-  "releaseDate": "2024-09-08T16:57:10.775Z",
-  "releaseName": "1.0.4",
-  "releaseNotes": "<p>pacman autoupdate release added</p>",
-  "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
-  "tag": "v1.0.4",
-  "version": "1.0.4",
 }
-`;
-
-exports[`Linux Updater Test > test fedora download and install (rpm) 2`] = `
-[
-  "checking-for-update",
-  "update-available",
-  "update-downloaded",
-]
 `;
 
 exports[`Linux Updater Test > test fedora download and install (yum) 1`] = `
 {
-  "files": [
+  "linux": [
     {
-      "blockMapSize": 82581,
-      "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
-      "size": 79016577,
-      "url": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
     {
-      "sha512": "TUEgrKUlS8RGFW86GlN8YZpuAK5TL0pbVDERmAvv5dPOHXI9VbvrlDEEwCzn0NYrvajVQW03jz64Ik5mhRSCvg==",
-      "size": 56079686,
-      "url": "electron-quick-start-typescript-1.0.4-amd64.deb",
-    },
-    {
-      "sha512": "RRTErNJKHJX+tfxSzE0EItjPgd+Oh7t4okaaRS4EveokyQp1fZgheLmPuxOft4ptKqjZCvFW+m200rvJRuYcWg==",
-      "size": 56055361,
-      "url": "electron-quick-start-typescript-1.0.4-x86_64.rpm",
-    },
-    {
-      "sha512": "2mUqhYKCSlAw1aWUNz2707tsqcp2/xSAsVrUVZtKZyfZEzGus63L/A5sW963i1jfuzrWk0HfdyUqYNFNS2HSWA==",
-      "size": 56075488,
-      "url": "electron-quick-start-typescript-1.0.4-x64.pacman",
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.1",
+      },
     },
   ],
-  "path": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
-  "releaseDate": "2024-09-08T16:57:10.775Z",
-  "releaseName": "1.0.4",
-  "releaseNotes": "<p>pacman autoupdate release added</p>",
-  "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
-  "tag": "v1.0.4",
-  "version": "1.0.4",
 }
-`;
-
-exports[`Linux Updater Test > test fedora download and install (yum) 2`] = `
-[
-  "checking-for-update",
-  "update-available",
-  "update-downloaded",
-]
 `;
 
 exports[`Linux Updater Test > test fedora download and install (zypper) 1`] = `
 {
-  "files": [
+  "linux": [
     {
-      "blockMapSize": 82581,
-      "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
-      "size": 79016577,
-      "url": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
+      "arch": "x64",
+      "file": "TestApp.rpm",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
     {
-      "sha512": "TUEgrKUlS8RGFW86GlN8YZpuAK5TL0pbVDERmAvv5dPOHXI9VbvrlDEEwCzn0NYrvajVQW03jz64Ik5mhRSCvg==",
-      "size": 56079686,
-      "url": "electron-quick-start-typescript-1.0.4-amd64.deb",
-    },
-    {
-      "sha512": "RRTErNJKHJX+tfxSzE0EItjPgd+Oh7t4okaaRS4EveokyQp1fZgheLmPuxOft4ptKqjZCvFW+m200rvJRuYcWg==",
-      "size": 56055361,
-      "url": "electron-quick-start-typescript-1.0.4-x86_64.rpm",
-    },
-    {
-      "sha512": "2mUqhYKCSlAw1aWUNz2707tsqcp2/xSAsVrUVZtKZyfZEzGus63L/A5sW963i1jfuzrWk0HfdyUqYNFNS2HSWA==",
-      "size": 56075488,
-      "url": "electron-quick-start-typescript-1.0.4-x64.pacman",
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.rpm",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.1",
+      },
     },
   ],
-  "path": "electron-quick-start-typescript-1.0.4-x86_64.AppImage",
-  "releaseDate": "2024-09-08T16:57:10.775Z",
-  "releaseName": "1.0.4",
-  "releaseNotes": "<p>pacman autoupdate release added</p>",
-  "sha512": "u6MIxgkAyGQJNoQh/xZaVN2quQ7+So3t5RXnA2RspDuF0PiMk4q3xE5DhjnTdYCUpFANykEyt/QfmSriGoRamw==",
-  "tag": "v1.0.4",
-  "version": "1.0.4",
 }
-`;
-
-exports[`Linux Updater Test > test fedora download and install (zypper) 2`] = `
-[
-  "checking-for-update",
-  "update-available",
-  "update-downloaded",
-]
 `;

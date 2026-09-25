@@ -1,6 +1,6 @@
 import { orNullIfFileNotExist } from "builder-util"
 import fsExtra from "fs-extra"
-import GitHost, { fromUrl } from "hosted-git-info"
+import { fromUrl } from "hosted-git-info"
 import * as path from "path"
 import { SourceRepositoryInfo } from "../core.js"
 import { Metadata, RepositoryInfo } from "../options/metadata.js"
@@ -32,7 +32,7 @@ async function getGitUrlFromGitConfig(projectDir: string): Promise<string | null
 
 async function _getInfo(projectDir: string, repo?: RepositoryInfo | string | null): Promise<SourceRepositoryInfo | null> {
   if (repo != null) {
-    return parseRepositoryUrl(typeof repo === "string" ? repo : repo.url)
+    return parseRepositoryUrl(typeof repo === "string" ? repo : repo.url, "package.json")
   }
 
   const slug = process.env.TRAVIS_REPO_SLUG || process.env.APPVEYOR_REPO_NAME
@@ -41,6 +41,7 @@ async function _getInfo(projectDir: string, repo?: RepositoryInfo | string | nul
     return {
       user: splitted[0],
       project: splitted[1],
+      source: process.env.TRAVIS_REPO_SLUG ? "TRAVIS_REPO_SLUG" : "APPVEYOR_REPO_NAME",
     }
   }
 
@@ -50,14 +51,15 @@ async function _getInfo(projectDir: string, repo?: RepositoryInfo | string | nul
     return {
       user,
       project,
+      source: "CIRCLE_PROJECT_USERNAME+CIRCLE_PROJECT_REPONAME",
     }
   }
 
   const url = await getGitUrlFromGitConfig(projectDir)
-  return url == null ? null : parseRepositoryUrl(url)
+  return url == null ? null : parseRepositoryUrl(url, ".git/config")
 }
 
-function parseRepositoryUrl(url: string): GitHost | null {
+function parseRepositoryUrl(url: string, source: string): SourceRepositoryInfo | null {
   const info: any = fromUrl(url)
   if (info == null) {
     return null
@@ -82,5 +84,6 @@ function parseRepositoryUrl(url: string): GitHost | null {
   delete info.opts
   delete info.browsefiletemplate
   delete info.auth
+  info.source = source
   return info
 }

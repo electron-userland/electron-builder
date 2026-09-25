@@ -1,4 +1,7 @@
 FROM node:24-alpine
 WORKDIR /app
 ENV CI=true
+# git + bash: needed by website/scripts/build-versioned-site.sh to materialize
+# and build additional release branches/tags (RELEASE_TAGS) inside the container.
+RUN apk add --no-cache bash git
 RUN corepack enable

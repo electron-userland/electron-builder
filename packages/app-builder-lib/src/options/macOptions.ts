@@ -1,7 +1,7 @@
 import { TargetConfiguration, TargetSpecificOptions } from "../core.js"
 import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
 import { CustomMacSign } from "../macPackager.js"
-import type { OnlySignOptions } from "@electron/osx-sign"
+import type { OnlySignOptions, SigningDistributionType } from "@electron/osx-sign"
 import type { MakeUniversalOpts } from "@electron/universal"
 
 /**
@@ -22,15 +22,27 @@ export interface ElectronUniversalOptions extends Omit<MakeUniversalOpts, "x64Ap
 
 /**
  * Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control
- * itself — `app`, `keychain`, `platform`, `version`, `optionsForFile`, and `type` (derived from the
- * build flavor: `mas-dev` → `development`, otherwise `distribution`) — and forwards everything else.
+ * itself — `app`, `keychain`, `platform`, `version`, and `optionsForFile` — and forwards everything else.
  *
  * Additionally exposes a small set of per-file convenience fields that electron-builder maps
  * internally through `optionsForFile`.
  *
  * @see https://packages.electronjs.org/osx-sign
  */
-export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFile" | "version" | "type"> {
+export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFile" | "version"> {
+  /**
+   * The type of certificate to use when signing: `development` or `distribution`.
+   *
+   * Defaults to a value derived from the build flavor: `mas-dev` → `development`, otherwise `distribution`.
+   * Set it explicitly to override — e.g. `development` on a darwin build signs with a `Mac Developer` or
+   * `Apple Development` certificate instead of `Developer ID Application` and embeds a matching
+   * development provisioning profile.
+   *
+   * Development-signed apps are blocked by Gatekeeper on other machines; users must use the
+   * right-click → Open workaround documented at https://support.apple.com/en-us/guide/mac-help/mh40616/mac.
+   * Such builds are not suitable for production distribution and cannot be notarized.
+   */
+  readonly type?: SigningDistributionType
   /**
    * The signing identity (certificate name or SHA-1 hash). Applies to both app signing and DMG signing.
    * Prefer the environment variables `CSC_LINK` / `CSC_NAME` over hardcoding this value.
@@ -41,14 +53,19 @@ export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFi
    */
   readonly identity?: string | null
   /**
-   * Path to the main app entitlements file.
-   * Falls back to `build/entitlements.mac.plist` if it exists, then to `@electron/osx-sign`'s
-   * built-in defaults.
+   * Path to the main app entitlements file. Resolved relative to the build resources directory, then the project directory.
+   * Falls back to `build/entitlements.mac.plist` (or `build/entitlements.mas.plist` for MAS targets) if it exists.
+   * Otherwise `mac` builds use the bundled default, which grants only `com.apple.security.cs.allow-jit`
+   * (ad-hoc builds use a bundled ad-hoc template that also disables library validation), and MAS builds use
+   * `@electron/osx-sign`'s built-in sandboxed `default.mas.plist`.
    */
   readonly entitlements?: string | null
   /**
-   * Path to child entitlements inherited by embedded frameworks and bundles.
-   * Falls back to `build/entitlements.mac.inherit.plist` if it exists.
+   * Path to child entitlements inherited by embedded frameworks and bundles. Resolved relative to the build resources directory, then the project directory.
+   * Falls back to `build/entitlements.mac.inherit.plist` (or `build/entitlements.mas.inherit.plist` for MAS targets) if it exists.
+   * Otherwise nested binaries receive `@electron/osx-sign`'s per-file defaults (renderer/GPU helpers: `allow-jit`;
+   * plugin helper: Chromium's looser set; everything else: `default.darwin.plist`); ad-hoc `mac` builds use the
+   * bundled ad-hoc template instead.
    */
   readonly entitlementsInherit?: string | null
   /**
@@ -61,9 +78,7 @@ export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFi
    * Whether to enable [Hardened Runtime](https://developer.apple.com/documentation/security/hardened_runtime).
    *
    * Hardened Runtime is a prerequisite for notarization (mandatory on macOS 10.15+).
-   * Defaults to `true` for `darwin` builds and `false` for `mas-dev`.
-   *
-   * @see https://github.com/electron/fuses
+   * Defaults to `true` for `darwin` builds and `false` for MAS builds (`mas` and `mas-dev`).
    */
   readonly hardenedRuntime?: boolean
   /**
@@ -192,7 +207,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * - **{@link ElectronSignOptions}**: options forwarded directly to `@electron/osx-sign`.
    *
    * @see {@link ElectronSignOptions}
-   * @see https://www.electron.build/code-signing
+   * @see https://www.electron.build/docs/features/code-signing
    */
   readonly sign?: CustomMacSign | ElectronSignOptions | string | null
 
@@ -270,15 +285,15 @@ export interface DmgOptions extends TargetSpecificOptions {
   contents?: Array<DmgContent>
 
   /**
-   * The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).
+   * The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)). `ULMO` (lzma-compressed image (macOS 10.15+ only)).
    * @default UDZO
    */
-  format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO"
+  format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO" | "ULMO"
 
   /**
    * The filesystem for the DMG volume (e.g. `"APFS"` or `"HFS+"`)
-   * This will be changed to APFS in the next major release, so it is recommended to set it explicitly to HFS+ if you want to keep using HFS+ (e.g. for better compatibility with older macOS versions).
-   * @default HFS+
+   * As of v27 this defaults to APFS. Set it explicitly to `"HFS+"` if you need compatibility with older macOS versions (pre-10.13 High Sierra cannot mount APFS volumes).
+   * @default APFS
    */
   readonly filesystem?: "HFS+" | "APFS" | null
 
@@ -386,7 +401,7 @@ export interface DmgContent {
    * The device-independent pixel offset from the top of the window to the **center** of the icon.
    */
   y: number
-  type?: "link" | "file" | "dir"
+  type?: "link" | "file" | "dir" | "position"
 
   /**
    * The name of the file within the DMG. Defaults to basename of `path`.

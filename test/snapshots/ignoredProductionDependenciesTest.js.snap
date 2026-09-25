@@ -1,0 +1,7 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ignoredProductionDependencies (pack-level) > packed app omits ignored production dependencies from node_modules 1`] = `
+{
+  "linux": [],
+}
+`;

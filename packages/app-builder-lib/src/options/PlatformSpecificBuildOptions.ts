@@ -81,7 +81,7 @@ Defaults to:
   "!**\/node_modules/*\/{test,__tests__,tests,powered-test,example,examples}",
   "!**\/node_modules/*.d.ts",
   "!**\/node_modules/.bin",
-  "!**\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+  "!**\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}",
   "!.editorconfig",
   "!**\/._*",
   "!**\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
@@ -184,7 +184,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly forceCodeSigning?: boolean
 
   /**
-   * The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.
+   * The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.
    */
   readonly electronUpdaterCompatibility?: string | null
 
@@ -205,6 +205,13 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
    * @default false
    */
   readonly generateUpdatesFilesForAllChannels?: boolean
+
+  /**
+   * Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed
+   * and electron-updater verifies the signature (against the embedded public key) before downloading an update.
+   * Prefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI.
+   */
+  readonly updateManifest?: UpdateManifestSigningOptions | null
 
   /**
    * The release info. Intended for command line usage:
@@ -234,6 +241,32 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
    * Defaults to the current machine's architecture.
    */
   readonly defaultArch?: string
+}
+
+export interface UpdateManifestSigningOptions {
+  /**
+   * Ed25519 private key(s) in PEM (PKCS#8) format used to sign the update manifest. A single PEM string may
+   * contain several concatenated keys, or pass an array with one key each; the manifest is signed by every key
+   * (dual-signing for [key rotation](https://www.electron.build/features/key-rotation)) and the first key also
+   * fills the legacy single `signature` field.
+   * Secret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable in CI over committing this to config.
+   */
+  readonly signingKey?: string | Array<string> | null
+
+  /**
+   * Path(s) to file(s) containing the Ed25519 private key (PEM, PKCS#8). Alternative to `signingKey`.
+   * An array signs with every listed key, in order. Relative paths are resolved against the project directory.
+   */
+  readonly signingKeyFile?: string | Array<string> | null
+
+  /**
+   * The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.
+   * The updater accepts a manifest when any listed key validates one of its signatures. Optional — when
+   * omitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust
+   * additional keys ahead of a rotation (for example `[current, next]`) or when the private key is held by an
+   * external signer.
+   */
+  readonly publicKey?: string | Array<string> | null
 }
 
 export interface ReleaseInfo {

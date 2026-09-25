@@ -111,7 +111,7 @@ describe("getBucketLocation — XML response parsing", () => {
 
 // ─── Credential chain: getBucketLocation forwards resolved credentials ────────
 
-describe("getBucketLocation — credential chain", { sequential: true }, () => {
+describe("getBucketLocation — credential chain", { concurrent: false }, () => {
   beforeEach(() => {
     vi.mocked(https.request).mockClear()
     vi.mocked(resolveAwsCredentials).mockClear()

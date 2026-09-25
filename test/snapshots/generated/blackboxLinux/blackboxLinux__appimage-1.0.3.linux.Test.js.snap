@@ -1,0 +1,319 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`linux > appimage tool: 1.0.3 > AppImage - install on next launch - x64 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > appimage tool: 1.0.3 > AppImage - install on next launch - x64 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > appimage tool: 1.0.3 > AppImage - key rotation - x64 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "signature": "@signature",
+        "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+        ],
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > appimage tool: 1.0.3 > AppImage - key rotation - x64 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "signature": "@signature",
+        "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+        ],
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > appimage tool: 1.0.3 > AppImage - key rotation - x64 3`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "signature": "@signature",
+        "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+        ],
+        "version": "1.0.2",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > appimage tool: 1.0.3 > AppImage - signed update manifest - x64 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "signature": "@signature",
+        "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+        ],
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > appimage tool: 1.0.3 > AppImage - signed update manifest - x64 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "signature": "@signature",
+        "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+        ],
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > appimage tool: 1.0.3 > AppImage - x64 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`linux > appimage tool: 1.0.3 > AppImage - x64 2`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.AppImage",
+      "updateInfo": {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-linux.yml",
+      "fileContent": {
+        "files": [
+          {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp.AppImage",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;

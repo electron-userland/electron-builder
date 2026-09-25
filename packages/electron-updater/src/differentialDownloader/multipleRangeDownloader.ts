@@ -94,6 +94,8 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
   const requestOptions = differentialDownloader.createRequestOptions()
   requestOptions.headers!.Range = ranges.substring(0, ranges.length - 2)
   const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
+    response.on("error", reject)
+
     if (!checkIsRangesSupported(response, reject)) {
       return
     }
@@ -105,13 +107,27 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       return
     }
 
+    // The watchdog below only exists for a response that ends before every part was handled. It must not outlive a
+    // successful batch: the next batch reuses the same `reject`, so a stale watchdog used to fail any multi-batch
+    // download whose later batches took longer than the grace period.
+    let isBatchFinished = false
+    let watchdog: ReturnType<typeof setTimeout> | null = null
+    const onBatchFinished = (): void => {
+      isBatchFinished = true
+      if (watchdog != null) {
+        clearTimeout(watchdog)
+        watchdog = null
+      }
+      resolve()
+    }
+
     const dicer = new DataSplitter(
       out,
       options,
       partIndexToTaskIndex,
       m[1] || m[2],
       partIndexToLength,
-      resolve,
+      onBatchFinished,
       grandTotalBytes,
       differentialDownloader.options.onProgress,
       differentialDownloader.logger
@@ -120,7 +136,14 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     response.pipe(dicer)
 
     response.on("end", () => {
-      setTimeout(() => {
+      if (isBatchFinished) {
+        return
+      }
+      watchdog = setTimeout(() => {
+        watchdog = null
+        if (isBatchFinished) {
+          return
+        }
         request.abort()
         reject(new Error("Response ends without calling any handlers"))
       }, 10000)

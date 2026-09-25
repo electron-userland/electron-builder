@@ -1,18 +1,31 @@
 import { PublishManager } from "app-builder-lib"
 import { verifyAsarFileTree as _verifyAsarFileTree } from "./asarVerifier"
-import { AsarIntegrity, computeArchToTargetNamesMap, getLinuxToolsMacToolset, parsePlistFile, PlistObject } from "app-builder-lib/internal"
-import { addValue, copyDir, exec, executeFinally, exists, FileCopier, log, retry, USE_HARD_LINKS, walk } from "builder-util"
-import { CancellationToken, deepAssign, UpdateFileInfo } from "builder-util-runtime"
-import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
-import { convertVersion } from "electron-winstaller"
+import { computeArchToTargetNamesMap, getLinuxToolsMacToolset, parsePlistFile, PlistObject } from "app-builder-lib/internal"
+import { addValue, copyDir, deepAssign, exec, executeFinally, exists, FileCopier, isEmptyOrSpaces, log, retry, USE_HARD_LINKS, walk } from "builder-util"
+import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
+import {
+  AfterPackContext,
+  Arch,
+  ArtifactCreated,
+  Configuration,
+  DIR_TARGET,
+  getArchSuffix,
+  MacOsTargetName,
+  Packager,
+  PackagerOptions,
+  Platform,
+  SquirrelWindowsOptions,
+  Target,
+} from "electron-builder"
+import { convertVersion } from "electron-builder-squirrel-windows/src/windowsInstaller"
 import { PublishPolicy } from "electron-publish"
 import { copyFile, emptyDir, mkdir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { realpath as realpathCb } from "fs"
-import { load } from "js-yaml"
+import { dump, load } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
-import { NtExecutable, NtExecutableResource } from "resedit"
+import { Format, NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
 import { getCollectorByPackageManager, PM } from "app-builder-lib/internal"
 import { promisify } from "util"
@@ -29,12 +42,12 @@ import { detectPackageManager } from "app-builder-lib/src/node-module-collector/
 import { SelfSignedIdentity } from "./selfSignedIdentity"
 
 const PACKAGE_MANAGER_VERSION_MAP = {
-  [PM.NPM]: { cli: "npm", version: "9.8.1" },
-  [PM.YARN]: { cli: "yarn", version: "1.22.19" },
-  [PM.YARN_BERRY]: { cli: "yarn", version: "3.5.0" },
-  [PM.PNPM]: { cli: "pnpm", version: "10.18.0" },
-  [PM.BUN]: { cli: "bun", version: "1.3.2" },
-  [PM.TRAVERSAL]: { cli: "npm", version: "9.8.1" }, // use npm to install, we're testing manual node traversal, but we still need something to install the dependencies
+  [PM.NPM]: { cli: "npm", version: "12.0.2" },
+  [PM.YARN]: { cli: "yarn", version: "1.22.22" },
+  [PM.YARN_BERRY]: { cli: "yarn", version: "4.18.0" },
+  [PM.PNPM]: { cli: "pnpm", version: "11.26.0" },
+  [PM.BUN]: { cli: "bun", version: "1.4.2" },
+  [PM.TRAVERSAL]: { cli: "npm", version: "12.0.2" }, // use npm to install, we're testing manual node traversal, but we still need something to install the dependencies
 }
 
 // `fs.promises.realpath` keeps 8.3 short components on Windows; only the `.native` variant
@@ -73,6 +86,133 @@ function getUnlockedInstallArgs(pm: PM): Array<string> | undefined {
   return undefined
 }
 
+// Fixture dependencies come straight from the registry and must never run their own install hooks (supply chain).
+// Nothing is lost: native modules are built by electron-builder's own @electron/rebuild step right after the
+// install, which is the product feature under test. npm, yarn 1, pnpm and bun all take `--ignore-scripts` on
+// `install`; yarn berry has no such flag and is handled through YARN_ENABLE_SCRIPTS on the install env instead.
+function getIgnoreScriptsInstallArgs(pm: PM): Array<string> {
+  return pm === PM.YARN_BERRY ? [] : ["--ignore-scripts"]
+}
+
+// Writes AssertPackOptions.packageManagerSettings into the config file the detected package manager actually reads for the
+// fixture install, and returns a function that undoes the write (removes the file, or puts the fixture's own bytes back).
+// Every merge goes through `deepAssign` so a fixture's existing keys survive, nested objects are merged rather than
+// replaced, arrays are unioned, and `__proto__`/`constructor`/`prototype` keys are dropped (prototype pollution).
+//
+//   pnpm         -> pnpm-workspace.yaml (nearest between `appDir` and `projectDir`, else created in `appDir`), see below
+//   yarn berry   -> .yarnrc.yml in `appDir` (yaml; berry merges every .yarnrc.yml up the tree, the nearest one wins)
+//   npm / yarn 1 -> .npmrc in `appDir` (ini `key=value` lines; comments and unrelated keys of an existing file are kept)
+//   bun          -> bunfig.toml is not supported (no toml writer in the test toolchain), passing settings throws
+//
+// pnpm >= 11 fails the install with ERR_PNPM_IGNORED_BUILDS when a dependency has a build script that has not been
+// allowlisted (`strictDepBuilds` defaults to true and is only honored from pnpm-workspace.yaml, not from the env).
+// `--ignore-scripts` (see getIgnoreScriptsInstallArgs) skips that check as of pnpm 11.26, but rather than relying on it
+// or disabling the check, allowlist electron alone: nothing else in a fixture is ever allowed to run its install hooks in
+// CI (natives are built by electron-builder's own @electron/rebuild step). Fixtures that ship or generate their own
+// pnpm-workspace.yaml keep every other key. The file is therefore always written for pnpm, even without settings.
+//
+// pnpm 11 also stopped reading its own settings from `.npmrc` and from the `pnpm` key of package.json, so a test's install
+// settings (`nodeLinker`, `shamefullyHoist`, `publicHoistPattern`, `supportedArchitectures`, ...) go into the same file.
+//
+// pnpm locates its workspace root with a plain upward search for pnpm-workspace.yaml, and `pnpm install` run inside a
+// workspace installs the workspace's packages, not the cwd's. installDependencies runs pnpm in `appDir`, so the file has to
+// live there for two-package fixtures such as `test-app`: written to `projectDir` instead, it turned that parent into a
+// workspace root whose only member was the root package.json, and the install in `app/` silently became a no-op that never
+// produced `sqlite3` (updater blackbox suites). Conversely, a fixture that already has a workspace root above `appDir`
+// must keep it, since a second pnpm-workspace.yaml below it would split the workspace, so the nearest existing file between
+// `appDir` and `projectDir` wins.
+//
+// The restore runs once the install is done: the file is only needed by the install itself (the packager's rebuild step is
+// @electron/rebuild, and the pnpm collector's `pnpm list` reads the lockfile and node_modules), pnpm appends placeholder
+// `allowBuilds` entries for every unreviewed build script it met, and for single-package fixtures `appDir` is the packaged
+// directory, so leaving the file there would add it to app.asar and shift every offset in the asar snapshots.
+async function writePackageManagerSettings(projectDir: string, appDir: string, pm: PM, settings: Record<string, any> | undefined): Promise<(() => Promise<void>) | null> {
+  switch (pm) {
+    case PM.PNPM: {
+      const workspaceFile = (await findPnpmWorkspaceFile(appDir, projectDir)) ?? path.join(appDir, "pnpm-workspace.yaml")
+      return await writeYamlSettings(workspaceFile, settings, { allowBuilds: { electron: true } })
+    }
+    case PM.YARN_BERRY:
+      return settings == null ? null : await writeYamlSettings(path.join(appDir, ".yarnrc.yml"), settings)
+    case PM.NPM:
+    case PM.YARN:
+    case PM.TRAVERSAL:
+      return settings == null ? null : await writeNpmrcSettings(path.join(appDir, ".npmrc"), settings)
+    case PM.BUN:
+      if (settings != null) {
+        throw new Error(`packageManagerSettings is not supported for ${pm} (bunfig.toml); pass them via the fixture or projectDirCreated instead`)
+      }
+      return null
+  }
+}
+
+// Merges `layers` (left to right) over the yaml document in `file` and returns the restore function.
+async function writeYamlSettings(file: string, ...layers: Array<Record<string, any> | undefined>): Promise<() => Promise<void>> {
+  const original = (await exists(file)) ? await fs.readFile(file, "utf8") : null
+  const existing = original == null ? null : load(original)
+  const config = deepAssign<Record<string, any>>({}, existing != null && typeof existing === "object" ? existing : null, ...layers)
+  await fs.writeFile(file, dump(config))
+  return restoreFile(file, original)
+}
+
+// `.npmrc` is ini: one `key=value` per line, arrays as repeated `key[]=value` lines. Lines for keys that are not being set
+// (and comments/blank lines) are kept verbatim; the settings are appended after them.
+async function writeNpmrcSettings(file: string, settings: Record<string, any>): Promise<() => Promise<void>> {
+  const original = (await exists(file)) ? await fs.readFile(file, "utf8") : null
+  const existing: Record<string, any> = {}
+  const untouchedLines: Array<string> = []
+  for (const line of (original ?? "").split(/\r?\n/)) {
+    const match = /^\s*([^;#=\s][^=]*?)(\[\])?\s*=\s*(.*?)\s*$/.exec(line)
+    if (match == null) {
+      untouchedLines.push(line)
+      continue
+    }
+    const [, key, isArray, value] = match
+    if (isArray != null) {
+      existing[key] = [...(Array.isArray(existing[key]) ? existing[key] : []), value]
+    } else {
+      existing[key] = value
+    }
+  }
+  const merged = deepAssign<Record<string, any>>({}, existing, settings)
+  const lines = untouchedLines.filter((line, index, all) => !(index === all.length - 1 && line === ""))
+  for (const [key, value] of Object.entries(merged)) {
+    if (Array.isArray(value)) {
+      lines.push(...value.map(it => `${key}[]=${String(it)}`))
+    } else if (value != null && typeof value === "object") {
+      throw new Error(`.npmrc setting "${key}" must be a scalar or an array, got ${JSON.stringify(value)}`)
+    } else if (value != null) {
+      lines.push(`${key}=${String(value)}`)
+    }
+  }
+  await fs.writeFile(file, `${lines.join("\n")}\n`)
+  return restoreFile(file, original)
+}
+
+function restoreFile(file: string, original: string | null): () => Promise<void> {
+  return async () => {
+    if (original == null) {
+      await fs.rm(file, { force: true })
+    } else {
+      await fs.writeFile(file, original)
+    }
+  }
+}
+
+// Nearest pnpm-workspace.yaml from `startDir` up to and including `stopDir` (the fixture root), mirroring pnpm's own lookup.
+async function findPnpmWorkspaceFile(startDir: string, stopDir: string): Promise<string | null> {
+  const stop = path.resolve(stopDir)
+  for (let dir = path.resolve(stopDir, startDir); ; dir = path.dirname(dir)) {
+    const candidate = path.join(dir, "pnpm-workspace.yaml")
+    if (await exists(candidate)) {
+      return candidate
+    }
+    if (dir === stop || path.dirname(dir) === dir) {
+      return null
+    }
+  }
+}
+
 function getLockfileFixtureNameCandidates(currentTestName: string): Array<string> {
   const names: Array<string> = []
   const normalizedTestName = currentTestName.trim()
@@ -96,11 +236,27 @@ export const snapTarget = Platform.LINUX.createTarget("snap", Arch.x64)
 export interface AssertPackOptions {
   readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir, testEnv: NodeJS.ProcessEnv) => Promise<any> | (() => Promise<any>)
   readonly packed?: (context: PackedContext) => Promise<any>
+  /**
+   * Test-only early exit. Called once per platform/arch after the app directory is assembled and signed but before any
+   * target (nsis/dmg/deb/zip…) is built. Return `true` to skip the target builds for that arch; the artifact snapshot then
+   * records an empty list (like a `dir` target) and the target post-checks are skipped. `packed` still runs afterwards.
+   *
+   * Fires once per platform/arch, plus once per `mas`/`mas-dev` target on macOS — `toMatchSnapshot` calls inside the hook
+   * produce one snapshot key per invocation.
+   */
+  readonly afterPackTestHook?: (context: PackedContext & { readonly arch: Arch; readonly packContext: AfterPackContext }) => Promise<boolean>
   readonly expectedArtifacts?: Array<string>
 
   readonly checkMacApp?: (appDir: string, info: any) => Promise<any>
 
   readonly packageManager?: PM
+  /**
+   * Settings merged (with `deepAssign`) into the package manager's own config file for the fixture install and restored
+   * afterwards, before packing (see writePackageManagerSettings): pnpm-workspace.yaml keys for pnpm (`nodeLinker`,
+   * `shamefullyHoist`, `publicHoistPattern`, `supportedArchitectures`, ...), .yarnrc.yml keys for yarn berry, .npmrc keys
+   * for npm and yarn 1. Not supported for bun.
+   */
+  readonly packageManagerSettings?: Record<string, any>
   readonly useTempDir?: boolean
   readonly signedMac?: boolean
   readonly signedWin?: boolean
@@ -281,7 +437,12 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
       }
 
       const appDir = await computeDefaultAppDirectory(projectDir, configuration.directories?.app)
-      const additionalInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : checkOptions.storeDepsLockfileSnapshot ? getUnlockedInstallArgs(pm) : undefined
+      const restorePackageManagerSettings = await writePackageManagerSettings(projectDir, appDir, pm, checkOptions.packageManagerSettings)
+      const lockfileInstallArgs = lockfileFixtureApplied ? getLockedInstallArgs(pm) : checkOptions.storeDepsLockfileSnapshot ? getUnlockedInstallArgs(pm) : undefined
+      const additionalInstallArgs = [...getIgnoreScriptsInstallArgs(pm), ...(lockfileInstallArgs ?? [])]
+      // Scoped to this install only: `runtimeEnv` also reaches the packager, whose install-or-rebuild path must keep
+      // building natives. YARN_ENABLE_SCRIPTS is read by yarn berry alone (see getIgnoreScriptsInstallArgs).
+      const installEnv = pm === PM.YARN_BERRY ? { ...runtimeEnv, YARN_ENABLE_SCRIPTS: "0" } : runtimeEnv
 
       await installDependencies(
         configuration,
@@ -294,12 +455,13 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
           frameworkInfo: { version: ELECTRON_VERSION, useCustomDist: false },
           additionalArgs: additionalInstallArgs,
         },
-        runtimeEnv
+        installEnv
       )
 
       if (typeof postNodeModulesInstallHook === "function") {
         await postNodeModulesInstallHook()
       }
+      await restorePackageManagerSettings?.()
 
       // save or update lockfile fixture
       if (shouldUpdateLockfiles) {
@@ -321,32 +483,57 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
           ...packagerOptions,
         },
         checkOptions,
-        runtimeEnv
+        runtimeEnv,
+        { projectDir, tmpDir }
       )
 
       if (checkOptions.packed != null) {
-        const getAppPath = function (platform: Platform, arch?: Arch): string {
-          return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch ?? Arch.x64)}${platform === Platform.MAC ? "" : "-unpacked"}`)
-        }
-        const getContent = (platform: Platform, arch: Arch | undefined): string => {
-          return path.join(getAppPath(platform, arch), platform === Platform.MAC ? `${packager.appInfo.productFilename}.app/Contents` : "")
-        }
-        const getResources = (platform: Platform, arch: Arch | undefined): string => {
-          return path.join(getContent(platform, arch), platform === Platform.MAC ? "Resources" : "resources")
-        }
-        await checkOptions.packed({
-          projectDir,
-          outDir,
-          getAppPath,
-          getResources,
-          getContent,
-          packager,
-          tmpDir,
-        })
+        await checkOptions.packed(createPackedContext(outDir, packager, projectDir, tmpDir))
       }
     })(),
     (): any => (tmpDir === checkOptions.tmpDir ? null : tmpDir.cleanup())
   )
+}
+
+function createPackedContext(outDir: string, packager: Packager, projectDir: string, tmpDir: TmpDir): PackedContext {
+  const getAppPath = function (platform: Platform, arch?: Arch): string {
+    return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch ?? Arch.x64)}${platform === Platform.MAC ? "" : "-unpacked"}`)
+  }
+  const getContent = (platform: Platform, arch: Arch | undefined): string => {
+    return path.join(getAppPath(platform, arch), platform === Platform.MAC ? `${packager.appInfo.productFilename}.app/Contents` : "")
+  }
+  const getResources = (platform: Platform, arch: Arch | undefined): string => {
+    return path.join(getContent(platform, arch), platform === Platform.MAC ? "Resources" : "resources")
+  }
+  return {
+    projectDir,
+    outDir,
+    getAppPath,
+    getResources,
+    getContent,
+    packager,
+    tmpDir,
+  }
+}
+
+/**
+ * Reads the `INTEGRITY` resource electron-builder embeds into the Windows executable (the asar integrity map,
+ * see `AsarIntegrity`) and normalizes the hashes for snapshotting.
+ */
+export async function readAsarIntegrityFromExe(exePath: string): Promise<Array<{ file: string; alg: string; value: string }>> {
+  const resource = NtExecutableResource.from(NtExecutable.from(await fs.readFile(exePath), { ignoreCert: true }))
+  const integrityEntry = resource.entries.find(entry => entry.type === "INTEGRITY")
+  if (integrityEntry == null) {
+    throw new Error(`No INTEGRITY resource in ${exePath}`)
+  }
+  const checksumData = new TextDecoder("utf-8").decode(new Uint8Array(integrityEntry.bin))
+  return JSON.parse(checksumData).map((data: { file: string; alg: string; value: string }) => ({ ...data, alg: "SHA256", value: "hash" }))
+}
+
+/** `true` when the PE file at `exePath` carries no Authenticode signature (empty Certificate data directory). */
+export async function isExeUnsigned(exePath: string): Promise<boolean> {
+  const executable = NtExecutable.from(await fs.readFile(exePath), { ignoreCert: true })
+  return executable.newHeader.optionalHeaderDataDirectory.get(Format.ImageDirectoryEntry.Certificate).size === 0
 }
 
 const fileCopier = new FileCopier()
@@ -407,6 +594,8 @@ function getFileTypePriority(file: string): number {
  * 3. Tertiary: Filename (alphabetical)
  * 4. Quaternary: Presence of updateInfo (with updateInfo < without updateInfo)
  * 5. Quinary: Safe artifact name (alphabetical)
+ * 6. Senary: Publish provider (alphabetical)
+ * 7. Final: File content bytes — same provider may be configured multiple times
  */
 function sortArtifacts(a: ArtifactCreated, b: ArtifactCreated): number {
   // Primary sort: by file extension type
@@ -442,21 +631,57 @@ function sortArtifacts(a: ArtifactCreated, b: ArtifactCreated): number {
     return hasUpdateInfoA - hasUpdateInfoB
   }
 
-  // Quinary sort: by safeArtifactName (final tiebreaker)
-  const safeNameA = a.safeArtifactName ?? ""
-  const safeNameB = b.safeArtifactName ?? ""
+  // Quinary sort: by safeArtifactName
+  const safeNameCompare = (a.safeArtifactName ?? "").localeCompare(b.safeArtifactName ?? "", "en")
+  if (safeNameCompare !== 0) {
+    return safeNameCompare
+  }
 
-  return safeNameA.localeCompare(safeNameB, "en")
+  // Senary sort: by publish provider. Update-info yml files emitted per publisher share
+  // basename/arch/updateInfo/safeArtifactName, so without this their relative order depends on
+  // async write completion in writeUpdateInfoFiles (asyncPool) and is nondeterministic.
+  const providerCompare = (a.publishConfig?.provider ?? "").localeCompare(b.publishConfig?.provider ?? "", "en")
+  if (providerCompare !== 0) {
+    return providerCompare
+  }
+
+  // Final tiebreaker: file content bytes (same provider can be configured multiple times)
+  return Buffer.compare(a.fileContent ?? Buffer.alloc(0), b.fileContent ?? Buffer.alloc(0))
 }
 
 async function packAndCheck(
   expect: ExpectStatic,
   packagerOptions: PackagerOptions,
   checkOptions: AssertPackOptions,
-  runtimeEnv: NodeJS.ProcessEnv
+  runtimeEnv: NodeJS.ProcessEnv,
+  packedContextOptions: { projectDir: string; tmpDir: TmpDir }
 ): Promise<{ packager: Packager; outDir: string }> {
+  // `${platform.buildConfigurationKey}:${arch}` entries for which `afterPackTestHook` requested an early exit — no targets
+  // were built for them, so the target post-checks below are skipped (the .app / *-unpacked directory still exists).
+  const earlyExited = new Set<string>()
+  const testHook = checkOptions.afterPackTestHook
+  let effectivePackagerOptions = packagerOptions
+  if (testHook != null) {
+    effectivePackagerOptions = {
+      ...packagerOptions,
+      // closes over `packager` (declared below); safe because the hook only runs inside `packager.build()`
+      afterPackTestHook: async packContext => {
+        const platform = packContext.packager.platform
+        const skip = await testHook({
+          ...createPackedContext(packContext.outDir, packager, packedContextOptions.projectDir, packedContextOptions.tmpDir),
+          arch: packContext.arch,
+          packContext,
+        })
+        if (skip) {
+          earlyExited.add(`${platform.buildConfigurationKey}:${packContext.arch}`)
+        }
+        return skip
+      },
+    }
+  }
+
   const cancellationToken = new CancellationToken()
-  const packager = new Packager(packagerOptions, cancellationToken)
+  const packager = new Packager(effectivePackagerOptions, cancellationToken)
   ;(packager as any).runtimeEnvironmentVariables = runtimeEnv
   const publishManager = new PublishManager(packager, { publish: "publish" in checkOptions ? checkOptions.publish : "never" })
 
@@ -541,6 +766,9 @@ async function packAndCheck(
         const subDir = nameToTarget.has("mas-dev") ? "mas-dev" : nameToTarget.has("mas") ? "mas" : "mac"
         const packedAppDir = path.join(outDir, `${subDir}${getArchSuffix(arch)}`, `${packager.appInfo.productFilename}.app`)
         await checkMacResult(expect, packager, packagerOptions, checkOptions, packedAppDir)
+      } else if (earlyExited.has(`${platform.buildConfigurationKey}:${arch}`)) {
+        // afterPackTestHook skipped the target builds for this arch — nothing to check beyond the artifact snapshot
+        continue
       } else if (platform === Platform.LINUX) {
         await checkLinuxResult(expect, outDir, packager, arch, nameToTarget)
       } else if (platform === Platform.WINDOWS) {
@@ -657,28 +885,44 @@ async function checkMacResult(expect: ExpectStatic, packager: Packager, packager
 }
 
 async function checkWindowsResult(expect: ExpectStatic, packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<string, Target>) {
-  function checkSquirrelResult() {
+  async function checkSquirrelResult() {
     const appInfo = packager.appInfo
-    const { zip } = checkResult(expect, artifacts, "-full.nupkg")
+    const { zip, allFiles } = checkResult(expect, artifacts, "-full.nupkg")
 
-    if (checkOptions == null) {
-      const expectedSpec = zip.readAsText("TestApp.nuspec").replace(/\r\n/g, "\n")
-      // console.log(expectedSpec)
-      expect(expectedSpec).toEqual(`<?xml version="1.0"?>
-<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
-  <metadata>
-    <id>TestApp</id>
-    <version>${convertVersion(appInfo.version)}</version>
-    <title>${appInfo.productName}</title>
-    <authors>Foo Bar</authors>
-    <owners>Foo Bar</owners>
-    <iconUrl>https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico</iconUrl>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Test Application (test quite “ #378)</description>
-    <copyright>Copyright © ${new Date().getFullYear()} Foo Bar</copyright>
-    <projectUrl>http://foo.example.com</projectUrl>
-  </metadata>
-</package>`)
+    // nuget.exe re-serializes the manifest when it packs (own schema namespace, element order, no <files>
+    // block), so the packed .nuspec is not byte-comparable with the rendered template. Assert the metadata
+    // fields that SquirrelWindowsTarget derives from the config instead.
+    const nuspecEntry = allFiles.find(it => it.endsWith(".nuspec"))
+    expect(nuspecEntry).toBeDefined()
+    const nuspec = zip.readAsText(nuspecEntry!).replace(/\r\n/g, "\n")
+
+    // XmlWriter escapes only these in text nodes (quotes are written verbatim)
+    const xmlText = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    const squirrelOptions: SquirrelWindowsOptions = packager.config.squirrelWindows ?? {}
+    const expectedId = squirrelOptions.useAppIdAsId ? appInfo.id : squirrelOptions.name || appInfo.name
+    const expectedAuthors = appInfo.companyName || ""
+    const expectedDescription = isEmptyOrSpaces(appInfo.description) ? squirrelOptions.name || appInfo.productName : appInfo.description
+    const expectedProjectUrl = await appInfo.computePackageUrl()
+
+    expect(nuspecEntry).toBe(`${expectedId}.nuspec`)
+    expect(nuspec).toContain(`<id>${xmlText(expectedId)}</id>`)
+    expect(nuspec).toContain(`<version>${convertVersion(appInfo.version)}</version>`)
+    expect(nuspec).toContain(`<title>${xmlText(appInfo.productName)}</title>`)
+    expect(nuspec).toContain(`<authors>${xmlText(expectedAuthors)}</authors>`)
+    expect(nuspec).toContain(`<owners>${xmlText(expectedAuthors)}</owners>`)
+    if (squirrelOptions.iconUrl != null) {
+      expect(nuspec).toContain(`<iconUrl>${xmlText(squirrelOptions.iconUrl)}</iconUrl>`)
+    }
+    expect(nuspec).toContain(`<description>${xmlText(expectedDescription)}</description>`)
+    expect(nuspec).toContain(`<copyright>${xmlText(appInfo.copyright)}</copyright>`)
+    if (expectedProjectUrl != null) {
+      // nuget.exe round-trips the URL through System.Uri, which appends "/" to a bare authority
+      // (http://foo.example.com -> http://foo.example.com/), so compare without a trailing slash
+      const projectUrl = /<projectUrl>([^<]*)<\/projectUrl>/.exec(nuspec)?.[1]
+      expect(projectUrl).toBeDefined()
+      expect(projectUrl!.replace(/\/$/, "")).toBe(xmlText(expectedProjectUrl).replace(/\/$/, ""))
+    } else {
+      expect(nuspec).not.toContain("<projectUrl>")
     }
   }
 
@@ -687,14 +931,7 @@ async function checkWindowsResult(expect: ExpectStatic, packager: Packager, chec
 
     const executable = allFiles.filter(it => it.endsWith(".exe"))[0]
     zip.extractEntryTo(executable, path.dirname(packageFile), true, true)
-    const buffer = await fs.readFile(path.join(path.dirname(packageFile), executable))
-    const resource = NtExecutableResource.from(NtExecutable.from(buffer))
-    const integrityBuffer = resource.entries.find(entry => entry.type === "INTEGRITY")
-    const asarIntegrity = new Uint8Array(integrityBuffer!.bin)
-    const decoder = new TextDecoder("utf-8")
-    const checksumData = decoder.decode(asarIntegrity)
-    const checksums = JSON.parse(checksumData).map((data: AsarIntegrity) => ({ ...data, alg: "SHA256", value: "hash" }))
-    expect(checksums).toMatchSnapshot()
+    expect(await readAsarIntegrityFromExe(path.join(path.dirname(packageFile), executable))).toMatchSnapshot()
   }
 
   const hasTarget = (target: string) => {
@@ -903,7 +1140,8 @@ export async function checkDirContents(expect: ExpectStatic, dir: string) {
 export function removeUnstableProperties(data: any) {
   return JSON.parse(
     JSON.stringify(data, (name, value) => {
-      if (name.includes("size") || name.includes("Size") || name.startsWith("sha") || name === "releaseDate") {
+      // `signature`/`keyId`: Ed25519 update-manifest signatures over hashes/sizes and the (runtime-generated) key's id
+      if (name.includes("size") || name.includes("Size") || name.startsWith("sha") || name === "releaseDate" || name === "signature" || name === "keyId") {
         // to ensure that some property exists
         return `@${name}`
       }

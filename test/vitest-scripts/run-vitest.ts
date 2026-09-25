@@ -6,7 +6,7 @@ import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./vitest-config/file-discovery.js"
 import { generateTests } from "./generate-tests.js"
 import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./vitest-config/shard-builder.js"
-import { SHARD_INDEX, SupportedPlatforms, TEST_FILES_PATTERN } from "./vitest-config/smart-config.js"
+import { DEFAULT_TEST_FILE_GLOBS, getTestFilesOverride, SHARD_INDEX, SupportedPlatforms, TEST_MODE } from "./vitest-config/smart-config.js"
 import SmartSequencer from "./vitest-config/vitest-smart-sequencer.js"
 
 const PACKAGES_DIR = path.join(__dirname, "..", "..", "packages")
@@ -51,18 +51,32 @@ const workspaceSourceAliases = [
   },
 ]
 
-const testPatterns = TEST_FILES_PATTERN.split(",")
-  .map(s => s.trim())
-  .filter(Boolean)
-const includeGlob = `(${testPatterns.join("|")}|${testPatterns.map(t => `${t}*Test`).join("|")})`
+/**
+ * Basename globs (without `.ts`) vitest may run. Without a `TEST_FILES` override these are exactly the four test-file
+ * classes (`*Test`, `*test`, `*.e2e`, `*__e2e`). A `TEST_FILES` token is a filename substring, so each token `t` expands
+ * to `t` itself, `t*Test`, `t*test` and both e2e spellings (`t*.e2e` hand-written / platform-gated generated, `t*__e2e`
+ * ungated generated — see isE2eTestFile): `TEST_FILES=oneClickInstaller` runs oneClickInstallerTest.ts and
+ * oneClickInstaller.e2e.ts alike, `TEST_FILES=snapHeavy` finds snapHeavy.e2e.ts. Discovery only ever *adds* TEST_FILES
+ * matches; this glob is what scopes the vitest run down to them.
+ */
+function buildIncludeGlobs(override: ReadonlyArray<string> | undefined): ReadonlyArray<string> {
+  if (override == null) {
+    return DEFAULT_TEST_FILE_GLOBS
+  }
+  return override.flatMap(t => [t, ...DEFAULT_TEST_FILE_GLOBS.map(glob => `${t}${glob}`)])
+}
+
+const includeGlob = `(${buildIncludeGlobs(getTestFilesOverride()).join("|")})`
 console.log("TEST_FILES pattern", includeGlob)
+console.log("TEST_MODE", TEST_MODE)
 
 async function main() {
   if (!process.env.SKIP_GENERATE) {
     generateTests()
   }
 
-  const files = getAllTestFiles()
+  // Discovery applies TEST_MODE (all | unit | e2e) and TEST_FILES; the list below is the whole file universe vitest sees.
+  const files = getAllTestFiles("current", TEST_MODE)
   const currentPlatform = process.platform as SupportedPlatforms
 
   console.log(`Platform: ${currentPlatform}`)
@@ -102,10 +116,11 @@ async function main() {
   const reportId = `${currentPlatform}-shard${index}-pid${process.pid}`
   const reporters: any[] = [
     "default",
+    // smart sharding
     __dirname + "/vitest-config/vitest-smart-reporter.ts",
+    // output report/summary for printing in Test workflow OUTPUT_SUMMARY
     ["json", { outputFile: `test-results/results-${reportId}.json` }],
-    ["blob", { outputFile: `vitest-blobs/blob-${reportId}.json` }],
-  ]
+  ].concat(process.env.VITEST_COVERAGE === "true" ? [["blob", { outputFile: `vitest-blobs/blob-${reportId}.json` }]] : [])
 
   // Opt-in v8 coverage (VITEST_COVERAGE=true, set by the collect-coverage workflow input). Each shard
   // writes a raw coverage map; the merge job combines them into one downloadable report. Spread in
@@ -127,12 +142,19 @@ async function main() {
         }
       : {}
 
+  // Vitest reads process.env.UPDATE_SNAPSHOT itself (`resolved.update || process.env.UPDATE_SNAPSHOT`)
+  // and treats ANY non-empty value — including "false" — as update-all mode, even on CI. Only an
+  // explicit "true" opts in; scrub anything else so CI enforces snapshots instead of rewriting them.
+  const updateSnapshot = process.env.UPDATE_SNAPSHOT === "true"
+  if (!updateSnapshot) {
+    delete process.env.UPDATE_SNAPSHOT
+  }
+
   return startVitest(
-    "test",
     selectedFiles,
     {
       allowOnly: !isCI, // Prevent accidental commit of `test.only` in CI
-      update: process.env.UPDATE_SNAPSHOT === "true",
+      update: updateSnapshot,
 
       // we manually set `globalThis.test` and `globalThis.describe` in vitest-setup.ts to make sure everything works correctly
       globals: false,
@@ -140,6 +162,7 @@ async function main() {
       // Allow test metadata
       includeTaskLocation: true,
       setupFiles: [__dirname + "/vitest-config/vitest-setup.ts", __dirname + "/vitest-config/vitest-heavy-mutex.ts", __dirname + "/vitest-config/vitest-tmpdir.ts"],
+      // Which of the admitted files run is decided by the discovery list above (TEST_MODE + sharding).
       include: [`test/src/**/${includeGlob}.ts`],
 
       runner: __dirname + "/vitest-config/vitest-network-retry-runner.ts",
@@ -164,6 +187,8 @@ async function main() {
       resolveSnapshotPath: (testPath, snapshotExtension) => {
         const snapshotPath = testPath
           .replace(/\.[tj]s$/, `.js${snapshotExtension}`)
+          // (`foo.e2e.ts` → `foo.e2e.js.snap`, next to the `fooTest.js.snap` of its unit-level sibling; generated
+          // `foo__e2e.ts` → `foo__e2e.js.snap`.)
           // Wine-variant test files share snapshots with the non-wine variants — the wine
           // dimension is an execution detail (run via Wine vs natively), not a content
           // dimension.  Strip the `__wine-X.Y.Z` segment before computing the snapshot path so

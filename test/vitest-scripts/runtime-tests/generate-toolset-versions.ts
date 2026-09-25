@@ -1,7 +1,7 @@
 import type { ToolsetConfig } from "app-builder-lib"
 
-// Wine dimension for the Windows-artifact suites (winPackager, assistedInstaller, msiWrapped,
-// blackboxWin). These run under `ifWindowsOrWine`: native on Windows, host wine on Linux. They are
+// Wine dimension for the Windows-artifact suites (assistedInstaller, msiWrapped, blackboxWin).
+// These run under `ifWindowsOrWine`: native on Windows, host wine on Linux. They are
 // build-only under wine — winHelper.doTest skips install-verification for "0.0.0", so the (often
 // interactive) installers never run under wine, which would hang. Keep this at "0.0.0" only: adding
 // "1.0.1" flips doTest to run install-verification under wine on Linux and times out. Bundled-wine

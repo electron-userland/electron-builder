@@ -1,0 +1,84 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`msix > msix app executable launches from install location 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.0-x64.msix",
+    },
+  ],
+}
+`;
+
+exports[`msix > msix with createMsixupload produces a valid zip archive 1`] = `
+{
+  "win": [
+    {
+      "arch": "ia32",
+      "file": "TestApp-1.0.0-ia32.msix",
+    },
+    {
+      "file": "TestApp-1.0.0-x64.msixbundle",
+    },
+    {
+      "file": "TestApp-1.0.0-x64.msixupload",
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.0-x64.msix",
+    },
+  ],
+}
+`;
+
+exports[`msix > msix with enforcePackageIntegrity installs and manifest contains integrity element 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.0-x64.msix",
+    },
+  ],
+}
+`;
+
+exports[`msix > msix with windowsServices manifest contains desktop6 extension 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.0-x64.msix",
+    },
+  ],
+}
+`;
+
+exports[`msix > multi-arch msixbundle installs via VM 1`] = `
+{
+  "win": [
+    {
+      "arch": "ia32",
+      "file": "TestApp-1.0.0-ia32.msix",
+    },
+    {
+      "file": "TestApp-1.0.0-x64.msixbundle",
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.0-x64.msix",
+    },
+  ],
+}
+`;
+
+exports[`msix > single-arch msix installs and uninstalls via VM 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.0.0-x64.msix",
+    },
+  ],
+}
+`;

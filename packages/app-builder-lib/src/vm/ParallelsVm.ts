@@ -1,5 +1,6 @@
 import { DebugLogger, ExtraSpawnOptions, exec, log, sanitizeDirPath, spawn } from "builder-util"
 import { ExecFileOptions, SpawnOptions, execFileSync } from "child_process"
+import { homedir } from "os"
 import { VmManager } from "./vm.js"
 
 /** @internal */
@@ -124,14 +125,26 @@ export function macPathToParallelsWindows(file: string) {
   if (!file.startsWith("/")) {
     throw new Error(`Invalid path for Parallels VM execution: "${file}"`)
   }
-  // file is an absolute macOS host path; sanitizeDirPath rejects null/newline (arg-injection) and leaves it otherwise unchanged
-  const hostPath = sanitizeDirPath(file).replace(/\//g, "\\")
-  const uncPath = "\\\\Mac\\Host\\" + hostPath
-  // Reject characters/control bytes that can change command/tool argument semantics.
+  // Validate the raw host path up-front and reject control bytes plus shell/UNC-significant
+  // metacharacters BEFORE it is concatenated into the \\Mac\... path passed to `prlctl exec`. The
+  // `/`→`\` conversion below only adds backslashes (not in the deny-set), so validating the input here
+  // is the single sanitizing barrier for the value that reaches the command.
+  // (CodeQL js/shell-command-constructed-from-input — sanitize the tainted input at the source.)
   // eslint-disable-next-line no-control-regex
-  if (/[\x00-\x1F\x7F"*?<>|]/.test(uncPath)) {
+  if (/[\x00-\x1F\x7F"*?<>|]/.test(file)) {
     throw new Error(`Invalid path for Parallels VM execution: "${file}"`)
   }
+  // sanitizeDirPath additionally rejects null/newline and resolves the path; the input is already
+  // validated above, so the resulting UNC path is safe to hand to prlctl.
+  const sanitized = sanitizeDirPath(file)
+  // \\Mac\Home maps to the current user's home directory and is always accessible
+  // in both --current-user and SYSTEM exec contexts (unlike \\Mac\Host which requires
+  // "All Disks" sharing to be enabled in Parallels preferences).
+  const home = homedir()
+  // codeql[js/shell-command-constructed-from-input] - `file` is validated above (control bytes + shell/UNC metacharacters rejected) and resolved via sanitizeDirPath; the resulting UNC path is passed to prlctl as a discrete execFile argv element (array args, no shell), so no shell interpretation occurs
+  const uncPath = sanitized.startsWith(home + "/")
+    ? "\\\\Mac\\Home\\" + sanitized.substring(home.length + 1).replace(/\//g, "\\")
+    : "\\\\Mac\\Host\\" + sanitized.replace(/\//g, "\\")
   return uncPath
 }
 

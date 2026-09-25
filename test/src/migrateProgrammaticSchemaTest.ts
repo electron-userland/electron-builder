@@ -89,6 +89,24 @@ describe("migrateProgrammaticSource — locate shapes", () => {
   }
 })
 
+describe("migrateProgrammaticSource — linux.syncDesktopName", () => {
+  test("removes linux.syncDesktopName: true, preserving other linux props", () => {
+    const result = run(`export default {\n  linux: {\n    target: "deb",\n    syncDesktopName: true,\n  },\n}\n`)
+    expect(result.status).toBe("migrated")
+    expect(result.code).not.toContain("syncDesktopName")
+    expect(result.code).toContain(`target: "deb"`)
+    expect(result.changes.some(c => c.key === "linux.syncDesktopName")).toBe(true)
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  test("removes linux.syncDesktopName: false and warns", () => {
+    const result = run(`export default {\n  linux: {\n    syncDesktopName: false,\n  },\n}\n`)
+    expect(result.status).toBe("migrated")
+    expect(result.code).not.toContain("syncDesktopName")
+    expect(result.warnings.some(w => w.includes("syncDesktopName") && w.includes("desktopName"))).toBe(true)
+  })
+})
+
 describe("migrateProgrammaticSource — disableDefaultIgnoredFiles", () => {
   test("strips the root-level key, preserving surrounding properties", () => {
     const result = run(`export default {\n  appId: "com.a.b",\n  disableDefaultIgnoredFiles: true,\n  files: ["dist/**/*"],\n}\n`)
@@ -151,11 +169,12 @@ describe("migrateProgrammaticSource — formatting & comment fidelity", () => {
     expect(result.status).toBe("migrated")
     // Compare parsed objects, not whitespace: the signing fields are grouped under mac.sign,
     // everything else is preserved, and the top-level shape is unchanged.
+    // gatekeeperAssess is removed, not moved: @electron/osx-sign 2.x dropped the spctl --assess
+    // step, so mac.sign.gatekeeperAssess does not exist and the schema rejects it.
     expect(objFromCjs(result.code)).toEqual({
       mac: {
         sign: {
           hardenedRuntime: true,
-          gatekeeperAssess: true,
         },
         target: "dmg",
         extendInfo: {
@@ -163,6 +182,7 @@ describe("migrateProgrammaticSource — formatting & comment fidelity", () => {
         },
       },
     })
+    expect(result.changes.some(c => c.key === "mac.gatekeeperAssess")).toBe(true)
   })
 
   test("preserves comments, imports, and functions on untouched code", () => {
@@ -256,5 +276,40 @@ describe("migrateProgrammaticSource — warnings", () => {
     expect(result.warnings.some(w => w.includes("cache"))).toBe(true)
     expect(result.code).toContain("electronGet")
     expect(result.code).toContain("mirrorOptions")
+  })
+})
+
+describe("migrateProgrammaticSource — nsis-web advisory", () => {
+  test("nsis-web-only config is a no-op but still emits the advisory (code unchanged)", () => {
+    const source = `export default {\n  win: { target: "nsis-web" },\n}\n`
+    const result = run(source)
+    expect(result.status).toBe("no-op")
+    expect(result.advisories).toHaveLength(1)
+    expect(result.advisories[0]).toMatch(/nsis-web/)
+    expect(result.advisories[0]).toMatch(/disableWebInstaller = false/)
+    expect(result.code).toBe(source)
+  })
+
+  test("advisory is emitted alongside a real migration (status 'migrated')", () => {
+    const result = run(`export default {\n  electronCompile: true,\n  win: { target: "nsis-web" },\n}\n`)
+    expect(result.status).toBe("migrated")
+    expect(result.advisories).toHaveLength(1)
+    expect(result.code).not.toContain("electronCompile")
+  })
+
+  test("array target form is detected", () => {
+    const result = run(`export default {\n  win: { target: ["nsis", "nsis-web"] },\n}\n`)
+    expect(result.advisories).toHaveLength(1)
+  })
+
+  test("object target form is detected", () => {
+    const result = run(`export default {\n  win: { target: [{ target: "nsis-web", arch: "x64" }] },\n}\n`)
+    expect(result.advisories).toHaveLength(1)
+  })
+
+  test("non-web target yields no advisory", () => {
+    const result = run(`export default {\n  win: { target: "nsis" },\n}\n`)
+    expect(result.advisories).toHaveLength(0)
+    expect(result.status).toBe("no-op")
   })
 })

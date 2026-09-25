@@ -2,6 +2,12 @@
 
 exports[`macPackager > Build macOS on Windows is not supported 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
+exports[`macPackager > CFBundleName matches helper bundle name for a Unicode productName 1`] = `
+{
+  "mac": [],
+}
+`;
+
 exports[`macPackager > disableAsarIntegrity skips ASAR integrity computation 1`] = `
 {
   "mac": [],
@@ -19,6 +25,8 @@ exports[`macPackager > extraFiles are placed in product app bundle Contents, not
   "Info.plist",
   "PkgInfo",
   "extraTestFile.txt",
+  "Resources/LICENSE.electron.txt",
+  "Resources/LICENSES.chromium.html",
   "Resources/app.asar",
   "Resources/icon.icns",
   "MacOS/Test App ßW",
@@ -367,6 +375,8 @@ exports[`macPackager > extraFiles are placed in product app bundle Contents, not
 
 exports[`macPackager > extraFiles are placed in product app bundle Contents, not Electron.app 4`] = `
 [
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
   "app.asar",
   "icon.icns",
 ]
@@ -459,6 +469,7 @@ exports[`macPackager > multiple asar resources 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
@@ -529,6 +540,8 @@ exports[`macPackager > multiple asar resources 2`] = `
 
 exports[`macPackager > multiple asar resources 3`] = `
 [
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
   "app.asar",
   "extraAsar.asar",
   "icon.icns",
@@ -558,6 +571,7 @@ exports[`macPackager > one-package 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
@@ -566,6 +580,7 @@ exports[`macPackager > one-package 1`] = `
       },
     },
     {
+      "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
       "updateInfo": {
@@ -588,9 +603,7 @@ exports[`macPackager > one-package 1`] = `
             "url": "Test App ßW-1.1.0.dmg",
           },
         ],
-        "path": "Test App ßW-1.1.0-mac.zip",
         "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -688,142 +701,7 @@ exports[`macPackager > one-package 2`] = `
 
 exports[`macPackager > two-package 1`] = `
 {
-  "mac": [
-    {
-      "arch": "x64",
-      "file": "TestApp-1.1.0-mac-x64.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-mac-arm64.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "universal",
-      "file": "TestApp-1.1.0-mac-universal.dmg",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.1.0-mac-x64.zip",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-mac-arm64.zip",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "arch": "universal",
-      "file": "TestApp-1.1.0-mac-universal.zip",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0-mac-arm64.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0-mac-arm64.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-mac-arm64.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0-mac-universal.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0-mac-universal.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-mac-universal.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0-mac-x64.dmg.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "TestApp-1.1.0-mac-x64.zip.blockmap",
-      "safeArtifactName": "TestApp-1.1.0-mac-x64.zip.blockmap",
-      "updateInfo": {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    {
-      "file": "latest-mac.yml",
-      "fileContent": {
-        "files": [
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-mac-arm64.dmg",
-          },
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-mac-arm64.zip",
-          },
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-mac-universal.dmg",
-          },
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-mac-universal.zip",
-          },
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-mac-x64.dmg",
-          },
-          {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-mac-x64.zip",
-          },
-        ],
-        "path": "TestApp-1.1.0-mac-x64.zip",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
-    },
-  ],
+  "mac": [],
 }
 `;
 
@@ -878,10 +756,13 @@ exports[`macPackager > two-package 2`] = `
 
 exports[`macPackager > two-package 3`] = `
 [
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
   "en.lproj",
+  "en_GB.lproj",
   "icon.icns",
 ]
 `;
@@ -891,9 +772,19 @@ exports[`macPackager > two-package 4`] = `
   "Info.plist",
   "MainMenu.nib",
   "bn.lproj",
+  "bn_FEMININE.lproj",
+  "bn_MASCULINE.lproj",
+  "bn_NEUTER.lproj",
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
   "en.lproj",
+  "en_FEMININE.lproj",
+  "en_GB.lproj",
+  "en_GB_FEMININE.lproj",
+  "en_GB_MASCULINE.lproj",
+  "en_GB_NEUTER.lproj",
+  "en_MASCULINE.lproj",
+  "en_NEUTER.lproj",
   "icudtl.dat",
   "resources.pak",
   "v8_context_snapshot.x86_64.bin",
@@ -951,10 +842,13 @@ exports[`macPackager > two-package 5`] = `
 
 exports[`macPackager > two-package 6`] = `
 [
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
   "en.lproj",
+  "en_GB.lproj",
   "icon.icns",
 ]
 `;
@@ -964,9 +858,19 @@ exports[`macPackager > two-package 7`] = `
   "Info.plist",
   "MainMenu.nib",
   "bn.lproj",
+  "bn_FEMININE.lproj",
+  "bn_MASCULINE.lproj",
+  "bn_NEUTER.lproj",
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
   "en.lproj",
+  "en_FEMININE.lproj",
+  "en_GB.lproj",
+  "en_GB_FEMININE.lproj",
+  "en_GB_MASCULINE.lproj",
+  "en_GB_NEUTER.lproj",
+  "en_MASCULINE.lproj",
+  "en_NEUTER.lproj",
   "icudtl.dat",
   "resources.pak",
   "v8_context_snapshot.arm64.bin",
@@ -1024,10 +928,13 @@ exports[`macPackager > two-package 8`] = `
 
 exports[`macPackager > two-package 9`] = `
 [
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
   "en.lproj",
+  "en_GB.lproj",
   "icon.icns",
 ]
 `;
@@ -1037,9 +944,19 @@ exports[`macPackager > two-package 10`] = `
   "Info.plist",
   "MainMenu.nib",
   "bn.lproj",
+  "bn_FEMININE.lproj",
+  "bn_MASCULINE.lproj",
+  "bn_NEUTER.lproj",
   "chrome_100_percent.pak",
   "chrome_200_percent.pak",
   "en.lproj",
+  "en_FEMININE.lproj",
+  "en_GB.lproj",
+  "en_GB_FEMININE.lproj",
+  "en_GB_MASCULINE.lproj",
+  "en_GB_NEUTER.lproj",
+  "en_MASCULINE.lproj",
+  "en_NEUTER.lproj",
   "icudtl.dat",
   "resources.pak",
   "v8_context_snapshot.arm64.bin",
@@ -1059,6 +976,7 @@ exports[`macPackager > yarn two package.json w/ native module 1`] = `
       },
     },
     {
+      "arch": "universal",
       "file": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
       "safeArtifactName": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
       "updateInfo": {
@@ -1116,6 +1034,7 @@ exports[`macPackager > yarn two package.json w/ native module 2`] = `
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
+
 exports[`macPackager > yarn two package.json w/ native module 3`] = `
 {
   "files": {
@@ -2085,6 +2004,8 @@ exports[`macPackager > yarn two package.json w/ native module 3`] = `
 
 exports[`macPackager > yarn two package.json w/ native module 4`] = `
 [
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
   "app.asar",
   "electron.icns",
   "app.asar.unpacked/node_modules/node-pty/LICENSE",

@@ -80,8 +80,10 @@ async function _resolveCustomToolsetPath(custom: ToolsetCustom, resourcesDir?: s
     const customToolsetDir = path.join(cacheDir, "custom-toolsets")
     await mkdir(customToolsetDir, { recursive: true })
 
-    // wipe first to ensure idempotent extraction if the source file changed since last extraction
-    const toolsetTarget = path.join(customToolsetDir, releaseName)
+    // wipe first to ensure idempotent extraction if the source file changed since last extraction.
+    // Contain the destination within customToolsetDir (mirrors the `url` branch): `version` is a free-form
+    // config field, so a `../…` value must not let rmdir/extract escape the cache directory.
+    const toolsetTarget = sanitizeDirPath(path.join(customToolsetDir, releaseName), customToolsetDir)
     if (await exists(toolsetTarget)) {
       await rmdir(toolsetTarget, { recursive: true })
     }
