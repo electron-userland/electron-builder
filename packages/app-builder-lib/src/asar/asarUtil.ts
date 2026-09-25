@@ -17,6 +17,11 @@ const resolvePaths = async (filepaths: (string | undefined)[]) => {
   return Promise.all(filepaths.map(resolvePath)).then(paths => paths.filter((it): it is string => it != null))
 }
 
+/** @internal */
+export function isPathInside(root: string, target: string): boolean {
+  return target === root || target.startsWith(root + path.sep)
+}
+
 const DENYLIST = resolvePaths([
   "/usr",
   "/lib",
@@ -324,7 +329,7 @@ export class AsarPackager {
     }
 
     for (const root of allowRoots) {
-      if (resolved === root || resolved.startsWith(root + path.sep)) {
+      if (isPathInside(root, resolved)) {
         return true
       }
     }
@@ -338,7 +343,7 @@ export class AsarPackager {
     const workspace = await resolvePath(workspaceRoot)
 
     // If in workspace, always safe
-    if (workspace && resolved?.startsWith(workspace)) {
+    if (workspace && resolved && isPathInside(workspace, resolved)) {
       return
     }
 
