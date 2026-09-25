@@ -9,10 +9,16 @@ export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
   // noinspection JSMethodCanBeStatic
   // noinspection JSUnusedGlobalSymbols
   createRequest(options: any, callback: (response: any) => void): ClientRequest {
-    if (process.env["https_proxy"] !== undefined && options.protocol === "https:") {
-      options.agent = new HttpsProxyAgent(process.env["https_proxy"])
-    } else if (process.env["http_proxy"] !== undefined && options.protocol === "http:") {
-      options.agent = new HttpProxyAgent(process.env["http_proxy"])
+    if (options.protocol === "https:") {
+      const proxy = getProxyEnv("HTTPS_PROXY", "https_proxy")
+      if (proxy != null) {
+        options.agent = new HttpsProxyAgent(proxy)
+      }
+    } else if (options.protocol === "http:") {
+      const proxy = getProxyEnv("HTTP_PROXY", "http_proxy")
+      if (proxy != null) {
+        options.agent = new HttpProxyAgent(proxy)
+      }
     }
     return (options.protocol === "http:" ? httpRequest : https.request)(options, callback)
   }
@@ -20,10 +26,13 @@ export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
 
 export const httpExecutor = new NodeHttpExecutor()
 
+function getProxyEnv(uppercaseName: "HTTP_PROXY" | "HTTPS_PROXY", lowercaseName: "http_proxy" | "https_proxy"): string | undefined {
+  return [process.env[uppercaseName], process.env[lowercaseName]].find(value => !isEmptyOrSpaces(value))
+}
+
 export function buildGotProxyAgent(): { http?: HttpProxyAgent<string>; https?: HttpsProxyAgent<string> } | undefined {
-  // Use Array.find so a whitespace-only uppercase var doesn't block the lowercase fallback.
-  const httpsProxy = [process.env.HTTPS_PROXY, process.env.https_proxy].find(v => !isEmptyOrSpaces(v))
-  const httpProxy = [process.env.HTTP_PROXY, process.env.http_proxy].find(v => !isEmptyOrSpaces(v))
+  const httpsProxy = getProxyEnv("HTTPS_PROXY", "https_proxy")
+  const httpProxy = getProxyEnv("HTTP_PROXY", "http_proxy")
   if (!httpsProxy && !httpProxy) {
     return undefined
   }
