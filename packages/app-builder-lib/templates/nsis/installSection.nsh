@@ -59,6 +59,15 @@ ${endIf}
 
 SetOutPath $INSTDIR
 
+# Per-user install locations under %LocalAppData% do not grant ALL APPLICATION PACKAGES read access the way
+# Program Files does. If the folder also inherits an ACE for some AppContainer package SID (left by other software),
+# Windows denies restricted-token processes access to it and the app's sandboxed Chromium processes cannot start.
+# Add the grant before extracting so every installed file inherits it.
+${if} $installMode == "CurrentUser"
+  nsExec::Exec '"$SYSDIR\icacls.exe" "$INSTDIR" /grant *S-1-15-2-1:(OI)(CI)(RX)'
+  Pop $0
+${endIf}
+
 !ifdef UNINSTALLER_ICON
   File /oname=uninstallerIcon.ico "${UNINSTALLER_ICON}"
 !endif
