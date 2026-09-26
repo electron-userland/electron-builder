@@ -8,7 +8,7 @@ import { CertType, findIdentity, Identity, reportError } from "../../codeSign/ma
 import { SigningResult } from "../../codeSign/signResult.js"
 import type { MacPackager } from "../../macPackager.js"
 import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
-import { parsePlistFile, PlistObject } from "../../util/mac/plist.js"
+import { parsePlistFile, savePlistFile, PlistObject } from "../../util/mac/plist.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import asyncPool from "tiny-async-pool"
 
@@ -16,6 +16,7 @@ export type MasPlatformType = "mas" | "mas-dev"
 export type PlatformType = MasPlatformType | "mac"
 
 const DISABLE_LIBRARY_VALIDATION = "com.apple.security.cs.disable-library-validation"
+const APP_SANDBOX = "com.apple.security.app-sandbox"
 
 export class MacTargetHelper {
   constructor(private packager: MacPackager) {}
@@ -106,16 +107,21 @@ export class MacTargetHelper {
     return (await this.grantsDisableLibraryValidation(appEntitlements)) && (await this.grantsDisableLibraryValidation(inheritEntitlements))
   }
 
-  private async grantsDisableLibraryValidation(file: string | null): Promise<boolean> {
+  private grantsDisableLibraryValidation(file: string | null): Promise<boolean> {
+    return this.entitlementsGrant(file, DISABLE_LIBRARY_VALIDATION)
+  }
+
+  /** Whether the entitlements file grants `key`. Fails open (returns false) when the file cannot be read or parsed. */
+  private async entitlementsGrant(file: string | null, key: string): Promise<boolean> {
     if (file == null) {
       // no user-supplied file and no bundled default — @electron/osx-sign's defaults never grant the key
       return false
     }
     try {
       const entitlements = await parsePlistFile<PlistObject>(file)
-      return entitlements[DISABLE_LIBRARY_VALIDATION] === true
+      return entitlements[key] === true
     } catch (e: any) {
-      log.debug({ file, error: e.message }, "cannot read entitlements to verify library validation")
+      log.debug({ file, key, error: e.message }, "cannot read entitlements")
       return false
     }
   }
@@ -168,6 +174,66 @@ export class MacTargetHelper {
     // an ad-hoc signature has no Team ID, so every process in the bundle — not just the main one — needs
     // library validation disabled or it cannot load the Electron framework
     return adHoc && !isMas ? getTemplatePath("entitlements.mac.adhoc.plist") : null
+  }
+
+  /**
+   * Picks the string handed to `@electron/osx-sign` as `identity`. Two consumers inside osx-sign want different
+   * forms of the same certificate, which is why this line has flipped twice before:
+   *
+   * - `codesign --sign <identity>` needs a *unique* reference. A common name can match several valid certificates
+   *   (the same name issued twice with different expiry dates), and `codesign` then fails with
+   *   `... : ambiguous (matches "X" and "X" ...)` — `--keychain` does not disambiguate it. Only the SHA-1 hash is
+   *   unique. https://github.com/electron-userland/electron-builder/issues/10237
+   * - osx-sign's entitlements automation scrapes the Team ID out of the identity *name* with `/^.+\((.+?)\)$/` to
+   *   fill in `ElectronTeamID`, and throws `Could not automatically determine ElectronTeamID from identity` when
+   *   that fails. A bare hash has no `(TEAMID)` suffix.
+   *   https://github.com/electron-userland/electron-builder/issues/7995
+   *
+   * So we pass the hash and, when that automation is going to run, hand it the Team ID through the one channel it
+   * already prefers over the identity name: `ElectronTeamID` in the app's `Info.plist`. osx-sign only reaches the
+   * regex when the app entitlements grant `com.apple.security.app-sandbox` (always true for MAS, which falls back
+   * to osx-sign's `default.mas.plist`), no `provisioningProfile` is configured, and `Info.plist` carries no
+   * `ElectronTeamID` — writing that key is exactly what osx-sign would have done itself from the same source.
+   *
+   * Falls back to the name whenever the hash cannot be made to work (no hash at all, ad-hoc, a self-signed name
+   * with no `(TEAMID)`, an unreadable `Info.plist`), which leaves the previous behavior — and the previous error
+   * message — untouched for those cases.
+   */
+  async resolveSignIdentity(appPath: string, identity: Identity, signOpts: ElectronSignOptions | Nullish, targetPlatform: PlatformType): Promise<string> {
+    // ad-hoc ("-") and any name-only identity have nothing to disambiguate with
+    if (!identity.hash || MacTargetHelper.isAdHocIdentity(identity)) {
+      return identity.name
+    }
+
+    const isMas = MacTargetHelper.isMasTarget(targetPlatform)
+    const sandboxed = isMas || (await this.entitlementsGrant(await this.getAppEntitlements(targetPlatform, signOpts, false), APP_SANDBOX))
+    // osx-sign's entitlements automation is off, or it will not reach the identity name
+    if (!sandboxed || signOpts?.preAutoEntitlements === false || signOpts?.provisioningProfile) {
+      return identity.hash
+    }
+
+    const infoPlistFile = path.join(appPath, "Contents", "Info.plist")
+    try {
+      const info = await parsePlistFile<PlistObject>(infoPlistFile)
+      if (info.ElectronTeamID) {
+        // osx-sign prefers this over parsing the identity, so the hash never reaches its regex
+        return identity.hash
+      }
+
+      // the same pattern osx-sign uses, so we never derive a Team ID it would have rejected
+      const teamId = /^.+\((.+?)\)\s*$/.exec(identity.name)?.[1]
+      if (teamId == null) {
+        log.debug({ identityName: identity.name }, "cannot parse Team ID from identity name, signing with the identity name")
+        return identity.name
+      }
+
+      await savePlistFile(infoPlistFile, { ...info, ElectronTeamID: teamId })
+      log.debug({ file: log.filePath(infoPlistFile), teamId }, "ElectronTeamID set from the signing identity name")
+      return identity.hash
+    } catch (e: any) {
+      log.debug({ file: log.filePath(infoPlistFile), error: e.message }, "cannot read or update Info.plist, signing with the identity name")
+      return identity.name
+    }
   }
 
   async buildSignOptions(
@@ -250,7 +316,7 @@ export class MacTargetHelper {
           https://github.com/electron-userland/electron-builder/issues/5383
           */
       },
-      identity: identity ? identity.hash || identity.name : undefined,
+      identity: identity ? await this.resolveSignIdentity(appPath, identity, config, targetPlatform) : undefined,
       type,
       platform: isMas ? "mas" : "darwin",
       version: this.packager.config.electronVersion || undefined,
