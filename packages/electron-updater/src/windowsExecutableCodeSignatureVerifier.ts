@@ -1,6 +1,7 @@
 import { parseDn } from "builder-util-runtime"
 import { execFile, execFileSync, ExecFileOptions } from "child_process"
 import * as os from "os"
+import type { VerifyUpdateFileResult } from "./index.js"
 import { Logger } from "./types.js"
 import * as path from "path"
 
@@ -87,26 +88,25 @@ function matchPublisher(data: any, publisherNames: string[], logger: Logger): bo
 }
 
 // Parses Get-AuthenticodeSignature JSON, checks the LiteralPath guard, and
-// matches against publisherNames. Returns null on success or a diagnostic
-// string on failure. Throws LiteralPathMismatchError when checkLiteralPath
-// detects a mismatch.
-function evaluateSignatureResult(stdout: string, publisherNames: string[], unescapedTempUpdateFile: string, logger: Logger): string | null {
+// matches against publisherNames. Returns a success/failure result. Throws
+// LiteralPathMismatchError when checkLiteralPath detects a mismatch.
+function evaluateSignatureResult(stdout: string, publisherNames: string[], unescapedTempUpdateFile: string, logger: Logger): VerifyUpdateFileResult {
   const data = parseOut(stdout)
   if (data.Status === 0) {
     checkLiteralPath(data, unescapedTempUpdateFile, logger)
     if (matchPublisher(data, publisherNames, logger)) {
-      return null
+      return { success: true }
     }
   }
   const result = `publisherNames: ${publisherNames.join(" | ")}, raw info: ` + JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2)
   logger.warn(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
-  return result
+  return { success: false, error: result }
 }
 
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
 // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
-export function verifySignature(publisherNames: Array<string>, unescapedTempUpdateFile: string, logger: Logger): Promise<string | null> {
+export function verifySignature(publisherNames: Array<string>, unescapedTempUpdateFile: string, logger: Logger): Promise<VerifyUpdateFileResult> {
   // Single quotes in the path are doubled for PS single-quoted strings ('don''t' → don't).
   // PowerShell also treats the Unicode single-quote variants U+2018–U+201B (‘ ’ ‚ ‛) as
   // string delimiters, so they must be doubled as well or a path like C:\Users\D’Andre
@@ -114,11 +114,11 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
   // Other PS metacharacters ($, `, \) are literal inside single-quoted strings.
   const tempUpdateFile = unescapedTempUpdateFile.replace(/['\u2018\u2019\u201A\u201B]/g, "$&$&")
   logger.info(`Verifying signature ${tempUpdateFile}`)
-  return new Promise<string | null>((resolve, reject) => {
+  return new Promise<VerifyUpdateFileResult>((resolve, reject) => {
     execFile(...preparePowerShellExec(`Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress`, 20 * 1000), (error, stdout, stderr) => {
       if (error != null || stderr) {
         if (handleError(logger, error, stderr, reject)) {
-          resolve(null)
+          resolve({ success: true })
         }
         return
       }
@@ -132,7 +132,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
           return
         }
         if (handleError(logger, e, null, reject)) {
-          resolve(null)
+          resolve({ success: true })
         }
       }
     })
@@ -156,7 +156,7 @@ function parseOut(out: string): any {
   return data
 }
 
-// Returns true when the error is ignored (caller should resolve null).
+// Returns true when the error is ignored (caller should resolve { success: true }).
 // Returns false when reject() was called (caller must not resolve).
 function handleError(logger: Logger, error: Error | null, stderr: string | null, reject: (reason: any) => void): boolean {
   if (isOldWin6()) {

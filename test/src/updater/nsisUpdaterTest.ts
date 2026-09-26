@@ -11,7 +11,7 @@ import { removeUnstableProperties } from "../helpers/packTester.js"
 import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { serializeToYaml, TmpDir } from "builder-util"
-import { ExpectStatic } from "vitest"
+import { ExpectStatic, vi } from "vitest"
 
 const config = { retry: 3 }
 
@@ -104,6 +104,47 @@ test("file url generic", config, async ({ expect }) => {
     const updater = await createNsisUpdater()
     updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
     await validateDownload(expect, updater)
+  } finally {
+    await close()
+  }
+})
+
+// verifyUpdateFile is an inherited property, see baseUpdaterUnitTest.ts for test coverage on the parent class.
+test("file url generic aborts when verifyUpdateFile rejects the downloaded temp file", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+    let observedTempPath = ""
+    const verifyUpdateFile = vi.fn(async (params: { temporaryUpdateFilePath: string; originalUpdateFileName: string }) => {
+      observedTempPath = params.temporaryUpdateFilePath
+      expect(path.basename(params.temporaryUpdateFilePath).startsWith("temp-")).toBe(true)
+      expect(params.originalUpdateFileName).toBe(installerName(UPDATE_VERSION))
+      await assertThat(expect, params.temporaryUpdateFilePath).isFile()
+      return { success: false as const, error: "custom verification failed" }
+    })
+    updater.verifyUpdateFile = verifyUpdateFile
+
+    const actualEvents = trackEvents(updater)
+    const updateCheckResult = await updater.checkForUpdates()
+    const downloadPromise = updateCheckResult?.downloadPromise
+
+    /*
+     Test the external behavior: the download flow, observed from outside, aborts early with the verification error.
+    */
+    expect(downloadPromise).toBeDefined()
+    await expect(downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_FILE" })
+
+    /*
+     Test the internal behaviors:
+    */
+    expect(verifyUpdateFile).toHaveBeenCalledTimes(1)
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
+    // The temporary update file was present before its verification, but then deleted.
+    expect(observedTempPath).not.toBe("")
+    expect(await fsExtra.pathExists(observedTempPath)).toBe(false)
+    // Most importantly, the temporary update file was never restored to the original filename as an executable binary.
+    expect(await fsExtra.pathExists(path.join(path.dirname(observedTempPath), installerName(UPDATE_VERSION)))).toBe(false)
   } finally {
     await close()
   }
@@ -305,7 +346,7 @@ test.ifWindows("test custom signature verifier", config, async ({ expect }) => {
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
     updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
-      return Promise.resolve(null)
+      return Promise.resolve({ success: true })
     }
     await validateDownload(expect, updater)
   } finally {
@@ -323,7 +364,7 @@ test.ifWindows("test custom signature verifier - signing error message", config,
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
     updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
-      return Promise.resolve("signature verification failed")
+      return Promise.resolve({ success: false, error: "signature verification failed" })
     }
     const actualEvents = trackEvents(updater)
     await assertThat(

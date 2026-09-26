@@ -31,7 +31,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
 
     const result = await (updater as any).verifySignature("/path/to/installer.exe")
 
-    expect(result).toBeNull()
+    expect(result).toEqual({ success: true })
     // the custom hook is also skipped by the guard — that is exactly what the warning is about
     expect(verifyHook).not.toHaveBeenCalled()
     const warnings = logger.warn.mock.calls.map(call => String(call[0]))
@@ -51,12 +51,12 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     })
     const logger = mockLogger()
     updater.logger = logger
-    const verifyHook = vi.fn().mockResolvedValue(null)
+    const verifyHook = vi.fn().mockResolvedValue({ success: true })
     updater.verifyUpdateCodeSignature = verifyHook
 
     const result = await (updater as any).verifySignature("/path/to/installer.exe")
 
-    expect(result).toBeNull()
+    expect(result).toEqual({ success: true })
     expect(verifyHook).toHaveBeenCalledTimes(1)
     expect(verifyHook).toHaveBeenCalledWith(["Acme Corp"], "/path/to/installer.exe")
     expect(logger.warn.mock.calls.map(call => String(call[0])).filter(message => message.includes(DEPRECATION_FRAGMENT))).toHaveLength(0)
@@ -70,7 +70,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
       publisherName: "Acme Corp" as any,
     })
     updater.logger = mockLogger()
-    const verifyHook = vi.fn().mockResolvedValue(null)
+    const verifyHook = vi.fn().mockResolvedValue({ success: true })
     updater.verifyUpdateCodeSignature = verifyHook
 
     await (updater as any).verifySignature("/path/to/installer.exe")
@@ -88,7 +88,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
 
     const result = await (updater as any).verifySignature("/path/to/installer.exe")
 
-    expect(result).toBeNull()
+    expect(result).toEqual({ success: true })
     expect(verifyHook).not.toHaveBeenCalled()
     expect(logger.warn).not.toHaveBeenCalled()
   })

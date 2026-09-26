@@ -17,6 +17,7 @@ import * as fs from "fs/promises"
 import { release as osRelease } from "os"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
+import type { VerifyUpdateFileResult } from "electron-updater/src/index"
 import type { Logger } from "electron-updater/src/types"
 import { verifySignature } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
 import { cleanupWindowsSignedFixture, createSignedExecutable, getWindowsSignedFixture } from "../helpers/windowsSignedFixture"
@@ -33,6 +34,24 @@ const DEFAULT_SUBJECT = "CN=Test Publisher, O=Test Org, C=US"
 
 function createLogger(): Logger {
   return { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+}
+
+function expectVerificationSuccess(result: VerifyUpdateFileResult): void {
+  expect(result).toEqual({ success: true })
+}
+
+function expectVerificationFailure(result: VerifyUpdateFileResult): string {
+  expect(result.success).toBe(false)
+  if (result.success) {
+    throw new Error("Expected signature verification to fail")
+  }
+  return result.error
+}
+
+function expectVerificationCompletedWithoutCrash(result: VerifyUpdateFileResult): void {
+  if (!result.success) {
+    expect(typeof result.error).toBe("string")
+  }
 }
 
 // =============================================================================
@@ -241,13 +260,13 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       const dn = "CN=Acme Corp, O=Acme Corp, L=Austin, S=TX, C=US"
       mockPsSuccess(makeJson({ subject: dn }))
-      expect(await verifySignature([dn], defaultFile, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature([dn], defaultFile, logger))
     })
 
     test("CN-only match returns null and logs a deprecation warning", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ subject: "CN=Acme Corp, O=Acme Corp, C=US" }))
-      expect(await verifySignature(["Acme Corp"], defaultFile, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature(["Acme Corp"], defaultFile, logger))
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Acme Corp"))
     })
 
@@ -255,21 +274,20 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       const dn = "CN=Real Publisher, O=Real, C=DE"
       mockPsSuccess(makeJson({ subject: dn }))
-      expect(await verifySignature(["Fake Corp", dn], defaultFile, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature(["Fake Corp", dn], defaultFile, logger))
     })
 
     test("partial DN (publisherName has fewer keys than cert subject) matches on provided keys only", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ subject: "CN=Acme, O=Acme Corp, L=Denver, C=US" }))
       // Only CN and O in the publisherName spec — L and C are extra in the cert but not required
-      expect(await verifySignature(["CN=Acme, O=Acme Corp"], defaultFile, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature(["CN=Acme, O=Acme Corp"], defaultFile, logger))
     })
 
     test("no matching publisher returns non-null error string listing all provided names", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ subject: "CN=Real, O=Real, C=US" }))
-      const result = await verifySignature(["Wrong1", "CN=Wrong2, O=Wrong2, C=US"], defaultFile, logger)
-      expect(result).not.toBeNull()
+      const result = expectVerificationFailure(await verifySignature(["Wrong1", "CN=Wrong2, O=Wrong2, C=US"], defaultFile, logger))
       expect(result).toContain("Wrong1")
       expect(result).toContain("CN=Wrong2")
     })
@@ -277,39 +295,39 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
     test("empty publisherNames array always returns non-null error string", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson())
-      expect(await verifySignature([], defaultFile, logger)).not.toBeNull()
+      expectVerificationFailure(await verifySignature([], defaultFile, logger))
     })
 
     test("status non-0 returns non-null error regardless of publisher", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ status: 2 }))
-      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).not.toBeNull()
+      expectVerificationFailure(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
     })
 
     test("status 3 (HashMismatch) returns non-null error string", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ status: 3 }))
-      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).not.toBeNull()
+      expectVerificationFailure(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
     })
 
     test("status 4 (NotSupportedFileFormat) returns non-null error string", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ status: 4 }))
-      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).not.toBeNull()
+      expectVerificationFailure(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
     })
 
     test("DN value comparison is case-sensitive", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       // lower-case "acme corp" in cert, upper-case in publisherName → no match
       mockPsSuccess(makeJson({ subject: "CN=acme corp, O=Acme, C=US" }))
-      expect(await verifySignature(["CN=Acme Corp, O=Acme, C=US"], defaultFile, logger)).not.toBeNull()
+      expectVerificationFailure(await verifySignature(["CN=Acme Corp, O=Acme, C=US"], defaultFile, logger))
     })
 
     test("extra keys in cert subject beyond what publisherName specifies do not prevent a match", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ subject: "CN=Test, O=Test Org, L=City, C=US" }))
       // Publisher spec only specifies CN and C — L and O in the cert are beyond the spec, ignored
-      expect(await verifySignature(["CN=Test, C=US"], defaultFile, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature(["CN=Test, C=US"], defaultFile, logger))
     })
   })
 
@@ -318,7 +336,7 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
     test("matching Path resolves to null", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ filePath: defaultFile }))
-      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
     })
 
     test("mismatched Path rejects (prevents symlink / redirect attacks)", async ({ tmpDir }) => {
@@ -339,7 +357,7 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       // path.normalize(undefined) throws → caught → logger.warn → continues to publisher match
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ omitPath: true }))
-      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("LiteralPath"))
     })
   })
@@ -349,20 +367,20 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
     test("root-level PrivateKey, IsOSBinary, SignatureType do not prevent validation", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ withStrippableFields: true }))
-      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
     })
 
     test("SignerCertificate-level Archived, Extensions, Handle, HasPrivateKey, SubjectName are stripped without error", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ withStrippableFields: true }))
-      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
     })
 
     test("null SignerCertificate does not crash (Status non-0 path)", async ({ tmpDir }) => {
       const { defaultFile, logger } = await setup(tmpDir)
       mockPsSuccess(JSON.stringify({ SignerCertificate: null, Status: 1, Path: defaultFile }))
       // Status 1 → not valid → no access to null cert → non-null error string (no crash)
-      expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).not.toBeNull()
+      expectVerificationFailure(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
     })
   })
 
@@ -379,7 +397,7 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
         const { defaultFile, logger } = await setup(tmpDir)
         mockPsError(new Error("PS unavailable"))
         mockConvertToJsonFail("ConvertTo-Json not found")
-        expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
+        expectVerificationSuccess(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("ConvertTo-Json"))
       })
     })
@@ -397,7 +415,7 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
         const { defaultFile, logger } = await setup(tmpDir)
         vi.mocked(osRelease).mockReturnValue("6.1.7601")
         mockPsError(new Error("ConvertTo-Json not available"))
-        expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
+        expectVerificationSuccess(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("unsupported powershell"))
       })
 
@@ -405,7 +423,7 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
         const { defaultFile, logger } = await setup(tmpDir)
         vi.mocked(osRelease).mockReturnValue("6.0.6001")
         mockPsError(new Error("old PS"))
-        expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
+        expectVerificationSuccess(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("unsupported powershell"))
       })
 
@@ -413,7 +431,7 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
         const { defaultFile, logger } = await setup(tmpDir)
         vi.mocked(osRelease).mockReturnValue("6.2.9200")
         mockPsError(new Error("old PS"))
-        expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
+        expectVerificationSuccess(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("unsupported powershell"))
       })
 
@@ -507,7 +525,7 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
         const { defaultFile, logger } = await setup(tmpDir)
         mockPsSuccess("not json at all")
         mockConvertToJsonFail()
-        expect(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).toBeNull()
+        expectVerificationSuccess(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
         expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("ConvertTo-Json"))
       })
 
@@ -642,8 +660,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
   test("unsigned file returns a non-null error string", { timeout: 30_000 }, async ({ tmpDir }) => {
     const { logger } = await setup()
     const p = await createUnsignedExe(tmpDir)
-    const result = await verifySignature(["Any Publisher"], p, logger)
-    expect(result).not.toBeNull()
+    const result = expectVerificationFailure(await verifySignature(["Any Publisher"], p, logger))
     expect(typeof result).toBe("string")
   })
 
@@ -653,7 +670,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     const p = path.join(dir, "my update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
     const result = await verifySignature(["Any Publisher"], p, logger)
-    expect(result).not.toBeNull() // Unsigned → non-null error; key assertion is no crash
+    expectVerificationCompletedWithoutCrash(result)
   })
 
   test("path with single quote does not crash (injection prevention)", { timeout: 30_000 }, async ({ tmpDir }) => {
@@ -665,7 +682,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     await fs.writeFile(p, Buffer.from("not a PE"))
     // Should not throw — the single quote must be escaped before entering the PS command string.
     const result = await verifySignature(["Any Publisher"], p, logger)
-    expect(typeof result === "string" || result === null).toBe(true)
+    expectVerificationCompletedWithoutCrash(result)
   })
 
   test("path with typographic apostrophe (U+2019) does not crash (PS smart-quote delimiter)", { timeout: 30_000 }, async ({ tmpDir }) => {
@@ -678,7 +695,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     // PowerShell treats U+2019 as a single-quote delimiter, so it must be escaped
     // like ' or the -LiteralPath string terminates early with a parse error.
     const result = await verifySignature(["Any Publisher"], p, logger)
-    expect(typeof result === "string" || result === null).toBe(true)
+    expectVerificationCompletedWithoutCrash(result)
   })
 
   test("path with non-ASCII characters does not crash (UTF-8 encoding, issue #8162)", { timeout: 30_000 }, async ({ tmpDir }) => {
@@ -690,7 +707,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     await fs.writeFile(p, Buffer.from("not a PE"))
     // The $OutputEncoding + [Console]::OutputEncoding setup must handle non-ASCII dir names.
     const result = await verifySignature(["Any Publisher"], p, logger)
-    expect(typeof result === "string" || result === null).toBe(true)
+    expectVerificationCompletedWithoutCrash(result)
   })
 
   // -------------------------------------------------------------------------
@@ -720,7 +737,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
         return
       }
       const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
-      expect(await verifySignature([fixture.subject], exe, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature([fixture.subject], exe, logger))
     })
 
     test("full DN match is RDN-order-insensitive (parseDn compares per key)", { timeout: 120_000 }, async (context: TestContext) => {
@@ -733,7 +750,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
       const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
       // .NET may render the subject RDNs in a different order than requested from OpenSSL;
       // matching is per-key, so the canonical requested order must match either way.
-      expect(await verifySignature([`CN=${fixture.commonName}, O=EB Test Org, C=US`], exe, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature([`CN=${fixture.commonName}, O=EB Test Org, C=US`], exe, logger))
     })
 
     test("CN-only match returns null and logs the deprecation warning", { timeout: 120_000 }, async (context: TestContext) => {
@@ -744,7 +761,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
         return
       }
       const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
-      expect(await verifySignature([fixture.commonName], exe, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature([fixture.commonName], exe, logger))
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining(fixture.commonName))
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Distinguished Name"))
     })
@@ -759,7 +776,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
       const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
       // C=US is present in the certificate subject but omitted here — extra subject keys
       // beyond the publisherName spec do not prevent a match.
-      expect(await verifySignature([`CN=${fixture.commonName}, O=EB Test Org`], exe, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature([`CN=${fixture.commonName}, O=EB Test Org`], exe, logger))
     })
 
     test("wrong publisher returns a non-null error string naming the mismatch", { timeout: 120_000 }, async (context: TestContext) => {
@@ -770,8 +787,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
         return
       }
       const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
-      const result = await verifySignature(["CN=Definitely Not The Publisher, O=Evil Org, C=US"], exe, logger)
-      expect(result).not.toBeNull()
+      const result = expectVerificationFailure(await verifySignature(["CN=Definitely Not The Publisher, O=Evil Org, C=US"], exe, logger))
       expect(result).toContain("Definitely Not The Publisher")
     })
 
@@ -788,7 +804,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
       const dir = path.join(await context.tmpDir.createTempDir(), "D’Andre’s signed updates")
       await fs.mkdir(dir, { recursive: true })
       const exe = await createSignedExecutable(fixture, dir)
-      expect(await verifySignature([fixture.subject], exe, logger)).toBeNull()
+      expectVerificationSuccess(await verifySignature([fixture.subject], exe, logger))
     })
 
     test("symlink to a validly-signed exe never yields a publisher mismatch — LiteralPath guard or genuine pass", { timeout: 120_000 }, async (context: TestContext) => {
@@ -807,7 +823,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
         return
       }
 
-      let result: string | null
+      let result: VerifyUpdateFileResult
       try {
         result = await verifySignature([fixture.subject], symlinkPath, logger)
       } catch (error) {
@@ -818,7 +834,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
       // PowerShell echoed the symlink's own literal path: the guard sees a match and the signature
       // genuinely covers the bytes behind the link, so this is a pass, not a bypass. Anything else
       // (publisher mismatch, invalid status) would surface here as a non-null string.
-      expect(result).toBeNull()
+      expectVerificationSuccess(result)
     })
 
     test("tampered signed exe (appended bytes) returns a non-null error string", { timeout: 120_000 }, async (context: TestContext) => {
@@ -830,11 +846,10 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
       }
       const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
       // Sanity: the untouched copy verifies, so a failure below is caused by the tampering alone.
-      expect(await verifySignature([fixture.subject], exe, createLogger())).toBeNull()
+      expectVerificationSuccess(await verifySignature([fixture.subject], exe, createLogger()))
       await fs.appendFile(exe, Buffer.from("tampered"))
       // Appended bytes break the Authenticode hash → Status HashMismatch → non-null error string.
-      const result = await verifySignature([fixture.subject], exe, logger)
-      expect(result).not.toBeNull()
+      const result = expectVerificationFailure(await verifySignature([fixture.subject], exe, logger))
       expect(typeof result).toBe("string")
     })
   })
@@ -852,7 +867,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     const p = path.join(andDir, "update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
     const result = await verifySignature(["Any Publisher"], p, logger)
-    expect(typeof result === "string" || result === null).toBe(true)
+    expectVerificationCompletedWithoutCrash(result)
   })
 
   test("directory name with %VAR% does not crash or reject (was expanded by cmd.exe)", { timeout: 30_000 }, async ({ tmpDir }) => {
@@ -863,7 +878,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     const p = path.join(pctDir, "update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
     const result = await verifySignature(["Any Publisher"], p, logger)
-    expect(typeof result === "string" || result === null).toBe(true)
+    expectVerificationCompletedWithoutCrash(result)
   })
 
   test("directory name with $ does not crash or reject (safe in PS single-quoted string)", { timeout: 30_000 }, async ({ tmpDir }) => {
@@ -874,7 +889,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     const p = path.join(dollarDir, "update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
     const result = await verifySignature(["Any Publisher"], p, logger)
-    expect(typeof result === "string" || result === null).toBe(true)
+    expectVerificationCompletedWithoutCrash(result)
   })
 
   test("directory name with backtick does not crash or reject (safe in PS single-quoted string)", { timeout: 30_000 }, async ({ tmpDir }) => {
@@ -885,7 +900,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     const p = path.join(backtickDir, "update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
     const result = await verifySignature(["Any Publisher"], p, logger)
-    expect(typeof result === "string" || result === null).toBe(true)
+    expectVerificationCompletedWithoutCrash(result)
   })
 
   // -------------------------------------------------------------------------
@@ -903,12 +918,12 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
 
     // When PowerShell resolves the symlink, data.Path === realFile ≠ symlinkPath.
     // Either the promise rejects (LiteralPath mismatch) or returns a non-null error string.
-    let result: string | null = null
+    let result: VerifyUpdateFileResult | null = null
     try {
       result = await verifySignature(["Any Publisher"], symlinkPath, logger)
     } catch {
       return // Rejection is the expected security behavior — verification did NOT silently pass
     }
-    expect(result).not.toBeNull()
+    expectVerificationFailure(result)
   })
 })

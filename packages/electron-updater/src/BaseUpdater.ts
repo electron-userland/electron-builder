@@ -5,6 +5,7 @@ import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion } from "semver"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"
+import type { VerifyUpdateFileResult } from "./index.js"
 import { QuitAndInstallOptions, DownloadExecutorResult } from "./types.js"
 
 const require = createRequire(import.meta.url)
@@ -181,11 +182,13 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     const signatureVerificationStatus = await this.verifyInstallerSignatureOnLaunch(installerPath)
-    if (signatureVerificationStatus != null) {
+    if (!signatureVerificationStatus.success) {
       await downloadedUpdateHelper.clear().catch(() => {
         // ignore
       })
-      this.dispatchError(newError(`Pending update ${latestInfo.version} is not signed by the application owner: ${signatureVerificationStatus}`, "ERR_UPDATER_INVALID_SIGNATURE"))
+      this.dispatchError(
+        newError(`Pending update ${latestInfo.version} is not signed by the application owner: ${signatureVerificationStatus.error}`, "ERR_UPDATER_INVALID_SIGNATURE")
+      )
       return false
     }
 
@@ -209,10 +212,10 @@ export abstract class BaseUpdater extends AppUpdater {
 
   /**
    * Re-verification of the cached installer's code signature before an install-on-next-launch is executed.
-   * Platforms without installer signature verification resolve to `null` (no error).
+   * Platforms without installer signature verification resolve to `{ success: true }`.
    */
-  protected verifyInstallerSignatureOnLaunch(_installerPath: string): Promise<string | null> {
-    return Promise.resolve(null)
+  protected verifyInstallerSignatureOnLaunch(_installerPath: string): Promise<VerifyUpdateFileResult> {
+    return Promise.resolve({ success: true })
   }
 
   private markPendingInstallOnNextLaunch(): boolean {
