@@ -574,6 +574,8 @@ function getFileTypePriority(file: string): number {
     // Package formats
     ".nupkg",
     ".asar",
+    ".ebuild",
+    "/Manifest",
 
     // Metadata and auxiliary files
     ".blockmap",

@@ -140,6 +140,7 @@ Standard consumer distribution?
 | `pacman` | `.pkg.tar.zst` | Arch Linux, Manjaro | No | Arch-based |
 | `apk` | `.apk` | Alpine Linux, Docker | No | Alpine |
 | `freebsd` | `.pkg` | FreeBSD | No | FreeBSD |
+| `gentoo` | `.ebuild` | Gentoo overlays (needs a `tar.*` target) | No | Gentoo |
 | `p5p` | IPS package | Solaris / illumos | No | Solaris-based |
 | `zip`, `tar.gz` | Archive | CDN / custom deployment | No | Universal |
 
@@ -180,6 +181,11 @@ Standard consumer distribution?
 - Alpine uses musl libc; some native modules need recompilation
 - See [Linux Configuration → Alpine APK](linux.md#alpine-apk-package-apk)
 
+**Gentoo**: use to give Gentoo users an ebuild for your published `tar.*` archive.
+- Writes a typical source recipe: the ebuild references the archive you already publish
+- Requires a `tar.gz`/`tar.bz2`/`tar.xz`/`tar.lz` target in the same build
+- See [Linux Configuration → Gentoo](linux.md#gentoo-ebuild-gentoo)
+
 ### Linux Decision Tree
 
 ```
@@ -203,6 +209,9 @@ Arch Linux?
 
 Alpine / Docker?
   → APK
+
+Gentoo overlay?
+  → gentoo (alongside a tar.* target)
 ```
 
 ---

@@ -1,0 +1,217 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`gentoo target > derives a Codeberg release URL from the repository field alone 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.tar.gz",
+    },
+    {
+      "file": "TestApp-bin-1.1.0.ebuild",
+    },
+    {
+      "file": "TestApp-bin-1.1.0.png",
+    },
+  ],
+}
+`;
+
+exports[`gentoo target > emits a single self-contained ebuild referencing the published tar.gz 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.tar.gz",
+    },
+    {
+      "file": "TestApp-bin-1.1.0.ebuild",
+    },
+  ],
+}
+`;
+
+exports[`gentoo target > emits a single self-contained ebuild referencing the published tar.gz 2`] = `
+"# Copyright <year> Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+EAPI=8
+
+CHROMIUM_LANGS="
+	af am ar bg bn ca cs da de el en-GB en-US es es-419 et fa fi fil fr gu he hi hr hu id it ja kn ko lt lv ml mr
+	ms nb nl pl pt-BR pt-PT ro ru sk sl sr sv sw ta te th tr uk ur vi zh-CN zh-TW
+"
+
+inherit chromium-2 desktop pax-utils xdg
+
+DESCRIPTION="Test Application (test quite “ #378)"
+HOMEPAGE="http://foo.example.com"
+SRC_URI="
+	amd64? ( https://example.com/releases/v\${PV}/TestApp-\${PV}.tar.gz )
+"
+
+LICENSE="MIT"
+# Bundled Electron runtime, from www-client/chromium
+LICENSE+=" Apache-2.0 Apache-2.0-with-LLVM-exceptions BSD BSD-2 Base64 Boost-1.0 CC-BY-3.0 CC-BY-4.0 Clear-BSD FFT2D FTL"
+LICENSE+=" IJG ISC LGPL-2 LGPL-2.1 MIT MPL-1.1 MPL-2.0 Ms-PL PSF-2 SGI-B-2.0 SSLeay SunSoft Unicode-3.0"
+LICENSE+=" Unicode-DFS-2015 Unlicense UoI-NCSA ZLIB libtiff openssl"
+LICENSE+=" Apache-1.1 BlueOak-1.0.0"
+SLOT="0"
+KEYWORDS="-* ~amd64"
+RESTRICT="strip"
+
+RDEPEND="
+	app-accessibility/at-spi2-core:2
+	dev-libs/expat
+	dev-libs/glib:2
+	dev-libs/nspr
+	dev-libs/nss
+	media-libs/alsa-lib
+	media-libs/mesa
+	net-print/cups
+	sys-apps/dbus
+	virtual/libudev
+	x11-libs/cairo
+	x11-libs/gtk+:3
+	x11-libs/libX11
+	x11-libs/libXcomposite
+	x11-libs/libXdamage
+	x11-libs/libXext
+	x11-libs/libXfixes
+	x11-libs/libXrandr
+	x11-libs/libxcb
+	x11-libs/libxkbcommon
+	x11-libs/pango
+"
+
+QA_PREBUILT='*'
+
+src_unpack() {
+	default
+
+	case \${ARCH} in
+		amd64) S="\${WORKDIR}/TestApp-\${PV}" ;;
+	esac
+}
+
+src_prepare() {
+	default
+
+	cd locales || die
+	chromium_remove_language_paks
+	cd "\${S}" || die
+
+	# prebuildify ships a build per platform and per libc; only one can ever load here
+	local node_arch prebuilds
+	case \${ARCH} in
+		amd64) node_arch=x64 ;;
+	esac
+	for prebuilds in resources/app.asar.unpacked/node_modules/*/prebuilds; do
+		[[ -d \${prebuilds} ]] || continue
+		find "\${prebuilds}" -mindepth 1 -maxdepth 1 -type d ! -name "linux-\${node_arch}" -exec rm -r {} + || die
+	done
+	if [[ \${CHOST} == *musl* ]]; then
+		find . -name '*.glibc.node' -delete || die
+	else
+		find . -name '*.musl.node' -delete || die
+	fi
+}
+
+src_configure() {
+	default
+
+	chromium_suid_sandbox_check_kernel_config
+}
+
+src_install() {
+	local app_root='/opt/Test App ßW'
+
+	# cp -a, not doins: the archive already carries the right modes, and doins would strip the
+	# executable bit from every bundled binary and shared library.
+	dodir "\${app_root}"
+	cp -a . "\${ED}\${app_root}"/ || die
+
+	# Electron ships a SUID sandbox helper, used when the kernel denies unprivileged user namespaces.
+	if [[ -e chrome-sandbox ]]; then
+		fperms 4711 "\${app_root}"/chrome-sandbox
+	fi
+
+	# Chromium needs writable+executable memory, which a PaX-enabled kernel denies by default.
+	pax-mark m "\${ED}\${app_root}"/testapp
+
+	cat > "\${T}"/testapp <<-'EOF' || die
+		#!/usr/bin/env bash
+		declare -a params
+		exec '/opt/Test App ßW/testapp' "\${params[@]}" "$@"
+	EOF
+	exeinto /usr/bin
+	newexe "\${T}"/testapp testapp
+
+	cat > "\${T}"/testapp.desktop <<-'EOF' || die
+		[Desktop Entry]
+		Name=Test App ßW
+		Exec=/usr/bin/testapp %U
+		Terminal=false
+		Type=Application
+		Icon=testapp
+		StartupWMClass=Test App ßW
+		Comment=Test Application (test quite “ #378)
+		Categories=Development;
+	EOF
+	domenu "\${T}"/testapp.desktop
+}
+"
+`;
+
+exports[`gentoo target > follows the project's archive format 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.tar.bz2",
+    },
+    {
+      "file": "TestApp-bin-1.1.0.ebuild",
+    },
+  ],
+}
+`;
+
+exports[`gentoo target > follows the project's archive format 2`] = `"	amd64? ( https://example.com/releases/v\${PV}/TestApp-\${PV}.tar.bz2 )"`;
+
+exports[`gentoo target > one ebuild covers every built architecture 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.tar.gz",
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-arm64.tar.gz",
+    },
+    {
+      "file": "TestApp-bin-1.1.0.ebuild",
+    },
+  ],
+}
+`;
+
+exports[`gentoo target > one ebuild covers every built architecture 2`] = `
+"	amd64? ( https://github.com/example-org/example-app/releases/download/v\${PV}/TestApp-\${PV}.tar.gz )
+	arm64? ( https://github.com/example-org/example-app/releases/download/v\${PV}/TestApp-\${PV}-arm64.tar.gz )
+	https://raw.githubusercontent.com/example-org/example-app/v\${PV}/build/icons/512x512.png -> \${P}.png"
+`;
+
+exports[`gentoo target > one ebuild covers every built architecture 3`] = `"KEYWORDS="-* ~amd64 ~arm64""`;
+
+exports[`gentoo target > one ebuild covers every built architecture 4`] = `
+"src_unpack() {
+	default
+
+	case \${ARCH} in
+		amd64) S="\${WORKDIR}/TestApp-\${PV}" ;;
+		arm64) S="\${WORKDIR}/TestApp-\${PV}-arm64" ;;
+	esac
+}"
+`;
