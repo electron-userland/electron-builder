@@ -1,5 +1,64 @@
 # electron-builder
 
+## 27.0.0-alpha.9
+
+### Minor Changes
+
+- Feat: v27 upgrade guardrails: make every breaking change self-announcing _[`#10182`](https://github.com/electron-userland/electron-builder/pull/10182) [`318f6fb`](https://github.com/electron-userland/electron-builder/commit/318f6fb93f9a6f92231320aa876db9e66bd78b6a) [@mmaietta](https://github.com/mmaietta)_
+- Feat(migrate-schema): cover every v27 breaking config change _[`#10241`](https://github.com/electron-userland/electron-builder/pull/10241) [`6ebe0ac`](https://github.com/electron-userland/electron-builder/commit/6ebe0ac5077a5f41adb3a4e87c8f1a958ace16b1) [@claude](https://github.com/apps/claude)_
+
+  `electron-builder migrate-schema` (static and JS/TS configs) now also rewrites the v26 shapes it previously left behind, which failed v27 schema validation on the next build:
+  - platform-level `mac`/`mas`/`masDev`/`win`/`linux` `asarUnpack` → `<platform>.asar.unpack`, merging the root ASAR options in because a platform-level `asar` replaces the root one in v27; root ASAR keys that have no effect under `asar: false` are removed
+  - `toolsets.*: null` entries are removed and the retired `toolsets.appimage: "1.0.2"` pin becomes `"1.0.3"`
+  - `nativeRebuilder: "legacy"`, `electronDownload.force`, and v26 `null` ("unset") values on `mac.type` / `provisioningProfile` / `binaries` / `signIgnore` / `singleArchFiles` / `x64ArchFiles` are dropped instead of carried into keys that reject them; a hand-renamed `electronGet` still in the v26 shape is reshaped
+  - GitHub publish entries are migrated in every section (e.g. `nsis.publish`), a non-empty `tagNamePrefix` next to `vPrefixedTagName` is kept (it won in v26), and an empty `tagNamePrefix` — ignored by v26 — becomes `"v"` with a warning so existing tag names do not change
+  - `win.signAndEditExecutable: false` also maps to `win.sign: false` (it skipped signing in v26), and `win.signtoolOptions` / `win.azureSignOptions` under disabled signing are dropped with a warning instead of producing an invalid config
+  - `snap` options the `snapcraft.core24` shape does not support are dropped with a warning
+
+  It warns about `squirrelWindows.customSquirrelVendorDir` (not mechanically migratable) and prints an advisory for `mac`/`mas`/`masDev` configs that rely on the tightened default entitlements. The build-time legacy-config guard now also names `squirrelWindows.customSquirrelVendorDir` and `electronGet.force`, and the `USE_SYSTEM_WINE` removal message points at `toolsets.wine: "system"`.
+
+- Feat(security): signed update manifests (Ed25519) with trust lists and multi-signature manifests _[`#9877`](https://github.com/electron-userland/electron-builder/pull/9877) [`d45536f`](https://github.com/electron-userland/electron-builder/commit/d45536f74e63e5c19dd4a590238521f6315812f5) [@mmaietta](https://github.com/mmaietta)_
+
+  Optional Ed25519 signing of auto-update manifests (`latest*.yml`). When signing keys are configured
+  (`updateManifest.signingKey`/`signingKeyFile` in config, or `ELECTRON_BUILDER_UPDATE_SIGN_KEY`/`ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`
+  env vars), each manifest is signed over its integrity-critical fields and the matching public keys are
+  embedded into `app-update.yml` (both resolved from the same keys on the platform packager, so signing and
+  embedding cannot disagree). electron-updater verifies the signature before downloading and refuses to
+  update on tamper/missing-signature (fail-closed). Opt-in: when no public key is configured, verification is
+  skipped with a one-time warning. New CLI: `electron-builder create-update-key` (prints the public key and its key id).
+
+  Key rotation without a flag day: an install trusts a **list** of public keys (`updateManifestPublicKey` is a
+  string or an array; `updateManifest.publicKey`, `signingKey` and `signingKeyFile` accept arrays, a PEM value may
+  hold several concatenated keys, and `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` accepts several paths joined with
+  the OS path delimiter), and a manifest may carry **several signatures** (`signatures: [{ keyId, signature }]`,
+  one per signing key, next to the legacy `signature` of the first key). A manifest is accepted when any trusted
+  key validates any of its signatures, so a release signed with `[old, new]` verifies on installs that trust
+  either. `AppUpdater.updateManifestPublicKey` accepts a string or an array. A build-time warning flags an
+  explicit `publicKey` list that contains none of the signing keys.
+
+  Gating of the Linux package-manager signature-bypass flags landed separately as
+  `AppUpdater.allowUnverifiedLinuxPackages` (#9990).
+
+### Patch Changes
+
+- Fix: clean up publish SIGINT listeners _[`#10147`](https://github.com/electron-userland/electron-builder/pull/10147) [`28b0c20`](https://github.com/electron-userland/electron-builder/commit/28b0c20f6b61c3519a30f6510d31ac09e5922e6f) [@OskarEichler](https://github.com/OskarEichler)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`7935fd5`](https://github.com/electron-userland/electron-builder/commit/7935fd536e31705cdd9a923cd36c68122130d614) [`e87e86e`](https://github.com/electron-userland/electron-builder/commit/e87e86ea650d4368849ff4a918332310bb5c8200) [`c53a27f`](https://github.com/electron-userland/electron-builder/commit/c53a27fdab0a92fd05cb5d095935da90318ba87e) [`e0ada9d`](https://github.com/electron-userland/electron-builder/commit/e0ada9d69c706cafd34150f70e13687c0676b6e8) [`e68f9ce`](https://github.com/electron-userland/electron-builder/commit/e68f9ce400f6ade26ce871947b045172c0a6bf2e) [`6be2795`](https://github.com/electron-userland/electron-builder/commit/6be279576bf22a6f7521b146f89fd7501839bc94) [`7b0f29b`](https://github.com/electron-userland/electron-builder/commit/7b0f29b07e7a7d193920b7336eb18d5cd1cc7d5b) [`8278a19`](https://github.com/electron-userland/electron-builder/commit/8278a1914869c46e4e00a37007143adbb30c818b) [`ce9ee68`](https://github.com/electron-userland/electron-builder/commit/ce9ee68da690305e326e22927126327da6644392) [`318f6fb`](https://github.com/electron-userland/electron-builder/commit/318f6fb93f9a6f92231320aa876db9e66bd78b6a) [`e331645`](https://github.com/electron-userland/electron-builder/commit/e3316455022434d9153dd7f61c6e853068715482) [`de70642`](https://github.com/electron-userland/electron-builder/commit/de70642c688044e5dbbe9259b7923e6d83964a22) [`6ebe0ac`](https://github.com/electron-userland/electron-builder/commit/6ebe0ac5077a5f41adb3a4e87c8f1a958ace16b1) [`0097e04`](https://github.com/electron-userland/electron-builder/commit/0097e04c190ea45d4fbfbd991b93b0de88f088e4) [`f42fbf6`](https://github.com/electron-userland/electron-builder/commit/f42fbf659bf0d3a9fc3a5fa5f269deb3431a5fda) [`92ef45a`](https://github.com/electron-userland/electron-builder/commit/92ef45a4010dac25ca12e008a446754bca16e2de) [`66eb52c`](https://github.com/electron-userland/electron-builder/commit/66eb52cd85f975c04f6cfe1cfc89c15fd98cd07d) [`66eb52c`](https://github.com/electron-userland/electron-builder/commit/66eb52cd85f975c04f6cfe1cfc89c15fd98cd07d) [`94814ed`](https://github.com/electron-userland/electron-builder/commit/94814ed3dfdb131fd45160f0b8dc618dd1a501d8) [`83cf98f`](https://github.com/electron-userland/electron-builder/commit/83cf98fb6a63282f284409a6c47bede2a68e16f9) [`a787a5a`](https://github.com/electron-userland/electron-builder/commit/a787a5a5544474c02557394958501b24f8bd4519) [`125cde9`](https://github.com/electron-userland/electron-builder/commit/125cde9acaf70f355345519f2a528342a2bd0dff) [`99b6c7f`](https://github.com/electron-userland/electron-builder/commit/99b6c7f1efe761bbd3d0582e158a8f1705f652a0) [`06e0c23`](https://github.com/electron-userland/electron-builder/commit/06e0c23f0dbfe6ff6a250f6727037e5d5a75541e) [`b370bdb`](https://github.com/electron-userland/electron-builder/commit/b370bdb621eeb78a25fc6a9aefa3088f1ebe3077) [`0fdbba6`](https://github.com/electron-userland/electron-builder/commit/0fdbba62d48fe6dcd2fcce5b3e5ac028a96417c9) [`d5dcfa8`](https://github.com/electron-userland/electron-builder/commit/d5dcfa8be858a221dba415e8d6fe8c8c2a12e5bf) [`206b2a6`](https://github.com/electron-userland/electron-builder/commit/206b2a66569a593772d0e79d7f6ff7a81e2833a3) [`d45536f`](https://github.com/electron-userland/electron-builder/commit/d45536f74e63e5c19dd4a590238521f6315812f5) [`5f6c32a`](https://github.com/electron-userland/electron-builder/commit/5f6c32afec92c4c24c74094c84771740d30c7687) [`6ab9a8c`](https://github.com/electron-userland/electron-builder/commit/6ab9a8c5fbed759e0c9e26064208c422c612b200) [`f02576d`](https://github.com/electron-userland/electron-builder/commit/f02576d7759ffa510d1189abc6e9b904e91864db) [`7f5014d`](https://github.com/electron-userland/electron-builder/commit/7f5014ddfd89f5eae83b433727cf6fb6addf1e5f) [`2a964ee`](https://github.com/electron-userland/electron-builder/commit/2a964eea0e43838cb62494357726f538f5cc2993) [`77dff15`](https://github.com/electron-userland/electron-builder/commit/77dff159e835124accd647c6fa326f5340f38df6) [`49cb865`](https://github.com/electron-userland/electron-builder/commit/49cb86582f04e914bd1a234299465e01c7ff68a6)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.9`
+- `dmg-builder@27.0.0-alpha.9`
+- `electron-publish@27.0.0-alpha.9`
+- `builder-util-runtime@10.0.0-alpha.8`
+- `builder-util@27.0.0-alpha.9`
+
+</details>
+
 ## 27.0.0-alpha.8
 
 ### Patch Changes
