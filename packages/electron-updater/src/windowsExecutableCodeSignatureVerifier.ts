@@ -3,41 +3,16 @@ import { execFile, execFileSync, ExecFileOptions } from "child_process"
 import * as os from "os"
 import { Logger } from "./types.js"
 import * as path from "path"
+import { buildPowerShellArgs, escapePowerShellSingleQuoted, stripPsModulePath } from "./windowsPowerShell.js"
 
 function preparePowerShellExec(command: string, timeout?: number) {
-  // $PSHOME is a PS automatic variable pointing to the trusted PS installation directory.
-  // Using the full path for Import-Module avoids relying on PSModulePath for module discovery,
-  // which prevents a shadowing attack via user-writable PSModulePath entries.
-  // $env:PSModulePath is also cleared inside the script as belt-and-suspenders.
-  // https://github.com/electron-userland/electron-builder/issues/2421
-  // https://github.com/electron-userland/electron-builder/issues/2535
-  // https://github.com/electron-userland/electron-builder/issues/7127
-  //
-  // PSModulePath is stripped from the inherited env on the Node side so it is never
-  // present when PowerShell starts. Windows environment variable names are case-insensitive,
-  // but plain JS object keys are not — spreading process.env produces a plain object — so
-  // every casing of the key must be removed, not just the canonical one.
-  //
-  // UTF-8 output encoding is configured inside PowerShell itself rather than via `chcp 65001`
-  // (which required cmd.exe as the host). Both $OutputEncoding and [Console]::OutputEncoding
-  // must be set so that ConvertTo-Json emits UTF-8 when stdout is captured by Node.
-  // https://github.com/electron-userland/electron-builder/issues/8162
-  // Suppress progress-stream output (CLIXML) before the first Import-Module so that
-  // "Preparing modules for first use." records are never written to stderr, which would
-  // otherwise be misidentified as a command error by the stderr check in verifySignature.
-  const script = `$ProgressPreference = 'SilentlyContinue'; Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Security"; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; ${command}`
-  const encodedCommand = Buffer.from(script, "utf16le").toString("base64")
-  const args = ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-EncodedCommand", encodedCommand]
-  const env: NodeJS.ProcessEnv = { ...process.env }
-  for (const key of Object.keys(env)) {
-    if (key.toLowerCase() === "psmodulepath") {
-      delete env[key]
-    }
-  }
+  // hardened invocation (explicit $PSHOME module import, PSModulePath cleared and stripped from the env,
+  // UTF-8 output, progress stream suppressed, -EncodedCommand): see windowsPowerShell.ts
+  const args = buildPowerShellArgs(command, { modules: ["Microsoft.PowerShell.Security"] })
   const options: ExecFileOptions = {
     shell: false,
     timeout,
-    env,
+    env: stripPsModulePath(process.env),
   }
   return ["powershell.exe", args, options] as const
 }
@@ -107,12 +82,8 @@ function evaluateSignatureResult(stdout: string, publisherNames: string[], unesc
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
 // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
 export function verifySignature(publisherNames: Array<string>, unescapedTempUpdateFile: string, logger: Logger): Promise<string | null> {
-  // Single quotes in the path are doubled for PS single-quoted strings ('don''t' → don't).
-  // PowerShell also treats the Unicode single-quote variants U+2018–U+201B (‘ ’ ‚ ‛) as
-  // string delimiters, so they must be doubled as well or a path like C:\Users\D’Andre
-  // would terminate the string early ("The string is missing the terminator").
-  // Other PS metacharacters ($, `, \) are literal inside single-quoted strings.
-  const tempUpdateFile = unescapedTempUpdateFile.replace(/['\u2018\u2019\u201A\u201B]/g, "$&$&")
+  // escaped for the PS single-quoted string literal (plain and Unicode single quotes doubled)
+  const tempUpdateFile = escapePowerShellSingleQuoted(unescapedTempUpdateFile)
   logger.info(`Verifying signature ${tempUpdateFile}`)
   return new Promise<string | null>((resolve, reject) => {
     execFile(...preparePowerShellExec(`Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress`, 20 * 1000), (error, stdout, stderr) => {

@@ -1,5 +1,6 @@
 import { createRequire } from "node:module"
 import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME } from "builder-util-runtime"
+import { ChildProcess, spawn } from "child_process"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
@@ -11,9 +12,15 @@ import { VerifyUpdateCodeSignature } from "./index.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import fsExtra from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
+import { buildElevatedInstallerInvocation, UAC_CANCELLED_EXIT_CODE } from "./windowsElevation.js"
 import { URL } from "url"
 
 const require = createRequire(import.meta.url)
+
+// see NsisUpdater.runElevationTrampoline
+const ELEVATION_TIMEOUT_MS = 5 * 60 * 1000
+
+type ElevationOutcome = "launched" | "cancelled" | "unavailable"
 
 export class NsisUpdater extends BaseUpdater {
   /**
@@ -174,7 +181,7 @@ export class NsisUpdater extends BaseUpdater {
     return true
   }
 
-  protected doInstall(options: InstallOptions): boolean {
+  protected doInstall(options: InstallOptions): boolean | Promise<boolean> {
     const installerPath = this.installerPath
     if (installerPath == null) {
       this.dispatchError(new Error("No update filepath provided, can't quit and install"))
@@ -201,14 +208,14 @@ export class NsisUpdater extends BaseUpdater {
       args.push(`--package-file=${packagePath}`)
     }
 
-    const callUsingElevation = (): void => {
-      this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [installerPath].concat(args)).catch(e => this.dispatchError(e))
-    }
-
     if (options.isAdminRightsRequired) {
-      this._logger.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
-      callUsingElevation()
-      return true
+      this._logger.info("isAdminRightsRequired is set to true, run installer with UAC elevation (PowerShell Start-Process -Verb RunAs, elevate.exe as fallback)")
+      if (options.isAppQuitting) {
+        // the app quit handler cannot wait for the trampoline to report, so the launch is fire-and-forget here
+        this.launchElevatedDetached(installerPath, args)
+        return true
+      }
+      return this.launchElevated(installerPath, args)
     }
 
     this.spawnLog(installerPath, args).catch((e: Error) => {
@@ -216,10 +223,11 @@ export class NsisUpdater extends BaseUpdater {
       // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
       const errorCode = (e as NodeJS.ErrnoException).code
       this._logger.info(
-        `Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES, and will try to use electron.shell.openItem if ENOENT`
+        `Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using UAC elevation if EACCES, and will try to use electron.shell.openPath if ENOENT`
       )
       if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
-        callUsingElevation()
+        // doInstall has already reported success and the app is quitting — nothing can wait for the trampoline any more
+        this.launchElevatedDetached(installerPath, args)
       } else if (errorCode === "ENOENT") {
         require("electron")
           .shell.openPath(installerPath)
@@ -229,6 +237,100 @@ export class NsisUpdater extends BaseUpdater {
       }
     })
     return true
+  }
+
+  /**
+   * Launches the installer elevated and waits until the outcome is known:
+   * - the PowerShell trampoline (`Start-Process -Verb RunAs`) reports that the installer is running → `true`;
+   * - the user declined the UAC prompt → an `error` event (`ERR_UPDATER_ELEVATION_CANCELLED`) and `false`. There is
+   *   deliberately no fallback here: `elevate.exe` would only show the same prompt a second time;
+   * - PowerShell cannot be started, is blocked (e.g. AppLocker/WDAC/constrained language mode), exits with another error
+   *   or does not report in time → falls back to the bundled `resources/elevate.exe`, exactly as before.
+   */
+  private async launchElevated(installerPath: string, args: Array<string>): Promise<boolean> {
+    const outcome = await this.runElevationTrampoline(installerPath, args)
+    switch (outcome) {
+      case "launched":
+        this._logger.info("Installer started with UAC elevation via PowerShell")
+        return true
+      case "cancelled":
+        this.dispatchError(newError("Update installation was cancelled: the UAC elevation prompt was declined", "ERR_UPDATER_ELEVATION_CANCELLED"))
+        return false
+      default:
+        this._logger.warn("UAC elevation via PowerShell is not available, falling back to elevate.exe")
+        return this.launchWithElevateHelper(installerPath, args)
+    }
+  }
+
+  /**
+   * Fire-and-forget variant of {@link launchElevated} for the paths where the app is already quitting: the trampoline is
+   * spawned detached like any other installer launch. Only a spawn failure (e.g. `ENOENT`) can be observed here, so a
+   * PowerShell that starts but then fails (blocked, or UAC declined) is invisible, like it was with `elevate.exe`.
+   */
+  private launchElevatedDetached(installerPath: string, args: Array<string>): void {
+    const invocation = buildElevatedInstallerInvocation(installerPath, args)
+    this.spawnLog(invocation.file, invocation.args, invocation.env).catch((e: Error) => {
+      this._logger.warn(`Cannot start PowerShell for UAC elevation (${(e as NodeJS.ErrnoException).code ?? e.message}), falling back to elevate.exe`)
+      void this.launchWithElevateHelper(installerPath, args)
+    })
+  }
+
+  // legacy elevation through the bundled third-party helper (win.packElevateHelper)
+  private launchWithElevateHelper(installerPath: string, args: Array<string>): Promise<boolean> {
+    return this.spawnLog(path.join(process.resourcesPath, "elevate.exe"), [installerPath, ...args]).catch((e: Error) => {
+      this.dispatchError(e)
+      return false
+    })
+  }
+
+  /**
+   * Runs the PowerShell elevation trampoline (see `windowsElevation.ts`) and maps its result. The child is not detached:
+   * its exit code is the only channel through which the UAC outcome is reported. `Start-Process -Verb RunAs` blocks while
+   * the UAC consent dialog is open, so the timeout is generous — it only guards against a hung PowerShell host, never
+   * against a user who is still deciding (Windows itself dismisses an unanswered prompt after about two minutes).
+   */
+  private runElevationTrampoline(installerPath: string, args: Array<string>): Promise<ElevationOutcome> {
+    const invocation = buildElevatedInstallerInvocation(installerPath, args)
+    this._logger.info(`Executing: ${invocation.file} with args: ${invocation.args}`)
+    return new Promise<ElevationOutcome>(resolve => {
+      let isSettled = false
+      let timer: NodeJS.Timeout | null = null
+      const settle = (outcome: ElevationOutcome, message: string) => {
+        if (isSettled) {
+          return
+        }
+        isSettled = true
+        if (timer != null) {
+          clearTimeout(timer)
+        }
+        this._logger.info(message)
+        resolve(outcome)
+      }
+
+      let child: ChildProcess
+      try {
+        child = spawn(invocation.file, invocation.args, { stdio: "ignore", windowsHide: true, env: invocation.env })
+      } catch (e: any) {
+        settle("unavailable", `Cannot spawn PowerShell for UAC elevation: ${e.message}`)
+        return
+      }
+
+      timer = setTimeout(() => {
+        child.kill()
+        settle("unavailable", `PowerShell elevation trampoline did not report within ${ELEVATION_TIMEOUT_MS / 1000}s, killing it`)
+      }, ELEVATION_TIMEOUT_MS)
+
+      child.once("error", (e: NodeJS.ErrnoException) => settle("unavailable", `Cannot spawn PowerShell for UAC elevation: ${e.code ?? e.message}`))
+      child.once("exit", (code, signal) => {
+        if (code === 0) {
+          settle("launched", "PowerShell elevation trampoline exited with code 0")
+        } else if (code === UAC_CANCELLED_EXIT_CODE) {
+          settle("cancelled", `PowerShell elevation trampoline exited with code ${code}: the UAC prompt was declined`)
+        } else {
+          settle("unavailable", `PowerShell elevation trampoline exited with code ${code}${signal == null ? "" : ` (signal ${signal})`}`)
+        }
+      })
+    })
   }
 
   private async differentialDownloadWebPackage(
