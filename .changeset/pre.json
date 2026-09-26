@@ -19,6 +19,7 @@
     "@electron-builder/website": "0.0.0"
   },
   "changesets": [
+    "accurate-differential-progress",
     "after-pack-test-hook",
     "airgapped-seeded-shasums",
     "allow-missing-dependencies",
@@ -78,6 +79,7 @@
     "lemon-yaks-clean",
     "linux-launcher-entrypoint",
     "linux-tools-mac-1.0.1",
+    "long-cougars-double",
     "long-foxes-marry",
     "loose-webs-itch",
     "loud-lizards-post",
@@ -144,6 +146,7 @@
     "snap-template-tar7z-extraction",
     "snapcraft-types-shipped",
     "solid-toes-like",
+    "some-turkeys-slide",
     "stale-blockmap-cache",
     "stop-oversized-buffer-downloads",
     "tender-dodos-film",

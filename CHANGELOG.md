@@ -1,3 +1,13 @@
+# [27.0.0-alpha.10](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.9...electron-builder@27.0.0-alpha.10) (2026-09-26)
+
+
+### Bug Fixes
+
+* preserve sibling paths in logs ([#10152](https://github.com/electron-userland/electron-builder/issues/10152)) ([7619d08](https://github.com/electron-userland/electron-builder/commit/7619d08a1c02049b0dd40e043346e5263c0a3e50))
+* **updater:** report accurate differential progress ([#10118](https://github.com/electron-userland/electron-builder/issues/10118)) ([58e5d2e](https://github.com/electron-userland/electron-builder/commit/58e5d2e2b26cc7665f39e7f19e93c59259d5ee76))
+
+
+
 # [27.0.0-alpha.9](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.8...electron-builder@27.0.0-alpha.9) (2026-09-25)
 
 

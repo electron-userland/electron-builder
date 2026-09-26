@@ -1,5 +1,12 @@
 ## 4.3.0
 
+## 7.0.0-alpha.9
+
+### Patch Changes
+
+- Fix: report accurate differential download progress deltas _[`#10118`](https://github.com/electron-userland/electron-builder/pull/10118) [`58e5d2e`](https://github.com/electron-userland/electron-builder/commit/58e5d2e2b26cc7665f39e7f19e93c59259d5ee76) [@OskarEichler](https://github.com/OskarEichler)_
+- Chore: replace ESLint and Prettier with oxlint and oxfmt _[`#10240`](https://github.com/electron-userland/electron-builder/pull/10240) [`a578e53`](https://github.com/electron-userland/electron-builder/commit/a578e53441ede7f6fb3e9d69292dc135ef37ed17) [@claude](https://github.com/apps/claude)_
+
 ## 7.0.0-alpha.8
 
 ### Major Changes
@@ -10,25 +17,25 @@
 
   ```ts
   // Before (v6)
-  const files = await autoUpdater.downloadUpdate()
-  const installer = files[0]
-  const webInstallerPackage = files[1] // only for NSIS web installers
+  const files = await autoUpdater.downloadUpdate();
+  const installer = files[0];
+  const webInstallerPackage = files[1]; // only for NSIS web installers
 
   // After (v7)
-  const { updateFile, packageFile } = await autoUpdater.downloadUpdate()
+  const { updateFile, packageFile } = await autoUpdater.downloadUpdate();
   ```
 
   The same applies to the result of `checkForUpdates()`:
 
   ```ts
   // Before (v6)
-  const result = await autoUpdater.checkForUpdates()
-  const [installer] = (await result?.downloadPromise) ?? []
+  const result = await autoUpdater.checkForUpdates();
+  const [installer] = (await result?.downloadPromise) ?? [];
 
   // After (v7)
-  const result = await autoUpdater.checkForUpdates()
-  const download = await result?.downloadPromise
-  const installer = download?.updateFile
+  const result = await autoUpdater.checkForUpdates();
+  const download = await result?.downloadPromise;
+  const installer = download?.updateFile;
   ```
 
   The underlying cache-consistency fix from #10098 already produced this object internally; this change stops converting it back to an array at the public API boundary.
@@ -62,6 +69,7 @@
 ### Patch Changes
 
 - Fix: make multi-range differential downloads work on real servers. Three independent defects made `downloadUpdate` fall back to a full download with `Response ends without calling any handlers`: _[`#10192`](https://github.com/electron-userland/electron-builder/pull/10192) [`8e22767`](https://github.com/electron-userland/electron-builder/commit/8e227679fe34befde8fa31f6b811b86c79f010d5) [@yi-ge](https://github.com/yi-ge)_
+
   - `DataSplitter` only recognised CRLF. Some CDNs answer `multipart/byteranges` with bare LF line endings, so no part was ever split and the whole response accumulated in memory. Header lists now end at whichever of `\r\n\r\n` / `\n\n` comes first, and the `<EOL>--boundary` separator size follows the line ending the server actually uses.
   - A header-list terminator split across two chunks was never found: only the new chunk was searched, the buffered bytes never were, so the parser locked onto the next part's header instead. Only the last few bytes of an unfinished header list are now carried over and searched together with the next chunk, instead of accumulating the whole list.
   - The 10s watchdog armed when a batch response ends was never disarmed after that batch succeeded. With more than 1000 operations (several range requests) it failed the whole download whenever a later batch took longer than the grace period.
@@ -107,6 +115,7 @@
 - Feat: warn on silently skipped update signature verification and validate `publisherName` against the signing certificate at build time _[`#10056`](https://github.com/electron-userland/electron-builder/pull/10056) [`331afdd`](https://github.com/electron-userland/electron-builder/commit/331afdd30bd59aa0185f7df31b5712e62a5acfbf) [@claude](https://github.com/apps/claude)_
 
   Two guards around Windows update signature verification:
+
   - **electron-updater**: when `app-update.yml` exists but contains no `publisherName`, the updater used to skip signature verification (including custom `verifyUpdateCodeSignature` hooks) completely silently. It now logs a warning explaining that verification was skipped, how to fix it (sign the build so `publisherName` is derived automatically, or set `win.publisherName` explicitly), and that this fail-open behavior is deprecated: electron-builder v28 will treat a missing `publisherName` as a verification failure (fail-closed). The no-`app-update.yml` path (unpackaged/dev mode) stays silent.
   - **app-builder-lib**: when `publisherName` is explicitly configured and the subject of the local code signing certificate is known, the build now fails with a clear error if none of the configured names match the certificate (same DN-subset/CN matching semantics as the updater's verifier; any one of multiple configured names matching passes, so certificate-rotation setups keep working). This catches signing with the wrong certificate at build time instead of at update time. The check is skipped whenever the actual signing certificate's subject is not genuinely known (custom `sign` hooks, Azure Trusted Signing, PKCS#11 without an extractable certificate, x509 files without a CN), and `publisherName: null` remains a pure opt-out.
 
@@ -141,6 +150,7 @@
   BREAKING CHANGE: `AppUpdater.disableWebInstaller` now defaults to `true`. NSIS web-installer packages are no longer loaded unless you opt in, because their payload is fetched from a manifest-supplied URL that may not undergo signature verification.
 
   v27 ships a one-major-version grace period so existing deployments are not broken without warning:
+
   - If you never set `disableWebInstaller` (the default) and a web-installer update is received, the updater logs a deprecation warning and still downloads it. In v28 this becomes an error and the download is blocked (`ERR_UPDATER_WEB_INSTALLER_DISABLED`).
   - If you explicitly set `disableWebInstaller = true`, the download throws `ERR_UPDATER_WEB_INSTALLER_DISABLED` immediately.
 
@@ -152,23 +162,24 @@
 
   ```ts
   // Before (v26)
-  autoUpdater.quitAndInstall(true, false)
+  autoUpdater.quitAndInstall(true, false);
 
   // After (v27)
-  autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: false })
+  autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: false });
   ```
 
   **BREAKING:** the `autoInstallOnAppQuit` boolean is replaced by an `autoInstallEvent: "manual" | "onQuit" | "onNextLaunch"` enum (default `"onQuit"`, which preserves prior behavior). There is no compat alias — a single boolean cannot express the three states.
 
   ```ts
   // Before (v26)
-  autoUpdater.autoInstallOnAppQuit = false
+  autoUpdater.autoInstallOnAppQuit = false;
 
   // After (v27)
-  autoUpdater.autoInstallEvent = "manual"
+  autoUpdater.autoInstallEvent = "manual";
   ```
 
   Installing an update while the app quits spawns a detached installer process; when the quit is caused by the OS session ending (shutdown/reboot/log off on Windows), the OS can kill that installer mid-install and leave the app uninstalled but not re-installed (#7807). Two mitigations, both implemented in `BaseUpdater` so NSIS, AppImage, deb, rpm and pacman targets all inherit them:
+
   - **Session-end guard (always on):** when the OS session is ending, the on-quit install is skipped with a warning and the downloaded update stays cached for the next quit. Detection is best-effort: `powerMonitor` `shutdown` on macOS/Linux, `BrowserWindow` `session-end` on Windows (windowless apps cannot be covered on Windows).
   - **`autoInstallEvent: "onNextLaunch"` (opt-in; default is `"onQuit"`):** any app quit persists the downloaded update as pending instead of spawning the installer. On the next launch the updater re-validates the cached installer against freshly fetched update info (checksum, code signature on Windows, and an installable-change version check — newer, or a downgrade when `allowDowngrade` is set — as a loop guard) and installs it silently, restarting the app. A single quit can be deferred via the new `quitAndInstall({ waitUntilNextLaunch: true })` option.
 
@@ -190,6 +201,7 @@
   Adds `AppUpdater.allowUnverifiedLinuxPackages`. Because electron-builder does not sign Linux packages, this defaults to `true`, preserving the existing behavior: `.deb`/`.rpm` auto-updates install with the package manager's signature/GPG checks bypassed where a bypass flag exists (`--allow-unauthenticated` for the apt fallback, `--allow-unsigned-rpm` for zypper, `--nogpgcheck` for dnf/yum).
 
   If you sign your Linux packages through your own pipeline and the target systems trust your keys, set `autoUpdater.allowUnverifiedLinuxPackages = false`. What this enforces depends on the package manager used on the target system:
+
   - dpkg (the default for `.deb`): no effect — dpkg performs no signature verification (a warning is logged); enforcing `.deb` signatures requires a debsig-verify/debsigs policy on the target system.
   - apt (`.deb` fallback): `--allow-unauthenticated` is omitted.
   - zypper: enforced — unsigned/untrusted packages fail to install.
@@ -202,6 +214,7 @@
 
 - Fix: Reject the differential download promise instead of crashing with an uncaughtException when the multipart range response emits a network error _[`#10021`](https://github.com/electron-userland/electron-builder/pull/10021) [`5eed26b`](https://github.com/electron-userland/electron-builder/commit/5eed26b2a9cfd06a1dbe207b25a46ce2c0b05ae9) [@claude](https://github.com/apps/claude)_
 - Fix(updater): make GitHubProvider pick the newest available release if `allowPrerelease=true` but current version is stable _[`#9895`](https://github.com/electron-userland/electron-builder/pull/9895) [`1f681e1`](https://github.com/electron-userland/electron-builder/commit/1f681e18292c318f2563d7b87cc480ee290e99e2) [@AbdulrhmanGoni](https://github.com/AbdulrhmanGoni)_
+
   - `allowPrerelease=true` with no explicit channel and a stable current version now selects the newest valid semver release in the Atom feed (skipping unrelated non-semver tags such as other packages in a monorepo) instead of blindly taking the first feed entry (#9894).
   - When every published release is older than the installed version, the updater now reports "update not available" gracefully (and honors `allowDowngrade`) instead of throwing.
   - `allowPrerelease=false` no longer throws `ERR_UPDATER_NO_PUBLISHED_VERSIONS` when the latest release tag (from `/releases/latest`) is absent from GitHub's truncated Atom feed; it proceeds with the resolved tag.

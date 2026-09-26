@@ -1,5 +1,26 @@
 # electron-builder
 
+## 27.0.0-alpha.10
+
+### Patch Changes
+
+- Chore: replace ESLint and Prettier with oxlint and oxfmt _[`#10240`](https://github.com/electron-userland/electron-builder/pull/10240) [`a578e53`](https://github.com/electron-userland/electron-builder/commit/a578e53441ede7f6fb3e9d69292dc135ef37ed17) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`7619d08`](https://github.com/electron-userland/electron-builder/commit/7619d08a1c02049b0dd40e043346e5263c0a3e50) [`a578e53`](https://github.com/electron-userland/electron-builder/commit/a578e53441ede7f6fb3e9d69292dc135ef37ed17)
+
+</small>
+
+- `builder-util@27.0.0-alpha.10`
+- `app-builder-lib@27.0.0-alpha.10`
+- `electron-publish@27.0.0-alpha.10`
+- `dmg-builder@27.0.0-alpha.10`
+
+</details>
+
 ## 27.0.0-alpha.9
 
 ### Minor Changes
@@ -8,6 +29,7 @@
 - Feat(migrate-schema): cover every v27 breaking config change _[`#10241`](https://github.com/electron-userland/electron-builder/pull/10241) [`6ebe0ac`](https://github.com/electron-userland/electron-builder/commit/6ebe0ac5077a5f41adb3a4e87c8f1a958ace16b1) [@claude](https://github.com/apps/claude)_
 
   `electron-builder migrate-schema` (static and JS/TS configs) now also rewrites the v26 shapes it previously left behind, which failed v27 schema validation on the next build:
+
   - platform-level `mac`/`mas`/`masDev`/`win`/`linux` `asarUnpack` → `<platform>.asar.unpack`, merging the root ASAR options in because a platform-level `asar` replaces the root one in v27; root ASAR keys that have no effect under `asar: false` are removed
   - `toolsets.*: null` entries are removed and the retired `toolsets.appimage: "1.0.2"` pin becomes `"1.0.3"`
   - `nativeRebuilder: "legacy"`, `electronDownload.force`, and v26 `null` ("unset") values on `mac.type` / `provisioningProfile` / `binaries` / `signIgnore` / `singleArchFiles` / `x64ArchFiles` are dropped instead of carried into keys that reject them; a hand-renamed `electronGet` still in the v26 shape is reshaped

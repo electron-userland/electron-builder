@@ -1,5 +1,26 @@
 # app-builder-lib
 
+## 27.0.0-alpha.10
+
+### Patch Changes
+
+- Chore: replace ESLint and Prettier with oxlint and oxfmt _[`#10240`](https://github.com/electron-userland/electron-builder/pull/10240) [`a578e53`](https://github.com/electron-userland/electron-builder/commit/a578e53441ede7f6fb3e9d69292dc135ef37ed17) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 4 dependencies</summary>
+
+<small>
+
+[`7619d08`](https://github.com/electron-userland/electron-builder/commit/7619d08a1c02049b0dd40e043346e5263c0a3e50) [`a578e53`](https://github.com/electron-userland/electron-builder/commit/a578e53441ede7f6fb3e9d69292dc135ef37ed17)
+
+</small>
+
+- `builder-util@27.0.0-alpha.10`
+- `electron-publish@27.0.0-alpha.10`
+- `dmg-builder@27.0.0-alpha.10`
+- `electron-builder-squirrel-windows@27.0.0-alpha.10`
+
+</details>
+
 ## 27.0.0-alpha.9
 
 ### Major Changes
@@ -17,6 +38,7 @@
 - Feat: v27 upgrade guardrails: make every breaking change self-announcing _[`#10182`](https://github.com/electron-userland/electron-builder/pull/10182) [`318f6fb`](https://github.com/electron-userland/electron-builder/commit/318f6fb93f9a6f92231320aa876db9e66bd78b6a) [@mmaietta](https://github.com/mmaietta)_
 - Feat(dmg): allow "position" as a dmg.contents type3 _[`#10183`](https://github.com/electron-userland/electron-builder/pull/10183) [`e331645`](https://github.com/electron-userland/electron-builder/commit/e3316455022434d9153dd7f61c6e853068715482) [@Laruxo](https://github.com/Laruxo)_
 - Feat(nsis): more flexible custom script includes (#9112) _[`#10161`](https://github.com/electron-userland/electron-builder/pull/10161) [`66eb52c`](https://github.com/electron-userland/electron-builder/commit/66eb52cd85f975c04f6cfe1cfc89c15fd98cd07d) [@claude](https://github.com/apps/claude)_
+
   - `nsis.include` (and `nsisWeb.include`) now also accepts an array of paths — every entry is resolved relative to the build resources directory first, then the project directory, and all scripts are included in order.
   - The build resources directory is now always registered via `!addincludedir`, so custom scripts can `!include` sibling files by name even when the main include is auto-discovered.
   - The portable target now honors an explicitly set `portable.include` (string or array). It still does **not** auto-discover `build/installer.nsh`, so existing portable builds are unaffected.
@@ -68,6 +90,7 @@
 - Feat(migrate-schema): cover every v27 breaking config change _[`#10241`](https://github.com/electron-userland/electron-builder/pull/10241) [`6ebe0ac`](https://github.com/electron-userland/electron-builder/commit/6ebe0ac5077a5f41adb3a4e87c8f1a958ace16b1) [@claude](https://github.com/apps/claude)_
 
   `electron-builder migrate-schema` (static and JS/TS configs) now also rewrites the v26 shapes it previously left behind, which failed v27 schema validation on the next build:
+
   - platform-level `mac`/`mas`/`masDev`/`win`/`linux` `asarUnpack` → `<platform>.asar.unpack`, merging the root ASAR options in because a platform-level `asar` replaces the root one in v27; root ASAR keys that have no effect under `asar: false` are removed
   - `toolsets.*: null` entries are removed and the retired `toolsets.appimage: "1.0.2"` pin becomes `"1.0.3"`
   - `nativeRebuilder: "legacy"`, `electronDownload.force`, and v26 `null` ("unset") values on `mac.type` / `provisioningProfile` / `binaries` / `signIgnore` / `singleArchFiles` / `x64ArchFiles` are dropped instead of carried into keys that reject them; a hand-renamed `electronGet` still in the v26 shape is reshaped
@@ -127,7 +150,7 @@
 - Fix: return a descriptive result instead of a bare boolean from the signing chain, unified across the platform packagers as a single exported type. `SigningResult` (`"signed" | "signed:custom" | "skipped:no-certificate" | "skipped:filtered" | "skipped:disabled" | "skipped:unsupported"`, failures are still thrown) is now what `PlatformPackager.signApp` and the Windows/macOS signing paths report; sign managers' single sign attempts resolve to the `SignFileResult` subset (`"signed" | "signed:custom" | "skipped:no-certificate"`), and `WinPackager.signIf` extends it with `"skipped:filtered"` (excluded via `signExts`) and `"skipped:disabled"` (`sign: false`/`sign: null`), so callers and logs can distinguish why a file was not signed. The `isSignResultSigned` type guard tells the signed variants apart from the skips. Follow-up to #10082: _[`#10104`](https://github.com/electron-userland/electron-builder/pull/10104) [`5ce1625`](https://github.com/electron-userland/electron-builder/commit/5ce1625642794f1f7bf8cf9fe51dc73fc39451ad) [@claude](https://github.com/apps/claude)_
   - The unconditional `Signing <file>...` log line is removed — the sign managers already log `signing` with certificate details right before executing, so unsigned builds no longer look like they are signing.
   - The skip message now states the actual reason at info level (`signing skipped reason=no code signing certificate configured`) instead of a debug-level "no signing configuration found".
-  - A file signed by a custom `win.sign` hook is now logged as ``signed with custom `sign` hook`` instead of being misattributed to `signtool.exe`.
+  - A file signed by a custom `win.sign` hook is now logged as `` signed with custom `sign` hook `` instead of being misattributed to `signtool.exe`.
   - `MacPackager.sign` reports the same type explicitly instead of a bare true/false (`"skipped:unsupported"` on non-mac hosts and pull-request CI guard, `"skipped:disabled"` for `sign`/`identity: null`, `"skipped:no-certificate"` when no identity is found, `"signed:custom"` for a custom `mac.sign` hook), and `MacTargetHelper.handleNullIdentity` returns `"skipped:disabled"` instead of `false`.
   - **Behavior change**: `WinPackager.signApp` and `MacPackager.signApp` previously discarded the per-file results and returned `true` unconditionally, so the `afterSign` hook fired even for fully unsigned builds. `signApp` now reports the combined real result (a signed result wins) — for unsigned builds, `afterSign` is skipped and the standard `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?` warning is logged, matching the documented gating in `doSignAfterPack` and the mas/mas-dev behavior (#10071). Builds that relied on `afterSign` firing without any signing should move that logic to `afterPack`.
 
@@ -180,6 +203,7 @@
 - Feat: warn on silently skipped update signature verification and validate `publisherName` against the signing certificate at build time _[`#10056`](https://github.com/electron-userland/electron-builder/pull/10056) [`331afdd`](https://github.com/electron-userland/electron-builder/commit/331afdd30bd59aa0185f7df31b5712e62a5acfbf) [@claude](https://github.com/apps/claude)_
 
   Two guards around Windows update signature verification:
+
   - **electron-updater**: when `app-update.yml` exists but contains no `publisherName`, the updater used to skip signature verification (including custom `verifyUpdateCodeSignature` hooks) completely silently. It now logs a warning explaining that verification was skipped, how to fix it (sign the build so `publisherName` is derived automatically, or set `win.publisherName` explicitly), and that this fail-open behavior is deprecated: electron-builder v28 will treat a missing `publisherName` as a verification failure (fail-closed). The no-`app-update.yml` path (unpackaged/dev mode) stays silent.
   - **app-builder-lib**: when `publisherName` is explicitly configured and the subject of the local code signing certificate is known, the build now fails with a clear error if none of the configured names match the certificate (same DN-subset/CN matching semantics as the updater's verifier; any one of multiple configured names matching passes, so certificate-rotation setups keep working). This catches signing with the wrong certificate at build time instead of at update time. The check is skipped whenever the actual signing certificate's subject is not genuinely known (custom `sign` hooks, Azure Trusted Signing, PKCS#11 without an extractable certificate, x509 files without a CN), and `publisherName: null` remains a pure opt-out.
 
@@ -198,6 +222,7 @@
 - Fix: don't mutate shared UpdateInfo.files when applying GitHub safeArtifactName, which leaked the GitHub-safe file name into other publish providers' update metadata _[`#10013`](https://github.com/electron-userland/electron-builder/pull/10013) [`951e177`](https://github.com/electron-userland/electron-builder/commit/951e17796d98a72d0058bf629d1ca492f06e50c5) [@claude](https://github.com/apps/claude)_
 - Fix: prevent infinite recursion in node module collection when a package depends on itself (e.g. `libsql@0.3.19` via `@prisma/adapter-libsql` -> `@libsql/client`), which caused npm-based builds to hang at `searching for node modules` and eventually crash with a JavaScript heap out-of-memory error (#10068) _[`#10070`](https://github.com/electron-userland/electron-builder/pull/10070) [`075efcf`](https://github.com/electron-userland/electron-builder/commit/075efcf2725a733aa25bb115801dee62e85a5594) [@claude](https://github.com/apps/claude)_
 - Security hardening and a migrate-schema fix: _[`#10036`](https://github.com/electron-userland/electron-builder/pull/10036) [`b87a0b7`](https://github.com/electron-userland/electron-builder/commit/b87a0b7a533eef1711e600864f2540dc163176d7) [@mmaietta](https://github.com/mmaietta)_
+
   - `builder-util` `removePassword`: redact single-letter/URI secret flags (`security … -k <password>`, `osslsigncode -key <pkcs11-uri?pin-value=…>`) and whitespace-containing secrets in debug logs, and make the `/b … /c` block-redaction regex ReDoS-safe.
   - `builder-util-runtime` `httpExecutor`: fix the non-functional `maxRedirects` guard (the redirect counter was never advanced), so a redirect loop from a malicious feed/mirror no longer hangs the updater.
   - `electron-updater` `GitLabProvider`: only forward the GitLab token to the channel-file request when its URL is same-origin as the API host, so an off-host/`http://` `direct_asset_url` in the release JSON cannot exfiltrate the token.
@@ -236,6 +261,7 @@
 
 - Feat: build-time packages (`electron`, `electron-builder`) listed in `dependencies` are now excluded from the packaged app (logged once) instead of failing the build, configurable via the new `ignoredProductionDependencies` option. BREAKING: removed the `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` env var — `electron-builder` is excluded by default; drop a name from `ignoredProductionDependencies` to bundle it. _[`#9994`](https://github.com/electron-userland/electron-builder/pull/9994) [`0721e95`](https://github.com/electron-userland/electron-builder/commit/0721e95e844a8b09179ffc3cbdfd905e1f301f9e) [@liamcmitchell](https://github.com/liamcmitchell)_
 - Fix(mac): keep `CFBundleName` and helper app bundle names consistent so Electron resolves helper apps on modern macOS _[`#9962`](https://github.com/electron-userland/electron-builder/pull/9962) [`e5db1a0`](https://github.com/electron-userland/electron-builder/commit/e5db1a0ba2674a1c5dc81fad9aeb107d57a245b1) [@mmaietta](https://github.com/mmaietta)_
+
   - macOS product and executable names are no longer normalized to NFD. The `.app` bundle, the helper bundles, and `CFBundleName` now all use the product name exactly as configured, which is required for Electron's helper-app lookup (`${CFBundleName} Helper.app`).
   - macOS builds now require `productName` and `executableName` to be usable as a bundle name without any filename sanitization. A name that would otherwise be silently altered (for example one containing `/`, `\`, `:`, `*`, control characters, or trailing dots/spaces) now fails with a clear configuration error so you can choose a valid name.
 
@@ -288,6 +314,7 @@
 - Feat: allow including default-excluded files (e.g. Wavefront `.obj`) by adding an explicit `files` glob such as `**/*.obj` (fixes #6126). BREAKING: removed the `disableDefaultIgnoredFiles` option — `electron-builder migrate-schema` strips it automatically; re-include specific files via `files` globs instead. _[`#9954`](https://github.com/electron-userland/electron-builder/pull/9954) [`a16fb6b`](https://github.com/electron-userland/electron-builder/commit/a16fb6bfdcf0352a6b127229b8f8254847d16df1) [@mmaietta](https://github.com/mmaietta)_
 - Feat(toolsets): Adopt `"latest"` as the canonical "null"-state for every `ToolsetConfig` property, and make the toolset resolution logic resolve the unset state (`undefined` / `null` / `"latest"`) to the newest available bundle for each toolset. _[`#9939`](https://github.com/electron-userland/electron-builder/pull/9939) [`2669c2a`](https://github.com/electron-userland/electron-builder/commit/2669c2a7c7e9b6c3d8f7789362ffa5d7aac3fbf6) [@mmaietta](https://github.com/mmaietta)_
 - Feat(toolsets)!: remove `USE_SYSTEM_FPM` env override; require an explicit custom toolset on Windows _[`#9958`](https://github.com/electron-userland/electron-builder/pull/9958) [`238f0f1`](https://github.com/electron-userland/electron-builder/commit/238f0f162282c996a101ff830edc210f9f25b6dc) [@mmaietta](https://github.com/mmaietta)_
+
   - Remove the `USE_SYSTEM_FPM` environment flag — the last of the `USE_SYSTEM_*` toolset overrides. To use a non-bundled fpm, configure `toolsets.fpm` with a custom toolset pointing at the directory containing the `fpm` executable, e.g. `{ url: "file:///opt/homebrew/bin" }`.
   - A custom toolset is now honored before the platform fallback in `getFpmPath()` and `getOsslSigncodeBundle()`, so an explicit override is respected on every platform (previously it was silently ignored on Windows).
   - On Windows with no custom toolset configured, `getFpmPath()` now throws `InvalidConfigurationError` instead of resolving a bare `fpm` from `$PATH`, closing a binary-hijack vector (`getOsslSigncodeBundle()` throws as defense-in-depth on the same path).
@@ -851,6 +878,7 @@
   downloadArtifact() was ignoring electron_builder_binaries_mirror and falling back
   to electron_mirror due to @electron/get behavior. This affected dmg-builder
   (macOS) and appimage-tools (Linux) downloads.
+
   - Extract getBinariesMirrorUrl() to share mirror URL resolution
   - Use the helper in both downloadArtifact() and getBinFromUrl()
   - Ensure custom mirrors are respected for all binary downloads
