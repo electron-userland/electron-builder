@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="880" viewBox="0 0 1600 880">
+  <style>
+  html,body{margin:0;background:#ffffff}
+  svg{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;fill:#1f2937}
+  .t{font-size:22px;font-weight:700}
+  .h{font-size:17px;font-weight:700}
+  .s{font-size:13px;fill:#4b5563}
+  .m{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+  .num{font-weight:700}
+  .lbl{font-size:13px;fill:#374151}
+</style>
+  <rect width="1600" height="880" fill="#ffffff"/>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker>
+    <marker id="arrb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker>
+    <marker id="arrr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+    <pattern id="hatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#9ca3af" stroke-width="2"/></pattern>
+  </defs>
+
+  <text x="40" y="44" class="t">NSIS differential update of a one-line app.asar change — where the bytes go</text>
+  <text x="40" y="70" class="s">electron-builder #10186 (store-asar) → #3 (finer blocks in the stored asar region) → #4 (512 B asar content alignment). Measurements: 32 MB asar, 3,001 files, 789 KB header.</text>
+
+  <!-- ===================== 1. artifact layout ===================== -->
+  <text x="40" y="118" class="h">1 · Build: what is inside the installer</text>
+  <!-- installer exe -->
+  <rect x="40" y="134" width="1520" height="150" rx="8" fill="#f9fafb" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="56" y="158" class="lbl">Setup.exe (NSIS) — the app package is embedded verbatim (SetCompress off)</text>
+  <!-- 7z package -->
+  <rect x="56" y="170" width="1488" height="100" rx="6" fill="#ffffff" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="70" y="192" class="lbl">app-x64.nsis.7z (-ms=off, -md=1m, BCJ)</text>
+  <!-- compressed members -->
+  <rect x="70" y="204" width="470" height="52" fill="url(#hatch)" stroke="#6b7280"/>
+  <rect x="70" y="204" width="470" height="52" fill="#e5e7eb" fill-opacity="0.55" stroke="#6b7280"/>
+  <text x="305" y="226" text-anchor="middle" class="lbl">electron.exe · *.dll · *.pak · locales … (LZMA2, compressed)</text>
+  <text x="305" y="246" text-anchor="middle" class="s">changes only on Electron upgrades</text>
+  <!-- stored asar -->
+  <rect x="552" y="204" width="978" height="52" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="566" y="226" class="lbl"><tspan class="num">resources/app.asar</tspan> — stored uncompressed (7-Zip Copy), byte-identical between releases (#10186)</text>
+  <!-- asar internals -->
+  <rect x="566" y="234" width="360" height="18" fill="#fde68a" stroke="#d97706"/>
+  <text x="746" y="247" text-anchor="middle" class="m" style="font-size:12px">JSON header: per-file {size, offset, integrity}</text>
+  <rect x="930" y="234" width="586" height="18" fill="#bfdbfe" stroke="#2563eb"/>
+  <text x="1223" y="247" text-anchor="middle" class="m" style="font-size:12px">file contents back-to-back — every offset is absolute</text>
+
+  <!-- ===================== 2. blockmap ===================== -->
+  <text x="40" y="326" class="h">2 · Build: the content-defined block map (.blockmap, ~22 B per block, downloaded in full on every update)</text>
+  <!-- byte ruler for the same artifact -->
+  <rect x="70" y="344" width="470" height="30" fill="#f3f4f6" stroke="#9ca3af"/>
+  <rect x="552" y="344" width="978" height="30" fill="#eff6ff" stroke="#2563eb"/>
+  <!-- default blocks: 8/16/32 KiB -->
+  <g stroke="#6b7280" stroke-width="1.5">
+    <line x1="120" y1="344" x2="120" y2="374"/><line x1="175" y1="344" x2="175" y2="374"/><line x1="255" y1="344" x2="255" y2="374"/><line x1="300" y1="344" x2="300" y2="374"/><line x1="380" y1="344" x2="380" y2="374"/><line x1="445" y1="344" x2="445" y2="374"/><line x1="500" y1="344" x2="500" y2="374"/>
+  </g>
+  <text x="305" y="394" text-anchor="middle" class="s">default Rabin CDC blocks: 8 / 16 / 32 KiB</text>
+  <!-- region blocks: 4/8/16 KiB, forced boundaries at edges -->
+  <g stroke="#2563eb" stroke-width="1.5">
+    <line x1="552" y1="338" x2="552" y2="380" stroke-width="3"/>
+    <line x1="1530" y1="338" x2="1530" y2="380" stroke-width="3"/>
+  </g>
+  <g stroke="#3b82f6" stroke-width="1">
+    <line x1="578" y1="344" x2="578" y2="374"/><line x1="606" y1="344" x2="606" y2="374"/><line x1="630" y1="344" x2="630" y2="374"/><line x1="664" y1="344" x2="664" y2="374"/><line x1="690" y1="344" x2="690" y2="374"/><line x1="722" y1="344" x2="722" y2="374"/><line x1="748" y1="344" x2="748" y2="374"/><line x1="770" y1="344" x2="770" y2="374"/><line x1="806" y1="344" x2="806" y2="374"/><line x1="836" y1="344" x2="836" y2="374"/><line x1="860" y1="344" x2="860" y2="374"/><line x1="894" y1="344" x2="894" y2="374"/><line x1="918" y1="344" x2="918" y2="374"/><line x1="950" y1="344" x2="950" y2="374"/><line x1="978" y1="344" x2="978" y2="374"/><line x1="1004" y1="344" x2="1004" y2="374"/><line x1="1036" y1="344" x2="1036" y2="374"/><line x1="1064" y1="344" x2="1064" y2="374"/><line x1="1088" y1="344" x2="1088" y2="374"/><line x1="1122" y1="344" x2="1122" y2="374"/><line x1="1150" y1="344" x2="1150" y2="374"/><line x1="1176" y1="344" x2="1176" y2="374"/><line x1="1210" y1="344" x2="1210" y2="374"/><line x1="1236" y1="344" x2="1236" y2="374"/><line x1="1262" y1="344" x2="1262" y2="374"/><line x1="1296" y1="344" x2="1296" y2="374"/><line x1="1322" y1="344" x2="1322" y2="374"/><line x1="1350" y1="344" x2="1350" y2="374"/><line x1="1382" y1="344" x2="1382" y2="374"/><line x1="1408" y1="344" x2="1408" y2="374"/><line x1="1436" y1="344" x2="1436" y2="374"/><line x1="1468" y1="344" x2="1468" y2="374"/><line x1="1496" y1="344" x2="1496" y2="374"/>
+  </g>
+  <text x="1041" y="394" text-anchor="middle" class="s"><tspan fill="#1d4ed8" font-weight="700">#3:</tspan> stored-asar region located verbatim in the artifact and chunked at 4 / 8 / 16 KiB; boundaries forced at both edges, so its blocks depend only on the asar's own bytes</text>
+  <text x="40" y="424" class="s">Trade-off measured in #3: 4/8/16 is the optimum — finer blocks save download bytes but the .blockmap grows faster than the savings (2/4/8 KiB is already a net loss).</text>
+
+  <!-- ===================== 3. update ===================== -->
+  <text x="40" y="470" class="h">3 · Update: electron-updater diffs the two block maps and fetches only changed blocks</text>
+  <!-- old (cached) -->
+  <rect x="40" y="490" width="420" height="120" rx="8" fill="#f9fafb" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="56" y="514" class="lbl" font-weight="700">On the user's machine (cached)</text>
+  <text x="56" y="540" class="lbl">previous installer.exe</text>
+  <text x="56" y="562" class="lbl">previous .blockmap (current.blockmap)</text>
+  <text x="56" y="592" class="s">→ COPY every block whose checksum still matches</text>
+  <!-- server -->
+  <rect x="1140" y="490" width="420" height="120" rx="8" fill="#f9fafb" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="1156" y="514" class="lbl" font-weight="700">On the update server</text>
+  <text x="1156" y="540" class="lbl">new installer.exe (HTTP Range requests)</text>
+  <text x="1156" y="562" class="lbl">new .blockmap (full download, ~40–75 KB)</text>
+  <text x="1156" y="592" class="s">→ DOWNLOAD only the blocks that changed</text>
+  <!-- plan in the middle -->
+  <rect x="490" y="490" width="620" height="120" rx="8" fill="#ffffff" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="800" y="514" text-anchor="middle" class="lbl" font-weight="700">computeOperations(old, new) → COPY / DOWNLOAD plan</text>
+  <!-- plan strip -->
+  <rect x="510" y="530" width="580" height="26" fill="#f3f4f6" stroke="#9ca3af"/>
+  <rect x="510" y="530" width="200" height="26" fill="#d1d5db"/>
+  <rect x="740" y="530" width="18" height="26" fill="#dc2626"/>
+  <rect x="990" y="530" width="10" height="26" fill="#dc2626"/>
+  <text x="610" y="548" text-anchor="middle" class="s" style="font-size:12px">Electron (unchanged, COPY)</text>
+  <text x="749" y="574" text-anchor="middle" class="s" style="font-size:12px;fill:#dc2626">header entry</text>
+  <text x="995" y="574" text-anchor="middle" class="s" style="font-size:12px;fill:#dc2626">edited file</text>
+  <text x="880" y="548" text-anchor="middle" class="s" style="font-size:12px">asar (COPY except changed blocks)</text>
+  <text x="800" y="600" text-anchor="middle" class="s">red = DOWNLOAD ranges; everything grey is copied from the local installer</text>
+  <line x1="460" y1="550" x2="490" y2="550" stroke="#6b7280" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="1140" y1="550" x2="1110" y2="550" stroke="#6b7280" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- ===================== 4. the header problem & numbers ===================== -->
+  <text x="40" y="654" class="h">4 · Why the header dominates, and what #4 does about it</text>
+  <!-- unaligned -->
+  <text x="40" y="684" class="lbl" font-weight="700">Unaligned asar, one line grows by 7 bytes</text>
+  <rect x="40" y="694" width="700" height="22" fill="#bfdbfe" stroke="#2563eb"/>
+  <rect x="40" y="694" width="160" height="22" fill="#fde68a" stroke="#d97706"/>
+  <rect x="120" y="694" width="80" height="22" fill="#dc2626" fill-opacity="0.75"/>
+  <rect x="396" y="694" width="8" height="22" fill="#dc2626"/>
+  <rect x="404" y="694" width="336" height="22" fill="#fca5a5" fill-opacity="0.7"/>
+  <text x="80" y="709" class="s" style="font-size:11px">header</text>
+  <text x="400" y="734" class="s" style="font-size:12px">edit at +7 B → every later file's absolute offset changes → ~half the header rewritten, later content shifted (CDC resyncs, but header offsets don't)</text>
+  <text x="760" y="709" class="lbl"><tspan class="num" fill="#dc2626">414 KB</tspan> on the wire (328 KB of it header)</text>
+  <!-- aligned -->
+  <text x="40" y="774" class="lbl" font-weight="700"><tspan fill="#1d4ed8">#4:</tspan> asar.contentAlignment: 512 — each file starts on a 512 B slot, padding between (+2.2 % size)</text>
+  <rect x="40" y="784" width="700" height="22" fill="#bfdbfe" stroke="#2563eb"/>
+  <rect x="40" y="784" width="160" height="22" fill="#fde68a" stroke="#d97706"/>
+  <g fill="#ffffff" stroke="#93c5fd"><rect x="230" y="784" width="6" height="22"/><rect x="300" y="784" width="6" height="22"/><rect x="360" y="784" width="6" height="22"/><rect x="450" y="784" width="6" height="22"/><rect x="520" y="784" width="6" height="22"/><rect x="600" y="784" width="6" height="22"/><rect x="680" y="784" width="6" height="22"/></g>
+  <rect x="150" y="784" width="12" height="22" fill="#dc2626" fill-opacity="0.75"/>
+  <rect x="396" y="784" width="8" height="22" fill="#dc2626"/>
+  <text x="80" y="799" class="s" style="font-size:11px">header</text>
+  <text x="400" y="824" class="s" style="font-size:12px">same edit grows within its slot → no other offset moves → only that file's header entry + its own blocks are downloaded</text>
+  <text x="760" y="799" class="lbl"><tspan class="num" fill="#1d4ed8">139 KB</tspan> on the wire (15 KB header)  ·  same-length edit: 101 KB either way</text>
+
+  <!-- summary strip -->
+  <rect x="40" y="842" width="1520" height="30" rx="6" fill="#f3f4f6" stroke="#d1d5db"/>
+  <text x="800" y="862" text-anchor="middle" class="lbl">before #10186: <tspan class="num">2.9 MB</tspan>  →  store-asar: <tspan class="num">498 KB</tspan>  →  + #3 finer region: <tspan class="num">414 KB</tspan>  →  + #4 alignment: <tspan class="num" fill="#1d4ed8">139 KB</tspan>   (remaining floor ≈ the ~75 KB .blockmap + CDC resync; a range-fetchable v3 blockmap would reach ~15–20 KB)</text>
+</svg>

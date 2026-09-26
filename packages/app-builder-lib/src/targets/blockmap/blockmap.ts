@@ -1,6 +1,6 @@
 import { createHash } from "crypto"
 import { createReadStream } from "fs"
-import { appendFile, writeFile } from "fs/promises"
+import { appendFile, stat, writeFile } from "fs/promises"
 import * as zlib from "zlib"
 import { blake2b } from "@noble/hashes/blake2.js"
 import { BlockMapDataHolder } from "builder-util-runtime"
@@ -34,6 +34,44 @@ const RABIN_HASH_MASK = RABIN_AVG - 1 // 0x3FFF
 
 export type CompressionFormat = "deflate" | "gzip"
 
+/** Rabin content-defined chunker parameters. `avg` must be a power of two; `min` < `avg` <= `max`. */
+export interface ChunkerParams {
+  min: number
+  avg: number
+  max: number
+}
+
+/** Default chunker (go-rabin defaults): 8 KB min / 16 KB avg / 32 KB max. */
+export const DEFAULT_CHUNKER: ChunkerParams = { min: RABIN_MIN, avg: RABIN_AVG, max: RABIN_MAX }
+
+/**
+ * A byte range of the input that should be chunked with its own parameters — e.g. a stored
+ * (uncompressed) archive member that is expected to change in small, localized ways between
+ * releases, where finer blocks make a differential download proportional to the change.
+ * Chunk boundaries are forced at both edges of every region, so the blocks inside a region
+ * depend only on the region's own bytes.
+ */
+export interface BlockMapRegion {
+  offset: number
+  size: number
+  chunker: ChunkerParams
+}
+
+export interface BuildBlockMapOptions {
+  /**
+   * Byte ranges of the input that are chunked with their own `ChunkerParams`; bytes outside every
+   * region use `DEFAULT_CHUNKER`. Regions must be ascending, non-overlapping and lie entirely
+   * within the input file (an empty list or `null` is equivalent to "no regions").
+   *
+   * A chunk boundary is forced at the start and at the end of every region: any pending chunk is
+   * emitted when the region begins and the last chunk of the region is emitted when it ends. Because
+   * the chunker state is reset at every boundary, the sequence of (checksum, size) blocks produced
+   * for a region depends only on the region's own bytes — it is identical for the same bytes placed
+   * at a different offset or surrounded by different data.
+   */
+  regions?: Array<BlockMapRegion> | null
+}
+
 interface BlockMap {
   version: "2"
   files: Array<{
@@ -48,27 +86,115 @@ function compress(data: Buffer, format: CompressionFormat): Buffer {
   return format === "deflate" ? zlib.deflateRawSync(data, { level: 9 }) : zlib.gzipSync(data, { level: 9 })
 }
 
+// The boundary test is `(lo & (avg - 1)) === avg - 1` on the low 32-bit word of the hash, so `avg`
+// must fit in a 32-bit mask. 2^31 keeps the mask a non-negative int32.
+const MAX_CHUNKER_AVG = 0x80000000
+
+function validateChunkerParams(where: string, chunker: ChunkerParams | null | undefined): void {
+  if (chunker == null || typeof chunker !== "object") {
+    throw new Error(`${where}: chunker is required`)
+  }
+  const { min, avg, max } = chunker
+  for (const [name, value] of [
+    ["min", min],
+    ["avg", avg],
+    ["max", max],
+  ] as const) {
+    if (!Number.isInteger(value) || value <= 0) {
+      throw new Error(`${where}: chunker.${name} must be a positive integer, got ${String(value)}`)
+    }
+  }
+  if (avg > MAX_CHUNKER_AVG || (avg & (avg - 1)) !== 0) {
+    throw new Error(`${where}: chunker.avg must be a power of two not greater than ${MAX_CHUNKER_AVG}, got ${avg}`)
+  }
+  if (!(min < avg && avg <= max)) {
+    throw new Error(`${where}: chunker must satisfy min < avg <= max, got min=${min} avg=${avg} max=${max}`)
+  }
+  if (min <= RABIN_WINDOW) {
+    throw new Error(`${where}: chunker.min must be greater than the Rabin window (${RABIN_WINDOW}), got ${min}`)
+  }
+}
+
+/**
+ * Validate `regions` (ascending, non-overlapping, sane chunker parameters, within `fileSize`) and
+ * return a normalized copy.
+ */
+function normalizeRegions(regions: Array<BlockMapRegion>, fileSize: number): Array<BlockMapRegion> {
+  const result: Array<BlockMapRegion> = []
+  let previousEnd = 0
+  for (let i = 0; i < regions.length; i++) {
+    const region = regions[i]
+    const where = `blockmap region #${i}`
+    if (region == null || typeof region !== "object") {
+      throw new Error(`${where}: must be an object with offset, size and chunker`)
+    }
+    const { offset, size } = region
+    if (!Number.isSafeInteger(offset) || offset < 0) {
+      throw new Error(`${where}: offset must be a non-negative integer, got ${String(offset)}`)
+    }
+    if (!Number.isSafeInteger(size) || size <= 0) {
+      throw new Error(`${where}: size must be a positive integer, got ${String(size)}`)
+    }
+    validateChunkerParams(where, region.chunker)
+    if (offset < previousEnd) {
+      throw new Error(`${where}: regions must be ascending and non-overlapping (offset ${offset} < previous region end ${previousEnd})`)
+    }
+    const end = offset + size
+    if (end > fileSize) {
+      throw new Error(`${where}: [${offset}, ${end}) extends past the end of the input (${fileSize} bytes)`)
+    }
+    previousEnd = end
+    result.push({ offset, size, chunker: { min: region.chunker.min, avg: region.chunker.avg, max: region.chunker.max } })
+  }
+  return result
+}
+
 /**
  * Build a content-defined block map for `inFile` using Rabin fingerprinting.
  *
- * Files are processed via streaming (peak memory ≈ RABIN_MAX = 32 KB per chunk,
- * not the full file size), making this safe for large installers.
+ * Files are processed via streaming (peak memory ≈ the largest chunker `max` — 32 KB by default —
+ * per chunk, not the full file size), making this safe for large installers.
  *
  * - If `outFile` is omitted: compressed blockmap is appended to `inFile`
  *   (used for NSIS web installer / AppImage embed); `blockMapSize` is returned.
  * - If `outFile` is provided: compressed blockmap is written to that file;
  *   `blockMapSize` is not included in the result.
  *
+ * `options.regions` lets byte ranges of the input be chunked with their own parameters (see
+ * `BuildBlockMapOptions`). Chunk boundaries are forced at both edges of every region and the chunker
+ * state is reset there, so the blocks of a region depend only on the region's own bytes. Without
+ * regions the output is exactly what the default chunker produces. Regions never affect the returned
+ * `size` or `sha512`.
+ *
  * Returned `sha512` is SHA-512 of the full file as it exists after the call.
  */
-export async function buildBlockMap(inFile: string, compressionFormat: CompressionFormat, outFile?: string): Promise<BlockMapDataHolder> {
+export async function buildBlockMap(inFile: string, compressionFormat: CompressionFormat, outFile?: string, options?: BuildBlockMapOptions): Promise<BlockMapDataHolder> {
+  const requestedRegions = options?.regions
+  // The input is pre-stat'ed only when regions are given, so a region past the end of the file fails before any work is done.
+  const regions = requestedRegions == null || requestedRegions.length === 0 ? [] : normalizeRegions(requestedRegions, (await stat(inFile)).size)
+
   const fileHash = createHash("sha512")
   const checksums: string[] = []
   const sizes: number[] = []
   let totalSize = 0
 
-  // Per-chunk Rabin state. Peak memory ≈ RABIN_MAX (32 KB) — not file size.
-  const chunkBuf = Buffer.allocUnsafe(RABIN_MAX)
+  // Chunker parameters of the current segment. A segment is either a region (its own parameters) or
+  // the span between regions (DEFAULT_CHUNKER). They only change when `filePos` crosses `segmentEnd`,
+  // so the per-byte loop never looks anything up.
+  let curMin = RABIN_MIN
+  let curMax = RABIN_MAX
+  let curMask = RABIN_HASH_MASK
+  let curSkip = RABIN_MIN - RABIN_WINDOW
+  let segmentEnd = Infinity // absolute offset (exclusive) at which the current segment ends
+  let nextRegion = 0 // index into `regions` of the next region not yet entered
+  let filePos = 0 // absolute offset of the next byte fed to the chunker
+
+  // Per-chunk Rabin state. Peak memory ≈ largest `max` (RABIN_MAX = 32 KB by default) — not file size.
+  let maxChunkSize = RABIN_MAX
+  for (const region of regions) {
+    maxChunkSize = Math.max(maxChunkSize, region.chunker.max)
+  }
+  const chunkBuf = Buffer.allocUnsafe(maxChunkSize)
   let chunkN = 0 // bytes accumulated for current chunk
   let hi = 0
   let lo = 0
@@ -85,17 +211,40 @@ export async function buildBlockMap(inFile: string, compressionFormat: Compressi
     wpos = 0
   }
 
+  // Enter the segment that starts at absolute offset `pos` (always a forced chunk boundary, so the
+  // Rabin state is already reset here). Either the next region starts exactly at `pos`, or a
+  // default-chunker span runs from `pos` up to the next region (or to the end of the file).
+  function enterSegmentAt(pos: number) {
+    const region = nextRegion < regions.length ? regions[nextRegion] : null
+    if (region != null && region.offset === pos) {
+      curMin = region.chunker.min
+      curMax = region.chunker.max
+      curMask = region.chunker.avg - 1
+      curSkip = curMin - RABIN_WINDOW
+      segmentEnd = region.offset + region.size
+      nextRegion++
+    } else {
+      curMin = RABIN_MIN
+      curMax = RABIN_MAX
+      curMask = RABIN_HASH_MASK
+      curSkip = RABIN_MIN - RABIN_WINDOW
+      segmentEnd = region == null ? Infinity : region.offset
+    }
+  }
+
+  enterSegmentAt(0)
+
   // Called once per byte; inlines the three-phase Rabin state machine:
   //   skip (< MIN-WINDOW bytes) → prime (next WINDOW bytes) → scan (≥ MIN bytes)
   function processByte(b: number) {
     chunkBuf[chunkN++] = b
 
-    if (chunkN <= RABIN_MIN - RABIN_WINDOW) {
+    if (chunkN <= curSkip) {
       // Skip phase: not close enough to MIN to start priming yet
       return
     }
 
-    if (chunkN <= RABIN_MIN) {
+    if (chunkN <= curMin) {
       // Prime phase: non-windowed hash update, filling the ring buffer
       win[wpos] = b
       wpos = (wpos + 1) % RABIN_WINDOW
@@ -105,7 +254,7 @@ export async function buildBlockMap(inFile: string, compressionFormat: Compressi
       hi = (nhi ^ PUSH_HI[top]) | 0
       lo = (nlo ^ PUSH_LO[top]) | 0
       // At exactly MIN: check whether the primed hash is already a boundary
-      if (chunkN === RABIN_MIN && (lo & RABIN_HASH_MASK) === RABIN_HASH_MASK) {
+      if (chunkN === curMin && (lo & curMask) === curMask) {
         emitChunk()
       }
       return
@@ -123,7 +272,7 @@ export async function buildBlockMap(inFile: string, compressionFormat: Compressi
     hi = (nhi ^ PUSH_HI[top]) | 0
     lo = (nlo ^ PUSH_LO[top]) | 0
 
-    if ((lo & RABIN_HASH_MASK) === RABIN_HASH_MASK || chunkN >= RABIN_MAX) {
+    if ((lo & curMask) === curMask || chunkN >= curMax) {
       emitChunk()
     }
   }
@@ -133,16 +282,35 @@ export async function buildBlockMap(inFile: string, compressionFormat: Compressi
     const rs = createReadStream(inFile, { highWaterMark: 256 * 1024 })
     rs.on("data", (chunk: Buffer | string) => {
       const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
-      chunk = buf
-      fileHash.update(chunk)
-      totalSize += chunk.length
-      for (let i = 0; i < chunk.length; i++) {
-        processByte(chunk[i])
+      fileHash.update(buf)
+      totalSize += buf.length
+      let i = 0
+      while (i < buf.length) {
+        // Feed bytes up to the end of the buffer or of the current segment, whichever comes first;
+        // `segmentEnd` is Infinity once the last region is behind us.
+        const n = Math.min(buf.length - i, segmentEnd - filePos)
+        const stop = i + n
+        for (; i < stop; i++) {
+          processByte(buf[i])
+        }
+        filePos += n
+        if (filePos === segmentEnd) {
+          // Forced boundary at a region edge: flush whatever is pending and switch parameters.
+          if (chunkN > 0) {
+            emitChunk()
+          }
+          enterSegmentAt(filePos)
+        }
       }
     })
     rs.on("end", () => {
       if (chunkN > 0) {
         emitChunk()
+      }
+      if (nextRegion < regions.length || segmentEnd !== Infinity) {
+        // Only reachable if the file shrank between the pre-stat and the read.
+        reject(new Error(`blockmap region extends past the end of the input (${totalSize} bytes)`))
+        return
       }
       resolve()
     })

@@ -28,7 +28,14 @@ import { time } from "../../../util/timer.js"
 import { WineVmManager } from "../../../vm/WineVm.js"
 import { WinPackager } from "../../../winPackager.js"
 import { archive, ArchiveOptions } from "../../archive.js"
-import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../../differentialUpdateInfoBuilder.js"
+import {
+  appendBlockmap,
+  configureDifferentialAwareArchiveOptions,
+  createBlockmap,
+  createNsisWebDifferentialUpdateInfo,
+  locateStoredMemberRegions,
+  toBlockMapOptions,
+} from "../../differentialUpdateInfoBuilder.js"
 import { getWindowsInstallationAppPackageName, getWindowsInstallationDirName } from "../../targetUtil.js"
 import { Commands } from "./Commands.js"
 import { Defines } from "./Defines.js"
@@ -104,8 +111,12 @@ export class NsisTarget extends Target {
     return result == null ? null : asArray(result).map(it => (it.startsWith(".") ? it : `.${it}`))
   }
 
-  /** @private */
-  async buildAppPackage(appOutDir: string, arch: Arch, elevateHelper?: CopyElevateHelper | null): Promise<PackageFileInfo> {
+  /**
+   * @private
+   * @returns the package file info plus the absolute source paths of the members stored verbatim in it
+   *   (`storedMemberFiles`, empty unless `differentialPackage` is `"store-asar"`).
+   */
+  async buildAppPackage(appOutDir: string, arch: Arch, elevateHelper?: CopyElevateHelper | null): Promise<{ fileInfo: PackageFileInfo; storedMemberFiles: Array<string> }> {
     const options = this.options
     const packager = this.packager
 
@@ -113,6 +124,11 @@ export class NsisTarget extends Target {
     const format = !isBuildDifferentialAware && options.useZip ? "zip" : "7z"
     const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
     const preCompressedFileExtensions = this.getPreCompressedFileExtensions()
+    // Opt-in via differentialPackage: "store-asar" — keep the asar a byte-stable Copy member so a
+    // differential update pays only for its changed blocks instead of re-downloading the whole
+    // recompressed asar (see nsisOptions docs). The blockmap chunks these verbatim bytes finer.
+    const storedPaths = isBuildDifferentialAware && options.differentialPackage === "store-asar" ? ["resources/app.asar"] : null
+    const storedMemberFiles = (storedPaths ?? []).map(it => path.join(appOutDir, it))
     const archiveOptions: ArchiveOptions = {
       withoutDir: true,
       compression: packager.compression,
@@ -122,10 +138,7 @@ export class NsisTarget extends Target {
       // install. Pin the payload to a filter it can decode. See #9983.
       installTimeDecodable: true,
       excluded: preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`),
-      // Opt-in via differentialPackage: "store-asar" — keep the asar a byte-stable Copy member so a
-      // differential update pays only for its changed blocks instead of re-downloading the whole
-      // recompressed asar (see nsisOptions docs).
-      storedPaths: isBuildDifferentialAware && options.differentialPackage === "store-asar" ? ["resources/app.asar"] : null,
+      storedPaths,
     }
 
     const timer = time(`nsis package, ${Arch[arch]}`)
@@ -142,13 +155,17 @@ export class NsisTarget extends Target {
     }
 
     if (isBuildDifferentialAware && this.isWebInstaller) {
-      const data = await appendBlockmap(archiveFile)
+      const regions = await locateStoredMemberRegions(archiveFile, storedMemberFiles)
+      const data = await appendBlockmap(archiveFile, toBlockMapOptions(regions))
       return {
-        ...data,
-        path: archiveFile,
+        fileInfo: {
+          ...data,
+          path: archiveFile,
+        },
+        storedMemberFiles,
       }
     } else {
-      return await createPackageFileInfo(archiveFile)
+      return { fileInfo: await createPackageFileInfo(archiveFile), storedMemberFiles }
     }
   }
 
@@ -269,7 +286,7 @@ export class NsisTarget extends Target {
       }
     }
 
-    const { packageFiles, estimatedSize } = await this.resolveArchPackageFiles(archs, defines, packager)
+    const { packageFiles, estimatedSize, storedMemberFiles } = await this.resolveArchPackageFiles(archs, defines, packager)
 
     this.configureDefinesForAllTypeOfInstaller(defines)
     if (isPortable) {
@@ -346,7 +363,10 @@ export class NsisTarget extends Target {
       if (this.isWebInstaller) {
         updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
       } else if (this.isBuildDifferentialAware) {
-        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch)
+        // Every arch package is embedded verbatim in the installer (SetCompress off), so the stored
+        // members of all of them sit verbatim in the signed installer too; locate them there.
+        const regions = await locateStoredMemberRegions(installerPath, storedMemberFiles)
+        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch, toBlockMapOptions(regions))
       }
 
       if (updateInfo != null && isPerMachine && (oneClick || options.packElevateHelper)) {
@@ -369,8 +389,10 @@ export class NsisTarget extends Target {
     archs: Map<Arch, string>,
     defines: Defines,
     packager: WinPackager
-  ): Promise<{ packageFiles: { [arch: string]: PackageFileInfo }; estimatedSize: number }> {
+  ): Promise<{ packageFiles: { [arch: string]: PackageFileInfo }; estimatedSize: number; storedMemberFiles: Array<string> }> {
     const packageFiles: { [arch: string]: PackageFileInfo } = {}
+    // stored (Copy) members of every arch package, to be located in the installer for its block map
+    const storedMemberFiles: Array<string> = []
     let estimatedSize = 0
     const options = this.options
 
@@ -384,7 +406,8 @@ export class NsisTarget extends Target {
     } else {
       await Promise.all(
         Array.from(archs.keys()).map(async arch => {
-          const { fileInfo, unpackedSize } = await this.packageHelper.packArch(arch, this)
+          const { fileInfo, unpackedSize, storedMemberFiles: archStoredMemberFiles } = await this.packageHelper.packArch(arch, this)
+          storedMemberFiles.push(...archStoredMemberFiles)
           const file = fileInfo.path
           const defineKey = arch === Arch.x64 ? "APP_64" : arch === Arch.arm64 ? "APP_ARM64" : "APP_32"
           defines[defineKey] = file
@@ -409,7 +432,7 @@ export class NsisTarget extends Target {
       )
     }
 
-    return { packageFiles, estimatedSize }
+    return { packageFiles, estimatedSize, storedMemberFiles }
   }
 
   protected generateGitHubInstallerName(primaryArch: Arch | null, defaultArch: string | undefined): string {
