@@ -542,7 +542,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       customSign ? "executing custom sign" : "signing"
     )
 
-    return customSign ? Promise.resolve(customSign(opts, this)) : sign({ ...opts, identity: identity ? identity.hash || identity.name : undefined })
+    // `opts.identity` is resolved once, in MacTargetHelper.resolveSignIdentity — never re-derive it here, or a
+    // custom signer and @electron/osx-sign end up signing with different forms of the same certificate
+    return customSign ? Promise.resolve(customSign(opts, this)) : sign(opts)
   }
 
   //noinspection JSMethodCanBeStatic
