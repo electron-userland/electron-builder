@@ -11,6 +11,7 @@ import { FileSet } from "../../options/PlatformSpecificBuildOptions.js"
 import { reactCra } from "../../presets/rectCra.js"
 import { PACKAGE_VERSION } from "../../version.js"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
+import { checkLegacyConfiguration } from "./legacyConfigGuard.js"
 import { validateSchema } from "./schemaValidator.js"
 import _fsExtra from "fs-extra"
 const { readJson } = _fsExtra
@@ -226,6 +227,10 @@ function getDefaultConfig(): Configuration {
 const schemeDataPromise = new Lazy(() => readJson(path.join(import.meta.dirname, "..", "..", "..", "scheme.json")))
 
 export async function validateConfiguration(config: Configuration, debugLogger: DebugLogger) {
+  // Runs first so a v26 option produces a targeted "moved to X" message instead of ajv's generic
+  // "has an unknown property" — see util/config/legacyConfigGuard.ts.
+  checkLegacyConfiguration(config)
+
   validateSchema(await schemeDataPromise.value, config, {
     name: `electron-builder ${PACKAGE_VERSION}`,
     postFormatter: (formattedError, error): string => {

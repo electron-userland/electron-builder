@@ -2,14 +2,14 @@ import { outputFile, readFile } from "fs-extra"
 import * as path from "path"
 import * as which from "which"
 import { app, appThrows, assertPack, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTester"
-// Inline so snapcraftTest.ts does NOT import from snapHeavyTest.ts — importing that file
+// Inline so snapcraftTest.ts does NOT import from snapHeavy.e2e.ts — importing that file
 // causes all its describe() blocks to execute here, registering heavy tests twice.
 //
 // No snapcraft binary is needed: every test uses effectiveOptionComputed: () => true to skip
 // the actual build and only validates the generated snapcraft.yaml descriptor.
 const hasSnapInstalled = () => process.platform !== "win32"
 
-describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeout: EXTENDED_TIMEOUT }, () => {
+describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeout: EXTENDED_TIMEOUT }, () => {
   // ─── legacy cores (core18 / core20 / core22) ─────────────────────────────────
   //
   // Each iteration mirrors the test cases in snapTest.ts but uses the new
@@ -264,6 +264,22 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
         expect(snap.apps?.["cl-co-app"]).toBeDefined()
         expect(snap.apps?.["cl-co-app"]?.plugs).toBeUndefined()
         return Promise.resolve(true)
+      },
+    }))
+
+  test("core24 omits the app desktop mapping (single desktop entry)", ({ expect }) =>
+    app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: "sep", desktopName: "com.example.sep.desktop" },
+        productName: "Sep",
+        linux: { executableName: "Sep" },
+        snapcraft: { base: "core24" },
+      },
+      effectiveOptionComputed: async ({ snap, desktopFile }) => {
+        expect(snap.apps?.sep?.desktop).toBeUndefined()
+        expect(await readFile(desktopFile, "utf8")).toContain("\nExec=sep %U\n")
+        return true
       },
     }))
 
@@ -752,7 +768,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
   // "core24 useLXD build mode" effectiveOptionComputed test above.
   const hasMultipassInstalled = () => which.sync("multipass", { nothrow: true }) != null
 
-  describe.skipIf(!hasMultipassInstalled())("core24 Multipass real build", { sequential: true, timeout: EXTENDED_TIMEOUT }, () => {
+  describe.skipIf(!hasMultipassInstalled())("core24 Multipass real build", { concurrent: false, timeout: EXTENDED_TIMEOUT }, () => {
     test("core24 useMultipass full build", async ({ expect }) => {
       await app(expect, {
         targets: snapTarget,

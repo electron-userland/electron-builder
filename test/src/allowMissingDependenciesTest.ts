@@ -123,7 +123,7 @@ describe("allowMissingDependencies (enforcement semantics)", () => {
 // The real collectors report missing dependencies as `name@version` summary entries. Feed the
 // enforcement the summary produced by an actual collector run (stubbed `npm list` tree) to pin the
 // two ends of the contract together.
-describe("allowMissingDependencies (npm collector summary integration)", { sequential: true }, () => {
+describe("allowMissingDependencies (npm collector summary integration)", { concurrent: false }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {
@@ -163,7 +163,7 @@ describe("allowMissingDependencies (npm collector summary integration)", { seque
         "never-found": { name: "never-found", version: "2.0.0", path: undefined as unknown as string, _dependencies: {} },
       },
     }
-    const collector = new StubbedNpmNodeModulesCollector(root, projectTmpDir as unknown as TmpDir, tree)
+    const collector = new StubbedNpmNodeModulesCollector(root, projectTmpDir, tree)
     return collector.getNodeModules({ packageName: "my-app" })
   }
 
@@ -196,7 +196,7 @@ describe("allowMissingDependencies (npm collector summary integration)", { seque
 // The pnpm collector knows a dependency is declared in `optionalDependencies` when its existence
 // check fails; the miss must be classified as optional (fsevents on Linux/Windows being the
 // canonical case) and must therefore never trip the fail-closed default.
-describe("allowMissingDependencies (pnpm declared-optional classification)", { sequential: true }, () => {
+describe("allowMissingDependencies (pnpm declared-optional classification)", { concurrent: false }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {
@@ -247,7 +247,7 @@ describe("allowMissingDependencies (pnpm declared-optional classification)", { s
       },
     } as unknown as PnpmDependency
 
-    const collector = new StubbedPnpmNodeModulesCollector(root, projectTmpDir as unknown as TmpDir, tree)
+    const collector = new StubbedPnpmNodeModulesCollector(root, projectTmpDir, tree)
     const { nodeModules, logSummary } = await collector.getNodeModules({ packageName: "my-app" })
 
     expect(nodeModules.map(m => m.name)).toContain("keep-me")
@@ -265,7 +265,7 @@ describe("allowMissingDependencies (pnpm declared-optional classification)", { s
 
 // Wiring through the app-side collection entry point: `collectNodeModulesWithLogging` reads the
 // option from the effective configuration and enforces it after the summary is flushed to the log.
-describe("allowMissingDependencies (collectNodeModulesWithLogging wiring)", { sequential: true }, () => {
+describe("allowMissingDependencies (collectNodeModulesWithLogging wiring)", { concurrent: false }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {

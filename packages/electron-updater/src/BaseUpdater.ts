@@ -5,7 +5,7 @@ import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion } from "semver"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"
-import { QuitAndInstallOptions } from "./types.js"
+import { QuitAndInstallOptions, DownloadExecutorResult } from "./types.js"
 
 const require = createRequire(import.meta.url)
 
@@ -25,8 +25,8 @@ export abstract class BaseUpdater extends AppUpdater {
     })
   }
 
-  quitAndInstall(options: QuitAndInstallOptions = {}): void {
-    const { isSilent = false, isForceRunAfter = false, waitUntilNextLaunch = false } = options
+  quitAndInstall(options: QuitAndInstallOptions | boolean = {}, legacyIsForceRunAfter?: boolean): void {
+    const { isSilent = false, isForceRunAfter = false, waitUntilNextLaunch = false } = this.normalizeQuitAndInstallOptions(options, legacyIsForceRunAfter)
     if (waitUntilNextLaunch) {
       this._logger.info(`Deferring install to next launch on explicit quitAndInstall (waitUntilNextLaunch)`)
       if (this.markPendingInstallOnNextLaunch()) {
@@ -62,7 +62,7 @@ export abstract class BaseUpdater extends AppUpdater {
     return false
   }
 
-  protected executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
+  protected executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
     return super.executeDownload({
       ...taskOptions,
       done: event => {

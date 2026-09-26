@@ -1,3 +1,77 @@
+# [27.0.0-alpha.9](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.8...electron-builder@27.0.0-alpha.9) (2026-09-25)
+
+
+### Bug Fixes
+
+* **app-builder-lib:** evaluate node_modules directory filter once per directory and await async `onNodeModuleFile` hook ([#10178](https://github.com/electron-userland/electron-builder/issues/10178)) ([92ef45a](https://github.com/electron-userland/electron-builder/commit/92ef45a4010dac25ca12e008a446754bca16e2de))
+* **app-builder-lib:** resolve pnpm deps omitted from deduped list output by declared range ([#10200](https://github.com/electron-userland/electron-builder/issues/10200)) ([83cf98f](https://github.com/electron-userland/electron-builder/commit/83cf98fb6a63282f284409a6c47bede2a68e16f9))
+* clean up publish SIGINT listeners ([#10147](https://github.com/electron-userland/electron-builder/issues/10147)) ([28b0c20](https://github.com/electron-userland/electron-builder/commit/28b0c20f6b61c3519a30f6510d31ac09e5922e6f))
+* **cli:** cover all v27 breaking config changes in migrate-schema ([#10241](https://github.com/electron-userland/electron-builder/issues/10241)) ([6ebe0ac](https://github.com/electron-userland/electron-builder/commit/6ebe0ac5077a5f41adb3a4e87c8f1a958ace16b1))
+* detach DMGs after mount parsing failures ([#10151](https://github.com/electron-userland/electron-builder/issues/10151)) ([206b2a6](https://github.com/electron-userland/electron-builder/commit/206b2a66569a593772d0e79d7f6ff7a81e2833a3))
+* detect pnpm workspace root on Windows without shelling out to pwd ([#10188](https://github.com/electron-userland/electron-builder/issues/10188)) ([99b6c7f](https://github.com/electron-userland/electron-builder/commit/99b6c7f1efe761bbd3d0582e158a8f1705f652a0))
+* **electron-updater:** keep cached blockmap consistent with cached installer to avoid stale sha512 mismatches ([#10098](https://github.com/electron-userland/electron-builder/issues/10098)) ([9306160](https://github.com/electron-userland/electron-builder/commit/93061602d9ee89d824834cef0b06c75353fa6a4a))
+* Ensure arch is passed to blockmap path macro expansion ([#10075](https://github.com/electron-userland/electron-builder/issues/10075)) ([6be2795](https://github.com/electron-userland/electron-builder/commit/6be279576bf22a6f7521b146f89fd7501839bc94))
+* **flatpak:** don't let `linux.files` corrupt the flatpak `files` tuple list ([#10209](https://github.com/electron-userland/electron-builder/issues/10209)) ([7b0f29b](https://github.com/electron-userland/electron-builder/commit/7b0f29b07e7a7d193920b7336eb18d5cd1cc7d5b))
+* **flatpak:** read flatpak.files from the flatpak config instead of the merged target options ([#10227](https://github.com/electron-userland/electron-builder/issues/10227)) ([8278a19](https://github.com/electron-userland/electron-builder/commit/8278a1914869c46e4e00a37007143adbb30c818b))
+* log dynamic import failures ([#10154](https://github.com/electron-userland/electron-builder/issues/10154)) ([2a964ee](https://github.com/electron-userland/electron-builder/commit/2a964eea0e43838cb62494357726f538f5cc2993))
+* **mac:** Retain Electron and Chromium license files on macOS ([#10174](https://github.com/electron-userland/electron-builder/issues/10174)) ([de70642](https://github.com/electron-userland/electron-builder/commit/de70642c688044e5dbbe9259b7923e6d83964a22))
+* **node-module-collector:** clear error on empty output and fall back to traversal when a collector throws ([#10210](https://github.com/electron-userland/electron-builder/issues/10210)) ([e87e86e](https://github.com/electron-userland/electron-builder/commit/e87e86ea650d4368849ff4a918332310bb5c8200))
+* normalize Snap Store channels ([#10155](https://github.com/electron-userland/electron-builder/issues/10155)) ([ce9ee68](https://github.com/electron-userland/electron-builder/commit/ce9ee68da690305e326e22927126327da6644392))
+* **nsis:** select ARM64 web installer packages consistently ([#10196](https://github.com/electron-userland/electron-builder/issues/10196)) ([e68f9ce](https://github.com/electron-userland/electron-builder/commit/e68f9ce400f6ade26ce871947b045172c0a6bf2e))
+* parse GitHub repo shorthand correctly ([#10153](https://github.com/electron-userland/electron-builder/issues/10153)) ([f42fbf6](https://github.com/electron-userland/electron-builder/commit/f42fbf659bf0d3a9fc3a5fa5f269deb3431a5fda))
+* **pkg:** add rootVolumeOnly to <options> to avoid the macOS 26 Insta… ([#10193](https://github.com/electron-userland/electron-builder/issues/10193)) ([94814ed](https://github.com/electron-userland/electron-builder/commit/94814ed3dfdb131fd45160f0b8dc618dd1a501d8))
+* pnpm collector: transitive deps of a `link:`ed package in an isolated store ([#10185](https://github.com/electron-userland/electron-builder/issues/10185)) ([125cde9](https://github.com/electron-userland/electron-builder/commit/125cde9acaf70f355345519f2a528342a2bd0dff))
+* **pnpm-collector:** find nested deps in pnpm hoisted workspaces ([#10234](https://github.com/electron-userland/electron-builder/issues/10234)) ([a787a5a](https://github.com/electron-userland/electron-builder/commit/a787a5a5544474c02557394958501b24f8bd4519))
+* restore console logger after asar failures ([#10136](https://github.com/electron-userland/electron-builder/issues/10136)) ([e0ada9d](https://github.com/electron-userland/electron-builder/commit/e0ada9d69c706cafd34150f70e13687c0676b6e8))
+* **snap:** stop emitting a duplicate desktop entry for snaps ([#10176](https://github.com/electron-userland/electron-builder/issues/10176)) ([5f6c32a](https://github.com/electron-userland/electron-builder/commit/5f6c32afec92c4c24c74094c84771740d30c7687))
+* stop oversized in-memory downloads at the configured limit ([#10123](https://github.com/electron-userland/electron-builder/issues/10123)) ([6ab9a8c](https://github.com/electron-userland/electron-builder/commit/6ab9a8c5fbed759e0c9e26064208c422c612b200))
+* **test:** throw on legacy test signature; case-insensitive PSModulePath removal in updater verifier ([#10159](https://github.com/electron-userland/electron-builder/issues/10159)) ([61bd5f6](https://github.com/electron-userland/electron-builder/commit/61bd5f6044ff8c09f44d443b956a96e0aba105b2))
+* **updater:** make multi-range differential downloads work on real servers ([#10192](https://github.com/electron-userland/electron-builder/issues/10192)) ([8e22767](https://github.com/electron-userland/electron-builder/commit/8e227679fe34befde8fa31f6b811b86c79f010d5))
+* **updater:** preserve fractional staged rollouts ([#10114](https://github.com/electron-userland/electron-builder/issues/10114)) ([23bccfb](https://github.com/electron-userland/electron-builder/commit/23bccfb6accd2eb082633d592d15486e81c89374))
+
+
+### Features
+
+* **dmg:** allow `position` as a dmg.contents type ([#10183](https://github.com/electron-userland/electron-builder/issues/10183)) ([e331645](https://github.com/electron-userland/electron-builder/commit/e3316455022434d9153dd7f61c6e853068715482))
+* **mac:** tighten default macOS entitlements [BREAKING] ([#10181](https://github.com/electron-userland/electron-builder/issues/10181)) ([f02576d](https://github.com/electron-userland/electron-builder/commit/f02576d7759ffa510d1189abc6e9b904e91864db))
+* **nsis:** "store-asar" mode for proportional differential updates ([#10186](https://github.com/electron-userland/electron-builder/issues/10186)) ([c53a27f](https://github.com/electron-userland/electron-builder/commit/c53a27fdab0a92fd05cb5d095935da90318ba87e))
+* **nsis:** flexible custom script includes (array `include`, portable support, sibling includes, plugin dirs) ([#10161](https://github.com/electron-userland/electron-builder/issues/10161)) ([66eb52c](https://github.com/electron-userland/electron-builder/commit/66eb52cd85f975c04f6cfe1cfc89c15fd98cd07d))
+* signed update manifests (Ed25519) ([#9877](https://github.com/electron-userland/electron-builder/issues/9877)) ([d45536f](https://github.com/electron-userland/electron-builder/commit/d45536f74e63e5c19dd4a590238521f6315812f5))
+* **squirrel-windows:** inline installer logic; remove electron-winstaller dependency and its vendored binaries ([#9830](https://github.com/electron-userland/electron-builder/issues/9830)) ([0fdbba6](https://github.com/electron-userland/electron-builder/commit/0fdbba62d48fe6dcd2fcce5b3e5ac028a96417c9))
+* **toolsets): `toolsets.wine: "system"` + fix(msi:** icon-less MSI builds ([#10184](https://github.com/electron-userland/electron-builder/issues/10184)) ([49cb865](https://github.com/electron-userland/electron-builder/commit/49cb86582f04e914bd1a234299465e01c7ff68a6))
+* **updater:** robust PowerShell invocation for Windows code-signature verification ([#9764](https://github.com/electron-userland/electron-builder/issues/9764)) ([df1bce3](https://github.com/electron-userland/electron-builder/commit/df1bce3eb032194c970c605286ab9b11655469dd))
+* v27 upgrade guardrails: make every breaking change self-announcing ([#10182](https://github.com/electron-userland/electron-builder/issues/10182)) ([318f6fb](https://github.com/electron-userland/electron-builder/commit/318f6fb93f9a6f92231320aa876db9e66bd78b6a))
+
+
+### Performance Improvements
+
+* deduplicate concurrent module cache lookups ([#10148](https://github.com/electron-userland/electron-builder/issues/10148)) ([0097e04](https://github.com/electron-userland/electron-builder/commit/0097e04c190ea45d4fbfbd991b93b0de88f088e4))
+
+
+
+# [27.0.0-alpha.8](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.7...electron-builder@27.0.0-alpha.8) (2026-09-01)
+
+
+### Bug Fixes
+
+* **app-builder-lib:** expand lower channels when channel name has a suffix ([#9998](https://github.com/electron-userland/electron-builder/issues/9998)) ([e2077cd](https://github.com/electron-userland/electron-builder/commit/e2077cd8f7b0fb143ecd6c9574460a92a001ae46))
+* **app-builder-lib:** return sign result instead of boolean from windows signing chain ([#10104](https://github.com/electron-userland/electron-builder/issues/10104)) ([5ce1625](https://github.com/electron-userland/electron-builder/commit/5ce1625642794f1f7bf8cf9fe51dc73fc39451ad))
+* emit afterSign hook for mas/mas-dev builds ([#10071](https://github.com/electron-userland/electron-builder/issues/10071)) ([1d7b489](https://github.com/electron-userland/electron-builder/commit/1d7b4890f32fef6e02215ae5137626a84d8259d9))
+* exclude `.slnx` files ([#9969](https://github.com/electron-userland/electron-builder/issues/9969)) ([4273546](https://github.com/electron-userland/electron-builder/commit/427354611fe82b3106d0645a1e25e2de95330fdc))
+* **linux:** remove http-parser from default pacman depends; support "default" keyword in depends ([#10109](https://github.com/electron-userland/electron-builder/issues/10109)) ([64c2398](https://github.com/electron-userland/electron-builder/commit/64c2398b4e749b0695e3efe4071c2b884bff4ba4))
+* **mac:** bump linux-tools-mac toolset to 1.0.1 (macOS 15+) and stop mangling custom toolset URLs ([#10100](https://github.com/electron-userland/electron-builder/issues/10100)) ([f7e400b](https://github.com/electron-userland/electron-builder/commit/f7e400ba6766165cce896b53fc55142bb48597d8))
+* **mac:** pass the keychain password to security set-key-partition-list ([#10101](https://github.com/electron-userland/electron-builder/issues/10101)) ([7abb30e](https://github.com/electron-userland/electron-builder/commit/7abb30e393326676237862163a115c96e2f0e80d))
+* **nsis:** default the uninstall-failure dialog in silent installs so auto-update cannot hang ([#10034](https://github.com/electron-userland/electron-builder/issues/10034)) ([4b455f7](https://github.com/electron-userland/electron-builder/commit/4b455f7577c5a7112c7c00bfcb9cb26e3259a87f))
+* **nsis:** detect running app in previous install locations when checking/closing processes ([#10024](https://github.com/electron-userland/electron-builder/issues/10024)) ([8e95ad0](https://github.com/electron-userland/electron-builder/commit/8e95ad0e00c866c8389ae295ac802ebd9954d2ca))
+* **nsis:** run PowerShell with -NoProfile -NonInteractive in allowOnlyOneInstallerInstance checks ([#10051](https://github.com/electron-userland/electron-builder/issues/10051)) ([4070ce7](https://github.com/electron-userland/electron-builder/commit/4070ce731159ede8239b8129fa9f177e2193b1ad))
+* Only logs that we've signed a file if we actually did ([#10082](https://github.com/electron-userland/electron-builder/issues/10082)) ([4f84c6e](https://github.com/electron-userland/electron-builder/commit/4f84c6e972e443d155cf80bbc849443060f120be))
+* preserve Yarn Berry registry credentials ([#10079](https://github.com/electron-userland/electron-builder/issues/10079)) ([16559d4](https://github.com/electron-userland/electron-builder/commit/16559d4f214b184b6edd0812db97e41ecb79ab42))
+* **publish:** report the repository detected for app-update.yml at build time ([#10081](https://github.com/electron-userland/electron-builder/issues/10081)) ([f2cfd5f](https://github.com/electron-userland/electron-builder/commit/f2cfd5f3c147410495030e66f22dc1b336a5faec))
+* retry Electron/binaries downloads on transient errors; cache Windows toolset and self-heal the Electron zip cache ([#10105](https://github.com/electron-userland/electron-builder/issues/10105)) ([c5c4ea1](https://github.com/electron-userland/electron-builder/commit/c5c4ea138cfe5e17f7d80c0ba1a26bb99799861d))
+* update 7zip toolset to 1.0.1 with correct per-arch Windows binaries ([#10103](https://github.com/electron-userland/electron-builder/issues/10103)) ([44a10d4](https://github.com/electron-userland/electron-builder/commit/44a10d43c486fbde12c5a19b04a2ce65e017c628))
+
+
+
 # [27.0.0-alpha.7](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.6...electron-builder@27.0.0-alpha.7) (2026-08-17)
 
 

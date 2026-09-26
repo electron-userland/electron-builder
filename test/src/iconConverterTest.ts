@@ -120,7 +120,7 @@ function parseIcns(data: Buffer): Map<string, Buffer> {
   return entries
 }
 
-describe("iconConverter", { sequential: true }, () => {
+describe("iconConverter", { concurrent: false }, () => {
   const iconsToolset: ToolsetConfig["icons"] = "1.2.3"
 
   // ─── ICNS output ─────────────────────────────────────────────────────────────

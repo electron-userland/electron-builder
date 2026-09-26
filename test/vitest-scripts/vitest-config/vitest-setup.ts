@@ -36,6 +36,9 @@ function createChainable(baseFn: any, meta: Meta = {}, shouldSkip = false): any 
     const target = shouldSkip ? baseFn.skip : baseFn
 
     const body = rest.pop()
+    if (typeof body !== "function") {
+      throw new Error(`test/describe "${name}" registered without a function body — the legacy (name, fn, timeout) signature is not supported; use test(name, { timeout }, fn)`)
+    }
     const options = typeof rest[0] === "object" ? rest[0] : {}
 
     const finalMeta = { ...(options.meta ?? {}), ...meta }

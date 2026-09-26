@@ -358,7 +358,7 @@ describe("HSM validation errors", () => {
   test(".crt file without HSM mode → throws pkcs12 error", () => {
     const manager = makeManager("1.1.0")
     const config = makeTaskConfig({
-      options: { sign: { type: "signtool" as const } } as any,
+      options: { sign: { type: "signtool" as const } },
       cscInfo: { file: "/certs/cert.crt", password: null },
     })
     expect(() => manager.computeSignToolArgs(config, true)).toThrow(/pkcs12/)
@@ -418,7 +418,7 @@ describe("computeSignToolArgs — PKCS#11 (isWin=false)", () => {
   test("HSM csp/kc on non-Windows → throws Windows-only error (via HsmSignManager)", () => {
     const manager = makeHsmManager("1.1.0")
     const config = makeTaskConfig({
-      options: { sign: { type: "hsm" as const, cryptoServiceProvider: "Google Cloud KMS Provider", keyContainer: "my-key" } } as any,
+      options: { sign: { type: "hsm" as const, cryptoServiceProvider: "Google Cloud KMS Provider", keyContainer: "my-key" } },
     })
     expect(() => manager.computeSignToolArgs(config, false)).toThrow(/only supported on Windows/)
   })
@@ -443,7 +443,7 @@ describe("PKCS#11 timestamp flags", () => {
 
   test("sha256 → uses -ts (RFC 3161)", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha256" })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base }, hash: "sha256" })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-ts")
     expect(args).not.toContain("-t")
@@ -451,7 +451,7 @@ describe("PKCS#11 timestamp flags", () => {
 
   test("sha1 → uses -t (HTTP Authenticode)", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha1" })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base }, hash: "sha1" })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-t")
     expect(args).not.toContain("-ts")
@@ -459,14 +459,14 @@ describe("PKCS#11 timestamp flags", () => {
 
   test("sha256 nested → uses -ts", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha256", isNest: true })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base }, hash: "sha256", isNest: true })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-ts")
   })
 
   test("sha1 nested → uses -ts (nested always RFC 3161)", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha1", isNest: true })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base }, hash: "sha1", isNest: true })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-ts")
     expect(args).not.toContain("-t")
@@ -475,7 +475,7 @@ describe("PKCS#11 timestamp flags", () => {
   test("custom rfc3161TimeStampServer is used for -ts", () => {
     const manager = makePkcs11Manager()
     const config = makeTaskConfig({
-      options: { sign: { ...pkcs11Base, rfc3161TimeStampServer: "http://my-ts.example.com" } } as any,
+      options: { sign: { ...pkcs11Base, rfc3161TimeStampServer: "http://my-ts.example.com" } },
       hash: "sha256",
     })
     const args = manager.computeSignToolArgs(config, false)
@@ -486,7 +486,7 @@ describe("PKCS#11 timestamp flags", () => {
   test("custom timeStampServer is used for -t", () => {
     const manager = makePkcs11Manager()
     const config = makeTaskConfig({
-      options: { sign: { ...pkcs11Base, timeStampServer: "http://old-ts.example.com" } } as any,
+      options: { sign: { ...pkcs11Base, timeStampServer: "http://old-ts.example.com" } },
       hash: "sha1",
     })
     const args = manager.computeSignToolArgs(config, false)
@@ -499,7 +499,7 @@ describe("PKCS#11 timestamp flags", () => {
     process.env.ELECTRON_BUILDER_OFFLINE = "true"
     try {
       const manager = makePkcs11Manager()
-      const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha256" })
+      const config = makeTaskConfig({ options: { sign: pkcs11Base }, hash: "sha256" })
       const args = manager.computeSignToolArgs(config, false)
       expect(args).not.toContain("-ts")
       expect(args).not.toContain("-t")
@@ -525,7 +525,7 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
   test("certificateFile set → -certs present with correct path", () => {
     const manager = makePkcs11Manager()
     const config = makeTaskConfig({
-      options: { sign: { ...pkcs11Base, certificateFile: "/certs/chain.pem" } } as any,
+      options: { sign: { ...pkcs11Base, certificateFile: "/certs/chain.pem" } },
       cscInfo: { file: "/certs/chain.pem", password: null },
     })
     const args = manager.computeSignToolArgs(config, false)
@@ -536,7 +536,7 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
 
   test("no certificateFile → no -certs arg", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, cscInfo: null })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base }, cscInfo: null })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).not.toContain("-certs")
   })
@@ -544,7 +544,7 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
   test("-certs appears between -key and -h", () => {
     const manager = makePkcs11Manager()
     const config = makeTaskConfig({
-      options: { sign: { ...pkcs11Base, certificateFile: "/certs/chain.crt" } } as any,
+      options: { sign: { ...pkcs11Base, certificateFile: "/certs/chain.crt" } },
       cscInfo: { file: "/certs/chain.crt", password: null },
     })
     const args = manager.computeSignToolArgs(config, false)
@@ -558,7 +558,7 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
 
 // ─── PKCS#11 PIN via env vars ─────────────────────────────────────────────────
 
-describe("PKCS#11 PIN via env var (no cert file)", { sequential: true }, () => {
+describe("PKCS#11 PIN via env var (no cert file)", { concurrent: false }, () => {
   const pkcs11Options = {
     sign: {
       type: "pkcs11" as const,
@@ -690,7 +690,7 @@ o4qne60TB3wolLhOJqQ3uJLPvOmFI5oMnEAmhP0JlwFSBj3SiYoHScLuNP2YQXB+
 // the x64 kit. From v1.3.0 the dlib lives in a separate ats-bundle (not the
 // kits bundle) and the .NET runtime root is injected via DOTNET_ROOT.
 
-describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential: true }, () => {
+describe("WindowsSignAzureManager signFileWithDlib arch selection", { concurrent: false }, () => {
   const originalArch = process.arch
 
   beforeEach(async () => {
@@ -736,7 +736,7 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     Object.defineProperty(process, "arch", { value: arch })
     const exec = vi.fn().mockResolvedValue(undefined)
     const manager = makeAzureManager(tmpDir, exec, toVmFile, toolsets)
-    await manager.signFile({ path: path.join(tmpDir, "app.exe"), options: {} as any })
+    await manager.signFile({ path: path.join(tmpDir, "app.exe"), options: {} })
     const [signtool, args, execOptions] = exec.mock.calls[0]
     const dlib = args[args.indexOf("/dlib") + 1]
     return { signtool, dlib, dotnetRoot: execOptions?.env?.DOTNET_ROOT }

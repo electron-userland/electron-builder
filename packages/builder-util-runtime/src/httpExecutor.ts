@@ -289,16 +289,28 @@ Please double check that your authentication token is correct. Due to security r
           },
           responseHandler: (response, callback) => {
             let receivedLength = 0
+            let isDone = false
+            const finish = (error: Error | null) => {
+              if (isDone) {
+                return
+              }
+              isDone = true
+              callback(error)
+            }
             response.on("data", (chunk: Buffer) => {
+              if (isDone) {
+                return
+              }
               receivedLength += chunk.length
               if (receivedLength > 524288000) {
-                callback(new Error("Maximum allowed size is 500 MB"))
+                finish(new Error("Maximum allowed size is 500 MB"))
+                response.destroy()
                 return
               }
               responseChunks.push(chunk)
             })
             response.on("end", () => {
-              callback(null)
+              finish(null)
             })
           },
         },

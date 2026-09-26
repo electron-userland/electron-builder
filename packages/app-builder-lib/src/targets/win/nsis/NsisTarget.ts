@@ -20,6 +20,7 @@ import _debug from "debug"
 import * as path from "path"
 import { Target } from "../../../core.js"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../../options/CommonWindowsInstallerConfiguration.js"
+import { FileAssociation } from "../../../options/FileAssociation.js"
 import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../../platformPackager.js"
 import { hashFile } from "../../../util/hash.js"
 import { isMacOsCatalina } from "../../../util/mac/macosVersion.js"
@@ -121,6 +122,10 @@ export class NsisTarget extends Target {
       // install. Pin the payload to a filter it can decode. See #9983.
       installTimeDecodable: true,
       excluded: preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`),
+      // Opt-in via differentialPackage: "store-asar" — keep the asar a byte-stable Copy member so a
+      // differential update pays only for its changed blocks instead of re-downloading the whole
+      // recompressed asar (see nsisOptions docs).
+      storedPaths: isBuildDifferentialAware && options.differentialPackage === "store-asar" ? ["resources/app.asar"] : null,
     }
 
     const timer = time(`nsis package, ${Arch[arch]}`)
@@ -341,7 +346,7 @@ export class NsisTarget extends Target {
       if (this.isWebInstaller) {
         updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
       } else if (this.isBuildDifferentialAware) {
-        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName)
+        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch)
       }
 
       if (updateInfo != null && isPerMachine && (oneClick || options.packElevateHelper)) {
@@ -708,44 +713,106 @@ export class NsisTarget extends Target {
 
     const includeDir = path.join(nsisTemplatesDir, "include")
     scriptGenerator.addIncludeDir(includeDir)
+    // allow custom scripts to `!include` sibling files from the build resources directory
+    scriptGenerator.addIncludeDir(packager.buildResourcesDir)
     scriptGenerator.flags(["updated", "force-run", "keep-shortcuts", "no-desktop-shortcut", "delete-app-data", "allusers", "currentuser"])
 
     createAddLangsMacro(scriptGenerator, langConfigurator)
 
     const taskManager = new AsyncTaskManager(packager.cancellationToken)
 
-    const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
+    const bundledPluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
-      scriptGenerator.addPluginDir(pluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis, this.packager.buildResourcesDir), pluginArch))
+      scriptGenerator.addPluginDir(bundledPluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis, this.packager.buildResourcesDir), bundledPluginArch))
     })
 
-    taskManager.add(async () => {
-      const userPluginDir = path.join(packager.buildResourcesDir, pluginArch)
-      const stat = await statOrNull(userPluginDir)
-      if (stat != null && stat.isDirectory()) {
-        scriptGenerator.addPluginDir(pluginArch, userPluginDir)
-      }
-    })
-
-    taskManager.addTask(addCustomMessageFileInclude("messages.yml", packager, scriptGenerator, langConfigurator))
-
-    if (!this.isPortable) {
-      if (options.oneClick === false) {
-        taskManager.addTask(addCustomMessageFileInclude("assistedMessages.yml", packager, scriptGenerator, langConfigurator))
-      }
-
+    for (const pluginArch of ["x86-unicode", "x86-ansi"]) {
       taskManager.add(async () => {
-        const customInclude = await packager.getResource(this.options.include, "installer.nsh")
-        if (customInclude != null) {
-          scriptGenerator.addIncludeDir(packager.buildResourcesDir)
-          scriptGenerator.include(customInclude)
+        const userPluginDir = path.join(packager.buildResourcesDir, pluginArch)
+        const stat = await statOrNull(userPluginDir)
+        if (stat != null && stat.isDirectory()) {
+          scriptGenerator.addPluginDir(pluginArch, userPluginDir)
         }
       })
     }
 
+    taskManager.addTask(addCustomMessageFileInclude("messages.yml", packager, scriptGenerator, langConfigurator))
+
+    if (!this.isPortable && options.oneClick === false) {
+      taskManager.addTask(addCustomMessageFileInclude("assistedMessages.yml", packager, scriptGenerator, langConfigurator))
+    }
+
+    taskManager.add(async () => {
+      for (const customInclude of await this.resolveCustomIncludes()) {
+        scriptGenerator.include(customInclude)
+      }
+    })
+
     await taskManager.awaitTasks()
     return scriptGenerator.build()
   }
+
+  /**
+   * Resolves the `include` option to a list of NSIS script paths.
+   *
+   * `include` may be a single path or an array of paths — each is resolved relative to the build resources directory first and then relative to the project directory.
+   * When the option is not set, `build/installer.nsh` is auto-discovered — except for the portable target, which only ever includes explicitly configured scripts
+   * (an auto-discovered `installer.nsh` is usually written for the installer target and must not silently leak into portable builds).
+   */
+  private async resolveCustomIncludes(): Promise<Array<string>> {
+    const include = this.options.include
+    if (Array.isArray(include)) {
+      const result: Array<string> = []
+      for (const entry of include) {
+        const resolved = await this.packager.getResource(entry)
+        if (resolved != null) {
+          result.push(resolved)
+        }
+      }
+      return result
+    }
+
+    if (this.isPortable && include == null) {
+      return []
+    }
+    const resolved = this.isPortable ? await this.packager.getResource(include) : await this.packager.getResource(include, "installer.nsh")
+    return resolved == null ? [] : [resolved]
+  }
+
+  /**
+   * v27 registers each file association under a generated ProgID instead of the association name or
+   * extension verbatim, so the old value could collide with an unrelated app. Nothing needs to change
+   * in config — but a custom NSIS script that hard-codes the old ProgID to add shell verbs or extra
+   * registry entries now writes them under a key nothing reads.
+   *
+   * Only warns when a custom script is actually supplied; the generated ProgID is invisible otherwise.
+   */
+  private async warnAboutProgIdFormatChange(fileAssociations: Array<FileAssociation>, progIdMaker: ProgIdMaker): Promise<void> {
+    if (this.progIdWarningEmitted) {
+      return
+    }
+    const packager = this.packager
+    const hasCustomScript = (await this.resolveCustomIncludes()).length > 0 || (await packager.getResource(this.options.script, "installer.nsi")) != null
+    if (!hasCustomScript) {
+      return
+    }
+    this.progIdWarningEmitted = true
+    const examples = fileAssociations
+      .slice(0, 3)
+      .map(item => {
+        const ext = asArray(item.ext).map(normalizeExt)[0]
+        return `${item.name || ext} -> ${progIdMaker.progId(item.name || ext)}`
+      })
+      .join(", ")
+    log.warn(
+      { progIds: examples, solution: "update any registry keys, shell verbs, or external tooling that references the old ProgID" },
+      "NSIS file associations now register a generated ProgID instead of the association name or extension. " +
+        "You ship a custom NSIS script (nsis.include / nsis.script), which may reference the old value. " +
+        "See https://www.electron.build/docs/migration/v27-breaking-changes#nsis-file-association-progid-format-changed"
+    )
+  }
+
+  private progIdWarningEmitted = false
 
   private async computeFinalScript(originalScript: string, isInstaller: boolean, archs: Map<Arch, string>): Promise<string> {
     const packager = this.packager
@@ -777,6 +844,7 @@ export class NsisTarget extends Target {
     if (fileAssociations.length !== 0) {
       scriptGenerator.include(path.join(path.join(nsisTemplatesDir, "include"), "FileAssociation.nsh"))
       const progIdMaker = new ProgIdMaker(this.appGuid, packager.appInfo.productFilename)
+      await this.warnAboutProgIdFormatChange(fileAssociations, progIdMaker)
       if (isInstaller) {
         const registerFileAssociationsScript = new NsisScriptGenerator()
         for (const item of fileAssociations) {

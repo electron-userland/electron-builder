@@ -70,22 +70,39 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, forc
   if (device == null) {
     throw new Error(`Cannot mount: ${attachResult}`)
   }
-  // Find the volume mount path directly from hdiutil attach output.
-  // APFS images synthesize a new disk device (e.g. disk9) separate from the container disk
-  // (e.g. disk8), so device-name matching via hdiutil info misses the APFS volume.
-  let volumePath: string | null = null
-  for (const line of attachResult!.split("\n")) {
-    const match = /\s+(\/Volumes\/.+?)\s*$/.exec(line)
-    if (match) {
-      volumePath = match[1].trim()
-      break
-    }
-  }
-  if (volumePath == null) {
-    throw new Error(`Cannot find volume mount path for device: ${device}`)
-  }
 
-  return await executeFinally(task(volumePath), () => detach(device, forceDetach))
+  return executeAndDetach(attachResult!, device, forceDetach, task)
+}
+
+/** @internal */
+export async function executeAndDetach(
+  attachResult: string,
+  device: string,
+  forceDetach: boolean,
+  task: (volumePath: string) => Promise<any>,
+  detacher: (device: string, forceDetach: boolean) => Promise<any> = detach
+) {
+  return executeFinally(
+    (async () => {
+      // Find the volume mount path directly from hdiutil attach output.
+      // APFS images synthesize a new disk device (e.g. disk9) separate from the container disk
+      // (e.g. disk8), so device-name matching via hdiutil info misses the APFS volume.
+      let volumePath: string | null = null
+      for (const line of attachResult.split("\n")) {
+        const match = /\s+(\/Volumes\/.+?)\s*$/.exec(line)
+        if (match) {
+          volumePath = match[1].trim()
+          break
+        }
+      }
+      if (volumePath == null) {
+        throw new Error(`Cannot find volume mount path for device: ${device}`)
+      }
+
+      return task(volumePath)
+    })(),
+    () => detacher(device, forceDetach)
+  )
 }
 
 export async function detach(name: string, alwaysForce: boolean) {

@@ -101,7 +101,7 @@ test("passes only Yarn npm auth variables to the Yarn Berry install child", asyn
   vi.mocked(detectPackageManager).mockResolvedValue({ pm: PM.YARN_BERRY, resolvedDirectory: projectDir, corepackConfig: undefined, detectionMethod: "test" })
   vi.mocked(streamSpawnToFile).mockResolvedValue({ code: 0, stderr: "" })
 
-  await installDependencies({} as any, { appDir: projectDir, projectDir, workspaceRoot: null }, { frameworkInfo: { version: "39.0.0", useCustomDist: false } }, {})
+  await installDependencies({}, { appDir: projectDir, projectDir, workspaceRoot: null }, { frameworkInfo: { version: "39.0.0", useCustomDist: false } }, {})
 
   const childEnv = vi.mocked(streamSpawnToFile).mock.calls[0][4]
   expect(childEnv.XXX_NPM_TOKEN).toBe("registry-token")

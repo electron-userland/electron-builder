@@ -448,7 +448,7 @@ export async function ensureDir(dir: string, maxAttempts = 8, mkdir: (p: string,
  */
 type FileOpener = (file: string, flags: string) => Promise<{ close(): Promise<void> }>
 
-export async function ensureNotBusy(file: string, intervalMs = 2000, maxAttempts = 60, open: FileOpener = fs.open as FileOpener): Promise<void> {
+export async function ensureNotBusy(file: string, intervalMs = 2000, maxAttempts = 60, open: FileOpener = fs.open): Promise<void> {
   for (let attempt = 0, warned = false; attempt < maxAttempts; attempt++) {
     try {
       const handle = await open(file, "r+")
