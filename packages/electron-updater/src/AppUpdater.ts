@@ -500,7 +500,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
       void it.downloadPromise.then(() => {
         const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
-        new (require("electron").Notification)(notificationContent).show()
+        const ElectronNotification = require("electron").Notification
+        new ElectronNotification(notificationContent).show()
       })
 
       return it

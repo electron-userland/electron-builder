@@ -37,7 +37,7 @@ describe("signWindows result and logging", () => {
     const infoSpy = vi.spyOn(log, "info")
     const packager = makePackagerWithManager(() => Promise.resolve("signed"))
 
-    const result = await signWindows({ path: "/out/app.exe", options: { sign: { type: "signtool" } } as WindowsConfiguration }, packager)
+    const result = await signWindows({ path: "/out/app.exe", options: { sign: { type: "signtool" } } }, packager)
 
     expect(result).toBe("signed")
     const messages = infoMessages(infoSpy)
@@ -67,7 +67,7 @@ describe("signWindows result and logging", () => {
     const infoSpy = vi.spyOn(log, "info")
     const packager = makePackagerWithManager(() => Promise.resolve("signed:custom"))
 
-    const result = await signWindows({ path: "/out/app.exe", options: { sign: { type: "signtool" } } as WindowsConfiguration }, packager)
+    const result = await signWindows({ path: "/out/app.exe", options: { sign: { type: "signtool" } } }, packager)
 
     expect(result).toBe("signed:custom")
     const messages = infoMessages(infoSpy)
@@ -79,7 +79,7 @@ describe("signWindows result and logging", () => {
     const infoSpy = vi.spyOn(log, "info")
     const packager = makePackagerWithManager(() => Promise.resolve("skipped:no-certificate"))
 
-    const result = await signWindows({ path: "/out/app.exe", options: {} as WindowsConfiguration }, packager)
+    const result = await signWindows({ path: "/out/app.exe", options: {} }, packager)
 
     expect(result).toBe("skipped:no-certificate")
     const messages = infoMessages(infoSpy)
@@ -92,7 +92,7 @@ describe("signWindows result and logging", () => {
 
   test("failures are rethrown, not converted to a result", async ({ expect }) => {
     const packager = makePackagerWithManager(() => Promise.reject(new Error("signtool exited with code 1")))
-    await expect(signWindows({ path: "/out/app.exe", options: {} as WindowsConfiguration }, packager)).rejects.toThrow("signtool exited with code 1")
+    await expect(signWindows({ path: "/out/app.exe", options: {} }, packager)).rejects.toThrow("signtool exited with code 1")
   })
 })
 
@@ -112,7 +112,7 @@ describe("SigntoolSignManager.signFile result", () => {
 
   test(`returns "skipped:no-certificate" when there is no certificate and no custom sign hook`, async ({ expect }) => {
     const manager = makeManager({})
-    await expect(manager.signFile({ path: "/out/app.exe", options: {} as WindowsConfiguration })).resolves.toBe("skipped:no-certificate")
+    await expect(manager.signFile({ path: "/out/app.exe", options: {} })).resolves.toBe("skipped:no-certificate")
   })
 
   test(`returns "signed:custom" when a custom sign hook does the signing`, async ({ expect }) => {
@@ -147,7 +147,7 @@ describe("WinPackager.signIf result", () => {
 
   test(`returns "skipped:filtered" for a file excluded via signExts without invoking the sign manager`, async ({ expect }) => {
     const signFile = vi.fn()
-    const packager = makeWinPackager({ signExts: ["!.txt"] } as WindowsConfiguration, "signed")
+    const packager = makeWinPackager({ signExts: ["!.txt"] }, "signed")
     ;(packager as any).signingManager = { value: Promise.resolve({ signFile }) }
 
     await expect(packager.signIf("/out/readme.txt")).resolves.toBe("skipped:filtered")
@@ -155,7 +155,7 @@ describe("WinPackager.signIf result", () => {
   })
 
   test(`returns "skipped:disabled" when signing is explicitly disabled`, async ({ expect }) => {
-    const packager = makeWinPackager({ sign: false } as WindowsConfiguration, "signed")
+    const packager = makeWinPackager({ sign: false }, "signed")
     await expect(packager.signIf("/out/app.exe")).resolves.toBe("skipped:disabled")
   })
 

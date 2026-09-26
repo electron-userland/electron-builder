@@ -1,5 +1,87 @@
 ## 4.3.0
 
+## 7.0.0-alpha.8
+
+### Major Changes
+
+- Refactor(updater): `downloadUpdate()` and `UpdateCheckResult.downloadPromise` resolve with a `DownloadExecutorResult` object instead of a positional `Array<string>` _[`#10164`](https://github.com/electron-userland/electron-builder/pull/10164) [`0d47ef5`](https://github.com/electron-userland/electron-builder/commit/0d47ef5c4dda24939e5a6b02927440bdc2da1cd1) [@claude](https://github.com/apps/claude)_
+
+  BREAKING CHANGE: the promise returned by `AppUpdater.downloadUpdate()` (and `UpdateCheckResult.downloadPromise` when `autoDownload` is enabled) now resolves with `{ updateFile, packageFile? }` instead of `[updateFile]` / `[updateFile, packageFile]`. The array shape depended on element order to tell the installer apart from the optional NSIS web-installer package; the new `DownloadExecutorResult` type (exported from `electron-updater`) names both files. `UpdateDownloadedEvent` additionally gains an optional `packageFile` field for web installers.
+
+  ```ts
+  // Before (v6)
+  const files = await autoUpdater.downloadUpdate()
+  const installer = files[0]
+  const webInstallerPackage = files[1] // only for NSIS web installers
+
+  // After (v7)
+  const { updateFile, packageFile } = await autoUpdater.downloadUpdate()
+  ```
+
+  The same applies to the result of `checkForUpdates()`:
+
+  ```ts
+  // Before (v6)
+  const result = await autoUpdater.checkForUpdates()
+  const [installer] = (await result?.downloadPromise) ?? []
+
+  // After (v7)
+  const result = await autoUpdater.checkForUpdates()
+  const download = await result?.downloadPromise
+  const installer = download?.updateFile
+  ```
+
+  The underlying cache-consistency fix from #10098 already produced this object internally; this change stops converting it back to an array at the public API boundary.
+
+### Minor Changes
+
+- Feat: v27 upgrade guardrails: make every breaking change self-announcing _[`#10182`](https://github.com/electron-userland/electron-builder/pull/10182) [`318f6fb`](https://github.com/electron-userland/electron-builder/commit/318f6fb93f9a6f92231320aa876db9e66bd78b6a) [@mmaietta](https://github.com/mmaietta)_
+- Feat(updater): improve PowerShell invocation reliability for Windows code-signature verification _[`#9764`](https://github.com/electron-userland/electron-builder/pull/9764) [`df1bce3`](https://github.com/electron-userland/electron-builder/commit/df1bce3eb032194c970c605286ab9b11655469dd) [@mmaietta](https://github.com/mmaietta)_
+- Feat(security): signed update manifests (Ed25519) with trust lists and multi-signature manifests _[`#9877`](https://github.com/electron-userland/electron-builder/pull/9877) [`d45536f`](https://github.com/electron-userland/electron-builder/commit/d45536f74e63e5c19dd4a590238521f6315812f5) [@mmaietta](https://github.com/mmaietta)_
+
+  Optional Ed25519 signing of auto-update manifests (`latest*.yml`). When signing keys are configured
+  (`updateManifest.signingKey`/`signingKeyFile` in config, or `ELECTRON_BUILDER_UPDATE_SIGN_KEY`/`ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`
+  env vars), each manifest is signed over its integrity-critical fields and the matching public keys are
+  embedded into `app-update.yml` (both resolved from the same keys on the platform packager, so signing and
+  embedding cannot disagree). electron-updater verifies the signature before downloading and refuses to
+  update on tamper/missing-signature (fail-closed). Opt-in: when no public key is configured, verification is
+  skipped with a one-time warning. New CLI: `electron-builder create-update-key` (prints the public key and its key id).
+
+  Key rotation without a flag day: an install trusts a **list** of public keys (`updateManifestPublicKey` is a
+  string or an array; `updateManifest.publicKey`, `signingKey` and `signingKeyFile` accept arrays, a PEM value may
+  hold several concatenated keys, and `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` accepts several paths joined with
+  the OS path delimiter), and a manifest may carry **several signatures** (`signatures: [{ keyId, signature }]`,
+  one per signing key, next to the legacy `signature` of the first key). A manifest is accepted when any trusted
+  key validates any of its signatures, so a release signed with `[old, new]` verifies on installs that trust
+  either. `AppUpdater.updateManifestPublicKey` accepts a string or an array. A build-time warning flags an
+  explicit `publicKey` list that contains none of the signing keys.
+
+  Gating of the Linux package-manager signature-bypass flags landed separately as
+  `AppUpdater.allowUnverifiedLinuxPackages` (#9990).
+
+### Patch Changes
+
+- Fix: make multi-range differential downloads work on real servers. Three independent defects made `downloadUpdate` fall back to a full download with `Response ends without calling any handlers`: _[`#10192`](https://github.com/electron-userland/electron-builder/pull/10192) [`8e22767`](https://github.com/electron-userland/electron-builder/commit/8e227679fe34befde8fa31f6b811b86c79f010d5) [@yi-ge](https://github.com/yi-ge)_
+  - `DataSplitter` only recognised CRLF. Some CDNs answer `multipart/byteranges` with bare LF line endings, so no part was ever split and the whole response accumulated in memory. Header lists now end at whichever of `\r\n\r\n` / `\n\n` comes first, and the `<EOL>--boundary` separator size follows the line ending the server actually uses.
+  - A header-list terminator split across two chunks was never found: only the new chunk was searched, the buffered bytes never were, so the parser locked onto the next part's header instead. Only the last few bytes of an unfinished header list are now carried over and searched together with the next chunk, instead of accumulating the whole list.
+  - The 10s watchdog armed when a batch response ends was never disarmed after that batch succeeded. With more than 1000 operations (several range requests) it failed the whole download whenever a later batch took longer than the grace period.
+
+- Fix: preserve fractional staged rollout percentages _[`#10114`](https://github.com/electron-userland/electron-builder/pull/10114) [`23bccfb`](https://github.com/electron-userland/electron-builder/commit/23bccfb6accd2eb082633d592d15486e81c89374) [@OskarEichler](https://github.com/OskarEichler)_
+- Fix: strip `PSModulePath` from the PowerShell child environment case-insensitively during Windows code-signature verification. Windows environment variable names are case-insensitive but JS object keys are not, so a differently-cased key (e.g. `PSMODULEPATH`) could previously survive into the spawned PowerShell process. _[`#10159`](https://github.com/electron-userland/electron-builder/pull/10159) [`61bd5f6`](https://github.com/electron-userland/electron-builder/commit/61bd5f6044ff8c09f44d443b956a96e0aba105b2) [@claude](https://github.com/apps/claude)_
+- Fix: keep the cached blockmap consistent with the cached installer. A download round that did not produce a new blockmap (e.g. the differential download was skipped because the cached installer was evicted) now removes the cached `current.blockmap` instead of leaving a stale one next to the freshly cached file, which poisoned the next differential download and surfaced as a generic sha512 checksum mismatch before falling back to a full download (#10097). Leftover pending blockmaps from previous update rounds are also cleared before a fresh download. sha512-mismatch logging now distinguishes a differential download that failed against stale/corrupt cached inputs (including whether the old blockmap came from the local cache or the server) from a genuine checksum failure of a fully downloaded file. _[`#10098`](https://github.com/electron-userland/electron-builder/pull/10098) [`9306160`](https://github.com/electron-userland/electron-builder/commit/93061602d9ee89d824834cef0b06c75353fa6a4a) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`d45536f`](https://github.com/electron-userland/electron-builder/commit/d45536f74e63e5c19dd4a590238521f6315812f5) [`6ab9a8c`](https://github.com/electron-userland/electron-builder/commit/6ab9a8c5fbed759e0c9e26064208c422c612b200)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.8`
+
+</details>
+
 ## 7.0.0-alpha.7
 
 ### Patch Changes

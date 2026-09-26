@@ -100,7 +100,7 @@ test("allowPrerelease=true with stable current - picks the newest available vali
 
   // only 2 calls: feed + channel file (no getLatestTagName)
   expect(requestSpy).toHaveBeenCalledTimes(2)
-  expect((result?.updateInfo as any).tag).toBe(BETA_TAG)
+  expect((result!.updateInfo as any).tag).toBe(BETA_TAG)
   expect(result?.updateInfo.version).toBe(BETA_VERSION)
 })
 
@@ -126,7 +126,7 @@ test("allowPrerelease=true with stable current - picks the newest available vali
 
   // only 2 calls: feed + channel file (no getLatestTagName)
   expect(requestSpy).toHaveBeenCalledTimes(2)
-  expect((result?.updateInfo as any).tag).toBe(newVersionTag)
+  expect((result!.updateInfo as any).tag).toBe(newVersionTag)
   expect(result?.updateInfo.version).toBe(newVersion)
 })
 
@@ -149,7 +149,7 @@ test("allowPrerelease=true with beta channel current - picks matching beta entry
     .mockResolvedValueOnce(mockYaml("1.2.0-beta.2"))
 
   const result = await updater.checkForUpdates()
-  expect((result?.updateInfo as any).tag).toBe(newerBeta)
+  expect((result!.updateInfo as any).tag).toBe(newerBeta)
   expect(result?.updateInfo.version).toBe("1.2.0-beta.2")
 })
 
@@ -221,7 +221,7 @@ test("allowPrerelease=true with stable current newer than all releases - reports
 
   const result = await updater.checkForUpdates()
   expect(result?.isUpdateAvailable).toBe(false)
-  expect((result?.updateInfo as any).tag).toBe(BETA_TAG)
+  expect((result!.updateInfo as any).tag).toBe(BETA_TAG)
   // newest available release is older than current → AppUpdater takes the graceful no-update path
   expect(events).toEqual(["checking-for-update", "update-not-available"])
 })

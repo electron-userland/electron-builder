@@ -1,12 +1,14 @@
-import { AsarFilesystem, PM, readAsar } from "app-builder-lib/internal"
+import { AsarFilesystem, PM, PnpmNodeModulesCollector, readAsar } from "app-builder-lib/internal"
 import { spawn } from "builder-util"
 import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
 import { appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, verifyAsarFileTree } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
-import { copy, mkdir, outputFile, readJson, rm, symlink, writeJson } from "fs-extra"
+import { copy, lstat, mkdir, outputFile, outputJson, pathExists, readJson, realpath, rm, symlink, writeJson } from "fs-extra"
 import { assertThat } from "./helpers/fileAssert"
 import { dump } from "js-yaml"
+import type { ExpectStatic } from "vitest"
+import type { TmpDir } from "temp-file"
 
 describe("node_module collectors", () => {
   test("yarn workspace", ({ expect }) =>
@@ -829,6 +831,152 @@ describe("node_module collectors", () => {
       }
     ))
 
+  // https://github.com/electron-userland/electron-builder/issues/10228
+  // A pnpm 11 workspace with `nodeLinker: hoisted` (pnpm 11 reads it from pnpm-workspace.yaml only) installs the app
+  // package's dependencies into the workspace root's node_modules, and the app package gets no node_modules of its own.
+  // lazystream needs readable-stream ^2 while the app and the workspace root pin readable-stream@3, so pnpm hoists 3.6.2
+  // to the root and nests 2.3.8 under `node_modules/lazystream/node_modules`. The collector runs from the app package, so
+  // it has to detect the hoisted layout and find that nested copy under the workspace root; before the fix lazystream was
+  // packaged with the root readable-stream@3.
+  // Every pnpm layout test below pins pnpm through `packageManager`, so the same pnpm 11 performs the install and the
+  // collector's `pnpm list`, and checks the layout the collector detects on the real install next to the packaged tree.
+  test("pnpm v11 hoisted workspace keeps nested dependency versions", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-yarn-several-workspace",
+      {
+        targets: linuxDirTarget,
+        projectDir: "packages/test-app",
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        packageManagerSettings: { nodeLinker: "hoisted" },
+        projectDirCreated: projectDir =>
+          Promise.all([
+            modifyPackageJson(projectDir, data => {
+              data.packageManager = PNPM_11_PACKAGE_MANAGER
+              // A root dependency claims the workspace root's readable-stream slot for 3.6.2; without it pnpm's hoister
+              // puts lazystream's 2.3.8 there and moves the app's 3.6.2 into `packages/test-app/node_modules` instead.
+              data.dependencies = { "readable-stream": LAZYSTREAM_READABLE_STREAM_CONFLICT["readable-stream"] }
+            }),
+            modifyPackageJson(path.join(projectDir, "packages", "test-app"), data => {
+              data.dependencies = LAZYSTREAM_READABLE_STREAM_CONFLICT
+            }),
+          ]),
+        packed: async context => {
+          const appDir = path.join(context.projectDir, "packages", "test-app")
+          // The layout #10228 needs: everything lives under the workspace root, nothing under the app package.
+          expect(await pathExists(path.join(appDir, "node_modules"))).toBe(false)
+          expect(await pathExists(path.join(context.projectDir, "node_modules", "lazystream", "node_modules", "readable-stream"))).toBe(true)
+          expect(await isPnpmLayoutHoisted(appDir, context.tmpDir)).toBe(true)
+          await assertLazystreamKeepsNestedReadableStream(expect, context.getResources(Platform.LINUX))
+        },
+      }
+    ))
+
+  // Same dependency conflict in a single-package project with `nodeLinker: hoisted`: every package is a real directory
+  // under node_modules and readable-stream@2.3.8 is only reachable by searching down from lazystream.
+  test("pnpm v11 hoisted project keeps nested dependency versions", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: linuxDirTarget,
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        packageManagerSettings: { nodeLinker: "hoisted" },
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.packageManager = PNPM_11_PACKAGE_MANAGER
+            data.dependencies = LAZYSTREAM_READABLE_STREAM_CONFLICT
+          }),
+        packed: async context => {
+          expect(await pathExists(path.join(context.projectDir, "node_modules", "lazystream", "node_modules", "readable-stream"))).toBe(true)
+          expect(await isPnpmLayoutHoisted(context.projectDir, context.tmpDir)).toBe(true)
+          await assertLazystreamKeepsNestedReadableStream(expect, context.getResources(Platform.LINUX))
+        },
+      }
+    ))
+
+  // Same dependency conflict with pnpm's default isolated layout: top-level packages are links into the `.pnpm` virtual
+  // store, which the collector must detect so it resolves through the store instead of searching down node_modules.
+  test("pnpm v11 isolated project keeps nested dependency versions", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: linuxDirTarget,
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.packageManager = PNPM_11_PACKAGE_MANAGER
+            data.dependencies = LAZYSTREAM_READABLE_STREAM_CONFLICT
+          }),
+        packed: async context => {
+          expect(await pathExists(path.join(context.projectDir, "node_modules", ".pnpm"))).toBe(true)
+          expect(await isPnpmLayoutHoisted(context.projectDir, context.tmpDir)).toBe(false)
+          await assertLazystreamKeepsNestedReadableStream(expect, context.getResources(Platform.LINUX))
+        },
+      }
+    ))
+
+  // A `link:` dependency is a top-level node_modules link that resolves outside `.pnpm`; layout detection has to look past
+  // it and still recognize the isolated store from the registry packages.
+  test("pnpm v11 isolated project with a link: dependency keeps nested dependency versions", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: linuxDirTarget,
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        projectDirCreated: projectDir =>
+          Promise.all([
+            outputFile(path.join(projectDir, "local-linked", "index.js"), "module.exports = 'local-linked'\n"),
+            outputJson(path.join(projectDir, "local-linked", "package.json"), { name: "local-linked", version: "1.0.0", main: "index.js" }),
+            modifyPackageJson(projectDir, data => {
+              data.packageManager = PNPM_11_PACKAGE_MANAGER
+              data.dependencies = { ...LAZYSTREAM_READABLE_STREAM_CONFLICT, "local-linked": "link:./local-linked" }
+            }),
+          ]),
+        packed: async context => {
+          const linked = path.join(context.projectDir, "node_modules", "local-linked")
+          expect((await lstat(linked)).isSymbolicLink()).toBe(true)
+          expect((await realpath(linked)).split(path.sep)).not.toContain(".pnpm")
+          expect(await isPnpmLayoutHoisted(context.projectDir, context.tmpDir)).toBe(false)
+          await assertLazystreamKeepsNestedReadableStream(expect, context.getResources(Platform.LINUX), ["node_modules/local-linked@1.0.0"])
+        },
+      }
+    ))
+
+  // Nothing to install: node_modules holds no packages, so the collector falls back to the flat (non-hoisted) default
+  // and the app ships without node_modules.
+  test("pnpm v11 project without dependencies", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: linuxDirTarget,
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.packageManager = PNPM_11_PACKAGE_MANAGER
+            delete data.dependencies
+          }),
+        packed: async context => {
+          expect(await isPnpmLayoutHoisted(context.projectDir, context.tmpDir)).toBe(false)
+          const asarFs = await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))
+          expect(asarFs.header.files?.node_modules).toBeUndefined()
+        },
+      }
+    ))
+
   test("yarn berry version conflict with hoisted dependencies", ({ expect }) =>
     assertPack(
       expect,
@@ -877,6 +1025,41 @@ describe("node_module collectors", () => {
       }
     ))
 })
+
+const PNPM_11_PACKAGE_MANAGER = "pnpm@11.26.0"
+
+// lazystream@1.0.1 depends on readable-stream ^2.0.5, which conflicts with the app's own readable-stream@3.
+const LAZYSTREAM_READABLE_STREAM_CONFLICT = {
+  lazystream: "1.0.1",
+  "readable-stream": "3.6.2",
+}
+
+/** The layout PnpmNodeModulesCollector detects for `rootDir` (true: hoisted, false: isolated `.pnpm` store or no packages). */
+function isPnpmLayoutHoisted(rootDir: string, tmpDir: TmpDir): Promise<boolean> {
+  return (new PnpmNodeModulesCollector(rootDir, tmpDir) as any).isHoisted.value
+}
+
+async function assertLazystreamKeepsNestedReadableStream(expect: ExpectStatic, resourceDir: string, extraPackages: Array<string> = []) {
+  const versions = await readAsarPackageVersions(await readAsar(path.join(resourceDir, "app.asar")))
+  // lazystream's readable-stream@2.3.8 closure keeps its own nested copies wherever the root copy (the app's
+  // readable-stream@3.6.2 closure) is out of range; dependencies both accept (inherits, util-deprecate, ...) are shared.
+  expect([...versions].map(([dir, version]) => `${dir}@${version}`).sort()).toEqual([...LAZYSTREAM_PACKAGES, ...extraPackages].sort())
+}
+
+const LAZYSTREAM_PACKAGES = [
+  "node_modules/core-util-is@1.0.3",
+  "node_modules/inherits@2.0.4",
+  "node_modules/isarray@1.0.0",
+  "node_modules/lazystream/node_modules/readable-stream@2.3.8",
+  "node_modules/lazystream/node_modules/string_decoder@1.1.1",
+  "node_modules/lazystream@1.0.1",
+  "node_modules/process-nextick-args@2.0.1",
+  "node_modules/readable-stream@3.6.2",
+  "node_modules/safe-buffer@5.1.2",
+  "node_modules/string_decoder/node_modules/safe-buffer@5.2.1",
+  "node_modules/string_decoder@1.3.0",
+  "node_modules/util-deprecate@1.0.2",
+]
 
 /**
  * Every package under `node_modules` in the asar, keyed by its directory relative to the asar root
