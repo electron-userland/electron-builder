@@ -316,7 +316,7 @@ export async function runTest(
   const outDirs: ApplicationUpdatePaths[] = []
   const shouldRunWindowsTests = process.platform === "win32" || (target === "nsis" && vm != null)
   // Merge toolsets with any caller-supplied config overrides (e.g. nsis.perMachine)
-  const buildConfig = deepAssign({ toolsets } as Configuration, extraConfig ?? {})
+  const buildConfig = deepAssign({ toolsets }, extraConfig ?? {})
   await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, buildConfig)
 
   const oldAppDir = outDirs[0]
@@ -504,7 +504,7 @@ export async function runInstallOnNextLaunchTest(
   const tmpDir = new TmpDir("install-on-next-launch")
   const outDirs: ApplicationUpdatePaths[] = []
   const shouldRunWindowsTests = process.platform === "win32" || (target === "nsis" && vm != null)
-  const buildConfig = deepAssign({ toolsets } as Configuration, extraConfig ?? {})
+  const buildConfig = deepAssign({ toolsets }, extraConfig ?? {})
   await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, buildConfig)
 
   const oldAppDir = outDirs[0]
@@ -672,7 +672,7 @@ async function runUpdateScenario(
   const tmpDir = new TmpDir(tmpDirPrefix)
   const outDirs: ApplicationUpdatePaths[] = []
   const shouldRunWindowsTests = process.platform === "win32" || (target === "nsis" && vm != null)
-  const buildConfig = deepAssign({ toolsets } as Configuration, extraConfig ?? {})
+  const buildConfig = deepAssign({ toolsets }, extraConfig ?? {})
   await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, buildConfig, builds)
   expect(outDirs.length).toBe(builds.length)
 

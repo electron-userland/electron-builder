@@ -444,7 +444,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         arch,
         targets,
         packager: this,
-        electronPlatformName: this.platform.nodeName as ElectronPlatformName,
+        electronPlatformName: this.platform.nodeName,
       })
     ) {
       return

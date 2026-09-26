@@ -61,8 +61,8 @@ import { configurePublishCommand } from "../../packages/electron-builder/src/pub
 describe("clearCache", { concurrent: false }, () => {
   beforeEach(() => {
     vi.mocked(getCacheDirectoryInternal).mockReturnValue(Promise.resolve("/home/user/.cache/electron-builder"))
-    vi.mocked(access).mockResolvedValue(undefined as any)
-    vi.mocked(rm).mockResolvedValue(undefined as any)
+    vi.mocked(access).mockResolvedValue(undefined)
+    vi.mocked(rm).mockResolvedValue(undefined)
     vi.mocked(createInterface).mockReturnValue({
       question: vi.fn().mockResolvedValue("y"),
       close: vi.fn(),
@@ -161,7 +161,7 @@ describe("wrap", { concurrent: false }, () => {
 
   afterEach(() => {
     delete process.env.NO_UPDATE_NOTIFIER
-    process.exitCode = savedExitCode as any
+    process.exitCode = savedExitCode
     vi.clearAllMocks()
   })
 

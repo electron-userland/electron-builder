@@ -105,7 +105,7 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
   async function setup(tmpDir: TmpDir) {
     vi.clearAllMocks()
     // Default: ConvertTo-Json probe (execFileSync) succeeds so handleError reaches reject().
-    vi.mocked(execFileSync).mockImplementation(() => Buffer.from("") as any)
+    vi.mocked(execFileSync).mockImplementation(() => Buffer.from(""))
     // Default: modern OS — handleError does not short-circuit via isOldWin6().
     vi.mocked(osRelease).mockReturnValue("10.0.19041")
     const defaultFile = path.join(await tmpDir.getTempDir(), "test-update-1.0.1.exe")
@@ -620,8 +620,8 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     vi.clearAllMocks()
     const realCp = await vi.importActual<typeof import("child_process")>("child_process")
     const realOs = await vi.importActual<typeof import("os")>("os")
-    vi.mocked(execFile).mockImplementation(realCp.execFile as any)
-    vi.mocked(execFileSync).mockImplementation(realCp.execFileSync as any)
+    vi.mocked(execFile).mockImplementation(realCp.execFile)
+    vi.mocked(execFileSync).mockImplementation(realCp.execFileSync)
     vi.mocked(osRelease).mockImplementation(realOs.release)
     return { logger: createLogger(), realExecFileSync: realCp.execFileSync }
   }

@@ -40,7 +40,7 @@ describe.heavy.ifLinux("linux install", optionsForInstall, () => {
             await runInstallTest(context, "appImage", archFromString(arch), { toolsets: { appimage: "0.0.0" }, compression, appImage: { compression: legacyCompression } })
           })
         }
-        const toolsetAppImage: ToolsetConfig["appimage"][] = ["1.1.0", "1.0.3"]
+        const toolsetAppImage = ["1.1.0", "1.0.3"] satisfies ToolsetConfig["appimage"][]
         for (const appimage of toolsetAppImage) {
           for (const appImageCompression of APPIMAGE_COMPRESSIONS) {
             test.ifEnv(arch === process.arch)(`${arch} - toolset: ${appimage} - compression: ${compression} - compressor: ${appImageCompression}`, async context => {

@@ -332,16 +332,14 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
   },
 
   // ── macOS signing: one entry per moved field, per platform key ────────────
-  ...MAC_SIGN_FIELDS.map(
-    (field): LegacyConfigOption => ({
-      key: field,
-      scope: "mac",
-      replacement: `sign.${field}`,
-      autoMigrated: true,
-      severity: "error",
-      anchor: MAC_SIGN_ANCHOR,
-    })
-  ),
+  ...MAC_SIGN_FIELDS.map((field): LegacyConfigOption => ({
+    key: field,
+    scope: "mac",
+    replacement: `sign.${field}`,
+    autoMigrated: true,
+    severity: "error",
+    anchor: MAC_SIGN_ANCHOR,
+  })),
   {
     key: "signIgnore",
     scope: "mac",
@@ -351,27 +349,23 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
     detail: "Renamed to the @electron/osx-sign canonical name.",
     anchor: MAC_SIGN_ANCHOR,
   },
-  ...MAC_SIGN_REMOVED_FIELDS.map(
-    (field): LegacyConfigOption => ({
-      key: field,
-      scope: "mac",
-      replacement: null,
-      autoMigrated: true,
-      severity: "error",
-      detail: "@electron/osx-sign 2.x removed the `spctl --assess` step entirely, so there is no `sign.gatekeeperAssess` to move it to.",
-      anchor: MAC_SIGN_ANCHOR,
-    })
-  ),
-  ...MAC_UNIVERSAL_FIELDS.map(
-    (field): LegacyConfigOption => ({
-      key: field,
-      scope: "mac",
-      replacement: `universal.${field}`,
-      autoMigrated: true,
-      severity: "error",
-      anchor: "macuniversal",
-    })
-  ),
+  ...MAC_SIGN_REMOVED_FIELDS.map((field): LegacyConfigOption => ({
+    key: field,
+    scope: "mac",
+    replacement: null,
+    autoMigrated: true,
+    severity: "error",
+    detail: "@electron/osx-sign 2.x removed the `spctl --assess` step entirely, so there is no `sign.gatekeeperAssess` to move it to.",
+    anchor: MAC_SIGN_ANCHOR,
+  })),
+  ...MAC_UNIVERSAL_FIELDS.map((field): LegacyConfigOption => ({
+    key: field,
+    scope: "mac",
+    replacement: `universal.${field}`,
+    autoMigrated: true,
+    severity: "error",
+    anchor: "macuniversal",
+  })),
 ]
 
 /** A `LegacyConfigOption` with its `scope` expanded to a concrete parent path. */

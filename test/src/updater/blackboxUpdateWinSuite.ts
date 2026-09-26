@@ -2,7 +2,7 @@ import { ToolsetConfig } from "app-builder-lib"
 import { ParallelsVmManager } from "app-builder-lib/internal"
 import { copyFileSync, unlinkSync } from "fs"
 import { tmpdir } from "os"
-import { Arch, Configuration } from "electron-builder"
+import { Arch } from "electron-builder"
 import { spawn as nodeSpawn } from "child_process"
 import * as path from "path"
 import { TestContext } from "vitest"
@@ -220,7 +220,7 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
       const { expect } = context
       const tmpDir = new TmpDir("per-machine-sibling-test")
       const outDirs: ApplicationUpdatePaths[] = []
-      const buildConfig = deepAssign({ toolsets } as Configuration, { nsis: { perMachine: true } } as Partial<Configuration>)
+      const buildConfig = deepAssign({ toolsets }, { nsis: { perMachine: true } })
       await doBuild(expect, outDirs, "nsis", Arch.x64, tmpDir, /* isWindows */ true, buildConfig)
 
       const { cleanup, assertAlive } = await spawnSiblingProcess(vm, "TestApp.exe")

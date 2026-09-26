@@ -1,4 +1,4 @@
-import { GenericServerOptions, S3Options, UpdateInfo } from "builder-util-runtime"
+import { GenericServerOptions, S3Options } from "builder-util-runtime"
 import { UpdateCheckResult } from "electron-updater"
 import fsExtra from "fs-extra"
 import { createHash } from "crypto"
@@ -185,7 +185,7 @@ test("checkForUpdates several times", config, async ({ expect }) => {
 })
 
 async function checkDownloadPromise(expect: ExpectStatic, updateCheckResult: UpdateCheckResult | null) {
-  return await assertThat(expect, (await updateCheckResult?.downloadPromise)!.updateFile).isFile()
+  return await assertThat(expect, (await updateCheckResult!.downloadPromise)!.updateFile).isFile()
 }
 
 test("test error", config, async ({ expect }) => {
@@ -396,7 +396,7 @@ test("cancel download with progress", config, async ({ expect }) => {
     path: fileName,
     sha512,
     releaseDate: RELEASE_DATE,
-  } as UpdateInfo)
+  })
 
   const sockets = new Set<Socket>()
   const server = http.createServer((request, response) => {
