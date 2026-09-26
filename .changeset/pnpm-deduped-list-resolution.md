@@ -1,5 +1,0 @@
----
-"app-builder-lib": patch
----
-
-fix: resolve pnpm dependencies omitted from the `pnpm list --json` output by their declared range. Since pnpm 10.29.3 a repeated subtree is printed once and every later occurrence is a childless entry flagged `deduped: true`; the node-module collector recovered such an entry's dependencies by package name only, so when two versions of one package were installed the nested, version-conflicted copy was wired to the wrong version and its whole closure vanished from the packaged `node_modules` (the #8493 regression, e.g. `es5-ext@0.10.64` with `esniff`, `event-emitter` and `next-tick@1.1.0` dropped while the app pins `es5-ext@0.10.53`). The collector now resolves an omitted dependency against the dependent's declared range from its real store directory and takes the exact `name@version` entry, keeping the name-only match only as a fallback for `link:` dependencies, so version-conflicted transitive dependencies are no longer dropped with pnpm >= 10.29.3, 11 and 12.
