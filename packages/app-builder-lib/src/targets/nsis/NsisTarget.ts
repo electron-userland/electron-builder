@@ -79,6 +79,17 @@ export class NsisTarget extends Target {
     if (deps != null && deps["electron-squirrel-startup"] != null) {
       log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
+
+    if (this.options.useZip === true && !this.isZipPayload) {
+      if (this.isWebInstaller) {
+        log.warn({ target: this.name, solution: "useZip only applies to the nsis and portable targets" }, "useZip is ignored because the web installer always uses a 7z package")
+      } else {
+        log.warn(
+          { target: this.name, solution: "set differentialPackage: false to get a zip payload" },
+          "useZip is ignored because differential-aware builds always use a 7z payload"
+        )
+      }
+    }
   }
 
   get shouldBuildUniversalInstaller() {
@@ -98,21 +109,50 @@ export class NsisTarget extends Target {
     return !this.isPortable && this.options.differentialPackage !== false
   }
 
+  // Single source of truth for the payload format: the archive written in buildAppPackage and the
+  // extractor selected by the ZIP_COMPRESSION / COMPRESSION_METHOD defines must never disagree.
+  // The web installer's download/extract path only handles 7z, so it never gets a zip package.
+  private get isZipPayload(): boolean {
+    return !this.isWebInstaller && !this.isBuildDifferentialAware && this.options.useZip === true
+  }
+
+  private get isStoreAsar(): boolean {
+    return this.isBuildDifferentialAware && this.options.differentialPackage === "store-asar"
+  }
+
+  /**
+   * Everything that makes buildAppPackage's archive differ between targets. Targets sharing an
+   * AppPackageHelper (nsis + portable) reuse one app package per arch only when this key matches,
+   * so a target never embeds an archive whose format or layout was chosen by another target.
+   * @private
+   */
+  get appPackageCacheKey(): string {
+    const options = this.options
+    return JSON.stringify({
+      format: this.isZipPayload ? "zip" : "7z",
+      differentialAware: this.isBuildDifferentialAware,
+      storeAsar: this.isStoreAsar,
+      excluded: this.getPreCompressedFileExtensions(),
+      // mirrors CopyElevateHelper's per-target packElevateHelper / perMachine resolution
+      elevate: options.packElevateHelper !== false || options.perMachine === true,
+      blockmap: this.isBuildDifferentialAware && this.isWebInstaller,
+    })
+  }
+
   private getPreCompressedFileExtensions(): Array<string> | null {
     const result = this.isWebInstaller ? null : this.options.preCompressedFileExtensions
     return result == null ? null : asArray(result).map(it => (it.startsWith(".") ? it : `.${it}`))
   }
 
   /** @private */
-  async buildAppPackage(appOutDir: string, arch: Arch, elevateHelper?: CopyElevateHelper | null): Promise<PackageFileInfo> {
-    const options = this.options
+  async buildAppPackage(appOutDir: string, arch: Arch, elevateHelper?: CopyElevateHelper | null, fileNameSuffix = ""): Promise<PackageFileInfo> {
     const packager = this.packager
 
     const isBuildDifferentialAware = this.isBuildDifferentialAware
-    const format = !isBuildDifferentialAware && options.useZip ? "zip" : "7z"
-    const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
+    const format = this.isZipPayload ? "zip" : "7z"
+    const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}${fileNameSuffix}.nsis.${format}`)
     const preCompressedFileExtensions = this.getPreCompressedFileExtensions()
-    const isStoreAsar = isBuildDifferentialAware && options.differentialPackage === "store-asar"
+    const isStoreAsar = this.isStoreAsar
     if (isStoreAsar) {
       await this.warnIfStoreAsarHasNoAsar(appOutDir)
     }
@@ -645,12 +685,11 @@ export class NsisTarget extends Target {
     }
 
     if (!this.isWebInstaller && defines.APP_BUILD_DIR == null) {
-      const options = this.options
-      if (options.useZip) {
+      if (this.isZipPayload) {
         defines.ZIP_COMPRESSION = null
       }
 
-      defines.COMPRESSION_METHOD = options.useZip ? "zip" : "7z"
+      defines.COMPRESSION_METHOD = this.isZipPayload ? "zip" : "7z"
     }
   }
 

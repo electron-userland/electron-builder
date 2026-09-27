@@ -17,7 +17,10 @@ export interface PackArchResult {
 }
 
 export class AppPackageHelper {
-  private readonly archToResult = new Map<Arch, Promise<PackArchResult>>()
+  // keyed by arch + the requesting target's appPackageCacheKey: targets only share an app package
+  // when packaging it for them would produce the same archive
+  private readonly archToResult = new Map<string, Promise<PackArchResult>>()
+  private readonly archToPackageCount = new Map<Arch, number>()
   private readonly infoToIsDelete = new Map<PackageFileInfo, boolean>()
 
   /** @private */
@@ -26,14 +29,20 @@ export class AppPackageHelper {
   constructor(private readonly elevateHelper: CopyElevateHelper) {}
 
   async packArch(arch: Arch, target: NsisTarget): Promise<PackArchResult> {
-    let resultPromise = this.archToResult.get(arch)
+    const cacheKey = `${arch}:${target.appPackageCacheKey}`
+    let resultPromise = this.archToResult.get(cacheKey)
     if (resultPromise == null) {
       const appOutDir = target.archs.get(arch)!
-      resultPromise = target.buildAppPackage(appOutDir, arch, this.elevateHelper).then(async fileInfo => ({
+      // the first package of an arch keeps the usual file name; any further one (a target with
+      // different packaging settings) gets a distinct name so it never overwrites the other
+      const packageCount = (this.archToPackageCount.get(arch) ?? 0) + 1
+      this.archToPackageCount.set(arch, packageCount)
+      const fileNameSuffix = packageCount === 1 ? "" : `-${packageCount}`
+      resultPromise = target.buildAppPackage(appOutDir, arch, this.elevateHelper, fileNameSuffix).then(async fileInfo => ({
         fileInfo,
         unpackedSize: await dirSize(appOutDir),
       }))
-      this.archToResult.set(arch, resultPromise)
+      this.archToResult.set(cacheKey, resultPromise)
     }
 
     const result = await resultPromise
