@@ -74,7 +74,7 @@ async function seedDownloadedUpdate(
   return { installerPath, sha512, fileInfo, updateInfo }
 }
 
-describe("install on next launch", { sequential: true }, () => {
+describe("install on next launch", { concurrent: false }, () => {
   let cacheDir: string
   let helper: DownloadedUpdateHelper
   let log: ReturnType<typeof makeLogger>

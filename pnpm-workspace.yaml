@@ -8,7 +8,6 @@ allowBuilds:
   '@swc/core': true
   core-js: false
   electron: false
-  electron-winstaller: true
   esbuild: false
 
 # 10080 minutes = 7 days
@@ -19,6 +18,16 @@ minimumReleaseAgeExclude:
   - '@esbuild/*' # platform binaries released in lockstep with esbuild 0.28.1
   # Renovate security update: electron@39.8.10
   - electron@39.8.10
+  # Renovate security update: toml@4.2.0
+  - toml@4.2.0
+  # Renovate security update: js-yaml@4.3.2
+  - js-yaml@4.3.2
+  # Renovate security update: tar@7.5.21
+  - tar@7.5.21
+  # Renovate security update: undici@7.29.0
+  - undici@7.29.0
+  # Renovate security update: form-data@4.0.6
+  - form-data@4.0.6
 patchedDependencies:
   '@changesets/cli@2.29.7': patches/@changesets__cli@2.29.7.patch
   '@changesets/assemble-release-plan@6.0.9': patches/@changesets__assemble-release-plan@6.0.9.patch

@@ -169,11 +169,12 @@ describe("migrateProgrammaticSource — formatting & comment fidelity", () => {
     expect(result.status).toBe("migrated")
     // Compare parsed objects, not whitespace: the signing fields are grouped under mac.sign,
     // everything else is preserved, and the top-level shape is unchanged.
+    // gatekeeperAssess is removed, not moved: @electron/osx-sign 2.x dropped the spctl --assess
+    // step, so mac.sign.gatekeeperAssess does not exist and the schema rejects it.
     expect(objFromCjs(result.code)).toEqual({
       mac: {
         sign: {
           hardenedRuntime: true,
-          gatekeeperAssess: true,
         },
         target: "dmg",
         extendInfo: {
@@ -181,6 +182,7 @@ describe("migrateProgrammaticSource — formatting & comment fidelity", () => {
         },
       },
     })
+    expect(result.changes.some(c => c.key === "mac.gatekeeperAssess")).toBe(true)
   })
 
   test("preserves comments, imports, and functions on untouched code", () => {
@@ -249,6 +251,22 @@ describe("migrateProgrammaticSource — per-rule coverage (CJS, drift-checked vs
     publishGithub: `module.exports = { publish: [{ provider: "github", vPrefixedTagName: false }] }\n`,
     publishGithubGitlab: `module.exports = { publish: [{ provider: "github", vPrefixedTagName: false }, { provider: "gitlab", vPrefixedTagName: false }] }\n`,
     electronDownload: `module.exports = { electronDownload: { mirror: "https://m", isVerifyChecksum: false, cache: "/tmp" } }\n`,
+    electronDownloadForce: `module.exports = { electronDownload: { force: true, mirrorOptions: { mirror: "https://m" } } }\n`,
+    electronGetLegacy: `module.exports = { electronGet: { mirror: "https://m", isVerifyChecksum: false } }\n`,
+    platformAsarUnpack: `module.exports = { mac: { asarUnpack: ["**/*.node"] }, win: { asar: true, asarUnpack: "x.dll" }, masDev: { asar: { smartUnpack: false }, asarUnpack: "y" } }\n`,
+    platformAsarDisabled: `module.exports = { linux: { asar: false, asarUnpack: "x" }, win: { asarUnpack: "y" }, asar: false }\n`,
+    rootAsarFalse: `module.exports = { asar: false, asarUnpack: "x", disableSanityCheckAsar: true }\n`,
+    toolsets: `module.exports = { toolsets: { wine: null, nsis: "1.2.1", appimage: "1.0.2" } }\n`,
+    nativeRebuilderLegacy: `module.exports = { nativeRebuilder: "legacy", npmRebuild: false }\n`,
+    macNulls: `module.exports = { mac: { sign: null, type: null, provisioningProfile: null, identity: null, singleArchFiles: null } }\n`,
+    macOnlyNulls: `module.exports = { mac: { sign: null, type: null, target: "dmg" } }\n`,
+    publishTagPrefixKept: `module.exports = { publish: { provider: "github", tagNamePrefix: "release-", vPrefixedTagName: false } }\n`,
+    publishTagPrefixEmpty: `module.exports = { publish: [{ provider: "github", tagNamePrefix: "" }, { provider: "github", tagNamePrefix: "", vPrefixedTagName: false }] }\n`,
+    publishInTargetSection: `module.exports = { nsis: { publish: { provider: "github", vPrefixedTagName: false } }, dmg: { publish: [{ provider: "github", vPrefixedTagName: true }] } }\n`,
+    snapCore24: `module.exports = { snap: { base: "core24", allowNativeWayland: true, grade: "stable" } }\n`,
+    winSignAndEditFalse: `module.exports = { win: { signAndEditExecutable: false } }\n`,
+    winSignDisabledLegacy: `module.exports = { win: { signExecutable: false, signtoolOptions: { certificateFile: "c.pfx" } } }\n`,
+    winSignNullSigntool: `module.exports = { win: { sign: null, signtoolOptions: { certificateFile: "c.pfx" } } }\n`,
   }
 
   for (const [name, src] of Object.entries(fixtures)) {
@@ -274,6 +292,43 @@ describe("migrateProgrammaticSource — warnings", () => {
     expect(result.warnings.some(w => w.includes("cache"))).toBe(true)
     expect(result.code).toContain("electronGet")
     expect(result.code).toContain("mirrorOptions")
+  })
+})
+
+describe("migrateProgrammaticSource — v27 audit rules that stay manual", () => {
+  // A platform-level asar replaces the root one in v27; copying the root options into it is left to the user.
+  test("platform asarUnpack next to root-level asar options warns instead of rewriting", () => {
+    const result = run(`module.exports = { asarUnpack: "root/**", mac: { asarUnpack: "m/**" } }\n`)
+    expect(result.warnings.some(w => w.startsWith("mac.asar:"))).toBe(true)
+    expect(objFromCjs(result.code).mac).toEqual({ asarUnpack: "m/**" })
+  })
+
+  test("shorthand or non-literal asar values are never rewritten", () => {
+    const result = run(`const asar = { smartUnpack: false }\nmodule.exports = { asar, mac: { asarUnpack: "m/**" } }\n`)
+    expect(result.warnings.some(w => w.startsWith("mac.asar:"))).toBe(true)
+    expect(result.code).toContain(`mac: { asarUnpack: "m/**" }`)
+  })
+
+  test("squirrelWindows.customSquirrelVendorDir warns and is left in place", () => {
+    const src = `module.exports = { squirrelWindows: { customSquirrelVendorDir: "./vendor" } }\n`
+    const result = run(src)
+    expect(result.status).toBe("no-op")
+    expect(result.code).toBe(src)
+    expect(result.warnings.some(w => w.includes("toolsets.squirrel"))).toBe(true)
+  })
+
+  test("asar: true change log distinguishes a populated replacement from a removal", () => {
+    const replaced = run(`module.exports = { asar: true, asarUnpack: "**/*.node" }\n`).changes.find(c => c.key === "asar")
+    expect(replaced?.description).toBe("replaced asar: true with an asar object carrying unpack")
+    const removed = run(`module.exports = { asar: true }\n`).changes.find(c => c.key === "asar")
+    expect(removed?.description).toContain("removed redundant asar: true")
+  })
+
+  test("mac config without entitlements emits the entitlements advisory", () => {
+    expect(run(`module.exports = { mac: { target: "dmg" } }\n`).advisories.some(a => a.includes("allow-jit"))).toBe(true)
+    expect(run(`module.exports = { mac: { entitlements: "build/e.plist" } }\n`).advisories).toHaveLength(0)
+    expect(run(`module.exports = { mac: { sign: "./customSign.js" } }\n`).advisories).toHaveLength(0)
+    expect(run(`module.exports = { mac: { identity: null } }\n`).advisories).toHaveLength(0)
   })
 })
 
