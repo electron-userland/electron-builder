@@ -89,7 +89,7 @@ New features and bug fixes need tests. Tests live under [`test/src`](https://git
 The full suite is very slow. Scope your run to the tests you touched with `TEST_FILES` (comma-separated, no file extension):
 
 ```sh
-TEST_FILES=oneClickInstallerTest,assistedInstallerTest pnpm ci:test
+TEST_FILES=oneClickInstaller,assistedInstaller pnpm ci:test
 ```
 
 Set `TEST_APP_TMP_DIR` to inspect the build output afterwards:
@@ -107,7 +107,7 @@ TEST_APP_TMP_DIR=/tmp/electron-builder-test TEST_FILES=oneClickInstallerTest pnp
 pnpm ci:validate
 ```
 
-This runs dependency checks, ESLint, type-checking for both source and tests, regenerates the JSON schema, and applies Prettier. **Commit anything it regenerates** (most commonly `packages/app-builder-lib/scheme.json` and formatting fixes).
+This runs dependency checks, oxlint (type-aware), type-checking for both source and tests, regenerates the JSON schema, and formats the sources with oxfmt. **Commit anything it regenerates** (most commonly `packages/app-builder-lib/scheme.json` and formatting fixes).
 
 ### 6. Generate a changeset
 
@@ -171,7 +171,8 @@ In the PR body, describe what you're trying to do, how you verified it, and link
 pnpm install               # install dependencies
 pnpm compile               # build + generate toolset tests (pnpm compile:watch for iteration)
 TEST_FILES=<name> pnpm ci:test   # run scoped tests
-pnpm ci:validate           # lint + typecheck + regenerate schema + prettier
+pnpm ci:validate           # lint + typecheck + regenerate schema + format
+pnpm format:check          # verify formatting (CI fails on unformatted files)
 pnpm generate:changeset    # create the changeset for your change
 ```
 
@@ -295,12 +296,13 @@ Always run `pnpm compile` before executing tests — it generates the toolset te
 
 ```sh
 pnpm compile
-TEST_APP_TMP_DIR=/tmp/electron-builder-test TEST_FILES=oneClickInstallerTest,assistedInstallerTest,webInstallerTest pnpm ci:test
+TEST_APP_TMP_DIR=/tmp/electron-builder-test TEST_FILES=oneClickInstaller,assistedInstaller,webInstaller pnpm ci:test
 ```
 
 | Variable | Purpose |
 | --- | --- |
-| `TEST_FILES` | Comma-separated test filenames without extension (e.g. `oneClickInstallerTest`). Scopes the run — the full suite is very slow. |
+| `TEST_FILES` | Comma-separated test filenames without extension (e.g. `oneClickInstallerTest`). Scopes the run — the full suite is very slow. Matched as a substring, so `snapHeavy` selects `snapHeavy.e2e.ts`. |
+| `TEST_MODE` | `all` (default), `unit` or `e2e`. Packaging tests that build an installer/archive and read it back live in `*.e2e.ts` files; `unit` runs only the `*Test.ts` files (app-directory level), `e2e` only the `*.e2e.ts` files. `TEST_FILES` always wins over the mode. |
 | `TEST_APP_TMP_DIR` | Fixed directory for build output so you can inspect and use the test build. Used instead of a random temp directory and **emptied on each run**. Shared by every test — pair it with a single-test `TEST_FILES` only. |
 
 ### VS Code

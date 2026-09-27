@@ -5,7 +5,7 @@ import { LogMessageByKey, type Package, readJsonOrNull } from "./moduleManager.j
 import { NodeModulesCollector } from "./nodeModulesCollector.js"
 import { getPackageManagerCommand, PM } from "./packageManager.js"
 import type { PackageJson, PnpmDependency } from "./types.js"
-import { isValidKey } from "builder-util"
+import { exists, isValidKey } from "builder-util"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
   public readonly installOptions = {
@@ -25,10 +25,10 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   })
 
   /**
-   * Detect pnpm's installed layout from the on-disk structure rather than `pnpm config list`.
-   * pnpm 11 no longer echoes `node-linker` (from `.npmrc`) in `config list`, so the base-class
-   * config-parsing detection silently reports "not hoisted" for a hoisted install, which would
-   * disable the downward search needed to find version-conflicted nested deps.
+   * Detect pnpm's installed layout from the on-disk structure rather than from config.
+   * pnpm 11 ignores `node-linker` in `.npmrc` (it moved to `nodeLinker` in `pnpm-workspace.yaml`),
+   * so config parsing can report "not hoisted" for a hoisted install, which would disable the
+   * downward search needed to find version-conflicted nested deps.
    *
    * In the default isolated store every regular top-level package resolves — through a symlink
    * on POSIX, a junction on Windows — into `node_modules/.pnpm/<name>@<ver>/node_modules/<name>`.
@@ -39,7 +39,48 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
    * otherwise mask an isolated store.
    */
   protected override isHoisted = new Lazy<boolean>(async () => {
-    const nmDir = path.join(this.rootDir, "node_modules")
+    // A workspace package's own `node_modules` is often absent (or holds only its version
+    // conflicts) in a hoisted workspace, so fall back to the workspace root's `node_modules`.
+    let sawPackage = false
+    for (const dir of await this.layoutRoots.value) {
+      const isolated = await this.scanNodeModulesLayout(path.join(dir, "node_modules"))
+      if (isolated != null) {
+        if (isolated) {
+          return false
+        }
+        sawPackage = true
+      }
+    }
+    // Packages exist and none route through `.pnpm` → hoisted. No packages → flat default.
+    return sawPackage
+  })
+
+  /**
+   * The pnpm workspace root containing `rootDir` (nearest ancestor with `pnpm-workspace.yaml`, as pnpm
+   * itself resolves it), or null outside a workspace or when `rootDir` is the workspace root.
+   */
+  private readonly workspaceRoot = new Lazy<string | null>(async () => {
+    let current = path.resolve(this.rootDir)
+    while (true) {
+      if (await exists(path.join(current, "pnpm-workspace.yaml"))) {
+        return current === path.resolve(this.rootDir) ? null : current
+      }
+      const parent = path.dirname(current)
+      if (parent === current) {
+        return null
+      }
+      current = parent
+    }
+  })
+
+  /** `rootDir`, then the workspace root when `rootDir` is a workspace package. */
+  private readonly layoutRoots = new Lazy<string[]>(async () => {
+    const workspaceRoot = await this.workspaceRoot.value
+    return workspaceRoot == null ? [this.rootDir] : [this.rootDir, workspaceRoot]
+  })
+
+  /** Returns true if `nmDir` is an isolated (`.pnpm`) store, false if hoisted, null if it holds no packages. */
+  private async scanNodeModulesLayout(nmDir: string): Promise<boolean | null> {
     const entries = await _fsExtra.readdir(nmDir).catch(() => [] as string[])
     let sawPackage = false
     for (const name of entries) {
@@ -56,13 +97,12 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
         }
         sawPackage = true
         if (real.split(path.sep).includes(".pnpm")) {
-          return false // isolated store: a package routes through the virtual store
+          return true // isolated store: a package routes through the virtual store
         }
       }
     }
-    // Packages exist and none route through `.pnpm` → hoisted. No packages → flat default.
-    return sawPackage
-  })
+    return sawPackage ? false : null
+  }
 
   /**
    * Memo for `locateFromDepOrRoot`, keyed by `name@version`. pnpm's content-addressed virtual
@@ -149,9 +189,15 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       // `.pnpm` virtual store it stays true (forcing it on there would burn thousands of
       // readdir/lstat calls — and on Windows, where pnpm uses junctions that `lstat` reports as
       // directories, the BFS walks the entire store and resolves the wrong paths).
-      const satisfying =
-        (parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch, skipOverrideFallback: true }) : null) ??
-        (await this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange, skipDownwardSearch, skipOverrideFallback: true }))
+      //
+      // When `rootDir` is a workspace package, a hoisted install keeps the tree — including the
+      // nested `<workspaceRoot>/node_modules/A/node_modules/B` copies — under the workspace root,
+      // which the downward BFS from `rootDir` never reaches (its `node_modules` is often absent),
+      // so search the workspace root last.
+      let satisfying = parentPath ? await this.cache.locatePackageVersion({ pkgName, parentDir: parentPath, requiredRange, skipDownwardSearch, skipOverrideFallback: true }) : null
+      for (const dir of await this.layoutRoots.value) {
+        satisfying ??= await this.cache.locatePackageVersion({ pkgName, parentDir: dir, requiredRange, skipDownwardSearch, skipOverrideFallback: true })
+      }
       if (satisfying) {
         return satisfying
       }
@@ -229,13 +275,14 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
 
     const deps: Record<string, PnpmDependency> = { ...(tree.dependencies || {}), ...(tree.optionalDependencies || {}) }
 
-    // pnpm --prod omits sub-deps for link: packages (and synthetic entries derived from them).
-    // For any dep declared in the package.json (all) that pnpm left out of the tree, recover
-    // the resolved entry from allDependencies so it lands in the production graph.
-    const byName = this.getAllDepsByName()
-    for (const depName of Object.keys(all)) {
+    // pnpm --prod omits sub-deps for link: packages (and synthetic entries derived from them), and pnpm
+    // 10.29.3+ prints a repeated subtree only once, so every later occurrence is a childless `deduped`
+    // stub (which is what `tree` is when the stub was the first occurrence collected). For any dep
+    // declared in the package.json (all) that pnpm left out of the tree, recover the resolved entry
+    // from allDependencies so it lands in the production graph.
+    for (const [depName, declaredRange] of Object.entries(all)) {
       if (!deps[depName]) {
-        const dep = byName.get(depName)
+        const dep = await this.resolveOmittedDependency(depName, declaredRange, tree.path)
         if (dep && isValidKey(depName)) {
           deps[depName] = dep
         }
@@ -272,6 +319,25 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
       }
     }
     this.productionGraph[dependencyId] = { dependencies: collectedDependencies }
+  }
+
+  /**
+   * Resolve a dependency that `pnpm list` left out of a package's tree to its `allDependencies` entry.
+   * The lookup goes through the copy node itself would load from `parentPath` (the package's real store
+   * directory), filtered by the declared range, and falls back to a name-only match only when nothing on
+   * disk resolves to a collected entry (a `link:` dep, whose entry is keyed by its `link:` version).
+   *
+   * A name-only lookup returns whichever version was collected first, which is wrong as soon as two
+   * versions of the package are installed: with the app pinning es5-ext@0.10.53 while its transitive
+   * d@1.0.2 needs es5-ext ^0.10.64, `d` was wired to 0.10.53 and the nested 0.10.64 copy (with its own
+   * esniff / event-emitter / next-tick@1.1.0 closure) vanished from the asar (#8493). pnpm 10.29.3+
+   * made this common, because its deduped output routes every repeated package through this recovery.
+   */
+  private async resolveOmittedDependency(depName: string, declaredRange: unknown, parentPath: string | undefined): Promise<PnpmDependency | undefined> {
+    const range = typeof declaredRange === "string" ? declaredRange : undefined
+    const located = await this.locateFromDepOrRoot(depName, parentPath, range)
+    const exact = located ? this.allDependencies.get(`${depName}@${located.packageJson.version}`) : undefined
+    return exact ?? this.getAllDepsByName().get(depName)
   }
 
   protected async collectAllDependencies(_tree: PnpmDependency, _appPackageName: string): Promise<void> {

@@ -24,7 +24,7 @@ test("stops reading a buffer download after the size limit", async () => {
     cancellationToken: new CancellationToken(),
   })
 
-  executor.response.emit("data", { length: 524288001 } as Buffer)
+  executor.response.emit("data", { length: 524288001 })
   executor.response.emit("data", Buffer.from("ignored"))
   executor.response.emit("end")
 

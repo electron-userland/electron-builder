@@ -263,10 +263,12 @@ test.ifNotWindows("hooks as functions", ({ expect }) => {
   )
 })
 
+// The hook files only have to load and run (they log); a dir target exercises beforePack/afterExtract/afterPack without
+// building the zips. Artifact hook counts (artifactBuildStarted/Completed) are covered by "hooks as functions" above.
 test.ifNotWindows("hooks as file - cjs", async ({ expect }) => {
   const hookScript = path.join(getFixtureDir(), "build-hook.cjs")
   return assertPack(expect, "test-app-one", {
-    targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
+    targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET, "x64"),
     config: {
       artifactBuildStarted: hookScript,
       artifactBuildCompleted: hookScript,
@@ -280,7 +282,7 @@ test.ifNotWindows("hooks as file - cjs", async ({ expect }) => {
 test.ifNotWindows("hooks as file - mjs exported functions", async ({ expect }) => {
   const hookScript = path.join(getFixtureDir(), "build-hook.mjs")
   return assertPack(expect, "test-app-one", {
-    targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
+    targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET, "x64"),
     config: {
       artifactBuildStarted: hookScript,
       artifactBuildCompleted: hookScript,

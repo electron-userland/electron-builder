@@ -29,6 +29,22 @@ async function buildTempTree(packages: Record<string, { name: string; version: s
 // ---------------------------------------------------------------------------
 
 describe("ModuleManager.locatePackageVersion", () => {
+  test("shares in-flight cache lookups for the same key", async ({ expect }) => {
+    const manager = new ModuleManager()
+    const root = await projectTmpDir.createTempDir()
+    const file = path.join(root, "missing")
+
+    try {
+      const first = manager.exists[file]
+      const second = manager.exists[file]
+
+      expect(second).toBe(first)
+      await expect(first).resolves.toBe(false)
+    } finally {
+      await fse.rm(root, { recursive: true, force: true })
+    }
+  })
+
   describe("basic resolution", () => {
     test("returns null when parentDir is undefined", async ({ expect }) => {
       const manager = new ModuleManager()
@@ -83,7 +99,7 @@ describe("ModuleManager.locatePackageVersion", () => {
     })
   })
 
-  describe("upward (hoisted) resolution", { sequential: true }, () => {
+  describe("upward (hoisted) resolution", { concurrent: false }, () => {
     let root = ""
     afterEach(async () => {
       if (root) {
@@ -109,7 +125,7 @@ describe("ModuleManager.locatePackageVersion", () => {
     })
   })
 
-  describe("override fallback (two-pass search)", { sequential: true }, () => {
+  describe("override fallback (two-pass search)", { concurrent: false }, () => {
     let root = ""
     afterEach(async () => {
       if (root) {
@@ -195,7 +211,7 @@ describe("ModuleManager.locatePackageVersion", () => {
   })
 })
 
-describe("ModuleManager downward search", { sequential: true }, () => {
+describe("ModuleManager downward search", { concurrent: false }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {
@@ -288,7 +304,7 @@ describe("ModuleManager downward search", { sequential: true }, () => {
   })
 })
 
-describe("ModuleManager.semverSatisfies (via locatePackageVersion)", { sequential: true }, () => {
+describe("ModuleManager.semverSatisfies (via locatePackageVersion)", { concurrent: false }, () => {
   let root = ""
   afterEach(async () => {
     if (root) {

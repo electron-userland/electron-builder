@@ -127,7 +127,11 @@ export class NsisTarget extends Target {
     // Opt-in via differentialPackage: "store-asar" — keep the asar a byte-stable Copy member so a
     // differential update pays only for its changed blocks instead of re-downloading the whole
     // recompressed asar (see nsisOptions docs). The blockmap chunks these verbatim bytes finer.
-    const storedPaths = isBuildDifferentialAware && options.differentialPackage === "store-asar" ? ["resources/app.asar"] : null
+    const isStoreAsar = isBuildDifferentialAware && options.differentialPackage === "store-asar"
+    if (isStoreAsar) {
+      await this.warnIfStoreAsarHasNoAsar(appOutDir)
+    }
+    const storedPaths = isStoreAsar ? ["resources/app.asar"] : null
     const storedMemberFiles = (storedPaths ?? []).map(it => path.join(appOutDir, it))
     const archiveOptions: ArchiveOptions = {
       withoutDir: true,
@@ -168,6 +172,31 @@ export class NsisTarget extends Target {
       return { fileInfo: await createPackageFileInfo(archiveFile), storedMemberFiles }
     }
   }
+
+  /**
+   * `archive()` silently skips stored paths that don't exist, so without an asar (e.g. `asar: false`)
+   * "store-asar" would do nothing unnoticed. The fallback is harmless — the differential package is
+   * non-solid, so each unpacked file is already its own block — but say so once per target.
+   * @private
+   */
+  async warnIfStoreAsarHasNoAsar(appOutDir: string): Promise<void> {
+    // every arch is packaged with the same asar setting, so checking the first one is enough (and
+    // flagging before the await keeps concurrent per-arch packaging from warning twice)
+    if (this.storeAsarChecked) {
+      return
+    }
+    this.storeAsarChecked = true
+    const asarFile = path.join(appOutDir, "resources", "app.asar")
+    if (await exists(asarFile)) {
+      return
+    }
+    log.warn(
+      { reason: "resources/app.asar not found (e.g. asar is disabled)", file: log.filePath(asarFile) },
+      'differentialPackage "store-asar" has no effect, the app package is compressed normally'
+    )
+  }
+
+  private storeAsarChecked = false
 
   protected installerFilenamePattern(primaryArch?: Arch | null, defaultArch?: string): string {
     const setupText = this.isPortable ? "" : "Setup "

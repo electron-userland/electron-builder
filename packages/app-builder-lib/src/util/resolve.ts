@@ -23,7 +23,7 @@ export async function resolveFunction<T>(type: string | undefined, executor: T |
     return executor
   }
 
-  let p = executor as string
+  let p = executor
   if (p.startsWith(".")) {
     p = path.resolve(p)
     let realP = p
