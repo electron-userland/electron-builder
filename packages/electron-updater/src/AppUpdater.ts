@@ -498,11 +498,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return it
       }
 
-      void it.downloadPromise.then(() => {
-        const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
-        const ElectronNotification = require("electron").Notification
-        new ElectronNotification(notificationContent).show()
-      })
+      void it.downloadPromise.then(
+        () => {
+          const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
+          const ElectronNotification = require("electron").Notification
+          new ElectronNotification(notificationContent).show()
+        },
+        () => {
+          // downloadUpdate already dispatches the error event
+        }
+      )
 
       return it
     })

@@ -19,6 +19,18 @@ const stubApp: AppAdapter = {
 
 const installOpts: InstallOptions = { isSilent: false, isForceRunAfter: false, isAdminRightsRequired: false }
 
+it("handles a failed checkForUpdatesAndNotify background download", async () => {
+  const updater = new DebUpdater(null, stubApp)
+  const result = {
+    updateInfo: { version: "2.0.0" },
+    downloadPromise: Promise.reject(new Error("download failed")),
+  } as any
+  vi.spyOn(updater, "checkForUpdates").mockResolvedValue(result)
+
+  await expect(updater.checkForUpdatesAndNotify()).resolves.toBe(result)
+  await new Promise(resolve => setImmediate(resolve))
+})
+
 it("preserves fractional staged rollout percentages", async () => {
   const updater = new DebUpdater(null, stubApp)
   Object.defineProperty(updater, "stagingUserIdPromise", {
