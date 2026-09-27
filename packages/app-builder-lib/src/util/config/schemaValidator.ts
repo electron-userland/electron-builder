@@ -14,6 +14,23 @@ const ajv = new Ajv({
   strict: false,
 })
 
+// KNOWN GAP — `typeof` is an ajv-keywords keyword and ajv-keywords is not installed. Under
+// `strict: false` an unregistered keyword is silently ignored, so every `{ "typeof": "function" }`
+// branch behaves as an empty schema that matches ANYTHING. Those branches sit inside `anyOf`s, so
+// the enclosing union accepts any value: most consequentially `mac.sign` / `mas.sign`, where an
+// unsupported or typo'd key validates here and is then dropped at build time with no error.
+//
+// Registering the keyword is NOT a safe drop-in fix. scheme.json currently emits
+// `anyOf: [{ "typeof": "function" }, { "type": "null" }]` for several object-valued options —
+// LinuxDesktopFile.entry / .desktopActions, ReleaseInfo.vendor, SnapOptions*.layout / .slots, and
+// CustomPublishOptions.updateProvider — i.e. their object branch is missing and they validate today
+// only because this keyword is ignored. Registering `typeof` would reject those valid configs.
+//
+// Fixing this therefore means correcting schema generation for those definitions first, then
+// registering the keyword. Until then `checkLegacyConfiguration` covers the v26 keys that actually
+// matter for migration, which is the part of this hole an upgrader can hit.
+// See util/config/legacyConfigGuard.ts.
+
 // Cache the compiled validator for the canonical scheme.json so it is only
 // compiled once per process lifetime.
 let _cachedValidate: ValidateFunction | undefined

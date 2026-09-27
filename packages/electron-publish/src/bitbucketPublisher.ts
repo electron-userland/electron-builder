@@ -30,8 +30,14 @@ export class BitbucketPublisher extends HttpPublisher {
     // - With a username, the token is sent as HTTP Basic auth: a Bitbucket username + app password, or an Atlassian account email + API token.
     // - Without a username, the token is treated as a repository/project/workspace access token and sent as Bearer auth.
     if (isEmptyOrSpaces(username)) {
-      log.info(
-        'No Bitbucket username provided via "BITBUCKET_USERNAME"; sending the token as an access token (Bearer auth). Set "BITBUCKET_USERNAME" to authenticate with an app password or API token instead.'
+      // Warn rather than inform: v26 always sent Basic auth using the repository owner as the
+      // username, so a CI job supplying an app password / API token with no username silently
+      // switches scheme here and the upload fails authentication.
+      log.warn(
+        'No Bitbucket username provided via "BITBUCKET_USERNAME"; sending the token as an access token (Bearer auth). ' +
+          "This changed in v27 — electron-builder <= 26 always used Basic auth with the repository owner as the username. " +
+          'If your token is an app password or an Atlassian API token, set "BITBUCKET_USERNAME" (or bitbucket.username) or authentication will fail. ' +
+          "See https://www.electron.build/docs/migration/v27-breaking-changes#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth"
       )
       this.auth = BitbucketPublisher.convertAccessToken(token)
     } else {

@@ -29,7 +29,7 @@ function makeUpdateInfo(version = "1.0.1"): UpdateInfo {
   return { version, files: [], path: "", sha512: "", releaseDate: "" }
 }
 
-describe("downloadedUpdateHelper", { sequential: true }, () => {
+describe("downloadedUpdateHelper", { concurrent: false }, () => {
   describe("DownloadedUpdateHelper.getValidCachedUpdateFile", () => {
     let cacheDir: string
     let helper: DownloadedUpdateHelper

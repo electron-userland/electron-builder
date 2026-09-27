@@ -48,7 +48,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
       provider: "generic",
       url: "https://example.com/updates",
       publisherName: ["Acme Corp"],
-    } as GenericServerOptions)
+    })
     const logger = mockLogger()
     updater.logger = logger
     const verifyHook = vi.fn().mockResolvedValue(null)
@@ -68,7 +68,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
       provider: "generic",
       url: "https://example.com/updates",
       publisherName: "Acme Corp" as any,
-    } as GenericServerOptions)
+    })
     updater.logger = mockLogger()
     const verifyHook = vi.fn().mockResolvedValue(null)
     updater.verifyUpdateCodeSignature = verifyHook

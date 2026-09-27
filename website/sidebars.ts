@@ -78,6 +78,8 @@ const sidebars: SidebarsConfig = {
     { type: "doc", id: "features/hooks", label: "Hooks" },
     { type: "doc", id: "features/icons-and-images", label: "Icons & Images" },
     { type: "doc", id: "features/auto-update", label: "Auto Update" },
+    { type: "doc", id: "features/signed-update-manifests", label: "Signed Update Manifests" },
+    { type: "doc", id: "features/key-rotation", label: "Key Rotation" },
     { type: "doc", id: "features/security", label: "Security & Hardening" },
     {
       type: "category",
