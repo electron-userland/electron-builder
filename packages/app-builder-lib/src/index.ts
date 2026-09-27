@@ -94,7 +94,19 @@ export { PlatformPackager } from "./platformPackager.js"
 export { PublishManager } from "./publish/PublishManager.js"
 export { WinPackager } from "./winPackager.js"
 
-const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
+const expectedOptions = new Set([
+  "publish",
+  "targets",
+  "mac",
+  "win",
+  "linux",
+  "projectDir",
+  "platformPackagerFactory",
+  "config",
+  "effectiveOptionComputed",
+  "afterPackTestHook",
+  "prepackaged",
+])
 
 export function checkBuildRequestOptions(options: PackagerOptions & PublishOptions) {
   for (const optionName of Object.keys(options)) {

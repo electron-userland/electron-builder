@@ -1,4 +1,4 @@
-import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError, unlinkIfExists } from "builder-util"
+import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError } from "builder-util"
 import { rename, utimes } from "fs/promises"
 import * as path from "path"
 import * as fs from "fs"
@@ -232,11 +232,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     await savePlistFile(helperPlistFilename, helperPlist)
   }
 
-  await Promise.all([
-    doRename(path.join(contentsPath, "MacOS"), electronBranding.productName, appPlist.CFBundleExecutable as string),
-    unlinkIfExists(path.join(appOutDir, "LICENSE")),
-    unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
-  ])
+  await doRename(path.join(contentsPath, "MacOS"), electronBranding.productName, appPlist.CFBundleExecutable as string)
 
   await moveHelpers(
     getAvailableHelperSuffixes({

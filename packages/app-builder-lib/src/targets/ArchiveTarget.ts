@@ -78,7 +78,7 @@ export class ArchiveTarget extends Target {
 
         if (this.isWriteUpdateInfo && format === "zip") {
           if (isMac) {
-            updateInfo = await createBlockmap(artifactPath, this, packager, artifactName)
+            updateInfo = await createBlockmap(artifactPath, this, packager, artifactName, arch)
           } else {
             updateInfo = await appendBlockmap(artifactPath)
           }

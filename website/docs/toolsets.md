@@ -19,32 +19,33 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 | `winCodeSign` | Windows code signing & resource editing (`signtool` / `osslsigncode`, `rcedit`, Windows Kits for AppX/MSIX) | `1.3.0` |
 | `appimage` | Building `.AppImage` files (`mksquashfs`, `unsquashfs`, the self-executing runtime) | `1.1.0` |
 | `nsis` | Compiling Windows installers (`makensis`, plugin DLLs, `elevate.exe`) | `1.2.1` |
-| `wine` | Running Windows tools (NSIS, rcedit, signtool) on non-Windows hosts | `1.0.1` |
+| `wine` | Running Windows tools (NSIS, rcedit, signtool) on non-Windows hosts | `system` (host `wine` on `PATH`) |
 | `fpm` | Building Linux packages (`.deb`, `.rpm`, `.pacman`, …) on macOS & Linux | `2.2.1` |
-| `linuxToolsMac` | Building Linux targets / `.tar.lz` archives on macOS (`ar`, `lzip`, `gtar`) | `1.0.0` |
-| `sevenZip` | Extracting `.7z` and `.tar.xz` archives internally | `1.0.0` |
-| `icons` | Converting source images to `.icns`, `.ico`, and PNG icon sets | `1.2.1` |
+| `linuxToolsMac` | Building Linux targets / `.tar.lz` archives on macOS (`ar`, `lzip`, `gtar`) | `1.0.1` |
+| `sevenZip` | Extracting `.7z` and `.tar.xz` archives internally | `1.0.1` |
+| `icons` | Converting source images to `.icns`, `.ico`, and PNG icon sets | `1.2.3` |
+| `squirrel` | Building Squirrel.Windows installers (`Squirrel.exe`, `SyncReleases.exe`, `nuget.exe`, `7z`) — requires `electron-builder-squirrel-windows` | `1.1.1` |
 
 :::note[Platform notes]
-- **`wine`** is only needed to build **Windows targets on a non-Windows machine**. On Windows it has no effect. On **Linux**, electron-builder uses the **host-installed `wine`** (no bundle is shipped for Linux); the version pin applies to **macOS**, where the bundled Wine 11.0 runs — including on arm64 via Rosetta.
+- **`wine`** is only needed to build **Windows targets on a non-Windows machine**. On Windows it has no effect. It defaults to the **host-installed `wine`** on `PATH` (`"system"`) on both macOS and Linux, so a macOS host that builds Windows targets needs Wine installed (`brew install --cask wine-stable`). `toolsets.wine: "1.0.1"` still downloads the Wine 11.0 bundle on macOS when pinned explicitly, but the published bundle ships no PE builtins, so it cannot run Windows tools on its own.
 - **`winCodeSign`** is used on all platforms (`signtool.exe` on Windows, `osslsigncode` on macOS/Linux).
-- **`fpm`**, **`linuxToolsMac`**, and **`sevenZip`** each have only one published version today, so `"latest"` and the listed version are equivalent.
+- **`squirrel`** is only used by the `squirrelWindows` target. It runs natively on Windows; on macOS/Linux it needs a host-installed `mono`, and `rcedit` (from `winCodeSign`) runs under Wine.
+- **`fpm`**, **`icons`**, and **`squirrel`** each have only one published version today, so `"latest"` and the listed version are equivalent.
 :::
 
 For the full version-by-version breakdown of what each `"latest"` bundle upgrades from — and which are drop-in replacements versus behavior changes — see the migration table in [Toolset defaults resolve to `"latest"`](./migration/v27-breaking-changes.md#toolset-defaults-resolve-to-latest-newest-bundle).
 
 ## Default resolution — `"latest"`
 
-Every `toolsets.*` property defaults to **`"latest"`**. An **unset** property, an explicit **`null`**, and the literal string **`"latest"`** all resolve to the **newest published bundle** for that toolset. These three are interchangeable:
+Every `toolsets.*` property defaults to **`"latest"`**. An **unset** property and the literal string **`"latest"`** both resolve to the **newest published bundle** for that toolset. These two are interchangeable:
 
 ```json5
 { "build": { "toolsets": {} } }                          // unset → latest
 { "build": { "toolsets": { "nsis": "latest" } } }        // explicit latest
-{ "build": { "toolsets": { "nsis": null } } }            // null → latest (see note)
 ```
 
 :::note
-`null` is no longer part of the `ToolsetConfig` type. It still works at runtime, but TypeScript/programmatic configs typed against `Configuration` should use `"latest"` (or omit the key) instead. `electron-builder migrate-schema` does **not** rewrite this.
+`null` is no longer accepted: it was dropped from the `ToolsetConfig` type and the configuration schema rejects it, so use `"latest"` or omit the key. `electron-builder migrate-schema` removes `null` entries (and rewrites the retired `appimage: "1.0.2"` pin to `"1.0.3"`).
 :::
 
 Pinning to a concrete version is as simple as naming it:
@@ -136,7 +137,7 @@ v27 **removes** the toolset environment-variable overrides. Replace each with a 
 | `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` | NSIS resources/plugins | `toolsets.nsis: { url }` |
 | `CUSTOM_NSIS_RESOURCES` | Alternate NSIS resources | `toolsets.nsis: { url }` |
 | `ELECTRON_BUILDER_WINE_TOOLSET_DIR` | Wine bundle | `toolsets.wine: { url }` |
-| `USE_SYSTEM_WINE` | Host Wine instead of the bundle | `toolsets.wine: { url }` |
+| `USE_SYSTEM_WINE` | Host Wine instead of the bundle | `toolsets.wine: "system"` |
 | `USE_SYSTEM_SIGNCODE` | Host `signtool`/`signcode` | Configure via [`win.sign`](./features/code-signing/code-signing-win.md) + `winCodeSign` |
 | `USE_SYSTEM_OSSLSIGNCODE` | Host `osslsigncode` | Configure via [`win.sign`](./features/code-signing/code-signing-win.md) + `winCodeSign` |
 | `USE_SYSTEM_FPM` | Host `fpm` instead of the bundle | `toolsets.fpm: { url }` |
@@ -149,7 +150,7 @@ v27 **removes** the toolset environment-variable overrides. Replace each with a 
 ```
 
 :::warning[No env-var replacement for the signing overrides]
-The three signing `USE_SYSTEM_*` variables (`USE_SYSTEM_WINE`, `USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var equivalent** — configure signing through [`win.sign`](./features/code-signing/code-signing-win.md) and the `winCodeSign` toolset instead.
+The two signing `USE_SYSTEM_*` variables (`USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var equivalent** — configure signing through [`win.sign`](./features/code-signing/code-signing-win.md) and the `winCodeSign` toolset instead. `USE_SYSTEM_WINE` is replaced by the config value `toolsets.wine: "system"`.
 
 `USE_SYSTEM_FPM` is likewise removed. On **Windows there is no bundled FPM**, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` (`{ url: "file:///path/to/dir" }`) and otherwise throws a clear configuration error — previously it silently fell back to a host `fpm` on `PATH`.
 :::

@@ -20,7 +20,7 @@ electron-builder offers several signing backends, selected by the `type` field o
 For file- or store-based signing you need a Windows code signing certificate from a CA (DigiCert, Sectigo, SSL.com, …). They come in two grades:
 
 - **OV (Organization Validation)** — the common, lower-cost option. New publishers see a SmartScreen "unknown publisher" warning during install that fades as your download reputation grows. OV certificates export to a `.pfx`, so they work in CI with the `signtool` method.
-- **EV (Extended Validation)** — earns SmartScreen reputation immediately, but its private key is bound to a hardware token and **cannot** be exported to a file. Identify an EV certificate by `certificateSubjectName` or `certificateSha1` rather than a file path, and sign with the `hsm` (Windows) or `pkcs11` (macOS/Linux) method — or switch to `azure` to avoid managing hardware at all.
+- **EV (Extended Validation)** — since 2024 no longer earns SmartScreen reputation immediately; Microsoft treats EV and OV code signing certificates the same for SmartScreen ([details](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/distribution-feature-status#smartscreen-reputation-ev-certificates-no-longer-grant-instant-bypass)). Its private key is bound to a hardware token and **cannot** be exported to a file. Identify an EV certificate by `certificateSubjectName` or `certificateSha1` rather than a file path, and sign with the `hsm` (Windows) or `pkcs11` (macOS/Linux) method — or switch to `azure` to avoid managing hardware at all.
 
 Both grades work with auto-update.
 
