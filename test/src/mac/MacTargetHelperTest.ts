@@ -14,6 +14,7 @@ import {
   type PlistObject,
   type PlatformType,
 } from "app-builder-lib/internal"
+import { savePlistFile } from "app-builder-lib/src/util/mac/plist"
 
 /** A packager stub that resolves resources with the real `getResource`, so the tests exercise its contract (containment, project-dir fallback, missing-file error). */
 function fakePackager(resourceFiles: string[] = [], buildResourcesDir = "/nonexistent", config: Record<string, unknown> = {}): MacPackager {
@@ -137,6 +138,193 @@ describe("MacTargetHelper", () => {
       const signOptions = await makeHelper().buildSignOptions("/project/My.app", identity, config, null, Arch.x64, targetPlatform)
       expect(signOptions.type).toBe(expected)
       expect(signOptions.platform).toBe(targetPlatform === "mac" ? "darwin" : "mas")
+    })
+  })
+
+  // `codesign --sign` needs the unique hash (a common name can match several valid certs), while
+  // @electron/osx-sign's entitlements automation needs the `(TEAMID)` suffix of the name. See
+  // MacTargetHelper.resolveSignIdentity.
+  describe("resolveSignIdentity", () => {
+    const HASH = "0123456789ABCDEF0123456789ABCDEF01234567"
+    const identity = { name: "Developer ID Application: Foo (TEAM123)", hash: HASH } as any
+
+    const entitlementsPlist = (body: string) => `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+${body}
+  </dict>
+</plist>
+`
+    const sandboxedPlist = entitlementsPlist(`    <key>com.apple.security.app-sandbox</key>
+    <true/>`)
+    const nonSandboxedPlist = entitlementsPlist(`    <key>com.apple.security.cs.allow-jit</key>
+    <true/>`)
+
+    function makeHelper(resourceFiles: string[] = [], buildResourcesDir = "/nonexistent"): MacTargetHelper {
+      return new MacTargetHelper(fakePackager(resourceFiles, buildResourcesDir))
+    }
+
+    async function makeApp(dir: string, info: Record<string, unknown> = {}): Promise<string> {
+      const appPath = path.join(dir, "My.app")
+      await fs.mkdir(path.join(appPath, "Contents"), { recursive: true })
+      await savePlistFile(path.join(appPath, "Contents", "Info.plist"), { CFBundleIdentifier: "com.example.app", ...info })
+      return appPath
+    }
+
+    const readInfo = (appPath: string) => parsePlistFile<PlistObject>(path.join(appPath, "Contents", "Info.plist"))
+
+    test("a mac build signs with the hash and leaves Info.plist alone", async ({ tmpDir }) => {
+      const appPath = await makeApp(await tmpDir.createTempDir())
+      await expect(makeHelper().resolveSignIdentity(appPath, identity, undefined, "mac")).resolves.toBe(HASH)
+      expect((await readInfo(appPath)).ElectronTeamID).toBeUndefined()
+    })
+
+    test.for<[PlatformType]>([["mas"], ["mas-dev"]])("a %s build signs with the hash and fills in ElectronTeamID", async ([targetPlatform], { tmpDir }) => {
+      const appPath = await makeApp(await tmpDir.createTempDir())
+      await expect(makeHelper().resolveSignIdentity(appPath, identity, undefined, targetPlatform)).resolves.toBe(HASH)
+      expect((await readInfo(appPath)).ElectronTeamID).toBe("TEAM123")
+    })
+
+    test("an existing ElectronTeamID is preserved", async ({ tmpDir }) => {
+      const appPath = await makeApp(await tmpDir.createTempDir(), { ElectronTeamID: "EXISTING" })
+      await expect(makeHelper().resolveSignIdentity(appPath, identity, undefined, "mas")).resolves.toBe(HASH)
+      expect((await readInfo(appPath)).ElectronTeamID).toBe("EXISTING")
+    })
+
+    // @electron/osx-sign takes the Team ID from the profile, so there is nothing to fill in
+    test("a configured provisioningProfile signs with the hash without touching Info.plist", async ({ tmpDir }) => {
+      const appPath = await makeApp(await tmpDir.createTempDir())
+      await expect(makeHelper().resolveSignIdentity(appPath, identity, { provisioningProfile: "foo.provisionprofile" }, "mas")).resolves.toBe(HASH)
+      expect((await readInfo(appPath)).ElectronTeamID).toBeUndefined()
+    })
+
+    test("preAutoEntitlements: false signs with the hash without touching Info.plist", async ({ tmpDir }) => {
+      const appPath = await makeApp(await tmpDir.createTempDir())
+      await expect(makeHelper().resolveSignIdentity(appPath, identity, { preAutoEntitlements: false }, "mas")).resolves.toBe(HASH)
+      expect((await readInfo(appPath)).ElectronTeamID).toBeUndefined()
+    })
+
+    // a darwin build whose own entitlements enable the App Sandbox reaches the same automation as MAS
+    test("a sandboxed mac build fills in ElectronTeamID too", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const appPath = await makeApp(dir)
+      await fs.writeFile(path.join(dir, "entitlements.mac.plist"), sandboxedPlist, "utf-8")
+      await expect(makeHelper(["entitlements.mac.plist"], dir).resolveSignIdentity(appPath, identity, undefined, "mac")).resolves.toBe(HASH)
+      expect((await readInfo(appPath)).ElectronTeamID).toBe("TEAM123")
+    })
+
+    // a self-signed cert has no `(TEAMID)` suffix — keep the name so osx-sign reports it in its own error
+    test("an identity name with no Team ID falls back to the name", async ({ tmpDir }) => {
+      const appPath = await makeApp(await tmpDir.createTempDir())
+      const nameOnly = { name: "Developer ID Application: Foo", hash: HASH } as any
+      await expect(makeHelper().resolveSignIdentity(appPath, nameOnly, undefined, "mas")).resolves.toBe("Developer ID Application: Foo")
+      expect((await readInfo(appPath)).ElectronTeamID).toBeUndefined()
+    })
+
+    test("ad-hoc signing keeps the ad-hoc identity", async ({ tmpDir }) => {
+      const appPath = await makeApp(await tmpDir.createTempDir())
+      await expect(makeHelper().resolveSignIdentity(appPath, { name: "-" } as any, undefined, "mac")).resolves.toBe("-")
+      expect((await readInfo(appPath)).ElectronTeamID).toBeUndefined()
+    })
+
+    test("an identity with no hash falls back to the name", async ({ tmpDir }) => {
+      const appPath = await makeApp(await tmpDir.createTempDir())
+      await expect(makeHelper().resolveSignIdentity(appPath, { name: identity.name } as any, undefined, "mas")).resolves.toBe(identity.name)
+    })
+
+    test("an unreadable Info.plist falls back to the name instead of throwing", async () => {
+      await expect(makeHelper().resolveSignIdentity("/nonexistent/My.app", identity, undefined, "mas")).resolves.toBe(identity.name)
+    })
+
+    test("buildSignOptions forwards the resolved identity", async ({ tmpDir }) => {
+      const appPath = await makeApp(await tmpDir.createTempDir())
+      const helper = new MacTargetHelper(fakePackager([], "/nonexistent", { electronVersion: "38.0.0" }))
+      const signOptions = await helper.buildSignOptions(appPath, identity, undefined, null, Arch.x64, "mas")
+      expect(signOptions.identity).toBe(HASH)
+      expect((await readInfo(appPath)).ElectronTeamID).toBe("TEAM123")
+    })
+
+    // MAS build supplying its own entitlements without the App Sandbox: osx-sign's automation bails before the
+    // identity regex, so there is nothing to feed and nothing to rewrite
+    test("a mas build whose own entitlements omit the App Sandbox is left alone", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const appPath = await makeApp(dir)
+      await fs.writeFile(path.join(dir, "entitlements.mas.plist"), nonSandboxedPlist, "utf-8")
+      await expect(makeHelper(["entitlements.mas.plist"], dir).resolveSignIdentity(appPath, identity, undefined, "mas")).resolves.toBe(HASH)
+      expect((await readInfo(appPath)).ElectronTeamID).toBeUndefined()
+    })
+
+    // osx-sign tests the key for truthiness, not for a literal boolean, so a plist spelling it as a string still
+    // reaches the identity regex and still needs the Team ID
+    test("app-sandbox spelled as a string still counts as sandboxed", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const appPath = await makeApp(dir)
+      await fs.writeFile(path.join(dir, "entitlements.mac.plist"), sandboxedPlist.replace("<true/>", "<string>true</string>"), "utf-8")
+      await expect(makeHelper(["entitlements.mac.plist"], dir).resolveSignIdentity(appPath, identity, undefined, "mac")).resolves.toBe(HASH)
+      expect((await readInfo(appPath)).ElectronTeamID).toBe("TEAM123")
+    })
+
+    // osx-sign gates its automation on `!filePath.includes('.app/')`, so a sign.binaries entry is signed outside
+    // any `.app/` path and reaches the identity regex under the INHERIT entitlements — the app entitlements alone
+    // are not enough to predict whether the Team ID is needed.
+    test("a sandboxed inherit plist counts when sign.binaries are signed alongside the bundle", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const appPath = await makeApp(dir)
+      const external = path.join(dir, "tool")
+      await fs.writeFile(external, "", "utf-8")
+      await fs.writeFile(path.join(dir, "entitlements.mac.inherit.plist"), sandboxedPlist, "utf-8")
+      const helper = makeHelper(["entitlements.mac.inherit.plist"], dir)
+      await expect(helper.resolveSignIdentity(appPath, identity, { binaries: [external] }, "mac")).resolves.toBe(HASH)
+      expect((await readInfo(appPath)).ElectronTeamID).toBe("TEAM123")
+    })
+
+    // ...but with nothing signed outside the bundle, the inherit entitlements never reach the automation
+    test("a sandboxed inherit plist alone does not count", async ({ tmpDir }) => {
+      const dir = await tmpDir.createTempDir()
+      const appPath = await makeApp(dir)
+      await fs.writeFile(path.join(dir, "entitlements.mac.inherit.plist"), sandboxedPlist, "utf-8")
+      await expect(makeHelper(["entitlements.mac.inherit.plist"], dir).resolveSignIdentity(appPath, identity, undefined, "mac")).resolves.toBe(HASH)
+      expect((await readInfo(appPath)).ElectronTeamID).toBeUndefined()
+    })
+
+    // A custom signer replaces @electron/osx-sign, so none of its automation runs — the identity must stay the
+    // unique hash and Info.plist must not be touched on its behalf. Each fallback branch is pinned separately:
+    // they return identity.name for the osx-sign path, which for a delegated signer would reintroduce #10237.
+    describe("custom signer", () => {
+      test.for<[string, PlatformType]>([
+        ["mas", "mas"],
+        ["mas-dev", "mas-dev"],
+        ["mac", "mac"],
+      ])("a %s build with a custom signer gets the hash and an untouched Info.plist", async ([, targetPlatform], { tmpDir }) => {
+        const appPath = await makeApp(await tmpDir.createTempDir())
+        await expect(makeHelper().resolveSignIdentity(appPath, identity, undefined, targetPlatform, true)).resolves.toBe(HASH)
+        expect((await readInfo(appPath)).ElectronTeamID).toBeUndefined()
+      })
+
+      test("an identity name with no Team ID still gets the hash", async ({ tmpDir }) => {
+        const appPath = await makeApp(await tmpDir.createTempDir())
+        const nameOnly = { name: "Developer ID Application: Foo", hash: HASH } as any
+        await expect(makeHelper().resolveSignIdentity(appPath, nameOnly, undefined, "mas", true)).resolves.toBe(HASH)
+        expect((await readInfo(appPath)).ElectronTeamID).toBeUndefined()
+      })
+
+      test("an unreadable Info.plist still gets the hash", async () => {
+        await expect(makeHelper().resolveSignIdentity("/nonexistent/My.app", identity, undefined, "mas", true)).resolves.toBe(HASH)
+      })
+
+      test("ad-hoc signing still keeps the ad-hoc identity", async ({ tmpDir }) => {
+        const appPath = await makeApp(await tmpDir.createTempDir())
+        await expect(makeHelper().resolveSignIdentity(appPath, { name: "-" } as any, undefined, "mas", true)).resolves.toBe("-")
+      })
+
+      test("buildSignOptions forwards the hash unmutated", async ({ tmpDir }) => {
+        const appPath = await makeApp(await tmpDir.createTempDir())
+        const helper = new MacTargetHelper(fakePackager([], "/nonexistent", { electronVersion: "38.0.0" }))
+        const signOptions = await helper.buildSignOptions(appPath, identity, undefined, null, Arch.x64, "mas", true)
+        expect(signOptions.identity).toBe(HASH)
+        expect((await readInfo(appPath)).ElectronTeamID).toBeUndefined()
+      })
     })
   })
 
@@ -826,6 +1014,22 @@ ${body}
         keychainProfile: "my-profile",
         keychain: "/path/to/keychain.keychain",
       })
+    })
+  })
+
+  // resolveSignIdentity rewrites the app's Info.plist through savePlistFile. With `--prepackaged` that is the first
+  // write the file ever sees from electron-builder, so the round trip has to be lossless for every plist type.
+  describe("savePlistFile round trip", () => {
+    test("preserves <data> and <date> values", async ({ tmpDir }) => {
+      const file = path.join(await tmpDir.createTempDir(), "Info.plist")
+      const data = Buffer.from("ABCD")
+      const date = new Date("2024-01-02T03:04:05Z")
+      await savePlistFile(file, { CFBundleIdentifier: "com.example.app", SomeData: data, SomeDate: date })
+      const parsed = await parsePlistFile<Record<string, any>>(file)
+      expect(Buffer.isBuffer(parsed.SomeData)).toBe(true)
+      expect((parsed.SomeData as Buffer).toString()).toBe("ABCD")
+      expect(parsed.SomeDate).toBeInstanceOf(Date)
+      expect((parsed.SomeDate as Date).toISOString()).toBe(date.toISOString())
     })
   })
 })
