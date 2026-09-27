@@ -50,24 +50,32 @@ export async function listArchiveMethods(archivePath: string): Promise<Array<str
     .filter(method => method.length > 0)
 }
 
-// Maps each entry path to its `Packed Size` from the `-slt` technical listing (the archive-level
-// summary block is skipped). In a 7z archive the file packed streams sit back-to-back right after
-// the 32-byte signature header, so the sum of these is the size of the packed-streams region.
-export async function listArchiveEntryPackedSizes(archivePath: string): Promise<Map<string, number>> {
+// Returns the byte range [start, end) of each folder's packed streams, in folder (`Block`) order.
+// In a 7z archive the folders' packed streams sit back-to-back, in folder order, right after the
+// 32-byte signature header; the `-slt` listing reports a folder's packed size on its first file only
+// (later files in a solid folder report an empty `Packed Size`, empty directories an empty `Block`).
+export async function listArchiveFolderRanges(archivePath: string): Promise<Array<{ start: number; end: number }>> {
   const stdout = await list7z(archivePath)
-  const archiveAsEntry = archivePath.replace(/\\/g, "/")
-  const result = new Map<string, number>()
-  let current: string | null = null
+  const folderSizes: Array<number> = []
+  let packedSize = 0
   for (const line of stdout.split(/\r?\n/)) {
     if (line.startsWith("Path = ")) {
-      const entry = line.slice("Path = ".length).trim().replace(/\\/g, "/")
-      current = entry === archiveAsEntry ? null : entry
-    } else if (line.startsWith("Packed Size = ") && current != null) {
-      const value = line.slice("Packed Size = ".length).trim()
-      result.set(current, value.length === 0 ? 0 : parseInt(value, 10))
+      packedSize = 0
+    } else if (line.startsWith("Packed Size = ")) {
+      packedSize = parseInt(line.slice("Packed Size = ".length).trim(), 10) || 0
+    } else if (line.startsWith("Block = ")) {
+      const block = parseInt(line.slice("Block = ".length).trim(), 10)
+      if (!Number.isNaN(block)) {
+        folderSizes[block] = (folderSizes[block] ?? 0) + packedSize
+      }
     }
   }
-  return result
+  let offset = 32
+  return Array.from(folderSizes, (size = 0) => {
+    const range = { start: offset, end: offset + size }
+    offset += size
+    return range
+  })
 }
 
 // Maps each entry path to its reported codec (the `Path = …` line followed by that entry's
