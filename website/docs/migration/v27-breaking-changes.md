@@ -587,7 +587,7 @@ v27 adds `electron-builder migrate-schema`, which rewrites your config to v27 fo
 
 **It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom `mac.sign` signer combined with sibling signing options, and (in JS/TS configs) platform-level `asarUnpack` next to root-level ASAR options.
 
-**It prints an advisory** (without changing the config) for runtime defaults and behavior changes you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)), `nsis.perMachine` or `nsisWeb.perMachine` set to `true` ([per-machine NSIS updates](#nsis-per-machine-builds-set-isadminrightsrequired)), a custom `win.sign.sign` hook without `win.sign.publisherName`, unless `win.verifyUpdateCodeSignature` is `false` ([publisher name](#windows-publishername-is-validated-against-the-signing-certificate)), and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
+**It prints an advisory** (without changing the config) for runtime defaults and behavior changes you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)), `nsis.perMachine` or `nsisWeb.perMachine` set to `true` ([per-machine NSIS updates](#nsis-per-machine-builds-set-isadminrightsrequired)), a custom `win.sign.sign` hook without `win.sign.publisherName`, unless `win.verifyUpdateCodeSignature` is `false` ([publisher name](#windows-publishername-is-validated-against-the-signing-certificate)), a `generic` publish configuration whose `url` has a query string ([update credentials](#update-credentials-stay-on-the-feeds-origin)), and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
 
 **It does not touch** anything outside the config: CLI flags, environment variables, custom NSIS scripts, Linux maintainer scripts, app code using the electron-updater API, or plugins using `PlatformPackager`. Every other row marked **—** in the [table above](#breaking-changes-at-a-glance) is a manual step.
 
@@ -965,6 +965,8 @@ electron-updater now sends the credential headers from `requestHeaders` / `addAu
 - A custom provider that extends a built-in provider (e.g. `GenericProvider` or `GitHubProvider`) inherits its `feedBaseUrl`. Other custom providers keep sending the request headers to every download URL unless they override `Provider.feedBaseUrl`.
 
 **Action:** none if your update files are served from the feed origin. If `latest*.yml` uses absolute URLs on another origin that authenticate with your `requestHeaders` / `addAuthHeader`, or with a token in the feed URL's query (e.g. `url: https://updates.example.com/?key=…`), those downloads now fail (for example with 401 or 403). Serve the files from the feed origin, or use pre-signed URLs. The manifest signature, [required by default](#signed-update-manifests-are-required) in v27, covers `files[].url` and `packages.<arch>.path`, so pre-signed URLs have to be in `latest*.yml` before it is signed (see [Key storage](../features/key-rotation.md#key-storage)); installs with a public key refuse a manifest whose URLs changed after signing.
+
+> **Tip:** `electron-builder migrate-schema` prints an advisory for a `generic` publish configuration whose `url` has a query string.
 
 ### `latest*.yml` drops legacy top-level `path`/`sha512`
 
