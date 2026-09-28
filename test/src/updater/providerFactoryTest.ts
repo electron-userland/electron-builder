@@ -1,4 +1,4 @@
-import { getS3LikeProviderBaseUrl, R2Options, S3Options, SpacesOptions } from "builder-util-runtime"
+import { AllPublishOptions, getS3LikeProviderBaseUrl, R2Options, S3Options, SpacesOptions } from "builder-util-runtime"
 import { createClient } from "electron-updater/src/providerFactory"
 import { GenericProvider } from "electron-updater/src/providers/GenericProvider"
 import type { AppUpdater } from "electron-updater/src/AppUpdater"
@@ -95,5 +95,23 @@ describe("createClient — s3/spaces share the r2 fall-through", () => {
     const provider = createClient(options, updater, runtimeOptions) as any
     expect(provider).toBeInstanceOf(GenericProvider)
     expect(provider.configuration.url).toBe(getS3LikeProviderBaseUrl(options))
+  })
+})
+
+// Download URLs chosen by the update manifest get the credential-bearing request headers only on the feedBaseUrl origin.
+describe("createClient — feedBaseUrl", () => {
+  const cases: Array<{ name: string; options: AllPublishOptions; expected: string | null }> = [
+    { name: "generic", options: { provider: "generic", url: "https://feed.example.com/updates?token=s" }, expected: "https://feed.example.com/updates/?token=s" },
+    { name: "s3", options: { provider: "s3", bucket: "my-bucket" }, expected: "https://my-bucket.s3.amazonaws.com/" },
+    { name: "keygen", options: { provider: "keygen", account: "acc", product: "prod" }, expected: "https://api.keygen.sh/v1/accounts/acc/artifacts/?product=prod" },
+    { name: "bitbucket", options: { provider: "bitbucket", owner: "owner", slug: "repo" }, expected: "https://api.bitbucket.org/2.0/repositories/owner/repo/downloads/" },
+    { name: "github", options: { provider: "github", owner: "owner", repo: "repo" }, expected: "https://github.com/" },
+    { name: "gitlab", options: { provider: "gitlab", projectId: 1, host: "gitlab.example.com" }, expected: "https://gitlab.example.com/api/v4/" },
+    // private GitHub asset downloads are API URLs that need the token on the first request
+    { name: "private github", options: { provider: "github", owner: "owner", repo: "repo", token: "t" }, expected: null },
+  ]
+
+  test.each(cases)("$name", ({ options, expected }) => {
+    expect(createClient(options, updater, runtimeOptions).feedBaseUrl?.href ?? null).toBe(expected)
   })
 })

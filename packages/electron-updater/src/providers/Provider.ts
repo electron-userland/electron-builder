@@ -68,6 +68,15 @@ export abstract class Provider<T extends UpdateInfo> {
     return null
   }
 
+  /**
+   * Base URL of the update feed. When this is set, the credential-bearing request headers (the ones stripped on a cross-origin redirect)
+   * are only sent to download URLs on its origin.
+   * `null` (default) sends the request headers to every download URL; a custom provider opts in by overriding this getter.
+   */
+  get feedBaseUrl(): URL | null {
+    return null
+  }
+
   setRequestHeaders(value: OutgoingHttpHeaders | null): void {
     this.requestHeaders = value
   }

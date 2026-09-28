@@ -9,6 +9,7 @@ import {
   UUID,
   DownloadOptions,
   CancellationError,
+  HttpExecutor,
   ProgressInfo,
   BlockMap,
   retry,
@@ -896,6 +897,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     return this.computeFinalHeaders({ accept: "*/*" })
   }
 
+  /**
+   * Headers for a download from `url`: when the provider has a `feedBaseUrl`, the credential-bearing ones are dropped if `url` is on
+   * another origin than `originUrl` (the feed by default).
+   */
+  protected downloadRequestHeaders(url: URL, downloadUpdateOptions: DownloadUpdateOptions, originUrl?: URL): OutgoingHttpHeaders {
+    const feedBaseUrl = downloadUpdateOptions.updateInfoAndProvider.provider.feedBaseUrl
+    const headers = downloadUpdateOptions.requestHeaders
+    return feedBaseUrl == null ? headers : HttpExecutor.removeCrossOriginSensitiveHeaders(headers, originUrl ?? feedBaseUrl, url)
+  }
+
   private async getOrCreateStagingUserId(): Promise<string> {
     const file = path.join(this.app.userDataPath, ".updaterId")
     try {
@@ -971,7 +982,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       )
     }
     const downloadOptions: DownloadOptions = {
-      headers: taskOptions.downloadUpdateOptions.requestHeaders,
+      headers: this.downloadRequestHeaders(fileInfo.url, taskOptions.downloadUpdateOptions),
       cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
       sha2: (fileInfo.info as any).sha2,
       sha512: fileInfo.info.sha512,
@@ -1128,9 +1139,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       )
       this._logger.info(`Download block maps (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
 
-      const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
+      const downloadBlockMap = async (url: URL, originUrl?: URL): Promise<BlockMap> => {
         const data = await this.httpExecutor.downloadToBuffer(url, {
-          headers: downloadUpdateOptions.requestHeaders,
+          headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
           cancellationToken: downloadUpdateOptions.cancellationToken,
         })
 
@@ -1151,7 +1162,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         logger: this._logger,
         newFile: installerPath,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
-        requestHeaders: downloadUpdateOptions.requestHeaders,
+        requestHeaders: this.downloadRequestHeaders(fileInfo.url, downloadUpdateOptions),
         cancellationToken: downloadUpdateOptions.cancellationToken,
       }
 
@@ -1184,7 +1195,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       isOldBlockMapFromCache = oldBlockMapData != null
       if (oldBlockMapData == null) {
         this._logger.info(`No cached blockmap for the old installer, downloading it from "${blockmapFileUrls[0]}"`)
-        oldBlockMapData = await downloadBlockMap(blockmapFileUrls[0])
+        // the old blockmap comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
+        const override = this.previousBlockmapBaseUrlOverride
+        oldBlockMapData = await downloadBlockMap(blockmapFileUrls[0], override ? new URL(override) : undefined)
       }
 
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)

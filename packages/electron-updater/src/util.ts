@@ -14,6 +14,10 @@ export function newBaseUrl(url: string): URL {
 // so, it makes sense only for Generic Provider for channel files
 export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToAvoidCaching = false): URL {
   const result = new URL(pathname, baseUrl)
+  // a URL on another origin (e.g. an absolute URL in the update manifest) keeps its own query; the base query is only added on the base origin
+  if (result.origin !== baseUrl.origin) {
+    return result
+  }
   // search is not propagated (search is an empty string if not specified)
   const search = baseUrl.search
   if (search != null && search.length !== 0) {

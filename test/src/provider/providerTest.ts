@@ -65,6 +65,12 @@ test("fileExtraDownloadHeaders - returns null by default", ({ expect }) => {
   expect(provider.fileExtraDownloadHeaders).toBeNull()
 })
 
+// a custom provider keeps sending the request headers to every download URL unless it overrides feedBaseUrl
+test("feedBaseUrl - returns null by default", ({ expect }) => {
+  const provider = makeProvider()
+  expect(provider.feedBaseUrl).toBeNull()
+})
+
 test("getDefaultChannelName - win32 returns latest (no suffix)", ({ expect }) => {
   const provider = makeProvider("win32")
   expect(provider.callGetDefaultChannelName()).toBe("latest")

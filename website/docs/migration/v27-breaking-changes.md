@@ -105,6 +105,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | Web-installer updates are rejected (`ERR_UPDATER_WEB_INSTALLER_DISABLED`) unless `disableWebInstaller` is `false`; v27+ `nsis-web` installs opt in automatically; older installs, and apps switching from `nsis` to `nsis-web`, need `disableWebInstaller: false` |
 | [`nsis-web` installer verifies and installs its own copy of the app package](#disablewebinstaller-defaults-to-true) | — | A `--package-file` package or a publish-URL download that does not match, or a `--package-file` package that cannot be copied, aborts the install (exit code `2`); the local package file is now left in place. Only if you run one web installer with a `--package-file` from another build: set `nsisWeb.allowUnverifiedAppPackage: true` |
 | [NSIS: per-machine builds set `isAdminRightsRequired` in the update info](#nsis-per-machine-builds-set-isadminrightsrequired) | — | None for most apps. Their updates are started with `elevate.exe`; with `autoInstallEvent: "onNextLaunch"`, per-machine apps call `installPendingUpdateIfAvailable()` to install a pending update |
+| [Update credentials are only sent to the feed's origin (electron-updater)](#update-credentials-stay-on-the-feeds-origin) | — | Only if `latest*.yml` points downloads at another origin (another host, or another port or scheme) that needs your `requestHeaders` / `addAuthHeader` credentials or a token in the feed URL's query: serve the files from the feed origin or use pre-signed URLs |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | — | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
 | [Signed update manifests are required](#signed-update-manifests-are-required) | — | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY`, or set `updateManifest: false` to keep publishing unsigned manifests |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | — | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
@@ -953,6 +954,17 @@ electron-builder now sets `isAdminRightsRequired: true` in the update info of ev
 **Action:** none for most apps. With `autoInstallEvent: "onNextLaunch"`, per-machine apps call `installPendingUpdateIfAvailable()` to install a pending update.
 
 > **Tip:** `electron-builder migrate-schema` prints an advisory when `nsis.perMachine` or `nsisWeb.perMachine` is `true`.
+
+### Update credentials stay on the feed's origin {#update-credentials-stay-on-the-feeds-origin}
+
+electron-updater now sends the credential headers from `requestHeaders` / `addAuthHeader` — headers such as `Authorization`, the same set that is removed on a cross-origin redirect — and the query string of the feed `url` only to the feed's origin. This applies to the generic, s3, spaces, r2, keygen, bitbucket, github and gitlab providers.
+
+- An installer, web package, blockmap or differential range request on another origin is requested without those headers and without the feed query. Another origin is another host, or the same host with another port or scheme (`https://updates.example.com` → `https://updates.example.com:8443` or `http://updates.example.com`); as on redirects, an `http` → `https` upgrade of the same host on the default ports keeps the headers. Such a URL keeps its own query string, so pre-signed URLs work.
+- Downloads on the feed origin (relative `files[].url`, the default) are unchanged. For GitLab the feed origin is `https://<host>`, where electron-builder publishes the release assets.
+- When the app sets `previousBlockmapBaseUrlOverride`, the old blockmap is downloaded with the credentials if it is on that origin.
+- A custom provider that extends a built-in provider (e.g. `GenericProvider` or `GitHubProvider`) inherits its `feedBaseUrl`. Other custom providers keep sending the request headers to every download URL unless they override `Provider.feedBaseUrl`.
+
+**Action:** none if your update files are served from the feed origin. If `latest*.yml` uses absolute URLs on another origin that authenticate with your `requestHeaders` / `addAuthHeader`, or with a token in the feed URL's query (e.g. `url: https://updates.example.com/?key=…`), those downloads now fail (for example with 401 or 403). Serve the files from the feed origin, or use pre-signed URLs. The manifest signature, [required by default](#signed-update-manifests-are-required) in v27, covers `files[].url` and `packages.<arch>.path`, so pre-signed URLs have to be in `latest*.yml` before it is signed (see [Key storage](../features/key-rotation.md#key-storage)); installs with a public key refuse a manifest whose URLs changed after signing.
 
 ### `latest*.yml` drops legacy top-level `path`/`sha512`
 

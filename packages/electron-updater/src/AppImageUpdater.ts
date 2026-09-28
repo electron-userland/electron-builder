@@ -64,7 +64,7 @@ export class AppImageUpdater extends BaseUpdater {
         logger: this._logger,
         newFile: updateFile,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
-        requestHeaders: downloadUpdateOptions.requestHeaders,
+        requestHeaders: this.downloadRequestHeaders(fileInfo.url, downloadUpdateOptions),
         cancellationToken: downloadUpdateOptions.cancellationToken,
       }
 

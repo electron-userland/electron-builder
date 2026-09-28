@@ -677,6 +677,50 @@ describe("sensitive header stripping", () => {
   })
 })
 
+describe("HttpExecutor.removeCrossOriginSensitiveHeaders", () => {
+  const feedUrl = new URL("https://feed.example.com/updates/")
+  const credentialHeaders = () => ({
+    Authorization: "Bearer token123",
+    "PRIVATE-TOKEN": "glpat-secret",
+    "X-Api-Key": "apikey",
+    Cookie: "session=1",
+    "User-Agent": "electron-builder",
+    accept: "*/*",
+  })
+
+  test("strips the sensitive headers for another origin, keeps the rest", () => {
+    const result = HttpExecutor.removeCrossOriginSensitiveHeaders(credentialHeaders(), feedUrl, new URL("https://cdn.example.net/app.exe"))
+    expect(result).toEqual({ "User-Agent": "electron-builder", accept: "*/*" })
+  })
+
+  test("returns the same headers for a same-origin URL", () => {
+    const headers = credentialHeaders()
+    expect(HttpExecutor.removeCrossOriginSensitiveHeaders(headers, feedUrl, new URL("https://feed.example.com/other/app.exe"))).toBe(headers)
+  })
+
+  test("does not mutate its input", () => {
+    const headers = credentialHeaders()
+    HttpExecutor.removeCrossOriginSensitiveHeaders(headers, feedUrl, new URL("https://cdn.example.net/app.exe"))
+    expect(headers).toEqual(credentialHeaders())
+  })
+
+  test("another port on the same host is cross-origin", () => {
+    const result = HttpExecutor.removeCrossOriginSensitiveHeaders(credentialHeaders(), feedUrl, new URL("https://feed.example.com:8443/app.exe"))
+    expect(result.Authorization).toBeUndefined()
+  })
+
+  test("https → http on the same host is cross-origin", () => {
+    const result = HttpExecutor.removeCrossOriginSensitiveHeaders(credentialHeaders(), feedUrl, new URL("http://feed.example.com/updates/app.exe"))
+    expect(result.Authorization).toBeUndefined()
+    expect(result["PRIVATE-TOKEN"]).toBeUndefined()
+  })
+
+  test("http → https upgrade on the same host keeps them (same rule as a redirect)", () => {
+    const headers = credentialHeaders()
+    expect(HttpExecutor.removeCrossOriginSensitiveHeaders(headers, new URL("http://feed.example.com/updates/"), new URL("https://feed.example.com/updates/app.exe"))).toBe(headers)
+  })
+})
+
 describe("safeStringifyJson field redaction", () => {
   test("strips token variants", () => {
     const data = { token: "x", TOKEN: "x", access_token: "x", ACCESS_TOKEN: "x", refreshToken: "x" }

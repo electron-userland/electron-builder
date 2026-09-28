@@ -394,6 +394,26 @@ Please double check that your authentication token is correct. Due to security r
     return newOptions
   }
 
+  /**
+   * `headers` without the credential-bearing ones stripped on cross-origin redirects (see {@link addSensitiveRedirectHeader})
+   * when `targetUrl` is on another origin than `originUrl` (same rule as a redirect), else `headers` itself. Never mutates `headers`.
+   */
+  static removeCrossOriginSensitiveHeaders(headers: OutgoingHttpHeaders, originUrl: URL, targetUrl: URL): OutgoingHttpHeaders {
+    if (!HttpExecutor.isCrossOriginRedirect(originUrl, targetUrl)) {
+      return headers
+    }
+    if (debug.enabled) {
+      debug(`Cross-origin request (${originUrl.host} → ${targetUrl.host}): stripping sensitive headers`)
+    }
+    const result: OutgoingHttpHeaders = {}
+    for (const [key, value] of Object.entries(headers)) {
+      if (!SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
+        result[key] = value
+      }
+    }
+    return result
+  }
+
   private static reconstructOriginalUrl(options: RequestOptions): URL {
     const protocol = options.protocol || "https:"
     if (!options.hostname) {
