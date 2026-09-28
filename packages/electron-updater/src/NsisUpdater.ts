@@ -191,7 +191,7 @@ export class NsisUpdater extends BaseUpdater {
       if (publisherName == null) {
         this._logger.warn(
           "Signature verification of the downloaded update was skipped because no publisherName is present in app-update.yml. " +
-            "Sign your build so electron-builder can derive publisherName from the code signing certificate automatically, or set win.publisherName explicitly. " +
+            "Sign your build so electron-builder can derive publisherName from the code signing certificate automatically, or set win.sign.publisherName explicitly. " +
             "This fail-open behavior is deprecated: electron-builder v28 will treat a missing publisherName as a verification failure (fail-closed)."
         )
         return { response: "success" }

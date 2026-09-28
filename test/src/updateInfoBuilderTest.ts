@@ -10,6 +10,7 @@ import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationE
 import { computeUpdateManifestKeyId, verifyManifestSignature, verifyManifestSignatures } from "builder-util-runtime"
 import { getAppUpdatePublishConfiguration } from "app-builder-lib/src/publish/PublishManager"
 import { PlatformPackager } from "app-builder-lib/src/platformPackager"
+import { SigntoolSignManager } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
 
 const basePublishConfig = { provider: "s3", bucket: "test-bucket" } as const
 
@@ -742,6 +743,42 @@ test("app-update.yml rejects a manually configured publish.updateManifestPublicK
   )
   expect(error).toBeInstanceOf(InvalidConfigurationError)
   expect(error!.message).toBe("publish.updateManifestPublicKey is managed by electron-builder and must not be set; configure updateManifest.publicKey instead")
+})
+
+// ── app-update.yml: Windows publisherName ────────────────────────────────────
+
+// Windows variant: the real SigntoolSignManager computes publisherName; getCscLink keeps a WIN_CSC_LINK / CSC_LINK
+// from the test environment out of it
+function makeWinAppUpdateConfigPackager(sign: any, verifyUpdateCodeSignature = true): any {
+  const packager: any = {
+    ...makeAppUpdateConfigPackager(),
+    platform: Platform.WINDOWS,
+    platformOptions: { sign },
+    isForceCodeSigningVerification: verifyUpdateCodeSignature,
+    getCscLink: () => null,
+    getCscPassword: () => null,
+  }
+  packager.signingManager = { value: Promise.resolve(new SigntoolSignManager(packager)) }
+  return packager
+}
+
+test("app-update.yml: a Windows build signed by a custom sign hook without publisherName fails", async ({ expect }) => {
+  const packager = makeWinAppUpdateConfigPackager({ type: "signtool", sign: "./customSign.js" })
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)).rejects.toThrow(InvalidConfigurationError)
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)).rejects.toThrow(/win\.sign\.publisherName/)
+})
+
+test("app-update.yml: the publisherName configured for a custom sign hook is written", async ({ expect }) => {
+  const packager = makeWinAppUpdateConfigPackager({ type: "signtool", sign: "./customSign.js", publisherName: "CN=My Company, O=My Company, C=US" })
+  const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
+  expect(publishConfig?.publisherName).toEqual(["CN=My Company, O=My Company, C=US"])
+})
+
+test("app-update.yml: verifyUpdateCodeSignature: false skips publisherName for a custom sign hook", async ({ expect }) => {
+  const packager = makeWinAppUpdateConfigPackager({ type: "signtool", sign: "./customSign.js" }, false)
+  const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
+  expect(publishConfig).not.toBeNull()
+  expect(publishConfig?.publisherName).toBeUndefined()
 })
 
 test("no signature field is written when the packager yields no signing key", async ({ expect }) => {

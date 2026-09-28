@@ -123,8 +123,11 @@ interface WindowsSigningSharedOptions {
    *   subject, so electron-builder derives it from this value (or the certificate) to keep them
    *   in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.
    *
-   * Defaults to the Common Name (CN) extracted from your code signing certificate. Set to `null`
-   * to opt out.
+   * Defaults to the Common Name (CN) extracted from your code signing certificate. **Required**
+   * (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) when
+   * electron-builder cannot read the signing certificate — a custom [sign](#sign) hook without a
+   * certificate, or a certificate without a CN — otherwise the build fails. Set to `null` to opt
+   * out.
    *
    * @see https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073
    */
@@ -184,6 +187,10 @@ interface WindowsSigningSharedOptions {
    * that returns the default arguments electron-builder would otherwise have used. Use this to
    * integrate an external or cloud signing service. See
    * [Code Signing](https://www.electron.build/docs/features/code-signing).
+   *
+   * electron-builder cannot tell which certificate the hook signs with, so also set
+   * [publisherName](#publisherName) to that certificate's subject — without a readable certificate
+   * to derive it from, a build that writes `app-update.yml` fails.
    */
   readonly sign?: CustomWindowsSign | string | null
 }

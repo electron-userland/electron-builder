@@ -146,7 +146,8 @@ The default `winCodeSign` toolset already supports HSM signing, so no `toolsets`
 
 - **Windows only.** The `/csp` and `/kc` flags are signtool-specific. On macOS/Linux, use `type: "pkcs11"`.
 - The CSP driver must be installed on the machine where the build runs (not available in most cloud CI environments without extra setup).
-- `certificateFile`, `certificateSha1`, or `certificateSubjectName` must be provided — HSM signing requires a certificate identifier (unlike signtool where the cert can be embedded in the token implicitly).
+- `certificateFile`, `certificateSha1`, or `certificateSubjectName` must be provided unless a custom `sign` hook does the signing — HSM signing requires a certificate identifier (unlike signtool where the cert can be embedded in the token implicitly).
+- Set `publisherName` to the certificate subject when electron-builder cannot read it — a custom `sign` hook without a certificate identifier, or a `.crt`/`.cer` without a Common Name (CN). Otherwise a build that writes `app-update.yml` fails, because electron-updater needs the publisher name to verify updates.
 
 ### Configuration reference
 
@@ -179,7 +180,8 @@ Signs using a PKCS#11 hardware token via `osslsigncode`. Unlike HSM signing, thi
     "sign": {
       "type": "pkcs11",
       "pkcs11Module": "/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so",
-      "pkcs11KeyUri": "pkcs11:token=MyToken;object=MyKey;type=private"
+      "pkcs11KeyUri": "pkcs11:token=MyToken;object=MyKey;type=private",
+      "publisherName": "CN=My Company, O=My Company, C=US"
     }
   }
 }
@@ -219,6 +221,7 @@ With an optional external certificate chain file (if the token does not carry th
 - **macOS/Linux only.** Throws `InvalidConfigurationError` when called on Windows; use `type: "hsm"` on Windows.
 - The `osslsigncode` binary is bundled in the `winCodeSign` toolset — no manual installation needed.
 - The PKCS#11 shared library (`.so` / `.dylib`) must be installed separately on the build machine.
+- `publisherName` (the certificate subject) is required when there is no `certificateFile`, and, for builds that write `app-update.yml`, when the `certificateFile` has no Common Name (CN) — electron-builder cannot read the certificate on the token.
 - Network or USB token latency can make large builds slow. Consider signing only final installers rather than every intermediate `.exe`.
 
 ### Configuration reference

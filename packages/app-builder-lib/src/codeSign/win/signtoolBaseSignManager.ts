@@ -116,7 +116,20 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     }
 
     const certInfo = await this.lazyCertInfo.value
-    return certInfo == null ? null : [certInfo.commonName]
+    if (certInfo != null) {
+      return [certInfo.commonName]
+    }
+    // Signed (custom `sign` hook, or a certificate without a CN) but no publisher name can be derived: electron-updater verifies
+    // downloaded updates against the publisherName in app-update.yml, so the build needs one.
+    if (signing != null && (signing.sign != null || (await this.cscInfo.value) != null)) {
+      throw new InvalidConfigurationError(
+        "Windows code signing is configured, but the publisher name cannot be determined at build time (a custom `win.sign.sign` hook without a readable certificate, or a certificate without a Common Name). " +
+          "electron-updater verifies the signature of downloaded updates against the publisherName in app-update.yml. " +
+          'Set `win.sign.publisherName` to the subject of the certificate that signs your app (e.g. "CN=My Company, O=My Company, C=US"), ' +
+          "or set `win.verifyUpdateCodeSignature: false` (only if your updates are not Authenticode-signed or you don't use electron-updater) to opt out of update signature verification explicitly."
+      )
+    }
+    return null
   })
 
   readonly lazyCertInfo = new MemoLazy<MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>, CertificateInfo | null>(
@@ -199,7 +212,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
           `This usually means the build is signing with the wrong certificate (for example, a code signing certificate for another platform or team leaked into WIN_CSC_LINK/CSC_LINK in CI) — electron-updater would reject every update signed with it.\n` +
           `  Configured publisherName: ${publisherNames.join(" | ")}\n` +
           `  Certificate subject: ${certInfo.bloodyMicrosoftSubjectDn}\n` +
-          `Fix win.publisherName (or sign with the intended certificate). To opt out of update signature verification entirely, set publisherName to null.`
+          `Fix win.sign.publisherName (or sign with the intended certificate). To opt out of update signature verification entirely, set publisherName to null.`
       )
     }
   }
@@ -363,7 +376,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
   }
 
   async getCertInfo(file: string, password: string): Promise<CertificateInfo> {
-    const errorMessagePrefix = "Cannot extract publisher name from code signing certificate. As workaround, set win.publisherName. Error: "
+    const errorMessagePrefix = "Cannot extract publisher name from code signing certificate. As workaround, set win.sign.publisherName. Error: "
     try {
       return await readCertInfo(file, password)
     } catch (e: any) {

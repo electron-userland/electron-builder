@@ -38,7 +38,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     const warnings = logger.warn.mock.calls.map(call => String(call[0]))
     const deprecationWarnings = warnings.filter(message => message.includes(DEPRECATION_FRAGMENT))
     expect(deprecationWarnings).toHaveLength(1)
-    expect(deprecationWarnings[0]).toContain("publisherName")
+    expect(deprecationWarnings[0]).toContain("win.sign.publisherName")
     expect(deprecationWarnings[0]).toContain("app-update.yml")
     expect(deprecationWarnings[0]).toContain("electron-builder v28")
   })
