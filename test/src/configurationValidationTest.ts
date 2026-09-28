@@ -99,8 +99,8 @@ test("`-c.updateManifest=false` is coerced to a boolean and passes schema valida
 
 test("schema validation does not coerce `updateManifest: null` into the `false` opt-out", async ({ expect }) => {
   // ajv runs with coerceTypes: true and mutates data on the first matching anyOf branch. scripts/fix-schema.js
-  // hoists the null branch ahead of the `const: false` one precisely so `null` survives; without that, `null`
-  // ("signing still required") silently becomes `false` (ship unsigned manifests).
+  // drops `type` from the `const: false` branch precisely so `null` survives (reordering would coerce `false` into
+  // `null` instead); without that, `null` ("signing still required") silently becomes `false` (ship unsigned manifests).
   const config: Configuration = { updateManifest: null, linux: { updateManifest: null } }
   await validateConfiguration(config, new DebugLogger())
   expect(config.updateManifest).toBeNull()

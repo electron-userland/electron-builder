@@ -4,6 +4,7 @@ import fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
 import { generateUpdateSigningKeypair } from "builder-util"
+import { afterEach, vi } from "vitest"
 import { app, appThrows } from "./helpers/packTester.js"
 
 // This test reads app-update.yml out of the assembled .app (written by afterPack), so it stops before the zip target is
@@ -58,8 +59,24 @@ test.ifNotWindows("r2 as first publisher writes provider r2 to app-update.yml", 
 // A generic provider needs no credentials, so getPublishConfigs cannot fail first and mask the real error.
 const genericPublish = { provider: "generic", url: "https://example.com/updates" } as const
 
-test.ifNotWindows("publishing without a signing key fails with an actionable error", ({ expect }) =>
-  appThrows(
+// `publish: "always"` alone does not make a publishing build on CI: PublishManager downgrades any build that
+// isPullRequest() detects (GITHUB_BASE_REF is set on GitHub Actions pull_request runs) to non-publishing, and the
+// signing requirement then only warns. The macOS shards run on the host with GITHUB_BASE_REF set; the Linux shards run
+// in docker without it - so without this the build only threw on Linux. PUBLISH_FOR_PULL_REQUEST forces the
+// publishing path, and clearing the signing-key env vars keeps a developer's exported key from satisfying the requirement.
+function stubPublishingBuildEnv() {
+  vi.stubEnv("PUBLISH_FOR_PULL_REQUEST", "true")
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", undefined)
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", undefined)
+}
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
+test.ifNotWindows("publishing without a signing key fails with an actionable error", ({ expect }) => {
+  stubPublishingBuildEnv()
+  return appThrows(
     expect,
     {
       targets: Platform.MAC.createTarget("zip", Arch.x64),
@@ -72,9 +89,10 @@ test.ifNotWindows("publishing without a signing key fails with an actionable err
       expect(error.message).toContain("`updateManifest: false`")
     }
   )
-)
+})
 
 test.ifNotWindows("a configured signing key embeds the derived public key into app-update.yml", ({ expect }) => {
+  stubPublishingBuildEnv()
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
   return app(
     expect,
@@ -93,8 +111,9 @@ test.ifNotWindows("a configured signing key embeds the derived public key into a
   )
 })
 
-test.ifNotWindows("updateManifest: false publishes unsigned manifests without failing", ({ expect }) =>
-  app(
+test.ifNotWindows("updateManifest: false publishes unsigned manifests without failing", ({ expect }) => {
+  stubPublishingBuildEnv()
+  return app(
     expect,
     {
       targets: Platform.MAC.createTarget("zip", Arch.x64),
@@ -109,4 +128,4 @@ test.ifNotWindows("updateManifest: false publishes unsigned manifests without fa
       },
     }
   )
-)
+})
