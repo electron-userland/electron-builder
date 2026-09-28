@@ -12,7 +12,7 @@ Every install in the field trusts exactly what it was built with. electron-updat
 
 | Trust anchor | Where it is fixed | What checks it |
 | --- | --- | --- |
-| Update-manifest trust list (`updateManifestPublicKey`, one or more Ed25519 public keys) | `app-update.yml`, written at build time | electron-updater, on every platform, before any download ([Signed Update Manifests](./signed-update-manifests.md)) |
+| Update-manifest trust list (`updateManifestPublicKey`, one or more Ed25519 public keys) | `app-update.yml`, written at build time — present in every build unless `updateManifest: false` | electron-updater, on every platform, before any download ([Signed Update Manifests](./signed-update-manifests.md)) |
 | Windows publisher name (`publisherName`) | `app-update.yml`, written at build time | electron-updater (NSIS target), against the Authenticode signature of the downloaded installer |
 | macOS Team ID | The running app's code signature | Squirrel.Mac, when it installs the downloaded update |
 | Linux repository GPG key | The user's package-manager keyring | `apt` / `dnf` / `zypper`, only when `allowUnverifiedLinuxPackages` is `false` |
@@ -31,13 +31,15 @@ Rotation is much calmer when it is routine. Decide in advance how you will measu
 
 electron-builder signs `latest*.yml` with one or more Ed25519 private keys and embeds the matching public keys into `app-update.yml`; electron-updater verifies the manifest against that list before downloading anything. See [Signed Update Manifests](./signed-update-manifests.md) for the feature itself. Four facts drive the rotation procedure:
 
-1. **An install trusts a LIST of keys.** `updateManifestPublicKey` in `app-update.yml` is either a single public key or a list of them. A manifest is accepted when *any* listed key validates *any* signature it carries. Verification is fail-closed as soon as at least one key is configured, and electron-updater never fetches replacement keys from the update server.
+1. **An install trusts a LIST of keys.** `updateManifestPublicKey` in `app-update.yml` is either a single public key or a list of them. A manifest is accepted when *any* listed key validates *any* signature it carries. Verification is fail-closed as soon as at least one key is configured — and since v27 configures one by default, treat fail-closed as the normal state. electron-updater never fetches replacement keys from the update server.
 2. **A manifest may carry several signatures.** Every configured signing key signs each `latest*.yml`; the result is written as a `signatures` list (one `{ keyId, signature }` entry per key) plus the legacy single `signature` field holding the first key's signature. `keyId` is the hex SHA-256 of the public key's SPKI DER encoding (printed by `create-update-key`), so you can see at a glance which keys signed a release.
-3. **The private keys are resolved from, in order:** `updateManifest.signingKey` → `updateManifest.signingKeyFile` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. The first source that is set wins, but that source may hold several keys: config values accept an array, a PEM value may contain several concatenated `-----BEGIN PRIVATE KEY-----` blocks, and `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` accepts several paths joined with the OS path delimiter (`:` on Linux/macOS, `;` on Windows). Relative `signingKeyFile` paths resolve against the project directory; relative `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` paths against the current working directory.
+3. **The private keys are resolved from, in order:** `updateManifest.signingKey` → `updateManifest.signingKeyFile` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. The first source that is set wins, but that source may hold several keys: config values accept an array, a PEM value may contain several concatenated `-----BEGIN PRIVATE KEY-----` blocks, and `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` accepts several paths joined with the OS path delimiter (`:` on Linux/macOS, `;` on Windows). Relative `signingKeyFile` paths resolve against the project directory; relative `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` paths against the current working directory. Setting `updateManifest` to `false` disables signing outright and short-circuits this whole ladder, environment variables included.
 4. **The embedded trust list is either explicit or derived.** If `updateManifest.publicKey` is set (string or array) it is embedded as-is; otherwise the public half of *every* signing key is derived and embedded. This lets you trust a key before you sign with it.
 
 :::note[Platform blocks replace, they don't merge]
 A platform-specific `updateManifest` block (for example `linux.updateManifest`) *replaces* the top-level `updateManifest` block for that platform rather than being merged with it. If you set `publicKey` at the top level but also have a per-platform block, put `publicKey` in the per-platform block too.
+
+The same replacement rule makes `linux.updateManifest: false` an opt-out for Linux alone, leaving a top-level signing config in force for the other platforms. A platform value of `null` is *not* an opt-out — it falls back to the top-level block.
 :::
 
 ### Recommended steady state: always trust the next key
@@ -108,6 +110,8 @@ An attacker holding a private key that installs still trust can produce a `lates
 - **Never commit private keys.** `updateManifest.signingKey` exists for completeness; in practice use `ELECTRON_BUILDER_UPDATE_SIGN_KEY` (PEM contents) or `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (paths to mounted secret files) from your CI secret store.
 - Prefer the `_FILE` variant where your CI can mount secrets as files; it keeps the keys out of process listings and environment dumps.
 - If a private key lives in an HSM or KMS that signs on your behalf, electron-builder cannot call it directly. Sign `latest*.yml` in a post-publish step of your own (append an entry to `signatures` with the matching `keyId`, or set `signature`), and list the public key in `updateManifest.publicKey` so it is embedded. electron-builder warns at build time when none of the keys it signs with is in an explicit `publicKey` list, since such a release cannot verify its own manifests.
+
+  A `publicKey` alone does not satisfy the v27 signing requirement, so this workflow has to build **without** a publish policy — the requirement is only enforced on a publishing build — and then publish the signed manifest itself.
 - Use one key per app (or per release channel if channels are operated by different teams). Sharing a key across unrelated apps means one compromise affects all of them.
 
 ## Windows: code-signing certificate rotation
@@ -206,6 +210,7 @@ Use this as a template for a rotation ticket.
 - [ ] Linux GPG (if enforced): package installs the new public key; sign with the old GPG key.
 - [ ] macOS: nothing to bridge for a same-Team certificate change; announce a Team ID change in-app.
 - [ ] Verify the built `app-update.yml` lists both keys under `updateManifestPublicKey` / both `publisherName` entries, and `latest*.yml` has two `signatures` entries, before publishing.
+- [ ] Never reach for `updateManifest: false` to get a rotation release out: it is not a rotation tool, and it produces manifests that every install carrying a key will refuse.
 
 **Switch**
 

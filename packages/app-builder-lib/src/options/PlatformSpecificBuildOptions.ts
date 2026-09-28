@@ -207,11 +207,26 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly generateUpdatesFilesForAllChannels?: boolean
 
   /**
-   * Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed
-   * and electron-updater verifies the signature (against the embedded public key) before downloading an update.
-   * Prefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI.
+   * Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is
+   * embedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.
+   *
+   * **Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key
+   * resolves. Generate one once with `electron-builder create-update-key`, then supply it via
+   * `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via
+   * `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and
+   * resolves the key from the environment; `null` is not an opt-out.
+   *
+   * Set to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then
+   * logs a warning. `false` also short-circuits the environment variables, so a leftover
+   * `ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.
+   *
+   * The requirement is only enforced when a publish policy is in effect (`--publish`); a build without one
+   * warns instead, so local builds and pipelines that sign the manifest in a later step of their own are
+   * unaffected. It is also waived for a publish target with `publishAutoUpdate: false`, which emits no manifest.
+   *
+   * See [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests).
    */
-  readonly updateManifest?: UpdateManifestSigningOptions | null
+  readonly updateManifest?: UpdateManifestSigningOptions | false | null
 
   /**
    * The release info. Intended for command line usage:
@@ -263,8 +278,11 @@ export interface UpdateManifestSigningOptions {
    * The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.
    * The updater accepts a manifest when any listed key validates one of its signatures. Optional — when
    * omitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust
-   * additional keys ahead of a rotation (for example `[current, next]`) or when the private key is held by an
-   * external signer.
+   * additional keys ahead of a rotation (for example `[current, next]`).
+   *
+   * A `publicKey` on its own does not satisfy the signing requirement — electron-builder still has no key to
+   * sign with. An external signer that signs `latest*.yml` in a later step therefore has to build without a
+   * publish policy, where the requirement is not enforced.
    */
   readonly publicKey?: string | Array<string> | null
 }

@@ -3,7 +3,8 @@ import { Arch, Platform } from "electron-builder"
 import fsExtra from "fs-extra"
 import { load } from "js-yaml"
 import * as path from "path"
-import { app } from "./helpers/packTester.js"
+import { generateUpdateSigningKeypair } from "builder-util"
+import { app, appThrows } from "./helpers/packTester.js"
 
 // This test reads app-update.yml out of the assembled .app (written by afterPack), so it stops before the zip target is
 // built. The tests that need the built artifacts — latest-mac.yml / latest-linux.yml per provider, publish upload
@@ -46,6 +47,65 @@ test.ifNotWindows("r2 as first publisher writes provider r2 to app-update.yml", 
         expect(updateConfig.channel).toBe("beta")
         // electron-updater derives the download base URL from app-update.yml via getS3LikeProviderBaseUrl
         expect(getS3LikeProviderBaseUrl(updateConfig)).toBe("https://pub-abcdef1234567890abcdef1234567890.r2.dev")
+      },
+    }
+  )
+)
+
+// ── the update-manifest signing requirement, end to end ──────────────────────
+// `updateManifest: null` rather than omitting the key: assertPack defaults an ABSENT updateManifest to `false`
+// so the fixture suites keep asserting unsigned manifests, and `null` is explicitly not an opt-out.
+// A generic provider needs no credentials, so getPublishConfigs cannot fail first and mask the real error.
+const genericPublish = { provider: "generic", url: "https://example.com/updates" } as const
+
+test.ifNotWindows("publishing without a signing key fails with an actionable error", ({ expect }) =>
+  appThrows(
+    expect,
+    {
+      targets: Platform.MAC.createTarget("zip", Arch.x64),
+      config: { updateManifest: null, publish: [genericPublish] },
+    },
+    { publish: "always", afterPackTestHook: async () => true },
+    error => {
+      expect(error.message).toContain("auto-update manifests must be signed")
+      expect(error.message).toContain("electron-builder create-update-key")
+      expect(error.message).toContain("`updateManifest: false`")
+    }
+  )
+)
+
+test.ifNotWindows("a configured signing key embeds the derived public key into app-update.yml", ({ expect }) => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  return app(
+    expect,
+    {
+      targets: Platform.MAC.createTarget("zip", Arch.x64),
+      config: { updateManifest: { signingKey: privateKeyPem }, publish: [genericPublish] },
+    },
+    {
+      publish: "always",
+      afterPackTestHook: async () => true,
+      packed: async context => {
+        const updateConfig = load(await fsExtra.readFile(path.join(context.getResources(Platform.MAC, Arch.x64), "app-update.yml"), "utf-8")) as any
+        expect(updateConfig.updateManifestPublicKey).toBe(publicKeyPem)
+      },
+    }
+  )
+})
+
+test.ifNotWindows("updateManifest: false publishes unsigned manifests without failing", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: Platform.MAC.createTarget("zip", Arch.x64),
+      config: { updateManifest: false, publish: [genericPublish] },
+    },
+    {
+      publish: "always",
+      afterPackTestHook: async () => true,
+      packed: async context => {
+        const updateConfig = load(await fsExtra.readFile(path.join(context.getResources(Platform.MAC, Arch.x64), "app-update.yml"), "utf-8")) as any
+        expect(updateConfig.updateManifestPublicKey).toBeUndefined()
       },
     }
   )

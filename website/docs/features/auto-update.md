@@ -222,7 +222,7 @@ Update metadata validated only by the legacy SHA-256 `sha2` checksum is deprecat
 
 Two `AppUpdater` settings changed or were added in v27. See the [Security & Hardening](./security.md#update-security-electron-updater) page for the full rationale.
 
-The update manifest (`latest*.yml`) itself can also be cryptographically signed and verified before any download — see [Signed Update Manifests](./signed-update-manifests.md).
+The update manifest (`latest*.yml`) itself **is** cryptographically signed and verified before any download as of v27. Publishing a build that emits update metadata fails unless an Ed25519 signing key resolves; `updateManifest: false` is the only opt-out — see [Signed Update Manifests](./signed-update-manifests.md).
 
 Changing a signing key or certificate that installs in the field already trust requires a transition release — see [Key Rotation](./key-rotation.md).
 

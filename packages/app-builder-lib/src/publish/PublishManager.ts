@@ -293,7 +293,7 @@ export class PublishManager implements PublishContext {
       return
     }
 
-    await writeUpdateInfoFiles(updateInfoFileTasks, this.packager)
+    await writeUpdateInfoFiles(updateInfoFileTasks, this.packager, this.isPublish)
     await this.taskManager.awaitTasks()
   }
 }
@@ -302,9 +302,14 @@ export async function getAppUpdatePublishConfiguration(
   packager: PlatformPackager<any>,
   targetSpecificOptions: TargetSpecificOptions | Nullish,
   arch: Arch,
-  errorIfCannot: boolean
+  /**
+   * Whether this is the publish path. Gates both publish-credential resolution and the update-manifest signing
+   * requirement. The two Linux targets that write `app-update.yml` into the package pass `false`, since for them
+   * "validation will be done on publish step" - and that is exactly when signing is enforced too.
+   */
+  isPublish: boolean
 ): Promise<PublishConfiguration | null> {
-  const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, arch, errorIfCannot), arch)
+  const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, arch, isPublish), arch)
   if (publishConfigs == null || publishConfigs.length === 0) {
     return null
   }
@@ -326,7 +331,7 @@ export async function getAppUpdatePublishConfiguration(
   // `publicKey` list wins as-is; otherwise the public half of every configured signing key is derived
   // so the user only manages the secrets. One key is written as a plain string (byte-identical to the
   // single-key format), several as a YAML list.
-  const updateManifestConfig = packager.platformOptions.updateManifest ?? packager.config.updateManifest
+  const updateManifestConfig = packager.updateManifestOptions
   // `updateManifestPublicKey` is only ever assigned right below, on this fresh copy, so a value that is
   // already present can only have come from the user's `publish` configuration. Rejecting it (rather than
   // taking it as-is) keeps the trust list on the single validated path and stops a stale hand-copied key
@@ -337,8 +342,11 @@ export async function getAppUpdatePublishConfiguration(
   // The very same keys updateInfoBuilder signs `latest*.yml` with, so env-var-only signing
   // (no `updateManifest` config block) embeds the matching public keys too, and the two sides
   // cannot disagree about whether signing is enabled.
-  const signingKeys = await packager.updateSigningKeys.value
-  const explicitKeys = normalizeExplicitPublicKeys(updateManifestConfig?.publicKey)
+  // A publish target with `publishAutoUpdate: false` emits no manifest, so the signing requirement is waived
+  // there - the trust list is still embedded if keys happen to be configured.
+  const signingKeys = publishConfig.publishAutoUpdate === false ? await packager.updateSigningKeys.value : await packager.requireUpdateSigningKeys(isPublish)
+  // `false` is the opt-out and carries no config object to read `publicKey` from
+  const explicitKeys = updateManifestConfig === false ? [] : normalizeExplicitPublicKeys(updateManifestConfig?.publicKey)
   const trustedKeys = explicitKeys.length > 0 ? explicitKeys : signingKeys.map(derivePublicKeyPem)
   if (trustedKeys.length > 0) {
     publishConfig.updateManifestPublicKey = trustedKeys.length === 1 ? trustedKeys[0] : trustedKeys
