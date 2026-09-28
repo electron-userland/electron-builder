@@ -127,6 +127,7 @@ export default class AppUpdater {
 All updater classes inherit `AppUpdater.verifyUpdateFile`, which lets you run your own verification step after the update file has finished downloading.
 The file is downloaded under a temporary name, to prevent accidental execution, and only after a successful verification it is renamed into its original filename.
 If the verification fails, the update is aborted, and temporary file deleted.
+For NSIS web installers, `packageFilePath` is also provided and points to the downloaded companion `.7z` package.
 
 This hook is generic and works across updater implementations. On Windows NSIS updates, the built-in Authenticode verification remains available separately as `NsisUpdater.verifyUpdateFileAuthenticodeSignature`.
 
@@ -135,9 +136,11 @@ import { NsisUpdater } from "electron-updater"
 
 const updater = new NsisUpdater()
 
-updater.verifyUpdateFile = async ({ temporaryUpdateFilePath, originalUpdateFileName, cancellationToken }) => {
+updater.verifyUpdateFile = async ({ temporaryUpdateFilePath, originalUpdateFileName, packageFilePath, cancellationToken }) => {
   try {
-    // Example for your custom code, which can inspect the downloaded file at `temporaryUpdateFilePath`, and can use the expected filename `originalUpdateFileName`:
+    // Example for your custom code, which can inspect the downloaded file at `temporaryUpdateFilePath`,
+    // can use the expected filename `originalUpdateFileName`, and for NSIS web installers can also inspect
+    // the downloaded companion package at `packageFilePath`.
     const signatureFile = getCorrespondingSignatureFile(originalUpdateFileName)
     checkSignature(temporaryUpdateFilePath, signatureFile)
     return { response: "success" }

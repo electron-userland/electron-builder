@@ -86,6 +86,7 @@ export type VerifyUpdateFileResult = { response: "success" | "failure"; message?
 export type VerifyUpdateFile = (params: {
   temporaryUpdateFilePath: string
   originalUpdateFileName: string
+  packageFilePath?: string
   cancellationToken?: CancellationToken
 }) => Promise<VerifyUpdateFileResult>
 // Specific interface to verify a pending Nsis update file for Windows Authenticode signature.

@@ -45,6 +45,26 @@ function channelYml(options: { version?: string; sha512?: string; stagingPercent
   return serializeToYaml(info)
 }
 
+function webInstallerChannelYml(packageFileName: string, packageContent: Buffer, options: { version?: string } = {}): string {
+  const version = options.version ?? UPDATE_VERSION
+  const fileName = installerName(version)
+  return serializeToYaml({
+    version,
+    files: [{ url: fileName, sha512: createHash("sha512").update(INSTALLER_CONTENT).digest("base64"), size: INSTALLER_CONTENT.length }],
+    path: fileName,
+    sha512: createHash("sha512").update(INSTALLER_CONTENT).digest("base64"),
+    packages: {
+      [process.arch]: {
+        file: packageFileName,
+        path: packageFileName,
+        sha512: createHash("sha512").update(packageContent).digest("base64"),
+        size: packageContent.length,
+      },
+    },
+    releaseDate: RELEASE_DATE,
+  })
+}
+
 /**
  * Writes the given files into a temp dir and serves them over a localhost static server.
  * Pass file paths relative to the server root (subdirectories are supported).
@@ -145,6 +165,43 @@ test("file url generic aborts when verifyUpdateFile rejects the downloaded temp 
     expect(await fsExtra.pathExists(observedTempPath)).toBe(false)
     // Most importantly, the temporary update file was never restored to the original filename as an executable binary.
     expect(await fsExtra.pathExists(path.join(path.dirname(observedTempPath), installerName(UPDATE_VERSION)))).toBe(false)
+  } finally {
+    await close()
+  }
+})
+
+test("web installer passes packageFilePath to verifyUpdateFile", config, async ({ expect }) => {
+  const packageFileName = `TestApp-${UPDATE_VERSION}.nsis.7z`
+  const packageContent = Buffer.from("electron-builder localhost update-server test nsis-web package payload")
+  const { url, close } = await serveUpdate({
+    "latest.yml": webInstallerChannelYml(packageFileName, packageContent),
+    [installerName(UPDATE_VERSION)]: INSTALLER_CONTENT,
+    [packageFileName]: packageContent,
+  })
+  try {
+    const updater = await createNsisUpdater()
+    updater.disableWebInstaller = false
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+
+    let observedPackageFilePath = ""
+    const verifyUpdateFile = vi.fn(async (params: { temporaryUpdateFilePath: string; originalUpdateFileName: string; packageFilePath?: string }) => {
+      expect(params.originalUpdateFileName).toBe(installerName(UPDATE_VERSION))
+      expect(path.basename(params.temporaryUpdateFilePath).startsWith("temp-")).toBe(true)
+      expect(params.packageFilePath).toBeDefined()
+      observedPackageFilePath = params.packageFilePath!
+      expect(path.basename(observedPackageFilePath)).toBe(`package-${UPDATE_VERSION}.7z`)
+      await assertThat(expect, params.temporaryUpdateFilePath).isFile()
+      await assertThat(expect, observedPackageFilePath).isFile()
+      return { response: "failure" as const, message: "custom verification failed" }
+    })
+    updater.verifyUpdateFile = verifyUpdateFile
+
+    const updateCheckResult = await updater.checkForUpdates()
+    await expect(updateCheckResult?.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_FILE" })
+
+    expect(verifyUpdateFile).toHaveBeenCalledTimes(1)
+    expect(observedPackageFilePath).not.toBe("")
+    expect(await fsExtra.pathExists(observedPackageFilePath)).toBe(false)
   } finally {
     await close()
   }

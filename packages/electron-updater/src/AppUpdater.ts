@@ -1014,6 +1014,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       const verificationResult = await this.verifyUpdateFile({
         temporaryUpdateFilePath: tempUpdateFile,
         originalUpdateFileName: updateFileName,
+        packageFilePath: packageFile ?? undefined,
         cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
       })
       if (verificationResult?.response !== "success") {
