@@ -1,5 +1,5 @@
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
-import { UpdateCheckResult } from "electron-updater"
+import { NsisUpdater, UpdateCheckResult } from "electron-updater"
 import fsExtra from "fs-extra"
 import { createHash } from "crypto"
 import * as http from "http"
@@ -8,7 +8,16 @@ import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
 import { removeUnstableProperties } from "../helpers/packTester.js"
-import { createNsisUpdater, createVerifyUpdateFileMock, expectVerifyUpdateFileFailure, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import {
+  createNsisUpdater,
+  createTestAppAdapter,
+  createVerifyUpdateFileMock,
+  expectVerifyUpdateFileFailure,
+  trackEvents,
+  tuneTestUpdater,
+  validateDownload,
+  writeUpdateConfig,
+} from "../helpers/updaterTestUtil.js"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { serializeToYaml, TmpDir } from "builder-util"
 import { ExpectStatic } from "vitest"
@@ -184,7 +193,43 @@ test("web installer passes packageFilePath to verifyUpdateFile", config, async (
   }
 })
 
-test("verifyUpdateFile also gates an update reused from the cache", config, async ({ expect }) => {
+test("verifyUpdateFile also gates a cached update reused after an app relaunch", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    // both updaters share one app adapter, so the second one reads the cache the first one wrote — the
+    // cross-launch branch of validateDownloadedPath (update-info.json + re-hash), not the in-session one
+    const appAdapter = await createTestAppAdapter()
+    const updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+
+    const firstLaunch = new NsisUpdater(null, appAdapter)
+    tuneTestUpdater(firstLaunch)
+    firstLaunch.updateConfigPath = updateConfigPath
+    const accepting = createVerifyUpdateFileMock(() => ({ response: "success" }))
+    firstLaunch.verifyUpdateFile = accepting.mock
+    const firstDownload = await (await firstLaunch.checkForUpdates())?.downloadPromise
+    await assertThat(expect, firstDownload!.updateFile).isFile()
+
+    // a fresh updater instance, as after a restart: nothing is downloaded again, but the verifier must still run
+    const secondLaunch = new NsisUpdater(null, appAdapter)
+    tuneTestUpdater(secondLaunch)
+    secondLaunch.updateConfigPath = updateConfigPath
+    const rejecting = createVerifyUpdateFileMock(() => ({ response: "failure", message: "stale cached file rejected" }))
+    secondLaunch.verifyUpdateFile = rejecting.mock
+
+    await expect((await secondLaunch.checkForUpdates())?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_INVALID_UPDATE_FILE",
+      message: expect.stringContaining("stale cached file rejected"),
+    })
+
+    expect(rejecting.mock).toHaveBeenCalledTimes(1)
+    expect(rejecting.observations[0].updateFilePath).toBe(firstDownload!.updateFile)
+    await assertThat(expect, firstDownload!.updateFile).doesNotExist()
+  } finally {
+    await close()
+  }
+})
+
+test("verifyUpdateFile also gates an update reused from the cache in the same session", config, async ({ expect }) => {
   const { url, close } = await serveDefaultUpdate()
   try {
     const updater = await createNsisUpdater()
