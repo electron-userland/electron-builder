@@ -813,6 +813,24 @@ test("createUpdateInfoTasks passes event.arch to the created task", async ({ exp
   })
 })
 
+test.for([
+  ["full installer", { sha512: "c2hhNTEy", isAdminRightsRequired: true }],
+  ["web installer", { packages: { x64: { path: "App-1.0.0-x64.nsis.7z", sha512: "p64", size: 5000 } }, isAdminRightsRequired: true }],
+] as const)("createUpdateInfoTasks writes isAdminRightsRequired of a %s into the file entry of the installer", async ([, updateInfo], { expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: null, packager: makePlatformPackager(), target: { outDir: dir }, updateInfo }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
+    const info: any = tasks[0].info
+    expect(info.files[0].isAdminRightsRequired).toBe(true)
+    expect(info.isAdminRightsRequired).toBeUndefined()
+    if ("packages" in updateInfo) {
+      expect(info.packages).toEqual(updateInfo.packages)
+    }
+  })
+})
+
 test("createUpdateInfoTasks sets arch null for universal installer", async ({ expect }) => {
   await withTmpDir(async dir => {
     const artifactFile = path.join(dir, "App-1.0.0.exe")

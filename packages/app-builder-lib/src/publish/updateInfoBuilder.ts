@@ -210,7 +210,16 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
 
   if (customUpdateInfo != null) {
     // file info or nsis web installer packages info
-    Object.assign("sha512" in customUpdateInfo ? files[0] : result, customUpdateInfo)
+    if ("sha512" in customUpdateInfo) {
+      Object.assign(files[0], customUpdateInfo)
+    } else {
+      const { isAdminRightsRequired, ...packagesInfo } = customUpdateInfo
+      Object.assign(result, packagesInfo)
+      // electron-updater reads isAdminRightsRequired from the file entry of the installer
+      if (isAdminRightsRequired != null) {
+        Object.assign(files[0], { isAdminRightsRequired })
+      }
+    }
   }
   return result
 }

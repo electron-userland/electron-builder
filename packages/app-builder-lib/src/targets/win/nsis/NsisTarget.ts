@@ -422,7 +422,10 @@ export class NsisTarget extends Target {
         updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch)
       }
 
-      if (updateInfo != null && isPerMachine && (oneClick || options.packElevateHelper)) {
+      // a per-machine build always packs elevate.exe (see CopyElevateHelper), unless the framework has no elevate helper
+      if (isPerMachine && packager.framework.isCopyElevateHelper) {
+        // without a blockmap (`differentialPackage: false`), the update info of the installer is only its checksum
+        updateInfo ??= { sha512: await hashFile(installerPath) }
         updateInfo.isAdminRightsRequired = true
       }
 
