@@ -21,6 +21,7 @@
         StrCpy $packageFile "$EXEDIR/$packageFile"
         StrCpy $isPackageFileExplicitlySpecified "false"
       ${else}
+        StrCpy $4 "$packageFile"
         StrCpy $isPackageFileExplicitlySpecified "true"
       ${endIf}
 
@@ -29,6 +30,18 @@
       # by the native machine arch. nsisWeb.allowUnverifiedAppPackage (ALLOW_UNVERIFIED_APP_PACKAGE) skips this for a deliberately foreign
       # package (use case - one installer suitable for any app version).
       ${if} ${FileExists} "$packageFile"
+        # A local package ($4) is copied into the installer's own temporary directory first. The copy is what is verified and
+        # extracted. It isn't named package.7z, which a download resumes into.
+        Push "$PLUGINSDIR\package-staged.7z"
+        Push "$packageFile"
+        System::Call 'kernel32::CopyFileW(w s, w s, i 1) i .r0'
+        ${if} $0 = 0
+          MessageBox MB_OK|MB_ICONSTOP "Package file $4 cannot be copied to $PLUGINSDIR. Installation aborted." /SD IDOK
+          SetErrorLevel 2
+          Quit
+        ${endIf}
+        StrCpy $packageFile "$PLUGINSDIR\package-staged.7z"
+
         ${if} $isPackageFileExplicitlySpecified == "true"
           !ifndef ALLOW_UNVERIFIED_APP_PACKAGE
             ${StdUtils.HashFile} $3 "SHA2-512" "$packageFile"
@@ -41,7 +54,7 @@
             !ifdef APP_ARM64_HASH
               StrCmp $3 "${APP_ARM64_HASH}" fun_extract
             !endif
-            MessageBox MB_OK|MB_ICONSTOP "Package file $packageFile doesn't match any package of this installer (checksum $3). Installation aborted." /SD IDOK
+            MessageBox MB_OK|MB_ICONSTOP "Package file $4 doesn't match any package of this installer (checksum $3). Installation aborted." /SD IDOK
             SetErrorLevel 2
             Quit
           !endif
@@ -51,6 +64,7 @@
           ${if} $3 == $1
             Goto fun_extract
           ${else}
+            Delete "$packageFile"
             MessageBox MB_OK "Package file $4 found locally, but checksum doesn't match — expected $1, actual $3.$\r$\nLocal file is ignored and package will be downloaded from Internet." /SD IDOK
           ${endIf}
         ${endIf}

@@ -36,7 +36,9 @@ The web installer verifies the package it installs against the SHA-512 of the pa
 - A package downloaded from the default, publish-derived (versioned) URL must match the package for the detected arch.
 - A package downloaded from an explicit `appPackageUrl` (e.g. a version-independent `latest` URL) is **not** verified, since that URL can serve packages of other builds.
 
-A mismatch aborts the installation (exit code `2`). Set `nsisWeb.allowUnverifiedAppPackage: true` (default `false`) to skip these checks only if you intentionally use one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).
+A local package (passed via `--package-file`, or found next to the installer) is first copied into the installer's own temporary directory. The installer verifies and installs that copy. The local file itself is left in place. With `allowUnverifiedAppPackage` a package passed via `--package-file` is still copied, but not verified.
+
+A mismatch, or a local package that cannot be copied, aborts the installation (exit code `2`). Set `nsisWeb.allowUnverifiedAppPackage: true` (default `false`) to skip these checks only if you intentionally use one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).
 
 For auto-update, electron-updater installs web-installer updates only when `disableWebInstaller` is `false`; installs made by an `nsis-web` installer built with electron-builder v27+ default to `false` automatically — see [Auto Update](./features/auto-update.md#disablewebinstaller-now-defaults-to-true). Don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./features/signed-update-manifests.md) cover the web package's path, SHA-512 and size.
 
