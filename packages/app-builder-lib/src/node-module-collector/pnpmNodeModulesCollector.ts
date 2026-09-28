@@ -337,7 +337,22 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     const range = typeof declaredRange === "string" ? declaredRange : undefined
     const located = await this.locateFromDepOrRoot(depName, parentPath, range)
     const exact = located ? this.allDependencies.get(`${depName}@${located.packageJson.version}`) : undefined
-    return exact ?? this.getAllDepsByName().get(depName)
+    if (exact) {
+      return exact
+    }
+    // The copy on disk was never listed with children by `pnpm list --prod`: with pnpm 10.29.3+ a
+    // package whose only occurrences sit beneath other deduped stubs (e.g. `wrappy` under `once`,
+    // `ms` under `debug`) is never visited by collectDepsRecursively, so it has no allDependencies
+    // entry at all and used to fall through to the name-only lookup (or to nothing). Register it
+    // straight from disk; its own dependencies are recovered the same way when the production graph
+    // walks its package.json, and `_getNodeModules` finds its path through the entry we add here.
+    if (located) {
+      const id = `${depName}@${located.packageJson.version}`
+      const synthesized: PnpmDependency = { name: depName, from: depName, version: located.packageJson.version, path: located.packageDir, resolved: "" }
+      this.allDependencies.set(id, synthesized)
+      return synthesized
+    }
+    return this.getAllDepsByName().get(depName)
   }
 
   protected async collectAllDependencies(_tree: PnpmDependency, _appPackageName: string): Promise<void> {
