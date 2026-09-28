@@ -719,6 +719,14 @@ describe("HttpExecutor.removeCrossOriginSensitiveHeaders", () => {
     const headers = credentialHeaders()
     expect(HttpExecutor.removeCrossOriginSensitiveHeaders(headers, new URL("http://feed.example.com/updates/"), new URL("https://feed.example.com/updates/app.exe"))).toBe(headers)
   })
+
+  test("a __proto__ key in the headers does not change the prototype of the result", () => {
+    const headers = JSON.parse(`{"__proto__": {"Authorization": "Bearer token123"}, "accept": "*/*"}`)
+    const result = HttpExecutor.removeCrossOriginSensitiveHeaders(headers, feedUrl, new URL("https://cdn.example.net/app.exe"))
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype)
+    expect(result.Authorization).toBeUndefined()
+    expect(result).toEqual({ accept: "*/*" })
+  })
 })
 
 describe("safeStringifyJson field redaction", () => {

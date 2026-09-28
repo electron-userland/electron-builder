@@ -9,6 +9,7 @@ import { URL } from "url"
 import { Nullish } from "./index.js"
 import { CancellationToken } from "./CancellationToken.js"
 import { newError } from "./error.js"
+import { deepAssign } from "./objects.js"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform.js"
 
 const debug = _debug("electron-builder")
@@ -405,10 +406,10 @@ Please double check that your authentication token is correct. Due to security r
     if (debug.enabled) {
       debug(`Cross-origin request (${originUrl.host} → ${targetUrl.host}): stripping sensitive headers`)
     }
-    const result: OutgoingHttpHeaders = {}
-    for (const [key, value] of Object.entries(headers)) {
-      if (!SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
-        result[key] = value
+    const result = deepAssign<OutgoingHttpHeaders>({}, headers)
+    for (const key of Object.keys(result)) {
+      if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
+        delete result[key]
       }
     }
     return result
