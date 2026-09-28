@@ -2,6 +2,7 @@ import { readFileSync } from "fs"
 import * as path from "path"
 import { describe, expect, test } from "vitest"
 import {
+  FEED_QUERY_ADVISORY,
   MAC_ENTITLEMENTS_ADVISORY,
   migrateConfig,
   NSIS_PER_MACHINE_UPDATE_ADVISORY,
@@ -714,6 +715,7 @@ describe("migrateConfig — updater advisories", () => {
     ["NSIS_WEB_ADVISORY", NSIS_WEB_ADVISORY, "disablewebinstaller-defaults-to-true"],
     ["NSIS_PER_MACHINE_UPDATE_ADVISORY", NSIS_PER_MACHINE_UPDATE_ADVISORY, "nsis-per-machine-builds-set-isadminrightsrequired"],
     ["WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY", WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, "windows-publishername-is-validated-against-the-signing-certificate"],
+    ["FEED_QUERY_ADVISORY", FEED_QUERY_ADVISORY, "update-credentials-stay-on-the-feeds-origin"],
   ])("%s links its v27 breaking-changes section", (_name, advisory, anchor) => {
     expect(advisory.endsWith(` See https://www.electron.build/docs/migration/v27-breaking-changes#${anchor}`)).toBe(true)
     const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-breaking-changes.md"), "utf8")
@@ -727,17 +729,22 @@ describe("migrateConfig — updater advisories", () => {
         appId: "com.example.app",
         win: { target: ["nsis", "portable"], sign: { type: "signtool", sign: "./sign.js", certificateFile: "c.pfx", publisherName: "CN=Acme" } },
         nsis: { oneClick: false, perMachine: false },
+        publish: [
+          { provider: "generic", url: "https://updates.example.com/app" },
+          { provider: "github", owner: "o", repo: "r" },
+        ],
       })
     ).toEqual([])
   })
 
-  test("all advisories keep their order: nsis-web, mac entitlements, per-machine, sign hook", () => {
+  test("all advisories keep their order: nsis-web, mac entitlements, per-machine, sign hook, feed query", () => {
     const result = migrateConfig({
       win: { target: "nsis-web", sign: { type: "signtool", sign: "./sign.js" } },
       nsisWeb: { perMachine: true },
       mac: { target: "dmg" },
+      publish: { provider: "generic", url: "https://updates.example.com/?token=t" },
     })
-    expect(result.advisories).toEqual([NSIS_WEB_ADVISORY, MAC_ENTITLEMENTS_ADVISORY, NSIS_PER_MACHINE_UPDATE_ADVISORY, WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
+    expect(result.advisories).toEqual([NSIS_WEB_ADVISORY, MAC_ENTITLEMENTS_ADVISORY, NSIS_PER_MACHINE_UPDATE_ADVISORY, WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, FEED_QUERY_ADVISORY])
     expect(result.modified).toBe(false)
   })
 
@@ -811,6 +818,44 @@ describe("migrateConfig — updater advisories", () => {
       const result = migrateConfig({ win: { signExecutable: false, signtoolOptions: { sign: "./sign.js" } } })
       expect(result.migrated.win).toEqual({ sign: false })
       expect(result.advisories).toEqual([])
+    })
+  })
+
+  describe("generic publish url with a query string", () => {
+    test.each<[string, Record<string, any>]>([
+      ["root publish object", { publish: { provider: "generic", url: "https://updates.example.com/?token=t" } }],
+      [
+        "root publish array",
+        {
+          publish: [
+            { provider: "github", owner: "o", repo: "r" },
+            { provider: "generic", url: "https://updates.example.com/feed?key=k" },
+          ],
+        },
+      ],
+      ["platform-level publish", { win: { publish: { provider: "generic", url: "https://updates.example.com/win?key=k" } } }],
+      ["target-level publish array", { nsis: { publish: [{ provider: "generic", url: "https://updates.example.com/?key=k" }] } }],
+      ["linux publish", { linux: { publish: [{ provider: "generic", url: "https://updates.example.com/?key=${env.KEY}" }] } }],
+    ])("%s emits the advisory without changing the config", (_name, input) => {
+      const result = migrateConfig(input)
+      expect(result.advisories).toEqual([FEED_QUERY_ADVISORY])
+      expect(result.modified).toBe(false)
+      expect(result.migrated).toEqual(input)
+    })
+
+    test("a generic url without a query, string entries and other providers emit nothing", () => {
+      expect(advisoriesOf({ publish: { provider: "generic", url: "https://updates.example.com/app" } })).toEqual([])
+      expect(advisoriesOf({ publish: { provider: "generic" } })).toEqual([])
+      expect(advisoriesOf({ publish: ["github", "generic"] })).toEqual([])
+      expect(advisoriesOf({ publish: null, win: { publish: [null] } })).toEqual([])
+      expect(
+        advisoriesOf({
+          publish: [
+            { provider: "s3", bucket: "b", endpoint: "https://s3.example.com/?x=1" },
+            { provider: "custom", url: "https://updates.example.com/?token=t" },
+          ],
+        })
+      ).toEqual([])
     })
   })
 })
