@@ -118,8 +118,8 @@ export async function expectVerifyUpdateFileFailure({
 
   // Test the internal behaviors:
   expect(verifyUpdateFile).toHaveBeenCalledTimes(1)
+  // guaranteed non-empty by the call-count assertion above: the mock records an observation before it awaits onVerify
   const observation = observations[0]
-  expect(observation).toBeDefined()
   // The downloaded bytes were offered to the verifier under a temporary name...
   expect(path.basename(observation.updateFilePath)).toBe(`temp-${observation.originalUpdateFileName}`)
   expect(observation.updateFileExisted).toBe(true)

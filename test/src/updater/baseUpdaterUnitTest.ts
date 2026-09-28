@@ -329,11 +329,22 @@ describe("BaseUpdater verifyUpdateFile integration", () => {
 
       const destinationFile = path.join(await context.tmpDir.createTempDir(), "temp-TestApp-2.0.0.AppImage")
       await captured!.task(destinationFile, {} as any, null, () => Promise.resolve())
-      // the downloaded, not-yet-verified file must not be runnable
-      expect((await stat(destinationFile)).mode & 0o111).toBe(0)
+      expect(await pathExists(destinationFile)).toBe(true)
+
+      // Windows carries no POSIX permission bits (`fs.chmod` only toggles the read-only attribute there, and
+      // `stat().mode & 0o111` is always 0), so the executable-bit half of this test is guarded inline and the
+      // rest — that AppImageUpdater supplies `afterVerification` at all, and that the task writes the file —
+      // keeps running everywhere.
+      if (process.platform !== "win32") {
+        // the downloaded, not-yet-verified file must not be runnable
+        expect((await stat(destinationFile)).mode & 0o111).toBe(0)
+      }
 
       await captured!.afterVerification!(destinationFile)
-      expect((await stat(destinationFile)).mode & 0o111).not.toBe(0)
+
+      if (process.platform !== "win32") {
+        expect((await stat(destinationFile)).mode & 0o111).not.toBe(0)
+      }
     } finally {
       if (originalAppimage == null) {
         delete process.env.APPIMAGE
