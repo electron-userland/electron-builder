@@ -43,15 +43,12 @@ function expectVerificationSuccess(result: VerifyUpdateFileResult): void {
 function expectVerificationFailure(result: VerifyUpdateFileResult): string {
   expect(result.response).toBe("failure")
   if (result.response !== "failure") {
+    // narrows the discriminated union so `message` is reachable below
     throw new Error("Expected signature verification to fail")
   }
-  return result.message ?? ""
-}
-
-function expectVerificationCompletedWithoutCrash(result: VerifyUpdateFileResult): void {
-  if (result.response === "failure") {
-    expect(typeof result.message).toBe("string")
-  }
+  // a failure always carries a reason, otherwise the error surfaced to the app says nothing
+  expect(result.message).not.toBe("")
+  return result.message
 }
 
 // =============================================================================
@@ -660,8 +657,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
   test("unsigned file returns a non-null error string", { timeout: 30_000 }, async ({ tmpDir }) => {
     const { logger } = await setup()
     const p = await createUnsignedExe(tmpDir)
-    const result = expectVerificationFailure(await verifySignature(["Any Publisher"], p, logger))
-    expect(typeof result).toBe("string")
+    expectVerificationFailure(await verifySignature(["Any Publisher"], p, logger))
   })
 
   test("path with spaces is handled without crashing", { timeout: 30_000 }, async ({ tmpDir }) => {
@@ -669,8 +665,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     const dir = await tmpDir.createTempDir({ prefix: "path with spaces" })
     const p = path.join(dir, "my update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
-    const result = await verifySignature(["Any Publisher"], p, logger)
-    expectVerificationCompletedWithoutCrash(result)
+    expectVerificationFailure(await verifySignature(["Any Publisher"], p, logger))
   })
 
   test("path with single quote does not crash (injection prevention)", { timeout: 30_000 }, async ({ tmpDir }) => {
@@ -681,8 +676,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     const p = path.join(quotedDir, "update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
     // Should not throw — the single quote must be escaped before entering the PS command string.
-    const result = await verifySignature(["Any Publisher"], p, logger)
-    expectVerificationCompletedWithoutCrash(result)
+    expectVerificationFailure(await verifySignature(["Any Publisher"], p, logger))
   })
 
   test("path with typographic apostrophe (U+2019) does not crash (PS smart-quote delimiter)", { timeout: 30_000 }, async ({ tmpDir }) => {
@@ -694,8 +688,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     await fs.writeFile(p, Buffer.from("not a PE"))
     // PowerShell treats U+2019 as a single-quote delimiter, so it must be escaped
     // like ' or the -LiteralPath string terminates early with a parse error.
-    const result = await verifySignature(["Any Publisher"], p, logger)
-    expectVerificationCompletedWithoutCrash(result)
+    expectVerificationFailure(await verifySignature(["Any Publisher"], p, logger))
   })
 
   test("path with non-ASCII characters does not crash (UTF-8 encoding, issue #8162)", { timeout: 30_000 }, async ({ tmpDir }) => {
@@ -706,8 +699,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     const p = path.join(unicodeDir, "update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
     // The $OutputEncoding + [Console]::OutputEncoding setup must handle non-ASCII dir names.
-    const result = await verifySignature(["Any Publisher"], p, logger)
-    expectVerificationCompletedWithoutCrash(result)
+    expectVerificationFailure(await verifySignature(["Any Publisher"], p, logger))
   })
 
   // -------------------------------------------------------------------------
@@ -848,9 +840,11 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
       // Sanity: the untouched copy verifies, so a failure below is caused by the tampering alone.
       expectVerificationSuccess(await verifySignature([fixture.subject], exe, createLogger()))
       await fs.appendFile(exe, Buffer.from("tampered"))
-      // Appended bytes break the Authenticode hash → Status HashMismatch → non-null error string.
+      // Appended bytes break the Authenticode hash → Status HashMismatch → a failure naming the mismatch.
       const result = expectVerificationFailure(await verifySignature([fixture.subject], exe, logger))
-      expect(typeof result).toBe("string")
+      // the reason carries the requested publisher and the raw Get-AuthenticodeSignature payload, so the app can log why
+      expect(result).toContain(fixture.subject)
+      expect(result).toContain("raw info:")
     })
   })
 
@@ -866,8 +860,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     await fs.mkdir(andDir, { recursive: true })
     const p = path.join(andDir, "update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
-    const result = await verifySignature(["Any Publisher"], p, logger)
-    expectVerificationCompletedWithoutCrash(result)
+    expectVerificationFailure(await verifySignature(["Any Publisher"], p, logger))
   })
 
   test("directory name with %VAR% does not crash or reject (was expanded by cmd.exe)", { timeout: 30_000 }, async ({ tmpDir }) => {
@@ -877,8 +870,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     await fs.mkdir(pctDir, { recursive: true })
     const p = path.join(pctDir, "update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
-    const result = await verifySignature(["Any Publisher"], p, logger)
-    expectVerificationCompletedWithoutCrash(result)
+    expectVerificationFailure(await verifySignature(["Any Publisher"], p, logger))
   })
 
   test("directory name with $ does not crash or reject (safe in PS single-quoted string)", { timeout: 30_000 }, async ({ tmpDir }) => {
@@ -888,8 +880,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     await fs.mkdir(dollarDir, { recursive: true })
     const p = path.join(dollarDir, "update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
-    const result = await verifySignature(["Any Publisher"], p, logger)
-    expectVerificationCompletedWithoutCrash(result)
+    expectVerificationFailure(await verifySignature(["Any Publisher"], p, logger))
   })
 
   test("directory name with backtick does not crash or reject (safe in PS single-quoted string)", { timeout: 30_000 }, async ({ tmpDir }) => {
@@ -899,8 +890,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     await fs.mkdir(backtickDir, { recursive: true })
     const p = path.join(backtickDir, "update.exe")
     await fs.writeFile(p, Buffer.from("not a PE"))
-    const result = await verifySignature(["Any Publisher"], p, logger)
-    expectVerificationCompletedWithoutCrash(result)
+    expectVerificationFailure(await verifySignature(["Any Publisher"], p, logger))
   })
 
   // -------------------------------------------------------------------------

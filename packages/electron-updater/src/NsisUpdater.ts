@@ -6,8 +6,8 @@ import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
-import { DOWNLOAD_PROGRESS, DownloadExecutorResult } from "./types.js"
-import type { VerifyUpdateCodeSignature, VerifyUpdateFileAuthenticodeSignature, VerifyUpdateFileResult } from "./index.js"
+import { DOWNLOAD_PROGRESS, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
+import type { VerifyUpdateCodeSignature, VerifyUpdateFileAuthenticodeSignature, VerifyUpdateFileResult } from "./types.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import fsExtra from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
@@ -47,48 +47,68 @@ export class NsisUpdater extends BaseUpdater {
     }
   }
 
-  protected _verifyUpdateFileAuthenticodeSignature: VerifyUpdateFileAuthenticodeSignature = (publisherNames: Array<string>, unescapedTempUpdateFile: string) =>
+  private readonly _defaultVerifyUpdateFileAuthenticodeSignature: VerifyUpdateFileAuthenticodeSignature = (publisherNames: Array<string>, unescapedTempUpdateFile: string) =>
     verifySignature(publisherNames, unescapedTempUpdateFile, this._logger)
 
+  protected _verifyUpdateFileAuthenticodeSignature: VerifyUpdateFileAuthenticodeSignature = this._defaultVerifyUpdateFileAuthenticodeSignature
+
+  // built lazily and cached so that repeated reads of the deprecated accessor return the same function object, the way
+  // reading the plain field used to; invalidated whenever the underlying implementation changes
+  private _legacyVerifyUpdateCodeSignature: { implementation: VerifyUpdateFileAuthenticodeSignature; shim: VerifyUpdateCodeSignature } | null = null
+
   /**
-   * The verifyUpdateFileAuthenticodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust) or another custom verify function: ` (publisherName: string[], path: string) => Promise<{ response: "success" | "failure", message?: string }>`
+   * @deprecated Use `verifyUpdateFileAuthenticodeSignature` instead, which differs in return type.
+   * Shall be deleted in electron-builder v28.
+   */
+  protected get _verifyUpdateCodeSignature(): VerifyUpdateFileAuthenticodeSignature {
+    return this._verifyUpdateFileAuthenticodeSignature
+  }
+
+  protected set _verifyUpdateCodeSignature(value: VerifyUpdateFileAuthenticodeSignature) {
+    this._verifyUpdateFileAuthenticodeSignature = value
+  }
+
+  /**
+   * The verifyUpdateFileAuthenticodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust) or another custom verify function: ` (publisherName: string[], path: string) => Promise<{ response: "success" } | { response: "failure", message: string }>`
    * The default verify function uses [windowsExecutableCodeSignatureVerifier](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts)
+   *
+   * Assigning `null` restores the default verify function.
    */
   get verifyUpdateFileAuthenticodeSignature(): VerifyUpdateFileAuthenticodeSignature {
     return this._verifyUpdateFileAuthenticodeSignature
   }
 
-  set verifyUpdateFileAuthenticodeSignature(value: VerifyUpdateFileAuthenticodeSignature) {
-    if (value) {
-      this._verifyUpdateFileAuthenticodeSignature = value
-    }
+  set verifyUpdateFileAuthenticodeSignature(value: VerifyUpdateFileAuthenticodeSignature | null | undefined) {
+    this._verifyUpdateFileAuthenticodeSignature = value ?? this._defaultVerifyUpdateFileAuthenticodeSignature
   }
 
   /**
    * @deprecated Use verifyUpdateFileAuthenticodeSignature instead, which differs in return type.
    * This is a compatibility shim that keeps the old return type: returns null if verify signature succeeds or returns error message if it failed.
-   * Shall be deleted in v28.
+   * Shall be deleted in electron-builder v28.
    */
   get verifyUpdateCodeSignature(): VerifyUpdateCodeSignature {
-    const actualImplementation = this._verifyUpdateFileAuthenticodeSignature
-
-    return async function (this: NsisUpdater, publisherNames: Array<string>, unescapedTempUpdateFile: string) {
-      const result = await actualImplementation.call(this, publisherNames, unescapedTempUpdateFile)
-      return result.response === "success" ? null : (result?.message ?? "unknown error")
+    const implementation = this._verifyUpdateFileAuthenticodeSignature
+    if (this._legacyVerifyUpdateCodeSignature?.implementation !== implementation) {
+      this._legacyVerifyUpdateCodeSignature = {
+        implementation,
+        shim: async (publisherNames: Array<string>, unescapedTempUpdateFile: string) =>
+          verificationFailureMessage(await implementation.call(this, publisherNames, unescapedTempUpdateFile)),
+      }
     }
+    return this._legacyVerifyUpdateCodeSignature.shim
   }
 
-  /**
-   * @deprecated Use verifyUpdateFileAuthenticodeSignature instead, which differs in return type.
-   * This is a compatibility shim that keeps the old return type: returns null if verify signature succeeds or returns error message if it failed.
-   * Shall be deleted in v28.
-   */
-  set verifyUpdateCodeSignature(value: VerifyUpdateCodeSignature) {
-    if (value) {
-      this._verifyUpdateFileAuthenticodeSignature = async (publisherName: string[], path: string) => {
-        const result = await value.call(this, publisherName, path)
-        return result == null ? { response: "success" } : { response: "failure", message: result }
-      }
+  set verifyUpdateCodeSignature(value: VerifyUpdateCodeSignature | null | undefined) {
+    if (value == null) {
+      this._verifyUpdateFileAuthenticodeSignature = this._defaultVerifyUpdateFileAuthenticodeSignature
+      return
+    }
+    this._verifyUpdateFileAuthenticodeSignature = async (publisherNames: string[], unescapedTempUpdateFile: string) => {
+      const message = await value.call(this, publisherNames, unescapedTempUpdateFile)
+      // the legacy contract is "falsy means verified", so an empty message has to stay a success rather than become a
+      // failure with no reason
+      return message ? { response: "failure", message } : { response: "success" }
     }
   }
 
@@ -132,12 +152,12 @@ export class NsisUpdater extends BaseUpdater {
           await this.httpExecutor.download(fileInfo.url, destinationFile, downloadOptions)
         }
 
-        const signatureVerificationStatus = await this.verifySignature(destinationFile)
-        if (signatureVerificationStatus?.response !== "success") {
+        const signatureFailure = verificationFailureMessage(await this.verifySignature(destinationFile))
+        if (signatureFailure != null) {
           await removeTempDirIfAny()
           // noinspection ThrowInsideFinallyBlockJS
           throw newError(
-            `New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureVerificationStatus?.message ?? "unknown error"}`,
+            `New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureFailure}`,
             "ERR_UPDATER_INVALID_SIGNATURE"
           )
         }

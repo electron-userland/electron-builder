@@ -27,9 +27,9 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     const logger = mockLogger()
     updater.logger = logger
     const verifyHook = vi.fn()
-    updater.verifyUpdateCodeSignature = verifyHook
+    updater.verifyUpdateFileAuthenticodeSignature = verifyHook
 
-    // @ts-expect-error accessing a protected property
+    // @ts-expect-error accessing a private method
     const result = await updater.verifySignature("/path/to/installer.exe")
 
     expect(result).toEqual({ response: "success" })
@@ -55,7 +55,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     const verifyHook = vi.fn().mockResolvedValue({ response: "success" })
     updater.verifyUpdateFileAuthenticodeSignature = verifyHook
 
-    // @ts-expect-error accessing a protected property
+    // @ts-expect-error accessing a private method
     const result = await updater.verifySignature("/path/to/installer.exe")
 
     expect(result).toEqual({ response: "success" })
@@ -75,7 +75,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     const verifyHook = vi.fn().mockResolvedValue({ response: "success" })
     updater.verifyUpdateFileAuthenticodeSignature = verifyHook
 
-    // @ts-expect-error accessing a protected property
+    // @ts-expect-error accessing a private method
     await updater.verifySignature("/path/to/installer.exe")
 
     expect(verifyHook).toHaveBeenCalledWith(["Acme Corp"], "/path/to/installer.exe")
@@ -87,9 +87,9 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     const logger = mockLogger()
     updater.logger = logger
     const verifyHook = vi.fn()
-    updater.verifyUpdateCodeSignature = verifyHook
+    updater.verifyUpdateFileAuthenticodeSignature = verifyHook
 
-    // @ts-expect-error accessing a protected property
+    // @ts-expect-error accessing a private method
     const result = await updater.verifySignature("/path/to/installer.exe")
 
     expect(result).toEqual({ response: "success" })
@@ -111,7 +111,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
       const verifyHook = vi.fn().mockResolvedValue(null) // success as per old interface
       updater.verifyUpdateCodeSignature = verifyHook
 
-      // @ts-expect-error accessing a protected property
+      // @ts-expect-error accessing a private method
       const innerMethodResult = await updater.verifySignature("/path/to/installer.exe")
       expect(innerMethodResult).toEqual({ response: "success" }) // private method uses new interface internally
       expect(verifyHook).toHaveBeenCalledWith(["Acme Corp"], "/path/to/installer.exe")
@@ -139,6 +139,66 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
       expect(legacyGetterMethodResult).toBe(message)
     })
 
+    test("fails closed instead of throwing when the underlying verifier returns a malformed result", async () => {
+      const updater = await createNsisUpdater()
+      updater.logger = mockLogger()
+      // @ts-expect-error intentionally violating the verifier contract to cover fail-closed behavior
+      updater.verifyUpdateFileAuthenticodeSignature = vi.fn(async () => null)
+
+      // the legacy contract is `string | null`, so a contract violation must surface as an error message, not a TypeError
+      await expect(updater.verifyUpdateCodeSignature(["Acme Corp"], "/path/to/installer.exe")).resolves.toBe("unknown error")
+    })
+
+    test("reports a reason when the underlying verifier fails without a message", async () => {
+      const updater = await createNsisUpdater()
+      updater.logger = mockLogger()
+      // @ts-expect-error intentionally violating the verifier contract to cover fail-closed behavior
+      updater.verifyUpdateFileAuthenticodeSignature = vi.fn(async () => ({ response: "failure" }))
+
+      // an empty message would be falsy, and legacy consumers read falsy as "verified"
+      await expect(updater.verifyUpdateCodeSignature(["Acme Corp"], "/path/to/installer.exe")).resolves.toBe("unknown error")
+    })
+
+    test("getter is stable across reads and tracks the current verifier", async () => {
+      const updater = await createNsisUpdater()
+      updater.logger = mockLogger()
+
+      expect(updater.verifyUpdateCodeSignature).toBe(updater.verifyUpdateCodeSignature)
+
+      const before = updater.verifyUpdateCodeSignature
+      updater.verifyUpdateFileAuthenticodeSignature = vi.fn(async () => ({ response: "failure" as const, message: "nope" }))
+      expect(updater.verifyUpdateCodeSignature).not.toBe(before)
+      await expect(updater.verifyUpdateCodeSignature(["Acme Corp"], "/path/to/installer.exe")).resolves.toBe("nope")
+    })
+
+    test("assigning null restores the default verifier", async () => {
+      const updater = await createNsisUpdater()
+      updater.logger = mockLogger()
+      const custom = vi.fn(async () => ({ response: "success" as const }))
+      updater.verifyUpdateFileAuthenticodeSignature = custom
+      expect(updater.verifyUpdateFileAuthenticodeSignature).toBe(custom)
+
+      updater.verifyUpdateFileAuthenticodeSignature = null
+      expect(updater.verifyUpdateFileAuthenticodeSignature).not.toBe(custom)
+    })
+
+    test("the deprecated protected _verifyUpdateCodeSignature field still reaches the verifier", async () => {
+      const updater = await createNsisUpdater()
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
+        provider: "generic",
+        url: "https://example.com/updates",
+        publisherName: ["Acme Corp"],
+      })
+      updater.logger = mockLogger()
+      const nativeVerifier = vi.fn(async () => ({ response: "failure" as const, message: "from the protected field" }))
+      // @ts-expect-error assigning the deprecated protected member the way a subclass would
+      updater._verifyUpdateCodeSignature = nativeVerifier
+
+      // @ts-expect-error accessing a private method
+      await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "failure", message: "from the protected field" })
+      expect(nativeVerifier).toHaveBeenCalledWith(["Acme Corp"], "/path/to/installer.exe")
+    })
+
     test("preserves updater this-binding in both directions", async () => {
       const updater = await createNsisUpdater()
       updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
@@ -158,7 +218,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
         return null
       }
 
-      // @ts-expect-error accessing a protected property
+      // @ts-expect-error accessing a private method
       const innerMethodResult = await updater.verifySignature("/path/to/installer.exe")
       expect(innerMethodResult).toEqual({ response: "success" })
     })

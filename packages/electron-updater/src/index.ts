@@ -5,7 +5,7 @@ import { AppUpdater } from "./AppUpdater.js"
 
 const require = createRequire(import.meta.url)
 
-import type { CancellationToken, UpdateInfo } from "builder-util-runtime"
+import type { UpdateInfo } from "builder-util-runtime"
 
 export { AppImageUpdater } from "./AppImageUpdater.js"
 export { BaseUpdater } from "./BaseUpdater.js"
@@ -80,21 +80,5 @@ export const autoUpdater: AppUpdater = new Proxy({} as AppUpdater, {
     return Reflect.set(_autoUpdater, prop, value, _autoUpdater)
   },
 })
-
-export type VerifyUpdateFileResult = { response: "success" | "failure"; message?: string }
-// Generic interface to verify a pending update file.
-export type VerifyUpdateFile = (params: {
-  temporaryUpdateFilePath: string
-  originalUpdateFileName: string
-  packageFilePath?: string
-  cancellationToken?: CancellationToken
-}) => Promise<VerifyUpdateFileResult>
-// Specific interface to verify a pending Nsis update file for Windows Authenticode signature.
-export type VerifyUpdateFileAuthenticodeSignature = (publisherName: string[], path: string) => Promise<VerifyUpdateFileResult>
-/**
- * @deprecated Use VerifyUpdateFileAuthenticodeSignature instead, which differs in return type.
- * This is a compatibility shim that keeps the old return type: returns null if verify signature succeeds or returns error message if it failed.
- */
-export type VerifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>
 
 export type VerifyUpdateSupport = (updateInfo: UpdateInfo) => boolean | Promise<boolean>

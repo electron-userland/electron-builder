@@ -38,10 +38,9 @@ exports.default = async function(configuration) {
 Use the `NsisUpdater.verifyUpdateFileAuthenticodeSignature` interface:
 
 ```ts
-export type VerifyUpdateFileResult = {
-  response: "success" | "failure"
-  message?: string
-}
+export type VerifyUpdateFileResult =
+  | { response: "success" }
+  | { response: "failure"; message: string }
 
 export type VerifyUpdateFileAuthenticodeSignature = (
   publisherName: string[],
@@ -77,7 +76,7 @@ export default class AppUpdater {
 ```
 
 The built-in default uses [`windowsExecutableCodeSignatureVerifier`](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts).
-The older property `verifyUpdateCodeSignature`, which differs only in name and return interface, is deprecated and kept only as a compatibility shim (shall be removed in v28).
+The older property `verifyUpdateCodeSignature`, which differs only in name and return interface, is deprecated and kept only as a compatibility shim (shall be removed in electron-builder v28). The protected `_verifyUpdateCodeSignature` member is likewise deprecated in favour of `_verifyUpdateFileAuthenticodeSignature`.
 
 ## How do you create a Parallels Windows 10 Virtual Machine?
 

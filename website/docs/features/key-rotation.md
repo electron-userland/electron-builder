@@ -158,7 +158,7 @@ When `publisherName` is configured explicitly and electron-builder can read the 
 - **signtool (file / store)** — rotate by pointing `certificateFile`/`WIN_CSC_LINK` (or `certificateSubjectName`/`certificateSha1`) at the new certificate. Timestamp your signatures (`rfc3161TimeStampServer`, on by default) so installers signed with the old certificate stay valid after it expires.
 - **HSM / PKCS#11** — the certificate lives on the token; rotation means a new token or key label plus, for PKCS#11 without an extractable certificate, an explicit `publisherName`.
 - **Azure Trusted Signing** — there is no local certificate, so `publisherName` is required and is embedded verbatim. Confirm the Subject Azure signs with before the bridge release.
-- **Custom `verifyUpdateCodeSignature` function** — if your app replaces the verifier (see the [Windows target docs](../win.md)), the rules above are yours to reimplement.
+- **Custom `verifyUpdateFileAuthenticodeSignature` function** — if your app replaces the verifier (see the [Windows target docs](../win.md)), the rules above are yours to reimplement.
 - **Squirrel.Windows** is not supported by electron-updater's auto-update flow, so nothing here applies to it.
 
 See [Windows Code Signing](./code-signing/code-signing-win.md) for configuration details of each method.

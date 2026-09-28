@@ -49,9 +49,10 @@ export class AppImageUpdater extends BaseUpdater {
         if (downloadUpdateOptions.disableDifferentialDownload || (await this.downloadDifferential(fileInfo, oldFile, updateFile, provider, downloadUpdateOptions))) {
           await this.httpExecutor.download(fileInfo.url, updateFile, downloadOptions)
         }
-
-        await fsExtra.chmod(updateFile, 0o755)
       },
+      // deferred until after verification: the temporary path is predictable, so marking the AppImage executable
+      // before it is verified would leave an unverified binary runnable for as long as verification takes
+      afterVerification: updateFile => fsExtra.chmod(updateFile, 0o755),
     })
   }
 
