@@ -112,6 +112,19 @@ test("schema validation does not coerce `updateManifest: null` into the `false` 
   expect(optedOut.linux!.updateManifest).toBe(false)
 })
 
+test("a wrong `updateManifest` value names `false` as the opt-out, not just `null`", async ({ expect }) => {
+  // `updateManifest: true` is the likely mistake for someone who reads "required by default, disable with false".
+  // It fails schema validation, so the actionable runtime error from requireUpdateSigningKeys never runs - this
+  // message is the only thing the user sees, and it must not advertise `null` (which is NOT the opt-out) alone.
+  const error = await validateConfiguration({ updateManifest: true } as any, new DebugLogger()).then(
+    () => null,
+    (e: Error) => e
+  )
+  expect(error).not.toBeNull()
+  expect(error!.message).toContain("configuration.updateManifest should be one of these")
+  expect(error!.message).toContain("false")
+})
+
 test.ifNotWindows("unknown mac property reports correct path", ({ expect }) =>
   appThrows(
     expect,
