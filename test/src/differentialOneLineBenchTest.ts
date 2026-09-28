@@ -29,18 +29,18 @@
 //     OLD blockmap is cached locally)
 //   + #DOWNLOAD ranges × BENCH_RANGE_OVERHEAD (multipart range request overhead)
 //
-// The 7z package is built with exactly the options NsisTarget.buildAppPackage uses for a
-// differential-aware installer (withoutDir, compression "normal", installTimeDecodable, dictSize 1,
-// solid off) with `storedPaths: ["resources/app.asar"]` (PR #10186), and — as a control — the same
-// options WITHOUT storedPaths (asar compressed with the rest, the pre-PR "100 % of the member"
-// baseline). The 7z is embedded verbatim in the NSIS exe, so it is a faithful proxy for the installer.
+// The 7z package is built with the very options NsisTarget.buildAppPackage uses for a
+// differential-aware installer (`createAppPackageArchiveOptions` + `configureDifferentialAwareArchiveOptions`)
+// with `storedPaths: ["resources/app.asar"]` (PR #10186), and — as a control — the same options WITHOUT
+// storedPaths (asar compressed with the rest, the pre-PR "100 % of the member" baseline). The 7z is
+// embedded verbatim in the NSIS exe, so it is a faithful proxy for the installer.
 //
-// The region sweep targets `buildBlockMap(..., { regions })` (BuildBlockMapOptions). If the tree
-// under test does not honor `regions` yet, the region rows are skipped and only the default rows run.
+// The region sweep targets `buildBlockMap(..., { regions })` (BuildBlockMapOptions).
 
 import { archive, ArchiveOptions } from "app-builder-lib/src/targets/archive"
 import { buildBlockMap, BuildBlockMapOptions, ChunkerParams } from "app-builder-lib/src/targets/blockmap/blockmap"
 import { configureDifferentialAwareArchiveOptions } from "app-builder-lib/src/targets/differentialUpdateInfoBuilder"
+import { createAppPackageArchiveOptions, STORED_ASAR_PATH } from "app-builder-lib/src/targets/win/nsis/NsisTarget"
 import { dynamicImport } from "app-builder-lib/src/util/dynamicImport"
 import { BlockMap } from "builder-util-runtime"
 import { computeOperations, OperationKind } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
@@ -407,13 +407,7 @@ function locateAsar(pkg: Buffer, asar: Buffer): number {
 
 function nsisArchiveOptions(stored: boolean): ArchiveOptions {
   // exactly NsisTarget.buildAppPackage for a differential-aware build (elevate.exe injection aside)
-  return configureDifferentialAwareArchiveOptions({
-    withoutDir: true,
-    compression: "normal",
-    installTimeDecodable: true,
-    excluded: null,
-    storedPaths: stored ? ["resources/app.asar"] : null,
-  })
+  return configureDifferentialAwareArchiveOptions(createAppPackageArchiveOptions("normal", null, stored ? [STORED_ASAR_PATH] : null))
 }
 
 async function readBlockMap(file: string): Promise<BlockMap> {
@@ -730,23 +724,12 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
       return { map: await readBlockMap(out), gzBytes: (await fs.stat(out)).size }
     }
 
-    // Detect whether this tree honors `regions`: chunk the v1 stored asar with the finest sweep
-    // chunker and compare the block layout inside the asar region against the default build.
     const v1StoredDefault = await buildMap(v1Stored, null)
-    const finest = SWEEP[SWEEP.length - 1].asarChunker!
-    const v1StoredFinest = await buildMap(v1Stored, finest)
-    const regionsHonored =
-      countBlocksInRange(v1StoredFinest.map, v1Stored.asarOffset, v1Stored.asarOffset + v1Stored.asarSize) >
-      countBlocksInRange(v1StoredDefault.map, v1Stored.asarOffset, v1Stored.asarOffset + v1Stored.asarSize)
-    const configs = regionsHonored ? SWEEP : SWEEP.filter(c => c.asarChunker == null)
-    if (!regionsHonored) {
-      console.log("[bench] region-aware chunker not available in this tree — region rows skipped")
-    }
     console.log(`[bench] v1 stored default blockmap: ${fmt(v1StoredDefault.map.files[0].sizes.length)} blocks, ${fmt(v1StoredDefault.gzBytes)} B gz [${elapsed()}]`)
 
     const v1Maps = new Map<string, { map: BlockMap; gzBytes: number }>()
-    for (const c of configs) {
-      v1Maps.set(c.name, c.asarChunker == null ? v1StoredDefault : c.name === SWEEP[SWEEP.length - 1].name ? v1StoredFinest : await buildMap(v1Stored, c.asarChunker))
+    for (const c of SWEEP) {
+      v1Maps.set(c.name, c.asarChunker == null ? v1StoredDefault : await buildMap(v1Stored, c.asarChunker))
     }
     const v1CompressedMap = await buildMap(v1Compressed, null)
 
@@ -756,7 +739,7 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
       const pkgs = v2Packages.get(v.id)!
       const offsetsShifted = countShiftedOffsets(v1StoredAsarBytes, await fs.readFile(v.storedAsar))
       const stored: Array<Row> = []
-      for (const c of configs) {
+      for (const c of SWEEP) {
         const newMap = await buildMap(pkgs.stored, c.asarChunker)
         stored.push(measure(c.name, v1Maps.get(c.name)!.map, newMap.map, pkgs.stored, newMap.gzBytes))
       }
@@ -777,7 +760,7 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
     md.push(
       `Synthetic app: ${fmt(app.files.size)} files, asar ${fmt(v1AsarBytes.length)} B (header ${fmt(readAsarHeaderBytes(v1AsarBytes))} B); ` +
         `packages: stored ${fmt(v1Stored.size)} B / compressed control ${fmt(v1Compressed.size)} B; ` +
-        `range overhead ${RANGE_OVERHEAD} B; region-aware chunker ${regionsHonored ? "available" : "NOT available (region rows skipped)"}.`
+        `range overhead ${RANGE_OVERHEAD} B.`
     )
     md.push("")
     md.push(
@@ -823,7 +806,7 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
         path.join(BENCH_OUT, "results.json"),
         JSON.stringify(
           {
-            params: { asarMb: ASAR_MB, fileCount: FILE_COUNT, rangeOverhead: RANGE_OVERHEAD, regionsHonored, asarAlign: ASAR_ALIGN },
+            params: { asarMb: ASAR_MB, fileCount: FILE_COUNT, rangeOverhead: RANGE_OVERHEAD, asarAlign: ASAR_ALIGN },
             alignment:
               v1Aligned == null
                 ? null

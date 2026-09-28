@@ -1,11 +1,11 @@
-import { Arch, log } from "builder-util"
+import { Arch, exists, log } from "builder-util"
 import { BlockMapDataHolder, PackageFileInfo } from "builder-util-runtime"
 import * as path from "path"
 import { Target } from "../core.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ArchiveOptions } from "./archive.js"
 import { BlockMapRegion, buildBlockMap, BuildBlockMapOptions, ChunkerParams } from "./blockmap/blockmap.js"
-import { findVerbatimRange } from "./blockmap/verbatimRange.js"
+import { findVerbatimRange, VerbatimRange } from "./blockmap/verbatimRange.js"
 
 export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
 
@@ -24,14 +24,21 @@ export const STORED_MEMBER_CHUNKER: ChunkerParams = { min: 4096, avg: 8192, max:
 
 /**
  * Locates each of `memberFiles` (absolute paths of files stored verbatim inside `artifact`) and returns
- * a `STORED_MEMBER_CHUNKER` blockmap region per located file, sorted by offset. A member that cannot be
- * found verbatim is logged at warn and skipped — the blockmap then falls back to the default chunker for
- * those bytes; it never fails the build.
+ * a `STORED_MEMBER_CHUNKER` blockmap region per located file, sorted by offset. The regions never
+ * overlap: byte-identical members (a pure-JS app packaged for x64 + arm64 has the same asar twice in
+ * the universal installer) are each matched to their own copy, and a copy already claimed by an
+ * earlier member is skipped. A member file that does not exist, or that cannot be found verbatim, is
+ * logged at warn and skipped — the blockmap then falls back to the default chunker for those bytes;
+ * it never fails the build.
  */
 export async function locateStoredMemberRegions(artifact: string, memberFiles: Array<string>): Promise<Array<BlockMapRegion>> {
   const regions: Array<BlockMapRegion> = []
   for (const memberFile of memberFiles) {
-    const range = await findVerbatimRange(artifact, memberFile)
+    if (!(await exists(memberFile))) {
+      log.warn({ artifact: log.filePath(artifact), member: log.filePath(memberFile) }, "stored member file does not exist; no block map region for it")
+      continue
+    }
+    const range = await findUnclaimedVerbatimRange(artifact, memberFile, regions)
     if (range == null) {
       log.warn(
         { artifact: log.filePath(artifact), member: log.filePath(memberFile) },
@@ -43,6 +50,27 @@ export async function locateStoredMemberRegions(artifact: string, memberFiles: A
     regions.push({ ...range, chunker: STORED_MEMBER_CHUNKER })
   }
   return regions.sort((a, b) => a.offset - b.offset)
+}
+
+/**
+ * The first occurrence of `memberFile` in `artifact` that does not overlap a range in `claimed`. An
+ * occurrence that overlaps a claimed range is another member's copy (or part of one), so the scan
+ * resumes right after that range — every candidate start before its end would overlap it too.
+ */
+async function findUnclaimedVerbatimRange(artifact: string, memberFile: string, claimed: Array<BlockMapRegion>): Promise<VerbatimRange | null> {
+  let startOffset = 0
+  for (;;) {
+    const range = await findVerbatimRange(artifact, memberFile, startOffset)
+    if (range == null) {
+      return null
+    }
+    const rangeEnd = range.offset + range.size
+    const clash = claimed.find(it => range.offset < it.offset + it.size && it.offset < rangeEnd)
+    if (clash == null) {
+      return range
+    }
+    startOffset = clash.offset + clash.size
+  }
 }
 
 /** `BuildBlockMapOptions` for `regions`, or `undefined` when there are none so the default chunker path is taken unchanged. */

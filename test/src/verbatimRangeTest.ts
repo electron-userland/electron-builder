@@ -1,9 +1,12 @@
 import { archive } from "app-builder-lib/src/targets/archive"
-import { locateStoredMemberRegions, STORED_MEMBER_CHUNKER } from "app-builder-lib/src/targets/differentialUpdateInfoBuilder"
+import { buildBlockMap } from "app-builder-lib/src/targets/blockmap/blockmap"
 import { findVerbatimRange } from "app-builder-lib/src/targets/blockmap/verbatimRange"
+import { locateStoredMemberRegions, STORED_MEMBER_CHUNKER } from "app-builder-lib/src/targets/differentialUpdateInfoBuilder"
+import { log } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { describe } from "vitest"
+import { TmpDir } from "temp-file"
+import { describe, vi } from "vitest"
 import { listArchiveEntryMethods } from "./helpers/archiveHelper"
 
 const KiB = 1024
@@ -21,6 +24,13 @@ function pseudoRandom(size: number, seed: number): Buffer {
     buf[i] = x >>> 24
   }
   return buf
+}
+
+// getTempDir only reserves the path; the tests write straight into it.
+async function makeTempDir(tmpDir: TmpDir, prefix: string): Promise<string> {
+  const dir = await tmpDir.getTempDir({ prefix })
+  await fs.mkdir(dir, { recursive: true })
+  return dir
 }
 
 // Writes `haystack` and `needle` next to each other and returns their paths.
@@ -43,20 +53,20 @@ describe("findVerbatimRange", () => {
   const needle = pseudoRandom(100 * KiB, 42)
 
   test("needle at offset 0", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
     const files = await writePair(dir, plant(300 * KiB, needle, 0), needle)
     expect(await findVerbatimRange(files.haystackFile, files.needleFile)).toEqual({ offset: 0, size: needle.length })
   })
 
   test("needle mid-file", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
     const offset = 123_457
     const files = await writePair(dir, plant(300 * KiB, needle, offset), needle)
     expect(await findVerbatimRange(files.haystackFile, files.needleFile)).toEqual({ offset, size: needle.length })
   })
 
   test("needle at the very end", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
     const size = 300 * KiB
     const offset = size - needle.length
     const files = await writePair(dir, plant(size, needle, offset), needle)
@@ -67,7 +77,7 @@ describe("findVerbatimRange", () => {
   // Boundaries at several power-of-two multiples cover any chunk size the implementation picks.
   for (const boundary of [256 * KiB, 512 * KiB, 1 * MiB, 2 * MiB]) {
     test(`needle straddling the ${boundary / KiB} KiB read boundary`, async ({ expect, tmpDir }) => {
-      const dir = await tmpDir.createTempDir()
+      const dir = await makeTempDir(tmpDir, "verbatim-range")
       const offset = boundary - 1000
       const files = await writePair(dir, plant(3 * MiB, needle, offset), needle)
       expect(await findVerbatimRange(files.haystackFile, files.needleFile)).toEqual({ offset, size: needle.length })
@@ -75,7 +85,7 @@ describe("findVerbatimRange", () => {
   }
 
   test("needle smaller than the probe straddling a read boundary", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
     const smallNeedle = pseudoRandom(300, 99)
     const offset = 1 * MiB - 100
     const files = await writePair(dir, plant(2 * MiB, smallNeedle, offset), smallNeedle)
@@ -85,7 +95,7 @@ describe("findVerbatimRange", () => {
   // The probe (first 64 KiB of the needle) also occurs earlier with a different tail: that candidate
   // must be rejected by the full comparison and the scan must go on to the real occurrence.
   test("skips a false-positive probe hit and returns the real match", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
     const decoyOffset = 10 * KiB
     const realOffset = 700 * KiB
     const haystack = plant(1 * MiB, needle, realOffset)
@@ -97,7 +107,7 @@ describe("findVerbatimRange", () => {
   })
 
   test("false-positive probe hit with no real match returns null", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
     const haystack = pseudoRandom(512 * KiB, 3)
     needle.subarray(0, PROBE_SIZE).copy(haystack, 200 * KiB)
     const files = await writePair(dir, haystack, needle)
@@ -105,25 +115,25 @@ describe("findVerbatimRange", () => {
   })
 
   test("not found", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
     const files = await writePair(dir, pseudoRandom(512 * KiB, 3), needle)
     expect(await findVerbatimRange(files.haystackFile, files.needleFile)).toBeNull()
   })
 
   test("needle larger than haystack returns null", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
     const files = await writePair(dir, needle.subarray(0, needle.length - 1), needle)
     expect(await findVerbatimRange(files.haystackFile, files.needleFile)).toBeNull()
   })
 
   test("needle equal to haystack", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
     const files = await writePair(dir, needle, needle)
     expect(await findVerbatimRange(files.haystackFile, files.needleFile)).toEqual({ offset: 0, size: needle.length })
   })
 
   test("a probe hit too close to the end to fit the needle is not a match", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
     // haystack ends with the first 80 KiB of the needle — the probe matches but the needle can't fit
     const haystack = Buffer.concat([pseudoRandom(200 * KiB, 5), needle.subarray(0, 80 * KiB)])
     const files = await writePair(dir, haystack, needle)
@@ -131,9 +141,40 @@ describe("findVerbatimRange", () => {
   })
 
   test("empty needle throws", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
     const files = await writePair(dir, pseudoRandom(4 * KiB, 1), Buffer.alloc(0))
     await expect(findVerbatimRange(files.haystackFile, files.needleFile)).rejects.toThrow("empty")
+  })
+
+  // The needle occurs twice; `startOffset` selects which occurrence the scan starts from.
+  test("startOffset skips occurrences that start before it", async ({ expect, tmpDir }) => {
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
+    const first = 20 * KiB
+    const second = 400 * KiB
+    const haystack = plant(600 * KiB, needle, first)
+    needle.copy(haystack, second)
+    const files = await writePair(dir, haystack, needle)
+    expect(await findVerbatimRange(files.haystackFile, files.needleFile)).toEqual({ offset: first, size: needle.length })
+    expect(await findVerbatimRange(files.haystackFile, files.needleFile, first)).toEqual({ offset: first, size: needle.length })
+    expect(await findVerbatimRange(files.haystackFile, files.needleFile, first + 1)).toEqual({ offset: second, size: needle.length })
+    expect(await findVerbatimRange(files.haystackFile, files.needleFile, first + needle.length)).toEqual({ offset: second, size: needle.length })
+    expect(await findVerbatimRange(files.haystackFile, files.needleFile, second + 1)).toBeNull()
+  })
+
+  test("startOffset after which the needle cannot fit returns null", async ({ expect, tmpDir }) => {
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
+    const size = 300 * KiB
+    const files = await writePair(dir, plant(size, needle, size - needle.length), needle)
+    expect(await findVerbatimRange(files.haystackFile, files.needleFile, size - needle.length)).toEqual({ offset: size - needle.length, size: needle.length })
+    expect(await findVerbatimRange(files.haystackFile, files.needleFile, size - needle.length + 1)).toBeNull()
+    expect(await findVerbatimRange(files.haystackFile, files.needleFile, size + 1)).toBeNull()
+  })
+
+  test("invalid startOffset throws", async ({ expect, tmpDir }) => {
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
+    const files = await writePair(dir, plant(300 * KiB, needle, 0), needle)
+    await expect(findVerbatimRange(files.haystackFile, files.needleFile, -1)).rejects.toThrow("startOffset")
+    await expect(findVerbatimRange(files.haystackFile, files.needleFile, 1.5)).rejects.toThrow("startOffset")
   })
 })
 
@@ -149,7 +190,7 @@ describe("locateStoredMemberRegions", () => {
   }
 
   test("locates the stored asar in a 7z produced by archive() with storedPaths", async ({ expect, tmpDir }) => {
-    const root = await tmpDir.createTempDir()
+    const root = await makeTempDir(tmpDir, "stored-member-regions")
     const asarBytes = pseudoRandom(200 * KiB, 2024)
     const dir = await makeAppDir(root, asarBytes)
     const outFile = path.join(root, "stored.7z")
@@ -169,7 +210,7 @@ describe("locateStoredMemberRegions", () => {
   // Several arch packages are embedded in one universal installer; the regions of all their stored
   // members must come back ascending, each covering its own member's bytes.
   test("returns one region per member, sorted by offset", async ({ expect, tmpDir }) => {
-    const root = await tmpDir.createTempDir()
+    const root = await makeTempDir(tmpDir, "stored-member-regions")
     const first = pseudoRandom(70 * KiB, 11)
     const second = pseudoRandom(90 * KiB, 12)
     const firstFile = path.join(root, "first.asar")
@@ -189,7 +230,7 @@ describe("locateStoredMemberRegions", () => {
   })
 
   test("a member not found verbatim is skipped without failing", async ({ expect, tmpDir }) => {
-    const root = await tmpDir.createTempDir()
+    const root = await makeTempDir(tmpDir, "stored-member-regions")
     const present = pseudoRandom(70 * KiB, 21)
     const missing = pseudoRandom(70 * KiB, 22)
     const presentFile = path.join(root, "present.asar")
@@ -204,9 +245,79 @@ describe("locateStoredMemberRegions", () => {
   })
 
   test("no members yields no regions", async ({ expect, tmpDir }) => {
-    const root = await tmpDir.createTempDir()
+    const root = await makeTempDir(tmpDir, "stored-member-regions")
     const containerFile = path.join(root, "installer.bin")
     await fs.writeFile(containerFile, pseudoRandom(10 * KiB, 1))
     expect(await locateStoredMemberRegions(containerFile, [])).toEqual([])
+  })
+
+  // A pure-JS app packaged for x64 + arm64 has byte-identical asars, and the universal installer embeds
+  // both packages: each member must be matched to its own copy so the regions never overlap (the block
+  // map builder rejects overlapping regions, which used to fail such builds).
+  test("byte-identical members each get their own region", async ({ expect, tmpDir }) => {
+    const root = await makeTempDir(tmpDir, "stored-member-regions")
+    const asar = pseudoRandom(100 * KiB, 31)
+    const x64File = path.join(root, "x64.asar")
+    const arm64File = path.join(root, "arm64.asar")
+    await fs.writeFile(x64File, asar)
+    await fs.writeFile(arm64File, asar)
+    const secondCopy = 50 * KiB + asar.length + 30 * KiB
+    const container = Buffer.concat([pseudoRandom(50 * KiB, 1), asar, pseudoRandom(30 * KiB, 2), asar, pseudoRandom(20 * KiB, 3)])
+    const containerFile = path.join(root, "installer.bin")
+    await fs.writeFile(containerFile, container)
+
+    const regions = await locateStoredMemberRegions(containerFile, [x64File, arm64File])
+    expect(regions.map(it => ({ offset: it.offset, size: it.size }))).toEqual([
+      { offset: 50 * KiB, size: asar.length },
+      { offset: secondCopy, size: asar.length },
+    ])
+    // the regions are what the installer's block map is built with
+    await expect(buildBlockMap(containerFile, "gzip", path.join(root, "installer.blockmap"), { regions })).resolves.toMatchObject({ size: container.length })
+  })
+
+  // Three identical members (x64 + ia32 + arm64) but the artifact holds only two copies: the third has
+  // no copy of its own and is skipped rather than reusing a claimed range.
+  test("identical members beyond the copies in the artifact are skipped", async ({ expect, tmpDir }) => {
+    const root = await makeTempDir(tmpDir, "stored-member-regions")
+    const asar = pseudoRandom(80 * KiB, 32)
+    const memberFiles = ["x64.asar", "ia32.asar", "arm64.asar"].map(it => path.join(root, it))
+    for (const file of memberFiles) {
+      await fs.writeFile(file, asar)
+    }
+    const containerFile = path.join(root, "installer.bin")
+    await fs.writeFile(containerFile, Buffer.concat([pseudoRandom(10 * KiB, 1), asar, asar, pseudoRandom(5 * KiB, 2)]))
+
+    const warn = vi.spyOn(log, "warn")
+    try {
+      const regions = await locateStoredMemberRegions(containerFile, memberFiles)
+      expect(regions.map(it => ({ offset: it.offset, size: it.size }))).toEqual([
+        { offset: 10 * KiB, size: asar.length },
+        { offset: 10 * KiB + asar.length, size: asar.length },
+      ])
+      expect(warn.mock.calls.filter(it => String(it[1]).includes("not found verbatim"))).toHaveLength(1)
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  // `asar: false` with "store-asar": the member is not in the package at all and its file does not
+  // exist — it must be skipped, not stat()ed into an ENOENT that fails the build.
+  test("a member file that does not exist is skipped without failing", async ({ expect, tmpDir }) => {
+    const root = await makeTempDir(tmpDir, "stored-member-regions")
+    const present = pseudoRandom(60 * KiB, 41)
+    const presentFile = path.join(root, "present.asar")
+    await fs.writeFile(presentFile, present)
+    const absentFile = path.join(root, "resources", "app.asar")
+    const containerFile = path.join(root, "installer.bin")
+    await fs.writeFile(containerFile, Buffer.concat([pseudoRandom(10 * KiB, 1), present]))
+
+    const warn = vi.spyOn(log, "warn")
+    try {
+      expect(await locateStoredMemberRegions(containerFile, [absentFile])).toEqual([])
+      expect(await locateStoredMemberRegions(containerFile, [absentFile, presentFile])).toEqual([{ offset: 10 * KiB, size: present.length, chunker: STORED_MEMBER_CHUNKER }])
+      expect(warn.mock.calls.filter(it => String(it[1]).includes("does not exist"))).toHaveLength(2)
+    } finally {
+      warn.mockRestore()
+    }
   })
 })

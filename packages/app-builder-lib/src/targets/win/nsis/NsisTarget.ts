@@ -52,6 +52,28 @@ const { readFile, stat, unlink } = _fsExtra
 
 const debug = _debug("electron-builder:nsis")
 
+/** The member `differentialPackage: "store-asar"` keeps uncompressed in the app package, relative to the unpacked app dir. */
+export const STORED_ASAR_PATH = "resources/app.asar"
+
+/**
+ * The `archive()` options `buildAppPackage` packages the unpacked app with, before the differential-aware
+ * adjustments of `configureDifferentialAwareArchiveOptions`. Exported so the benchmark
+ * (`test/src/differentialOneLineBenchTest.ts`) packages exactly like a real build instead of copying these.
+ */
+export function createAppPackageArchiveOptions(compression: ArchiveOptions["compression"], excluded: Array<string> | null, storedPaths: Array<string> | null): ArchiveOptions {
+  return {
+    withoutDir: true,
+    compression,
+    // The install-time Nsis7z extractor only decodes plain LZMA2/Copy and single-stream BCJ — not
+    // the CPU branch converters modern 7za applies to executables (BCJ2 on x86/x64, ARM64 on
+    // arm64), which it silently skips, dropping the main exe and every native binary from the
+    // install. Pin the payload to a filter it can decode. See #9983.
+    installTimeDecodable: true,
+    excluded,
+    storedPaths,
+  }
+}
+
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
 export class NsisTarget extends Target {
@@ -176,19 +198,21 @@ export class NsisTarget extends Target {
     // Opt-in via differentialPackage: "store-asar" — keep the asar a byte-stable Copy member so a
     // differential update pays only for its changed blocks instead of re-downloading the whole
     // recompressed asar (see nsisOptions docs). The blockmap chunks these verbatim bytes finer.
-    const storedPaths = isStoreAsar ? ["resources/app.asar"] : null
-    const storedMemberFiles = (storedPaths ?? []).map(it => path.join(appOutDir, it))
-    const archiveOptions: ArchiveOptions = {
-      withoutDir: true,
-      compression: packager.compression,
-      // The install-time Nsis7z extractor only decodes plain LZMA2/Copy and single-stream BCJ — not
-      // the CPU branch converters modern 7za applies to executables (BCJ2 on x86/x64, ARM64 on
-      // arm64), which it silently skips, dropping the main exe and every native binary from the
-      // install. Pin the payload to a filter it can decode. See #9983.
-      installTimeDecodable: true,
-      excluded: preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`),
-      storedPaths,
+    const storedPaths = isStoreAsar ? [STORED_ASAR_PATH] : null
+    // archive() skips a stored path that does not exist (e.g. `asar: false`, warned about above), so
+    // only the members that really end up in the package are located in it for the block map.
+    const storedMemberFiles: Array<string> = []
+    for (const storedPath of storedPaths ?? []) {
+      const memberFile = path.join(appOutDir, storedPath)
+      if (await exists(memberFile)) {
+        storedMemberFiles.push(memberFile)
+      }
     }
+    const archiveOptions = createAppPackageArchiveOptions(
+      packager.compression,
+      preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`),
+      storedPaths
+    )
 
     const timer = time(`nsis package, ${Arch[arch]}`)
     await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)
@@ -231,12 +255,12 @@ export class NsisTarget extends Target {
       return
     }
     this.storeAsarChecked = true
-    const asarFile = path.join(appOutDir, "resources", "app.asar")
+    const asarFile = path.join(appOutDir, STORED_ASAR_PATH)
     if (await exists(asarFile)) {
       return
     }
     log.warn(
-      { reason: "resources/app.asar not found (e.g. asar is disabled)", file: log.filePath(asarFile) },
+      { reason: `${STORED_ASAR_PATH} not found (e.g. asar is disabled)`, file: log.filePath(asarFile) },
       'differentialPackage "store-asar" has no effect, the app package is compressed normally'
     )
   }

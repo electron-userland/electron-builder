@@ -220,8 +220,13 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    *   re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every
    *   block). Storing it keeps unchanged regions byte-identical between releases, making the delta
    *   proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%
-   *   instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar
-   *   saved. Without an `app.asar` (e.g. `asar` is disabled) there is nothing to store, so it behaves like `true`.
+   *   instead of 100%). The stored asar's byte range is also chunked with finer content-defined blocks
+   *   (4/8/16 KiB instead of the 8/16/32 KiB used for the rest of the installer), so a small change costs
+   *   proportionally fewer bytes still. Trade-off: the installer and full package grow by roughly what
+   *   compressing the asar saved. Without an `app.asar` (e.g. `asar` is disabled) there is nothing to store,
+   *   so it behaves like `true`. Upgrading from an electron-builder without the finer chunking changes the
+   *   block boundaries once: the first differential update from an installer built before it re-downloads
+   *   close to the whole asar, and updates between installers built with it are proportional again.
    * - anything else (`true`, `"compressed"`, unset) — differential-aware, whole package compressed.
    * @default true
    */

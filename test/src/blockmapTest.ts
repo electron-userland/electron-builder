@@ -1,10 +1,18 @@
 import { createHash } from "crypto"
-import { readFile, writeFile } from "fs/promises"
+import { mkdir, readFile, writeFile } from "fs/promises"
 import * as path from "path"
 import * as zlib from "zlib"
 import { describe, expect, it } from "vitest"
 import { BlockMapDataHolder } from "builder-util-runtime"
 import { BlockMapRegion, BuildBlockMapOptions, buildBlockMap, ChunkerParams, DEFAULT_CHUNKER } from "app-builder-lib/src/targets/blockmap/blockmap.js"
+import { TmpDir } from "temp-file"
+
+// getTempDir only reserves the path; the region tests write straight into it.
+async function regionTestDir(tmpDir: TmpDir): Promise<string> {
+  const dir = await tmpDir.getTempDir({ prefix: "blockmap-regions" })
+  await mkdir(dir, { recursive: true })
+  return dir
+}
 
 function sha512(data: Buffer): string {
   return createHash("sha512").update(data).digest("base64")
@@ -379,7 +387,7 @@ describe("buildBlockMap — regions", () => {
   }
 
   it("no regions: undefined, {}, null and [] all produce the default blockmap", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await regionTestDir(tmpDir)
     const data = makeTestData(300_000, 4242)
     const baseline = await build(dir, "none", data)
     for (const [name, options] of [
@@ -399,7 +407,7 @@ describe("buildBlockMap — regions", () => {
   })
 
   it("forces chunk boundaries at region start and end", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await regionTestDir(tmpDir)
     const data = makeTestData(300_000, 1)
     const region = { offset: 100_000, size: 120_000, chunker: FINE }
     const { sizes } = await build(dir, "edges", data, { regions: [region] })
@@ -416,7 +424,7 @@ describe("buildBlockMap — regions", () => {
   })
 
   it("region blocks obey min/max and average around avg (~2 MB random region)", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await regionTestDir(tmpDir)
     const region = { offset: 262_144, size: 2 * 1024 * 1024, chunker: FINE }
     const data = makeTestData(region.offset + region.size + 100_000, 777)
     const { sizes } = await build(dir, "band", data, { regions: [region] })
@@ -433,7 +441,7 @@ describe("buildBlockMap — regions", () => {
   })
 
   it("region blocks depend only on the region bytes (same bytes, different offset and surroundings)", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await regionTestDir(tmpDir)
     const regionBytes = makeTestData(1024 * 1024, 555)
 
     const offsetA = 50_000
@@ -457,7 +465,7 @@ describe("buildBlockMap — regions", () => {
   })
 
   it("rejects invalid regions with clear messages", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await regionTestDir(tmpDir)
     const inFile = path.join(dir, "invalid.bin")
     const outFile = path.join(dir, "invalid.blockmap")
     await writeFile(inFile, makeTestData(100_000, 5))
@@ -503,7 +511,7 @@ describe("buildBlockMap — regions", () => {
   })
 
   it("multiple regions, adjacent regions, a region at offset 0 and a region ending at EOF", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await regionTestDir(tmpDir)
     const data = makeTestData(400_000, 31337)
     const coarse: ChunkerParams = { min: 2048, avg: 8192, max: 65536 }
     const regions: Array<BlockMapRegion> = [
@@ -548,7 +556,7 @@ describe("buildBlockMap — regions", () => {
   })
 
   it("regions do not change sha512 or size (file-output and append modes)", async ({ expect, tmpDir }) => {
-    const dir = await tmpDir.createTempDir()
+    const dir = await regionTestDir(tmpDir)
     const data = makeTestData(250_000, 2024)
     const regions: Array<BlockMapRegion> = [{ offset: 40_000, size: 150_000, chunker: FINE }]
 
