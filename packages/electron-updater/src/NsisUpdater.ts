@@ -30,8 +30,8 @@ export class NsisUpdater extends BaseUpdater {
   // nsis-web installs self-identify via a `resources/package-type` marker written by the installer.
   // When present, pre-seed disableWebInstaller=false so web-installer updates work without the app
   // wiring the flag by hand. This is a default only — an explicit `autoUpdater.disableWebInstaller = …`
-  // set later by the app still wins (the setter runs after construction). A plain `nsis` marker is left
-  // untouched so the secure `?? true` default and the v27 grace-period warning stay intact.
+  // set later by the app still wins (the setter runs after construction). A plain `nsis` marker, or no marker,
+  // leaves the default (`true`), so web-installer updates are rejected with ERR_UPDATER_WEB_INSTALLER_DISABLED.
   private seedWebInstallerDefaultFromPackageType(): void {
     try {
       const resourcesPath = process.resourcesPath
@@ -116,6 +116,18 @@ export class NsisUpdater extends BaseUpdater {
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")!
+    const webInstallerDisabled = downloadUpdateOptions.disableWebInstaller ?? true
+    // checked before executeDownload, so that it also applies to an update cached by a previous launch
+    if (fileInfo.packageInfo != null) {
+      if (webInstallerDisabled) {
+        return Promise.reject(
+          newError(`Unable to download new version ${downloadUpdateOptions.updateInfoAndProvider.info.version}. Web Installers are disabled`, "ERR_UPDATER_WEB_INSTALLER_DISABLED")
+        )
+      }
+      if (fileInfo.packageInfo.sha512 == null) {
+        return Promise.reject(newError(`Update info doesn't contain sha512 checksum for the web installer package: ${fileInfo.packageInfo.path}`, "ERR_UPDATER_NO_CHECKSUM"))
+      }
+    }
     return this.executeDownload({
       fileExtension: "exe",
       downloadUpdateOptions,
@@ -123,23 +135,7 @@ export class NsisUpdater extends BaseUpdater {
       task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
-        // Tri-state: `undefined` means the app never set disableWebInstaller (relies on the v27 default), `true`/`false` are explicit choices.
-        const webInstallerExplicitlySet = downloadUpdateOptions.disableWebInstaller !== undefined
-        const webInstallerDisabled = downloadUpdateOptions.disableWebInstaller ?? true
-
-        if (isWebInstaller && webInstallerDisabled) {
-          if (webInstallerExplicitlySet) {
-            throw newError(
-              `Unable to download new version ${downloadUpdateOptions.updateInfoAndProvider.info.version}. Web Installers are disabled`,
-              "ERR_UPDATER_WEB_INSTALLER_DISABLED"
-            )
-          }
-          // Grace period: the app receives a web-installer update but never opted in. Warn loudly and still download for now; v28 will fail-closed.
-          this._logger.warn(
-            "Web installer packages are in use but disableWebInstaller was not explicitly set. v27 defaults to true (web installers disabled) and currently still downloads them with this warning; v28 will fail-closed and throw ERR_UPDATER_WEB_INSTALLER_DISABLED. To keep downloading web installers, set autoUpdater.disableWebInstaller = false. To accept the v28 default, set it to true (or remove the override)."
-          )
-        }
-        if (!isWebInstaller && webInstallerExplicitlySet && webInstallerDisabled === false) {
+        if (!isWebInstaller && !webInstallerDisabled) {
           this._logger.warn(
             "disableWebInstaller is explicitly set to false, but a full installer (not a web installer) was downloaded. As of v27 web installers are opt-in (disabled by default); remove the override unless you intentionally publish NSIS web-installer packages."
           )
@@ -245,6 +241,11 @@ export class NsisUpdater extends BaseUpdater {
 
     const packagePath = this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.packageFile
     if (packagePath != null) {
+      // the policy may have changed since the download; never run the web installer when web installers are disabled
+      if (this.disableWebInstaller) {
+        this.dispatchError(newError("Unable to install the downloaded update. Web Installers are disabled", "ERR_UPDATER_WEB_INSTALLER_DISABLED"))
+        return false
+      }
       // only = form is supported
       args.push(`--package-file=${packagePath}`)
     }

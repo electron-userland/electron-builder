@@ -174,6 +174,12 @@ export abstract class BaseUpdater extends AppUpdater {
       return false
     }
 
+    if (fileInfo.packageInfo != null && this.disableWebInstaller) {
+      await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
+      this.dispatchError(newError(`Unable to install pending update ${latestInfo.version}. Web Installers are disabled`, "ERR_UPDATER_WEB_INSTALLER_DISABLED"))
+      return false
+    }
+
     const installerPath = await downloadedUpdateHelper.validateCachedPendingInstall(fileInfo, this._logger)
     if (installerPath == null) {
       // validation already logged the reason and cleaned the pending cache
@@ -199,6 +205,8 @@ export abstract class BaseUpdater extends AppUpdater {
       await this.verifyUpdateFile({
         updateFilePath: installerPath,
         originalUpdateFileName: path.basename(installerPath),
+        // the cached package of a web installer is passed to it with --package-file, so the verifier gets it as well
+        packageFilePath: downloadedUpdateHelper.packageFile ?? undefined,
       })
     )
     if (updateFileFailure != null) {

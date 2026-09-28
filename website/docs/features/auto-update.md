@@ -274,13 +274,17 @@ Changing a signing key or certificate that installs in the field already trust r
 
 NSIS **web** installers download their full payload at install time from a manifest-supplied URL, which may not undergo signature verification. As of v27, `AppUpdater.disableWebInstaller` defaults to **`true`**, so a web-installer update is not loaded unless you opt in.
 
-v27 ships a one-major grace period: if you never set the flag and a web-installer update is received, the updater **logs a warning and still downloads** it. In **v28** that becomes an error (`ERR_UPDATER_WEB_INSTALLER_DISABLED`). Opt back in only if you intentionally ship an `nsis-web` target:
+Unless the flag is `false`, a web-installer update is rejected with `ERR_UPDATER_WEB_INSTALLER_DISABLED` — at download time (including an update already cached by a previous launch), before an [install on next launch](#install-on-next-launch-windowslinux), and at install time.
+
+Installs made by an `nsis-web` installer built with electron-builder v27+ carry a `resources/package-type` marker, and `NsisUpdater` then defaults the flag to `false` automatically. Set it yourself only for web-installer installs without that marker (installed by an installer built before v27, or with a custom script) or when switching an app from `nsis` to `nsis-web`:
 
 ```ts
 import { NsisUpdater } from "electron-updater"
 const updater = new NsisUpdater()
 updater.disableWebInstaller = false // only if you intentionally ship a web installer
 ```
+
+A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest; otherwise it is discarded. The `nsis-web` installer itself verifies the package electron-updater passes to it — see [Web Installer](../nsis.md#web-installer). Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./signed-update-manifests.md) cover its path, SHA-512 and size.
 
 ### `allowUnverifiedLinuxPackages` (new)
 

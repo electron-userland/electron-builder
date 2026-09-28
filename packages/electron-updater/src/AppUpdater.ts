@@ -201,9 +201,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   private _disableWebInstaller: boolean | undefined = undefined
 
   /**
-   * Whether to block NSIS web-installer packages. Web installer files might not have signature verification, so they are disabled by default as of v27.
+   * Whether to block NSIS web-installer packages. Web installer files might not have signature verification, so they are disabled by default as of v27:
+   * a web-installer update is rejected with `ERR_UPDATER_WEB_INSTALLER_DISABLED` at download time, before an install on next launch, and at install time unless this is `false`.
    *
-   * v27 grace period: apps that do not explicitly set this property will warn (but still download) if a web-installer update is received. In v28 the warning becomes an error and the download is blocked (`ERR_UPDATER_WEB_INSTALLER_DISABLED`). Apps that explicitly set this to `true` throw immediately. Set it to `false` only if you intentionally publish and rely on NSIS web-installer packages.
+   * `NsisUpdater` defaults it to `false` for installs made by an `nsis-web` installer built with electron-builder v27+ (`resources/package-type` marker).
+   * Set it to `false` explicitly only if you intentionally publish and rely on NSIS web-installer packages and your installs lack that marker.
    *
    * @default true
    */
@@ -802,7 +804,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       updateInfoAndProvider,
       requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
       cancellationToken,
-      disableWebInstaller: this._disableWebInstaller,
+      disableWebInstaller: this.disableWebInstaller,
       disableDifferentialDownload: this.disableDifferentialDownload,
     })
       .catch((e: any) => {

@@ -28,7 +28,17 @@ To customize web installer, use the top-level `nsisWeb` key (not `nsis`).
 If for some reasons web installer cannot download (antivirus, offline):
 
 - Download package file into the same directory where installer located. It will be detected automatically and used instead of downloading from the Internet. Please note — only original package file is allowed (checksum is checked).
-- Specify any local package file using `--package-file=path_to_file`.
+- Specify a local package file using `--package-file=path_to_file`. It must be one of the packages built with the installer (any arch; checksum is checked).
+
+The web installer verifies the package it installs against the SHA-512 of the packages built with it:
+
+- A package passed via `--package-file` (electron-updater passes the package it verified against the update manifest) must match one of them, for any arch.
+- A package downloaded from the default, publish-derived (versioned) URL must match the package for the detected arch.
+- A package downloaded from an explicit `appPackageUrl` (e.g. a version-independent `latest` URL) is **not** verified, since that URL can serve packages of other builds.
+
+A mismatch aborts the installation (exit code `2`). Set `nsisWeb.allowUnverifiedAppPackage: true` (default `false`) to skip these checks only if you intentionally use one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).
+
+For auto-update, electron-updater installs web-installer updates only when `disableWebInstaller` is `false`; installs made by an `nsis-web` installer built with electron-builder v27+ default to `false` automatically — see [Auto Update](./features/auto-update.md#disablewebinstaller-now-defaults-to-true). Don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./features/signed-update-manifests.md) cover the web package's path, SHA-512 and size.
 
 ## Custom NSIS script
 

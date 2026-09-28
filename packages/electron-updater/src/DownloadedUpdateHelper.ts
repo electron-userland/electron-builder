@@ -69,6 +69,7 @@ export class DownloadedUpdateHelper {
       fileName: updateFileName,
       sha512: fileInfo.info.sha512,
       isAdminRightsRequired: fileInfo.info.isAdminRightsRequired === true,
+      ...(packageFile == null ? {} : { packageFileName: path.basename(packageFile) }),
     }
 
     if (isSaveCache) {
@@ -134,7 +135,8 @@ export class DownloadedUpdateHelper {
 
   /**
    * Validates the cached pending update against freshly fetched update info (checksum of the metadata and of the
-   * file on disk) and makes it the current downloaded file, so `installerPath` resolves to it.
+   * file on disk) and makes it the current downloaded file, so `installerPath` resolves to it. For an NSIS web installer
+   * the app package is re-validated as well and exposed as `packageFile`.
    * @returns Path to the validated installer or `null` if the cache is unusable.
    */
   async validateCachedPendingInstall(fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
@@ -215,7 +217,22 @@ export class DownloadedUpdateHelper {
       await this.cleanCacheDirForPendingUpdate()
       return null
     }
+
+    // NSIS web installer: the package is passed to the installer via --package-file, so it must match the latest update info as well
+    let packageFile: string | null = null
+    const packageInfo = fileInfo.packageInfo
+    if (packageInfo != null) {
+      packageFile = cachedInfo.packageFileName == null ? null : path.join(this.cacheDirForPendingUpdate, path.basename(cachedInfo.packageFileName))
+      if (packageFile == null || !(await fsExtra.pathExists(packageFile)) || (await hashFile(packageFile)) !== packageInfo.sha512) {
+        logger.warn(
+          `Cached web installer package doesn't match the latest available update. New update must be downloaded. Expected: ${packageInfo.sha512}. Directory for cached update will be cleaned`
+        )
+        await this.cleanCacheDirForPendingUpdate()
+        return null
+      }
+    }
     this._downloadedFileInfo = cachedInfo
+    this._packageFile = packageFile
     return updateFile
   }
 
@@ -233,6 +250,11 @@ export interface CachedUpdateInfo {
    * meaning the cached update should be installed on the next application launch after successful re-validation.
    */
   readonly installOnNextLaunch?: boolean
+  /**
+   * NSIS web installer only: file name (in the pending cache dir) of the downloaded app package, re-validated together with
+   * the installer before a cached update is reused or installed on next launch and passed to the installer via `--package-file`.
+   */
+  readonly packageFileName?: string
 }
 
 export async function createTempUpdateFile(name: string, cacheDir: string, log: Logger): Promise<string> {

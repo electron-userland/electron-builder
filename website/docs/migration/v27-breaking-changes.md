@@ -101,7 +101,8 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [New: Cloudflare R2 publish provider](#new-cloudflare-r2-publish-provider-additive) | — | None — additive; needs `accountId` and an `https` `publicUrl` |
 | [New command: `migrate-schema`](#new-command-migrate-schema) | — | None — run it to apply every **Auto ✓** change above |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
-| [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | v27 warns but still downloads if you never set it; opt in with `disableWebInstaller: false` before v28 enforces it |
+| [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | Web-installer updates are rejected (`ERR_UPDATER_WEB_INSTALLER_DISABLED`) unless `disableWebInstaller` is `false`; v27+ `nsis-web` installs opt in automatically, older installs need `disableWebInstaller: false` |
+| [`nsis-web` installer verifies its app package](#disablewebinstaller-defaults-to-true) | — | Only if you run one web installer with a `--package-file` from another build: set `nsisWeb.allowUnverifiedAppPackage: true` |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | — | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
 | [Signed update manifests are required](#signed-update-manifests-are-required) | — | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY`, or set `updateManifest: false` to keep publishing unsigned manifests |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | — | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
@@ -898,15 +899,17 @@ v27 adds a new `dmg.format` value, **`"ULMO"`** — an LZMA-compressed disk imag
 
 `AppUpdater.disableWebInstaller` now defaults to **`true`**. NSIS *web* installers (the small installer that downloads the full payload at install time from a manifest-supplied URL) are no longer loaded unless you opt in, because that payload may not undergo signature verification.
 
-v27 ships a one-major-version grace period so existing deployments are not broken without warning:
+Unless `disableWebInstaller` is `false`, a web-installer update is rejected with `ERR_UPDATER_WEB_INSTALLER_DISABLED` — at download time (including an update already cached by a previous launch), before an install on next launch, and at install time.
 
-- **You never set `disableWebInstaller`** (the default): if a web-installer update is received, the updater logs a warning and still downloads it in v27. In **v28** that warning becomes an error and the download is blocked (`ERR_UPDATER_WEB_INSTALLER_DISABLED`).
-- **You explicitly set `disableWebInstaller = true`**: the download throws `ERR_UPDATER_WEB_INSTALLER_DISABLED` immediately (no grace period).
-- **You do not use a web installer** (the common case): no action — this is the safer default and v28 will enforce it.
+- **You do not use a web installer** (the common case): no action — this is the safer default.
+- **Your installs were made by an `nsis-web` installer built with v27+**: no action — they opt in automatically. NSIS installers now write a `resources/package-type` marker, and `NsisUpdater` reads it to default `disableWebInstaller` to `false` for web-installer installs.
+- **Your web-installer installs lack that marker** (installed by an installer built before v27, or with a custom script), **or you are switching an app from `nsis` to `nsis-web`**: opt in manually (below), or those installs will not update.
 
-**Installs produced by a v27 `nsis-web` build opt in automatically.** NSIS installers now write a `resources/package-type` marker, and `NsisUpdater` reads it to default `disableWebInstaller` to `false` for web-installer installs. So the manual opt-in below is needed for **apps already in the field** (installed before v27), not for go-forward installs.
+A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest. The `nsis-web` installer now also verifies the package it installs: an explicit `--package-file` must match the SHA-512 of one of the packages built with it (any arch), and a package downloaded from the default publish-derived (versioned) URL must match the package for the detected arch; a package downloaded from an explicit `appPackageUrl` (e.g. a version-independent `latest` URL) is not verified. A mismatch aborts the installation. The new `nsisWeb.allowUnverifiedAppPackage` option (default `false`) opts out, for one web installer used with packages of other builds. See [Web Installer](../nsis.md#web-installer).
 
-If you publish and rely on an NSIS web installer, opt back in **before v28** by setting `disableWebInstaller: false` in your main process:
+Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](../features/signed-update-manifests.md) cover its path, SHA-512 and size.
+
+If you publish and rely on an NSIS web installer and your installs lack the marker, opt in by setting `disableWebInstaller: false` in your main process:
 
 ```ts
 import { NsisUpdater } from "electron-updater"

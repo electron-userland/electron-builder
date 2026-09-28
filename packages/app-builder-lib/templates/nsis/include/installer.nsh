@@ -24,11 +24,27 @@
         StrCpy $isPackageFileExplicitlySpecified "true"
       ${endIf}
 
-      # we do not check file hash is specifed explicitly using --package-file because it is clear that user definitely want to use this file and it is user responsibility to check
-      # 1. auto-updater uses --package-file and validates checksum
-      # 2. user can user another package file (use case - one installer suitable for any app version (use latest version))
+      # An explicit --package-file (electron-updater passes the package it verified against the update manifest) must match one of the
+      # packages built with this installer. Any arch is accepted: electron-updater selects the package by its process arch, this installer
+      # by the native machine arch. nsisWeb.allowUnverifiedAppPackage (ALLOW_UNVERIFIED_APP_PACKAGE) skips this for a deliberately foreign
+      # package (use case - one installer suitable for any app version).
       ${if} ${FileExists} "$packageFile"
         ${if} $isPackageFileExplicitlySpecified == "true"
+          !ifndef ALLOW_UNVERIFIED_APP_PACKAGE
+            ${StdUtils.HashFile} $3 "SHA2-512" "$packageFile"
+            !ifdef APP_64_HASH
+              StrCmp $3 "${APP_64_HASH}" fun_extract
+            !endif
+            !ifdef APP_32_HASH
+              StrCmp $3 "${APP_32_HASH}" fun_extract
+            !endif
+            !ifdef APP_ARM64_HASH
+              StrCmp $3 "${APP_ARM64_HASH}" fun_extract
+            !endif
+            MessageBox MB_OK|MB_ICONSTOP "Package file $packageFile doesn't match any package of this installer (checksum $3). Installation aborted." /SD IDOK
+            SetErrorLevel 2
+            Quit
+          !endif
           Goto fun_extract
         ${else}
           ${StdUtils.HashFile} $3 "SHA2-512" "$packageFile"
@@ -41,6 +57,20 @@
       ${endIf}
 
       !insertmacro downloadApplicationFiles
+
+      # A publish-derived (versioned) URL names exactly the package built with this installer: the download must match its hash
+      # ($1, set by selectWebPackage in downloadApplicationFiles under the same define). An explicit appPackageUrl (e.g. a
+      # version-independent "latest" URL) can serve packages of other builds and is not verified.
+      !ifdef APP_PACKAGE_URL_IS_INCOMPLETE
+        !ifndef ALLOW_UNVERIFIED_APP_PACKAGE
+          ${StdUtils.HashFile} $3 "SHA2-512" "$packageFile"
+          ${if} $3 != $1
+            MessageBox MB_OK|MB_ICONSTOP "Package downloaded from $packageUrl doesn't match this installer — expected checksum $1, actual $3. Installation aborted." /SD IDOK
+            SetErrorLevel 2
+            Quit
+          ${endIf}
+        !endif
+      !endif
 
       fun_extract:
         !insertmacro extractUsing7za "$packageFile"

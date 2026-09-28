@@ -4822,8 +4822,13 @@
           "description": "*assisted installer only.* Whether to allow user to change installation directory.",
           "type": "boolean"
         },
+        "allowUnverifiedAppPackage": {
+          "default": false,
+          "description": "Whether the web installer may install an app package that doesn't match any package built with it: a package passed via `--package-file`,\nor (when `appPackageUrl` is not set) the downloaded package. By default such a package aborts the installation.\n\nEnable only if you intentionally run one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).",
+          "type": "boolean"
+        },
         "appPackageUrl": {
-          "description": "The application package download URL. Optional — by default computed using publish configuration.\n\nURL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).\nPlease note — it is [full URL](https://github.com/electron-userland/electron-builder/issues/1810#issuecomment-317650878).\n\nCustom `X-Arch` http header is set to `32` or `64`.",
+          "description": "The application package download URL. Optional — by default computed using publish configuration.\n\nURL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).\nPlease note — it is [full URL](https://github.com/electron-userland/electron-builder/issues/1810#issuecomment-317650878).\n\nCustom `X-Arch` http header is set to `32` or `64`.\n\nThe installer does not checksum-verify a package downloaded from an explicit `appPackageUrl`; a package downloaded from the default (publish-derived) URL is verified against the packages built with the installer.",
           "type": [
             "null",
             "string"
