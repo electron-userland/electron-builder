@@ -1,6 +1,6 @@
 import asyncPool from "tiny-async-pool"
 import { Arch, createUpdateManifestSignatures, log, safeStringifyJson, serializeToYaml } from "builder-util"
-import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { deepAssign, GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -211,13 +211,13 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
   if (customUpdateInfo != null) {
     // file info or nsis web installer packages info
     if ("sha512" in customUpdateInfo) {
-      Object.assign(files[0], customUpdateInfo)
+      deepAssign(files[0], customUpdateInfo)
     } else {
       const { isAdminRightsRequired, ...packagesInfo } = customUpdateInfo
-      Object.assign(result, packagesInfo)
+      deepAssign(result, packagesInfo)
       // electron-updater reads isAdminRightsRequired from the file entry of the installer
       if (isAdminRightsRequired != null) {
-        Object.assign(files[0], { isAdminRightsRequired })
+        deepAssign(files[0], { isAdminRightsRequired })
       }
     }
   }

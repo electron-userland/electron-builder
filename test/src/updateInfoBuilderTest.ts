@@ -831,6 +831,29 @@ test.for([
   })
 })
 
+test.for([
+  ["full installer", `{"sha512": "c2hhNTEy", "__proto__": {"inherited": true}}`],
+  ["web installer", `{"packages": {"x64": {"path": "App-1.0.0-x64.nsis.7z", "sha512": "p64"}}, "__proto__": {"inherited": true}}`],
+] as const)("createUpdateInfoTasks keeps the plain Object prototype for the update info of a %s with a __proto__ key", async ([, json], { expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const updateInfo = JSON.parse(json)
+    const event: any = { file: artifactFile, arch: null, packager: makePlatformPackager(), target: { outDir: dir }, updateInfo }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
+    const info: any = tasks[0].info
+    for (const target of [info, info.files[0]]) {
+      expect(Object.getPrototypeOf(target)).toBe(Object.prototype)
+      expect(target.inherited).toBeUndefined()
+    }
+    if ("packages" in updateInfo) {
+      expect(info.packages).toEqual(updateInfo.packages)
+    } else {
+      expect(info.files[0].sha512).toBe(updateInfo.sha512)
+    }
+  })
+})
+
 test("createUpdateInfoTasks sets arch null for universal installer", async ({ expect }) => {
   await withTmpDir(async dir => {
     const artifactFile = path.join(dir, "App-1.0.0.exe")
