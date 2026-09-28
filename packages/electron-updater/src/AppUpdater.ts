@@ -339,15 +339,15 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
   }
 
-  protected _verifyUpdateFile: VerifyUpdateFile = (_params: { temporaryUpdateFilePath: string; originalUpdateFileName: string }) =>
-    Promise.resolve({ response: "success" })
+  protected _verifyUpdateFile: VerifyUpdateFile = _params => Promise.resolve({ response: "success" })
 
   /**
    * Allows developer to set custom logic for verifying a freshly downloaded update file, before it is renamed from its temporary path
    * into the updater cache under its real filename. When the verification fails, the file is instead deleted, and electron-updater will emit an error.
    * The default behavior is a stub – immediately succeeds.
    * The custom logic gets parameters `temporaryUpdateFilePath` (the path to the actual downloaded file under its temporary path) and
-   * `originalUpdateFileName` (the original file name, which will be reapplied after a successful verification).
+   * `originalUpdateFileName` (the original file name, which will be reapplied after a successful verification), plus
+   * the active `cancellationToken`.
    */
   get verifyUpdateFile(): VerifyUpdateFile {
     return this._verifyUpdateFile
@@ -1014,12 +1014,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       const verificationResult = await this.verifyUpdateFile({
         temporaryUpdateFilePath: tempUpdateFile,
         originalUpdateFileName: updateFileName,
+        cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
       })
       if (verificationResult?.response !== "success") {
-        throw newError(
-          `Downloaded update file ${updateFileName} failed verification: ${verificationResult.message ?? "unknown error"}`,
-          "ERR_UPDATER_INVALID_UPDATE_FILE"
-        )
+        throw newError(`Downloaded update file ${updateFileName} failed verification: ${verificationResult?.message ?? "unknown error"}`, "ERR_UPDATER_INVALID_UPDATE_FILE")
+      }
+      if (taskOptions.downloadUpdateOptions.cancellationToken.cancelled) {
+        throw new CancellationError()
       }
       await retry(() => fsExtra.rename(tempUpdateFile, updateFile), {
         retries: 60,

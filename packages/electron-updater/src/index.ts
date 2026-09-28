@@ -5,7 +5,7 @@ import { AppUpdater } from "./AppUpdater.js"
 
 const require = createRequire(import.meta.url)
 
-import { UpdateInfo } from "builder-util-runtime"
+import type { CancellationToken, UpdateInfo } from "builder-util-runtime"
 
 export { AppImageUpdater } from "./AppImageUpdater.js"
 export { BaseUpdater } from "./BaseUpdater.js"
@@ -83,7 +83,11 @@ export const autoUpdater: AppUpdater = new Proxy({} as AppUpdater, {
 
 export type VerifyUpdateFileResult = { response: "success" | "failure"; message?: string }
 // Generic interface to verify a pending update file.
-export type VerifyUpdateFile = (params: { temporaryUpdateFilePath: string; originalUpdateFileName: string }) => Promise<VerifyUpdateFileResult>
+export type VerifyUpdateFile = (params: {
+  temporaryUpdateFilePath: string
+  originalUpdateFileName: string
+  cancellationToken?: CancellationToken
+}) => Promise<VerifyUpdateFileResult>
 // Specific interface to verify a pending Nsis update file for Windows Authenticode signature.
 export type VerifyUpdateFileAuthenticodeSignature = (publisherName: string[], path: string) => Promise<VerifyUpdateFileResult>
 /**

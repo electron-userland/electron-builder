@@ -1,7 +1,7 @@
 import * as path from "path"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
-import { CancellationToken } from "builder-util-runtime"
-import { AppImageUpdater, DebUpdater } from "electron-updater"
+import { CancellationError, CancellationToken } from "builder-util-runtime"
+import { AppImageUpdater, DebUpdater, type VerifyUpdateFile } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import type { InstallOptions } from "electron-updater/src/BaseUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
@@ -149,7 +149,7 @@ describe("BaseUpdater verifyUpdateFile integration", () => {
     updater.downloadedUpdateHelper = helper
 
     let observedTempPath = ""
-    const verifyUpdateFile = vi.fn(async (params: { temporaryUpdateFilePath: string; originalUpdateFileName: string }) => {
+    const verifyUpdateFile = vi.fn<VerifyUpdateFile>(async params => {
       observedTempPath = params.temporaryUpdateFilePath
       return { response: "failure" as const, message: "custom verification failed" }
     })
@@ -195,11 +195,56 @@ describe("BaseUpdater verifyUpdateFile integration", () => {
     expect(verifyUpdateFile).toHaveBeenCalledWith({
       temporaryUpdateFilePath: observedTempPath,
       originalUpdateFileName: "TestApp-2.0.0.AppImage",
+      cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
     })
     // The temporary update file was present before its verification, but then deleted.
     expect(observedTempPath).not.toBe("")
     expect(await pathExists(observedTempPath)).toBe(false)
     // Most importantly, the temporary update file was never restored to the original filename as an executable binary.
+    expect(await pathExists(path.join(helper.cacheDirForPendingUpdate, "TestApp-2.0.0.AppImage"))).toBe(false)
+  })
+
+  it("aborts after verification when the verifier cancels before rename", async context => {
+    const cacheDir = await context.tmpDir.createTempDir()
+    const helper = new DownloadedUpdateHelper(cacheDir)
+    const updater = new AppImageUpdater(null, stubApp)
+    updater.logger = null
+    // @ts-expect-error accessing a protected property
+    updater.downloadedUpdateHelper = helper
+
+    const cancellationToken = new CancellationToken()
+    const verifyUpdateFile = vi.fn<VerifyUpdateFile>(async params => {
+      params.cancellationToken?.cancel()
+      return { response: "success" as const }
+    })
+    updater.verifyUpdateFile = verifyUpdateFile
+
+    const done = vi.fn()
+    const taskOptions: DownloadExecutorTask = {
+      fileExtension: "AppImage",
+      fileInfo: {
+        url: new URL("https://example.com/TestApp-2.0.0.AppImage"),
+        info: { url: "TestApp-2.0.0.AppImage", sha512: "sha512-of-2.0.0", size: 1024 },
+      },
+      downloadUpdateOptions: {
+        updateInfoAndProvider: {
+          info: { version: "2.0.0", files: [], path: "", sha512: "", releaseDate: "" },
+          // @ts-expect-error the provider does not come into play, so we can have it null
+          provider: null,
+        },
+        requestHeaders: {},
+        cancellationToken,
+      },
+      task: async destinationFile => {
+        await outputFile(destinationFile, "new AppImage bytes")
+      },
+      done,
+    }
+    // @ts-expect-error accessing a protected property
+    const downloadPromise = updater.executeDownload(taskOptions)
+
+    await expect(downloadPromise).rejects.toBeInstanceOf(CancellationError)
+    expect(done).not.toHaveBeenCalled()
     expect(await pathExists(path.join(helper.cacheDirForPendingUpdate, "TestApp-2.0.0.AppImage"))).toBe(false)
   })
 })
