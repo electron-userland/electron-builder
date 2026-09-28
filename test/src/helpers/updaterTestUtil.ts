@@ -1,12 +1,12 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, DownloadOptions } from "builder-util-runtime"
-import { AppUpdater, NsisUpdater } from "electron-updater"
+import { AppUpdater, NsisUpdater, type VerifyUpdateFile } from "electron-updater"
 import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
 import fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./fileAssert.js"
 import { TestAppAdapter } from "./TestAppAdapter.js"
-import { ExpectStatic, vi } from "vitest"
+import { type ExpectStatic, type Mock, vi } from "vitest"
 
 const tmpDir = new TmpDir("updater-test-util")
 
@@ -52,6 +52,41 @@ export async function validateDownload(expect: ExpectStatic, updater: AppUpdater
 
   expect(actualEvents).toMatchSnapshot()
   return updateCheckResult
+}
+
+type ExpectVerifyUpdateFileFailureParams = {
+  expect: ExpectStatic
+  downloadPromise: Promise<unknown> | null | undefined
+  verifyUpdateFile: Mock<VerifyUpdateFile>
+  getObservedTempPath: () => string
+  getFinalFilePath: () => string
+  expectedErrorMessageSubstring: string
+}
+
+export async function expectVerifyUpdateFileFailure({
+  expect,
+  downloadPromise,
+  verifyUpdateFile,
+  getObservedTempPath,
+  getFinalFilePath,
+  expectedErrorMessageSubstring,
+}: ExpectVerifyUpdateFileFailureParams) {
+  // Test the external behavior: the download flow, observed from outside, aborts early with the verification error.
+  expect(downloadPromise).toBeDefined()
+  await expect(downloadPromise).rejects.toMatchObject({
+    code: "ERR_UPDATER_INVALID_UPDATE_FILE",
+    message: expect.stringContaining(expectedErrorMessageSubstring),
+  })
+
+  // Test the internal behaviors:
+  expect(verifyUpdateFile).toHaveBeenCalledTimes(1)
+  const observedTempPath = getObservedTempPath()
+  const finalFilePath = getFinalFilePath()
+  // The temporary update file was present before its verification, but then deleted.
+  expect(observedTempPath).not.toBe("")
+  expect(await fsExtra.pathExists(observedTempPath)).toBe(false)
+  // Most importantly, the temporary update file was never restored to the original filename as an executable binary.
+  expect(await fsExtra.pathExists(finalFilePath)).toBe(false)
 }
 
 export class TestNodeHttpExecutor extends NodeHttpExecutor {

@@ -8,7 +8,7 @@ import fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
-import { createTestAppAdapter, httpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import { createTestAppAdapter, expectVerifyUpdateFileFailure, httpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { vi } from "vitest"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 
@@ -142,22 +142,16 @@ test.ifMac("mac updates abort when verifyUpdateFile rejects the downloaded temp 
     const updateCheckResult = await updater.checkForUpdates()
     const downloadPromise = updateCheckResult?.downloadPromise
 
-    /*
-     Test the external behavior: the download flow, observed from outside, aborts early with the verification error.
-    */
-    expect(downloadPromise).toBeDefined()
-    await expect(downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_FILE" })
+    await expectVerifyUpdateFileFailure({
+      expect,
+      downloadPromise,
+      verifyUpdateFile,
+      getObservedTempPath: () => observedTempPath,
+      getFinalFilePath: () => path.join(path.dirname(observedTempPath), zipName),
+      expectedErrorMessageSubstring: "custom verification failed",
+    })
 
-    /*
-     Test the internal behaviors:
-    */
-    expect(verifyUpdateFile).toHaveBeenCalledTimes(1)
     expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
-    // The temporary update file was present before its verification, but then deleted.
-    expect(observedTempPath).not.toBe("")
-    expect(await fsExtra.pathExists(observedTempPath)).toBe(false)
-    // Most importantly, the temporary update file was never restored to the original filename as an executable binary.
-    expect(await fsExtra.pathExists(path.join(path.dirname(observedTempPath), zipName))).toBe(false)
   } finally {
     server.close()
     await tmpDir.cleanup()

@@ -8,7 +8,7 @@ import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
 import { removeUnstableProperties } from "../helpers/packTester.js"
-import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import { createNsisUpdater, expectVerifyUpdateFileFailure, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { serializeToYaml, TmpDir } from "builder-util"
 import { ExpectStatic, vi } from "vitest"
@@ -149,22 +149,15 @@ test("file url generic aborts when verifyUpdateFile rejects the downloaded temp 
     const updateCheckResult = await updater.checkForUpdates()
     const downloadPromise = updateCheckResult?.downloadPromise
 
-    /*
-     Test the external behavior: the download flow, observed from outside, aborts early with the verification error.
-    */
-    expect(downloadPromise).toBeDefined()
-    await expect(downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_UPDATE_FILE" })
-
-    /*
-     Test the internal behaviors:
-    */
-    expect(verifyUpdateFile).toHaveBeenCalledTimes(1)
+    await expectVerifyUpdateFileFailure({
+      expect,
+      downloadPromise,
+      verifyUpdateFile,
+      getObservedTempPath: () => observedTempPath,
+      getFinalFilePath: () => path.join(path.dirname(observedTempPath), installerName(UPDATE_VERSION)),
+      expectedErrorMessageSubstring: "custom verification failed",
+    })
     expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
-    // The temporary update file was present before its verification, but then deleted.
-    expect(observedTempPath).not.toBe("")
-    expect(await fsExtra.pathExists(observedTempPath)).toBe(false)
-    // Most importantly, the temporary update file was never restored to the original filename as an executable binary.
-    expect(await fsExtra.pathExists(path.join(path.dirname(observedTempPath), installerName(UPDATE_VERSION)))).toBe(false)
   } finally {
     await close()
   }
