@@ -55,7 +55,7 @@ a GitHub feed while the manifests went elsewhere). With no such target (snap-onl
 `publishAutoUpdate: false` on the target) the platform/top-level settings apply as before, including the GitHub
 fallback. AppImage and deb/rpm/pacman honor `appImage.publish`/`deb.publish` etc. for the file they write. When two
 targets built from the same app (e.g. `dmg` and `zip`, or `nsis` and an updater-aware `appx`) resolve different
-first providers, a publishing build fails at build start with an `InvalidConfigurationError`; a build without a
+feeds (first providers that differ in more than upload-only options such as `publishAutoUpdate` or `timeout`), a publishing build fails at build start with an `InvalidConfigurationError`; a build without a
 publish policy warns that publishing will fail and writes no `app-update.yml` for that app. Configure `publish` once
 at the platform level, or give those targets the same first provider. `getAppUpdatePublishConfiguration` now
 honors the target-specific options passed to it.

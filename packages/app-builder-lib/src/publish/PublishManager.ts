@@ -390,8 +390,9 @@ export async function getPackAppUpdatePublishConfiguration(
  *
  * - the targets that emit a manifest (`writesUpdateInfo`, and on Windows an electron-updater-aware one) under their
  *   own effective publish settings - target-level `publish` first, then platform, then root - decide it;
- * - if several do, their first providers must be identical: one app dir holds one `app-update.yml`, so otherwise
- *   some installs would poll a feed that never receives their manifest. That is a configuration error;
+ * - if several do, their first providers must be the same feed ({@link appUpdateFeedIdentity}: publish-only options
+ *   may differ): one app dir holds one `app-update.yml`, so otherwise some installs would poll a feed that never
+ *   receives their manifest. That is a configuration error;
  * - with none (a snap-only pack, or `nsis.publish: null`), it comes from the platform/root settings, as before -
  *   including the GitHub fallback from repository info when no level configures `publish` at all.
  *
@@ -414,8 +415,8 @@ async function resolvePackAppUpdatePublishConfigs(
     return { publishConfigs: await getPlatformUpdateInfoPublishConfigs(packager, arch, isPublish), emitsManifest: false }
   }
 
-  const embedded = canonicalPublishConfigJson(writers[0].publishConfigs[0])
-  if (writers.some(it => canonicalPublishConfigJson(it.publishConfigs[0]) !== embedded)) {
+  const embedded = appUpdateFeedIdentity(writers[0].publishConfigs[0])
+  if (writers.some(it => appUpdateFeedIdentity(it.publishConfigs[0]) !== embedded)) {
     reportConflictingAppUpdateFeeds(packager, writers, arch, isPublish)
     // not publishing: no app-update.yml, the same package the error would have prevented - picking one of the feeds
     // would silently ship installs that poll a feed without their manifest
@@ -443,7 +444,7 @@ function reportConflictingAppUpdateFeeds(
   const problem =
     `targets ${targets} are built from the same ${packager.platform.name} ${Arch[arch]} app, which holds a single app-update.yml, ` +
     `but their publish settings resolve to different auto-update feeds (${feeds}; the first provider of each is embedded)`
-  const solution = `configure \`publish\` once at the platform level (\`${packager.platform.buildConfigurationKey}.publish\`) and remove the target-level overrides, or make their first providers identical`
+  const solution = `configure \`publish\` once at the platform level (\`${packager.platform.buildConfigurationKey}.publish\`) and remove the target-level overrides, or point their first providers at the same feed`
   if (isPublish) {
     throw new InvalidConfigurationError(`${problem}. To fix it, ${solution}.`)
   }
@@ -464,9 +465,28 @@ function reportConflictingAppUpdateFeeds(
   )
 }
 
-// key order does not make two configs different feeds
-function canonicalPublishConfigJson(config: PublishConfiguration | Nullish): string {
-  return JSON.stringify(config ?? null, (_key, value) =>
+// Options that only the publisher reads (the upload itself), never electron-updater, so they cannot make two otherwise
+// identical first providers different feeds. Everything else is compared - including fields of custom providers and
+// options such as `requestHeaders`, `token` or `private` that change how or whether the updater can read the feed.
+const PUBLISH_ONLY_OPTIONS = new Set(["publishAutoUpdate", "timeout"])
+const S3_PUBLISH_ONLY_OPTIONS = new Set(["acl", "storageClass", "encryption"])
+
+/**
+ * What makes two first providers the same app-update.yml feed: the provider and every option that decides where, or
+ * how, electron-updater reads the manifest (url, bucket, region, path, owner, repo, channel, ...). Publish-only options
+ * and unset (nullish) values are left out, and key order does not matter - so `publishAutoUpdate: true` against an
+ * absent flag is the same feed, a different url or bucket is not.
+ */
+function appUpdateFeedIdentity(config: PublishConfiguration | Nullish): string {
+  if (config == null) {
+    return "null"
+  }
+  const isS3Like = config.provider === "s3" || config.provider === "spaces" || config.provider === "r2"
+  const identity = Object.fromEntries(
+    Object.entries(config).filter(([key, value]) => value != null && !PUBLISH_ONLY_OPTIONS.has(key) && !(isS3Like && S3_PUBLISH_ONLY_OPTIONS.has(key)))
+  )
+  // key order does not make two configs different feeds
+  return JSON.stringify(identity, (_key, value) =>
     value != null && typeof value === "object" && !Array.isArray(value)
       ? Object.fromEntries(
           Object.keys(value)

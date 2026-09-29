@@ -195,6 +195,35 @@ test("targets of one pack with the same feed (in any key order) are fine; later 
   expect(appUpdate).toMatchObject(s3)
 })
 
+test("the same feed with different upload-only options is fine", async ({ expect, tmpDir }) => {
+  // nsis sets publishAutoUpdate/timeout explicitly, the updater-aware appx inherits the same generic url without them
+  const nsis = { publish: { ...generic, publishAutoUpdate: true, timeout: 600000 } }
+  const packager = makePackager({ platformPublish: generic })
+  const appUpdate = await afterPackAppUpdate(tmpDir, packager, [target("nsis", nsis), target("appx", { electronUpdaterAware: true })])
+  expect(appUpdate).toMatchObject(generic)
+  expect(appUpdate.updateManifestPublicKey).toBe(trustedKey)
+
+  const s3Upload = { publish: { ...s3, acl: "private", storageClass: "STANDARD_IA", encryption: "AES256", channel: null } }
+  expect(await afterPackAppUpdate(tmpDir, makePackager({ platformPublish: s3 }), [target("nsis", s3Upload), target("nsis-web")])).toMatchObject(s3)
+})
+
+test("a different url, bucket, path or channel is a different feed", async ({ expect, tmpDir }) => {
+  const conflicts: Array<[any, any]> = [
+    [generic, { ...generic, url: "https://example.com/other" }],
+    [s3, { ...s3, bucket: "other-bucket" }],
+    [s3, { ...s3, path: "beta" }],
+    [generic, { ...generic, channel: "beta" }],
+    [
+      { provider: "github", owner: "acme", repo: "app" },
+      { provider: "github", owner: "acme", repo: "other" },
+    ],
+  ]
+  for (const [nsis, appx] of conflicts) {
+    const targets = [target("nsis", { publish: nsis }), target("appx", { electronUpdaterAware: true, publish: appx })]
+    await expect(afterPackAppUpdate(tmpDir, makePackager({}), targets), JSON.stringify(appx)).rejects.toThrow(InvalidConfigurationError)
+  }
+})
+
 test("a non-manifest target does not take part in the rule", async ({ expect, tmpDir }) => {
   // the portable exe's own publish differs, but it writes no update info and does not decide the feed
   const appUpdate = await afterPackAppUpdate(tmpDir, makePackager({}), [target("portable", { publish: generic }, false), target("nsis", { publish: s3 })])
