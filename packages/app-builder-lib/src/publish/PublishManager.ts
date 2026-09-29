@@ -164,7 +164,10 @@ export class PublishManager implements PublishContext {
         }
       }
 
-      const publishConfig = await getAppUpdatePublishConfiguration(packager, null, event.arch, this.isPublish)
+      // app-update.yml is still written for every pack, but the signing requirement only applies when one of this
+      // pack's targets emits a manifest: a snap-, flatpak- or mas-only pack has none (Linux and mas are not filtered above)
+      const enforce = this.isPublish && event.targets.some(it => it.writesUpdateInfo)
+      const publishConfig = await getAppUpdatePublishConfiguration(packager, null, event.arch, enforce)
       if (publishConfig != null) {
         await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig)
       }

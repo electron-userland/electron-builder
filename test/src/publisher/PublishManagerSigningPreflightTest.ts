@@ -2,7 +2,7 @@ import { Arch, LinuxPackager, Packager, Platform, PlatformPackager, Target } fro
 import { PublishManager } from "app-builder-lib/src/publish/PublishManager"
 import { InvalidConfigurationError } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { outputFile, outputJson } from "fs-extra"
+import { outputFile, outputJson, readFile } from "fs-extra"
 import * as path from "path"
 import { afterEach, beforeEach, vi } from "vitest"
 
@@ -21,14 +21,15 @@ afterEach(() => {
 
 function createManager() {
   let onTargetsCreated: (plan: any) => Promise<void> = () => Promise.resolve()
+  let onAfterPack: (event: any) => Promise<void> = () => Promise.resolve()
   const packager = {
     projectDir: __dirname,
     config: {},
     onTargetsCreated: (handler: (plan: any) => Promise<void>) => {
       onTargetsCreated = handler
     },
-    onAfterPack: () => {
-      // ignore
+    onAfterPack: (handler: (event: any) => Promise<void>) => {
+      onAfterPack = handler
     },
     onArtifactCreated: () => {
       // ignore
@@ -36,7 +37,7 @@ function createManager() {
   }
   const manager = new PublishManager(packager as any, { publish: "always" }, new CancellationToken())
   const scheduleUpload = vi.spyOn(manager, "scheduleUpload").mockResolvedValue()
-  return { manager, scheduleUpload, targetsCreated: (plan: any) => onTargetsCreated(plan) }
+  return { manager, scheduleUpload, targetsCreated: (plan: any) => onTargetsCreated(plan), afterPack: (event: any) => onAfterPack(event) }
 }
 
 function makePlatformPackager(publish: any, requireUpdateSigningKeys: (required: boolean) => Promise<Array<any>>) {
@@ -184,4 +185,22 @@ test("a target without update info built before the manifest-producing one is no
   // AppImage's own artifact check (awaited in awaitTasks) fails
   await expect(packager.build().then(() => manager.awaitTasks())).rejects.toThrow(/must be signed/)
   expect(scheduleUpload).not.toHaveBeenCalled()
+})
+
+test("afterPack enforces signing only when a target of the pack emits update info (snap-only still gets app-update.yml)", async ({ expect, tmpDir }) => {
+  const { afterPack } = createManager()
+  const appOutDir = await tmpDir.getTempDir({ prefix: "linux-unpacked" })
+  const packager = {
+    ...makePlatformPackager({ provider: "generic", url: "https://example.com/updates" }, missingKey),
+    platform: Platform.LINUX,
+    getResourcesDir: (dir: string) => path.join(dir, "resources"),
+  }
+  const event = (targets: Array<any>) => ({ packager, electronPlatformName: "linux", arch: Arch.x64, appOutDir, outDir: appOutDir, targets })
+
+  await afterPack(event([makeTarget("snap", false)]))
+  expect(packager.requireUpdateSigningKeys).toHaveBeenLastCalledWith(false)
+  expect(await readFile(path.join(appOutDir, "resources", "app-update.yml"), "utf8")).toContain("provider: generic")
+
+  await expect(afterPack(event([makeTarget("snap", false), makeTarget("appimage", true)]))).rejects.toThrow(/must be signed/)
+  expect(packager.requireUpdateSigningKeys).toHaveBeenLastCalledWith(true)
 })
