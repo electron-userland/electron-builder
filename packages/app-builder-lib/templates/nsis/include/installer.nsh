@@ -57,14 +57,17 @@
         ${endif}
     !else
       !insertmacro extractEmbeddedAppPackage
-      # electron always uses per user app data
-      ${if} $installMode == "all"
-        SetShellVarContext current
-      ${endif}
-      !insertmacro copyFile "$EXEPATH" "$LOCALAPPDATA\${APP_INSTALLER_STORE_FILE}"
-      ${if} $installMode == "all"
-        SetShellVarContext all
-      ${endif}
+      # the copy is electron-updater's differential base, kept only for an app with app-update.yml
+      !ifdef KEEP_INSTALLER_FOR_UPDATER
+        # electron always uses per user app data
+        ${if} $installMode == "all"
+          SetShellVarContext current
+        ${endif}
+        !insertmacro copyFile "$EXEPATH" "$LOCALAPPDATA\${APP_INSTALLER_STORE_FILE}"
+        ${if} $installMode == "all"
+          SetShellVarContext all
+        ${endif}
+      !endif
     !endif
   !endif
 
