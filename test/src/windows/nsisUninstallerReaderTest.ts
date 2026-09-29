@@ -9,7 +9,9 @@ import type { TmpDir } from "temp-file"
 // It must produce the same bytes as NSIS itself, including the uninstaller icon patch, or the uninstaller fails
 // its own CRC check ("Installer integrity check has failed") on the end user's machine.
 
-async function buildInstaller(tmpDir: TmpDir, uninstallerIcon: string, compress = true) {
+// `uninstallerIcon: null` configures no icon at all, so makensis uses its own default install and uninstall icons, which differ
+// (electron-builder does the same when no icon is configured: `MUI_ICON`/`MUI_UNICON` are not defined)
+async function buildInstaller(tmpDir: TmpDir, uninstallerIcon: string | null, compress = true) {
   const dir = await tmpDir.getTempDir({ prefix: "nsis-uninstaller-reader" })
   await fs.mkdir(dir, { recursive: true })
   const makensis = await getMakeNsisPath(undefined, dir)
@@ -18,8 +20,7 @@ async function buildInstaller(tmpDir: TmpDir, uninstallerIcon: string, compress 
     "Unicode true",
     compress ? "SetCompressor zlib" : "SetCompress off",
     `OutFile "${installer}"`,
-    'Icon "${NSISDIR}/Contrib/Graphics/Icons/modern-install.ico"',
-    `UninstallIcon "\${NSISDIR}/Contrib/Graphics/Icons/${uninstallerIcon}"`,
+    ...(uninstallerIcon == null ? [] : ['Icon "${NSISDIR}/Contrib/Graphics/Icons/modern-install.ico"', `UninstallIcon "\${NSISDIR}/Contrib/Graphics/Icons/${uninstallerIcon}"`]),
     "RequestExecutionLevel user",
     "SilentInstall silent",
     'Section "install"',
@@ -47,6 +48,17 @@ async function readIconImages(file: string): Promise<Array<Buffer>> {
   return images
 }
 
+function findNsisFirstHeader(data: Buffer): number {
+  // the firstheader (flags, then 0xDEADBEEF "NullsoftInst") is at a 512-byte boundary right after the exehead
+  const signature = Buffer.from("NullsoftInst", "latin1")
+  for (let offset = 512; offset + 20 <= data.length; offset += 512) {
+    if (data.readUInt32LE(offset + 4) === 0xdeadbeef && data.subarray(offset + 8, offset + 20).equals(signature)) {
+      return offset
+    }
+  }
+  return -1
+}
+
 for (const compress of [true, false]) {
   describe(`UninstallerReader (${compress ? "zlib" : "no compression"})`, () => {
     test("uninstaller icon differs from installer icon", async ({ expect, tmpDir }) => {
@@ -66,6 +78,18 @@ for (const compress of [true, false]) {
       await UninstallerReader.exec(installer, uninstaller)
       const data = await fs.readFile(uninstaller)
       expect(() => verifyNsisIntegrity(data)).not.toThrow()
+    })
+
+    // https://github.com/electron-userland/electron-builder/issues/10258#issuecomment-5896037582
+    test("no icon configured (makensis default icons)", async ({ expect, tmpDir }) => {
+      const { installer, uninstaller } = await buildInstaller(tmpDir, null, compress)
+      await UninstallerReader.exec(installer, uninstaller)
+      const data = await fs.readFile(uninstaller)
+      expect(() => verifyNsisIntegrity(data)).not.toThrow()
+      // the default uninstall icon differs from the default install icon, so the exehead copied from the installer is patched
+      const exeheadSize = findNsisFirstHeader(data)
+      expect(exeheadSize).toBeGreaterThan(0)
+      expect(data.subarray(0, exeheadSize).equals((await fs.readFile(installer)).subarray(0, exeheadSize))).toBe(false)
     })
   })
 }
@@ -100,9 +124,11 @@ describe("verifyNsisIntegrity", () => {
   })
 })
 
-test.ifWindows("extracted uninstaller runs", async ({ expect, tmpDir }) => {
-  const { dir, installer, uninstaller } = await buildInstaller(tmpDir, "modern-uninstall.ico")
-  await UninstallerReader.exec(installer, uninstaller)
-  // exits with code 2 if the integrity check fails; `_?=` runs it in place instead of from a temp copy
-  await expect(exec(uninstaller, ["/S", `_?=${dir}`])).resolves.toBeDefined()
-})
+for (const uninstallerIcon of ["modern-uninstall.ico", null]) {
+  test.ifWindows(`extracted uninstaller runs (${uninstallerIcon ?? "no icon configured"})`, async ({ expect, tmpDir }) => {
+    const { dir, installer, uninstaller } = await buildInstaller(tmpDir, uninstallerIcon)
+    await UninstallerReader.exec(installer, uninstaller)
+    // exits with code 2 if the integrity check fails; `_?=` runs it in place instead of from a temp copy
+    await expect(exec(uninstaller, ["/S", `_?=${dir}`])).resolves.toBeDefined()
+  })
+}
