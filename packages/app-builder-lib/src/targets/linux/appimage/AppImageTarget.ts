@@ -67,7 +67,7 @@ export default class AppImageTarget extends Target {
 
     // Parallelize independent async operations
     const [publishConfig, stageDir, desktopEntry, icons, license] = await Promise.all([
-      getPackAppUpdatePublishConfiguration(packager, packager.getPackTargets(appOutDir) ?? [this], arch, false),
+      getPackAppUpdatePublishConfiguration(packager, packager.getPackTargets(appOutDir, arch) ?? [this], arch, false),
       createStageDir(this, packager, arch),
       this.desktopEntry.value,
       this.helper.icons,

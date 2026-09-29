@@ -264,10 +264,11 @@ test("getAppUpdatePublishConfiguration honors the target-specific options it is 
   expect(packager.requireUpdateSigningKeys).toHaveBeenCalledTimes(2)
 })
 
-// Records what an AppImage/deb build() sees: the targets packaged from its app dir.
+// Records what an AppImage/deb build() sees: the targets packaged from its app dir for its arch.
 class RecordingTarget extends Target {
   readonly options = null
   packTargets: ReadonlyArray<Target> | undefined
+  arch: Arch | undefined
 
   constructor(
     name: string,
@@ -277,13 +278,16 @@ class RecordingTarget extends Target {
     super(name)
   }
 
-  build(appOutDir: string): Promise<any> {
-    this.packTargets = this.packager.getPackTargets(appOutDir)
-    return Promise.resolve()
+  async build(appOutDir: string, arch: Arch): Promise<any> {
+    this.arch = arch
+    // look up only after the build has moved on: an AppImage/deb resolves its feed well after build() starts, when
+    // the next arch may already have been packaged
+    await new Promise(resolve => setTimeout(resolve, 100))
+    this.packTargets = this.packager.getPackTargets(appOutDir, arch)
   }
 }
 
-test("a target's build() can look up the other targets of its pack", async ({ expect, tmpDir }) => {
+async function buildPrepackagedLinux(tmpDir: any, targets: Map<Arch, Array<string>>): Promise<Array<RecordingTarget>> {
   const projectDir = await tmpDir.getTempDir({ prefix: "project" })
   await outputJson(path.join(projectDir, "package.json"), { name: "feed-app", version: "1.0.0", description: "test", author: "Foo Bar <foo@example.com>" })
   const prepackaged = await tmpDir.getTempDir({ prefix: "prepackaged" })
@@ -304,13 +308,32 @@ test("a target's build() can look up the other targets of its pack", async ({ ex
   const packager = new Packager({
     projectDir,
     prepackaged,
-    targets: Platform.LINUX.createTarget(["appimage", "deb"], Arch.x64),
+    targets: new Map([[Platform.LINUX, targets]]),
     config: { electronVersion: "38.0.0", directories: { output: path.join(projectDir, "dist") } },
     platformPackagerFactory: info => new RecordingLinuxPackager(info),
   })
   await packager.build()
+  return created
+}
+
+test("a target's build() can look up the other targets of its pack", async ({ expect, tmpDir }) => {
+  const created = await buildPrepackagedLinux(tmpDir, new Map([[Arch.x64, ["appimage", "deb"]]]))
   expect(created.map(it => it.name)).toEqual(["appimage", "deb"])
   for (const it of created) {
     expect(it.packTargets).toEqual(created)
+  }
+})
+
+test("prepackaged multi-arch: each arch's targets look up their own pack, although the app dir is the same", async ({ expect, tmpDir }) => {
+  const created = await buildPrepackagedLinux(
+    tmpDir,
+    new Map([
+      [Arch.x64, ["appimage", "deb"]],
+      [Arch.arm64, ["snap"]],
+    ])
+  )
+  expect(created.map(it => `${it.name}:${Arch[it.arch!]}`)).toEqual(["appimage:x64", "deb:x64", "snap:arm64"])
+  for (const it of created) {
+    expect(it.packTargets, it.name).toEqual(created.filter(other => other.arch === it.arch))
   }
 })
