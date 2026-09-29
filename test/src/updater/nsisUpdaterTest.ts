@@ -951,6 +951,95 @@ describe("NsisUpdater — disableWebInstaller", () => {
       await tmpDir.cleanup()
     }
   })
+
+  // process.resourcesPath is only set in Electron: set here while the updater is created, which reads the package-type marker from it
+  async function createNsisUpdaterWithPackageType(tmpDir: TmpDir, packageType: string) {
+    const resourcesPath = await tmpDir.getTempDir({ prefix: "resources" })
+    await fsExtra.outputFile(path.join(resourcesPath, "package-type"), packageType)
+    const original = Object.getOwnPropertyDescriptor(process, "resourcesPath")
+    Object.defineProperty(process, "resourcesPath", { value: resourcesPath, configurable: true, writable: true })
+    try {
+      return await createNsisUpdater("1.0.0")
+    } finally {
+      if (original == null) {
+        delete (process as any).resourcesPath
+      } else {
+        Object.defineProperty(process, "resourcesPath", original)
+      }
+    }
+  }
+
+  // an nsis-web install that receives a full installer (the app moved from nsis-web to nsis) needs no change by the app; the full
+  // installer writes the `nsis` marker, so web-installer updates need an opt-in after it is installed
+  test("the nsis-web default of disableWebInstaller logs an info line, not a warning, for a regular (non-web) installer", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(false, WEB_PAYLOAD)
+    try {
+      const updater = await createNsisUpdaterWithPackageType(tmpDir, "nsis-web")
+      expect(updater.disableWebInstaller).toBe(false)
+      const infos: Array<string> = []
+      const warnings: Array<string> = []
+      updater.logger = { info: (m: string) => infos.push(m), warn: (m: string) => warnings.push(m), error() {}, debug() {} }
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      trackEvents(updater)
+
+      const updateCheckResult = await updater.checkForUpdates()
+      // the download completes, so the full-installer branch ran
+      await expect(updateCheckResult!.downloadPromise).resolves.toMatchObject({ updateFile: expect.stringContaining(WEB_INSTALLER_NAME) })
+      expect(warnings.filter(w => w.includes("disableWebInstaller"))).toEqual([])
+      expect(infos.filter(m => m.includes("disableWebInstaller"))).toEqual([
+        "A full installer (not a web installer) was downloaded for an install made by an nsis-web installer. After it is installed, web-installer updates need disableWebInstaller = false.",
+      ])
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  test("disableWebInstaller=true set by the app wins over the nsis-web default", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(true)
+    const downloads = trackDownloads(server)
+    try {
+      const updater = await createNsisUpdaterWithPackageType(tmpDir, "nsis-web")
+      expect(updater.disableWebInstaller).toBe(false)
+      updater.disableWebInstaller = true
+      expect(updater.disableWebInstaller).toBe(true)
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      trackEvents(updater)
+
+      const updateCheckResult = await updater.checkForUpdates()
+      await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })
+      expect(downloads).toEqual([])
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  test("disableWebInstaller=false set by the app also warns on an nsis-web install for a regular (non-web) installer", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(false)
+    try {
+      const updater = await createNsisUpdaterWithPackageType(tmpDir, "nsis-web")
+      updater.disableWebInstaller = false
+      const infos: Array<string> = []
+      const warnings: Array<string> = []
+      updater.logger = { info: (m: string) => infos.push(m), warn: (m: string) => warnings.push(m), error() {}, debug() {} }
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      trackEvents(updater)
+
+      await updater
+        .checkForUpdates()
+        .then(r => r!.downloadPromise)
+        .then(
+          () => null,
+          () => null
+        )
+      expect(warnings.some(w => w.includes("a full installer (not a web installer) was downloaded"))).toBe(true)
+      expect(infos.filter(m => m.includes("disableWebInstaller"))).toEqual([])
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
 })
 
 describe("NsisUpdater — package-type pre-seeds disableWebInstaller", () => {

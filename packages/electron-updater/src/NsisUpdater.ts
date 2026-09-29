@@ -28,10 +28,10 @@ export class NsisUpdater extends BaseUpdater {
   }
 
   // nsis-web installs self-identify via a `resources/package-type` marker written by the installer.
-  // When present, pre-seed disableWebInstaller=false so web-installer updates work without the app
-  // wiring the flag by hand. This is a default only — an explicit `autoUpdater.disableWebInstaller = …`
-  // set later by the app still wins (the setter runs after construction). A plain `nsis` marker, or no marker,
-  // leaves the default (`true`), so web-installer updates are rejected with ERR_UPDATER_WEB_INSTALLER_DISABLED.
+  // When present, disableWebInstaller defaults to false so web-installer updates work without the app
+  // wiring the flag by hand. This is a default only: a value the app sets (`autoUpdater.disableWebInstaller = …`)
+  // wins. A plain `nsis` marker, or no marker, leaves the default (`true`), so web-installer updates are rejected
+  // with ERR_UPDATER_WEB_INSTALLER_DISABLED.
   private seedWebInstallerDefaultFromPackageType(): void {
     try {
       const resourcesPath = process.resourcesPath
@@ -40,10 +40,10 @@ export class NsisUpdater extends BaseUpdater {
       }
       const packageTypePath = path.join(resourcesPath, "package-type")
       if (fsExtra.existsSync(packageTypePath) && fsExtra.readFileSync(packageTypePath, "utf-8").trim() === "nsis-web") {
-        this.disableWebInstaller = false
+        this.disableWebInstallerDefault = false
       }
     } catch (_ignored) {
-      // best-effort: a missing/unreadable marker just leaves the secure default in place
+      // best-effort: a missing/unreadable marker leaves the default (`true`) in place
     }
   }
 
@@ -117,6 +117,8 @@ export class NsisUpdater extends BaseUpdater {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")!
     const webInstallerDisabled = downloadUpdateOptions.disableWebInstaller ?? true
+    // the app set disableWebInstaller to false (read with the options above), not the default of an install made by an nsis-web installer
+    const webInstallerEnabledByApp = this.isWebInstallerEnabledByApp
     // checked before executeDownload, so that it also applies to an update cached by a previous launch
     if (fileInfo.packageInfo != null) {
       if (webInstallerDisabled) {
@@ -136,9 +138,16 @@ export class NsisUpdater extends BaseUpdater {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
         if (!isWebInstaller && !webInstallerDisabled) {
-          this._logger.warn(
-            "disableWebInstaller is explicitly set to false, but a full installer (not a web installer) was downloaded. As of v27 web installers are opt-in (disabled by default); remove the override unless you intentionally publish NSIS web-installer packages."
-          )
+          if (webInstallerEnabledByApp) {
+            this._logger.warn(
+              "disableWebInstaller is explicitly set to false, but a full installer (not a web installer) was downloaded. As of v27 web installers are opt-in (disabled by default); remove the override unless you intentionally publish NSIS web-installer packages."
+            )
+          } else {
+            // the nsis-web default (package-type marker) needs no change by the app, but the full installer writes the `nsis` marker
+            this._logger.info(
+              "A full installer (not a web installer) was downloaded for an install made by an nsis-web installer. After it is installed, web-installer updates need disableWebInstaller = false."
+            )
+          }
         }
         if (
           isWebInstaller ||

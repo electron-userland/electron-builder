@@ -198,7 +198,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   allowUnverifiedLinuxPackages = true
 
+  // undefined until the app sets disableWebInstaller, so NsisUpdater can tell a `false` set by the app from the nsis-web default
   private _disableWebInstaller: boolean | undefined = undefined
+
+  // the value of disableWebInstaller while the app has not set it; NsisUpdater sets it to false for an install made by an nsis-web installer
+  protected disableWebInstallerDefault = true
 
   /**
    * Whether to block NSIS web-installer packages. Web installer files might not have signature verification, so they are disabled by default as of v27:
@@ -210,11 +214,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * @default true
    */
   get disableWebInstaller(): boolean {
-    return this._disableWebInstaller ?? true
+    return this._disableWebInstaller ?? this.disableWebInstallerDefault
   }
 
   set disableWebInstaller(value: boolean) {
     this._disableWebInstaller = value
+  }
+
+  // the app itself set disableWebInstaller to false (not the nsis-web default)
+  protected get isWebInstallerEnabledByApp(): boolean {
+    return this._disableWebInstaller === false
   }
 
   /**
