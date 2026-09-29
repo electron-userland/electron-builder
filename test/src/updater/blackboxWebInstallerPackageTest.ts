@@ -1,6 +1,6 @@
 import { TmpDir } from "builder-util"
 import { hashFile, WindowsUpdateInfo } from "builder-util-runtime"
-import { copy, existsSync, outputFile, readFile } from "fs-extra"
+import { copy, existsSync, outputFile, readFile, remove } from "fs-extra"
 import path from "path"
 import { TestContext } from "vitest"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform"
@@ -10,12 +10,12 @@ import { appExe, buildWebInstaller, packageFileName, resetNativeInstall, storedP
 import { readEmbeddedUpdateConfig, readUpdateManifest } from "./signedManifestTestUtil"
 
 // A file of its own, next to blackboxWebInstallerTest.ts: the CI sharder packs whole files and this test runs the web installer
-// seven times (~10 min).
+// nine times.
 describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
   // A web installer built without appPackageUrl downloads <publish url>/<package file name>, which names exactly the package it was
   // built with: that download, a package next to it and a --package-file (as electron-updater passes one) must match that package.
   // Each installer run starts from a machine without an install, so the runs don't depend on each other; only the refused packages
-  // over an install run right after the install they must keep.
+  // and the failed download over an install run right after the install they must keep.
   test(
     "web installer with a publish-derived package URL checks downloaded, adjacent and --package-file packages",
     { ...optionsForFlakyE2E, retry: 1 },
@@ -84,6 +84,12 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
           expect(await hashFile(storedPackage)).toBe(sha512)
         }
 
+        // A download that fails (the server doesn't have the package yet) ends the silent run with exit code 2 instead of waiting on
+        // the retry prompt.
+        expect(await run(await webInstallerIn("download-missing"))).toBe(2)
+        expect(new Set(requests)).toEqual(new Set([`/${packageFileName}`]))
+        expectNotInstalled()
+
         // A download that doesn't match the package of the installer is refused.
         await outputFile(servedPackage, "different package content")
         expect(await run(await webInstallerIn("download-other"))).toBe(2)
@@ -104,8 +110,9 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
         expect(new Set(requests)).toEqual(new Set([`/${packageFileName}`]))
         await expectInstalled()
 
-        // Over that install, a package that is refused aborts the installation before the installed version is uninstalled: a
-        // --package-file and a download that don't match leave it installed, with its stored package.
+        // Over that install, a package that is refused or cannot be downloaded aborts the installation before the installed version is
+        // uninstalled: a --package-file and a download that don't match, and a failed download, leave it installed, with its stored
+        // package.
         expect(await runOverInstall(await webInstallerIn("explicit-other-installed"), packageFileArg(otherPackage))).toBe(2)
         expect(requests).toEqual([])
         await expectInstalled()
@@ -113,7 +120,11 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
         expect(await runOverInstall(await webInstallerIn("download-other-installed"))).toBe(2)
         expect(new Set(requests)).toEqual(new Set([`/${packageFileName}`]))
         await expectInstalled()
-        await copy(packageFile, servedPackage, { overwrite: true })
+        await remove(servedPackage)
+        expect(await runOverInstall(await webInstallerIn("download-missing-installed"))).toBe(2)
+        expect(new Set(requests)).toEqual(new Set([`/${packageFileName}`]))
+        await expectInstalled()
+        await copy(packageFile, servedPackage)
 
         // A matching --package-file is installed under any name, without a download; the installer installs a copy of it.
         const explicitPackage = path.join(await tmpDir.getTempDir({ prefix: "explicit-package" }), "app-package.7z")

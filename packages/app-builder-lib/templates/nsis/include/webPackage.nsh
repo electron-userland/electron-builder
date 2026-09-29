@@ -49,8 +49,14 @@
     StrCpy $packageArch "32"
   ${endif}
 
+  # Only an interactive run passes /RESUME: after a connection error inetc then asks to reconnect and retry, a prompt without a
+  # silent default. A silent run gets the error back and ends below.
   download:
-  inetc::get /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+  ${if} ${Silent}
+    inetc::get /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+  ${else}
+    inetc::get /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+  ${endif}
   Pop $0
 
   ${if} $0 == "Cancelled"
@@ -59,14 +65,20 @@
 
   ${if} $0 != "OK"
     # try without proxy
-    inetc::get /NOPROXY /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+    ${if} ${Silent}
+      inetc::get /NOPROXY /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+    ${else}
+      inetc::get /NOPROXY /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+    ${endif}
     Pop $0
   ${endif}
 
   ${if} $0 == "Cancelled"
     quit
   ${elseif} $0 != "OK"
-    Messagebox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Unable to download application package from $packageUrl (status: $0).$\r$\n$\r$\nPlease check your internet connection and retry." IDRETRY download
+    # A silent run doesn't retry: it cancels and exits with code 2, like the other aborts of the web installer.
+    MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Unable to download application package from $packageUrl (status: $0).$\r$\n$\r$\nPlease check your internet connection and retry." /SD IDCANCEL IDRETRY download
+    SetErrorLevel 2
     Quit
   ${endif}
 

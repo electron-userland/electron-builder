@@ -118,13 +118,39 @@ for (const incomplete of [false, true]) {
       // storing of the package follow (the fixture's moveFile ends the installer).
       const uninstalled = script.indexOf(uninstall)
       const checkOrExit = /^(quit|seterrorlevel|messagebox|inetc::get|stdutils::hashfile|system::call)\b/i
-      expect(script.slice(0, uninstalled).filter(line => line.startsWith("inetc::get "))).toHaveLength(2)
       expect(script.slice(uninstalled + 1).filter(line => checkOrExit.test(line))).toEqual(["SetErrorLevel 0", "Quit"])
+
+      // The package is downloaded with and without proxy. A silent run doesn't pass /RESUME: after a connection error inetc would ask
+      // to reconnect, a prompt without a silent default. An interactive run keeps it.
+      const downloads = script.slice(0, uninstalled).flatMap((line, index) => (line.startsWith("inetc::get ") ? [index] : []))
+      expect(downloads).toHaveLength(4)
+      for (const [silent, interactive] of [downloads.slice(0, 2), downloads.slice(2)]) {
+        const interactiveLabel = /^IfSilent `` `(\w+)`$/.exec(script[silent - 1])?.[1]
+        expect(interactiveLabel).toBeDefined()
+        expect(script[silent]).not.toContain("/RESUME")
+        expect(script[interactive - 1]).toBe(`${interactiveLabel}:`)
+        expect(script[interactive]).toContain(' /RESUME "" ')
+        expect(script[interactive].replace(' /RESUME ""', "")).toBe(script[silent])
+      }
 
       // A script that inserts only installApplicationFiles (e.g. a custom script based on an older installSection.nsh) gets the same
       // preparation, followed directly by the extraction.
       const { stdout: installOnly } = await compile(dir, packages, installOnlyDefines, ["-PPO"])
       expect(statements(installOnly)).toEqual(script.filter(line => line !== uninstall))
+
+      // Every message box of the web installer has a default for silent runs (/SD): a failed copy, an explicit package that doesn't
+      // match (unless unverified packages are allowed), an adjacent package that doesn't match, a failed download and a versioned
+      // download that doesn't match (unless unverified packages are allowed).
+      const messageBoxOptions = [...stdout.matchAll(/^MessageBox [^"]*"[^"]*"([^\r\n]*)/gim)].map(match => match[1].trim())
+      expect(messageBoxOptions).toHaveLength(3 + (allowUnverified ? 0 : 1) + (incomplete && !allowUnverified ? 1 : 0))
+      expect(messageBoxOptions.filter(options => !options.startsWith("/SD "))).toEqual([])
+      // A failed download can be retried interactively; a silent run cancels and exits with code 2.
+      const downloadFailed = script.findIndex(line => line.startsWith("Please check your internet connection and retry."))
+      expect(script.slice(downloadFailed, downloadFailed + 3)).toEqual([
+        'Please check your internet connection and retry." /SD IDCANCEL IDRETRY download',
+        "SetErrorLevel 2",
+        "Quit",
+      ])
     })
   }
 }
@@ -188,10 +214,18 @@ for (const { packages, expected, completeUrl, allowUnverified, nsis } of [
     const dir = await tmpDir.createTempDir()
     const requests: string[] = []
     let mismatched = false
+    // the status of every response while set, e.g. 404 for a package the server doesn't have
+    let failedStatus: number | undefined
+    // closes the connection of every request without a response while set
+    let dropConnection = false
     const server = createServer((req, res) => {
       requests.push(req.url!)
+      if (dropConnection) {
+        req.socket.destroy()
+        return
+      }
       const arch = /app-(32|64|ARM64)\.7z$/.exec(req.url!)?.[1]
-      res.writeHead(arch != null && packages.includes(arch) ? 200 : 404)
+      res.writeHead(failedStatus ?? (arch != null && packages.includes(arch) ? 200 : 404))
       res.end(arch == null ? "invalid package" : mismatched ? "different package" : payload(arch))
     })
     try {
@@ -226,7 +260,8 @@ for (const { packages, expected, completeUrl, allowUnverified, nsis } of [
           ...(packageFile == null ? [] : [`--package-file=${packageFile}`]),
           ...(replaced == null ? [] : [`--replace-local-package=${replaced}`]),
         ]
-        await exec(installer, args)
+        // an installer that waits on a message box fails (exit code null) instead of stalling the suite
+        await exec(installer, args, { timeout: 60_000 })
         await expect(fs.access(installed)).rejects.toThrow()
         return (await fs.readFile(path.join(dir, "result.txt"), "utf8")).split("\n")
       }
@@ -315,8 +350,43 @@ for (const { packages, expected, completeUrl, allowUnverified, nsis } of [
         await expectRefused(run("ARM64"))
       }
       expect(requests).toEqual([`/app-${expected[2]}.7z`])
+
+      // A download that fails ends a silent run with exit code 2 instead of waiting on the retry prompt, and before the installed
+      // version is uninstalled. The package is requested with and without proxy, and not again.
+      failedStatus = 404
+      await expectRefused(run("ARM64"))
+      expect(requests.length).toBeGreaterThan(0)
+      expect(requests.length).toBeLessThanOrEqual(2)
+      expect(new Set(requests)).toEqual(new Set([`/app-${expected[2]}.7z`]))
+
+      // A connection that is closed without a response (not an HTTP status) ends a silent run the same way: without /RESUME, inetc
+      // returns the error instead of asking to reconnect.
+      failedStatus = undefined
+      dropConnection = true
+      await expectRefused(run("ARM64"))
+      expect(requests.length).toBeGreaterThan(0)
+      expect(new Set(requests)).toEqual(new Set([`/app-${expected[2]}.7z`]))
     } finally {
       await new Promise<void>((resolve, reject) => server.close(error => (error ? reject(error) : resolve())))
     }
   })
 }
+
+// A download whose connection is refused (nothing listens on the port) ends a silent run with exit code 2 as well, before the
+// installed version is uninstalled.
+test.ifWindows("NSIS web package download: a refused connection ends a silent run", async ({ expect, tmpDir }) => {
+  const dir = await tmpDir.createTempDir()
+  const closed = createServer()
+  await new Promise<void>(resolve => closed.listen(0, "127.0.0.1", resolve))
+  const address = closed.address()
+  if (address == null || typeof address === "string") {
+    throw new Error("Expected a TCP server address")
+  }
+  await new Promise<void>((resolve, reject) => closed.close(error => (error ? reject(error) : resolve())))
+  const { installer } = await compile(dir, ["64"], [`!define APP_PACKAGE_URL "http://127.0.0.1:${address.port}"`, "!define APP_PACKAGE_URL_IS_INCOMPLETE"])
+  const installed = path.join(dir, "installed.txt")
+  await fs.writeFile(installed, "installed version")
+  await expect(exec(installer, ["/S", "--arch=64"], { timeout: 60_000 })).rejects.toMatchObject({ exitCode: 2 })
+  expect(await fs.readFile(installed, "utf8")).toBe("installed version")
+  await expect(fs.access(path.join(dir, "result.txt"))).rejects.toThrow()
+})
