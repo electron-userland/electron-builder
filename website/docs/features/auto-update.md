@@ -74,7 +74,7 @@ The `electron-updater` package offers a different functionality compared to Elec
 5. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
 
 :::note
-Do not call `setFeedURL`. electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
+Do not call `setFeedURL`. electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). Its feed is the first provider that receives the update manifest (`publishAutoUpdate` not `false`) in the `publish` settings of the targets that write update info — a target-level `publish` such as `nsis.publish` counts — see [which settings become the auto-update feed](../publish.md#app-update-yml-feed).
 :::
 
 ## Examples
@@ -266,7 +266,7 @@ Update metadata validated only by the legacy SHA-256 `sha2` checksum is deprecat
 
 Two `AppUpdater` settings changed or were added in v27. See the [Security & Hardening](./security.md#update-security-electron-updater) page for the full rationale.
 
-The update manifest (`latest*.yml`) itself can also be cryptographically signed and verified before any download — see [Signed Update Manifests](./signed-update-manifests.md).
+The update manifest (`latest*.yml`) itself **is** cryptographically signed and verified before any download as of v27. Publishing a build that emits update metadata fails unless an Ed25519 signing key resolves; `updateManifest: false` is the only opt-out — see [Signed Update Manifests](./signed-update-manifests.md).
 
 Changing a signing key or certificate that installs in the field already trust requires a transition release — see [Key Rotation](./key-rotation.md).
 

@@ -28,7 +28,7 @@ import { createElectronFrameworkSupport } from "./electron/ElectronFramework.js"
 import { assertElectronArchSupported } from "./electron/electronArchSupport.js"
 import { Framework, isElectronBased } from "./Framework.js"
 import { Metadata } from "./options/metadata.js"
-import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
+import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions, PlannedTargets } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
@@ -62,6 +62,9 @@ type PackagerEvents = {
 
   // internal-use only, prefer usage of `artifactBuildCompleted`
   artifactCreated: Hook<ArtifactCreated, void>
+
+  // internal-use only: every target of the build, before the first pack
+  targetsCreated: Hook<ReadonlyArray<PlannedTargets>, void>
 }
 
 /**
@@ -293,6 +296,12 @@ export class Packager {
     return this
   }
 
+  /** @internal emitted once per build, after every platform's targets are created and before anything is packed */
+  onTargetsCreated(handler: PackagerEvents["targetsCreated"]): Packager {
+    this.eventEmitter.on("targetsCreated", handler)
+    return this
+  }
+
   onArtifactCreated(handler: PackagerEvents["artifactCreated"]): Packager {
     this.eventEmitter.on("artifactCreated", handler)
     return this
@@ -520,6 +529,10 @@ export class Packager {
     const platformToTarget = new Map<Platform, Map<string, Target>>()
     const createdOutDirs = new Set<string>()
 
+    // Every platform packager and target is created before the first pack, so listeners of `targetsCreated` (the
+    // publish preflight) see the whole build and can fail it before any artifact exists - let alone is uploaded.
+    type ArchPlan = { packager: PlatformPackager<any>; arch: Arch; targets: Array<Target>; outDir: string }
+    const plans: Array<{ packager: PlatformPackager<any>; nameToTarget: Map<string, Target>; archs: Array<ArchPlan> }> = []
     for (const [platform, archToType] of this.options.targets!) {
       if (this.cancellationToken.cancelled) {
         break
@@ -533,18 +546,7 @@ export class Packager {
       const nameToTarget: Map<string, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
 
-      let poolCount = Math.floor(packager.config.concurrency?.jobs || 1)
-      if (poolCount < 1) {
-        log.warn({ concurrency: poolCount }, "concurrency is invalid, overriding with job count: 1")
-        poolCount = 1
-      } else if (poolCount > MAX_FILE_REQUESTS) {
-        log.warn(
-          { concurrency: poolCount, MAX_FILE_REQUESTS },
-          `job concurrency is greater than recommended MAX_FILE_REQUESTS, this may lead to File Descriptor errors (too many files open). Proceed with caution (e.g. this is an experimental feature)`
-        )
-      }
-      const packPromises: Promise<any>[] = []
-
+      const archs: Array<ArchPlan> = []
       for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
         if (this.cancellationToken.cancelled) {
           break
@@ -558,7 +560,42 @@ export class Packager {
 
         // support os and arch macro in output value
         const outDir = path.resolve(this.projectDir, packager.expandMacro(this.config.directories!.output!, Arch[arch]))
-        const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
+        const targets = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
+        archs.push({ packager, arch, targets, outDir })
+      }
+      plans.push({ packager, nameToTarget, archs })
+    }
+
+    // a cancelled build stops here rather than running the publish preflight on a partial plan
+    if (!this.cancellationToken.cancelled) {
+      await this.eventEmitter.emit(
+        "targetsCreated",
+        plans.flatMap<PlannedTargets>(it => it.archs)
+      )
+    }
+
+    for (const { packager, nameToTarget, archs } of plans) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
+
+      let poolCount = Math.floor(packager.config.concurrency?.jobs || 1)
+      if (poolCount < 1) {
+        log.warn({ concurrency: poolCount }, "concurrency is invalid, overriding with job count: 1")
+        poolCount = 1
+      } else if (poolCount > MAX_FILE_REQUESTS) {
+        log.warn(
+          { concurrency: poolCount, MAX_FILE_REQUESTS },
+          `job concurrency is greater than recommended MAX_FILE_REQUESTS, this may lead to File Descriptor errors (too many files open). Proceed with caution (e.g. this is an experimental feature)`
+        )
+      }
+      const packPromises: Promise<any>[] = []
+
+      for (const { arch, targets: targetList, outDir } of archs) {
+        if (this.cancellationToken.cancelled) {
+          break
+        }
+
         await createOutDirIfNeed(targetList, createdOutDirs)
         const promise = packager.pack(outDir, arch, targetList, taskManager)
         if (poolCount < 2) {

@@ -8,10 +8,16 @@ electron-updater always verifies the sha512 checksum of a downloaded artifact ag
 
 Signed update manifests close that gap: electron-builder can sign each `latest*.yml` with one or more **Ed25519** private keys at publish time, and electron-updater verifies the signature — before anything is downloaded — against a list of trusted public keys baked into the app at build time. Signing uses Node's built-in `crypto`; no additional dependencies or external tools are involved.
 
-The feature is **opt-in** and backward compatible in both directions:
+Signing is **required**: publishing a build that emits auto-update metadata fails unless a signing key resolves, and `updateManifest: false` is the only way to opt out. See [Opting out](#opting-out).
 
-- Apps built without a public key ignore the `signature`/`signatures` fields in the manifest (a one-time warning notes that verification is disabled).
-- Apps built with a public key **fail closed**: an unsigned or tampered manifest aborts the update check before any download starts.
+Verification remains backward compatible in both directions:
+
+- Apps built **before** a public key existed ignore the `signature`/`signatures` fields in the manifest (a one-time warning notes that verification is disabled).
+- Apps built **with** a public key **fail closed**: an unsigned or tampered manifest aborts the update check before any download starts.
+
+:::warning[Full protection arrives one release after adoption]
+Installs already in the field carry whatever `app-update.yml` they shipped with. Those built before you adopted signing have no trusted key, so they keep accepting unsigned manifests — signing a release does not retroactively protect the installs that will consume it. The installs protected by a signed manifest are the ones built *after* the public key was embedded.
+:::
 
 ## Quick setup
 
@@ -32,7 +38,19 @@ ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(cat update-private-key.pem)" electron-builde
 ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=/run/secrets/update-private-key.pem electron-builder --publish always
 ```
 
-No configuration block is required for the environment-variable route: when a key is present, every generated `latest*.yml` gains a base64 `signature` field plus a `signatures` list (see [What is written](#what-is-written)), and the derived public key is embedded into the app's `app-update.yml` as `updateManifestPublicKey` automatically.
+No configuration block is required — the environment-variable route is the whole setup. Every generated `latest*.yml` gains a base64 `signature` field plus a `signatures` list (see [What is written](#what-is-written)), and the derived public key is embedded into the app's `app-update.yml` as `updateManifestPublicKey` automatically.
+
+A publishing build with no resolvable key fails instead — at build start, before anything is packed or uploaded, so none of that build's artifacts are published:
+
+```
+auto-update manifests must be signed, but no Ed25519 signing key was found for mac. Generate one with
+`electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (PEM contents)
+or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey /
+updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out
+explicitly with `updateManifest: false`.
+```
+
+A build **without** a publish policy only warns, so local builds keep working while your release pipeline is the thing that has to hold the key.
 
 **3. That's it.** electron-updater picks the public key up from `app-update.yml` and enforces verification from the first update check.
 
@@ -53,6 +71,12 @@ updateManifest:
   publicKey: null
 ```
 
+The whole option may instead be set to `false`, the only opt-out:
+
+```yaml
+updateManifest: false # publishes UNSIGNED manifests; warns on every build
+```
+
 Key resolution order is: `signingKey` → `signingKeyFile` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. The first source that is set wins, but that source may provide **several keys**:
 
 | Source | Several keys |
@@ -65,7 +89,9 @@ A relative `signingKeyFile` path resolves against the project directory (where t
 
 Every key must be a distinct Ed25519 key; duplicates and other key types fail the build. When several keys are configured, **each manifest is signed by all of them** and the trust list embeds all of their public keys — this is the dual-signing used during [key rotation](#key-rotation).
 
-An explicit `publicKey` takes precedence over derivation and is embedded as-is. Use it to trust keys you do not (yet) sign with — for example the *next* key ahead of a rotation — or when the private key is held by an HSM/KMS-style signer and only the public half is available to the build. If none of the keys the build signs with is in an explicit `publicKey` list, electron-builder logs a warning: installs of that release could not verify its own manifests, which is only ever intended for a deliberate bridge release.
+An explicit `publicKey` takes precedence over derivation and is embedded as-is. Use it to trust keys you do not (yet) sign with — for example the *next* key ahead of a rotation. If none of the keys the build signs with is in an explicit `publicKey` list, electron-builder logs a warning: installs of that release could not verify its own manifests, which is only ever intended for a deliberate bridge release.
+
+A `publicKey` on its own does **not** satisfy the signing requirement — electron-builder still has no key to sign with, so a publishing build fails. An HSM/KMS-style signer that signs `latest*.yml` in a later step of its own therefore either builds without a publish policy, where the requirement only warns and the unsigned manifest is written locally for it to sign, or keeps publishing with `publishAutoUpdate: false` on every publish provider — electron-builder then uploads the artifacts and embeds the `publicKey`, but writes no `latest*.yml`, so the external step has to generate the manifest too. See [Key storage](./key-rotation.md#key-storage).
 
 At runtime you can also set the trust list on the updater directly; it overrides the value from `app-update.yml`:
 
@@ -73,6 +99,27 @@ At runtime you can also set the trust list on the updater directly; it overrides
 import { autoUpdater } from "electron-updater"
 autoUpdater.updateManifestPublicKey = "-----BEGIN PUBLIC KEY-----\n…" // or an array of keys
 ```
+
+## Opting out
+
+Set `updateManifest: false` — at the top level, or under a platform key — to publish unsigned manifests. This is the only opt-out, and every build that produces a manifest logs a warning naming the consequence.
+
+```yaml
+updateManifest: false
+```
+
+Two properties are worth knowing:
+
+- **It short-circuits the environment variables.** A leftover `ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing behind the back of the opt-out, so `false` means unsigned everywhere, deterministically.
+- **A platform value wins over the root**, so `linux: { updateManifest: false }` opts out for Linux only while a root signing config still covers the other platforms — and the converse works too. A platform value of `null`, on the other hand, falls back to the root rather than opting out.
+
+The requirement is also waived, without any configuration, where no manifest is emitted at all: a build whose publish providers all set `publishAutoUpdate: false`, a build whose targets write no update info (for example only snap, flatpak, MSI/MSIX, portable, mas/pkg or plain archives), and any build without a publish policy (which only warns).
+
+:::danger[Opting out is not reversible for a release line]
+Once a release embeds a public key, its installs are **fail-closed**: an unsigned manifest is rejected with `ERR_UPDATER_MANIFEST_NOT_SIGNED` and those installs stop updating entirely. Do not switch to `updateManifest: false` after shipping signed manifests, and make sure *every* pipeline that can publish a release — including a hotfix built from a laptop — has the key.
+:::
+
+Legitimate reasons to opt out: an app that does not auto-update at all. A pipeline that signs `latest*.yml` itself in a later step should **not** opt out — `false` also drops `updateManifest.publicKey`, so installs would embed no trust list and never verify those signatures; see [Key storage](./key-rotation.md#key-storage) for its two routes.
 
 ## What is written
 
@@ -111,8 +158,8 @@ When at least one public key is configured (embedded or set at runtime), verific
 
 Both errors are emitted through the updater's regular `error` event and abort the update **before any download begins**.
 
-:::warning[Roll out the key before enforcing it]
-Verification is enforced by the *installed* app. Ship at least one release that embeds the public key while your manifests are already being signed; older installs without the key simply skip verification. Conversely, once clients with the key are in the field, every future manifest must be signed — publishing an unsigned manifest would make those clients refuse the update.
+:::warning[The hazard is turning it off, not turning it on]
+Verification is enforced by the *installed* app, and since signing is on by default there is nothing to roll out — your first build already embeds the public key and signs its manifests. Older installs without the key simply skip verification. What matters from then on is that every future manifest is signed: publishing an unsigned one makes every install that carries the key refuse the update.
 :::
 
 ## Key rotation

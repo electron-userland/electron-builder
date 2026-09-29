@@ -228,6 +228,10 @@ export class NsisTarget extends Target {
     return "${productName} " + setupText + "${version}" + archSuffix + ".${ext}"
   }
 
+  get writesUpdateInfo(): boolean {
+    return !this.isPortable
+  }
+
   private get isPortable(): boolean {
     return this.name === "portable"
   }
