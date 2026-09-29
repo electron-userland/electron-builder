@@ -222,7 +222,8 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
    *
    * The requirement is only enforced when a publish policy is in effect (`--publish`); a build without one
    * warns instead, so local builds and pipelines that sign the manifest in a later step of their own are
-   * unaffected. It is also waived for a publish target with `publishAutoUpdate: false`, which emits no manifest.
+   * unaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is
+   * emitted then.
    *
    * See [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests).
    */
@@ -281,8 +282,10 @@ export interface UpdateManifestSigningOptions {
    * additional keys ahead of a rotation (for example `[current, next]`).
    *
    * A `publicKey` on its own does not satisfy the signing requirement — electron-builder still has no key to
-   * sign with. An external signer that signs `latest*.yml` in a later step therefore has to build without a
-   * publish policy, where the requirement is not enforced.
+   * sign with. An external signer (HSM/KMS) that signs `latest*.yml` in a later step therefore either builds
+   * without a publish policy, where the requirement only warns and the unsigned manifest is written locally, or
+   * keeps publishing with `publishAutoUpdate: false` on every publish provider - electron-builder then uploads the
+   * artifacts and embeds this key, but writes no `latest*.yml`, so the external step has to produce it too.
    */
   readonly publicKey?: string | Array<string> | null
 }

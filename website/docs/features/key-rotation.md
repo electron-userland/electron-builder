@@ -12,7 +12,7 @@ Every install in the field trusts exactly what it was built with. electron-updat
 
 | Trust anchor | Where it is fixed | What checks it |
 | --- | --- | --- |
-| Update-manifest trust list (`updateManifestPublicKey`, one or more Ed25519 public keys) | `app-update.yml`, written at build time — present in every build unless `updateManifest: false` | electron-updater, on every platform, before any download ([Signed Update Manifests](./signed-update-manifests.md)) |
+| Update-manifest trust list (`updateManifestPublicKey`, one or more Ed25519 public keys) | `app-update.yml`, written at build time — present whenever a signing key or an explicit `updateManifest.publicKey` resolves (a publishing build fails without a key unless `updateManifest: false`) | electron-updater, on every platform, before any download ([Signed Update Manifests](./signed-update-manifests.md)) |
 | Windows publisher name (`publisherName`) | `app-update.yml`, written at build time | electron-updater (NSIS target), against the Authenticode signature of the downloaded installer |
 | macOS Team ID | The running app's code signature | Squirrel.Mac, when it installs the downloaded update |
 | Linux repository GPG key | The user's package-manager keyring | `apt` / `dnf` / `zypper`, only when `allowUnverifiedLinuxPackages` is `false` |
@@ -111,7 +111,10 @@ An attacker holding a private key that installs still trust can produce a `lates
 - Prefer the `_FILE` variant where your CI can mount secrets as files; it keeps the keys out of process listings and environment dumps.
 - If a private key lives in an HSM or KMS that signs on your behalf, electron-builder cannot call it directly. Sign `latest*.yml` in a post-publish step of your own (append an entry to `signatures` with the matching `keyId`, or set `signature`), and list the public key in `updateManifest.publicKey` so it is embedded. electron-builder warns at build time when none of the keys it signs with is in an explicit `publicKey` list, since such a release cannot verify its own manifests.
 
-  A `publicKey` alone does not satisfy the v27 signing requirement, so this workflow has to build **without** a publish policy — the requirement is only enforced on a publishing build — and then publish the signed manifest itself.
+  A `publicKey` alone does not satisfy the v27 signing requirement, so this workflow takes one of two routes:
+
+  - **Build without a publish policy.** The requirement only warns there, and electron-builder writes the unsigned `latest*.yml` locally; your step signs it and publishes the artifacts and the manifest.
+  - **Keep publishing, with `publishAutoUpdate: false` on every publish provider.** electron-builder uploads the artifacts and embeds the `publicKey`, but writes no `latest*.yml` at all, so your step has to generate the manifest as well as sign and upload it.
 - Use one key per app (or per release channel if channels are operated by different teams). Sharing a key across unrelated apps means one compromise affects all of them.
 
 ## Windows: code-signing certificate rotation
