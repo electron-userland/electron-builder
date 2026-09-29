@@ -74,7 +74,7 @@ The `electron-updater` package offers a different functionality compared to Elec
 5. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
 
 :::note
-Do not call `setFeedURL`. electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
+Do not call `setFeedURL`. electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). Its feed is the first provider of the `publish` settings of the targets that write update info — a target-level `publish` such as `nsis.publish` counts — see [which settings become the auto-update feed](../publish.md#app-update-yml-feed).
 :::
 
 ## Examples
