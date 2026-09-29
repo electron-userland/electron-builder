@@ -296,3 +296,19 @@ test("a build cancelled while its targets are planned does not emit targetsCreat
   })
   expect(targetsCreated).not.toHaveBeenCalled()
 })
+
+test("afterPack needs no key for a Linux pack whose only update-info target opts out with `publish: null`", async ({ expect, tmpDir }) => {
+  // linux.publish: generic, targets [deb], deb: { publish: null }, --publish, no signing key
+  const { afterPack } = createManager()
+  const appOutDir = await tmpDir.getTempDir({ prefix: "linux-unpacked" })
+  const packager = {
+    ...makePlatformPackager(undefined, missingKey),
+    platform: Platform.LINUX,
+    platformOptions: { publish: { provider: "generic", url: "https://example.com/linux" } },
+    getResourcesDir: (dir: string) => path.join(dir, "resources"),
+  }
+  await afterPack({ packager, electronPlatformName: "linux", arch: Arch.x64, appOutDir, outDir: appOutDir, targets: [makeTarget("deb", true, { publish: null })] })
+  expect(packager.requireUpdateSigningKeys).not.toHaveBeenCalled()
+  // app-update.yml still comes from the platform-level config
+  expect(await readFile(path.join(appOutDir, "resources", "app-update.yml"), "utf8")).toContain("https://example.com/linux")
+})
