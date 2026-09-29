@@ -11,7 +11,7 @@ export interface S3UploadConfig {
   region: string
   endpoint?: string
   forcePathStyle?: boolean
-  credentials?: AwsCredentials
+  credentials: AwsCredentials
 }
 
 export interface S3UploadExtraParams {
@@ -30,11 +30,8 @@ export abstract class BaseS3Publisher extends Publisher {
 
   protected abstract getBucketName(): string
 
-  public abstract getS3UploadConfig(): S3UploadConfig
-
-  protected getResolvedS3UploadConfig(): Promise<S3UploadConfig> {
-    return Promise.resolve(this.getS3UploadConfig())
-  }
+  /** The upload target and credentials. May resolve asynchronously (e.g. S3 credentials from a shared config profile). */
+  public abstract getS3UploadConfig(): S3UploadConfig | Promise<S3UploadConfig>
 
   public getUploadExtraParams(): S3UploadExtraParams {
     return {
@@ -58,9 +55,9 @@ export abstract class BaseS3Publisher extends Publisher {
     this.createProgressBar(fileName, -1)
 
     return await cancellationToken.createPromise((resolve, reject, onCancel) => {
-      const config = this.getResolvedS3UploadConfig()
       const extraParams = this.getUploadExtraParams()
-      config
+      Promise.resolve()
+        .then(() => this.getS3UploadConfig())
         .then(config => {
           if (cancellationToken.cancelled) {
             return

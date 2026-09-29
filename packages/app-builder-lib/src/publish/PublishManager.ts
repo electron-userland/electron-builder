@@ -310,7 +310,7 @@ export async function getAppUpdatePublishConfiguration(
   }
 
   const publishConfig = {
-    ...publishConfigs[0],
+    ...stripBuildTimeOnlyPublishOptions(publishConfigs[0]),
     updaterCacheDirName: packager.appInfo.updaterCacheDirName,
   }
 
@@ -379,8 +379,20 @@ function normalizeExplicitPublicKeys(value: string | Array<string> | null | unde
   return keys
 }
 
+// Publish options that only configure the build machine (credential sources, local file paths). They must never be
+// embedded in app-update.yml, which ships inside every installed app.
+const BUILD_TIME_ONLY_PUBLISH_OPTIONS = ["awsCredentials"] as const
+
+export function stripBuildTimeOnlyPublishOptions<T extends PublishConfiguration>(publishConfig: T): T {
+  const result = { ...publishConfig } as Record<string, unknown>
+  for (const key of BUILD_TIME_ONLY_PUBLISH_OPTIONS) {
+    delete result[key]
+  }
+  return result as T
+}
+
 export async function writeAppUpdateYaml(resourcesDir: string, publishConfig: PublishConfiguration): Promise<void> {
-  await outputFile(path.join(resourcesDir, "app-update.yml"), serializeToYaml(publishConfig))
+  await outputFile(path.join(resourcesDir, "app-update.yml"), serializeToYaml(stripBuildTimeOnlyPublishOptions(publishConfig)))
 }
 
 export async function getPublishConfigsForUpdateInfo(

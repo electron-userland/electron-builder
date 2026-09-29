@@ -6757,9 +6757,87 @@
       },
       "type": "object"
     },
+    "S3AwsCredentialsEnvNames": {
+      "additionalProperties": false,
+      "description": "Environment variable names holding the S3 publishing credentials.",
+      "properties": {
+        "accessKeyId": {
+          "description": "The environment variable holding the access key ID.",
+          "type": "string"
+        },
+        "secretAccessKey": {
+          "description": "The environment variable holding the secret access key.",
+          "type": "string"
+        },
+        "sessionToken": {
+          "description": "The environment variable holding the session token, if any.",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "accessKeyId",
+        "secretAccessKey"
+      ],
+      "type": "object"
+    },
+    "S3AwsCredentialsOptions": {
+      "additionalProperties": false,
+      "description": "How the S3 publisher obtains AWS credentials. Only the sources named here are consulted.",
+      "properties": {
+        "configFile": {
+          "default": "~/.aws/config",
+          "description": "The shared config file for `source: \"profile\"`. `AWS_CONFIG_FILE` is not consulted.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "credentialsFile": {
+          "default": "~/.aws/credentials",
+          "description": "The shared credentials file for `source: \"profile\"`. `AWS_SHARED_CREDENTIALS_FILE` is not consulted.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "env": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/S3AwsCredentialsEnvNames"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Custom environment variable names for `source: \"env\"`, e.g. to keep publish-only keys separate from ambient `AWS_*` variables."
+        },
+        "profile": {
+          "description": "The profile name for `source: \"profile\"` (required for that source; `AWS_PROFILE` is not used as a fallback).\nUse `default` to select the `[default]` profile.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "source": {
+          "description": "The credential source (required, no default):\n- `env`: read only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` (or the variable names given in `env`).\n- `profile`: read the named `profile` from the shared config/credentials files. Static keys, IAM Identity Center (SSO), `credential_process` and assume-role profiles are supported.",
+          "enum": [
+            "env",
+            "profile"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "type": "object"
+    },
     "S3Options": {
       "additionalProperties": false,
-      "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).\nTo set credentials define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html) directly,\nor use [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html) file,\nor use [~/.aws/config](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html) file. For the last method to work you will also need to define `AWS_SDK_LOAD_CONFIG=1` environment variable.\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\"\n }\n}\n}\n```",
+      "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](https://docs.aws.amazon.com/sdkref/latest/guide/access.html).\nPublishing requires choosing where they come from with [awsCredentials](#awsCredentials) `source` (there is no default):\n- `source: \"env\"` reads only the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and optional `AWS_SESSION_TOKEN` environment variables (or custom names);\n- `source: \"profile\"` reads the named `profile` from the [shared config and credentials files](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)\n  (static keys, IAM Identity Center / SSO, `credential_process`, assume-role).\n\nNo credentials are read implicitly: `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE`, `AWS_SHARED_CREDENTIALS_FILE` and the `~/.aws` files are never consulted on their own.\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\",\n   \"awsCredentials\": { \"source\": \"env\" }\n }\n}\n}\n```",
       "properties": {
         "accelerate": {
           "description": "If set to true, this will enable the s3 accelerated endpoint\nThese endpoints have a particular format of:\n ${bucketname}.s3-accelerate.amazonaws.com",
@@ -6780,6 +6858,17 @@
           ],
           "default": "public-read",
           "description": "The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).\n\nPlease see [required permissions for the S3 provider](https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128)."
+        },
+        "awsCredentials": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/S3AwsCredentialsOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Where the AWS credentials used for publishing come from. Required to publish (there is no default source);\nbuilds that don't publish don't need it. Build-time only: never written to `app-update.yml`.\n\nExample using an IAM Identity Center (SSO) profile:\n\n```json\n\"awsCredentials\": { \"source\": \"profile\", \"profile\": \"release\" }\n```"
         },
         "bucket": {
           "description": "The bucket name.",

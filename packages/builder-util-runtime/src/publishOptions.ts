@@ -384,10 +384,13 @@ export interface BaseS3Options extends PublishConfiguration {
 
 /**
  * [Amazon S3](https://aws.amazon.com/s3/) options.
- * AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
- * To set credentials define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html) directly,
- * or use [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html) file,
- * or use [~/.aws/config](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html) file. For the last method to work you will also need to define `AWS_SDK_LOAD_CONFIG=1` environment variable.
+ * AWS credentials are required, please see [getting your credentials](https://docs.aws.amazon.com/sdkref/latest/guide/access.html).
+ * Publishing requires choosing where they come from with [awsCredentials](#awsCredentials) `source` (there is no default):
+ * - `source: "env"` reads only the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and optional `AWS_SESSION_TOKEN` environment variables (or custom names);
+ * - `source: "profile"` reads the named `profile` from the [shared config and credentials files](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)
+ *   (static keys, IAM Identity Center / SSO, `credential_process`, assume-role).
+ *
+ * No credentials are read implicitly: `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE`, `AWS_SHARED_CREDENTIALS_FILE` and the `~/.aws` files are never consulted on their own.
  *
  * Example configuration:
  *
@@ -396,7 +399,8 @@ export interface BaseS3Options extends PublishConfiguration {
   "build":
     "publish": {
       "provider": "s3",
-      "bucket": "bucket-name"
+      "bucket": "bucket-name",
+      "awsCredentials": { "source": "env" }
     }
   }
 }
@@ -456,6 +460,73 @@ export interface S3Options extends BaseS3Options {
    * [Path-style Access](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html#path-style-access)
    */
   readonly forcePathStyle?: boolean
+
+  /**
+   * Where the AWS credentials used for publishing come from. Required to publish (there is no default source);
+   * builds that don't publish don't need it. Build-time only: never written to `app-update.yml`.
+   *
+   * Example using an IAM Identity Center (SSO) profile:
+   *
+   * ```json
+   * "awsCredentials": { "source": "profile", "profile": "release" }
+   * ```
+   */
+  readonly awsCredentials?: S3AwsCredentialsOptions | null
+}
+
+/**
+ * How the S3 publisher obtains AWS credentials. Only the sources named here are consulted.
+ */
+export interface S3AwsCredentialsOptions {
+  /**
+   * The credential source (required, no default):
+   * - `env`: read only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` (or the variable names given in `env`).
+   * - `profile`: read the named `profile` from the shared config/credentials files. Static keys, IAM Identity Center (SSO), `credential_process` and assume-role profiles are supported.
+   */
+  readonly source: "env" | "profile"
+
+  /**
+   * The profile name for `source: "profile"` (required for that source; `AWS_PROFILE` is not used as a fallback).
+   * Use `default` to select the `[default]` profile.
+   */
+  readonly profile?: string | null
+
+  /**
+   * The shared credentials file for `source: "profile"`. `AWS_SHARED_CREDENTIALS_FILE` is not consulted.
+   * @default ~/.aws/credentials
+   */
+  readonly credentialsFile?: string | null
+
+  /**
+   * The shared config file for `source: "profile"`. `AWS_CONFIG_FILE` is not consulted.
+   * @default ~/.aws/config
+   */
+  readonly configFile?: string | null
+
+  /**
+   * Custom environment variable names for `source: "env"`, e.g. to keep publish-only keys separate from ambient `AWS_*` variables.
+   */
+  readonly env?: S3AwsCredentialsEnvNames | null
+}
+
+/**
+ * Environment variable names holding the S3 publishing credentials.
+ */
+export interface S3AwsCredentialsEnvNames {
+  /**
+   * The environment variable holding the access key ID.
+   */
+  readonly accessKeyId: string
+
+  /**
+   * The environment variable holding the secret access key.
+   */
+  readonly secretAccessKey: string
+
+  /**
+   * The environment variable holding the session token, if any.
+   */
+  readonly sessionToken?: string | null
 }
 
 /**

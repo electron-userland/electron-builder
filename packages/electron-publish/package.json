@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@aws-sdk/credential-provider-ini": "3.893.0",
+    "@aws-sdk/credential-provider-sso": "3.893.0",
     "@types/fs-extra": "^9.0.11",
     "aws4": "^1.13.2",
     "builder-util": "workspace:*",

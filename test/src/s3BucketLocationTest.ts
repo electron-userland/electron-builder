@@ -1,19 +1,21 @@
 import { EventEmitter } from "events"
-import * as os from "os"
-import * as path from "path"
+import { InvalidConfigurationError } from "builder-util"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // Must be hoisted before the module under test is imported so vitest intercepts the require.
 vi.mock("https")
-vi.mock("electron-publish/src/s3/awsCredentials", () => ({
-  resolveAwsCredentials: vi.fn().mockReturnValue({ accessKeyId: "test-key", secretAccessKey: "test-secret" }),
-  resolveAwsCredentialsForS3: vi.fn().mockResolvedValue({ accessKeyId: "test-key", secretAccessKey: "test-secret" }),
+vi.mock("electron-publish/src/s3/awsCredentials", async importOriginal => ({
+  ...(await importOriginal<typeof import("electron-publish/src/s3/awsCredentials")>()),
+  resolveS3Credentials: vi.fn().mockResolvedValue({ accessKeyId: "test-key", secretAccessKey: "test-secret" }),
 }))
 
 // Import after mock is in place.
 import * as https from "https"
-import { resolveAwsCredentials, resolveAwsCredentialsForS3 } from "electron-publish/src/s3/awsCredentials"
+import { AwsCredentials, resolveS3Credentials } from "electron-publish/src/s3/awsCredentials"
 import { getBucketLocation } from "electron-publish/src/s3/bucketLocation"
+import { S3Publisher } from "electron-publish/internal"
+
+const TEST_CREDENTIALS: AwsCredentials = { accessKeyId: "test-key", secretAccessKey: "test-secret" }
 
 // ─── Mock helper ─────────────────────────────────────────────────────────────
 
@@ -56,28 +58,28 @@ describe("getBucketLocation — XML response parsing", () => {
 
   it("extracts the region from a populated LocationConstraint element", async () => {
     mockHttpResponse(200, '<?xml version="1.0" encoding="UTF-8"?><LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">us-west-2</LocationConstraint>')
-    expect(await getBucketLocation("my.dotted.bucket")).toBe("us-west-2")
+    expect(await getBucketLocation("my.dotted.bucket", TEST_CREDENTIALS)).toBe("us-west-2")
   })
 
   it("returns 'us-east-1' for a self-closing (empty) LocationConstraint element", async () => {
     // AWS returns an empty element for buckets in the default region (us-east-1)
     mockHttpResponse(200, '<?xml version="1.0" encoding="UTF-8"?><LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/"/>')
-    expect(await getBucketLocation("my.dotted.bucket")).toBe("us-east-1")
+    expect(await getBucketLocation("my.dotted.bucket", TEST_CREDENTIALS)).toBe("us-east-1")
   })
 
   it("returns 'us-east-1' for an explicitly empty LocationConstraint element", async () => {
     mockHttpResponse(200, '<?xml version="1.0"?><LocationConstraint></LocationConstraint>')
-    expect(await getBucketLocation("my.dotted.bucket")).toBe("us-east-1")
+    expect(await getBucketLocation("my.dotted.bucket", TEST_CREDENTIALS)).toBe("us-east-1")
   })
 
   it("rejects on a non-200 HTTP status", async () => {
     mockHttpResponse(403, "<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>")
-    await expect(getBucketLocation("my.dotted.bucket")).rejects.toThrow("HTTP 403")
+    await expect(getBucketLocation("my.dotted.bucket", TEST_CREDENTIALS)).rejects.toThrow("HTTP 403")
   })
 
   it("rejects on a 400 error response", async () => {
     mockHttpResponse(400, "<Error><Code>NoSuchBucket</Code></Error>")
-    await expect(getBucketLocation("my.dotted.bucket")).rejects.toThrow("HTTP 400")
+    await expect(getBucketLocation("my.dotted.bucket", TEST_CREDENTIALS)).rejects.toThrow("HTTP 400")
   })
 
   it("rejects when the request emits a network error", async () => {
@@ -88,61 +90,137 @@ describe("getBucketLocation — XML response parsing", () => {
       })
       return req
     })
-    await expect(getBucketLocation("my.dotted.bucket")).rejects.toThrow("ECONNREFUSED")
+    await expect(getBucketLocation("my.dotted.bucket", TEST_CREDENTIALS)).rejects.toThrow("ECONNREFUSED")
   })
 
   it("rejects when the response body exceeds 64 KB", async () => {
     // Guard against memory exhaustion from a malicious/unexpected S3 response
     mockHttpResponse(200, "x".repeat(65537))
-    await expect(getBucketLocation("my.dotted.bucket")).rejects.toThrow("response too large")
+    await expect(getBucketLocation("my.dotted.bucket", TEST_CREDENTIALS)).rejects.toThrow("response too large")
   })
 
   it("rejects when the extracted region contains unexpected characters", async () => {
     // Guard against a tampered response injecting an invalid region string
     mockHttpResponse(200, "<LocationConstraint>../evil\ninjection</LocationConstraint>")
-    await expect(getBucketLocation("my.dotted.bucket")).rejects.toThrow("unexpected region")
+    await expect(getBucketLocation("my.dotted.bucket", TEST_CREDENTIALS)).rejects.toThrow("unexpected region")
   })
 
   it("maps the legacy 'EU' token to 'eu-west-1'", async () => {
     // AWS returns "EU" for eu-west-1 buckets created before 2014
     mockHttpResponse(200, '<?xml version="1.0" encoding="UTF-8"?><LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
-    expect(await getBucketLocation("my.dotted.bucket")).toBe("eu-west-1")
+    expect(await getBucketLocation("my.dotted.bucket", TEST_CREDENTIALS)).toBe("eu-west-1")
   })
 })
 
-// ─── Credential chain: getBucketLocation forwards resolved credentials ────────
+// ─── Credentials: getBucketLocation signs with exactly the given credentials ───
 
-describe("getBucketLocation — credential chain", { concurrent: false }, () => {
+describe("getBucketLocation — credentials", { concurrent: false }, () => {
   beforeEach(() => {
     vi.mocked(https.request).mockClear()
-    vi.mocked(resolveAwsCredentialsForS3).mockClear()
   })
 
   afterEach(() => {
+    vi.unstubAllEnvs()
     vi.restoreAllMocks()
   })
 
-  it("calls resolveAwsCredentialsForS3() and uses the result for signing", async () => {
-    vi.mocked(resolveAwsCredentialsForS3).mockResolvedValueOnce({ accessKeyId: "AKIATEST", secretAccessKey: "secret" })
+  it("signs the request with the given credentials", async () => {
     mockHttpResponse(200, "<LocationConstraint>us-west-2</LocationConstraint>")
 
-    await getBucketLocation("my.bucket")
+    await getBucketLocation("my.bucket", { accessKeyId: "AKIATEST", secretAccessKey: "secret", sessionToken: "session" })
 
-    // toHaveBeenCalled (not CalledOnce) because concurrent tests in other describes
-    // may also call resolveAwsCredentials via getBucketLocation at the same time.
-    expect(resolveAwsCredentialsForS3).toHaveBeenCalled()
-    // The Authorization header in the request should reference the access key
     const callArgs = vi.mocked(https.request).mock.calls.at(-1)?.[0] as any
-    const authHeader = callArgs?.headers?.Authorization ?? callArgs?.headers?.authorization ?? ""
-    expect(authHeader).toMatch(/AKIATEST/)
+    expect(callArgs?.headers?.Authorization).toMatch(/Credential=AKIATEST\//)
+    expect(callArgs?.headers?.["X-Amz-Security-Token"]).toBe("session")
   })
 
-  it("still makes the request when no credentials are found (anonymous request)", async () => {
-    vi.mocked(resolveAwsCredentialsForS3).mockResolvedValueOnce(undefined)
-    mockHttpResponse(200, "<LocationConstraint>eu-central-1</LocationConstraint>")
+  it("refuses to sign without credentials instead of letting aws4 read env or send Credential=undefined", async () => {
+    vi.stubEnv("AWS_ACCESS_KEY_ID", "AMBIENT_KEY")
+    vi.stubEnv("AWS_SECRET_ACCESS_KEY", "ambient-secret")
+    vi.stubEnv("AWS_ACCESS_KEY", "LEGACY_KEY")
+    await expect(getBucketLocation("public-bucket", undefined as unknown as AwsCredentials)).rejects.toThrow(/AWS credentials are required/)
+    await expect(getBucketLocation("public-bucket", { accessKeyId: "", secretAccessKey: "" })).rejects.toThrow(/AWS credentials are required/)
+    expect(https.request).not.toHaveBeenCalled()
+  })
+})
 
-    const region = await getBucketLocation("public-bucket")
-    expect(region).toBe("eu-central-1")
+// ─── S3Publisher.checkAndResolveOptions: dotted bucket region lookup ─────────
+
+describe("S3Publisher.checkAndResolveOptions — dotted bucket region", { concurrent: false }, () => {
+  let bucketCounter = 0
+  // the region cache is per process, so each test uses its own bucket
+  const uniqueBucket = () => `releases.example.${Date.now()}.${bucketCounter++}`
+
+  beforeEach(() => {
+    vi.mocked(https.request).mockClear()
+    vi.mocked(resolveS3Credentials).mockClear()
+  })
+
+  it("does not resolve credentials or call AWS when not publishing (errorIfCannot=false)", async () => {
+    const options: any = { provider: "s3", bucket: uniqueBucket(), awsCredentials: { source: "profile", profile: "sso" } }
+    await S3Publisher.checkAndResolveOptions(options, null, false)
+    expect(resolveS3Credentials).not.toHaveBeenCalled()
+    expect(https.request).not.toHaveBeenCalled()
+    expect(options.region).toBeUndefined()
+  })
+
+  it("resolves credentials from the configured source when publishing, once per bucket", async () => {
+    const bucket = uniqueBucket()
+    const awsCredentials = { source: "profile", profile: "sso" }
+    vi.mocked(resolveS3Credentials).mockResolvedValueOnce({ accessKeyId: "AKIAPROFILE", secretAccessKey: "s" })
+    mockHttpResponse(200, "<LocationConstraint>eu-west-2</LocationConstraint>")
+
+    const first: any = { provider: "s3", bucket, awsCredentials }
+    const second: any = { provider: "s3", bucket, awsCredentials }
+    const notPublishing: any = { provider: "s3", bucket, awsCredentials }
+    await S3Publisher.checkAndResolveOptions(first, null, true)
+    await S3Publisher.checkAndResolveOptions(second, null, true)
+    // a later non-publish resolution (e.g. AppImage app-update.yml) reuses the looked-up region without credentials
+    await S3Publisher.checkAndResolveOptions(notPublishing, null, false)
+
+    expect([first.region, second.region, notPublishing.region]).toEqual(["eu-west-2", "eu-west-2", "eu-west-2"])
+    expect(resolveS3Credentials).toHaveBeenCalledTimes(1)
+    expect(resolveS3Credentials).toHaveBeenCalledWith(awsCredentials)
+    expect(https.request).toHaveBeenCalledTimes(1)
+    expect((vi.mocked(https.request).mock.calls[0][0] as any).headers.Authorization).toMatch(/Credential=AKIAPROFILE\//)
+  })
+
+  it("propagates credential errors when publishing and does not cache them", async () => {
+    const bucket = uniqueBucket()
+    const awsCredentials = { source: "env" }
+    vi.mocked(resolveS3Credentials).mockRejectedValueOnce(new Error("SSO session expired"))
+    await expect(S3Publisher.checkAndResolveOptions({ provider: "s3", bucket, awsCredentials } as any, null, true)).rejects.toThrow("SSO session expired")
+    expect(https.request).not.toHaveBeenCalled()
+
+    mockHttpResponse(200, "<LocationConstraint>ap-south-1</LocationConstraint>")
+    const options: any = { provider: "s3", bucket, awsCredentials }
+    await S3Publisher.checkAndResolveOptions(options, null, true)
+    expect(options.region).toBe("ap-south-1")
+  })
+
+  it("skips the lookup when region or endpoint is set", async () => {
+    const awsCredentials = { source: "env" }
+    await S3Publisher.checkAndResolveOptions({ provider: "s3", bucket: uniqueBucket(), region: "us-west-1", awsCredentials } as any, null, true)
+    await S3Publisher.checkAndResolveOptions({ provider: "s3", bucket: uniqueBucket(), endpoint: "https://minio.local", awsCredentials } as any, null, true)
+    expect(resolveS3Credentials).not.toHaveBeenCalled()
+  })
+
+  it("requires an explicit awsCredentials.source when publishing, before any credential resolution", async () => {
+    for (const awsCredentials of [undefined, null, {}]) {
+      const promise = S3Publisher.checkAndResolveOptions({ provider: "s3", bucket: uniqueBucket(), awsCredentials } as any, null, true)
+      await expect(promise).rejects.toBeInstanceOf(InvalidConfigurationError)
+      await expect(promise).rejects.toThrow(/requires an explicit credential source/)
+    }
+    // also for a non-dotted bucket, where no region lookup is needed
+    await expect(S3Publisher.checkAndResolveOptions({ provider: "s3", bucket: "plain-bucket" } as any, null, true)).rejects.toThrow(/requires an explicit credential source/)
+    expect(resolveS3Credentials).not.toHaveBeenCalled()
+    expect(https.request).not.toHaveBeenCalled()
+  })
+
+  it("does not require awsCredentials when not publishing", async () => {
+    await expect(S3Publisher.checkAndResolveOptions({ provider: "s3", bucket: uniqueBucket() } as any, null, false)).resolves.toBeUndefined()
+    await expect(S3Publisher.checkAndResolveOptions({ provider: "s3", bucket: "plain-bucket" } as any, null, false)).resolves.toBeUndefined()
+    expect(resolveS3Credentials).not.toHaveBeenCalled()
   })
 })
 
@@ -163,62 +241,15 @@ describe("getBucketLocation — output format matches binary contract", () => {
 
   it("returns a bare region string with no JSON wrapping or trailing whitespace", async () => {
     mockHttpResponse(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">us-west-2</LocationConstraint>')
-    const region = await getBucketLocation("my.dotted.bucket")
+    const region = await getBucketLocation("my.dotted.bucket", TEST_CREDENTIALS)
     expect(region).toBe("us-west-2")
     expect(region).not.toMatch(/[{"\n\r]/)
   })
 
   it("returns bare 'us-east-1' for the default region, matching binary contract", async () => {
     mockHttpResponse(200, '<?xml version="1.0" encoding="UTF-8"?><LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/"/>')
-    const region = await getBucketLocation("my.dotted.bucket")
+    const region = await getBucketLocation("my.dotted.bucket", TEST_CREDENTIALS)
     expect(region).toBe("us-east-1")
     expect(region).not.toMatch(/[{"\n\r]/)
-  })
-})
-
-// ─── Credential resolution unit tests ────────────────────────────────────────
-
-describe("resolveAwsCredentials", () => {
-  // These tests unshim the module mock and test the real implementation.
-  // We exercise the env var path only (the ~/.aws/credentials path is tested via
-  // file I/O which would require temp-file setup).
-
-  afterEach(() => {
-    vi.unstubAllEnvs()
-    vi.mocked(resolveAwsCredentials).mockRestore?.()
-  })
-
-  it("returns env-var credentials when AWS_ACCESS_KEY_ID is set", async () => {
-    // Use the specific awsCredentials module path so vi.importActual bypasses the mock for
-    // exactly that file — going via "electron-publish/internal" would still return the mock
-    // because internal re-exports from the already-mocked awsCredentials.ts.
-    const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/src/s3/awsCredentials")>("electron-publish/src/s3/awsCredentials")
-    vi.stubEnv("AWS_ACCESS_KEY_ID", "AKIAENV")
-    vi.stubEnv("AWS_SECRET_ACCESS_KEY", "env-secret")
-    vi.stubEnv("AWS_SESSION_TOKEN", "env-token")
-
-    const creds = realResolve()
-    expect(creds).toEqual({ accessKeyId: "AKIAENV", secretAccessKey: "env-secret", sessionToken: "env-token" })
-  })
-
-  it("includes sessionToken only when AWS_SESSION_TOKEN is set", async () => {
-    const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/src/s3/awsCredentials")>("electron-publish/src/s3/awsCredentials")
-    vi.stubEnv("AWS_ACCESS_KEY_ID", "AKIAENV")
-    vi.stubEnv("AWS_SECRET_ACCESS_KEY", "env-secret")
-    vi.stubEnv("AWS_SESSION_TOKEN", "")
-
-    const creds = realResolve()
-    expect(creds?.sessionToken).toBeUndefined()
-  })
-
-  it("returns undefined when no credentials are configured", async () => {
-    const { resolveAwsCredentials: realResolve } = await vi.importActual<typeof import("electron-publish/src/s3/awsCredentials")>("electron-publish/src/s3/awsCredentials")
-    vi.stubEnv("AWS_ACCESS_KEY_ID", "")
-    vi.stubEnv("AWS_SECRET_ACCESS_KEY", "")
-    // Point HOME to a non-existent dir so there's no ~/.aws/credentials
-    vi.stubEnv("HOME", path.join(os.tmpdir(), "no-such-home-" + Date.now()))
-
-    const creds = realResolve()
-    expect(creds).toBeUndefined()
   })
 })

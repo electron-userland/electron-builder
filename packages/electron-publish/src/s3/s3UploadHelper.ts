@@ -5,7 +5,7 @@ import * as http from "http"
 import * as https from "https"
 import mime from "mime"
 import * as path from "path"
-import type { AwsCredentials } from "./awsCredentials.js"
+import { AwsCredentials, requireAwsCredentials } from "./awsCredentials.js"
 
 export interface S3PutObjectParams {
   bucket: string
@@ -18,7 +18,7 @@ export interface S3PutObjectParams {
   acl?: string
   storageClass?: string
   serverSideEncryption?: string
-  credentials?: AwsCredentials
+  credentials: AwsCredentials
 }
 
 interface S3RequestTarget {
@@ -62,6 +62,7 @@ function resolveS3Request(params: S3RequestTarget): { hostname: string; urlPath:
  * Mirrors the behaviour of the `publish-s3` app-builder subcommand.
  */
 export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientRequest; done: Promise<void> } {
+  const credentials = requireAwsCredentials(params.credentials, "S3 PutObject")
   const stat = fs.statSync(params.file)
   const region = params.region
   const { hostname, urlPath, isHttp } = resolveS3Request(params)
@@ -92,7 +93,7 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
       path: urlPath,
       headers,
     },
-    params.credentials
+    credentials
   )
 
   const transport = isHttp ? http : https
@@ -141,7 +142,7 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
 }
 
 export interface S3DeleteObjectParams extends S3RequestTarget {
-  credentials?: AwsCredentials
+  credentials: AwsCredentials
 }
 
 /**
@@ -149,6 +150,7 @@ export interface S3DeleteObjectParams extends S3RequestTarget {
  * Primarily used by credential-gated live tests to clean up uploaded artifacts.
  */
 export function deleteS3Object(params: S3DeleteObjectParams): Promise<void> {
+  const credentials = requireAwsCredentials(params.credentials, "S3 DeleteObject")
   const { hostname, urlPath, isHttp } = resolveS3Request(params)
 
   const signed = sign(
@@ -162,7 +164,7 @@ export function deleteS3Object(params: S3DeleteObjectParams): Promise<void> {
         "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
       },
     },
-    params.credentials
+    credentials
   )
 
   const transport = isHttp ? http : https
