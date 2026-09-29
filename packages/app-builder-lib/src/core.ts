@@ -92,6 +92,8 @@ export abstract class Target {
    * The publish preflight uses it to enforce update-manifest signing before the first upload of the whole build.
    * A target that emits update info without saying so here is still enforced when its artifact is created - only
    * uploads of other targets that finished earlier can slip through - so custom targets should override it.
+   * "Emits update info" means an artifact event with `isWriteUpdateInfo: true` and no explicit `publishConfig`: an
+   * artifact with an explicit `publishConfig` is only uploaded, and electron-builder writes no manifest for it.
    */
   get writesUpdateInfo(): boolean {
     return false
