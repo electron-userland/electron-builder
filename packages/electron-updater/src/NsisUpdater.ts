@@ -243,11 +243,6 @@ export class NsisUpdater extends BaseUpdater {
       args.push("--force-run")
     }
 
-    if (this.installDirectory) {
-      // maybe check if folder exists
-      args.push(`/D=${this.installDirectory}`)
-    }
-
     const packagePath = this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.packageFile
     if (packagePath != null) {
       // the policy may have changed since the download; never run the web installer when web installers are disabled
@@ -257,6 +252,12 @@ export class NsisUpdater extends BaseUpdater {
       }
       // only = form is supported
       args.push(`--package-file=${packagePath}`)
+    }
+
+    // must be the last argument: NSIS takes the rest of the command line after /D= as the directory (see GetDParameter in multiUser.nsh)
+    if (this.installDirectory) {
+      // maybe check if folder exists
+      args.push(`/D=${this.installDirectory}`)
     }
 
     const callUsingElevation = (): void => {

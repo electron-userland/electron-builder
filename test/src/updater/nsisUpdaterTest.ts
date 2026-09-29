@@ -865,44 +865,99 @@ describe("NsisUpdater — disableWebInstaller", () => {
     }
   })
 
+  // NSIS takes the rest of the command line after /D= as the install directory, so every other argument comes before it
+  for (const web of [true, false]) {
+    for (const installDirectory of ["C:\\Apps\\TestApp", undefined]) {
+      test(
+        `installer arguments of a ${web ? "web" : "full"} installer ${installDirectory == null ? "without installDirectory" : "with installDirectory (/D= last)"}`,
+        config,
+        async ({ expect }) => {
+          const { server, port, tmpDir } = await serveUpdate(web, WEB_PAYLOAD)
+          try {
+            const updater = await createNsisUpdater("1.0.0")
+            if (web) {
+              updater.disableWebInstaller = false
+            }
+            updater.installDirectory = installDirectory
+            updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+            const errors: Array<any> = []
+            updater.on("error", e => errors.push(e))
+
+            const updateCheckResult = await updater.checkForUpdates()
+            const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
+            expect(packageFile == null).toBe(!web)
+
+            const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+            expect(updater.install(true, true)).toBe(true)
+            expect(spawnLog).toHaveBeenCalledTimes(1)
+            expect(spawnLog).toHaveBeenCalledWith(updateFile, [
+              "--updated",
+              "/S",
+              "--force-run",
+              ...(web ? [`--package-file=${packageFile}`] : []),
+              ...(installDirectory == null ? [] : [`/D=${installDirectory}`]),
+            ])
+            expect(errors).toEqual([])
+          } finally {
+            server.close()
+            await tmpDir.cleanup()
+          }
+        }
+      )
+    }
+  }
+
   // the update info of a per-machine build has isAdminRightsRequired in the installer's file entry: the installer is started through
   // elevate.exe from the resources of the running app, with the arguments it would get directly
-  test("an update with isAdminRightsRequired is installed through elevate.exe, --package-file included", config, async ({ expect }) => {
-    const { server, port, tmpDir } = await serveUpdate(true, { ...WEB_PAYLOAD, isAdminRightsRequired: true })
-    try {
-      const updater = await createNsisUpdater("1.0.0")
-      updater.disableWebInstaller = false
-      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
-      const errors: Array<any> = []
-      updater.on("error", e => errors.push(e))
+  for (const installDirectory of [undefined, "C:\\Apps\\TestApp"]) {
+    test(
+      `an update with isAdminRightsRequired is installed through elevate.exe, --package-file included${installDirectory == null ? "" : " and /D= last"}`,
+      config,
+      async ({ expect }) => {
+        const { server, port, tmpDir } = await serveUpdate(true, { ...WEB_PAYLOAD, isAdminRightsRequired: true })
+        try {
+          const updater = await createNsisUpdater("1.0.0")
+          updater.disableWebInstaller = false
+          updater.installDirectory = installDirectory
+          updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+          const errors: Array<any> = []
+          updater.on("error", e => errors.push(e))
 
-      const updateCheckResult = await updater.checkForUpdates()
-      const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
-      expect(packageFile).toBeDefined()
-      expect((await fsExtra.readJson(path.join(path.dirname(updateFile), "update-info.json"))).isAdminRightsRequired).toBe(true)
+          const updateCheckResult = await updater.checkForUpdates()
+          const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
+          expect(packageFile).toBeDefined()
+          expect((await fsExtra.readJson(path.join(path.dirname(updateFile), "update-info.json"))).isAdminRightsRequired).toBe(true)
 
-      const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
-      // process.resourcesPath is only set in Electron; set here for the install only (the constructor reads the package-type marker from it)
-      const resourcesPath = await tmpDir.getTempDir({ prefix: "resources" })
-      const original = Object.getOwnPropertyDescriptor(process, "resourcesPath")
-      Object.defineProperty(process, "resourcesPath", { value: resourcesPath, configurable: true, writable: true })
-      try {
-        expect(updater.install(true, false)).toBe(true)
-      } finally {
-        if (original == null) {
-          delete (process as any).resourcesPath
-        } else {
-          Object.defineProperty(process, "resourcesPath", original)
+          const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+          // process.resourcesPath is only set in Electron; set here for the install only (the constructor reads the package-type marker from it)
+          const resourcesPath = await tmpDir.getTempDir({ prefix: "resources" })
+          const original = Object.getOwnPropertyDescriptor(process, "resourcesPath")
+          Object.defineProperty(process, "resourcesPath", { value: resourcesPath, configurable: true, writable: true })
+          try {
+            expect(updater.install(true, false)).toBe(true)
+          } finally {
+            if (original == null) {
+              delete (process as any).resourcesPath
+            } else {
+              Object.defineProperty(process, "resourcesPath", original)
+            }
+          }
+          expect(spawnLog).toHaveBeenCalledTimes(1)
+          expect(spawnLog).toHaveBeenCalledWith(path.join(resourcesPath, "elevate.exe"), [
+            updateFile,
+            "--updated",
+            "/S",
+            `--package-file=${packageFile}`,
+            ...(installDirectory == null ? [] : [`/D=${installDirectory}`]),
+          ])
+          expect(errors).toEqual([])
+        } finally {
+          server.close()
+          await tmpDir.cleanup()
         }
       }
-      expect(spawnLog).toHaveBeenCalledTimes(1)
-      expect(spawnLog).toHaveBeenCalledWith(path.join(resourcesPath, "elevate.exe"), [updateFile, "--updated", "/S", `--package-file=${packageFile}`])
-      expect(errors).toEqual([])
-    } finally {
-      server.close()
-      await tmpDir.cleanup()
-    }
-  })
+    )
+  }
 
   test("unset disableWebInstaller stays silent for a regular (non-web) installer", config, async ({ expect }) => {
     const { server, port, tmpDir } = await serveUpdate(false)
