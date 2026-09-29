@@ -10382,6 +10382,13 @@
       ],
       "description": "Windows-specific build options (signing, NSIS, icon, file associations, etc.)."
     },
+    "writeEffectiveConfig": {
+      "description": "Whether to write `builder-effective-config.yaml` (the resolved configuration, including the detected\n`electronVersion`) to the output directory.\n\nDefaults to writing it only for local interactive builds: not on CI and not when stdout is piped.\nSet `true` to always write it, e.g. to read the resolved configuration in a CI step, or `false` to never write it.",
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
     "$schema": {
       "description": "JSON Schema for this document.",
       "type": [

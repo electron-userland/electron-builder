@@ -425,7 +425,7 @@ export class Packager {
       })
     )
 
-    if (!isCI && (process.stdout as any).isTTY) {
+    if (shouldWriteEffectiveConfig(this.config.writeEffectiveConfig, isCI, (process.stdout as any).isTTY === true)) {
       const effectiveConfigFile = path.join(commonOutDirWithoutPossibleOsMacro, "builder-effective-config.yaml")
       log.info({ file: log.filePath(effectiveConfigFile) }, "writing effective config")
       await outputFile(effectiveConfigFile, getSafeEffectiveConfig(this.config))
@@ -714,6 +714,10 @@ export interface BuildResult {
   readonly artifactPaths: Array<string>
   readonly platformToTargets: Map<Platform, Map<string, Target>>
   readonly configuration: Configuration
+}
+
+export function shouldWriteEffectiveConfig(option: boolean | null | undefined, ci: boolean, isTTY: boolean): boolean {
+  return option ?? (!ci && isTTY)
 }
 
 function getSafeEffectiveConfig(configuration: Configuration): string {
