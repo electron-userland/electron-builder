@@ -211,6 +211,10 @@ export class PublishManager implements PublishContext {
     }
     for (const { packager, arch, targets } of plan) {
       for (const target of targets) {
+        // resolving publish configs is async: a build cancelled meanwhile stops instead of failing on a missing key
+        if (this.cancellationToken.cancelled) {
+          return
+        }
         if (await targetEmitsUpdateManifest(packager, target, arch, true)) {
           await packager.requireUpdateSigningKeys(true)
         }

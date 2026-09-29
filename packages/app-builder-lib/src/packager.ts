@@ -529,6 +529,10 @@ export class Packager {
     type ArchPlan = { packager: PlatformPackager<any>; arch: Arch; targets: Array<Target>; outDir: string }
     const plans: Array<{ packager: PlatformPackager<any>; nameToTarget: Map<string, Target>; archs: Array<ArchPlan> }> = []
     for (const [platform, archToType] of this.options.targets!) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
+
       if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
         throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/docs/features/multi-platform-build")
       }
@@ -539,6 +543,10 @@ export class Packager {
 
       const archs: Array<ArchPlan> = []
       for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
+        if (this.cancellationToken.cancelled) {
+          break
+        }
+
         // fail fast when the requested arch has no official Electron build anymore (Electron 44 removed win32-ia32 and linux-armv7l);
         // skipped for prepackaged apps since nothing is downloaded then
         if (this.options.prepackaged == null && isElectronBased(this.framework)) {
@@ -553,10 +561,13 @@ export class Packager {
       plans.push({ packager, nameToTarget, archs })
     }
 
-    await this.eventEmitter.emit(
-      "targetsCreated",
-      plans.flatMap<PlannedTargets>(it => it.archs)
-    )
+    // a cancelled build stops here rather than running the publish preflight on a partial plan
+    if (!this.cancellationToken.cancelled) {
+      await this.eventEmitter.emit(
+        "targetsCreated",
+        plans.flatMap<PlannedTargets>(it => it.archs)
+      )
+    }
 
     for (const { packager, nameToTarget, archs } of plans) {
       if (this.cancellationToken.cancelled) {

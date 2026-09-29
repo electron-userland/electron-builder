@@ -35,9 +35,10 @@ function createManager(publish: "always" | "never" = "always") {
       // ignore
     },
   }
-  const manager = new PublishManager(packager as any, { publish }, new CancellationToken())
+  const cancellationToken = new CancellationToken()
+  const manager = new PublishManager(packager as any, { publish }, cancellationToken)
   const scheduleUpload = vi.spyOn(manager, "scheduleUpload").mockResolvedValue()
-  return { manager, scheduleUpload, targetsCreated: (plan: any) => onTargetsCreated(plan), afterPack: (event: any) => onAfterPack(event) }
+  return { manager, scheduleUpload, cancellationToken, targetsCreated: (plan: any) => onTargetsCreated(plan), afterPack: (event: any) => onAfterPack(event) }
 }
 
 function makePlatformPackager(publish: any, requireUpdateSigningKeys: (required: boolean) => Promise<Array<any>>) {
@@ -250,4 +251,48 @@ test("afterPack of a non-publishing build warns only when a target of the pack w
   const writesManifest = makeWinPackager(updates)
   await afterPack(makeWinPackEvent(writesManifest, await tmpDir.getTempDir({ prefix: "win-unpacked" }), null))
   expect(writesManifest.requireUpdateSigningKeys).toHaveBeenCalledWith(false)
+})
+
+test("build-start preflight stops when the build is cancelled, also while it runs", async ({ expect }) => {
+  const { targetsCreated, cancellationToken } = createManager()
+  const updates = { provider: "generic", url: "https://example.com/updates" }
+  // the first target has a key; the build is cancelled while its publish settings are resolved
+  const signed = makePlatformPackager(updates, () => {
+    cancellationToken.cancel()
+    return Promise.resolve([{}])
+  })
+  const missing = makePlatformPackager(updates, missingKey)
+  await targetsCreated([
+    { packager: signed, arch: Arch.x64, targets: [makeTarget("nsis", true)] },
+    { packager: missing, arch: Arch.arm64, targets: [makeTarget("nsis", true)] },
+  ])
+  expect(signed.requireUpdateSigningKeys).toHaveBeenCalledTimes(1)
+  expect(missing.requireUpdateSigningKeys).not.toHaveBeenCalled()
+})
+
+test("a build cancelled while its targets are planned does not emit targetsCreated", async ({ expect, tmpDir }) => {
+  const projectDir = await tmpDir.getTempDir({ prefix: "project" })
+  await outputJson(path.join(projectDir, "package.json"), { name: "preflight-app", version: "1.0.0", description: "test", author: "Foo Bar <foo@example.com>" })
+  const prepackaged = await tmpDir.getTempDir({ prefix: "prepackaged" })
+  await outputFile(path.join(prepackaged, "resources", "app.asar"), "")
+
+  const packager = new Packager({
+    projectDir,
+    prepackaged,
+    targets: Platform.LINUX.createTarget(["appimage"], Arch.x64, Arch.arm64),
+    config: {
+      electronVersion: "38.0.0",
+      directories: { output: path.join(projectDir, "dist") },
+    },
+    platformPackagerFactory: info => {
+      info.cancellationToken.cancel()
+      return new FakeLinuxPackager(info)
+    },
+  })
+  const targetsCreated = vi.fn()
+  packager.onTargetsCreated(targetsCreated)
+  await packager.build().catch(() => {
+    // a cancelled build may reject; what matters is that the preflight never ran
+  })
+  expect(targetsCreated).not.toHaveBeenCalled()
 })
