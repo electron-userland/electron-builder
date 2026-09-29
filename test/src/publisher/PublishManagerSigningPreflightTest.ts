@@ -19,7 +19,7 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-function createManager() {
+function createManager(publish: "always" | "never" = "always") {
   let onTargetsCreated: (plan: any) => Promise<void> = () => Promise.resolve()
   let onAfterPack: (event: any) => Promise<void> = () => Promise.resolve()
   const packager = {
@@ -35,7 +35,7 @@ function createManager() {
       // ignore
     },
   }
-  const manager = new PublishManager(packager as any, { publish: "always" }, new CancellationToken())
+  const manager = new PublishManager(packager as any, { publish }, new CancellationToken())
   const scheduleUpload = vi.spyOn(manager, "scheduleUpload").mockResolvedValue()
   return { manager, scheduleUpload, targetsCreated: (plan: any) => onTargetsCreated(plan), afterPack: (event: any) => onAfterPack(event) }
 }
@@ -48,6 +48,7 @@ function makePlatformPackager(publish: any, requireUpdateSigningKeys: (required:
     appInfo: { version: "1.0.0", updaterCacheDirName: "test-app" },
     expandMacro: (value: string) => value,
     requireUpdateSigningKeys: vi.fn(requireUpdateSigningKeys),
+    updateSigningKeys: { value: Promise.resolve([]) },
   }
 }
 
@@ -76,7 +77,7 @@ test("a missing signing key fails before the manifest-producing artifact is uplo
 })
 
 test("a target-level publish config that emits a manifest is enforced even when the platform-level one is waived", async ({ expect }) => {
-  // onAfterPack resolves the platform-level config only, so this is the case it cannot catch
+  // the per-artifact check resolves the target-level config, like the build-start preflight and onAfterPack
   const { manager, scheduleUpload } = createManager()
   const packager = makePlatformPackager({ provider: "generic", url: "https://example.com/updates", publishAutoUpdate: false }, missingKey)
   await expect(artifactCreated(manager, makeEvent(packager, { provider: "generic", url: "https://example.com/nsis" }))).rejects.toThrow(/must be signed/)
@@ -197,10 +198,56 @@ test("afterPack enforces signing only when a target of the pack emits update inf
   }
   const event = (targets: Array<any>) => ({ packager, electronPlatformName: "linux", arch: Arch.x64, appOutDir, outDir: appOutDir, targets })
 
+  // no manifest, so neither the error nor the "publishing this configuration will fail" advisory
   await afterPack(event([makeTarget("snap", false)]))
-  expect(packager.requireUpdateSigningKeys).toHaveBeenLastCalledWith(false)
+  expect(packager.requireUpdateSigningKeys).not.toHaveBeenCalled()
   expect(await readFile(path.join(appOutDir, "resources", "app-update.yml"), "utf8")).toContain("provider: generic")
 
   await expect(afterPack(event([makeTarget("snap", false), makeTarget("appimage", true)]))).rejects.toThrow(/must be signed/)
   expect(packager.requireUpdateSigningKeys).toHaveBeenLastCalledWith(true)
+})
+
+function makeWinPackEvent(packager: any, appOutDir: string, nsisOptions: any) {
+  return { packager, electronPlatformName: "win32", arch: Arch.x64, appOutDir, outDir: appOutDir, targets: [makeTarget("nsis", true, nsisOptions)] }
+}
+
+function makeWinPackager(publish: any) {
+  return { ...makePlatformPackager(publish, missingKey), getResourcesDir: (dir: string) => path.join(dir, "resources") }
+}
+
+test("afterPack honors the installer's own publish settings: a target-level null or waiver needs no key", async ({ expect, tmpDir }) => {
+  const { afterPack } = createManager()
+  const updates = { provider: "generic", url: "https://example.com/updates" }
+  for (const nsisOptions of [{ publish: null }, { publish: { ...updates, publishAutoUpdate: false } }]) {
+    const appOutDir = await tmpDir.getTempDir({ prefix: "win-unpacked" })
+    const packager = makeWinPackager(updates)
+    // the build-start preflight waives these, so a publishing build must not fail here either
+    await afterPack(makeWinPackEvent(packager, appOutDir, nsisOptions))
+    expect(packager.requireUpdateSigningKeys).not.toHaveBeenCalled()
+    expect(await readFile(path.join(appOutDir, "resources", "app-update.yml"), "utf8")).toContain("provider: generic")
+  }
+})
+
+test("afterPack enforces signing for an installer whose manifest comes from a target-level publish only", async ({ expect, tmpDir }) => {
+  for (const name of ["GH_TOKEN", "GITHUB_TOKEN", "GITLAB_TOKEN", "KEYGEN_TOKEN", "BITBUCKET_TOKEN"]) {
+    vi.stubEnv(name, "")
+  }
+  const { afterPack } = createManager()
+  const appOutDir = await tmpDir.getTempDir({ prefix: "win-unpacked" })
+  const packager = makeWinPackager(undefined)
+  await expect(afterPack(makeWinPackEvent(packager, appOutDir, { publish: { provider: "generic", url: "https://example.com/nsis" } }))).rejects.toThrow(/must be signed/)
+  expect(packager.requireUpdateSigningKeys).toHaveBeenCalledWith(true)
+})
+
+test("afterPack of a non-publishing build warns only when a target of the pack writes a manifest", async ({ expect, tmpDir }) => {
+  const { afterPack } = createManager("never")
+  const updates = { provider: "generic", url: "https://example.com/updates" }
+
+  const waived = makeWinPackager(updates)
+  await afterPack(makeWinPackEvent(waived, await tmpDir.getTempDir({ prefix: "win-unpacked" }), { publish: null }))
+  expect(waived.requireUpdateSigningKeys).not.toHaveBeenCalled()
+
+  const writesManifest = makeWinPackager(updates)
+  await afterPack(makeWinPackEvent(writesManifest, await tmpDir.getTempDir({ prefix: "win-unpacked" }), null))
+  expect(writesManifest.requireUpdateSigningKeys).toHaveBeenCalledWith(false)
 })
