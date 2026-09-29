@@ -109,12 +109,14 @@ for (const incomplete of [false, true]) {
   }
 }
 
-for (const { packages, expected, completeUrl, allowUnverified } of [
-  ...cases.map(value => ({ ...value, completeUrl: false, allowUnverified: false })),
-  { ...cases[0], completeUrl: true, allowUnverified: false },
-  { ...cases[cases.length - 1], completeUrl: false, allowUnverified: true },
+for (const { packages, expected, completeUrl, allowUnverified, nsis } of [
+  ...cases.map(value => ({ ...value, completeUrl: false, allowUnverified: false, nsis: undefined })),
+  { ...cases[0], completeUrl: true, allowUnverified: false, nsis: undefined },
+  { ...cases[cases.length - 1], completeUrl: false, allowUnverified: true, nsis: undefined },
+  // the legacy NSIS toolset (its StdUtils, inetc and System plugins) at run time
+  { ...cases[1], completeUrl: false, allowUnverified: false, nsis: "0.0.0" as const },
 ]) {
-  const suffix = `${completeUrl ? " (complete URL)" : ""}${allowUnverified ? " (unverified allowed)" : ""}`
+  const suffix = `${completeUrl ? " (complete URL)" : ""}${allowUnverified ? " (unverified allowed)" : ""}${nsis == null ? "" : ` (NSIS ${nsis})`}`
   test.ifWindows(`NSIS web package selection: ${packages.join(" + ")}${suffix}`, async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir()
     const requests: string[] = []
@@ -132,11 +134,17 @@ for (const { packages, expected, completeUrl, allowUnverified } of [
         throw new Error("Expected a TCP server address")
       }
       const url = `http://127.0.0.1:${address.port}`
-      const { installer } = await compile(dir, packages, [
-        `!define APP_PACKAGE_URL "${completeUrl ? `${url}/app-ARM64.7z` : url}"`,
-        ...(completeUrl ? [] : ["!define APP_PACKAGE_URL_IS_INCOMPLETE"]),
-        ...(allowUnverified ? ["!define ALLOW_UNVERIFIED_APP_PACKAGE"] : []),
-      ])
+      const { installer } = await compile(
+        dir,
+        packages,
+        [
+          `!define APP_PACKAGE_URL "${completeUrl ? `${url}/app-ARM64.7z` : url}"`,
+          ...(completeUrl ? [] : ["!define APP_PACKAGE_URL_IS_INCOMPLETE"]),
+          ...(allowUnverified ? ["!define ALLOW_UNVERIFIED_APP_PACKAGE"] : []),
+        ],
+        undefined,
+        nsis
+      )
       // replaced: a local package the fixture writes other content to while the installer runs; the installer keeps using its own copy.
       const run = async (arch: string, packageFile?: string, replaced?: string) => {
         requests.length = 0

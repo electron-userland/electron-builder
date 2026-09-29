@@ -62,6 +62,30 @@ test("per-machine without blockmap: update info has isAdminRightsRequired", ({ e
     }
   ))
 
+// The update info of a web installer (its packages) is merged into the update info file; isAdminRightsRequired belongs to the file
+// entry of the web installer, which is where electron-updater reads it.
+test("nsis-web per-machine: update info has isAdminRightsRequired in the installer's file entry", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget("nsis-web", Arch.x64),
+      config: {
+        publish,
+        nsis: {
+          perMachine: true,
+        },
+      },
+    },
+    {
+      packed: async context => {
+        const updateInfo = load(await fs.readFile(path.join(context.outDir, "nsis-web", "latest.yml"), "utf-8")) as any
+        expect(updateInfo.files[0].isAdminRightsRequired).toBe(true)
+        expect(updateInfo).not.toHaveProperty("isAdminRightsRequired")
+        expect(updateInfo.packages.x64.sha512).toEqual(expect.any(String))
+      },
+    }
+  ))
+
 test("per-machine without elevate.exe: update info has no isAdminRightsRequired", ({ expect }) =>
   app(
     expect,

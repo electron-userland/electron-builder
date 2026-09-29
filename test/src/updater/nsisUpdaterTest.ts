@@ -681,14 +681,14 @@ describe("NsisUpdater — disableWebInstaller", () => {
   // keyed by the test arch, so resolveFiles populates fileInfo.packageInfo → isWebInstaller. Without `payload` no
   // installer/package files are served and the checksums are placeholders — enough for the branches that reject or
   // warn before the download. With `payload` its bytes are served and latest.yml carries their real sha512.
-  async function serveUpdate(web: boolean, payload?: { installer: Buffer; package: Buffer; omitPackageSha512?: boolean }) {
+  async function serveUpdate(web: boolean, payload?: { installer: Buffer; package: Buffer; omitPackageSha512?: boolean; isAdminRightsRequired?: boolean }) {
     const tmpDir = new TmpDir("web-installer-unit")
     const root = await tmpDir.getTempDir()
     const placeholderSha512 = Buffer.alloc(64).toString("base64")
     const sha512 = payload == null ? placeholderSha512 : sha512Base64(payload.installer)
     const updateInfo: any = {
       version: "1.0.1",
-      files: [{ url: WEB_INSTALLER_NAME, sha512, size: payload?.installer.length ?? 10 }],
+      files: [{ url: WEB_INSTALLER_NAME, sha512, size: payload?.installer.length ?? 10, ...(payload?.isAdminRightsRequired ? { isAdminRightsRequired: true } : {}) }],
       path: WEB_INSTALLER_NAME,
       sha512,
       releaseDate: new Date(0).toISOString(),
@@ -859,6 +859,45 @@ describe("NsisUpdater — disableWebInstaller", () => {
       updater.disableWebInstaller = false
       expect(updater.install(true, false)).toBe(true)
       expect(spawnLog).toHaveBeenCalledWith(updateFile, expect.arrayContaining([`--package-file=${packageFile}`]))
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  // the update info of a per-machine build has isAdminRightsRequired in the installer's file entry: the installer is started through
+  // elevate.exe from the resources of the running app, with the arguments it would get directly
+  test("an update with isAdminRightsRequired is installed through elevate.exe, --package-file included", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(true, { ...WEB_PAYLOAD, isAdminRightsRequired: true })
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      updater.disableWebInstaller = false
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      const errors: Array<any> = []
+      updater.on("error", e => errors.push(e))
+
+      const updateCheckResult = await updater.checkForUpdates()
+      const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
+      expect(packageFile).toBeDefined()
+      expect((await fsExtra.readJson(path.join(path.dirname(updateFile), "update-info.json"))).isAdminRightsRequired).toBe(true)
+
+      const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+      // process.resourcesPath is only set in Electron; set here for the install only (the constructor reads the package-type marker from it)
+      const resourcesPath = await tmpDir.getTempDir({ prefix: "resources" })
+      const original = Object.getOwnPropertyDescriptor(process, "resourcesPath")
+      Object.defineProperty(process, "resourcesPath", { value: resourcesPath, configurable: true, writable: true })
+      try {
+        expect(updater.install(true, false)).toBe(true)
+      } finally {
+        if (original == null) {
+          delete (process as any).resourcesPath
+        } else {
+          Object.defineProperty(process, "resourcesPath", original)
+        }
+      }
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(spawnLog).toHaveBeenCalledWith(path.join(resourcesPath, "elevate.exe"), [updateFile, "--updated", "/S", `--package-file=${packageFile}`])
+      expect(errors).toEqual([])
     } finally {
       server.close()
       await tmpDir.cleanup()
