@@ -238,7 +238,20 @@ export class PublishManager implements PublishContext {
       return
     }
 
+    const writesUpdateInfo =
+      event.isWriteUpdateInfo === true && target != null && eventFile != null && (platformPackager.platform !== Platform.WINDOWS || isSuitableWindowsTarget(target))
+
     if (this.isPublish) {
+      // Enforce the signing requirement before this artifact is uploaded, not only in writeUpdateInfoFiles, which runs
+      // after every upload has been awaited. onAfterPack already fails early for the platform-level publish config;
+      // this also covers a target-level `publish` (e.g. `nsis.publish`) that differs from it.
+      if (writesUpdateInfo) {
+        const updateInfoConfigs = await getPublishConfigsForUpdateInfo(platformPackager, publishConfigs, event.arch)
+        if (updateInfoConfigs?.some(it => it.publishAutoUpdate !== false)) {
+          await platformPackager.requireUpdateSigningKeys(true)
+        }
+      }
+
       for (const publishConfig of publishConfigs) {
         if (this.cancellationToken.cancelled) {
           log.debug({ file: event.file, reason: "cancelled" }, "not published")
@@ -249,13 +262,7 @@ export class PublishManager implements PublishContext {
       }
     }
 
-    if (
-      event.isWriteUpdateInfo &&
-      target != null &&
-      eventFile != null &&
-      !this.cancellationToken.cancelled &&
-      (platformPackager.platform !== Platform.WINDOWS || isSuitableWindowsTarget(target))
-    ) {
+    if (writesUpdateInfo && !this.cancellationToken.cancelled) {
       this.taskManager.addTask(createUpdateInfoTasks(event, publishConfigs).then(it => this.updateFileWriteTask.push(...it)))
     }
   }
