@@ -10,7 +10,7 @@ import { app, assertPack, EXTENDED_TIMEOUT, snapTarget } from "../helpers/packTe
 import { launchSnapBinary } from "../helpers/launchAppCrossPlatform"
 
 // very slow
-const options = { sequential: true, timeout: 3 * EXTENDED_TIMEOUT }
+const options = { concurrent: false, timeout: 3 * EXTENDED_TIMEOUT }
 
 // Guard: tests run when RUN_SNAP_TESTS=true AND snapcraft is found in PATH.
 // test-snap.sh sets RUN_SNAP_TESTS=true and runs inside Docker images that

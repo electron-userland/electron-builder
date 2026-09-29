@@ -9,7 +9,7 @@ import { app, appThrows, assertPack, EXTENDED_TIMEOUT, snapTarget } from "../hel
 // the actual build and only validates the generated snapcraft.yaml descriptor.
 const hasSnapInstalled = () => process.platform !== "win32"
 
-describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeout: EXTENDED_TIMEOUT }, () => {
+describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeout: EXTENDED_TIMEOUT }, () => {
   // ─── legacy cores (core18 / core20 / core22) ─────────────────────────────────
   //
   // Each iteration mirrors the test cases in snapTest.ts but uses the new
@@ -768,7 +768,7 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { sequential: true, timeou
   // "core24 useLXD build mode" effectiveOptionComputed test above.
   const hasMultipassInstalled = () => which.sync("multipass", { nothrow: true }) != null
 
-  describe.skipIf(!hasMultipassInstalled())("core24 Multipass real build", { sequential: true, timeout: EXTENDED_TIMEOUT }, () => {
+  describe.skipIf(!hasMultipassInstalled())("core24 Multipass real build", { concurrent: false, timeout: EXTENDED_TIMEOUT }, () => {
     test("core24 useMultipass full build", async ({ expect }) => {
       await app(expect, {
         targets: snapTarget,

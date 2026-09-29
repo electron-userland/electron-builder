@@ -42,7 +42,7 @@ afterEach(async () => {
   }
 })
 
-describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env merging", { sequential: true }, () => {
+describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env merging", { concurrent: false }, () => {
   test("DYLD_FALLBACK_LIBRARY_PATH includes the wine lib dir", async ({ expect }) => {
     delete process.env.DYLD_FALLBACK_LIBRARY_PATH
     const result = await getWineToolset(fakeToolset(), "")
@@ -92,7 +92,7 @@ describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env me
   })
 })
 
-describe.ifNotWindows('getWineToolset — "system"', { sequential: true }, () => {
+describe.ifNotWindows('getWineToolset — "system"', { concurrent: false }, () => {
   test("resolves the host wine on PATH and downloads no bundle", async ({ expect }) => {
     const result = await getWineToolset("system", "")
     expect(result.execPath).toBe("wine")

@@ -151,7 +151,6 @@ async function main() {
   }
 
   return startVitest(
-    "test",
     selectedFiles,
     {
       allowOnly: !isCI, // Prevent accidental commit of `test.only` in CI

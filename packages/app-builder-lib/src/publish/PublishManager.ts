@@ -790,9 +790,11 @@ async function getResolvedPublishConfig(
       log.warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).')
     }
     //tslint:disable-next-line:no-object-literal-type-assertion
+    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion -- required by the TS 5.1 that typescript-json-schema bundles (pnpm generate:schema)
     return { owner, repo: project, ...options } as GithubOptions
   } else {
     //tslint:disable-next-line:no-object-literal-type-assertion
+    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion -- required by the TS 5.1 that typescript-json-schema bundles (pnpm generate:schema)
     return { owner, slug: project, ...options } as BitbucketOptions
   }
 }

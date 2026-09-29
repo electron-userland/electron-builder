@@ -12,7 +12,7 @@ import type { attachAndExecute as aAndE, getDmgTemplatePath as dmgTemplate } fro
 const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
 const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)
 
-describe.heavy.ifMac("dmg", { sequential: true }, () => {
+describe.heavy.ifMac("dmg", { concurrent: false }, () => {
   let attachAndExecute: typeof aAndE
   let getDmgTemplatePath: typeof dmgTemplate
 

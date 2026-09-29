@@ -5,7 +5,8 @@ import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion } from "semver"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"
-import { QuitAndInstallOptions, DownloadExecutorResult } from "./types.js"
+import type { VerifyUpdateFileResult } from "./types.js"
+import { QuitAndInstallOptions, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
 
 const require = createRequire(import.meta.url)
 
@@ -242,12 +243,29 @@ export abstract class BaseUpdater extends AppUpdater {
       return false
     }
 
-    const signatureVerificationStatus = await this.verifyInstallerSignatureOnLaunch(installerPath)
-    if (signatureVerificationStatus != null) {
-      await downloadedUpdateHelper.clear().catch(() => {
+    const clearPendingCache = () =>
+      downloadedUpdateHelper.clear().catch(() => {
         // ignore
       })
-      this.dispatchError(newError(`Pending update ${latestInfo.version} is not signed by the application owner: ${signatureVerificationStatus}`, "ERR_UPDATER_INVALID_SIGNATURE"))
+
+    const signatureFailure = verificationFailureMessage(await this.verifyInstallerSignatureOnLaunch(installerPath))
+    if (signatureFailure != null) {
+      await clearPendingCache()
+      this.dispatchError(newError(`Pending update ${latestInfo.version} is not signed by the application owner: ${signatureFailure}`, "ERR_UPDATER_INVALID_SIGNATURE"))
+      return false
+    }
+
+    // the installer sat on disk since a previous launch, so the app's own verifier gets to inspect it again before it
+    // is spawned — `verifyInstallerSignatureOnLaunch` only covers Authenticode, and only on Windows
+    const updateFileFailure = verificationFailureMessage(
+      await this.verifyUpdateFile({
+        updateFilePath: installerPath,
+        originalUpdateFileName: path.basename(installerPath),
+      })
+    )
+    if (updateFileFailure != null) {
+      await clearPendingCache()
+      this.dispatchError(newError(`Pending update ${latestInfo.version} failed verification: ${updateFileFailure}`, "ERR_UPDATER_INVALID_UPDATE_FILE"))
       return false
     }
 
@@ -268,10 +286,13 @@ export abstract class BaseUpdater extends AppUpdater {
 
   /**
    * Re-verification of the cached installer's code signature before an install-on-next-launch is executed.
-   * Platforms without installer signature verification resolve to `null` (no error).
+   * Platforms without installer signature verification resolve to `{ response: "success" }`.
+   *
+   * This covers only the platform's own signature scheme; {@link AppUpdater.verifyUpdateFile} is re-run on the same
+   * installer right after, and is the cross-platform place for an app's own verification.
    */
-  protected verifyInstallerSignatureOnLaunch(_installerPath: string): Promise<string | null> {
-    return Promise.resolve(null)
+  protected verifyInstallerSignatureOnLaunch(_installerPath: string): Promise<VerifyUpdateFileResult> {
+    return Promise.resolve({ response: "success" })
   }
 
   private markPendingInstallOnNextLaunch(): boolean {

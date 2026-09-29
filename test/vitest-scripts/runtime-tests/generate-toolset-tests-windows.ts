@@ -56,7 +56,7 @@ const SUITES: WindowsSuiteConfig[] = [
     importPath: "windows/assistedInstallerTestSuite",
     describeConfig: { name: "assisted", chain: ["ifWindowsOrWine"] },
     // sequential: tests share ~/wine-test WINEPREFIX; concurrent access causes wineboot --init races
-    describeOptions: { sequential: true },
+    describeOptions: { concurrent: false },
     nsisVersions: NSIS_VERSIONS,
     wineVersions: WINE_VERSIONS,
   },
@@ -66,7 +66,7 @@ const SUITES: WindowsSuiteConfig[] = [
     registerFn: namedFn("registerMsiTests" satisfies keyof typeof _MsiSuite),
     importPath: "windows/msiTestSuite",
     describeConfig: { name: "msi", chain: ["ifWindows"] },
-    describeOptions: { sequential: true },
+    describeOptions: { concurrent: false },
     // MSI does not vary by winCodeSign or WiX version — a single test file suffices.
     // winCodeSignVersions: [] triggers the single-file path in the generator.
     winCodeSignVersions: [],
@@ -77,7 +77,7 @@ const SUITES: WindowsSuiteConfig[] = [
     registerFn: namedFn("registerMsiWrappedTests" satisfies keyof typeof _MsiWrappedSuite),
     importPath: "windows/msiWrappedTestSuite",
     describeConfig: { name: "msiWrapped", chain: ["ifWindows"] },
-    describeOptions: { sequential: true },
+    describeOptions: { concurrent: false },
     nsisVersions: NSIS_VERSIONS,
     wineVersions: WINE_VERSIONS,
   },
@@ -87,7 +87,7 @@ const SUITES: WindowsSuiteConfig[] = [
     registerFn: namedFn("registerSquirrelWindowsTests" satisfies keyof typeof _SquirrelWindowsSuite),
     importPath: "windows/squirrelWindowsTestSuite",
     describeConfig: { name: "squirrel-windows", chain: ["ifWindows"] },
-    describeOptions: { sequential: true },
+    describeOptions: { concurrent: false },
   },
   {
     name: "appx",
@@ -111,7 +111,7 @@ const SUITES: WindowsSuiteConfig[] = [
     registerFn: namedFn("registerDifferentialWinTests" satisfies keyof typeof _DifferentialWinSuite),
     importPath: "updater/differentialUpdateWinSuite",
     describeConfig: { name: "differential-win", chain: ["ifWindows"] },
-    describeOptions: { sequential: true },
+    describeOptions: { concurrent: false },
     nsisVersions: NSIS_VERSIONS,
   },
   {
@@ -120,7 +120,7 @@ const SUITES: WindowsSuiteConfig[] = [
     registerFn: namedFn("registerBlackboxWinTests" satisfies keyof typeof _BlackboxWinSuite),
     importPath: "updater/blackboxUpdateWinSuite",
     describeConfig: { name: "blackboxWin" },
-    describeOptions: { sequential: true, retry: 1 },
+    describeOptions: { concurrent: false, retry: 1 },
     nsisVersions: NSIS_VERSIONS,
     wineVersions: WINE_VERSIONS,
   },
@@ -129,7 +129,7 @@ const SUITES: WindowsSuiteConfig[] = [
     registerFn: namedFn("registerWinCodeSignTests" satisfies keyof typeof _WinCodeSignSuite),
     importPath: "windows/winCodeSignTestSuite",
     describeConfig: { name: "winCodeSign" },
-    describeOptions: { sequential: true },
+    describeOptions: { concurrent: false },
     // dir targets / stub packagers only — unit-level like winPackager, so no `e2e` flag.
   },
 ]

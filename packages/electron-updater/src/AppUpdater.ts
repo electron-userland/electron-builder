@@ -49,10 +49,15 @@ import {
   DownloadExecutorResult,
   UpdateDownloadedEvent,
   UpdaterSignal,
+  VerifyUpdateFile,
+  verificationFailureMessage,
 } from "./types.js"
-import { VerifyUpdateSupport } from "./index.js"
+import type { VerifyUpdateSupport } from "./index.js"
 
 const require = createRequire(import.meta.url)
+
+// shared rather than per-instance so that `updater.verifyUpdateFile === DEFAULT_VERIFY_UPDATE_FILE` identifies "no custom verifier"
+const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve({ response: "success" })
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
@@ -339,6 +344,33 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
   }
 
+  protected _verifyUpdateFile: VerifyUpdateFile = DEFAULT_VERIFY_UPDATE_FILE
+
+  /**
+   * Allows developer to set custom logic for verifying an update file before it is allowed to become installable.
+   * When the verification fails, the file is deleted and electron-updater emits an `ERR_UPDATER_INVALID_UPDATE_FILE` error.
+   * The default behavior is a stub – immediately succeeds.
+   *
+   * It runs on every path that can lead to an install:
+   * - right after a fresh download, while the file still sits under a temporary name and before it is renamed into the
+   *   updater cache under its real filename, so an unverified file can never be executed under its real name;
+   * - when an update downloaded by an earlier session is reused from the updater cache;
+   * - before an install-on-next-launch spawns the cached installer (see {@link BaseUpdater}).
+   *
+   * The custom logic gets `updateFilePath` (the file to verify), `originalUpdateFileName` (its real filename), the
+   * optional `packageFilePath` of an NSIS web installer package, and the active `cancellationToken` when the
+   * verification belongs to a download.
+   *
+   * Assigning `null` restores the default stub.
+   */
+  get verifyUpdateFile(): VerifyUpdateFile {
+    return this._verifyUpdateFile
+  }
+
+  set verifyUpdateFile(value: VerifyUpdateFile | null | undefined) {
+    this._verifyUpdateFile = value ?? DEFAULT_VERIFY_UPDATE_FILE
+  }
+
   protected _isUpdateSupported: VerifyUpdateSupport = updateInfo => this.checkIfUpdateSupported(updateInfo)
 
   /**
@@ -498,10 +530,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return it
       }
 
-      void it.downloadPromise.then(() => {
-        const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
-        new (require("electron").Notification)(notificationContent).show()
-      })
+      void it.downloadPromise.then(
+        () => {
+          const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
+          const ElectronNotification = require("electron").Notification
+          new ElectronNotification(notificationContent).show()
+        },
+        () => {
+          // downloadUpdate already dispatches the error event
+        }
+      )
 
       return it
     })
@@ -933,22 +971,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const version = updateInfo.version
     const packageInfo = fileInfo.packageInfo
 
-    function getCacheUpdateFileName(): string {
-      // NodeJS URL doesn't decode automatically
-      const urlPath = decodeURIComponent(taskOptions.fileInfo.url.pathname)
-      if (urlPath.toLowerCase().endsWith(`.${taskOptions.fileExtension.toLowerCase()}`)) {
-        return path.basename(urlPath)
-      } else {
-        // url like /latest — use basename so a server-supplied path like "../../etc/evil"
-        // cannot escape the cache directory via path.join
-        return path.basename(taskOptions.fileInfo.info.url)
-      }
-    }
-
     const downloadedUpdateHelper = await this.getOrCreateDownloadHelper()
     const cacheDir = downloadedUpdateHelper.cacheDirForPendingUpdate
     await fsExtra.mkdir(cacheDir, { recursive: true })
-    const updateFileName = getCacheUpdateFileName()
+    const updateFileName = getCacheUpdateFileName(taskOptions.fileInfo, taskOptions.fileExtension)
     let updateFile = path.join(cacheDir, updateFileName)
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
 
@@ -974,11 +1000,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     const log = this._logger
-    const cachedUpdateFile = await downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo, log)
-    if (cachedUpdateFile != null) {
-      updateFile = cachedUpdateFile
-      return await done(false)
-    }
+    const cancellationToken = taskOptions.downloadUpdateOptions.cancellationToken
 
     const removeFileIfAny = async () => {
       await downloadedUpdateHelper.clear().catch(() => {
@@ -989,6 +1011,38 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       })
     }
 
+    const verifyUpdateFile = async (fileToVerify: string) => {
+      const failure = verificationFailureMessage(
+        await this.verifyUpdateFile({
+          updateFilePath: fileToVerify,
+          originalUpdateFileName: updateFileName,
+          // only offered when the companion package was actually written: `packageFile` is derived from the update
+          // metadata, so it is non-null for any channel file carrying a `packages` block even on targets that never
+          // download one
+          packageFilePath: packageFile != null && (await fsExtra.pathExists(packageFile)) ? packageFile : undefined,
+          cancellationToken,
+        })
+      )
+      if (failure != null) {
+        throw newError(`Downloaded update file ${updateFileName} failed verification: ${failure}`, "ERR_UPDATER_INVALID_UPDATE_FILE")
+      }
+    }
+
+    const cachedUpdateFile = await downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo, log)
+    if (cachedUpdateFile != null) {
+      updateFile = cachedUpdateFile
+      // an update downloaded by an earlier session is about to be announced as ready to install without being
+      // downloaded again, so the custom verifier has to gate it here too — its only other gate is the sha512 taken
+      // from the very update metadata a custom verifier exists to distrust
+      try {
+        await verifyUpdateFile(updateFile)
+      } catch (e: any) {
+        await removeFileIfAny()
+        throw e
+      }
+      return await done(false)
+    }
+
     // a fresh download starts — drop any blockmap left over from a previous update round, so that when this round
     // does not produce a new one (e.g. the differential download is skipped), the leftover cannot be promoted to the
     // cache next to a file it does not describe
@@ -997,6 +1051,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
+      // checked before verifying as well as after: verification can be arbitrarily expensive (hashing a large
+      // installer, a remote attestation call), and there is no point paying for it on a download already cancelled
+      if (cancellationToken.cancelled) {
+        throw new CancellationError()
+      }
+      await verifyUpdateFile(tempUpdateFile)
+      if (cancellationToken.cancelled) {
+        throw new CancellationError()
+      }
+      // only now may the file be made executable — doing it inside `task` would leave an unverified binary
+      // executable under a predictable path for as long as verification takes
+      await taskOptions.afterVerification?.(tempUpdateFile)
       await retry(() => fsExtra.rename(tempUpdateFile, updateFile), {
         retries: 60,
         interval: 500,
@@ -1127,6 +1193,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 }
 
+/** @internal */
+export function getCacheUpdateFileName(fileInfo: ResolvedUpdateFileInfo, fileExtension: string): string {
+  // NodeJS URL doesn't decode automatically
+  const urlPath = decodeURIComponent(fileInfo.url.pathname)
+  const fileName = path.basename(urlPath.toLowerCase().endsWith(`.${fileExtension.toLowerCase()}`) ? urlPath : fileInfo.info.url)
+  // basename(".") and basename("..") remain traversal segments. Reject them explicitly,
+  // along with values that cannot be represented as a single portable filename.
+  if (fileName.length === 0 || fileName === "." || fileName === ".." || fileName.includes("\0") || fileName.includes("/") || fileName.includes("\\")) {
+    throw newError(`Invalid update file name: ${JSON.stringify(fileName)}`, "ERR_UPDATER_INVALID_FILE_NAME")
+  }
+  return fileName
+}
+
 export interface DownloadUpdateOptions {
   readonly updateInfoAndProvider: UpdateInfoAndProvider
   readonly requestHeaders: OutgoingHttpHeaders
@@ -1168,6 +1247,12 @@ export interface DownloadExecutorTask {
   readonly fileInfo: ResolvedUpdateFileInfo
   readonly downloadUpdateOptions: DownloadUpdateOptions
   readonly task: (destinationFile: string, downloadOptions: DownloadOptions, packageFile: string | null, removeTempDirIfAny: () => Promise<any>) => Promise<any>
+
+  /**
+   * Runs after the downloaded file passed verification and before it is renamed into the cache under its real name.
+   * For anything that must not be done to a file that is still unverified — making it executable, in particular.
+   */
+  readonly afterVerification?: (destinationFile: string) => Promise<void>
 
   readonly done?: (event: UpdateDownloadedEvent) => Promise<any>
 }

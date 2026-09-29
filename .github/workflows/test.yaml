@@ -97,6 +97,10 @@ jobs:
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
 
+      # Before ci:validate, which rewrites files via `pnpm format` (generate:all)
+      - name: Check formatting
+        run: pnpm format:check
+
       - name: Validate files
         run: pnpm ci:validate
 

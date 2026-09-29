@@ -1,7 +1,7 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { getWindowsVm, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
 import { computeUpdateManifestKeyId, GenericServerOptions, Nullish, UpdateInfo, verifyManifestSignatures } from "builder-util-runtime"
-import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, spawn, TmpDir } from "builder-util"
+import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { copy, emptyDir, existsSync, move, outputFile, readJsonSync, remove } from "fs-extra"
 import { homedir } from "os"
@@ -17,7 +17,7 @@ import { cleanupLinux, installLinux } from "./blackboxInstallLinux"
 import { installMac } from "./blackboxInstallMac"
 import { readEmbeddedUpdateConfig, readUpdateManifest, resignManifest, rewriteServedManifests } from "./signedManifestTestUtil"
 
-export const optionsForFlakyE2E = { sequential: true, retry: 2, timeout: EXTENDED_TIMEOUT } as const
+export const optionsForFlakyE2E = { concurrent: false, retry: 2, timeout: EXTENDED_TIMEOUT } as const
 // Three builds and two update hops (plus negative launches) instead of two builds and one hop: 15-25 min per
 // attempt, so a single retry keeps a genuine failure within the 60-minute job cap of the mac runner.
 export const optionsForFlakyMultiHopE2E = { ...optionsForFlakyE2E, retry: 1, timeout: EXTENDED_TIMEOUT * 1.5 } as const
@@ -125,11 +125,13 @@ export async function doBuild(
         signedWin: isWindows,
         packed,
         packageManager: PM.PNPM,
-        projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
-          // Write .npmrc to app/ — installDependencies runs pnpm with cwd=appDir, so pnpm 10
-          // reads this file and uses hoisted layout for the main install.
-          await outputFile(path.join(projectDir, "app", ".npmrc"), "node-linker=hoisted")
-
+        // pnpm 11 reads its own settings from pnpm-workspace.yaml alone (neither `node-linker` in .npmrc nor the `pnpm` key of
+        // package.json is consulted any more), so packTester writes these next to app/package.json for the install. Hoisted from the
+        // start, the install keeps the sqlite3 binary that @electron/rebuild produces right after it: the former follow-up
+        // `pnpm install --config.node-linker=hoisted` re-linked node_modules from the store (dropping that binary) and, under pnpm 11,
+        // failed outright with ERR_PNPM_IGNORED_BUILDS for sqlite3 (strictDepBuilds).
+        packageManagerSettings: { nodeLinker: "hoisted", supportedArchitectures: { os: ["current"], cpu: ["x64", "arm64"] } },
+        projectDirCreated: async projectDir => {
           await modifyPackageJson(
             projectDir,
             data => {
@@ -152,23 +154,6 @@ export async function doBuild(
             },
             true
           )
-          await modifyPackageJson(
-            projectDir,
-            data => {
-              data.pnpm = {
-                supportedArchitectures: {
-                  os: ["current"],
-                  cpu: ["x64", "arm64"],
-                },
-              }
-            },
-            false
-          )
-          // Return a post-install hook so the explicit flag runs AFTER installDependencies.
-          // pnpm 11 ignores node-linker from .npmrc; the CLI flag here handles that case.
-          return async () => {
-            await spawn("pnpm", ["install", "--config.node-linker=hoisted"], { cwd: path.join(projectDir, "app"), stdio: "inherit", env: runtimeEnv })
-          }
         },
       }
     )
@@ -331,7 +316,7 @@ export async function runTest(
   const outDirs: ApplicationUpdatePaths[] = []
   const shouldRunWindowsTests = process.platform === "win32" || (target === "nsis" && vm != null)
   // Merge toolsets with any caller-supplied config overrides (e.g. nsis.perMachine)
-  const buildConfig = deepAssign({ toolsets } as Configuration, extraConfig ?? {})
+  const buildConfig = deepAssign({ toolsets }, extraConfig ?? {})
   await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, buildConfig)
 
   const oldAppDir = outDirs[0]
@@ -519,7 +504,7 @@ export async function runInstallOnNextLaunchTest(
   const tmpDir = new TmpDir("install-on-next-launch")
   const outDirs: ApplicationUpdatePaths[] = []
   const shouldRunWindowsTests = process.platform === "win32" || (target === "nsis" && vm != null)
-  const buildConfig = deepAssign({ toolsets } as Configuration, extraConfig ?? {})
+  const buildConfig = deepAssign({ toolsets }, extraConfig ?? {})
   await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, buildConfig)
 
   const oldAppDir = outDirs[0]
@@ -628,6 +613,152 @@ export async function runInstallOnNextLaunchTest(
 }
 
 // ---------------------------------------------------------------------------------------------------------
+// App-supplied update-file verification (AppUpdater.verifyUpdateFile)
+// ---------------------------------------------------------------------------------------------------------
+
+/** One `verifyUpdateFile` invocation, as reported by the fixture app on stdout. */
+export interface VerifyUpdateFileObservation {
+  mode: "accept" | "reject"
+  /** the hook was handed the file under a temporary name (a fresh download) rather than its real name */
+  temporary: boolean
+  name: string
+  original: string
+  exists: boolean
+  executable: boolean
+  package: string | null
+}
+
+const VERIFY_UPDATE_FILE_MARKER = "VERIFY_UPDATE_FILE_CALLED:"
+
+/** Parses every `verifyUpdateFile` invocation the fixture reported during one launch, in order. */
+function verifyUpdateFileCalls(stdout: string): Array<VerifyUpdateFileObservation> {
+  const observations: Array<VerifyUpdateFileObservation> = []
+  for (const line of stdout.split(/\r?\n/)) {
+    const markerIndex = line.indexOf(VERIFY_UPDATE_FILE_MARKER)
+    if (markerIndex < 0) {
+      continue
+    }
+    observations.push(JSON.parse(line.slice(markerIndex + VERIFY_UPDATE_FILE_MARKER.length).trim()) as VerifyUpdateFileObservation)
+  }
+  return observations
+}
+
+/**
+ * App-supplied update verification (`AppUpdater.verifyUpdateFile`) end-to-end in a packaged app:
+ *
+ *   1. launch the installed app with a hook that REJECTS — the download aborts with
+ *      `ERR_UPDATER_INVALID_UPDATE_FILE`, the hook saw the file under a temporary name, and nothing is installed
+ *   2. relaunch with an ACCEPTING hook and `AUTO_UPDATER_TEST_NEXT_LAUNCH=true` — the update is downloaded,
+ *      verified under its temporary name, and queued instead of installed
+ *   3. relaunch with `autoInstallEvent: "onNextLaunch"` — the pending installer is re-verified, this time under
+ *      its REAL name, and installed
+ *   4. poll until the installed binary reports the new version
+ *
+ * Steps 2-3 are why this has to run against a packaged app across real process restarts: the hook only ever
+ * meets a pending installer on a later launch, which no in-process test can reproduce. Step 4 additionally
+ * covers `AppImageUpdater`'s deferred executable bit — the AppImage is chmod'ed only after verification, so a
+ * broken deferral surfaces here as an install that never completes.
+ */
+export async function runVerifyUpdateFileTest(context: TestContext, target: string, packageManager: string, arch: Arch = Arch.x64, toolsets: ToolsetConfig = {}): Promise<void> {
+  await runUpdateScenario(context, {
+    target,
+    packageManager,
+    arch,
+    toolsets,
+    tmpDirPrefix: "verify-update-file",
+    builds: [{ version: OLD_VERSION_NUMBER }, { version: NEW_VERSION_NUMBER }],
+    initialUpdateConfig: async () => ({}),
+    scenario: async ({ expect, appPath, vm, updateConfigPath, packageManager: pm }) => {
+      // 1. A rejecting hook must abort the download before anything becomes installable.
+      const rejected = await launchAndWaitForQuit({
+        appPath,
+        vm,
+        timeoutMs: 5 * 60 * 1000,
+        updateConfigPath,
+        expectedVersion: OLD_VERSION_NUMBER,
+        packageManagerToTest: pm,
+        waitForExit: true,
+        env: { AUTO_UPDATER_TEST_VERIFY_UPDATE_FILE: "reject" },
+      })
+      log.info({ version: rejected.version }, "Rejecting-verifier launch completed")
+      await rejected.assert(() => {
+        expect(rejected.version).toMatch(OLD_VERSION_NUMBER)
+        const calls = verifyUpdateFileCalls(rejected.stdout)
+        expect(calls).toHaveLength(1)
+        // the downloaded bytes are offered under a temporary name, so a rejected file is never installable
+        expect(calls[0]).toMatchObject({ mode: "reject", temporary: true, exists: true, package: null })
+        expect(calls[0].name).toBe(`temp-${calls[0].original}`)
+        expect(rejected.stdout).toContain("ERR_UPDATER_INVALID_UPDATE_FILE")
+        expect(rejected.stdout).toContain("blackbox verifyUpdateFile rejection")
+        expect(rejected.stdout).not.toContain("Update downloaded")
+      })
+
+      // ... and nothing was installed.
+      const afterRejection = await launchAndWaitForQuit({
+        appPath,
+        vm,
+        timeoutMs: 60 * 1000,
+        updateConfigPath,
+        packageManagerToTest: pm,
+        env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
+        waitForExit: true,
+      })
+      await afterRejection.assert(() => expect(afterRejection.version).toMatch(OLD_VERSION_NUMBER))
+
+      // 2. An accepting hook lets the download through; the install is queued for the next launch.
+      const queued = await launchAndWaitForQuit({
+        appPath,
+        vm,
+        timeoutMs: 5 * 60 * 1000,
+        updateConfigPath,
+        expectedVersion: OLD_VERSION_NUMBER,
+        packageManagerToTest: pm,
+        waitForExit: true,
+        env: { AUTO_UPDATER_TEST_VERIFY_UPDATE_FILE: "accept", AUTO_UPDATER_TEST_NEXT_LAUNCH: "true" },
+      })
+      log.info({ version: queued.version }, "Accepting-verifier queue launch completed")
+      await queued.assert(() => {
+        expect(queued.version).toMatch(OLD_VERSION_NUMBER)
+        const calls = verifyUpdateFileCalls(queued.stdout)
+        expect(calls).toHaveLength(1)
+        expect(calls[0]).toMatchObject({ mode: "accept", temporary: true, exists: true })
+        expect(queued.stdout).toContain("Update downloaded")
+        expect(queued.stdout).toContain("Update is marked for install on next launch")
+      })
+
+      // 3. The pending installer is re-verified on the next launch — this time under its real name.
+      const installed = await launchAndWaitForQuit({
+        appPath,
+        vm,
+        timeoutMs: 5 * 60 * 1000,
+        updateConfigPath,
+        expectedVersion: OLD_VERSION_NUMBER,
+        packageManagerToTest: pm,
+        waitForExit: true,
+        env: { AUTO_UPDATER_TEST_VERIFY_UPDATE_FILE: "accept", AUTO_UPDATER_TEST_AUTO_INSTALL_ON_NEXT_LAUNCH: "true" },
+      })
+      log.info({ version: installed.version }, "Pending-install verification launch completed")
+      await installed.assert(() => {
+        const calls = verifyUpdateFileCalls(installed.stdout)
+        expect(calls).toHaveLength(1)
+        // no download happened on this launch, so the hook meets the cached installer at its real path
+        expect(calls[0]).toMatchObject({ mode: "accept", temporary: false, exists: true })
+        expect(calls[0].name).toBe(calls[0].original)
+        // AppImageUpdater defers the executable bit until after verification, but a *pending* installer was
+        // already verified and chmod'ed on the launch that downloaded it
+        if (target === "AppImage") {
+          expect(calls[0].executable).toBe(true)
+        }
+        expect(installed.stdout).toContain("Installing pending update")
+      })
+
+      // 4. The install completes (for AppImage, only possible if the deferred chmod actually ran).
+      await pollUntilNewVersionInstalled(expect, { appPath, vm, updateConfigPath, packageManagerToTest: pm })
+    },
+  })
+}
+
+// ---------------------------------------------------------------------------------------------------------
 // Signed update manifests (Ed25519) — see website/docs/features/signed-update-manifests.md
 // ---------------------------------------------------------------------------------------------------------
 
@@ -687,7 +818,7 @@ async function runUpdateScenario(
   const tmpDir = new TmpDir(tmpDirPrefix)
   const outDirs: ApplicationUpdatePaths[] = []
   const shouldRunWindowsTests = process.platform === "win32" || (target === "nsis" && vm != null)
-  const buildConfig = deepAssign({ toolsets } as Configuration, extraConfig ?? {})
+  const buildConfig = deepAssign({ toolsets }, extraConfig ?? {})
   await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, buildConfig, builds)
   expect(outDirs.length).toBe(builds.length)
 

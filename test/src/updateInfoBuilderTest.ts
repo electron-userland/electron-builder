@@ -28,7 +28,7 @@ function makeTask(dir: string, url: string, sha512: string, arch: Arch | null, f
       path: url,
       sha512,
     } as any,
-    publishConfiguration: basePublishConfig as any,
+    publishConfiguration: basePublishConfig,
     packager: makeTaskPackager(),
     arch,
   }
@@ -481,6 +481,7 @@ test("app-update.yml: an explicit publicKey LIST wins as-is over derivation, and
     const packager = makeAppUpdateConfigPackager([parsePrivateKey(current.privateKeyPem)], { publicKey: [current.publicKeyPem, next.publicKeyPem] })
     const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
     expect(publishConfig?.updateManifestPublicKey).toEqual([current.publicKeyPem, next.publicKeyPem])
+    // oxlint-disable-next-line typescript/no-base-to-string -- substring check over log.warn args; an object fallback stringifying to "[object Object]" simply does not match
     expect(warn.mock.calls.some(c => String(c[1] ?? c[0]).includes("updateManifest.publicKey"))).toBe(false)
   } finally {
     warn.mockRestore()
@@ -504,6 +505,7 @@ test("app-update.yml warns when none of the signing keys is in the explicit trus
     const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
     // still a warning, not an error: the release is built, but cannot verify its own manifests
     expect(publishConfig?.updateManifestPublicKey).toBe(newKey.publicKeyPem)
+    // oxlint-disable-next-line typescript/no-base-to-string -- substring check over log.warn args; an object fallback stringifying to "[object Object]" simply does not match
     expect(warn.mock.calls.some(c => String(c[1] ?? c[0]).includes("none of the update-manifest signing keys"))).toBe(true)
   } finally {
     warn.mockRestore()

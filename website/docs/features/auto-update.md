@@ -122,6 +122,50 @@ export default class AppUpdater {
 }
 ```
 
+### Custom downloaded-file verification
+
+All updater classes inherit `AppUpdater.verifyUpdateFile`, which lets you run your own verification step on an update file before it is allowed to become installable.
+If the verification fails, the update is aborted, the file is deleted and an `ERR_UPDATER_INVALID_UPDATE_FILE` error is emitted.
+
+The hook runs on **every** path that can lead to an install, so a rejected file can never reach the installer:
+
+| When | `updateFilePath` points to |
+| --- | --- |
+| Right after a fresh download | the file under a **temporary** name — it is renamed to `originalUpdateFileName` only after your verification succeeds, so an unverified file is never executable under its real name |
+| An update downloaded by an earlier session and reused from the cache | the cached file, under its real name |
+| Before an install-on-next-launch spawns the cached installer | the pending installer, under its real name |
+
+Only the first case can quarantine the file under a temporary name; in the other two the bytes are already on disk under their real name from a previous session, and the hook is a re-verification of a file at rest. `cancellationToken` is set only when the verification belongs to a download.
+
+For NSIS web installers, `packageFilePath` is also provided and points to the downloaded companion `.7z` package. It is omitted when no such package was downloaded.
+
+This hook is generic and works across updater implementations. On Windows NSIS updates, the built-in Authenticode verification remains available separately as `NsisUpdater.verifyUpdateFileAuthenticodeSignature`, and both run — Authenticode first, then your hook.
+
+```ts
+import { NsisUpdater } from "electron-updater"
+
+const updater = new NsisUpdater()
+
+updater.verifyUpdateFile = async ({ updateFilePath, originalUpdateFileName, packageFilePath, cancellationToken }) => {
+  try {
+    // Example for your custom code, which can inspect the update file at `updateFilePath`,
+    // can use the expected filename `originalUpdateFileName`, and for NSIS web installers can also inspect
+    // the downloaded companion package at `packageFilePath`.
+    const signatureFile = getCorrespondingSignatureFile(originalUpdateFileName)
+    checkSignature(updateFilePath, signatureFile)
+    return { response: "success" }
+  }
+  catch (err) {
+    return { response: "failure", message: `${err}` }
+  }
+}
+
+// assigning null restores the default (a stub that always succeeds)
+updater.verifyUpdateFile = null
+```
+
+A `failure` must carry a `message`; it is what the emitted error reports as the reason.
+
 ## Install on Next Launch (Windows/Linux)
 
 When a downloaded update is automatically installed is controlled by `autoUpdater.autoInstallEvent` (`"manual" | "onQuit" | "onNextLaunch"`, default `"onQuit"`). With the default `"onQuit"`, the update is installed when the app quits: the updater spawns the installer as a detached process while the app is exiting. If the quit happens because the OS session is ending (shutdown, reboot or log off on Windows), the OS can kill that installer mid-install and leave the app in a broken, partially-uninstalled state ([#7807](https://github.com/electron-userland/electron-builder/issues/7807)).

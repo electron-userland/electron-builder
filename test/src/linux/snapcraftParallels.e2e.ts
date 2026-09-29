@@ -12,7 +12,7 @@ const isEnabled = process.env.RUN_SNAP_TESTS === "true" && process.platform !== 
 const linuxVmPromise: Promise<Awaited<ReturnType<typeof getLinuxVm>>> =
   process.platform === "darwin" && isEnabled ? getLinuxVm(new DebugLogger(false)).catch(() => undefined) : Promise.resolve(undefined)
 
-const vitestOptions = { sequential: true, timeout: EXTENDED_TIMEOUT }
+const vitestOptions = { concurrent: false, timeout: EXTENDED_TIMEOUT }
 
 // Run this command IN the Ubuntu VM terminal ($(whoami) expands to the VM user, e.g. "parallels").
 // Grants passwordless sudo only for snap install/remove — no broader access.

@@ -30,12 +30,6 @@ exports[`electronDist as callback function for path to local electron zipped art
 }
 `;
 
-exports[`electronDist as callback function for path to local folder with electron builds zipped  1`] = `
-{
-  "linux": [],
-}
-`;
-
 exports[`electronDist as callback function for path to locally unzipped 1`] = `
 {
   "linux": [],

@@ -122,7 +122,7 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-describe("streamCollectorCommandToFile", { sequential: true }, () => {
+describe("streamCollectorCommandToFile", { concurrent: false }, () => {
   describe("Windows PowerShell -EncodedCommand wrapping", () => {
     test(".cmd file: spawn receives powershell.exe with -EncodedCommand", async ({ expect }) => {
       setPlatform("win32")

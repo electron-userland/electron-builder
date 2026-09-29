@@ -1,5 +1,5 @@
-import { GenericServerOptions, S3Options, UpdateInfo } from "builder-util-runtime"
-import { UpdateCheckResult } from "electron-updater"
+import { GenericServerOptions, S3Options } from "builder-util-runtime"
+import { NsisUpdater, UpdateCheckResult } from "electron-updater"
 import fsExtra from "fs-extra"
 import { createHash } from "crypto"
 import * as http from "http"
@@ -8,7 +8,16 @@ import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
 import { removeUnstableProperties } from "../helpers/packTester.js"
-import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import {
+  createNsisUpdater,
+  createTestAppAdapter,
+  createVerifyUpdateFileMock,
+  expectVerifyUpdateFileFailure,
+  trackEvents,
+  tuneTestUpdater,
+  validateDownload,
+  writeUpdateConfig,
+} from "../helpers/updaterTestUtil.js"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { serializeToYaml, TmpDir } from "builder-util"
 import { ExpectStatic } from "vitest"
@@ -28,7 +37,7 @@ function installerName(version: string) {
   return `TestApp Setup ${version}.exe`
 }
 
-function channelYml(options: { version?: string; sha512?: string; stagingPercentage?: number } = {}): string {
+function channelYml(options: { version?: string; sha512?: string; stagingPercentage?: number; webInstallerPackage?: { fileName: string; content: Buffer } } = {}): string {
   const version = options.version ?? UPDATE_VERSION
   const fileName = installerName(version)
   const sha512 = options.sha512 ?? createHash("sha512").update(INSTALLER_CONTENT).digest("base64")
@@ -41,6 +50,17 @@ function channelYml(options: { version?: string; sha512?: string; stagingPercent
   }
   if (options.stagingPercentage != null) {
     info.stagingPercentage = options.stagingPercentage
+  }
+  if (options.webInstallerPackage != null) {
+    const { fileName: packageFileName, content } = options.webInstallerPackage
+    info.packages = {
+      [process.arch]: {
+        file: packageFileName,
+        path: packageFileName,
+        sha512: createHash("sha512").update(content).digest("base64"),
+        size: content.length,
+      },
+    }
   }
   return serializeToYaml(info)
 }
@@ -104,6 +124,141 @@ test("file url generic", config, async ({ expect }) => {
     const updater = await createNsisUpdater()
     updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
     await validateDownload(expect, updater)
+  } finally {
+    await close()
+  }
+})
+
+// verifyUpdateFile is an inherited property, see baseUpdaterUnitTest.ts for test coverage on the parent class.
+test("file url generic aborts when verifyUpdateFile rejects the downloaded temp file", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+    const { mock, observations } = createVerifyUpdateFileMock(() => ({ response: "failure", message: "custom verification failed" }))
+    updater.verifyUpdateFile = mock
+
+    const actualEvents = trackEvents(updater)
+    const updateCheckResult = await updater.checkForUpdates()
+
+    const observation = await expectVerifyUpdateFileFailure({
+      expect,
+      downloadPromise: updateCheckResult?.downloadPromise,
+      verifyUpdateFile: mock,
+      observations,
+      expectedErrorMessageSubstring: "custom verification failed",
+    })
+    expect(observation.originalUpdateFileName).toBe(installerName(UPDATE_VERSION))
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
+  } finally {
+    await close()
+  }
+})
+
+test("web installer passes packageFilePath to verifyUpdateFile", config, async ({ expect }) => {
+  const packageFileName = `TestApp-${UPDATE_VERSION}.nsis.7z`
+  const packageContent = Buffer.from("electron-builder localhost update-server test nsis-web package payload")
+  const { url, close } = await serveUpdate({
+    "latest.yml": channelYml({ webInstallerPackage: { fileName: packageFileName, content: packageContent } }),
+    [installerName(UPDATE_VERSION)]: INSTALLER_CONTENT,
+    [packageFileName]: packageContent,
+  })
+  try {
+    const updater = await createNsisUpdater()
+    updater.disableWebInstaller = false
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+
+    let packageFileExistedDuringVerification = false
+    const { mock, observations } = createVerifyUpdateFileMock(async params => {
+      packageFileExistedDuringVerification = await fsExtra.pathExists(params.packageFilePath!)
+      return { response: "failure", message: "custom verification failed" }
+    })
+    updater.verifyUpdateFile = mock
+
+    const updateCheckResult = await updater.checkForUpdates()
+    const observation = await expectVerifyUpdateFileFailure({
+      expect,
+      downloadPromise: updateCheckResult?.downloadPromise,
+      verifyUpdateFile: mock,
+      observations,
+      expectedErrorMessageSubstring: "custom verification failed",
+    })
+
+    expect(observation.originalUpdateFileName).toBe(installerName(UPDATE_VERSION))
+    expect(path.basename(observation.packageFilePath!)).toBe(`package-${UPDATE_VERSION}.7z`)
+    expect(packageFileExistedDuringVerification).toBe(true)
+    await assertThat(expect, observation.packageFilePath!).doesNotExist()
+  } finally {
+    await close()
+  }
+})
+
+test("verifyUpdateFile also gates a cached update reused after an app relaunch", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    // both updaters share one app adapter, so the second one reads the cache the first one wrote — the
+    // cross-launch branch of validateDownloadedPath (update-info.json + re-hash), not the in-session one
+    const appAdapter = await createTestAppAdapter()
+    const updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+
+    const firstLaunch = new NsisUpdater(null, appAdapter)
+    tuneTestUpdater(firstLaunch)
+    firstLaunch.updateConfigPath = updateConfigPath
+    const accepting = createVerifyUpdateFileMock(() => ({ response: "success" }))
+    firstLaunch.verifyUpdateFile = accepting.mock
+    const firstDownload = await (await firstLaunch.checkForUpdates())?.downloadPromise
+    await assertThat(expect, firstDownload!.updateFile).isFile()
+
+    // a fresh updater instance, as after a restart: nothing is downloaded again, but the verifier must still run
+    const secondLaunch = new NsisUpdater(null, appAdapter)
+    tuneTestUpdater(secondLaunch)
+    secondLaunch.updateConfigPath = updateConfigPath
+    const rejecting = createVerifyUpdateFileMock(() => ({ response: "failure", message: "stale cached file rejected" }))
+    secondLaunch.verifyUpdateFile = rejecting.mock
+
+    await expect((await secondLaunch.checkForUpdates())?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_INVALID_UPDATE_FILE",
+      message: expect.stringContaining("stale cached file rejected"),
+    })
+
+    expect(rejecting.mock).toHaveBeenCalledTimes(1)
+    expect(rejecting.observations[0].updateFilePath).toBe(firstDownload!.updateFile)
+    await assertThat(expect, firstDownload!.updateFile).doesNotExist()
+  } finally {
+    await close()
+  }
+})
+
+test("verifyUpdateFile also gates an update reused from the cache in the same session", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+
+    // first round: the verifier accepts, so the update lands in the cache under its real filename
+    const accepting = createVerifyUpdateFileMock(() => ({ response: "success" }))
+    updater.verifyUpdateFile = accepting.mock
+    const firstDownload = await (await updater.checkForUpdates())?.downloadPromise
+    expect(accepting.mock).toHaveBeenCalledTimes(1)
+    await assertThat(expect, firstDownload!.updateFile).isFile()
+
+    // second round: nothing is downloaded again, but the verifier must still get to inspect the cached file
+    const rejecting = createVerifyUpdateFileMock(() => ({ response: "failure", message: "cached file rejected" }))
+    updater.verifyUpdateFile = rejecting.mock
+    const actualEvents = trackEvents(updater)
+    await expect((await updater.checkForUpdates())?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_INVALID_UPDATE_FILE",
+      message: expect.stringContaining("cached file rejected"),
+    })
+
+    expect(rejecting.mock).toHaveBeenCalledTimes(1)
+    const [observation] = rejecting.observations
+    // the cached file is re-verified at its real name — there is no temporary name to quarantine it under
+    expect(observation.updateFilePath).toBe(firstDownload!.updateFile)
+    expect(observation.updateFileExisted).toBe(true)
+    // and a rejected cached file does not survive to be installed
+    await assertThat(expect, observation.updateFilePath).doesNotExist()
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
   } finally {
     await close()
   }
@@ -185,7 +340,7 @@ test("checkForUpdates several times", config, async ({ expect }) => {
 })
 
 async function checkDownloadPromise(expect: ExpectStatic, updateCheckResult: UpdateCheckResult | null) {
-  return await assertThat(expect, (await updateCheckResult?.downloadPromise)!.updateFile).isFile()
+  return await assertThat(expect, (await updateCheckResult!.downloadPromise)!.updateFile).isFile()
 }
 
 test("test error", config, async ({ expect }) => {
@@ -304,8 +459,8 @@ test.ifWindows("test custom signature verifier", config, async ({ expect }) => {
       url,
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
-    updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
-      return Promise.resolve(null)
+    updater.verifyUpdateFileAuthenticodeSignature = (_publisherName: string[], _path: string) => {
+      return Promise.resolve({ response: "success" })
     }
     await validateDownload(expect, updater)
   } finally {
@@ -322,8 +477,8 @@ test.ifWindows("test custom signature verifier - signing error message", config,
       url,
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
-    updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
-      return Promise.resolve("signature verification failed")
+    updater.verifyUpdateFileAuthenticodeSignature = (_publisherName: string[], _path: string) => {
+      return Promise.resolve({ response: "failure", message: "signature verification failed" })
     }
     const actualEvents = trackEvents(updater)
     await assertThat(
@@ -331,6 +486,30 @@ test.ifWindows("test custom signature verifier - signing error message", config,
       updater.checkForUpdates().then((it): any => it?.downloadPromise)
     ).throws()
     expect(actualEvents).toMatchSnapshot()
+  } finally {
+    await close()
+  }
+})
+
+test("malformed custom signature verifier result fails closed", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater("1.0.2")
+    updater.updateConfigPath = await writeUpdateConfig({
+      provider: "generic",
+      url,
+      publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
+    })
+    // @ts-expect-error intentionally violating the verifier contract to cover fail-closed behavior
+    updater.verifyUpdateFileAuthenticodeSignature = async (_publisherName: string[], _path: string) => null
+    const actualEvents = trackEvents(updater)
+    const updateCheckResult = await updater.checkForUpdates()
+
+    await expect(updateCheckResult?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_INVALID_SIGNATURE",
+      message: expect.stringContaining("unknown error"),
+    })
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
   } finally {
     await close()
   }
@@ -396,7 +575,7 @@ test("cancel download with progress", config, async ({ expect }) => {
     path: fileName,
     sha512,
     releaseDate: RELEASE_DATE,
-  } as UpdateInfo)
+  })
 
   const sockets = new Set<Socket>()
   const server = http.createServer((request, response) => {

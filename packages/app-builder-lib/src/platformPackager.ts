@@ -302,7 +302,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       targets,
     })
     // test-only early exit (see PackagerOptions.afterPackTestHook); a no-op unless the option is set
-    if (await this.info.shouldSkipTargetsAfterPack({ appOutDir, outDir, arch, targets, packager: this, electronPlatformName: this.platform.nodeName as ElectronPlatformName })) {
+    if (await this.info.shouldSkipTargetsAfterPack({ appOutDir, outDir, arch, targets, packager: this, electronPlatformName: this.platform.nodeName })) {
       return
     }
     this.packageInDistributableFormat(appOutDir, arch, targets, taskManager)

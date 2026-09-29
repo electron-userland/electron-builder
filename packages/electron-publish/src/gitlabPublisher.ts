@@ -240,7 +240,7 @@ export class GitlabPublisher extends HttpPublisher {
         {
           protocol: parsedUrl.protocol,
           hostname: parsedUrl.hostname,
-          port: parsedUrl.port as any,
+          port: parsedUrl.port,
           path: parsedUrl.pathname,
           headers: { ...form.getHeaders(), ...getGitlabAuthHeaders(this.token) },
           timeout: this.info.timeout || undefined,
@@ -265,7 +265,7 @@ export class GitlabPublisher extends HttpPublisher {
         {
           protocol: parsedUrl.protocol,
           hostname: parsedUrl.hostname,
-          port: parsedUrl.port as any,
+          port: parsedUrl.port,
           path: parsedUrl.pathname,
           headers: { "Content-Length": dataLength, "Content-Type": mime.getType(fileName) || "application/octet-stream", ...getGitlabAuthHeaders(this.token) },
           timeout: this.info.timeout || undefined,

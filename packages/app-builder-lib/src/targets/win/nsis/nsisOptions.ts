@@ -64,7 +64,7 @@ export interface CommonNsisOptions {
   readonly warningsAsErrors?: boolean
 
   /**
-   * Forces zip compression format instead of LZMA. Used internally for differential update packages.
+   * Use zip instead of 7z (LZMA) for the embedded app package. Only applies to portable targets and to installers built with `differentialPackage: false`; ignored (with a warning) when `differentialPackage` is enabled and for `nsis-web`, which always use 7z.
    * @default false
    */
   readonly useZip?: boolean
@@ -221,7 +221,7 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    *   block). Storing it keeps unchanged regions byte-identical between releases, making the delta
    *   proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%
    *   instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar
-   *   saved.
+   *   saved. Without an `app.asar` (e.g. `asar` is disabled) there is nothing to store, so it behaves like `true`.
    * - anything else (`true`, `"compressed"`, unset) — differential-aware, whole package compressed.
    * @default true
    */

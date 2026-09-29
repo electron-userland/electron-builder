@@ -27,7 +27,7 @@ const stubApp: AppAdapter = {
 // current.blockmap describing it. These tests cover the cache-consistency contract from
 // https://github.com/electron-userland/electron-builder/issues/10097: the cached blockmap must never
 // survive a download round that refreshed the cached binary without producing a new blockmap.
-describe("executeDownload blockmap cache consistency", { sequential: true }, () => {
+describe("executeDownload blockmap cache consistency", { concurrent: false }, () => {
   const OLD_BINARY_FILE_NAME = "update.zip"
   let cacheDir: string
   let pendingDir: string

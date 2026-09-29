@@ -6,7 +6,7 @@ import { assertPack } from "../helpers/packTester"
 // Full-build copy of macPackagerTest.ts "two-package": builds dmg + zip for x64, arm64 and universal and asserts the
 // artifact list (artifactName macros incl. ${os}/${arch}, blockmaps, multi-arch latest-mac.yml) via the snapshot.
 // The unit-level original stops after the app bundles are assembled (afterPackTestHook).
-describe("macPackager", { sequential: true }, () => {
+describe("macPackager", { concurrent: false }, () => {
   test.ifMac("two-package (e2e)", ({ expect }) =>
     assertPack(
       expect,
