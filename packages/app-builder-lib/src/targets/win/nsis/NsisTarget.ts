@@ -521,26 +521,13 @@ export class NsisTarget extends Target {
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
     await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, false, archs)))
 
-    // http://forums.winamp.com/showthread.php?p=3078545
-    // TODO: remove workaround when arm64 macOS has native wine support
-    if (isMacOsCatalina()) {
-      try {
-        await UninstallerReader.exec(installerPath, uninstallerPath)
-      } catch (error: any) {
-        log.warn(`packager.vm is used: ${error.message}`)
-
-        const vm = await packager.vm.value
-        await vm.exec(installerPath, [])
-        // Parallels VM can exit after command execution, but NSIS continue to be running
-        let i = 0
-        while (!(await exists(uninstallerPath)) && i++ < 100) {
-          // noinspection JSUnusedLocalSymbols
-          await sleep(300)
-        }
-      }
-    } else {
-      const wineVm = new WineVmManager(packager.config.toolsets?.wine, packager.buildResourcesDir)
-      await wineVm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
+    // The uninstaller is extracted from the installer in JS, emulating what NSIS `WriteUninstaller` does, and verified with the NSIS CRC check.
+    // Running the installer (natively, via wine or in a VM) is only a fallback, e.g. for solid compression or `!uninstfinalize`.
+    try {
+      await UninstallerReader.exec(installerPath, uninstallerPath)
+    } catch (error: any) {
+      log.warn({ reason: error.message }, "cannot extract uninstaller from installer, running installer to write it instead")
+      await this.runInstallerToWriteUninstaller(installerPath, uninstallerPath)
     }
     await packager.signIf(uninstallerPath)
 
@@ -548,6 +535,24 @@ export class NsisTarget extends Target {
     // platform-specific path, not wine
     defines.UNINSTALLER_OUT_FILE = uninstallerPath
     return { script, isCustomScript: false }
+  }
+
+  private async runInstallerToWriteUninstaller(installerPath: string, uninstallerPath: string): Promise<void> {
+    const packager = this.packager
+    // wine cannot run 32-bit executables on macOS Catalina and later
+    if (isMacOsCatalina()) {
+      const vm = await packager.vm.value
+      await vm.exec(installerPath, [])
+      // Parallels VM can exit after command execution, but NSIS continue to be running
+      let i = 0
+      while (!(await exists(uninstallerPath)) && i++ < 100) {
+        // noinspection JSUnusedLocalSymbols
+        await sleep(300)
+      }
+    } else {
+      const wineVm = new WineVmManager(packager.config.toolsets?.wine, packager.buildResourcesDir)
+      await wineVm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
+    }
   }
 
   private computeVersionKey(short = false) {
