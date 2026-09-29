@@ -170,12 +170,12 @@ export class PublishManager implements PublishContext {
       // snap-, flatpak- or mas-only pack has none (Linux and mas are not filtered above), nor has an installer whose
       // target-level `publish` is `null` or waived.
       const { publishConfigs, emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, event.targets, event.arch, this.isPublish)
-      if (emitsManifest) {
-        await packager.requireUpdateSigningKeys(this.isPublish)
-      }
+      const signingKeys = emitsManifest ? await packager.requireUpdateSigningKeys(this.isPublish) : []
       const publishConfig = await createAppUpdateConfiguration(packager, publishConfigs, this.isPublish, false)
       if (publishConfig != null) {
         await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig)
+      } else if (signingKeys.length > 0) {
+        this.warnSignedManifestWithoutTrustKey(packager, event.targets)
       }
     })
 
@@ -215,6 +215,30 @@ export class PublishManager implements PublishContext {
         }
       }
     }
+  }
+
+  private readonly warnedMissingTrustKey = new WeakSet<PlatformPackager<any>>()
+
+  /**
+   * A target's own `publish` (e.g. `nsis.publish`) makes it emit a signed manifest, but app-update.yml - the only place
+   * electron-builder embeds the trust list - is resolved from the platform/root `publish` alone and is not written, so
+   * installs get neither a feed nor a key to verify it with. Warned once per platform, not per arch.
+   */
+  private warnSignedManifestWithoutTrustKey(packager: PlatformPackager<any>, targets: Array<Target>): void {
+    if (this.warnedMissingTrustKey.has(packager)) {
+      return
+    }
+    this.warnedMissingTrustKey.add(packager)
+    log.warn(
+      {
+        platform: packager.platform.name,
+        targets: targets.map(it => it.name).join(", "),
+        solution: `set \`${packager.platform.buildConfigurationKey}.publish\` (or the root \`publish\`), or set \`autoUpdater.updateManifestPublicKey\` in the app along with \`setFeedURL\``,
+      },
+      "update manifests are signed from a target-level `publish` configuration, but no app-update.yml is written because no platform- or root-level `publish` resolves: " +
+        "installed apps get neither an update feed nor the public key to verify these manifests. " +
+        "See https://www.electron.build/features/signed-update-manifests"
+    )
   }
 
   private getAppInfo(platformPackager: PlatformPackager<any> | null) {
