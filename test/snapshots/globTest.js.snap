@@ -10163,7 +10163,7 @@ exports[`unpackDir 2`] = `
       "size": 7820,
     },
     "package.json": {
-      "offset": 8300,
+      "offset": 8310,
       "size": 230,
     },
     "path": {
