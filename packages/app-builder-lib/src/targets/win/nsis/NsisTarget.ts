@@ -80,6 +80,17 @@ export class NsisTarget extends Target {
     if (deps != null && deps["electron-squirrel-startup"] != null) {
       log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
+
+    if (this.options.useZip === true && !this.isZipPayload) {
+      if (this.isWebInstaller) {
+        log.warn({ target: this.name, solution: "useZip only applies to the nsis and portable targets" }, "useZip is ignored because the web installer always uses a 7z package")
+      } else {
+        log.warn(
+          { target: this.name, solution: "set differentialPackage: false to get a zip payload" },
+          "useZip is ignored because differential-aware builds always use a 7z payload"
+        )
+      }
+    }
   }
 
   get shouldBuildUniversalInstaller() {
@@ -99,20 +110,53 @@ export class NsisTarget extends Target {
     return !this.isPortable && this.options.differentialPackage !== false
   }
 
+  // Single source of truth for the payload format: the archive written in buildAppPackage and the
+  // extractor selected by the ZIP_COMPRESSION / COMPRESSION_METHOD defines must never disagree.
+  // The web installer's download/extract path only handles 7z, so it never gets a zip package.
+  private get isZipPayload(): boolean {
+    return !this.isWebInstaller && !this.isBuildDifferentialAware && this.options.useZip === true
+  }
+
+  private get isStoreAsar(): boolean {
+    return this.isBuildDifferentialAware && this.options.differentialPackage === "store-asar"
+  }
+
+  /**
+   * Everything that makes buildAppPackage's archive differ between targets. Targets sharing an
+   * AppPackageHelper (nsis + portable) reuse one app package per arch only when this key matches,
+   * so a target never embeds an archive whose format or layout was chosen by another target.
+   * @private
+   */
+  get appPackageCacheKey(): string {
+    const options = this.options
+    return JSON.stringify({
+      format: this.isZipPayload ? "zip" : "7z",
+      differentialAware: this.isBuildDifferentialAware,
+      storeAsar: this.isStoreAsar,
+      excluded: this.getPreCompressedFileExtensions(),
+      // mirrors CopyElevateHelper's per-target packElevateHelper / perMachine resolution
+      elevate: options.packElevateHelper !== false || options.perMachine === true,
+      blockmap: this.isBuildDifferentialAware && this.isWebInstaller,
+    })
+  }
+
   private getPreCompressedFileExtensions(): Array<string> | null {
     const result = this.isWebInstaller ? null : this.options.preCompressedFileExtensions
     return result == null ? null : asArray(result).map(it => (it.startsWith(".") ? it : `.${it}`))
   }
 
   /** @private */
-  async buildAppPackage(appOutDir: string, arch: Arch, elevateHelper?: CopyElevateHelper | null): Promise<PackageFileInfo> {
-    const options = this.options
+  async buildAppPackage(appOutDir: string, arch: Arch, elevateHelper?: CopyElevateHelper | null, fileNameSuffix = ""): Promise<PackageFileInfo> {
     const packager = this.packager
 
     const isBuildDifferentialAware = this.isBuildDifferentialAware
-    const format = !isBuildDifferentialAware && options.useZip ? "zip" : "7z"
-    const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
+    const format = this.isZipPayload ? "zip" : "7z"
+    const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}${fileNameSuffix}.nsis.${format}`)
     const preCompressedFileExtensions = this.getPreCompressedFileExtensions()
+    const isStoreAsar = this.isStoreAsar
+    if (isStoreAsar) {
+      await this.warnIfStoreAsarHasNoAsar(appOutDir)
+    }
     const archiveOptions: ArchiveOptions = {
       withoutDir: true,
       compression: packager.compression,
@@ -125,7 +169,7 @@ export class NsisTarget extends Target {
       // Opt-in via differentialPackage: "store-asar" — keep the asar a byte-stable Copy member so a
       // differential update pays only for its changed blocks instead of re-downloading the whole
       // recompressed asar (see nsisOptions docs).
-      storedPaths: isBuildDifferentialAware && options.differentialPackage === "store-asar" ? ["resources/app.asar"] : null,
+      storedPaths: isStoreAsar ? ["resources/app.asar"] : null,
     }
 
     const timer = time(`nsis package, ${Arch[arch]}`)
@@ -151,6 +195,31 @@ export class NsisTarget extends Target {
       return await createPackageFileInfo(archiveFile)
     }
   }
+
+  /**
+   * `archive()` silently skips stored paths that don't exist, so without an asar (e.g. `asar: false`)
+   * "store-asar" would do nothing unnoticed. The fallback is harmless — the differential package is
+   * non-solid, so each unpacked file is already its own block — but say so once per target.
+   * @private
+   */
+  async warnIfStoreAsarHasNoAsar(appOutDir: string): Promise<void> {
+    // every arch is packaged with the same asar setting, so checking the first one is enough (and
+    // flagging before the await keeps concurrent per-arch packaging from warning twice)
+    if (this.storeAsarChecked) {
+      return
+    }
+    this.storeAsarChecked = true
+    const asarFile = path.join(appOutDir, "resources", "app.asar")
+    if (await exists(asarFile)) {
+      return
+    }
+    log.warn(
+      { reason: "resources/app.asar not found (e.g. asar is disabled)", file: log.filePath(asarFile) },
+      'differentialPackage "store-asar" has no effect, the app package is compressed normally'
+    )
+  }
+
+  private storeAsarChecked = false
 
   protected installerFilenamePattern(primaryArch?: Arch | null, defaultArch?: string): string {
     const setupText = this.isPortable ? "" : "Setup "
@@ -630,12 +699,11 @@ export class NsisTarget extends Target {
     }
 
     if (!this.isWebInstaller && defines.APP_BUILD_DIR == null) {
-      const options = this.options
-      if (options.useZip) {
+      if (this.isZipPayload) {
         defines.ZIP_COMPRESSION = null
       }
 
-      defines.COMPRESSION_METHOD = options.useZip ? "zip" : "7z"
+      defines.COMPRESSION_METHOD = this.isZipPayload ? "zip" : "7z"
     }
   }
 

@@ -5,7 +5,7 @@ import { AppUpdater } from "./AppUpdater.js"
 
 const require = createRequire(import.meta.url)
 
-import { UpdateInfo } from "builder-util-runtime"
+import type { UpdateInfo } from "builder-util-runtime"
 
 export { AppImageUpdater } from "./AppImageUpdater.js"
 export { BaseUpdater } from "./BaseUpdater.js"
@@ -80,11 +80,5 @@ export const autoUpdater: AppUpdater = new Proxy({} as AppUpdater, {
     return Reflect.set(_autoUpdater, prop, value, _autoUpdater)
   },
 })
-
-/**
- * return null if verify signature succeed
- * return error message if verify signature failed
- */
-export type VerifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>
 
 export type VerifyUpdateSupport = (updateInfo: UpdateInfo) => boolean | Promise<boolean>

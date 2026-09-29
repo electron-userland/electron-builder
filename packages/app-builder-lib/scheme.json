@@ -4504,7 +4504,7 @@
         },
         "differentialPackage": {
           "default": true,
-          "description": "Marks the package as built with differential download support for the update server, and selects how the\napp package is compressed:\n\n- `false` — no differential download support.\n- `\"store-asar\"` — differential-aware, with the app's `resources/app.asar` stored uncompressed (7-Zip\n  `Copy`) inside the package. The differential updater diffs the *compressed* package with a\n  content-defined blockmap, and the asar is a single compressed member — so any change to app code\n  re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every\n  block). Storing it keeps unchanged regions byte-identical between releases, making the delta\n  proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%\n  instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar\n  saved.\n- anything else (`true`, `\"compressed\"`, unset) — differential-aware, whole package compressed.",
+          "description": "Marks the package as built with differential download support for the update server, and selects how the\napp package is compressed:\n\n- `false` — no differential download support.\n- `\"store-asar\"` — differential-aware, with the app's `resources/app.asar` stored uncompressed (7-Zip\n  `Copy`) inside the package. The differential updater diffs the *compressed* package with a\n  content-defined blockmap, and the asar is a single compressed member — so any change to app code\n  re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every\n  block). Storing it keeps unchanged regions byte-identical between releases, making the delta\n  proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%\n  instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar\n  saved. Without an `app.asar` (e.g. `asar` is disabled) there is nothing to store, so it behaves like `true`.\n- anything else (`true`, `\"compressed\"`, unset) — differential-aware, whole package compressed.",
           "enum": [
             "compressed",
             false,
@@ -4788,7 +4788,7 @@
         },
         "useZip": {
           "default": false,
-          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
+          "description": "Use zip instead of 7z (LZMA) for the embedded app package. Only applies to portable targets and to installers built with `differentialPackage: false`; ignored (with a warning) when `differentialPackage` is enabled and for `nsis-web`, which always use 7z.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -4876,7 +4876,7 @@
         },
         "differentialPackage": {
           "default": true,
-          "description": "Marks the package as built with differential download support for the update server, and selects how the\napp package is compressed:\n\n- `false` — no differential download support.\n- `\"store-asar\"` — differential-aware, with the app's `resources/app.asar` stored uncompressed (7-Zip\n  `Copy`) inside the package. The differential updater diffs the *compressed* package with a\n  content-defined blockmap, and the asar is a single compressed member — so any change to app code\n  re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every\n  block). Storing it keeps unchanged regions byte-identical between releases, making the delta\n  proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%\n  instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar\n  saved.\n- anything else (`true`, `\"compressed\"`, unset) — differential-aware, whole package compressed.",
+          "description": "Marks the package as built with differential download support for the update server, and selects how the\napp package is compressed:\n\n- `false` — no differential download support.\n- `\"store-asar\"` — differential-aware, with the app's `resources/app.asar` stored uncompressed (7-Zip\n  `Copy`) inside the package. The differential updater diffs the *compressed* package with a\n  content-defined blockmap, and the asar is a single compressed member — so any change to app code\n  re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every\n  block). Storing it keeps unchanged regions byte-identical between releases, making the delta\n  proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%\n  instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar\n  saved. Without an `app.asar` (e.g. `asar` is disabled) there is nothing to store, so it behaves like `true`.\n- anything else (`true`, `\"compressed\"`, unset) — differential-aware, whole package compressed.",
           "enum": [
             "compressed",
             false,
@@ -5160,7 +5160,7 @@
         },
         "useZip": {
           "default": false,
-          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
+          "description": "Use zip instead of 7z (LZMA) for the embedded app package. Only applies to portable targets and to installers built with `differentialPackage: false`; ignored (with a warning) when `differentialPackage` is enabled and for `nsis-web`, which always use 7z.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -6236,7 +6236,7 @@
         },
         "useZip": {
           "default": false,
-          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
+          "description": "Use zip instead of 7z (LZMA) for the embedded app package. Only applies to portable targets and to installers built with `differentialPackage: false`; ignored (with a warning) when `differentialPackage` is enabled and for `nsis-web`, which always use 7z.",
           "type": "boolean"
         },
         "warningsAsErrors": {

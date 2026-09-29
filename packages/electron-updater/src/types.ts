@@ -124,3 +124,65 @@ export interface ResolvedUpdateFileInfo {
 export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-not-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"
 
 export type LoginHandler = (authInfo: any, callback: LoginCallback) => void
+
+/**
+ * Outcome of a downloaded-update-file verification. A failure must carry a `message` explaining why, so that the
+ * error surfaced to the app always names a reason.
+ */
+export type VerifyUpdateFileResult = { response: "success" } | { response: "failure"; message: string }
+
+/**
+ * Custom verification of an update file, run before the file is allowed to become installable.
+ *
+ * It is invoked on every path that can lead to an install:
+ * - right after a fresh download, while the file still sits under a temporary name (see `updateFilePath`);
+ * - when an update downloaded by an earlier session is reused from the updater cache;
+ * - before an install-on-next-launch spawns the cached installer.
+ */
+export type VerifyUpdateFile = (params: {
+  /**
+   * Absolute path to the update file to verify. For a fresh download this is a temporary path — the file is renamed
+   * to `originalUpdateFileName` only after this verification succeeds, so it can never be executed under its real
+   * name while unverified. When a cached or pending update is re-verified the file already sits under its real name.
+   */
+  updateFilePath: string
+  /**
+   * The real file name of the update, i.e. the name `updateFilePath` has (or will be given once verified).
+   */
+  originalUpdateFileName: string
+  /**
+   * Path to the downloaded NSIS web installer package (`package-<version>.7z`). Only set for web installers.
+   */
+  packageFilePath?: string
+  /**
+   * The cancellation token of the download this verification belongs to. Not set when a cached or pending update is
+   * re-verified outside a download.
+   */
+  cancellationToken?: CancellationToken
+}) => Promise<VerifyUpdateFileResult>
+
+/**
+ * Verification of a pending NSIS update file against a Windows Authenticode signature.
+ */
+export type VerifyUpdateFileAuthenticodeSignature = (publisherName: string[], path: string) => Promise<VerifyUpdateFileResult>
+
+/**
+ * @deprecated Use VerifyUpdateFileAuthenticodeSignature instead, which differs in return type.
+ * This is a compatibility shim that keeps the old return type: returns null if verify signature succeeds or returns error message if it failed.
+ * Shall be deleted in electron-builder v28.
+ */
+export type VerifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>
+
+/**
+ * Normalizes a verifier result into `null` (verified) or a non-empty failure message.
+ *
+ * Accepts `null`/`undefined` so that a hook violating the contract — a JS implementation with a missing return, say —
+ * fails closed with a reason instead of throwing a `TypeError` at the call site. An empty `message` is treated the
+ * same way, so a failure can never be reported without a reason.
+ */
+export function verificationFailureMessage(result: VerifyUpdateFileResult | null | undefined): string | null {
+  if (result?.response === "success") {
+    return null
+  }
+  return (result?.response === "failure" ? result.message : null) || "unknown error"
+}
