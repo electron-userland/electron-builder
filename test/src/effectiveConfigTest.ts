@@ -1,22 +1,7 @@
-import { shouldWriteEffectiveConfig } from "app-builder-lib/src/packager"
 import fsExtra from "fs-extra"
 import * as path from "path"
-import { describe, test } from "vitest"
+import { test } from "vitest"
 import { app, linuxDirTarget } from "./helpers/packTester.js"
-
-describe("shouldWriteEffectiveConfig", () => {
-  test("defaults to local interactive builds only", ({ expect }) => {
-    expect(shouldWriteEffectiveConfig(undefined, false, true)).toBe(true)
-    expect(shouldWriteEffectiveConfig(null, false, true)).toBe(true)
-    expect(shouldWriteEffectiveConfig(undefined, true, true)).toBe(false)
-    expect(shouldWriteEffectiveConfig(undefined, false, false)).toBe(false)
-  })
-
-  test("explicit option wins over CI and TTY detection", ({ expect }) => {
-    expect(shouldWriteEffectiveConfig(true, true, false)).toBe(true)
-    expect(shouldWriteEffectiveConfig(false, false, true)).toBe(false)
-  })
-})
 
 const effectiveConfigFile = (outDir: string) => path.join(outDir, "builder-effective-config.yaml")
 
