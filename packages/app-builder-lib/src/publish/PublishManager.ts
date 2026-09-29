@@ -165,17 +165,19 @@ export class PublishManager implements PublishContext {
       }
 
       // app-update.yml is written for every pack, from the publish settings of the pack's targets that emit a manifest
-      // (see resolvePackAppUpdatePublishConfigs). The signing requirement (the error when publishing, the advisory
-      // otherwise) only applies when there is one - the same per-target resolution as the build-start preflight. A
-      // snap-, flatpak- or mas-only pack has none (Linux and mas are not filtered above), nor has an installer whose
-      // target-level `publish` is `null` or waived.
+      // (see resolvePackAppUpdatePublishConfigs) - so a manifest signed under a target-level `publish` always ships with
+      // the key that verifies it, except when the pack's targets disagree about the feed (an error when publishing, a
+      // warning and no app-update.yml otherwise). The signing requirement (the error when publishing, the advisory
+      // otherwise) only applies when a target emits a manifest - the same per-target resolution as the build-start
+      // preflight. A snap-, flatpak- or mas-only pack has none (Linux and mas are not filtered above), nor has an
+      // installer whose target-level `publish` is `null` or waived.
       const { publishConfigs, emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, event.targets, event.arch, this.isPublish)
-      const signingKeys = emitsManifest ? await packager.requireUpdateSigningKeys(this.isPublish) : []
+      if (emitsManifest) {
+        await packager.requireUpdateSigningKeys(this.isPublish)
+      }
       const publishConfig = await createAppUpdateConfiguration(packager, publishConfigs, this.isPublish, false)
       if (publishConfig != null) {
         await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig)
-      } else if (signingKeys.length > 0) {
-        this.warnSignedManifestWithoutTrustKey(packager, event.targets)
       }
     })
 
@@ -198,47 +200,23 @@ export class PublishManager implements PublishContext {
    * only stops that artifact's own upload; by then an earlier target (a portable exe, another arch, another platform)
    * may already be uploading. Same resolution as the per-artifact path - target-level `publish` first, `null` means
    * none, `publishAutoUpdate: false` on every provider waives it - which stays in place for targets that do not
-   * declare `writesUpdateInfo`.
+   * declare `writesUpdateInfo`. Each planned platform x arch is one pack, so targets of a pack that disagree about the
+   * app-update.yml feed fail here too, before anything is packed (also for a prepackaged app, which has no afterPack).
    */
   private async requireSigningKeysForPlannedTargets(plan: ReadonlyArray<PlannedTargets>): Promise<void> {
     if (!this.isPublish) {
       return
     }
     for (const { packager, arch, targets } of plan) {
-      for (const target of targets) {
-        // resolving publish configs is async: a build cancelled meanwhile stops instead of failing on a missing key
-        if (this.cancellationToken.cancelled) {
-          return
-        }
-        if (await targetEmitsUpdateManifest(packager, target, arch, true)) {
-          await packager.requireUpdateSigningKeys(true)
-        }
+      // resolving publish configs is async: a build cancelled meanwhile stops instead of failing on a missing key
+      if (this.cancellationToken.cancelled) {
+        return
+      }
+      const { emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, targets, arch, true)
+      if (emitsManifest && !this.cancellationToken.cancelled) {
+        await packager.requireUpdateSigningKeys(true)
       }
     }
-  }
-
-  private readonly warnedMissingTrustKey = new WeakSet<PlatformPackager<any>>()
-
-  /**
-   * A target's own `publish` (e.g. `nsis.publish`) makes it emit a signed manifest, but app-update.yml - the only place
-   * electron-builder embeds the trust list - is resolved from the platform/root `publish` alone and is not written, so
-   * installs get neither a feed nor a key to verify it with. Warned once per platform, not per arch.
-   */
-  private warnSignedManifestWithoutTrustKey(packager: PlatformPackager<any>, targets: Array<Target>): void {
-    if (this.warnedMissingTrustKey.has(packager)) {
-      return
-    }
-    this.warnedMissingTrustKey.add(packager)
-    log.warn(
-      {
-        platform: packager.platform.name,
-        targets: targets.map(it => it.name).join(", "),
-        solution: `set \`${packager.platform.buildConfigurationKey}.publish\` (or the root \`publish\`), or set \`autoUpdater.updateManifestPublicKey\` in the app along with \`setFeedURL\``,
-      },
-      "update manifests are signed from a target-level `publish` configuration, but no app-update.yml is written because no platform- or root-level `publish` resolves: " +
-        "installed apps get neither an update feed nor the public key to verify these manifests. " +
-        "See https://www.electron.build/features/signed-update-manifests"
-    )
   }
 
   private getAppInfo(platformPackager: PlatformPackager<any> | null) {
@@ -438,14 +416,52 @@ async function resolvePackAppUpdatePublishConfigs(
 
   const embedded = canonicalPublishConfigJson(writers[0].publishConfigs[0])
   if (writers.some(it => canonicalPublishConfigJson(it.publishConfigs[0]) !== embedded)) {
-    const feeds = writers.map(it => `${it.target.name} -> ${it.publishConfigs[0]?.provider ?? "none"}`).join(", ")
-    throw new InvalidConfigurationError(
-      `targets ${writers.map(it => `"${it.target.name}"`).join(", ")} are built from the same ${packager.platform.name} ${Arch[arch]} app, which holds a single app-update.yml, ` +
-        `but their publish settings resolve to different auto-update feeds (${feeds}; the first provider of each is embedded). ` +
-        `Configure \`publish\` once at the platform level (\`${packager.platform.buildConfigurationKey}.publish\`) and remove the target-level overrides, or make their first providers identical.`
-    )
+    reportConflictingAppUpdateFeeds(packager, writers, arch, isPublish)
+    // not publishing: no app-update.yml, the same package the error would have prevented - picking one of the feeds
+    // would silently ship installs that poll a feed without their manifest
+    return { publishConfigs: null, emitsManifest: true }
   }
   return { publishConfigs: writers[0].publishConfigs, emitsManifest: true }
+}
+
+// keyed by platform packager (one per platform and build): afterPack and the targets writing app-update.yml themselves
+// resolve the same pack, and every arch usually repeats the same conflict - report each one once
+const reportedFeedConflicts = new WeakMap<PlatformPackager<any>, Set<string>>()
+
+/**
+ * Targets of one pack resolve different app-update.yml feeds: an InvalidConfigurationError when publishing, otherwise
+ * a warning that says so, so the misconfiguration surfaces before a release is built with it.
+ */
+function reportConflictingAppUpdateFeeds(
+  packager: PlatformPackager<any>,
+  writers: ReadonlyArray<{ target: Target; publishConfigs: Array<PublishConfiguration> }>,
+  arch: Arch,
+  isPublish: boolean
+): void {
+  const targets = writers.map(it => `"${it.target.name}"`).join(", ")
+  const feeds = writers.map(it => `${it.target.name} -> ${it.publishConfigs[0]?.provider ?? "none"}`).join(", ")
+  const problem =
+    `targets ${targets} are built from the same ${packager.platform.name} ${Arch[arch]} app, which holds a single app-update.yml, ` +
+    `but their publish settings resolve to different auto-update feeds (${feeds}; the first provider of each is embedded)`
+  const solution = `configure \`publish\` once at the platform level (\`${packager.platform.buildConfigurationKey}.publish\`) and remove the target-level overrides, or make their first providers identical`
+  if (isPublish) {
+    throw new InvalidConfigurationError(`${problem}. To fix it, ${solution}.`)
+  }
+
+  let reported = reportedFeedConflicts.get(packager)
+  if (reported == null) {
+    reported = new Set<string>()
+    reportedFeedConflicts.set(packager, reported)
+  }
+  if (reported.has(feeds)) {
+    return
+  }
+  reported.add(feeds)
+  log.warn(
+    { solution },
+    `${problem}. No app-update.yml is written, so installed apps get neither an update feed nor the update-manifest public key. ` +
+      "Publishing this configuration fails with an InvalidConfigurationError."
+  )
 }
 
 // key order does not make two configs different feeds
@@ -794,14 +810,10 @@ async function resolvePublishConfigurations(
 }
 
 /**
- * Whether `target` emits an auto-update manifest under its own effective publish settings: target-level `publish`
- * first, `null` means none, and `publishAutoUpdate: false` on every provider means no manifest.
+ * The update-info publish configs `target` emits an auto-update manifest for under its own effective publish settings,
+ * else `null`: target-level `publish` first, `null` means none, and `publishAutoUpdate: false` on every provider means
+ * no manifest.
  */
-async function targetEmitsUpdateManifest(packager: PlatformPackager<any>, target: Target, arch: Arch, errorIfCannot: boolean): Promise<boolean> {
-  return (await getTargetManifestPublishConfigs(packager, target, arch, errorIfCannot)) != null
-}
-
-/** The update-info publish configs `target` emits a manifest for (see {@link targetEmitsUpdateManifest}), else `null`. */
 async function getTargetManifestPublishConfigs(packager: PlatformPackager<any>, target: Target, arch: Arch, errorIfCannot: boolean): Promise<Array<PublishConfiguration> | null> {
   if (!target.writesUpdateInfo || (packager.platform === Platform.WINDOWS && !isSuitableWindowsTarget(target))) {
     return null

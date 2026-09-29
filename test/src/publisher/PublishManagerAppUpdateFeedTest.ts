@@ -1,6 +1,6 @@
 import { Arch, LinuxPackager, Packager, Platform, PlatformPackager, Target } from "app-builder-lib"
 import { getAppUpdatePublishConfiguration, getPackAppUpdatePublishConfiguration, PublishManager } from "app-builder-lib/src/publish/PublishManager"
-import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, parsePrivateKey } from "builder-util"
+import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, log, parsePrivateKey } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { outputFile, outputJson, pathExists, readFile } from "fs-extra"
 import { load as yamlLoad } from "js-yaml"
@@ -31,13 +31,14 @@ const s3 = { provider: "s3", bucket: "nsis-updates" }
 const generic = { provider: "generic", url: "https://example.com/updates" }
 const githubRepository = { type: "github", user: "acme", project: "app", source: "package.json" }
 
-function createManager(publish: "always" | "never" = "always") {
+function createManagerHooks(publish: "always" | "never" = "always") {
+  let onTargetsCreated: (plan: any) => Promise<void> = () => Promise.resolve()
   let onAfterPack: (event: any) => Promise<void> = () => Promise.resolve()
   const packager = {
     projectDir: __dirname,
     config: {},
-    onTargetsCreated: () => {
-      // ignore
+    onTargetsCreated: (handler: (plan: any) => Promise<void>) => {
+      onTargetsCreated = handler
     },
     onAfterPack: (handler: (event: any) => Promise<void>) => {
       onAfterPack = handler
@@ -47,7 +48,11 @@ function createManager(publish: "always" | "never" = "always") {
     },
   }
   new PublishManager(packager as any, { publish }, new CancellationToken())
-  return (event: any) => onAfterPack(event)
+  return { afterPack: (event: any) => onAfterPack(event), targetsCreated: (plan: any) => onTargetsCreated(plan) }
+}
+
+function createManager(publish: "always" | "never" = "always") {
+  return createManagerHooks(publish).afterPack
 }
 
 interface StubOptions {
@@ -141,6 +146,47 @@ test("targets of one pack that resolve different feeds fail the build and write 
   expect(error!.message).toContain("nsis -> s3, appx -> generic")
   expect(error!.message).toContain("win.publish")
   expect(await pathExists(path.join(appOutDir, "resources", "app-update.yml"))).toBe(false)
+})
+
+test("a non-publishing build only warns about conflicting feeds, once, says publishing fails, and writes no app-update.yml", async ({ expect, tmpDir }) => {
+  const warn = vi.spyOn(log, "warn")
+  const conflictWarnings = () => warn.mock.calls.filter(([, message]) => String(message).includes("different auto-update feeds"))
+  try {
+    const packager = makePackager({ platformPublish: generic })
+    const targets = [target("nsis", { publish: s3 }), target("appx", { electronUpdaterAware: true })]
+    for (const arch of [Arch.x64, Arch.arm64]) {
+      const appOutDir = await tmpDir.getTempDir({ prefix: "win-unpacked" })
+      await createManager("never")({ packager, electronPlatformName: "win32", arch, appOutDir, outDir: appOutDir, targets })
+      expect(await pathExists(path.join(appOutDir, "resources", "app-update.yml"))).toBe(false)
+    }
+    // the targets that write the file themselves get no config either, and do not repeat the warning
+    expect(await getPackAppUpdatePublishConfiguration(packager as any, targets as any, Arch.x64, false)).toBeNull()
+
+    expect(conflictWarnings()).toHaveLength(1)
+    const [fields, message] = conflictWarnings()[0]
+    expect(message).toContain(`targets "nsis", "appx" are built from the same windows x64 app`)
+    expect(message).toContain("No app-update.yml is written")
+    expect(message).toContain("Publishing this configuration fails with an InvalidConfigurationError")
+    expect((fields as any).solution).toContain("win.publish")
+    // the manifests are still emitted, so the signing advisory applies
+    expect(packager.requireUpdateSigningKeys).toHaveBeenCalledWith(false)
+  } finally {
+    warn.mockRestore()
+  }
+})
+
+test("a publishing build fails on conflicting feeds at build start, before anything is packed", async ({ expect }) => {
+  const { targetsCreated } = createManagerHooks("always")
+  const packager = makePackager({ platform: Platform.LINUX, platformPublish: generic })
+  // also covers a prepackaged app, where no afterPack runs and AppImage/deb would only resolve with isPublish=false
+  await expect(targetsCreated([{ packager, arch: Arch.x64, targets: [target("appimage", { publish: s3 }), target("deb")] }])).rejects.toThrow(
+    /different auto-update feeds \(appimage -> s3, deb -> generic.*To fix it, configure `publish` once at the platform level \(`linux.publish`\)/
+  )
+  expect(packager.requireUpdateSigningKeys).not.toHaveBeenCalled()
+
+  const agreeing = makePackager({ platform: Platform.LINUX, platformPublish: generic })
+  await targetsCreated([{ packager: agreeing, arch: Arch.x64, targets: [target("appimage", { publish: s3 }), target("deb", { publish: null })] }])
+  expect(agreeing.requireUpdateSigningKeys).toHaveBeenCalledWith(true)
 })
 
 test("targets of one pack with the same feed (in any key order) are fine; later providers may differ", async ({ expect, tmpDir }) => {

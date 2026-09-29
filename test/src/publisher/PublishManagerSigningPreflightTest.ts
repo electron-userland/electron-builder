@@ -1,8 +1,8 @@
 import { Arch, LinuxPackager, Packager, Platform, PlatformPackager, Target } from "app-builder-lib"
 import { PublishManager } from "app-builder-lib/src/publish/PublishManager"
-import { InvalidConfigurationError, log } from "builder-util"
+import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, parsePrivateKey } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { outputFile, outputJson, pathExists, readFile } from "fs-extra"
+import { outputFile, outputJson, readFile } from "fs-extra"
 import * as path from "path"
 import { afterEach, beforeEach, vi } from "vitest"
 
@@ -313,35 +313,35 @@ test("afterPack needs no key for a Linux pack whose only update-info target opts
   expect(await readFile(path.join(appOutDir, "resources", "app-update.yml"), "utf8")).toContain("https://example.com/linux")
 })
 
-test("afterPack warns once per platform when a target-level publish signs manifests but no app-update.yml carries the key", async ({ expect, tmpDir }) => {
+test("a manifest signed under a target-level publish ships with app-update.yml carrying its key, for every arch", async ({ expect, tmpDir }) => {
+  // before app-update.yml followed the manifest-writing targets, this configuration wrote no app-update.yml (and
+  // warned); now every pack embeds the installer's feed and the trust key that verifies its signed manifest
   for (const name of ["GH_TOKEN", "GITHUB_TOKEN", "GITLAB_TOKEN", "KEYGEN_TOKEN", "BITBUCKET_TOKEN"]) {
     vi.stubEnv(name, "")
   }
-  const warn = vi.spyOn(log, "warn")
-  const trustKeyWarnings = () => warn.mock.calls.filter(([, message]) => String(message).includes("no app-update.yml is written"))
-  const hasKey = () => Promise.resolve([{}])
+  const { privateKeyPem } = generateUpdateSigningKeypair()
+  const keys = [parsePrivateKey(privateKeyPem)]
   const nsisOnly = { publish: { provider: "generic", url: "https://example.com/nsis" } }
-  try {
-    const { afterPack } = createManager()
-    const packager = { ...makePlatformPackager(undefined, hasKey), getResourcesDir: (dir: string) => path.join(dir, "resources") }
-    for (const arch of [Arch.x64, Arch.arm64]) {
-      const appOutDir = await tmpDir.getTempDir({ prefix: "win-unpacked" })
-      await afterPack({ ...makeWinPackEvent(packager, appOutDir, nsisOnly), arch })
-      expect(await pathExists(path.join(appOutDir, "resources", "app-update.yml"))).toBe(false)
-    }
-    expect(trustKeyWarnings()).toHaveLength(1)
-    expect(trustKeyWarnings()[0][0]).toMatchObject({ platform: "windows", targets: "nsis" })
-
-    // app-update.yml written (it carries the key), or nothing is signed: no warning
-    const withPlatformPublish = {
-      ...makePlatformPackager({ provider: "generic", url: "https://example.com/updates" }, hasKey),
-      getResourcesDir: (dir: string) => path.join(dir, "resources"),
-    }
-    await afterPack(makeWinPackEvent(withPlatformPublish, await tmpDir.getTempDir({ prefix: "win-unpacked" }), nsisOnly))
-    const unsigned = { ...makePlatformPackager(undefined, () => Promise.resolve([])), getResourcesDir: (dir: string) => path.join(dir, "resources") }
-    await createManager("never").afterPack(makeWinPackEvent(unsigned, await tmpDir.getTempDir({ prefix: "win-unpacked" }), nsisOnly))
-    expect(trustKeyWarnings()).toHaveLength(1)
-  } finally {
-    warn.mockRestore()
+  const { afterPack } = createManager()
+  const packager = {
+    ...makePlatformPackager(undefined, () => Promise.resolve(keys)),
+    updateSigningKeys: { value: Promise.resolve(keys) },
+    getResourcesDir: (dir: string) => path.join(dir, "resources"),
   }
+  for (const arch of [Arch.x64, Arch.arm64]) {
+    const appOutDir = await tmpDir.getTempDir({ prefix: "win-unpacked" })
+    await afterPack({ ...makeWinPackEvent(packager, appOutDir, nsisOnly), arch })
+    const appUpdate = await readFile(path.join(appOutDir, "resources", "app-update.yml"), "utf8")
+    expect(appUpdate).toContain("https://example.com/nsis")
+    expect(appUpdate).toContain(derivePublicKeyPem(keys[0]).split("\n")[1])
+  }
+  expect(packager.requireUpdateSigningKeys).toHaveBeenCalledWith(true)
+
+  // nothing is signed: the feed is still embedded, without a trust list
+  const unsigned = { ...makePlatformPackager(undefined, () => Promise.resolve([])), getResourcesDir: (dir: string) => path.join(dir, "resources") }
+  const appOutDir = await tmpDir.getTempDir({ prefix: "win-unpacked" })
+  await createManager("never").afterPack(makeWinPackEvent(unsigned, appOutDir, nsisOnly))
+  const appUpdate = await readFile(path.join(appOutDir, "resources", "app-update.yml"), "utf8")
+  expect(appUpdate).toContain("https://example.com/nsis")
+  expect(appUpdate).not.toContain("updateManifestPublicKey")
 })
