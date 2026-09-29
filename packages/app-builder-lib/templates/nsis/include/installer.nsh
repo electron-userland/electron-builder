@@ -6,11 +6,13 @@
   !include webPackage.nsh
 !endif
 
-!macro installApplicationFiles
-  !ifdef APP_BUILD_DIR
-    File /r "${APP_BUILD_DIR}\*.*"
-  !else
+# nsis-web: sets $packageFile to the package to install (the installer's copy of a local package, or a download) and verifies it.
+# installSection.nsh inserts this before the installed version is uninstalled, so a package that is refused or cannot be downloaded
+# leaves that version in place; installApplicationFiles only extracts and stores the package. Empty for other installers.
+!macro prepareWebPackage
+  !ifndef APP_BUILD_DIR
     !ifdef APP_PACKAGE_URL
+      !define WEB_PACKAGE_PREPARED
       Var /GLOBAL packageFile
       Var /GLOBAL isPackageFileExplicitlySpecified
 
@@ -46,23 +48,23 @@
           !ifndef ALLOW_UNVERIFIED_APP_PACKAGE
             ${StdUtils.HashFile} $3 "SHA2-512" "$packageFile"
             !ifdef APP_64_HASH
-              StrCmp $3 "${APP_64_HASH}" fun_extract
+              StrCmp $3 "${APP_64_HASH}" web_package_ready
             !endif
             !ifdef APP_32_HASH
-              StrCmp $3 "${APP_32_HASH}" fun_extract
+              StrCmp $3 "${APP_32_HASH}" web_package_ready
             !endif
             !ifdef APP_ARM64_HASH
-              StrCmp $3 "${APP_ARM64_HASH}" fun_extract
+              StrCmp $3 "${APP_ARM64_HASH}" web_package_ready
             !endif
             MessageBox MB_OK|MB_ICONSTOP "Package file $4 doesn't match any package of this installer (checksum $3). Installation aborted." /SD IDOK
             SetErrorLevel 2
             Quit
           !endif
-          Goto fun_extract
+          Goto web_package_ready
         ${else}
           ${StdUtils.HashFile} $3 "SHA2-512" "$packageFile"
           ${if} $3 == $1
-            Goto fun_extract
+            Goto web_package_ready
           ${else}
             Delete "$packageFile"
             MessageBox MB_OK "Package file $4 found locally, but checksum doesn't match — expected $1, actual $3.$\r$\nLocal file is ignored and package will be downloaded from Internet." /SD IDOK
@@ -86,19 +88,33 @@
         !endif
       !endif
 
-      fun_extract:
-        !insertmacro extractUsing7za "$packageFile"
+      web_package_ready:
+    !endif
+  !endif
+!macroend
 
-        # electron always uses per user app data
-        ${if} $installMode == "all"
-          SetShellVarContext current
-        ${endif}
+!macro installApplicationFiles
+  !ifdef APP_BUILD_DIR
+    File /r "${APP_BUILD_DIR}\*.*"
+  !else
+    !ifdef APP_PACKAGE_URL
+      # A custom script that doesn't insert prepareWebPackage before uninstallOldVersion gets the package here.
+      !ifndef WEB_PACKAGE_PREPARED
+        !insertmacro prepareWebPackage
+      !endif
 
-        !insertmacro moveFile "$packageFile" "$LOCALAPPDATA\${APP_PACKAGE_STORE_FILE}"
+      !insertmacro extractUsing7za "$packageFile"
 
-        ${if} $installMode == "all"
-          SetShellVarContext all
-        ${endif}
+      # electron always uses per user app data
+      ${if} $installMode == "all"
+        SetShellVarContext current
+      ${endif}
+
+      !insertmacro moveFile "$packageFile" "$LOCALAPPDATA\${APP_PACKAGE_STORE_FILE}"
+
+      ${if} $installMode == "all"
+        SetShellVarContext all
+      ${endif}
     !else
       !insertmacro extractEmbeddedAppPackage
       # electron always uses per user app data

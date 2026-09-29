@@ -13,7 +13,7 @@ SilentInstall silent
 Var installMode
 !include installer.nsh
 
-# Exercise selection, file lookup, staging, hashing and HTTP; stop before installing an app.
+# Exercise selection, file lookup, staging, hashing, HTTP and the order of these and the uninstall; stop before installing an app.
 # --replace-local-package: the fixture writes other content to the local package while the installer runs; the installer keeps using its own copy.
 !macro replaceLocalPackage
   ${StdUtils.GetParameter} $R1 "replace-local-package" ""
@@ -47,5 +47,11 @@ Section
   InitPluginsDir
   ${StdUtils.GetParameter} $R8 "arch" "ARM64"
   StrCpy $installMode "current"
+  # INSTALL_APPLICATION_FILES_ONLY: a script that inserts only installApplicationFiles, which then prepares the package itself.
+  !ifndef INSTALL_APPLICATION_FILES_ONLY
+    !insertmacro prepareWebPackage
+    # Stands in for uninstallOldVersion in installSection.nsh: removes the installed version the test writes before each run.
+    Delete "$EXEDIR\installed.txt"
+  !endif
   !insertmacro installApplicationFiles
 SectionEnd

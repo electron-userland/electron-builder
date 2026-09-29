@@ -49,6 +49,10 @@ ${if} $isTryToKeepShortcuts == "true"
   ${endIf}
 ${endif}
 
+# nsis-web: the app package is copied, verified and, if needed, downloaded before the installed version is uninstalled, so a package
+# that is refused or cannot be downloaded leaves that version in place. Empty for other installers.
+!insertmacro prepareWebPackage
+
 !insertmacro uninstallOldVersion SHELL_CONTEXT
 !insertmacro handleUninstallResult SHELL_CONTEXT
 

@@ -38,7 +38,7 @@ The web installer verifies the package it installs against the SHA-512 of the pa
 
 A local package (passed via `--package-file`, or found next to the installer) is first copied into the installer's own temporary directory. The installer verifies and installs that copy. The local file itself is left in place. With `allowUnverifiedAppPackage` a package passed via `--package-file` is still copied, but not verified.
 
-A mismatch, or a local package that cannot be copied, aborts the installation (exit code `2`). Set `nsisWeb.allowUnverifiedAppPackage: true` (default `false`) to skip these checks only if you intentionally use one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).
+A mismatch, or a local package that cannot be copied, aborts the installation (exit code `2`). The installer copies, verifies and, if needed, downloads the package before it removes an installed version, so a refused package, a local package that cannot be copied, or a failed or cancelled download leaves the installed version in place. Set `nsisWeb.allowUnverifiedAppPackage: true` (default `false`) to skip these checks only if you intentionally use one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).
 
 For auto-update, electron-updater installs web-installer updates only when `disableWebInstaller` is `false`; installs made by an `nsis-web` installer built with electron-builder v27+ default to `false` automatically — see [Auto Update](./features/auto-update.md#disablewebinstaller-now-defaults-to-true). Don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./features/signed-update-manifests.md) cover the web package's path, SHA-512 and size.
 
@@ -49,6 +49,8 @@ Two options are available — [include](#include) and [script](#script). `script
 :::warning[Custom `script` disables built-in safeguards]
 When you provide a custom `script`, electron-builder no longer generates (and signs) the uninstaller for you and skips installer size verification. Prefer `include` unless you really need to replace the whole script.
 :::
+
+For `nsis-web`, a custom `script` that copies installSection.nsh should insert `!insertmacro prepareWebPackage` before `uninstallOldVersion`; otherwise the package is prepared in `installApplicationFiles`, after the installed version is removed.
 
 Keep in mind — if you customize the NSIS script, you should always mention it in issue reports. And don't expect that your issue will be resolved.
 

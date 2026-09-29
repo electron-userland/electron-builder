@@ -50,7 +50,7 @@ function statements(script: string): string[] {
 // Package verification branches (explicit --package-file, versioned download) must compile warning-free in every configuration,
 // and are checked on every OS in the preprocessed script: the explicit package check unless unverified packages are allowed, the
 // download check only for a versioned URL. A local package (explicit or adjacent) is always copied first, and only that copy is
-// hashed and extracted.
+// hashed and extracted. All of this happens before the installed version is uninstalled.
 for (const incomplete of [false, true]) {
   for (const allowUnverified of [false, true]) {
     test(`NSIS web package verification compiles: ${incomplete ? "versioned" : "complete"} URL${allowUnverified ? ", unverified allowed" : ""}`, async ({ expect, tmpDir }) => {
@@ -61,8 +61,12 @@ for (const incomplete of [false, true]) {
         ...(incomplete ? ["!define APP_PACKAGE_URL_IS_INCOMPLETE"] : []),
         ...(allowUnverified ? ["!define ALLOW_UNVERIFIED_APP_PACKAGE"] : []),
       ]
-      await compile(dir, packages, defines)
-      await compile(dir, packages, defines, undefined, "0.0.0")
+      // INSTALL_APPLICATION_FILES_ONLY: a script that inserts only installApplicationFiles (see below) compiles warning-free as well.
+      const installOnlyDefines = [...defines, "!define INSTALL_APPLICATION_FILES_ONLY"]
+      for (const scriptDefines of [defines, installOnlyDefines]) {
+        await compile(dir, packages, scriptDefines)
+        await compile(dir, packages, scriptDefines, undefined, "0.0.0")
+      }
       const { stdout } = await compile(dir, packages, defines, ["-PPO"])
       expect(stdout.includes("doesn't match any package of this installer")).toBe(!allowUnverified)
       expect(stdout.includes("doesn't match this installer")).toBe(incomplete && !allowUnverified)
@@ -89,25 +93,88 @@ for (const incomplete of [false, true]) {
 
       // Then the package file is hashed, removed, reassigned, extracted and moved in this order, a package that matches is extracted.
       const hashPackageFile = ["push `$packageFile`", "StdUtils::HashFile /NOUNLOAD"]
-      expect(script.slice(script.indexOf(staged) + 1).filter(line => /\$packageFile|package-staged\.7z|CopyFileW|StdUtils::HashFile|fun_extract/.test(line))).toEqual([
+      const uninstall = 'Delete "$EXEDIR\\installed.txt"'
+      expect(
+        script.slice(script.indexOf(staged) + 1).filter(line => /\$packageFile|package-staged\.7z|CopyFileW|StdUtils::HashFile|web_package_ready|installed\.txt/.test(line))
+      ).toEqual([
         // explicit package
-        ...(allowUnverified ? [] : [...hashPackageFile, ...["64", "32", "ARM64"].map(arch => `StrCmp $3 "${hash(arch)}" fun_extract`)]),
-        "Goto fun_extract",
+        ...(allowUnverified ? [] : [...hashPackageFile, ...["64", "32", "ARM64"].map(arch => `StrCmp $3 "${hash(arch)}" web_package_ready`)]),
+        "Goto web_package_ready",
         // adjacent package, its copy is removed if it doesn't match
         ...hashPackageFile,
-        "Goto fun_extract",
+        "Goto web_package_ready",
         'Delete "$packageFile"',
         // download
         'StrCpy $packageFile "$PLUGINSDIR\\package.7z"',
         ...(incomplete && !allowUnverified ? hashPackageFile : []),
-        // extractUsing7za and moveFile of the fixture
-        "fun_extract:",
+        "web_package_ready:",
+        // the fixture's stand-in for uninstallOldVersion, then extractUsing7za and moveFile of the fixture
+        uninstall,
         'FileWrite $R0 "$packageFile',
         'Rename "$packageFile" "$EXEDIR\\stored.7z"',
       ])
+
+      // Every check, message, abort and download comes before the installed version is uninstalled. Only the extraction and the
+      // storing of the package follow (the fixture's moveFile ends the installer).
+      const uninstalled = script.indexOf(uninstall)
+      const checkOrExit = /^(quit|seterrorlevel|messagebox|inetc::get|stdutils::hashfile|system::call)\b/i
+      expect(script.slice(0, uninstalled).filter(line => line.startsWith("inetc::get "))).toHaveLength(2)
+      expect(script.slice(uninstalled + 1).filter(line => checkOrExit.test(line))).toEqual(["SetErrorLevel 0", "Quit"])
+
+      // A script that inserts only installApplicationFiles (e.g. a custom script based on an older installSection.nsh) gets the same
+      // preparation, followed directly by the extraction.
+      const { stdout: installOnly } = await compile(dir, packages, installOnlyDefines, ["-PPO"])
+      expect(statements(installOnly)).toEqual(script.filter(line => line !== uninstall))
     })
   }
 }
+
+// installSection.nsh prepares the web package before it uninstalls the installed version; installApplicationFiles only extracts it.
+test("installSection.nsh prepares the web package before uninstalling the installed version", async ({ expect }) => {
+  const order = [
+    "!insertmacro prepareWebPackage",
+    "!insertmacro uninstallOldVersion SHELL_CONTEXT",
+    "!insertmacro uninstallOldVersion HKEY_CURRENT_USER",
+    "!insertmacro installApplicationFiles",
+  ]
+  const section = statements(await fs.readFile(path.join(templates, "..", "installSection.nsh"), "utf8")).filter(line => !line.startsWith("#") && !line.startsWith(";"))
+  expect(section.filter(line => order.includes(line))).toEqual(order)
+
+  // prepareWebPackage is the statement right before the uninstall and outside any conditional, so every installer run that uninstalls
+  // the installed version has prepared the package first.
+  const uninstall = section.indexOf(order[1])
+  expect(section[uninstall - 1]).toBe(order[0])
+  let depth = 0
+  for (const line of section.slice(0, uninstall - 1)) {
+    if (/^(!if|\$\{(if|ifnot|unless)\})/i.test(line)) {
+      depth++
+    } else if (/^(!endif|\$\{endif\})/i.test(line)) {
+      depth--
+    }
+  }
+  expect(depth).toBe(0)
+})
+
+// Installers with an embedded package, and with APP_BUILD_DIR, are unchanged: the web package preparation is empty for them.
+test("NSIS web package preparation is empty for an embedded package and with APP_BUILD_DIR", async ({ expect, tmpDir }) => {
+  const dir = await tmpDir.createTempDir()
+  const makensis = await getMakeNsisPath(undefined, dir)
+  for (const defines of [[], [`!define APP_BUILD_DIR "unused"`, `!define APP_PACKAGE_URL "http://127.0.0.1/app.7z"`]]) {
+    const script = [
+      `!addincludedir "${templates}"`,
+      ...defines,
+      "!include installer.nsh",
+      "Section",
+      'DetailPrint "before"',
+      "!insertmacro prepareWebPackage",
+      'DetailPrint "after"',
+      "SectionEnd",
+    ]
+    const { stdout } = await spawnAndWriteWithOutput(makensis.path, ["-PPO", "-"], script.join("\n"), { env: { ...process.env, ...makensis.env } })
+    const lines = statements(stdout)
+    expect(lines.slice(lines.indexOf('DetailPrint "before"'), lines.indexOf('DetailPrint "after"') + 1)).toEqual(['DetailPrint "before"', 'DetailPrint "after"'])
+  }
+})
 
 for (const { packages, expected, completeUrl, allowUnverified, nsis } of [
   ...cases.map(value => ({ ...value, completeUrl: false, allowUnverified: false, nsis: undefined })),
@@ -145,11 +212,14 @@ for (const { packages, expected, completeUrl, allowUnverified, nsis } of [
         undefined,
         nsis
       )
+      // The installed version, which the fixture removes where installSection.nsh uninstalls it: after the package is prepared.
+      const installed = path.join(dir, "installed.txt")
       // replaced: a local package the fixture writes other content to while the installer runs; the installer keeps using its own copy.
       const run = async (arch: string, packageFile?: string, replaced?: string) => {
         requests.length = 0
         await fs.rm(path.join(dir, "result.txt"), { force: true })
         await fs.rm(path.join(dir, "stored.7z"), { force: true })
+        await fs.writeFile(installed, "installed version")
         const args = [
           "/S",
           `--arch=${arch}`,
@@ -157,7 +227,13 @@ for (const { packages, expected, completeUrl, allowUnverified, nsis } of [
           ...(replaced == null ? [] : [`--replace-local-package=${replaced}`]),
         ]
         await exec(installer, args)
+        await expect(fs.access(installed)).rejects.toThrow()
         return (await fs.readFile(path.join(dir, "result.txt"), "utf8")).split("\n")
+      }
+      // A refused package aborts the installation before the installed version is uninstalled.
+      const expectRefused = async (result: Promise<unknown>) => {
+        await expect(result).rejects.toMatchObject({ exitCode: 2 })
+        expect(await fs.readFile(installed, "utf8")).toBe("installed version")
       }
       // The package that is extracted and then stored for differential updates: a download, or the installer's copy of a local package.
       const downloadedPackage = /\\ns\w+\.tmp\\package\.7z$/
@@ -215,14 +291,14 @@ for (const { packages, expected, completeUrl, allowUnverified, nsis } of [
         expect(local[0]).toMatch(stagedPackage)
         expect(await storedPackage()).toBe("user supplied package")
       } else {
-        await expect(run("ARM64", explicit)).rejects.toMatchObject({ exitCode: 2 })
+        await expectRefused(run("ARM64", explicit))
       }
       expect(requests).toEqual([])
 
       // An explicit package that cannot be copied (a directory) aborts the installation, even if unverified packages are allowed.
       await fs.rm(explicit)
       await fs.mkdir(explicit)
-      await expect(run("ARM64", explicit)).rejects.toMatchObject({ exitCode: 2 })
+      await expectRefused(run("ARM64", explicit))
       expect(requests).toEqual([])
 
       // A missing explicit file must still select the correct download independently.
@@ -236,7 +312,7 @@ for (const { packages, expected, completeUrl, allowUnverified, nsis } of [
         const downloaded = await run("ARM64")
         expect(downloaded[2]).toBe(`${url}/app-${expected[2]}.7z`)
       } else {
-        await expect(run("ARM64")).rejects.toMatchObject({ exitCode: 2 })
+        await expectRefused(run("ARM64"))
       }
       expect(requests).toEqual([`/app-${expected[2]}.7z`])
     } finally {
