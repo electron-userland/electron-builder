@@ -531,6 +531,15 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
   electronVersion?: string | null
 
   /**
+   * Whether to write `builder-effective-config.yaml` (the resolved configuration, including the detected
+   * `electronVersion`) to the output directory.
+   *
+   * Defaults to writing it only for local interactive builds: not on CI and not when stdout is piped.
+   * Set `true` to always write it, e.g. to read the resolved configuration in a CI step, or `false` to never write it.
+   */
+  readonly writeEffectiveConfig?: boolean | null
+
+  /**
    * One or more configuration presets or file paths to merge into this configuration.
    *
    * Accepts a string or array of strings, each of which is either:

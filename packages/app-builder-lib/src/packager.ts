@@ -401,6 +401,11 @@ export class Packager {
     this._devMetadata = devMetadata
   }
 
+  /** @internal */
+  shouldWriteEffectiveConfig(): boolean {
+    return this.config.writeEffectiveConfig ?? (!isCI && process.stdout.isTTY === true)
+  }
+
   // external caller of this method always uses isTwoPackageJsonProjectLayoutUsed=false and appDir=projectDir, no way (and need) to use another values
   async build(repositoryInfo?: SourceRepositoryInfo): Promise<BuildResult> {
     // Removed env vars are checked before anything else: nothing validates process.env, so a CI
@@ -425,7 +430,7 @@ export class Packager {
       })
     )
 
-    if (!isCI && (process.stdout as any).isTTY) {
+    if (this.shouldWriteEffectiveConfig()) {
       const effectiveConfigFile = path.join(commonOutDirWithoutPossibleOsMacro, "builder-effective-config.yaml")
       log.info({ file: log.filePath(effectiveConfigFile) }, "writing effective config")
       await outputFile(effectiveConfigFile, getSafeEffectiveConfig(this.config))
