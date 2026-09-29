@@ -14,7 +14,8 @@ Set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to your Minio credentials, t
 electron-builder --publish always \
   --config.publish.provider=s3 \
   --config.publish.endpoint=http://localhost:9000 \
-  --config.publish.bucket=test-bucket
+  --config.publish.bucket=test-bucket \
+  --config.publish.awsCredentials.source=env
 ```
 
 ## 3. Bump the version and test

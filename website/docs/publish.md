@@ -182,6 +182,22 @@ The GitHub `vPrefixedTagName` boolean was removed — use `tagNamePrefix` to con
   {!./builder-util-runtime.Interface.KeygenOptions.md!}
 
 ## S3
+
+:::note[v27: choose the credential source with `awsCredentials`]
+Publishing to S3 requires `awsCredentials.source`; no credentials are read implicitly. Use `{ "source": "env" }` to read `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN`. `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG` and the `~/.aws` files are not used unless you name a profile. To publish with a named profile, including an IAM Identity Center (SSO) session from `aws sso login`, a `credential_process` or an assume-role profile:
+
+```json
+"publish": {
+  "provider": "s3",
+  "bucket": "my-bucket",
+  "region": "us-west-2",
+  "awsCredentials": { "source": "profile", "profile": "release" }
+}
+```
+
+For a bucket name containing dots, set `region`: it is only looked up automatically when publishing. See [v27 Breaking Changes](./migration/v27-breaking-changes.md#s3-publishing-requires-an-explicit-awscredentialssource).
+:::
+
   {!./builder-util-runtime.Interface.S3Options.md!}
 
 ## Snap Store

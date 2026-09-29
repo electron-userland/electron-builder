@@ -90,6 +90,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [macOS `productName`/`executableName` validated, not silently sanitized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | A name needing filename sanitization now throws — pick a name that needs none |
 | [macOS default entitlements tightened](#macos-default-entitlements-tightened) | — | The bundled default now grants only `allow-jit`; add `allow-unsigned-executable-memory` / `disable-library-validation` back in `build/entitlements.mac.plist` (and `.inherit.plist`) only if your app needs them |
 | [Bitbucket Cloud publishing: token without username → Bearer auth](#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth) | — | Set `BITBUCKET_USERNAME` if your token is an app password / API token |
+| [S3 publishing requires an explicit `awsCredentials.source`](#s3-publishing-requires-an-explicit-awscredentialssource) | — | Add `awsCredentials: { source: "env" }` (for `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) or `{ source: "profile", profile: "<name>" }` (for `AWS_PROFILE` / `~/.aws` / SSO) |
 | [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); tune the set via `ignoredProductionDependencies`. If you set `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` (removed) to bundle `electron-builder`, override the list instead; `electron-prebuilt`/`electron-rebuild` no longer error and now ship if declared — remove them from `dependencies` |
 | [`allowMissingDependencies` now fails the build](#allowmissingdependencies-now-fails-the-build) | — | A missing production dependency is a hard error; set `allowMissingDependencies: true` to restore v26 warn-only behavior |
 | [`extraFiles` / `extraResources` `to` is validated](#extrafiles--extraresources-destinations-are-validated) | — | An absolute `to`, or one escaping the output dir, now throws |
@@ -594,6 +595,45 @@ The Bitbucket publisher now selects its authentication scheme by whether a usern
 - **No username** → the token is sent as `Authorization: Bearer <token>` (a repository / project / workspace **access token**). This is the new behavior; previously a token was always sent as Basic auth using the repository owner as the username.
 
 **Action is required only if** your CI sets `BITBUCKET_TOKEN` (or `bitbucket.token`) to an **app password / API token without a username** — those requests now go out as Bearer and will fail authentication. Set `BITBUCKET_USERNAME` (or `bitbucket.username`) so Basic auth is used. Genuine access tokens need no username.
+
+### S3 publishing requires an explicit `awsCredentials.source`
+
+The `s3` publisher no longer picks up AWS credentials from ambient sources, and there is no default source. To publish, set the new `awsCredentials` publish option; only the source it names is consulted:
+
+- **`source: "env"`** reads only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and the optional `AWS_SESSION_TOKEN`, or the variable names you give in `awsCredentials.env`.
+- **`source: "profile"`** reads the named `profile` (required) from the shared config and credentials files (`~/.aws/config` and `~/.aws/credentials`, or `configFile` / `credentialsFile`). Static keys, IAM Identity Center (SSO) sessions from `aws sso login`, `credential_process` and assume-role profiles are supported.
+
+What changed compared with v26:
+
+- Publishing to `s3` without `awsCredentials.source` **fails** with an `InvalidConfigurationError` that names both sources. Builds that don't publish (e.g. `--publish never`) don't need it.
+- `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE` and `AWS_SHARED_CREDENTIALS_FILE` are **no longer read**, and `~/.aws/credentials` is no longer used as an implicit fallback.
+- When the configured source has no credentials, publishing **fails** with a clear error. Before, the request was signed with whatever aws4 found in the environment (including the undocumented `AWS_ACCESS_KEY` / `AWS_SECRET_KEY`), or with `Credential=undefined`.
+- For a bucket name with dots and no `region`, the region is now looked up **only when publishing**. Builds that don't publish log a warning and leave `region` unset, so set `region` explicitly for dotted bucket names.
+- An assume-role profile whose `source_profile` is an SSO profile is rejected, because the AWS SDK would resolve that SSO profile without the configured files. Use an SSO profile that grants the publishing role directly, or a `credential_process`.
+- `awsCredentials` is build-time only and is never written to `app-update.yml`. electron-updater is unaffected: it downloads S3 updates without credentials.
+- DigitalOcean Spaces (`DO_KEY_ID` / `DO_SECRET_KEY`) and Cloudflare R2 (`CF_R2_*`) are unchanged.
+
+**Action is required for every S3 publish configuration.** If CI exports `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (for example `aws-actions/configure-aws-credentials`), choose the env source:
+
+```json
+"publish": {
+  "provider": "s3",
+  "bucket": "my-bucket",
+  "awsCredentials": { "source": "env" }
+}
+```
+
+If you relied on `AWS_PROFILE`, `~/.aws/credentials`, `~/.aws/config` + `AWS_SDK_LOAD_CONFIG=1`, or an SSO login, name the profile:
+
+```json
+"awsCredentials": { "source": "profile", "profile": "release" }
+```
+
+To keep publish-only keys apart from other `AWS_*` variables in the same job, point `awsCredentials.env` at different names:
+
+```json
+"awsCredentials": { "source": "env", "env": { "accessKeyId": "RELEASE_S3_KEY_ID", "secretAccessKey": "RELEASE_S3_SECRET" } }
+```
 
 ### New: Cloudflare R2 publish provider (additive)
 
