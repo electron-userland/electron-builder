@@ -23,9 +23,7 @@ import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../../opt
 import { FileAssociation } from "../../../options/FileAssociation.js"
 import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../../platformPackager.js"
 import { hashFile } from "../../../util/hash.js"
-import { isMacOsCatalina } from "../../../util/mac/macosVersion.js"
 import { time } from "../../../util/timer.js"
-import { WineVmManager } from "../../../vm/WineVm.js"
 import { WinPackager } from "../../../winPackager.js"
 import { archive, ArchiveOptions } from "../../archive.js"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../../differentialUpdateInfoBuilder.js"
@@ -538,20 +536,13 @@ export class NsisTarget extends Target {
   }
 
   private async runInstallerToWriteUninstaller(installerPath: string, uninstallerPath: string): Promise<void> {
-    const packager = this.packager
-    // wine cannot run 32-bit executables on macOS Catalina and later
-    if (isMacOsCatalina()) {
-      const vm = await packager.vm.value
-      await vm.exec(installerPath, [])
-      // Parallels VM can exit after command execution, but NSIS continue to be running
-      let i = 0
-      while (!(await exists(uninstallerPath)) && i++ < 100) {
-        // noinspection JSUnusedLocalSymbols
-        await sleep(300)
-      }
-    } else {
-      const wineVm = new WineVmManager(packager.config.toolsets?.wine, packager.buildResourcesDir)
-      await wineVm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
+    const vm = await this.packager.execVm.value
+    await vm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
+    // Parallels VM can exit after command execution, but NSIS continue to be running
+    let i = 0
+    while (!(await exists(uninstallerPath)) && i++ < 100) {
+      // noinspection JSUnusedLocalSymbols
+      await sleep(300)
     }
   }
 
