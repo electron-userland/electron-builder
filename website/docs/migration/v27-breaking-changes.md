@@ -927,7 +927,7 @@ The deprecated top-level `path` and `sha512` fields are **no longer written** to
 
 ### Signed update manifests are required
 
-Ed25519 signing of `latest*.yml` is new in v27 and **required by default**. A build with a publish policy that emits auto-update metadata — `latest*.yml`, or the `app-update.yml` written into the packaged app — now fails unless a signing key resolves:
+Ed25519 signing of `latest*.yml` is new in v27 and **required by default**. A build with a publish policy that includes a target writing auto-update metadata — NSIS, AppImage, deb/rpm/pacman, macOS zip/dmg, or AppX with `electronUpdaterAware` — now fails unless a signing key resolves. The check runs at build start, before anything is packed or uploaded:
 
 ```
 auto-update manifests must be signed, but no Ed25519 signing key was found for mac. Generate one with
@@ -948,7 +948,7 @@ ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(cat update-private-key.pem)" electron-builde
 
 **To opt out**, set `updateManifest: false` at the top level or under a platform key. Every build that emits a manifest then logs a warning. `false` also short-circuits the environment variables, so a leftover `ELECTRON_BUILDER_UPDATE_SIGN_KEY` cannot silently re-enable signing. A platform value of `null` is **not** an opt-out — it falls back to the top-level value.
 
-Two cases need no configuration at all: when every publish provider sets `publishAutoUpdate: false` no manifest is emitted, so the requirement is waived; and a `publicKey` with no private key does **not** satisfy it, since electron-builder still has nothing to sign with (that HSM/KMS workflow either builds without a publish policy, or publishes with `publishAutoUpdate: false` and generates the manifest itself — see [Key storage](../features/key-rotation.md#key-storage)).
+A publishing build whose targets write no update info (for example only snap, flatpak, MSI/MSIX, portable, mas/pkg or plain archives) needs no key. Two more cases need no configuration at all: when every publish provider sets `publishAutoUpdate: false` no manifest is emitted, so the requirement is waived; and a `publicKey` with no private key does **not** satisfy it, since electron-builder still has nothing to sign with (that HSM/KMS workflow either builds without a publish policy, or publishes with `publishAutoUpdate: false` and generates the manifest itself — see [Key storage](../features/key-rotation.md#key-storage)).
 
 :::danger[Opting out is not reversible for a release line]
 Once a release embeds a public key, its installs are **fail-closed**: an unsigned manifest is rejected with `ERR_UPDATER_MANIFEST_NOT_SIGNED` and those installs stop updating entirely. Do not switch to `updateManifest: false` after shipping signed manifests, and make sure every pipeline that can publish a release — including a hotfix built from a laptop — has the key.

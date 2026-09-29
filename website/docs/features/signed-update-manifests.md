@@ -40,7 +40,7 @@ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=/run/secrets/update-private-key.pem electr
 
 No configuration block is required — the environment-variable route is the whole setup. Every generated `latest*.yml` gains a base64 `signature` field plus a `signatures` list (see [What is written](#what-is-written)), and the derived public key is embedded into the app's `app-update.yml` as `updateManifestPublicKey` automatically.
 
-A publishing build with no resolvable key fails instead:
+A publishing build with no resolvable key fails instead — at build start, before anything is packed or uploaded, so none of that build's artifacts are published:
 
 ```
 auto-update manifests must be signed, but no Ed25519 signing key was found for mac. Generate one with
@@ -113,7 +113,7 @@ Two properties are worth knowing:
 - **It short-circuits the environment variables.** A leftover `ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing behind the back of the opt-out, so `false` means unsigned everywhere, deterministically.
 - **A platform value wins over the root**, so `linux: { updateManifest: false }` opts out for Linux only while a root signing config still covers the other platforms — and the converse works too. A platform value of `null`, on the other hand, falls back to the root rather than opting out.
 
-The requirement is also waived, without any configuration, where no manifest is emitted at all: a build whose publish providers all set `publishAutoUpdate: false`, and any build without a publish policy (which only warns).
+The requirement is also waived, without any configuration, where no manifest is emitted at all: a build whose publish providers all set `publishAutoUpdate: false`, a build whose targets write no update info (for example only snap, flatpak, MSI/MSIX, portable, mas/pkg or plain archives), and any build without a publish policy (which only warns).
 
 :::danger[Opting out is not reversible for a release line]
 Once a release embeds a public key, its installs are **fail-closed**: an unsigned manifest is rejected with `ERR_UPDATER_MANIFEST_NOT_SIGNED` and those installs stop updating entirely. Do not switch to `updateManifest: false` after shipping signed manifests, and make sure *every* pipeline that can publish a release — including a hotfix built from a laptop — has the key.

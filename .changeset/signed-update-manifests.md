@@ -9,8 +9,12 @@
 feat(security)!: signed update manifests (Ed25519) are required by default, with trust lists and multi-signature manifests
 
 BREAKING CHANGE: signing auto-update manifests is now REQUIRED by default. A build with a publish policy
-(`--publish`) that emits auto-update metadata (`latest*.yml`, or the `app-update.yml` written into the app) fails
-when no Ed25519 signing key resolves; the error names `electron-builder create-update-key` and the
+(`--publish`) that includes a target writing auto-update metadata (`latest*.yml`: NSIS, AppImage, deb/rpm/pacman,
+macOS zip/dmg, AppX with `electronUpdaterAware`) fails when no Ed25519 signing key resolves. The check runs at build
+start, before anything is packed or uploaded, so no artifact of that build is published; a build of only targets
+that write no update info (snap, flatpak, MSI/MSIX, portable, mas/pkg, plain archives) needs no key. Third-party
+targets declare update info with the new `Target.writesUpdateInfo` getter; one that does not is still checked, but
+only when its own artifact is created. The error names `electron-builder create-update-key` and the
 `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables
 (`updateManifest.signingKey` / `signingKeyFile` work too). A build without a publish policy only warns, so local
 builds are unaffected. To keep publishing unsigned manifests, set `updateManifest: false` - the only opt-out; every
