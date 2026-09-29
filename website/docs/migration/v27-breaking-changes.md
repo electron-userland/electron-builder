@@ -107,6 +107,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`quitAndInstall` takes an options object (electron-updater)](#quitandinstall-takes-an-options-object) | — | Replace positional args: `quitAndInstall(true, false)` → `quitAndInstall({ isSilent: true, isForceRunAfter: false })` |
 | [`autoInstallOnAppQuit` replaced by `autoInstallEvent` enum (electron-updater)](#autoinstallevent-replaces-autoinstallonappquit) | — | `autoInstallOnAppQuit = false` → `autoInstallEvent = "manual"`; default `"onQuit"` preserves behavior |
 | [`downloadUpdate()` resolves with an object, not an array (electron-updater)](#downloadupdate-resolves-with-a-downloadexecutorresult-object) | — | `const [installer] = await downloadUpdate()` → `const { updateFile } = await downloadUpdate()`; same for `checkForUpdates()` → `downloadPromise` |
+| [`verifyUpdateCodeSignature` renamed and returns a result object (electron-updater)](#verifyupdatecodesignature-renamed-to-verifyupdatefileauthenticodesignature) | — | `NsisUpdater.verifyUpdateCodeSignature` → `verifyUpdateFileAuthenticodeSignature`; return `{ response: "success" }` / `{ response: "failure", message }` instead of `null` / `string` |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | — | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | — | Use the `snapcraft` config shape / Electron framework |
 
@@ -996,6 +997,29 @@ const downloaded = (await result?.downloadPromise)?.updateFile
 ```
 
 Code that only awaits the promise for its side effects, or that relies on the `update-downloaded` event, needs no change. Additively, the `update-downloaded` event payload (`UpdateDownloadedEvent`) now also carries `packageFile` for web installers, next to the existing `downloadedFile`.
+
+### `verifyUpdateCodeSignature` renamed to `verifyUpdateFileAuthenticodeSignature`
+
+NSIS Authenticode verification no longer uses the `null`-means-success / `string`-means-error convention. `NsisUpdater.verifyUpdateCodeSignature` is renamed to `verifyUpdateFileAuthenticodeSignature` and returns a result object:
+
+```ts
+type VerifyUpdateFileResult = { response: "success" } | { response: "failure"; message: string }
+```
+
+```ts
+// Before (v6)
+autoUpdater.verifyUpdateCodeSignature = async (publisherNames, path) => (isValid ? null : "why it failed")
+
+// After (v7)
+autoUpdater.verifyUpdateFileAuthenticodeSignature = async (publisherNames, path) =>
+  isValid ? { response: "success" } : { response: "failure", message: "why it failed" }
+```
+
+The old name is kept as a compatibility shim that translates in both directions, so existing code keeps working; it is deprecated and **will be removed in v28**. The same applies to the protected `_verifyUpdateCodeSignature` member, which is renamed to `_verifyUpdateFileAuthenticodeSignature` — a subclass that *assigns* the old name still works through a deprecated accessor, but a subclass that *redeclares* it as a class field shadows that accessor and must be migrated.
+
+If you override the protected `BaseUpdater.verifyInstallerSignatureOnLaunch` (added earlier in the same v27 pre-release cycle, so only 7.0.0-alpha users are affected), return `{ response: "success" }` rather than `null` — `null` is now read as a verification failure and blocks every install-on-next-launch.
+
+Additively, all updaters gain `AppUpdater.verifyUpdateFile` for app-defined verification of the downloaded file on every path that can lead to an install. See [Custom downloaded-file verification](../features/auto-update.md#custom-downloaded-file-verification).
 
 ---
 

@@ -3,7 +3,15 @@ import { isEmptyOrSpaces } from "builder-util"
 import { execSync } from "child_process"
 import { Arch } from "electron-builder"
 import { TestContext } from "vitest"
-import { optionsForFlakyE2E, optionsForFlakyMultiHopE2E, runInstallOnNextLaunchTest, runKeyRotationTest, runSignedManifestTest, runTest } from "./blackboxUpdateHelpers"
+import {
+  optionsForFlakyE2E,
+  optionsForFlakyMultiHopE2E,
+  runInstallOnNextLaunchTest,
+  runKeyRotationTest,
+  runSignedManifestTest,
+  runTest,
+  runVerifyUpdateFileTest,
+} from "./blackboxUpdateHelpers"
 
 export function registerBlackboxLinuxTests(toolset: Required<Pick<ToolsetConfig, "appimage">>): void {
   const appimage = toolset.appimage
@@ -33,6 +41,13 @@ export function registerBlackboxLinuxTests(toolset: Required<Pick<ToolsetConfig,
     // Key rotation A → [A, B] → B over three builds, including manifests the installed app must refuse.
     test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "x64")("AppImage - key rotation - x64", optionsForFlakyMultiHopE2E, async (context: TestContext) => {
       await runKeyRotationTest(context, "AppImage", "appimage", Arch.x64, { appimage })
+    })
+
+    // App-supplied verification (AppUpdater.verifyUpdateFile): a rejecting hook aborts the download, an accepting
+    // one lets it through, and the pending installer is re-verified at its real path on the next launch — the
+    // cross-launch half of the hook, which no in-process test can reach.
+    test.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true" && process.arch === "x64")("AppImage - verifyUpdateFile - x64", optionsForFlakyE2E, async (context: TestContext) => {
+      await runVerifyUpdateFileTest(context, "AppImage", "appimage", Arch.x64, { appimage })
     })
   })
 }

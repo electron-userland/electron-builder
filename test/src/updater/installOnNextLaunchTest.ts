@@ -294,7 +294,7 @@ describe("install on next launch", { concurrent: false }, () => {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
       const { updater, doInstall } = createUpdater(seeded.updateInfo)
       helper.markInstallOnNextLaunchSync(log)
-      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue("invalid signature")
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "failure", message: "invalid signature" })
       const errors: Error[] = []
       updater.on("error", error => errors.push(error))
 
@@ -303,11 +303,71 @@ describe("install on next launch", { concurrent: false }, () => {
       expect(errors.some(it => it.message.includes("not signed"))).toBe(true)
     })
 
+    test("fails closed when the launch-time signature verifier returns a malformed result", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      const { updater, doInstall } = createUpdater(seeded.updateInfo)
+      helper.markInstallOnNextLaunchSync(log)
+      // @ts-expect-error intentionally violating the verifier contract to cover fail-closed behavior
+      vi.spyOn(updater, "verifyInstallerSignatureOnLaunch").mockResolvedValue(null)
+      const errors: Error[] = []
+      updater.on("error", error => errors.push(error))
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(errors.some(it => it.message.includes("unknown error"))).toBe(true)
+    })
+
+    test("does not install when verifyUpdateFile rejects the pending installer", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      const { updater, doInstall } = createUpdater(seeded.updateInfo)
+      helper.markInstallOnNextLaunchSync(log)
+      const verifyUpdateFile = vi.fn(async () => ({ response: "failure" as const, message: "pending installer rejected" }))
+      updater.verifyUpdateFile = verifyUpdateFile
+      const errors: Error[] = []
+      updater.on("error", error => errors.push(error))
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      // the installer is re-verified at its real path — it has been sitting in the cache since a previous launch
+      expect(verifyUpdateFile).toHaveBeenCalledWith({
+        updateFilePath: seeded.installerPath,
+        originalUpdateFileName: path.basename(seeded.installerPath),
+      })
+      expect(errors.some(it => it.message.includes("pending installer rejected"))).toBe(true)
+      expect((errors.find(it => it.message.includes("pending installer rejected")) as any)?.code).toBe("ERR_UPDATER_INVALID_UPDATE_FILE")
+    })
+
+    test("fails closed when verifyUpdateFile returns a malformed result on launch", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      const { updater, doInstall } = createUpdater(seeded.updateInfo)
+      helper.markInstallOnNextLaunchSync(log)
+      // @ts-expect-error intentionally violating the verifier contract to cover fail-closed behavior
+      updater.verifyUpdateFile = vi.fn(async () => null)
+      const errors: Error[] = []
+      updater.on("error", error => errors.push(error))
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(errors.some(it => it.message.includes("unknown error"))).toBe(true)
+    })
+
+    test("installs when verifyUpdateFile accepts the pending installer", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      const { updater, doInstall } = createUpdater(seeded.updateInfo)
+      helper.markInstallOnNextLaunchSync(log)
+      const verifyUpdateFile = vi.fn(async () => ({ response: "success" as const }))
+      updater.verifyUpdateFile = verifyUpdateFile
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(verifyUpdateFile).toHaveBeenCalledTimes(1)
+      expect(doInstall).toHaveBeenCalledTimes(1)
+    })
+
     test("automatic startup path installs a validated per-user pending update on a supporting target (NSIS)", async () => {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
       const { updater, app, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
       helper.markInstallOnNextLaunchSync(log)
-      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue(null)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
 
       await expect((updater as any).installPendingUpdate(true)).resolves.toBe(true)
       await new Promise(resolve => setImmediate(resolve))
@@ -319,7 +379,7 @@ describe("install on next launch", { concurrent: false }, () => {
     test("automatic startup path skips per-machine installs but explicit call installs them", async () => {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
       const { updater, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
-      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue(null)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
       // simulate a per-machine install record
       await helper.setDownloadedFile(
         seeded.installerPath,
