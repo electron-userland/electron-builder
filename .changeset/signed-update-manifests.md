@@ -2,6 +2,7 @@
 "builder-util-runtime": minor
 "builder-util": minor
 "app-builder-lib": major
+"dmg-builder": minor
 "electron-updater": minor
 "electron-builder": major
 ---
