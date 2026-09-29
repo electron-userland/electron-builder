@@ -680,6 +680,26 @@ test("publishAutoUpdate: false still embeds the trust list when keys are configu
   expect(publishConfig?.updateManifestPublicKey).toBe(publicKeyPem)
 })
 
+test("publishAutoUpdate: false on the first provider does not waive the requirement when a later provider emits a manifest", async ({ expect }) => {
+  // createUpdateInfoTasks writes latest*.yml for every provider, so only an all-disabled list emits no manifest
+  const packager = makeAppUpdateConfigPackager([], undefined, [
+    { provider: "generic", url: "https://example.com/no-manifest", publishAutoUpdate: false },
+    { provider: "generic", url: "https://example.com/updates" },
+  ])
+  packager.requireUpdateSigningKeys = (required: boolean) =>
+    required ? Promise.reject(new InvalidConfigurationError("auto-update manifests must be signed")) : Promise.resolve([])
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, true)).rejects.toThrow(/must be signed/)
+
+  const requireUpdateSigningKeys = vi.fn().mockRejectedValue(new Error("must not be called - no provider emits a manifest"))
+  const allDisabled = makeAppUpdateConfigPackager([], undefined, [
+    { provider: "generic", url: "https://example.com/a", publishAutoUpdate: false },
+    { provider: "generic", url: "https://example.com/b", publishAutoUpdate: false },
+  ])
+  allDisabled.requireUpdateSigningKeys = requireUpdateSigningKeys
+  await expect(getAppUpdatePublishConfiguration(allDisabled, null, Arch.x64, true)).resolves.toBeTruthy()
+  expect(requireUpdateSigningKeys).not.toHaveBeenCalled()
+})
+
 test("the managed publish.updateManifestPublicKey error wins over the signing requirement", async ({ expect }) => {
   // both wrong at once: the actionable message is the managed-key one, so its guard must stay first
   const { publicKeyPem } = generateUpdateSigningKeypair()

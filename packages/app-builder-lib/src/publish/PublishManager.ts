@@ -343,8 +343,11 @@ export async function getAppUpdatePublishConfiguration(
   // (no `updateManifest` config block) embeds the matching public keys too, and the two sides
   // cannot disagree about whether signing is enabled.
   // A publish target with `publishAutoUpdate: false` emits no manifest, so the signing requirement is waived
-  // there - the trust list is still embedded if keys happen to be configured.
-  const signingKeys = publishConfig.publishAutoUpdate === false ? await packager.updateSigningKeys.value : await packager.requireUpdateSigningKeys(isPublish)
+  // there - the trust list is still embedded if keys happen to be configured. Only app-update.yml is limited to
+  // the first provider: createUpdateInfoTasks writes a manifest for every configured one, so the waiver must hold
+  // for all of them, or a later provider's manifest would only fail in writeUpdateInfoFiles, after the uploads.
+  const emitsManifest = publishConfigs.some(it => it.publishAutoUpdate !== false)
+  const signingKeys = emitsManifest ? await packager.requireUpdateSigningKeys(isPublish) : await packager.updateSigningKeys.value
   // `false` is the opt-out and carries no config object to read `publicKey` from
   const explicitKeys = updateManifestConfig === false ? [] : normalizeExplicitPublicKeys(updateManifestConfig?.publicKey)
   const trustedKeys = explicitKeys.length > 0 ? explicitKeys : signingKeys.map(derivePublicKeyPem)
