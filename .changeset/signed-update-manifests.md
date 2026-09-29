@@ -47,18 +47,21 @@ either. `AppUpdater.updateManifestPublicKey` accepts a string or an array. A bui
 explicit `publicKey` list that contains none of the signing keys.
 
 `app-update.yml` (the embedded feed and trust list) now follows the targets that write update info: each packaged
-app embeds the first provider of the publish settings of its manifest-emitting targets (NSIS/NSIS web, AppX with
-`electronUpdaterAware`, macOS dmg/zip, AppImage, deb/rpm/pacman), resolving target, then platform, then top level,
-instead of the platform/top-level `publish` only. A build with only `nsis.publish` therefore ships that feed and
-the key verifying its signed manifests, where it used to ship no `app-update.yml` (or, with a GitHub `repository`,
-a GitHub feed while the manifests went elsewhere). With no such target (snap-only, `publish: null` or
-`publishAutoUpdate: false` on the target) the platform/top-level settings apply as before, including the GitHub
-fallback. AppImage and deb/rpm/pacman honor `appImage.publish`/`deb.publish` etc. for the file they write. When two
-targets built from the same app (e.g. `dmg` and `zip`, or `nsis` and an updater-aware `appx`) resolve different
-feeds (first providers that differ in more than upload-only options such as `publishAutoUpdate` or `timeout`), a publishing build fails at build start with an `InvalidConfigurationError`; a build without a
-publish policy warns that publishing will fail and writes no `app-update.yml` for that app. Configure `publish` once
-at the platform level, or give those targets the same first provider. `getAppUpdatePublishConfiguration` now
-honors the target-specific options passed to it.
+app embeds the first manifest-receiving provider of the publish settings of its manifest-emitting targets
+(NSIS/NSIS web, AppX with `electronUpdaterAware`, macOS dmg/zip, AppImage, deb/rpm/pacman), resolving target, then
+platform, then top level, instead of the platform/top-level `publish` only. A build with only `nsis.publish`
+therefore ships that feed and the key verifying its signed manifests, where it used to ship no `app-update.yml`
+(or, with a GitHub `repository`, a GitHub feed while the manifests went elsewhere). With no such target (snap-only,
+`publish: null` or `publishAutoUpdate: false` on the target) the platform/top-level settings apply as before,
+including the GitHub fallback. AppImage and deb/rpm/pacman honor `appImage.publish`/`deb.publish` etc. for the file
+they write. When two targets built from the same app (e.g. `dmg` and `zip`, or `nsis` and an updater-aware `appx`)
+resolve different feeds (first providers that differ in more than upload-only options such as `publishAutoUpdate`
+or `timeout`), a publishing build fails at build start with an `InvalidConfigurationError`; a build without a
+publish policy warns that publishing will fail and writes no `app-update.yml` for that app. Configure `publish`
+once at the platform level, or give those targets the same first provider. `getAppUpdatePublishConfiguration` now
+honors the target-specific options passed to it. A provider with `publishAutoUpdate: false` is no longer embedded
+as the feed when a later provider receives the manifest (e.g. `[{ provider: "s3", publishAutoUpdate: false },
+"github"]` now embeds GitHub instead of an S3 feed that never gets a `latest*.yml`).
 
 Gating of the Linux package-manager signature-bypass flags landed separately as
 `AppUpdater.allowUnverifiedLinuxPackages` (#9990).

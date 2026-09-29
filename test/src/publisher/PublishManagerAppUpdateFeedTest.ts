@@ -224,6 +224,39 @@ test("a different url, bucket, path or channel is a different feed", async ({ ex
   }
 })
 
+test("a provider with publishAutoUpdate: false is not embedded when a later one receives the manifest", async ({ expect, tmpDir }) => {
+  // writeUpdateInfoFiles writes no latest*.yml for the disabled provider, so installs must poll the later one
+  const mixed = [{ ...s3, publishAutoUpdate: false }, generic]
+  // target level
+  expect(await afterPackAppUpdate(tmpDir, makePackager({}), [target("nsis", { publish: mixed })])).toMatchObject(generic)
+  // platform level, inherited by the target (before: the S3 feed, which never receives a manifest)
+  const platformMixed = makePackager({ platformPublish: mixed })
+  const appUpdate = await afterPackAppUpdate(tmpDir, platformMixed, [target("nsis")])
+  expect(appUpdate).toMatchObject(generic)
+  expect(appUpdate.bucket).toBeUndefined()
+  expect(appUpdate.updateManifestPublicKey).toBe(trustedKey)
+  expect(platformMixed.requireUpdateSigningKeys).toHaveBeenCalledWith(true)
+  // the exported single-target helper and the Linux targets that write the file themselves agree
+  const linux = makePackager({ platform: Platform.LINUX, platformPublish: mixed }) as any
+  expect(await getAppUpdatePublishConfiguration(linux, null, Arch.x64, false)).toMatchObject(generic)
+  expect(await getPackAppUpdatePublishConfiguration(linux, [target("appimage")] as any, Arch.x64, false)).toMatchObject(generic)
+  // and the disabled provider does not make it a different feed from a target that only lists the enabled one
+  const targets = [target("nsis", { publish: mixed }), target("appx", { electronUpdaterAware: true, publish: generic })]
+  expect(await afterPackAppUpdate(tmpDir, makePackager({}), targets)).toMatchObject(generic)
+})
+
+test("with publishAutoUpdate: false on every provider the first one is still embedded (external manifest signing)", async ({ expect, tmpDir }) => {
+  const packager = makePackager({
+    platformPublish: [
+      { ...s3, publishAutoUpdate: false },
+      { ...generic, publishAutoUpdate: false },
+    ],
+  })
+  const appUpdate = await afterPackAppUpdate(tmpDir, packager, [target("nsis")])
+  expect(appUpdate).toMatchObject(s3)
+  expect(packager.requireUpdateSigningKeys).not.toHaveBeenCalled()
+})
+
 test("a non-manifest target does not take part in the rule", async ({ expect, tmpDir }) => {
   // the portable exe's own publish differs, but it writes no update info and does not decide the feed
   const appUpdate = await afterPackAppUpdate(tmpDir, makePackager({}), [target("portable", { publish: generic }, false), target("nsis", { publish: s3 })])

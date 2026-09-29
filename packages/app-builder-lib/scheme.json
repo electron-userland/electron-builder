@@ -481,7 +481,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -643,7 +643,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -1762,7 +1762,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -1885,7 +1885,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -2013,7 +2013,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -2148,7 +2148,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -6346,7 +6346,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -6843,7 +6843,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -7735,7 +7735,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -8229,7 +8229,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {

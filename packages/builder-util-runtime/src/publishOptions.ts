@@ -51,6 +51,8 @@ export interface PublishConfiguration {
    *
    * Auto update relies only on the first provider in the list (you can specify several publishers).
    * Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+   * A provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:
+   * the first provider that does is embedded instead.
    *
    * @default true
    */

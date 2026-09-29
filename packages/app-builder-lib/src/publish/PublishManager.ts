@@ -386,7 +386,8 @@ export async function getPackAppUpdatePublishConfiguration(
 }
 
 /**
- * The publish configs whose first provider becomes the `app-update.yml` shared by all targets of one pack:
+ * The publish configs whose first provider becomes the `app-update.yml` shared by all targets of one pack (for a
+ * manifest-emitting target, the first provider that receives its manifest - see getEmittingUpdateInfoPublishConfigs):
  *
  * - the targets that emit a manifest (`writesUpdateInfo`, and on Windows an electron-updater-aware one) under their
  *   own effective publish settings - target-level `publish` first, then platform, then root - decide it;
@@ -443,7 +444,7 @@ function reportConflictingAppUpdateFeeds(
   const feeds = writers.map(it => `${it.target.name} -> ${it.publishConfigs[0]?.provider ?? "none"}`).join(", ")
   const problem =
     `targets ${targets} are built from the same ${packager.platform.name} ${Arch[arch]} app, which holds a single app-update.yml, ` +
-    `but their publish settings resolve to different auto-update feeds (${feeds}; the first provider of each is embedded)`
+    `but their publish settings resolve to different auto-update feeds (${feeds}; the first provider of each that receives the manifest is embedded)`
   const solution = `configure \`publish\` once at the platform level (\`${packager.platform.buildConfigurationKey}.publish\`) and remove the target-level overrides, or point their first providers at the same feed`
   if (isPublish) {
     throw new InvalidConfigurationError(`${problem}. To fix it, ${solution}.`)
@@ -842,9 +843,11 @@ async function getTargetManifestPublishConfigs(packager: PlatformPackager<any>, 
 }
 
 /**
- * The update-info publish configs resolved for the given target-specific options (target, then platform, then root;
- * GitHub from repository info when none configures `publish`), or `null` when they emit no manifest: `publish: null`,
- * or `publishAutoUpdate: false` on every provider.
+ * The update-info publish configs that receive a manifest, resolved for the given target-specific options (target,
+ * then platform, then root; GitHub from repository info when none configures `publish`), or `null` when they emit
+ * none: `publish: null`, or `publishAutoUpdate: false` on every provider. Providers with `publishAutoUpdate: false`
+ * are left out - writeUpdateInfoFiles writes no `latest*.yml` for them - so the first provider, the one embedded in
+ * app-update.yml, is always one the manifest is uploaded to.
  */
 async function getEmittingUpdateInfoPublishConfigs(
   packager: PlatformPackager<any>,
@@ -853,7 +856,8 @@ async function getEmittingUpdateInfoPublishConfigs(
   errorIfCannot: boolean
 ): Promise<Array<PublishConfiguration> | null> {
   const updateInfoConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, targetSpecificOptions, arch, errorIfCannot), arch)
-  return updateInfoConfigs?.some(it => it.publishAutoUpdate !== false) === true ? updateInfoConfigs : null
+  const emitting = updateInfoConfigs?.filter(it => it.publishAutoUpdate !== false) ?? []
+  return emitting.length === 0 ? null : emitting
 }
 
 function isSuitableWindowsTarget(target: Target) {
