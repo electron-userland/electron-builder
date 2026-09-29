@@ -28,7 +28,7 @@ import { createElectronFrameworkSupport } from "./electron/ElectronFramework.js"
 import { assertElectronArchSupported } from "./electron/electronArchSupport.js"
 import { Framework, isElectronBased } from "./Framework.js"
 import { Metadata } from "./options/metadata.js"
-import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
+import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions, PlannedTargets } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
@@ -62,6 +62,9 @@ type PackagerEvents = {
 
   // internal-use only, prefer usage of `artifactBuildCompleted`
   artifactCreated: Hook<ArtifactCreated, void>
+
+  // internal-use only: every target of the build, before the first pack
+  targetsCreated: Hook<ReadonlyArray<PlannedTargets>, void>
 }
 
 /**
@@ -293,6 +296,12 @@ export class Packager {
     return this
   }
 
+  /** @internal emitted once per build, after every platform's targets are created and before anything is packed */
+  onTargetsCreated(handler: PackagerEvents["targetsCreated"]): Packager {
+    this.eventEmitter.on("targetsCreated", handler)
+    return this
+  }
+
   onArtifactCreated(handler: PackagerEvents["artifactCreated"]): Packager {
     this.eventEmitter.on("artifactCreated", handler)
     return this
@@ -515,11 +524,11 @@ export class Packager {
     const platformToTarget = new Map<Platform, Map<string, Target>>()
     const createdOutDirs = new Set<string>()
 
+    // Every platform packager and target is created before the first pack, so listeners of `targetsCreated` (the
+    // publish preflight) see the whole build and can fail it before any artifact exists - let alone is uploaded.
+    type ArchPlan = { packager: PlatformPackager<any>; arch: Arch; targets: Array<Target>; outDir: string }
+    const plans: Array<{ packager: PlatformPackager<any>; nameToTarget: Map<string, Target>; archs: Array<ArchPlan> }> = []
     for (const [platform, archToType] of this.options.targets!) {
-      if (this.cancellationToken.cancelled) {
-        break
-      }
-
       if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
         throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/docs/features/multi-platform-build")
       }
@@ -527,6 +536,32 @@ export class Packager {
       const packager = await this.createHelper(platform)
       const nameToTarget: Map<string, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
+
+      const archs: Array<ArchPlan> = []
+      for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
+        // fail fast when the requested arch has no official Electron build anymore (Electron 44 removed win32-ia32 and linux-armv7l);
+        // skipped for prepackaged apps since nothing is downloaded then
+        if (this.options.prepackaged == null && isElectronBased(this.framework)) {
+          assertElectronArchSupported(platform, arch, this.framework.version, this.config)
+        }
+
+        // support os and arch macro in output value
+        const outDir = path.resolve(this.projectDir, packager.expandMacro(this.config.directories!.output!, Arch[arch]))
+        const targets = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
+        archs.push({ packager, arch, targets, outDir })
+      }
+      plans.push({ packager, nameToTarget, archs })
+    }
+
+    await this.eventEmitter.emit(
+      "targetsCreated",
+      plans.flatMap<PlannedTargets>(it => it.archs)
+    )
+
+    for (const { packager, nameToTarget, archs } of plans) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
 
       let poolCount = Math.floor(packager.config.concurrency?.jobs || 1)
       if (poolCount < 1) {
@@ -540,20 +575,11 @@ export class Packager {
       }
       const packPromises: Promise<any>[] = []
 
-      for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
+      for (const { arch, targets: targetList, outDir } of archs) {
         if (this.cancellationToken.cancelled) {
           break
         }
 
-        // fail fast when the requested arch has no official Electron build anymore (Electron 44 removed win32-ia32 and linux-armv7l);
-        // skipped for prepackaged apps since nothing is downloaded then
-        if (this.options.prepackaged == null && isElectronBased(this.framework)) {
-          assertElectronArchSupported(platform, arch, this.framework.version, this.config)
-        }
-
-        // support os and arch macro in output value
-        const outDir = path.resolve(this.projectDir, packager.expandMacro(this.config.directories!.output!, Arch[arch]))
-        const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
         await createOutDirIfNeed(targetList, createdOutDirs)
         const promise = packager.pack(outDir, arch, targetList, taskManager)
         if (poolCount < 2) {

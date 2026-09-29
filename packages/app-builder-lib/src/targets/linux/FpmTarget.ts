@@ -404,6 +404,11 @@ export default class FpmTarget extends Target {
     })
   }
 
+  // an over-approximation: the artifact only carries update info when the platform-level publish config resolves
+  get writesUpdateInfo(): boolean {
+    return this.supportsAutoUpdate(this.name)
+  }
+
   private supportsAutoUpdate(target: string) {
     return ["deb", "rpm", "pacman"].includes(target)
   }

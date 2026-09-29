@@ -53,7 +53,7 @@ import { WriteStream as TtyWriteStream } from "tty"
 import { AppInfo } from "../appInfo.js"
 import { Configuration } from "../configuration.js"
 import { Platform, Target, TargetSpecificOptions } from "../core.js"
-import { ArtifactCreated } from "../packagerApi.js"
+import { ArtifactCreated, PlannedTargets } from "../packagerApi.js"
 import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
 import { PlatformPackager } from "../platformPackager.js"
@@ -150,6 +150,8 @@ export class PublishManager implements PublishContext {
       )
     }
 
+    packager.onTargetsCreated(plan => this.requireSigningKeysForPlannedTargets(plan))
+
     packager.onAfterPack(async event => {
       const packager = event.packager
       if (event.electronPlatformName === "darwin") {
@@ -179,6 +181,32 @@ export class PublishManager implements PublishContext {
         await this.scheduleUpload(publishConfiguration, event, this.getAppInfo(event.packager))
       }
     })
+  }
+
+  /**
+   * Build-start preflight: enforces update-manifest signing for every target of every platform and arch that will
+   * emit update info, before anything is packed. The per-artifact check in artifactCreatedWithoutExplicitPublishConfig
+   * only stops that artifact's own upload; by then an earlier target (a portable exe, another arch, another platform)
+   * may already be uploading. Same resolution as the per-artifact path - target-level `publish` first, `null` means
+   * none, `publishAutoUpdate: false` on every provider waives it - which stays in place for targets that do not
+   * declare `writesUpdateInfo`.
+   */
+  private async requireSigningKeysForPlannedTargets(plan: ReadonlyArray<PlannedTargets>): Promise<void> {
+    if (!this.isPublish) {
+      return
+    }
+    for (const { packager, arch, targets } of plan) {
+      for (const target of targets) {
+        if (!target.writesUpdateInfo || (packager.platform === Platform.WINDOWS && !isSuitableWindowsTarget(target))) {
+          continue
+        }
+        const publishConfigs = await getPublishConfigs(packager, target.options, arch, true)
+        const updateInfoConfigs = await getPublishConfigsForUpdateInfo(packager, publishConfigs, arch)
+        if (updateInfoConfigs?.some(it => it.publishAutoUpdate !== false)) {
+          await packager.requireUpdateSigningKeys(true)
+        }
+      }
+    }
   }
 
   private getAppInfo(platformPackager: PlatformPackager<any> | null) {

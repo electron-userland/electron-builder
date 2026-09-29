@@ -46,6 +46,10 @@ export default class AppImageTarget extends Target {
     )
   }
 
+  get writesUpdateInfo(): boolean {
+    return true
+  }
+
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
 

@@ -87,6 +87,16 @@ export abstract class Target {
     // ignore
   }
 
+  /**
+   * Whether this target's artifacts carry auto-update metadata (`isWriteUpdateInfo`), known before anything is built.
+   * The publish preflight uses it to enforce update-manifest signing before the first upload of the whole build.
+   * A target that emits update info without saying so here is still enforced when its artifact is created - only
+   * uploads of other targets that finished earlier can slip through - so custom targets should override it.
+   */
+  get writesUpdateInfo(): boolean {
+    return false
+  }
+
   abstract build(appOutDir: string, arch: Arch): Promise<any>
 
   async finishBuild(): Promise<any> {
