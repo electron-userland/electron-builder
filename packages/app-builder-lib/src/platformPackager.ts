@@ -375,7 +375,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     this.packageInDistributableFormat(appOutDir, arch, targets, taskManager)
   }
 
+  // the targets built from each packed app dir: they ship its single app-update.yml, so a target that writes that
+  // file itself (AppImage, deb/rpm/pacman) resolves it for all of them - see getPackAppUpdatePublishConfiguration
+  private readonly appOutDirToTargets = new Map<string, ReadonlyArray<Target>>()
+
+  /** @internal the targets packaged from `appOutDir`, as passed to their `build()` */
+  getPackTargets(appOutDir: string): ReadonlyArray<Target> | undefined {
+    return this.appOutDirToTargets.get(appOutDir)
+  }
+
   protected packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): void {
+    this.appOutDirToTargets.set(appOutDir, targets)
     if (targets.find(it => !it.isAsyncSupported) == null) {
       PlatformPackager.buildAsyncTargets(targets, taskManager, appOutDir, arch)
       return

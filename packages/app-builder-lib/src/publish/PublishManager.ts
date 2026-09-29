@@ -164,21 +164,16 @@ export class PublishManager implements PublishContext {
         }
       }
 
-      // app-update.yml is still written for every pack, but the signing requirement (the error when publishing, the
-      // advisory otherwise) only applies when one of this pack's targets emits a manifest under its own publish
-      // settings - the same resolution as the build-start preflight. A snap-, flatpak- or mas-only pack has none
-      // (Linux and mas are not filtered above), nor has an installer whose target-level `publish` is `null` or waived.
-      let packEmitsManifest = false
-      for (const target of event.targets) {
-        if (await targetEmitsUpdateManifest(packager, target, event.arch, this.isPublish)) {
-          packEmitsManifest = true
-          break
-        }
-      }
-      if (packEmitsManifest) {
+      // app-update.yml is written for every pack, from the publish settings of the pack's targets that emit a manifest
+      // (see resolvePackAppUpdatePublishConfigs). The signing requirement (the error when publishing, the advisory
+      // otherwise) only applies when there is one - the same per-target resolution as the build-start preflight. A
+      // snap-, flatpak- or mas-only pack has none (Linux and mas are not filtered above), nor has an installer whose
+      // target-level `publish` is `null` or waived.
+      const { publishConfigs, emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, event.targets, event.arch, this.isPublish)
+      if (emitsManifest) {
         await packager.requireUpdateSigningKeys(this.isPublish)
       }
-      const publishConfig = await getAppUpdatePublishConfiguration(packager, null, event.arch, this.isPublish, true)
+      const publishConfig = await createAppUpdateConfiguration(packager, publishConfigs, this.isPublish, false)
       if (publishConfig != null) {
         await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig)
       }
@@ -346,24 +341,117 @@ export class PublishManager implements PublishContext {
   }
 }
 
+/**
+ * The `app-update.yml` config for a single target with the given target-specific options (`null` for none): the
+ * target's own publish settings when it emits a manifest under them, otherwise the platform/root ones - the rule of
+ * {@link getPackAppUpdatePublishConfiguration} for a pack of one target.
+ */
 export async function getAppUpdatePublishConfiguration(
   packager: PlatformPackager<any>,
   targetSpecificOptions: TargetSpecificOptions | Nullish,
   arch: Arch,
   /**
    * Whether this is the publish path. Gates both publish-credential resolution and the update-manifest signing
-   * requirement. The two Linux targets that write `app-update.yml` into the package pass `false`, since for them
+   * requirement. The Linux targets that write `app-update.yml` into the package pass `false`, since for them
    * "validation will be done on publish step" - and that is exactly when signing is enforced too.
    */
   isPublish: boolean,
   /**
-   * Set when the caller has already applied the signing requirement for the targets this config is embedded for,
-   * using their own publish settings (onAfterPack does); the platform-level configs resolved here then only decide
-   * the embedded trust list, and neither enforce nor warn.
+   * Set when the caller has already applied the signing requirement for the targets this config is embedded for;
+   * the configs resolved here then only decide the embedded trust list, and neither enforce nor warn.
    */
   signingRequirementApplied = false
 ): Promise<PublishConfiguration | null> {
-  const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, arch, isPublish), arch)
+  const own = await getEmittingUpdateInfoPublishConfigs(packager, targetSpecificOptions, arch, isPublish)
+  const publishConfigs = own ?? (await getPlatformUpdateInfoPublishConfigs(packager, arch, isPublish))
+  return await createAppUpdateConfiguration(packager, publishConfigs, isPublish, own != null && !signingRequirementApplied)
+}
+
+/**
+ * The `app-update.yml` config of a packed app dir, which every target built from it ships: see
+ * {@link resolvePackAppUpdatePublishConfigs}. Used by the targets that (re)write the file themselves (AppImage,
+ * deb/rpm/pacman), so they embed the same feed as PublishManager's afterPack handler - or, for a prepackaged app, any
+ * feed at all - and do not race each other with different content.
+ */
+export async function getPackAppUpdatePublishConfiguration(
+  packager: PlatformPackager<any>,
+  targets: ReadonlyArray<Target>,
+  arch: Arch,
+  isPublish: boolean
+): Promise<PublishConfiguration | null> {
+  const { publishConfigs, emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, targets, arch, isPublish)
+  return await createAppUpdateConfiguration(packager, publishConfigs, isPublish, emitsManifest)
+}
+
+/**
+ * The publish configs whose first provider becomes the `app-update.yml` shared by all targets of one pack:
+ *
+ * - the targets that emit a manifest (`writesUpdateInfo`, and on Windows an electron-updater-aware one) under their
+ *   own effective publish settings - target-level `publish` first, then platform, then root - decide it;
+ * - if several do, their first providers must be identical: one app dir holds one `app-update.yml`, so otherwise
+ *   some installs would poll a feed that never receives their manifest. That is a configuration error;
+ * - with none (a snap-only pack, or `nsis.publish: null`), it comes from the platform/root settings, as before -
+ *   including the GitHub fallback from repository info when no level configures `publish` at all.
+ *
+ * `emitsManifest` tells whether any target of the pack emits one, i.e. whether the signing requirement applies.
+ */
+async function resolvePackAppUpdatePublishConfigs(
+  packager: PlatformPackager<any>,
+  targets: ReadonlyArray<Target>,
+  arch: Arch,
+  isPublish: boolean
+): Promise<{ publishConfigs: Array<PublishConfiguration> | null; emitsManifest: boolean }> {
+  const writers: Array<{ target: Target; publishConfigs: Array<PublishConfiguration> }> = []
+  for (const target of targets) {
+    const publishConfigs = await getTargetManifestPublishConfigs(packager, target, arch, isPublish)
+    if (publishConfigs != null) {
+      writers.push({ target, publishConfigs })
+    }
+  }
+  if (writers.length === 0) {
+    return { publishConfigs: await getPlatformUpdateInfoPublishConfigs(packager, arch, isPublish), emitsManifest: false }
+  }
+
+  const embedded = canonicalPublishConfigJson(writers[0].publishConfigs[0])
+  if (writers.some(it => canonicalPublishConfigJson(it.publishConfigs[0]) !== embedded)) {
+    const feeds = writers.map(it => `${it.target.name} -> ${it.publishConfigs[0]?.provider ?? "none"}`).join(", ")
+    throw new InvalidConfigurationError(
+      `targets ${writers.map(it => `"${it.target.name}"`).join(", ")} are built from the same ${packager.platform.name} ${Arch[arch]} app, which holds a single app-update.yml, ` +
+        `but their publish settings resolve to different auto-update feeds (${feeds}; the first provider of each is embedded). ` +
+        `Configure \`publish\` once at the platform level (\`${packager.platform.buildConfigurationKey}.publish\`) and remove the target-level overrides, or make their first providers identical.`
+    )
+  }
+  return { publishConfigs: writers[0].publishConfigs, emitsManifest: true }
+}
+
+// key order does not make two configs different feeds
+function canonicalPublishConfigJson(config: PublishConfiguration | Nullish): string {
+  return JSON.stringify(config ?? null, (_key, value) =>
+    value != null && typeof value === "object" && !Array.isArray(value)
+      ? Object.fromEntries(
+          Object.keys(value)
+            .sort()
+            .map(key => [key, value[key]])
+        )
+      : value
+  )
+}
+
+async function getPlatformUpdateInfoPublishConfigs(packager: PlatformPackager<any>, arch: Arch, isPublish: boolean): Promise<Array<PublishConfiguration> | null> {
+  return await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, arch, isPublish), arch)
+}
+
+/**
+ * The embedded `app-update.yml` config (first provider, updater cache dir, Windows publisher name, manifest trust
+ * list) for already-resolved publish configs. `requireSigning` applies the update-manifest signing requirement
+ * (error when publishing, advisory otherwise) before the trust list is derived.
+ */
+async function createAppUpdateConfiguration(
+  packager: PlatformPackager<any>,
+  publishConfigs: Array<PublishConfiguration> | null,
+  isPublish: boolean,
+  requireSigning: boolean
+): Promise<PublishConfiguration | null> {
   if (publishConfigs == null || publishConfigs.length === 0) {
     return null
   }
@@ -396,12 +484,11 @@ export async function getAppUpdatePublishConfiguration(
   // The very same keys updateInfoBuilder signs `latest*.yml` with, so env-var-only signing
   // (no `updateManifest` config block) embeds the matching public keys too, and the two sides
   // cannot disagree about whether signing is enabled.
-  // A publish target with `publishAutoUpdate: false` emits no manifest, so the signing requirement is waived
-  // there - the trust list is still embedded if keys happen to be configured. Only app-update.yml is limited to
-  // the first provider: createUpdateInfoTasks writes a manifest for every configured one, so the waiver must hold
-  // for all of them, or a later provider's manifest would only fail in writeUpdateInfoFiles, after the uploads.
-  const emitsManifest = publishConfigs.some(it => it.publishAutoUpdate !== false)
-  const signingKeys = emitsManifest && !signingRequirementApplied ? await packager.requireUpdateSigningKeys(isPublish) : await packager.updateSigningKeys.value
+  // Whether the requirement applies was decided by the caller from the manifest-emitting targets (a publish target
+  // with `publishAutoUpdate: false` on every provider emits none, so it is waived there) - the trust list is still
+  // embedded if keys happen to be configured. Only app-update.yml is limited to the first provider:
+  // createUpdateInfoTasks writes a manifest for every configured one, so the waiver must hold for all of them.
+  const signingKeys = requireSigning ? await packager.requireUpdateSigningKeys(isPublish) : await packager.updateSigningKeys.value
   // `false` is the opt-out and carries no config object to read `publicKey` from
   const explicitKeys = updateManifestConfig === false ? [] : normalizeExplicitPublicKeys(updateManifestConfig?.publicKey)
   const trustedKeys = explicitKeys.length > 0 ? explicitKeys : signingKeys.map(derivePublicKeyPem)
@@ -687,12 +774,30 @@ async function resolvePublishConfigurations(
  * first, `null` means none, and `publishAutoUpdate: false` on every provider means no manifest.
  */
 async function targetEmitsUpdateManifest(packager: PlatformPackager<any>, target: Target, arch: Arch, errorIfCannot: boolean): Promise<boolean> {
+  return (await getTargetManifestPublishConfigs(packager, target, arch, errorIfCannot)) != null
+}
+
+/** The update-info publish configs `target` emits a manifest for (see {@link targetEmitsUpdateManifest}), else `null`. */
+async function getTargetManifestPublishConfigs(packager: PlatformPackager<any>, target: Target, arch: Arch, errorIfCannot: boolean): Promise<Array<PublishConfiguration> | null> {
   if (!target.writesUpdateInfo || (packager.platform === Platform.WINDOWS && !isSuitableWindowsTarget(target))) {
-    return false
+    return null
   }
-  const publishConfigs = await getPublishConfigs(packager, target.options, arch, errorIfCannot)
-  const updateInfoConfigs = await getPublishConfigsForUpdateInfo(packager, publishConfigs, arch)
-  return updateInfoConfigs?.some(it => it.publishAutoUpdate !== false) === true
+  return await getEmittingUpdateInfoPublishConfigs(packager, target.options, arch, errorIfCannot)
+}
+
+/**
+ * The update-info publish configs resolved for the given target-specific options (target, then platform, then root;
+ * GitHub from repository info when none configures `publish`), or `null` when they emit no manifest: `publish: null`,
+ * or `publishAutoUpdate: false` on every provider.
+ */
+async function getEmittingUpdateInfoPublishConfigs(
+  packager: PlatformPackager<any>,
+  targetSpecificOptions: PlatformSpecificBuildOptions | Nullish,
+  arch: Arch,
+  errorIfCannot: boolean
+): Promise<Array<PublishConfiguration> | null> {
+  const updateInfoConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, targetSpecificOptions, arch, errorIfCannot), arch)
+  return updateInfoConfigs?.some(it => it.publishAutoUpdate !== false) === true ? updateInfoConfigs : null
 }
 
 function isSuitableWindowsTarget(target: Target) {

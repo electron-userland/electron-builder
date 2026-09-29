@@ -5,7 +5,7 @@ import * as path from "path"
 import { Target } from "../../../core.js"
 import { LinuxPackager } from "../../../linuxPackager.js"
 import { AppImageOptions } from "../../../options/linuxOptions.js"
-import { getAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../../publish/PublishManager.js"
+import { getPackAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../../publish/PublishManager.js"
 import { getNotLocalizedLicenseFile } from "../../../util/license.js"
 import { LinuxTargetHelper } from "../LinuxTargetHelper.js"
 import { createStageDir } from "../../targetUtil.js"
@@ -67,7 +67,7 @@ export default class AppImageTarget extends Target {
 
     // Parallelize independent async operations
     const [publishConfig, stageDir, desktopEntry, icons, license] = await Promise.all([
-      getAppUpdatePublishConfiguration(packager, options, arch, false),
+      getPackAppUpdatePublishConfiguration(packager, packager.getPackTargets(appOutDir) ?? [this], arch, false),
       createStageDir(this, packager, arch),
       this.desktopEntry.value,
       this.helper.icons,

@@ -11,7 +11,7 @@ import * as errorMessages from "../../errorMessages.js"
 import { LinuxPackager } from "../../linuxPackager.js"
 import { DebOptions, LinuxTargetSpecificOptions } from "../../options/linuxOptions.js"
 import { ArtifactCreated } from "../../packagerApi.js"
-import { getAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../publish/PublishManager.js"
+import { getPackAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../publish/PublishManager.js"
 import { getFpmPath } from "../../toolsets/fpm.js"
 import { getLinuxToolsPath } from "../../toolsets/linuxToolsMac.js"
 import { computeEnv } from "../../util/bundledTool.js"
@@ -171,7 +171,7 @@ export default class FpmTarget extends Target {
     const resourceDir = packager.getResourcesDir(linuxDistType)
 
     const publishConfig = this.supportsAutoUpdate(target)
-      ? await getAppUpdatePublishConfiguration(packager, this.options, arch, false /* in any case validation will be done on publish step */)
+      ? await getPackAppUpdatePublishConfiguration(packager, packager.getPackTargets(appOutDir) ?? [this], arch, false /* in any case validation will be done on publish step */)
       : null
     if (publishConfig != null) {
       log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}`)
@@ -404,7 +404,7 @@ export default class FpmTarget extends Target {
     })
   }
 
-  // an over-approximation: the artifact only carries update info when the platform-level publish config resolves
+  // an over-approximation: the artifact only carries update info when its publish config resolves
   get writesUpdateInfo(): boolean {
     return this.supportsAutoUpdate(this.name)
   }
