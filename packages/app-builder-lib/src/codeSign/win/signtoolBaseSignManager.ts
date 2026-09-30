@@ -5,6 +5,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../core.js"
 import {
+  isWindowsSigningDisabled,
   resolveWindowsSigningConfiguration,
   WindowsConfiguration,
   WindowsHsmSigningConfig,
@@ -115,15 +116,18 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       return asArray(publisherName)
     }
 
-    const certInfo = await this.lazyCertInfo.value
-    if (certInfo != null) {
+    // A custom `sign` hook signs with a certificate electron-builder doesn't see. The publisher name that electron-updater trusts is then
+    // derived only from a certificate the config names, never from WIN_CSC_LINK / CSC_LINK in the environment of the build.
+    const isCustomSign = signing?.sign != null
+    const certInfo = isCustomSign && !this.isSigningCertificateConfigured(signing) ? null : await this.lazyCertInfo.value
+    if (certInfo?.commonName) {
       return [certInfo.commonName]
     }
     // Signed (custom `sign` hook, or a certificate without a CN) but no publisher name can be derived: electron-updater verifies
-    // downloaded updates against the publisherName in app-update.yml, so the build needs one.
-    if (signing != null && (signing.sign != null || (await this.cscInfo.value) != null)) {
+    // downloaded updates against the publisherName in app-update.yml, so the build needs one. Not for `win.sign: false`: nothing is signed.
+    if (isCustomSign || (!isWindowsSigningDisabled(this.platformSpecificBuildOptions) && (await this.cscInfo.value) != null)) {
       throw new InvalidConfigurationError(
-        "Windows code signing is configured, but the publisher name cannot be determined at build time (a custom `win.sign.sign` hook without a readable certificate, or a certificate without a Common Name). " +
+        "Windows code signing is configured, but the publisher name cannot be determined at build time (a custom `win.sign.sign` hook without a certificate in the config, or a certificate without a Common Name). " +
           "electron-updater verifies the signature of downloaded updates against the publisherName in app-update.yml. " +
           'Set `win.sign.publisherName` to the subject of the certificate that signs your app (e.g. "CN=My Company, O=My Company, C=US"), ' +
           "or set `win.verifyUpdateCodeSignature: false` (only if your updates are not Authenticode-signed or you don't use electron-updater) to opt out of update signature verification explicitly."
@@ -131,6 +135,20 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     }
     return null
   })
+
+  /**
+   * Whether the config itself names the signing certificate (`certificateFile`, `certificateSubjectName`, `certificateSha1`, or a
+   * `cscLink` in the config), as opposed to one that only WIN_CSC_LINK / CSC_LINK in the environment supply.
+   */
+  private isSigningCertificateConfigured(signing: WindowsSigntoolFamilyConfig | null): boolean {
+    const certificateSigning = signing as WindowsSigntoolSigningConfig | WindowsHsmSigningConfig | null
+    return (
+      certificateSigning?.certificateFile != null ||
+      certificateSigning?.certificateSubjectName != null ||
+      certificateSigning?.certificateSha1 != null ||
+      (signing?.type === "signtool" && (this.platformSpecificBuildOptions.cscLink != null || this.packager.config.cscLink != null))
+    )
+  }
 
   readonly lazyCertInfo = new MemoLazy<MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>, CertificateInfo | null>(
     () => this.cscInfo,
@@ -143,7 +161,8 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       if ("subject" in cscInfo) {
         const bloodyMicrosoftSubjectDn = cscInfo.subject
         return {
-          commonName: parseDn(bloodyMicrosoftSubjectDn).get("CN")!,
+          // empty for a subject without a CN, like readCertInfo, so computedPublisherName requires an explicit publisherName
+          commonName: parseDn(bloodyMicrosoftSubjectDn).get("CN") ?? "",
           bloodyMicrosoftSubjectDn,
         }
       }

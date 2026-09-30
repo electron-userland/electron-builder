@@ -48,12 +48,12 @@ export const NSIS_PER_MACHINE_UPDATE_ADVISORY =
   'with autoInstallEvent "onNextLaunch" (call autoUpdater.installPendingUpdateIfAvailable()). ' +
   "See https://www.electron.build/docs/migration/v27-breaking-changes#nsis-per-machine-builds-set-isadminrightsrequired"
 
-// Advisory surfaced when a custom win.sign.sign hook has no publisherName and no certificate electron-builder reads. v27 fails
+// Advisory surfaced when a custom win.sign.sign hook has no publisherName and no certificate in the config. v27 fails
 // such a build when it writes app-update.yml.
 export const WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY =
   "win.sign.sign (custom signing hook) without win.sign.publisherName detected. In v27, a signed build that writes app-update.yml " +
   "(an nsis, nsis-web or electronUpdaterAware appx target with a publish configuration, including one inferred from a GitHub repository) fails with InvalidConfigurationError " +
-  'when electron-builder cannot read the signing certificate to determine the publisher name (for type "signtool", WIN_CSC_LINK / CSC_LINK may still supply one). ' +
+  "when the config names no certificate to determine the publisher name from (a certificate from the WIN_CSC_LINK / CSC_LINK environment variables is not used for a custom hook). " +
   "Set win.sign.publisherName to the subject of the certificate your hook signs with, or win.verifyUpdateCodeSignature: false only if your updates are not Authenticode-signed. " +
   "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-is-validated-against-the-signing-certificate"
 
@@ -106,7 +106,7 @@ function detectTarget(config: Record<string, any>, platform: "win" | "linux", na
 }
 
 /**
- * True when a custom `win.sign.sign` hook signs without `publisherName` and without a certificate electron-builder reads
+ * True when a custom `win.sign.sign` hook signs without `publisherName` and without a certificate in the config
  * (certificateFile / certificateSubjectName / certificateSha1, or a cscLink for type "signtool"), and update signature
  * verification is on. Evaluated on the migrated config, so a v26 `win.signtoolOptions.sign` counts too.
  */

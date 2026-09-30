@@ -93,7 +93,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); tune the set via `ignoredProductionDependencies`. If you set `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` (removed) to bundle `electron-builder`, override the list instead; `electron-prebuilt`/`electron-rebuild` no longer error and now ship if declared — remove them from `dependencies` |
 | [`allowMissingDependencies` now fails the build](#allowmissingdependencies-now-fails-the-build) | — | A missing production dependency is a hard error; set `allowMissingDependencies: true` to restore v26 warn-only behavior |
 | [`extraFiles` / `extraResources` `to` is validated](#extrafiles--extraresources-destinations-are-validated) | — | An absolute `to`, or one escaping the output dir, now throws |
-| [Windows `publisherName` validated against the certificate](#windows-publishername-is-validated-against-the-signing-certificate) | — | Update `publisherName` after a certificate rotation, or drop it. Custom `win.sign.sign` hooks without a certificate electron-builder can read, and certificates without a CN, now **require** it when `app-update.yml` is written (or set `win.verifyUpdateCodeSignature: false` if your updates are not Authenticode-signed) |
+| [Windows `publisherName` validated against the certificate](#windows-publishername-is-validated-against-the-signing-certificate) | — | Update `publisherName` after a certificate rotation, or drop it. Custom `win.sign.sign` hooks without a certificate in the config (`WIN_CSC_LINK` / `CSC_LINK` don't count), and certificates without a CN, now **require** it when `app-update.yml` is written (or set `win.verifyUpdateCodeSignature: false` if your updates are not Authenticode-signed) |
 | [Custom Windows signing hook moved to `win.sign.sign`](#custom-windows-signing-hooks-move-to-winsignsign) | ✓ | `win.signtoolOptions.sign` moves with the rest of `signtoolOptions` to `win.sign.sign` |
 | [macOS names are no longer NFD-normalized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | Update tooling that matches the normalized on-disk bundle filename |
 | [Linux `executableArgs` field codes are now literal](#linux-launcher-entrypoint) | — | Remove `%F`/`%U` from `executableArgs`; use `linux.desktop.entry.Exec` |
@@ -511,7 +511,7 @@ In v26 the **custom signer hook** lived at `win.signtoolOptions.sign`. v27 reuse
 
 `migrate-schema` performs this move. (A top-level `win.sign: "./customSign.js"` is a pre-v26 shape that v26 already rejected; move it under `{ "type": "signtool", "sign": … }` by hand.)
 
-A hook without a certificate electron-builder can read now also needs `win.sign.publisherName` — see [Windows `publisherName`](#windows-publishername-is-validated-against-the-signing-certificate).
+A hook without a certificate in the config now also needs `win.sign.publisherName` (a certificate from `WIN_CSC_LINK` / `CSC_LINK` is not used to derive it) — see [Windows `publisherName`](#windows-publishername-is-validated-against-the-signing-certificate).
 
 #### `win.signExecutable` / `win.signAndEditExecutable` removed {#winsignexecutable-winsignandeditexecutable-removed}
 
@@ -871,11 +871,11 @@ A configured `win.sign.publisherName` (v26: `win.signtoolOptions.publisherName` 
 
 **Action is required only if** a build fails here — update `win.sign.publisherName` to the new certificate subject, sign with the intended certificate, or set `publisherName` to `null` to opt out of update signature verification entirely.
 
-A code-signed build whose publisher name cannot be determined now also fails with `InvalidConfigurationError`. This covers a custom `win.sign.sign` hook without a certificate electron-builder can read, HSM with a hook and no certificate identifier, and an HSM/PKCS#11 `.crt`/`.cer` without a Common Name. It applies only to builds that write `app-update.yml`: `nsis`, `nsis-web` and `electronUpdaterAware` `appx` targets with a publish configuration, including one inferred from a GitHub `repository`.
+A code-signed build whose publisher name cannot be determined now also fails with `InvalidConfigurationError`. This covers a custom `win.sign.sign` hook without a certificate in the config (`certificateFile`, `certificateSubjectName`, `certificateSha1` or `cscLink`; a certificate from the `WIN_CSC_LINK` / `CSC_LINK` environment variables is not used, because the hook may sign with another one), HSM with a hook and no certificate identifier, and a certificate without a Common Name (including a certificate-store subject). It applies only to builds that write `app-update.yml`: `nsis`, `nsis-web` and `electronUpdaterAware` `appx` targets with a publish configuration, including one inferred from a GitHub `repository`.
 
 **Action:** set `win.sign.publisherName` to the subject of the certificate that signs your app, copied from a binary it already signed ([how](../win.md#how-do-you-delegate-code-signing)) — every component you list must match. Set `win.verifyUpdateCodeSignature: false` instead only if your updates are not Authenticode-signed or you don't use electron-updater.
 
-> **Tip:** `electron-builder migrate-schema` prints an advisory for a custom `win.sign.sign` hook with neither `win.sign.publisherName` nor a certificate in the config. It cannot see a certificate supplied by the `CSC_LINK` / `WIN_CSC_LINK` environment variables.
+> **Tip:** `electron-builder migrate-schema` prints an advisory for a custom `win.sign.sign` hook with neither `win.sign.publisherName` nor a certificate in the config. A certificate supplied by the `CSC_LINK` / `WIN_CSC_LINK` environment variables doesn't count for a hook, at build time either.
 
 > Related, on the updater side: an `app-update.yml` with no `publisherName` means signature verification is silently skipped. v27 warns; **v28 will fail closed.**
 

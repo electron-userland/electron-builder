@@ -933,11 +933,12 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
     return file
   }
 
-  // Real constructors (computedPublisherName is a class field). `cscLink` stands in for WIN_CSC_LINK / CSC_LINK,
+  // Real constructors (computedPublisherName is a class field). `getCscLink` stands in for WIN_CSC_LINK / CSC_LINK,
   // so a certificate link in the environment of the test run is not picked up.
   function makePublisherNameManager(sign: any, packagerOverrides: Record<string, unknown> = {}): SigntoolBaseSignManager {
     const packager = {
       platformOptions: { sign },
+      config: {},
       projectDir: process.cwd(),
       getCscLink: () => null,
       getCscPassword: () => null,
@@ -1020,6 +1021,40 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
     const manager: any = makePublisherNameManager({ type: "signtool", sign: "./customSign.js", certificateFile: "cert.pfx" })
     manager.lazyCertInfo = { value: Promise.resolve(acmeCertInfo) }
     await expect(manager.computedPublisherName.value).resolves.toEqual(["Acme Corp"])
+  })
+
+  test("custom sign hook ignores a certificate from WIN_CSC_LINK / CSC_LINK and throws", async () => {
+    const manager: any = makePublisherNameManager({ type: "signtool", sign: "./customSign.js" }, { getCscLink: () => "env-cert.pfx" })
+    // the environment's certificate is readable, but the hook may sign with another one
+    manager.lazyCertInfo = {
+      get value() {
+        throw new Error("the certificate of the environment must not be read for a custom sign hook")
+      },
+    }
+    await expectMissingPublisherNameError(manager)
+  })
+
+  test.for([
+    ["win.cscLink", { platformOptions: { sign: { type: "signtool", sign: "./customSign.js" }, cscLink: "cert.pfx" } }],
+    ["the top-level cscLink", { config: { cscLink: "cert.pfx" } }],
+  ] as const)("custom sign hook with a certificate in %s derives the CN", async ([, overrides]) => {
+    const manager: any = makePublisherNameManager({ type: "signtool", sign: "./customSign.js" }, overrides)
+    manager.lazyCertInfo = { value: Promise.resolve(acmeCertInfo) }
+    await expect(manager.computedPublisherName.value).resolves.toEqual(["Acme Corp"])
+  })
+
+  test("certificate-store subject without a Common Name throws instead of an undefined publisher name", async () => {
+    const manager: any = makePublisherNameManager({ type: "signtool", certificateSubjectName: "No CN Org" })
+    manager.cscInfo = { value: Promise.resolve({ thumbprint: "AB12", subject: "O=No CN Org, C=US", store: "My", isLocalMachineStore: false }) }
+    await expect(manager.lazyCertInfo.value).resolves.toEqual({ commonName: "", bloodyMicrosoftSubjectDn: "O=No CN Org, C=US" })
+    await expectMissingPublisherNameError(manager)
+  })
+
+  test("implicit signtool with a certificate without a Common Name from WIN_CSC_LINK / CSC_LINK throws", async () => {
+    const manager: any = makePublisherNameManager(undefined)
+    manager.cscInfo = { value: Promise.resolve({ file: "env-cert.pfx", password: null }) }
+    manager.lazyCertInfo = { value: Promise.resolve({ commonName: "", bloodyMicrosoftSubjectDn: "O=No CN Org, C=US" }) }
+    await expectMissingPublisherNameError(manager)
   })
 
   test("unsigned build (no certificate, no hook) resolves null", async () => {

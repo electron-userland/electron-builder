@@ -126,7 +126,8 @@ interface WindowsSigningSharedOptions {
    * Defaults to the Common Name (CN) extracted from your code signing certificate. **Required**
    * (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) when
    * electron-builder cannot read the signing certificate — a custom [sign](#sign) hook without a
-   * certificate, or a certificate without a CN — otherwise the build fails. Set to `null` to opt
+   * certificate in the config (a `WIN_CSC_LINK` / `CSC_LINK` environment variable doesn't count
+   * for a hook), or a certificate without a CN — otherwise the build fails. Set to `null` to opt
    * out.
    *
    * @see https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073
@@ -189,8 +190,10 @@ interface WindowsSigningSharedOptions {
    * [Code Signing](https://www.electron.build/docs/features/code-signing).
    *
    * electron-builder cannot tell which certificate the hook signs with, so also set
-   * [publisherName](#publisherName) to that certificate's subject — without a readable certificate
-   * to derive it from, a build that writes `app-update.yml` fails.
+   * [publisherName](#publisherName) to that certificate's subject — without a certificate in the
+   * config to derive it from (`certificateFile`, `certificateSubjectName`, `certificateSha1` or
+   * `cscLink`; a `WIN_CSC_LINK` / `CSC_LINK` environment variable is not used for this), a build
+   * that writes `app-update.yml` fails.
    */
   readonly sign?: CustomWindowsSign | string | null
 }
