@@ -59,7 +59,9 @@
   ${endif}
   Pop $0
 
+  # A cancelled download ends the installation with exit code 2, like the other aborts of the web installer.
   ${if} $0 == "Cancelled"
+    SetErrorLevel 2
     Quit
   ${endif}
 
@@ -74,7 +76,8 @@
   ${endif}
 
   ${if} $0 == "Cancelled"
-    quit
+    SetErrorLevel 2
+    Quit
   ${elseif} $0 != "OK"
     # A silent run doesn't retry: it cancels and exits with code 2, like the other aborts of the web installer.
     MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Unable to download application package from $packageUrl (status: $0).$\r$\n$\r$\nPlease check your internet connection and retry." /SD IDCANCEL IDRETRY download

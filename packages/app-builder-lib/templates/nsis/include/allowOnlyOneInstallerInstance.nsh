@@ -182,6 +182,7 @@
         Goto doStopProcess
       ${endIf}
       MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "$(appRunning)" /SD IDOK IDOK doStopProcess
+      SetErrorLevel 2
       Quit
 
       doStopProcess:
@@ -218,6 +219,7 @@
         # Ask user to close it manually
         ${if} $R1 > 1
           MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDCANCEL IDRETRY loop
+          SetErrorLevel 2
           Quit
         ${else}
           Goto loop

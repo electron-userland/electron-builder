@@ -120,6 +120,12 @@ for (const incomplete of [false, true]) {
       const checkOrExit = /^(quit|seterrorlevel|messagebox|inetc::get|stdutils::hashfile|system::call)\b/i
       expect(script.slice(uninstalled + 1).filter(line => checkOrExit.test(line))).toEqual(["SetErrorLevel 0", "Quit"])
 
+      // Every abort before the uninstall exits with code 2: a failed copy, an explicit package that doesn't match (unless unverified
+      // packages are allowed), a download cancelled with or without proxy, a failed download and a versioned download that doesn't match.
+      const aborts = script.slice(0, uninstalled).flatMap((line, index) => (/^quit$/i.test(line) ? [index] : []))
+      expect(aborts).toHaveLength(4 + (allowUnverified ? 0 : 1) + (incomplete && !allowUnverified ? 1 : 0))
+      expect(aborts.map(index => script[index - 1])).toEqual(aborts.map(() => "SetErrorLevel 2"))
+
       // The package is downloaded with and without proxy. A silent run doesn't pass /RESUME: after a connection error inetc would ask
       // to reconnect, a prompt without a silent default. An interactive run keeps it.
       const downloads = script.slice(0, uninstalled).flatMap((line, index) => (line.startsWith("inetc::get ") ? [index] : []))
