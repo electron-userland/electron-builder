@@ -1,0 +1,5 @@
+---
+"app-builder-lib": major
+---
+
+feat: verify that native binaries shipped in the app match the target platform/arch. After packing (and, for a macOS universal build, per slice before the merge), every `.node` addon in `app.asar`, `app.asar.unpacked` or the unpacked `app` directory is identified from its header (ELF `e_machine`, Mach-O `cputype` including every fat slice, PE `Machine`) and compared with the target. A mismatched addon now fails the build with an error naming the file, the detected format/arch and the expected one; other mismatched native files (`.so`, `.dylib`, `.dll`, `.exe`, extensionless executables) log a warning. Files whose package declares another platform via `package.json` `os`/`cpu`, or whose path names another platform/arch (e.g. prebuildify `prebuilds/<platform>-<arch>/`), are skipped. Configure via the new `nativeModules.verifyNativeBinaries?: boolean | "warn" | null` option: `true`/omitted (default) fails on a mismatched addon, `"warn"` only logs, `false` skips the check.

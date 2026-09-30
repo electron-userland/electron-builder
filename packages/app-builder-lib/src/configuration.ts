@@ -569,6 +569,10 @@ export interface NativeModulesConfig {
    * Useful when pre-built binaries are not available for the target platform/arch combination,
    * or when you need to ensure native modules are compiled against the exact Electron ABI.
    *
+   * Only honored when the target platform matches the host platform: native modules cannot be
+   * cross-compiled from source for another OS, so for a cross-platform target native dependencies are
+   * rebuilt with prebuilt binaries for that target instead (and a warning is logged).
+   *
    * @default false
    */
   buildDependenciesFromSource?: boolean
@@ -614,6 +618,30 @@ export interface NativeModulesConfig {
    * @default "sequential"
    */
   readonly rebuildMode?: "sequential" | "parallel" | null
+
+  /**
+   * Whether to verify, after the app is packed, that every native binary shipped in the app was built for
+   * the target platform and architecture.
+   *
+   * electron-builder reads the header of each `.node` addon (and of other native libraries and executables
+   * such as `.so`, `.dylib`, `.dll`, `.exe`) in `app.asar`, `app.asar.unpacked` or the unpacked `app`
+   * directory, and compares its format (ELF / Mach-O / PE) and machine type against the target (for
+   * a macOS universal build, each per-arch slice is checked before the slices are merged). This catches a
+   * stale or host-platform binary left in `node_modules` by a skipped or cached rebuild, which otherwise
+   * only surfaces at runtime as `invalid ELF header` / `not a valid Win32 application` /
+   * `incompatible architecture`.
+   *
+   * Files whose package declares another platform via `package.json` `os`/`cpu`, or whose path names
+   * another platform/arch (e.g. prebuildify's `prebuilds/linux-arm64/`), are not loaded for this target
+   * and are ignored.
+   *
+   * - `true` (default) — a mismatched `.node` addon fails the build; other mismatched native files log a warning.
+   * - `"warn"` — log every mismatch as a warning and continue.
+   * - `false` — skip the check.
+   *
+   * @default true
+   */
+  readonly verifyNativeBinaries?: boolean | "warn" | null
 }
 
 export type Hook<T, V> = (contextOrPath: T) => Promise<V> | V

@@ -92,6 +92,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Bitbucket Cloud publishing: token without username → Bearer auth](#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth) | — | Set `BITBUCKET_USERNAME` if your token is an app password / API token |
 | [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); tune the set via `ignoredProductionDependencies`. If you set `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` (removed) to bundle `electron-builder`, override the list instead; `electron-prebuilt`/`electron-rebuild` no longer error and now ship if declared — remove them from `dependencies` |
 | [`allowMissingDependencies` now fails the build](#allowmissingdependencies-now-fails-the-build) | — | A missing production dependency is a hard error; set `allowMissingDependencies: true` to restore v26 warn-only behavior |
+| [Native binaries are verified against the target](#native-binaries-are-verified-against-the-target) | — | A `.node` addon built for another platform/arch now fails the build; set `nativeModules.verifyNativeBinaries: "warn"` (or `false`) to package anyway |
 | [`extraFiles` / `extraResources` `to` is validated](#extrafiles--extraresources-destinations-are-validated) | — | An absolute `to`, or one escaping the output dir, now throws |
 | [Windows `publisherName` validated against the certificate](#windows-publishername-is-validated-against-the-signing-certificate) | — | Update `publisherName` after a certificate rotation, or drop it |
 | [Custom Windows signing hook moved to `win.sign.sign`](#custom-windows-signing-hooks-move-to-winsignsign) | ✓ | `win.signtoolOptions.sign` moves with the rest of `signtoolOptions` to `win.sign.sign` |
@@ -854,6 +855,21 @@ A production dependency that cannot be resolved during `node_modules` collection
 `false` / `null` / omitted (the default) fails on any missing production dependency. Missing **optional** dependencies (declared in `optionalDependencies`, e.g. `fsevents` on Linux/Windows) are always allowed and never fail the build.
 
 **Action:** if a build that previously succeeded now fails here, fix the installation, list the affected names in `allowMissingDependencies`, or set it to `true` to keep the v26 behavior.
+
+### Native binaries are verified against the target
+
+After the app is packed, electron-builder reads the header of every `.node` addon in `app.asar`, `app.asar.unpacked` (or the unpacked `app` directory) and checks its format and machine type (ELF `e_machine`, Mach-O `cputype` including every slice of a fat binary, PE `Machine`) against the target platform and arch. A mismatch is now a **hard error** naming the file, what it was built for and what was expected. In v26 a stale or host-platform binary left in `node_modules` by a skipped or cached rebuild was packaged silently and only failed at runtime (`invalid ELF header`, `not a valid Win32 application`, `incompatible architecture`). For a macOS universal build each per-arch slice is checked before the slices are merged.
+
+Other native files (`.so`, `.dylib`, `.dll`, `.exe`, extensionless executables) that mismatch only log a warning, since packages legitimately bundle helper binaries for several platforms. Files whose package declares another platform in `package.json` `os`/`cpu`, or whose path names another platform/arch (prebuildify's `prebuilds/linux-arm64/`, `@img/sharp-darwin-arm64`), are skipped.
+
+```json5
+{ "build": { "nativeModules": { "verifyNativeBinaries": "warn" } } }  // log mismatches, keep packaging
+{ "build": { "nativeModules": { "verifyNativeBinaries": false } } }   // skip the check
+```
+
+Relatedly, `nativeModules.buildDependenciesFromSource` no longer skips the native rebuild for a target whose platform differs from the host (which shipped the host's binary). Native modules cannot be cross-compiled from source, so for such a target the rebuild runs with prebuilt binaries for the target instead, and a warning is logged.
+
+**Action is required only if** a build fails here — rebuild native dependencies for the target (for a cross-platform target, the module needs a prebuilt binary for it), or opt out as above.
 
 ### `extraFiles` / `extraResources` destinations are validated {#extrafiles--extraresources-destinations-are-validated}
 

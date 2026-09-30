@@ -37,7 +37,7 @@ import { expandMacro } from "./util/macroExpander.js"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
 import { getRepositoryInfo } from "./util/repositoryInfo.js"
 import { resolveFunction } from "./util/resolve.js"
-import { installOrRebuild, nodeGypRebuild } from "./util/installOrRebuild.js"
+import { installOrRebuild, nodeGypRebuild, resolveBuildFromSource } from "./util/installOrRebuild.js"
 import { PACKAGE_VERSION } from "./version.js"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter.js"
 import asyncPool from "tiny-async-pool"
@@ -704,21 +704,21 @@ export class Packager {
       }
     }
 
-    if (config.nativeModules?.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
-      log.info({ reason: "platform is different and nativeModules.buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
-    } else {
-      await installOrRebuild(
-        config,
-        { appDir: this.appDir, projectDir: this.projectDir, workspaceRoot: await this.getWorkspaceRoot() },
-        {
-          frameworkInfo,
-          platform: platform.nodeName,
-          arch: Arch[arch],
-        },
-        false,
-        this.runtimeEnvironmentVariables
-      )
-    }
+    // Always rebuild for the target, even cross-platform: skipping here would ship whatever binary is
+    // already in node_modules (typically the host's). buildDependenciesFromSource is downgraded to
+    // prebuilt binaries for a cross-platform target, since node-gyp cannot cross-compile.
+    await installOrRebuild(
+      config,
+      { appDir: this.appDir, projectDir: this.projectDir, workspaceRoot: await this.getWorkspaceRoot() },
+      {
+        frameworkInfo,
+        platform: platform.nodeName,
+        arch: Arch[arch],
+        buildFromSource: resolveBuildFromSource(config, platform.nodeName),
+      },
+      false,
+      this.runtimeEnvironmentVariables
+    )
   }
 }
 

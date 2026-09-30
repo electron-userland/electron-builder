@@ -58,6 +58,7 @@ import type {
 } from "./index.js"
 import type { PlatformType } from "./targets/mac/MacTargetHelper.js"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, transformFiles } from "./util/appFileCopier.js"
+import { verifyNativeBinaries } from "./util/nativeBinaryVerifier.js"
 import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/mac/macosIconComposer.js"
@@ -575,6 +576,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const isAsar = asarOptions != null
     await this.sanityCheckPackage(appOutDir, isAsar, framework, !!asarOptions?.disableSanityCheck)
+    // before fuses/signing and, for a macOS universal build, before the per-arch slices are merged
+    await verifyNativeBinaries({
+      resourcesDir: this.getResourcesDir(appOutDir),
+      platform: this.platform.nodeName,
+      arch,
+      mode: this.config.nativeModules?.verifyNativeBinaries,
+    })
 
     if (!options?.disableFuses) {
       await this.doAddElectronFuses(packContext)
