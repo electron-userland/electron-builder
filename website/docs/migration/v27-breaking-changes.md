@@ -93,7 +93,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); tune the set via `ignoredProductionDependencies`. If you set `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` (removed) to bundle `electron-builder`, override the list instead; `electron-prebuilt`/`electron-rebuild` no longer error and now ship if declared — remove them from `dependencies` |
 | [`allowMissingDependencies` now fails the build](#allowmissingdependencies-now-fails-the-build) | — | A missing production dependency is a hard error; set `allowMissingDependencies: true` to restore v26 warn-only behavior |
 | [`extraFiles` / `extraResources` `to` is validated](#extrafiles--extraresources-destinations-are-validated) | — | An absolute `to`, or one escaping the output dir, now throws |
-| [Windows `publisherName` validated against the certificate](#windows-publishername-is-validated-against-the-signing-certificate) | — | Update `publisherName` after a certificate rotation, or drop it |
+| [Windows `publisherName` validated against the certificate](#windows-publishername-is-validated-against-the-signing-certificate) | — | Update `publisherName` after a certificate rotation, or drop it. Custom `win.sign.sign` hooks (even with a certificate configured) and certificates without a CN now **require** it when `app-update.yml` is written (or set `win.verifyUpdateCodeSignature: false` if your updates are not Authenticode-signed) |
 | [Custom Windows signing hook moved to `win.sign.sign`](#custom-windows-signing-hooks-move-to-winsignsign) | ✓ | `win.signtoolOptions.sign` moves with the rest of `signtoolOptions` to `win.sign.sign` |
 | [macOS names are no longer NFD-normalized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | Update tooling that matches the normalized on-disk bundle filename |
 | [Linux `executableArgs` field codes are now literal](#linux-launcher-entrypoint) | — | Remove `%F`/`%U` from `executableArgs`; use `linux.desktop.entry.Exec` |
@@ -101,7 +101,9 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [New: Cloudflare R2 publish provider](#new-cloudflare-r2-publish-provider-additive) | — | None — additive; needs `accountId` and an `https` `publicUrl` |
 | [New command: `migrate-schema`](#new-command-migrate-schema) | — | None — run it to apply every **Auto ✓** change above |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
-| [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | v27 warns but still downloads if you never set it; opt in with `disableWebInstaller: false` before v28 enforces it |
+| [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | Web-installer updates are rejected (`ERR_UPDATER_WEB_INSTALLER_DISABLED`) unless `disableWebInstaller` is `false`; v27+ `nsis-web` installs opt in automatically; older installs, and apps switching from `nsis` to `nsis-web`, need `disableWebInstaller: false` |
+| [`nsis-web` installer verifies and installs its own copy of the app package](#disablewebinstaller-defaults-to-true) | — | A `--package-file` package or a publish-URL download that does not match, or a `--package-file` package that cannot be copied, aborts the install (exit code `2`); the local package file is now left in place. Only if you run one web installer with a `--package-file` from another build: set `nsisWeb.allowUnverifiedAppPackage: true` |
+| [NSIS: per-machine builds set `isAdminRightsRequired` in the update info](#nsis-per-machine-builds-set-isadminrightsrequired) | — | None for most apps. Their updates are started with `elevate.exe`; with `autoInstallEvent: "onNextLaunch"`, per-machine apps call `installPendingUpdateIfAvailable()` to install a pending update |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | — | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
 | [Signed update manifests are required](#signed-update-manifests-are-required) | — | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY`, or set `updateManifest: false` to keep publishing unsigned manifests |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | — | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
@@ -509,6 +511,8 @@ In v26 the **custom signer hook** lived at `win.signtoolOptions.sign`. v27 reuse
 
 `migrate-schema` performs this move. (A top-level `win.sign: "./customSign.js"` is a pre-v26 shape that v26 already rejected; move it under `{ "type": "signtool", "sign": … }` by hand.)
 
+A hook now also needs `win.sign.publisherName`, even with a certificate configured (the publisher name of a hook is never derived from a certificate) — see [Windows `publisherName`](#windows-publishername-is-validated-against-the-signing-certificate).
+
 #### `win.signExecutable` / `win.signAndEditExecutable` removed {#winsignexecutable-winsignandeditexecutable-removed}
 
 | Removed | Replacement |
@@ -581,7 +585,7 @@ v27 adds `electron-builder migrate-schema`, which rewrites your config to v27 fo
 
 **It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom `mac.sign` signer combined with sibling signing options, and (in JS/TS configs) platform-level `asarUnpack` next to root-level ASAR options.
 
-**It prints an advisory** (without changing the config) for runtime defaults you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)) and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
+**It prints an advisory** (without changing the config) for runtime defaults and behavior changes you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)), `nsis.perMachine` or `nsisWeb.perMachine` set to `true` ([per-machine NSIS updates](#nsis-per-machine-builds-set-isadminrightsrequired)), a custom `win.sign.sign` hook without `win.sign.publisherName`, unless `win.verifyUpdateCodeSignature` is `false` ([publisher name](#windows-publishername-is-validated-against-the-signing-certificate)), and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
 
 **It does not touch** anything outside the config: CLI flags, environment variables, custom NSIS scripts, Linux maintainer scripts, app code using the electron-updater API, or plugins using `PlatformPackager`. Every other row marked **—** in the [table above](#breaking-changes-at-a-glance) is a manual step.
 
@@ -867,6 +871,12 @@ A configured `win.sign.publisherName` (v26: `win.signtoolOptions.publisherName` 
 
 **Action is required only if** a build fails here — update `win.sign.publisherName` to the new certificate subject, sign with the intended certificate, or set `publisherName` to `null` to opt out of update signature verification entirely.
 
+A code-signed build whose publisher name cannot be determined now also fails with `InvalidConfigurationError`. This covers every custom `win.sign.sign` hook without `win.sign.publisherName`: a hook may sign with another certificate than any electron-builder can read, so its publisher name is never derived from a certificate, not even one in the config (`certificateFile`, `certificateSubjectName`, `certificateSha1`, `cscLink`) or from `WIN_CSC_LINK` / `CSC_LINK`. It also covers a certificate without a Common Name (including a certificate-store subject). It applies only to builds that write `app-update.yml`: `nsis`, `nsis-web` and `electronUpdaterAware` `appx` targets with a publish configuration, including one inferred from a GitHub `repository`.
+
+**Action:** set `win.sign.publisherName` to the subject of the certificate that signs your app, copied from a binary it already signed ([how](../win.md#how-do-you-delegate-code-signing)) — every component you list must match. Set `win.verifyUpdateCodeSignature: false` instead only if your updates are not Authenticode-signed or you don't use electron-updater.
+
+> **Tip:** `electron-builder migrate-schema` prints an advisory for a custom `win.sign.sign` hook without `win.sign.publisherName`, whatever certificate the config names.
+
 > Related, on the updater side: an `app-update.yml` with no `publisherName` means signature verification is silently skipped. v27 warns; **v28 will fail closed.**
 
 ---
@@ -898,15 +908,19 @@ v27 adds a new `dmg.format` value, **`"ULMO"`** — an LZMA-compressed disk imag
 
 `AppUpdater.disableWebInstaller` now defaults to **`true`**. NSIS *web* installers (the small installer that downloads the full payload at install time from a manifest-supplied URL) are no longer loaded unless you opt in, because that payload may not undergo signature verification.
 
-v27 ships a one-major-version grace period so existing deployments are not broken without warning:
+Unless `disableWebInstaller` is `false`, a web-installer update is rejected with `ERR_UPDATER_WEB_INSTALLER_DISABLED` — at download time (including an update already cached by a previous launch), before an install on next launch, and at install time.
 
-- **You never set `disableWebInstaller`** (the default): if a web-installer update is received, the updater logs a warning and still downloads it in v27. In **v28** that warning becomes an error and the download is blocked (`ERR_UPDATER_WEB_INSTALLER_DISABLED`).
-- **You explicitly set `disableWebInstaller = true`**: the download throws `ERR_UPDATER_WEB_INSTALLER_DISABLED` immediately (no grace period).
-- **You do not use a web installer** (the common case): no action — this is the safer default and v28 will enforce it.
+- **You do not use a web installer** (the common case): no action — this is the safer default.
+- **Your installs were made by an `nsis-web` installer built with v27+**: no action — they opt in automatically. NSIS installers now write a `resources/package-type` marker, and `NsisUpdater` reads it to default `disableWebInstaller` to `false` for web-installer installs.
+- **Your web-installer installs lack that marker** (installed by an installer built before v27, or with a custom script), **or you are switching an app from `nsis` to `nsis-web`**: opt in manually (below), or those installs will not update.
 
-**Installs produced by a v27 `nsis-web` build opt in automatically.** NSIS installers now write a `resources/package-type` marker, and `NsisUpdater` reads it to default `disableWebInstaller` to `false` for web-installer installs. So the manual opt-in below is needed for **apps already in the field** (installed before v27), not for go-forward installs.
+A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest. A web-installer update whose update info has no `sha512` for the web package is rejected with `ERR_UPDATER_NO_CHECKSUM`. The `nsis-web` installer now also verifies the package it installs: an explicit `--package-file` must match the SHA-512 of one of the packages built with it (any arch), and a package downloaded from the default publish-derived (versioned) URL must match the package for the detected arch; a package downloaded from an explicit `appPackageUrl` (e.g. a version-independent `latest` URL) is not verified. A mismatch aborts the installation (exit code `2`) before the installed version is removed, so that version stays installed. The new `nsisWeb.allowUnverifiedAppPackage` option (default `false`) opts out, for one web installer used with packages of other builds. See [Web Installer](../nsis.md#web-installer).
 
-If you publish and rely on an NSIS web installer, opt back in **before v28** by setting `disableWebInstaller: false` in your main process:
+A local package — passed via `--package-file` (electron-updater does this for updates) or found next to the installer — is first copied into the installer's own temporary directory, and the installer verifies and installs that copy. The local package file is now left in place (the installer's copy is moved into the app's update cache instead; electron-updater removes the package it passed from its `pending` directory once the updated app starts), and a `--package-file` package that cannot be copied aborts the installation (exit code `2`), also before the installed version is removed; a package next to the installer that cannot be copied is ignored and downloaded instead, as when its checksum doesn't match.
+
+Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](../features/signed-update-manifests.md) cover its path, SHA-512 and size.
+
+**Action:** if you publish and rely on an NSIS web installer and your installs lack the marker, or you are switching from `nsis` to `nsis-web`, opt in by setting `disableWebInstaller: false` in your main process:
 
 ```ts
 import { NsisUpdater } from "electron-updater"
@@ -914,7 +928,15 @@ const updater = new NsisUpdater()
 updater.disableWebInstaller = false // only if you intentionally ship a web installer
 ```
 
-> **Tip:** running `electron-builder migrate-schema` on a project that builds an `nsis-web` target now prints an advisory reminding you to set `autoUpdater.disableWebInstaller = false` at runtime. The advisory is informational only — it never rewrites your config (`disableWebInstaller` is an electron-updater runtime setting, not a build-config key).
+> **Tip:** running `electron-builder migrate-schema` on a project that builds an `nsis-web` target now prints an advisory: web-installer updates are rejected unless the app opts in, when to set `autoUpdater.disableWebInstaller = false` at runtime, and when to set `nsisWeb.allowUnverifiedAppPackage`. The advisory is informational only — it never rewrites your config (`disableWebInstaller` is an electron-updater runtime setting, not a build-config key).
+
+### NSIS: per-machine builds set `isAdminRightsRequired` in the update info {#nsis-per-machine-builds-set-isadminrightsrequired}
+
+electron-builder now sets `isAdminRightsRequired: true` in the update info of every per-machine `nsis` and `nsis-web` build (`perMachine: true`), including assisted installers (`oneClick: false`) that don't set `packElevateHelper` and builds with `differentialPackage: false`. For `nsis-web` builds it is written into the file entry of the installer, where electron-updater reads it. electron-updater starts these updates with `elevate.exe` right away and, like other per-machine updates, does not install them automatically at launch with `autoInstallEvent: "onNextLaunch"`.
+
+**Action:** none for most apps. With `autoInstallEvent: "onNextLaunch"`, per-machine apps call `installPendingUpdateIfAvailable()` to install a pending update.
+
+> **Tip:** `electron-builder migrate-schema` prints an advisory when `nsis.perMachine` or `nsisWeb.perMachine` is `true`.
 
 ### `latest*.yml` drops legacy top-level `path`/`sha512`
 

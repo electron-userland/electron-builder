@@ -11,16 +11,24 @@ The top-level [win](./configuration.md#win) key contains a set of options instru
 ## Common Questions
 ## How do you delegate code signing?
 
-In v27, all Windows signing is configured through the single [`win.sign`](./configuration.md#win) discriminated union (`type: "signtool" | "hsm" | "pkcs11" | "azure"`). To delegate signing to a custom function, set the `sign` field on that union — it works for every `type`. See the [Windows Code Signing guide](./features/code-signing/code-signing-win.md) and [why sign.js is called 8 times](https://github.com/electron-userland/electron-builder/issues/3995).
+In v27, all Windows signing is configured through the single [`win.sign`](./configuration.md#win) discriminated union (`type: "signtool" | "hsm" | "pkcs11" | "azure"`). To delegate signing to a custom function, set the `sign` field on that union — it works for the `signtool`, `hsm` and `pkcs11` types. See the [Windows Code Signing guide](./features/code-signing/code-signing-win.md) and [why sign.js is called 8 times](https://github.com/electron-userland/electron-builder/issues/3995).
 
 ```json
 "win": {
   "sign": {
     "type": "signtool",
-    "sign": "./customSign.js"
+    "sign": "./customSign.js",
+    "publisherName": "CN=My Company, O=My Company, C=US"
   }
 }
 ```
+
+electron-builder cannot read the certificate your hook signs with, so set `publisherName` to that certificate's subject: it is written to `app-update.yml`, and electron-updater checks every downloaded update against it. It is never derived from a certificate for a hook, not even one in the config, so without it a build that writes `app-update.yml` (an `nsis`, `nsis-web` or `electronUpdaterAware` `appx` target with a publish configuration, including one inferred from a GitHub `repository`) fails. Set `win.verifyUpdateCodeSignature: false` instead only if your updates are not Authenticode-signed or you don't use electron-updater.
+
+Copy the subject from a binary your hook has already signed (a previous release, or `win-unpacked` from an `electron-builder --win dir` build, which does not write `app-update.yml`) instead of typing it by hand. electron-builder cannot check it against the certificate the hook uses, and every component you list (`CN`, `O`, `C`, …) must match the certificate exactly — otherwise installed apps reject every later update:
+
+- **Windows (PowerShell):** `(Get-AuthenticodeSignature .\dist\win-unpacked\<App>.exe).SignerCertificate.Subject` prints it in the form to use as-is.
+- **macOS / Linux:** `osslsigncode verify -in <App>.exe` — the `Subject:` line under "Signer's certificate", printed as `/C=US/ST=California/O=My Company, Inc./CN=My Company, Inc.`. Keep only `CN`, `O` and `C` and write them as `CN="My Company, Inc.", O="My Company, Inc.", C=US`: OpenSSL names some other components differently from Windows (`ST` instead of `S`, for example), and a value that contains a comma must be wrapped in double quotes.
 
 :::note[Upgrading from v26]
 The v26 `win.signtoolOptions` / `win.azureSignOptions` keys were removed — `electron-builder migrate-schema` rewrites them to `win.sign` automatically. See [v27 Breaking Changes → Windows signing](./migration/v27-breaking-changes.md#windows-signing-winsign).

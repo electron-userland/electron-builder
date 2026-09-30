@@ -10,6 +10,7 @@ import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationE
 import { computeUpdateManifestKeyId, verifyManifestSignature, verifyManifestSignatures } from "builder-util-runtime"
 import { getAppUpdatePublishConfiguration } from "app-builder-lib/src/publish/PublishManager"
 import { PlatformPackager } from "app-builder-lib/src/platformPackager"
+import { SigntoolSignManager } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
 
 const basePublishConfig = { provider: "s3", bucket: "test-bucket" } as const
 
@@ -744,6 +745,42 @@ test("app-update.yml rejects a manually configured publish.updateManifestPublicK
   expect(error!.message).toBe("publish.updateManifestPublicKey is managed by electron-builder and must not be set; configure updateManifest.publicKey instead")
 })
 
+// ── app-update.yml: Windows publisherName ────────────────────────────────────
+
+// Windows variant: the real SigntoolSignManager computes publisherName; getCscLink keeps a WIN_CSC_LINK / CSC_LINK
+// from the test environment out of it
+function makeWinAppUpdateConfigPackager(sign: any, verifyUpdateCodeSignature = true): any {
+  const packager: any = {
+    ...makeAppUpdateConfigPackager(),
+    platform: Platform.WINDOWS,
+    platformOptions: { sign },
+    isForceCodeSigningVerification: verifyUpdateCodeSignature,
+    getCscLink: () => null,
+    getCscPassword: () => null,
+  }
+  packager.signingManager = { value: Promise.resolve(new SigntoolSignManager(packager)) }
+  return packager
+}
+
+test("app-update.yml: a Windows build signed by a custom sign hook without publisherName fails", async ({ expect }) => {
+  const packager = makeWinAppUpdateConfigPackager({ type: "signtool", sign: "./customSign.js" })
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)).rejects.toThrow(InvalidConfigurationError)
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)).rejects.toThrow(/win\.sign\.publisherName/)
+})
+
+test("app-update.yml: the publisherName configured for a custom sign hook is written", async ({ expect }) => {
+  const packager = makeWinAppUpdateConfigPackager({ type: "signtool", sign: "./customSign.js", publisherName: "CN=My Company, O=My Company, C=US" })
+  const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
+  expect(publishConfig?.publisherName).toEqual(["CN=My Company, O=My Company, C=US"])
+})
+
+test("app-update.yml: verifyUpdateCodeSignature: false skips publisherName for a custom sign hook", async ({ expect }) => {
+  const packager = makeWinAppUpdateConfigPackager({ type: "signtool", sign: "./customSign.js" }, false)
+  const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
+  expect(publishConfig).not.toBeNull()
+  expect(publishConfig?.publisherName).toBeUndefined()
+})
+
 test("no signature field is written when the packager yields no signing key", async ({ expect }) => {
   await withTmpDir(async dir => {
     await writeUpdateInfoFiles([makeTask(dir, "App-1.0.0.exe", "sha", null)], makePackager() as any)
@@ -773,6 +810,47 @@ test("createUpdateInfoTasks passes event.arch to the created task", async ({ exp
     const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
     expect(tasks).toHaveLength(1)
     expect(tasks[0].arch).toBe(Arch.arm64)
+  })
+})
+
+test.for([
+  ["full installer", { sha512: "c2hhNTEy", isAdminRightsRequired: true }],
+  ["web installer", { packages: { x64: { path: "App-1.0.0-x64.nsis.7z", sha512: "p64", size: 5000 } }, isAdminRightsRequired: true }],
+] as const)("createUpdateInfoTasks writes isAdminRightsRequired of a %s into the file entry of the installer", async ([, updateInfo], { expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: null, packager: makePlatformPackager(), target: { outDir: dir }, updateInfo }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
+    const info: any = tasks[0].info
+    expect(info.files[0].isAdminRightsRequired).toBe(true)
+    expect(info.isAdminRightsRequired).toBeUndefined()
+    if ("packages" in updateInfo) {
+      expect(info.packages).toEqual(updateInfo.packages)
+    }
+  })
+})
+
+test.for([
+  ["full installer", `{"sha512": "c2hhNTEy", "__proto__": {"inherited": true}}`],
+  ["web installer", `{"packages": {"x64": {"path": "App-1.0.0-x64.nsis.7z", "sha512": "p64"}}, "__proto__": {"inherited": true}}`],
+] as const)("createUpdateInfoTasks keeps the plain Object prototype for the update info of a %s with a __proto__ key", async ([, json], { expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const updateInfo = JSON.parse(json)
+    const event: any = { file: artifactFile, arch: null, packager: makePlatformPackager(), target: { outDir: dir }, updateInfo }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
+    const info: any = tasks[0].info
+    for (const target of [info, info.files[0]]) {
+      expect(Object.getPrototypeOf(target)).toBe(Object.prototype)
+      expect(target.inherited).toBeUndefined()
+    }
+    if ("packages" in updateInfo) {
+      expect(info.packages).toEqual(updateInfo.packages)
+    } else {
+      expect(info.files[0].sha512).toBe(updateInfo.sha512)
+    }
   })
 })
 

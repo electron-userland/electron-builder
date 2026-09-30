@@ -208,6 +208,8 @@ The *automatic* install at startup only runs for targets that can install the pe
 | deb / rpm / pacman | skipped — package managers always elevate (pkexec/sudo) | ✓ (auth prompt) |
 | macOS | n/a — Squirrel.Mac stages updates natively and applies them on relaunch | resolves `false` |
 
+electron-builder v27 sets `isAdminRightsRequired` in the update info of every per-machine `nsis` and `nsis-web` build (`perMachine: true`), including assisted installers (`oneClick: false`) and builds with `differentialPackage: false`, so their updates are started with `elevate.exe` and skipped by the automatic install at launch.
+
 :::note[Planned default change in v28]
 `autoInstallEvent` defaults to `"onQuit"` in v27; `"onNextLaunch"` is planned to become the **default** in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch, without a killable installer process (there `"onQuit"` and `"onNextLaunch"` behave identically).
 :::
@@ -274,13 +276,19 @@ Changing a signing key or certificate that installs in the field already trust r
 
 NSIS **web** installers download their full payload at install time from a manifest-supplied URL, which may not undergo signature verification. As of v27, `AppUpdater.disableWebInstaller` defaults to **`true`**, so a web-installer update is not loaded unless you opt in.
 
-v27 ships a one-major grace period: if you never set the flag and a web-installer update is received, the updater **logs a warning and still downloads** it. In **v28** that becomes an error (`ERR_UPDATER_WEB_INSTALLER_DISABLED`). Opt back in only if you intentionally ship an `nsis-web` target:
+Unless the flag is `false`, a web-installer update is rejected with `ERR_UPDATER_WEB_INSTALLER_DISABLED` — at download time (including an update already cached by a previous launch), before an [install on next launch](#install-on-next-launch-windowslinux), and at install time.
+
+Installs made by an `nsis-web` installer built with electron-builder v27+ carry a `resources/package-type` marker, and `NsisUpdater` then defaults the flag to `false` automatically. Set it yourself only for web-installer installs without that marker (installed by an installer built before v27, or with a custom script) or when switching an app from `nsis` to `nsis-web`:
 
 ```ts
 import { NsisUpdater } from "electron-updater"
 const updater = new NsisUpdater()
 updater.disableWebInstaller = false // only if you intentionally ship a web installer
 ```
+
+Set it before the app is `ready`, e.g. right after creating the updater: with `autoInstallEvent: "onNextLaunch"`, a pending web-installer update is checked against the flag when the app is ready, and rejected (its pending-install marker cleared) while the flag is `true`.
+
+A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest; otherwise it is discarded. The `nsis-web` installer itself verifies the package electron-updater passes to it and installs its own copy — see [Web Installer](../nsis.md#web-installer). Once the app runs the version of that update, `NsisUpdater` removes the package from its `pending` cache directory at startup (app `ready`); the package of an update that is not installed yet, or whose install failed, is kept for the install or a retry. Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./signed-update-manifests.md) cover its path, SHA-512 and size.
 
 ### `allowUnverifiedLinuxPackages` (new)
 

@@ -123,7 +123,7 @@ Two things happen when a Windows certificate changes: the OS and SmartScreen see
 
 ### How the updater checks the certificate
 
-When `win.verifyUpdateCodeSignature` is `true` (the default), electron-builder writes the resolved publisher name into `app-update.yml` as `publisherName`. It is either what you configured in `win.sign.publisherName` (a string or an array) or, when not configured, the Common Name of the signing certificate. At update time the NSIS updater reads that value and runs `Get-AuthenticodeSignature` on the downloaded installer:
+When `win.verifyUpdateCodeSignature` is `true` (the default), electron-builder writes the resolved publisher name into `app-update.yml` as `publisherName`. It is either what you configured in `win.sign.publisherName` (a string or an array) or, when not configured, the Common Name of the signing certificate. When electron-builder cannot read the signing certificate (a custom `sign` hook without a certificate, or a certificate without a CN), the build fails unless `publisherName` is set. At update time the NSIS updater reads that value and runs `Get-AuthenticodeSignature` on the downloaded installer:
 
 - The installer must carry a **valid** Authenticode signature.
 - The signer's Subject is compared against **each** configured publisher name. A full Distinguished Name (`CN=..., O=..., C=...`) matches when every component you listed equals the certificate's; a bare `CN=` value matches on the Common Name alone (with a warning asking you to configure the full DN).
@@ -163,7 +163,8 @@ When `publisherName` is configured explicitly and electron-builder can read the 
 ### Notes per signing method
 
 - **signtool (file / store)** — rotate by pointing `certificateFile`/`WIN_CSC_LINK` (or `certificateSubjectName`/`certificateSha1`) at the new certificate. Timestamp your signatures (`rfc3161TimeStampServer`, on by default) so installers signed with the old certificate stay valid after it expires.
-- **HSM / PKCS#11** — the certificate lives on the token; rotation means a new token or key label plus, for PKCS#11 without an extractable certificate, an explicit `publisherName`.
+- **HSM / PKCS#11** — the certificate lives on the token; rotation means a new token or key label plus an explicit `publisherName` for PKCS#11 without an extractable certificate, an HSM/PKCS#11 `.crt`/`.cer` without a CN, or HSM with a custom `sign` hook and no certificate identifier.
+- **Custom `sign` hook** — electron-builder cannot read the certificate the hook signs with, so set `publisherName` (the build fails without it, even if a certificate is configured too). It is **not** checked against the hook's certificate at build time. Copy the subject from a binary the hook signed (see [How do you delegate code signing?](../win.md#how-do-you-delegate-code-signing)); a wrong component makes installs reject every update signed with it.
 - **Azure Trusted Signing** — there is no local certificate, so `publisherName` is required and is embedded verbatim. Confirm the Subject Azure signs with before the bridge release.
 - **Custom `verifyUpdateFileAuthenticodeSignature` function** — if your app replaces the verifier (see the [Windows target docs](../win.md)), the rules above are yours to reimplement.
 - **Squirrel.Windows** is not supported by electron-updater's auto-update flow, so nothing here applies to it.

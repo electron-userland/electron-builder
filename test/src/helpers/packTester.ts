@@ -1094,6 +1094,15 @@ export async function getWindowsSigningIdentity(): Promise<SelfSignedIdentity> {
   return await winSigningCredentialsInfo.value
 }
 
+/**
+ * The `publisherName` a Windows build signed with getWindowsSigningIdentity (`signedWin`) writes to app-update.yml when none is
+ * configured: the common name of its certificate. A certificate provided via CSC_LINK / WIN_CSC_LINK has one the tests don't know.
+ */
+export async function expectedWindowsPublisherName(expect: ExpectStatic): Promise<Array<unknown>> {
+  const { commonName } = await getWindowsSigningIdentity()
+  return commonName === "provided" ? [expect.any(String)] : [commonName]
+}
+
 async function signed(packagerOptions: PackagerOptions, platform: "win" | "mac"): Promise<PackagerOptions> {
   if (platform === "mac" && process.platform !== "darwin") {
     // codesign only runs on macOS; off-darwin the build is left unsigned (mac signing tests are .ifMac-gated).
