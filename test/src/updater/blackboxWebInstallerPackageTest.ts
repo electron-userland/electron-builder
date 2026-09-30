@@ -1,4 +1,3 @@
-import { TmpDir } from "builder-util"
 import { hashFile, WindowsUpdateInfo } from "builder-util-runtime"
 import { copy, existsSync, outputFile, readFile, remove } from "fs-extra"
 import path from "path"
@@ -20,13 +19,12 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
     "web installer with a publish-derived package URL checks downloaded, adjacent and --package-file packages",
     { ...optionsForFlakyE2E, retry: 1 },
     async (context: TestContext) => {
-      const { expect } = context
+      const { expect, tmpDir } = context
       if (process.platform !== "win32") {
         context.skip()
         return
       }
 
-      const tmpDir = new TmpDir("web-installer-package-e2e")
       let server: import("http").Server | undefined
       const requests: Array<string> = []
       try {
@@ -143,7 +141,6 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
       } finally {
         await resetNativeInstall().catch(error => console.warn("Failed to uninstall TestApp", error))
         server?.close()
-        await tmpDir.cleanup().catch(() => {})
       }
     }
   )
