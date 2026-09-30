@@ -537,7 +537,8 @@ export class NsisTarget extends Target {
 
   private async runInstallerToWriteUninstaller(installerPath: string, uninstallerPath: string): Promise<void> {
     const vm = await this.packager.execVm.value
-    await vm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
+    // explicit timeout (2 minutes, as WineVmManager defaults to), so a stuck installer fails the build instead of hanging it on any host
+    await vm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" }, timeout: 120 * 1000 })
     // Parallels VM can exit after command execution, but NSIS continue to be running
     let i = 0
     while (!(await exists(uninstallerPath)) && i++ < 100) {
