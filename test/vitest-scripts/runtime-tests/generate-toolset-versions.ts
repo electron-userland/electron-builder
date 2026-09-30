@@ -14,3 +14,26 @@ export const APPIMAGE_VERSIONS: ToolsetConfig["appimage"][] = ["0.0.0", "1.0.3",
 
 export const WIN_CODE_SIGN_VERSIONS: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0", "1.2.1", "1.3.0"]
 export const NSIS_VERSIONS: ToolsetConfig["nsis"][] = ["0.0.0", "1.2.1"]
+
+/**
+ * Highest dotted version of a toolset version list, compared numerically (custom, non-string toolset entries are ignored). Shared by
+ * the generator (suites built with the newest toolset only) and isLatestToolset (blackboxUpdateWinSuite.ts).
+ */
+export function latestToolsetVersion<T>(versions: ReadonlyArray<T>): T | undefined {
+  const parts = (version: T) => String(version).split(".").map(Number)
+  const compare = (a: T, b: T) => {
+    const pa = parts(a)
+    const pb = parts(b)
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+      const diff = (pa[i] ?? 0) - (pb[i] ?? 0)
+      if (diff !== 0) {
+        return diff
+      }
+    }
+    return 0
+  }
+  return versions
+    .filter(it => typeof it === "string")
+    .sort(compare)
+    .at(-1)
+}

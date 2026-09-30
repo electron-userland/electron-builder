@@ -1,18 +1,29 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { getWindowsVm, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
-import { computeUpdateManifestKeyId, GenericServerOptions, Nullish, UpdateInfo, verifyManifestSignatures } from "builder-util-runtime"
+import { computeUpdateManifestKeyId, GenericServerOptions, hashFile, Nullish, UpdateInfo, verifyManifestSignatures, WindowsUpdateInfo } from "builder-util-runtime"
 import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
-import { copy, emptyDir, existsSync, move, outputFile, readJsonSync, remove } from "fs-extra"
+import { copy, emptyDir, existsSync, move, outputFile, readJson, readJsonSync, remove } from "fs-extra"
 import { homedir } from "os"
 import path from "path"
 import { randomUUID } from "crypto"
 import { ExpectStatic, TestContext } from "vitest"
 import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
-import { assertPack, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext } from "../helpers/packTester"
+import { assertPack, expectedWindowsPublisherName, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { ELECTRON_VERSION, PACMAN_TEST_DEPENDS } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { cleanupWindowsNative, installWindowsNative, installWindowsVm } from "./blackboxInstallWindows"
+import {
+  cleanupWindowsNative,
+  clearWindowsUpdaterCaches,
+  describeWindowsInstallDir,
+  installWindowsNative,
+  installWindowsVm,
+  NSIS_INSTALLER_IMAGE_NAME,
+  readInstalledPackageType,
+  UPDATER_STORE_DIR_NAME,
+  waitForWindowsProcessExit,
+  windowsLocalAppData,
+} from "./blackboxInstallWindows"
 import { cleanupLinux, installLinux } from "./blackboxInstallLinux"
 import { installMac } from "./blackboxInstallMac"
 import { readEmbeddedUpdateConfig, readUpdateManifest, resignManifest, rewriteServedManifests } from "./signedManifestTestUtil"
@@ -25,8 +36,11 @@ export const optionsForFlakyMultiHopE2E = { ...optionsForFlakyE2E, retry: 1, tim
 /** Third version for multi-hop (key rotation) update tests: 1.0.0 → 1.0.1 → 1.0.2 */
 export const THIRD_VERSION_NUMBER = "1.0.2"
 
-/** A version to build, optionally with configuration that applies to that build only (e.g. its `updateManifest` keys). */
-export type VersionBuild = { version: string; extraConfig?: Partial<Configuration> | Nullish }
+/**
+ * A version to build, optionally with configuration that applies to that build only (e.g. its `updateManifest` keys) and a
+ * target other than the one of the scenario (e.g. an nsis-web update of an nsis install).
+ */
+export type VersionBuild = { version: string; target?: string; extraConfig?: Partial<Configuration> | Nullish }
 
 // Resolve only to a ParallelsVmManager — PwshVmManager (used for code-signing on Linux/Mac via Wine)
 // is not capable of installing or running Windows executables and must not be treated as a Windows VM.
@@ -159,10 +173,10 @@ export async function doBuild(
     )
   }
 
-  const build = (version: string, extraConfig: Configuration | Nullish) =>
+  const build = (version: string, extraConfig: Configuration | Nullish, buildTarget: string) =>
     buildApp({
       version,
-      target,
+      target: buildTarget,
       arch,
       extraConfig,
       packed: async context => {
@@ -171,16 +185,19 @@ export async function doBuild(
         await move(context.outDir, dir)
         const appPath = path.join(dir, path.relative(context.outDir, context.getAppPath(Platform.current(), archFromString(process.arch))))
         outDirs.push({ dir, appPath })
+        if (isWindows) {
+          await assertEmbeddedPublisherName(expect, dir)
+        }
       },
     })
   try {
     // first build uses "store", later builds use "maximum" — validates both compressions work while we're at it
     let isFirstBuild = true
     for (const entry of versions) {
-      const { version, extraConfig } = typeof entry === "string" ? { version: entry, extraConfig: null } : entry
+      const { version, extraConfig, target: entryTarget }: VersionBuild = typeof entry === "string" ? { version: entry, extraConfig: null } : entry
       // shallow merge on purpose: a per-version block (e.g. `updateManifest`) replaces the shared one wholesale
       // (deepAssign would union arrays such as signingKey lists)
-      await build(version, { ...extraConfiguration, ...extraConfig, compression: isFirstBuild ? "store" : "maximum" })
+      await build(version, { ...extraConfiguration, ...extraConfig, compression: isFirstBuild ? "store" : "maximum" }, entryTarget ?? target)
       isFirstBuild = false
     }
   } catch (e: any) {
@@ -188,6 +205,22 @@ export async function doBuild(
     throw e
   }
 }
+
+/**
+ * A signed Windows build that writes app-update.yml embeds the publisher name of its certificate, which electron-updater checks
+ * the Authenticode signature of a downloaded update against (doBuild signs every Windows build, see `signedWin` in packTester).
+ */
+async function assertEmbeddedPublisherName(expect: ExpectStatic, distDir: string): Promise<void> {
+  const { publisherName } = await readEmbeddedUpdateConfig(distDir)
+  expect(publisherName).toEqual(await expectedWindowsPublisherName(expect))
+}
+
+/** Directory of a build's `latest.yml` and the files it references: nsis-web writes them (web installer, packages) to `<dist>/nsis-web`. */
+function updateFilesDir(target: string, distDir: string): string {
+  return target === "nsis-web" ? path.join(distDir, "nsis-web") : distDir
+}
+
+const isNsisTarget = (target: string) => target === "nsis" || target === "nsis-web"
 
 const LINUX_TARGETS = ["AppImage", "deb", "rpm", "pacman"]
 
@@ -208,7 +241,10 @@ async function handleInitialInstallPerOS({
     return installLinux(target, dirPath)
   }
   if (process.platform === "win32") {
-    return installWindowsNative(dirPath, perMachine ?? false)
+    return installWindowsNative(updateFilesDir(target, dirPath), perMachine ?? false)
+  }
+  if (target === "nsis-web") {
+    throw new Error("nsis-web blackbox installs run on native Windows only")
   }
   if (target === "nsis" && vm) {
     return installWindowsVm(dirPath, arch, vm as ParallelsVmManager, perMachine ?? false)
@@ -304,7 +340,9 @@ export async function runTest(
   packageManager: string,
   arch: Arch = Arch.x64,
   toolsets: ToolsetConfig = {},
-  extraConfig?: Partial<Configuration>
+  extraConfig?: Partial<Configuration>,
+  /** checks the stdout of the launch that downloads and installs the update (e.g. updater log lines) */
+  assertLaunch?: (stdout: string) => void
 ) {
   const { expect } = context
   const vm = await windowsVmPromise
@@ -332,13 +370,31 @@ export async function runTest(
     throw new Error(`App not found: ${appPath}`)
   }
 
+  // The NSIS installer writes resources/package-type ("nsis" or "nsis-web", the target name) after the app files. Read on native
+  // Windows only (not from the VM).
+  const assertPackageType = process.platform === "win32" && isNsisTarget(target) ? async () => expect(await readInstalledPackageType(appPath)).toBe(target) : null
+
   let queuedError: Error | null = null
   try {
+    if (shouldRunWindowsTests && isNsisTarget(target)) {
+      // electron-updater runs the installer of an update whose file entry has isAdminRightsRequired through elevate.exe
+      for (const dist of outDirs) {
+        const [fileInfo] = (await readUpdateManifest(updateFilesDir(target, dist.dir))).files
+        expect(fileInfo.isAdminRightsRequired).toBe(perMachine === true ? true : undefined)
+      }
+    }
+    await assertPackageType?.()
+
     await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
       // Move app update to the root directory of the server
-      await copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
+      await copy(updateFilesDir(target, newAppDir.dir), rootDirectory, { recursive: true, overwrite: true })
 
-      await updateHop(expect, { appPath, vm, updateConfigPath, packageManager, fromVersion: OLD_VERSION_NUMBER, toVersion: NEW_VERSION_NUMBER })
+      await updateHop(expect, { appPath, vm, updateConfigPath, packageManager, fromVersion: OLD_VERSION_NUMBER, toVersion: NEW_VERSION_NUMBER, assertLaunch })
+      if (assertPackageType != null) {
+        // the version probe can see the new app before the installer has written the marker
+        await waitForWindowsProcessExit(NSIS_INSTALLER_IMAGE_NAME)
+        await assertPackageType()
+      }
     }, vm)
   } catch (error: any) {
     log.error({ error: error.message }, "Blackbox Updater Test failed to run")
@@ -468,7 +524,10 @@ async function pollUntilNewVersionInstalled(
       await new Promise(resolve => setTimeout(resolve, pollInterval))
     }
   }
-  expect(newVersion).toMatch(expectedVersion)
+  // on native Windows, name what the install directory holds (e.g. no app at all when the installer exited half-way)
+  const installDirState = newVersion !== expectedVersion && vm == null && process.platform === "win32" ? await describeWindowsInstallDir(appPath) : undefined
+  // toBe, not toMatch: toMatch rejects an undefined version (no probe got one) before it would show the message
+  expect(newVersion, installDirState).toBe(expectedVersion)
 }
 
 /**
@@ -493,7 +552,17 @@ export async function runInstallOnNextLaunchTest(
   arch: Arch,
   toolsets: ToolsetConfig,
   installMode: "automatic" | "explicit",
-  extraConfig?: Partial<Configuration>
+  extraConfig?: Partial<Configuration>,
+  options: {
+    /** merged into the served update config (e.g. `updaterCacheDirName`) */
+    extraUpdateConfig?: Partial<GenericServerOptions>
+    /** runs after step 2, while the old version is still installed and the update is queued */
+    afterQueued?: (outDirs: Array<ApplicationUpdatePaths>) => Promise<void>
+    /** checks the stdout of the launch that installs the pending update (step 3) */
+    assertInstallLaunch?: (stdout: string) => void
+    /** runs after step 4, once the new version is installed (NSIS: after its installer has exited) */
+    afterInstalled?: (outDirs: Array<ApplicationUpdatePaths>) => Promise<void>
+  } = {}
 ) {
   const { expect } = context
   const vm = await windowsVmPromise
@@ -509,90 +578,103 @@ export async function runInstallOnNextLaunchTest(
 
   const oldAppDir = outDirs[0]
   const newAppDir = outDirs[1]
+  const perMachine = extraConfig?.nsis?.perMachine
 
   // Setup tests by installing the previous version
-  const appPath = await handleInitialInstallPerOS({ target, dirPath: oldAppDir.dir, arch, vm })
+  const appPath = await handleInitialInstallPerOS({ target, dirPath: oldAppDir.dir, arch, vm, perMachine })
   if (!vm && !existsSync(appPath)) {
     throw new Error(`App not found: ${appPath}`)
   }
 
   let queuedError: Error | null = null
   try {
-    await runTestWithinServer(async (rootDirectory: string, updateConfigPath: string) => {
-      // Move app update to the root directory of the server
-      await copy(newAppDir.dir, rootDirectory, { recursive: true, overwrite: true })
+    await runTestWithinServer(
+      async (rootDirectory: string, updateConfigPath: string) => {
+        // Move app update to the root directory of the server
+        await copy(updateFilesDir(target, newAppDir.dir), rootDirectory, { recursive: true, overwrite: true })
 
-      // 1. Download the update and queue it for the next launch — the app must quit without installing.
-      const queueResult = await launchAndWaitForQuit({
-        appPath,
-        vm,
-        timeoutMs: 5 * 60 * 1000,
-        updateConfigPath,
-        expectedVersion: OLD_VERSION_NUMBER,
-        packageManagerToTest: packageManager,
-        waitForExit: true,
-        env: { AUTO_UPDATER_TEST_NEXT_LAUNCH: "true" },
-      })
-      log.info({ version: queueResult.version }, "Queue-for-next-launch launch completed")
-      await queueResult.assert(() => {
-        expect(queueResult.version).toMatch(OLD_VERSION_NUMBER)
-        expect(queueResult.stdout).toContain("Update downloaded")
-        expect(queueResult.stdout).toContain("Deferring install to next launch on explicit quitAndInstall")
-        expect(queueResult.stdout).toContain("Update is marked for install on next launch")
-      })
-
-      // 2. The installer must NOT have run — the installed binary still reports the old version.
-      const probe = await launchAndWaitForQuit({
-        appPath,
-        vm,
-        timeoutMs: 60 * 1000,
-        updateConfigPath,
-        packageManagerToTest: packageManager,
-        env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
-        waitForExit: true,
-      })
-      await probe.assert(() => expect(probe.version).toMatch(OLD_VERSION_NUMBER))
-
-      // 3. Relaunch — the pending update is re-validated against the update server and installed.
-      const installResult = await launchAndWaitForQuit({
-        appPath,
-        vm,
-        timeoutMs: 5 * 60 * 1000,
-        updateConfigPath,
-        expectedVersion: OLD_VERSION_NUMBER,
-        packageManagerToTest: packageManager,
-        waitForExit: true,
-        env: installMode === "automatic" ? { AUTO_UPDATER_TEST_AUTO_INSTALL_ON_NEXT_LAUNCH: "true" } : { AUTO_UPDATER_TEST_INSTALL_PENDING: "true" },
-      })
-      log.info({ version: installResult.version, installMode }, "Pending-install launch completed")
-      await installResult.assert(() => {
-        expect(installResult.stdout).toContain("Installing pending update")
-        if (installMode === "explicit") {
-          expect(installResult.stdout).toContain("INSTALL_PENDING_RESULT: true")
-        }
-      })
-
-      // 4. Wait until the installed binary reports the new version (NSIS/AppImage installers run detached).
-      await pollUntilNewVersionInstalled(expect, { appPath, vm, updateConfigPath, packageManagerToTest: packageManager })
-
-      // 5. Nothing is pending anymore — the explicit call must report false and leave the app intact.
-      if (installMode === "explicit") {
-        const negativeResult = await launchAndWaitForQuit({
+        // 1. Download the update and queue it for the next launch — the app must quit without installing.
+        const queueResult = await launchAndWaitForQuit({
           appPath,
           vm,
-          timeoutMs: 2 * 60 * 1000,
+          timeoutMs: 5 * 60 * 1000,
           updateConfigPath,
-          expectedVersion: NEW_VERSION_NUMBER,
+          expectedVersion: OLD_VERSION_NUMBER,
           packageManagerToTest: packageManager,
           waitForExit: true,
-          env: { AUTO_UPDATER_TEST_INSTALL_PENDING: "true" },
+          env: { AUTO_UPDATER_TEST_NEXT_LAUNCH: "true" },
         })
-        await negativeResult.assert(() => {
-          expect(negativeResult.version).toMatch(NEW_VERSION_NUMBER)
-          expect(negativeResult.stdout).toContain("INSTALL_PENDING_RESULT: false")
+        log.info({ version: queueResult.version }, "Queue-for-next-launch launch completed")
+        await queueResult.assert(() => {
+          expect(queueResult.version).toMatch(OLD_VERSION_NUMBER)
+          expect(queueResult.stdout).toContain("Update downloaded")
+          expect(queueResult.stdout).toContain("Deferring install to next launch on explicit quitAndInstall")
+          expect(queueResult.stdout).toContain("Update is marked for install on next launch")
         })
-      }
-    }, vm)
+
+        // 2. The installer must NOT have run — the installed binary still reports the old version.
+        const probe = await launchAndWaitForQuit({
+          appPath,
+          vm,
+          timeoutMs: 60 * 1000,
+          updateConfigPath,
+          packageManagerToTest: packageManager,
+          env: { AUTO_UPDATER_TEST: "" }, // disables updater — app prints version and quits
+          waitForExit: true,
+        })
+        await probe.assert(() => expect(probe.version).toMatch(OLD_VERSION_NUMBER))
+        await options.afterQueued?.(outDirs)
+
+        // 3. Relaunch — the pending update is re-validated against the update server and installed.
+        const installResult = await launchAndWaitForQuit({
+          appPath,
+          vm,
+          timeoutMs: 5 * 60 * 1000,
+          updateConfigPath,
+          expectedVersion: OLD_VERSION_NUMBER,
+          packageManagerToTest: packageManager,
+          waitForExit: true,
+          env: installMode === "automatic" ? { AUTO_UPDATER_TEST_AUTO_INSTALL_ON_NEXT_LAUNCH: "true" } : { AUTO_UPDATER_TEST_INSTALL_PENDING: "true" },
+        })
+        log.info({ version: installResult.version, installMode }, "Pending-install launch completed")
+        await installResult.assert(() => {
+          expect(installResult.stdout).toContain("Installing pending update")
+          if (installMode === "explicit") {
+            expect(installResult.stdout).toContain("INSTALL_PENDING_RESULT: true")
+          }
+          options.assertInstallLaunch?.(installResult.stdout)
+        })
+
+        // 4. Wait until the installed binary reports the new version (NSIS/AppImage installers run detached).
+        await pollUntilNewVersionInstalled(expect, { appPath, vm, updateConfigPath, packageManagerToTest: packageManager })
+        if (process.platform === "win32" && isNsisTarget(target)) {
+          // the version probe can see the new app before the installer has written resources/package-type
+          await waitForWindowsProcessExit(NSIS_INSTALLER_IMAGE_NAME)
+          expect(await readInstalledPackageType(appPath)).toBe(target)
+        }
+        await options.afterInstalled?.(outDirs)
+
+        // 5. Nothing is pending anymore — the explicit call must report false and leave the app intact.
+        if (installMode === "explicit") {
+          const negativeResult = await launchAndWaitForQuit({
+            appPath,
+            vm,
+            timeoutMs: 2 * 60 * 1000,
+            updateConfigPath,
+            expectedVersion: NEW_VERSION_NUMBER,
+            packageManagerToTest: packageManager,
+            waitForExit: true,
+            env: { AUTO_UPDATER_TEST_INSTALL_PENDING: "true" },
+          })
+          await negativeResult.assert(() => {
+            expect(negativeResult.version).toMatch(NEW_VERSION_NUMBER)
+            expect(negativeResult.stdout).toContain("INSTALL_PENDING_RESULT: false")
+          })
+        }
+      },
+      vm,
+      options.extraUpdateConfig
+    )
   } catch (error: any) {
     log.error({ error: error.message }, "Install-on-next-launch blackbox test failed to run")
     queuedError = error
@@ -601,7 +683,7 @@ export async function runInstallOnNextLaunchTest(
     await new Promise(resolve => setTimeout(resolve, 1000))
     await tmpDir.cleanup()
     try {
-      await handleCleanupPerOS({ target })
+      await handleCleanupPerOS({ target, perMachine })
     } catch (error: any) {
       log.error({ error: error.message }, "Install-on-next-launch blackbox test cleanup failed")
       // ignore
@@ -821,11 +903,13 @@ async function runUpdateScenario(
   const buildConfig = deepAssign({ toolsets }, extraConfig ?? {})
   await doBuild(expect, outDirs, target, arch, tmpDir, shouldRunWindowsTests, buildConfig, builds)
   expect(outDirs.length).toBe(builds.length)
+  const targetOf = (index: number) => builds[index].target ?? target
+  const perMachine = extraConfig?.nsis?.perMachine
 
   const extraUpdateConfig = await initialUpdateConfig(outDirs)
 
   // Setup tests by installing the previous version
-  const appPath = await handleInitialInstallPerOS({ target, dirPath: outDirs[0].dir, arch, vm })
+  const appPath = await handleInitialInstallPerOS({ target: targetOf(0), dirPath: outDirs[0].dir, arch, vm, perMachine })
   if (!vm && !existsSync(appPath)) {
     throw new Error(`App not found: ${appPath}`)
   }
@@ -835,7 +919,7 @@ async function runUpdateScenario(
     await runTestWithinServer(
       async (rootDirectory: string, updateConfigPath: string, serverConfig: GenericServerOptions) => {
         // Serve the first update
-        await copy(outDirs[1].dir, rootDirectory, { recursive: true, overwrite: true })
+        await copy(updateFilesDir(targetOf(1), outDirs[1].dir), rootDirectory, { recursive: true, overwrite: true })
         await scenario({ expect, vm, appPath, outDirs, packageManager, rootDirectory, updateConfigPath, serverConfig })
       },
       vm,
@@ -849,7 +933,7 @@ async function runUpdateScenario(
     await new Promise(resolve => setTimeout(resolve, 1000))
     await tmpDir.cleanup()
     try {
-      await handleCleanupPerOS({ target })
+      await handleCleanupPerOS({ target, perMachine })
     } catch (error: any) {
       log.error({ error: error.message }, `Blackbox ${tmpDirPrefix} test cleanup failed`)
       // ignore
@@ -866,7 +950,16 @@ async function runUpdateScenario(
  */
 async function expectRejectedUpdate(
   { expect, appPath, vm, updateConfigPath, packageManager }: ScenarioContext,
-  { installedVersion, expectedErrorCode }: { installedVersion: string; expectedErrorCode: string }
+  {
+    installedVersion,
+    expectedErrorCode,
+    assertLaunch,
+  }: {
+    installedVersion: string
+    expectedErrorCode: string
+    /** further checks of the stdout of the launch that refuses the update */
+    assertLaunch?: (stdout: string) => void
+  }
 ): Promise<void> {
   const result = await launchAndWaitForQuit({
     appPath,
@@ -884,6 +977,7 @@ async function expectRejectedUpdate(
     expect(result.stdout).toContain(expectedErrorCode)
     expect(result.stdout).not.toContain("Update downloaded")
     expect(result.stdout).not.toContain(MANIFEST_VERIFICATION_DISABLED_MARKER)
+    assertLaunch?.(result.stdout)
   })
 
   // nothing may have been installed
@@ -1043,4 +1137,228 @@ export async function runKeyRotationTest(context: TestContext, target: string, p
       })
     },
   })
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// NSIS web installer (nsis-web) updates. The web installer is named like the nsis installer (it inherits nsis.artifactName), so
+// the install and cleanup helpers apply unchanged; it installs on native Windows only (see handleInitialInstallPerOS).
+// ---------------------------------------------------------------------------------------------------------
+
+/** File name of the x64 package of an nsis-web build of the test app. */
+const webPackageName = (version: string) => `testapp-${version}-x64.nsis.7z`
+
+/** The package of the update, as electron-updater names it in its pending directory and passes it via --package-file. */
+const pendingPackageName = (version: string) => `package-${version}.7z`
+
+/**
+ * Checks the update info of an nsis-web build (the web installer's file entry, the x64 package and its checksum) and returns the
+ * sha512 of the package.
+ */
+async function assertWebInstallerUpdateInfo(expect: ExpectStatic, dist: ApplicationUpdatePaths, version: string, perMachine: boolean): Promise<string> {
+  const dir = updateFilesDir("nsis-web", dist.dir)
+  const info = (await readUpdateManifest(dir)) as WindowsUpdateInfo
+  expect(info.version).toBe(version)
+  expect(info.files.map(it => it.url)).toEqual([NSIS_INSTALLER_IMAGE_NAME])
+  const sha512 = await hashFile(path.join(dir, webPackageName(version)))
+  expect(info.packages?.x64).toMatchObject({ path: webPackageName(version), sha512 })
+  // electron-updater reads isAdminRightsRequired from the file entry of the installer
+  expect(info.files[0].isAdminRightsRequired).toBe(perMachine ? true : undefined)
+  expect(info).not.toHaveProperty("isAdminRightsRequired")
+  return sha512
+}
+
+/** Reads the sha512 of the x64 package from the update info of an nsis-web build. */
+async function webPackageSha512(dist: ApplicationUpdatePaths): Promise<string> {
+  const info = (await readUpdateManifest(updateFilesDir("nsis-web", dist.dir))) as WindowsUpdateInfo
+  return info.packages!.x64.sha512
+}
+
+/**
+ * Runs `test` with empty updater caches and clears them again afterwards: they hold the stored and pending packages of the test
+ * app (up to ~250 MB each), which the uninstaller keeps.
+ */
+async function withEmptyUpdaterCaches(test: () => Promise<void>): Promise<void> {
+  await clearWindowsUpdaterCaches()
+  try {
+    await test()
+  } finally {
+    await clearWindowsUpdaterCaches().catch((error: any) => log.warn({ error: error.message }, "Failed to clear the updater caches"))
+  }
+}
+
+/**
+ * nsis-web update end to end (native Windows):
+ *   - v1 is installed by its web installer from the package next to it; the installer stores its own copy of the package in
+ *     `%LOCALAPPDATA%\testapp-updater` and leaves the one next to it in place
+ *   - the fixture app doesn't set disableWebInstaller: the `nsis-web` marker of the install allows the web-installer update
+ *   - the v2 package is downloaded differentially against the stored v1 package (the served config names the same
+ *     `updaterCacheDirName` as the embedded app-update.yml) and passed to the v2 web installer via --package-file, which installs it
+ *     and stores it as the base of the next update
+ * With `nsis.perMachine` the update installer is started through elevate.exe (needs an elevated session).
+ */
+export async function runWebInstallerUpdateTest(context: TestContext, toolsets: ToolsetConfig, extraConfig?: Partial<Configuration>): Promise<void> {
+  const perMachine = extraConfig?.nsis?.perMachine === true
+  const packageSha512: Array<string> = []
+  await withEmptyUpdaterCaches(() =>
+    runUpdateScenario(context, {
+      target: "nsis-web",
+      packageManager: "",
+      arch: Arch.x64,
+      toolsets,
+      extraConfig,
+      tmpDirPrefix: "web-installer-update",
+      builds: [{ version: OLD_VERSION_NUMBER }, { version: NEW_VERSION_NUMBER }],
+      initialUpdateConfig: async outDirs => {
+        const { expect } = context
+        packageSha512.push(await assertWebInstallerUpdateInfo(expect, outDirs[0], OLD_VERSION_NUMBER, perMachine))
+        packageSha512.push(await assertWebInstallerUpdateInfo(expect, outDirs[1], NEW_VERSION_NUMBER, perMachine))
+        const { updaterCacheDirName } = await readEmbeddedUpdateConfig(outDirs[0].dir)
+        expect(updaterCacheDirName).toBe(UPDATER_STORE_DIR_NAME)
+        return { updaterCacheDirName }
+      },
+      scenario: async ctx => {
+        const { expect, appPath, outDirs, rootDirectory } = ctx
+        const [oldPackageSha512, newPackageSha512] = packageSha512
+        const store = path.join(windowsLocalAppData(), UPDATER_STORE_DIR_NAME)
+        const pending = path.join(store, "pending")
+        for (const file of ["latest.yml", NSIS_INSTALLER_IMAGE_NAME, webPackageName(NEW_VERSION_NUMBER)]) {
+          if (!existsSync(path.join(rootDirectory, file))) {
+            throw new Error(`${file} is not served from ${rootDirectory}`)
+          }
+        }
+
+        expect(await readInstalledPackageType(appPath)).toBe("nsis-web")
+        expect(await hashFile(path.join(store, "package.7z"))).toBe(oldPackageSha512)
+        expect(await hashFile(path.join(updateFilesDir("nsis-web", outDirs[0].dir), webPackageName(OLD_VERSION_NUMBER)))).toBe(oldPackageSha512)
+
+        await updateHop(expect, {
+          ...ctx,
+          fromVersion: OLD_VERSION_NUMBER,
+          toVersion: NEW_VERSION_NUMBER,
+          assertLaunch: stdout => {
+            expect(stdout).not.toContain("ERR_UPDATER_WEB_INSTALLER_DISABLED")
+            expect(stdout).not.toContain("Web Installers are disabled")
+            expect(stdout).not.toContain("disableWebInstaller is explicitly set to false")
+            expect(stdout).not.toContain("updaterCacheDirName is not specified")
+            // only the package is downloaded differentially (a web installer is always downloaded in full)
+            expect(stdout).toMatch(/Full: .+, To download: .+ \(\d+%\)/)
+            expect(stdout).not.toContain("Cannot download differentially")
+            if (perMachine) {
+              expect(stdout).toContain("isAdminRightsRequired is set to true, run installer using elevate.exe")
+              expect(stdout).toMatch(
+                /Executing: .*\\resources\\elevate\.exe with args: .*\\testapp-updater\\pending\\TestApp Setup\.exe,--updated,\/S,--package-file=.*\\testapp-updater\\pending\\package-1\.0\.1\.7z/i
+              )
+            } else {
+              expect(stdout).not.toContain("run installer using elevate.exe")
+              expect(stdout).toMatch(
+                /Executing: .*\\testapp-updater\\pending\\TestApp Setup\.exe with args: --updated,\/S,--package-file=.*\\testapp-updater\\pending\\package-1\.0\.1\.7z/i
+              )
+            }
+          },
+        })
+
+        // the marker is written after the app files, the version probe can see v2 before that
+        await waitForWindowsProcessExit(NSIS_INSTALLER_IMAGE_NAME)
+        expect(await readInstalledPackageType(appPath)).toBe("nsis-web")
+        expect(await hashFile(path.join(store, "package.7z"))).toBe(newPackageSha512)
+        // the web installer installed its own copy of the --package-file, which stays where electron-updater put it until the updated
+        // app starts electron-updater (the version probes don't), which removes it (NsisUpdater.removeInstalledWebPackage)
+        expect(await hashFile(path.join(pending, pendingPackageName(NEW_VERSION_NUMBER)))).toBe(newPackageSha512)
+      },
+    })
+  )
+}
+
+/**
+ * nsis-web install on next launch (native Windows): the update, queued with its package, is validated again against fresh update
+ * info after a restart (the cached package included, see CachedUpdateInfo.packageFileName) and installed automatically at launch,
+ * with the package passed to the web installer via --package-file.
+ */
+export async function runWebInstallerInstallOnNextLaunchTest(context: TestContext, toolsets: ToolsetConfig): Promise<void> {
+  const { expect } = context
+  const store = path.join(windowsLocalAppData(), UPDATER_STORE_DIR_NAME)
+  const pending = path.join(store, "pending")
+  const cachedPackage = path.join(pending, pendingPackageName(NEW_VERSION_NUMBER))
+  await withEmptyUpdaterCaches(() =>
+    runInstallOnNextLaunchTest(context, "nsis-web", "", Arch.x64, toolsets, "automatic", undefined, {
+      // the directory the web installer stores its package in, as the embedded app-update.yml names it
+      extraUpdateConfig: { updaterCacheDirName: UPDATER_STORE_DIR_NAME },
+      afterQueued: async outDirs => {
+        expect(await readJson(path.join(pending, "update-info.json"))).toMatchObject({
+          fileName: NSIS_INSTALLER_IMAGE_NAME,
+          installOnNextLaunch: true,
+          isAdminRightsRequired: false,
+          packageFileName: pendingPackageName(NEW_VERSION_NUMBER),
+        })
+        expect(await hashFile(cachedPackage)).toBe(await webPackageSha512(outDirs[1]))
+      },
+      assertInstallLaunch: stdout => {
+        expect(stdout).toContain(`Installing pending update ${NEW_VERSION_NUMBER} on launch`)
+        expect(stdout).toMatch(/Executing: .*\\pending\\TestApp Setup\.exe with args: --updated,\/S,--force-run,--package-file=.*\\pending\\package-1\.0\.1\.7z/i)
+        expect(stdout).not.toContain("ERR_UPDATER_WEB_INSTALLER_DISABLED")
+        expect(stdout).not.toContain("Pending update failed validation")
+        expect(stdout).not.toContain("Cached web installer package doesn't match")
+      },
+      afterInstalled: async outDirs => {
+        // the marker is cleared before the installer is started
+        expect((await readJson(path.join(pending, "update-info.json"))).installOnNextLaunch).toBeUndefined()
+        expect(await hashFile(path.join(store, "package.7z"))).toBe(await webPackageSha512(outDirs[1]))
+        // not asserted: the pending package (cachedPackage) is removed by the updated app's electron-updater once it starts, and the app
+        // --force-run starts may or may not have done so by now
+      },
+    })
+  )
+}
+
+/**
+ * A plain nsis install refuses a web-installer update: its `nsis` marker keeps disableWebInstaller at its default, so the update
+ * fails with ERR_UPDATER_WEB_INSTALLER_DISABLED before anything is downloaded and the installed version stays. The manifests are
+ * signed, so the served nsis-web manifest (whose signed content includes its packages) is verified first. Native Windows or the VM.
+ */
+export async function runWebInstallerRejectedTest(context: TestContext, toolsets: ToolsetConfig): Promise<void> {
+  const keyA = generateUpdateSigningKeypair()
+  const signedByA: Partial<Configuration> = { updateManifest: { signingKey: keyA.privateKeyPem } }
+  await withEmptyUpdaterCaches(() =>
+    runUpdateScenario(context, {
+      target: "nsis",
+      packageManager: "",
+      arch: Arch.x64,
+      toolsets,
+      tmpDirPrefix: "web-installer-rejected",
+      builds: [
+        { version: OLD_VERSION_NUMBER, extraConfig: signedByA },
+        { version: NEW_VERSION_NUMBER, target: "nsis-web", extraConfig: signedByA },
+      ],
+      initialUpdateConfig: async outDirs => {
+        const { expect } = context
+        const served = (await readUpdateManifest(updateFilesDir("nsis-web", outDirs[1].dir))) as WindowsUpdateInfo
+        assertManifestSignedBy(expect, served, NEW_VERSION_NUMBER, [keyA.publicKeyPem])
+        expect(served.packages?.x64?.sha512).toEqual(expect.any(String))
+        const updateManifestPublicKey = await assertEmbeddedTrustList(expect, outDirs[0], [keyA.publicKeyPem])
+        const { updaterCacheDirName } = await readEmbeddedUpdateConfig(outDirs[0].dir)
+        return { updateManifestPublicKey, updaterCacheDirName }
+      },
+      scenario: async ctx => {
+        const { expect, appPath } = ctx
+        const isNativeWindows = process.platform === "win32"
+        if (isNativeWindows) {
+          expect(await readInstalledPackageType(appPath)).toBe("nsis")
+        }
+        await expectRejectedUpdate(ctx, {
+          installedVersion: OLD_VERSION_NUMBER,
+          expectedErrorCode: "ERR_UPDATER_WEB_INSTALLER_DISABLED",
+          assertLaunch: stdout => {
+            expect(stdout).toContain(manifestVerifiedMarker(NEW_VERSION_NUMBER))
+            expect(stdout).toContain("Web Installers are disabled")
+            expect(stdout).not.toContain("Executing:")
+          },
+        })
+        if (isNativeWindows) {
+          const pending = path.join(windowsLocalAppData(), UPDATER_STORE_DIR_NAME, "pending")
+          expect(existsSync(path.join(pending, NSIS_INSTALLER_IMAGE_NAME))).toBe(false)
+          expect(existsSync(path.join(pending, pendingPackageName(NEW_VERSION_NUMBER)))).toBe(false)
+        }
+      },
+    })
+  )
 }

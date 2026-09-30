@@ -13,3 +13,9 @@ exports[`one-click 2`] = `
   "url": "https://develar.s3.amazonaws.com/test/win/x64",
 }
 `;
+
+exports[`one-click signed without publisherName: app-update.yml has the certificate's common name 1`] = `
+{
+  "win": [],
+}
+`;

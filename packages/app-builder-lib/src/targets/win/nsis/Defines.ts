@@ -21,6 +21,8 @@ export type Defines = {
   // nsis-web: the download URL of the app package; with `APP_PACKAGE_URL_IS_INCOMPLETE` the script appends the arch-specific file name
   APP_PACKAGE_URL?: string
   APP_PACKAGE_URL_IS_INCOMPLETE?: null
+  // nsis-web: skip verifying `--package-file` / the downloaded package against the built packages' hashes (`nsisWeb.allowUnverifiedAppPackage`)
+  ALLOW_UNVERIFIED_APP_PACKAGE?: null
 
   ENABLE_LOGGING_ELECTRON_BUILDER?: null
   UNINSTALL_REGISTRY_KEY_2?: string

@@ -8,7 +8,7 @@ import { spawn as nodeSpawn, spawnSync } from "child_process"
 import * as path from "path"
 import { TestContext } from "vitest"
 import { deepAssign, TmpDir } from "builder-util"
-import { NSIS_VERSIONS, WIN_CODE_SIGN_VERSIONS, WINE_VERSIONS } from "../../vitest-scripts/runtime-tests/generate-toolset-versions"
+import { latestToolsetVersion, NSIS_VERSIONS, WIN_CODE_SIGN_VERSIONS, WINE_VERSIONS } from "../../vitest-scripts/runtime-tests/generate-toolset-versions"
 import { getFixtureDir } from "../helpers/packTester"
 import { OLD_VERSION_NUMBER } from "../helpers/updaterTestUtil"
 import {
@@ -23,25 +23,7 @@ import {
   windowsVmPromise,
 } from "./blackboxUpdateHelpers"
 import { installWindowsNative, installWindowsVm } from "./blackboxInstallWindows"
-
-/** Highest dotted version string in the list (custom, non-string toolset entries are ignored). */
-function latestVersion(versions: ReadonlyArray<unknown>): string | undefined {
-  const compare = (a: string, b: string) => {
-    const pa = a.split(".").map(Number)
-    const pb = b.split(".").map(Number)
-    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-      const diff = (pa[i] ?? 0) - (pb[i] ?? 0)
-      if (diff !== 0) {
-        return diff
-      }
-    }
-    return 0
-  }
-  return versions
-    .filter((it): it is string => typeof it === "string")
-    .sort(compare)
-    .at(-1)
-}
+import { readUpdateManifest } from "./signedManifestTestUtil"
 
 /**
  * True for exactly one generated blackboxWin file: the one built against the newest version of every toolset
@@ -50,12 +32,12 @@ function latestVersion(versions: ReadonlyArray<unknown>): string | undefined {
  * toolset combination.
  */
 export function isLatestToolset(toolsets: Required<Pick<ToolsetConfig, "winCodeSign" | "nsis" | "wine">>): boolean {
-  return isLatestToolsetExceptNsis(toolsets) && toolsets.nsis === latestVersion(NSIS_VERSIONS)
+  return isLatestToolsetExceptNsis(toolsets) && toolsets.nsis === latestToolsetVersion(NSIS_VERSIONS)
 }
 
 /** Like isLatestToolset, but true once per NSIS version: for tests of the makensis output, which the other toolsets take no part in. */
 function isLatestToolsetExceptNsis(toolsets: Required<Pick<ToolsetConfig, "winCodeSign" | "wine">>): boolean {
-  return toolsets.winCodeSign === latestVersion(WIN_CODE_SIGN_VERSIONS) && toolsets.wine === latestVersion(WINE_VERSIONS)
+  return toolsets.winCodeSign === latestToolsetVersion(WIN_CODE_SIGN_VERSIONS) && toolsets.wine === latestToolsetVersion(WINE_VERSIONS)
 }
 
 // Spawn a process whose IMAGE NAME contains `appExeName` (e.g. "TestApp-helper.exe" when
@@ -234,7 +216,12 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
       if (process.platform !== "win32") {
         context.skip()
       }
-      await runTest(context, "nsis", "", Arch.x64, toolsets, { nsis: { perMachine: true } })
+      const { expect } = context
+      await runTest(context, "nsis", "", Arch.x64, toolsets, { nsis: { perMachine: true } }, stdout => {
+        // the update info of a per-machine build has isAdminRightsRequired, so the update installer is started through elevate.exe
+        expect(stdout).toContain("isAdminRightsRequired is set to true, run installer using elevate.exe")
+        expect(stdout).toMatch(/Executing: .*\\resources\\elevate\.exe with args: .*\\pending\\TestApp Setup\.exe,--updated,\/S/i)
+      })
     })
 
     // Same regression test for the per-machine (INSTALL_MODE_PER_ALL_USERS) code path.
@@ -261,6 +248,8 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
       const outDirs: ApplicationUpdatePaths[] = []
       const buildConfig = deepAssign({ toolsets }, { nsis: { perMachine: true } })
       await doBuild(expect, outDirs, "nsis", Arch.x64, tmpDir, /* isWindows */ true, buildConfig)
+      // a per-machine one-click build packs elevate.exe, so its update info asks electron-updater to use it
+      expect((await readUpdateManifest(outDirs[0].dir)).files[0].isAdminRightsRequired).toBe(true)
 
       const { cleanup, assertAlive } = await spawnSiblingProcess(vm, "TestApp.exe")
       try {

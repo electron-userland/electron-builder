@@ -481,7 +481,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -643,7 +643,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -1762,7 +1762,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -1885,7 +1885,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -2013,7 +2013,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -2148,7 +2148,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -2587,10 +2587,13 @@
               "$ref": "#/definitions/UpdateManifestSigningOptions"
             },
             {
+              "const": false
+            },
+            {
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         },
         "vendor": {
           "description": "The vendor. Defaults to [author](https://www.electron.build/configuration#author).",
@@ -3333,10 +3336,13 @@
               "$ref": "#/definitions/UpdateManifestSigningOptions"
             },
             {
+              "const": false
+            },
+            {
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         }
       },
       "type": "object"
@@ -3825,10 +3831,13 @@
               "$ref": "#/definitions/UpdateManifestSigningOptions"
             },
             {
+              "const": false
+            },
+            {
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         }
       },
       "type": "object"
@@ -4404,7 +4413,7 @@
       "properties": {
         "buildDependenciesFromSource": {
           "default": false,
-          "description": "Whether to pass `--build-from-source` to the package manager when installing native\ndependencies, forcing them to compile from source rather than using pre-built binaries.\n\nUseful when pre-built binaries are not available for the target platform/arch combination,\nor when you need to ensure native modules are compiled against the exact Electron ABI.",
+          "description": "Whether to pass `--build-from-source` to the package manager when installing native\ndependencies, forcing them to compile from source rather than using pre-built binaries.\n\nUseful when pre-built binaries are not available for the target platform/arch combination,\nor when you need to ensure native modules are compiled against the exact Electron ABI.\n\nOnly honored when the target platform matches the host platform: native modules cannot be\ncross-compiled from source for another OS, so for a cross-platform target native dependencies are\nrebuilt with prebuilt binaries for that target instead (and a warning is logged).",
           "type": "boolean"
         },
         "nodeGypRebuild": {
@@ -4432,6 +4441,22 @@
           ],
           "default": "sequential",
           "description": "Compilation mode for `@electron/rebuild`.\n\n- `\"sequential\"` — rebuilds native modules one at a time. Safer in memory-constrained\n  environments and produces cleaner log output.\n- `\"parallel\"` — rebuilds all native modules concurrently. Faster on machines with many cores\n  and plentiful memory, but may exhaust resources on CI agents with limited RAM."
+        },
+        "verifyNativeBinaries": {
+          "anyOf": [
+            {
+              "enum": [
+                false,
+                true,
+                "warn"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": true,
+          "description": "Whether to verify, after the app is packed, that every native binary shipped in the app was built for\nthe target platform and architecture.\n\nelectron-builder reads the header of each `.node` addon (and of other native libraries and executables\nsuch as `.so`, `.dylib`, `.dll`, `.exe`) in `app.asar`, `app.asar.unpacked` or the unpacked `app`\ndirectory, and compares its format (ELF / Mach-O / PE) and machine type against the target (for\na macOS universal build, each per-arch slice is checked before the slices are merged). This catches a\nstale or host-platform binary left in `node_modules` by a skipped or cached rebuild, which otherwise\nonly surfaces at runtime as `invalid ELF header` / `not a valid Win32 application` /\n`incompatible architecture`.\n\nFiles whose package declares another platform via `package.json` `os`/`cpu`, or whose path names\nanother platform/arch (e.g. prebuildify's `prebuilds/linux-arm64/`), are not loaded for this target\nand are ignored.\n\n- `true` (default) — a mismatched `.node` addon fails the build; other mismatched native files log a warning.\n- `\"warn\"` — log every mismatch as a warning and continue.\n- `false` — skip the check."
         }
       },
       "type": "object"
@@ -4813,8 +4838,13 @@
           "description": "*assisted installer only.* Whether to allow user to change installation directory.",
           "type": "boolean"
         },
+        "allowUnverifiedAppPackage": {
+          "default": false,
+          "description": "Whether the web installer may install an app package that doesn't match any package built with it: a package passed via `--package-file`,\nor (when `appPackageUrl` is not set) the downloaded package. By default such a package aborts the installation.\n\nEnable only if you intentionally run one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).",
+          "type": "boolean"
+        },
         "appPackageUrl": {
-          "description": "The application package download URL. Optional — by default computed using publish configuration.\n\nURL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).\nPlease note — it is [full URL](https://github.com/electron-userland/electron-builder/issues/1810#issuecomment-317650878).\n\nCustom `X-Arch` http header is set to `32` or `64`.",
+          "description": "The application package download URL. Optional — by default computed using publish configuration.\n\nURL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).\nPlease note — it is [full URL](https://github.com/electron-userland/electron-builder/issues/1810#issuecomment-317650878).\n\nCustom `X-Arch` http header is set to `32` or `64`.\n\nThe installer does not checksum-verify a package downloaded from an explicit `appPackageUrl`; a package downloaded from the default (publish-derived) URL is verified against the packages built with the installer.",
           "type": [
             "null",
             "string"
@@ -6337,7 +6367,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -6834,7 +6864,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -7726,7 +7756,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -8220,7 +8250,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -8620,7 +8650,7 @@
               ]
             }
           ],
-          "description": "The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.\nThe updater accepts a manifest when any listed key validates one of its signatures. Optional — when\nomitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust\nadditional keys ahead of a rotation (for example `[current, next]`) or when the private key is held by an\nexternal signer."
+          "description": "The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.\nThe updater accepts a manifest when any listed key validates one of its signatures. Optional — when\nomitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust\nadditional keys ahead of a rotation (for example `[current, next]`).\n\nA `publicKey` on its own does not satisfy the signing requirement — electron-builder still has no key to\nsign with. An external signer (HSM/KMS) that signs `latest*.yml` in a later step therefore either builds\nwithout a publish policy, where the requirement only warns and the unsigned manifest is written locally, or\nkeeps publishing with `publishAutoUpdate: false` on every publish provider - electron-builder then uploads the\nartifacts and embeds this key, but writes no `latest*.yml`, so the external step has to produce it too."
         },
         "signingKey": {
           "anyOf": [
@@ -9087,10 +9117,13 @@
               "$ref": "#/definitions/UpdateManifestSigningOptions"
             },
             {
+              "const": false
+            },
+            {
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         },
         "verifyUpdateCodeSignature": {
           "default": true,
@@ -9154,7 +9187,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. Set to `null`\nto opt out."
+          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9176,7 +9209,7 @@
               ]
             }
           ],
-          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing)."
+          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing).\n\nelectron-builder cannot tell which certificate the hook signs with, so also set\n[publisherName](#publisherName) to that certificate's subject: it is never derived from a\ncertificate for a hook (not even one in the config), and without it a build that writes\n`app-update.yml` fails."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -9259,7 +9292,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. Set to `null`\nto opt out."
+          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9281,7 +9314,7 @@
               ]
             }
           ],
-          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing)."
+          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing).\n\nelectron-builder cannot tell which certificate the hook signs with, so also set\n[publisherName](#publisherName) to that certificate's subject: it is never derived from a\ncertificate for a hook (not even one in the config), and without it a build that writes\n`app-update.yml` fails."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -9377,7 +9410,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. Set to `null`\nto opt out."
+          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9399,7 +9432,7 @@
               ]
             }
           ],
-          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing)."
+          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing).\n\nelectron-builder cannot tell which certificate the hook signs with, so also set\n[publisherName](#publisherName) to that certificate's subject: it is never derived from a\ncertificate for a hook (not even one in the config), and without it a build that writes\n`app-update.yml` fails."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -10366,10 +10399,13 @@
           "$ref": "#/definitions/UpdateManifestSigningOptions"
         },
         {
+          "const": false
+        },
+        {
           "type": "null"
         }
       ],
-      "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). When configured, each manifest is signed\nand electron-updater verifies the signature (against the embedded public key) before downloading an update.\nPrefer supplying the key via the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` environment variables in CI."
+      "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
     },
     "win": {
       "anyOf": [
@@ -10381,6 +10417,13 @@
         }
       ],
       "description": "Windows-specific build options (signing, NSIS, icon, file associations, etc.)."
+    },
+    "writeEffectiveConfig": {
+      "description": "Whether to write `builder-effective-config.yaml` (the resolved configuration, including the detected\n`electronVersion`) to the output directory.\n\nDefaults to writing it only for local interactive builds: not on CI and not when stdout is piped.\nSet `true` to always write it, e.g. to read the resolved configuration in a CI step, or `false` to never write it.",
+      "type": [
+        "null",
+        "boolean"
+      ]
     },
     "$schema": {
       "description": "JSON Schema for this document.",

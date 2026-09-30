@@ -2,6 +2,7 @@ import type { ToolsetConfig } from "app-builder-lib/internal"
 import * as fs from "fs"
 import * as path from "path"
 import type * as _BlackboxWinSuite from "../../src/updater/blackboxUpdateWinSuite.js"
+import type * as _BlackboxWebWinSuite from "../../src/updater/blackboxUpdateWebWinSuite.js"
 import type * as _DifferentialWinSuite from "../../src/updater/differentialUpdateWinSuite.js"
 import type * as _AppxSuite from "../../src/windows/appxTestSuite.js"
 import type * as _AssistedInstallerSuite from "../../src/windows/assistedInstallerTestSuite.js"
@@ -23,13 +24,36 @@ import {
   resolveImportPath,
   TEST_SRC_DIR,
 } from "./generate-toolset-tests-shared.js"
-import { NSIS_VERSIONS, WINE_VERSIONS, WIN_CODE_SIGN_VERSIONS } from "./generate-toolset-versions.js"
+import { latestToolsetVersion, NSIS_VERSIONS, WINE_VERSIONS, WIN_CODE_SIGN_VERSIONS } from "./generate-toolset-versions.js"
 
 interface WindowsSuiteConfig extends SuiteConfig {
   readonly winCodeSignVersions?: ToolsetConfig["winCodeSign"][]
   readonly nsisVersions?: ToolsetConfig["nsis"][]
   readonly wineVersions?: ToolsetConfig["wine"][]
 }
+
+/** The newest version of a toolset version list as a one-element list, e.g. for a suite that is built with the newest toolset only. */
+function newestVersion<T>(versions: ReadonlyArray<T>): T[] {
+  const latest = latestToolsetVersion(versions)
+  return latest == null ? [] : [latest]
+}
+
+// nsis-web update cycles (blackboxUpdateWebWinSuite.ts): one suite per test, so each generated file holds a single ~15 min test
+// (the CI sharder packs whole files). Update and NextLaunch run on native Windows only, Rejected on native Windows or a Parallels
+// VM; elsewhere they are skipped at runtime like blackboxWin (so a local TEST_FILES run reports them as skipped). Built with the
+// newest winCodeSign only: the served update config has no publisherName, so the signing toolset doesn't take part in the update.
+// The names don't contain "blackboxWin", so TEST_FILES=blackboxWin doesn't select them.
+const blackboxWebWinSuite = (name: string, registerFn: SuiteConfig["registerFn"], nsisVersions: ToolsetConfig["nsis"][]): WindowsSuiteConfig => ({
+  name,
+  e2e: true,
+  registerFn,
+  importPath: "updater/blackboxUpdateWebWinSuite",
+  describeConfig: { name: "blackboxWebWin" },
+  describeOptions: { concurrent: false, retry: 1 },
+  winCodeSignVersions: newestVersion(WIN_CODE_SIGN_VERSIONS),
+  nsisVersions,
+  wineVersions: WINE_VERSIONS,
+})
 
 const SUITES: WindowsSuiteConfig[] = [
   {
@@ -124,6 +148,13 @@ const SUITES: WindowsSuiteConfig[] = [
     nsisVersions: NSIS_VERSIONS,
     wineVersions: WINE_VERSIONS,
   },
+  // the web installer that is installed and updated is built with the NSIS toolset: once per NSIS version. The NSIS 0.0.0 run cases
+  // of nsisWebPackageSelectionTest run the package selection and checks of a fixture installer; this runs the whole web installer
+  // of that toolset (install from an adjacent package, then an update through electron-updater with --package-file).
+  blackboxWebWinSuite("blackboxWebWinUpdate", namedFn("registerBlackboxWebWinUpdateTests" satisfies keyof typeof _BlackboxWebWinSuite), NSIS_VERSIONS),
+  blackboxWebWinSuite("blackboxWebWinNextLaunch", namedFn("registerBlackboxWebWinNextLaunchTests" satisfies keyof typeof _BlackboxWebWinSuite), newestVersion(NSIS_VERSIONS)),
+  // installs plain nsis and never runs the web installer
+  blackboxWebWinSuite("blackboxWebWinRejected", namedFn("registerBlackboxWebWinRejectedTests" satisfies keyof typeof _BlackboxWebWinSuite), newestVersion(NSIS_VERSIONS)),
   {
     name: "winCodeSign",
     registerFn: namedFn("registerWinCodeSignTests" satisfies keyof typeof _WinCodeSignSuite),
