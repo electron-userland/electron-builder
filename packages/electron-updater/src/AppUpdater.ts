@@ -211,6 +211,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * `NsisUpdater` defaults it to `false` for installs made by an `nsis-web` installer built with electron-builder v27+ (`resources/package-type` marker).
    * Set it to `false` explicitly only if you intentionally publish and rely on NSIS web-installer packages and your installs lack that marker.
    *
+   * Set it before the app is `ready` (e.g. right after creating the updater): with `autoInstallEvent: "onNextLaunch"` a pending
+   * web-installer update is checked against it when the app is ready, and rejected (its pending-install marker cleared) while it is `true`.
+   *
    * @default true
    */
   get disableWebInstaller(): boolean {
