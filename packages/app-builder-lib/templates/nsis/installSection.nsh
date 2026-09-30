@@ -53,6 +53,17 @@ ${endif}
 # that is refused or cannot be downloaded leaves that version in place. Empty for other installers.
 !insertmacro prepareWebPackage
 
+# nsis-web: the app may have been started again while the package was downloaded, check again (see CHECK_APP_RUNNING_AGAIN)
+!ifdef WEB_PACKAGE_PREPARED
+  !ifdef ONE_CLICK
+    !insertmacro CHECK_APP_RUNNING_AGAIN
+  !else
+    ${ifNot} ${UAC_IsInnerInstance}
+      !insertmacro CHECK_APP_RUNNING_AGAIN
+    ${endif}
+  !endif
+!endif
+
 !insertmacro uninstallOldVersion SHELL_CONTEXT
 !insertmacro handleUninstallResult SHELL_CONTEXT
 

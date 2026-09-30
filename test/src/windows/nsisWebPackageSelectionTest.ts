@@ -172,12 +172,12 @@ test("installSection.nsh prepares the web package before uninstalling the instal
   const section = statements(await fs.readFile(path.join(templates, "..", "installSection.nsh"), "utf8")).filter(line => !line.startsWith("#") && !line.startsWith(";"))
   expect(section.filter(line => order.includes(line))).toEqual(order)
 
-  // prepareWebPackage is the statement right before the uninstall and outside any conditional, so every installer run that uninstalls
-  // the installed version has prepared the package first.
+  // prepareWebPackage is outside any conditional, so every installer run that uninstalls the installed version has prepared the package
+  // first.
+  const prepare = section.indexOf(order[0])
   const uninstall = section.indexOf(order[1])
-  expect(section[uninstall - 1]).toBe(order[0])
   let depth = 0
-  for (const line of section.slice(0, uninstall - 1)) {
+  for (const line of section.slice(0, prepare)) {
     if (/^(!if|\$\{(if|ifnot|unless)\})/i.test(line)) {
       depth++
     } else if (/^(!endif|\$\{endif\})/i.test(line)) {
@@ -185,6 +185,52 @@ test("installSection.nsh prepares the web package before uninstalling the instal
     }
   }
   expect(depth).toBe(0)
+
+  // Between the two, only nsis-web installers check again for the running app (the package download may have taken a while), with the
+  // same condition as the first check (CHECK_APP_RUNNING), so the uninstaller doesn't close an app started again meanwhile without asking.
+  expect(section.slice(prepare + 1, uninstall)).toEqual([
+    "!ifdef WEB_PACKAGE_PREPARED",
+    "!ifdef ONE_CLICK",
+    "!insertmacro CHECK_APP_RUNNING_AGAIN",
+    "!else",
+    "${ifNot} ${UAC_IsInnerInstance}",
+    "!insertmacro CHECK_APP_RUNNING_AGAIN",
+    "${endif}",
+    "!endif",
+    "!endif",
+  ])
+  const firstCheck = section.slice(0, prepare).filter(line => /CHECK_APP_RUNNING|UAC_IsInnerInstance/.test(line))
+  expect(firstCheck).toEqual(["!insertmacro CHECK_APP_RUNNING", "${ifNot} ${UAC_IsInnerInstance}", "!insertmacro CHECK_APP_RUNNING"])
+})
+
+// The second check for the running app is the first one's body with labels of its own (both are inserted in the install section), asks
+// the same (Cancel aborts with exit code 2), and is skipped for an update (--updated) and for a custom customCheckAppRunning.
+test("the second check for the running app has labels of its own and aborts with exit code 2", async ({ expect }) => {
+  const script = await fs.readFile(path.join(templates, "allowOnlyOneInstallerInstance.nsh"), "utf8")
+  const macro = (name: string) => {
+    const match = new RegExp(`^!macro ${name}\\b.*$([\\s\\S]*?)^!macroend$`, "m").exec(script)
+    expect(match, name).not.toBeNull()
+    return statements(match![1]).filter(line => !line.startsWith("#"))
+  }
+
+  expect(macro("_CHECK_APP_RUNNING")).toEqual(['!insertmacro _CHECK_APP_RUNNING_BODY ""'])
+  expect(macro("CHECK_APP_RUNNING_AGAIN")).toEqual([
+    "!ifmacrondef customCheckAppRunning",
+    "${ifNot} ${isUpdated}",
+    '!insertmacro _CHECK_APP_RUNNING_BODY "_again"',
+    "${endIf}",
+    "!endif",
+  ])
+
+  const body = macro("_CHECK_APP_RUNNING_BODY")
+  const labels = body.filter(line => /^\w[\w${}]*:$/.test(line))
+  expect(labels).toEqual(["doStopProcess${LABEL_SUFFIX}:", "loop${LABEL_SUFFIX}:", "not_running${LABEL_SUFFIX}:"])
+  const jumps = body.flatMap(line => [...line.matchAll(/(?:\bGoto|(?<!\/SD )\bIDOK|\bIDRETRY) (\S+)/g)].map(match => match[1]))
+  expect(jumps.length).toBeGreaterThan(0)
+  expect(jumps.filter(target => !target.endsWith("${LABEL_SUFFIX}"))).toEqual([])
+  const quits = body.flatMap((line, index) => (/^quit$/i.test(line) ? [index] : []))
+  expect(quits).toHaveLength(2)
+  expect(quits.map(index => body[index - 1])).toEqual(["SetErrorLevel 2", "SetErrorLevel 2"])
 })
 
 // Installers with an embedded package, and with APP_BUILD_DIR, are unchanged: the web package preparation is empty for them.
