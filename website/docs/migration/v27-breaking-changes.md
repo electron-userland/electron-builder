@@ -103,6 +103,8 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
 | [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | v27 warns but still downloads if you never set it; opt in with `disableWebInstaller: false` before v28 enforces it |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | — | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
+| [Signed update manifests are required](#signed-update-manifests-are-required) | — | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY`, or set `updateManifest: false` to keep publishing unsigned manifests |
+| [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | — | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
 | [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | — | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
 | [`quitAndInstall` takes an options object (electron-updater)](#quitandinstall-takes-an-options-object) | — | Replace positional args: `quitAndInstall(true, false)` → `quitAndInstall({ isSilent: true, isForceRunAfter: false })` |
 | [`autoInstallOnAppQuit` replaced by `autoInstallEvent` enum (electron-updater)](#autoinstallevent-replaces-autoinstallonappquit) | — | `autoInstallOnAppQuit = false` → `autoInstallEvent = "manual"`; default `"onQuit"` preserves behavior |
@@ -924,6 +926,49 @@ The deprecated top-level `path` and `sha512` fields are **no longer written** to
 - **If you still ship apps embedding electron-updater 1.x – 2.15**, keep emitting the legacy descriptor by declaring a compatibility range that includes them, e.g. `"electronUpdaterCompatibility": ">=1.0.0"` (also settable per platform, e.g. `win.electronUpdaterCompatibility`).
 
 > Related: metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated — v27 warns and **v28 will reject sha2-only metadata (fail-closed)**. Avoid pinning `electronUpdaterCompatibility` to a legacy range unless you actually ship 1.x–2.15 clients.
+
+### Signed update manifests are required
+
+Ed25519 signing of `latest*.yml` is new in v27 and **required by default**. A build with a publish policy that includes a target writing auto-update metadata — NSIS, AppImage, deb/rpm/pacman, macOS zip/dmg, or AppX with `electronUpdaterAware` — now fails unless a signing key resolves. The check runs at build start, before anything is packed or uploaded:
+
+```
+auto-update manifests must be signed, but no Ed25519 signing key was found for mac. Generate one with
+`electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (PEM contents)
+or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey /
+updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out
+explicitly with `updateManifest: false`.
+```
+
+Only a **publishing** build fails. A build without a publish policy warns instead, so local builds keep working — which matters because `app-update.yml` is generated whenever a publish configuration exists *or* can be inferred from your `repository` field.
+
+**To adopt it** (recommended):
+
+```bash
+npx electron-builder create-update-key          # once; store the PEM as a CI secret
+ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(cat update-private-key.pem)" electron-builder --publish always
+```
+
+**To opt out**, set `updateManifest: false` at the top level or under a platform key. Every build that emits a manifest then logs a warning. `false` also short-circuits the environment variables, so a leftover `ELECTRON_BUILDER_UPDATE_SIGN_KEY` cannot silently re-enable signing. A platform value of `null` is **not** an opt-out — it falls back to the top-level value.
+
+A publishing build whose targets write no update info (for example only snap, flatpak, MSI/MSIX, portable, mas/pkg or plain archives) needs no key. Two more cases need no configuration at all: when every publish provider sets `publishAutoUpdate: false` no manifest is emitted, so the requirement is waived; and a `publicKey` with no private key does **not** satisfy it, since electron-builder still has nothing to sign with (that HSM/KMS workflow either builds without a publish policy, or publishes with `publishAutoUpdate: false` and generates the manifest itself — see [Key storage](../features/key-rotation.md#key-storage)).
+
+:::danger[Opting out is not reversible for a release line]
+Once a release embeds a public key, its installs are **fail-closed**: an unsigned manifest is rejected with `ERR_UPDATER_MANIFEST_NOT_SIGNED` and those installs stop updating entirely. Do not switch to `updateManifest: false` after shipping signed manifests, and make sure every pipeline that can publish a release — including a hotfix built from a laptop — has the key.
+:::
+
+Note that installs already in the field are unaffected but also unprotected: they carry whatever `app-update.yml` they shipped with, so those built before you adopted signing keep accepting unsigned manifests. Full protection begins with the installs built after the public key was embedded.
+
+See [Signed Update Manifests](../features/signed-update-manifests.md) and [Key Rotation](../features/key-rotation.md).
+
+### `app-update.yml` feed follows the update-writing targets
+
+The feed an installed app polls — the first provider embedded in its `app-update.yml`, together with the manifest public key — is now resolved from the `publish` settings of the targets that write update info, not only from the platform/top-level `publish`. This changes package contents in three cases:
+
+- **Target-level `publish`** (e.g. `nsis.publish`, `appImage.publish`, `dmg.publish`) now decides the feed. An `nsis.publish`-only build used to ship no `app-update.yml` (or, with a GitHub `repository`, a GitHub feed while the manifests went elsewhere); it now ships that feed and the key that verifies its signed manifests.
+- **Providers with `publishAutoUpdate: false` are skipped** when a later provider receives the manifest, also in platform/top-level lists: `win.publish: [{ provider: "s3", …, publishAutoUpdate: false }, "github"]` now embeds GitHub, where v26 embedded the S3 feed that never gets a `latest*.yml`. When every provider sets `publishAutoUpdate: false` (the external-signing route), the first one is still embedded.
+- **Targets of one app must agree.** One packaged app holds a single `app-update.yml`, so two update-writing targets built from it (for example `dmg` and `zip`, or `nsis` and an updater-aware `appx`) whose feeds differ fail a publishing build at build start with an `InvalidConfigurationError`; a build without a publish policy warns that publishing will fail and writes no `app-update.yml` for that app. Only feed-identifying options are compared — upload-only ones such as `publishAutoUpdate` or `timeout` may differ.
+
+Builds with no update-writing target, or whose only such target opts out (`publish: null`), keep the platform/top-level feed and the GitHub fallback as before. **Action:** only if you use target-level `publish`, per-target feeds within one app, or a disabled first provider — configure `publish` once at the platform level, or check that the embedded feed is the one you publish `latest*.yml` to. See [which settings become the auto-update feed](../publish.md#app-update-yml-feed).
 
 ### New: `allowUnverifiedLinuxPackages` (opt-in Linux package-signature verification)
 

@@ -144,6 +144,18 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       coerceValue(config.mac, "universal")
     }
 
+    // `-c.updateManifest=false` is the signing opt-out and arrives as the string "false"; ajv does not write a
+    // coerced value back out of an `anyOf` branch, so without this the opt-out is silently ignored and the build
+    // fails demanding a signing key. coerceValue recurses into objects, so `-c.updateManifest.signingKeyFile=...`
+    // still works. (`mas` / `masDev` are omitted on purpose - PlatformPackager never reads updateManifest there.)
+    coerceValue(config, "updateManifest")
+    for (const platform of ["mac", "win", "linux"]) {
+      const platformConfig = config[platform]
+      if (platformConfig != null && typeof platformConfig === "object") {
+        coerceValue(platformConfig, "updateManifest")
+      }
+    }
+
     // fix Boolean type by coerceTypes
     if (config.nsis != null) {
       coerceTypes(config.nsis)

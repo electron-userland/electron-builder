@@ -215,7 +215,7 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
   return result
 }
 
-export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfoFileTask>, packager: Packager) {
+export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfoFileTask>, packager: Packager, isPublish = false) {
   // zip must be first and zip info must be used for old path/sha512 properties in the update info
   // universal installer (arch === null) must precede arch-specific ones so path:/sha512: point to the right artifact
   updateInfoFileTasks.sort((a, b) => {
@@ -245,8 +245,20 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
 
   const releaseDate = new Date().toISOString()
 
+  const tasks = Array.from(updateChannelFileToInfo.values())
+
+  // Resolve (and, when publishing, enforce) the signing keys before writing anything, so a missing key fails the
+  // build instead of leaving some manifests written and others not. MemoLazy and the one-shot warning make the
+  // per-task calls below free after this. Tasks with `publishAutoUpdate: false` are skipped for the same reason
+  // the loop skips them: they emit no manifest.
+  for (const task of tasks) {
+    if (task.publishConfiguration.publishAutoUpdate !== false) {
+      await task.packager.requireUpdateSigningKeys(isPublish)
+    }
+  }
+
   const concurrency = 4
-  await asyncPool<UpdateInfoFileTask, void>(concurrency, Array.from(updateChannelFileToInfo.values()), async task => {
+  await asyncPool<UpdateInfoFileTask, void>(concurrency, tasks, async task => {
     const publishConfig = task.publishConfiguration
     if (publishConfig.publishAutoUpdate === false) {
       log.debug(
@@ -270,8 +282,10 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     // Every configured key signs (dual-signing during key rotation): `signatures` holds one tagged entry
     // per key and the legacy single `signature` field repeats the first key's signature, so the manifest
     // shape is the same whether one or several keys are configured.
-    const signingKeys = await task.packager.updateSigningKeys.value
+    const signingKeys = await task.packager.requireUpdateSigningKeys(isPublish)
     let info: UpdateInfo = task.info
+    // empty only when signing is opted out of with `updateManifest: false`, or on a build without a publish
+    // policy that has no key configured - both of which have already warned
     if (signingKeys.length > 0) {
       const signatures = createUpdateManifestSignatures(task.info, signingKeys)
       info = { ...task.info, signature: signatures[0].signature, signatures }
