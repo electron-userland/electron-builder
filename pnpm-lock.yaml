@@ -435,6 +435,9 @@ importers:
       '@aws-sdk/credential-provider-sso':
         specifier: 3.893.0
         version: 3.893.0
+      '@aws-sdk/nested-clients':
+        specifier: 3.893.0
+        version: 3.893.0
       '@types/fs-extra':
         specifier: ^9.0.11
         version: 9.0.13

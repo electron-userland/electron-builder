@@ -2,6 +2,7 @@ import { createHash } from "crypto"
 import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
+import { Readable } from "stream"
 import { InvalidConfigurationError } from "builder-util"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { awsSdkLoaders, memoizeAwsCredentials, parseAwsIni, resolveS3Credentials, validateS3CredentialsOptions } from "electron-publish/src/s3/awsCredentials"
@@ -86,12 +87,14 @@ describe("S3 credentials — no source configured", { concurrent: false }, () =>
     stubAmbientDecoys({ envKeys: true })
     const ini = vi.spyOn(awsSdkLoaders, "ini")
     const sso = vi.spyOn(awsSdkLoaders, "sso")
+    const sts = vi.spyOn(awsSdkLoaders, "sts")
     const promise = resolveS3Credentials(options as any)
     await expect(promise).rejects.toBeInstanceOf(InvalidConfigurationError)
     await expect(promise).rejects.toThrow(/requires an explicit credential source.*"source": "env".*"source": "profile"/)
     expect(await recordEnvReads(() => resolveS3Credentials(options as any))).toEqual([])
     expect(ini).not.toHaveBeenCalled()
     expect(sso).not.toHaveBeenCalled()
+    expect(sts).not.toHaveBeenCalled()
   })
 
   it("validateS3CredentialsOptions checks the shape without reading anything", async () => {
@@ -117,11 +120,13 @@ describe("S3 credentials — source: env", { concurrent: false }, () => {
     stubAmbientDecoys()
     const ini = vi.spyOn(awsSdkLoaders, "ini")
     const sso = vi.spyOn(awsSdkLoaders, "sso")
+    const sts = vi.spyOn(awsSdkLoaders, "sts")
     const promise = resolveS3Credentials({ source: "env" })
     await expect(promise).rejects.toBeInstanceOf(InvalidConfigurationError)
     await expect(promise).rejects.toThrow(/AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are not set.*"source": "profile"/)
     expect(ini).not.toHaveBeenCalled()
     expect(sso).not.toHaveBeenCalled()
+    expect(sts).not.toHaveBeenCalled()
   })
 
   it("rejects a partial pair instead of mixing sources", async () => {
@@ -152,7 +157,9 @@ describe("S3 credentials — source: env", { concurrent: false }, () => {
 
   it("rejects options that belong to the other source", async () => {
     stubAmbientDecoys({ envKeys: true })
-    await expect(resolveS3Credentials({ source: "env", profile: "release" })).rejects.toThrow(/awsCredentials\.profile" only applies to "awsCredentials\.source": "profile"/)
+    await expect(resolveS3Credentials({ source: "env", profile: "release" })).rejects.toThrow(
+      /awsCredentials\.profile" only applies to "awsCredentials\.source": "profile" or "sso-role-chain"/
+    )
     await expect(resolveS3Credentials({ source: "profile", profile: "release", env: { accessKeyId: "A", secretAccessKey: "B" } })).rejects.toThrow(
       /awsCredentials\.env" only applies/
     )
@@ -169,6 +176,7 @@ describe("S3 credentials — source: profile", { concurrent: false }, () => {
     stubAmbientDecoys({ envKeys: true })
     const ini = vi.spyOn(awsSdkLoaders, "ini")
     const sso = vi.spyOn(awsSdkLoaders, "sso")
+    const sts = vi.spyOn(awsSdkLoaders, "sts")
     const credentialsFile = write("custom/credentials", "[release]\naws_access_key_id = FILE_KEY\naws_secret_access_key = file-secret\naws_session_token = file-token\n")
     await expect(resolveS3Credentials({ source: "profile", profile: "release", credentialsFile, configFile: path.join(root, "custom/missing-config") })).resolves.toEqual({
       accessKeyId: "FILE_KEY",
@@ -177,6 +185,7 @@ describe("S3 credentials — source: profile", { concurrent: false }, () => {
     })
     expect(ini).not.toHaveBeenCalled()
     expect(sso).not.toHaveBeenCalled()
+    expect(sts).not.toHaveBeenCalled()
   })
 
   it("resolves static keys from the config file, with the credentials file winning per key", async () => {
@@ -300,7 +309,7 @@ describe("S3 credentials — source: profile", { concurrent: false }, () => {
     await expect(promise).rejects.toThrow(/SSO session token associated with profile=release was not found/)
   })
 
-  it("refuses an assume-role profile whose source_profile is an SSO profile (the SDK would ignore the configured files)", async () => {
+  it("refuses an assume-role profile whose source_profile is an SSO profile and points to source: sso-role-chain", async () => {
     stubAmbientDecoys({ envKeys: true })
     const configFile = write(
       "custom/config",
@@ -309,7 +318,8 @@ describe("S3 credentials — source: profile", { concurrent: false }, () => {
     const ini = vi.spyOn(awsSdkLoaders, "ini")
     const promise = resolveS3Credentials({ source: "profile", profile: "deploy", configFile })
     await expect(promise).rejects.toBeInstanceOf(InvalidConfigurationError)
-    await expect(promise).rejects.toThrow(/SSO\) profile "login" \(source_profile\), which is not supported/)
+    await expect(promise).rejects.toThrow(/SSO\) profile "login" \(source_profile\), which "awsCredentials.source": "profile" does not resolve/)
+    await expect(promise).rejects.toThrow(/"awsCredentials": \{ "source": "sso-role-chain", "profile": "deploy" \}/)
     expect(ini).not.toHaveBeenCalled()
   })
 
@@ -331,6 +341,352 @@ describe("S3 credentials — source: profile", { concurrent: false }, () => {
       [{ profile: "role", filepath: credentialsFile, configFilepath: configFile, clientConfig: { ignoreConfiguredEndpointUrls: true }, parentClientConfig: { profile: "role" } }],
     ])
     expect(sso).not.toHaveBeenCalled()
+  })
+})
+
+describe("S3 credentials — source: sso-role-chain", { concurrent: false }, () => {
+  const SSO_SECTIONS = [
+    "[profile login]",
+    "sso_session = corp",
+    "sso_account_id = 111111111111",
+    "sso_role_name = Base",
+    "[sso-session corp]",
+    "sso_start_url = https://example.awsapps.com/start",
+    "sso_region = us-east-1",
+  ]
+
+  /** Decoys on top of stubAmbientDecoys: an AWS_CONFIG_FILE that defines the same profile names differently, plus region / endpoint / profile variables. */
+  function stubChainDecoys(): void {
+    stubAmbientDecoys({ envKeys: true })
+    vi.stubEnv(
+      "AWS_CONFIG_FILE",
+      write(
+        "decoy/chain-config",
+        [
+          "[profile deploy]",
+          "role_arn = arn:aws:iam::999999999999:role/DECOY",
+          "source_profile = login",
+          "region = ap-south-1",
+          "endpoint_url = https://decoy-endpoint.example.com",
+          "[profile login]",
+          "sso_session = corp",
+          "sso_account_id = 999999999999",
+          "sso_role_name = Decoy",
+          "[sso-session corp]",
+          "sso_start_url = https://decoy.awsapps.com/start",
+          "sso_region = ap-south-1",
+          "",
+        ].join("\n")
+      )
+    )
+    vi.stubEnv("AWS_PROFILE", "deploy")
+    vi.stubEnv("AWS_REGION", "ap-south-1")
+    vi.stubEnv("AWS_DEFAULT_REGION", "ap-south-1")
+    vi.stubEnv("AWS_ENDPOINT_URL", "https://decoy-endpoint.example.com")
+    vi.stubEnv("AWS_ENDPOINT_URL_STS", "https://decoy-sts.example.com")
+    vi.stubEnv("AWS_ENDPOINT_URL_SSO", "https://decoy-sso.example.com")
+    vi.stubEnv("AWS_STS_REGIONAL_ENDPOINTS", "legacy")
+    vi.stubEnv("AWS_USE_FIPS_ENDPOINT", "true")
+    vi.stubEnv("AWS_DEFAULTS_MODE", "auto")
+    vi.stubEnv("AWS_ROLE_ARN", "arn:aws:iam::999999999999:role/DECOY_WEB_IDENTITY")
+    vi.stubEnv("AWS_WEB_IDENTITY_TOKEN_FILE", write("decoy/token", "decoy-token"))
+  }
+
+  /** A cached `aws sso login` token for session "corp" under the stubbed HOME. */
+  function writeSsoToken(): void {
+    write(
+      `home/.aws/sso/cache/${createHash("sha1").update("corp").digest("hex")}.json`,
+      JSON.stringify({
+        accessToken: "cached-sso-token",
+        expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+        region: "us-east-1",
+        startUrl: "https://example.awsapps.com/start",
+      })
+    )
+  }
+
+  /** Real fromSSO with a fake SSO client (no network). */
+  function fakeSso(expiration = Date.now() + 3600_000) {
+    const send = vi.fn().mockResolvedValue({ roleCredentials: { accessKeyId: "SSO_KEY", secretAccessKey: "sso-secret", sessionToken: "sso-token", expiration } })
+    const inits: Array<any> = []
+    const realSso = awsSdkLoaders.sso
+    const loader = vi.spyOn(awsSdkLoaders, "sso").mockImplementation(async () => {
+      const sdk = await realSso()
+      return { ...sdk, fromSSO: (init: any) => (inits.push(init), sdk.fromSSO({ ...init, ssoClient: { send } as any })) }
+    })
+    return { send, inits, loader }
+  }
+
+  /** A fake STS module: each AssumeRole returns credentials named after the role. */
+  function fakeSts() {
+    const clients: Array<{ config: any; inputs: Array<any>; destroyed: boolean }> = []
+    class AssumeRoleCommand {
+      constructor(readonly input: any) {}
+    }
+    class STSClient {
+      readonly record: { config: any; inputs: Array<any>; destroyed: boolean }
+      constructor(config: any) {
+        this.record = { config, inputs: [], destroyed: false }
+        clients.push(this.record)
+      }
+      send(command: AssumeRoleCommand) {
+        this.record.inputs.push(command.input)
+        const role = command.input.RoleArn.split("/").pop()
+        return Promise.resolve({
+          Credentials: { AccessKeyId: `${role}_KEY`, SecretAccessKey: `${role}-secret`, SessionToken: `${role}-token`, Expiration: new Date(Date.now() + 3600_000) },
+        })
+      }
+      destroy() {
+        this.record.destroyed = true
+      }
+    }
+    const loader = vi.spyOn(awsSdkLoaders, "sts").mockResolvedValue({ STSClient, AssumeRoleCommand } as any)
+    return { clients, loader }
+  }
+
+  const credentialsFile = () => path.join(root, "custom/missing-credentials")
+
+  it("resolves SSO -> role (2 hops) from the explicit configFile, ignoring AWS_CONFIG_FILE, AWS_PROFILE, AWS_REGION and AWS_* keys", async () => {
+    stubChainDecoys()
+    writeSsoToken()
+    const configFile = write(
+      "custom/config",
+      [
+        "[profile deploy]",
+        "role_arn = arn:aws:iam::222222222222:role/deploy",
+        "source_profile = login",
+        "role_session_name = release-session",
+        "external_id = ext-123",
+        "duration_seconds = 1800",
+        "region = eu-west-1",
+        ...SSO_SECTIONS,
+        "",
+      ].join("\n")
+    )
+    const sso = fakeSso()
+    const sts = fakeSts()
+    const ini = vi.spyOn(awsSdkLoaders, "ini")
+
+    const credentials = await resolveS3Credentials({ source: "sso-role-chain", profile: "deploy", configFile, credentialsFile: credentialsFile() })
+    expect(credentials).toMatchObject({ accessKeyId: "deploy_KEY", secretAccessKey: "deploy-secret", sessionToken: "deploy-token" })
+    expect(credentials.expiration).toBeInstanceOf(Date)
+
+    // SSO: the explicit file's account/role, the explicit paths, no configured endpoint URLs
+    expect(sso.send).toHaveBeenCalledTimes(1)
+    expect(sso.send.mock.calls[0][0].input).toEqual({ accountId: "111111111111", roleName: "Base", accessToken: "cached-sso-token" })
+    expect(sso.inits).toEqual([
+      { profile: "login", filepath: credentialsFile(), configFilepath: configFile, clientConfig: { ignoreConfiguredEndpointUrls: true }, parentClientConfig: { profile: "login" } },
+    ])
+
+    // STS: one client per hop, signed with the SSO credentials, with every ambient-derived setting given explicitly
+    expect(sts.clients).toHaveLength(1)
+    expect(sts.clients[0].config).toMatchObject({
+      credentials: { accessKeyId: "SSO_KEY", secretAccessKey: "sso-secret", sessionToken: "sso-token" },
+      region: "eu-west-1",
+      profile: "deploy",
+      useGlobalEndpoint: false,
+      useFipsEndpoint: false,
+      useDualstackEndpoint: false,
+      ignoreConfiguredEndpointUrls: true,
+      defaultsMode: "standard",
+    })
+    expect(sts.clients[0].inputs).toEqual([{ RoleArn: "arn:aws:iam::222222222222:role/deploy", RoleSessionName: "release-session", ExternalId: "ext-123", DurationSeconds: 1800 }])
+    expect(sts.clients[0].destroyed).toBe(true)
+    expect(ini).not.toHaveBeenCalled()
+  })
+
+  it("resolves SSO -> role -> role (3 hops), each AssumeRole signed with the previous hop's credentials", async () => {
+    stubChainDecoys()
+    writeSsoToken()
+    const configFile = write(
+      "custom/config",
+      [
+        "[profile deploy]",
+        "role_arn = arn:aws:iam::333333333333:role/deploy",
+        "source_profile = hub",
+        "sts_regional_endpoints = legacy",
+        "[profile hub]",
+        "role_arn = arn:aws:iam::222222222222:role/hub",
+        "source_profile = login",
+        "region = eu-central-1",
+        ...SSO_SECTIONS,
+        "",
+      ].join("\n")
+    )
+    fakeSso()
+    const sts = fakeSts()
+
+    await expect(resolveS3Credentials({ source: "sso-role-chain", profile: "deploy", configFile, credentialsFile: credentialsFile() })).resolves.toMatchObject({
+      accessKeyId: "deploy_KEY",
+      sessionToken: "deploy-token",
+    })
+    expect(sts.clients.map(it => it.inputs[0].RoleArn)).toEqual(["arn:aws:iam::222222222222:role/hub", "arn:aws:iam::333333333333:role/deploy"])
+    expect(sts.clients.map(it => it.config.credentials.accessKeyId)).toEqual(["SSO_KEY", "hub_KEY"])
+    // like the AWS SDK: the named profile's region (none -> us-east-1, not AWS_REGION or the hub's region) and sts_regional_endpoints
+    expect(sts.clients.map(it => [it.config.region, it.config.useGlobalEndpoint])).toEqual([
+      ["us-east-1", true],
+      ["us-east-1", true],
+    ])
+    expect(sts.clients[0].inputs[0].RoleSessionName).toMatch(/^electron-builder-\d+$/)
+    expect(sts.clients[0].inputs[0]).toMatchObject({ ExternalId: undefined, DurationSeconds: undefined })
+  })
+
+  it("sends AssumeRole through the real STS client to the configured region's endpoint, not AWS_ENDPOINT_URL_STS / AWS_REGION", async () => {
+    stubChainDecoys()
+    writeSsoToken()
+    const configFile = write(
+      "custom/config",
+      ["[profile deploy]", "role_arn = arn:aws:iam::222222222222:role/deploy", "source_profile = login", "region = eu-west-1", ...SSO_SECTIONS, ""].join("\n")
+    )
+    fakeSso()
+    const requests: Array<any> = []
+    const realSts = awsSdkLoaders.sts
+    vi.spyOn(awsSdkLoaders, "sts").mockImplementation(async () => {
+      const sdk = await realSts()
+      const requestHandler = {
+        handle: async (request: any) => {
+          requests.push(request)
+          const xml =
+            '<AssumeRoleResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/"><AssumeRoleResult><Credentials>' +
+            "<AccessKeyId>REAL_STS_KEY</AccessKeyId><SecretAccessKey>real-sts-secret</SecretAccessKey><SessionToken>real-sts-token</SessionToken>" +
+            "<Expiration>2099-01-01T00:00:00Z</Expiration></Credentials></AssumeRoleResult></AssumeRoleResponse>"
+          return { response: { statusCode: 200, headers: { "content-type": "text/xml" }, body: Readable.from([Buffer.from(xml)]) } }
+        },
+      }
+      class STSClient extends sdk.STSClient {
+        constructor(config: any) {
+          super({ ...config, requestHandler })
+        }
+      }
+      return { ...sdk, STSClient }
+    })
+
+    await expect(resolveS3Credentials({ source: "sso-role-chain", profile: "deploy", configFile, credentialsFile: credentialsFile() })).resolves.toEqual({
+      accessKeyId: "REAL_STS_KEY",
+      secretAccessKey: "real-sts-secret",
+      sessionToken: "real-sts-token",
+      expiration: new Date("2099-01-01T00:00:00Z"),
+    })
+    expect(requests).toHaveLength(1)
+    expect(requests[0].hostname).toBe("sts.eu-west-1.amazonaws.com")
+    expect(requests[0].headers.authorization).toMatch(/Credential=SSO_KEY\/\d{8}\/eu-west-1\/sts\/aws4_request/)
+    expect(requests[0].headers["x-amz-security-token"]).toBe("sso-token")
+    expect(String(requests[0].body)).toContain("RoleArn=arn%3Aaws%3Aiam%3A%3A222222222222%3Arole%2Fdeploy")
+
+    // neither our code nor the SSO / STS clients consult AWS_CONFIG_FILE, AWS_PROFILE, AWS_REGION, AWS_ENDPOINT_URL*, AWS_* keys etc.;
+    // only HOME (SSO token cache) and the SDK's user-agent / Lambda recursion-detection variables are read
+    const reads = await recordEnvReads(() => resolveS3Credentials({ source: "sso-role-chain", profile: "deploy", configFile, credentialsFile: credentialsFile() }))
+    expect(requests).toHaveLength(2)
+    expect(reads.filter(it => it.startsWith("AWS_") && it !== "AWS_EXECUTION_ENV" && it !== "AWS_LAMBDA_FUNCTION_NAME")).toEqual([])
+  })
+
+  it("resolves the chain once for many uploads when memoized", async () => {
+    stubChainDecoys()
+    writeSsoToken()
+    const configFile = write("custom/config", ["[profile deploy]", "role_arn = arn:aws:iam::222222222222:role/deploy", "source_profile = login", ...SSO_SECTIONS, ""].join("\n"))
+    const sso = fakeSso()
+    const sts = fakeSts()
+    const get = memoizeAwsCredentials(() => resolveS3Credentials({ source: "sso-role-chain", profile: "deploy", configFile, credentialsFile: credentialsFile() }))
+    await Promise.all([get(), get(), get()])
+    await get()
+    expect(sso.send).toHaveBeenCalledTimes(1)
+    expect(sts.clients).toHaveLength(1)
+  })
+
+  it.each([
+    [
+      "a source_profile cycle",
+      ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = hub", "[profile hub]", "role_arn = arn:aws:iam::1:role/b", "source_profile = deploy"],
+      /source_profile chain has a cycle: deploy -> hub -> deploy/,
+    ],
+    ["a self-referencing source_profile", ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = deploy"], /cycle: deploy -> deploy/],
+    [
+      "a chain longer than 5 assume-role hops",
+      [...[0, 1, 2, 3, 4, 5].flatMap(i => [`[profile r${i}]`, `role_arn = arn:aws:iam::1:role/r${i}`, `source_profile = ${i === 5 ? "login" : `r${i + 1}`}`]), ...SSO_SECTIONS],
+      /longer than 5 assume-role hops: r0 -> r1 -> r2 -> r3 -> r4 -> r5/,
+      "r0",
+    ],
+    [
+      "a missing source_profile",
+      ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = nowhere"],
+      /source_profile "nowhere" of profile "deploy" was not found/,
+    ],
+    ["credential_source", ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "credential_source = Environment"], /profile "deploy" sets credential_source/],
+    ["mfa_serial", ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = login", "mfa_serial = arn:aws:iam::1:mfa/me", ...SSO_SECTIONS], /sets mfa_serial/],
+    [
+      "web identity in the chain",
+      ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = web", "[profile web]", "role_arn = arn:aws:iam::1:role/w", "web_identity_token_file = /tmp/t"],
+      /profile "web" sets web_identity_token_file/,
+    ],
+    [
+      "credential_process at the root",
+      ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = proc", "[profile proc]", "credential_process = /bin/false"],
+      /profile "proc" sets credential_process/,
+    ],
+    [
+      "a chain that starts at static keys",
+      ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = keys", "[profile keys]", "aws_access_key_id = K", "aws_secret_access_key = S"],
+      /ends at static keys in profile "keys".*"awsCredentials.source": "profile"/,
+    ],
+    ["a named profile that is not an assume-role profile", SSO_SECTIONS.map(it => it.replace("profile login", "profile deploy")), /profile "deploy" is not an assume-role profile/],
+    [
+      "a role_arn without source_profile",
+      ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = mid", "[profile mid]", "role_arn = arn:aws:iam::1:role/m"],
+      /profile "mid" sets role_arn without source_profile/,
+    ],
+    [
+      "a chain that ends at neither a role nor SSO",
+      ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = empty", "[profile empty]", "region = us-west-2"],
+      /ends at profile "empty", which is neither/,
+    ],
+    [
+      "an invalid duration_seconds",
+      ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = login", "duration_seconds = 1h", ...SSO_SECTIONS],
+      /invalid duration_seconds: "1h"/,
+    ],
+    [
+      "an invalid sts_regional_endpoints",
+      ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = login", "sts_regional_endpoints = global", ...SSO_SECTIONS],
+      /invalid sts_regional_endpoints: "global"/,
+    ],
+  ] as Array<[string, Array<string>, RegExp, string?]>)("rejects %s with InvalidConfigurationError before loading the SDK", async (_name, lines, message, profile = "deploy") => {
+    stubChainDecoys()
+    const configFile = write("custom/config", [...lines, ""].join("\n"))
+    const loaders = (["ini", "sso", "sts"] as const).map(it => vi.spyOn(awsSdkLoaders, it))
+    const promise = resolveS3Credentials({ source: "sso-role-chain", profile, configFile, credentialsFile: credentialsFile() })
+    await expect(promise).rejects.toBeInstanceOf(InvalidConfigurationError)
+    await expect(promise).rejects.toThrow(message)
+    for (const loader of loaders) {
+      expect(loader).not.toHaveBeenCalled()
+    }
+  })
+
+  it("wraps an STS failure with the profile and the hop", async () => {
+    stubChainDecoys()
+    writeSsoToken()
+    const configFile = write("custom/config", ["[profile deploy]", "role_arn = arn:aws:iam::222222222222:role/deploy", "source_profile = login", ...SSO_SECTIONS, ""].join("\n"))
+    fakeSso()
+    class AssumeRoleCommand {
+      constructor(readonly input: any) {}
+    }
+    const destroy = vi.fn()
+    class STSClient {
+      send = () => Promise.reject(new Error("AccessDenied: not authorized to perform sts:AssumeRole"))
+      destroy = destroy
+    }
+    vi.spyOn(awsSdkLoaders, "sts").mockResolvedValue({ STSClient, AssumeRoleCommand } as any)
+    await expect(resolveS3Credentials({ source: "sso-role-chain", profile: "deploy", configFile, credentialsFile: credentialsFile() })).rejects.toThrow(
+      /Cannot resolve AWS credentials for profile "deploy" .* at AssumeRole arn:aws:iam::222222222222:role\/deploy \(profile "deploy"\): AccessDenied/
+    )
+    expect(destroy).toHaveBeenCalledTimes(1)
+  })
+
+  it("requires an explicit profile and rejects env names", async () => {
+    stubChainDecoys()
+    await expect(resolveS3Credentials({ source: "sso-role-chain" })).rejects.toThrow(/"awsCredentials\.profile" must be set when "awsCredentials\.source" is "sso-role-chain"/)
+    await expect(resolveS3Credentials({ source: "sso-role-chain", profile: "deploy", env: { accessKeyId: "A", secretAccessKey: "B" } })).rejects.toThrow(
+      /"awsCredentials\.env" only applies to "awsCredentials\.source": "env" \(source is "sso-role-chain"\)/
+    )
   })
 })
 

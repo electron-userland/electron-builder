@@ -389,6 +389,8 @@ export interface BaseS3Options extends PublishConfiguration {
  * - `source: "env"` reads only the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and optional `AWS_SESSION_TOKEN` environment variables (or custom names);
  * - `source: "profile"` reads the named `profile` from the [shared config and credentials files](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)
  *   (static keys, IAM Identity Center / SSO, `credential_process`, assume-role).
+ * - `source: "sso-role-chain"` reads the named assume-role `profile` from the same files and resolves its `source_profile` chain, which must start at an
+ *   IAM Identity Center (SSO) profile, with the configured files only.
  *
  * No credentials are read implicitly: `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE`, `AWS_SHARED_CREDENTIALS_FILE` and the `~/.aws` files are never consulted on their own.
  *
@@ -470,6 +472,12 @@ export interface S3Options extends BaseS3Options {
    * ```json
    * "awsCredentials": { "source": "profile", "profile": "release" }
    * ```
+   *
+   * Example assuming a role (`role_arn` + `source_profile`) on top of an SSO profile:
+   *
+   * ```json
+   * "awsCredentials": { "source": "sso-role-chain", "profile": "deploy", "configFile": "~/.aws/config" }
+   * ```
    */
   readonly awsCredentials?: S3AwsCredentialsOptions | null
 }
@@ -482,23 +490,29 @@ export interface S3AwsCredentialsOptions {
    * The credential source (required, no default):
    * - `env`: read only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` (or the variable names given in `env`).
    * - `profile`: read the named `profile` from the shared config/credentials files. Static keys, IAM Identity Center (SSO), `credential_process` and assume-role profiles are supported.
+   *   An assume-role profile whose `source_profile` chain starts at an SSO profile is rejected; use `sso-role-chain` for it.
+   * - `sso-role-chain`: `profile` names an assume-role profile (`role_arn` + `source_profile`). Its `source_profile` chain (up to 5 assume-role hops, no cycles)
+   *   must end at an IAM Identity Center (SSO) profile. electron-builder resolves that SSO profile from the configured files, then calls STS AssumeRole for each hop
+   *   with the previous hop's credentials. `role_session_name`, `external_id` and `duration_seconds` are honoured per hop; STS uses the named profile's `region`
+   *   (else `us-east-1`) and `sts_regional_endpoints`. `AWS_REGION` and other `AWS_*` variables are not read. `credential_source`, `mfa_serial`, `web_identity_token_file`
+   *   and `credential_process` are rejected in the chain.
    */
-  readonly source: "env" | "profile"
+  readonly source: "env" | "profile" | "sso-role-chain"
 
   /**
-   * The profile name for `source: "profile"` (required for that source; `AWS_PROFILE` is not used as a fallback).
+   * The profile name for `source: "profile"` or `source: "sso-role-chain"` (required for those sources; `AWS_PROFILE` is not used as a fallback).
    * Use `default` to select the `[default]` profile.
    */
   readonly profile?: string | null
 
   /**
-   * The shared credentials file for `source: "profile"`. `AWS_SHARED_CREDENTIALS_FILE` is not consulted.
+   * The shared credentials file for `source: "profile"` or `source: "sso-role-chain"`. `AWS_SHARED_CREDENTIALS_FILE` is not consulted.
    * @default ~/.aws/credentials
    */
   readonly credentialsFile?: string | null
 
   /**
-   * The shared config file for `source: "profile"`. `AWS_CONFIG_FILE` is not consulted.
+   * The shared config file for `source: "profile"` or `source: "sso-role-chain"`. `AWS_CONFIG_FILE` is not consulted.
    * @default ~/.aws/config
    */
   readonly configFile?: string | null

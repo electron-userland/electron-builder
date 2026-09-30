@@ -6789,7 +6789,7 @@
       "properties": {
         "configFile": {
           "default": "~/.aws/config",
-          "description": "The shared config file for `source: \"profile\"`. `AWS_CONFIG_FILE` is not consulted.",
+          "description": "The shared config file for `source: \"profile\"` or `source: \"sso-role-chain\"`. `AWS_CONFIG_FILE` is not consulted.",
           "type": [
             "null",
             "string"
@@ -6797,7 +6797,7 @@
         },
         "credentialsFile": {
           "default": "~/.aws/credentials",
-          "description": "The shared credentials file for `source: \"profile\"`. `AWS_SHARED_CREDENTIALS_FILE` is not consulted.",
+          "description": "The shared credentials file for `source: \"profile\"` or `source: \"sso-role-chain\"`. `AWS_SHARED_CREDENTIALS_FILE` is not consulted.",
           "type": [
             "null",
             "string"
@@ -6815,17 +6815,18 @@
           "description": "Custom environment variable names for `source: \"env\"`, e.g. to keep publish-only keys separate from ambient `AWS_*` variables."
         },
         "profile": {
-          "description": "The profile name for `source: \"profile\"` (required for that source; `AWS_PROFILE` is not used as a fallback).\nUse `default` to select the `[default]` profile.",
+          "description": "The profile name for `source: \"profile\"` or `source: \"sso-role-chain\"` (required for those sources; `AWS_PROFILE` is not used as a fallback).\nUse `default` to select the `[default]` profile.",
           "type": [
             "null",
             "string"
           ]
         },
         "source": {
-          "description": "The credential source (required, no default):\n- `env`: read only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` (or the variable names given in `env`).\n- `profile`: read the named `profile` from the shared config/credentials files. Static keys, IAM Identity Center (SSO), `credential_process` and assume-role profiles are supported.",
+          "description": "The credential source (required, no default):\n- `env`: read only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` (or the variable names given in `env`).\n- `profile`: read the named `profile` from the shared config/credentials files. Static keys, IAM Identity Center (SSO), `credential_process` and assume-role profiles are supported.\n  An assume-role profile whose `source_profile` chain starts at an SSO profile is rejected; use `sso-role-chain` for it.\n- `sso-role-chain`: `profile` names an assume-role profile (`role_arn` + `source_profile`). Its `source_profile` chain (up to 5 assume-role hops, no cycles)\n  must end at an IAM Identity Center (SSO) profile. electron-builder resolves that SSO profile from the configured files, then calls STS AssumeRole for each hop\n  with the previous hop's credentials. `role_session_name`, `external_id` and `duration_seconds` are honoured per hop; STS uses the named profile's `region`\n  (else `us-east-1`) and `sts_regional_endpoints`. `AWS_REGION` and other `AWS_*` variables are not read. `credential_source`, `mfa_serial`, `web_identity_token_file`\n  and `credential_process` are rejected in the chain.",
           "enum": [
             "env",
-            "profile"
+            "profile",
+            "sso-role-chain"
           ],
           "type": "string"
         }
@@ -6837,7 +6838,7 @@
     },
     "S3Options": {
       "additionalProperties": false,
-      "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](https://docs.aws.amazon.com/sdkref/latest/guide/access.html).\nPublishing requires choosing where they come from with [awsCredentials](#awsCredentials) `source` (there is no default):\n- `source: \"env\"` reads only the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and optional `AWS_SESSION_TOKEN` environment variables (or custom names);\n- `source: \"profile\"` reads the named `profile` from the [shared config and credentials files](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)\n  (static keys, IAM Identity Center / SSO, `credential_process`, assume-role).\n\nNo credentials are read implicitly: `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE`, `AWS_SHARED_CREDENTIALS_FILE` and the `~/.aws` files are never consulted on their own.\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\",\n   \"awsCredentials\": { \"source\": \"env\" }\n }\n}\n}\n```",
+      "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](https://docs.aws.amazon.com/sdkref/latest/guide/access.html).\nPublishing requires choosing where they come from with [awsCredentials](#awsCredentials) `source` (there is no default):\n- `source: \"env\"` reads only the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and optional `AWS_SESSION_TOKEN` environment variables (or custom names);\n- `source: \"profile\"` reads the named `profile` from the [shared config and credentials files](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)\n  (static keys, IAM Identity Center / SSO, `credential_process`, assume-role).\n- `source: \"sso-role-chain\"` reads the named assume-role `profile` from the same files and resolves its `source_profile` chain, which must start at an\n  IAM Identity Center (SSO) profile, with the configured files only.\n\nNo credentials are read implicitly: `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE`, `AWS_SHARED_CREDENTIALS_FILE` and the `~/.aws` files are never consulted on their own.\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\",\n   \"awsCredentials\": { \"source\": \"env\" }\n }\n}\n}\n```",
       "properties": {
         "accelerate": {
           "description": "If set to true, this will enable the s3 accelerated endpoint\nThese endpoints have a particular format of:\n ${bucketname}.s3-accelerate.amazonaws.com",
@@ -6868,7 +6869,7 @@
               "type": "null"
             }
           ],
-          "description": "Where the AWS credentials used for publishing come from. Required to publish (there is no default source);\nbuilds that don't publish don't need it. Build-time only: never written to `app-update.yml`.\n\nExample using an IAM Identity Center (SSO) profile:\n\n```json\n\"awsCredentials\": { \"source\": \"profile\", \"profile\": \"release\" }\n```"
+          "description": "Where the AWS credentials used for publishing come from. Required to publish (there is no default source);\nbuilds that don't publish don't need it. Build-time only: never written to `app-update.yml`.\n\nExample using an IAM Identity Center (SSO) profile:\n\n```json\n\"awsCredentials\": { \"source\": \"profile\", \"profile\": \"release\" }\n```\n\nExample assuming a role (`role_arn` + `source_profile`) on top of an SSO profile:\n\n```json\n\"awsCredentials\": { \"source\": \"sso-role-chain\", \"profile\": \"deploy\", \"configFile\": \"~/.aws/config\" }\n```"
         },
         "bucket": {
           "description": "The bucket name.",

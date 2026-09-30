@@ -120,7 +120,7 @@ Read only when the S3 publish configuration sets `awsCredentials: { source: "env
 | `AWS_SECRET_ACCESS_KEY` | AWS secret access key. |
 | `AWS_SESSION_TOKEN` | Optional session token for temporary credentials. |
 
-Since v27, `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE` and `AWS_SHARED_CREDENTIALS_FILE` are **not** read, and publishing without `awsCredentials.source` fails. To use a named profile from the shared config/credentials files (including IAM Identity Center / SSO), set `awsCredentials: { source: "profile", profile: "<name>" }` in the [S3 publish options](./publish.md#s3).
+Since v27, `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE` and `AWS_SHARED_CREDENTIALS_FILE` are **not** read, and publishing without `awsCredentials.source` fails. To use a named profile from the shared config/credentials files (including IAM Identity Center / SSO), set `awsCredentials: { source: "profile", profile: "<name>" }` in the [S3 publish options](./publish.md#s3); for a role assumed from an SSO profile via `source_profile`, set `{ source: "sso-role-chain", profile: "<name>" }`. The role chain's SSO and STS calls do not read `AWS_REGION`, `AWS_DEFAULT_REGION` or `AWS_ENDPOINT_URL*`.
 
 ### DigitalOcean Spaces
 

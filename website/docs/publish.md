@@ -195,6 +195,8 @@ Publishing to S3 requires `awsCredentials.source`; no credentials are read impli
 }
 ```
 
+If the publishing role is assumed from an SSO profile through `source_profile` (a `role_arn` + `source_profile = <sso profile>` role profile), opt in with `{ "source": "sso-role-chain", "profile": "<role profile>" }`: electron-builder resolves the SSO profile and each `AssumeRole` hop from the same configured files.
+
 For a bucket name containing dots, set `region`: it is only looked up automatically when publishing. See [v27 Breaking Changes](./migration/v27-breaking-changes.md#s3-publishing-requires-an-explicit-awscredentialssource).
 :::
 
