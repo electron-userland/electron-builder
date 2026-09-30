@@ -76,20 +76,33 @@ for (const incomplete of [false, true]) {
       // Messages name the local package (adjacent, explicit), not the installer's copy of it.
       expect(script.slice(0, lookup).filter(line => line.startsWith("StrCpy $4 "))).toEqual(['StrCpy $4 "$packageFile"', 'StrCpy $4 "$packageFile"'])
 
-      // A local package is copied before anything else is done with it, a failed copy aborts the installation.
+      // A local package is copied before anything else is done with it. A failed copy of an explicit --package-file aborts the
+      // installation; a package found next to the installer that cannot be copied is ignored and the package is downloaded instead.
       const staged = 'StrCpy $packageFile "$PLUGINSDIR\\package-staged.7z"'
       const copied = /^IntCmp `\$0` `0` `` `(\w+)` `\1`$/.exec(script[lookup + 4])?.[1]
+      const notExplicit = /^StrCmp `\$isPackageFileExplicitlySpecified` `true` `` `(\w+)`$/.exec(script[lookup + 5])?.[1]
+      expect(copied).toBeDefined()
+      expect(notExplicit).toBeDefined()
       expect(script.slice(lookup + 1, script.indexOf(staged) + 1)).toEqual([
         'Push "$PLUGINSDIR\\package-staged.7z"',
         'Push "$packageFile"',
         "System::Call 'kernel32::CopyFileW(w s, w s, i 1) i .r0'",
         `IntCmp \`$0\` \`0\` \`\` \`${copied}\` \`${copied}\``,
+        `StrCmp \`$isPackageFileExplicitlySpecified\` \`true\` \`\` \`${notExplicit}\``,
         'MessageBox MB_OK|MB_ICONSTOP "Package file $4 cannot be copied to $PLUGINSDIR. Installation aborted." /SD IDOK',
         "SetErrorLevel 2",
         "Quit",
+        `${notExplicit}:`,
+        'MessageBox MB_OK "Package file $4 found locally, but it cannot be copied to $PLUGINSDIR.',
+        'Local file is ignored and package will be downloaded from Internet." /SD IDOK',
+        "Goto web_package_download",
         `${copied}:`,
         staged,
       ])
+      // the download that follows starts right after the label
+      const downloadLabel = script.indexOf("web_package_download:")
+      expect(downloadLabel).toBeGreaterThan(script.indexOf(staged))
+      expect(script.slice(downloadLabel + 1).find(line => line.startsWith("inetc::get ") || line.startsWith("StrCpy $packageUrl "))).toMatch(/^StrCpy \$packageUrl /)
 
       // Then the package file is hashed, removed, reassigned, extracted and moved in this order, a package that matches is extracted.
       const hashPackageFile = ["push `$packageFile`", "StdUtils::HashFile /NOUNLOAD"]
@@ -144,11 +157,11 @@ for (const incomplete of [false, true]) {
       const { stdout: installOnly } = await compile(dir, packages, installOnlyDefines, ["-PPO"])
       expect(statements(installOnly)).toEqual(script.filter(line => line !== uninstall))
 
-      // Every message box of the web installer has a default for silent runs (/SD): a failed copy, an explicit package that doesn't
-      // match (unless unverified packages are allowed), an adjacent package that doesn't match, a failed download and a versioned
-      // download that doesn't match (unless unverified packages are allowed).
+      // Every message box of the web installer has a default for silent runs (/SD): a failed copy (explicit and adjacent package), an
+      // explicit package that doesn't match (unless unverified packages are allowed), an adjacent package that doesn't match, a failed
+      // download and a versioned download that doesn't match (unless unverified packages are allowed).
       const messageBoxOptions = [...stdout.matchAll(/^MessageBox [^"]*"[^"]*"([^\r\n]*)/gim)].map(match => match[1].trim())
-      expect(messageBoxOptions).toHaveLength(3 + (allowUnverified ? 0 : 1) + (incomplete && !allowUnverified ? 1 : 0))
+      expect(messageBoxOptions).toHaveLength(4 + (allowUnverified ? 0 : 1) + (incomplete && !allowUnverified ? 1 : 0))
       expect(messageBoxOptions.filter(options => !options.startsWith("/SD "))).toEqual([])
       // A failed download can be retried interactively; a silent run cancels and exits with code 2.
       const downloadFailed = script.findIndex(line => line.startsWith("Please check your internet connection and retry."))
@@ -355,6 +368,14 @@ for (const { packages, expected, completeUrl, allowUnverified, nsis } of [
         expect(fallback[0]).toMatch(downloadedPackage)
         expect(await storedPackage()).toBe(payload(arch))
         await fs.rm(adjacent)
+
+        // A package next to the installer that cannot be copied (a directory) is ignored as well, and the package is downloaded.
+        await fs.mkdir(adjacent)
+        const uncopied = await run(machine)
+        expect(requests).toEqual([`/${name}`])
+        expect(uncopied[0]).toMatch(downloadedPackage)
+        expect(await storedPackage()).toBe(payload(arch))
+        await fs.rmdir(adjacent)
       }
       // Explicit packages skip filename selection: a package of any arch built with this installer is accepted.
       // The explicit package is left in place, the installer uses its own copy.

@@ -38,9 +38,15 @@
         Push "$packageFile"
         System::Call 'kernel32::CopyFileW(w s, w s, i 1) i .r0'
         ${if} $0 = 0
-          MessageBox MB_OK|MB_ICONSTOP "Package file $4 cannot be copied to $PLUGINSDIR. Installation aborted." /SD IDOK
-          SetErrorLevel 2
-          Quit
+          # An explicit --package-file that cannot be copied aborts the installation. A package found next to the installer is ignored
+          # and the package is downloaded instead, as when its checksum doesn't match.
+          ${if} $isPackageFileExplicitlySpecified == "true"
+            MessageBox MB_OK|MB_ICONSTOP "Package file $4 cannot be copied to $PLUGINSDIR. Installation aborted." /SD IDOK
+            SetErrorLevel 2
+            Quit
+          ${endIf}
+          MessageBox MB_OK "Package file $4 found locally, but it cannot be copied to $PLUGINSDIR.$\r$\nLocal file is ignored and package will be downloaded from Internet." /SD IDOK
+          Goto web_package_download
         ${endIf}
         StrCpy $packageFile "$PLUGINSDIR\package-staged.7z"
 
@@ -72,6 +78,7 @@
         ${endIf}
       ${endIf}
 
+      web_package_download:
       !insertmacro downloadApplicationFiles
 
       # A publish-derived (versioned) URL names exactly the package built with this installer: the download must match its hash
