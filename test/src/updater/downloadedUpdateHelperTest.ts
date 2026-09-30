@@ -269,5 +269,76 @@ describe("downloadedUpdateHelper", { concurrent: false }, () => {
       await helper.setDownloadedFile(installerPath, null, makeUpdateInfo(), fileInfo, installerName, true)
       expect(await readJson(updateInfoFile)).not.toHaveProperty("packageFileName")
     })
+
+    test("setDownloadedFile persists the version of a web installer update, which the next launch compares with its own", async () => {
+      const installerPath = path.join(pending, installerName)
+      const fileInfo = makeFileInfo("sha512abc", installerName)
+      const updateInfoFile = path.join(pending, "update-info.json")
+
+      await helper.setDownloadedFile(installerPath, path.join(pending, packageName), makeUpdateInfo("1.0.1"), fileInfo, installerName, true)
+      expect((await readJson(updateInfoFile)).version).toBe("1.0.1")
+      // marking the update for the next launch keeps it
+      expect(helper.markInstallOnNextLaunchSync(log)).toBe(true)
+      expect(await readJson(updateInfoFile)).toMatchObject({ version: "1.0.1", packageFileName: packageName, installOnNextLaunch: true })
+
+      await helper.setDownloadedFile(installerPath, null, makeUpdateInfo("1.0.1"), fileInfo, installerName, true)
+      expect(await readJson(updateInfoFile)).not.toHaveProperty("version")
+    })
+
+    describe("removeInstalledWebPackage", () => {
+      test("removes the package of the installed update, and keeps the installer and update-info.json", async () => {
+        const { installerPath, packagePath } = await seedWebCache({ version: "1.0.1" })
+
+        expect(await helper.removeInstalledWebPackage("1.0.1", log)).toBe(true)
+        expect(await pathExists(packagePath)).toBe(false)
+        expect(await pathExists(installerPath)).toBe(true)
+        expect(await readJson(path.join(pending, "update-info.json"))).toMatchObject({ packageFileName: packageName, version: "1.0.1" })
+        expect(log.infos.some(line => line.includes("Removed the web installer package of the installed update 1.0.1"))).toBe(true)
+      })
+
+      test.for([
+        ["an update that is not installed yet (or whose install failed and is retried)", "1.0.0"],
+        ["a pending downgrade", "1.0.2"],
+      ] as const)("keeps the package of %s", async ([, currentVersion]) => {
+        const { packagePath, fileInfo } = await seedWebCache({ version: "1.0.1", installOnNextLaunch: true })
+
+        expect(await helper.removeInstalledWebPackage(currentVersion, log)).toBe(false)
+        expect(await pathExists(packagePath)).toBe(true)
+        // still usable for the install
+        expect(await helper.validateCachedPendingInstall(fileInfo, log)).not.toBeNull()
+        expect(helper.packageFile).toBe(packagePath)
+      })
+
+      test.for([
+        ["an update-info.json without a version (written before it was recorded)", {}],
+        ["an invalid version", { version: "not a version" }],
+        ["a full installer update", { packageFileName: undefined, version: "1.0.1" }],
+      ] as const)("keeps the pending files for %s", async ([, cachedInfo]) => {
+        const { installerPath, packagePath } = await seedWebCache(cachedInfo)
+
+        expect(await helper.removeInstalledWebPackage("1.0.1", log)).toBe(false)
+        expect(await pathExists(packagePath)).toBe(true)
+        expect(await pathExists(installerPath)).toBe(true)
+      })
+
+      test("only removes the package from the pending directory", async () => {
+        const outside = path.join(cacheDir, packageName)
+        await outputFile(outside, "stored package")
+        const { packagePath } = await seedWebCache({ version: "1.0.1", packageFileName: `../${packageName}` })
+
+        expect(await helper.removeInstalledWebPackage("1.0.1", log)).toBe(true)
+        expect(await pathExists(packagePath)).toBe(false)
+        expect(await pathExists(outside)).toBe(true)
+      })
+
+      test("is a no-op without a pending update or package", async () => {
+        expect(await helper.removeInstalledWebPackage("1.0.1", log)).toBe(false)
+
+        const { packagePath } = await seedWebCache({ version: "1.0.1" })
+        await remove(packagePath)
+        expect(await helper.removeInstalledWebPackage("1.0.1", log)).toBe(false)
+        expect(log.warns).toEqual([])
+      })
+    })
   })
 })

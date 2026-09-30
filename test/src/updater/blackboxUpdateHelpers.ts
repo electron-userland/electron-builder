@@ -1261,7 +1261,8 @@ export async function runWebInstallerUpdateTest(context: TestContext, toolsets: 
         await waitForWindowsProcessExit(NSIS_INSTALLER_IMAGE_NAME)
         expect(await readInstalledPackageType(appPath)).toBe("nsis-web")
         expect(await hashFile(path.join(store, "package.7z"))).toBe(newPackageSha512)
-        // the web installer installed its own copy of the --package-file, which stays where electron-updater put it
+        // the web installer installed its own copy of the --package-file, which stays where electron-updater put it until the updated
+        // app starts electron-updater (the version probes don't), which removes it (NsisUpdater.removeInstalledWebPackage)
         expect(await hashFile(path.join(pending, pendingPackageName(NEW_VERSION_NUMBER)))).toBe(newPackageSha512)
       },
     })
@@ -1302,7 +1303,8 @@ export async function runWebInstallerInstallOnNextLaunchTest(context: TestContex
         // the marker is cleared before the installer is started
         expect((await readJson(path.join(pending, "update-info.json"))).installOnNextLaunch).toBeUndefined()
         expect(await hashFile(path.join(store, "package.7z"))).toBe(await webPackageSha512(outDirs[1]))
-        expect(existsSync(cachedPackage)).toBe(true)
+        // not asserted: the pending package (cachedPackage) is removed by the updated app's electron-updater once it starts, and the app
+        // --force-run starts may or may not have done so by now
       },
     })
   )

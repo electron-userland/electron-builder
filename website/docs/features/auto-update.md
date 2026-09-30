@@ -286,7 +286,7 @@ const updater = new NsisUpdater()
 updater.disableWebInstaller = false // only if you intentionally ship a web installer
 ```
 
-A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest; otherwise it is discarded. The `nsis-web` installer itself verifies the package electron-updater passes to it — see [Web Installer](../nsis.md#web-installer). Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./signed-update-manifests.md) cover its path, SHA-512 and size.
+A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest; otherwise it is discarded. The `nsis-web` installer itself verifies the package electron-updater passes to it and installs its own copy — see [Web Installer](../nsis.md#web-installer). Once the app runs the version of that update, `NsisUpdater` removes the package from its `pending` cache directory at startup (app `ready`); the package of an update that is not installed yet, or whose install failed, is kept for the install or a retry. Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./signed-update-manifests.md) cover its path, SHA-512 and size.
 
 ### `allowUnverifiedLinuxPackages` (new)
 

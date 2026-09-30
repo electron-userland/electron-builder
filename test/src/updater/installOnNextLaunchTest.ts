@@ -562,4 +562,52 @@ describe("install on next launch", { concurrent: false }, () => {
       expect(await helper.getPendingInstallInfo()).toBeNull()
     })
   })
+
+  // The web installer installs its own copy of the --package-file, so the package left in the pending directory is removed once
+  // the app runs the version of that update, at startup (app ready).
+  describe("NsisUpdater removes the web package of an installed update", () => {
+    async function createPackagedNsisUpdater(version: string, context: { tmpDir: import("temp-file").TmpDir }) {
+      const configDir = await context.tmpDir.createTempDir()
+      const appUpdateConfigPath = path.join(configDir, "app-update.yml")
+      await outputFile(appUpdateConfigPath, `provider: generic\nurl: https://example.com\nupdaterCacheDirName: ${path.basename(cacheDir)}\n`)
+      let ready!: () => void
+      const whenReady = new Promise<void>(resolve => (ready = resolve))
+      const app = makeStubApp({ version, isPackaged: true, appUpdateConfigPath, baseCachePath: path.dirname(cacheDir), whenReady: () => whenReady })
+      const updater = new NsisUpdater(null, app)
+      updater.logger = log
+      return { updater, ready }
+    }
+
+    test("removes the package at startup once the app runs the version of the update", async context => {
+      const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
+      const { ready } = await createPackagedNsisUpdater("1.0.1", context)
+      // nothing happens before the app is ready
+      expect(await pathExists(seeded.packagePath)).toBe(true)
+
+      ready()
+      await vi.waitFor(async () => expect(await pathExists(seeded.packagePath)).toBe(false))
+      expect(await pathExists(seeded.installerPath)).toBe(true)
+      expect(await readJson(path.join(helper.cacheDirForPendingUpdate, "update-info.json"))).toMatchObject({ version: "1.0.1" })
+      expect(log.warns).toEqual([])
+    })
+
+    test("keeps the package of an update that is not installed yet, so it can be installed or retried", async context => {
+      const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
+      const { updater, ready } = await createPackagedNsisUpdater("1.0.0", context)
+      ready()
+      await (updater as any).removeInstalledWebPackage()
+
+      expect(await pathExists(seeded.packagePath)).toBe(true)
+      expect(await helper.getPendingInstallInfo()).toMatchObject({ installOnNextLaunch: true, version: "1.0.1" })
+    })
+
+    test("does not fix the updater cache directory before the app sets updateConfigPath", async context => {
+      await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
+      const { updater, ready } = await createPackagedNsisUpdater("1.0.1", context)
+      ready()
+      await (updater as any).removeInstalledWebPackage()
+
+      expect((updater as any).downloadedUpdateHelper).toBeNull()
+    })
+  })
 })

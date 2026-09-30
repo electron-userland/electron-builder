@@ -4,6 +4,7 @@ import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
+import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
 import { DOWNLOAD_PROGRESS, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
@@ -25,6 +26,32 @@ export class NsisUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
     this.seedWebInstallerDefaultFromPackageType()
+    void this.app.whenReady().then(() => this.removeInstalledWebPackage())
+  }
+
+  // The web installer installs its own copy of the package electron-updater passes with --package-file, so the package in the pending
+  // directory is removed once the app runs the version of that update (after it was installed, never before or during the install).
+  private async removeInstalledWebPackage(): Promise<void> {
+    // like isUpdaterActive, without its log line: nothing is cached for an unpackaged app
+    if (!this.app.isPackaged && !this.forceDevUpdateConfig) {
+      return
+    }
+    try {
+      // not getOrCreateDownloadHelper: that would fix the cache directory before the app had a chance to set updateConfigPath
+      let downloadedUpdateHelper = this.downloadedUpdateHelper
+      if (downloadedUpdateHelper == null) {
+        const dirName = (await this.configOnDisk.value).updaterCacheDirName
+        if (dirName == null) {
+          return
+        }
+        downloadedUpdateHelper = new DownloadedUpdateHelper(path.join(this.app.baseCachePath, dirName))
+      }
+      await downloadedUpdateHelper.removeInstalledWebPackage(this.currentVersion.version, this._logger)
+    } catch (e: any) {
+      // best effort: no readable app-update.yml (e.g. forceDevUpdateConfig without dev-app-update.yml) means no cache to clean, and an
+      // unusable config is reported by the update check itself
+      this._logger.debug?.(`Cannot look for the web installer package of an installed update: ${e.message || e}`)
+    }
   }
 
   // nsis-web installs self-identify via a `resources/package-type` marker written by the installer.
