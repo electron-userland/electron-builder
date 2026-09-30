@@ -188,9 +188,10 @@ export class DownloadedUpdateHelper {
       return null
     }
 
-    const isCachedInfoFileNameValid = cachedInfo?.fileName !== null
+    const cachedFileName = cachedInfo?.fileName
+    const isCachedInfoFileNameValid = typeof cachedFileName === "string" && cachedFileName.length > 0 && path.basename(cachedFileName) === cachedFileName
     if (!isCachedInfoFileNameValid) {
-      logger.warn(`Cached update info is corrupted: no fileName, directory for cached update will be cleaned`)
+      logger.warn(`Cached update info is corrupted: invalid fileName, directory for cached update will be cleaned`)
       await this.cleanCacheDirForPendingUpdate()
       return null
     }
@@ -203,7 +204,7 @@ export class DownloadedUpdateHelper {
       return null
     }
 
-    const updateFile = path.join(this.cacheDirForPendingUpdate, cachedInfo.fileName)
+    const updateFile = path.join(this.cacheDirForPendingUpdate, cachedFileName)
     if (!(await fsExtra.pathExists(updateFile))) {
       logger.info("Cached update file doesn't exist")
       return null
