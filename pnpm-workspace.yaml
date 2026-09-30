@@ -16,8 +16,8 @@ minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
   - esbuild # GHSA-gv7w-rqvm-qjhr: only patched in 0.28.1 (published <7d ago)
   - '@esbuild/*' # platform binaries released in lockstep with esbuild 0.28.1
-  # Renovate security update: electron@39.8.10
-  - electron@39.8.10
+  # Renovate security update: electron@39.8.10 || 41.10.6
+  - electron@39.8.10 || 41.10.6
   # Renovate security update: toml@4.2.0
   - toml@4.2.0
   # Renovate security update: js-yaml@4.3.2
