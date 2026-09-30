@@ -320,8 +320,19 @@ export interface NsisWebOptions extends NsisOptions {
    * Please note — it is [full URL](https://github.com/electron-userland/electron-builder/issues/1810#issuecomment-317650878).
    *
    * Custom `X-Arch` http header is set to `32` or `64`.
+   *
+   * The installer does not checksum-verify a package downloaded from an explicit `appPackageUrl`; a package downloaded from the default (publish-derived) URL is verified against the packages built with the installer.
    */
   readonly appPackageUrl?: string | null
+
+  /**
+   * Whether the web installer may install an app package that doesn't match any package built with it: a package passed via `--package-file`,
+   * or (when `appPackageUrl` is not set) the downloaded package. By default such a package aborts the installation.
+   *
+   * Enable only if you intentionally run one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).
+   * @default false
+   */
+  readonly allowUnverifiedAppPackage?: boolean
 
   /**
    * The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.

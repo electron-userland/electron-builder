@@ -48,7 +48,8 @@ package.json
       "target": "nsis",
       "sign": {
         "type": "signtool",
-        "sign": "./sign.js"
+        "sign": "./sign.js",
+        "publisherName": "CN=My Company, O=My Company, C=US"
       }
     },
 ...
@@ -71,3 +72,5 @@ exports.default = async function(configuration) {
   );
 };
 ```
+
+electron-builder cannot read the certificate on your token, so `publisherName` (in `package.json` above) must be set to its subject: it is written to `app-update.yml` and electron-updater checks every downloaded update against it, and an `nsis` build with a publish configuration (including one inferred from a GitHub `repository`) fails without it. Copy the subject from an executable your hook has already signed (a previous release, or `win-unpacked` from an `electron-builder --win dir` build, which does not write `app-update.yml`) instead of typing it by hand, because every component you list (`CN`, `O`, `C`, …) must match exactly: run `osslsigncode verify -in <App>.exe` and take the `Subject:` line under "Signer's certificate" (printed as `/C=US/ST=California/O=My Company, Inc./CN=My Company, Inc.`). Keep only `CN`, `O` and `C` and write them as `CN="My Company, Inc.", O="My Company, Inc.", C=US` — OpenSSL names some other components differently from Windows (`ST` instead of `S`, for example), and a value that contains a comma must be wrapped in double quotes. On Windows, `(Get-AuthenticodeSignature .\dist\win-unpacked\<App>.exe).SignerCertificate.Subject` prints it in the form to use as-is. Set `win.verifyUpdateCodeSignature: false` instead only if your updates are not Authenticode-signed or you don't use electron-updater.

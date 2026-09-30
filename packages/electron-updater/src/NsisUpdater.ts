@@ -5,6 +5,7 @@ import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
+import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
 import { DOWNLOAD_PROGRESS, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
@@ -32,13 +33,39 @@ export class NsisUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
     this.seedWebInstallerDefaultFromPackageType()
+    void this.app.whenReady().then(() => this.removeInstalledWebPackage())
+  }
+
+  // The web installer installs its own copy of the package electron-updater passes with --package-file, so the package in the pending
+  // directory is removed once the app runs the version of that update (after it was installed, never before or during the install).
+  private async removeInstalledWebPackage(): Promise<void> {
+    // like isUpdaterActive, without its log line: nothing is cached for an unpackaged app
+    if (!this.app.isPackaged && !this.forceDevUpdateConfig) {
+      return
+    }
+    try {
+      // not getOrCreateDownloadHelper: that would fix the cache directory before the app had a chance to set updateConfigPath
+      let downloadedUpdateHelper = this.downloadedUpdateHelper
+      if (downloadedUpdateHelper == null) {
+        const dirName = (await this.configOnDisk.value).updaterCacheDirName
+        if (dirName == null) {
+          return
+        }
+        downloadedUpdateHelper = new DownloadedUpdateHelper(path.join(this.app.baseCachePath, dirName))
+      }
+      await downloadedUpdateHelper.removeInstalledWebPackage(this.currentVersion.version, this._logger)
+    } catch (e: any) {
+      // best effort: no readable app-update.yml (e.g. forceDevUpdateConfig without dev-app-update.yml) means no cache to clean, and an
+      // unusable config is reported by the update check itself
+      this._logger.debug?.(`Cannot look for the web installer package of an installed update: ${e.message || e}`)
+    }
   }
 
   // nsis-web installs self-identify via a `resources/package-type` marker written by the installer.
-  // When present, pre-seed disableWebInstaller=false so web-installer updates work without the app
-  // wiring the flag by hand. This is a default only — an explicit `autoUpdater.disableWebInstaller = …`
-  // set later by the app still wins (the setter runs after construction). A plain `nsis` marker is left
-  // untouched so the secure `?? true` default and the v27 grace-period warning stay intact.
+  // When present, disableWebInstaller defaults to false so web-installer updates work without the app
+  // wiring the flag by hand. This is a default only: a value the app sets (`autoUpdater.disableWebInstaller = …`)
+  // wins. A plain `nsis` marker, or no marker, leaves the default (`true`), so web-installer updates are rejected
+  // with ERR_UPDATER_WEB_INSTALLER_DISABLED.
   private seedWebInstallerDefaultFromPackageType(): void {
     try {
       const resourcesPath = process.resourcesPath
@@ -47,10 +74,10 @@ export class NsisUpdater extends BaseUpdater {
       }
       const packageTypePath = path.join(resourcesPath, "package-type")
       if (fsExtra.existsSync(packageTypePath) && fsExtra.readFileSync(packageTypePath, "utf-8").trim() === "nsis-web") {
-        this.disableWebInstaller = false
+        this.disableWebInstallerDefault = false
       }
     } catch (_ignored) {
-      // best-effort: a missing/unreadable marker just leaves the secure default in place
+      // best-effort: a missing/unreadable marker leaves the default (`true`) in place
     }
   }
 
@@ -123,6 +150,20 @@ export class NsisUpdater extends BaseUpdater {
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")!
+    const webInstallerDisabled = downloadUpdateOptions.disableWebInstaller ?? true
+    // the app set disableWebInstaller to false (read with the options above), not the default of an install made by an nsis-web installer
+    const webInstallerEnabledByApp = this.isWebInstallerEnabledByApp
+    // checked before executeDownload, so that it also applies to an update cached by a previous launch
+    if (fileInfo.packageInfo != null) {
+      if (webInstallerDisabled) {
+        return Promise.reject(
+          newError(`Unable to download new version ${downloadUpdateOptions.updateInfoAndProvider.info.version}. Web Installers are disabled`, "ERR_UPDATER_WEB_INSTALLER_DISABLED")
+        )
+      }
+      if (fileInfo.packageInfo.sha512 == null) {
+        return Promise.reject(newError(`Update info doesn't contain sha512 checksum for the web installer package: ${fileInfo.packageInfo.path}`, "ERR_UPDATER_NO_CHECKSUM"))
+      }
+    }
     return this.executeDownload({
       fileExtension: "exe",
       downloadUpdateOptions,
@@ -130,26 +171,17 @@ export class NsisUpdater extends BaseUpdater {
       task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
-        // Tri-state: `undefined` means the app never set disableWebInstaller (relies on the v27 default), `true`/`false` are explicit choices.
-        const webInstallerExplicitlySet = downloadUpdateOptions.disableWebInstaller !== undefined
-        const webInstallerDisabled = downloadUpdateOptions.disableWebInstaller ?? true
-
-        if (isWebInstaller && webInstallerDisabled) {
-          if (webInstallerExplicitlySet) {
-            throw newError(
-              `Unable to download new version ${downloadUpdateOptions.updateInfoAndProvider.info.version}. Web Installers are disabled`,
-              "ERR_UPDATER_WEB_INSTALLER_DISABLED"
+        if (!isWebInstaller && !webInstallerDisabled) {
+          if (webInstallerEnabledByApp) {
+            this._logger.warn(
+              "disableWebInstaller is explicitly set to false, but a full installer (not a web installer) was downloaded. As of v27 web installers are opt-in (disabled by default); remove the override unless you intentionally publish NSIS web-installer packages."
+            )
+          } else {
+            // the nsis-web default (package-type marker) needs no change by the app, but the full installer writes the `nsis` marker
+            this._logger.info(
+              "A full installer (not a web installer) was downloaded for an install made by an nsis-web installer. After it is installed, web-installer updates need disableWebInstaller = false."
             )
           }
-          // Grace period: the app receives a web-installer update but never opted in. Warn loudly and still download for now; v28 will fail-closed.
-          this._logger.warn(
-            "Web installer packages are in use but disableWebInstaller was not explicitly set. v27 defaults to true (web installers disabled) and currently still downloads them with this warning; v28 will fail-closed and throw ERR_UPDATER_WEB_INSTALLER_DISABLED. To keep downloading web installers, set autoUpdater.disableWebInstaller = false. To accept the v28 default, set it to true (or remove the override)."
-          )
-        }
-        if (!isWebInstaller && webInstallerExplicitlySet && webInstallerDisabled === false) {
-          this._logger.warn(
-            "disableWebInstaller is explicitly set to false, but a full installer (not a web installer) was downloaded. As of v27 web installers are opt-in (disabled by default); remove the override unless you intentionally publish NSIS web-installer packages."
-          )
         }
         if (
           isWebInstaller ||
@@ -202,7 +234,7 @@ export class NsisUpdater extends BaseUpdater {
       if (publisherName == null) {
         this._logger.warn(
           "Signature verification of the downloaded update was skipped because no publisherName is present in app-update.yml. " +
-            "Sign your build so electron-builder can derive publisherName from the code signing certificate automatically, or set win.publisherName explicitly. " +
+            "Sign your build so electron-builder can derive publisherName from the code signing certificate automatically, or set win.sign.publisherName explicitly. " +
             "This fail-open behavior is deprecated: electron-builder v28 will treat a missing publisherName as a verification failure (fail-closed)."
         )
         return { response: "success" }
@@ -245,15 +277,21 @@ export class NsisUpdater extends BaseUpdater {
       args.push("--force-run")
     }
 
+    const packagePath = this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.packageFile
+    if (packagePath != null) {
+      // the policy may have changed since the download; never run the web installer when web installers are disabled
+      if (this.disableWebInstaller) {
+        this.dispatchError(newError("Unable to install the downloaded update. Web Installers are disabled", "ERR_UPDATER_WEB_INSTALLER_DISABLED"))
+        return false
+      }
+      // only = form is supported
+      args.push(`--package-file=${packagePath}`)
+    }
+
+    // must be the last argument: NSIS takes the rest of the command line after /D= as the directory (see GetDParameter in multiUser.nsh)
     if (this.installDirectory) {
       // maybe check if folder exists
       args.push(`/D=${this.installDirectory}`)
-    }
-
-    const packagePath = this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.packageFile
-    if (packagePath != null) {
-      // only = form is supported
-      args.push(`--package-file=${packagePath}`)
     }
 
     if (options.isAdminRightsRequired) {

@@ -1,5 +1,5 @@
 import { hashFile } from "builder-util-runtime"
-import type { UpdateInfo } from "builder-util-runtime"
+import type { UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, pathExists, readJson } from "fs-extra"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
@@ -72,6 +72,27 @@ async function seedDownloadedUpdate(
   const updateInfo = makeUpdateInfo(options.version ?? "1.0.1", sha512, fileName)
   await helper.setDownloadedFile(installerPath, null, updateInfo, fileInfo, fileName, true)
   return { installerPath, sha512, fileInfo, updateInfo }
+}
+
+// NSIS web installer: the stub installer plus the app package it installs via --package-file, marked for install on next launch
+async function seedDownloadedWebUpdate(
+  helper: DownloadedUpdateHelper,
+  options: { version?: string } = {}
+): Promise<{ installerPath: string; packagePath: string; sha512: string; packageSha512: string; updateInfo: WindowsUpdateInfo }> {
+  const version = options.version ?? "1.0.1"
+  const fileName = "TestApp-Web-Setup.exe"
+  const installerPath = path.join(helper.cacheDirForPendingUpdate, fileName)
+  const packagePath = path.join(helper.cacheDirForPendingUpdate, `package-${version}.7z`)
+  await outputFile(installerPath, "web installer binary content")
+  await outputFile(packagePath, "app package content")
+  const sha512 = await hashFile(installerPath)
+  const packageSha512 = await hashFile(packagePath)
+  const packageInfo = { path: `https://example.com/TestApp-${version}-${process.arch}.nsis.7z`, sha512: packageSha512, size: 1024 }
+  const updateInfo: WindowsUpdateInfo = { ...makeUpdateInfo(version, sha512, fileName), packages: { [process.arch]: packageInfo } }
+  const fileInfo: ResolvedUpdateFileInfo = { ...makeResolvedFileInfo(sha512, fileName), packageInfo }
+  await helper.setDownloadedFile(installerPath, packagePath, updateInfo, fileInfo, fileName, true)
+  expect(helper.markInstallOnNextLaunchSync(makeLogger())).toBe(true)
+  return { installerPath, packagePath, sha512, packageSha512, updateInfo }
 }
 
 describe("install on next launch", { concurrent: false }, () => {
@@ -229,7 +250,9 @@ describe("install on next launch", { concurrent: false }, () => {
         getUpdateInfoAndProvider.mockResolvedValue({
           info: latestUpdateInfo,
           provider: {
-            resolveFiles: (info: UpdateInfo) => info.files.map(it => makeResolvedFileInfo(it.sha512, it.url)),
+            // like Provider.resolveFiles: web-installer updates carry the package of the current arch (undefined otherwise)
+            resolveFiles: (info: UpdateInfo) =>
+              info.files.map(it => ({ ...makeResolvedFileInfo(it.sha512, it.url), packageInfo: (info as WindowsUpdateInfo).packages?.[process.arch] })),
           },
         })
       }
@@ -459,6 +482,132 @@ describe("install on next launch", { concurrent: false }, () => {
       helper.markInstallOnNextLaunchSync(log)
       await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
       expect(doInstall).toHaveBeenCalledTimes(2)
+    })
+
+    test("passes the re-verified web-installer package to the installer via --package-file", async () => {
+      const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
+      // next launch: a fresh helper knows the package only from the persisted update-info.json, not from the download
+      helper = new DownloadedUpdateHelper(cacheDir)
+      const { updater, app, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
+      updater.disableWebInstaller = false
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+      const verifyUpdateFile = vi.fn(async () => ({ response: "success" as const }))
+      updater.verifyUpdateFile = verifyUpdateFile
+      // run the real NsisUpdater.doInstall, only the installer spawn is stubbed
+      doInstall.mockRestore()
+      const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      await new Promise(resolve => setImmediate(resolve))
+
+      // the verifier gets the same package that the installer is given
+      expect(verifyUpdateFile).toHaveBeenCalledWith({
+        updateFilePath: seeded.installerPath,
+        originalUpdateFileName: path.basename(seeded.installerPath),
+        packageFilePath: seeded.packagePath,
+      })
+      expect(spawnLog).toHaveBeenCalledTimes(1)
+      expect(spawnLog).toHaveBeenCalledWith(seeded.installerPath, expect.arrayContaining([`--package-file=${seeded.packagePath}`]))
+      expect(app.quitCalls).toBe(1)
+    })
+
+    test("does not install a pending web-installer update whose package verifyUpdateFile rejects", async () => {
+      const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
+      helper = new DownloadedUpdateHelper(cacheDir)
+      const { updater, app, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
+      updater.disableWebInstaller = false
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+      updater.verifyUpdateFile = async ({ packageFilePath }) =>
+        packageFilePath == null ? { response: "success" } : { response: "failure", message: `package rejected: ${path.basename(packageFilePath)}` }
+      const errors: Error[] = []
+      updater.on("error", error => errors.push(error))
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(app.quitCalls).toBe(0)
+      expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_INVALID_UPDATE_FILE", message: expect.stringContaining("package rejected: package-1.0.1.7z") })])
+      // the pending cache is cleaned, so the update must be downloaded again
+      expect(await pathExists(seeded.installerPath)).toBe(false)
+      expect(await pathExists(seeded.packagePath)).toBe(false)
+    })
+
+    test("does not install a pending web-installer update when web installers are disabled", async () => {
+      const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
+      const { updater, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+      const errors: Error[] = []
+      updater.on("error", error => errors.push(error))
+      // default: no nsis-web package-type marker under vitest (process.resourcesPath is undefined)
+      expect(updater.disableWebInstaller).toBe(true)
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })])
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(await helper.getPendingInstallInfo()).toBeNull()
+    })
+
+    test("does not install a pending web-installer update whose package no longer matches its checksum", async () => {
+      const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
+      const { updater, doInstall } = createUpdater(seeded.updateInfo, NsisUpdater)
+      updater.disableWebInstaller = false
+      vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+      await outputFile(seeded.packagePath, "different package content")
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(false)
+      expect(doInstall).not.toHaveBeenCalled()
+      expect(log.warns.some(it => it.includes("web installer package"))).toBe(true)
+      // the pending cache is cleaned, so the update must be downloaded again
+      expect(await pathExists(seeded.installerPath)).toBe(false)
+      expect(await pathExists(seeded.packagePath)).toBe(false)
+      expect(await helper.getPendingInstallInfo()).toBeNull()
+    })
+  })
+
+  // The web installer installs its own copy of the --package-file, so the package left in the pending directory is removed once
+  // the app runs the version of that update, at startup (app ready).
+  describe("NsisUpdater removes the web package of an installed update", () => {
+    async function createPackagedNsisUpdater(version: string, context: { tmpDir: import("temp-file").TmpDir }) {
+      const configDir = await context.tmpDir.createTempDir()
+      const appUpdateConfigPath = path.join(configDir, "app-update.yml")
+      await outputFile(appUpdateConfigPath, `provider: generic\nurl: https://example.com\nupdaterCacheDirName: ${path.basename(cacheDir)}\n`)
+      let ready!: () => void
+      const whenReady = new Promise<void>(resolve => (ready = resolve))
+      const app = makeStubApp({ version, isPackaged: true, appUpdateConfigPath, baseCachePath: path.dirname(cacheDir), whenReady: () => whenReady })
+      const updater = new NsisUpdater(null, app)
+      updater.logger = log
+      return { updater, ready }
+    }
+
+    test("removes the package at startup once the app runs the version of the update", async context => {
+      const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
+      const { ready } = await createPackagedNsisUpdater("1.0.1", context)
+      // nothing happens before the app is ready
+      expect(await pathExists(seeded.packagePath)).toBe(true)
+
+      ready()
+      await vi.waitFor(async () => expect(await pathExists(seeded.packagePath)).toBe(false))
+      expect(await pathExists(seeded.installerPath)).toBe(true)
+      expect(await readJson(path.join(helper.cacheDirForPendingUpdate, "update-info.json"))).toMatchObject({ version: "1.0.1" })
+      expect(log.warns).toEqual([])
+    })
+
+    test("keeps the package of an update that is not installed yet, so it can be installed or retried", async context => {
+      const seeded = await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
+      const { updater, ready } = await createPackagedNsisUpdater("1.0.0", context)
+      ready()
+      await (updater as any).removeInstalledWebPackage()
+
+      expect(await pathExists(seeded.packagePath)).toBe(true)
+      expect(await helper.getPendingInstallInfo()).toMatchObject({ installOnNextLaunch: true, version: "1.0.1" })
+    })
+
+    test("does not fix the updater cache directory before the app sets updateConfigPath", async context => {
+      await seedDownloadedWebUpdate(helper, { version: "1.0.1" })
+      const { updater, ready } = await createPackagedNsisUpdater("1.0.1", context)
+      ready()
+      await (updater as any).removeInstalledWebPackage()
+
+      expect((updater as any).downloadedUpdateHelper).toBeNull()
     })
   })
 })

@@ -58,6 +58,7 @@ import type {
 } from "./index.js"
 import type { PlatformType } from "./targets/mac/MacTargetHelper.js"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, transformFiles } from "./util/appFileCopier.js"
+import { verifyNativeBinaries } from "./util/nativeBinaryVerifier.js"
 import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/mac/macosIconComposer.js"
@@ -121,18 +122,40 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   private readonly _resourceList = new Lazy<Array<string>>(() => orIfFileNotExist(readdir(this.info.buildResourcesDir), []))
 
   /**
-   * Ed25519 private key(s) used to sign auto-update manifests; empty when signing is disabled.
-   * Single source of truth for both consumers - updateInfoBuilder (signing `latest*.yml`) and
-   * PublishManager (embedding the derived public keys in `app-update.yml`) - so the two can no longer
+   * The effective `updateManifest` option: a platform-level value (`config.mac.updateManifest`, ...) shadows the
+   * root one, and so does `false` - the explicit opt-out - because `??` only falls through on null/undefined.
+   * A platform-level `null` therefore still falls back to the root rather than disabling signing.
+   *
+   * Note that `mas` / `masDev` are not consulted: `platformOptions` is `config[platform.buildConfigurationKey]`,
+   * which is `mac` for every macOS flavor. MAS builds produce no auto-update metadata, so the opt-out belongs on
+   * `mac` or at the root.
+   */
+  get updateManifestOptions(): UpdateManifestSigningOptions | false | null {
+    return this.platformOptions.updateManifest ?? this.config.updateManifest ?? null
+  }
+
+  /**
+   * Ed25519 private key(s) used to sign auto-update manifests; empty when signing is opted out of, or when
+   * nothing is configured. Single source of truth for both consumers - updateInfoBuilder (signing `latest*.yml`)
+   * and PublishManager (embedding the derived public keys in `app-update.yml`) - so the two can no longer
    * disagree about whether signing is on or which keys are in play. Several keys mean every manifest is
    * signed by each of them (dual-signing during key rotation); the first key is the one written to the
    * legacy single `signature` field. MemoLazy rather than Lazy so a hook mutating `updateManifest`
    * between packs re-resolves, while a normal build parses the PEMs once.
+   *
+   * Deliberately non-throwing: callers about to emit auto-update metadata go through
+   * {@link requireUpdateSigningKeys}, which enforces the requirement. Callers that only want the keys if they
+   * happen to exist - embedding a trust list for a publish target with `publishAutoUpdate: false` - read this.
    */
-  readonly updateSigningKeys = new MemoLazy<UpdateManifestSigningOptions | null, Array<KeyObject>>(
-    () => this.platformOptions.updateManifest ?? this.config.updateManifest ?? null,
+  readonly updateSigningKeys = new MemoLazy<UpdateManifestSigningOptions | false | null, Array<KeyObject>>(
+    () => this.updateManifestOptions,
     // resolution is fully synchronous (env/readFileSync + createPrivateKey); MemoLazy just wants a promise
     selected => {
+      // `false` must short-circuit before loadUpdateSigningKeys, or an ELECTRON_BUILDER_UPDATE_SIGN_KEY left in
+      // the CI environment would keep signing - and keep embedding a public key - despite the explicit opt-out.
+      if (selected === false) {
+        return Promise.resolve([])
+      }
       // relative signingKeyFile paths are project-relative, like every other path in the configuration
       const pems = loadUpdateSigningKeys(selected, this.projectDir)
       if (pems.length === 0) {
@@ -142,6 +165,51 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return Promise.resolve(pems.map(parsePrivateKey))
     }
   )
+
+  private updateManifestSigningWarned = false
+
+  /**
+   * Resolves the signing keys for a build step that will emit auto-update metadata, enforcing that manifests are
+   * signed: an unsigned `latest*.yml` lets anyone who can write to the update feed point every install at an
+   * arbitrary installer.
+   *
+   * `required` is the publish gate - only a build with a publish policy fails. A build that merely writes a
+   * manifest (which includes any GitHub-hosted project, since the publish config is inferred from `repository`)
+   * gets an advisory warning instead, so local builds and external-signer pipelines keep working. The warning is
+   * emitted at most once per packager; the throw stays re-derivable, since the call sites run per arch and per
+   * manifest task.
+   */
+  async requireUpdateSigningKeys(required: boolean): Promise<Array<KeyObject>> {
+    const optedOut = this.updateManifestOptions === false
+    const keys = optedOut ? [] : await this.updateSigningKeys.value
+    if (keys.length > 0) {
+      return keys
+    }
+
+    if (!optedOut && required) {
+      throw new InvalidConfigurationError(
+        `auto-update manifests must be signed, but no Ed25519 signing key was found for ${this.platform.name}. ` +
+          "Generate one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (PEM contents) " +
+          "or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey / " +
+          "updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out explicitly with " +
+          "`updateManifest: false`. See https://www.electron.build/features/signed-update-manifests"
+      )
+    }
+
+    if (!this.updateManifestSigningWarned) {
+      this.updateManifestSigningWarned = true
+      log.warn(
+        { platform: this.platform.name, reason: optedOut ? "updateManifest is set to false" : "no Ed25519 signing key is configured" },
+        "auto-update manifests will be unsigned: anyone who can overwrite latest*.yml on your update server can point installs at an arbitrary payload. " +
+          (optedOut
+            ? "Remove `updateManifest: false` and provide a key with `electron-builder create-update-key` to enable signing. "
+            : "Publishing this configuration will fail until you provide a key with `electron-builder create-update-key`, or opt out explicitly with `updateManifest: false`. ") +
+          "Note that installs which already embed a public key reject unsigned manifests (ERR_UPDATER_MANIFEST_NOT_SIGNED). " +
+          "See https://www.electron.build/features/signed-update-manifests"
+      )
+    }
+    return keys
+  }
 
   readonly appInfo: AppInfo
 
@@ -308,7 +376,19 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     this.packageInDistributableFormat(appOutDir, arch, targets, taskManager)
   }
 
+  // the targets built from each pack (app dir and arch): they ship its single app-update.yml, so a target that writes
+  // that file itself (AppImage, deb/rpm/pacman) resolves it for all of them - see getPackAppUpdatePublishConfiguration.
+  // Keyed by arch too: a prepackaged app dir is the same for every arch, and each arch may have other targets, whose
+  // builds can still be running when the next arch is packaged.
+  private readonly packToTargets = new Map<string, ReadonlyArray<Target>>()
+
+  /** @internal the targets packaged from `appOutDir` for `arch`, as passed to their `build()` */
+  getPackTargets(appOutDir: string, arch: Arch): ReadonlyArray<Target> | undefined {
+    return this.packToTargets.get(packKey(appOutDir, arch))
+  }
+
   protected packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): void {
+    this.packToTargets.set(packKey(appOutDir, arch), targets)
     if (targets.find(it => !it.isAsyncSupported) == null) {
       PlatformPackager.buildAsyncTargets(targets, taskManager, appOutDir, arch)
       return
@@ -496,6 +576,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const isAsar = asarOptions != null
     await this.sanityCheckPackage(appOutDir, isAsar, framework, !!asarOptions?.disableSanityCheck)
+    // before fuses/signing and, for a macOS universal build, before the per-arch slices are merged
+    await verifyNativeBinaries({
+      resourcesDir: this.getResourcesDir(appOutDir),
+      platform: this.platform.nodeName,
+      arch,
+      mode: this.config.nativeModules?.verifyNativeBinaries,
+    })
 
     if (!options?.disableFuses) {
       await this.doAddElectronFuses(packContext)
@@ -1051,4 +1138,8 @@ export function chooseNotNull<T>(v1: T | Nullish, v2: T | Nullish): T | Nullish 
 
 function capitalizeFirstLetter(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+function packKey(appOutDir: string, arch: Arch) {
+  return `${Arch[arch]}:${appOutDir}`
 }

@@ -167,6 +167,23 @@
 !macroend 
 
 !macro _CHECK_APP_RUNNING
+  !insertmacro _CHECK_APP_RUNNING_BODY ""
+!macroend
+
+# nsis-web: prepareWebPackage can download the app package (and wait on its retry prompt) after CHECK_APP_RUNNING, so the app may have
+# been started again by then. installSection.nsh checks again right before the installed version is uninstalled (its uninstaller closes
+# the app without asking), with the same prompt: Cancel aborts with exit code 2, OK closes the app. An update (--updated) is not checked
+# again (the app is closed without asking, as before), and neither is a custom customCheckAppRunning, which may not be inserted twice.
+!macro CHECK_APP_RUNNING_AGAIN
+  !ifmacrondef customCheckAppRunning
+    ${ifNot} ${isUpdated}
+      !insertmacro _CHECK_APP_RUNNING_BODY "_again"
+    ${endIf}
+  !endif
+!macroend
+
+# LABEL_SUFFIX keeps the labels unique when the check is inserted a second time in the same section (CHECK_APP_RUNNING_AGAIN)
+!macro _CHECK_APP_RUNNING_BODY LABEL_SUFFIX
   ${GetProcessInfo} 0 $pid $1 $2 $3 $4
   ${if} $3 != "${APP_EXECUTABLE_FILENAME}"
     ${if} ${isUpdated}
@@ -179,12 +196,13 @@
       ${if} ${isUpdated}
         # allow app to exit without explicit kill
         Sleep 1000
-        Goto doStopProcess
+        Goto doStopProcess${LABEL_SUFFIX}
       ${endIf}
-      MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "$(appRunning)" /SD IDOK IDOK doStopProcess
+      MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "$(appRunning)" /SD IDOK IDOK doStopProcess${LABEL_SUFFIX}
+      SetErrorLevel 2
       Quit
 
-      doStopProcess:
+      doStopProcess${LABEL_SUFFIX}:
 
       DetailPrint "$(appClosing)"
 
@@ -195,7 +213,7 @@
       # Retry counter
       StrCpy $R1 0
 
-      loop:
+      loop${LABEL_SUFFIX}:
         IntOp $R1 $R1 + 1
 
         !insertmacro FIND_PROCESS "${APP_EXECUTABLE_FILENAME}" $R0
@@ -208,21 +226,22 @@
             DetailPrint `Waiting for "${PRODUCT_NAME}" to close.`
             Sleep 2000
           ${else}
-            Goto not_running
+            Goto not_running${LABEL_SUFFIX}
           ${endIf}
         ${else}
-          Goto not_running
+          Goto not_running${LABEL_SUFFIX}
         ${endIf}
 
         # App likely running with elevated permissions.
         # Ask user to close it manually
         ${if} $R1 > 1
-          MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDCANCEL IDRETRY loop
+          MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDCANCEL IDRETRY loop${LABEL_SUFFIX}
+          SetErrorLevel 2
           Quit
         ${else}
-          Goto loop
+          Goto loop${LABEL_SUFFIX}
         ${endIf}
-      not_running:
+      not_running${LABEL_SUFFIX}:
     ${endIf}
   ${endIf}
 !macroend
