@@ -330,17 +330,71 @@ describe("S3 credentials — source: profile", { concurrent: false }, () => {
       "[profile proc]\ncredential_process = /bin/false\n[profile role]\nrole_arn = arn:aws:iam::123456789012:role/r\nsource_profile = base\naws_access_key_id = BASE\naws_secret_access_key = base\n"
     )
     const credentialsFile = write("custom/credentials", "")
-    const fromIni = vi.fn(() => () => Promise.resolve({ accessKeyId: "INI_KEY", secretAccessKey: "ini-secret" }))
+    const fromIni = vi.fn((_init: any) => () => Promise.resolve({ accessKeyId: "INI_KEY", secretAccessKey: "ini-secret" }))
     vi.spyOn(awsSdkLoaders, "ini").mockResolvedValue({ fromIni })
     const sso = vi.spyOn(awsSdkLoaders, "sso")
+    const sts = vi.spyOn(awsSdkLoaders, "sts")
     for (const profile of ["proc", "role"]) {
       await expect(resolveS3Credentials({ source: "profile", profile, configFile, credentialsFile })).resolves.toMatchObject({ accessKeyId: "INI_KEY" })
     }
     expect(fromIni.mock.calls).toEqual([
       [{ profile: "proc", filepath: credentialsFile, configFilepath: configFile, clientConfig: { ignoreConfiguredEndpointUrls: true }, parentClientConfig: { profile: "proc" } }],
-      [{ profile: "role", filepath: credentialsFile, configFilepath: configFile, clientConfig: { ignoreConfiguredEndpointUrls: true }, parentClientConfig: { profile: "role" } }],
+      [
+        {
+          profile: "role",
+          filepath: credentialsFile,
+          configFilepath: configFile,
+          clientConfig: { ignoreConfiguredEndpointUrls: true },
+          parentClientConfig: { profile: "role" },
+          roleAssumer: expect.any(Function),
+        },
+      ],
     ])
+    // the STS client is only loaded for the assume-role profile
+    expect(sts).toHaveBeenCalledTimes(1)
     expect(sso).not.toHaveBeenCalled()
+  })
+
+  it("assumes roles for fromIni with the explicit STS client (AWS_ENDPOINT_URL_STS / AWS_REGION / AWS_CONFIG_FILE are decoys)", async () => {
+    stubAmbientDecoys({ envKeys: true })
+    vi.stubEnv("AWS_CONFIG_FILE", write("decoy/role-config", "[profile role]\nregion = ap-south-1\nendpoint_url = https://decoy-endpoint.example.com\n"))
+    vi.stubEnv("AWS_PROFILE", "role")
+    vi.stubEnv("AWS_REGION", "ap-south-1")
+    vi.stubEnv("AWS_ENDPOINT_URL", "https://decoy-endpoint.example.com")
+    vi.stubEnv("AWS_ENDPOINT_URL_STS", "https://decoy-sts.example.com")
+    const configFile = write(
+      "custom/config",
+      "[profile role]\nrole_arn = arn:aws:iam::123456789012:role/r\nsource_profile = base\nregion = eu-west-1\n[profile base]\naws_access_key_id = BASE_KEY\naws_secret_access_key = base-secret\n"
+    )
+    const requests: Array<any> = []
+    const realSts = awsSdkLoaders.sts
+    vi.spyOn(awsSdkLoaders, "sts").mockImplementation(async () => {
+      const sdk = await realSts()
+      const requestHandler = {
+        handle: (request: any) => {
+          requests.push(request)
+          const xml =
+            '<AssumeRoleResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/"><AssumeRoleResult><Credentials>' +
+            "<AccessKeyId>ROLE_KEY</AccessKeyId><SecretAccessKey>role-secret</SecretAccessKey><SessionToken>role-token</SessionToken>" +
+            "<Expiration>2099-01-01T00:00:00Z</Expiration></Credentials></AssumeRoleResult></AssumeRoleResponse>"
+          return Promise.resolve({ response: { statusCode: 200, headers: { "content-type": "text/xml" }, body: Readable.from([Buffer.from(xml)]) } })
+        },
+      }
+      class STSClient extends sdk.STSClient {
+        constructor(config: any) {
+          super({ ...config, requestHandler })
+        }
+      }
+      return { ...sdk, STSClient }
+    })
+
+    await expect(resolveS3Credentials({ source: "profile", profile: "role", configFile, credentialsFile: path.join(root, "custom/missing") })).resolves.toMatchObject({
+      accessKeyId: "ROLE_KEY",
+      sessionToken: "role-token",
+    })
+    expect(requests).toHaveLength(1)
+    expect(requests[0].hostname).toBe("sts.eu-west-1.amazonaws.com")
+    expect(requests[0].headers.authorization).toMatch(/Credential=BASE_KEY\/\d{8}\/eu-west-1\/sts\/aws4_request/)
   })
 })
 

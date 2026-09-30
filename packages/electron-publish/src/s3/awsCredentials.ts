@@ -210,6 +210,59 @@ function explicitSsoInit(profile: string, filepath: string, configFilepath: stri
   return { profile, filepath, configFilepath, clientConfig: { ignoreConfiguredEndpointUrls: true }, parentClientConfig: { profile } }
 }
 
+type StsModule = Awaited<ReturnType<(typeof awsSdkLoaders)["sts"]>>
+type AssumeRoleInput = { RoleArn: string; RoleSessionName: string; ExternalId?: string; DurationSeconds?: number; SerialNumber?: string; TokenCode?: string }
+
+interface StsSettings {
+  profileName: string
+  region: string
+  useGlobalEndpoint: boolean
+}
+
+/** Like the AWS SDK's fromIni, AssumeRole uses the named profile's `region` (else us-east-1) and `sts_regional_endpoints` — never AWS_REGION. */
+function stsSettings(profileName: string, namedProfile: Record<string, string>): StsSettings {
+  const stsRegionalEndpoints = namedProfile.sts_regional_endpoints?.trim().toLowerCase()
+  if (stsRegionalEndpoints != null && stsRegionalEndpoints !== "regional" && stsRegionalEndpoints !== "legacy") {
+    throw new InvalidConfigurationError(
+      `AWS profile "${profileName}" has an invalid sts_regional_endpoints: ${JSON.stringify(namedProfile.sts_regional_endpoints)} (expected "regional" or "legacy")`
+    )
+  }
+  return { profileName, region: namedProfile.region?.trim() || DEFAULT_STS_REGION, useGlobalEndpoint: stsRegionalEndpoints === "legacy" }
+}
+
+/**
+ * Returns an STS AssumeRole function whose client gets every setting explicitly: credentials, region, endpoint mode, FIPS / dual-stack,
+ * defaults mode, retries, auth scheme preference and app id, with configured endpoint URLs ignored. So it reads neither
+ * AWS_REGION / AWS_ENDPOINT_URL* / other AWS_* variables nor AWS_CONFIG_FILE / AWS_PROFILE for them.
+ */
+function explicitRoleAssumer(sts: StsModule, settings: StsSettings) {
+  return async (source: AwsCredentials, input: AssumeRoleInput): Promise<AwsCredentials> => {
+    const client = new sts.STSClient({
+      credentials: { accessKeyId: source.accessKeyId, secretAccessKey: source.secretAccessKey, sessionToken: source.sessionToken },
+      region: settings.region,
+      profile: settings.profileName,
+      useGlobalEndpoint: settings.useGlobalEndpoint,
+      useFipsEndpoint: false,
+      useDualstackEndpoint: false,
+      ignoreConfiguredEndpointUrls: true,
+      defaultsMode: "standard",
+      retryMode: "standard",
+      maxAttempts: 3,
+      authSchemePreference: [],
+      userAgentAppId: () => Promise.resolve(undefined),
+    })
+    try {
+      const { Credentials: assumed } = await client.send(new sts.AssumeRoleCommand(input))
+      if (assumed?.AccessKeyId == null || assumed.SecretAccessKey == null) {
+        throw new Error(`STS returned no credentials for ${input.RoleArn}`)
+      }
+      return { accessKeyId: assumed.AccessKeyId, secretAccessKey: assumed.SecretAccessKey, sessionToken: assumed.SessionToken, expiration: assumed.Expiration }
+    } finally {
+      client.destroy()
+    }
+  }
+}
+
 async function resolveFromProfile(options: S3AwsCredentialsOptions): Promise<AwsCredentials> {
   const { profileName, profiles, filepath, configFilepath } = await loadProfiles(options)
   const profile = profiles[profileName]
@@ -234,6 +287,7 @@ async function resolveFromProfile(options: S3AwsCredentialsOptions): Promise<Aws
   // no AWS_ENDPOINT_URL* / endpoint_url redirection of the SSO calls, and the nested STS client reads its (non-credential)
   // settings from the named profile rather than from AWS_PROFILE.
   const init = explicitSsoInit(profileName, filepath, configFilepath)
+  const assumeRoleSettings = isAssumeRoleProfile(profile) ? stsSettings(profileName, profile) : null
   let resolved: AwsCredentials
   try {
     if (!isAssumeRoleProfile(profile) && profile.credential_process == null && profile.web_identity_token_file == null && isSsoProfile(profile)) {
@@ -242,7 +296,9 @@ async function resolveFromProfile(options: S3AwsCredentialsOptions): Promise<Aws
       resolved = await fromSSO(init)()
     } else {
       const { fromIni } = await awsSdkLoaders.ini()
-      resolved = await fromIni(init)()
+      // fromIni's own STS client drops clientConfig (it would honour AWS_ENDPOINT_URL* and read AWS_CONFIG_FILE settings), so assume
+      // roles with the explicitly configured client instead
+      resolved = await fromIni(assumeRoleSettings == null ? init : { ...init, roleAssumer: explicitRoleAssumer(await awsSdkLoaders.sts(), assumeRoleSettings) })()
     }
   } catch (e: any) {
     throw new Error(`Cannot resolve AWS credentials for profile "${profileName}" (${configFilepath}, ${filepath}): ${e?.message ?? e}`, { cause: e })
@@ -352,54 +408,24 @@ async function resolveFromSsoRoleChain(options: S3AwsCredentialsOptions): Promis
   const { profileName, profiles, filepath, configFilepath } = loaded
   const { ssoProfileName, hops } = planSsoRoleChain(loaded)
 
-  // Like the AWS SDK's fromIni, every AssumeRole call uses the named profile's region (else us-east-1), never AWS_REGION.
-  const namedProfile = profiles[profileName]
-  const region = namedProfile.region?.trim() || DEFAULT_STS_REGION
-  const stsRegionalEndpoints = namedProfile.sts_regional_endpoints?.trim().toLowerCase()
-  if (stsRegionalEndpoints != null && stsRegionalEndpoints !== "regional" && stsRegionalEndpoints !== "legacy") {
-    throw new InvalidConfigurationError(
-      `AWS profile "${profileName}" has an invalid sts_regional_endpoints: ${JSON.stringify(namedProfile.sts_regional_endpoints)} (expected "regional" or "legacy")`
-    )
-  }
+  // validated before anything is loaded or requested
+  const settings = stsSettings(profileName, profiles[profileName])
 
   let credentials: AwsCredentials
   let step = `IAM Identity Center (SSO) profile "${ssoProfileName}"`
   try {
-    const [{ fromSSO }, { STSClient, AssumeRoleCommand }] = await Promise.all([awsSdkLoaders.sso(), awsSdkLoaders.sts()])
+    const [{ fromSSO }, sts] = await Promise.all([awsSdkLoaders.sso(), awsSdkLoaders.sts()])
+    const assumeRole = explicitRoleAssumer(sts, settings)
     credentials = await fromSSO(explicitSsoInit(ssoProfileName, filepath, configFilepath))()
 
     for (const hop of hops) {
       step = `AssumeRole ${hop.roleArn} (profile "${hop.profileName}")`
-      const client = new STSClient({
-        credentials: { accessKeyId: credentials.accessKeyId, secretAccessKey: credentials.secretAccessKey, sessionToken: credentials.sessionToken },
-        region,
-        profile: profileName,
-        useGlobalEndpoint: stsRegionalEndpoints === "legacy",
-        useFipsEndpoint: false,
-        useDualstackEndpoint: false,
-        ignoreConfiguredEndpointUrls: true,
-        defaultsMode: "standard",
-        retryMode: "standard",
-        maxAttempts: 3,
-        authSchemePreference: [],
-        userAgentAppId: () => Promise.resolve(undefined),
+      credentials = await assumeRole(credentials, {
+        RoleArn: hop.roleArn,
+        RoleSessionName: hop.roleSessionName ?? `electron-builder-${Date.now()}`,
+        ExternalId: hop.externalId,
+        DurationSeconds: hop.durationSeconds,
       })
-      try {
-        const { Credentials: assumed } = await client.send(
-          new AssumeRoleCommand({
-            RoleArn: hop.roleArn,
-            RoleSessionName: hop.roleSessionName ?? `electron-builder-${Date.now()}`,
-            ExternalId: hop.externalId,
-            DurationSeconds: hop.durationSeconds,
-          })
-        )
-        if (assumed?.AccessKeyId == null || assumed.SecretAccessKey == null) {
-          throw new Error("STS returned no credentials")
-        }
-        credentials = { accessKeyId: assumed.AccessKeyId, secretAccessKey: assumed.SecretAccessKey, sessionToken: assumed.SessionToken, expiration: assumed.Expiration }
-      } finally {
-        client.destroy()
-      }
     }
   } catch (e: any) {
     throw new Error(`Cannot resolve AWS credentials for profile "${profileName}" (${configFilepath}, ${filepath}) at ${step}: ${e?.message ?? e}`, { cause: e })
