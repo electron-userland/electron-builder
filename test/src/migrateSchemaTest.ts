@@ -725,7 +725,7 @@ describe("migrateConfig — updater advisories", () => {
     expect(
       advisoriesOf({
         appId: "com.example.app",
-        win: { target: ["nsis", "portable"], sign: { type: "signtool", sign: "./sign.js", certificateFile: "c.pfx" } },
+        win: { target: ["nsis", "portable"], sign: { type: "signtool", sign: "./sign.js", certificateFile: "c.pfx", publisherName: "CN=Acme" } },
         nsis: { oneClick: false, perMachine: false },
       })
     ).toEqual([])
@@ -795,12 +795,13 @@ describe("migrateConfig — updater advisories", () => {
       ["hsm certificateSha1", { sign: { type: "hsm", cryptoServiceProvider: "p", keyContainer: "k", sign: "./sign.js", certificateSha1: "ABCDEF" } }],
       ["pkcs11 certificateFile", { sign: { type: "pkcs11", pkcs11Module: "/m.so", pkcs11KeyUri: "pkcs11:object=k", sign: "./sign.js", certificateFile: "c.pem" } }],
       ["signtool win.cscLink", { sign: { type: "signtool", sign: "./sign.js" }, cscLink: "c.pfx" }],
-    ])("no advisory when electron-builder reads a certificate (%s)", (_name, win) => {
-      expect(advisoriesOf({ win })).toEqual([])
+    ])("a certificate in the config (%s) doesn't suppress the advisory: a hook always needs publisherName", (_name, win) => {
+      expect(advisoriesOf({ win })).toEqual([WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
+      expect(advisoriesOf({ win: { ...win, sign: { ...win.sign, publisherName: "CN=Acme" } } })).toEqual([])
     })
 
-    test("a root cscLink is a certificate source for signtool only", () => {
-      expect(advisoriesOf({ cscLink: "c.pfx", win: { sign: { type: "signtool", sign: "./sign.js" } } })).toEqual([])
+    test("a root cscLink doesn't suppress the advisory either", () => {
+      expect(advisoriesOf({ cscLink: "c.pfx", win: { sign: { type: "signtool", sign: "./sign.js" } } })).toEqual([WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
       expect(advisoriesOf({ cscLink: "c.pfx", win: { sign: { type: "hsm", cryptoServiceProvider: "p", keyContainer: "k", sign: "./sign.js" } } })).toEqual([
         WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
       ])

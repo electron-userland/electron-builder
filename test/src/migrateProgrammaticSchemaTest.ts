@@ -436,6 +436,12 @@ describe("migrateProgrammaticSource — updater advisories", () => {
       `{ win: { sign: { type: "pkcs11", pkcs11Module: "/m.so", pkcs11KeyUri: "pkcs11:object=k", sign: "./sign.js" } } }`,
       `{ win: { sign: { type: "signtool", sign: "./sign.js", certificateFile: null }, verifyUpdateCodeSignature: true } }`,
       `{ cscLink: "c.pfx", win: { sign: { type: "hsm", cryptoServiceProvider: "p", keyContainer: "k", sign: "./sign.js" } } }`,
+      // a certificate in the config doesn't suppress it: a hook always needs publisherName
+      `{ win: { sign: { type: "signtool", sign: "./sign.js", certificateFile: "c.pfx" } } }`,
+      `{ win: { sign: { type: "signtool", sign: "./sign.js", certificateSubjectName: "Acme" } } }`,
+      `{ win: { sign: { type: "hsm", cryptoServiceProvider: "p", keyContainer: "k", sign: "./sign.js", certificateSha1: "ABCDEF" } } }`,
+      `{ win: { sign: { type: "signtool", sign: "./sign.js" }, cscLink: "c.pfx" } }`,
+      `{ cscLink: "c.pfx", win: { sign: { type: "signtool", sign: "./sign.js" } } }`,
     ])("%s emits the advisory", body => expectAdvisories(body, [WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY]))
 
     test.each([
@@ -443,11 +449,7 @@ describe("migrateProgrammaticSource — updater advisories", () => {
       `{ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: ["CN=Old", "CN=New"] } } }`,
       `{ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: null } } }`,
       `{ win: { sign: { type: "signtool", sign: "./sign.js" }, verifyUpdateCodeSignature: false } }`,
-      `{ win: { sign: { type: "signtool", sign: "./sign.js", certificateFile: "c.pfx" } } }`,
-      `{ win: { sign: { type: "signtool", sign: "./sign.js", certificateSubjectName: "Acme" } } }`,
-      `{ win: { sign: { type: "hsm", cryptoServiceProvider: "p", keyContainer: "k", sign: "./sign.js", certificateSha1: "ABCDEF" } } }`,
-      `{ win: { sign: { type: "signtool", sign: "./sign.js" }, cscLink: "c.pfx" } }`,
-      `{ cscLink: "c.pfx", win: { sign: { type: "signtool", sign: "./sign.js" } } }`,
+      `{ win: { sign: { type: "signtool", sign: "./sign.js", certificateFile: "c.pfx", publisherName: "CN=Acme" } } }`,
       `{ win: { sign: { type: "signtool", sign: null } } }`,
       `{ win: { sign: { type: "signtool" } } }`,
       `{ win: { sign: false } }`,
@@ -469,8 +471,8 @@ describe("migrateProgrammaticSource — updater advisories", () => {
       expectAdvisories(`{ win: { signExecutable: false, signtoolOptions: { sign: "./sign.js" } } }`, [])
       expectAdvisories(`{ win: { signAndEditExecutable: false, signtoolOptions: { sign: "./sign.js" } } }`, [])
       expectAdvisories(`{ win: { signtoolOptions: { sign: "./sign.js", publisherName: "CN=Acme" } } }`, [])
-      // migrateConfig forces type "signtool", so a cscLink is a certificate source whatever the legacy type said
-      expectAdvisories(`{ cscLink: "c.pfx", win: { signtoolOptions: { sign: "./sign.js", type: "hsm" } } }`, [])
+      // a cscLink doesn't suppress it
+      expectAdvisories(`{ cscLink: "c.pfx", win: { signtoolOptions: { sign: "./sign.js", type: "hsm" } } }`, [WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
       expectAdvisories(`{ win: { sign: { type: "signtool", certificateFile: "c.pfx" }, signtoolOptions: { sign: "./sign.js" } } }`, [])
       // an unknown string-valued azureSignOptions field moves into additionalMetadata, and Azure wins over signtoolOptions
       expectAdvisories(`{ win: { azureSignOptions: { endpoint: "https://e/", sign: "./sign.js" } } }`, [])
@@ -489,17 +491,17 @@ describe("migrateProgrammaticSource — updater advisories", () => {
     test("non-literal values that may suppress the advisory are not flagged", () => {
       const hook = `sign: "./sign.js"`
       expectAdvisories(`{ win: { sign: { type: "signtool", ${hook}, publisherName: process.env.PUBLISHER } } }`, [])
-      expectAdvisories(`{ win: { sign: { type: "signtool", ${hook}, certificateFile: process.env.CERT_FILE } } }`, [])
       expectAdvisories(`{ win: { sign: { type: "signtool", ${hook} }, verifyUpdateCodeSignature: !process.env.DEV } }`, [])
-      expectAdvisories(`{ cscLink: process.env.CSC_LINK, win: { sign: { type: "signtool", ${hook} } } }`, [])
-      expectAdvisories(`{ cscLink: "c.pfx", win: { sign: { type: signType, ${hook} } } }`, [], `const signType = "signtool"\n`)
       expectAdvisories(`{ win: { sign: { ...base, type: "signtool", ${hook} } } }`, [], "const base = {}\n")
       expectAdvisories(`{ win: { sign: { type: "signtool", ${hook}, ...base } } }`, [], "const base = {}\n")
       expectAdvisories(`{ win: { ...base, sign: { type: "signtool", ${hook} } } }`, [], "const base = {}\n")
       expectAdvisories(`{ win: { sign: { type: "signtool", ${hook} }, ...base } }`, [], "const base = {}\n")
       expectAdvisories(`{ win: { sign: signConfig } }`, [], `const signConfig = { type: "signtool", ${hook} }\n`)
       expectAdvisories(`{ win: { signExecutable: process.env.SIGN === "1", signtoolOptions: { ${hook} } } }`, [])
-      // a non-literal type without a cscLink cannot suppress it
+      // a certificate or cscLink, literal or not, doesn't suppress it, and neither does a non-literal type
+      expectAdvisories(`{ win: { sign: { type: "signtool", ${hook}, certificateFile: process.env.CERT_FILE } } }`, [WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
+      expectAdvisories(`{ cscLink: process.env.CSC_LINK, win: { sign: { type: "signtool", ${hook} } } }`, [WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
+      expectAdvisories(`{ cscLink: "c.pfx", win: { sign: { type: signType, ${hook} } } }`, [WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY], `const signType = "signtool"\n`)
       expectAdvisories(`{ win: { sign: { type: signType, ${hook} } } }`, [WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY], `const signType = "signtool"\n`)
     })
 

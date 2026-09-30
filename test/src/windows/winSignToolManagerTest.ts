@@ -1017,30 +1017,24 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
     await expect(manager.computedPublisherName.value).resolves.toBeNull()
   })
 
-  test("custom sign hook with a readable certificate derives the CN", async () => {
-    const manager: any = makePublisherNameManager({ type: "signtool", sign: "./customSign.js", certificateFile: "cert.pfx" })
-    manager.lazyCertInfo = { value: Promise.resolve(acmeCertInfo) }
-    await expect(manager.computedPublisherName.value).resolves.toEqual(["Acme Corp"])
-  })
-
-  test("custom sign hook ignores a certificate from WIN_CSC_LINK / CSC_LINK and throws", async () => {
-    const manager: any = makePublisherNameManager({ type: "signtool", sign: "./customSign.js" }, { getCscLink: () => "env-cert.pfx" })
-    // the environment's certificate is readable, but the hook may sign with another one
+  // A hook may sign with another certificate than any electron-builder can read, so a readable certificate (in the config or from
+  // WIN_CSC_LINK / CSC_LINK) never supplies the publisher name of a hook: it must be set explicitly.
+  test.for([
+    ["certificateFile", { type: "signtool", sign: "./customSign.js", certificateFile: "cert.pfx" }, {}],
+    ["certificateSubjectName", { type: "signtool", sign: "./customSign.js", certificateSubjectName: "Acme Corp" }, {}],
+    ["certificateSha1", { type: "signtool", sign: "./customSign.js", certificateSha1: "ABCDEF" }, {}],
+    ["win.cscLink", { type: "signtool", sign: "./customSign.js" }, { platformOptions: { sign: { type: "signtool", sign: "./customSign.js" }, cscLink: "cert.pfx" } }],
+    ["the top-level cscLink", { type: "signtool", sign: "./customSign.js" }, { config: { cscLink: "cert.pfx" } }],
+    ["WIN_CSC_LINK / CSC_LINK", { type: "signtool", sign: "./customSign.js" }, { getCscLink: () => "env-cert.pfx" }],
+    ["HSM certificateFile", { ...hsmSign, sign: "./customSign.js", certificateFile: "chain.crt" }, {}],
+  ] as const)("custom sign hook with a readable certificate (%s) throws without publisherName", async ([, sign, overrides]) => {
+    const manager: any = makePublisherNameManager(sign, overrides)
     manager.lazyCertInfo = {
       get value() {
-        throw new Error("the certificate of the environment must not be read for a custom sign hook")
+        throw new Error("the certificate must not be read for a custom sign hook")
       },
     }
     await expectMissingPublisherNameError(manager)
-  })
-
-  test.for([
-    ["win.cscLink", { platformOptions: { sign: { type: "signtool", sign: "./customSign.js" }, cscLink: "cert.pfx" } }],
-    ["the top-level cscLink", { config: { cscLink: "cert.pfx" } }],
-  ] as const)("custom sign hook with a certificate in %s derives the CN", async ([, overrides]) => {
-    const manager: any = makePublisherNameManager({ type: "signtool", sign: "./customSign.js" }, overrides)
-    manager.lazyCertInfo = { value: Promise.resolve(acmeCertInfo) }
-    await expect(manager.computedPublisherName.value).resolves.toEqual(["Acme Corp"])
   })
 
   test("certificate-store subject without a Common Name throws instead of an undefined publisher name", async () => {

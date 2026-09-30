@@ -48,12 +48,11 @@ export const NSIS_PER_MACHINE_UPDATE_ADVISORY =
   'with autoInstallEvent "onNextLaunch" (call autoUpdater.installPendingUpdateIfAvailable()). ' +
   "See https://www.electron.build/docs/migration/v27-breaking-changes#nsis-per-machine-builds-set-isadminrightsrequired"
 
-// Advisory surfaced when a custom win.sign.sign hook has no publisherName and no certificate in the config. v27 fails
-// such a build when it writes app-update.yml.
+// Advisory surfaced when a custom win.sign.sign hook has no publisherName. v27 fails such a build when it writes app-update.yml.
 export const WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY =
   "win.sign.sign (custom signing hook) without win.sign.publisherName detected. In v27, a signed build that writes app-update.yml " +
   "(an nsis, nsis-web or electronUpdaterAware appx target with a publish configuration, including one inferred from a GitHub repository) fails with InvalidConfigurationError " +
-  "when the config names no certificate to determine the publisher name from (a certificate from the WIN_CSC_LINK / CSC_LINK environment variables is not used for a custom hook). " +
+  "because electron-builder cannot tell which certificate the hook signs with (a certificate in the config or from WIN_CSC_LINK / CSC_LINK doesn't supply the publisher name of a hook). " +
   "Set win.sign.publisherName to the subject of the certificate your hook signs with, or win.verifyUpdateCodeSignature: false only if your updates are not Authenticode-signed. " +
   "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-is-validated-against-the-signing-certificate"
 
@@ -106,23 +105,15 @@ function detectTarget(config: Record<string, any>, platform: "win" | "linux", na
 }
 
 /**
- * True when a custom `win.sign.sign` hook signs without `publisherName` and without a certificate in the config
- * (certificateFile / certificateSubjectName / certificateSha1, or a cscLink for type "signtool"), and update signature
- * verification is on. Evaluated on the migrated config, so a v26 `win.signtoolOptions.sign` counts too.
+ * True when a custom `win.sign.sign` hook signs without `publisherName` and update signature verification is on (a certificate
+ * in the config doesn't matter: a hook always needs publisherName). Evaluated on the migrated config, so a v26
+ * `win.signtoolOptions.sign` counts too.
  */
 function detectSignHookWithoutPublisherName(config: Record<string, any>): boolean {
   const win = config.win
   const sign = isPlainObject(win) ? win.sign : null
   // a function-valued hook cannot occur here: migrateConfig works on a JSON copy of the config
-  if (!isPlainObject(sign) || typeof sign.sign !== "string" || sign.publisherName !== undefined || win.verifyUpdateCodeSignature === false) {
-    return false
-  }
-  const readsCertificate =
-    sign.certificateFile != null ||
-    sign.certificateSubjectName != null ||
-    sign.certificateSha1 != null ||
-    (sign.type === "signtool" && (config.cscLink != null || win.cscLink != null))
-  return !readsCertificate
+  return isPlainObject(sign) && typeof sign.sign === "string" && sign.publisherName === undefined && win.verifyUpdateCodeSignature !== false
 }
 
 /**

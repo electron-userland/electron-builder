@@ -465,17 +465,8 @@ class ConfigCodemod {
     if (isNullish(hook) || (this.isLiteral(hook) && !ts.isStringLiteralLike(hook))) {
       return
     }
-    // Mere presence suppresses: publisherName with any value (null too), and a certificate or cscLink with any non-null value.
+    // Mere presence suppresses: publisherName with any value (null too). A certificate in the config doesn't: a hook needs publisherName.
     if (field("publisherName") !== undefined || isFalseOrUnread(this.propValue(win, "verifyUpdateCodeSignature"))) {
-      return
-    }
-    if (["certificateFile", "certificateSubjectName", "certificateSha1"].some(name => !isNullish(field(name)))) {
-      return
-    }
-    // A non-literal type may be "signtool".
-    const type = legacy == null ? this.propValue(sign, "type") : undefined
-    const isSigntool = legacy === "signtool" || (type !== undefined && (ts.isStringLiteralLike(type) ? type.text === "signtool" : !this.isLiteral(type)))
-    if (isSigntool && (!isNullish(this.propValue(root, "cscLink")) || !isNullish(this.propValue(win, "cscLink")))) {
       return
     }
     this.advisories.push(WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY)
