@@ -13,7 +13,7 @@ import fsExtra from "fs-extra"
 import type { IncomingHttpHeaders, IncomingMessage, OutgoingHttpHeaders, Server } from "http"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
-import { afterEach, describe, expect, test, vi } from "vitest"
+import { afterEach, describe, test, vi } from "vitest"
 import { gzipSync } from "zlib"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { createNsisUpdater, createTestAppAdapter, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
@@ -38,7 +38,7 @@ describe("download URLs chosen by the update manifest", () => {
 
   // a local static server that records every request; two servers on different ports are different origins
   async function serve(tmpDir: TmpDir) {
-    const root = await tmpDir.getTempDir()
+    const root = await tmpDir.getTempDir({ prefix: "manifest-origin-server" })
     const { server, port } = await createLocalServer(root)
     servers.push(server)
     const requests: Array<{ pathname: string; search: string; headers: IncomingHttpHeaders }> = []
@@ -68,7 +68,7 @@ describe("download URLs chosen by the update manifest", () => {
     return updater
   }
 
-  test("a download on another origin gets no credential headers or feed query", async ({ tmpDir }) => {
+  test("a download on another origin gets no credential headers or feed query", async ({ tmpDir, expect }) => {
     const feed = await serve(tmpDir)
     const foreign = await serve(tmpDir)
     await feed.write("latest.yml", channelYml(`${foreign.url}/${INSTALLER_NAME}`))
@@ -91,7 +91,7 @@ describe("download URLs chosen by the update manifest", () => {
     expect(foreign.requests[0].headers).toMatchObject({ accept: "*/*", "user-agent": "electron-builder" })
   })
 
-  test("the web package on another origin gets no credentials; the same-origin installer keeps them", async ({ tmpDir }) => {
+  test("the web package on another origin gets no credentials; the same-origin installer keeps them", async ({ tmpDir, expect }) => {
     const feed = await serve(tmpDir)
     const foreign = await serve(tmpDir)
     await feed.write("latest.yml", channelYml(INSTALLER_NAME, { [process.arch]: { path: `${foreign.url}/${PACKAGE_NAME}`, sha512: sha512(PACKAGE), size: PACKAGE.length } }))
@@ -130,7 +130,7 @@ describe("differential downloads use the per-download headers", () => {
     tuneTestUpdater(updater, { platform: "win32", isUseDifferentialDownload: true })
     updater.requestHeaders = { "X-Tenant": "acme" }
     updater.addAuthHeader("Bearer s")
-    ;(updater as any).downloadedUpdateHelper = new DownloadedUpdateHelper(await tmpDir.getTempDir())
+    ;(updater as any).downloadedUpdateHelper = new DownloadedUpdateHelper(await tmpDir.getTempDir({ prefix: "manifest-origin-cache" }))
     return updater
   }
 
@@ -169,14 +169,14 @@ describe("differential downloads use the per-download headers", () => {
 
   async function differentialDownloadInstaller(updater: AppUpdater, provider: Provider<any>, info: UpdateInfo, tmpDir: TmpDir) {
     const fileInfo = provider.resolveFiles(info)[0]
-    const installerPath = path.join(await tmpDir.getTempDir(), "installer.exe")
+    const installerPath = path.join(await tmpDir.getTempDir({ prefix: "manifest-origin-installer" }), "installer.exe")
     return (updater as any).differentialDownloadInstaller(fileInfo, downloadUpdateOptions(updater, provider, info), installerPath, provider, "installer.exe")
   }
 
   // another host, and the feed's host over plain http
   test.for(["https://cdn.example.net/", "http://feed.example.com/updates/"])(
     "blockmaps and range requests of a file on another origin (%s) get no credentials or feed query",
-    async (base, { tmpDir }) => {
+    async (base, { tmpDir, expect }) => {
       const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
       const provider = createProvider(updater, { provider: "generic", url: FEED_URL } as GenericServerOptions)
       const blockMapRequests = captureBlockMapRequests(updater)
@@ -193,7 +193,7 @@ describe("differential downloads use the per-download headers", () => {
     }
   )
 
-  test("same-origin blockmaps and range requests keep credentials and feed query", async ({ tmpDir }) => {
+  test("same-origin blockmaps and range requests keep credentials and feed query", async ({ tmpDir, expect }) => {
     const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
     const provider = createProvider(updater, { provider: "generic", url: FEED_URL } as GenericServerOptions)
     const blockMapRequests = captureBlockMapRequests(updater)
@@ -229,7 +229,7 @@ describe("differential downloads use the per-download headers", () => {
       extra: {},
       override: "https://blockmaps.example.org/old/",
     },
-  ])("$name: blockmaps derived from a same-origin file URL that resolve to another host get no credentials", async ({ options, fileUrl, extra, override }, { tmpDir }) => {
+  ])("$name: blockmaps derived from a same-origin file URL that resolve to another host get no credentials", async ({ options, fileUrl, extra, override }, { tmpDir, expect }) => {
     const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
     updater.previousBlockmapBaseUrlOverride = override
     const provider = createProvider(updater, options)
@@ -250,7 +250,7 @@ describe("differential downloads use the per-download headers", () => {
     expect(rangeRequestHeaders[0]).toHaveProperty("authorization", "Bearer s")
   })
 
-  test("the old blockmap from an app-set previousBlockmapBaseUrlOverride keeps credentials", async ({ tmpDir }) => {
+  test("the old blockmap from an app-set previousBlockmapBaseUrlOverride keeps credentials", async ({ tmpDir, expect }) => {
     const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
     updater.previousBlockmapBaseUrlOverride = "https://blockmaps.example.org/old/"
     const provider = createProvider(updater, { provider: "generic", url: FEED_URL } as GenericServerOptions)
@@ -269,12 +269,12 @@ describe("differential downloads use the per-download headers", () => {
     }
   })
 
-  test("the NSIS web-package differential download strips credentials for another origin", async ({ tmpDir }) => {
+  test("the NSIS web-package differential download strips credentials for another origin", async ({ tmpDir, expect }) => {
     const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
     const provider = createProvider(updater, { provider: "generic", url: FEED_URL } as GenericServerOptions)
     const rangeRequestHeaders = captureRangeRequestHeaders(FileWithEmbeddedBlockMapDifferentialDownloader)
     const options = downloadUpdateOptions(updater, provider, updateInfo("app-1.1.0.exe"))
-    const packagePath = path.join(await tmpDir.getTempDir(), "package.7z")
+    const packagePath = path.join(await tmpDir.getTempDir({ prefix: "manifest-origin-package" }), "package.7z")
     const differentialDownloadWebPackage = (packageUrl: string): Promise<boolean> =>
       (updater as any).differentialDownloadWebPackage(options, { path: packageUrl, sha512: "x", size: 10, blockMapSize: 4 }, packagePath, provider)
 
@@ -288,12 +288,12 @@ describe("differential downloads use the per-download headers", () => {
     expect(rangeRequestHeaders[1]).toHaveProperty("authorization", "Bearer s")
   })
 
-  test("the AppImage differential download strips credentials for another origin", async ({ tmpDir }) => {
+  test("the AppImage differential download strips credentials for another origin", async ({ tmpDir, expect }) => {
     const updater = await setUpUpdater(new AppImageUpdater(null, await createTestAppAdapter("1.0.0")), tmpDir)
     const provider = createProvider(updater, { provider: "generic", url: FEED_URL } as GenericServerOptions)
     const rangeRequestHeaders = captureRangeRequestHeaders(FileWithEmbeddedBlockMapDifferentialDownloader)
     const info = updateInfo("https://cdn.example.net/app-1.1.0.AppImage")
-    const updateFile = path.join(await tmpDir.getTempDir(), "app.AppImage")
+    const updateFile = path.join(await tmpDir.getTempDir({ prefix: "manifest-origin-appimage" }), "app.AppImage")
 
     await expect(
       (updater as any).downloadDifferential(provider.resolveFiles(info)[0], "/old/app.AppImage", updateFile, provider, downloadUpdateOptions(updater, provider, info))
@@ -304,7 +304,7 @@ describe("differential downloads use the per-download headers", () => {
     expect(rangeRequestHeaders[0]).toHaveProperty("accept", "*/*")
   })
 
-  test("private GitHub declares feedBaseUrl null: the request headers go to every download URL", async ({ tmpDir }) => {
+  test("private GitHub declares feedBaseUrl null: the request headers go to every download URL", async ({ tmpDir, expect }) => {
     const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
     const provider = createProvider(updater, { provider: "github", owner: "owner", repo: "repo", token: "t" } as GithubOptions)
     const options = downloadUpdateOptions(updater, provider, updateInfo("app-1.1.0.exe"))
