@@ -81,6 +81,42 @@ function checkOptions(publishPolicy: any) {
   }
 }
 
+/** Emitted once per process — app-update.yml is written for every pack. */
+let feedQueryWarningEmitted = false
+
+/**
+ * electron-updater 7 adds the query string of a generic feed url (typically a token), like the credential headers, only to
+ * downloads on the feed's origin. An app whose latest*.yml points downloads at another origin that relies on that query gets
+ * 401/403 at update time, inside a shipped app, with nothing at build time saying why — `migrate-schema` prints the same advisory,
+ * but cannot be relied on to have been run. Only the query parameter names are logged, never the url or the values.
+ *
+ * @internal exported for tests
+ */
+export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): void {
+  const url = publishConfig.provider === "generic" ? (publishConfig as GenericServerOptions).url : null
+  const queryStart = typeof url === "string" ? url.indexOf("?") : -1
+  if (queryStart < 0 || feedQueryWarningEmitted) {
+    return
+  }
+  feedQueryWarningEmitted = true
+  const queryParameters = [...new Set(new URLSearchParams(url!.slice(queryStart + 1).split("#")[0]).keys())]
+  log.warn(
+    {
+      queryParameters: queryParameters.length === 0 ? "(none)" : queryParameters.join(", "),
+      solution: "serve the update files from the feed origin (relative files[].url, the default) or use pre-signed URLs",
+    },
+    "the generic publish url has a query string. electron-updater 7 (electron-builder v27) adds it, and sends the credential headers from requestHeaders / addAuthHeader, " +
+      "only to downloads on the feed's origin (scheme, host and port): a download url in latest*.yml on another origin is requested without them. " +
+      "Nothing changes for the relative URLs electron-builder writes. " +
+      "See https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+  )
+}
+
+/** @internal exported for tests — re-arms the once-per-process warning. */
+export function resetGenericFeedQueryWarning(): void {
+  feedQueryWarningEmitted = false
+}
+
 /**
  * v26 published implicitly when it detected a CI tag; v27 requires an explicit `--publish` policy.
  * Without a signal, a tagged release pipeline goes green and uploads nothing — the build looks
@@ -521,6 +557,7 @@ async function createAppUpdateConfiguration(
     ...publishConfigs[0],
     updaterCacheDirName: packager.appInfo.updaterCacheDirName,
   }
+  warnAboutGenericFeedQuery(publishConfig)
 
   if (packager.platform === Platform.WINDOWS && publishConfig.publisherName == null) {
     const winPackager = packager as WinPackager
