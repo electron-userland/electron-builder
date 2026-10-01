@@ -37,6 +37,10 @@ describe("newUrlFromBase — the base query stays on the base origin", () => {
     expect(utils.newUrlFromBase("http://feed.example.com/updates/app.exe", feedUrl).href).toBe("http://feed.example.com/updates/app.exe")
   })
 
+  test("an http → https upgrade of the same host keeps the feed query, like the credential headers", ({ expect }) => {
+    expect(utils.newUrlFromBase("https://feed.example.com/app.exe", new URL("http://feed.example.com/?token=secret")).href).toBe("https://feed.example.com/app.exe?token=secret")
+  })
+
   test("a blockmap path that resolves to another origin does not get the file's query", ({ expect }) => {
     // `..//host/…` in the update manifest yields a same-origin file URL whose pathname starts with `//`
     const fileUrl = utils.newUrlFromBase("..//cdn.example.net/app.exe", feedUrl)

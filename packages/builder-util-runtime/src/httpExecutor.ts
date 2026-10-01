@@ -426,6 +426,14 @@ Please double check that your authentication token is correct. Due to security r
     return new URL(`${protocol}//${hostname}${port}${path}`)
   }
 
+  /**
+   * Whether `targetUrl` is on another origin than `originUrl` for the purpose of sending credentials: another host, port or
+   * scheme, except an `http` → `https` upgrade of the same host on the default ports.
+   */
+  static isCrossOrigin(originUrl: URL, targetUrl: URL): boolean {
+    return HttpExecutor.isCrossOriginRedirect(originUrl, targetUrl)
+  }
+
   private static isCrossOriginRedirect(originalUrl: URL, redirectUrl: URL): boolean {
     // Case-insensitive hostname comparison
     if (originalUrl.hostname.toLowerCase() !== redirectUrl.hostname.toLowerCase()) {
