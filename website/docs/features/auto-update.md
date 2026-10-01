@@ -123,7 +123,16 @@ export default class AppUpdater {
 ```
 
 :::note[Credentials are only sent to the update feed's origin]
-The credential headers in `requestHeaders` / `addAuthHeader` — headers such as `Authorization`, the same set that is removed on a cross-origin redirect — and the query string of the feed `url` are only sent to the feed's origin (scheme, host and port; as on redirects, an `http` → `https` upgrade of the feed host on the default ports keeps the headers and the feed query). With the generic, s3, spaces, r2, keygen, bitbucket, github and gitlab providers, an update file whose URL in `latest*.yml` is on another origin, and the blockmaps and differential range requests derived from it, are downloaded without them; such a URL keeps its own query string. With every provider, including custom ones, a URL that electron-updater resolves against the feed URL (such as `files[].url` or a blockmap) gets the feed query only on the feed's origin. Serve the update files from the feed origin (relative `files[].url`, the default) or use pre-signed URLs. [Signed update manifests](./signed-update-manifests.md) cover `files[].url` and `packages.<arch>.path`, so a pre-signed URL has to be in `latest*.yml` before it is signed (see [Key storage](./key-rotation.md#key-storage)). A custom provider opts in by overriding `Provider.feedBaseUrl`.
+The credential headers in `requestHeaders` / `addAuthHeader` — headers such as `Authorization`, the same set that is removed on a cross-origin redirect — and the query string of the feed `url` are only sent to the feed's origin (scheme, host and port; as on redirects, an `http` → `https` upgrade of the feed host on the default ports keeps the headers and the feed query). With the generic, s3, spaces, r2, keygen, bitbucket, github and gitlab providers, an update file whose URL in `latest*.yml` is on another origin, and the blockmaps and differential range requests derived from it, are downloaded without them; such a URL keeps its own query string. With every provider, including custom ones, a URL that electron-updater resolves against the feed URL (such as `files[].url` or a blockmap) gets the feed query only on the feed's origin. Serve the update files from the feed origin (relative `files[].url`, the default) or use pre-signed URLs. [Signed update manifests](./signed-update-manifests.md) cover `files[].url` and `packages.<arch>.path`, so a pre-signed URL has to be in `latest*.yml` before it is signed (see [Key storage](./key-rotation.md#key-storage)). A custom provider (one that does not extend a built-in provider such as `GenericProvider`) declares where these headers go by overriding `Provider.feedBaseUrl`: return its feed URL to send them only to that origin, or `null` to send the request headers to every download URL. If it declares neither and the downloads carry credential headers, `downloadUpdate()` fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` before any download request:
+
+```typescript
+class MyProvider extends Provider<UpdateInfo> {
+  get feedBaseUrl(): URL | null {
+    return new URL("https://updates.example.com/") // or null
+  }
+  // getLatestVersion(), resolveFiles(), …
+}
+```
 :::
 
 ### Custom downloaded-file verification

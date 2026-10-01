@@ -6,7 +6,8 @@ import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHel
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "electron-updater/src/differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { GenericDifferentialDownloader } from "electron-updater/src/differentialDownloader/GenericDifferentialDownloader"
 import { createClient } from "electron-updater/src/providerFactory"
-import type { Provider } from "electron-updater/src/providers/Provider"
+import { Provider, resolveFiles } from "electron-updater/src/providers/Provider"
+import type { ResolvedUpdateFileInfo } from "electron-updater/src/types"
 import { createHash } from "crypto"
 import fsExtra from "fs-extra"
 import type { IncomingHttpHeaders, IncomingMessage, OutgoingHttpHeaders, Server } from "http"
@@ -303,12 +304,108 @@ describe("differential downloads use the per-download headers", () => {
     expect(rangeRequestHeaders[0]).toHaveProperty("accept", "*/*")
   })
 
-  test("a provider without feedBaseUrl (private GitHub, custom) sends the request headers to every download URL", async ({ tmpDir }) => {
+  test("private GitHub declares feedBaseUrl null: the request headers go to every download URL", async ({ tmpDir }) => {
     const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
     const provider = createProvider(updater, { provider: "github", owner: "owner", repo: "repo", token: "t" } as GithubOptions)
     const options = downloadUpdateOptions(updater, provider, updateInfo("app-1.1.0.exe"))
 
     expect(provider.feedBaseUrl).toBeNull()
     expect((updater as any).downloadRequestHeaders(new URL("https://objects.example.net/app-1.1.0.exe"), options)).toBe(options.requestHeaders)
+  })
+})
+
+// A custom provider declares where the credential headers may go (Provider.feedBaseUrl); a download with credential headers
+// through a provider that does not declare it is a configuration error, not a silent fallback to sending them everywhere.
+describe("a custom provider must declare feedBaseUrl to send credentials", () => {
+  const FEED = "https://feed.example.com/updates/"
+  const INFO: UpdateInfo = { version: "1.1.0", files: [{ url: "app-1.1.0.exe", sha512: "x", size: 10 }], releaseDate: "2024-01-01T00:00:00.000Z" }
+
+  class UndeclaredProvider extends Provider<UpdateInfo> {
+    constructor() {
+      super({ isUseMultipleRangeRequest: false, platform: "win32", executor: {} as any })
+    }
+
+    getLatestVersion(): Promise<UpdateInfo> {
+      return Promise.resolve(INFO)
+    }
+
+    resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo> {
+      return resolveFiles(updateInfo, new URL(FEED))
+    }
+  }
+
+  class DeclaredProvider extends UndeclaredProvider {
+    constructor(private readonly declared: URL | null) {
+      super()
+    }
+
+    get feedBaseUrl(): URL | null {
+      return this.declared
+    }
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  async function createUpdater(provider: Provider<any>, withAuthHeader: boolean) {
+    const updater = await createNsisUpdater("1.0.0")
+    updater.requestHeaders = { "X-Tenant": "acme" }
+    if (withAuthHeader) {
+      updater.addAuthHeader("Bearer s")
+    }
+    ;(updater as any).updateInfoAndProvider = { info: INFO, provider }
+    const doDownloadUpdate = vi.spyOn(updater as any, "doDownloadUpdate").mockResolvedValue([])
+    const options: DownloadUpdateOptions = {
+      updateInfoAndProvider: { info: INFO, provider },
+      requestHeaders: (updater as any).computeRequestHeaders(provider),
+      cancellationToken: new CancellationToken(),
+    }
+    const downloadRequestHeaders = (url: string): OutgoingHttpHeaders => (updater as any).downloadRequestHeaders(new URL(url), options)
+    return { updater, doDownloadUpdate, options, downloadRequestHeaders }
+  }
+
+  test("undeclared with a credential header: the download fails with a configuration error before any request", async ({ expect }) => {
+    const { updater, doDownloadUpdate, downloadRequestHeaders } = await createUpdater(new UndeclaredProvider(), true)
+    const events = trackEvents(updater)
+
+    await expect(updater.downloadUpdate()).rejects.toMatchObject({
+      code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED",
+      message: expect.stringContaining("The custom update provider UndeclaredProvider does not declare feedBaseUrl"),
+    })
+    expect(doDownloadUpdate).not.toHaveBeenCalled()
+    expect(events).toEqual(["error"])
+    // the per-download headers refuse too, should a download start without downloadUpdate
+    expect(() => downloadRequestHeaders(`${FEED}app-1.1.0.exe`)).toThrow(expect.objectContaining({ code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED" }))
+  })
+
+  test("undeclared without credential headers: the download runs with the request headers", async ({ expect }) => {
+    const { updater, doDownloadUpdate, options, downloadRequestHeaders } = await createUpdater(new UndeclaredProvider(), false)
+
+    await expect(updater.downloadUpdate()).resolves.toEqual([])
+    expect(doDownloadUpdate).toHaveBeenCalledTimes(1)
+    expect(doDownloadUpdate.mock.calls[0][0]).toMatchObject({ requestHeaders: { "X-Tenant": "acme" } })
+    expect(downloadRequestHeaders("https://cdn.example.net/app-1.1.0.exe")).toBe(options.requestHeaders)
+  })
+
+  test("explicit null: the request headers go to every download URL", async ({ expect }) => {
+    const { updater, doDownloadUpdate, options, downloadRequestHeaders } = await createUpdater(new DeclaredProvider(null), true)
+
+    await expect(updater.downloadUpdate()).resolves.toEqual([])
+    expect(doDownloadUpdate).toHaveBeenCalledTimes(1)
+    const headers = downloadRequestHeaders("https://cdn.example.net/app-1.1.0.exe")
+    expect(headers).toBe(options.requestHeaders)
+    expect(headers).toHaveProperty("authorization", "Bearer s")
+  })
+
+  test("a feed URL: the credential headers only go to its origin", async ({ expect }) => {
+    const { updater, doDownloadUpdate, downloadRequestHeaders } = await createUpdater(new DeclaredProvider(new URL(FEED)), true)
+
+    await expect(updater.downloadUpdate()).resolves.toEqual([])
+    expect(doDownloadUpdate).toHaveBeenCalledTimes(1)
+    expect(downloadRequestHeaders(`${FEED}app-1.1.0.exe`)).toMatchObject({ authorization: "Bearer s", "X-Tenant": "acme" })
+    const foreign = downloadRequestHeaders("https://cdn.example.net/app-1.1.0.exe")
+    expect(foreign).not.toHaveProperty("authorization")
+    expect(foreign).toHaveProperty("X-Tenant", "acme")
   })
 })

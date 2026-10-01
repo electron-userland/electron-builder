@@ -729,6 +729,17 @@ describe("HttpExecutor.removeCrossOriginSensitiveHeaders", () => {
   })
 })
 
+describe("HttpExecutor.sensitiveHeaderNames", () => {
+  test("names the headers stripped on a cross-origin redirect, whatever their spelling", ({ expect }) => {
+    const headers = { Authorization: "Bearer t", private_token: "p", "X-Api-Key": "k", "User-Agent": "electron-builder", accept: "*/*" }
+    expect(HttpExecutor.sensitiveHeaderNames(headers)).toEqual(["Authorization", "private_token", "X-Api-Key"])
+  })
+
+  test("ignores a sensitive header without a value", ({ expect }) => {
+    expect(HttpExecutor.sensitiveHeaderNames({ authorization: undefined, accept: "*/*" })).toEqual([])
+  })
+})
+
 describe("safeStringifyJson field redaction", () => {
   test("strips token variants", () => {
     const data = { token: "x", TOKEN: "x", access_token: "x", ACCESS_TOKEN: "x", refreshToken: "x" }

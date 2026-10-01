@@ -107,11 +107,12 @@ describe("createClient — feedBaseUrl", () => {
     { name: "bitbucket", options: { provider: "bitbucket", owner: "owner", slug: "repo" }, expected: "https://api.bitbucket.org/2.0/repositories/owner/repo/downloads/" },
     { name: "github", options: { provider: "github", owner: "owner", repo: "repo" }, expected: "https://github.com/" },
     { name: "gitlab", options: { provider: "gitlab", projectId: 1, host: "gitlab.example.com" }, expected: "https://gitlab.example.com/api/v4/" },
-    // private GitHub asset downloads are API URLs that need the token on the first request
+    // private GitHub asset downloads are API URLs that need the token on the first request: an explicit null, not undeclared
     { name: "private github", options: { provider: "github", owner: "owner", repo: "repo", token: "t" }, expected: null },
   ]
 
   test.each(cases)("$name", ({ options, expected }) => {
-    expect(createClient(options, updater, runtimeOptions).feedBaseUrl?.href ?? null).toBe(expected)
+    const feedBaseUrl = createClient(options, updater, runtimeOptions).feedBaseUrl
+    expect(expected == null ? feedBaseUrl : feedBaseUrl?.href).toBe(expected)
   })
 })

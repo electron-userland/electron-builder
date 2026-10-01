@@ -69,12 +69,13 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   /**
-   * Base URL of the update feed. When this is set, the credential-bearing request headers (the ones stripped on a cross-origin redirect)
-   * are only sent to download URLs on its origin.
-   * `null` (default) sends the request headers to every download URL; a custom provider opts in by overriding this getter.
+   * Base URL of the update feed: the credential-bearing request headers (the ones stripped on a cross-origin redirect) are only sent to
+   * download URLs on its origin. `null` sends the request headers to every download URL.
+   * The default, `undefined`, means not declared: a download with credential headers (from `requestHeaders` / `addAuthHeader`) then fails
+   * with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, so a custom provider used with credentials must override this getter.
    */
-  get feedBaseUrl(): URL | null {
-    return null
+  get feedBaseUrl(): URL | null | undefined {
+    return undefined
   }
 
   setRequestHeaders(value: OutgoingHttpHeaders | null): void {

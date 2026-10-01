@@ -415,6 +415,11 @@ Please double check that your authentication token is correct. Due to security r
     return result
   }
 
+  /** The names in `headers` of the credential-bearing headers stripped on cross-origin redirects (see {@link addSensitiveRedirectHeader}). */
+  static sensitiveHeaderNames(headers: OutgoingHttpHeaders): Array<string> {
+    return Object.keys(headers).filter(key => headers[key] != null && SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key)))
+  }
+
   private static reconstructOriginalUrl(options: RequestOptions): URL {
     const protocol = options.protocol || "https:"
     if (!options.hostname) {

@@ -813,9 +813,17 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return e
     }
 
+    const requestHeaders = this.computeRequestHeaders(updateInfoAndProvider.provider)
+    try {
+      // fail before any download rather than in the middle of one
+      AppUpdater.checkFeedBaseUrlDeclared(updateInfoAndProvider.provider, requestHeaders)
+    } catch (e: any) {
+      return Promise.reject(errorHandler(e))
+    }
+
     this.downloadPromise = this.doDownloadUpdate({
       updateInfoAndProvider,
-      requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
+      requestHeaders,
       cancellationToken,
       disableWebInstaller: this.disableWebInstaller,
       disableDifferentialDownload: this.disableDifferentialDownload,
@@ -899,12 +907,30 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Headers for a download from `url`: when the provider has a `feedBaseUrl`, the credential-bearing ones are dropped if `url` is on
-   * another origin than `originUrl` (the feed by default).
+   * another origin than `originUrl` (the feed by default). `null` keeps them for every URL.
    */
   protected downloadRequestHeaders(url: URL, downloadUpdateOptions: DownloadUpdateOptions, originUrl?: URL): OutgoingHttpHeaders {
-    const feedBaseUrl = downloadUpdateOptions.updateInfoAndProvider.provider.feedBaseUrl
+    const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const headers = downloadUpdateOptions.requestHeaders
+    AppUpdater.checkFeedBaseUrlDeclared(provider, headers)
+    const feedBaseUrl = provider.feedBaseUrl
     return feedBaseUrl == null ? headers : HttpExecutor.removeCrossOriginSensitiveHeaders(headers, originUrl ?? feedBaseUrl, url)
+  }
+
+  // Credential headers are only sent where the provider says (Provider.feedBaseUrl); a provider that does not say is a configuration error.
+  private static checkFeedBaseUrlDeclared(provider: Provider<any>, headers: OutgoingHttpHeaders): void {
+    if (provider.feedBaseUrl !== undefined) {
+      return
+    }
+    const names = HttpExecutor.sensitiveHeaderNames(headers)
+    if (names.length !== 0) {
+      throw newError(
+        `The custom update provider ${provider.constructor.name} does not declare feedBaseUrl, but its downloads would send the credential headers ${names.join(", ")} ` +
+          `(from requestHeaders, addAuthHeader or fileExtraDownloadHeaders). Override Provider.feedBaseUrl to return the feed URL ` +
+          `(the headers are then only sent to its origin), or null to send the request headers to every origin.`,
+        "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED"
+      )
+    }
   }
 
   private async getOrCreateStagingUserId(): Promise<string> {
