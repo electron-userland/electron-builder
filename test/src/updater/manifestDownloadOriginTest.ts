@@ -312,6 +312,103 @@ describe("differential downloads use the per-download headers", () => {
     expect(provider.feedBaseUrl).toBeNull()
     expect((updater as any).downloadRequestHeaders(new URL("https://objects.example.net/app-1.1.0.exe"), options)).toBe(options.requestHeaders)
   })
+
+  // ── blockMapUrl: the update manifest names the file's blockmap (e.g. separately pre-signed) ──
+
+  test("resolveFiles: a relative blockMapUrl resolves against the feed (feed query), an absolute one keeps only its own query", async ({ tmpDir, expect }) => {
+    const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
+    const provider = createProvider(updater, { provider: "generic", url: FEED_URL } as GenericServerOptions)
+    const resolve = (blockMapUrl: string | undefined) =>
+      provider.resolveFiles({ ...updateInfo("https://cdn.example.net/app-1.1.0.exe?X-Amz-Signature=installer"), files: [{ url: "app-1.1.0.exe", sha512: "x", blockMapUrl }] })[0]
+
+    expect(resolve("maps/app-1.1.0.exe.blockmap").blockMapUrl?.href).toBe("https://feed.example.com/updates/maps/app-1.1.0.exe.blockmap?token=s")
+    expect(resolve("https://cdn.example.net/app-1.1.0.exe.blockmap?X-Amz-Signature=blockmap").blockMapUrl?.href).toBe(
+      "https://cdn.example.net/app-1.1.0.exe.blockmap?X-Amz-Signature=blockmap"
+    )
+    expect(resolve(undefined)).not.toHaveProperty("blockMapUrl")
+  })
+
+  test("resolveFiles: GitHub resolves a relative blockMapUrl to the release download like the file url", async ({ tmpDir, expect }) => {
+    const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
+    const provider = createProvider(updater, { provider: "github", owner: "owner", repo: "repo" } as GithubOptions)
+    const [resolved] = provider.resolveFiles(updateInfo("app 1.1.0.exe", { tag: "v1.1.0", files: [{ url: "app 1.1.0.exe", sha512: "x", blockMapUrl: "app 1.1.0.exe.blockmap" }] }))
+
+    expect(resolved.url.href).toBe("https://github.com/owner/repo/releases/download/v1.1.0/app-1.1.0.exe")
+    expect(resolved.blockMapUrl?.href).toBe("https://github.com/owner/repo/releases/download/v1.1.0/app-1.1.0.exe.blockmap")
+  })
+
+  async function writeCachedOldBlockMap(updater: AppUpdater) {
+    const cacheDir = (updater as any).downloadedUpdateHelper.cacheDir
+    await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), gzipSync(JSON.stringify({ version: "2", files: [] })))
+  }
+
+  const PRE_SIGNED = {
+    url: "https://cdn.example.net/app-1.1.0.exe?X-Amz-Signature=installer",
+    blockMapUrl: "https://cdn.example.net/app-1.1.0.exe.blockmap?X-Amz-Signature=blockmap",
+  }
+
+  test("blockMapUrl is used for the new blockmap; the old one comes from the cache", async ({ tmpDir, expect }) => {
+    const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
+    await writeCachedOldBlockMap(updater)
+    const provider = createProvider(updater, { provider: "generic", url: FEED_URL } as GenericServerOptions)
+    const blockMapRequests = captureBlockMapRequests(updater)
+    const rangeRequestHeaders = captureRangeRequestHeaders(GenericDifferentialDownloader)
+    const info = { ...updateInfo(""), files: [{ ...PRE_SIGNED, sha512: "x", size: 10 }] }
+
+    await expect(differentialDownloadInstaller(updater, provider, info, tmpDir)).resolves.toBe(false)
+
+    // the installer's signature is not reused on a derived blockmap URL, and the other origin gets no credentials
+    expect(blockMapRequests.map(it => it.url)).toEqual([PRE_SIGNED.blockMapUrl])
+    expect(blockMapRequests[0].headers).not.toHaveProperty("authorization")
+    expect(rangeRequestHeaders).toHaveLength(1)
+  })
+
+  test("a same-origin blockMapUrl keeps the credentials", async ({ tmpDir, expect }) => {
+    const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
+    await writeCachedOldBlockMap(updater)
+    const provider = createProvider(updater, { provider: "generic", url: FEED_URL } as GenericServerOptions)
+    const blockMapRequests = captureBlockMapRequests(updater)
+    captureRangeRequestHeaders(GenericDifferentialDownloader)
+    const info = { ...updateInfo(""), files: [{ url: "app-1.1.0.exe", blockMapUrl: "maps/app-1.1.0.exe.blockmap", sha512: "x", size: 10 }] }
+
+    await expect(differentialDownloadInstaller(updater, provider, info, tmpDir)).resolves.toBe(false)
+
+    expect(blockMapRequests.map(it => it.url)).toEqual(["https://feed.example.com/updates/maps/app-1.1.0.exe.blockmap?token=s"])
+    expect(blockMapRequests[0].headers).toHaveProperty("authorization", "Bearer s")
+  })
+
+  test("blockMapUrl without a cached old blockmap: no derived old URL, a full download that caches the new blockmap", async ({ tmpDir, expect }) => {
+    const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
+    const provider = createProvider(updater, { provider: "generic", url: FEED_URL } as GenericServerOptions)
+    const blockMapRequests = captureBlockMapRequests(updater)
+    const rangeRequestHeaders = captureRangeRequestHeaders(GenericDifferentialDownloader)
+    const info = { ...updateInfo(""), files: [{ ...PRE_SIGNED, sha512: "x", size: 10 }] }
+
+    // true: fall back to the full download
+    await expect(differentialDownloadInstaller(updater, provider, info, tmpDir)).resolves.toBe(true)
+
+    expect(blockMapRequests.map(it => it.url)).toEqual([PRE_SIGNED.blockMapUrl])
+    expect(rangeRequestHeaders).toHaveLength(0)
+    // promoted to the cache when the full download is done, for the next update
+    const pendingDir = (updater as any).downloadedUpdateHelper.cacheDirForPendingUpdate
+    expect(await fsExtra.pathExists(path.join(pendingDir, "current.blockmap"))).toBe(true)
+  })
+
+  test("blockMapUrl without a cached old blockmap: the old one comes from previousBlockmapBaseUrlOverride when set", async ({ tmpDir, expect }) => {
+    const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
+    updater.previousBlockmapBaseUrlOverride = "https://blockmaps.example.org/old/"
+    const provider = createProvider(updater, { provider: "generic", url: FEED_URL } as GenericServerOptions)
+    const blockMapRequests = captureBlockMapRequests(updater)
+    const rangeRequestHeaders = captureRangeRequestHeaders(GenericDifferentialDownloader)
+    const info = { ...updateInfo(""), files: [{ ...PRE_SIGNED, sha512: "x", size: 10 }] }
+
+    await expect(differentialDownloadInstaller(updater, provider, info, tmpDir)).resolves.toBe(false)
+
+    expect(blockMapRequests.map(it => it.url)).toEqual([PRE_SIGNED.blockMapUrl, "https://blockmaps.example.org/app-1.0.0.exe.blockmap"])
+    // the override's origin gets the credentials, as without blockMapUrl
+    expect(blockMapRequests[1].headers).toHaveProperty("authorization", "Bearer s")
+    expect(rangeRequestHeaders).toHaveLength(1)
+  })
 })
 
 // A custom provider declares where the credential headers may go (Provider.feedBaseUrl); a download with credential headers

@@ -1157,13 +1157,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return true
       }
       const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-      const blockmapFileUrls = await provider.getBlockMapFiles(
-        fileInfo.url,
-        this.app.version,
-        downloadUpdateOptions.updateInfoAndProvider.info.version,
-        this.previousBlockmapBaseUrlOverride
-      )
-      this._logger.info(`Download block maps (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
+      const override = this.previousBlockmapBaseUrlOverride
+      const getBlockMapFiles = () => provider.getBlockMapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version, override)
+      let oldBlockMapUrl: URL | null
+      let newBlockMapUrl: URL
+      if (fileInfo.blockMapUrl == null) {
+        ;[oldBlockMapUrl, newBlockMapUrl] = await getBlockMapFiles()
+      } else {
+        // The update manifest names the new blockmap (e.g. separately pre-signed), so a URL derived from the new file's URL is not
+        // valid for the old one: the old blockmap comes from the cache, else from previousBlockmapBaseUrlOverride.
+        newBlockMapUrl = fileInfo.blockMapUrl
+        oldBlockMapUrl = override ? (await getBlockMapFiles())[0] : null
+      }
+      this._logger.info(`Download block maps (old: "${oldBlockMapUrl ?? "cache only"}", new: ${newBlockMapUrl})`)
 
       const downloadBlockMap = async (url: URL, originUrl?: URL): Promise<BlockMap> => {
         const data = await this.httpExecutor.downloadToBuffer(url, {
@@ -1213,17 +1219,24 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return null
       }
 
-      const newBlockMapData = await downloadBlockMap(blockmapFileUrls[1])
+      const newBlockMapData = await downloadBlockMap(newBlockMapUrl)
       await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
 
       // get old blockmap from cache dir first, if not found, download it
       let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
       isOldBlockMapFromCache = oldBlockMapData != null
       if (oldBlockMapData == null) {
-        this._logger.info(`No cached blockmap for the old installer, downloading it from "${blockmapFileUrls[0]}"`)
+        if (oldBlockMapUrl == null) {
+          // the full download caches the new blockmap downloaded above, so the next update can be differential
+          this._logger.info(
+            "No cached blockmap for the old installer, and the update manifest sets blockMapUrl, so the old blockmap URL cannot be derived " +
+              "(set previousBlockmapBaseUrlOverride to download it): downloading the full update"
+          )
+          return true
+        }
+        this._logger.info(`No cached blockmap for the old installer, downloading it from "${oldBlockMapUrl}"`)
         // the old blockmap comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
-        const override = this.previousBlockmapBaseUrlOverride
-        oldBlockMapData = await downloadBlockMap(blockmapFileUrls[0], override ? new URL(override) : undefined)
+        oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, override ? new URL(override) : undefined)
       }
 
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)

@@ -172,6 +172,7 @@ export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransform
     return {
       url: newUrlFromBase(pathTransformer(fileInfo.url), baseUrl),
       info: fileInfo,
+      ...(fileInfo.blockMapUrl == null ? {} : { blockMapUrl: newUrlFromBase(pathTransformer(fileInfo.blockMapUrl), baseUrl) }),
     }
   })
 

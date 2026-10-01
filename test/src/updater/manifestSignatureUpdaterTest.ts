@@ -258,3 +258,23 @@ describe("AppUpdater.verifyManifestSignature: malformed signed manifests", () =>
     await expect(verify(makeUpdater(), withoutFiles as UpdateInfo)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
   })
 })
+
+describe("AppUpdater.verifyManifestSignature: blockMapUrl", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const makeUpdater = () => {
+    const updater = new DebUpdater(null, stubApp)
+    updater.updateManifestPublicKey = publicKeyPem
+    return updater
+  }
+  const verify = (updater: DebUpdater, info: UpdateInfo) => (updater as any).verifyManifestSignature(info)
+  const info = signed({ ...makeInfo(), files: [{ ...makeInfo().files[0], blockMapUrl: "https://cdn.example.com/App-2.0.0.exe.blockmap?sig=1" }] }, privateKeyPem)
+
+  it("passes a manifest signed with a blockMapUrl", async ({ expect }) => {
+    await expect(verify(makeUpdater(), info)).resolves.toBeUndefined()
+  })
+
+  it("throws ERR_UPDATER_MANIFEST_SIGNATURE_INVALID when the blockMapUrl is changed after signing", async ({ expect }) => {
+    const tampered: UpdateInfo = { ...info, files: [{ ...info.files[0], blockMapUrl: "https://cdn.example.com/App-2.0.0.exe.blockmap?sig=2" }] }
+    await expect(verify(makeUpdater(), tampered)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+  })
+})
