@@ -409,6 +409,83 @@ describe("differential downloads use the per-download headers", () => {
     expect(blockMapRequests[1].headers).toHaveProperty("authorization", "Bearer s")
     expect(rangeRequestHeaders).toHaveLength(1)
   })
+
+  // ── v27 behaviour changes announce themselves (plain-JavaScript apps get no type error) ──
+
+  describe("cross-origin download notices", () => {
+    const SECRET_FEED_URL = "https://feed.example.com/updates/?token=feed-secret-value&tenant=tenant-secret-value"
+    const DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+
+    async function setUp(tmpDir: TmpDir, options: { feedUrl?: string; auth?: boolean } = {}) {
+      const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
+      if (options.auth === false) {
+        updater.requestHeaders = { "X-Tenant": "acme" }
+      }
+      const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+      updater.logger = logger
+      const provider = createProvider(updater, { provider: "generic", url: options.feedUrl ?? SECRET_FEED_URL } as GenericServerOptions)
+      const downloadOptions = downloadUpdateOptions(updater, provider, updateInfo("app-1.1.0.exe"))
+      const headersFor = (url: string, originUrl?: string) =>
+        (updater as any).downloadRequestHeaders(new URL(url), downloadOptions, originUrl == null ? undefined : new URL(originUrl)) as OutgoingHttpHeaders
+      const warnings = () => logger.warn.mock.calls.map(it => String(it[0]))
+      return { headersFor, warnings }
+    }
+
+    test("a cross-origin download announces the dropped headers and feed query once, by name only", async ({ tmpDir, expect }) => {
+      const { headersFor, warnings } = await setUp(tmpDir)
+
+      headersFor("https://cdn.example.net/app-1.1.0.exe")
+      headersFor("https://cdn.example.net/app-1.1.0.exe.blockmap")
+      headersFor("https://other.example.org/app-1.0.0.exe.blockmap")
+
+      expect(warnings()).toHaveLength(2)
+      const [headersNotice, queryNotice] = warnings()
+      expect(headersNotice).toContain("sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (https://feed.example.com)")
+      expect(headersNotice).toContain("authorization not sent to https://cdn.example.net")
+      expect(queryNotice).toContain("adds the feed URL's query string (token, tenant) only to URLs on the update feed's origin (https://feed.example.com)")
+      expect(queryNotice).toContain("not added to the download from https://cdn.example.net")
+      for (const notice of warnings()) {
+        expect(notice).toContain(DOCS)
+        for (const secret of ["Bearer s", "feed-secret-value", "tenant-secret-value", "acme"]) {
+          expect(notice).not.toContain(secret)
+        }
+      }
+    })
+
+    test("same-origin downloads and the http → https upgrade announce nothing", async ({ tmpDir, expect }) => {
+      const { headersFor, warnings } = await setUp(tmpDir, { feedUrl: "http://feed.example.com/updates/?token=t" })
+
+      headersFor("http://feed.example.com/updates/app-1.1.0.exe")
+      headersFor("https://feed.example.com/updates/app-1.1.0.exe")
+
+      expect(warnings()).toEqual([])
+    })
+
+    test("no credential headers and no feed query: a cross-origin download announces nothing", async ({ tmpDir, expect }) => {
+      const { headersFor, warnings } = await setUp(tmpDir, { feedUrl: "https://feed.example.com/updates/", auth: false })
+
+      headersFor("https://cdn.example.net/app-1.1.0.exe")
+
+      expect(warnings()).toEqual([])
+    })
+
+    test("the old blockmap on the previousBlockmapBaseUrlOverride origin announces nothing", async ({ tmpDir, expect }) => {
+      const { headersFor, warnings } = await setUp(tmpDir)
+
+      headersFor("https://blockmaps.example.org/updates/app-1.0.0.exe.blockmap", "https://blockmaps.example.org/old/")
+
+      expect(warnings()).toEqual([])
+    })
+
+    test("a blockmap off the override origin announces the headers but not the feed query, which it never had", async ({ tmpDir, expect }) => {
+      const { headersFor, warnings } = await setUp(tmpDir)
+
+      headersFor("https://cdn.example.net/app-1.0.0.exe.blockmap", "https://blockmaps.example.org/old/")
+
+      expect(warnings()).toHaveLength(1)
+      expect(warnings()[0]).toContain("only to the update feed's origin (https://blockmaps.example.org)")
+    })
+  })
 })
 
 // A custom provider declares where the credential headers may go (Provider.feedBaseUrl); a download with credential headers
@@ -468,7 +545,9 @@ describe("a custom provider must declare feedBaseUrl to send credentials", () =>
 
     await expect(updater.downloadUpdate()).rejects.toMatchObject({
       code: "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED",
-      message: expect.stringContaining("The custom update provider UndeclaredProvider does not declare feedBaseUrl"),
+      message: expect.stringMatching(
+        /^The custom update provider UndeclaredProvider does not declare feedBaseUrl.*https:\/\/www\.electron\.build\/docs\/migration\/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin$/
+      ),
     })
     expect(doDownloadUpdate).not.toHaveBeenCalled()
     expect(events).toEqual(["error"])

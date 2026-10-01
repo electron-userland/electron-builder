@@ -306,6 +306,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   updateManifestPublicKey: string | Array<string> | null = null
 
   private manifestVerificationWarned = false
+  // v27 behaviour changes a plain-JavaScript app would otherwise not notice: each is announced once per updater
+  private crossOriginHeadersWarned = false
+  private crossOriginFeedQueryWarned = false
 
   /**
    *  The request headers.
@@ -717,8 +720,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       // `files` list or control characters in a signed field) — those are rejected before any key is tried.
       const cause =
         result.reason == null ? `none of the ${trustedKeys.length} trusted key(s) validates any of its signatures` : `the signed manifest is malformed (${result.reason})`
+      // download URLs written into latest*.yml after signing (e.g. pre-signed URLs) are the likely cause, rather than tampering
+      const blockMapUrlHint = (info.files ?? []).some(it => it?.blockMapUrl != null)
+        ? " files[].blockMapUrl is covered by the signature, like files[].url, so it has to be in latest*.yml before the manifest is signed: " +
+          "https://www.electron.build/docs/features/signed-update-manifests#what-is-signed"
+        : ""
       throw newError(
-        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.`,
+        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}`,
         "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID"
       )
     }
@@ -914,7 +922,37 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const headers = downloadUpdateOptions.requestHeaders
     AppUpdater.checkFeedBaseUrlDeclared(provider, headers)
     const feedBaseUrl = provider.feedBaseUrl
-    return feedBaseUrl == null ? headers : HttpExecutor.removeCrossOriginSensitiveHeaders(headers, originUrl ?? feedBaseUrl, url)
+    if (feedBaseUrl == null) {
+      return headers
+    }
+    const credentialOrigin = originUrl ?? feedBaseUrl
+    if (HttpExecutor.isCrossOrigin(credentialOrigin, url)) {
+      this.announceCrossOriginDownload(url, credentialOrigin, headers, originUrl == null ? feedBaseUrl : null)
+    }
+    return HttpExecutor.removeCrossOriginSensitiveHeaders(headers, credentialOrigin, url)
+  }
+
+  // Only names are logged (header names, query parameter names, origins), never values.
+  private announceCrossOriginDownload(url: URL, credentialOrigin: URL, headers: OutgoingHttpHeaders, feedBaseUrl: URL | null): void {
+    const docs = "https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+    const names = HttpExecutor.sensitiveHeaderNames(headers)
+    if (names.length !== 0 && !this.crossOriginHeadersWarned) {
+      this.crossOriginHeadersWarned = true
+      this._logger.warn(
+        `electron-updater 7 (electron-builder v27) sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (${credentialOrigin.origin}): ` +
+          `${names.join(", ")} not sent to ${url.origin}, which is another origin. ` +
+          `If that server needs them, serve the update files from the feed origin or use pre-signed URLs. ${docs}`
+      )
+    }
+    const feedQueryNames = feedBaseUrl == null ? [] : [...new Set(feedBaseUrl.searchParams.keys())]
+    if (feedQueryNames.length !== 0 && !this.crossOriginFeedQueryWarned) {
+      this.crossOriginFeedQueryWarned = true
+      this._logger.warn(
+        `electron-updater 7 (electron-builder v27) adds the feed URL's query string (${feedQueryNames.join(", ")}) only to URLs on the update feed's origin (${feedBaseUrl!.origin}): ` +
+          `not added to the download from ${url.origin}, which keeps its own query string. ` +
+          `If that server needs it, serve the update files from the feed origin or use pre-signed URLs. ${docs}`
+      )
+    }
   }
 
   // Credential headers are only sent where the provider says (Provider.feedBaseUrl); a provider that does not say is a configuration error.
@@ -927,7 +965,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       throw newError(
         `The custom update provider ${provider.constructor.name} does not declare feedBaseUrl, but its downloads would send the credential headers ${names.join(", ")} ` +
           `(from requestHeaders, addAuthHeader or fileExtraDownloadHeaders). Override Provider.feedBaseUrl to return the feed URL ` +
-          `(the headers are then only sent to its origin), or null to send the request headers to every origin.`,
+          `(the headers are then only sent to its origin), or null to send the request headers to every origin. ` +
+          `https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin`,
         "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED"
       )
     }
