@@ -24,6 +24,7 @@ import {
   getCacheDirectoryInternal,
   parseChecksumFile,
   resolveSeededChecksums,
+  retryDownload,
   shouldRetryDownloadError,
 } from "app-builder-lib/src/util/electronGet.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
@@ -304,6 +305,61 @@ describe("shouldRetryDownloadError", () => {
     expect(shouldRetryDownloadError(Object.assign(new Error("denied"), { code: "EACCES" }))).toBe(false)
     expect(shouldRetryDownloadError(null)).toBe(false)
     expect(shouldRetryDownloadError(undefined)).toBe(false)
+  })
+})
+
+// ─── retryDownload ────────────────────────────────────────────────────────────
+
+describe("retryDownload", () => {
+  /** HTTP server that never answers its first `stalledRequests` requests and answers "ok" afterwards. */
+  async function startStallingServer(stalledRequests: number) {
+    let requests = 0
+    const server = http.createServer((_req, res) => {
+      if (++requests > stalledRequests) {
+        res.end("ok")
+      }
+    })
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    return {
+      url: `http://127.0.0.1:${(server.address() as net.AddressInfo).port}/toolset.tar.gz`,
+      requests: () => requests,
+      close: () => {
+        server.closeAllConnections()
+        return new Promise(resolve => server.close(resolve))
+      },
+    }
+  }
+
+  const download = (url: string) => (signal: AbortSignal) => fetch(url, { signal }).then(it => it.text())
+
+  test("retries a stalled attempt with a fresh timeout signal", async ({ expect }) => {
+    const server = await startStallingServer(1)
+    try {
+      expect(await retryDownload(download(server.url), null, 300)).toBe("ok")
+      expect(server.requests()).toBe(2)
+    } finally {
+      await server.close()
+    }
+  })
+
+  test("gives up after a second stall", async ({ expect }) => {
+    const server = await startStallingServer(Infinity)
+    try {
+      await expect(retryDownload(download(server.url), null, 300)).rejects.toMatchObject({ name: "TimeoutError" })
+      expect(server.requests()).toBe(2)
+    } finally {
+      await server.close()
+    }
+  })
+
+  test("does not retry when the caller's signal aborts", async ({ expect }) => {
+    const server = await startStallingServer(Infinity)
+    try {
+      await expect(retryDownload(download(server.url), AbortSignal.timeout(300), 60_000)).rejects.toMatchObject({ name: "TimeoutError" })
+      expect(server.requests()).toBe(1)
+    } finally {
+      await server.close()
+    }
   })
 })
 
