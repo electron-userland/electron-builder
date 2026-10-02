@@ -163,6 +163,12 @@ export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
   }
 }
 
+// An absolute blockMapUrl (e.g. a separately pre-signed URL) is used as-is: a provider's path transformer (such as GitHub's release
+// download path) only applies to a relative one, which resolves against the feed like `url`.
+function resolveBlockMapUrl(blockMapUrl: string, baseUrl: URL, pathTransformer: (p: string) => string): URL {
+  return newUrlFromBase(/^[a-z][a-z\d+.-]*:/i.test(blockMapUrl) ? blockMapUrl : pathTransformer(blockMapUrl), baseUrl)
+}
+
 export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransformer: (p: string) => string = (p: string): string => p): Array<ResolvedUpdateFileInfo> {
   const files = getFileList(updateInfo)
   const result: Array<ResolvedUpdateFileInfo> = files.map(fileInfo => {
@@ -172,7 +178,7 @@ export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransform
     return {
       url: newUrlFromBase(pathTransformer(fileInfo.url), baseUrl),
       info: fileInfo,
-      ...(fileInfo.blockMapUrl == null ? {} : { blockMapUrl: newUrlFromBase(pathTransformer(fileInfo.blockMapUrl), baseUrl) }),
+      ...(fileInfo.blockMapUrl == null ? {} : { blockMapUrl: resolveBlockMapUrl(fileInfo.blockMapUrl, baseUrl, pathTransformer) }),
     }
   })
 

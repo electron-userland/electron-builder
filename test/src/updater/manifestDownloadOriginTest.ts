@@ -337,6 +337,16 @@ describe("differential downloads use the per-download headers", () => {
     expect(resolved.blockMapUrl?.href).toBe("https://github.com/owner/repo/releases/download/v1.1.0/app-1.1.0.exe.blockmap")
   })
 
+  test("resolveFiles: GitHub keeps an absolute blockMapUrl as-is, with its own host and query", async ({ tmpDir, expect }) => {
+    const updater = await setUpUpdater(await createNsisUpdater("1.0.0"), tmpDir)
+    const provider = createProvider(updater, { provider: "github", owner: "owner", repo: "repo" } as GithubOptions)
+    const blockMapUrl = "https://cdn.example.net/app%201.1.0.exe.blockmap?X-Amz-Signature=blockmap&X-Amz-Expires=600"
+    const [resolved] = provider.resolveFiles(updateInfo("app 1.1.0.exe", { tag: "v1.1.0", files: [{ url: "app 1.1.0.exe", sha512: "x", blockMapUrl }] }))
+
+    expect(resolved.url.href).toBe("https://github.com/owner/repo/releases/download/v1.1.0/app-1.1.0.exe")
+    expect(resolved.blockMapUrl?.href).toBe(blockMapUrl)
+  })
+
   async function writeCachedOldBlockMap(updater: AppUpdater) {
     const cacheDir = (updater as any).downloadedUpdateHelper.cacheDir
     await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), gzipSync(JSON.stringify({ version: "2", files: [] })))
