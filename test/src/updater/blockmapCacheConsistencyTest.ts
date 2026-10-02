@@ -59,7 +59,7 @@ describe("executeDownload blockmap cache consistency", { concurrent: false }, ()
       downloadUpdateOptions: {
         updateInfoAndProvider: {
           info: { version: "2.0.0", files: [], path: "", sha512: "", releaseDate: "" },
-          provider: null as any,
+          provider: { feedBaseUrl: null } as any,
         },
         requestHeaders: {},
         cancellationToken: new CancellationToken(),

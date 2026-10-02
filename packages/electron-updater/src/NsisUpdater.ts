@@ -197,8 +197,9 @@ export class NsisUpdater extends BaseUpdater {
         if (isWebInstaller) {
           if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo, packageFile, provider)) {
             try {
-              await this.httpExecutor.download(new URL(packageInfo.path), packageFile, {
-                headers: downloadUpdateOptions.requestHeaders,
+              const packageUrl = new URL(packageInfo.path)
+              await this.httpExecutor.download(packageUrl, packageFile, {
+                headers: this.downloadRequestHeaders(packageUrl, downloadUpdateOptions),
                 cancellationToken: downloadUpdateOptions.cancellationToken,
                 sha512: packageInfo.sha512,
               })
@@ -328,12 +329,13 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     try {
+      const newUrl = new URL(packageInfo.path)
       const downloadOptions: DifferentialDownloaderOptions = {
-        newUrl: new URL(packageInfo.path),
+        newUrl,
         oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_APP_PACKAGE_FILE_NAME),
         logger: this._logger,
         newFile: packagePath,
-        requestHeaders: this.requestHeaders,
+        requestHeaders: this.downloadRequestHeaders(newUrl, downloadUpdateOptions),
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
         cancellationToken: downloadUpdateOptions.cancellationToken,
       }

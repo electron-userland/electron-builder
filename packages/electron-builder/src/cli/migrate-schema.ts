@@ -63,6 +63,14 @@ export const MAC_ENTITLEMENTS_ADVISORY =
   "If you rely on the default (no mac.sign.entitlements and no build/entitlements.mac.plist) and your app loads native modules, frameworks, or plugins signed by another Team ID (or unsigned), " +
   "add those entitlements back in build/entitlements.mac.plist. See https://www.electron.build/docs/migration/v27-breaking-changes#macos-default-entitlements-tightened"
 
+// Advisory surfaced when a generic publish url carries a query string (typically a token). v27 electron-updater sends the feed
+// query and credential headers only to downloads on the feed's origin.
+export const FEED_QUERY_ADVISORY =
+  "generic publish url with a query string detected. In v27, electron-updater sends the feed url's query string, and the credential headers from requestHeaders / addAuthHeader, " +
+  "only to downloads on the feed's origin (scheme, host and port); a download url in latest*.yml on another origin is requested without them. " +
+  "If those downloads need these credentials, serve the update files from the feed origin or use pre-signed URLs. " +
+  "See https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+
 /**
  * macOS signing/universal fields that v26 accepted as `null` (meaning "unset") but whose v27 type has no `null`
  * branch, so a moved `null` would fail validation. They are dropped instead of moved. `identity: null` is not in
@@ -132,6 +140,17 @@ function detectDefaultMacEntitlements(config: Record<string, any>): boolean {
     }
     return !(isPlainObject(sign) && (sign.entitlements != null || sign.identity === null))
   })
+}
+
+/** True when a root or platform/target-level `publish` (walked like step 7) has a generic provider whose url has a query string. */
+function detectGenericFeedQuery(config: Record<string, any>): boolean {
+  return [config, ...Object.values(config)].some(
+    section =>
+      isPlainObject(section) &&
+      (Array.isArray(section.publish) ? section.publish : [section.publish]).some(
+        (entry: any) => isPlainObject(entry) && entry.provider === "generic" && typeof entry.url === "string" && entry.url.includes("?")
+      )
+  )
 }
 
 function isPlainObject(value: unknown): value is Record<string, any> {
@@ -504,6 +523,9 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   }
   if (detectSignHookWithoutPublisherName(c)) {
     advisories.push(WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY)
+  }
+  if (detectGenericFeedQuery(c)) {
+    advisories.push(FEED_QUERY_ADVISORY)
   }
 
   return { migrated: c, changes, warnings, advisories, modified: changes.length > 0 || warnings.length > 0 }

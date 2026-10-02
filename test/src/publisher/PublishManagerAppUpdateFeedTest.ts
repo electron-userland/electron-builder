@@ -1,5 +1,5 @@
 import { Arch, LinuxPackager, Packager, Platform, PlatformPackager, Target } from "app-builder-lib"
-import { getAppUpdatePublishConfiguration, getPackAppUpdatePublishConfiguration, PublishManager } from "app-builder-lib/src/publish/PublishManager"
+import { getAppUpdatePublishConfiguration, getPackAppUpdatePublishConfiguration, PublishManager, resetGenericFeedQueryWarning } from "app-builder-lib/src/publish/PublishManager"
 import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, log, parsePrivateKey } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { outputFile, outputJson, pathExists, readFile } from "fs-extra"
@@ -368,5 +368,23 @@ test("prepackaged multi-arch: each arch's targets look up their own pack, althou
   expect(created.map(it => `${it.name}:${Arch[it.arch!]}`)).toEqual(["appimage:x64", "deb:x64", "snap:arm64"])
   for (const it of created) {
     expect(it.packTargets, it.name).toEqual(created.filter(other => other.arch === it.arch))
+  }
+})
+
+test("an app-update.yml generic feed with a query string announces the v27 feed-origin rule, by parameter name only", async ({ expect, tmpDir }) => {
+  resetGenericFeedQueryWarning()
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    const feed = { provider: "generic", url: "https://example.com/updates?token=feed-secret-value" }
+    const appUpdate = await afterPackAppUpdate(tmpDir, makePackager({ platformPublish: feed }), [target("nsis")])
+
+    expect(appUpdate).toMatchObject(feed)
+    const notices = warn.mock.calls.filter(it => String(it[1]).includes("update-credentials-stay-on-the-feeds-origin"))
+    expect(notices).toHaveLength(1)
+    expect(notices[0][0]).toMatchObject({ queryParameters: "token" })
+    expect(JSON.stringify(notices)).not.toContain("feed-secret-value")
+  } finally {
+    warn.mockRestore()
+    resetGenericFeedQueryWarning()
   }
 })

@@ -109,12 +109,13 @@ An attacker holding a private key that installs still trust can produce a `lates
 
 - **Never commit private keys.** `updateManifest.signingKey` exists for completeness; in practice use `ELECTRON_BUILDER_UPDATE_SIGN_KEY` (PEM contents) or `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (paths to mounted secret files) from your CI secret store.
 - Prefer the `_FILE` variant where your CI can mount secrets as files; it keeps the keys out of process listings and environment dumps.
-- If a private key lives in an HSM or KMS that signs on your behalf, electron-builder cannot call it directly. Sign `latest*.yml` in a post-publish step of your own (append an entry to `signatures` with the matching `keyId`, or set `signature`), and list the public key in `updateManifest.publicKey` so it is embedded. electron-builder warns at build time when none of the keys it signs with is in an explicit `publicKey` list, since such a release cannot verify its own manifests.
+- If a private key lives in an HSM or KMS that signs on your behalf, electron-builder cannot call it directly. Sign `latest*.yml` in a post-publish step of your own (append an entry to `signatures` with the matching `keyId`, or set `signature`, over the payload from `canonicalizeForSigning` in `builder-util-runtime`), and list the public key in `updateManifest.publicKey` so it is embedded. electron-builder warns at build time when none of the keys it signs with is in an explicit `publicKey` list, since such a release cannot verify its own manifests.
 
   A `publicKey` alone does not satisfy the v27 signing requirement, so this workflow takes one of two routes:
 
   - **Build without a publish policy.** The requirement only warns there, and electron-builder writes the unsigned `latest*.yml` locally; your step signs it and publishes the artifacts and the manifest.
   - **Keep publishing, with `publishAutoUpdate: false` on every publish provider.** electron-builder uploads the artifacts and embeds the `publicKey`, but writes no `latest*.yml` at all, so your step has to generate the manifest as well as sign and upload it.
+- **Pre-signed download URLs** (`files[].url`, `files[].blockMapUrl`, `packages.<arch>.path`) are covered by the signature, so a step that writes them into `latest*.yml` has to run before the manifest is signed — or sign it again afterwards, which needs the private key in that step. A server that mints them per request cannot serve a signed manifest.
 - Use one key per app (or per release channel if channels are operated by different teams). Sharing a key across unrelated apps means one compromise affects all of them.
 
 ## Windows: code-signing certificate rotation

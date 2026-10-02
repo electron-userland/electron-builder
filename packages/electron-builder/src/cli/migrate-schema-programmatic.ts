@@ -4,6 +4,7 @@ import {
   ASAR_PLATFORM_KEYS,
   AZURE_KNOWN_FIELDS,
   ELECTRON_DOWNLOAD_DROPPED,
+  FEED_QUERY_ADVISORY,
   isLegacyElectronDownloadKey,
   MAC_ENTITLEMENTS_ADVISORY,
   MAC_NULL_MEANS_UNSET_FIELDS,
@@ -386,6 +387,7 @@ class ConfigCodemod {
     this.ruleMacEntitlementsAdvisory(root)
     this.ruleNsisPerMachineAdvisory(root)
     this.ruleWinSignHookPublisherNameAdvisory(root)
+    this.ruleFeedQueryAdvisory(root)
   }
 
   // ── Rules ───────────────────────────────────────────────────────────────
@@ -470,6 +472,47 @@ class ConfigCodemod {
       return
     }
     this.advisories.push(WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY)
+  }
+
+  // Advisory only. Mirrors migrateConfig, which walks the publish of the root and of each top-level section of the migrated config:
+  // a v26 `snap` moves under snapcraft.<base> (not walked) unless its base is "custom", when its keys replace snapcraft's.
+  private ruleFeedQueryAdvisory(root: any): void {
+    const ts = this.ts
+    const snap = this.objectLiteral(this.propValue(root, "snap"))
+    const snapBase = this.propValue(snap, "base")
+    const snapIsCustom = snapBase !== undefined && ts.isStringLiteral(snapBase) && snapBase.text === "custom"
+    // A base the AST cannot read may be "custom" too, so snapcraft.publish is not read when the snap may replace it.
+    const snapReplacesPublish = (snapIsCustom || (snapBase !== undefined && !this.isLiteral(snapBase))) && this.propValue(snap, "publish") !== undefined
+    const sections: any[] = [root]
+    for (const prop of root.properties) {
+      const name = this.propName(prop)
+      const section = name == null || name === "snap" ? null : this.objectLiteral(this.propValue(root, name))
+      if (section != null && !(name === "snapcraft" && snapReplacesPublish)) {
+        sections.push(section)
+      }
+    }
+    if (snapIsCustom) {
+      sections.push(snap)
+    }
+    // A non-literal url is not read, but a template's static text is: a "?" there is in every url the template produces.
+    const urlHasQuery = (url: any): boolean =>
+      url !== undefined &&
+      (ts.isStringLiteralLike(url)
+        ? url.text.includes("?")
+        : ts.isTemplateExpression(url) && [url.head, ...url.templateSpans.map((s: any) => s.literal)].some((part: any) => part.text.includes("?")))
+    const isGenericWithQuery = (entry: any): boolean => {
+      const obj = this.objectLiteral(this.unwrap(entry))
+      const provider = this.propValue(obj, "provider")
+      return provider !== undefined && ts.isStringLiteralLike(provider) && provider.text === "generic" && urlHasQuery(this.propValue(obj, "url"))
+    }
+    for (const section of sections) {
+      const publish = this.propValue(section, "publish")
+      const entries = publish === undefined ? [] : ts.isArrayLiteralExpression(publish) ? publish.elements : [publish]
+      if (entries.some(isGenericWithQuery)) {
+        this.advisories.push(FEED_QUERY_ADVISORY)
+        return
+      }
+    }
   }
 
   private ruleToolsets(root: any): void {

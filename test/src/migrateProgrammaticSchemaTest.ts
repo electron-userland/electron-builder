@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 import {
+  FEED_QUERY_ADVISORY,
   MAC_ENTITLEMENTS_ADVISORY,
   migrateConfig,
   NSIS_PER_MACHINE_UPDATE_ADVISORY,
@@ -402,6 +403,7 @@ describe("migrateProgrammaticSource — updater advisories", () => {
   test.each<[string, string[]]>([
     [`module.exports = { nsis: { perMachine: true } }\n`, [NSIS_PER_MACHINE_UPDATE_ADVISORY]],
     [`export default {\n  win: { sign: { type: "signtool", sign: "./sign.js" } },\n}\n`, [WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY]],
+    [`export default {\n  publish: { provider: "generic", url: "https://u.example.com/?t=1" },\n}\n`, [FEED_QUERY_ADVISORY]],
   ])("an advisory-only config is a no-op and the code is unchanged: %s", (src, expected) => {
     const result = run(src)
     expect(result.status).toBe("no-op")
@@ -516,13 +518,51 @@ describe("migrateProgrammaticSource — updater advisories", () => {
       ])
     })
   })
+
+  describe("generic publish url with a query string", () => {
+    test.each([
+      `{ publish: { provider: "generic", url: "https://u.example.com/?token=t" } }`,
+      `{ publish: [{ provider: "github", owner: "o", repo: "r" }, { provider: "generic", url: "https://u.example.com/feed?key=k" }] }`,
+      `{ win: { publish: { provider: "generic", url: "https://u.example.com/win?key=k" } } }`,
+      `{ nsis: { publish: [{ provider: "generic", url: "https://u.example.com/?key=k" }] } }`,
+      `{ linux: { publish: [{ provider: "generic", url: "https://u.example.com/?key=\${env.KEY}" }] } }`,
+      `{ snap: { base: "custom", publish: { provider: "generic", url: "https://u.example.com/?key=k" } } }`,
+    ])("%s emits the advisory", body => expectAdvisories(body, [FEED_QUERY_ADVISORY]))
+
+    test.each([
+      `{ publish: { provider: "generic", url: "https://u.example.com/app" } }`,
+      `{ publish: { provider: "generic" } }`,
+      `{ publish: ["github", "generic"] }`,
+      `{ publish: null, win: { publish: [null] } }`,
+      `{ publish: [{ provider: "s3", bucket: "b", endpoint: "https://s3.example.com/?x=1" }, { provider: "custom", url: "https://u.example.com/?t=1" }] }`,
+      // a v26 snap moves under snapcraft.<base>, where migrateConfig does not look
+      `{ snap: { base: "core22", publish: { provider: "generic", url: "https://u.example.com/?key=k" } } }`,
+    ])("%s emits nothing", body => expectAdvisories(body, []))
+
+    test("a non-literal url or provider is not read; a '?' in a template's static text is", () => {
+      expectAdvisories('{ publish: { provider: "generic", url: `https://u.example.com/?token=${process.env.TOKEN}` } }', [FEED_QUERY_ADVISORY])
+      expectAdvisories('{ publish: { provider: "generic", url: `${process.env.FEED_URL}/app` } }', [])
+      expectAdvisories(`{ publish: { provider: "generic", url: process.env.FEED_URL } }`, [])
+      expectAdvisories(`{ publish: { provider, url: "https://u.example.com/?t=1" } }`, [], `const provider = "generic"\n`)
+      expectAdvisories(`{ publish: { provider: "generic", url: "https://u.example.com/?t=1", ...base } }`, [], "const base = {}\n")
+      expectAdvisories(`{ publish: { ...base, provider: "generic", url: "https://u.example.com/?t=1" } }`, [FEED_QUERY_ADVISORY], "const base = {}\n")
+      expectAdvisories(`{ win: { publish: { provider: "generic", url: "https://u.example.com/?t=1" }, ...base } }`, [], "const base = {}\n")
+      expectAdvisories(`{ win: { ...base, publish: { provider: "generic", url: "https://u.example.com/?t=1" } } }`, [FEED_QUERY_ADVISORY], "const base = {}\n")
+      // a custom-base snap whose spread may carry a publish may replace snapcraft.publish
+      const snapcraft = `snapcraft: { publish: { provider: "generic", url: "https://u.example.com/?t=1" } }`
+      expectAdvisories(`{ snap: { base: "custom", ...base }, ${snapcraft} }`, [], "const base = {}\n")
+      expectAdvisories(`{ snap: { ...base, base: "custom", publish: { provider: "github" } }, ${snapcraft} }`, [], "const base = {}\n")
+      expectAdvisories(`{ publish: [...base, { provider: "generic", url: "https://u.example.com/?t=1" }] }`, [FEED_QUERY_ADVISORY], "const base = []\n")
+    })
+  })
 })
 
 describe("migrateProgrammaticSource — advisories match migrateConfig (parity)", () => {
   const hook = { type: "signtool", sign: "./sign.js" }
+  const feed = { provider: "generic", url: "https://u.example.com/?token=t" }
   const configs: Record<string, Record<string, any>> = {
     empty: {},
-    allFour: { win: { target: "nsis-web", sign: hook }, nsisWeb: { perMachine: true }, mac: { target: "dmg" } },
+    allFive: { win: { target: "nsis-web", sign: hook }, nsisWeb: { perMachine: true }, mac: { target: "dmg" }, publish: feed },
     nsisWebWinTarget: { win: { target: "nsis-web" } },
     nsisWebRootTarget: { target: "nsis-web" },
     nsisWebArchAndCase: { win: { target: ["nsis", { target: "NSIS-Web:ia32" }] } },
@@ -585,7 +625,36 @@ describe("migrateProgrammaticSource — advisories match migrateConfig (parity)"
     hookVerifyString: { win: { sign: hook, verifyUpdateCodeSignature: "false" } },
     hookUndefined: { win: { sign: { type: "signtool", sign: undefined } } },
     hookUndefinedSuppressors: { cscLink: undefined, win: { sign: { ...hook, publisherName: undefined, certificateFile: undefined }, verifyUpdateCodeSignature: undefined } },
+    feedRootObject: { publish: feed },
+    feedRootArray: { publish: [{ provider: "github", owner: "o", repo: "r" }, feed] },
+    feedPlatform: { mac: { entitlements: "e.plist", publish: feed } },
+    feedTargetSection: { nsis: { publish: [feed] } },
+    feedMacro: { linux: { publish: [{ provider: "generic", url: "https://u.example.com/?key=${env.KEY}" }] } },
+    feedNoQuery: { publish: { provider: "generic", url: "https://u.example.com/app" } },
+    feedNoUrl: { publish: { provider: "generic" } },
+    feedStrings: { publish: ["github", "generic"] },
+    feedNulls: { publish: null, win: { publish: [null] } },
+    feedOtherProviders: {
+      publish: [
+        { provider: "s3", endpoint: "https://s3.example.com/?x=1" },
+        { provider: "custom", url: "https://u.example.com/?t=1" },
+      ],
+    },
+    feedSnapCore22: { snap: { base: "core22", publish: feed } },
+    feedSnapNoBase: { snap: { publish: feed } },
+    feedSnapCustom: { snap: { base: "custom", publish: feed } },
+    feedSnapCustomKeepsSnapcraft: { snap: { base: "custom" }, snapcraft: { publish: feed } },
+    feedSnapCustomReplacesSnapcraft: { snap: { base: "custom", publish: { provider: "github" } }, snapcraft: { publish: feed } },
+    feedSnapcraftNextToSnap: { snap: { base: "core22" }, snapcraft: { publish: feed } },
+    feedSnapNotObject: { snap: "x", snapcraft: { publish: feed } },
+    feedSnapCustomPublishNull: { snap: { base: "custom", publish: null }, snapcraft: { publish: feed } },
+    feedSnapCustomPublishUndefined: { snap: { base: "custom", publish: undefined }, snapcraft: { publish: feed } },
+    feedSnapcraftBaseSection: { snapcraft: { core22: { publish: feed } } },
+    feedAnySection: { directories: { output: "dist" }, extraMetadata: { publish: feed } },
+    feedNestedArray: { publish: [[feed]] },
+    feedProviderCase: { publish: { provider: "Generic", url: feed.url } },
     v26AllButEntitlements: {
+      snap: { base: "custom", publish: feed },
       win: { signtoolOptions: { sign: "./sign.js" }, target: "nsis-web:x64", signExecutable: true },
       nsisWeb: { perMachine: true },
       mac: { target: "dmg", entitlements: "e.plist", hardenedRuntime: true },
@@ -616,10 +685,16 @@ describe("migrateProgrammaticSource — advisories match migrateConfig (parity)"
 
   test("the table triggers and skips every advisory", () => {
     const results = Object.values(configs).map(config => migrateConfig(config).advisories)
-    for (const advisory of [NSIS_WEB_ADVISORY, MAC_ENTITLEMENTS_ADVISORY, NSIS_PER_MACHINE_UPDATE_ADVISORY, WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY]) {
+    for (const advisory of [NSIS_WEB_ADVISORY, MAC_ENTITLEMENTS_ADVISORY, NSIS_PER_MACHINE_UPDATE_ADVISORY, WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, FEED_QUERY_ADVISORY]) {
       expect(results.some(it => it.includes(advisory))).toBe(true)
       expect(results.some(it => !it.includes(advisory))).toBe(true)
     }
-    expect(results.find(it => it.length === 4)).toEqual([NSIS_WEB_ADVISORY, MAC_ENTITLEMENTS_ADVISORY, NSIS_PER_MACHINE_UPDATE_ADVISORY, WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
+    expect(results.find(it => it.length === 5)).toEqual([
+      NSIS_WEB_ADVISORY,
+      MAC_ENTITLEMENTS_ADVISORY,
+      NSIS_PER_MACHINE_UPDATE_ADVISORY,
+      WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
+      FEED_QUERY_ADVISORY,
+    ])
   })
 })

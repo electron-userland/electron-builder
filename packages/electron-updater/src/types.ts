@@ -118,6 +118,9 @@ export interface ResolvedUpdateFileInfo {
   readonly url: URL
   readonly info: UpdateFileInfo
 
+  /** The resolved `info.blockMapUrl`, when the update manifest names the file's blockmap. */
+  readonly blockMapUrl?: URL
+
   packageInfo?: PackageFileInfo
 }
 
