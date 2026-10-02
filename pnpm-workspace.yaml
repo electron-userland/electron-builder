@@ -28,6 +28,7 @@ minimumReleaseAgeExclude:
   - undici@7.29.0 || 7.29.1
   # Renovate security update: form-data@4.0.6
   - form-data@4.0.6
+  - '@electron/asar@4.3.1'
 patchedDependencies:
   '@changesets/cli@2.29.7': patches/@changesets__cli@2.29.7.patch
   '@changesets/assemble-release-plan@6.0.9': patches/@changesets__assemble-release-plan@6.0.9.patch

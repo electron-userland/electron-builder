@@ -10,7 +10,7 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
 {
   "files": {
     "index.js": {
-      "offset": 31280,
+      "offset": 29930,
       "size": 40,
     },
     "node_modules": {
@@ -42,23 +42,23 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
         "is-bigint": {
           "files": {
             ".nycrc": {
-              "offset": 2880,
+              "offset": 0,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 3020,
+              "offset": 2880,
               "size": 1080,
             },
             "index.js": {
-              "offset": 4090,
+              "offset": 3950,
               "size": 850,
             },
             "package.json": {
-              "offset": 4930,
+              "offset": 4790,
               "size": 1400,
             },
             "tsconfig.json": {
-              "offset": 6330,
+              "offset": 6190,
               "size": 120,
             },
           },
@@ -66,35 +66,35 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
         "left-pad": {
           "files": {
             "COPYING": {
-              "offset": 6440,
+              "offset": 6300,
               "size": 510,
             },
             "index.js": {
-              "offset": 6940,
+              "offset": 6810,
               "size": 1470,
             },
             "package.json": {
-              "offset": 8410,
+              "offset": 8270,
               "size": 470,
             },
             "perf": {
               "files": {
                 "O(n).js": {
-                  "offset": 8880,
+                  "offset": 8740,
                   "size": 250,
                 },
                 "es6Repeat.js": {
-                  "offset": 9120,
+                  "offset": 8980,
                   "size": 220,
                 },
                 "perf.js": {
-                  "offset": 9340,
+                  "offset": 9200,
                   "size": 1450,
                 },
               },
             },
             "test.js": {
-              "offset": 10780,
+              "offset": 10640,
               "size": 4010,
             },
           },
@@ -102,11 +102,11 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
         "lib": {
           "files": {
             ".yarnrc.yml": {
-              "offset": 14780,
+              "offset": 14640,
               "size": 30,
             },
             "index.js": {
-              "offset": 14810,
+              "offset": 14670,
               "size": 50,
             },
             "node_modules": {
@@ -114,23 +114,23 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
                 "is-bigint": {
                   "files": {
                     ".eslintignore": {
-                      "offset": 14990,
+                      "offset": 14850,
                       "size": 10,
                     },
                     ".nycrc": {
-                      "offset": 15000,
+                      "offset": 0,
                       "size": 140,
                     },
                     "LICENSE": {
-                      "offset": 15140,
+                      "offset": 2880,
                       "size": 1080,
                     },
                     "index.js": {
-                      "offset": 16210,
+                      "offset": 14860,
                       "size": 740,
                     },
                     "package.json": {
-                      "offset": 16950,
+                      "offset": 15600,
                       "size": 960,
                     },
                   },
@@ -138,7 +138,7 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
               },
             },
             "package.json": {
-              "offset": 14850,
+              "offset": 14710,
               "size": 140,
             },
           },
@@ -146,23 +146,23 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
         "process": {
           "files": {
             "LICENSE": {
-              "offset": 17900,
+              "offset": 16560,
               "size": 1100,
             },
             "browser.js": {
-              "offset": 19000,
+              "offset": 17650,
               "size": 5420,
             },
             "index.js": {
-              "offset": 24420,
+              "offset": 23070,
               "size": 100,
             },
             "package.json": {
-              "offset": 24520,
+              "offset": 23170,
               "size": 450,
             },
             "test.js": {
-              "offset": 24970,
+              "offset": 23620,
               "size": 6310,
             },
           },
@@ -170,7 +170,7 @@ exports[`Package Managers > bun workspace --linker=hoisted - multiple conflictin
       },
     },
     "package.json": {
-      "offset": 31310,
+      "offset": 29960,
       "size": 330,
     },
   },
@@ -187,7 +187,7 @@ exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
 {
   "files": {
     "index.js": {
-      "offset": 28340,
+      "offset": 28200,
       "size": 40,
     },
     "node_modules": {
@@ -219,23 +219,23 @@ exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
         "is-bigint": {
           "files": {
             ".nycrc": {
-              "offset": 2880,
+              "offset": 0,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 3020,
+              "offset": 2880,
               "size": 1080,
             },
             "index.js": {
-              "offset": 4090,
+              "offset": 3950,
               "size": 850,
             },
             "package.json": {
-              "offset": 4930,
+              "offset": 4790,
               "size": 1400,
             },
             "tsconfig.json": {
-              "offset": 6330,
+              "offset": 6190,
               "size": 120,
             },
           },
@@ -243,35 +243,35 @@ exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
         "left-pad": {
           "files": {
             "COPYING": {
-              "offset": 6440,
+              "offset": 6300,
               "size": 510,
             },
             "index.js": {
-              "offset": 6940,
+              "offset": 6810,
               "size": 1470,
             },
             "package.json": {
-              "offset": 8410,
+              "offset": 8270,
               "size": 470,
             },
             "perf": {
               "files": {
                 "O(n).js": {
-                  "offset": 8880,
+                  "offset": 8740,
                   "size": 250,
                 },
                 "es6Repeat.js": {
-                  "offset": 9120,
+                  "offset": 8980,
                   "size": 220,
                 },
                 "perf.js": {
-                  "offset": 9340,
+                  "offset": 9200,
                   "size": 1450,
                 },
               },
             },
             "test.js": {
-              "offset": 10780,
+              "offset": 10640,
               "size": 4010,
             },
           },
@@ -279,15 +279,15 @@ exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
         "lib": {
           "files": {
             ".yarnrc.yml": {
-              "offset": 14780,
+              "offset": 14640,
               "size": 30,
             },
             "index.js": {
-              "offset": 14810,
+              "offset": 14670,
               "size": 50,
             },
             "package.json": {
-              "offset": 14850,
+              "offset": 14710,
               "size": 120,
             },
           },
@@ -295,23 +295,23 @@ exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
         "process": {
           "files": {
             "LICENSE": {
-              "offset": 14970,
+              "offset": 14830,
               "size": 1100,
             },
             "browser.js": {
-              "offset": 16060,
+              "offset": 15930,
               "size": 5420,
             },
             "index.js": {
-              "offset": 21480,
+              "offset": 21340,
               "size": 100,
             },
             "package.json": {
-              "offset": 21580,
+              "offset": 21440,
               "size": 450,
             },
             "test.js": {
-              "offset": 22030,
+              "offset": 21890,
               "size": 6310,
             },
           },
@@ -319,7 +319,7 @@ exports[`Package Managers > bun workspace --linker=hoisted 2`] = `
       },
     },
     "package.json": {
-      "offset": 28370,
+      "offset": 28230,
       "size": 330,
     },
   },
@@ -336,7 +336,7 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
 {
   "files": {
     "index.js": {
-      "offset": 31280,
+      "offset": 29930,
       "size": 40,
     },
     "node_modules": {
@@ -368,23 +368,23 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
         "is-bigint": {
           "files": {
             ".nycrc": {
-              "offset": 2880,
+              "offset": 0,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 3020,
+              "offset": 2880,
               "size": 1080,
             },
             "index.js": {
-              "offset": 4090,
+              "offset": 3950,
               "size": 850,
             },
             "package.json": {
-              "offset": 4930,
+              "offset": 4790,
               "size": 1400,
             },
             "tsconfig.json": {
-              "offset": 6330,
+              "offset": 6190,
               "size": 120,
             },
           },
@@ -392,35 +392,35 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
         "left-pad": {
           "files": {
             "COPYING": {
-              "offset": 6440,
+              "offset": 6300,
               "size": 510,
             },
             "index.js": {
-              "offset": 6940,
+              "offset": 6810,
               "size": 1470,
             },
             "package.json": {
-              "offset": 8410,
+              "offset": 8270,
               "size": 470,
             },
             "perf": {
               "files": {
                 "O(n).js": {
-                  "offset": 8880,
+                  "offset": 8740,
                   "size": 250,
                 },
                 "es6Repeat.js": {
-                  "offset": 9120,
+                  "offset": 8980,
                   "size": 220,
                 },
                 "perf.js": {
-                  "offset": 9340,
+                  "offset": 9200,
                   "size": 1450,
                 },
               },
             },
             "test.js": {
-              "offset": 10780,
+              "offset": 10640,
               "size": 4010,
             },
           },
@@ -428,11 +428,11 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
         "lib": {
           "files": {
             ".yarnrc.yml": {
-              "offset": 14780,
+              "offset": 14640,
               "size": 30,
             },
             "index.js": {
-              "offset": 14810,
+              "offset": 14670,
               "size": 50,
             },
             "node_modules": {
@@ -440,23 +440,23 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
                 "is-bigint": {
                   "files": {
                     ".eslintignore": {
-                      "offset": 14990,
+                      "offset": 14850,
                       "size": 10,
                     },
                     ".nycrc": {
-                      "offset": 15000,
+                      "offset": 0,
                       "size": 140,
                     },
                     "LICENSE": {
-                      "offset": 15140,
+                      "offset": 2880,
                       "size": 1080,
                     },
                     "index.js": {
-                      "offset": 16210,
+                      "offset": 14860,
                       "size": 740,
                     },
                     "package.json": {
-                      "offset": 16950,
+                      "offset": 15600,
                       "size": 960,
                     },
                   },
@@ -464,7 +464,7 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
               },
             },
             "package.json": {
-              "offset": 14850,
+              "offset": 14710,
               "size": 140,
             },
           },
@@ -472,23 +472,23 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
         "process": {
           "files": {
             "LICENSE": {
-              "offset": 17900,
+              "offset": 16560,
               "size": 1100,
             },
             "browser.js": {
-              "offset": 19000,
+              "offset": 17650,
               "size": 5420,
             },
             "index.js": {
-              "offset": 24420,
+              "offset": 23070,
               "size": 100,
             },
             "package.json": {
-              "offset": 24520,
+              "offset": 23170,
               "size": 450,
             },
             "test.js": {
-              "offset": 24970,
+              "offset": 23620,
               "size": 6310,
             },
           },
@@ -496,7 +496,7 @@ exports[`Package Managers > bun workspace --linker=isolated - multiple conflicti
       },
     },
     "package.json": {
-      "offset": 31310,
+      "offset": 29960,
       "size": 330,
     },
   },
@@ -513,7 +513,7 @@ exports[`Package Managers > bun workspace --linker=isolated 2`] = `
 {
   "files": {
     "index.js": {
-      "offset": 28340,
+      "offset": 28200,
       "size": 40,
     },
     "node_modules": {
@@ -545,23 +545,23 @@ exports[`Package Managers > bun workspace --linker=isolated 2`] = `
         "is-bigint": {
           "files": {
             ".nycrc": {
-              "offset": 2880,
+              "offset": 0,
               "size": 140,
             },
             "LICENSE": {
-              "offset": 3020,
+              "offset": 2880,
               "size": 1080,
             },
             "index.js": {
-              "offset": 4090,
+              "offset": 3950,
               "size": 850,
             },
             "package.json": {
-              "offset": 4930,
+              "offset": 4790,
               "size": 1400,
             },
             "tsconfig.json": {
-              "offset": 6330,
+              "offset": 6190,
               "size": 120,
             },
           },
@@ -569,35 +569,35 @@ exports[`Package Managers > bun workspace --linker=isolated 2`] = `
         "left-pad": {
           "files": {
             "COPYING": {
-              "offset": 6440,
+              "offset": 6300,
               "size": 510,
             },
             "index.js": {
-              "offset": 6940,
+              "offset": 6810,
               "size": 1470,
             },
             "package.json": {
-              "offset": 8410,
+              "offset": 8270,
               "size": 470,
             },
             "perf": {
               "files": {
                 "O(n).js": {
-                  "offset": 8880,
+                  "offset": 8740,
                   "size": 250,
                 },
                 "es6Repeat.js": {
-                  "offset": 9120,
+                  "offset": 8980,
                   "size": 220,
                 },
                 "perf.js": {
-                  "offset": 9340,
+                  "offset": 9200,
                   "size": 1450,
                 },
               },
             },
             "test.js": {
-              "offset": 10780,
+              "offset": 10640,
               "size": 4010,
             },
           },
@@ -605,15 +605,15 @@ exports[`Package Managers > bun workspace --linker=isolated 2`] = `
         "lib": {
           "files": {
             ".yarnrc.yml": {
-              "offset": 14780,
+              "offset": 14640,
               "size": 30,
             },
             "index.js": {
-              "offset": 14810,
+              "offset": 14670,
               "size": 50,
             },
             "package.json": {
-              "offset": 14850,
+              "offset": 14710,
               "size": 120,
             },
           },
@@ -621,23 +621,23 @@ exports[`Package Managers > bun workspace --linker=isolated 2`] = `
         "process": {
           "files": {
             "LICENSE": {
-              "offset": 14970,
+              "offset": 14830,
               "size": 1100,
             },
             "browser.js": {
-              "offset": 16060,
+              "offset": 15930,
               "size": 5420,
             },
             "index.js": {
-              "offset": 21480,
+              "offset": 21340,
               "size": 100,
             },
             "package.json": {
-              "offset": 21580,
+              "offset": 21440,
               "size": 450,
             },
             "test.js": {
-              "offset": 22030,
+              "offset": 21890,
               "size": 6310,
             },
           },
@@ -645,7 +645,7 @@ exports[`Package Managers > bun workspace --linker=isolated 2`] = `
       },
     },
     "package.json": {
-      "offset": 28370,
+      "offset": 28230,
       "size": 330,
     },
   },
