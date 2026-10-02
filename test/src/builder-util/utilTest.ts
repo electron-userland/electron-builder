@@ -373,7 +373,7 @@ describe("resolveEnvShellValue", () => {
     expect(resolveEnvShellValue(VAR)).toBe("/some/path")
   })
 
-  const UNSAFE_CHARS = [";", "&", "|", "`", "$", "<", ">", '"', "'"]
+  const UNSAFE_CHARS = [";", "&", "|", "`", "$", "<", ">", '"', "'", "\n", "\r"]
   for (const ch of UNSAFE_CHARS) {
     test(`throws on shell-unsafe character: ${ch}`, ({ expect }) => {
       vi.stubEnv(VAR, `/some/path${ch}foo`)
@@ -478,6 +478,7 @@ describe("validateShellEmbeddable", () => {
       ['index.js"evil"', "double-quote"],
       ["index.js\\evil", "backslash"],
       ["index.js\nevil", "newline"],
+      ["index.js\revil", "carriage return"],
       ["$(rm -rf /)", "command substitution"],
       ["`id`", "backtick substitution"],
     ])("rejects %j (contains %s)", value => {
