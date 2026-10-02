@@ -326,6 +326,32 @@ export function shouldRetryDownloadError(e: any): boolean {
   return code != null && TRANSIENT_DOWNLOAD_ERROR_CODES.has(code)
 }
 
+const DOWNLOAD_ATTEMPT_TIMEOUT_MS = 10 * 60 * 1000
+
+/**
+ * Runs a download with the transient-error retries, giving each attempt its own timeout signal: a shared
+ * `AbortSignal.timeout()` stays aborted once it fires, so any retry after a stall would fail immediately.
+ * A stalled attempt is retried once. A caller-supplied signal is passed through as is, and its abort is final.
+ * Exported for tests.
+ */
+export function retryDownload<T>(download: (signal: AbortSignal) => Promise<T>, callerSignal?: AbortSignal | null, attemptTimeoutMs = DOWNLOAD_ATTEMPT_TIMEOUT_MS): Promise<T> {
+  let timedOut = false
+  return retry(() => download(callerSignal ?? AbortSignal.timeout(attemptTimeoutMs)), {
+    retries: 3,
+    interval: 2000,
+    backoff: 2000,
+    shouldRetry: e => {
+      // the timeout abort is a DOMException with a numeric `code`, which shouldRetryDownloadError never matches
+      if (callerSignal == null && e?.name === "TimeoutError") {
+        const retryStall = !timedOut
+        timedOut = true
+        return retryStall
+      }
+      return shouldRetryDownloadError(e)
+    },
+  })
+}
+
 async function downloadArtifactToFile(config: ElectronArtifactDetails, label: string): Promise<string> {
   // Serialize concurrent downloads of the same artifact across vitest workers to prevent @electron/get's
   // non-atomic putFileInCache (remove + move) from racing with a concurrent reader.
@@ -357,7 +383,6 @@ async function downloadArtifactToFile(config: ElectronArtifactDetails, label: st
   initializeProxyOnce()
 
   const downloadOptions: FetchDownloaderOptions = {
-    signal: AbortSignal.timeout(10 * 60 * 1000), // prevent indefinite hang on stalled connections
     ...config.downloadOptions,
     getProgressCallback: info => {
       // @electron/get passes downloadOptions (including this callback) to its internal
@@ -386,26 +411,23 @@ async function downloadArtifactToFile(config: ElectronArtifactDetails, label: st
     },
   }
 
-  const configWithProgress = { ...config, downloadOptions }
+  const callerSignal = config.downloadOptions?.signal
+  // every call gets a fresh timeout signal, to prevent an indefinite hang on stalled connections
+  const withSignal = (signal: AbortSignal = callerSignal ?? AbortSignal.timeout(DOWNLOAD_ATTEMPT_TIMEOUT_MS)) => ({ ...config, downloadOptions: { ...downloadOptions, signal } })
   try {
     let filePath: string
     try {
-      filePath = await retry(() => get.downloadArtifact(configWithProgress), {
-        retries: 3,
-        interval: 2000,
-        backoff: 2000,
-        shouldRetry: shouldRetryDownloadError,
-      })
+      filePath = await retryDownload(signal => get.downloadArtifact(withSignal(signal)), callerSignal)
     } catch (err) {
       if (typeof (err as any)?.message === "string" && (err as any).message.includes("dest already exists")) {
-        filePath = await get.downloadArtifact(configWithProgress)
+        filePath = await get.downloadArtifact(withSignal())
       } else {
         throw err
       }
     }
     if (!(await exists(filePath))) {
       log.warn({ filePath, label }, "cached artifact missing from disk; retrying with cache write")
-      filePath = await get.downloadArtifact({ ...configWithProgress, cacheMode: ElectronDownloadCacheMode.WriteOnly })
+      filePath = await get.downloadArtifact({ ...withSignal(), cacheMode: ElectronDownloadCacheMode.WriteOnly })
     }
     if (!state.bar && lastLoggedMilestone === -1) {
       log.info({ label }, "using cached artifact")
