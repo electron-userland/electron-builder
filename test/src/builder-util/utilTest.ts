@@ -1,12 +1,24 @@
 import { parseValidEnvVarUrl } from "builder-util/internal"
 import { resolveEnvShellValue, validateShellEmbeddable } from "builder-util/src/envUtil"
-import { removePassword, removePasswordFromArgs, filterSensitiveEnv, spawnAndWriteWithOutput, ExecError } from "builder-util"
+import { removePassword, removePasswordFromArgs, filterSensitiveEnv, spawnAndWriteWithOutput, ExecError, getPlatformIconFileName } from "builder-util"
 import { afterEach, expect, vi } from "vitest"
 
 const testValue = "secretValue"
 const testQuoted = "secret with spaces"
 
 const keys = ["--accessKey", "--secretKey", "-p", "-pass", "-String", "/p", "pass:"]
+
+describe("getPlatformIconFileName", () => {
+  test.each([
+    ["icon", true, "icon.icns"],
+    ["icon.ico", true, "icon.icns"],
+    ["icon.ICO", true, "icon.icns"],
+    ["icon.icns", false, "icon.ico"],
+    ["assets/.ico-cache/icon.png", true, "assets/.ico-cache/icon.png"],
+  ])("maps %s for isMac=%s", (value, isMac, expected) => {
+    expect(getPlatformIconFileName(value, isMac)).toBe(expected)
+  })
+})
 
 keys.forEach(key => {
   describe(`removePassword: ${key}`, () => {
