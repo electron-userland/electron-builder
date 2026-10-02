@@ -20,6 +20,7 @@ electron-builder supports a wide range of Linux package formats. Choose based on
 | `pacman` | Arch package | Arch Linux, Manjaro | Arch-based |
 | `apk` | Alpine package | Alpine Linux, containers | Alpine |
 | `freebsd` | FreeBSD pkg | FreeBSD | FreeBSD |
+| `gentoo` | Portage ebuild | Gentoo overlays | Gentoo |
 | `p5p` | Solaris IPS | Solaris, illumos | Solaris-based |
 | `zip`, `7z`, `tar.*` | Archive | Custom CDN distribution | Universal |
 | `dir` | Directory | Development/debugging | N/A |
@@ -234,6 +235,25 @@ freebsd:
     - nss
 ```
 
+## Gentoo Ebuild (`gentoo`)
+
+Writes a Portage ebuild (`<name>-bin-<version>.ebuild`) that installs the app from the `tar.*` archive you already publish. It needs a `tar.gz`, `tar.bz2`, `tar.xz` or `tar.lz` target in the same build, and a download URL for that archive: `gentoo.distUrl`, the `publish` provider, or the `repository` field of `package.json` at tag `v<version>` (GitHub, GitLab, Gitea, Forgejo and Codeberg, self-hosted included).
+
+```yaml
+linux:
+  target:
+    - tar.gz
+    - gentoo
+gentoo:
+  installDir: myapp
+```
+
+A Gentoo user drops the ebuild into an overlay, runs `ebuild myapp-bin-1.2.3.ebuild manifest` and `emerge myapp-bin`. The ebuild installs to `/opt/<installDir>`, adds a `/usr/bin` launcher (with `executableArgs`), the desktop entry and the icon, and declares `RDEPEND` and the bundled Electron licenses.
+
+:::note
+The icon is fetched from the source repository at the release tag by default; see `iconSource`. `LICENSE` comes from `gentoo.license` or the `license` field of `package.json` and must be a Gentoo license name.
+:::
+
 ## FPM Passthrough Options
 
 The DEB, RPM, Pacman, APK, FreeBSD, and P5P targets are built using [FPM](https://github.com/jordansissel/fpm) internally. Pass additional FPM command-line arguments:
@@ -273,3 +293,9 @@ All [LinuxTargetSpecificOptions](linux.md#linuxtargetspecificoptions-apk-freebsd
 The top-level `apk`, `freebsd`, `pacman`, `p5p` and `rpm` keys contain options for their respective Linux targets.
 
 {!./app-builder-lib.Interface.LinuxTargetSpecificOptions.md!}
+
+## Gentoo Ebuild Options
+
+The top-level `gentoo` key contains options for the [Gentoo target](linux.md#gentoo-ebuild-gentoo).
+
+{!./app-builder-lib.Interface.GentooOptions.md!}
