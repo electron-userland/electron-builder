@@ -1,3 +1,34 @@
+# [27.0.0-alpha.10](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.9...electron-builder@27.0.0-alpha.10) (2026-10-02)
+
+
+### Bug Fixes
+
+* encode Bitbucket delete filenames ([#10150](https://github.com/electron-userland/electron-builder/issues/10150)) ([2f6d7d1](https://github.com/electron-userland/electron-builder/commit/2f6d7d1c4bd8965909cf2e2fabbed95dc7c78d80))
+* **macOS:** Proper identityHash resolution instead of non-unique certificate-name for `codesign` CLI invocations via `doSign` method ([#10238](https://github.com/electron-userland/electron-builder/issues/10238)) ([56d2d74](https://github.com/electron-userland/electron-builder/commit/56d2d746123efa1edd4caa6871fadfedec261438))
+* **nsis:** keep installer extraction in sync with the payload format when useZip is set ([#10248](https://github.com/electron-userland/electron-builder/issues/10248)) ([6312a4d](https://github.com/electron-userland/electron-builder/commit/6312a4d47d8fc20371ba3be8f6063ac1b581dd77))
+* **nsis:** warn when differentialPackage "store-asar" finds no app.asar ([#10246](https://github.com/electron-userland/electron-builder/issues/10246)) ([1b0225e](https://github.com/electron-userland/electron-builder/commit/1b0225e22436c578533ad280b64eab7c41947a48))
+* preserve repeated debug logger key segments ([#10130](https://github.com/electron-userland/electron-builder/issues/10130)) ([4bc95cc](https://github.com/electron-userland/electron-builder/commit/4bc95cce39b2862e798365dc4687443e64f001a1))
+* preserve sibling paths in logs ([#10152](https://github.com/electron-userland/electron-builder/issues/10152)) ([7619d08](https://github.com/electron-userland/electron-builder/commit/7619d08a1c02049b0dd40e043346e5263c0a3e50))
+* rebuild cross-platform targets with buildDependenciesFromSource and verify native binary arch ([#10265](https://github.com/electron-userland/electron-builder/issues/10265)) ([0966275](https://github.com/electron-userland/electron-builder/commit/0966275eda68f3f27e6e179ad2d2c7645790a2e2))
+* replace dead CircleCI link in the PR publish/signing warnings ([#10268](https://github.com/electron-userland/electron-builder/issues/10268)) ([79f0062](https://github.com/electron-userland/electron-builder/commit/79f0062e2746fcb20cd116149795ac07ce8f1b65))
+* resolve retina backgrounds by terminal extension ([#10143](https://github.com/electron-userland/electron-builder/issues/10143)) ([63de366](https://github.com/electron-userland/electron-builder/commit/63de366290b074ce163070a3399a648062bcc0ad))
+* **updater:** handle notification download failures ([#10113](https://github.com/electron-userland/electron-builder/issues/10113)) ([c10345f](https://github.com/electron-userland/electron-builder/commit/c10345f7c016cb1ebaa3cf954a55e61df56d50a4))
+* **updater:** report accurate differential progress ([#10118](https://github.com/electron-userland/electron-builder/issues/10118)) ([58e5d2e](https://github.com/electron-userland/electron-builder/commit/58e5d2e2b26cc7665f39e7f19e93c59259d5ee76))
+* **updater:** validate update cache filenames ([#10127](https://github.com/electron-userland/electron-builder/issues/10127)) ([e832c81](https://github.com/electron-userland/electron-builder/commit/e832c8135b2e42ec06919434b678f777ef986ff1))
+
+
+### Features
+
+* add writeEffectiveConfig option to write builder-effective-config.yaml on CI ([#10260](https://github.com/electron-userland/electron-builder/issues/10260)) ([5f2f906](https://github.com/electron-userland/electron-builder/commit/5f2f9065a6bd28842cbef786f41753641ad747ee))
+* **updater:** add `VerifyUpdateFileAuthenticodeSignature` functionality to AppUpdater ([#10239](https://github.com/electron-userland/electron-builder/issues/10239)) ([317fc9e](https://github.com/electron-userland/electron-builder/commit/317fc9e7a820c55005179d3c648b36204efd1288))
+
+
+### Performance Improvements
+
+* make module downward search linear ([#10149](https://github.com/electron-userland/electron-builder/issues/10149)) ([bd7786f](https://github.com/electron-userland/electron-builder/commit/bd7786f24b3b9eeb026931a2c0af9aad928afe7a))
+
+
+
 # [27.0.0-alpha.9](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.8...electron-builder@27.0.0-alpha.9) (2026-09-25)
 
 
