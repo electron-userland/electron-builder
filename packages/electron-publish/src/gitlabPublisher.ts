@@ -183,8 +183,7 @@ export class GitlabPublisher extends HttpPublisher {
     if (uploadTarget === "generic_package") {
       await this.uploadToGenericPackages(fileName, dataLength, requestProcessor)
       // For generic packages, construct the download URL
-      const projectId = encodeURIComponent(this.projectId)
-      assetPath = `${this.baseApiPath}/projects/${projectId}/packages/generic/releases/${this.version}/${fileName}`
+      assetPath = getGenericPackageUrl(this.baseApiPath, this.projectId, this.version, fileName)
     } else {
       // Default to project_upload
       const uploadResult = await this.uploadToProjectUpload(fileName, filePath)
@@ -257,7 +256,7 @@ export class GitlabPublisher extends HttpPublisher {
   }
 
   private async uploadToGenericPackages(fileName: string, dataLength: number, requestProcessor: RequestProcessor): Promise<any> {
-    const uploadUrl = `${this.baseApiPath}/projects/${encodeURIComponent(this.projectId)}/packages/generic/releases/${this.version}/${fileName}`
+    const uploadUrl = getGenericPackageUrl(this.baseApiPath, this.projectId, this.version, fileName)
     const parsedUrl = new URL(uploadUrl)
 
     return httpExecutor.doApiRequest(
@@ -350,4 +349,9 @@ export class GitlabPublisher extends HttpPublisher {
   toString() {
     return `GitLab (project: ${this.projectId}, version: ${this.version})`
   }
+}
+
+/** @internal */
+export function getGenericPackageUrl(baseApiPath: string, projectId: string, version: string, fileName: string): string {
+  return `${baseApiPath}/projects/${encodeURIComponent(projectId)}/packages/generic/releases/${encodeURIComponent(version)}/${encodeURIComponent(fileName)}`
 }
