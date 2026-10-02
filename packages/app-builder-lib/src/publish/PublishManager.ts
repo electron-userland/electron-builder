@@ -81,8 +81,8 @@ function checkOptions(publishPolicy: any) {
   }
 }
 
-/** Emitted once per process — app-update.yml is written for every pack. */
-let feedQueryWarningEmitted = false
+/** Emitted once per feed (the url without its query) per process — app-update.yml is written for every pack, and platforms may use different feeds. */
+const feedQueryWarnedFeeds = new Set<string>()
 
 /**
  * electron-updater 7 adds the query string of a generic feed url (typically a token), like the credential headers, only to
@@ -95,10 +95,14 @@ let feedQueryWarningEmitted = false
 export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): void {
   const url = publishConfig.provider === "generic" ? (publishConfig as GenericServerOptions).url : null
   const queryStart = typeof url === "string" ? url.indexOf("?") : -1
-  if (queryStart < 0 || feedQueryWarningEmitted) {
+  if (queryStart < 0) {
     return
   }
-  feedQueryWarningEmitted = true
+  const feed = url!.slice(0, queryStart)
+  if (feedQueryWarnedFeeds.has(feed)) {
+    return
+  }
+  feedQueryWarnedFeeds.add(feed)
   const queryParameters = [...new Set(new URLSearchParams(url!.slice(queryStart + 1).split("#")[0]).keys())]
   log.warn(
     {
@@ -112,9 +116,9 @@ export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): 
   )
 }
 
-/** @internal exported for tests — re-arms the once-per-process warning. */
+/** @internal exported for tests — re-arms the once-per-feed warning. */
 export function resetGenericFeedQueryWarning(): void {
-  feedQueryWarningEmitted = false
+  feedQueryWarnedFeeds.clear()
 }
 
 /**

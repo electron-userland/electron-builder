@@ -10,11 +10,12 @@ describe("generic publish url with a query string", () => {
 
   const generic = (url: string) => ({ provider: "generic", url }) as PublishConfiguration
 
-  test("warns once per process, naming the query parameters but not their values or the url", ({ expect }) => {
+  test("warns once per feed, naming the query parameters but not their values or the url", ({ expect }) => {
     const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
 
     warnAboutGenericFeedQuery(generic("https://updates.example.com/app/?token=secret-token-value&tenant=acme-tenant&token=again#frag"))
-    warnAboutGenericFeedQuery(generic("https://updates.example.com/other/?key=another-secret"))
+    // the same feed with another query value (e.g. another platform's token) does not warn again
+    warnAboutGenericFeedQuery(generic("https://updates.example.com/app/?token=another-secret"))
 
     expect(warn).toHaveBeenCalledTimes(1)
     const [fields, message] = warn.mock.calls[0] as unknown as [Record<string, string>, string]
@@ -25,6 +26,21 @@ describe("generic publish url with a query string", () => {
     expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin")
     const logged = JSON.stringify(warn.mock.calls)
     for (const secret of ["secret-token-value", "acme-tenant", "another-secret", "updates.example.com"]) {
+      expect(logged).not.toContain(secret)
+    }
+  })
+
+  test("a different feed (e.g. another platform's publish url) warns again", ({ expect }) => {
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+
+    warnAboutGenericFeedQuery(generic("https://updates.example.com/win/?token=win-secret"))
+    warnAboutGenericFeedQuery(generic("https://updates.example.com/mac/?key=mac-secret"))
+    warnAboutGenericFeedQuery(generic("https://updates.example.com/win/?token=win-secret"))
+
+    expect(warn).toHaveBeenCalledTimes(2)
+    expect(warn.mock.calls.map(it => (it[0] as unknown as Record<string, string>).queryParameters)).toEqual(["token", "key"])
+    const logged = JSON.stringify(warn.mock.calls)
+    for (const secret of ["win-secret", "mac-secret", "updates.example.com"]) {
       expect(logged).not.toContain(secret)
     }
   })
