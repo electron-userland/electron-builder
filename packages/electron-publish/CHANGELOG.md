@@ -1,5 +1,25 @@
 # electron-publish
 
+## 27.0.0-alpha.10
+
+### Patch Changes
+
+- Fix: encode Bitbucket delete filenames _[`#10150`](https://github.com/electron-userland/electron-builder/pull/10150) [`2f6d7d1`](https://github.com/electron-userland/electron-builder/commit/2f6d7d1c4bd8965909cf2e2fabbed95dc7c78d80) [@OskarEichler](https://github.com/OskarEichler)_
+- Chore: replace ESLint and Prettier with oxlint and oxfmt _[`#10240`](https://github.com/electron-userland/electron-builder/pull/10240) [`a578e53`](https://github.com/electron-userland/electron-builder/commit/a578e53441ede7f6fb3e9d69292dc135ef37ed17) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`4bc95cc`](https://github.com/electron-userland/electron-builder/commit/4bc95cce39b2862e798365dc4687443e64f001a1) [`7619d08`](https://github.com/electron-userland/electron-builder/commit/7619d08a1c02049b0dd40e043346e5263c0a3e50) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`a578e53`](https://github.com/electron-userland/electron-builder/commit/a578e53441ede7f6fb3e9d69292dc135ef37ed17)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.9`
+- `builder-util@27.0.0-alpha.10`
+
+</details>
+
 ## 27.0.0-alpha.9
 
 ### Minor Changes
