@@ -328,7 +328,7 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
       }
     )
 
-    childProcess.stdin!.end(data)
+    endStdin(childProcess, data, reject)
   })
 }
 
@@ -368,7 +368,7 @@ export function spawnAndWriteWithOutput(command: string, args: Array<string>, da
       }
     })
 
-    childProcess.stdin!.end(data)
+    endStdin(childProcess, data, reject)
 
     childProcess.once("close", (code: number) => {
       clearTimeout(timeout)
@@ -381,6 +381,17 @@ export function spawnAndWriteWithOutput(command: string, args: Array<string>, da
       }
     })
   })
+}
+
+// The child may exit (closing its stdin) before all data is written. The resulting EPIPE / ECONNRESET is expected
+// and must not surface as an unhandled 'error' event: the exit code reported on "close" decides success or failure.
+function endStdin(childProcess: ChildProcess, data: string, reject: (reason?: any) => void) {
+  childProcess.stdin!.on("error", (error: NodeJS.ErrnoException) => {
+    if (error.code !== "EPIPE" && error.code !== "ECONNRESET") {
+      reject(error)
+    }
+  })
+  childProcess.stdin!.end(data)
 }
 
 export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
