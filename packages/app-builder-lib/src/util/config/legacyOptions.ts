@@ -417,3 +417,52 @@ export function formatLegacyOptionMessage(option: ResolvedLegacyConfigOption): s
   lines.push(`  ${BREAKING_CHANGES_URL}#${option.anchor}`)
   return lines.join("\n")
 }
+
+// ── Accepted by the v27 schema but ignored: warned, never rejected ──────────
+// `customNsisBinary` stays in the v27 schema because its `debugLogging` flag is still read, so these settings cannot
+// join the table above (every entry there must be rejected by the schema). The custom bundle itself is no longer used,
+// and the replacement needs a different checksum format and bundle layout, so neither the guard nor migrate-schema
+// can convert it: both warn instead.
+
+/** Config sections typed as `CommonNsisOptions`, which accept `customNsisBinary` / `customNsisResources`. */
+export const NSIS_CONFIG_KEYS = ["nsis", "nsisWeb", "portable"] as const
+
+/** `customNsisBinary` fields that selected a custom NSIS bundle in v26 and are ignored in v27 (`debugLogging` is still read). */
+export const LEGACY_CUSTOM_NSIS_BINARY_FIELDS = ["url", "checksum", "version"] as const
+
+const LEGACY_CUSTOM_NSIS_ANCHOR = "nsiscustomnsisbinary-toolsetsnsis"
+
+export function isPlainObject(value: unknown): value is Record<string, any> {
+  return value != null && typeof value === "object" && !Array.isArray(value)
+}
+
+/** Paths such as `nsis.customNsisBinary` of the v26 custom NSIS bundle settings present in `config`. */
+export function findLegacyCustomNsisPaths(config: Record<string, any>): string[] {
+  const paths: string[] = []
+  for (const section of NSIS_CONFIG_KEYS) {
+    const options = config[section]
+    if (!isPlainObject(options)) {
+      continue
+    }
+    const binary = options.customNsisBinary
+    if (isPlainObject(binary) && LEGACY_CUSTOM_NSIS_BINARY_FIELDS.some(field => binary[field] != null)) {
+      paths.push(`${section}.customNsisBinary`)
+    }
+    if (options.customNsisResources != null) {
+      paths.push(`${section}.customNsisResources`)
+    }
+  }
+  return paths
+}
+
+/** The warning for the paths returned by {@link findLegacyCustomNsisPaths}. It never includes the configured values. */
+export function formatLegacyCustomNsisMessage(paths: readonly string[]): string {
+  return [
+    `${paths.map(p => `\`${p}\``).join(", ")} ${paths.length === 1 ? "is" : "are"} ignored by electron-builder v27: the build uses the default NSIS bundle instead.`,
+    "  Supply your custom NSIS bundle via `toolsets.nsis: { url, checksum, version }` instead. It is not a rename:",
+    "  the checksum must be the lowercase hex SHA-256 of the archive (`shasum -a 256 <file>`), not the base64 SHA-512 v26 also accepted,",
+    "  and the bundle must also contain the NSIS plugins (`plugins/` or `windows/Plugins/`), which v26 read from a separate resources bundle.",
+    "  `customNsisBinary.debugLogging` is still read. `electron-builder migrate-schema` does not convert these settings.",
+    `  ${BREAKING_CHANGES_URL}#${LEGACY_CUSTOM_NSIS_ANCHOR}`,
+  ].join("\n")
+}

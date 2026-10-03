@@ -3,24 +3,27 @@ import { TargetSpecificOptions } from "../../../core.js"
 
 export interface CustomNsisBinary {
   /**
-   * @default https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z
+   * Ignored since v27 (the build warns): supply a custom NSIS bundle via `toolsets.nsis` instead.
+   * @see https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis
    */
   readonly url: string | null
 
   /**
-   * @default VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==
+   * Ignored since v27 (the build warns): supply a custom NSIS bundle via `toolsets.nsis` instead, whose checksum is a SHA-256 hex string.
+   * @see https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis
    */
   readonly checksum?: string | null
 
   /**
-   * @default 3.0.4.1
+   * Ignored since v27 (the build warns): supply a custom NSIS bundle via `toolsets.nsis` instead.
+   * @see https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis
    */
   readonly version?: string | null
 
   /**
    * Whether or not to enable NSIS logging for debugging.
    * Note: Requires a debug-enabled NSIS build.
-   * electron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `customNsisBinary?: CustomNsisBinary`
+   * electron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `toolsets.nsis`
    * In your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`
    */
   readonly debugLogging?: boolean | null
@@ -70,12 +73,15 @@ export interface CommonNsisOptions {
   readonly useZip?: boolean
 
   /**
-   * Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)
+   * Only `debugLogging` is still read. Since v27 `url`, `checksum` and `version` are ignored (the build warns): to use your own `makensis`,
+   * such as one with support for debug logging via LogSet and LogText, supply a custom NSIS bundle via `toolsets.nsis`.
+   * @see https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis
    */
   readonly customNsisBinary?: CustomNsisBinary | null
 
   /**
-   * Allows you to provide your own `nsis-resources`
+   * Ignored since v27 (the build warns): the NSIS plugins come from the `toolsets.nsis` bundle.
+   * @see https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis
    */
   readonly customNsisResources?: CustomNsisResources | null
 }

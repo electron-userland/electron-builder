@@ -698,3 +698,30 @@ describe("migrateProgrammaticSource — advisories match migrateConfig (parity)"
     ])
   })
 })
+
+describe("migrateProgrammaticSource — legacy custom NSIS bundle", () => {
+  const url = "https://downloads.example.com/nsisbi.7z?token=s3cr3t-token"
+  const checksum = "374cfc092fd1bd1898472df627549ecc165b0d6ba88e82deba085673aec95336"
+
+  test("customNsisBinary / customNsisResources warn and are left in place without printing their values", () => {
+    const src = `module.exports = {\n  nsis: { customNsisBinary: { url: "${url}", checksum: "${checksum}" } },\n  portable: { customNsisResources: { url: "${url}", checksum: "${checksum}", version: "1" } },\n}\n`
+    const result = run(src, "electron-builder.cjs")
+    expect(result.status).toBe("no-op")
+    expect(result.code).toBe(src)
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain("`nsis.customNsisBinary`, `portable.customNsisResources` are ignored by electron-builder v27")
+    expect(result.warnings[0]).toContain("toolsets.nsis")
+    expect(result.warnings[0]).not.toContain(url)
+    expect(result.warnings[0]).not.toContain(checksum)
+  })
+
+  test("a debugLogging-only or null customNsisBinary is not reported; a non-literal one is", () => {
+    expect(run(`module.exports = { nsis: { customNsisBinary: { url: null, debugLogging: true }, customNsisResources: null } }\n`).warnings).toHaveLength(0)
+    const nonLiteral = run(`const bin = require("./nsis-bin.json")\nmodule.exports = { nsisWeb: { customNsisBinary: bin } }\n`)
+    expect(nonLiteral.warnings.some(w => w.includes("`nsisWeb.customNsisBinary`"))).toBe(true)
+  })
+
+  test("a spread in an NSIS section is not mistaken for a custom NSIS bundle", () => {
+    expect(run(`const shared = { oneClick: false }\nmodule.exports = { nsis: { ...shared, perMachine: false }, portable: { ...shared } }\n`).warnings).toHaveLength(0)
+  })
+})

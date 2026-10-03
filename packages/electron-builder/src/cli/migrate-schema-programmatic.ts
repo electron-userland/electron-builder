@@ -1,4 +1,5 @@
 import { createRequire } from "node:module"
+import { formatLegacyCustomNsisMessage, LEGACY_CUSTOM_NSIS_BINARY_FIELDS, NSIS_CONFIG_KEYS } from "app-builder-lib/internal"
 import * as path from "path"
 import {
   ASAR_PLATFORM_KEYS,
@@ -373,6 +374,7 @@ class ConfigCodemod {
     this.ruleSnap(root)
     this.ruleHelperBundleId(root)
     this.ruleSquirrelNoMsi(root)
+    this.ruleLegacyCustomNsis(root)
     this.ruleWinSign(root)
     for (const platform of ["mac", "mas", "masDev"]) {
       const p = this.getObjectProp(root, platform)
@@ -1023,6 +1025,31 @@ class ConfigCodemod {
       this.replaceRange(this.start(noMsi), noMsi.end, `msi: ${this.negate(noMsi.initializer)}`)
     }
     this.changes.push({ key: "squirrelWindows.noMsi", description: "replaced squirrelWindows.noMsi → squirrelWindows.msi (inverted boolean)" })
+  }
+
+  // Warn only, like customSquirrelVendorDir. Mirrors migrateConfig: v27 still accepts customNsisBinary (debugLogging is read) but
+  // builds with the default NSIS bundle, and toolsets.nsis needs another checksum format and bundle layout, so nothing is rewritten.
+  private ruleLegacyCustomNsis(root: any): void {
+    const ts = this.ts
+    // Only a property that is written out counts: propValue also returns a spread, which would flag every `nsis: { ...shared }`.
+    const valueOf = (obj: any, name: string) => (obj != null && this.getProp(obj, name) != null ? this.propValue(obj, name) : undefined)
+    const isSet = (value: any) => value !== undefined && value.kind !== ts.SyntaxKind.NullKeyword
+    const paths: string[] = []
+    for (const section of NSIS_CONFIG_KEYS) {
+      const options = this.objectLiteral(valueOf(root, section))
+      const binary = valueOf(options, "customNsisBinary")
+      const binaryLiteral = this.objectLiteral(binary)
+      // A value the AST cannot read may set url/checksum/version.
+      if (binaryLiteral == null ? isSet(binary) : LEGACY_CUSTOM_NSIS_BINARY_FIELDS.some(field => isSet(valueOf(binaryLiteral, field)))) {
+        paths.push(`${section}.customNsisBinary`)
+      }
+      if (isSet(valueOf(options, "customNsisResources"))) {
+        paths.push(`${section}.customNsisResources`)
+      }
+    }
+    if (paths.length > 0) {
+      this.warnings.push(formatLegacyCustomNsisMessage(paths))
+    }
   }
 
   private ruleWinSign(root: any): void {

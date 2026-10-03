@@ -1,6 +1,6 @@
-import { checkLegacyConfiguration, RESOLVED_LEGACY_CONFIG_OPTIONS, validateConfiguration } from "app-builder-lib/internal"
-import { DebugLogger } from "builder-util"
-import { describe, expect, test } from "vitest"
+import { checkLegacyConfiguration, resetLegacyCustomNsisWarning, RESOLVED_LEGACY_CONFIG_OPTIONS, validateConfiguration } from "app-builder-lib/internal"
+import { DebugLogger, log } from "builder-util"
+import { describe, expect, test, vi } from "vitest"
 
 function expectRejected(config: Record<string, any>): string {
   try {
@@ -165,5 +165,64 @@ describe("PackagerOptions — removed programmatic fields", () => {
   test("a valid v27 options object is accepted", async () => {
     const { Packager } = await import("app-builder-lib")
     expect(() => new Packager({ projectDir: process.cwd(), config: { extraMetadata: { foo: 1 } } } as any)).not.toThrow()
+  })
+})
+
+// Issue #10274: v27 still accepts customNsisBinary (debugLogging is read) but ignores its custom bundle, so the build
+// would silently use the default NSIS. It must say so once per process, without echoing the url or checksum.
+describe("checkLegacyConfiguration — ignored v26 custom NSIS bundle", () => {
+  const url = "https://downloads.example.com/nsisbi.7z?token=s3cr3t-token"
+  const checksum = "374cfc092fd1bd1898472df627549ecc165b0d6ba88e82deba085673aec95336"
+  const config = { appId: "com.example.app", nsis: { customNsisBinary: { url, checksum, debugLogging: true } } }
+
+  function warningsFor(run: () => void): string[] {
+    resetLegacyCustomNsisWarning()
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    try {
+      run()
+      return warn.mock.calls.map(call => (typeof call[0] === "string" ? call[0] : JSON.stringify(call[0])))
+    } finally {
+      warn.mockRestore()
+      resetLegacyCustomNsisWarning()
+    }
+  }
+
+  test("warns once per process, naming the replacement and the breaking-changes anchor", () => {
+    const warnings = warningsFor(() => {
+      checkLegacyConfiguration(config)
+      checkLegacyConfiguration(config)
+    })
+    expect(warnings).toHaveLength(1)
+    const [warning] = warnings
+    expect(warning).toContain("`nsis.customNsisBinary` is ignored by electron-builder v27")
+    expect(warning).toContain("toolsets.nsis")
+    expect(warning).toContain("shasum -a 256")
+    expect(warning.endsWith("https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis")).toBe(true)
+    expect(warning).not.toContain(url)
+    expect(warning).not.toContain(checksum)
+  })
+
+  test("customNsisResources on nsisWeb / portable is reported too", () => {
+    const warnings = warningsFor(() =>
+      checkLegacyConfiguration({ nsisWeb: { customNsisResources: { url, checksum, version: "1" } }, portable: { customNsisResources: { url, checksum, version: "1" } } })
+    )
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]).toContain("`nsisWeb.customNsisResources`, `portable.customNsisResources` are ignored")
+  })
+
+  test("debugLogging alone is still read in v27 and is not reported", () => {
+    expect(warningsFor(() => checkLegacyConfiguration({ nsis: { customNsisBinary: { url: null, debugLogging: true } } } as any))).toHaveLength(0)
+  })
+
+  test("the v27 schema still accepts the keys, so the build warns instead of failing", async () => {
+    resetLegacyCustomNsisWarning()
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    try {
+      await expect(validateConfiguration(config, new DebugLogger(false))).resolves.toBeUndefined()
+      expect(warn).toHaveBeenCalledTimes(1)
+    } finally {
+      warn.mockRestore()
+      resetLegacyCustomNsisWarning()
+    }
   })
 })

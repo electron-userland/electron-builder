@@ -1229,3 +1229,35 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
     await expect(validateConfiguration(migrated as any, new DebugLogger(false))).resolves.toBeUndefined()
   })
 })
+
+describe("migrateConfig — legacy custom NSIS bundle (customNsisBinary / customNsisResources)", () => {
+  // v27 still accepts the keys (customNsisBinary.debugLogging is read) but builds with the default NSIS bundle, and
+  // toolsets.nsis needs another checksum format and bundle layout: warn, never convert, never print the values.
+  const url = "https://downloads.example.com/nsisbi.7z?token=s3cr3t-token"
+  const checksum = "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q=="
+
+  test("warns for every NSIS section and leaves the keys in place", () => {
+    const input = {
+      nsis: { oneClick: false, customNsisBinary: { url, checksum, debugLogging: true } },
+      nsisWeb: { customNsisResources: { url, checksum, version: "3.4.1" } },
+      portable: { customNsisBinary: { version: "3.10" } },
+    }
+    const result = migrateConfig(structuredClone(input))
+    // Warn-only: nothing is rewritten, so the file is not re-serialized either.
+    expect(result.modified).toBe(false)
+    expect(result.migrated).toEqual(input)
+    expect(result.warnings).toHaveLength(1)
+    const [warning] = result.warnings
+    expect(warning).toContain("`nsis.customNsisBinary`, `nsisWeb.customNsisResources`, `portable.customNsisBinary` are ignored by electron-builder v27")
+    expect(warning).toContain("toolsets.nsis")
+    expect(warning).toContain("SHA-256")
+    expect(warning.endsWith("https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis")).toBe(true)
+    expect(warning).not.toContain(url)
+    expect(warning).not.toContain(checksum)
+  })
+
+  test("customNsisBinary with only debugLogging (still read in v27) is not reported", () => {
+    const result = migrateConfig({ nsis: { customNsisBinary: { url: null, debugLogging: true }, customNsisResources: null } })
+    expect(result.warnings).toHaveLength(0)
+  })
+})

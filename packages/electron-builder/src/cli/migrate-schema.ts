@@ -1,5 +1,13 @@
 import { createRequire } from "node:module"
-import { AZURE_KNOWN_FIELDS, ELECTRON_DOWNLOAD_DROPPED, MAC_SIGN_FIELDS, MAC_SIGN_REMOVED_FIELDS, MAC_UNIVERSAL_FIELDS } from "app-builder-lib/internal"
+import {
+  AZURE_KNOWN_FIELDS,
+  ELECTRON_DOWNLOAD_DROPPED,
+  findLegacyCustomNsisPaths,
+  formatLegacyCustomNsisMessage,
+  MAC_SIGN_FIELDS,
+  MAC_SIGN_REMOVED_FIELDS,
+  MAC_UNIVERSAL_FIELDS,
+} from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
 import { promises as fs } from "fs"
 import * as path from "path"
@@ -528,7 +536,18 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     advisories.push(FEED_QUERY_ADVISORY)
   }
 
-  return { migrated: c, changes, warnings, advisories, modified: changes.length > 0 || warnings.length > 0 }
+  const modified = changes.length > 0 || warnings.length > 0
+
+  // nsis/nsisWeb/portable customNsisBinary / customNsisResources: ignored by v27 (not auto-migrated). v27 still accepts the keys
+  // (customNsisBinary.debugLogging is read) but builds with the default NSIS bundle, and toolsets.nsis needs a SHA-256 hex checksum
+  // and a bundle that carries the plugins, so the keys are left in place and the build warns too. Pushed after `modified` is
+  // computed: nothing is rewritten, so the file must not be re-serialized (dropping YAML/JSON5 comments) for this warning alone.
+  const legacyCustomNsisPaths = findLegacyCustomNsisPaths(c)
+  if (legacyCustomNsisPaths.length > 0) {
+    warnings.push(formatLegacyCustomNsisMessage(legacyCustomNsisPaths))
+  }
+
+  return { migrated: c, changes, warnings, advisories, modified }
 }
 
 /**
@@ -941,6 +960,9 @@ interface FoundConfig {
   readonly rootDirectoriesMoved?: boolean
 }
 
+/** Extensions of the `electron-builder.<ext>` files auto-detected when `--config` is omitted, in lookup order. */
+const CONFIG_FILE_EXTENSIONS = ["yml", "yaml", "json", "json5", "toml", "js", "cjs", "mjs", "ts"]
+
 async function findAndLoadConfig(projectDir: string, explicitConfigPath?: string | null): Promise<FoundConfig | null> {
   if (explicitConfigPath != null) {
     const abs = path.resolve(projectDir, explicitConfigPath)
@@ -970,7 +992,7 @@ async function findAndLoadConfig(projectDir: string, explicitConfigPath?: string
   }
 
   // Standalone config files
-  const candidates = [".yml", ".yaml", ".json", ".json5", ".toml", ".js", ".cjs", ".mjs", ".ts"].map(ext => path.join(projectDir, `electron-builder${ext}`))
+  const candidates = CONFIG_FILE_EXTENSIONS.map(ext => path.join(projectDir, `electron-builder.${ext}`))
   for (const candidate of candidates) {
     const text = await readFileSafe(candidate)
     if (text != null) {
@@ -1053,7 +1075,14 @@ export async function migrateSchema(args: any): Promise<void> {
 
   const found = await findAndLoadConfig(projectDir, configPath)
   if (found == null) {
-    log.error(null, "no config found — checked package.json build key and electron-builder.{yml,yaml,json,json5,toml,js,cjs,ts}")
+    // A missing --config file was already reported by findAndLoadConfig.
+    if (configPath == null) {
+      log.error(
+        { projectDir },
+        `no config found — checked the "build" key of package.json and electron-builder.{${CONFIG_FILE_EXTENSIONS.join(",")}}. ` +
+          "If your config file has another name (e.g. one you pass to `electron-builder --config`), run `electron-builder migrate-schema --config <path>`"
+      )
+    }
     process.exit(1)
   }
 
@@ -1089,7 +1118,8 @@ export async function migrateSchema(args: any): Promise<void> {
   }
 
   if (!modified) {
-    if (advisories.length === 0) {
+    // A warn-only key (e.g. customNsisBinary) leaves the config unmodified but is not "up to date".
+    if (advisories.length === 0 && warnings.length === 0) {
       log.info(null, "config is already up to date — no changes needed")
     }
     return
@@ -1189,6 +1219,7 @@ function printManualSteps() {
     "• Move helper-bundle-id → mac.helperBundleId",
     "• Replace squirrelWindows.noMsi with squirrelWindows.msi (inverted)",
     "• Replace squirrelWindows.customSquirrelVendorDir with a toolsets.squirrel custom bundle (it must contain an electron-winstaller/vendor/ subtree)",
+    "• Replace nsis/nsisWeb/portable customNsisBinary (url/checksum/version) and customNsisResources with a toolsets.nsis custom bundle (SHA-256 hex checksum; the bundle must also contain the NSIS plugins)",
     "• Move mac/mas/masDev signing fields (identity, entitlements, entitlementsInherit, entitlementsLoginHelper, hardenedRuntime, type, requirements, timestamp, binaries, strictVerify, preAutoEntitlements, provisioningProfile, additionalArguments) into the `sign` object; rename signIgnore → sign.ignore; remove gatekeeperAssess",
     "• Move mac/mas/masDev mergeASARs / singleArchFiles / x64ArchFiles into the `universal` object",
     "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true; drop cache/customDir/customFilename/strictSSL/platform/arch/version/force)",

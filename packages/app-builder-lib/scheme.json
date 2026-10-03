@@ -577,28 +577,28 @@
       "additionalProperties": false,
       "properties": {
         "checksum": {
-          "default": "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==",
+          "description": "Ignored since v27 (the build warns): supply a custom NSIS bundle via `toolsets.nsis` instead, whose checksum is a SHA-256 hex string.",
           "type": [
             "null",
             "string"
           ]
         },
         "debugLogging": {
-          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `customNsisBinary?: CustomNsisBinary`\nIn your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`",
+          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `toolsets.nsis`\nIn your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`",
           "type": [
             "null",
             "boolean"
           ]
         },
         "url": {
-          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z",
+          "description": "Ignored since v27 (the build warns): supply a custom NSIS bundle via `toolsets.nsis` instead.",
           "type": [
             "null",
             "string"
           ]
         },
         "version": {
-          "default": "3.0.4.1",
+          "description": "Ignored since v27 (the build warns): supply a custom NSIS bundle via `toolsets.nsis` instead.",
           "type": [
             "null",
             "string"
@@ -4509,7 +4509,7 @@
               "type": "null"
             }
           ],
-          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
+          "description": "Only `debugLogging` is still read. Since v27 `url`, `checksum` and `version` are ignored (the build warns): to use your own `makensis`,\nsuch as one with support for debug logging via LogSet and LogText, supply a custom NSIS bundle via `toolsets.nsis`."
         },
         "customNsisResources": {
           "anyOf": [
@@ -4520,7 +4520,7 @@
               "type": "null"
             }
           ],
-          "description": "Allows you to provide your own `nsis-resources`"
+          "description": "Ignored since v27 (the build warns): the NSIS plugins come from the `toolsets.nsis` bundle."
         },
         "deleteAppDataOnUninstall": {
           "default": false,
@@ -4886,7 +4886,7 @@
               "type": "null"
             }
           ],
-          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
+          "description": "Only `debugLogging` is still read. Since v27 `url`, `checksum` and `version` are ignored (the build warns): to use your own `makensis`,\nsuch as one with support for debug logging via LogSet and LogText, supply a custom NSIS bundle via `toolsets.nsis`."
         },
         "customNsisResources": {
           "anyOf": [
@@ -4897,7 +4897,7 @@
               "type": "null"
             }
           ],
-          "description": "Allows you to provide your own `nsis-resources`"
+          "description": "Ignored since v27 (the build warns): the NSIS plugins come from the `toolsets.nsis` bundle."
         },
         "deleteAppDataOnUninstall": {
           "default": false,
@@ -6152,7 +6152,7 @@
               "type": "null"
             }
           ],
-          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
+          "description": "Only `debugLogging` is still read. Since v27 `url`, `checksum` and `version` are ignored (the build warns): to use your own `makensis`,\nsuch as one with support for debug logging via LogSet and LogText, supply a custom NSIS bundle via `toolsets.nsis`."
         },
         "customNsisResources": {
           "anyOf": [
@@ -6163,7 +6163,7 @@
               "type": "null"
             }
           ],
-          "description": "Allows you to provide your own `nsis-resources`"
+          "description": "Ignored since v27 (the build warns): the NSIS plugins come from the `toolsets.nsis` bundle."
         },
         "guid": {
           "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",

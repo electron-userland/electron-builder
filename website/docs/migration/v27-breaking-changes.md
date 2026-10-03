@@ -14,7 +14,7 @@ This page is the **canonical reference for _what_ changed** in v27. For the **_h
 
 - The `build()` API is unchanged; configuration keys that were renamed or restructured are rewritten automatically by `migrate-schema` (see each entry below) and keep their v26 behavior, and exported types that survive keep their shape.
 - CJS `require()` continues to work without code changes on supported Node.js versions.
-- Every **config-level** breaking change below that has a mechanical v27 equivalent is rewritten automatically by `electron-builder migrate-schema` (look for the **Auto** ✓ marker). The one config key it cannot rewrite, [`squirrelWindows.customSquirrelVendorDir`](#squirrelwindowscustomsquirrelvendordir), is reported with a warning. Runtime, CLI, env-var, and behavior changes require manual action — see [what `migrate-schema` does and does not do](#new-command-migrate-schema).
+- Every **config-level** breaking change below that has a mechanical v27 equivalent is rewritten automatically by `electron-builder migrate-schema` (look for the **Auto** ✓ marker). The config keys it cannot rewrite, [`squirrelWindows.customSquirrelVendorDir`](#squirrelwindowscustomsquirrelvendordir) and [`nsis.customNsisBinary` / `customNsisResources`](#nsiscustomnsisbinary-toolsetsnsis), are reported with a warning. Runtime, CLI, env-var, and behavior changes require manual action — see [what `migrate-schema` does and does not do](#new-command-migrate-schema).
 
 :::tip[Run the automated migrator first]
 ```bash
@@ -68,6 +68,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`build.helper-bundle-id` removed](#buildhelper-bundle-id) | ✓ | Moved to `mac.helperBundleId` |
 | [`squirrelWindows.noMsi` removed](#squirrelwindowsnomsi) | ✓ | Replaced by `msi` (inverted) |
 | [`squirrelWindows.customSquirrelVendorDir` removed](#squirrelwindowscustomsquirrelvendordir) | — | Supply a custom Squirrel bundle via `toolsets.squirrel` (a `ToolsetCustom` object); `migrate-schema` warns but cannot rewrite it (different bundle layout) |
+| [`nsis.customNsisBinary` / `customNsisResources` ignored](#nsiscustomnsisbinary-toolsetsnsis) | — | Supply a custom NSIS bundle via `toolsets.nsis` with a SHA-256 hex checksum; the build and `migrate-schema` warn but do not convert it (different checksum format and bundle layout) |
 | [`GithubOptions.vPrefixedTagName` removed](#githuboptions-gitlaboptions-vprefixedtagname) | ✓ | Use `tagNamePrefix`; an empty `tagNamePrefix: ""` is now honored (v26 ignored it) |
 | [`GitlabOptions.vPrefixedTagName` retained](#githuboptions-gitlaboptions-vprefixedtagname) | — | None — still functional; the migrator leaves GitLab entries untouched |
 | [`devMetadata` / `extraMetadata` in `PackagerOptions` removed](#devmetadata-extrametadata-programmatic-packageroptions) | — | Use `config` / `config.extraMetadata` |
@@ -278,6 +279,24 @@ The shape and behaviour differ, so this is not a 1-to-1 rename:
 `migrate-schema` cannot rewrite this key (the bundle layout differs), so it warns and leaves it in place; the next build then fails with a message pointing at `toolsets.squirrel`. Remove the key to use the default bundle, or point `toolsets.squirrel` at a bundle with the layout above.
 
 For a fully offline build, seed the `squirrel.windows@<version>` archive (plus `winCodeSign` and, for MSI, the WiX bundle) in the toolset cache or point `toolsets.squirrel` at a local bundle — see [Offline / Air-Gapped Builds](../tutorials/offline-air-gapped-builds.md). Nothing is downloaded outside the checksummed toolset bundles.
+
+### `nsis.customNsisBinary` / `customNsisResources` → `toolsets.nsis` {#nsiscustomnsisbinary-toolsetsnsis}
+
+Ignored. The NSIS compiler and its plugins now come only from the [`toolsets.nsis`](#toolset-env-var-overrides-removed) bundle, so the `url`, `checksum` and `version` of `customNsisBinary` and the whole of `customNsisResources` (on `nsis`, `nsisWeb` or `portable`) no longer have any effect: the build compiles with the default NSIS bundle instead of yours. The keys are still accepted by the schema, because `customNsisBinary.debugLogging` is still read, so the build prints a warning instead of failing. Move a custom NSIS build, such as an NSISbi fork for installers over 2 GB or a debug-logging `makensis`, to `toolsets.nsis`:
+
+```json5
+// Before (v26 — ignored by v27):
+{ "nsis": { "customNsisBinary": { "url": "https://example.com/my-nsis.7z", "checksum": "<checksum>", "version": "3.10" } } }
+// After:
+{ "toolsets": { "nsis": { "url": "https://example.com/my-nsis.7z", "checksum": "<lowercase SHA-256 hex>", "version": "3.10" } } }
+```
+
+It is not a rename, for two reasons:
+
+- **The checksum format differs.** `toolsets.nsis.checksum` must be the SHA-256 of the archive as a lowercase hex string, which you can compute with `shasum -a 256 my-nsis.7z` (or `sha256sum`, or `(Get-FileHash my-nsis.7z).Hash.ToLower()` in PowerShell). v26 also accepted the base64-encoded SHA-512 that its docs showed as the default; v27 rejects that format. A v26 checksum that is already 64 hex characters can be kept once lowercased.
+- **The bundle must carry the plugins.** v26 read the NSIS plugins from a separate resources bundle (`customNsisResources`, or the default one), while a custom `toolsets.nsis` bundle must contain them itself, in a `plugins/` or `windows/Plugins/` directory (`elevate.exe` is still read from the bundle root, as in v26). Lay it out like the [default NSIS bundle](https://github.com/electron-userland/electron-builder-binaries/tree/master/packages). A bundle with the v26 layout (`Bin/makensis.exe` or `linux/makensis`) is still found.
+
+`migrate-schema` cannot rewrite these keys, so it warns and leaves them in place, and every build warns until you move them. Keep `customNsisBinary.debugLogging` if you use it, since it is still read.
 
 ### `GithubOptions` / `GitlabOptions` `vPrefixedTagName` {#githuboptions-gitlaboptions-vprefixedtagname}
 
@@ -585,7 +604,7 @@ v27 adds `electron-builder migrate-schema`, which rewrites your config to v27 fo
 
 **It rewrites** every entry marked **Auto ✓** on this page: removed keys (`electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, `disableDefaultIgnoredFiles`, `appImage.systemIntegration`, `linux.syncDesktopName`, `mac.gatekeeperAssess`), the `nativeModules`, `asar` (root and platform-level), `mac.sign`, `mac.universal`, `win.sign`, `electronGet`, and `snapcraft` restructurings, GitHub `vPrefixedTagName` → `tagNamePrefix`, `helper-bundle-id`, `squirrelWindows.noMsi`, root-level `directories` in `package.json`, and `toolsets.*` values v27 rejects (`null`, the retired `appimage: "1.0.2"`). Values with no v27 equivalent (for example `nativeRebuilder: "legacy"` or `electronDownload.strictSSL`) are dropped with a warning.
 
-**It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom `mac.sign` signer combined with sibling signing options, and (in JS/TS configs) platform-level `asarUnpack` next to root-level ASAR options.
+**It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, the custom NSIS bundle settings of `customNsisBinary` / `customNsisResources` ([→ `toolsets.nsis`](#nsiscustomnsisbinary-toolsetsnsis)), a custom `mac.sign` signer combined with sibling signing options, and (in JS/TS configs) platform-level `asarUnpack` next to root-level ASAR options.
 
 **It prints an advisory** (without changing the config) for runtime defaults and behavior changes you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)), `nsis.perMachine` or `nsisWeb.perMachine` set to `true` ([per-machine NSIS updates](#nsis-per-machine-builds-set-isadminrightsrequired)), a custom `win.sign.sign` hook without `win.sign.publisherName`, unless `win.verifyUpdateCodeSignature` is `false` ([publisher name](#windows-publishername-is-validated-against-the-signing-certificate)), a `generic` publish configuration whose `url` has a query string ([update credentials](#update-credentials-stay-on-the-feeds-origin)), and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
 
@@ -663,7 +682,7 @@ The `url` accepts an `https://` URL (downloaded and cached automatically) or a `
 
 ```json5
 // Remote bundle (URL)
-{ "build": { "toolsets": { "nsis": { "url": "https://example.com/my-nsis-bundle-1.0.tar.gz", "checksum": "sha256:abc123…", "version": "my-custom-1.0" } } } }
+{ "build": { "toolsets": { "nsis": { "url": "https://example.com/my-nsis-bundle-1.0.tar.gz", "checksum": "<lowercase SHA-256 hex of the archive>", "version": "my-custom-1.0" } } } }
 
 // Local directory (no checksum required)
 { "build": { "toolsets": { "appimage": { "url": "file:///path/to/my-appimage-tools-dir" } } } }
