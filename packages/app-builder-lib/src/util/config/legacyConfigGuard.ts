@@ -1,13 +1,6 @@
 import { InvalidConfigurationError, log } from "builder-util"
 import { Configuration } from "../../configuration.js"
-import {
-  BREAKING_CHANGES_URL,
-  findLegacyCustomNsisPaths,
-  formatLegacyCustomNsisMessage,
-  formatLegacyOptionMessage,
-  isPlainObject,
-  RESOLVED_LEGACY_CONFIG_OPTIONS,
-} from "./legacyOptions.js"
+import { BREAKING_CHANGES_URL, formatLegacyOptionMessage, RESOLVED_LEGACY_CONFIG_OPTIONS } from "./legacyOptions.js"
 
 /**
  * Build-time guard for configurations still written against v26.
@@ -50,6 +43,10 @@ const SNAPCRAFT_BASES = ["core18", "core20", "core22", "core24", "custom"]
 
 function docLink(anchor: string): string {
   return `  ${BREAKING_CHANGES_URL}#${anchor}`
+}
+
+function isPlainObject(value: unknown): value is Record<string, any> {
+  return value != null && typeof value === "object" && !Array.isArray(value)
 }
 
 /** Resolves `path` against `config`, returning the holding object or null when any segment is missing. */
@@ -184,30 +181,6 @@ function checkPublishEntries(config: Record<string, any>, errors: string[]): voi
   }
 }
 
-/** Emitted once per process; a build can validate the configuration more than once. */
-let legacyCustomNsisWarned = false
-
-/**
- * v26 `customNsisBinary` / `customNsisResources` still pass the v27 schema (`debugLogging` is still read) but no longer
- * select the NSIS bundle, so without this the build silently compiles with the default NSIS instead of the user's fork.
- */
-function warnLegacyCustomNsis(config: Record<string, any>): void {
-  if (legacyCustomNsisWarned) {
-    return
-  }
-  const paths = findLegacyCustomNsisPaths(config)
-  if (paths.length === 0) {
-    return
-  }
-  legacyCustomNsisWarned = true
-  log.warn(formatLegacyCustomNsisMessage(paths))
-}
-
-/** @internal exported for tests — lets a test re-arm the once-per-process warning. */
-export function resetLegacyCustomNsisWarning(): void {
-  legacyCustomNsisWarned = false
-}
-
 /**
  * Throws a single aggregated {@link InvalidConfigurationError} naming every v26 option found, and
  * warns about the ones that are merely discouraged. Runs before schema validation.
@@ -222,7 +195,6 @@ export function checkLegacyConfiguration(config: Configuration): void {
   checkWinSignDiscriminator(raw, errors)
   checkSnapcraftShape(raw, errors)
   checkPublishEntries(raw, errors)
-  warnLegacyCustomNsis(raw)
 
   for (const warning of warnings) {
     log.warn(warning)

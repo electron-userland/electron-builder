@@ -2,11 +2,12 @@ import { createRequire } from "node:module"
 import {
   AZURE_KNOWN_FIELDS,
   ELECTRON_DOWNLOAD_DROPPED,
-  findLegacyCustomNsisPaths,
-  formatLegacyCustomNsisMessage,
+  formatLegacyOptionMessage,
   MAC_SIGN_FIELDS,
   MAC_SIGN_REMOVED_FIELDS,
   MAC_UNIVERSAL_FIELDS,
+  NSIS_CONFIG_KEYS,
+  RESOLVED_LEGACY_CONFIG_OPTIONS,
 } from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
 import { promises as fs } from "fs"
@@ -536,18 +537,80 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     advisories.push(FEED_QUERY_ADVISORY)
   }
 
+  // ── nsis/nsisWeb/portable customNsisBinary / customNsisResources removed ──
+  // Kept keys are reported only after `modified` is computed: a key that is merely kept must not re-serialize the file
+  // (dropping YAML/JSON5 comments) when nothing else changed. The build then fails with the same targeted message.
+  const keptKeyWarnings: string[] = []
+  migrateCustomNsis(c, changes, warnings, keptKeyWarnings)
   const modified = changes.length > 0 || warnings.length > 0
-
-  // nsis/nsisWeb/portable customNsisBinary / customNsisResources: ignored by v27 (not auto-migrated). v27 still accepts the keys
-  // (customNsisBinary.debugLogging is read) but builds with the default NSIS bundle, and toolsets.nsis needs a SHA-256 hex checksum
-  // and a bundle that carries the plugins, so the keys are left in place and the build warns too. Pushed after `modified` is
-  // computed: nothing is rewritten, so the file must not be re-serialized (dropping YAML/JSON5 comments) for this warning alone.
-  const legacyCustomNsisPaths = findLegacyCustomNsisPaths(c)
-  if (legacyCustomNsisPaths.length > 0) {
-    warnings.push(formatLegacyCustomNsisMessage(legacyCustomNsisPaths))
-  }
+  warnings.push(...keptKeyWarnings)
 
   return { migrated: c, changes, warnings, advisories, modified }
+}
+
+/** The build-time guard's message for a removed key (`nsis.customNsisBinary`), reused for the keys migrate-schema leaves in place. */
+export function legacyKeyMessage(fullPath: string): string {
+  const option = RESOLVED_LEGACY_CONFIG_OPTIONS.find(o => o.fullPath === fullPath)
+  if (option == null) {
+    throw new Error(`no legacy config option for ${fullPath}`)
+  }
+  return formatLegacyOptionMessage(option)
+}
+
+/** Warning for a `portable.customNsisBinary.debugLogging` that migrate-schema drops. */
+export const PORTABLE_DEBUG_LOGGING_DROPPED =
+  "portable.customNsisBinary.debugLogging was dropped: it never had an effect on portable targets (the portable template does not enable NSIS logging), and v27 has no portable equivalent."
+
+/**
+ * `customNsisBinary.debugLogging` moves to `<section>.installerDebugLogging` (nsis / nsisWeb; dropped for portable), and an
+ * emptied or null `customNsisBinary` / `customNsisResources` is removed. A custom bundle (url / checksum / version, or the resources
+ * bundle) is never converted to `toolsets.nsis`: the checksum format and bundle layout differ, so the key is kept and reported.
+ */
+function migrateCustomNsis(c: Record<string, any>, changes: MigrationChange[], warnings: string[], keptKeyWarnings: string[]): void {
+  for (const section of NSIS_CONFIG_KEYS) {
+    const options = c[section]
+    if (!isPlainObject(options)) {
+      continue
+    }
+    const binaryPath = `${section}.customNsisBinary`
+    const binary = options.customNsisBinary
+    if (binary === null) {
+      delete options.customNsisBinary
+      changes.push({ key: binaryPath, description: `removed ${binaryPath}: null (the key was removed in v27)` })
+    } else if (isPlainObject(binary)) {
+      if ("debugLogging" in binary) {
+        const debugLogging = binary.debugLogging
+        delete binary.debugLogging
+        if (section === "portable") {
+          if (debugLogging != null) {
+            warnings.push(PORTABLE_DEBUG_LOGGING_DROPPED)
+          }
+          changes.push({ key: `${binaryPath}.debugLogging`, description: `removed ${binaryPath}.debugLogging (no effect on portable targets)` })
+        } else if (debugLogging != null && !("installerDebugLogging" in options)) {
+          options.installerDebugLogging = debugLogging
+          changes.push({ key: `${binaryPath}.debugLogging`, description: `moved ${binaryPath}.debugLogging → ${section}.installerDebugLogging` })
+        } else {
+          changes.push({ key: `${binaryPath}.debugLogging`, description: `removed ${binaryPath}.debugLogging` })
+        }
+      }
+      if (Object.values(binary).every(v => v == null)) {
+        delete options.customNsisBinary
+        changes.push({ key: binaryPath, description: `removed ${binaryPath} (no custom bundle was set)` })
+      } else {
+        keptKeyWarnings.push(legacyKeyMessage(binaryPath))
+      }
+    } else if (binary !== undefined) {
+      keptKeyWarnings.push(legacyKeyMessage(binaryPath))
+    }
+
+    const resourcesPath = `${section}.customNsisResources`
+    if (options.customNsisResources === null) {
+      delete options.customNsisResources
+      changes.push({ key: resourcesPath, description: `removed ${resourcesPath}: null (the key was removed in v27)` })
+    } else if (options.customNsisResources !== undefined) {
+      keptKeyWarnings.push(legacyKeyMessage(resourcesPath))
+    }
+  }
 }
 
 /**
@@ -1118,7 +1181,7 @@ export async function migrateSchema(args: any): Promise<void> {
   }
 
   if (!modified) {
-    // A warn-only key (e.g. customNsisBinary) leaves the config unmodified but is not "up to date".
+    // A kept key (e.g. a customNsisBinary with a url) leaves the config unmodified but is not "up to date".
     if (advisories.length === 0 && warnings.length === 0) {
       log.info(null, "config is already up to date — no changes needed")
     }
@@ -1219,7 +1282,7 @@ function printManualSteps() {
     "• Move helper-bundle-id → mac.helperBundleId",
     "• Replace squirrelWindows.noMsi with squirrelWindows.msi (inverted)",
     "• Replace squirrelWindows.customSquirrelVendorDir with a toolsets.squirrel custom bundle (it must contain an electron-winstaller/vendor/ subtree)",
-    "• Replace nsis/nsisWeb/portable customNsisBinary (url/checksum/version) and customNsisResources with a toolsets.nsis custom bundle (SHA-256 hex checksum; the bundle must also contain the NSIS plugins)",
+    "• Move nsis/nsisWeb customNsisBinary.debugLogging → installerDebugLogging (it needs a log-enabled custom toolsets.nsis); remove customNsisBinary and customNsisResources, replacing a custom url/checksum with a toolsets.nsis custom bundle (lowercase SHA-256 hex checksum; the bundle must also contain the NSIS plugins)",
     "• Move mac/mas/masDev signing fields (identity, entitlements, entitlementsInherit, entitlementsLoginHelper, hardenedRuntime, type, requirements, timestamp, binaries, strictVerify, preAutoEntitlements, provisioningProfile, additionalArguments) into the `sign` object; rename signIgnore → sign.ignore; remove gatekeeperAssess",
     "• Move mac/mas/masDev mergeASARs / singleArchFiles / x64ArchFiles into the `universal` object",
     "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true; drop cache/customDir/customFilename/strictSSL/platform/arch/version/force)",

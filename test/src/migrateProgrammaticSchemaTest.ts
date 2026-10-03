@@ -5,6 +5,7 @@ import {
   migrateConfig,
   NSIS_PER_MACHINE_UPDATE_ADVISORY,
   NSIS_WEB_ADVISORY,
+  PORTABLE_DEBUG_LOGGING_DROPPED,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
 } from "../../packages/electron-builder/src/cli/migrate-schema"
 import { loadTypeScript, migrateProgrammaticSource } from "../../packages/electron-builder/src/cli/migrate-schema-programmatic"
@@ -699,29 +700,45 @@ describe("migrateProgrammaticSource — advisories match migrateConfig (parity)"
   })
 })
 
-describe("migrateProgrammaticSource — legacy custom NSIS bundle", () => {
+describe("migrateProgrammaticSource — removed customNsisBinary / customNsisResources", () => {
   const url = "https://downloads.example.com/nsisbi.7z?token=s3cr3t-token"
   const checksum = "374cfc092fd1bd1898472df627549ecc165b0d6ba88e82deba085673aec95336"
 
-  test("customNsisBinary / customNsisResources warn and are left in place without printing their values", () => {
-    const src = `module.exports = {\n  nsis: { customNsisBinary: { url: "${url}", checksum: "${checksum}" } },\n  portable: { customNsisResources: { url: "${url}", checksum: "${checksum}", version: "1" } },\n}\n`
-    const result = run(src, "electron-builder.cjs")
-    expect(result.status).toBe("no-op")
-    expect(result.code).toBe(src)
+  test("debugLogging moves to installerDebugLogging and the emptied customNsisBinary is removed", () => {
+    const result = run(`module.exports = {\n  nsis: {\n    customNsisBinary: { url: null, debugLogging: true },\n    oneClick: false,\n  },\n}\n`, "electron-builder.cjs")
+    expect(result.status).toBe("migrated")
+    expect(result.code).toBe(`module.exports = {\n  nsis: {\n    installerDebugLogging: true,\n    oneClick: false,\n  },\n}\n`)
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  test("a custom bundle is kept and reported without its values; debugLogging still moves", () => {
+    const src = `export default {\n  nsisWeb: {\n    customNsisBinary: {\n      url: "${url}",\n      checksum: "${checksum}",\n      debugLogging: true,\n    },\n  },\n}\n`
+    const result = run(src)
+    expect(result.code).toBe(
+      `export default {\n  nsisWeb: {\n    installerDebugLogging: true,\n    customNsisBinary: {\n      url: "${url}",\n      checksum: "${checksum}",\n    },\n  },\n}\n`
+    )
     expect(result.warnings).toHaveLength(1)
-    expect(result.warnings[0]).toContain("`nsis.customNsisBinary`, `portable.customNsisResources` are ignored by electron-builder v27")
-    expect(result.warnings[0]).toContain("toolsets.nsis")
+    expect(result.warnings[0]).toContain("`nsisWeb.customNsisBinary` was replaced by `toolsets.nsis`")
     expect(result.warnings[0]).not.toContain(url)
     expect(result.warnings[0]).not.toContain(checksum)
   })
 
-  test("a debugLogging-only or null customNsisBinary is not reported; a non-literal one is", () => {
-    expect(run(`module.exports = { nsis: { customNsisBinary: { url: null, debugLogging: true }, customNsisResources: null } }\n`).warnings).toHaveLength(0)
-    const nonLiteral = run(`const bin = require("./nsis-bin.json")\nmodule.exports = { nsisWeb: { customNsisBinary: bin } }\n`)
-    expect(nonLiteral.warnings.some(w => w.includes("`nsisWeb.customNsisBinary`"))).toBe(true)
+  test("customNsisResources and a non-literal customNsisBinary are kept and reported; nothing is rewritten", () => {
+    const src = `const bin = require("./nsis-bin.json")\nmodule.exports = { nsis: { customNsisBinary: bin }, portable: { customNsisResources: { url: "${url}", checksum: "${checksum}", version: "1" } } }\n`
+    const result = run(src, "electron-builder.cjs")
+    expect(result.status).toBe("no-op")
+    expect(result.code).toBe(src)
+    expect(result.warnings.map(w => w.split("\n")[0])).toEqual([
+      "`nsis.customNsisBinary` was replaced by `toolsets.nsis` and `nsis.installerDebugLogging` in electron-builder v27.",
+      "`portable.customNsisResources` was replaced by `toolsets.nsis` in electron-builder v27.",
+    ])
   })
 
-  test("a spread in an NSIS section is not mistaken for a custom NSIS bundle", () => {
-    expect(run(`const shared = { oneClick: false }\nmodule.exports = { nsis: { ...shared, perMachine: false }, portable: { ...shared } }\n`).warnings).toHaveLength(0)
+  test("portable debugLogging is dropped with a warning; null keys are removed; a spread is not mistaken for the key", () => {
+    const result = run(
+      `const shared = {}\nmodule.exports = {\n  portable: {\n    ...shared,\n    customNsisBinary: { debugLogging: true },\n  },\n  nsisWeb: {\n    ...shared,\n    customNsisResources: null,\n  },\n}\n`
+    )
+    expect(result.code).toBe(`const shared = {}\nmodule.exports = {\n  portable: {\n    ...shared,\n  },\n  nsisWeb: {\n    ...shared,\n  },\n}\n`)
+    expect(result.warnings).toEqual([PORTABLE_DEBUG_LOGGING_DROPPED])
   })
 })

@@ -83,11 +83,11 @@ test("missing --config file reports only that file, not the auto-detection hint"
   }
 })
 
-// Issue #10274: v27 ignores the v26 custom NSIS bundle. The warning must name the setting, never its url or checksum.
+// Issue #10274: customNsisBinary / customNsisResources were removed. A kept key is reported by name, never with its url or checksum.
 const SECRET_URL = "https://downloads.example.com/nsisbi.7z?token=s3cr3t-token"
 const SECRET_CHECKSUM = "374cfc092fd1bd1898472df627549ecc165b0d6ba88e82deba085673aec95336"
 
-test("custom-named JS config via --config: warns about nsis.customNsisBinary without printing its values", async ({ expect, tmpDir }) => {
+test("custom-named JS config via --config: reports a kept nsis.customNsisBinary without printing its values", async ({ expect, tmpDir }) => {
   const projectDir = await tmpDir.createTempDir({ prefix: "migrate-schema-cli" })
   const source = `module.exports = { nsis: { oneClick: false, customNsisBinary: { url: "${SECRET_URL}", checksum: "${SECRET_CHECKSUM}" } } }\n`
   await fs.writeFile(path.join(projectDir, "the.spice.must.flow.cjs"), source)
@@ -96,7 +96,7 @@ test("custom-named JS config via --config: warns about nsis.customNsisBinary wit
   try {
     await migrateSchema({ "project-dir": projectDir, config: "the.spice.must.flow.cjs" })
     const warned = messagesOf(warn)
-    expect(warned.some(m => m.includes("`nsis.customNsisBinary` is ignored by electron-builder v27") && m.includes("toolsets.nsis"))).toBe(true)
+    expect(warned.some(m => m.includes("`nsis.customNsisBinary` was replaced by `toolsets.nsis`"))).toBe(true)
     expect(warned.join("\n")).not.toContain(SECRET_URL)
     expect(warned.join("\n")).not.toContain(SECRET_CHECKSUM)
     expect(messagesOf(info).some(m => m.includes("already up to date"))).toBe(false)
@@ -106,7 +106,7 @@ test("custom-named JS config via --config: warns about nsis.customNsisBinary wit
   }
 })
 
-test("static config with only a warn-only key: warns, is not rewritten, and is not 'already up to date'", async ({ expect, tmpDir }) => {
+test("static config with only a kept key: warns, is not rewritten, and is not 'already up to date'", async ({ expect, tmpDir }) => {
   const projectDir = await tmpDir.createTempDir({ prefix: "migrate-schema-cli" })
   const configPath = path.join(projectDir, "electron-builder.json")
   const source = JSON.stringify({ appId: "a", nsisWeb: { customNsisResources: { url: SECRET_URL, checksum: SECRET_CHECKSUM, version: "1" } } }, null, 2)

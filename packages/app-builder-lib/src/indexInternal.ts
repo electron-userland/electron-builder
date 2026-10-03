@@ -59,10 +59,7 @@ export {
   AZURE_KNOWN_FIELDS,
   BREAKING_CHANGES_URL,
   ELECTRON_DOWNLOAD_DROPPED,
-  findLegacyCustomNsisPaths,
-  formatLegacyCustomNsisMessage,
   LEGACY_CONFIG_OPTIONS,
-  LEGACY_CUSTOM_NSIS_BINARY_FIELDS,
   MAC_PLATFORM_KEYS,
   MAC_SIGN_FIELDS,
   MAC_SIGN_REMOVED_FIELDS,
@@ -72,7 +69,7 @@ export {
   formatLegacyOptionMessage,
 } from "./util/config/legacyOptions.js"
 export type { LegacyConfigOption, ResolvedLegacyConfigOption } from "./util/config/legacyOptions.js"
-export { checkLegacyConfiguration, resetLegacyCustomNsisWarning } from "./util/config/legacyConfigGuard.js"
+export { checkLegacyConfiguration } from "./util/config/legacyConfigGuard.js"
 export { assertNoRemovedEnvVars, checkRemovedEnvVars, resetRemovedEnvVarsCheck } from "./util/flags.js"
 export { validateSchema } from "./util/config/schemaValidator.js"
 export {
