@@ -66,7 +66,7 @@ export interface CommonNsisOptions {
   readonly warningsAsErrors?: boolean
 
   /**
-   * Forces zip compression format instead of LZMA. Used internally for differential update packages.
+   * Use zip instead of 7z (LZMA) for the embedded app package. Only applies to portable targets and to installers built with `differentialPackage: false`; ignored (with a warning) when `differentialPackage` is enabled and for `nsis-web`, which always use 7z.
    * @default false
    */
   readonly useZip?: boolean
