@@ -308,6 +308,14 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
   const childProcess = doSpawn(command, args, options, { isPipeInput: true })
   const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
   return new Promise<any>((resolve, reject) => {
+    const rejectAndClearTimeout = (error: Error) => {
+      try {
+        clearTimeout(timeout)
+      } finally {
+        reject(error)
+      }
+    }
+
     handleProcess(
       "close",
       childProcess,
@@ -319,16 +327,10 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
           resolve(undefined)
         }
       },
-      error => {
-        try {
-          clearTimeout(timeout)
-        } finally {
-          reject(error)
-        }
-      }
+      rejectAndClearTimeout
     )
 
-    endStdin(childProcess, data, reject)
+    endStdin(childProcess, data, rejectAndClearTimeout)
   })
 }
 
@@ -368,7 +370,10 @@ export function spawnAndWriteWithOutput(command: string, args: Array<string>, da
       }
     })
 
-    endStdin(childProcess, data, reject)
+    endStdin(childProcess, data, (err: Error) => {
+      clearTimeout(timeout)
+      reject(err)
+    })
 
     childProcess.once("close", (code: number) => {
       clearTimeout(timeout)
@@ -383,11 +388,14 @@ export function spawnAndWriteWithOutput(command: string, args: Array<string>, da
   })
 }
 
-// The child may exit (closing its stdin) before all data is written. The resulting EPIPE / ECONNRESET is expected
-// and must not surface as an unhandled 'error' event: the exit code reported on "close" decides success or failure.
-function endStdin(childProcess: ChildProcess, data: string, reject: (reason?: any) => void) {
+// The child may exit (closing its stdin) before all data is written. The resulting "reader went away" write error is
+// expected and must not surface as an unhandled 'error' event: the exit code reported on "close" decides success or failure.
+// POSIX reports EPIPE (or ECONNRESET); on Windows libuv maps ERROR_BROKEN_PIPE to UV_EOF, surfaced as code "EOF".
+const STDIN_CLOSED_ERROR_CODES = new Set(["EPIPE", "ECONNRESET", "EOF"])
+
+function endStdin(childProcess: ChildProcess, data: string, reject: (error: Error) => void) {
   childProcess.stdin!.on("error", (error: NodeJS.ErrnoException) => {
-    if (error.code !== "EPIPE" && error.code !== "ECONNRESET") {
+    if (!STDIN_CLOSED_ERROR_CODES.has(error.code ?? "")) {
       reject(error)
     }
   })
