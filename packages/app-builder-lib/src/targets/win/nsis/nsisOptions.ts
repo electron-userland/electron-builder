@@ -1,46 +1,6 @@
 import { CommonWindowsInstallerConfiguration } from "../../../options/CommonWindowsInstallerConfiguration.js"
 import { TargetSpecificOptions } from "../../../core.js"
 
-export interface CustomNsisBinary {
-  /**
-   * @default https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z
-   */
-  readonly url: string | null
-
-  /**
-   * @default VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==
-   */
-  readonly checksum?: string | null
-
-  /**
-   * @default 3.0.4.1
-   */
-  readonly version?: string | null
-
-  /**
-   * Whether or not to enable NSIS logging for debugging.
-   * Note: Requires a debug-enabled NSIS build.
-   * electron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `customNsisBinary?: CustomNsisBinary`
-   * In your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`
-   */
-  readonly debugLogging?: boolean | null
-}
-export interface CustomNsisResources {
-  /**
-   * @default https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z
-   */
-  readonly url: string
-
-  /**
-   * @default Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==
-   */
-  readonly checksum: string
-
-  /**
-   * @default 3.4.1
-   */
-  readonly version: string
-}
 export interface CommonNsisOptions {
   /**
    * Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
@@ -68,16 +28,6 @@ export interface CommonNsisOptions {
    * @default false
    */
   readonly useZip?: boolean
-
-  /**
-   * Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)
-   */
-  readonly customNsisBinary?: CustomNsisBinary | null
-
-  /**
-   * Allows you to provide your own `nsis-resources`
-   */
-  readonly customNsisResources?: CustomNsisResources | null
 }
 
 export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerConfiguration, TargetSpecificOptions {
@@ -86,6 +36,18 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    * @default true
    */
   readonly oneClick?: boolean
+
+  /**
+   * Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation
+   * directory). In your custom NSIS scripts, write to the log via `${LogText}`.
+   *
+   * Requires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. The default `toolsets.nsis` bundle
+   * is not log-enabled, so supply one as a custom `toolsets.nsis` bundle; the build fails otherwise.
+   * Replaces the v26 `customNsisBinary.debugLogging`.
+   * @see https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis
+   * @default false
+   */
+  readonly installerDebugLogging?: boolean
 
   /**
    * Whether to show install mode installer page (choice per-machine or per-user) for assisted installer. Or whether installation always per all users (per-machine).

@@ -573,66 +573,6 @@
       ],
       "type": "object"
     },
-    "CustomNsisBinary": {
-      "additionalProperties": false,
-      "properties": {
-        "checksum": {
-          "default": "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "debugLogging": {
-          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `customNsisBinary?: CustomNsisBinary`\nIn your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`",
-          "type": [
-            "null",
-            "boolean"
-          ]
-        },
-        "url": {
-          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "version": {
-          "default": "3.0.4.1",
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      },
-      "required": [
-        "url"
-      ],
-      "type": "object"
-    },
-    "CustomNsisResources": {
-      "additionalProperties": false,
-      "properties": {
-        "checksum": {
-          "default": "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==",
-          "type": "string"
-        },
-        "url": {
-          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z",
-          "type": "string"
-        },
-        "version": {
-          "default": "3.4.1",
-          "type": "string"
-        }
-      },
-      "required": [
-        "checksum",
-        "url",
-        "version"
-      ],
-      "type": "object"
-    },
     "CustomPublishOptions": {
       "additionalProperties": {},
       "properties": {
@@ -4500,28 +4440,6 @@
           "description": "Whether to create start menu shortcut.",
           "type": "boolean"
         },
-        "customNsisBinary": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisBinary"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
-        },
-        "customNsisResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisResources"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `nsis-resources`"
-        },
         "deleteAppDataOnUninstall": {
           "default": false,
           "description": "*one-click installer only.* Whether to delete app data on uninstall.",
@@ -4565,6 +4483,11 @@
             }
           ],
           "description": "The path to NSIS include script to customize installer, or an array of such paths to include multiple scripts. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).\n\nEach path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.\nWhen an array is provided, all scripts are included in the specified order."
+        },
+        "installerDebugLogging": {
+          "default": false,
+          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. The default `toolsets.nsis` bundle\nis not log-enabled, so supply one as a custom `toolsets.nsis` bundle; the build fails otherwise.\nReplaces the v26 `customNsisBinary.debugLogging`.",
+          "type": "boolean"
         },
         "installerHeader": {
           "default": "build/installerHeader.bmp",
@@ -4877,28 +4800,6 @@
           "description": "Whether to create start menu shortcut.",
           "type": "boolean"
         },
-        "customNsisBinary": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisBinary"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
-        },
-        "customNsisResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisResources"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `nsis-resources`"
-        },
         "deleteAppDataOnUninstall": {
           "default": false,
           "description": "*one-click installer only.* Whether to delete app data on uninstall.",
@@ -4942,6 +4843,11 @@
             }
           ],
           "description": "The path to NSIS include script to customize installer, or an array of such paths to include multiple scripts. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).\n\nEach path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.\nWhen an array is provided, all scripts are included in the specified order."
+        },
+        "installerDebugLogging": {
+          "default": false,
+          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. The default `toolsets.nsis` bundle\nis not log-enabled, so supply one as a custom `toolsets.nsis` bundle; the build fails otherwise.\nReplaces the v26 `customNsisBinary.debugLogging`.",
+          "type": "boolean"
         },
         "installerHeader": {
           "default": "build/installerHeader.bmp",
@@ -6142,28 +6048,6 @@
           "default": true,
           "description": "Disable building an universal installer of the archs specified in the target configuration",
           "type": "boolean"
-        },
-        "customNsisBinary": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisBinary"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
-        },
-        "customNsisResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisResources"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `nsis-resources`"
         },
         "guid": {
           "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",

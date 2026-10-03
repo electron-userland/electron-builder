@@ -37,7 +37,7 @@ import { computeLicensePage } from "./nsisLicense.js"
 import { NsisOptions, PortableOptions } from "./nsisOptions.js"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator.js"
 import { ELECTRON_BUILDER_NS_UUID, ProgIdMaker } from "./progId.js"
-import { getMakeNsisPath, getNsisPluginsPath } from "../../../toolsets/nsis.js"
+import { assertInstallerDebugLoggingSupported, getMakeNsisPath, getNsisPluginsPath } from "../../../toolsets/nsis.js"
 import { AppPackageHelper, CopyElevateHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation.js"
 import _fsExtra from "fs-extra"
@@ -74,6 +74,11 @@ export class NsisTarget extends Target {
 
     if (targetName !== "nsis") {
       deepAssign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
+    }
+
+    // Fails before packaging rather than when makensis rejects LogSet. Portable has no such option (its template never logs).
+    if (this.options.installerDebugLogging === true) {
+      assertInstallerDebugLoggingSupported(this.packager.config.toolsets?.nsis, this.name)
     }
 
     const deps = packager.metadata.dependencies
@@ -311,7 +316,7 @@ export class NsisTarget extends Target {
 
       APP_PACKAGE_NAME: getWindowsInstallationAppPackageName(appInfo.name),
     }
-    if (options.customNsisBinary?.debugLogging) {
+    if (options.installerDebugLogging === true) {
       defines.ENABLE_LOGGING_ELECTRON_BUILDER = null
     }
     if (uninstallAppKey !== this.appGuid) {
