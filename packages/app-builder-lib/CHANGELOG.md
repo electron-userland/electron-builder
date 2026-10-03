@@ -1,5 +1,23 @@
 # app-builder-lib
 
+## 26.17.1
+
+### Patch Changes
+
+- Fix(nsis): warn when `differentialPackage: "store-asar"` finds no `resources/app.asar` (e.g. `asar: false`) instead of silently compressing the package normally _[`#10249`](https://github.com/electron-userland/electron-builder/pull/10249) [`fcd6897`](https://github.com/electron-userland/electron-builder/commit/fcd6897810846ee8dc367f0abacf34e4eb5a10fb) [@claude](https://github.com/apps/claude)_
+- Fix(nsis): keep installer extraction in sync with the payload format when `useZip` is set (ignored with a warning for differential-aware builds and for `nsis-web`, which always use 7z), and only share an app package between targets (e.g. nsis + portable) whose packaging settings match _[`#10252`](https://github.com/electron-userland/electron-builder/pull/10252) [`160c3b4`](https://github.com/electron-userland/electron-builder/commit/160c3b405ff1e193eadd4d6d76049e23ce334ebd) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.17.1`
+- `electron-builder-squirrel-windows@26.17.1`
+
+</details>
+
 ## 26.17.0
 
 ### Minor Changes
