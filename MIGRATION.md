@@ -46,7 +46,7 @@ It handles every config-level breaking change that has a mechanical v27 equivale
 | `squirrelWindows.noMsi` removed | ✓ | Replaced by `msi` (inverted) |
 | Root-level `directories` removed | ✓ | Moved under `build.directories` |
 | `squirrelWindows.customSquirrelVendorDir` removed | — | Supply a custom bundle via `toolsets.squirrel` (different layout; `migrate-schema` warns) |
-| `nsis.customNsisBinary` / `customNsisResources` removed | partial | `debugLogging` → `nsis.installerDebugLogging` (needs a log-enabled custom `toolsets.nsis`; the default toolset is not built with `NSIS_CONFIG_LOG=yes`). Supply a custom NSIS bundle via `toolsets.nsis` with a lowercase SHA-256 hex checksum (`shasum -a 256 <file>`); the bundle must contain the NSIS plugins (`migrate-schema` warns, cannot convert it) |
+| `nsis.customNsisBinary` / `customNsisResources` removed | partial | `debugLogging` → `nsis.installerDebugLogging` (needs a log-enabled custom `toolsets.nsis`; the default toolset is not built with `NSIS_CONFIG_LOG=yes`). Supply a custom NSIS bundle via `toolsets.nsis` with a lowercase SHA-256 hex checksum ([custom toolset checksums](https://www.electron.build/docs/toolsets#custom-toolset-checksum)); the bundle must contain the NSIS plugins (`migrate-schema` warns, cannot convert it) |
 | Implicit `--publish` removed | — | Pass `--publish` explicitly |
 | `--em.build` / `--em.directories` CLI flags removed | — | Use `-c` / `-c.directories` |
 | `PackagerOptions.devMetadata` / `extraMetadata` removed | — | Use `config` / `config.extraMetadata` |

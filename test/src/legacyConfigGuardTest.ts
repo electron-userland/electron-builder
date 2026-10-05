@@ -177,7 +177,7 @@ describe("checkLegacyConfiguration — removed custom NSIS bundle keys", () => {
   test("customNsisBinary names toolsets.nsis, installerDebugLogging, the checksum change and the plugins, never its values", () => {
     const message = expectRejected({ nsis: { customNsisBinary: { url, checksum, debugLogging: true } } })
     expect(message).toContain("`nsis.customNsisBinary` was replaced by `toolsets.nsis` and `nsis.installerDebugLogging` in electron-builder v27.")
-    expect(message).toContain("shasum -a 256")
+    expect(message).toContain("toolsets#custom-toolset-checksum")
     expect(message).toContain("windows/Plugins/")
     expect(message).toContain("v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis")
     expect(message).not.toContain(url)

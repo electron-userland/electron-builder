@@ -1,4 +1,4 @@
-import { exists, sanitizeDirPath, validateSecuredUrl } from "builder-util"
+import { exists, InvalidConfigurationError, sanitizeDirPath, validateSecuredUrl } from "builder-util"
 import { mkdir, rm, stat } from "fs/promises"
 import * as path from "path"
 import { ToolsetCustom } from "../configuration.js"
@@ -54,6 +54,31 @@ export function getCustomToolsetPath(custom: ToolsetCustom, resourcesDir?: strin
   return cached
 }
 
+const CHECKSUM_DOCS_URL = "https://www.electron.build/docs/toolsets#custom-toolset-checksum"
+const SHA256_HEX = /^[0-9a-f]{64}$/i
+
+/**
+ * `@electron/get` verifies only a SHA-256 hex checksum, so any other value (such as a v26-style base64 SHA-512) would fail as a
+ * generic mismatch after the download. Reject it up front with the expected format, without echoing the value. Uppercase hex
+ * (e.g. from `Get-FileHash`) is accepted and lowercased.
+ */
+function normalizeChecksum(checksum: string | undefined, type: string, url: string): string {
+  if (!checksum) {
+    throw new InvalidConfigurationError(
+      `ToolsetCustom.checksum is required for ${type} toolsets (url: ${url}): the SHA-256 of the archive as 64 lowercase hex characters, e.g. \`shasum -a 256 <archive>\`. ` +
+        `See ${CHECKSUM_DOCS_URL}`
+    )
+  }
+  const value = checksum.trim()
+  if (!SHA256_HEX.test(value)) {
+    throw new InvalidConfigurationError(
+      `ToolsetCustom.checksum for ${type} toolset ${url} must be the SHA-256 of the archive as 64 lowercase hex characters, e.g. \`shasum -a 256 <archive>\`. ` +
+        `A base64 SHA-512 (as v26 configs typically used) or a prefixed value such as "sha256:…" is not accepted. See ${CHECKSUM_DOCS_URL}`
+    )
+  }
+  return value.toLowerCase()
+}
+
 async function _resolveCustomToolsetPath(custom: ToolsetCustom, resourcesDir?: string): Promise<string> {
   const { type, toolset } = await validateCustomToolset(custom, resourcesDir)
 
@@ -61,18 +86,15 @@ async function _resolveCustomToolsetPath(custom: ToolsetCustom, resourcesDir?: s
     return resolveFilePath(toolset.url, resourcesDir)
   }
 
-  if (!toolset.checksum) {
-    throw new Error(`ToolsetCustom.checksum is required for ${type} toolsets (url: ${toolset.url})`)
-  }
-
-  const binaryVersion = toolset.version ?? toolset.checksum.substring(0, 8)
+  const checksum = normalizeChecksum(toolset.checksum, String(type), toolset.url)
+  const binaryVersion = toolset.version ?? checksum.substring(0, 8)
   const releaseName = `${binaryVersion}-${hashUrlSafe(toolset.url)}`
 
   if (type === "url") {
     return downloadBuilderToolset({
       releaseName: releaseName,
       filenameWithExt: path.basename(toolset.url),
-      checksums: { [path.basename(toolset.url)]: toolset.checksum },
+      checksums: { [path.basename(toolset.url)]: checksum },
       overrideUrl: toolset.url,
     })
   } else if (type === "file") {

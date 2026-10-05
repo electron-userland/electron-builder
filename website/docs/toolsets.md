@@ -90,7 +90,7 @@ toolsets.<name>: { url: string, checksum?: string, version?: string }
 | Field | Required | Description |
 |---|---|---|
 | `url` | **yes** | An `https://` URL or a `file://` path. See below. |
-| `checksum` | for downloaded archives | SHA-256 of the archive as a lowercase hex string, e.g. the output of `shasum -a 256 <archive>`. Base64 SHA-512 values are not accepted. **Required** for `https://` URLs and for `file://` **archive files**. **Not** needed for a bare `file://` **directory** (used as-is, no caching). |
+| `checksum` | for downloaded archives | SHA-256 of the archive as 64 lowercase hex characters. See [Custom toolset checksums](#custom-toolset-checksum). **Required** for `https://` URLs and for `file://` **archive files**. **Not** needed for a bare `file://` **directory** (used as-is, no caching). |
 | `version` | no | Label used only in the local cache directory name. Falls back to the first 8 characters of `checksum` when omitted. |
 
 **`url` accepts two forms:**
@@ -111,6 +111,32 @@ toolsets.<name>: { url: string, checksum?: string, version?: string }
   "url": "file:///path/to/my-appimage-tools-dir"
 } } } }
 ```
+
+### Custom toolset checksums {#custom-toolset-checksum}
+
+Every custom toolset bundle uses the same checksum format, whichever toolset it replaces: `winCodeSign`, `appimage`, `nsis`, `wine`, `fpm`, `linuxToolsMac`, `sevenZip`, `icons` or `squirrel`.
+
+- **Format:** the SHA-256 of the archive file, as 64 **lowercase hex** characters. This is the format `@electron/get` verifies a downloaded bundle against. (An uppercase hex value is lowercased for you.)
+- **Not accepted:** base64-encoded SHA-512 values, which v26 configs (for example `nsis.customNsisBinary`) typically used, and prefixed forms such as `sha256:…`. electron-builder rejects a checksum in any other format before downloading. Recompute it from the archive instead of converting the old value.
+- **When it is needed:** for an `https://` URL and for a `file://` archive file. A bare `file://` directory needs none.
+
+Compute it from the exact archive that `url` points to:
+
+| Platform | Command |
+|---|---|
+| macOS, Linux | `shasum -a 256 my-bundle.tar.gz` (or `sha256sum my-bundle.tar.gz`) |
+| Windows (PowerShell) | `(Get-FileHash -Algorithm SHA256 my-bundle.tar.gz).Hash.ToLower()` |
+| Windows (cmd) | `certutil -hashfile my-bundle.tar.gz SHA256`, then lowercase the hash it prints |
+
+```json5
+{ "build": { "toolsets": { "nsis": {
+  "url": "https://example.com/my-nsis-bundle-1.0.tar.gz",
+  "checksum": "56997fdefe25e7928a1a68b4583d08b240b66cf660234053b20131a74cc082f4",
+  "version": "my-custom-1.0"
+} } } }
+```
+
+Recompute the checksum whenever you rebuild or repack the archive.
 
 :::warning[The bundle must mirror the built-in layout]
 A custom bundle has to match the **directory layout** of the corresponding built-in bundle — electron-builder looks for the same executables in the same relative paths. Use the build scripts in [electron-builder-binaries/packages](https://github.com/electron-userland/electron-builder-binaries/tree/master/packages) as the reference for each toolset's expected structure.
@@ -167,7 +193,7 @@ nsis-bundle/                 top-level folder, stripped on extraction
 1. Start from the default bundle (above) so you keep its entrypoints, `elevate.exe` and plugins.
 2. Replace `windows/makensis.exe` and `windows/Stubs/` with those of your NSIS or NSISBI release, and `windows/Include/` and `windows/Contrib/` too if the release changes them. Keep `windows/Plugins/`, adding the release's own plugins where they differ.
 3. For each macOS or Linux host you build on, replace `mac/<arch>/makensis` or `linux/<arch>/makensis` with one compiled from the same source and options. If you build only on Windows, the other hosts' binaries are never run.
-4. Pack it with one top-level folder (`tar -czf my-nsis.tar.gz nsis-bundle`) and compute the checksum: `shasum -a 256 my-nsis.tar.gz` (or `(Get-FileHash my-nsis.tar.gz).Hash.ToLower()` in PowerShell).
+4. Pack it with one top-level folder (`tar -czf my-nsis.tar.gz nsis-bundle`) and compute its [checksum](#custom-toolset-checksum).
 5. Point `toolsets.nsis` at it: `{ "url": "https://…/my-nsis.tar.gz", "checksum": "<that hex value>", "version": "nsisbi-3.10" }`. While testing, `{ "url": "file:///abs/path/to/nsis-bundle" }` uses the unpacked folder directly, without a checksum.
 
 For a Windows-only build you can instead use the fallback layout: the unpacked folder of a stock NSIS release zip already has `Bin/makensis.exe`, `Stubs/`, `Include/`, `Contrib/` and `Plugins/` (check that your fork's does too). Add `elevate.exe` at its root and the extra plugins listed above to `Plugins/x86-unicode/`, then zip its contents with the files at the root of the zip.
@@ -193,7 +219,7 @@ v27 **removes** the toolset environment-variable overrides. Replace each with a 
 ```json5
 { "build": { "toolsets": { "nsis": {
   "url": "https://example.com/my-nsis-bundle.tar.gz",
-  "checksum": "sha256:abc123…"
+  "checksum": "<lowercase SHA-256 hex of the archive>"
 } } } }
 ```
 

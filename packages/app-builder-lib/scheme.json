@@ -8496,10 +8496,10 @@
     },
     "ToolsetCustom": {
       "additionalProperties": false,
-      "description": "A custom toolset bundle supplied by the user in place of a built-in versioned bundle.\n\nThe bundle must mirror the expected directory layout of the corresponding built-in bundle.\nSee the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.\n\nFile formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.",
+      "description": "A custom toolset bundle supplied by the user in place of a built-in versioned bundle.\n\nThe bundle must mirror the expected directory layout of the corresponding built-in bundle.\nSee the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.\n\nFile formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.\n\n`checksum` is the SHA-256 of the archive as 64 lowercase hex characters, the same for every toolset. Base64 SHA-512 values\n(as v26 configs typically used) are rejected. See https://www.electron.build/docs/toolsets#custom-toolset-checksum",
       "properties": {
         "checksum": {
-          "description": "SHA-256 checksum of the custom toolset bundle for verification, as a lowercase hex string\n(e.g. the output of `shasum -a 256 bundle.tar.gz`) — not the base64 values GitHub release\nnotes may show.\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching.",
+          "description": "SHA-256 of the bundle archive, as 64 lowercase hex characters. A downloaded bundle is verified against it by `@electron/get`.\n\nCompute it with `shasum -a 256 <archive>` (macOS / Linux), `(Get-FileHash -Algorithm SHA256 <archive>).Hash.ToLower()`\n(PowerShell) or `certutil -hashfile <archive> SHA256` (then lowercase it). Base64 SHA-512 values, as v26 configs typically\nused, and prefixed forms such as `sha256:…` are rejected.\n\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching.",
           "type": "string"
         },
         "url": {
