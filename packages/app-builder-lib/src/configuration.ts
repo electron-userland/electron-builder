@@ -730,6 +730,9 @@ export interface ToolsetConfig {
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md
    *
+   * A custom bundle (a {@link ToolsetCustom} object) must follow the layout at
+   * https://www.electron.build/docs/toolsets#custom-nsis-bundle-layout
+   *
    * @default "latest"
    */
   readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | "latest"

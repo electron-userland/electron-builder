@@ -90,7 +90,7 @@ toolsets.<name>: { url: string, checksum?: string, version?: string }
 | Field | Required | Description |
 |---|---|---|
 | `url` | **yes** | An `https://` URL or a `file://` path. See below. |
-| `checksum` | for downloaded archives | SHA checksum used to verify the bundle. **Required** for `https://` URLs and for `file://` **archive files**. **Not** needed for a bare `file://` **directory** (used as-is, no caching). |
+| `checksum` | for downloaded archives | SHA-256 of the archive as a lowercase hex string, e.g. the output of `shasum -a 256 <archive>`. Base64 SHA-512 values are not accepted. **Required** for `https://` URLs and for `file://` **archive files**. **Not** needed for a bare `file://` **directory** (used as-is, no caching). |
 | `version` | no | Label used only in the local cache directory name. Falls back to the first 8 characters of `checksum` when omitted. |
 
 **`url` accepts two forms:**
@@ -102,7 +102,7 @@ toolsets.<name>: { url: string, checksum?: string, version?: string }
 // Remote bundle (URL) — checksum required
 { "build": { "toolsets": { "nsis": {
   "url": "https://example.com/my-nsis-bundle-1.0.tar.gz",
-  "checksum": "sha256:abc123…",
+  "checksum": "<lowercase SHA-256 hex of the archive>",
   "version": "my-custom-1.0"
 } } } }
 
@@ -118,11 +118,59 @@ A custom bundle has to match the **directory layout** of the corresponding built
 
 ### Supported archive formats
 
-Archives supplied via `url` are extracted automatically. Supported formats: **`.zip`**, **`.7z`**, **`.tar.gz`**, **`.tar.xz`**. A bare directory (no archive) is used as-is.
+Archives supplied via `url` are extracted automatically. Supported formats: **`.zip`**, **`.7z`**, **`.tar.gz`** / **`.tgz`**, **`.tar.xz`** / **`.txz`** and **`.tar.7z`**. A bare directory (no archive) is used as-is.
+
+The two families are unpacked differently, which decides where the bundle root is:
+
+- **Tar archives** (`.tar.gz`, `.tgz`, `.tar.xz`, `.txz`, `.tar.7z`) are extracted with their first path component stripped, so put everything inside **one top-level folder** (`tar -czf bundle.tar.gz my-bundle`). That folder becomes the bundle root.
+- **`.zip` and `.7z`** are extracted as they are, so put the bundle's files **at the root of the archive**, not inside a folder. A release zip that wraps everything in a versioned folder (such as `nsis-3.10/`) has to be repacked.
 
 :::note[sevenZip exception]
 Because 7-Zip is the tool electron-builder uses to extract `.7z` and `.tar.xz` archives, a custom **`sevenZip`** bundle can't itself be one of those formats — that would be circular. Supply it only as a **`.tar.gz`**, **`.zip`**, or bare **`file://` directory**. (The bundle must contain `bin/7za` on macOS/Linux or `bin/7za.exe` on Windows.)
 :::
+
+### Custom NSIS bundle layout {#custom-nsis-bundle-layout}
+
+A custom `toolsets.nsis` bundle replaces the whole NSIS toolset: the `makensis` compiler, the NSIS data directory (`NSISDIR`: stubs, headers and UIs), the plugins and `elevate.exe`. electron-builder looks these up relative to the bundle root, in this order:
+
+| What | Where electron-builder looks | Needed |
+|---|---|---|
+| `makensis`, entrypoint layout | `makensis` (macOS, Linux) or `makensis.cmd` (Windows) at the root. It is run as-is and must set `NSISDIR` itself. | One of the two `makensis` layouts |
+| `makensis`, fallback layout (the v26 bundle layout) | Used when the entrypoint is missing: `Bin/makensis.exe` (Windows), `mac/makensis` (macOS) or `linux/makensis` (Linux), with `NSISDIR` set to the bundle root. | |
+| NSIS data (`NSISDIR`) | `Stubs/`, `Include/` and `Contrib/` (including `Modern UI 2`, `Language files` and `Graphics`) inside `NSISDIR`: `windows/` in the default bundle, whose entrypoint sets it, or the bundle root in the fallback layout. | Yes |
+| Plugins | `plugins/<arch>/`, else `windows/Plugins/<arch>/`. `<arch>` is `x86-unicode`, or `x86-ansi` with `unicode: false`; no other architecture folder is read. The names are case-sensitive on case-sensitive file systems. | Yes |
+| `elevate.exe` | At the bundle root. | Unless `packElevateHelper: false` (and `perMachine` is not `true`) |
+
+The default bundle (`nsis-bundle-3.12.tar.gz` from the [`nsis@1.2.1` release](https://github.com/electron-userland/electron-builder-binaries/releases) of electron-builder-binaries) uses the entrypoint layout:
+
+```text
+nsis-bundle/                 top-level folder, stripped on extraction
+├── makensis                 POSIX entrypoint: runs mac/<x64|arm64>/makensis or linux/<x64|arm64>/makensis with NSISDIR=windows
+├── makensis.cmd             Windows entrypoint: runs windows/makensis.exe with NSISDIR=windows
+├── elevate.exe
+├── mac/x64/makensis, mac/arm64/makensis
+├── linux/x64/makensis, linux/arm64/makensis
+└── windows/                 NSISDIR
+    ├── makensis.exe
+    ├── Stubs/  Include/  Contrib/
+    └── Plugins/x86-unicode/, Plugins/x86-ansi/, …
+```
+
+**What electron-builder brings itself:** the installer scripts and their `.nsh` headers (including the headers for `StdUtils`, `UAC` and `nsProcess`), the installer messages, and any extra plugins you put in `build/x86-unicode/` or `build/x86-ansi/`. It does not patch the bundle.
+
+**What the bundle must carry:** the plugin DLLs. Besides the plugins that ship with NSIS (`System`, `nsExec`, `nsDialogs`, `BgImage`, …), the installer scripts call `StdUtils`, `UAC`, `nsProcess`, `WinShell` and `SpiderBanner`, plus `nsis7z` (7z app package), `nsisunz` (zip app package) and `INetC` (`nsis-web`). The default bundle also patches a few files in `Contrib/Language files` (Finnish, Hungarian, Korean, Simplified Chinese, Thai, Turkish); a bundle built from a stock NSIS release lacks those fixes unless you copy them over.
+
+**`makensis` and the stubs must come from the same build**: the same NSIS version or fork (for example NSISBI) and the same compile-time options. Official NSIS and NSISBI releases ship only a Windows `makensis.exe`, so to build on macOS or Linux, compile `makensis` for that host from the same source with the same options (`scons … install-compiler`). [`installerDebugLogging`](./migration/v27-breaking-changes.md#nsiscustomnsisbinary-toolsetsnsis) additionally needs `makensis` and the stubs compiled with `NSIS_CONFIG_LOG=yes`, which the bundled versions are not.
+
+#### Repacking an NSIS or NSISBI release
+
+1. Start from the default bundle (above) so you keep its entrypoints, `elevate.exe` and plugins.
+2. Replace `windows/makensis.exe` and `windows/Stubs/` with those of your NSIS or NSISBI release, and `windows/Include/` and `windows/Contrib/` too if the release changes them. Keep `windows/Plugins/`, adding the release's own plugins where they differ.
+3. For each macOS or Linux host you build on, replace `mac/<arch>/makensis` or `linux/<arch>/makensis` with one compiled from the same source and options. If you build only on Windows, the other hosts' binaries are never run.
+4. Pack it with one top-level folder (`tar -czf my-nsis.tar.gz nsis-bundle`) and compute the checksum: `shasum -a 256 my-nsis.tar.gz` (or `(Get-FileHash my-nsis.tar.gz).Hash.ToLower()` in PowerShell).
+5. Point `toolsets.nsis` at it: `{ "url": "https://…/my-nsis.tar.gz", "checksum": "<that hex value>", "version": "nsisbi-3.10" }`. While testing, `{ "url": "file:///abs/path/to/nsis-bundle" }` uses the unpacked folder directly, without a checksum.
+
+For a Windows-only build you can instead use the fallback layout: the unpacked folder of a stock NSIS release zip already has `Bin/makensis.exe`, `Stubs/`, `Include/`, `Contrib/` and `Plugins/` (check that your fork's does too). Add `elevate.exe` at its root and the extra plugins listed above to `Plugins/x86-unicode/`, then zip its contents with the files at the root of the zip.
 
 ## Replacing removed environment variables
 
