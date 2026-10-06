@@ -68,7 +68,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`build.helper-bundle-id` removed](#buildhelper-bundle-id) | ✓ | Moved to `mac.helperBundleId` |
 | [`squirrelWindows.noMsi` removed](#squirrelwindowsnomsi) | ✓ | Replaced by `msi` (inverted) |
 | [`squirrelWindows.customSquirrelVendorDir` removed](#squirrelwindowscustomsquirrelvendordir) | — | Supply a custom Squirrel bundle via `toolsets.squirrel` (a `ToolsetCustom` object); `migrate-schema` warns but cannot rewrite it (different bundle layout) |
-| [`nsis.customNsisBinary` / `customNsisResources` removed](#nsiscustomnsisbinary-toolsetsnsis) | partial | `debugLogging` → `nsis.installerDebugLogging` (auto); supply a custom NSIS bundle via `toolsets.nsis` with a [lowercase SHA-256 hex checksum](../toolsets.md#custom-toolset-checksum) and the plugins inside (`migrate-schema` warns, cannot convert it). `installerDebugLogging` needs a log-enabled custom bundle |
+| [`nsis.customNsisBinary` / `customNsisResources` removed](#nsiscustomnsisbinary-toolsetsnsis) | partial | `debugLogging` → `nsis.installerDebugLogging` (auto); supply a custom NSIS bundle via `toolsets.nsis` (the v26 [checksum](../toolsets.md#custom-toolset-checksum) keeps working) with the plugins inside (`migrate-schema` warns, cannot convert it). `installerDebugLogging` needs a log-enabled custom bundle |
 | [`GithubOptions.vPrefixedTagName` removed](#githuboptions-gitlaboptions-vprefixedtagname) | ✓ | Use `tagNamePrefix`; an empty `tagNamePrefix: ""` is now honored (v26 ignored it) |
 | [`GitlabOptions.vPrefixedTagName` retained](#githuboptions-gitlaboptions-vprefixedtagname) | — | None — still functional; the migrator leaves GitLab entries untouched |
 | [`devMetadata` / `extraMetadata` in `PackagerOptions` removed](#devmetadata-extrametadata-programmatic-packageroptions) | — | Use `config` / `config.extraMetadata` |
@@ -293,14 +293,14 @@ Removed, on `nsis`, `nsisWeb` and `portable`, together with the exported `Custom
 { "nsis": { "customNsisBinary": { "url": "https://example.com/my-nsis.7z", "checksum": "<checksum>", "version": "3.10", "debugLogging": true } } }
 // After:
 {
-  "toolsets": { "nsis": { "url": "https://example.com/my-nsis.7z", "checksum": "<lowercase SHA-256 hex>", "version": "3.10" } },
+  "toolsets": { "nsis": { "url": "https://example.com/my-nsis.7z", "checksum": "<checksum>", "version": "3.10" } },
   "nsis": { "installerDebugLogging": true }
 }
 ```
 
-Moving a custom bundle is not a rename, for two reasons:
+Moving a custom bundle is not a pure rename:
 
-- **The checksum format differs.** v26 configs typically used a base64-encoded SHA-512 checksum, which is no longer accepted. Recompute it from the archive as described in [Custom toolset checksums](../toolsets.md#custom-toolset-checksum). The `url` works as before, including for an NSISBI drop-in: only the checksum has to be recalculated.
+- **The checksum carries over.** The `url` and `checksum` work as before, including for an NSISBI drop-in: `toolsets.nsis` accepts the base64-encoded SHA-512 checksum v26 configs typically used unchanged, as well as a SHA-256 hex value (see [Custom toolset checksums](../toolsets.md#custom-toolset-checksum)). Only an archive you repack, for example to add the plugins, needs a new checksum.
 - **The bundle must carry the plugins.** v26 read the NSIS plugins from a separate resources bundle (`customNsisResources`, or the default one), while a custom `toolsets.nsis` bundle must contain them itself, in a `plugins/` or `windows/Plugins/` directory (`elevate.exe` is still read from the bundle root, as in v26). A bundle with the v26 layout (`Bin/makensis.exe` or `linux/makensis`) is still found. See [Custom NSIS bundle layout](../toolsets.md#custom-nsis-bundle-layout) for the exact paths, the plugins the bundle must contain, and how to repack an NSIS or NSISBI release.
 
 **`installerDebugLogging` needs a log-enabled NSIS**, that is `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`; any other `makensis` rejects the `LogSet` it emits. The bundled `toolsets.nsis` versions are not log-enabled, so the build fails with a configuration error when `installerDebugLogging` is set without a custom `toolsets.nsis` bundle. This is unchanged from v26, where the option also only worked with your own `customNsisBinary`. When building on Linux or macOS, the bundle's `makensis` for that host must be log-enabled too.
@@ -691,7 +691,7 @@ The `url` accepts an `https://` URL (downloaded and cached automatically) or a `
 
 ```json5
 // Remote bundle (URL)
-{ "build": { "toolsets": { "nsis": { "url": "https://example.com/my-nsis-bundle-1.0.tar.gz", "checksum": "<lowercase SHA-256 hex of the archive>", "version": "my-custom-1.0" } } } }
+{ "build": { "toolsets": { "nsis": { "url": "https://example.com/my-nsis-bundle-1.0.tar.gz", "checksum": "<SHA-256 hex or base64 SHA-512 of the archive>", "version": "my-custom-1.0" } } } }
 
 // Local directory (no checksum required)
 { "build": { "toolsets": { "appimage": { "url": "file:///path/to/my-appimage-tools-dir" } } } }

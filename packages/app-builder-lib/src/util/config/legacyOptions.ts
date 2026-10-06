@@ -97,8 +97,8 @@ const ELECTRON_GET_ANCHOR = "electrondownload-electronget"
 const WIN_SIGN_ANCHOR = "windows-signing-winsign"
 const CUSTOM_NSIS_ANCHOR = "nsiscustomnsisbinary-toolsetsnsis"
 const TOOLSETS_NSIS_DETAIL =
-  "Set a custom NSIS bundle via `toolsets.nsis: { url, checksum, version }`. It is not a rename: recompute the checksum as the lowercase SHA-256 hex " +
-  "of the archive (base64 SHA-512 is not accepted; https://www.electron.build/docs/toolsets#custom-toolset-checksum), and the bundle must contain the " +
+  "Set a custom NSIS bundle via `toolsets.nsis: { url, checksum, version }`. The v26 checksum (base64 SHA-512) works unchanged, as does a SHA-256 hex " +
+  "(https://www.electron.build/docs/toolsets#custom-toolset-checksum), but it is not a rename: the bundle must contain the " +
   "NSIS plugins (`plugins/` or `windows/Plugins/`), which v26 read from a separate resources bundle (https://www.electron.build/docs/toolsets#custom-nsis-bundle-layout)."
 
 export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
