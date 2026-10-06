@@ -87,6 +87,44 @@ test.ifNotWindows("null string as null", async ({ expect }) => {
   expect((config.mac!.sign as ElectronSignOptions).hardenedRuntime).toBe(false)
 })
 
+test("`-c.updateManifest=false` is coerced to a boolean and passes schema validation", async ({ expect }) => {
+  const yargs = configureBuildCommand(createYargs())
+  const options = normalizeOptions(yargs.parse(["-c.updateManifest=false", "-c.linux.updateManifest=false"]) as CliOptions)
+  const config = options.config as Configuration
+  // without coercion these stay the string "false", which is neither the `=== false` opt-out nor schema-valid
+  expect(config.updateManifest).toBe(false)
+  expect(config.linux!.updateManifest).toBe(false)
+  await validateConfiguration(config, new DebugLogger())
+})
+
+test("schema validation does not coerce `updateManifest: null` into the `false` opt-out", async ({ expect }) => {
+  // ajv runs with coerceTypes: true and mutates data on the first matching anyOf branch. scripts/fix-schema.js
+  // drops `type` from the `const: false` branch precisely so `null` survives (reordering would coerce `false` into
+  // `null` instead); without that, `null` ("signing still required") silently becomes `false` (ship unsigned manifests).
+  const config: Configuration = { updateManifest: null, linux: { updateManifest: null } }
+  await validateConfiguration(config, new DebugLogger())
+  expect(config.updateManifest).toBeNull()
+  expect(config.linux!.updateManifest).toBeNull()
+
+  const optedOut: Configuration = { updateManifest: false, linux: { updateManifest: false } }
+  await validateConfiguration(optedOut, new DebugLogger())
+  expect(optedOut.updateManifest).toBe(false)
+  expect(optedOut.linux!.updateManifest).toBe(false)
+})
+
+test("a wrong `updateManifest` value names `false` as the opt-out, not just `null`", async ({ expect }) => {
+  // `updateManifest: true` is the likely mistake for someone who reads "required by default, disable with false".
+  // It fails schema validation, so the actionable runtime error from requireUpdateSigningKeys never runs - this
+  // message is the only thing the user sees, and it must not advertise `null` (which is NOT the opt-out) alone.
+  const error = await validateConfiguration({ updateManifest: true } as any, new DebugLogger()).then(
+    () => null,
+    (e: Error) => e
+  )
+  expect(error).not.toBeNull()
+  expect(error!.message).toContain("configuration.updateManifest should be one of these")
+  expect(error!.message).toContain("false")
+})
+
 test.ifNotWindows("unknown mac property reports correct path", ({ expect }) =>
   appThrows(
     expect,

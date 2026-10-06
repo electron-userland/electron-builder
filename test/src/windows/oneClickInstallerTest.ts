@@ -1,5 +1,8 @@
 import { Arch, Platform } from "electron-builder"
-import { app, EXTENDED_TIMEOUT } from "../helpers/packTester.js"
+import { readFile } from "fs/promises"
+import { load } from "js-yaml"
+import * as path from "path"
+import { app, expectedWindowsPublisherName, EXTENDED_TIMEOUT } from "../helpers/packTester.js"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper.js"
 
 // Installer-building tests (custom includes, licenses, menuCategory, …) live in oneClickInstaller.e2e.ts.
@@ -50,6 +53,33 @@ test("one-click", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
         await checkHelpers(expect, context.getResources(Platform.WINDOWS, Arch.x64), false)
         await doTest(expect, context.outDir, true, "TestApp Setup", "TestApp", null, false)
         await expectUpdateMetadata(expect, context, Arch.x64, true)
+      },
+    }
+  )
+)
+
+// Without an explicit publisherName, a signed build embeds the common name of its certificate in app-update.yml; electron-updater
+// checks the signature of a downloaded update against it. Every blackbox update build relies on this (doBuild in
+// blackboxUpdateHelpers.ts asserts the same value on Windows).
+test("one-click signed without publisherName: app-update.yml has the certificate's common name", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
+      config: {
+        publish: {
+          provider: "generic",
+          url: "https://example.com/updates",
+        },
+      },
+    },
+    {
+      signedWin: true,
+      // app-update.yml is written by afterPack, no installer is needed
+      afterPackTestHook: async () => true,
+      packed: async context => {
+        const data = load(await readFile(path.join(context.getResources(Platform.WINDOWS, Arch.x64), "app-update.yml"), "utf-8")) as any
+        expect(data.publisherName).toEqual(await expectedWindowsPublisherName(expect))
       },
     }
   )

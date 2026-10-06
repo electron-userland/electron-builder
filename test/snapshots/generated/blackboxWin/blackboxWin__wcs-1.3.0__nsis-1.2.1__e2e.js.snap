@@ -390,6 +390,45 @@ exports[`blackboxWin > windows > nsis - signed update manifest 2`] = `
 }
 `;
 
+exports[`blackboxWin > windows > nsis - uninstaller icon differs from installer icon 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
 exports[`blackboxWin > windows > nsis 1`] = `
 {
   "win": [

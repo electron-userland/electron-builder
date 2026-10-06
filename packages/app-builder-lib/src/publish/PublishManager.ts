@@ -53,7 +53,7 @@ import { WriteStream as TtyWriteStream } from "tty"
 import { AppInfo } from "../appInfo.js"
 import { Configuration } from "../configuration.js"
 import { Platform, Target, TargetSpecificOptions } from "../core.js"
-import { ArtifactCreated } from "../packagerApi.js"
+import { ArtifactCreated, PlannedTargets } from "../packagerApi.js"
 import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
 import { PlatformPackager } from "../platformPackager.js"
@@ -64,7 +64,7 @@ import { parseUrl } from "../util/pathManager.js"
 import { isPublishForPullRequest } from "../util/flags.js"
 
 const publishForPrWarning =
-  "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
+  "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/guides/integration/oss/#pass-secrets-to-builds-from-forked-pull-requests) for details)" +
   "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
 
 const debug = _debug("electron-builder:publish")
@@ -79,6 +79,46 @@ function checkOptions(publishPolicy: any) {
       )
     }
   }
+}
+
+/** Emitted once per feed (the url without its query) per process — app-update.yml is written for every pack, and platforms may use different feeds. */
+const feedQueryWarnedFeeds = new Set<string>()
+
+/**
+ * electron-updater 7 adds the query string of a generic feed url (typically a token), like the credential headers, only to
+ * downloads on the feed's origin. An app whose latest*.yml points downloads at another origin that relies on that query gets
+ * 401/403 at update time, inside a shipped app, with nothing at build time saying why — `migrate-schema` prints the same advisory,
+ * but cannot be relied on to have been run. Only the query parameter names are logged, never the url or the values.
+ *
+ * @internal exported for tests
+ */
+export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): void {
+  const url = publishConfig.provider === "generic" ? (publishConfig as GenericServerOptions).url : null
+  const queryStart = typeof url === "string" ? url.indexOf("?") : -1
+  if (queryStart < 0) {
+    return
+  }
+  const feed = url!.slice(0, queryStart)
+  if (feedQueryWarnedFeeds.has(feed)) {
+    return
+  }
+  feedQueryWarnedFeeds.add(feed)
+  const queryParameters = [...new Set(new URLSearchParams(url!.slice(queryStart + 1).split("#")[0]).keys())]
+  log.warn(
+    {
+      queryParameters: queryParameters.length === 0 ? "(none)" : queryParameters.join(", "),
+      solution: "serve the update files from the feed origin (relative files[].url, the default) or use pre-signed URLs",
+    },
+    "the generic publish url has a query string. electron-updater 7 (electron-builder v27) adds it, and sends the credential headers from requestHeaders / addAuthHeader, " +
+      "only to downloads on the feed's origin (scheme, host and port): a download url in latest*.yml on another origin is requested without them. " +
+      "Nothing changes for the relative URLs electron-builder writes. " +
+      "See https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+  )
+}
+
+/** @internal exported for tests — re-arms the once-per-feed warning. */
+export function resetGenericFeedQueryWarning(): void {
+  feedQueryWarnedFeeds.clear()
 }
 
 /**
@@ -150,6 +190,8 @@ export class PublishManager implements PublishContext {
       )
     }
 
+    packager.onTargetsCreated(plan => this.requireSigningKeysForPlannedTargets(plan))
+
     packager.onAfterPack(async event => {
       const packager = event.packager
       if (event.electronPlatformName === "darwin") {
@@ -162,7 +204,18 @@ export class PublishManager implements PublishContext {
         }
       }
 
-      const publishConfig = await getAppUpdatePublishConfiguration(packager, null, event.arch, this.isPublish)
+      // app-update.yml is written for every pack, from the publish settings of the pack's targets that emit a manifest
+      // (see resolvePackAppUpdatePublishConfigs) - so a manifest signed under a target-level `publish` always ships with
+      // the key that verifies it, except when the pack's targets disagree about the feed (an error when publishing, a
+      // warning and no app-update.yml otherwise). The signing requirement (the error when publishing, the advisory
+      // otherwise) only applies when a target emits a manifest - the same per-target resolution as the build-start
+      // preflight. A snap-, flatpak- or mas-only pack has none (Linux and mas are not filtered above), nor has an
+      // installer whose target-level `publish` is `null` or waived.
+      const { publishConfigs, emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, event.targets, event.arch, this.isPublish)
+      if (emitsManifest) {
+        await packager.requireUpdateSigningKeys(this.isPublish)
+      }
+      const publishConfig = await createAppUpdateConfiguration(packager, publishConfigs, this.isPublish, false)
       if (publishConfig != null) {
         await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig)
       }
@@ -179,6 +232,31 @@ export class PublishManager implements PublishContext {
         await this.scheduleUpload(publishConfiguration, event, this.getAppInfo(event.packager))
       }
     })
+  }
+
+  /**
+   * Build-start preflight: enforces update-manifest signing for every target of every platform and arch that will
+   * emit update info, before anything is packed. The per-artifact check in artifactCreatedWithoutExplicitPublishConfig
+   * only stops that artifact's own upload; by then an earlier target (a portable exe, another arch, another platform)
+   * may already be uploading. Same resolution as the per-artifact path - target-level `publish` first, `null` means
+   * none, `publishAutoUpdate: false` on every provider waives it - which stays in place for targets that do not
+   * declare `writesUpdateInfo`. Each planned platform x arch is one pack, so targets of a pack that disagree about the
+   * app-update.yml feed fail here too, before anything is packed (also for a prepackaged app, which has no afterPack).
+   */
+  private async requireSigningKeysForPlannedTargets(plan: ReadonlyArray<PlannedTargets>): Promise<void> {
+    if (!this.isPublish) {
+      return
+    }
+    for (const { packager, arch, targets } of plan) {
+      // resolving publish configs is async: a build cancelled meanwhile stops instead of failing on a missing key
+      if (this.cancellationToken.cancelled) {
+        return
+      }
+      const { emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, targets, arch, true)
+      if (emitsManifest && !this.cancellationToken.cancelled) {
+        await packager.requireUpdateSigningKeys(true)
+      }
+    }
   }
 
   private getAppInfo(platformPackager: PlatformPackager<any> | null) {
@@ -238,7 +316,20 @@ export class PublishManager implements PublishContext {
       return
     }
 
+    const writesUpdateInfo =
+      event.isWriteUpdateInfo === true && target != null && eventFile != null && (platformPackager.platform !== Platform.WINDOWS || isSuitableWindowsTarget(target))
+
     if (this.isPublish) {
+      // Enforce the signing requirement before this artifact is uploaded, not only in writeUpdateInfoFiles, which runs
+      // after every upload has been awaited. The build-start preflight and onAfterPack already fail early for targets
+      // that declare `writesUpdateInfo`; this also covers a custom target that emits update info without declaring it.
+      if (writesUpdateInfo) {
+        const updateInfoConfigs = await getPublishConfigsForUpdateInfo(platformPackager, publishConfigs, event.arch)
+        if (updateInfoConfigs?.some(it => it.publishAutoUpdate !== false)) {
+          await platformPackager.requireUpdateSigningKeys(true)
+        }
+      }
+
       for (const publishConfig of publishConfigs) {
         if (this.cancellationToken.cancelled) {
           log.debug({ file: event.file, reason: "cancelled" }, "not published")
@@ -249,13 +340,7 @@ export class PublishManager implements PublishContext {
       }
     }
 
-    if (
-      event.isWriteUpdateInfo &&
-      target != null &&
-      eventFile != null &&
-      !this.cancellationToken.cancelled &&
-      (platformPackager.platform !== Platform.WINDOWS || isSuitableWindowsTarget(target))
-    ) {
+    if (writesUpdateInfo && !this.cancellationToken.cancelled) {
       this.taskManager.addTask(createUpdateInfoTasks(event, publishConfigs).then(it => this.updateFileWriteTask.push(...it)))
     }
   }
@@ -293,18 +378,181 @@ export class PublishManager implements PublishContext {
       return
     }
 
-    await writeUpdateInfoFiles(updateInfoFileTasks, this.packager)
+    await writeUpdateInfoFiles(updateInfoFileTasks, this.packager, this.isPublish)
     await this.taskManager.awaitTasks()
   }
 }
 
+/**
+ * The `app-update.yml` config for a single target with the given target-specific options (`null` for none): the
+ * target's own publish settings when it emits a manifest under them, otherwise the platform/root ones - the rule of
+ * {@link getPackAppUpdatePublishConfiguration} for a pack of one target.
+ */
 export async function getAppUpdatePublishConfiguration(
   packager: PlatformPackager<any>,
   targetSpecificOptions: TargetSpecificOptions | Nullish,
   arch: Arch,
-  errorIfCannot: boolean
+  /**
+   * Whether this is the publish path. Gates both publish-credential resolution and the update-manifest signing
+   * requirement. The Linux targets that write `app-update.yml` into the package pass `false`, since for them
+   * "validation will be done on publish step" - and that is exactly when signing is enforced too.
+   */
+  isPublish: boolean,
+  /**
+   * Set when the caller has already applied the signing requirement for the targets this config is embedded for;
+   * the configs resolved here then only decide the embedded trust list, and neither enforce nor warn.
+   */
+  signingRequirementApplied = false
 ): Promise<PublishConfiguration | null> {
-  const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, arch, errorIfCannot), arch)
+  const own = await getEmittingUpdateInfoPublishConfigs(packager, targetSpecificOptions, arch, isPublish)
+  const publishConfigs = own ?? (await getPlatformUpdateInfoPublishConfigs(packager, arch, isPublish))
+  return await createAppUpdateConfiguration(packager, publishConfigs, isPublish, own != null && !signingRequirementApplied)
+}
+
+/**
+ * The `app-update.yml` config of a packed app dir, which every target built from it ships: see
+ * {@link resolvePackAppUpdatePublishConfigs}. Used by the targets that (re)write the file themselves (AppImage,
+ * deb/rpm/pacman), so they embed the same feed as PublishManager's afterPack handler - or, for a prepackaged app, any
+ * feed at all - and do not race each other with different content.
+ */
+export async function getPackAppUpdatePublishConfiguration(
+  packager: PlatformPackager<any>,
+  targets: ReadonlyArray<Target>,
+  arch: Arch,
+  isPublish: boolean
+): Promise<PublishConfiguration | null> {
+  const { publishConfigs, emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, targets, arch, isPublish)
+  return await createAppUpdateConfiguration(packager, publishConfigs, isPublish, emitsManifest)
+}
+
+/**
+ * The publish configs whose first provider becomes the `app-update.yml` shared by all targets of one pack (for a
+ * manifest-emitting target, the first provider that receives its manifest - see getEmittingUpdateInfoPublishConfigs):
+ *
+ * - the targets that emit a manifest (`writesUpdateInfo`, and on Windows an electron-updater-aware one) under their
+ *   own effective publish settings - target-level `publish` first, then platform, then root - decide it;
+ * - if several do, their first providers must be the same feed ({@link appUpdateFeedIdentity}: publish-only options
+ *   may differ): one app dir holds one `app-update.yml`, so otherwise some installs would poll a feed that never
+ *   receives their manifest. That is a configuration error;
+ * - with none (a snap-only pack, or `nsis.publish: null`), it comes from the platform/root settings, as before -
+ *   including the GitHub fallback from repository info when no level configures `publish` at all.
+ *
+ * `emitsManifest` tells whether any target of the pack emits one, i.e. whether the signing requirement applies.
+ */
+async function resolvePackAppUpdatePublishConfigs(
+  packager: PlatformPackager<any>,
+  targets: ReadonlyArray<Target>,
+  arch: Arch,
+  isPublish: boolean
+): Promise<{ publishConfigs: Array<PublishConfiguration> | null; emitsManifest: boolean }> {
+  const writers: Array<{ target: Target; publishConfigs: Array<PublishConfiguration> }> = []
+  for (const target of targets) {
+    const publishConfigs = await getTargetManifestPublishConfigs(packager, target, arch, isPublish)
+    if (publishConfigs != null) {
+      writers.push({ target, publishConfigs })
+    }
+  }
+  if (writers.length === 0) {
+    return { publishConfigs: await getPlatformUpdateInfoPublishConfigs(packager, arch, isPublish), emitsManifest: false }
+  }
+
+  const embedded = appUpdateFeedIdentity(writers[0].publishConfigs[0])
+  if (writers.some(it => appUpdateFeedIdentity(it.publishConfigs[0]) !== embedded)) {
+    reportConflictingAppUpdateFeeds(packager, writers, arch, isPublish)
+    // not publishing: no app-update.yml, the same package the error would have prevented - picking one of the feeds
+    // would silently ship installs that poll a feed without their manifest
+    return { publishConfigs: null, emitsManifest: true }
+  }
+  return { publishConfigs: writers[0].publishConfigs, emitsManifest: true }
+}
+
+// keyed by platform packager (one per platform and build): afterPack and the targets writing app-update.yml themselves
+// resolve the same pack, and every arch usually repeats the same conflict - report each one once
+const reportedFeedConflicts = new WeakMap<PlatformPackager<any>, Set<string>>()
+
+/**
+ * Targets of one pack resolve different app-update.yml feeds: an InvalidConfigurationError when publishing, otherwise
+ * a warning that says so, so the misconfiguration surfaces before a release is built with it.
+ */
+function reportConflictingAppUpdateFeeds(
+  packager: PlatformPackager<any>,
+  writers: ReadonlyArray<{ target: Target; publishConfigs: Array<PublishConfiguration> }>,
+  arch: Arch,
+  isPublish: boolean
+): void {
+  const targets = writers.map(it => `"${it.target.name}"`).join(", ")
+  const feeds = writers.map(it => `${it.target.name} -> ${it.publishConfigs[0]?.provider ?? "none"}`).join(", ")
+  const problem =
+    `targets ${targets} are built from the same ${packager.platform.name} ${Arch[arch]} app, which holds a single app-update.yml, ` +
+    `but their publish settings resolve to different auto-update feeds (${feeds}; the first provider of each that receives the manifest is embedded)`
+  const solution = `configure \`publish\` once at the platform level (\`${packager.platform.buildConfigurationKey}.publish\`) and remove the target-level overrides, or point their first providers at the same feed`
+  if (isPublish) {
+    throw new InvalidConfigurationError(`${problem}. To fix it, ${solution}.`)
+  }
+
+  let reported = reportedFeedConflicts.get(packager)
+  if (reported == null) {
+    reported = new Set<string>()
+    reportedFeedConflicts.set(packager, reported)
+  }
+  if (reported.has(feeds)) {
+    return
+  }
+  reported.add(feeds)
+  log.warn(
+    { solution },
+    `${problem}. No app-update.yml is written, so installed apps get neither an update feed nor the update-manifest public key. ` +
+      "Publishing this configuration fails with an InvalidConfigurationError."
+  )
+}
+
+// Options that only the publisher reads (the upload itself), never electron-updater, so they cannot make two otherwise
+// identical first providers different feeds. Everything else is compared - including fields of custom providers and
+// options such as `requestHeaders`, `token` or `private` that change how or whether the updater can read the feed.
+const PUBLISH_ONLY_OPTIONS = new Set(["publishAutoUpdate", "timeout"])
+const S3_PUBLISH_ONLY_OPTIONS = new Set(["acl", "storageClass", "encryption"])
+
+/**
+ * What makes two first providers the same app-update.yml feed: the provider and every option that decides where, or
+ * how, electron-updater reads the manifest (url, bucket, region, path, owner, repo, channel, ...). Publish-only options
+ * and unset (nullish) values are left out, and key order does not matter - so `publishAutoUpdate: true` against an
+ * absent flag is the same feed, a different url or bucket is not.
+ */
+function appUpdateFeedIdentity(config: PublishConfiguration | Nullish): string {
+  if (config == null) {
+    return "null"
+  }
+  const isS3Like = config.provider === "s3" || config.provider === "spaces" || config.provider === "r2"
+  const identity = Object.fromEntries(
+    Object.entries(config).filter(([key, value]) => value != null && !PUBLISH_ONLY_OPTIONS.has(key) && !(isS3Like && S3_PUBLISH_ONLY_OPTIONS.has(key)))
+  )
+  // key order does not make two configs different feeds
+  return JSON.stringify(identity, (_key, value) =>
+    value != null && typeof value === "object" && !Array.isArray(value)
+      ? Object.fromEntries(
+          Object.keys(value)
+            .sort()
+            .map(key => [key, value[key]])
+        )
+      : value
+  )
+}
+
+async function getPlatformUpdateInfoPublishConfigs(packager: PlatformPackager<any>, arch: Arch, isPublish: boolean): Promise<Array<PublishConfiguration> | null> {
+  return await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, arch, isPublish), arch)
+}
+
+/**
+ * The embedded `app-update.yml` config (first provider, updater cache dir, Windows publisher name, manifest trust
+ * list) for already-resolved publish configs. `requireSigning` applies the update-manifest signing requirement
+ * (error when publishing, advisory otherwise) before the trust list is derived.
+ */
+async function createAppUpdateConfiguration(
+  packager: PlatformPackager<any>,
+  publishConfigs: Array<PublishConfiguration> | null,
+  isPublish: boolean,
+  requireSigning: boolean
+): Promise<PublishConfiguration | null> {
   if (publishConfigs == null || publishConfigs.length === 0) {
     return null
   }
@@ -313,6 +561,7 @@ export async function getAppUpdatePublishConfiguration(
     ...publishConfigs[0],
     updaterCacheDirName: packager.appInfo.updaterCacheDirName,
   }
+  warnAboutGenericFeedQuery(publishConfig)
 
   if (packager.platform === Platform.WINDOWS && publishConfig.publisherName == null) {
     const winPackager = packager as WinPackager
@@ -326,7 +575,7 @@ export async function getAppUpdatePublishConfiguration(
   // `publicKey` list wins as-is; otherwise the public half of every configured signing key is derived
   // so the user only manages the secrets. One key is written as a plain string (byte-identical to the
   // single-key format), several as a YAML list.
-  const updateManifestConfig = packager.platformOptions.updateManifest ?? packager.config.updateManifest
+  const updateManifestConfig = packager.updateManifestOptions
   // `updateManifestPublicKey` is only ever assigned right below, on this fresh copy, so a value that is
   // already present can only have come from the user's `publish` configuration. Rejecting it (rather than
   // taking it as-is) keeps the trust list on the single validated path and stops a stale hand-copied key
@@ -337,8 +586,13 @@ export async function getAppUpdatePublishConfiguration(
   // The very same keys updateInfoBuilder signs `latest*.yml` with, so env-var-only signing
   // (no `updateManifest` config block) embeds the matching public keys too, and the two sides
   // cannot disagree about whether signing is enabled.
-  const signingKeys = await packager.updateSigningKeys.value
-  const explicitKeys = normalizeExplicitPublicKeys(updateManifestConfig?.publicKey)
+  // Whether the requirement applies was decided by the caller from the manifest-emitting targets (a publish target
+  // with `publishAutoUpdate: false` on every provider emits none, so it is waived there) - the trust list is still
+  // embedded if keys happen to be configured. Only app-update.yml is limited to the first provider:
+  // createUpdateInfoTasks writes a manifest for every configured one, so the waiver must hold for all of them.
+  const signingKeys = requireSigning ? await packager.requireUpdateSigningKeys(isPublish) : await packager.updateSigningKeys.value
+  // `false` is the opt-out and carries no config object to read `publicKey` from
+  const explicitKeys = updateManifestConfig === false ? [] : normalizeExplicitPublicKeys(updateManifestConfig?.publicKey)
   const trustedKeys = explicitKeys.length > 0 ? explicitKeys : signingKeys.map(derivePublicKeyPem)
   if (trustedKeys.length > 0) {
     publishConfig.updateManifestPublicKey = trustedKeys.length === 1 ? trustedKeys[0] : trustedKeys
@@ -615,6 +869,36 @@ async function resolvePublishConfigurations(
   return (await Promise.all(
     asArray(publishers).map(it => getResolvedPublishConfig(platformPackager, typeof it === "string" ? { provider: it } : it, arch, errorIfCannot, fallbackPackager))
   )) as PublishConfiguration[]
+}
+
+/**
+ * The update-info publish configs `target` emits an auto-update manifest for under its own effective publish settings,
+ * else `null`: target-level `publish` first, `null` means none, and `publishAutoUpdate: false` on every provider means
+ * no manifest.
+ */
+async function getTargetManifestPublishConfigs(packager: PlatformPackager<any>, target: Target, arch: Arch, errorIfCannot: boolean): Promise<Array<PublishConfiguration> | null> {
+  if (!target.writesUpdateInfo || (packager.platform === Platform.WINDOWS && !isSuitableWindowsTarget(target))) {
+    return null
+  }
+  return await getEmittingUpdateInfoPublishConfigs(packager, target.options, arch, errorIfCannot)
+}
+
+/**
+ * The update-info publish configs that receive a manifest, resolved for the given target-specific options (target,
+ * then platform, then root; GitHub from repository info when none configures `publish`), or `null` when they emit
+ * none: `publish: null`, or `publishAutoUpdate: false` on every provider. Providers with `publishAutoUpdate: false`
+ * are left out - writeUpdateInfoFiles writes no `latest*.yml` for them - so the first provider, the one embedded in
+ * app-update.yml, is always one the manifest is uploaded to.
+ */
+async function getEmittingUpdateInfoPublishConfigs(
+  packager: PlatformPackager<any>,
+  targetSpecificOptions: PlatformSpecificBuildOptions | Nullish,
+  arch: Arch,
+  errorIfCannot: boolean
+): Promise<Array<PublishConfiguration> | null> {
+  const updateInfoConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, targetSpecificOptions, arch, errorIfCannot), arch)
+  const emitting = updateInfoConfigs?.filter(it => it.publishAutoUpdate !== false) ?? []
+  return emitting.length === 0 ? null : emitting
 }
 
 function isSuitableWindowsTarget(target: Target) {
