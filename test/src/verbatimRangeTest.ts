@@ -1,6 +1,6 @@
 import { archive } from "app-builder-lib/src/targets/archive"
 import { buildBlockMap } from "app-builder-lib/src/targets/blockmap/blockmap"
-import { findVerbatimRange } from "app-builder-lib/src/targets/blockmap/verbatimRange"
+import { findPreparedVerbatimRange, findVerbatimRange, prepareVerbatimNeedle } from "app-builder-lib/src/targets/blockmap/verbatimRange"
 import { locateStoredMemberRegions, STORED_MEMBER_CHUNKER } from "app-builder-lib/src/targets/differentialUpdateInfoBuilder"
 import { log } from "builder-util"
 import * as fs from "fs/promises"
@@ -176,6 +176,44 @@ describe("findVerbatimRange", () => {
     await expect(findVerbatimRange(files.haystackFile, files.needleFile, -1)).rejects.toThrow("startOffset")
     await expect(findVerbatimRange(files.haystackFile, files.needleFile, 1.5)).rejects.toThrow("startOffset")
   })
+
+  // A needle prepared once is searched for repeatedly without being read again; two files with the
+  // same bytes prepare to the same hash, which is how identical members are recognized.
+  test("a prepared needle finds every occurrence in turn", async ({ expect, tmpDir }) => {
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
+    const offsets = [10 * KiB, 300 * KiB, 450 * KiB]
+    const haystack = pseudoRandom(700 * KiB, 8)
+    for (const offset of offsets) {
+      needle.copy(haystack, offset)
+    }
+    const files = await writePair(dir, haystack, needle)
+    const twinFile = path.join(dir, "twin.bin")
+    await fs.writeFile(twinFile, needle)
+
+    const prepared = await prepareVerbatimNeedle(files.needleFile)
+    expect(prepared).toMatchObject({ file: files.needleFile, size: needle.length })
+    expect(prepared.hash).toMatch(/^[0-9a-f]{64}$/)
+    expect(prepared.probe.equals(needle.subarray(0, PROBE_SIZE))).toBe(true)
+    expect((await prepareVerbatimNeedle(twinFile)).hash).toBe(prepared.hash)
+
+    const found: Array<number> = []
+    for (let from = 0; ;) {
+      const range = await findPreparedVerbatimRange(files.haystackFile, prepared, from)
+      if (range == null) {
+        break
+      }
+      found.push(range.offset)
+      from = range.offset + range.size
+    }
+    expect(found).toEqual(offsets)
+  })
+
+  test("preparing an empty needle throws", async ({ expect, tmpDir }) => {
+    const dir = await makeTempDir(tmpDir, "verbatim-range")
+    const emptyFile = path.join(dir, "empty.bin")
+    await fs.writeFile(emptyFile, Buffer.alloc(0))
+    await expect(prepareVerbatimNeedle(emptyFile)).rejects.toThrow("empty")
+  })
 })
 
 // The production use: an app package built with `storedPaths` keeps the asar as a verbatim Copy
@@ -273,6 +311,39 @@ describe("locateStoredMemberRegions", () => {
     ])
     // the regions are what the installer's block map is built with
     await expect(buildBlockMap(containerFile, "gzip", path.join(root, "installer.blockmap"), { regions })).resolves.toMatchObject({ size: container.length })
+  })
+
+  // Identical members resume the scan past their previous copy; a different member in between must
+  // still be found wherever it is, and the member order must not matter.
+  test("identical members interleaved with a different one each get their own region", async ({ expect, tmpDir }) => {
+    const root = await makeTempDir(tmpDir, "stored-member-regions")
+    const same = pseudoRandom(90 * KiB, 51)
+    const other = pseudoRandom(70 * KiB, 52)
+    const sameFiles = ["x64.asar", "ia32.asar", "arm64.asar"].map(it => path.join(root, it))
+    for (const file of sameFiles) {
+      await fs.writeFile(file, same)
+    }
+    const otherFile = path.join(root, "other.asar")
+    await fs.writeFile(otherFile, other)
+    // layout: same, other, same, same
+    const container = Buffer.concat([pseudoRandom(5 * KiB, 1), same, pseudoRandom(5 * KiB, 2), other, pseudoRandom(5 * KiB, 3), same, pseudoRandom(5 * KiB, 4), same])
+    const containerFile = path.join(root, "installer.bin")
+    await fs.writeFile(containerFile, container)
+    const expected = [
+      { offset: 5 * KiB, size: same.length },
+      { offset: 10 * KiB + same.length, size: other.length },
+      { offset: 15 * KiB + same.length + other.length, size: same.length },
+      { offset: 20 * KiB + 2 * same.length + other.length, size: same.length },
+    ]
+
+    for (const memberFiles of [
+      [sameFiles[0], otherFile, sameFiles[1], sameFiles[2]],
+      [otherFile, ...sameFiles],
+      [...sameFiles, otherFile],
+    ]) {
+      const regions = await locateStoredMemberRegions(containerFile, memberFiles)
+      expect(regions.map(it => ({ offset: it.offset, size: it.size }))).toEqual(expected)
+    }
   })
 
   // Three identical members (x64 + ia32 + arm64) but the artifact holds only two copies: the third has

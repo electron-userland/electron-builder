@@ -5,7 +5,7 @@ import { Target } from "../core.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ArchiveOptions } from "./archive.js"
 import { BlockMapRegion, buildBlockMap, BuildBlockMapOptions, ChunkerParams } from "./blockmap/blockmap.js"
-import { findVerbatimRange, VerbatimRange } from "./blockmap/verbatimRange.js"
+import { findPreparedVerbatimRange, prepareVerbatimNeedle, VerbatimNeedle, VerbatimRange } from "./blockmap/verbatimRange.js"
 
 export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
 
@@ -33,12 +33,17 @@ export const STORED_MEMBER_CHUNKER: ChunkerParams = { min: 4096, avg: 8192, max:
  */
 export async function locateStoredMemberRegions(artifact: string, memberFiles: Array<string>): Promise<Array<BlockMapRegion>> {
   const regions: Array<BlockMapRegion> = []
+  // Byte-identical members have identical occurrences, and the copies are claimed in ascending order,
+  // so the scan for the next member with the same content resumes where its previous copy ended instead
+  // of rescanning (and re-confirming every earlier copy) from the start of the artifact.
+  const resumeOffsetByHash = new Map<string, number>()
   for (const memberFile of memberFiles) {
     if (!(await exists(memberFile))) {
       log.warn({ artifact: log.filePath(artifact), member: log.filePath(memberFile) }, "stored member file does not exist; no block map region for it")
       continue
     }
-    const range = await findUnclaimedVerbatimRange(artifact, memberFile, regions)
+    const needle = await prepareVerbatimNeedle(memberFile)
+    const range = await findUnclaimedVerbatimRange(artifact, needle, regions, resumeOffsetByHash.get(needle.hash) ?? 0)
     if (range == null) {
       log.warn(
         { artifact: log.filePath(artifact), member: log.filePath(memberFile) },
@@ -46,6 +51,7 @@ export async function locateStoredMemberRegions(artifact: string, memberFiles: A
       )
       continue
     }
+    resumeOffsetByHash.set(needle.hash, range.offset + range.size)
     log.info({ artifact: log.filePath(artifact), member: log.filePath(memberFile), offset: range.offset, size: range.size }, "located stored member region for block map")
     regions.push({ ...range, chunker: STORED_MEMBER_CHUNKER })
   }
@@ -53,14 +59,14 @@ export async function locateStoredMemberRegions(artifact: string, memberFiles: A
 }
 
 /**
- * The first occurrence of `memberFile` in `artifact` that does not overlap a range in `claimed`. An
- * occurrence that overlaps a claimed range is another member's copy (or part of one), so the scan
- * resumes right after that range — every candidate start before its end would overlap it too.
+ * The first occurrence of `needle` in `artifact` at or after `startOffset` that does not overlap a
+ * range in `claimed`. An occurrence that overlaps a claimed range is another member's copy (or part of
+ * one), so the scan resumes right after that range — every candidate start before its end would
+ * overlap it too.
  */
-async function findUnclaimedVerbatimRange(artifact: string, memberFile: string, claimed: Array<BlockMapRegion>): Promise<VerbatimRange | null> {
-  let startOffset = 0
+async function findUnclaimedVerbatimRange(artifact: string, needle: VerbatimNeedle, claimed: Array<BlockMapRegion>, startOffset: number): Promise<VerbatimRange | null> {
   for (;;) {
-    const range = await findVerbatimRange(artifact, memberFile, startOffset)
+    const range = await findPreparedVerbatimRange(artifact, needle, startOffset)
     if (range == null) {
       return null
     }
