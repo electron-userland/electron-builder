@@ -42,7 +42,7 @@ afterEach(async () => {
   }
 })
 
-describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env merging", { sequential: true }, () => {
+describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env merging", { concurrent: false }, () => {
   test("DYLD_FALLBACK_LIBRARY_PATH includes the wine lib dir", async ({ expect }) => {
     delete process.env.DYLD_FALLBACK_LIBRARY_PATH
     const result = await getWineToolset(fakeToolset(), "")
@@ -90,4 +90,26 @@ describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env me
     const result = await getWineToolset(fakeToolset(), "")
     expect(result.execPath).toBe(path.join(FAKE_WINE_DIR, "bin", "wine64"))
   })
+})
+
+describe.ifNotWindows('getWineToolset — "system"', { concurrent: false }, () => {
+  test("resolves the host wine on PATH and downloads no bundle", async ({ expect }) => {
+    const result = await getWineToolset("system", "")
+    expect(result.execPath).toBe("wine")
+  })
+
+  test("sets no WINEPREFIX or library paths, so the host wine uses its own defaults", async ({ expect }) => {
+    const result = await getWineToolset("system", "")
+    expect(result.env).toStrictEqual({ WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" })
+  })
+
+  // `null` / `undefined` / "latest" are aliases for WINE_LATEST. Resolving that alias only inside the
+  // download branch made every bundle request ask for a `wine@<WINE_LATEST>` release that does not
+  // exist, so assert the alias reaches the same place an explicit "system" does.
+  for (const value of [undefined, null, "latest"] as const) {
+    test(`${value} resolves through the WINE_LATEST alias without downloading`, async ({ expect }) => {
+      const result = await getWineToolset(value, "")
+      expect(result.execPath).toBe("wine")
+    })
+  }
 })

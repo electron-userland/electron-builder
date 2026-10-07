@@ -48,6 +48,10 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     super(options, "github.com", runtimeOptions)
   }
 
+  get feedBaseUrl(): URL {
+    return this.baseUrl
+  }
+
   private get channel(): string {
     const result = this.updater.channel || this.options.channel
     return result == null ? this.getDefaultChannelName() : this.getCustomChannelName(result)

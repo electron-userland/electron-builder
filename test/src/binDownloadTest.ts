@@ -7,7 +7,7 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-describe("resolveBuilderBinaryUrl", { sequential: true }, () => {
+describe("resolveBuilderBinaryUrl", { concurrent: false }, () => {
   describe("default URL (no env vars)", () => {
     test("builds the standard GitHub release URL", () => {
       const url = resolveBuilderBinaryUrl("nsis-3.0.4.1", "nsis-3.0.4.1.7z", BASE_URL)
@@ -75,7 +75,7 @@ describe("resolveBuilderBinaryUrl", { sequential: true }, () => {
   })
 })
 
-describe("downloadBuilderToolset", { sequential: true }, () => {
+describe("downloadBuilderToolset", { concurrent: false }, () => {
   describe("rejects unsafe filenameWithExt before any download attempt", () => {
     test.each([
       ["Unix path separator", "a/b.7z"],

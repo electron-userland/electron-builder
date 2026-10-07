@@ -277,7 +277,7 @@ export class GitHubPublisher extends HttpPublisher {
           {
             protocol: baseUrl.protocol,
             hostname: baseUrl.hostname,
-            port: baseUrl.port as any,
+            port: baseUrl.port,
             path: this.info.host != null && this.info.host !== "github.com" ? `/api/v3${path.startsWith("/") ? path : `/${path}`}` : path,
             headers: { accept: "application/vnd.github.v3+json" },
             timeout: this.info.timeout || undefined,
