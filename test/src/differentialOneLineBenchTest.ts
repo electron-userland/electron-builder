@@ -1,13 +1,20 @@
-// Benchmark (opt-in, never runs in CI): what does a ONE-LINE source change under app.asar cost on the
-// wire with electron-builder + NSIS + electron-updater differential updates, and how does that cost
-// move when the stored (Copy) asar region of the package is chunked with smaller content-defined
-// blocks than the default 8/16/32 KiB Rabin chunker?
+// Benchmark: what does a ONE-LINE source change under app.asar cost on the wire with
+// electron-builder + NSIS + electron-updater differential updates, and how does that cost move when
+// the stored (Copy) asar region of the package is chunked with smaller content-defined blocks than
+// the default 8/16/32 KiB Rabin chunker?
+//
+// It runs in CI as a small smoke (2 MiB asar, 200 files, ~20 s) so its assertions — the stored asar
+// is found verbatim in the package, the compressed one is not, and the stored default row beats the
+// compressed control for every variant — are exercised on every run; the sweep itself is only logged.
+// The full-size run whose numbers are quoted in STORED_MEMBER_CHUNKER's doc is opt-in:
 //
 //   BENCH=1 TEST_FILES=differentialOneLineBenchTest pnpm ci:test
 //
 // Env knobs (all optional):
-//   BENCH_ASAR_MB         target asar size in MiB                       (default 32)
-//   BENCH_FILES           number of files in the synthetic app          (default 3000)
+//   BENCH                 1 = full size defaults below and verbose output
+//   BENCH_VERBOSE         1 = verbose output at the smoke size too
+//   BENCH_ASAR_MB         target asar size in MiB                       (default 32 full, 2 smoke)
+//   BENCH_FILES           number of files in the synthetic app          (default 3000 full, 200 smoke)
 //   BENCH_RANGE_OVERHEAD  per-HTTP-range overhead in bytes              (default 120)
 //   BENCH_OUT             directory to write results.json / results.md  (default: console only)
 //   BENCH_ASAR_ALIGN      asar content alignment in bytes, 0 = off      (default 0; e.g. 512, 4096)
@@ -52,11 +59,20 @@ import { describe, it } from "vitest"
 
 // ─── parameters ───────────────────────────────────────────────────────────────
 
-const ASAR_MB = Number(process.env.BENCH_ASAR_MB ?? 32)
-const FILE_COUNT = Number(process.env.BENCH_FILES ?? 3000)
+const FULL_SIZE = process.env.BENCH === "1"
+const ASAR_MB = Number(process.env.BENCH_ASAR_MB ?? (FULL_SIZE ? 32 : 2))
+const FILE_COUNT = Number(process.env.BENCH_FILES ?? (FULL_SIZE ? 3000 : 200))
 const RANGE_OVERHEAD = Number(process.env.BENCH_RANGE_OVERHEAD ?? 120)
 const BENCH_OUT = process.env.BENCH_OUT
 const ASAR_ALIGN = Number(process.env.BENCH_ASAR_ALIGN ?? 0)
+const VERBOSE = FULL_SIZE || process.env.BENCH_VERBOSE === "1"
+
+// The progress lines and the report are what a full run is for; the CI smoke only needs the assertions.
+function say(message: string): void {
+  if (VERBOSE) {
+    console.log(message)
+  }
+}
 
 const KiB = 1024
 const DEFAULT_CONFIG_NAME = "default (8/16/32 KiB everywhere)"
@@ -556,7 +572,7 @@ function conclusions(result: VariantResult): Array<string> {
 
 // ─── the benchmark ────────────────────────────────────────────────────────────
 
-describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmark", () => {
+describe("differential one-line-change benchmark", () => {
   it("sweeps asar chunk sizes and reports the wire cost of a one-line change", { timeout: 60 * 60 * 1000 }, async ({ expect, tmpDir }) => {
     const work = await tmpDir.getTempDir({ prefix: "one-line-bench" })
     const asar = await dynamicImport<AsarApi>("@electron/asar")
@@ -575,7 +591,7 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
     const target = pickTargetFile(app)
     const targetContent = app.files.get(target)!
     const asarOrderIndex = [...app.files.keys()].indexOf(target)
-    console.log(
+    say(
       `[bench] app: ${app.files.size} files, ${fmt(app.totalBytes)} B of source → v1 asar ${fmt(v1AsarBytes.length)} B ` +
         `(header ${fmt(readAsarHeaderBytes(v1AsarBytes))} B); change target "${target}" (${fmt(targetContent.length)} B, ` +
         `file ${asarOrderIndex + 1}/${app.files.size} in asar order) [${elapsed()}]`
@@ -595,7 +611,7 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
       for (const [rel, content] of expected) {
         expect(asar.extractFile(out, rel).equals(Buffer.from(content)), `aligned ${path.basename(out)}: extractFile("${rel}") must match the source`).toBe(true)
       }
-      console.log(
+      say(
         `[bench] aligned ${path.basename(file)} to ${ASAR_ALIGN} B: ${fmt(info.originalBytes)} → ${fmt(info.alignedBytes)} B ` +
           `(+${fmt(info.paddingBytes)} B padding, ${pct(info.paddingBytes, info.originalBytes)}; header ${fmt(info.headerBytesBefore)} → ${fmt(info.headerBytesAfter)} B); ` +
           `extractFile verified ${expected.size} files [${elapsed()}]`
@@ -667,7 +683,7 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
       () => fs.writeFile(addedAbs, addedContent),
       () => fs.rm(addedAbs)
     )
-    console.log(`[bench] packed ${variants.length} v2 asars [${elapsed()}]`)
+    say(`[bench] packed ${variants.length} v2 asars [${elapsed()}]`)
 
     // 3. 7z packages exactly as NsisTarget builds them (stored asar) + control (compressed asar).
     //    The non-asar payload is identical between versions, like an app whose only change is in
@@ -700,9 +716,7 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
       } else {
         expect(asarOffset, `compressed asar must not appear verbatim in ${file}`).toBe(-1)
       }
-      console.log(
-        `[bench] 7z ${path.basename(file)}: ${fmt(pkg.length)} B in ${((Date.now() - started) / 1000).toFixed(1)}s` + (stored ? `, asar at offset ${fmt(asarOffset)}` : "")
-      )
+      say(`[bench] 7z ${path.basename(file)}: ${fmt(pkg.length)} B in ${((Date.now() - started) / 1000).toFixed(1)}s` + (stored ? `, asar at offset ${fmt(asarOffset)}` : ""))
       return { file, size: pkg.length, asarOffset, asarSize: asarBytes.length, asarHeaderBytes: readAsarHeaderBytes(asarBytes) }
     }
     const v1Stored = await buildPackage("v1", v1StoredAsar, true)
@@ -711,7 +725,7 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
     for (const v of variants) {
       v2Packages.set(v.id, { stored: await buildPackage(`v2-${v.id}`, v.storedAsar, true), compressed: await buildPackage(`v2-${v.id}`, v.asar, false) })
     }
-    console.log(`[bench] all packages built [${elapsed()}]`)
+    say(`[bench] all packages built [${elapsed()}]`)
 
     // 4./5. blockmaps: one per (package, config); packages are reused across configs.
     const bmDir = path.join(work, "blockmaps")
@@ -725,7 +739,7 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
     }
 
     const v1StoredDefault = await buildMap(v1Stored, null)
-    console.log(`[bench] v1 stored default blockmap: ${fmt(v1StoredDefault.map.files[0].sizes.length)} blocks, ${fmt(v1StoredDefault.gzBytes)} B gz [${elapsed()}]`)
+    say(`[bench] v1 stored default blockmap: ${fmt(v1StoredDefault.map.files[0].sizes.length)} blocks, ${fmt(v1StoredDefault.gzBytes)} B gz [${elapsed()}]`)
 
     const v1Maps = new Map<string, { map: BlockMap; gzBytes: number }>()
     for (const c of SWEEP) {
@@ -750,7 +764,7 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
       const controlMap = await buildMap(pkgs.compressed, null)
       const compressed = [measure(DEFAULT_CONFIG_NAME, v1CompressedMap.map, controlMap.map, pkgs.compressed, controlMap.gzBytes)]
       results.push({ variant: v.id, description: v.description, offsetsShifted, stored, compressed })
-      console.log(`[bench] measured variant ${v.id}: ${fmt(offsetsShifted.shifted)}/${fmt(offsetsShifted.total)} header offsets shifted [${elapsed()}]`)
+      say(`[bench] measured variant ${v.id}: ${fmt(offsetsShifted.shifted)}/${fmt(offsetsShifted.total)} header offsets shifted [${elapsed()}]`)
     }
 
     // 6. report
@@ -797,7 +811,7 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
     const overallBest = results.map(r => r.stored.reduce((a, b) => (b.totalWire < a.totalWire ? b : a)).config)
     md.push(`Best config per variant: ${results.map((r, i) => `${r.variant} → "${overallBest[i]}"`).join("; ")}.`)
     const report = md.join("\n")
-    console.log(`\n${report}\n\n[bench] done in ${elapsed()}`)
+    say(`\n${report}\n\n[bench] done in ${elapsed()}`)
 
     if (BENCH_OUT) {
       await fs.mkdir(BENCH_OUT, { recursive: true })
@@ -823,7 +837,7 @@ describe.runIf(process.env.BENCH === "1")("differential one-line-change benchmar
           2
         )
       )
-      console.log(`[bench] wrote ${path.join(BENCH_OUT, "results.md")} and results.json`)
+      say(`[bench] wrote ${path.join(BENCH_OUT, "results.md")} and results.json`)
     }
 
     // sanity: the stored default row must beat the compressed control for every variant
