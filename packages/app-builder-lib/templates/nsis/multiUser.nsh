@@ -101,7 +101,7 @@ Var installMode
 
 # Custom function to handle /D parameter with spaces
 # The /D parameter is special in NSIS - it must be the last parameter and cannot have quotes
-# Use StdUtils.GetParameter to get the full command line, then parse /D= manually
+# Use GetParameters to get the full command line, then parse /D= manually
 !macro GetDParameter outVar
   Push $R8
   Push $R9
@@ -109,8 +109,8 @@ Var installMode
   Push $R6
   Push $R5
 
-  # Get the complete command line using StdUtils (including /D parameter)
-  ${StdUtils.GetAllParameters} $R8 "0"
+  # Get the complete command line (including /D parameter)
+  ${GetParameters} $R8
 
   # Initialize result
   StrCpy $R9 ""
