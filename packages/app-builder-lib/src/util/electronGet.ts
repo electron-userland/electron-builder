@@ -22,6 +22,7 @@ import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
 import { getPath7za } from "../toolsets/7zip.js"
+import { checksumMismatchMessage, ExpectedChecksum, parseChecksum, verifyFileChecksum } from "./checksum.js"
 import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState.js"
 
 export interface ElectronGetOptions extends Omit<
@@ -420,7 +421,7 @@ async function downloadArtifactToFile(config: ElectronArtifactDetails, label: st
 
 /**
  * Checks electron-builder's own archive cache for a previously downloaded archive.
- * Validates the SHA-256 checksum when one is known. Returns the cached path on hit,
+ * Validates the checksum (SHA-256 hex or base64 SHA-512) when one is known. Returns the cached path on hit,
  * null on miss or checksum mismatch (mismatch also deletes the stale file).
  *
  * Air-gapped seeding contract: placing the archive at
@@ -429,23 +430,14 @@ async function downloadArtifactToFile(config: ElectronArtifactDetails, label: st
  * against the value hardcoded in the toolset module, and extraction happens locally too. No
  * `.state` file needs to be seeded. See https://www.electron.build/tutorials/offline-air-gapped-builds.
  */
-async function resolveFromArchiveCache(archiveCachePath: string, label: string, expectedSha256: string | undefined): Promise<string | null> {
+async function resolveFromArchiveCache(archiveCachePath: string, label: string, expected: ExpectedChecksum | undefined): Promise<string | null> {
   if (!(await exists(archiveCachePath))) {
     return null
   }
-  if (expectedSha256) {
-    const hash = await new Promise<string>((resolve, reject) => {
-      const h = crypto.createHash("sha256")
-      const s = createReadStream(archiveCachePath)
-      s.on("error", reject)
-      s.on("data", (chunk: Buffer | string) => h.update(chunk))
-      s.on("end", () => resolve(h.digest("hex")))
-    })
-    if (hash !== expectedSha256) {
-      log.warn({ file: label, archiveCachePath }, "cached archive checksum mismatch — removing and re-downloading")
-      await fs.rm(archiveCachePath).catch(() => {})
-      return null
-    }
+  if (expected != null && !(await verifyFileChecksum(archiveCachePath, expected)).matches) {
+    log.warn({ file: label, archiveCachePath }, "cached archive checksum mismatch — removing and re-downloading")
+    await fs.rm(archiveCachePath).catch(() => {})
+    return null
   }
   log.debug({ file: label, archiveCachePath }, "using cached archive — skipping download")
   return archiveCachePath
@@ -469,7 +461,13 @@ async function persistToArchiveCache(sourcePath: string, archiveCachePath: strin
  * progress bar, extraction (.zip or .tar.gz), and completion marker.
  * Both public download functions delegate here after building their respective configs.
  */
-async function downloadAndExtract(config: ElectronArtifactDetails, extractDir: string, label: string, archiveCachePath?: string): Promise<string> {
+async function downloadAndExtract(
+  config: ElectronArtifactDetails,
+  extractDir: string,
+  label: string,
+  archiveCachePath?: string,
+  expectedChecksum?: ExpectedChecksum
+): Promise<string> {
   // Create only the PARENT dir (e.g. <cache>/fpm@2.2.1), never extractDir itself, before locking.
   // The parent is stable — cleanup only ever removes extractDir and its .state/.tmp/.lock siblings —
   // so extractDir's whole lifecycle (mkdir, rm, re-mkdir) stays inside the lock. ensureDir absorbs
@@ -528,7 +526,7 @@ async function downloadAndExtract(config: ElectronArtifactDetails, extractDir: s
     // This lets repeated builds (or offline environments) skip the download entirely once
     // the archive has been fetched at least once.
     if (archiveCachePath) {
-      downloadedFile = await resolveFromArchiveCache(archiveCachePath, label, (config as any).checksums?.[label])
+      downloadedFile = await resolveFromArchiveCache(archiveCachePath, label, expectedChecksum)
     }
 
     if (!downloadedFile) {
@@ -536,6 +534,17 @@ async function downloadAndExtract(config: ElectronArtifactDetails, extractDir: s
       downloadedFile = await downloadArtifactToFile(config, label)
       if (!downloadedFile) {
         throw new Error(`Failed to download artifact: ${label}`)
+      }
+      // A SHA-256 hex checksum is verified by @electron/get during the download. A base64 SHA-512 was passed with
+      // unsafelyDisableChecksums (sumchecker only understands SHA-256 hex), so verify it here, before the archive is
+      // persisted to the archive cache or extracted.
+      if (expectedChecksum != null && expectedChecksum.algorithm !== "sha256") {
+        const { matches, actual } = await verifyFileChecksum(downloadedFile, expectedChecksum)
+        if (!matches) {
+          await fs.rm(downloadedFile, { force: true }).catch(() => {})
+          throw new Error(`${checksumMismatchMessage(label, expectedChecksum, actual)} The corrupted download has been removed.`)
+        }
+        log.debug({ file: label, algorithm: expectedChecksum.algorithm }, "checksum verified")
       }
       // Persist the downloaded archive so future builds (and offline environments) can
       // skip the network request entirely.
@@ -669,6 +678,8 @@ export async function downloadBuilderToolset(options: {
     throw new Error(`downloadBuilderToolset: unsafe filenameWithExt "${filenameWithExt}" — must be a plain filename with no path separators or traversal sequences`)
   }
 
+  const { expectedChecksum, electronGetChecksums } = resolveToolsetChecksums(releaseName, filenameWithExt, checksums)
+
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
   const fullUrl = resolveBuilderBinaryUrl(releaseName, filenameWithExt, baseUrl, overrideUrl)
   const suffix = hashUrlSafe(fullUrl, 5)
@@ -696,11 +707,42 @@ export async function downloadBuilderToolset(options: {
     artifactName: filenameWithExt,
     cacheRoot: path.resolve(await cacheDirectoryOverrideAllowed.value, "downloads"),
     cacheMode: resolveCacheMode(),
-    ...(checksums != null ? { checksums } : { unsafelyDisableChecksums: true }),
+    ...(electronGetChecksums != null ? { checksums: electronGetChecksums } : { unsafelyDisableChecksums: true }),
     mirrorOptions,
     isGeneric: true,
   }
-  return downloadAndExtract(config, extractDir, filenameWithExt, archiveCachePath)
+  return downloadAndExtract(config, extractDir, filenameWithExt, archiveCachePath, expectedChecksum)
+}
+
+/**
+ * Classifies every entry of a toolset checksum table up front, so a malformed value fails before anything is downloaded
+ * instead of as a sumchecker parse error or a generic mismatch afterwards. Returns the checksum for `filenameWithExt` and,
+ * when every entry is SHA-256 hex, the (lowercased) table to hand to `@electron/get`; base64 SHA-512 checksums are verified
+ * by electron-builder after the download instead (#10040).
+ */
+function resolveToolsetChecksums(
+  releaseName: string,
+  filenameWithExt: string,
+  checksums: Record<string, string> | undefined
+): { expectedChecksum?: ExpectedChecksum; electronGetChecksums?: Record<string, string> } {
+  if (checksums == null) {
+    return {}
+  }
+  const parsed = Object.entries(checksums).map(([file, value]) => [file, parseChecksum(value, `The checksum for "${file}" (${releaseName})`)] as const)
+  const algorithms = new Set(parsed.map(([, checksum]) => checksum.algorithm))
+  if (algorithms.size > 1) {
+    throw new Error(`Checksums for ${releaseName} mix formats: use a single format for all entries, either SHA-256 hex or base64 SHA-512`)
+  }
+  const expectedChecksum = parsed.find(([file]) => file === filenameWithExt)?.[1]
+  if (algorithms.has("sha256")) {
+    return { expectedChecksum, electronGetChecksums: Object.fromEntries(parsed.map(([file, checksum]) => [file, checksum.value])) }
+  }
+  if (expectedChecksum == null) {
+    // @electron/get would reject a missing entry itself, but its validation is disabled for SHA-512 checksums: never let a
+    // table without an entry for this file turn into an unverified download.
+    throw new Error(`No checksum for "${filenameWithExt}" in the checksums for ${releaseName}`)
+  }
+  return { expectedChecksum }
 }
 
 /**

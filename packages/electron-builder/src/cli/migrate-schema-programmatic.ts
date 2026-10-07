@@ -1031,7 +1031,7 @@ class ConfigCodemod {
 
   // Mirrors migrateConfig's migrateCustomNsis: customNsisBinary.debugLogging → <section>.installerDebugLogging (dropped for portable),
   // an emptied or null customNsisBinary / customNsisResources is removed, and a custom bundle is kept and reported, never converted
-  // to toolsets.nsis (the checksum format and bundle layout differ).
+  // to toolsets.nsis (the bundle layout differs: it must carry the NSIS plugins).
   private ruleCustomNsis(root: any): void {
     const ts = this.ts
     const isNullLiteral = (prop: any) => ts.isPropertyAssignment(prop) && this.unwrap(prop.initializer).kind === ts.SyntaxKind.NullKeyword

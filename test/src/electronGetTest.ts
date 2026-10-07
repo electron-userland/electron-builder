@@ -1,4 +1,5 @@
 import { exec } from "builder-util"
+import { createHash } from "crypto"
 import { readFileSync } from "fs"
 import * as fs from "fs/promises"
 import * as http from "http"
@@ -615,6 +616,167 @@ describe("toolset archive cache", { concurrent: false }, () => {
     } finally {
       await server.close()
     }
+  })
+})
+
+// ─── Checksum formats: SHA-256 hex vs base64 SHA-512 (#10040) ────────────────
+
+// The base64 SHA-512 checksums v26 used for all toolsets cannot be parsed by @electron/get's sumchecker (SHA-256 hex
+// only), so downloadBuilderToolset verifies those itself, after the download and before the archive is cached or extracted.
+// Every test routes downloads to a local server (or a dead port) and counts the requests, so no network is touched.
+describe("downloadBuilderToolset checksum formats (#10040)", { concurrent: false }, () => {
+  const digestOf = (data: Buffer | string, algorithm: "sha256" | "sha512", encoding: "hex" | "base64") => createHash(algorithm).update(data).digest(encoding)
+
+  let freshCache: string
+
+  beforeEach(async context => {
+    freshCache = await context.tmpDir.createTempDir({ prefix: "eb-checksum-format-test" })
+    vi.stubEnv("ELECTRON_BUILDER_CACHE", freshCache)
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  async function serveFixture(files: Record<string, string>) {
+    const fixture = path.join(freshCache, "fixture.tar.gz")
+    await createMinimalTarGz(fixture, files)
+    const server = await startArtifactServer(fixture)
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", `http://127.0.0.1:${server.port}/`)
+    return { server, data: await fs.readFile(fixture) }
+  }
+
+  test("an uppercase SHA-256 hex is lowercased and verified by @electron/get", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const { server, data } = await serveFixture({ sentinel: "sha256-ok" })
+    const fileName = "sha256-artifact.tar.gz"
+    try {
+      const result = await downloadBuilderToolset({
+        releaseName: "sha256-upper@0.1",
+        filenameWithExt: fileName,
+        checksums: { [fileName]: digestOf(data, "sha256", "hex").toUpperCase() },
+      })
+      expect(await fs.readdir(result)).toContain("sentinel")
+      expect(server.requestedPaths.length).toBe(1)
+    } finally {
+      await server.close()
+    }
+  })
+
+  test("a SHA-256 hex mismatch is still reported by @electron/get, not by the SHA-512 verification", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const { server } = await serveFixture({ sentinel: "served-bytes" })
+    const fileName = "sha256-corrupt.tar.gz"
+    try {
+      const error = await downloadBuilderToolset({
+        releaseName: "sha256-mismatch@0.1",
+        filenameWithExt: fileName,
+        checksums: { [fileName]: digestOf("other bytes", "sha256", "hex") },
+      }).catch(e => e)
+      expect(error).toBeInstanceOf(Error)
+      expect(error.message).not.toMatch(/checksum mismatch for/)
+      expect(server.requestedPaths.length).toBeGreaterThan(0)
+    } finally {
+      await server.close()
+    }
+  })
+
+  test("a base64 SHA-512 download is verified by electron-builder, cached and extracted", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const { server, data } = await serveFixture({ sentinel: "sha512-ok" })
+    const releaseName = "sha512-happy@0.1"
+    const fileName = "sha512-artifact.tar.gz"
+    try {
+      // sumchecker cannot parse base64, so this only succeeds if @electron/get's validation is bypassed and ours runs instead
+      const result = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: digestOf(data, "sha512", "base64") } })
+      expect(await fs.readdir(result)).toContain("sentinel")
+    } finally {
+      await server.close()
+    }
+    // the verified archive was persisted to the archive cache
+    expect(Buffer.compare(await fs.readFile(path.join(freshCache, releaseName, fileName)), data)).toBe(0)
+  })
+
+  test("a base64 SHA-512 mismatch throws with expected and actual and removes the download", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const { server, data } = await serveFixture({ sentinel: "served-bytes" })
+    const releaseName = "sha512-mismatch@0.1"
+    const fileName = "sha512-corrupt.tar.gz"
+    const wrongSha512 = digestOf("some other content entirely", "sha512", "base64")
+    try {
+      const error = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: wrongSha512 } }).catch(e => e)
+      expect(error.message).toMatch(/sha512 checksum mismatch for sha512-corrupt\.tar\.gz/)
+      expect(error.message).toContain(wrongSha512)
+      expect(error.message).toContain(digestOf(data, "sha512", "base64"))
+      expect(error.message).toContain("The corrupted download has been removed")
+    } finally {
+      await server.close()
+    }
+    // the corrupted download survives nowhere: neither in @electron/get's download cache nor in the archive cache,
+    // and nothing was extracted
+    const leftovers = (await fs.readdir(freshCache, { recursive: true })).map(String).filter(p => p.endsWith(fileName))
+    expect(leftovers).toEqual([])
+    const extracted = (await fs.readdir(path.join(freshCache, releaseName))).filter(e => !e.endsWith(".lock") && !e.endsWith(".state") && !e.endsWith(".tmp"))
+    for (const dir of extracted) {
+      expect(await fs.readdir(path.join(freshCache, releaseName, dir))).toEqual([])
+    }
+  })
+
+  test.for([
+    ["an unrecognized value", { "artifact.tar.gz": "clearly-not-a-checksum" }, /must be the SHA-256 of the archive as 64 hex characters/],
+    ["a sha256: prefixed value", { "artifact.tar.gz": `sha256:${"a".repeat(64)}` }, /must be the SHA-256/],
+    [
+      "mixed formats",
+      {
+        "artifact.tar.gz": "84021a78ee214ae6fd33a2d62a92ba25542dd10bc86bf117a9b2d0bba44e7665",
+        "other.tar.gz": "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==",
+      },
+      /mix formats/,
+    ],
+    [
+      "a SHA-512 table without an entry for the file",
+      { "other.tar.gz": "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==" },
+      /No checksum for "artifact\.tar\.gz"/,
+    ],
+  ] as const)("%s fails fast, before anything is downloaded", async ([, checksums, message], { expect }) => {
+    const { server } = await serveFixture({ sentinel: "never-served" })
+    try {
+      await expect(downloadBuilderToolset({ releaseName: "bad-format@0.1", filenameWithExt: "artifact.tar.gz", checksums: { ...checksums } })).rejects.toThrow(message)
+      expect(server.requestedPaths).toEqual([])
+    } finally {
+      await server.close()
+    }
+  })
+
+  test("an archive cache hit is verified with a base64 SHA-512 (no download)", async ({ expect }) => {
+    const releaseName = "sha512-cache@0.1"
+    const fileName = "sha512-cached.tar.gz"
+    const archiveCachePath = path.join(freshCache, releaseName, fileName)
+    await fs.mkdir(path.dirname(archiveCachePath), { recursive: true })
+    await createMinimalTarGz(archiveCachePath, { sentinel: "cached-sha512" })
+    // Dead man's switch: any download attempt fails with ECONNREFUSED (port 1 is never open)
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", "http://127.0.0.1:1/")
+
+    const result = await downloadBuilderToolset({
+      releaseName,
+      filenameWithExt: fileName,
+      checksums: { [fileName]: digestOf(await fs.readFile(archiveCachePath), "sha512", "base64") },
+    })
+    expect(await fs.readdir(result)).toContain("sentinel")
+  })
+
+  test("an archive cache entry failing its base64 SHA-512 is discarded and re-downloaded", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const { server, data } = await serveFixture({ sentinel: "pristine" })
+    const releaseName = "sha512-stale-cache@0.1"
+    const fileName = "sha512-stale.tar.gz"
+    const archiveCachePath = path.join(freshCache, releaseName, fileName)
+    await fs.mkdir(path.dirname(archiveCachePath), { recursive: true })
+    await fs.writeFile(archiveCachePath, "corrupt data")
+    try {
+      const result = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: digestOf(data, "sha512", "base64") } })
+      expect(await fs.readdir(result)).toContain("sentinel")
+      expect(server.requestedPaths.length).toBe(1)
+    } finally {
+      await server.close()
+    }
+    // the stale archive was replaced by the verified download
+    expect(Buffer.compare(await fs.readFile(archiveCachePath), data)).toBe(0)
   })
 })
 

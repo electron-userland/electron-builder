@@ -8496,10 +8496,10 @@
     },
     "ToolsetCustom": {
       "additionalProperties": false,
-      "description": "A custom toolset bundle supplied by the user in place of a built-in versioned bundle.\n\nThe bundle must mirror the expected directory layout of the corresponding built-in bundle.\nSee the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.\n\nFile formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.\n\n`checksum` is the SHA-256 of the archive as 64 lowercase hex characters, the same for every toolset. Base64 SHA-512 values\n(as v26 configs typically used) are rejected. See https://www.electron.build/docs/toolsets#custom-toolset-checksum",
+      "description": "A custom toolset bundle supplied by the user in place of a built-in versioned bundle.\n\nThe bundle must mirror the expected directory layout of the corresponding built-in bundle.\nSee the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.\n\nFile formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.\n\n`checksum` is the SHA-256 of the archive as 64 hex characters or its SHA-512 as 88 base64 characters (the format v26\nused for all toolset checksums), the same for every toolset. See https://www.electron.build/docs/toolsets#custom-toolset-checksum",
       "properties": {
         "checksum": {
-          "description": "SHA-256 of the bundle archive, as 64 lowercase hex characters. A downloaded bundle is verified against it by `@electron/get`.\n\nCompute it with `shasum -a 256 <archive>` (macOS / Linux), `(Get-FileHash -Algorithm SHA256 <archive>).Hash.ToLower()`\n(PowerShell) or `certutil -hashfile <archive> SHA256` (then lowercase it). Base64 SHA-512 values, as v26 configs typically\nused, and prefixed forms such as `sha256:…` are rejected.\n\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching.",
+          "description": "Checksum of the bundle archive, in one of two formats:\n- the SHA-256 as 64 hex characters (uppercase is lowercased), e.g. `shasum -a 256 <archive>` (macOS / Linux),\n  `(Get-FileHash -Algorithm SHA256 <archive>).Hash` (PowerShell) or `certutil -hashfile <archive> SHA256`;\n- the SHA-512 as 88 base64 characters, the format v26 used for all toolset checksums, e.g.\n  `openssl dgst -sha512 -binary <archive> | openssl base64 -A`.\n\nPrefixed forms such as `sha256:…` or `sha512-…`, and a hex-encoded SHA-512, are rejected before anything is downloaded.\nA downloaded archive is verified before it is cached or extracted, and a local `file://` archive before it is extracted.\n\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching and no verification.",
           "type": "string"
         },
         "url": {
@@ -8507,7 +8507,7 @@
           "type": "string"
         },
         "version": {
-          "description": "Optional version label used in the local cache directory name.\nFalls back to the first 8 characters of `checksum` when omitted.",
+          "description": "Optional version label used in the local cache directory name.\nFalls back to the first 8 hex characters of the `checksum` digest when omitted.",
           "type": "string"
         }
       },

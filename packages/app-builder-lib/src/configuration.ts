@@ -872,8 +872,8 @@ export interface ToolsetConfig {
  *
  * File formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.
  *
- * `checksum` is the SHA-256 of the archive as 64 lowercase hex characters, the same for every toolset. Base64 SHA-512 values
- * (as v26 configs typically used) are rejected. See https://www.electron.build/docs/toolsets#custom-toolset-checksum
+ * `checksum` is the SHA-256 of the archive as 64 hex characters or its SHA-512 as 88 base64 characters (the format v26
+ * used for all toolset checksums), the same for every toolset. See https://www.electron.build/docs/toolsets#custom-toolset-checksum
  *
  * @example
  * ```json
@@ -901,21 +901,24 @@ export interface ToolsetCustom {
   readonly url: string
 
   /**
-   * SHA-256 of the bundle archive, as 64 lowercase hex characters. A downloaded bundle is verified against it by `@electron/get`.
+   * Checksum of the bundle archive, in one of two formats:
+   * - the SHA-256 as 64 hex characters (uppercase is lowercased), e.g. `shasum -a 256 <archive>` (macOS / Linux),
+   *   `(Get-FileHash -Algorithm SHA256 <archive>).Hash` (PowerShell) or `certutil -hashfile <archive> SHA256`;
+   * - the SHA-512 as 88 base64 characters, the format v26 used for all toolset checksums, e.g.
+   *   `openssl dgst -sha512 -binary <archive> | openssl base64 -A`.
    *
-   * Compute it with `shasum -a 256 <archive>` (macOS / Linux), `(Get-FileHash -Algorithm SHA256 <archive>).Hash.ToLower()`
-   * (PowerShell) or `certutil -hashfile <archive> SHA256` (then lowercase it). Base64 SHA-512 values, as v26 configs typically
-   * used, and prefixed forms such as `sha256:…` are rejected.
+   * Prefixed forms such as `sha256:…` or `sha512-…`, and a hex-encoded SHA-512, are rejected before anything is downloaded.
+   * A downloaded archive is verified before it is cached or extracted, and a local `file://` archive before it is extracted.
    *
    * Required for remote (`https://`) URLs and local archive files (`file://`).
-   * Not needed for bare directory paths — the directory is used as-is with no caching.
+   * Not needed for bare directory paths — the directory is used as-is with no caching and no verification.
    * @see https://www.electron.build/docs/toolsets#custom-toolset-checksum
    */
   readonly checksum?: string
 
   /**
    * Optional version label used in the local cache directory name.
-   * Falls back to the first 8 characters of `checksum` when omitted.
+   * Falls back to the first 8 hex characters of the `checksum` digest when omitted.
    */
   readonly version?: string
 }
