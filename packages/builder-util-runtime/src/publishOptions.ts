@@ -36,10 +36,23 @@ export interface PublishConfiguration {
   readonly updaterCacheDirName?: string | null
 
   /**
+   * Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update
+   * manifest before downloading — the install's trust list. A manifest is accepted when any listed key
+   * validates one of its signatures. Embedded into `app-update.yml` at build time when update manifest
+   * signing is enabled: a single string for one key, an array for several. Managed by electron-builder —
+   * populated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it
+   * manually in the `publish` configuration is rejected as a configuration error.
+   * @private
+   */
+  readonly updateManifestPublicKey?: string | Array<string> | null
+
+  /**
    * Whether to publish auto update info files.
    *
    * Auto update relies only on the first provider in the list (you can specify several publishers).
    * Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+   * A provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:
+   * the first provider that does is embedded instead.
    *
    * @default true
    */

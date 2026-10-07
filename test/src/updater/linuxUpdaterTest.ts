@@ -58,9 +58,8 @@ const runTest = async (expect: ExpectStatic, updaterClass: any, expectedExtensio
     // the stable fields explicitly instead of snapshotting
     expect(updateCheckResult?.updateInfo.version).toBe(NEW_VERSION_NUMBER)
 
-    const files = await updateCheckResult?.downloadPromise
-    expect(files!.length).toEqual(1)
-    const installer = files![0]
+    const { updateFile: installer, packageFile } = (await updateCheckResult!.downloadPromise)!
+    expect(packageFile).toBeUndefined()
     expect(installer.endsWith(`.${expectedExtension}`)).toBeTruthy()
     await assertThat(expect, installer).isFile()
     expect(actualEvents).toEqual(["checking-for-update", "update-available", "update-downloaded"])
@@ -100,7 +99,7 @@ const packageManagerMap: {
   },
 }
 
-describe("LinuxUpdater.detectPackageManager", { sequential: true }, () => {
+describe("LinuxUpdater.detectPackageManager", { concurrent: false }, () => {
   afterEach(() => {
     delete process.env.ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER
   })
@@ -173,7 +172,7 @@ describe("LinuxUpdater.detectPackageManager", { sequential: true }, () => {
 
 // sequential: ELECTRON_BUILDER_LINUX_PACKAGE_MANAGER is process-global; extended timeout: the update
 // package is built in-job on first use
-describe.ifLinux("Linux Updater Test", { sequential: true, timeout: EXTENDED_TIMEOUT }, () => {
+describe.ifLinux("Linux Updater Test", { concurrent: false, timeout: EXTENDED_TIMEOUT }, () => {
   for (const distro in packageManagerMap) {
     const { pms, updater: Updater, extension } = packageManagerMap[distro as keyof typeof packageManagerMap]
     for (const pm of pms) {

@@ -23,6 +23,8 @@ export type SuiteChainKey = keyof ConditionalChainProps<never>
  *   ["ifNotWindows"]     → "__"      → foo__Test.ts (runs on Linux + macOS; no marker needed)
  *   ["heavy", "ifLinux"] → ".linux." → foo.linux.Test.ts
  *   undefined / []       → "__"      → foo__Test.ts (cross-platform)
+ *
+ * The `Test.ts` tail becomes `e2e.ts` for suites flagged `e2e` (see getTestFileSuffix).
  */
 export function getPlatformSuffix(chain?: SuiteChainKey[]): string {
   if (!chain) {
@@ -52,6 +54,21 @@ export interface SuiteConfig {
   readonly importPath: string
   readonly describeConfig: DescribeConfig
   readonly describeOptions?: TestOptions
+  /**
+   * The suite builds installers/archives and inspects them, so its generated files are emitted as `*.e2e.ts`
+   * (selected by `TEST_MODE=all|e2e`, see smart-config.ts) instead of `*Test.ts` (`TEST_MODE=all|unit`).
+   */
+  readonly e2e?: boolean
+}
+
+/**
+ * Filename tail of a generated test file: `Test.ts` for suites that stop at the app directory, `e2e.ts` for
+ * suites flagged {@link SuiteConfig.e2e}. Always preceded by the platform suffix from {@link getPlatformSuffix},
+ * e.g. `portable__wcs-1.0.0__nsis-0.0.0.win.e2e.ts` or `nsisWine__wine-1.0.1__e2e.ts` — both forms are what
+ * `isE2eTestFile` (file-discovery.ts) recognises.
+ */
+export function getTestFileSuffix(suite: Pick<SuiteConfig, "e2e">): string {
+  return suite.e2e ? "e2e.ts" : "Test.ts"
 }
 
 export function buildDescribeCall(chain?: SuiteChainKey[]): string {

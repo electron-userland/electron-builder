@@ -64,7 +64,7 @@ export interface CommonNsisOptions {
   readonly warningsAsErrors?: boolean
 
   /**
-   * Forces zip compression format instead of LZMA. Used internally for differential update packages.
+   * Use zip instead of 7z (LZMA) for the embedded app package. Only applies to portable targets and to installers built with `differentialPackage: false`; ignored (with a warning) when `differentialPackage` is enabled and for `nsis-web`, which always use 7z.
    * @default false
    */
   readonly useZip?: boolean
@@ -177,9 +177,12 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly uninstallUrlReadme?: string | null
 
   /**
-   * The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).
+   * The path to NSIS include script to customize installer, or an array of such paths to include multiple scripts. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).
+   *
+   * Each path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.
+   * When an array is provided, all scripts are included in the specified order.
    */
-  readonly include?: string | null
+  readonly include?: string | Array<string> | null
   /**
    * The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](#custom-nsis-script).
    */
@@ -207,9 +210,22 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly deleteAppDataOnUninstall?: boolean
 
   /**
-   * Marks the package as built with differential download support for the update server.
+   * Marks the package as built with differential download support for the update server, and selects how the
+   * app package is compressed:
+   *
+   * - `false` — no differential download support.
+   * - `"store-asar"` — differential-aware, with the app's `resources/app.asar` stored uncompressed (7-Zip
+   *   `Copy`) inside the package. The differential updater diffs the *compressed* package with a
+   *   content-defined blockmap, and the asar is a single compressed member — so any change to app code
+   *   re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every
+   *   block). Storing it keeps unchanged regions byte-identical between releases, making the delta
+   *   proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%
+   *   instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar
+   *   saved. Without an `app.asar` (e.g. `asar` is disabled) there is nothing to store, so it behaves like `true`.
+   * - anything else (`true`, `"compressed"`, unset) — differential-aware, whole package compressed.
+   * @default true
    */
-  readonly differentialPackage?: boolean
+  readonly differentialPackage?: boolean | "compressed" | "store-asar"
 
   /**
    * Whether to display a language selection dialog. Not recommended (by default will be detected using OS language).
@@ -278,6 +294,16 @@ export interface PortableOptions extends TargetSpecificOptions, CommonNsisOption
    * @default true
    */
   readonly buildUniversalInstaller?: boolean
+
+  /**
+   * The path to NSIS include script to customize the portable launcher, or an array of such paths to include multiple scripts. See [Custom NSIS script](#custom-nsis-script).
+   *
+   * Each path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.
+   * When an array is provided, all scripts are included in the specified order.
+   *
+   * Unlike the installer targets, the portable target does **not** fall back to `build/installer.nsh` — a custom script is only included when this option is explicitly set.
+   */
+  readonly include?: string | Array<string> | null
 }
 
 /**
@@ -291,8 +317,19 @@ export interface NsisWebOptions extends NsisOptions {
    * Please note — it is [full URL](https://github.com/electron-userland/electron-builder/issues/1810#issuecomment-317650878).
    *
    * Custom `X-Arch` http header is set to `32` or `64`.
+   *
+   * The installer does not checksum-verify a package downloaded from an explicit `appPackageUrl`; a package downloaded from the default (publish-derived) URL is verified against the packages built with the installer.
    */
   readonly appPackageUrl?: string | null
+
+  /**
+   * Whether the web installer may install an app package that doesn't match any package built with it: a package passed via `--package-file`,
+   * or (when `appPackageUrl` is not set) the downloaded package. By default such a package aborts the installation.
+   *
+   * Enable only if you intentionally run one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).
+   * @default false
+   */
+  readonly allowUnverifiedAppPackage?: boolean
 
   /**
    * The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.

@@ -20,11 +20,10 @@ import _debug from "debug"
 import * as path from "path"
 import { Target } from "../../../core.js"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../../options/CommonWindowsInstallerConfiguration.js"
+import { FileAssociation } from "../../../options/FileAssociation.js"
 import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../../platformPackager.js"
 import { hashFile } from "../../../util/hash.js"
-import { isMacOsCatalina } from "../../../util/mac/macosVersion.js"
 import { time } from "../../../util/timer.js"
-import { WineVmManager } from "../../../vm/WineVm.js"
 import { WinPackager } from "../../../winPackager.js"
 import { archive, ArchiveOptions } from "../../archive.js"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../../differentialUpdateInfoBuilder.js"
@@ -79,6 +78,17 @@ export class NsisTarget extends Target {
     if (deps != null && deps["electron-squirrel-startup"] != null) {
       log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
+
+    if (this.options.useZip === true && !this.isZipPayload) {
+      if (this.isWebInstaller) {
+        log.warn({ target: this.name, solution: "useZip only applies to the nsis and portable targets" }, "useZip is ignored because the web installer always uses a 7z package")
+      } else {
+        log.warn(
+          { target: this.name, solution: "set differentialPackage: false to get a zip payload" },
+          "useZip is ignored because differential-aware builds always use a 7z payload"
+        )
+      }
+    }
   }
 
   get shouldBuildUniversalInstaller() {
@@ -98,20 +108,53 @@ export class NsisTarget extends Target {
     return !this.isPortable && this.options.differentialPackage !== false
   }
 
+  // Single source of truth for the payload format: the archive written in buildAppPackage and the
+  // extractor selected by the ZIP_COMPRESSION / COMPRESSION_METHOD defines must never disagree.
+  // The web installer's download/extract path only handles 7z, so it never gets a zip package.
+  private get isZipPayload(): boolean {
+    return !this.isWebInstaller && !this.isBuildDifferentialAware && this.options.useZip === true
+  }
+
+  private get isStoreAsar(): boolean {
+    return this.isBuildDifferentialAware && this.options.differentialPackage === "store-asar"
+  }
+
+  /**
+   * Everything that makes buildAppPackage's archive differ between targets. Targets sharing an
+   * AppPackageHelper (nsis + portable) reuse one app package per arch only when this key matches,
+   * so a target never embeds an archive whose format or layout was chosen by another target.
+   * @private
+   */
+  get appPackageCacheKey(): string {
+    const options = this.options
+    return JSON.stringify({
+      format: this.isZipPayload ? "zip" : "7z",
+      differentialAware: this.isBuildDifferentialAware,
+      storeAsar: this.isStoreAsar,
+      excluded: this.getPreCompressedFileExtensions(),
+      // mirrors CopyElevateHelper's per-target packElevateHelper / perMachine resolution
+      elevate: options.packElevateHelper !== false || options.perMachine === true,
+      blockmap: this.isBuildDifferentialAware && this.isWebInstaller,
+    })
+  }
+
   private getPreCompressedFileExtensions(): Array<string> | null {
     const result = this.isWebInstaller ? null : this.options.preCompressedFileExtensions
     return result == null ? null : asArray(result).map(it => (it.startsWith(".") ? it : `.${it}`))
   }
 
   /** @private */
-  async buildAppPackage(appOutDir: string, arch: Arch, elevateHelper?: CopyElevateHelper | null): Promise<PackageFileInfo> {
-    const options = this.options
+  async buildAppPackage(appOutDir: string, arch: Arch, elevateHelper?: CopyElevateHelper | null, fileNameSuffix = ""): Promise<PackageFileInfo> {
     const packager = this.packager
 
     const isBuildDifferentialAware = this.isBuildDifferentialAware
-    const format = !isBuildDifferentialAware && options.useZip ? "zip" : "7z"
-    const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
+    const format = this.isZipPayload ? "zip" : "7z"
+    const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}${fileNameSuffix}.nsis.${format}`)
     const preCompressedFileExtensions = this.getPreCompressedFileExtensions()
+    const isStoreAsar = this.isStoreAsar
+    if (isStoreAsar) {
+      await this.warnIfStoreAsarHasNoAsar(appOutDir)
+    }
     const archiveOptions: ArchiveOptions = {
       withoutDir: true,
       compression: packager.compression,
@@ -121,6 +164,10 @@ export class NsisTarget extends Target {
       // install. Pin the payload to a filter it can decode. See #9983.
       installTimeDecodable: true,
       excluded: preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`),
+      // Opt-in via differentialPackage: "store-asar" — keep the asar a byte-stable Copy member so a
+      // differential update pays only for its changed blocks instead of re-downloading the whole
+      // recompressed asar (see nsisOptions docs).
+      storedPaths: isStoreAsar ? ["resources/app.asar"] : null,
     }
 
     const timer = time(`nsis package, ${Arch[arch]}`)
@@ -147,11 +194,40 @@ export class NsisTarget extends Target {
     }
   }
 
+  /**
+   * `archive()` silently skips stored paths that don't exist, so without an asar (e.g. `asar: false`)
+   * "store-asar" would do nothing unnoticed. The fallback is harmless — the differential package is
+   * non-solid, so each unpacked file is already its own block — but say so once per target.
+   * @private
+   */
+  async warnIfStoreAsarHasNoAsar(appOutDir: string): Promise<void> {
+    // every arch is packaged with the same asar setting, so checking the first one is enough (and
+    // flagging before the await keeps concurrent per-arch packaging from warning twice)
+    if (this.storeAsarChecked) {
+      return
+    }
+    this.storeAsarChecked = true
+    const asarFile = path.join(appOutDir, "resources", "app.asar")
+    if (await exists(asarFile)) {
+      return
+    }
+    log.warn(
+      { reason: "resources/app.asar not found (e.g. asar is disabled)", file: log.filePath(asarFile) },
+      'differentialPackage "store-asar" has no effect, the app package is compressed normally'
+    )
+  }
+
+  private storeAsarChecked = false
+
   protected installerFilenamePattern(primaryArch?: Arch | null, defaultArch?: string): string {
     const setupText = this.isPortable ? "" : "Setup "
     const archSuffix = !this.shouldBuildUniversalInstaller && primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : ""
 
     return "${productName} " + setupText + "${version}" + archSuffix + ".${ext}"
+  }
+
+  get writesUpdateInfo(): boolean {
+    return !this.isPortable
   }
 
   private get isPortable(): boolean {
@@ -341,10 +417,13 @@ export class NsisTarget extends Target {
       if (this.isWebInstaller) {
         updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
       } else if (this.isBuildDifferentialAware) {
-        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName)
+        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch)
       }
 
-      if (updateInfo != null && isPerMachine && (oneClick || options.packElevateHelper)) {
+      // a per-machine build always packs elevate.exe (see CopyElevateHelper), unless the framework has no elevate helper
+      if (isPerMachine && packager.framework.isCopyElevateHelper) {
+        // without a blockmap (`differentialPackage: false`), the update info of the installer is only its checksum
+        updateInfo ??= { sha512: await hashFile(installerPath) }
         updateInfo.isAdminRightsRequired = true
       }
 
@@ -447,26 +526,13 @@ export class NsisTarget extends Target {
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
     await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, false, archs)))
 
-    // http://forums.winamp.com/showthread.php?p=3078545
-    // TODO: remove workaround when arm64 macOS has native wine support
-    if (isMacOsCatalina()) {
-      try {
-        await UninstallerReader.exec(installerPath, uninstallerPath)
-      } catch (error: any) {
-        log.warn(`packager.vm is used: ${error.message}`)
-
-        const vm = await packager.vm.value
-        await vm.exec(installerPath, [])
-        // Parallels VM can exit after command execution, but NSIS continue to be running
-        let i = 0
-        while (!(await exists(uninstallerPath)) && i++ < 100) {
-          // noinspection JSUnusedLocalSymbols
-          await sleep(300)
-        }
-      }
-    } else {
-      const wineVm = new WineVmManager(packager.config.toolsets?.wine, packager.buildResourcesDir)
-      await wineVm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
+    // The uninstaller is extracted from the installer in JS, emulating what NSIS `WriteUninstaller` does, and verified with the NSIS CRC check.
+    // Running the installer (natively, via wine or in a VM) is only a fallback, e.g. for solid compression or `!uninstfinalize`.
+    try {
+      await UninstallerReader.exec(installerPath, uninstallerPath)
+    } catch (error: any) {
+      log.warn({ reason: error.message }, "cannot extract uninstaller from installer, running installer to write it instead")
+      await this.runInstallerToWriteUninstaller(installerPath, uninstallerPath)
     }
     await packager.signIf(uninstallerPath)
 
@@ -474,6 +540,18 @@ export class NsisTarget extends Target {
     // platform-specific path, not wine
     defines.UNINSTALLER_OUT_FILE = uninstallerPath
     return { script, isCustomScript: false }
+  }
+
+  private async runInstallerToWriteUninstaller(installerPath: string, uninstallerPath: string): Promise<void> {
+    const vm = await this.packager.execVm.value
+    // explicit timeout (2 minutes, as WineVmManager defaults to), so a stuck installer fails the build instead of hanging it on any host
+    await vm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" }, timeout: 120 * 1000 })
+    // Parallels VM can exit after command execution, but NSIS continue to be running
+    let i = 0
+    while (!(await exists(uninstallerPath)) && i++ < 100) {
+      // noinspection JSUnusedLocalSymbols
+      await sleep(300)
+    }
   }
 
   private computeVersionKey(short = false) {
@@ -625,12 +703,11 @@ export class NsisTarget extends Target {
     }
 
     if (!this.isWebInstaller && defines.APP_BUILD_DIR == null) {
-      const options = this.options
-      if (options.useZip) {
+      if (this.isZipPayload) {
         defines.ZIP_COMPRESSION = null
       }
 
-      defines.COMPRESSION_METHOD = options.useZip ? "zip" : "7z"
+      defines.COMPRESSION_METHOD = this.isZipPayload ? "zip" : "7z"
     }
   }
 
@@ -708,44 +785,106 @@ export class NsisTarget extends Target {
 
     const includeDir = path.join(nsisTemplatesDir, "include")
     scriptGenerator.addIncludeDir(includeDir)
+    // allow custom scripts to `!include` sibling files from the build resources directory
+    scriptGenerator.addIncludeDir(packager.buildResourcesDir)
     scriptGenerator.flags(["updated", "force-run", "keep-shortcuts", "no-desktop-shortcut", "delete-app-data", "allusers", "currentuser"])
 
     createAddLangsMacro(scriptGenerator, langConfigurator)
 
     const taskManager = new AsyncTaskManager(packager.cancellationToken)
 
-    const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
+    const bundledPluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
-      scriptGenerator.addPluginDir(pluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis, this.packager.buildResourcesDir), pluginArch))
+      scriptGenerator.addPluginDir(bundledPluginArch, path.join(await getNsisPluginsPath(this.packager.config.toolsets?.nsis, this.packager.buildResourcesDir), bundledPluginArch))
     })
 
-    taskManager.add(async () => {
-      const userPluginDir = path.join(packager.buildResourcesDir, pluginArch)
-      const stat = await statOrNull(userPluginDir)
-      if (stat != null && stat.isDirectory()) {
-        scriptGenerator.addPluginDir(pluginArch, userPluginDir)
-      }
-    })
-
-    taskManager.addTask(addCustomMessageFileInclude("messages.yml", packager, scriptGenerator, langConfigurator))
-
-    if (!this.isPortable) {
-      if (options.oneClick === false) {
-        taskManager.addTask(addCustomMessageFileInclude("assistedMessages.yml", packager, scriptGenerator, langConfigurator))
-      }
-
+    for (const pluginArch of ["x86-unicode", "x86-ansi"]) {
       taskManager.add(async () => {
-        const customInclude = await packager.getResource(this.options.include, "installer.nsh")
-        if (customInclude != null) {
-          scriptGenerator.addIncludeDir(packager.buildResourcesDir)
-          scriptGenerator.include(customInclude)
+        const userPluginDir = path.join(packager.buildResourcesDir, pluginArch)
+        const stat = await statOrNull(userPluginDir)
+        if (stat != null && stat.isDirectory()) {
+          scriptGenerator.addPluginDir(pluginArch, userPluginDir)
         }
       })
     }
 
+    taskManager.addTask(addCustomMessageFileInclude("messages.yml", packager, scriptGenerator, langConfigurator))
+
+    if (!this.isPortable && options.oneClick === false) {
+      taskManager.addTask(addCustomMessageFileInclude("assistedMessages.yml", packager, scriptGenerator, langConfigurator))
+    }
+
+    taskManager.add(async () => {
+      for (const customInclude of await this.resolveCustomIncludes()) {
+        scriptGenerator.include(customInclude)
+      }
+    })
+
     await taskManager.awaitTasks()
     return scriptGenerator.build()
   }
+
+  /**
+   * Resolves the `include` option to a list of NSIS script paths.
+   *
+   * `include` may be a single path or an array of paths — each is resolved relative to the build resources directory first and then relative to the project directory.
+   * When the option is not set, `build/installer.nsh` is auto-discovered — except for the portable target, which only ever includes explicitly configured scripts
+   * (an auto-discovered `installer.nsh` is usually written for the installer target and must not silently leak into portable builds).
+   */
+  private async resolveCustomIncludes(): Promise<Array<string>> {
+    const include = this.options.include
+    if (Array.isArray(include)) {
+      const result: Array<string> = []
+      for (const entry of include) {
+        const resolved = await this.packager.getResource(entry)
+        if (resolved != null) {
+          result.push(resolved)
+        }
+      }
+      return result
+    }
+
+    if (this.isPortable && include == null) {
+      return []
+    }
+    const resolved = this.isPortable ? await this.packager.getResource(include) : await this.packager.getResource(include, "installer.nsh")
+    return resolved == null ? [] : [resolved]
+  }
+
+  /**
+   * v27 registers each file association under a generated ProgID instead of the association name or
+   * extension verbatim, so the old value could collide with an unrelated app. Nothing needs to change
+   * in config — but a custom NSIS script that hard-codes the old ProgID to add shell verbs or extra
+   * registry entries now writes them under a key nothing reads.
+   *
+   * Only warns when a custom script is actually supplied; the generated ProgID is invisible otherwise.
+   */
+  private async warnAboutProgIdFormatChange(fileAssociations: Array<FileAssociation>, progIdMaker: ProgIdMaker): Promise<void> {
+    if (this.progIdWarningEmitted) {
+      return
+    }
+    const packager = this.packager
+    const hasCustomScript = (await this.resolveCustomIncludes()).length > 0 || (await packager.getResource(this.options.script, "installer.nsi")) != null
+    if (!hasCustomScript) {
+      return
+    }
+    this.progIdWarningEmitted = true
+    const examples = fileAssociations
+      .slice(0, 3)
+      .map(item => {
+        const ext = asArray(item.ext).map(normalizeExt)[0]
+        return `${item.name || ext} -> ${progIdMaker.progId(item.name || ext)}`
+      })
+      .join(", ")
+    log.warn(
+      { progIds: examples, solution: "update any registry keys, shell verbs, or external tooling that references the old ProgID" },
+      "NSIS file associations now register a generated ProgID instead of the association name or extension. " +
+        "You ship a custom NSIS script (nsis.include / nsis.script), which may reference the old value. " +
+        "See https://www.electron.build/docs/migration/v27-breaking-changes#nsis-file-association-progid-format-changed"
+    )
+  }
+
+  private progIdWarningEmitted = false
 
   private async computeFinalScript(originalScript: string, isInstaller: boolean, archs: Map<Arch, string>): Promise<string> {
     const packager = this.packager
@@ -777,6 +916,7 @@ export class NsisTarget extends Target {
     if (fileAssociations.length !== 0) {
       scriptGenerator.include(path.join(path.join(nsisTemplatesDir, "include"), "FileAssociation.nsh"))
       const progIdMaker = new ProgIdMaker(this.appGuid, packager.appInfo.productFilename)
+      await this.warnAboutProgIdFormatChange(fileAssociations, progIdMaker)
       if (isInstaller) {
         const registerFileAssociationsScript = new NsisScriptGenerator()
         for (const item of fileAssociations) {
