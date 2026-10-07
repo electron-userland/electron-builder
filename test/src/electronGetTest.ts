@@ -333,7 +333,7 @@ const DOWNLOAD_TIMEOUT = { timeout: 120_000 }
 // Running them concurrently causes proper-lockfile contention: the first download holds the lock
 // longer than the retry budget allows. Sequential order ensures test 1 writes the complete state
 // before tests 2 and 3 run, so they hit the pre-lock cache fast-path instead of waiting on the lock.
-describe("downloadBuilderToolset", { sequential: true }, () => {
+describe("downloadBuilderToolset", { concurrent: false }, () => {
   afterEach(() => {
     vi.unstubAllEnvs()
   })
@@ -502,7 +502,7 @@ describe("downloadBuilderToolset: filenameWithExt validation", () => {
 
 // ─── Toolset archive cache (no network) ──────────────────────────────────────
 
-describe("toolset archive cache", { sequential: true }, () => {
+describe("toolset archive cache", { concurrent: false }, () => {
   let freshCache: string
 
   beforeEach(async context => {
@@ -790,7 +790,7 @@ const electronArch = process.arch === "arm64" ? "arm64" : "x64"
 // Expected ffmpeg library filename by platform
 const ffmpegLibName = electronPlatform === "darwin" ? "libffmpeg.dylib" : electronPlatform === "linux" ? "libffmpeg.so" : "ffmpeg.dll"
 
-describe("downloadElectronArtifact", { sequential: true }, () => {
+describe("downloadElectronArtifact", { concurrent: false }, () => {
   test("downloads and extracts electron ffmpeg zip for current platform", DOWNLOAD_TIMEOUT, async ({ expect }) => {
     const options: ArtifactDownloadOptions = {
       artifactName: "ffmpeg",

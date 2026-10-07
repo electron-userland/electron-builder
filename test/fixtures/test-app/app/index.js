@@ -2,6 +2,7 @@
 
 const electron = require("electron")
 const path = require("path")
+const fs = require("fs")
 const sqlite3 = require("sqlite3").verbose() // injected during blackboxUpdateTest
 
 const app = electron.app
@@ -25,6 +26,10 @@ const shouldTestAutoUpdater = !!process.env.AUTO_UPDATER_TEST?.trim() && !!updat
 const isNextLaunchQueueMode = process.env.AUTO_UPDATER_TEST_NEXT_LAUNCH === "true"
 const isAutoInstallOnNextLaunchMode = process.env.AUTO_UPDATER_TEST_AUTO_INSTALL_ON_NEXT_LAUNCH === "true"
 const isInstallPendingMode = process.env.AUTO_UPDATER_TEST_INSTALL_PENDING === "true"
+
+// Custom update-file verification (AppUpdater.verifyUpdateFile). Unset = no hook installed (default stub).
+// "accept" / "reject" install a hook that logs what it was handed and then succeeds or fails.
+const verifyUpdateFileMode = process.env.AUTO_UPDATER_TEST_VERIFY_UPDATE_FILE?.trim()
 const root = path.dirname(process.execPath)
 const _appUpdateConfigPath = path.resolve(process.platform === "darwin" ? `${root}/../Resources` : `${root}/resources`, "app-update.yml")
 
@@ -85,6 +90,27 @@ async function isReady() {
     // Must be assigned synchronously after require: BaseUpdater schedules the automatic
     // pending-install check on app.whenReady(), which has already resolved at this point.
     autoUpdater.autoInstallEvent = isAutoInstallOnNextLaunchMode ? "onNextLaunch" : "onQuit"
+
+    // Assigned in the same synchronous block as autoInstallEvent, and for the same reason: the automatic
+    // pending-install check is scheduled on app.whenReady(), which has already resolved here, so the hook
+    // must be in place before control returns to the event loop.
+    if (verifyUpdateFileMode) {
+      autoUpdater.verifyUpdateFile = async ({ updateFilePath, originalUpdateFileName, packageFilePath }) => {
+        // A fresh download is handed the file under a temporary name; a cached or pending update is
+        // re-verified under its real name.
+        const observation = {
+          mode: verifyUpdateFileMode,
+          temporary: path.basename(updateFilePath) !== originalUpdateFileName,
+          name: path.basename(updateFilePath),
+          original: originalUpdateFileName,
+          exists: fs.existsSync(updateFilePath),
+          executable: fs.existsSync(updateFilePath) && (fs.statSync(updateFilePath).mode & 0o111) !== 0,
+          package: packageFilePath ?? null,
+        }
+        console.log(`VERIFY_UPDATE_FILE_CALLED: ${JSON.stringify(observation)}`)
+        return verifyUpdateFileMode === "reject" ? { response: "failure", message: "blackbox verifyUpdateFile rejection" } : { response: "success" }
+      }
+    }
 
     autoUpdater.on("checking-for-update", () => {
       console.log("Checking for update...")

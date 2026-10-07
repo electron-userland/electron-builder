@@ -30,7 +30,7 @@ beforeEach(() => {
   vi.mocked(spawn).mockResolvedValue(undefined)
 })
 
-describe("SnapStorePublisher", { sequential: true }, () => {
+describe("SnapStorePublisher", { concurrent: false }, () => {
   describe("Identity", () => {
     test("providerName is snapStore", ({ expect }) => {
       expect(makePublisher().providerName).toBe("snapStore")
@@ -147,6 +147,16 @@ describe("SnapStorePublisher", { sequential: true }, () => {
     test("handles comma-separated string channels", async ({ expect }) => {
       await makePublisher("stable,beta").upload(makeTask())
       expectSpawnCall(["upload", FILE, "--release", "stable,beta"])(expect)
+    })
+
+    test("trims and removes empty comma-separated channels", async ({ expect }) => {
+      await makePublisher(" stable, beta, ,edge ").upload(makeTask())
+      expectSpawnCall(["upload", FILE, "--release", "stable,beta,edge"])(expect)
+    })
+
+    test("empty string omits --release flag", async ({ expect }) => {
+      await makePublisher("  ").upload(makeTask())
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith("snapcraft", ["upload", FILE], expect.objectContaining(STDIO))
     })
 
     test("handles single-element array", async ({ expect }) => {

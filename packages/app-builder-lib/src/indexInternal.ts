@@ -39,18 +39,37 @@ export { buildBlockMap } from "./targets/blockmap/blockmap.js"
 export { createBlockmap } from "./targets/differentialUpdateInfoBuilder.js"
 export { validateCriticalPathString } from "./targets/linux/appimage/appImageUtil.js"
 export { copyMimeTypes } from "./targets/linux/appimage/appLauncher.js"
-export { MacTargetHelper, type PlatformType } from "./targets/mac/MacTargetHelper.js"
+export { MacTargetHelper, isLoadableMachOFileType, isMachOFile, MachOFileType, parseSigningTeamId, readMachOFileType, type PlatformType } from "./targets/mac/MacTargetHelper.js"
 export { assertSafeHelperName, getAvailableHelperSuffixes, type AvailableHelpers } from "./electron/mac/electronMacUtils.js"
 export { addTargetsForPlatform, computeArchToTargetNamesMap } from "./targets/targetFactory.js"
 export type { Defines } from "./targets/win/nsis/Defines.js"
 export { nsisEscapeString, NsisScriptGenerator } from "./targets/win/nsis/nsisScriptGenerator.js"
 export { ProgIdMaker } from "./targets/win/nsis/progId.js"
 export { checkMakensisOutput, verifyInstallerSize } from "./targets/win/nsis/nsisValidation.js"
+export { configureWebInstallerAppPackageUrl } from "./targets/win/nsis/WebInstallerTarget.js"
 export { getLinuxToolsMacToolset, getLinuxToolsPath } from "./toolsets/linuxToolsMac.js"
-export { getWindowsKitsBundle } from "./toolsets/winCodeSign.js"
+export { getCustomToolsetPath } from "./toolsets/custom.js"
+export { resolveToolsetVersion } from "./toolsets/version.js"
+export { getRceditBundle, getWindowsKitsBundle } from "./toolsets/winCodeSign.js"
 export { CacheState } from "./util/cacheState.js"
 export { computeDefaultAppDirectory, createProjectMetadataLazy, doMergeConfigs, getConfig, validateConfiguration } from "./util/config/config.js"
 export { loadEnv, orNullIfFileNotExist } from "./util/config/load.js"
+export {
+  ALL_PLATFORM_KEYS,
+  AZURE_KNOWN_FIELDS,
+  BREAKING_CHANGES_URL,
+  ELECTRON_DOWNLOAD_DROPPED,
+  LEGACY_CONFIG_OPTIONS,
+  MAC_PLATFORM_KEYS,
+  MAC_SIGN_FIELDS,
+  MAC_SIGN_REMOVED_FIELDS,
+  MAC_UNIVERSAL_FIELDS,
+  RESOLVED_LEGACY_CONFIG_OPTIONS,
+  formatLegacyOptionMessage,
+} from "./util/config/legacyOptions.js"
+export type { LegacyConfigOption, ResolvedLegacyConfigOption } from "./util/config/legacyOptions.js"
+export { checkLegacyConfiguration } from "./util/config/legacyConfigGuard.js"
+export { assertNoRemovedEnvVars, checkRemovedEnvVars, resetRemovedEnvVarsCheck } from "./util/flags.js"
 export { validateSchema } from "./util/config/schemaValidator.js"
 export {
   ArtifactDownloadOptions,

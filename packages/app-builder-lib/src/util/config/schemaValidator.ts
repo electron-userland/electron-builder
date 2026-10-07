@@ -14,6 +14,23 @@ const ajv = new Ajv({
   strict: false,
 })
 
+// KNOWN GAP — `typeof` is an ajv-keywords keyword and ajv-keywords is not installed. Under
+// `strict: false` an unregistered keyword is silently ignored, so every `{ "typeof": "function" }`
+// branch behaves as an empty schema that matches ANYTHING. Those branches sit inside `anyOf`s, so
+// the enclosing union accepts any value: most consequentially `mac.sign` / `mas.sign`, where an
+// unsupported or typo'd key validates here and is then dropped at build time with no error.
+//
+// Registering the keyword is NOT a safe drop-in fix. scheme.json currently emits
+// `anyOf: [{ "typeof": "function" }, { "type": "null" }]` for several object-valued options —
+// LinuxDesktopFile.entry / .desktopActions, ReleaseInfo.vendor, SnapOptions*.layout / .slots, and
+// CustomPublishOptions.updateProvider — i.e. their object branch is missing and they validate today
+// only because this keyword is ignored. Registering `typeof` would reject those valid configs.
+//
+// Fixing this therefore means correcting schema generation for those definitions first, then
+// registering the keyword. Until then `checkLegacyConfiguration` covers the v26 keys that actually
+// matter for migration, which is the part of this hole an upgrader can hit.
+// See util/config/legacyConfigGuard.ts.
+
 // Cache the compiled validator for the canonical scheme.json so it is only
 // compiled once per process lifetime.
 let _cachedValidate: ValidateFunction | undefined
@@ -176,7 +193,14 @@ function formatSchemaType(schema: Record<string, unknown> | undefined): string {
         if (Array.isArray(s.type)) {
           return (s.type as string[]).join(" | ")
         }
-        return typeof s.type === "string" ? s.type : ""
+        if (typeof s.type === "string") {
+          return s.type
+        }
+        // A branch carrying `const` but no `type` is a literal member of the union - `updateManifest: false`, the
+        // update-manifest signing opt-out, is the only one in scheme.json (the `type` is stripped by
+        // scripts/fix-schema.js so ajv's `coerceTypes` cannot turn `null` into `false`). Dropping it would leave the
+        // message advertising `null` as the sole legal value, when `null` specifically is NOT the opt-out.
+        return "const" in s ? JSON.stringify(s.const) : ""
       })
       .filter(Boolean)
       .join(" | ")

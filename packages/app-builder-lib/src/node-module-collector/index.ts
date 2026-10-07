@@ -39,6 +39,19 @@ export const determinePackageManagerEnv = ({ projectDir, appDir, workspaceRoot }
     if (root != null) {
       // re-detect package manager from workspace root, this seems particularly necessary for pnpm workspaces
       const actualPm = await detectPackageManager([root])
+      if (actualPm.resolvedDirectory == null) {
+        // The root was located from the workspace config (e.g. `pnpm-workspace.yaml`) but carries neither a lockfile nor a
+        // `packageManager` field, so detection fell through to the process environment and resolved no directory. Dropping the
+        // root here silently confines `@electron/rebuild` to the app dir (#10187), so keep the located directory instead.
+        log.warn(
+          { root: log.filePath(root), pm: pm.pm, projectDir: log.filePath(projectDir) },
+          "workspace root located, but no lockfile or `packageManager` field was found there to re-detect the package manager; using it as-is"
+        )
+        return {
+          pm: pm.pm,
+          workspaceRoot: Promise.resolve(root),
+        }
+      }
       log.info(
         { pm: actualPm.pm, config: actualPm.corepackConfig, resolved: actualPm.resolvedDirectory, projectDir },
         `detected workspace root for project using ${actualPm.detectionMethod}`
@@ -54,13 +67,25 @@ export const determinePackageManagerEnv = ({ projectDir, appDir, workspaceRoot }
     }
   })
 
-async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefined> {
+/** @internal exported for tests */
+export async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefined> {
+  if (pm === PM.PNPM) {
+    // pnpm itself locates the workspace root with a plain upward search for `pnpm-workspace.yaml` (@pnpm/find-workspace-dir), so
+    // mirror that on disk instead of shelling out to `pnpm --workspace-root exec pwd`. `pwd` is a POSIX command: on Windows it is
+    // either missing (so detection fell back to a `package.json#workspaces` walk, which pnpm workspaces do not use) or resolves to
+    // the Git-for-Windows binary, whose MSYS-style `/d/a/repo` output is not a usable path. Either way the root was lost and
+    // `@electron/rebuild` never reached native modules stored under the root `node_modules/.pnpm` (#10187).
+    const root = await findNearestDir(cwd, dir => exists(path.join(dir, "pnpm-workspace.yaml")))
+    if (root != null) {
+      log.debug({ path: root }, "identified pnpm workspace root")
+      return root
+    }
+    return findNearestPackageJsonWithWorkspacesField(cwd)
+  }
+
   let command: { command: string; args: string[] }
 
   switch (pm) {
-    case PM.PNPM:
-      command = { command: "pnpm", args: ["--workspace-root", "exec", "pwd"] }
-      break
     case PM.YARN_BERRY:
       command = { command: "yarn", args: ["workspaces", "list", "--json"] }
       break
@@ -106,28 +131,39 @@ async function findWorkspaceRoot(pm: PM, cwd: string): Promise<string | undefine
       }
       return out.length === 0 || out === "undefined" ? undefined : out
     })
-    .catch(() => findNearestPackageJsonWithWorkspacesField(cwd))
+    .catch((error: any) => {
+      log.debug({ command: `${command.command} ${command.args.join(" ")}`, error: error?.message ?? error }, "workspace root command failed, falling back to package.json walk")
+      return findNearestPackageJsonWithWorkspacesField(cwd)
+    })
   return output
 }
 
 async function findNearestPackageJsonWithWorkspacesField(dir: string): Promise<string | undefined> {
+  const root = await findNearestDir(dir, async current => {
+    try {
+      const pkg = JSON.parse(await fs.readFile(path.join(current, "package.json"), "utf8"))
+      return !!pkg.workspaces
+    } catch {
+      return false
+    }
+  })
+  if (root != null) {
+    log.debug({ path: root }, "identified workspace root")
+  }
+  return root
+}
+
+/** Walks from `dir` up to the filesystem root and returns the first directory for which `isRoot` holds. */
+async function findNearestDir(dir: string, isRoot: (dir: string) => Promise<boolean>): Promise<string | undefined> {
   let current = dir
   while (true) {
-    const pkgPath = path.join(current, "package.json")
-    try {
-      const pkg = JSON.parse(await fs.readFile(pkgPath, "utf8"))
-      if (pkg.workspaces) {
-        log.debug({ path: current }, "identified workspace root")
-        return current
-      }
-    } catch {
-      // ignore
+    if (await isRoot(current)) {
+      return current
     }
     const parent = path.dirname(current)
     if (parent === current) {
-      break
+      return undefined
     }
     current = parent
   }
-  return undefined
 }
