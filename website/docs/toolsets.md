@@ -118,7 +118,8 @@ Every custom toolset bundle accepts the same checksum formats, whichever toolset
 
 - **Formats:** either
   - the SHA-256 of the archive file as 64 **hex** characters (an uppercase value is lowercased for you), or
-  - the SHA-512 of the archive file as 88 **base64** characters, ending in `==`. This is the format v26 configs (for example `nsis.customNsisBinary`) typically used, so such a value keeps working unchanged in `toolsets.<name>.checksum`.
+  - the SHA-512 of the archive file as 88 **base64** characters, ending in `==`. v26 used this format for all toolset checksums, so a v26 value keeps working unchanged in `toolsets.<name>.checksum`.
+- **Why SHA-256 hex is the default:** v27 downloads toolsets with the official [`@electron/get`](https://github.com/electron/get) package, whose checksum verification (`sumchecker`) only supports SHA-256 hex. electron-builder verifies a base64 SHA-512 itself.
 - **Not accepted:** prefixed forms such as `sha256:…` or `sha512-…`, and a SHA-512 written as hex. electron-builder rejects a checksum in any other format before downloading or extracting anything.
 - **When it is needed:** for an `https://` URL and for a `file://` archive file. A bare `file://` directory needs none and is not verified.
 - **What is verified:** a downloaded archive is verified before it is cached or extracted (a corrupted download is deleted), and an archive already in the electron-builder cache is re-verified before it is extracted again. A `file://` archive is verified each time before it is extracted; on a mismatch the build fails and your file is left in place.

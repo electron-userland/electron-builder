@@ -73,7 +73,7 @@ const CHECKSUM_DOCS_URL = "https://www.electron.build/docs/toolsets#custom-tools
 /**
  * Classifies the checksum of a downloaded or archive toolset up front, so a value in an unsupported format fails before
  * anything is downloaded or extracted, without echoing the value. A SHA-256 hex value is verified by `@electron/get` for a
- * download; a base64 SHA-512 (the format v26 `customNsisBinary` configs used) is verified by electron-builder.
+ * download; a base64 SHA-512 (the format v26 used for all toolset checksums) is verified by electron-builder.
  */
 function normalizeChecksum(checksum: string | undefined, type: string, url: string): ExpectedChecksum {
   if (!checksum) {

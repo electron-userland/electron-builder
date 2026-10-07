@@ -4,7 +4,7 @@ import { hashFile } from "./hash.js"
 /**
  * A toolset archive checksum in one of the two accepted formats:
  * - SHA-256 as 64 hex characters (what `@electron/get` verifies itself), normalized to lowercase;
- * - SHA-512 as 88-character padded standard base64 (the format v26 `customNsisBinary` configs used), case preserved.
+ * - SHA-512 as 88-character padded standard base64 (the format v26 used for all toolset checksums), case preserved.
  */
 export interface ExpectedChecksum {
   readonly algorithm: "sha256" | "sha512"

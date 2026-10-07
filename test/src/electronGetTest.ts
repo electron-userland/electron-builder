@@ -621,7 +621,7 @@ describe("toolset archive cache", { concurrent: false }, () => {
 
 // ─── Checksum formats: SHA-256 hex vs base64 SHA-512 (#10040) ────────────────
 
-// The base64 SHA-512 checksums v26 customNsisBinary configs used cannot be parsed by @electron/get's sumchecker (SHA-256 hex
+// The base64 SHA-512 checksums v26 used for all toolsets cannot be parsed by @electron/get's sumchecker (SHA-256 hex
 // only), so downloadBuilderToolset verifies those itself, after the download and before the archive is cached or extracted.
 // Every test routes downloads to a local server (or a dead port) and counts the requests, so no network is touched.
 describe("downloadBuilderToolset checksum formats (#10040)", { concurrent: false }, () => {

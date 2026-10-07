@@ -873,7 +873,7 @@ export interface ToolsetConfig {
  * File formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.
  *
  * `checksum` is the SHA-256 of the archive as 64 hex characters or its SHA-512 as 88 base64 characters (the format v26
- * `customNsisBinary` configs used), the same for every toolset. See https://www.electron.build/docs/toolsets#custom-toolset-checksum
+ * used for all toolset checksums), the same for every toolset. See https://www.electron.build/docs/toolsets#custom-toolset-checksum
  *
  * @example
  * ```json
@@ -904,7 +904,7 @@ export interface ToolsetCustom {
    * Checksum of the bundle archive, in one of two formats:
    * - the SHA-256 as 64 hex characters (uppercase is lowercased), e.g. `shasum -a 256 <archive>` (macOS / Linux),
    *   `(Get-FileHash -Algorithm SHA256 <archive>).Hash` (PowerShell) or `certutil -hashfile <archive> SHA256`;
-   * - the SHA-512 as 88 base64 characters, the format v26 `customNsisBinary` configs used, e.g.
+   * - the SHA-512 as 88 base64 characters, the format v26 used for all toolset checksums, e.g.
    *   `openssl dgst -sha512 -binary <archive> | openssl base64 -A`.
    *
    * Prefixed forms such as `sha256:…` or `sha512-…`, and a hex-encoded SHA-512, are rejected before anything is downloaded.
