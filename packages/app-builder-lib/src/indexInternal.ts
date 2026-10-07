@@ -64,6 +64,7 @@ export {
   MAC_SIGN_FIELDS,
   MAC_SIGN_REMOVED_FIELDS,
   MAC_UNIVERSAL_FIELDS,
+  NSIS_CONFIG_KEYS,
   RESOLVED_LEGACY_CONFIG_OPTIONS,
   formatLegacyOptionMessage,
 } from "./util/config/legacyOptions.js"

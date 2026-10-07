@@ -730,6 +730,9 @@ export interface ToolsetConfig {
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md
    *
+   * A custom bundle (a {@link ToolsetCustom} object) must follow the layout at
+   * https://www.electron.build/docs/toolsets#custom-nsis-bundle-layout
+   *
    * @default "latest"
    */
   readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | "latest"
@@ -869,13 +872,16 @@ export interface ToolsetConfig {
  *
  * File formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.
  *
+ * `checksum` is the SHA-256 of the archive as 64 lowercase hex characters, the same for every toolset. Base64 SHA-512 values
+ * (as v26 configs typically used) are rejected. See https://www.electron.build/docs/toolsets#custom-toolset-checksum
+ *
  * @example
  * ```json
  * {
  *   "toolsets": {
  *     "nsis": {
  *       "url": "file:///path/to/my-nsis-bundle.tar.gz",
- *       "checksum": "abc123...",
+ *       "checksum": "56997fdefe25e7928a1a68b4583d08b240b66cf660234053b20131a74cc082f4",
  *       "version": "my-custom-1.0"
  *     }
  *   }
@@ -895,11 +901,15 @@ export interface ToolsetCustom {
   readonly url: string
 
   /**
-   * SHA-256 checksum of the custom toolset bundle for verification, as a lowercase hex string
-   * (e.g. the output of `shasum -a 256 bundle.tar.gz`) — not the base64 values GitHub release
-   * notes may show.
+   * SHA-256 of the bundle archive, as 64 lowercase hex characters. A downloaded bundle is verified against it by `@electron/get`.
+   *
+   * Compute it with `shasum -a 256 <archive>` (macOS / Linux), `(Get-FileHash -Algorithm SHA256 <archive>).Hash.ToLower()`
+   * (PowerShell) or `certutil -hashfile <archive> SHA256` (then lowercase it). Base64 SHA-512 values, as v26 configs typically
+   * used, and prefixed forms such as `sha256:…` are rejected.
+   *
    * Required for remote (`https://`) URLs and local archive files (`file://`).
    * Not needed for bare directory paths — the directory is used as-is with no caching.
+   * @see https://www.electron.build/docs/toolsets#custom-toolset-checksum
    */
   readonly checksum?: string
 

@@ -1,4 +1,5 @@
 import { createRequire } from "node:module"
+import { NSIS_CONFIG_KEYS } from "app-builder-lib/internal"
 import * as path from "path"
 import {
   ASAR_PLATFORM_KEYS,
@@ -6,6 +7,7 @@ import {
   ELECTRON_DOWNLOAD_DROPPED,
   FEED_QUERY_ADVISORY,
   isLegacyElectronDownloadKey,
+  legacyKeyMessage,
   MAC_ENTITLEMENTS_ADVISORY,
   MAC_NULL_MEANS_UNSET_FIELDS,
   MAC_SIGN_FIELDS,
@@ -14,6 +16,7 @@ import {
   normalizeTargetName,
   NSIS_PER_MACHINE_UPDATE_ADVISORY,
   NSIS_WEB_ADVISORY,
+  PORTABLE_DEBUG_LOGGING_DROPPED,
   SNAP_BASES,
   SNAP_CORE24_UNSUPPORTED,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
@@ -373,6 +376,7 @@ class ConfigCodemod {
     this.ruleSnap(root)
     this.ruleHelperBundleId(root)
     this.ruleSquirrelNoMsi(root)
+    this.ruleCustomNsis(root)
     this.ruleWinSign(root)
     for (const platform of ["mac", "mas", "masDev"]) {
       const p = this.getObjectProp(root, platform)
@@ -1023,6 +1027,67 @@ class ConfigCodemod {
       this.replaceRange(this.start(noMsi), noMsi.end, `msi: ${this.negate(noMsi.initializer)}`)
     }
     this.changes.push({ key: "squirrelWindows.noMsi", description: "replaced squirrelWindows.noMsi → squirrelWindows.msi (inverted boolean)" })
+  }
+
+  // Mirrors migrateConfig's migrateCustomNsis: customNsisBinary.debugLogging → <section>.installerDebugLogging (dropped for portable),
+  // an emptied or null customNsisBinary / customNsisResources is removed, and a custom bundle is kept and reported, never converted
+  // to toolsets.nsis (the checksum format and bundle layout differ).
+  private ruleCustomNsis(root: any): void {
+    const ts = this.ts
+    const isNullLiteral = (prop: any) => ts.isPropertyAssignment(prop) && this.unwrap(prop.initializer).kind === ts.SyntaxKind.NullKeyword
+    for (const section of NSIS_CONFIG_KEYS) {
+      const options = this.getObjectProp(root, section)
+      if (options == null) {
+        continue
+      }
+      const binaryPath = `${section}.customNsisBinary`
+      const binaryProp = this.getProp(options, "customNsisBinary")
+      const binary = this.getObjectProp(options, "customNsisBinary")
+      if (binaryProp != null && isNullLiteral(binaryProp)) {
+        this.removeProp(binaryProp)
+        this.changes.push({ key: binaryPath, description: `removed ${binaryPath}: null (the key was removed in v27)` })
+      } else if (binary != null) {
+        const found = this.getProp(binary, "debugLogging")
+        // A method / accessor named debugLogging is not read; it stays and keeps the key.
+        const debugProp = found != null && (ts.isPropertyAssignment(found) || ts.isShorthandPropertyAssignment(found)) ? found : null
+        // A shorthand, spread, method or computed key may hold a custom bundle, so only `name: null` counts as unset.
+        const keepsBundle = binary.properties.some((p: any) => p !== debugProp && !isNullLiteral(p))
+        if (debugProp != null) {
+          const valueText = ts.isShorthandPropertyAssignment(debugProp) ? debugProp.name.text : this.valueText(debugProp.initializer, this.propIndentFor(options))
+          if (section === "portable") {
+            if (!isNullLiteral(debugProp)) {
+              this.warnings.push(PORTABLE_DEBUG_LOGGING_DROPPED)
+            }
+            this.changes.push({ key: `${binaryPath}.debugLogging`, description: `removed ${binaryPath}.debugLogging (no effect on portable targets)` })
+          } else if (!isNullLiteral(debugProp) && this.getProp(options, "installerDebugLogging") == null) {
+            this.insertIntoObject(options, [`installerDebugLogging: ${valueText}`])
+            this.changes.push({ key: `${binaryPath}.debugLogging`, description: `moved ${binaryPath}.debugLogging → ${section}.installerDebugLogging` })
+          } else {
+            this.changes.push({ key: `${binaryPath}.debugLogging`, description: `removed ${binaryPath}.debugLogging` })
+          }
+          if (keepsBundle) {
+            this.removeProp(debugProp)
+          }
+        }
+        if (keepsBundle) {
+          this.warnings.push(legacyKeyMessage(binaryPath))
+        } else {
+          this.removeProp(binaryProp)
+          this.changes.push({ key: binaryPath, description: `removed ${binaryPath} (no custom bundle was set)` })
+        }
+      } else if (binaryProp != null) {
+        this.warnings.push(legacyKeyMessage(binaryPath))
+      }
+
+      const resourcesPath = `${section}.customNsisResources`
+      const resourcesProp = this.getProp(options, "customNsisResources")
+      if (resourcesProp != null && isNullLiteral(resourcesProp)) {
+        this.removeProp(resourcesProp)
+        this.changes.push({ key: resourcesPath, description: `removed ${resourcesPath}: null (the key was removed in v27)` })
+      } else if (resourcesProp != null) {
+        this.warnings.push(legacyKeyMessage(resourcesPath))
+      }
+    }
   }
 
   private ruleWinSign(root: any): void {

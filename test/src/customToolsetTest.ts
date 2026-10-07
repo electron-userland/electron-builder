@@ -1,3 +1,6 @@
+import { InvalidConfigurationError } from "builder-util"
+import { promises as fs } from "fs"
+import * as path from "path"
 import { afterEach, beforeEach } from "vitest"
 import { clearCustomToolsetCache, getCustomToolsetPath } from "app-builder-lib/src/toolsets/custom"
 import type { ToolsetCustom } from "app-builder-lib/internal"
@@ -61,5 +64,35 @@ describe("getCustomToolsetPath memoization", { concurrent: false }, () => {
     const dir = await tmpDir.createTempDir()
     const result = await getCustomToolsetPath(dirToolset(dir), "")
     expect(result).toBe(dir)
+  })
+})
+
+describe("custom toolset checksum", { concurrent: false }, () => {
+  const docsUrl = "https://www.electron.build/docs/toolsets#custom-toolset-checksum"
+
+  async function archiveToolset(tmpDir: { createTempDir: (options?: { prefix: string }) => Promise<string> }, checksum?: string): Promise<ToolsetCustom> {
+    const dir = await tmpDir.createTempDir({ prefix: "custom-toolset-checksum" })
+    const archive = path.join(dir, "bundle.tar.gz")
+    await fs.writeFile(archive, "not a real archive")
+    return { url: `file://${archive}`, checksum }
+  }
+
+  test("a missing checksum names the format and links to the docs", async ({ expect, tmpDir }) => {
+    const error = await getCustomToolsetPath(await archiveToolset(tmpDir), "").catch(e => e)
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain("64 lowercase hex characters")
+    expect(error.message).toContain(docsUrl)
+  })
+
+  test.for([
+    ["a v26-style base64 SHA-512", "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q=="],
+    ["a sha256: prefixed value", "sha256:56997fdefe25e7928a1a68b4583d08b240b66cf660234053b20131a74cc082f4"],
+    ["a truncated hex value", "56997fdefe25e7928a1a"],
+  ] as const)("rejects %s before extracting, without echoing it", async ([, checksum], { expect, tmpDir }) => {
+    const error = await getCustomToolsetPath(await archiveToolset(tmpDir, checksum), "").catch(e => e)
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain("base64 SHA-512")
+    expect(error.message).toContain(docsUrl)
+    expect(error.message).not.toContain(checksum)
   })
 })
