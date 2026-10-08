@@ -15,6 +15,12 @@ export const nsisTemplatesDir = getTemplatePath("nsis")
 export interface PackArchResult {
   fileInfo: PackageFileInfo
   unpackedSize: number
+  /**
+   * Absolute source paths of the members stored verbatim (`Copy`) in the app package — see
+   * `ArchiveOptions.storedPaths`. The package is embedded verbatim in the installer, so these are
+   * located again in the final installer to give the block map its finer-chunked regions.
+   */
+  storedMemberFiles: Array<string>
 }
 
 export class AppPackageHelper {
@@ -39,8 +45,9 @@ export class AppPackageHelper {
       const packageCount = (this.archToPackageCount.get(arch) ?? 0) + 1
       this.archToPackageCount.set(arch, packageCount)
       const fileNameSuffix = packageCount === 1 ? "" : `-${packageCount}`
-      resultPromise = target.buildAppPackage(appOutDir, arch, this.elevateHelper, fileNameSuffix).then(async fileInfo => ({
+      resultPromise = target.buildAppPackage(appOutDir, arch, this.elevateHelper, fileNameSuffix).then(async ({ fileInfo, storedMemberFiles }) => ({
         fileInfo,
+        storedMemberFiles,
         unpackedSize: await dirSize(appOutDir),
       }))
       this.archToResult.set(cacheKey, resultPromise)

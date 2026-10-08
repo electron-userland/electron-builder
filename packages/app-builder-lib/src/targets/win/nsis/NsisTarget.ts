@@ -26,7 +26,14 @@ import { hashFile } from "../../../util/hash.js"
 import { time } from "../../../util/timer.js"
 import { WinPackager } from "../../../winPackager.js"
 import { archive, ArchiveOptions } from "../../archive.js"
-import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../../differentialUpdateInfoBuilder.js"
+import {
+  appendBlockmap,
+  configureDifferentialAwareArchiveOptions,
+  createBlockmap,
+  createNsisWebDifferentialUpdateInfo,
+  locateStoredMemberRegions,
+  toBlockMapOptions,
+} from "../../differentialUpdateInfoBuilder.js"
 import { getWindowsInstallationAppPackageName, getWindowsInstallationDirName } from "../../targetUtil.js"
 import { Commands } from "./Commands.js"
 import { Defines } from "./Defines.js"
@@ -42,6 +49,28 @@ import _fsExtra from "fs-extra"
 const { readFile, stat, unlink } = _fsExtra
 
 const debug = _debug("electron-builder:nsis")
+
+/** The member `differentialPackage: "store-asar"` keeps uncompressed in the app package, relative to the unpacked app dir. */
+export const STORED_ASAR_PATH = "resources/app.asar"
+
+/**
+ * The `archive()` options `buildAppPackage` packages the unpacked app with, before the differential-aware
+ * adjustments of `configureDifferentialAwareArchiveOptions`. Exported so the benchmark
+ * (`test/src/differentialOneLineBenchTest.ts`) packages exactly like a real build instead of copying these.
+ */
+export function createAppPackageArchiveOptions(compression: ArchiveOptions["compression"], excluded: Array<string> | null, storedPaths: Array<string> | null): ArchiveOptions {
+  return {
+    withoutDir: true,
+    compression,
+    // The install-time Nsis7z extractor only decodes plain LZMA2/Copy and single-stream BCJ — not
+    // the CPU branch converters modern 7za applies to executables (BCJ2 on x86/x64, ARM64 on
+    // arm64), which it silently skips, dropping the main exe and every native binary from the
+    // install. Pin the payload to a filter it can decode. See #9983.
+    installTimeDecodable: true,
+    excluded,
+    storedPaths,
+  }
+}
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
@@ -148,8 +177,17 @@ export class NsisTarget extends Target {
     return result == null ? null : asArray(result).map(it => (it.startsWith(".") ? it : `.${it}`))
   }
 
-  /** @private */
-  async buildAppPackage(appOutDir: string, arch: Arch, elevateHelper?: CopyElevateHelper | null, fileNameSuffix = ""): Promise<PackageFileInfo> {
+  /**
+   * @private
+   * @returns the package file info plus the absolute source paths of the members stored verbatim in it
+   *   (`storedMemberFiles`, empty unless `differentialPackage` is `"store-asar"`).
+   */
+  async buildAppPackage(
+    appOutDir: string,
+    arch: Arch,
+    elevateHelper?: CopyElevateHelper | null,
+    fileNameSuffix = ""
+  ): Promise<{ fileInfo: PackageFileInfo; storedMemberFiles: Array<string> }> {
     const packager = this.packager
 
     const isBuildDifferentialAware = this.isBuildDifferentialAware
@@ -160,20 +198,24 @@ export class NsisTarget extends Target {
     if (isStoreAsar) {
       await this.warnIfStoreAsarHasNoAsar(appOutDir)
     }
-    const archiveOptions: ArchiveOptions = {
-      withoutDir: true,
-      compression: packager.compression,
-      // The install-time Nsis7z extractor only decodes plain LZMA2/Copy and single-stream BCJ — not
-      // the CPU branch converters modern 7za applies to executables (BCJ2 on x86/x64, ARM64 on
-      // arm64), which it silently skips, dropping the main exe and every native binary from the
-      // install. Pin the payload to a filter it can decode. See #9983.
-      installTimeDecodable: true,
-      excluded: preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`),
-      // Opt-in via differentialPackage: "store-asar" — keep the asar a byte-stable Copy member so a
-      // differential update pays only for its changed blocks instead of re-downloading the whole
-      // recompressed asar (see nsisOptions docs).
-      storedPaths: isStoreAsar ? ["resources/app.asar"] : null,
+    // Opt-in via differentialPackage: "store-asar" — keep the asar a byte-stable Copy member so a
+    // differential update pays only for its changed blocks instead of re-downloading the whole
+    // recompressed asar (see nsisOptions docs). The blockmap chunks these verbatim bytes finer.
+    const storedPaths = isStoreAsar ? [STORED_ASAR_PATH] : null
+    // archive() skips a stored path that does not exist (e.g. `asar: false`, warned about above), so
+    // only the members that really end up in the package are located in it for the block map.
+    const storedMemberFiles: Array<string> = []
+    for (const storedPath of storedPaths ?? []) {
+      const memberFile = path.join(appOutDir, storedPath)
+      if (await exists(memberFile)) {
+        storedMemberFiles.push(memberFile)
+      }
     }
+    const archiveOptions = createAppPackageArchiveOptions(
+      packager.compression,
+      preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`),
+      storedPaths
+    )
 
     const timer = time(`nsis package, ${Arch[arch]}`)
     await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)
@@ -189,13 +231,17 @@ export class NsisTarget extends Target {
     }
 
     if (isBuildDifferentialAware && this.isWebInstaller) {
-      const data = await appendBlockmap(archiveFile)
+      const regions = await locateStoredMemberRegions(archiveFile, storedMemberFiles)
+      const data = await appendBlockmap(archiveFile, toBlockMapOptions(regions))
       return {
-        ...data,
-        path: archiveFile,
+        fileInfo: {
+          ...data,
+          path: archiveFile,
+        },
+        storedMemberFiles,
       }
     } else {
-      return await createPackageFileInfo(archiveFile)
+      return { fileInfo: await createPackageFileInfo(archiveFile), storedMemberFiles }
     }
   }
 
@@ -212,12 +258,12 @@ export class NsisTarget extends Target {
       return
     }
     this.storeAsarChecked = true
-    const asarFile = path.join(appOutDir, "resources", "app.asar")
+    const asarFile = path.join(appOutDir, STORED_ASAR_PATH)
     if (await exists(asarFile)) {
       return
     }
     log.warn(
-      { reason: "resources/app.asar not found (e.g. asar is disabled)", file: log.filePath(asarFile) },
+      { reason: `${STORED_ASAR_PATH} not found (e.g. asar is disabled)`, file: log.filePath(asarFile) },
       'differentialPackage "store-asar" has no effect, the app package is compressed normally'
     )
   }
@@ -345,7 +391,7 @@ export class NsisTarget extends Target {
       }
     }
 
-    const { packageFiles, estimatedSize } = await this.resolveArchPackageFiles(archs, defines, packager)
+    const { packageFiles, estimatedSize, storedMemberFiles } = await this.resolveArchPackageFiles(archs, defines, packager)
 
     this.configureDefinesForAllTypeOfInstaller(defines)
     if (isPortable) {
@@ -422,7 +468,10 @@ export class NsisTarget extends Target {
       if (this.isWebInstaller) {
         updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
       } else if (this.isBuildDifferentialAware) {
-        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch)
+        // Every arch package is embedded verbatim in the installer (SetCompress off), so the stored
+        // members of all of them sit verbatim in the signed installer too; locate them there.
+        const regions = await locateStoredMemberRegions(installerPath, storedMemberFiles)
+        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch, toBlockMapOptions(regions))
       }
 
       // a per-machine build always packs elevate.exe (see CopyElevateHelper), unless the framework has no elevate helper
@@ -448,8 +497,10 @@ export class NsisTarget extends Target {
     archs: Map<Arch, string>,
     defines: Defines,
     packager: WinPackager
-  ): Promise<{ packageFiles: { [arch: string]: PackageFileInfo }; estimatedSize: number }> {
+  ): Promise<{ packageFiles: { [arch: string]: PackageFileInfo }; estimatedSize: number; storedMemberFiles: Array<string> }> {
     const packageFiles: { [arch: string]: PackageFileInfo } = {}
+    // stored (Copy) members of every arch package, to be located in the installer for its block map
+    const storedMemberFiles: Array<string> = []
     let estimatedSize = 0
     const options = this.options
 
@@ -463,7 +514,8 @@ export class NsisTarget extends Target {
     } else {
       await Promise.all(
         Array.from(archs.keys()).map(async arch => {
-          const { fileInfo, unpackedSize } = await this.packageHelper.packArch(arch, this)
+          const { fileInfo, unpackedSize, storedMemberFiles: archStoredMemberFiles } = await this.packageHelper.packArch(arch, this)
+          storedMemberFiles.push(...archStoredMemberFiles)
           const file = fileInfo.path
           const defineKey = arch === Arch.x64 ? "APP_64" : arch === Arch.arm64 ? "APP_ARM64" : "APP_32"
           defines[defineKey] = file
@@ -488,7 +540,7 @@ export class NsisTarget extends Target {
       )
     }
 
-    return { packageFiles, estimatedSize }
+    return { packageFiles, estimatedSize, storedMemberFiles }
   }
 
   protected generateGitHubInstallerName(primaryArch: Arch | null, defaultArch: string | undefined): string {
