@@ -296,7 +296,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
       await exec("chmod", ["-R", "g-s", dir]).catch(err => log.warn({ error: err.message }, "chmod g-s failed"))
     }
 
-    const { mksquashfs } = await getAppImageTools("0.0.0", snapArch, this.packager.buildResourcesDir)
+    const { mksquashfs } = await getAppImageTools(this.packager.config.toolsets?.appimage, snapArch, this.packager.buildResourcesDir)
 
     // Collect top-level entries from each dir as individual path args (mirrors Go ReadDirContentTo)
     const mksquashfsArgs: string[] = [
