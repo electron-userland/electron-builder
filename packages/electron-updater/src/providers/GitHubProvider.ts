@@ -74,134 +74,82 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       throw newError(`No releases in the GitHub Atom feed`, "ERR_XML_MISSED_ELEMENT")
     }
 
-    // noinspection TypeScriptValidateJSTypes
-    let latestRelease: XElement | null = null
-    let tag: string | null = null
+    let release: FeedRelease
     try {
-      if (this.updater.allowPrerelease) {
-        const currentChannel = this.updater?.channel || (semver.prerelease(this.updater.currentVersion)?.[0] as string) || null
-
-        if (currentChannel === null) {
-          // allowPrerelease=true with no explicit channel and stable current version:
-          // pick the newest available release (pre-release or stable) by semver, skipping
-          // non-semver tags (e.g. unrelated package releases in a monorepo). Whether the newest
-          // release is actually an update is decided later by AppUpdater.isUpdateAvailable.
-          for (const releaseEntry of releaseEntries) {
-            // noinspection TypeScriptValidateJSTypes
-            const releaseTag = hrefRegExp.exec(releaseEntry.element("link").attribute("href"))?.[1]
-
-            if (!releaseTag || !semver.valid(releaseTag)) {
-              continue
-            }
-
-            if (tag == null || semver.gt(releaseTag, tag)) {
-              tag = releaseTag
-              latestRelease = releaseEntry
-            }
-          }
-        } else {
-          for (const releaseEntry of releaseEntries) {
-            // noinspection TypeScriptValidateJSTypes
-            const hrefElement = hrefRegExp.exec(releaseEntry.element("link").attribute("href"))!
-
-            // If this is null then something is wrong and skip this release
-            if (hrefElement === null) {
-              continue
-            }
-
-            // This Release's Tag
-            const hrefTag = hrefElement[1]
-            if (!semver.valid(hrefTag)) {
-              continue
-            }
-
-            //Get Channel from this release's tag
-            const hrefChannel = (semver.prerelease(hrefTag)?.[0] as string) || null
-
-            const shouldFetchVersion = !currentChannel || ["alpha", "beta"].includes(currentChannel)
-            const isCustomChannel = hrefChannel !== null && !["alpha", "beta"].includes(String(hrefChannel))
-            // Allow moving from alpha to beta but not down
-            const channelMismatch = currentChannel === "beta" && hrefChannel === "alpha"
-
-            const isNextPreRelease = hrefChannel !== null && hrefChannel === currentChannel
-            const isEligible = (shouldFetchVersion && !isCustomChannel && !channelMismatch) || isNextPreRelease
-
-            // The Atom feed is ordered by publication date, not by version: a stable hotfix published after a
-            // pre-release would otherwise hide that newer pre-release (#10287). Pick the highest eligible version instead.
-            if (isEligible && (tag == null || semver.gt(hrefTag, tag))) {
-              tag = hrefTag
-              latestRelease = releaseEntry
-            }
-          }
-        }
-      } else {
-        tag = await this.getLatestTagName(cancellationToken)
-        for (const releaseEntry of releaseEntries) {
-          // noinspection TypeScriptValidateJSTypes
-          const hrefMatch = hrefRegExp.exec(releaseEntry.element("link").attribute("href"))
-          if (hrefMatch == null) {
-            continue
-          }
-          if (hrefMatch[1] === tag) {
-            latestRelease = releaseEntry
-            break
-          }
-        }
-      }
+      release = this.updater.allowPrerelease ? this.findHighestEligibleRelease(releaseEntries) : await this.findLatestRelease(releaseEntries, cancellationToken)
     } catch (e: any) {
       throw newError(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`, "ERR_UPDATER_INVALID_RELEASE_FEED")
     }
 
+    const { tag, entry: latestRelease } = release
     if (tag == null) {
       throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
     }
 
-    let rawData: string
-    let channelFile = ""
-    let channelFileUrl: any = ""
-    const fetchData = async (channelName: string) => {
-      channelFile = getChannelFilename(channelName)
-      channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(String(tag), channelFile), this.baseUrl)
-      const requestOptions = this.createRequestOptions(channelFileUrl)
-      try {
-        return (await this.executor.request(requestOptions, cancellationToken))!
-      } catch (e: any) {
-        if (e instanceof HttpError && e.statusCode === 404) {
-          throw channelFileNotFoundError(channelFile, channelFileUrl, e)
-        }
-        throw e
-      }
-    }
-
-    try {
-      let channel = this.channel
-      if (this.updater.allowPrerelease && semver.prerelease(tag)?.[0]) {
-        channel = this.getCustomChannelName(String(semver.prerelease(tag)?.[0]))
-      }
-      rawData = await fetchData(channel)
-    } catch (e: any) {
-      if (this.updater.allowPrerelease) {
-        // Allow fallback to `latest.yml`
-        rawData = await fetchData(this.getDefaultChannelName())
-      } else {
-        throw e
-      }
-    }
-
+    const { rawData, channelFile, channelFileUrl } = await this.fetchChannelFile(tag, cancellationToken)
     const result = parseUpdateInfo(rawData, channelFile, channelFileUrl)
     // latestRelease can be null in the allowPrerelease=false path when the resolved tag (from the
     // /releases/latest API) is not present in the truncated Atom feed; the update still proceeds
     // with the resolved tag, only the feed-derived release name/notes are omitted.
-    if (result.releaseName == null && latestRelease != null) {
-      result.releaseName = latestRelease.elementValueOrEmpty("title")
-    }
-
-    if (result.releaseNotes == null && latestRelease != null) {
-      result.releaseNotes = computeReleaseNotes(this.updater.currentVersion, this.updater.fullChangelog, releaseEntries, latestRelease)
+    if (latestRelease != null) {
+      if (result.releaseName == null) {
+        result.releaseName = latestRelease.elementValueOrEmpty("title")
+      }
+      if (result.releaseNotes == null) {
+        result.releaseNotes = computeReleaseNotes(this.updater.currentVersion, this.updater.fullChangelog, releaseEntries, latestRelease)
+      }
     }
     return {
       tag: tag,
       ...result,
+    }
+  }
+
+  // allowPrerelease=true: the highest semver release eligible for the current channel. The Atom feed is ordered by
+  // publication date, not by version, so the first eligible entry is not necessarily the newest one (#10287).
+  private findHighestEligibleRelease(releaseEntries: Array<XElement>): FeedRelease {
+    const currentChannel = this.updater?.channel || prereleaseChannelOf(this.updater.currentVersion)
+    // No explicit channel and a stable current version: any semver release (pre-release or stable) is a candidate,
+    // non-semver tags (e.g. unrelated package releases in a monorepo) are skipped. Whether the newest release is
+    // actually an update is decided later by AppUpdater.isUpdateAvailable.
+    if (currentChannel === null) {
+      return pickHighestRelease(releaseEntries, () => true)
+    }
+    return pickHighestRelease(releaseEntries, tag => isEligibleForChannel(prereleaseChannelOf(tag), currentChannel))
+  }
+
+  // allowPrerelease=false: the tag comes from the /releases/latest API; the feed only supplies the release name/notes.
+  private async findLatestRelease(releaseEntries: Array<XElement>, cancellationToken: CancellationToken): Promise<FeedRelease> {
+    const tag = await this.getLatestTagName(cancellationToken)
+    const entry = releaseEntries.find(releaseEntry => releaseTagOf(releaseEntry) === tag) ?? null
+    return { tag, entry }
+  }
+
+  private async fetchChannelFile(tag: string, cancellationToken: CancellationToken): Promise<ChannelFileData> {
+    const tagChannel = prereleaseChannelOf(tag)
+    const channel = this.updater.allowPrerelease && tagChannel != null ? this.getCustomChannelName(String(tagChannel)) : this.channel
+    try {
+      return await this.requestChannelFile(tag, channel, cancellationToken)
+    } catch (e: any) {
+      if (!this.updater.allowPrerelease) {
+        throw e
+      }
+      // Allow fallback to `latest.yml`
+      return await this.requestChannelFile(tag, this.getDefaultChannelName(), cancellationToken)
+    }
+  }
+
+  private async requestChannelFile(tag: string, channelName: string, cancellationToken: CancellationToken): Promise<ChannelFileData> {
+    const channelFile = getChannelFilename(channelName)
+    const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(tag, channelFile), this.baseUrl)
+    try {
+      const rawData = (await this.executor.request(this.createRequestOptions(channelFileUrl), cancellationToken))!
+      return { rawData, channelFile, channelFileUrl }
+    } catch (e: any) {
+      if (e instanceof HttpError && e.statusCode === 404) {
+        throw channelFileNotFoundError(channelFile, channelFileUrl, e)
+      }
+      throw e
     }
   }
 
@@ -246,6 +194,60 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
 interface GithubReleaseInfo {
   readonly tag_name: string
+}
+
+interface FeedRelease {
+  readonly tag: string | null
+  readonly entry: XElement | null
+}
+
+interface ChannelFileData {
+  readonly rawData: string
+  readonly channelFile: string
+  readonly channelFileUrl: URL
+}
+
+const PROMOTABLE_CHANNELS = ["alpha", "beta"]
+
+// Tag of a feed entry from its link href; undefined when the href has no /tag/ segment.
+function releaseTagOf(releaseEntry: XElement): string | undefined {
+  // noinspection TypeScriptValidateJSTypes
+  return hrefRegExp.exec(releaseEntry.element("link").attribute("href"))?.[1]
+}
+
+// First pre-release identifier ("beta" for 1.0.0-beta.1), or null for a stable version. Numeric identifiers are kept
+// as-is (so 1.0.0-0 counts as stable, as 0 is falsy).
+function prereleaseChannelOf(version: string | semver.SemVer): string | null {
+  return (semver.prerelease(version)?.[0] as string) || null
+}
+
+// A release is eligible when it is on the current channel. Alpha/beta clients additionally accept stable releases
+// and may move from alpha to beta, but not down from beta to alpha; custom channels only follow themselves.
+function isEligibleForChannel(releaseChannel: string | null, currentChannel: string): boolean {
+  if (releaseChannel === currentChannel) {
+    return true
+  }
+  if (!PROMOTABLE_CHANNELS.includes(currentChannel)) {
+    return false
+  }
+  return releaseChannel === null || (PROMOTABLE_CHANNELS.includes(String(releaseChannel)) && !(currentChannel === "beta" && releaseChannel === "alpha"))
+}
+
+// Highest semver-valid release accepted by `isEligible`; on equal versions the earlier feed entry wins.
+function pickHighestRelease(releaseEntries: Array<XElement>, isEligible: (tag: string) => boolean): FeedRelease {
+  let tag: string | null = null
+  let entry: XElement | null = null
+  for (const releaseEntry of releaseEntries) {
+    const releaseTag = releaseTagOf(releaseEntry)
+    if (releaseTag == null || !semver.valid(releaseTag) || !isEligible(releaseTag)) {
+      continue
+    }
+    if (tag == null || semver.gt(releaseTag, tag)) {
+      tag = releaseTag
+      entry = releaseEntry
+    }
+  }
+  return { tag, entry }
 }
 
 function getNoteValue(parent: XElement): string {
