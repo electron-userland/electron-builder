@@ -427,7 +427,7 @@ test.ifNotWindows("template app honors toolsets.appimage pin", ({ expect }) =>
       },
     },
     {},
-    // The pinned legacy "0.0.0" mksquashfs supports only gzip/xz, so the pin reaching the template build fails here.
-    error => expect(error.message).toContain('Compressor "lzo" is not supported')
+    // The pinned legacy "0.0.0" mksquashfs supports only gzip/xz, so the pin reaching the template build is rejected up front.
+    error => expect(error.message).toContain('Snap compression "lzo" is not supported with toolsets.appimage "0.0.0"')
   )
 )
