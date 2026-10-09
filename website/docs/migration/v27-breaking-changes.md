@@ -331,7 +331,7 @@ See [Custom NSIS Migration Guide](./v26-to-v27#step-4-custom-nsis-migration-guid
 
 You can see the relative escape hatch of providing an archive for the full toolset is generally the same from `v26` -> `v27` simply in a more consolidated form.
 
-Of note, `v27` brings in support for bare file-paths to be used in the `url` field. No checksum/version is required when you do this and that path is used 'as-is' with no caching.
+Of note, `v27` also accepts a `file://` path in the `url` field. A `file://` path to an unpacked bundle directory needs no checksum and is used as-is with no caching; a `file://` path to an archive still needs a `checksum`.
 
 - `https://` — downloaded and cached locally; the archive is extracted before use.
 - `file:///absolute/path` — used directly; relative paths must be within the project resources dir.
