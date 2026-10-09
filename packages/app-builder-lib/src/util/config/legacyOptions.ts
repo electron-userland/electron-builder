@@ -340,7 +340,7 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
       autoMigrated: false,
       severity: "error",
       detail:
-        `Custom  NSIS binaries now come from the \`toolsets.nsis\` bundle. ${TOOLSETS_NSIS_DETAIL}.` +
+        `Custom  NSIS binaries now come from the \`toolsets.nsis\` bundle. ${TOOLSETS_NSIS_DETAIL} ` +
         (section === "portable"
           ? "Property `debugLogging` never had an effect on portable targets and has no equivalent. "
           : `Property \`debugLogging\` is now \`${section}.installerDebugLogging\` (which needs a log-enabled NSIS bundle). `) +
