@@ -18,7 +18,7 @@ function rangeErrorMessage(version: string): string {
   return `Cannot compute electron version from installed node modules - version ("${version}") is not fixed in project.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`
 }
 
-describe("getElectronVersion (version resolution from package.json)", { sequential: true }, () => {
+describe("getElectronVersion (version resolution from package.json)", { concurrent: false }, () => {
   beforeEach(() => {
     // Spy on the shared log singleton so the same instance used by electronVersion.ts is intercepted.
     vi.spyOn(log, "error").mockImplementation(() => {})

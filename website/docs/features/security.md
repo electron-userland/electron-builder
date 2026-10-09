@@ -12,7 +12,11 @@ Several security-relevant defaults changed in v27 — auto-update web installers
 
 ## Update security (electron-updater)
 
-- **Web-installer payloads are disabled by default.** `AppUpdater.disableWebInstaller` now defaults to **`true`**. NSIS *web* installers (the small installer that downloads its full payload at install time from a manifest-supplied URL) are no longer loaded unless you opt in, because that payload may not undergo signature verification. v27 ships a one-major grace period: if a web-installer update is received and you never set the flag, the updater logs a warning and still downloads it. Set `autoUpdater.disableWebInstaller = false` only if you intentionally ship a web installer.
+- **Signed update manifests (required by default).** The `latest*.yml` update metadata is Ed25519-signed at publish time and verified by electron-updater — before any download — against a public key embedded in the app. Verification fails closed on unsigned or tampered manifests. Publishing a build that emits update metadata fails unless a signing key resolves; `updateManifest: false` is the only opt-out and warns on every build. Unlike the `sha2`-only metadata grace period below, this one is enforced in **v27**. See [Signed Update Manifests](./signed-update-manifests.md).
+
+- **Web-installer payloads are disabled by default.** `AppUpdater.disableWebInstaller` now defaults to **`true`**. NSIS *web* installers (the small installer that downloads its full payload at install time from a manifest-supplied URL) are no longer loaded unless you opt in, because that payload may not undergo signature verification. A web-installer update is rejected with `ERR_UPDATER_WEB_INSTALLER_DISABLED` — at download (including an update cached by a previous launch), before an install on next launch, and at install time. Installs made by an `nsis-web` installer built with electron-builder v27+ opt in automatically (via the `resources/package-type` marker); set `autoUpdater.disableWebInstaller = false` yourself only for web-installer installs without that marker (built before v27, or with a custom script) or when switching an app from `nsis` to `nsis-web`. Cached web updates are re-verified against the freshly fetched manifest, and the `nsis-web` installer verifies the package electron-updater passes to it against the packages built with it (see [Web Installer](../nsis.md#web-installer)). [Signed update manifests](./signed-update-manifests.md) cover the web package's path, SHA-512 and size, so don't set `updateManifest: false` for `nsis-web` apps.
+
+- **Update credentials stay on the feed's origin.** The credential headers from `requestHeaders` / `addAuthHeader` (headers such as `Authorization`, the same set that is removed on a cross-origin redirect) and the query string of the feed URL are only sent to the update feed's origin. A download on another origin, including the same host on another port or over `http` instead of `https`, is requested without them. See [Auto Update](./auto-update.md#custom-options-instantiating-updater-directly).
 
 - **Linux package signatures.** `AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**) preserves historical behavior, since electron-builder does not sign Linux packages itself. Set it to **`false`** to enforce GPG signature checks when installing `.deb` / `.rpm` auto-updates on package managers that support verification.
 
@@ -20,8 +24,8 @@ Several security-relevant defaults changed in v27 — auto-update web installers
 
 - **Windows update signature verification.** On Windows, downloaded NSIS updates are Authenticode-verified before they are applied. `win.verifyUpdateCodeSignature` (default `true`) embeds your signing `publisherName` into `app-update.yml`, and electron-updater checks each downloaded update against the certificate subject. Supply an array of `publisherName` values when rotating certificates so updates signed by either the old or new certificate still verify.
 
-:::warning[Two of these fail-close in v28]
-v27 is a grace period. In **v28**, an unblocked web-installer update becomes an error (`ERR_UPDATER_WEB_INSTALLER_DISABLED`), and `sha2`-only update metadata is **rejected (fail-closed)**. Confirm your updates use a signed full installer and modern `files[]` metadata before upgrading to v28.
+:::warning[sha2-only metadata is rejected in v28]
+v27 is a grace period for `sha2`-only update metadata. In **v28**, it is **rejected**. Confirm your updates use modern `files[]` metadata before upgrading to v28.
 :::
 
 **See also:** [Auto Update](./auto-update.md) · [Update metadata & compatibility](./auto-update.md#compatibility)
