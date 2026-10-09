@@ -1,0 +1,99 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`blackboxWebWin > windows > nsis-web - install on next launch 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "packages": {
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "testapp-1.0.0-x64.nsis.7z",
+            "path": "testapp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "testapp-1.0.0-x64.nsis.7z",
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "packages": {
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "testapp-1.0.0-x64.nsis.7z",
+            "path": "testapp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+        "releaseDate": "@releaseDate",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`blackboxWebWin > windows > nsis-web - install on next launch 2`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe",
+      "safeArtifactName": "TestApp-Setup.exe",
+      "updateInfo": {
+        "packages": {
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "testapp-1.0.1-x64.nsis.7z",
+            "path": "testapp-1.0.1-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "testapp-1.0.1-x64.nsis.7z",
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "url": "TestApp Setup.exe",
+          },
+        ],
+        "packages": {
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "testapp-1.0.1-x64.nsis.7z",
+            "path": "testapp-1.0.1-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+        "releaseDate": "@releaseDate",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
