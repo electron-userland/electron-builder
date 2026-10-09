@@ -97,8 +97,8 @@ const ELECTRON_GET_ANCHOR = "electrondownload-electronget"
 const WIN_SIGN_ANCHOR = "windows-signing-winsign"
 const CUSTOM_NSIS_ANCHOR = "nsiscustomnsisbinary-toolsetsnsis"
 const TOOLSETS_NSIS_DETAIL =
-  "Set a custom NSIS bundle via `toolsets.nsis: { url, checksum, version }`." +
-  "This is not a rename. The artifacts provided by `.customNsisBinary` & `.customNsisResources` have been merged into one toolset." +
+  "Set a custom NSIS bundle via `toolsets.nsis: { url, checksum, version }`. " +
+  "This is not a rename. The artifacts provided by `.customNsisBinary` & `.customNsisResources` have been merged into one toolset. " +
   "To continue using custom NSIS binary/resources in your build see (https://www.electron.build/docs/toolsets#custom-nsis-bundle-layout)."
 
 export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
