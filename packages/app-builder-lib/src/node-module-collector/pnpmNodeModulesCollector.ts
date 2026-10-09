@@ -4,7 +4,7 @@ import * as path from "path"
 import { LogMessageByKey, type Package } from "./moduleManager"
 import { NodeModulesCollector } from "./nodeModulesCollector"
 import { getPackageManagerCommand, PM } from "./packageManager"
-import { PnpmDependency } from "./types"
+import { PackageJson, PnpmDependency } from "./types"
 import { exists, isValidKey } from "builder-util"
 
 export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependency, PnpmDependency> {
@@ -123,6 +123,9 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
    *  first access inside `extractProductionDependencyGraph`, after `allDependencies` is settled. */
   private _allDepsByName: Map<string, PnpmDependency> | null = null
 
+  /** The app's own node of the `pnpm list` output (the root of the production graph), set by `getTreeFromWorkspaces`. */
+  private rootTree: PnpmDependency | null = null
+
   /**
    * Returns the workspace packages to iterate over, gated by detected pnpm version:
    * - pnpm v11+: multi-entry workspace output → return the full parsed array
@@ -234,7 +237,13 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
 
     const packageName = tree.name || tree.from
-    const { packageJson } = (await this.locateFromDepOrRoot(packageName, tree.path, tree.version)) || {}
+    // The app root is never installed inside a node_modules directory, so it is read from its own
+    // directory instead of being located by name. A by-name lookup finds a same-named dependency
+    // whenever the app shares its name with one (an app called `debug` depending on `debug`), and
+    // that dependency's package.json would then decide which of the app's dependencies are kept.
+    const isRoot = tree === this.rootTree
+    const rootPackageJson: PackageJson | null = isRoot && tree.path ? await fs.readJson(path.join(tree.path, "package.json")).catch(() => null) : null
+    const { packageJson } = (isRoot ? { packageJson: rootPackageJson } : await this.locateFromDepOrRoot(packageName, tree.path, tree.version)) || {}
 
     const all = packageJson ? { ...packageJson.dependencies, ...packageJson.optionalDependencies } : { ...tree.dependencies, ...tree.optionalDependencies }
     const optional = packageJson ? { ...packageJson.optionalDependencies } : {}
@@ -340,13 +349,10 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
   protected override getTreeFromWorkspaces(tree: PnpmDependency, packageName: string): PnpmDependency {
     // pnpm v10 workspace: app is nested as a dependency of root — handled by base class
     const result = super.getTreeFromWorkspaces(tree, packageName)
-    if (result !== tree) {
-      return result
-    }
     // pnpm v11 workspace: each workspace package is a separate top-level array entry;
     // non-workspace (single-tree): find returns the one entry or undefined → falls back to tree
-    const match = this.allWorkspacePackages.find(pkg => pkg.name === packageName || pkg.from === packageName)
-    return match ?? tree
+    this.rootTree = result !== tree ? result : (this.allWorkspacePackages.find(pkg => pkg.name === packageName || pkg.from === packageName) ?? tree)
+    return this.rootTree
   }
 
   protected async parseDependenciesTree(jsonBlob: string): Promise<PnpmDependency> {
