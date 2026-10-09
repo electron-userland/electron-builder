@@ -93,32 +93,44 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
 
   const requestOptions = differentialDownloader.createRequestOptions()
   requestOptions.headers!.Range = ranges.substring(0, ranges.length - 2)
+  // Each batch settles exactly once. The response-end watchdog only exists for a response that ends before every part was
+  // handled. It must not outlive a settled batch: the next batch reuses the same `reject`, so a stale watchdog used to fail
+  // any multi-batch download whose later batches took longer than the grace period.
+  let responseEndTimer: NodeJS.Timeout | undefined
+  let isSettled = false
+  const complete = () => {
+    if (isSettled) {
+      return
+    }
+    isSettled = true
+    if (responseEndTimer != null) {
+      clearTimeout(responseEndTimer)
+    }
+    resolve()
+  }
+  const fail = (error: Error) => {
+    if (isSettled) {
+      return
+    }
+    isSettled = true
+    if (responseEndTimer != null) {
+      clearTimeout(responseEndTimer)
+    }
+    reject(error)
+  }
   const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
-    response.on("error", reject)
+    response.on("error", fail)
+    response.on("aborted", () => fail(new Error("response has been aborted by the server")))
 
-    if (!checkIsRangesSupported(response, reject)) {
+    if (!checkIsRangesSupported(response, fail)) {
       return
     }
 
     const contentType = safeGetHeader(response, "content-type")
     const m = /^multipart\/.+?\s*;\s*boundary=(?:"([^"]+)"|([^\s";]+))\s*$/i.exec(contentType)
     if (m == null) {
-      reject(new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`))
+      fail(new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`))
       return
-    }
-
-    // The watchdog below only exists for a response that ends before every part was handled. It must not outlive a
-    // successful batch: the next batch reuses the same `reject`, so a stale watchdog used to fail any multi-batch
-    // download whose later batches took longer than the grace period.
-    let isBatchFinished = false
-    let watchdog: ReturnType<typeof setTimeout> | null = null
-    const onBatchFinished = (): void => {
-      isBatchFinished = true
-      if (watchdog != null) {
-        clearTimeout(watchdog)
-        watchdog = null
-      }
-      resolve()
     }
 
     const dicer = new DataSplitter(
@@ -127,29 +139,25 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       partIndexToTaskIndex,
       m[1] || m[2],
       partIndexToLength,
-      onBatchFinished,
+      complete,
       grandTotalBytes,
       differentialDownloader.options.onProgress,
       differentialDownloader.logger
     )
-    dicer.on("error", reject)
+    dicer.on("error", fail)
     response.pipe(dicer)
 
     response.on("end", () => {
-      if (isBatchFinished) {
+      if (isSettled) {
         return
       }
-      watchdog = setTimeout(() => {
-        watchdog = null
-        if (isBatchFinished) {
-          return
-        }
+      responseEndTimer = setTimeout(() => {
         request.abort()
-        reject(new Error("Response ends without calling any handlers"))
+        fail(new Error("Response ends without calling any handlers"))
       }, 10000)
     })
   })
-  differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
+  differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, fail)
   request.end()
 }
 
