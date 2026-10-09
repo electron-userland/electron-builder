@@ -242,8 +242,28 @@ export class LinuxTargetHelper {
     return basename
   }
 
+  // Emitted at most once per build — getDesktopFileName is called per target.
+  private desktopFilenameChangeWarningEmitted = false
+
   getDesktopFileName(fallback: string = this.packager.executableName): string {
-    return this.resolveDesktopName() ?? fallback
+    const resolved = this.resolveDesktopName()
+    if (resolved == null) {
+      return fallback
+    }
+    // v26 only synced the installed filename to desktopName when linux.syncDesktopName was set, and
+    // its default was off — so any project that set desktopName without opting in now installs a
+    // differently-named .desktop file. On upgrade the old entry stays behind until the previous
+    // package is removed, which shows up as a duplicate or stale launcher rather than a build error.
+    if (resolved !== fallback && !this.desktopFilenameChangeWarningEmitted) {
+      this.desktopFilenameChangeWarningEmitted = true
+      log.warn(
+        { desktopName: resolved, previousFileName: `${fallback}.desktop`, fileName: `${resolved}.desktop` },
+        "the installed .desktop filename is now always derived from `desktopName` (electron-builder v26 only did this with `linux.syncDesktopName: true`, which defaulted to off). " +
+          "Update any packaging, AppArmor, or MIME tooling that referenced the old filename. " +
+          "See https://www.electron.build/docs/migration/v27-breaking-changes#linuxsyncdesktopname-always-synced"
+      )
+    }
+    return resolved
   }
 
   computeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, extra?: Record<string, string>): Promise<string> {

@@ -93,6 +93,9 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
 
   const requestOptions = differentialDownloader.createRequestOptions()
   requestOptions.headers!.Range = ranges.substring(0, ranges.length - 2)
+  // Each batch settles exactly once. The response-end watchdog only exists for a response that ends before every part was
+  // handled. It must not outlive a settled batch: the next batch reuses the same `reject`, so a stale watchdog used to fail
+  // any multi-batch download whose later batches took longer than the grace period.
   let responseEndTimer: NodeJS.Timeout | undefined
   let isSettled = false
   const complete = () => {

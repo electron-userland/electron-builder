@@ -42,7 +42,7 @@ function escapeDnValue(value: string): string {
 // Set up the pkijs WebCrypto engine once. @peculiar/webcrypto supports legacy cipher suites
 // (RC2, 3DES) used by real-world CA-issued PFX files, unlike native Node.js WebCrypto.
 const peculiarCrypto = new PeculiarCrypto()
-pkijs.setEngine("peculiar", new pkijs.CryptoEngine({ name: "peculiar", crypto: peculiarCrypto as any, subtle: peculiarCrypto.subtle }) as any)
+pkijs.setEngine("peculiar", new pkijs.CryptoEngine({ name: "peculiar", crypto: peculiarCrypto, subtle: peculiarCrypto.subtle }) as any)
 
 function toArrayBuffer(buf: Buffer): ArrayBuffer {
   const ab = new ArrayBuffer(buf.byteLength)
