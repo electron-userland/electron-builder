@@ -668,22 +668,28 @@ This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias ma
 
 **This is a breaking change if you used env-var toolset overrides.** The following environment variables are **removed** — replace each with a [`ToolsetCustom`](#toolset-env-var-overrides-removed) object on the relevant `toolsets` key:
 
-| Removed env var | Toolset it controlled |
-|---|---|
-| `APPIMAGE_TOOLS_PATH` | AppImage build tools (`mksquashfs`, runtime) |
-| `LINUX_TOOLS_MAC_PATH` | Linux-tools-mac bundle (`ar`, `lzip`, `gtar`) |
-| `CUSTOM_FPM_PATH` | FPM executable |
-| `ELECTRON_BUILDER_NSIS_DIR` | NSIS compiler bundle directory |
-| `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` | NSIS resources/plugins directory |
-| `CUSTOM_NSIS_RESOURCES` | Alternate NSIS resources bundle |
-| `ELECTRON_BUILDER_WINE_TOOLSET_DIR` | Wine bundle directory |
-| `USE_SYSTEM_WINE` | Forced the host-installed Wine instead of the downloaded bundle (now the default — `toolsets.wine: "system"`) |
-| `USE_SYSTEM_SIGNCODE` | Forced the host `signtool`/`signcode` instead of the bundled `winCodeSign` toolset |
-| `USE_SYSTEM_OSSLSIGNCODE` | Forced the host `osslsigncode` instead of the bundled one |
-| `USE_SYSTEM_FPM` | Forced the host-installed `fpm` instead of the bundled FPM |
-| `SIGNTOOL_PATH` | Path to `signtool.exe` |
-| `ELECTRON_BUILDER_7ZIP_PATH` | The 7-Zip executable |
-| `ELECTRON_BUILDER_ICONS_TOOLSET_DIR` | Icons toolset bundle directory |
+| Removed env var | Toolset it controlled | Replace with |
+|---|---|---|
+| `APPIMAGE_TOOLS_PATH` | AppImage build tools (`mksquashfs`, runtime) | `toolsets.appimage` |
+| `MKSQUASHFS_PATH` | `mksquashfs` for legacy (core18/20/22) snap builds | `toolsets.appimage` |
+| `LINUX_TOOLS_MAC_PATH` | Linux-tools-mac bundle (`ar`, `lzip`, `gtar`) | `toolsets.linuxToolsMac` |
+| `CUSTOM_FPM_PATH` | FPM executable | `toolsets.fpm` |
+| `ELECTRON_BUILDER_NSIS_DIR` | NSIS compiler bundle directory | `toolsets.nsis` |
+| `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` | NSIS resources/plugins directory | `toolsets.nsis` |
+| `CUSTOM_NSIS_RESOURCES` | Alternate NSIS resources bundle | `toolsets.nsis` |
+| `ELECTRON_BUILDER_WINE_TOOLSET_DIR` | Wine bundle directory | `toolsets.wine` |
+| `ELECTRON_BUILDER_7ZIP_PATH` | 7-Zip executable | `toolsets.sevenZip` |
+| `ELECTRON_BUILDER_ICONS_TOOLSET_DIR` | Icon-conversion tools bundle | `toolsets.icons` |
+| `ELECTRON_BUILDER_OSSL_SIGNCODE_PATH` | `osslsigncode` binary | `toolsets.winCodeSign` |
+| `ELECTRON_BUILDER_RCEDIT_PATH` | `rcedit` binary | `toolsets.winCodeSign` |
+| `ELECTRON_BUILDER_WINDOWS_KITS_PATH` | Windows SDK / signtool kit directory | `toolsets.winCodeSign` |
+| `SIGNTOOL_PATH` | Path to `signtool.exe` | `win.sign` / `toolsets.winCodeSign` |
+| `USE_SYSTEM_WINE` | Forced the host-installed Wine instead of the downloaded bundle (now the default — `toolsets.wine: "system"`) | `toolsets.wine` (see note) |
+| `USE_SYSTEM_SIGNCODE` | Forced the host `signtool`/`signcode` instead of the bundled `winCodeSign` toolset | `win.sign` + `winCodeSign` |
+| `USE_SYSTEM_OSSLSIGNCODE` | Forced the host `osslsigncode` instead of the bundled one | `win.sign` + `winCodeSign` |
+| `USE_SYSTEM_FPM` | Forced the host-installed `fpm` instead of the bundled FPM | `toolsets.fpm` |
+
+> **v27 warns you at build start.** If any removed variable in this section is still set in the build environment, electron-builder logs a one-time deprecation warning naming the variable and its replacement (it is otherwise silently ignored). Unset it once you have migrated to the `toolsets`/`win.sign` config.
 
 Setting any of these now **fails the build** with a message naming the `toolsets` replacement, rather than being silently ignored. The two signing `USE_SYSTEM_*` variables (`USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var replacement** — configure signing through [`win.sign`](#windows-signing-winsign) and the `winCodeSign` toolset instead. `USE_SYSTEM_WINE` is replaced by `toolsets.wine: "system"`, which is already the default. `USE_SYSTEM_FPM` is now **also removed** (it was still functional in earlier v27 prereleases): supply a custom FPM via `toolsets.fpm: { url: "file:///path/to/dir" }`. On Windows there is no bundled FPM, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` and otherwise throws a clear configuration error (previously it silently fell back to a host `fpm` on `PATH`).
 
@@ -716,6 +722,14 @@ The `force` field has no equivalent in `@electron/get` v5 and was dropped from `
 ### `CI_BUILD_TAG` environment variable
 
 Removed. Use `CI_COMMIT_TAG` (the standard GitLab CI variable) to provide the release tag.
+
+### `ELECTRON_BUILDER_BINARIES_ALLOW_HTTP` renamed
+
+Renamed to `ELECTRON_BUILDER_DANGEROUSLY_ALLOW_HTTP` to make the security implication explicit. The behavior is unchanged: set it to `true` to permit non-`localhost` plain-HTTP mirror / download-override URLs that would otherwise be rejected. Set the new name instead; the old one is no longer read.
+
+### Implicit publish on `npm run release` removed
+
+electron-builder no longer inspects `npm_lifecycle_event`: naming your npm/yarn/pnpm script `release` (e.g. `npm run release`) no longer forces publishing on. Publish explicitly instead — pass a `--publish` flag (`--publish always`, `--publish onTag`, `--publish onTagOrDraft`) or set the `publish` option in your electron-builder config.
 
 ### Azure Trusted Signing `signtool /dlib` is the default
 

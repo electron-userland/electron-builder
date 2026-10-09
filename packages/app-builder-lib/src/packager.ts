@@ -35,6 +35,7 @@ import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./
 import { assertNoRemovedEnvVars } from "./util/flags.js"
 import { expandMacro } from "./util/macroExpander.js"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
+import { warnOnRemovedEnvVars } from "./util/removedEnvVars.js"
 import { getRepositoryInfo } from "./util/repositoryInfo.js"
 import { resolveFunction } from "./util/resolve.js"
 import { installOrRebuild, nodeGypRebuild, resolveBuildFromSource } from "./util/installOrRebuild.js"
@@ -274,6 +275,8 @@ export class Packager {
     }
 
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
+
+    warnOnRemovedEnvVars()
   }
 
   private async addPackagerEventHandlers() {
