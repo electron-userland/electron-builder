@@ -179,7 +179,7 @@ describe("checkLegacyConfiguration — removed custom NSIS bundle keys", () => {
     expect(message).toContain("`nsis.customNsisBinary` was replaced by `toolsets.nsis` and `nsis.installerDebugLogging` in electron-builder v27.")
     expect(message).toContain("toolsets#custom-toolset-checksum")
     expect(message).toContain("windows/Plugins/")
-    expect(message).toContain("v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis")
+    expect(message).toContain("v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis")
     expect(message).not.toContain(url)
     expect(message).not.toContain(checksum)
   })
@@ -214,7 +214,7 @@ describe("assertInstallerDebugLoggingSupported", () => {
     expect(message).toContain("`installerDebugLogging` (nsis-web target) needs a log-enabled NSIS")
     expect(message).toContain("NSIS_CONFIG_LOG=yes")
     expect(message).toContain(`\`toolsets.nsis\` is ${shown}`)
-    expect(message.endsWith("https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis")).toBe(true)
+    expect(message.endsWith("https://www.electron.build/docs/migration/v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis")).toBe(true)
   })
 
   test("accepts a custom toolsets.nsis bundle", () => {
