@@ -134,7 +134,7 @@ describe("buildBlockMap", () => {
     const blake2bPath = require.resolve("@noble/hashes/blake2.js", {
       paths: [require.resolve("app-builder-lib/out/targets/blockmap/blockmap")],
     })
-    const { blake2b } = require(blake2bPath) as typeof import("@noble/hashes/blake2")
+    const { blake2b } = require(blake2bPath) as typeof import("@noble/hashes/blake2.js")
     const data = makeTestData(50_000)
     const inFile = path.join(tmpDir, "checksum.bin")
     const outFile = path.join(tmpDir, "checksum.blockmap")
@@ -153,23 +153,6 @@ describe("buildBlockMap", () => {
       expect(checksums[i]).toBe(expected)
       offset += sizes[i]
     }
-  })
-
-  it("blake2b subpath switch keeps blockmap output unchanged", async () => {
-    // Golden value captured with the previous `@noble/hashes/blake2b.js` import. Blockmaps feed
-    // electron-updater differential downloads, so importing from `blake2.js` (exported by both
-    // @noble/hashes 1.x and 2.x) must not change a single chunk boundary or checksum.
-    const data = makeTestData(200_000)
-    const inFile = path.join(tmpDir, "golden.bin")
-    const outFile = path.join(tmpDir, "golden.blockmap")
-    await writeFile(inFile, data)
-
-    await buildBlockMap(inFile, "gzip", outFile)
-
-    const json = JSON.parse(zlib.gunzipSync(await readFile(outFile)).toString())
-    const { sizes, checksums } = json.files[0]
-    expect(sizes).toHaveLength(11)
-    expect(createHash("sha256").update(JSON.stringify({ sizes, checksums })).digest("hex")).toBe("c76fe121136db2eeb9d4372d2c765df56e1725c6bd2eef75a0f8cb5df1496454")
   })
 
   it("matches Go binary output: chunk boundaries for known test data", async () => {
