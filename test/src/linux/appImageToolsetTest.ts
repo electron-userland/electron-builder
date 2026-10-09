@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // Version resolution must never reach the network in a unit test: intercept the shared toolset
 // downloader and assert the release descriptor it is asked for. Everything else in electronGet stays real
@@ -11,8 +11,6 @@ vi.mock("app-builder-lib/src/util/electronGet", async importOriginal => {
 import { downloadBuilderToolset } from "app-builder-lib/internal"
 import { appimageChecksums, getAppImageTools } from "app-builder-lib/src/toolsets/appimage"
 import { Arch, InvalidConfigurationError } from "builder-util"
-import { mkdtemp, rm } from "fs/promises"
-import { tmpdir } from "os"
 import * as path from "path"
 
 const FAKE_TOOLSET = "/fake/appimage-toolset"
@@ -21,13 +19,12 @@ const GITHUB_ORG_REPO = "electron-userland/electron-builder-binaries"
 describe("getAppImageTools", () => {
   let tmpDir: string
 
-  beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(tmpdir(), "eb-appimage-toolset-test-"))
+  // The context's `tmpDir` fixture (vitest-tmpdir.ts) cleans up after each test.
+  beforeEach(async context => {
+    tmpDir = await context.tmpDir.createTempDir({ prefix: "eb-appimage-toolset-test" })
     vi.mocked(downloadBuilderToolset).mockReset()
     vi.mocked(downloadBuilderToolset).mockResolvedValue(FAKE_TOOLSET)
   })
-
-  afterEach(() => rm(tmpDir, { recursive: true, force: true }).catch(() => {}))
 
   test.each([
     ["latest", "latest"],
