@@ -316,7 +316,7 @@ See [Custom NSIS Migration Guide](./v26-to-v27#step-4-custom-nsis-migration-guid
 }
 // After:
 // Custom NSIS artifacts provided by a unified toolset
-// Note: Debug-logging still controlled on NSIS and not by toolsets.nssis
+// Note: Debug-logging still controlled on NSIS and not by toolsets.nsis
 {
   "toolsets": {
     "nsis": {
