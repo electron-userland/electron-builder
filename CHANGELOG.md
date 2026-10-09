@@ -1,3 +1,15 @@
+## [26.17.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.17.0...electron-builder@26.17.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* import blake2b from `@noble/hashes/blake2.js` ([#10292](https://github.com/electron-userland/electron-builder/issues/10292)) ([6202a27](https://github.com/electron-userland/electron-builder/commit/6202a271c2373eb5721acf2416098cd1dff73f83))
+* **nsis:** keep installer extraction in sync with the payload format when `useZip` is set (v26 backport of [#10248](https://github.com/electron-userland/electron-builder/issues/10248)) ([#10252](https://github.com/electron-userland/electron-builder/issues/10252)) ([160c3b4](https://github.com/electron-userland/electron-builder/commit/160c3b405ff1e193eadd4d6d76049e23ce334ebd))
+* **nsis:** warn when differentialPackage "store-asar" finds no app.asar (v26 backport of [#10246](https://github.com/electron-userland/electron-builder/issues/10246)) ([#10249](https://github.com/electron-userland/electron-builder/issues/10249)) ([fcd6897](https://github.com/electron-userland/electron-builder/commit/fcd6897810846ee8dc367f0abacf34e4eb5a10fb))
+* **pnpm:** read the app's own package.json when its name matches a dependency (v26 backport of [#10278](https://github.com/electron-userland/electron-builder/issues/10278)) ([#10282](https://github.com/electron-userland/electron-builder/issues/10282)) ([c60987c](https://github.com/electron-userland/electron-builder/commit/c60987c538598118d89ea9cede383a06dc2743b8))
+
+
+
 # [26.17.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.16.1...electron-builder@26.17.0) (2026-09-25)
 
 
