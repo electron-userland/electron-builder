@@ -68,7 +68,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`build.helper-bundle-id` removed](#buildhelper-bundle-id) | ✓ | Moved to `mac.helperBundleId` |
 | [`squirrelWindows.noMsi` removed](#squirrelwindowsnomsi) | ✓ | Replaced by `msi` (inverted) |
 | [`squirrelWindows.customSquirrelVendorDir` removed](#squirrelwindowscustomsquirrelvendordir) | — | Supply a custom Squirrel bundle via `toolsets.squirrel` (a `ToolsetCustom` object); `migrate-schema` warns but cannot rewrite it (different bundle layout) |
-| [`.customNsisBinary` / `.customNsisResources` removed](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis) | partial | Originally avail on nsis, nsisWeb, portable. Now combined and moved to a [NSIS Toolset Bundle](../toolsets#custom-nsis-bundle-layout) configured under `toolsets.nsis`. **Manual action required** - [A complete migration guide is available](#custom-nsis-migration-guide). A config that still sets removed key(s) fails the build with a message naming the replacement. (`migrate-schema` warns, cannot convert it).  |
+| [`.customNsisBinary` / `.customNsisResources` removed](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis) | partial | Originally avail on nsis, nsisWeb, portable. Now combined and moved to a [NSIS Toolset Bundle](../toolsets#custom-nsis-bundle-layout) configured under `toolsets.nsis`. **Manual action required** - [A complete migration guide is available](./v26-to-v27#step-4-custom-nsis-migration-guide). A config that still sets removed key(s) fails the build with a message naming the replacement. (`migrate-schema` warns, cannot convert it).  |
 | [`GithubOptions.vPrefixedTagName` removed](#githuboptions-gitlaboptions-vprefixedtagname) | ✓ | Use `tagNamePrefix`; an empty `tagNamePrefix: ""` is now honored (v26 ignored it) |
 | [`GitlabOptions.vPrefixedTagName` retained](#githuboptions-gitlaboptions-vprefixedtagname) | — | None — still functional; the migrator leaves GitLab entries untouched |
 | [`devMetadata` / `extraMetadata` in `PackagerOptions` removed](#devmetadata-extrametadata-programmatic-packageroptions) | — | Use `config` / `config.extraMetadata` |
@@ -280,7 +280,7 @@ The shape and behaviour differ, so this is not a 1-to-1 rename:
 
 For a fully offline build, seed the `squirrel.windows@<version>` archive (plus `winCodeSign` and, for MSI, the WiX bundle) in the toolset cache or point `toolsets.squirrel` at a local bundle — see [Offline / Air-Gapped Builds](../tutorials/offline-air-gapped-builds.md). Nothing is downloaded outside the checksummed toolset bundles.
 
-## customNsisBinary and customNsisResources replaced by `toolsets.nsis`
+### customNsisBinary and customNsisResources replaced by `toolsets.nsis`
 
 Removed (`.customNsisBinary` / `customNsisResources`), on `nsis`, `nsisWeb` and `portable` configs, together with the exported `CustomNsisBinary` type.
 
@@ -288,7 +288,7 @@ The 1 to 1 replacement for either/both is the new [`toolsets.nsis`](../toolsets#
 
 In general, the NSIS resources/binary are married quite closely and in nuanced ways - the new unified structure gives easy access to both in the same place and simplifies build-flow.
 
-See [Custom NSIS Migration Guide](#custom-nsis-migration-guide) & [NSIS toolset documentation](../toolsets.md#custom-nsis-bundle-layout) for more details.
+See [Custom NSIS Migration Guide](./v26-to-v27#step-4-custom-nsis-migration-guide) & [NSIS toolset documentation](../toolsets.md#custom-nsis-bundle-layout) for more details.
 
 - **A Custom NSIS Binary** Custom compiled NSIS binaries are practical to facillitate builds with unique requirements (like bypassing the 2Gib limit on installer.exe generation). A custom NSIS binary can also be used to adjust to the appearance of the installer in a variety of ways through the many images that get baked into it. If you were using (`.customNsisBinary`) in `v26`, now you must provide that binary via a `toolsets.nsis` bundle for parity on `v27`.
 - **Custom NSIS Resources** Custom NSIS resources are required to expose any additional 3rd party plugins that may be needed in custom `.nsh` scripts. If you were using (`.customNsisResources`) in `v26`, now you must provide that resource via a `toolsets.nsis` bundle for parity on `v27`.
@@ -333,68 +333,6 @@ Of note, `v27` brings in support for bare file-paths to be used in the `url` fie
 
 - `https://` — downloaded and cached locally; the archive is extracted before use.
 - `file:///absolute/path` — used directly; relative paths must be within the project resources dir.
-
-
-
-## Custom NSIS Migration Guide
-
-To migrate from `.customNsisBinary`/`.customNsisResources` to a new custom unified `toolsets.nsis` bundle requires manual steps.
-
-### **If you previously used `.customNsisBinary` in `v26` or prior:**
-
-1. Download & extract a copy of the new default [NSIS Toolset Bundle](https://github.com/electron-userland/electron-builder-binaries/tree/master/artifacts/nsis) as well as the archive you provided via `.customNsisBinary`.
-2. Depending on what OS(es) your `.customNsisBinary` was built to support, you may have any subset of these three binaries that need to be copied over.
-    - a. `/makensis.exe`
-    - b. `/linux/makensis`
-    - c. `/mac/makensis`
-3. The NSIS Toolset Bundle you download is a valid `toolsets.nsis` bundle and provides easy locations you can drop any `makensis` binaries you into.
-    - a. `/windows/` ← *Copy `/makensis.exe` From your `.customNsisBinary` archive to this path to migrate*
-    - b. `/mac/x64` ← *Copy `/mac/makensis` from a `.customNsisBinary` archive to this path to migrate*
-    - c. `/mac/arm64`
-    - d. `/linux/x64` ← *Copy `/linux/makensis` from a `.customNsisBinary` archive to this path to migrate*
-    - e. `/linux/arm64`
-4. When copying your custom binaries across you should overwrite the makensis executables already present in the new-bundle.
-5. (optional) - As you can see, the new `toolset.nsis` bundle now provides native makensis binaries for newly supported targets like `Mac (arm64)` & `Linux (arm64)`. You're welcome to provide binaries for as many (or as few) Operating-System/Architecture targets as you want in your custom toolset. You only need to provide a `makensis` executable for the OS & arch combos you intend to run your builds with.
-6. (optional) - The new `toolsets.nsis` is more flexible than previous `.customNsisBinary`/`.customNsisResources` in that the layout is customizable. The following files hook incoming makensis executions. This shim-script-layer opens up a path for custom dynamic logic to adjust binary/resources conditionally and on the fly.
-    - a. `/makensis` ← *Bash script, routes incoming makensis execution requests for macOS/Linux builds*
-    - b. `/makensis.cmd` ← *Cmd script, routes incoming makensis execution requests for Windows builds running via Command Prompt*
-    - c. `/makensis.ps1` ← *PowerShell script, routes incoming makensis execution requests for Windows builds running via Powershell*
-7. Include your newly created bundle in your electron builder config via `toolsets.nsis` by either:
-    - a. Providing a `file://<path-to-your-uncompressed-nsis-toolset-bundle-folder>` as the `toolsets.nsis.url`.
-    - b. Similar to how `.customNsisBinary`/`.customNsisResources` worked, host the bundle as a `.7z` file remotely. Provide the remote url as the `toolsets.nsis.url` & and provide the hash of the archive (either sha256-hex or sha512-base64) to the `toolsets.nsis.hash` property.
-
-
-### **If you previously used `.customNsisResources` in `v26` or prior:**
-
-1. Download & extract a copy of the new default [NSIS Toolset Bundle](https://github.com/electron-userland/electron-builder-binaries/tree/master/artifacts/nsis) as well as the archive you provided via `.customNsisResources`.
-2. For the `.customNsisResources`, all 3rd party resource .dlls were located as such:
-    - a. `/plugins/x64-ansi/<plugin(s).dll>`
-    - b. `/plugins/x64-unicode/<plugin(s).dll>`
-    - c. `/plugins/x86-ansi/<plugin(s).dll>`
-    - d. `/plugins/x86-ansi/<plugin(s).dll>`
-3. The NSIS Toolset Bundle you download is a valid `toolsets.nsis` bundle and provides an easy locations you can drop in your resources. The root NSISDIR (NSIS Resources Directory) is now `/windows/`. The move of just resources is pretty straightforward:
-    - a. `/windows/Plugins/x64-ansi/<plugin(s).dll>`
-    - b. `/windows/Plugins/x64-unicode/<plugin(s).dll>`
-    - c. `/windows/Plugins/x86-ansi/<plugin(s).dll>`
-    - d. `/windows/Plugins/x86-ansi/<plugin(s).dll>`
-4. When copying your custom binaries across you should overwrite the makensis executables already present in the new-bundle.
-5. The complete common NSIS resources pulled during `makensis` runtime are `/Stubs`, `/Include`, `/Contrib`, `/Plugins`. I actually have no confirmation if resources outside of `/plugins` were supported by `.customNsisResources`. Never the less, if you have any of these resources, they can go here:
-    - a. `/windows/Plugins/`
-    - b. `/windows/Include/`
-    - c. `/windows/Contrib/`
-    - d. `/windows/Stubs/`
-    - e. `/windows/` ← *Root NSISDIR (Nsis Resources Dir) by default*
-6. (optional) - The new `toolsets.nsis` is more flexible than previous `.customNsisBinary`/`.customNsisResources` in that the layout is customizable. The following files configure NSISDIR (NSIS Resource Directory). This shim-script-layer opens up a path to dynamically control NSISDIR on the fly.
-    - a. `/makensis` ← *Bash script, routes incoming makensis execution requests for macOS/Linux builds*
-    - b. `/makensis.cmd` ← *Cmd script, routes incoming makensis execution requests for Windows builds running via Command Prompt*
-    - c. `/makensis.ps1` ← *PowerShell script, routes incoming makensis execution requests for Windows builds running via Powershell*
-7. Include your newly created bundle in your electron builder config via `toolsets.nsis` by either:
-    - a. Providing a `file://<path-to-your-uncompressed-nsis-toolset-bundle-folder>` as the `toolsets.nsis.url`.
-    - b. Similar to how `.customNsisBinary`/`.customNsisResources` worked, host the bundle as a `.7z` file remotely. Provide the remote url as the `toolsets.nsis.url` & and provide the hash of the archive (either sha256-hex or sha512-base64) to the `toolsets.nsis.hash` property.
-
-- **The `toolsets.nsis` bundle must carry `elevate.exe` at the bundle's root directory** You can grab a copy one from the root of Electron Builder's default [NSIS Toolset Bundle](https://github.com/electron-userland/electron-builder-binaries/tree/master/artifacts/nsis). It is used for privledge-control features by the UAC nsis plugin.
-
-- **For more information/guidance you can checkout the [`toolsets.nsis` documentation](../toolsets#custom-nsis-bundle-layout)**
 
 **`installerDebugLogging` needs a log-enabled NSIS**, that is `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`; any other `makensis` rejects the `LogSet` it emits. The bundled `toolsets.nsis` versions are not log-enabled, so the build fails with a configuration error when `installerDebugLogging` is set without a custom `toolsets.nsis` bundle. This is unchanged from v26, where the option also only worked with your own `customNsisBinary`. When building on Linux or macOS, the bundle's `makensis` for that host must be log-enabled too.
 

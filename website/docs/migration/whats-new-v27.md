@@ -52,7 +52,7 @@ These are the runtime and default changes that `migrate-schema` **does not** rew
 | **Linux `.desktop` runs a `*-launcher` script** | Every Linux target launches via a generated `<executableName>-launcher`; the `.desktop` `Exec` points at it. Update custom `.desktop` / AppArmor / MIME tooling. | [→](./v27-breaking-changes.md#linux-launcher-entrypoint) |
 | **AppImage `--no-sandbox` only for legacy FUSE2** | With the default FUSE3 runtime, `--no-sandbox` is no longer auto-added; set `executableArgs: ["--no-sandbox"]` if you need it unconditionally. | [→](./v27-breaking-changes.md#linux-launcher-entrypoint) |
 | **Azure Trusted Signing uses `signtool /dlib`** | The default winCodeSign 1.3.0 ships the ATS `dlib` payload, so ATS uses the faster path automatically; pin below 1.3.0 to force the legacy PowerShell path. | [→](./v27-breaking-changes.md#azure-trusted-signing-signtool-dlib-is-the-default) |
-
+| **Consolidated custom NSIS artifacts to `toolsets.nsis`** | Artifacts provided by `.customNsisBinary`, `.customNsisResources` config are now provided by on bundle set via `toolset.nsis`. This is breaking change if you used those configs with [manual migration steps](./v26-to-v27#step-4-custom-nsis-migration-guide) required.  | [→](./v27-breaking-changes/#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis) |
 :::note
 This is the short list of high-traffic surprises. For the complete, authoritative catalogue — including config-key renames the migrator **does** handle — see [v27 Breaking Changes](./v27-breaking-changes.md).
 :::
