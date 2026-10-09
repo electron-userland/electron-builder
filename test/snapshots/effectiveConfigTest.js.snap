@@ -1,0 +1,13 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`writeEffectiveConfig: false skips the file 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`writeEffectiveConfig: true writes the file outside a TTY 1`] = `
+{
+  "linux": [],
+}
+`;
