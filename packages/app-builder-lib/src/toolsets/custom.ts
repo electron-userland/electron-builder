@@ -1,7 +1,8 @@
-import { exists, sanitizeDirPath, validateSecuredUrl } from "builder-util"
-import { mkdir, rmdir, stat } from "fs/promises"
+import { exists, InvalidConfigurationError, sanitizeDirPath, validateSecuredUrl } from "builder-util"
+import { mkdir, rm, stat } from "fs/promises"
 import * as path from "path"
 import { ToolsetCustom } from "../configuration.js"
+import { ACCEPTED_CHECKSUM_FORMATS, checksumCacheKey, checksumMismatchMessage, ExpectedChecksum, parseChecksum, verifyFileChecksum } from "../util/checksum.js"
 import { cacheDirectoryOverrideAllowed, downloadBuilderToolset, extractArchive, hashUrlSafe } from "../util/electronGet.js"
 
 async function validateCustomToolset(custom: ToolsetCustom, resourcesDir?: string) {
@@ -45,13 +46,40 @@ export function clearCustomToolsetCache(): void {
 }
 
 export function getCustomToolsetPath(custom: ToolsetCustom, resourcesDir?: string): Promise<string> {
-  const key = JSON.stringify({ url: custom.url, checksum: custom.checksum ?? "", resourcesDir })
+  const key = JSON.stringify({ url: custom.url, checksum: memoChecksumKey(custom.checksum), resourcesDir })
   let cached = _customToolsetCache.get(key)
   if (cached == null) {
     cached = _resolveCustomToolsetPath(custom, resourcesDir)
     _customToolsetCache.set(key, cached)
   }
   return cached
+}
+
+// Equivalent spellings of one checksum (uppercase hex, surrounding whitespace) share a memo entry; an invalid value is
+// keyed verbatim and fails in _resolveCustomToolsetPath with the configuration error.
+function memoChecksumKey(checksum: string | undefined): string {
+  if (!checksum) {
+    return ""
+  }
+  try {
+    return checksumCacheKey(parseChecksum(checksum, "ToolsetCustom.checksum"))
+  } catch {
+    return checksum
+  }
+}
+
+const CHECKSUM_DOCS_URL = "https://www.electron.build/docs/toolsets#custom-toolset-checksum"
+
+/**
+ * Classifies the checksum of a downloaded or archive toolset up front, so a value in an unsupported format fails before
+ * anything is downloaded or extracted, without echoing the value. A SHA-256 hex value is verified by `@electron/get` for a
+ * download; a base64 SHA-512 (the format v26 used for all toolset checksums) is verified by electron-builder.
+ */
+function normalizeChecksum(checksum: string | undefined, type: string, url: string): ExpectedChecksum {
+  if (!checksum) {
+    throw new InvalidConfigurationError(`ToolsetCustom.checksum is required for ${type} toolsets (url: ${url}): ${ACCEPTED_CHECKSUM_FORMATS}. See ${CHECKSUM_DOCS_URL}`)
+  }
+  return parseChecksum(checksum, `ToolsetCustom.checksum for ${type} toolset ${url}`, CHECKSUM_DOCS_URL)
 }
 
 async function _resolveCustomToolsetPath(custom: ToolsetCustom, resourcesDir?: string): Promise<string> {
@@ -61,21 +89,31 @@ async function _resolveCustomToolsetPath(custom: ToolsetCustom, resourcesDir?: s
     return resolveFilePath(toolset.url, resourcesDir)
   }
 
-  if (!toolset.checksum) {
-    throw new Error(`ToolsetCustom.checksum is required for ${type} toolsets (url: ${toolset.url})`)
-  }
-
-  const binaryVersion = toolset.version ?? toolset.checksum.substring(0, 8)
+  const checksum = normalizeChecksum(toolset.checksum, String(type), toolset.url)
+  // hex form of the digest: a base64 SHA-512 may contain "/" or "+", which must not reach the cache directory name
+  const binaryVersion = toolset.version ?? checksumCacheKey(checksum).substring(0, 8)
   const releaseName = `${binaryVersion}-${hashUrlSafe(toolset.url)}`
 
   if (type === "url") {
     return downloadBuilderToolset({
       releaseName: releaseName,
       filenameWithExt: path.basename(toolset.url),
-      checksums: { [path.basename(toolset.url)]: toolset.checksum },
+      checksums: { [path.basename(toolset.url)]: checksum.value },
       overrideUrl: toolset.url,
     })
   } else if (type === "file") {
+    const archivePath = resolveFilePath(toolset.url, resourcesDir)
+    // Verify the local archive on every resolution, before anything is extracted: the archive is re-extracted each time anyway
+    // (see below), so hashing it adds little, and a stale extraction can never outlive a changed archive. The user's file is
+    // never modified or removed, whatever the result.
+    const { matches, actual } = await verifyFileChecksum(archivePath, checksum)
+    if (!matches) {
+      throw new InvalidConfigurationError(
+        `${checksumMismatchMessage(`the local toolset archive ${archivePath}`, checksum, actual)} ` +
+          `The archive was not extracted and has been left in place. Update ToolsetCustom.checksum if the archive was changed intentionally. See ${CHECKSUM_DOCS_URL}`
+      )
+    }
+
     const cacheDir = await cacheDirectoryOverrideAllowed.value
     const customToolsetDir = path.join(cacheDir, "custom-toolsets")
     await mkdir(customToolsetDir, { recursive: true })
@@ -85,9 +123,9 @@ async function _resolveCustomToolsetPath(custom: ToolsetCustom, resourcesDir?: s
     // config field, so a `../…` value must not let rmdir/extract escape the cache directory.
     const toolsetTarget = sanitizeDirPath(path.join(customToolsetDir, releaseName), customToolsetDir)
     if (await exists(toolsetTarget)) {
-      await rmdir(toolsetTarget, { recursive: true })
+      await rm(toolsetTarget, { recursive: true })
     }
-    await extractArchive(resolveFilePath(toolset.url, resourcesDir), toolsetTarget)
+    await extractArchive(archivePath, toolsetTarget)
     return toolsetTarget
   }
 

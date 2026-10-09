@@ -217,22 +217,53 @@ type CollectorRunner = (pm: PM, dir: string) => Promise<CollectedNodeModules>
 // collected tree and cannot be used to validate it.
 const LOCAL_DEPENDENCY_SPEC = /^(?:workspace|file|link|portal):/
 
+// Log-summary buckets in which a collector reports a declared dependency it deliberately or
+// unavoidably left out of the collected tree. A direct dependency recorded in one of these is
+// accounted for even though it is absent from the top level of an otherwise correct collection.
+const ACCOUNTED_ABSENT_DEPENDENCY_KEYS: ReadonlyArray<LogMessageByKey> = [
+  // dropped by the target arch/platform filter (`archFilter`, package.json `cpu`/`os`)
+  LogMessageByKey.PKG_INCOMPATIBLE_PLATFORM,
+  // not installed / not resolvable on disk — whether that is fatal is decided afterwards by
+  // `allowMissingDependencies` (see enforceAllowMissingDependencies), not by collection matching
+  LogMessageByKey.PKG_NOT_FOUND,
+  LogMessageByKey.PKG_NOT_ON_DISK,
+  LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED,
+  LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED,
+  // excluded via `ignoredProductionDependencies` (such modules normally stay in the tree flagged
+  // `excluded`, so this only matters if a collector ever drops them instead)
+  LogMessageByKey.PKG_EXCLUDED_IGNORED,
+  // a dependency that resolves to the package itself is skipped rather than collected
+  LogMessageByKey.PKG_SELF_REF,
+]
+
 /**
  * Determines whether a collected module tree actually describes the package being built.
  *
  * A package-manager `list` invocation can resolve to the wrong project root — most notably when
  * electron-builder is run from a workspace sub-package whose dependencies are hoisted to the
- * workspace root. In that case the collector returns a non-empty but unrelated tree. Accepting it
- * would suppress the manual-traversal fallback that resolves the correct modules, so we need to
- * tell a matching collection from a mismatched one.
+ * workspace root (#9945) — or a collector can resolve the root node to the wrong package (e.g. an
+ * app named like one of its own dependencies, #10277). In both cases the collector returns a
+ * non-empty but wrong tree. Accepting it would suppress the manual-traversal fallback that resolves
+ * the correct modules, so we need to tell a matching collection from a mismatched one.
  *
- * A collection matches when at least one of the package's declared external (registry-installed,
- * non-`workspace:`/`file:`/`link:`/`portal:`) production dependencies is present at the top level —
- * those direct dependencies are always hoisted to the top level of a correct collection. When the
- * package declares no external production dependencies there is nothing to validate against, so any
- * non-empty collection is accepted.
+ * Only the package's declared external (registry-installed, non-`workspace:`/`file:`/`link:`/`portal:`)
+ * production `dependencies` are checked; they are always placed at the top level of a correct
+ * collection. A collection matches when:
+ * - at least one of them is present at the top level, and
+ * - every one of them is either present at the top level (including modules flagged `excluded` by
+ *   `ignoredProductionDependencies`) or reported in the collection's own `logSummary` as
+ *   legitimately absent: dropped by the arch/platform filter, missing on disk (enforced later by
+ *   `allowMissingDependencies`), a missing optional/platform-specific package, excluded as ignored,
+ *   or a self-reference.
+ *
+ * When the package declares no external production dependencies there is nothing to validate
+ * against, so any non-empty collection is accepted.
  */
-export function collectionMatchesAppDependencies(nodeModules: NodeModuleInfo[], dependencies: Record<string, string> | undefined): boolean {
+export function collectionMatchesAppDependencies(
+  nodeModules: NodeModuleInfo[],
+  dependencies: Record<string, string> | undefined,
+  logSummary?: ModuleManager["logSummary"]
+): boolean {
   const requiredExternalDeps = Object.entries(dependencies ?? {})
     .filter(([, spec]) => !LOCAL_DEPENDENCY_SPEC.test(spec))
     .map(([name]) => name)
@@ -240,7 +271,11 @@ export function collectionMatchesAppDependencies(nodeModules: NodeModuleInfo[], 
     return true
   }
   const collected = new Set(nodeModules.map(it => it.name))
-  return requiredExternalDeps.some(name => collected.has(name))
+  if (!requiredExternalDeps.some(name => collected.has(name))) {
+    return false
+  }
+  const accountedAbsent = new Set(ACCOUNTED_ABSENT_DEPENDENCY_KEYS.flatMap(key => logSummary?.[key] ?? []).map(dependencyNameFromSummaryId))
+  return requiredExternalDeps.every(name => collected.has(name) || accountedAbsent.has(name))
 }
 
 /**
@@ -249,6 +284,11 @@ export function collectionMatchesAppDependencies(nodeModules: NodeModuleInfo[], 
  * {@link collectionMatchesAppDependencies}). A non-empty collection that does NOT match — e.g. a
  * workspace-root tree returned for a sub-package — is retained only as a last-resort fallback so a
  * later approach (notably {@link PM.TRAVERSAL}) can supply the correct modules.
+ *
+ * An approach that throws (e.g. the package manager exited without producing its dependency tree,
+ * issue #10208) is logged as a warning and skipped so the remaining approaches still run. If every
+ * approach fails to produce a collection and at least one threw, the first error is rethrown rather
+ * than silently reporting "no node modules".
  */
 export async function resolveFirstMatchingCollection(options: {
   pmApproaches: PM[]
@@ -258,22 +298,33 @@ export async function resolveFirstMatchingCollection(options: {
 }): Promise<CollectedNodeModules | undefined> {
   const { pmApproaches, searchDirectories, dependencies, run } = options
   let fallback: CollectedNodeModules | undefined
+  let firstError: Error | undefined
 
   for (const pm of pmApproaches) {
     for (const dir of searchDirectories) {
       log.info({ pm, searchDir: dir }, "searching for node modules")
-      const deps = await run(pm, dir)
+      let deps: CollectedNodeModules
+      try {
+        deps = await run(pm, dir)
+      } catch (error: any) {
+        log.warn({ pm, searchDir: dir, error: error?.message ?? String(error) }, "node module collection failed, trying next search directory/approach")
+        firstError ??= error instanceof Error ? error : new Error(String(error))
+        continue
+      }
       if (deps.nodeModules.length === 0) {
         log.info({ pm, searchDir: dir }, "no node modules found in collection, trying next search directory")
         continue
       }
-      if (collectionMatchesAppDependencies(deps.nodeModules, dependencies)) {
+      if (collectionMatchesAppDependencies(deps.nodeModules, dependencies, deps.logSummary)) {
         log.debug({ pm, searchDir: dir, depCount: deps.nodeModules.length }, "collected node modules")
         return deps
       }
       log.info({ pm, searchDir: dir }, "collected node modules do not match the target package, trying next search directory/approach")
       fallback ??= deps
     }
+  }
+  if (fallback == null && firstError != null) {
+    throw firstError
   }
   return fallback
 }
@@ -392,5 +443,32 @@ export async function collectNodeModulesWithLogging(platformPackager: PlatformPa
     log.warn({ dependencies: bundledDefaultIgnored }, "copied dependencies that shouldn't be needed, see ignoredProductionDependencies")
   }
 
+  warnAboutDeprecatedElectronPackages(deps.nodeModules)
+
   return deps.nodeModules
+}
+
+/**
+ * Long-deprecated Electron packages that v26 rejected outright as production dependencies.
+ *
+ * v27 dropped that guard without adding them to the default ignore list, so they are now copied into
+ * the app instead of failing the build — and `electron-prebuilt` drags a full second Electron binary
+ * (hundreds of MB) into app.asar with nothing in the log to explain the size jump.
+ */
+const DEPRECATED_ELECTRON_PACKAGES: Record<string, string> = {
+  "electron-prebuilt": "renamed to `electron` in 2016 — replace it with `electron`",
+  "electron-rebuild": "moved to `@electron/rebuild` — replace it and move it to devDependencies",
+  "electron-nightly": "a full Electron distribution — move it to devDependencies if it is not meant to ship",
+}
+
+function warnAboutDeprecatedElectronPackages(nodeModules: Array<{ name: string; excluded?: boolean }>): void {
+  const bundled = nodeModules.filter(it => !it.excluded && it.name in DEPRECATED_ELECTRON_PACKAGES)
+  for (const { name } of bundled) {
+    log.warn(
+      { dependency: name, solution: `add "${name}" to ignoredProductionDependencies, or move it to devDependencies` },
+      `${name} is declared in dependencies and is being packaged into your app (${DEPRECATED_ELECTRON_PACKAGES[name]}). ` +
+        "electron-builder <= 26 rejected this outright; v27 removed that guard and does not exclude it by default. " +
+        "See https://www.electron.build/docs/migration/v27-breaking-changes#electron-prebuilt-electron-rebuild-no-longer-error-and-are-not-excluded"
+    )
+  }
 }

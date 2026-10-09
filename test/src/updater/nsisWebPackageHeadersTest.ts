@@ -38,7 +38,7 @@ test("passes provider-computed headers to differential web package downloads", a
 
   const requiresFullDownload = await (updater as any).differentialDownloadWebPackage(
     {
-      updateInfoAndProvider: { info: { version: "1.0.1" } },
+      updateInfoAndProvider: { info: { version: "1.0.1" }, provider: { feedBaseUrl: new URL("https://example.com/") } },
       requestHeaders: headers,
       cancellationToken: new CancellationToken(),
     },

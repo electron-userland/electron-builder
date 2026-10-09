@@ -35,6 +35,7 @@ export class SnapStorePublisher extends Publisher {
     if (typeof channels === "string") {
       channels = channels.split(",")
     }
+    channels = channels.map(channel => channel.trim()).filter(channel => channel.length > 0)
 
     // `snapcraft upload <snap-file> --release <channels>` uploads the snap and
     // immediately releases it to the specified channels upon store review.

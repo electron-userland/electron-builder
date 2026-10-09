@@ -10,9 +10,9 @@ import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper
  * Wine × NSIS test matrix. Registered once per wine version by the generated toolset test files.
  *
  * Coverage:
- *  - NsisTarget uninstaller extraction via WineVmManager (every oneClick build triggers this)
+ *  - NsisTarget uninstaller extraction (every oneClick build triggers this); doTest runs the extracted uninstaller under wine
  *  - perMachine and perUser install paths via doTest
- *  - x64 uninstaller extraction (build-only; proves WineVmManager works for x64 targets)
+ *  - x64 uninstaller extraction (build-only)
  *  - Non-oneClick assisted installer (menuCategory variants)
  *  - File associations, multi-language license, custom NSIS include
  */
@@ -28,14 +28,14 @@ export function registerNsisWineTests(toolsets: ToolsetConfig): void {
 
   // On Linux the wine@1.0.1 portable bundle fails to load ntdll.dll in CI Docker environments
   // (electronuserland/builder:22-wine-mono) because the bundle's PE loader requires libraries not
-  // present in that container. Linux NSIS build + install coverage exists in oneClickInstallerTest
+  // present in that container. Linux NSIS build + install coverage exists in oneClickInstaller.e2e.ts
   // via the system wine that Docker already provides (null toolset → host wine).
   if (process.platform === "linux") {
-    it.skip("wine@1.0.1 portable bundle not compatible with CI Docker; Linux NSIS coverage in oneClickInstallerTest", () => {})
+    it.skip("wine@1.0.1 portable bundle not compatible with CI Docker; Linux NSIS coverage in oneClickInstaller.e2e.ts", () => {})
     return
   }
 
-  // --- oneClick: triggers NsisTarget → WineVmManager for uninstaller extraction ---
+  // --- oneClick: triggers NsisTarget uninstaller extraction ---
 
   test.ifNotWindows("perMachine oneClick — build + install", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
     app(
@@ -83,6 +83,8 @@ export function registerNsisWineTests(toolsets: ToolsetConfig): void {
         },
       },
       {
+        // an uninstaller icon that differs from the installer icon must be patched into the extracted uninstaller (#10258)
+        projectDirCreated: projectDir => copyTestAsset("headerIcon.ico", path.join(projectDir, "build", "uninstallerIcon.ico")),
         packed: async context => {
           await doTest(expect, context.outDir, true, undefined, undefined, null, true, toolsets)
         },
@@ -90,7 +92,7 @@ export function registerNsisWineTests(toolsets: ToolsetConfig): void {
     )
   )
 
-  // x64 build: exercises WineVmManager for 64-bit uninstaller extraction
+  // x64 build: exercises uninstaller extraction for 64-bit targets
   test.ifNotWindows("x64 oneClick — build", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
     app(expect, {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
