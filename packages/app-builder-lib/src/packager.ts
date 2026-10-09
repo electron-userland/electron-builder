@@ -34,6 +34,7 @@ import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOp
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
 import { expandMacro } from "./util/macroExpander.js"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
+import { warnOnRemovedEnvVars } from "./util/removedEnvVars.js"
 import { getRepositoryInfo } from "./util/repositoryInfo.js"
 import { resolveFunction } from "./util/resolve.js"
 import { installOrRebuild, nodeGypRebuild } from "./util/installOrRebuild.js"
@@ -224,6 +225,8 @@ export class Packager {
     }
 
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
+
+    warnOnRemovedEnvVars()
   }
 
   private async addPackagerEventHandlers() {
