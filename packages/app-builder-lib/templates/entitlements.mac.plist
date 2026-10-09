@@ -2,13 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
-    <!-- https://github.com/electron/electron-notarize#prerequisites -->
+    <!-- V8 compiles JavaScript at runtime, so the main app needs the JIT exception under the hardened runtime.
+         Chromium grants nothing else to the browser process:
+         https://source.chromium.org/chromium/chromium/src/+/main:chrome/app/app-entitlements.plist
+
+         `com.apple.security.cs.allow-unsigned-executable-memory` and
+         `com.apple.security.cs.disable-library-validation` are deliberately NOT granted here — modern Electron
+         does not need them in the main process, and both materially weaken the hardened runtime. Add them to
+         your own `build/entitlements.mac.plist` only if you actually need them (for example, loading a
+         framework or native module signed by another team). -->
     <key>com.apple.security.cs.allow-jit</key>
-    <true/>
-    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-    <true/>
-    <!-- https://github.com/electron-userland/electron-builder/issues/3940 -->
-    <key>com.apple.security.cs.disable-library-validation</key>
     <true/>
   </dict>
 </plist>

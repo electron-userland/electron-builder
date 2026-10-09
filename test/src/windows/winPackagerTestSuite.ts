@@ -5,11 +5,15 @@ import * as path from "path"
 import { NtExecutable, NtExecutableResource, Resource } from "resedit"
 import type { ExpectStatic } from "vitest"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
-import { PackedContext, app, appThrows, assertPack, platform } from "../helpers/packTester"
+import { PackedContext, app, appThrows, assertPack, isExeUnsigned, platform, readAsarIntegrityFromExe } from "../helpers/packTester"
+
+function getAppExePath(context: PackedContext, arch: Arch): string {
+  return path.join(context.getAppPath(Platform.WINDOWS, arch), `${context.packager.appInfo.productFilename}.exe`)
+}
 
 async function validatePeResources(context: PackedContext, expect: ExpectStatic, arch: Arch = Arch.x64): Promise<void> {
   const { appInfo } = context.packager
-  const exePath = path.join(context.getAppPath(Platform.WINDOWS, arch), `${appInfo.productFilename}.exe`)
+  const exePath = getAppExePath(context, arch)
   const res = NtExecutableResource.from(NtExecutable.from(await fs.readFile(exePath), { ignoreCert: true }))
   const [vi] = Resource.VersionInfo.fromEntries(res.entries)
   expect(vi).toBeDefined()
@@ -40,6 +44,7 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
       },
       {
         signedWin: true,
+        afterPackTestHook: async () => true,
         packed: async context => {
           await validatePeResources(context, expect)
         },
@@ -78,6 +83,12 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
           await fs.mkdir(path.join(projectDir, "build", "subdir"))
           await fs.copyFile(path.join(projectDir, "build", "extraAsar.asar"), path.join(projectDir, "build", "subdir", "extraAsar2.asar"))
         },
+        // the exe's INTEGRITY resource must cover the extraResources asar files too — asserted on the unpacked app
+        // (per arch, before the zip target would be built)
+        afterPackTestHook: async context => {
+          expect(await readAsarIntegrityFromExe(getAppExePath(context, context.arch))).toMatchSnapshot()
+          return true
+        },
         packed: async context => {
           await validatePeResources(context, expect)
         },
@@ -97,6 +108,7 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
       },
       {
         signedWin: true,
+        afterPackTestHook: async () => true,
         packed: async context => {
           await validatePeResources(context, expect)
         },
@@ -114,6 +126,7 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
       },
       {
         signedWin: true,
+        afterPackTestHook: async () => true,
         packed: async context => {
           await validatePeResources(context, expect)
         },
@@ -195,6 +208,7 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
         },
       },
       {
+        afterPackTestHook: async () => true,
         packed: async context => {
           const appDir = context.getContent(Platform.WINDOWS, Arch.x64)
           const expectedExe = `${context.packager.appInfo.productFilename}.exe`
@@ -221,7 +235,7 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
       error => expect(error.message).toContain("`forceCodeSigning` is enabled")
     ))
 
-  test("sign: false — NSIS installer and elevate.exe not signed even when a cert is discoverable", ({ expect }) =>
+  test("sign: false — app executable not signed even when a cert is discoverable", ({ expect }) =>
     app(
       expect,
       {
@@ -233,6 +247,10 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
       },
       {
         signedWin: true,
+        afterPackTestHook: async context => {
+          expect(await isExeUnsigned(getAppExePath(context, context.arch))).toBe(true)
+          return true
+        },
         packed: async context => {
           await validatePeResources(context, expect)
         },

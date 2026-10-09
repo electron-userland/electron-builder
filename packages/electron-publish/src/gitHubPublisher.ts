@@ -164,7 +164,7 @@ export class GitHubPublisher extends HttpPublisher {
       return
     }
 
-    const parsedUrl = parseUrl(`${release.upload_url.substring(0, release.upload_url.indexOf("{"))}?name=${fileName}`)
+    const parsedUrl = getUploadUrl(release.upload_url, fileName)
     return await this.doUploadFile(0, parsedUrl, fileName, dataLength, requestProcessor, release)
   }
 
@@ -275,7 +275,7 @@ export class GitHubPublisher extends HttpPublisher {
           {
             protocol: baseUrl.protocol,
             hostname: baseUrl.hostname,
-            port: baseUrl.port as any,
+            port: baseUrl.port,
             path: this.info.host != null && this.info.host !== "github.com" ? `/api/v3${path.startsWith("/") ? path : `/${path}`}` : path,
             headers: { accept: "application/vnd.github.v3+json" },
             timeout: this.info.timeout || undefined,
@@ -292,6 +292,14 @@ export class GitHubPublisher extends HttpPublisher {
   toString() {
     return `Github (owner: ${this.info.owner}, project: ${this.info.repo}, version: ${this.version})`
   }
+}
+
+/** @internal */
+export function getUploadUrl(uploadUrl: string, fileName: string): UrlWithStringQuery {
+  const templateIndex = uploadUrl.indexOf("{")
+  const url = new URL(templateIndex === -1 ? uploadUrl : uploadUrl.slice(0, templateIndex))
+  url.searchParams.set("name", fileName)
+  return parseUrl(url.toString())
 }
 
 /** @internal */

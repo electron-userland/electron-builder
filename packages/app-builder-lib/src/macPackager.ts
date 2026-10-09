@@ -405,6 +405,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
       }
 
+      // test-only early exit (see PackagerOptions.afterPackTestHook); a no-op unless the option is set
+      if (await this.info.shouldSkipTargetsAfterPack(packContext)) {
+        continue
+      }
+
       // A development-signed build (mas-dev, or an explicit sign.type "development" — see
       // MacTargetHelper.shouldCreateMasInstaller) produces no installer
       const masSignConfig = platformConfig.config.sign
@@ -429,6 +434,20 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         platformSpecificBuildOptions: platformConfig.config,
         targets,
       })
+    }
+
+    // test-only early exit (see PackagerOptions.afterPackTestHook); a no-op unless the option is set
+    if (
+      await this.info.shouldSkipTargetsAfterPack({
+        appOutDir: path.dirname(appPath),
+        outDir,
+        arch,
+        targets,
+        packager: this,
+        electronPlatformName: this.platform.nodeName,
+      })
+    ) {
+      return
     }
 
     this.packageInDistributableFormat(appPath, arch, targets, taskManager)
@@ -486,8 +505,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
     }
 
-    const signOptions = await this.helper.buildSignOptions(appPath, identity, signOpts, keychainFile, arch, targetPlatform)
+    const signOptions = await this.helper.buildSignOptions(appPath, identity, signOpts, keychainFile, arch, targetPlatform, hasCustomSign)
     await this.doSign(signOptions, config, identity)
+
+    // now that everything is signed, flag binaries that still carry a foreign (or missing) signature and would
+    // fail library validation at launch — the case the old blanket entitlements default used to mask
+    if (!hasCustomSign) {
+      await this.helper.warnAboutForeignSignedBinaries(appPath, identity, targetPlatform, signOpts)
+    }
 
     // Handle notarization for non-MAS builds
     if (!isMas) {
@@ -517,7 +542,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       customSign ? "executing custom sign" : "signing"
     )
 
-    return customSign ? Promise.resolve(customSign(opts, this)) : sign({ ...opts, identity: identity ? identity.name : undefined })
+    // `opts.identity` is resolved once, in MacTargetHelper.resolveSignIdentity — never re-derive it here, or a
+    // custom signer and @electron/osx-sign end up signing with different forms of the same certificate
+    return customSign ? Promise.resolve(customSign(opts, this)) : sign(opts)
   }
 
   //noinspection JSMethodCanBeStatic
