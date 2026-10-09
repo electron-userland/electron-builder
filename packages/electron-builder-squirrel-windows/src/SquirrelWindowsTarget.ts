@@ -1,4 +1,4 @@
-import { InvalidConfigurationError, log, isEmptyOrSpaces, exists } from "builder-util"
+import { InvalidConfigurationError, log, isEmptyOrSpaces, exists, escapeForXml } from "builder-util"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { sanitizeFileName } from "builder-util/out/filename"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
@@ -223,8 +223,7 @@ export default class SquirrelWindowsTarget extends Target {
     if (projectUrl != null) {
       const nuspecTemplate = await this.packager.info.tempDirManager.getTempFile({ prefix: "template", suffix: ".nuspectemplate" })
       let templateContent = await fs.promises.readFile(templatePath, "utf8")
-      const searchString = "<copyright><%- copyright %></copyright>"
-      templateContent = templateContent.replace(searchString, `${searchString}\n    <projectUrl>${projectUrl}</projectUrl>`)
+      templateContent = addProjectUrl(templateContent, projectUrl)
       await fs.promises.writeFile(nuspecTemplate, templateContent)
       return nuspecTemplate
     }
@@ -302,6 +301,11 @@ export default class SquirrelWindowsTarget extends Target {
 
     return options
   }
+}
+
+export function addProjectUrl(template: string, projectUrl: string): string {
+  const searchString = "<copyright><%- copyright %></copyright>"
+  return template.replace(searchString, `${searchString}\n    <projectUrl>${escapeForXml(projectUrl)}</projectUrl>`)
 }
 
 function checkConflictingOptions(options: any) {
