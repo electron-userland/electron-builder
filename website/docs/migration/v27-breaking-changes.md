@@ -299,31 +299,33 @@ See [Custom NSIS Migration Guide](./v26-to-v27#step-4-custom-nsis-migration-guid
 ```json5
 // Before (v26):
 // Custom NSIS artifacts provided via 2 seperate bundles
-{ "nsis": {
-  "customNsisBinary": {
-    "url": "https://example.com/my-nsis-executable.7z",
-    "checksum": "<checksum>",
-    "version": "3.10",
-    "debugLogging": true }
-  },
-  "customNsisResources":{
-    "url": "https://example.com/my-nsis-resources.7z"
-    "checksum": "<checksum>",
-    "version": "3.10",
-    "debugLogging": true }
+{
+  "nsis": {
+    "customNsisBinary": {
+      "url": "https://example.com/my-nsis-executable.7z",
+      "checksum": "<checksum>",
+      "version": "3.10",
+      "debugLogging": true
+    },
+    "customNsisResources": {
+      "url": "https://example.com/my-nsis-resources.7z",
+      "checksum": "<checksum>",
+      "version": "3.4.1"
+    }
   }
 }
 // After:
 // Custom NSIS artifacts provided by a unified toolset
+// Note: Debug-logging still controlled on NSIS and not by toolsets.nssis
 {
   "toolsets": {
     "nsis": {
       "url": "https://example.com/my-nsis.7z",
       "checksum": "<checksum>",
       "version": "3.10"
-      "installerDebugLogging": true
     }
   },
+  "nsis": { "installerDebugLogging": true }
 }
 ```
 
