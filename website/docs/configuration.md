@@ -37,6 +37,12 @@ Most of the options accept `null` — for example, to explicitly set that DMG ic
 
 Env file `electron-builder.env` in the current dir ([example](https://github.com/motdotla/dotenv-expand/blob/1cc80d02e1f8aa749253a04a2061c0fecb9bdb69/tests/.env)). Supported only for CLI usage.
 
+## Effective Configuration
+
+Before packaging, electron-builder writes the resolved configuration to `builder-effective-config.yaml` in the output directory (`directories.output`, `dist` by default). It is the merged result of `package.json`, the config file, presets and CLI overrides, plus values detected during the build such as `electronVersion`. Sensitive fields (passwords, tokens, `cscLink`) are masked.
+
+By default the file is written only for local interactive builds, not on CI or when stdout is piped. Set `writeEffectiveConfig` to `true` to always write it (e.g. `electron-builder -c.writeEffectiveConfig=true` in a CI step), or to `false` to never write it.
+
 ## How to Read Docs
 
 * Name of optional property is normal, **required** is bold.
@@ -76,7 +82,7 @@ electron-builder downloads the Electron distribution to package via [`@electron/
 ```
 
 :::note[v27: renamed from electronDownload]
-This key was `electronDownload` in v26. In v27 it is `electronGet`, reshaped to `@electron/get` v5 options: the flat `mirror` moved under `mirrorOptions.mirror`, `isVerifyChecksum: false` became `unsafelyDisableChecksums: true`, and `cache` / `customDir` / `customFilename` / `strictSSL` were dropped. `electron-builder migrate-schema` performs the rename. See [v27 Breaking Changes → electronGet](./migration/v27-breaking-changes.md#electrondownload-electronget).
+This key was `electronDownload` in v26. In v27 it is `electronGet`, reshaped to `@electron/get` v5 options: the flat `mirror` moved under `mirrorOptions.mirror`, `isVerifyChecksum: false` became `unsafelyDisableChecksums: true`, and `cache` / `customDir` / `customFilename` / `strictSSL` / `force` were dropped. `electron-builder migrate-schema` performs the rename. See [v27 Breaking Changes → electronGet](./migration/v27-breaking-changes.md#electrondownload-electronget).
 :::
 
 ## Build Version Management

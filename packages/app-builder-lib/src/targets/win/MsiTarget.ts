@@ -218,6 +218,9 @@ export default class MsiTarget extends Target {
     const dirs: Array<string> = []
     const fileSpace = " ".repeat(6)
     const commonOptions = getEffectiveOptions(this.options, this.packager)
+    // The template only declares `<Icon Id="${iconId}"/>` when an icon is configured, so referencing
+    // that id unconditionally makes light.exe fail with LGHT0094 for an app without an icon.
+    const iconAttribute = (await this.packager.getIconPath()) == null ? "" : ` Icon="${this.iconId}"`
     const files = (await walk(appOutDir)).map(file => {
       const packagePath = file.substring(appOutDir.length + 1)
 
@@ -259,7 +262,7 @@ export default class MsiTarget extends Target {
         if (isCreateDesktopShortcut) {
           result += `${fileSpace}  <Shortcut Id="desktopShortcut" Directory="DesktopFolder" Name="${escapeForXml(
             shortcutName
-          )}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${this.iconId}"/>\n`
+          )}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes"${iconAttribute}/>\n`
         }
 
         const hasMenuCategory = commonOptions.menuCategory != null
@@ -270,7 +273,7 @@ export default class MsiTarget extends Target {
           }
           result += `${fileSpace}  <Shortcut Id="startMenuShortcut" Directory="${startMenuShortcutDirectoryId}" Name="${escapeForXml(
             shortcutName
-          )}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${this.iconId}">\n`
+          )}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes"${iconAttribute}>\n`
           result += `${fileSpace}    <ShortcutProperty Key="System.AppUserModel.ID" Value="${escapeForXml(this.packager.appInfo.id)}"/>\n`
           result += `${fileSpace}  </Shortcut>\n`
         }
@@ -288,7 +291,7 @@ export default class MsiTarget extends Target {
         for (const item of fileAssociations) {
           const extensions = asArray(item.ext).map(normalizeExt)
           for (const ext of extensions) {
-            result += `${fileSpace}  <ProgId Id="${this.productMsiIdPrefix}.${escapeForXml(ext)}" Advertise="yes" Icon="${this.iconId}" ${
+            result += `${fileSpace}  <ProgId Id="${this.productMsiIdPrefix}.${escapeForXml(ext)}" Advertise="yes"${iconAttribute} ${
               item.description ? `Description="${escapeForXml(item.description)}"` : ""
             }>\n`
             result += `${fileSpace}    <Extension Id="${escapeForXml(ext)}" Advertise="yes">\n`

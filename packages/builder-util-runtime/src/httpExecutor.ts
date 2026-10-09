@@ -9,6 +9,7 @@ import { URL } from "url"
 import { Nullish } from "./index.js"
 import { CancellationToken } from "./CancellationToken.js"
 import { newError } from "./error.js"
+import { deepAssign } from "./objects.js"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform.js"
 
 const debug = _debug("electron-builder")
@@ -289,16 +290,28 @@ Please double check that your authentication token is correct. Due to security r
           },
           responseHandler: (response, callback) => {
             let receivedLength = 0
+            let isDone = false
+            const finish = (error: Error | null) => {
+              if (isDone) {
+                return
+              }
+              isDone = true
+              callback(error)
+            }
             response.on("data", (chunk: Buffer) => {
+              if (isDone) {
+                return
+              }
               receivedLength += chunk.length
               if (receivedLength > 524288000) {
-                callback(new Error("Maximum allowed size is 500 MB"))
+                finish(new Error("Maximum allowed size is 500 MB"))
+                response.destroy()
                 return
               }
               responseChunks.push(chunk)
             })
             response.on("end", () => {
-              callback(null)
+              finish(null)
             })
           },
         },
@@ -382,6 +395,31 @@ Please double check that your authentication token is correct. Due to security r
     return newOptions
   }
 
+  /**
+   * `headers` without the credential-bearing ones stripped on cross-origin redirects (see {@link addSensitiveRedirectHeader})
+   * when `targetUrl` is on another origin than `originUrl` (same rule as a redirect), else `headers` itself. Never mutates `headers`.
+   */
+  static removeCrossOriginSensitiveHeaders(headers: OutgoingHttpHeaders, originUrl: URL, targetUrl: URL): OutgoingHttpHeaders {
+    if (!HttpExecutor.isCrossOriginRedirect(originUrl, targetUrl)) {
+      return headers
+    }
+    if (debug.enabled) {
+      debug(`Cross-origin request (${originUrl.host} → ${targetUrl.host}): stripping sensitive headers`)
+    }
+    const result = deepAssign<OutgoingHttpHeaders>({}, headers)
+    for (const key of Object.keys(result)) {
+      if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
+        delete result[key]
+      }
+    }
+    return result
+  }
+
+  /** The names in `headers` of the credential-bearing headers stripped on cross-origin redirects (see {@link addSensitiveRedirectHeader}). */
+  static sensitiveHeaderNames(headers: OutgoingHttpHeaders): Array<string> {
+    return Object.keys(headers).filter(key => headers[key] != null && SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key)))
+  }
+
   private static reconstructOriginalUrl(options: RequestOptions): URL {
     const protocol = options.protocol || "https:"
     if (!options.hostname) {
@@ -391,6 +429,14 @@ Please double check that your authentication token is correct. Due to security r
     const port = options.port ? `:${options.port}` : ""
     const path = options.path || "/"
     return new URL(`${protocol}//${hostname}${port}${path}`)
+  }
+
+  /**
+   * Whether `targetUrl` is on another origin than `originUrl` for the purpose of sending credentials: another host, port or
+   * scheme, except an `http` → `https` upgrade of the same host on the default ports.
+   */
+  static isCrossOrigin(originUrl: URL, targetUrl: URL): boolean {
+    return HttpExecutor.isCrossOriginRedirect(originUrl, targetUrl)
   }
 
   private static isCrossOriginRedirect(originalUrl: URL, redirectUrl: URL): boolean {
