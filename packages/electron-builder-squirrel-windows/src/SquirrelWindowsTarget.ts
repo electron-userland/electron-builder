@@ -1,6 +1,6 @@
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import { getRceditBundle, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
-import { InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { InvalidConfigurationError, isEmptyOrSpaces, log, escapeForXml } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import * as fs from "fs"
 import * as os from "os"
@@ -251,8 +251,7 @@ export default class SquirrelWindowsTarget extends Target {
     if (projectUrl != null) {
       const nuspecTemplate = await this.packager.tempDirManager.getTempFile({ prefix: "template", suffix: ".nuspectemplate" })
       let templateContent = await fs.promises.readFile(templatePath, "utf8")
-      const searchString = "<copyright><%- copyright %></copyright>"
-      templateContent = templateContent.replace(searchString, `${searchString}\n    <projectUrl>${projectUrl}</projectUrl>`)
+      templateContent = addProjectUrl(templateContent, projectUrl)
       await fs.promises.writeFile(nuspecTemplate, templateContent)
       return nuspecTemplate
     }
@@ -327,6 +326,12 @@ export default class SquirrelWindowsTarget extends Target {
       createTempDir: opts => this.packager.tempDirManager.createTempDir(opts),
     }
   }
+}
+
+/** @internal */
+export function addProjectUrl(template: string, projectUrl: string): string {
+  const searchString = "<copyright><%- copyright %></copyright>"
+  return template.replace(searchString, `${searchString}\n    <projectUrl>${escapeForXml(projectUrl)}</projectUrl>`)
 }
 
 // `remoteToken: ""` (or whitespace) in the config counts as unset: fall through to the environment
