@@ -1,5 +1,14 @@
 import { createRequire } from "node:module"
-import { AZURE_KNOWN_FIELDS, ELECTRON_DOWNLOAD_DROPPED, MAC_SIGN_FIELDS, MAC_SIGN_REMOVED_FIELDS, MAC_UNIVERSAL_FIELDS } from "app-builder-lib/internal"
+import {
+  AZURE_KNOWN_FIELDS,
+  ELECTRON_DOWNLOAD_DROPPED,
+  formatLegacyOptionMessage,
+  MAC_SIGN_FIELDS,
+  MAC_SIGN_REMOVED_FIELDS,
+  MAC_UNIVERSAL_FIELDS,
+  NSIS_CONFIG_KEYS,
+  RESOLVED_LEGACY_CONFIG_OPTIONS,
+} from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
 import { promises as fs } from "fs"
 import * as path from "path"
@@ -32,10 +41,29 @@ export interface MigrationResult {
 export { AZURE_KNOWN_FIELDS, ELECTRON_DOWNLOAD_DROPPED, MAC_SIGN_FIELDS, MAC_SIGN_REMOVED_FIELDS, MAC_UNIVERSAL_FIELDS } from "app-builder-lib/internal"
 
 // Advisory surfaced (informational only — never rewrites the config) when a project builds an nsis-web target. As of v27,
-// AppUpdater.disableWebInstaller defaults to true, so the auto-updater no longer downloads web-installer packages unless the app opts in at runtime.
+// electron-updater rejects web-installer updates unless disableWebInstaller is false (v27+ nsis-web installs opt in automatically).
 export const NSIS_WEB_ADVISORY =
-  "nsis-web target detected. In v27, autoUpdater.disableWebInstaller defaults to true, so NSIS web-installer packages are not downloaded by default. " +
-  "If your app relies on nsis-web installers for auto-updates, set autoUpdater.disableWebInstaller = false in your main process (this is an electron-updater runtime setting, not a build-config key)."
+  "nsis-web target detected. In v27, electron-updater rejects web-installer updates (ERR_UPDATER_WEB_INSTALLER_DISABLED) unless autoUpdater.disableWebInstaller is false; " +
+  "installs made by a v27+ nsis-web installer opt in automatically, so set autoUpdater.disableWebInstaller = false in your main process (a runtime setting, not a build-config key) " +
+  "for installs made by an older installer or when switching from nsis to nsis-web. " +
+  "The nsis-web installer also verifies a --package-file package, and a package downloaded from the URL derived from the publish configuration (no nsisWeb.appPackageUrl), against its built-in hashes; " +
+  "set nsisWeb.allowUnverifiedAppPackage: true only if one installer is used with packages of other builds. " +
+  "See https://www.electron.build/docs/migration/v27-breaking-changes#disablewebinstaller-defaults-to-true"
+
+// Advisory surfaced when nsis/nsisWeb installs per-machine. v27 sets isAdminRightsRequired in the update info of per-machine builds, so
+// electron-updater starts those updates with elevate.exe and skips them in the automatic install at launch.
+export const NSIS_PER_MACHINE_UPDATE_ADVISORY =
+  "nsis/nsisWeb perMachine: true detected. In v27, electron-updater starts per-machine updates with elevate.exe directly and does not install them automatically at launch " +
+  'with autoInstallEvent "onNextLaunch" (call autoUpdater.installPendingUpdateIfAvailable()). ' +
+  "See https://www.electron.build/docs/migration/v27-breaking-changes#nsis-per-machine-builds-set-isadminrightsrequired"
+
+// Advisory surfaced when a custom win.sign.sign hook has no publisherName. v27 fails such a build when it writes app-update.yml.
+export const WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY =
+  "win.sign.sign (custom signing hook) without win.sign.publisherName detected. In v27, a signed build that writes app-update.yml " +
+  "(an nsis, nsis-web or electronUpdaterAware appx target with a publish configuration, including one inferred from a GitHub repository) fails with InvalidConfigurationError " +
+  "because electron-builder cannot tell which certificate the hook signs with (a certificate in the config or from WIN_CSC_LINK / CSC_LINK doesn't supply the publisher name of a hook). " +
+  "Set win.sign.publisherName to the subject of the certificate your hook signs with, or win.verifyUpdateCodeSignature: false only if your updates are not Authenticode-signed. " +
+  "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-is-validated-against-the-signing-certificate"
 
 // Advisory surfaced when a mac/mas/masDev config does not name its own entitlements file. v27 stopped granting
 // allow-unsigned-executable-memory and disable-library-validation in the bundled default, which only fails at runtime.
@@ -43,6 +71,14 @@ export const MAC_ENTITLEMENTS_ADVISORY =
   "In v27 the bundled default macOS entitlements grant only com.apple.security.cs.allow-jit (allow-unsigned-executable-memory and disable-library-validation are no longer granted). " +
   "If you rely on the default (no mac.sign.entitlements and no build/entitlements.mac.plist) and your app loads native modules, frameworks, or plugins signed by another Team ID (or unsigned), " +
   "add those entitlements back in build/entitlements.mac.plist. See https://www.electron.build/docs/migration/v27-breaking-changes#macos-default-entitlements-tightened"
+
+// Advisory surfaced when a generic publish url carries a query string (typically a token). v27 electron-updater sends the feed
+// query and credential headers only to downloads on the feed's origin.
+export const FEED_QUERY_ADVISORY =
+  "generic publish url with a query string detected. In v27, electron-updater sends the feed url's query string, and the credential headers from requestHeaders / addAuthHeader, " +
+  "only to downloads on the feed's origin (scheme, host and port); a download url in latest*.yml on another origin is requested without them. " +
+  "If those downloads need these credentials, serve the update files from the feed origin or use pre-signed URLs. " +
+  "See https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
 
 /**
  * macOS signing/universal fields that v26 accepted as `null` (meaning "unset") but whose v27 type has no `null`
@@ -57,26 +93,44 @@ export const ASAR_PLATFORM_KEYS = ["mac", "mas", "masDev", "win", "linux"] as co
 /** v26 `snap` options that the v27 `snapcraft.core24` shape does not accept (core24 uses the snapcraft CLI directly). */
 export const SNAP_CORE24_UNSUPPORTED = ["allowNativeWayland", "useTemplateApp"] as const
 
-/** True when `target` (a string, a `{ target }` object, or an array of either) selects the nsis-web target. */
-function hasNsisWebTarget(target: any): boolean {
+/** A target name resolved like the build does: an ":<arch>" suffix is dropped and the name is lowercased ("RPM:x64" → "rpm"). */
+export function normalizeTargetName(target: string): string {
+  const suffixPos = target.lastIndexOf(":")
+  return (suffixPos > 0 ? target.substring(0, suffixPos) : target).toLowerCase()
+}
+
+/** True when `target` (a string such as "deb" or "deb:arm64", a `{ target }` object, or an array of either) selects one of `names`. */
+function hasTarget(target: any, names: ReadonlyArray<string>): boolean {
   if (target == null) {
     return false
   }
   if (typeof target === "string") {
-    return target === "nsis-web"
+    return names.includes(normalizeTargetName(target))
   }
   if (Array.isArray(target)) {
-    return target.some(hasNsisWebTarget)
+    return target.some(it => hasTarget(it, names))
   }
   if (typeof target === "object") {
-    return target.target === "nsis-web"
+    return hasTarget(target.target, names)
   }
   return false
 }
 
-/** True when the build config produces an nsis-web installer (via win.target or the global target). */
-function detectNsisWebTarget(config: Record<string, any>): boolean {
-  return hasNsisWebTarget(config.win?.target) || hasNsisWebTarget(config.target)
+/** True when the build config selects one of `names` (via `<platform>.target` or the global target). */
+function detectTarget(config: Record<string, any>, platform: "win" | "linux", names: ReadonlyArray<string>): boolean {
+  return hasTarget(config[platform]?.target, names) || hasTarget(config.target, names)
+}
+
+/**
+ * True when a custom `win.sign.sign` hook signs without `publisherName` and update signature verification is on (a certificate
+ * in the config doesn't matter: a hook always needs publisherName). Evaluated on the migrated config, so a v26
+ * `win.signtoolOptions.sign` counts too.
+ */
+function detectSignHookWithoutPublisherName(config: Record<string, any>): boolean {
+  const win = config.win
+  const sign = isPlainObject(win) ? win.sign : null
+  // a function-valued hook cannot occur here: migrateConfig works on a JSON copy of the config
+  return isPlainObject(sign) && typeof sign.sign === "string" && sign.publisherName === undefined && win.verifyUpdateCodeSignature !== false
 }
 
 /**
@@ -95,6 +149,17 @@ function detectDefaultMacEntitlements(config: Record<string, any>): boolean {
     }
     return !(isPlainObject(sign) && (sign.entitlements != null || sign.identity === null))
   })
+}
+
+/** True when a root or platform/target-level `publish` (walked like step 7) has a generic provider whose url has a query string. */
+function detectGenericFeedQuery(config: Record<string, any>): boolean {
+  return [config, ...Object.values(config)].some(
+    section =>
+      isPlainObject(section) &&
+      (Array.isArray(section.publish) ? section.publish : [section.publish]).some(
+        (entry: any) => isPlainObject(entry) && entry.provider === "generic" && typeof entry.url === "string" && entry.url.includes("?")
+      )
+  )
 }
 
 function isPlainObject(value: unknown): value is Record<string, any> {
@@ -455,15 +520,97 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     migrateToolsets(c.toolsets, changes)
   }
 
-  // Advisories (not config changes): runtime defaults that changed in v27 and only surface after the build.
-  if (detectNsisWebTarget(c)) {
+  // Advisories (not config changes): v27 runtime defaults and behavior changes that a config rewrite cannot address.
+  if (detectTarget(c, "win", ["nsis-web"])) {
     advisories.push(NSIS_WEB_ADVISORY)
   }
   if (detectDefaultMacEntitlements(c)) {
     advisories.push(MAC_ENTITLEMENTS_ADVISORY)
   }
+  if (c.nsis?.perMachine === true || c.nsisWeb?.perMachine === true) {
+    advisories.push(NSIS_PER_MACHINE_UPDATE_ADVISORY)
+  }
+  if (detectSignHookWithoutPublisherName(c)) {
+    advisories.push(WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY)
+  }
+  if (detectGenericFeedQuery(c)) {
+    advisories.push(FEED_QUERY_ADVISORY)
+  }
 
-  return { migrated: c, changes, warnings, advisories, modified: changes.length > 0 || warnings.length > 0 }
+  // ── nsis/nsisWeb/portable customNsisBinary / customNsisResources removed ──
+  // Kept keys are reported only after `modified` is computed: a key that is merely kept must not re-serialize the file
+  // (dropping YAML/JSON5 comments) when nothing else changed. The build then fails with the same targeted message.
+  const keptKeyWarnings: string[] = []
+  migrateCustomNsis(c, changes, warnings, keptKeyWarnings)
+  const modified = changes.length > 0 || warnings.length > 0
+  warnings.push(...keptKeyWarnings)
+
+  return { migrated: c, changes, warnings, advisories, modified }
+}
+
+/** The build-time guard's message for a removed key (`nsis.customNsisBinary`), reused for the keys migrate-schema leaves in place. */
+export function legacyKeyMessage(fullPath: string): string {
+  const option = RESOLVED_LEGACY_CONFIG_OPTIONS.find(o => o.fullPath === fullPath)
+  if (option == null) {
+    throw new Error(`no legacy config option for ${fullPath}`)
+  }
+  return formatLegacyOptionMessage(option)
+}
+
+/** Warning for a `portable.customNsisBinary.debugLogging` that migrate-schema drops. */
+export const PORTABLE_DEBUG_LOGGING_DROPPED =
+  "portable.customNsisBinary.debugLogging was dropped: it never had an effect on portable targets (the portable template does not enable NSIS logging), and v27 has no portable equivalent."
+
+/**
+ * `customNsisBinary.debugLogging` moves to `<section>.installerDebugLogging` (nsis / nsisWeb; dropped for portable), and an
+ * emptied or null `customNsisBinary` / `customNsisResources` is removed. A custom bundle (url / checksum / version, or the resources
+ * bundle) is never converted to `toolsets.nsis`: the bundle layout differs (it must carry the NSIS plugins), so the key is kept and reported.
+ */
+function migrateCustomNsis(c: Record<string, any>, changes: MigrationChange[], warnings: string[], keptKeyWarnings: string[]): void {
+  for (const section of NSIS_CONFIG_KEYS) {
+    const options = c[section]
+    if (!isPlainObject(options)) {
+      continue
+    }
+    const binaryPath = `${section}.customNsisBinary`
+    const binary = options.customNsisBinary
+    if (binary === null) {
+      delete options.customNsisBinary
+      changes.push({ key: binaryPath, description: `removed ${binaryPath}: null (the key was removed in v27)` })
+    } else if (isPlainObject(binary)) {
+      if ("debugLogging" in binary) {
+        const debugLogging = binary.debugLogging
+        delete binary.debugLogging
+        if (section === "portable") {
+          if (debugLogging != null) {
+            warnings.push(PORTABLE_DEBUG_LOGGING_DROPPED)
+          }
+          changes.push({ key: `${binaryPath}.debugLogging`, description: `removed ${binaryPath}.debugLogging (no effect on portable targets)` })
+        } else if (debugLogging != null && !("installerDebugLogging" in options)) {
+          options.installerDebugLogging = debugLogging
+          changes.push({ key: `${binaryPath}.debugLogging`, description: `moved ${binaryPath}.debugLogging → ${section}.installerDebugLogging` })
+        } else {
+          changes.push({ key: `${binaryPath}.debugLogging`, description: `removed ${binaryPath}.debugLogging` })
+        }
+      }
+      if (Object.values(binary).every(v => v == null)) {
+        delete options.customNsisBinary
+        changes.push({ key: binaryPath, description: `removed ${binaryPath} (no custom bundle was set)` })
+      } else {
+        keptKeyWarnings.push(legacyKeyMessage(binaryPath))
+      }
+    } else if (binary !== undefined) {
+      keptKeyWarnings.push(legacyKeyMessage(binaryPath))
+    }
+
+    const resourcesPath = `${section}.customNsisResources`
+    if (options.customNsisResources === null) {
+      delete options.customNsisResources
+      changes.push({ key: resourcesPath, description: `removed ${resourcesPath}: null (the key was removed in v27)` })
+    } else if (options.customNsisResources !== undefined) {
+      keptKeyWarnings.push(legacyKeyMessage(resourcesPath))
+    }
+  }
 }
 
 /**
@@ -876,6 +1023,9 @@ interface FoundConfig {
   readonly rootDirectoriesMoved?: boolean
 }
 
+/** Extensions of the `electron-builder.<ext>` files auto-detected when `--config` is omitted, in lookup order. */
+const CONFIG_FILE_EXTENSIONS = ["yml", "yaml", "json", "json5", "toml", "js", "cjs", "mjs", "ts"]
+
 async function findAndLoadConfig(projectDir: string, explicitConfigPath?: string | null): Promise<FoundConfig | null> {
   if (explicitConfigPath != null) {
     const abs = path.resolve(projectDir, explicitConfigPath)
@@ -905,7 +1055,7 @@ async function findAndLoadConfig(projectDir: string, explicitConfigPath?: string
   }
 
   // Standalone config files
-  const candidates = [".yml", ".yaml", ".json", ".json5", ".toml", ".js", ".cjs", ".mjs", ".ts"].map(ext => path.join(projectDir, `electron-builder${ext}`))
+  const candidates = CONFIG_FILE_EXTENSIONS.map(ext => path.join(projectDir, `electron-builder.${ext}`))
   for (const candidate of candidates) {
     const text = await readFileSafe(candidate)
     if (text != null) {
@@ -988,7 +1138,14 @@ export async function migrateSchema(args: any): Promise<void> {
 
   const found = await findAndLoadConfig(projectDir, configPath)
   if (found == null) {
-    log.error(null, "no config found — checked package.json build key and electron-builder.{yml,yaml,json,json5,toml,js,cjs,ts}")
+    // A missing --config file was already reported by findAndLoadConfig.
+    if (configPath == null) {
+      log.error(
+        { projectDir },
+        `no config found — checked the "build" key of package.json and electron-builder.{${CONFIG_FILE_EXTENSIONS.join(",")}}. ` +
+          "If your config file has another name (e.g. one you pass to `electron-builder --config`), run `electron-builder migrate-schema --config <path>`"
+      )
+    }
     process.exit(1)
   }
 
@@ -1024,7 +1181,8 @@ export async function migrateSchema(args: any): Promise<void> {
   }
 
   if (!modified) {
-    if (advisories.length === 0) {
+    // A kept key (e.g. a customNsisBinary with a url) leaves the config unmodified but is not "up to date".
+    if (advisories.length === 0 && warnings.length === 0) {
       log.info(null, "config is already up to date — no changes needed")
     }
     return
@@ -1124,6 +1282,7 @@ function printManualSteps() {
     "• Move helper-bundle-id → mac.helperBundleId",
     "• Replace squirrelWindows.noMsi with squirrelWindows.msi (inverted)",
     "• Replace squirrelWindows.customSquirrelVendorDir with a toolsets.squirrel custom bundle (it must contain an electron-winstaller/vendor/ subtree)",
+    "• Move nsis/nsisWeb customNsisBinary.debugLogging → installerDebugLogging (it needs a log-enabled custom toolsets.nsis); remove customNsisBinary and customNsisResources, replacing a custom url/checksum with a toolsets.nsis custom bundle (the checksum carries over; the bundle must also contain the NSIS plugins)",
     "• Move mac/mas/masDev signing fields (identity, entitlements, entitlementsInherit, entitlementsLoginHelper, hardenedRuntime, type, requirements, timestamp, binaries, strictVerify, preAutoEntitlements, provisioningProfile, additionalArguments) into the `sign` object; rename signIgnore → sign.ignore; remove gatekeeperAssess",
     "• Move mac/mas/masDev mergeASARs / singleArchFiles / x64ArchFiles into the `universal` object",
     "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true; drop cache/customDir/customFilename/strictSSL/platform/arch/version/force)",

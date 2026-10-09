@@ -34,6 +34,9 @@ function fakePackager(projectDir: string): Packager {
   return {
     projectDir,
     config: {},
+    onTargetsCreated: () => {
+      // ignore
+    },
     onAfterPack: () => {
       // ignore
     },

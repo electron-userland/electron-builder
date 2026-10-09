@@ -304,6 +304,15 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
     ;(packagerOptions as any).config = configuration
   }
 
+  // Signing auto-update manifests is required by default, but the fixture suites assert UNSIGNED `latest*.yml`
+  // snapshots, so opt out unless the test configures signing itself. This also makes those snapshots hermetic: a
+  // developer with ELECTRON_BUILDER_UPDATE_SIGN_KEY exported would otherwise sign every fixture build and rewrite
+  // every manifest snapshot. Set before the reassignments below so it survives them.
+  // `=== undefined` on purpose - a test writes `updateManifest: null` to exercise the required path.
+  if (configuration.updateManifest === undefined) {
+    ;(configuration as any).updateManifest = false
+  }
+
   if (checkOptions.signedMac) {
     packagerOptions = await signed(packagerOptions, "mac")
   } else if (process.env.CSC_LINK == null && process.platform === "darwin") {
@@ -1083,6 +1092,15 @@ export async function getWindowsSigningIdentity(): Promise<SelfSignedIdentity> {
     return { commonName: "provided", p12Base64: cscLink, password: cscKeyPassword }
   }
   return await winSigningCredentialsInfo.value
+}
+
+/**
+ * The `publisherName` a Windows build signed with getWindowsSigningIdentity (`signedWin`) writes to app-update.yml when none is
+ * configured: the common name of its certificate. A certificate provided via CSC_LINK / WIN_CSC_LINK has one the tests don't know.
+ */
+export async function expectedWindowsPublisherName(expect: ExpectStatic): Promise<Array<unknown>> {
+  const { commonName } = await getWindowsSigningIdentity()
+  return commonName === "provided" ? [expect.any(String)] : [commonName]
 }
 
 async function signed(packagerOptions: PackagerOptions, platform: "win" | "mac"): Promise<PackagerOptions> {

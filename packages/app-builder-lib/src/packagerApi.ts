@@ -48,6 +48,16 @@ export interface ArtifactCreated extends UploadTask {
   readonly isWriteUpdateInfo?: boolean
 }
 
+/**
+ * One platform × arch of the build with the targets it will build. The full list is emitted once (`targetsCreated`),
+ * after every target of every platform is created and before anything is packed or uploaded.
+ */
+export interface PlannedTargets {
+  readonly packager: PlatformPackager<any>
+  readonly arch: Arch
+  readonly targets: ReadonlyArray<Target>
+}
+
 export interface ArtifactBuildStarted {
   readonly targetPresentableName: string
 

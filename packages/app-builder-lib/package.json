@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "27.0.0-alpha.9",
+  "version": "27.0.0-alpha.10",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
@@ -60,13 +60,13 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "@electron/asar": "4.1.1",
-    "@electron/fuses": "^2.1.1",
-    "@electron/get": "^5.0.0",
-    "@electron/notarize": "3.1.1",
-    "@electron/osx-sign": "2.4.0",
-    "@electron/rebuild": "^4.0.4",
-    "@electron/universal": "3.0.4",
+    "@electron/asar": "^4.3.1",
+    "@electron/fuses": "^2.1.3",
+    "@electron/get": "^5.1.0",
+    "@electron/notarize": "^3.1.1",
+    "@electron/osx-sign": "^2.7.0",
+    "@electron/rebuild": "^4.2.0",
+    "@electron/universal": "^3.0.6",
     "@malept/flatpak-bundler": "^0.4.0",
     "@noble/hashes": "^2.2.0",
     "@peculiar/webcrypto": "^1.7.1",
@@ -98,7 +98,7 @@
     "tar": "^7.5.7",
     "temp-file": "^3.4.0",
     "tiny-async-pool": "1.3.0",
-    "undici": "^7.27.1",
+    "undici": "^7.29.1",
     "unzipper": "^0.12.3",
     "which": "^5.0.0"
   },

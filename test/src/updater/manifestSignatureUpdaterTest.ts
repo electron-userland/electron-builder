@@ -258,3 +258,35 @@ describe("AppUpdater.verifyManifestSignature: malformed signed manifests", () =>
     await expect(verify(makeUpdater(), withoutFiles as UpdateInfo)).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
   })
 })
+
+describe("AppUpdater.verifyManifestSignature: blockMapUrl", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const makeUpdater = () => {
+    const updater = new DebUpdater(null, stubApp)
+    updater.updateManifestPublicKey = publicKeyPem
+    return updater
+  }
+  const verify = (updater: DebUpdater, info: UpdateInfo) => (updater as any).verifyManifestSignature(info)
+  const info = signed({ ...makeInfo(), files: [{ ...makeInfo().files[0], blockMapUrl: "https://cdn.example.com/App-2.0.0.exe.blockmap?sig=1" }] }, privateKeyPem)
+
+  it("passes a manifest signed with a blockMapUrl", async ({ expect }) => {
+    await expect(verify(makeUpdater(), info)).resolves.toBeUndefined()
+  })
+
+  it("throws ERR_UPDATER_MANIFEST_SIGNATURE_INVALID when the blockMapUrl is changed after signing", async ({ expect }) => {
+    const tampered: UpdateInfo = { ...info, files: [{ ...info.files[0], blockMapUrl: "https://cdn.example.com/App-2.0.0.exe.blockmap?sig=2" }] }
+    await expect(verify(makeUpdater(), tampered)).rejects.toMatchObject({
+      code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID",
+      message: expect.stringContaining(
+        "files[].blockMapUrl is covered by the signature, like files[].url, so it has to be in latest*.yml before the manifest is signed: https://www.electron.build/docs/features/signed-update-manifests#what-is-signed"
+      ),
+    })
+  })
+
+  it("names blockMapUrl only for a manifest that has one", async ({ expect }) => {
+    const plain = signed(makeInfo(), privateKeyPem)
+    const error = await verify(makeUpdater(), { ...plain, files: [{ ...plain.files[0], sha512: "tampered" }] }).catch((e: Error) => e)
+    expect(error).toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+    expect(error.message).not.toContain("blockMapUrl")
+  })
+})

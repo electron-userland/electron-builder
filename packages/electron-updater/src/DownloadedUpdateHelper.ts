@@ -4,6 +4,7 @@ import { ResolvedUpdateFileInfo } from "./types.js"
 import { Logger } from "./types.js"
 import fsExtra from "fs-extra"
 import * as path from "path"
+import { eq as isVersionsEqual, parse as parseVersion } from "semver"
 
 /** @private **/
 export class DownloadedUpdateHelper {
@@ -69,6 +70,7 @@ export class DownloadedUpdateHelper {
       fileName: updateFileName,
       sha512: fileInfo.info.sha512,
       isAdminRightsRequired: fileInfo.info.isAdminRightsRequired === true,
+      ...(packageFile == null ? {} : { packageFileName: path.basename(packageFile), version: versionInfo.version }),
     }
 
     if (isSaveCache) {
@@ -134,7 +136,8 @@ export class DownloadedUpdateHelper {
 
   /**
    * Validates the cached pending update against freshly fetched update info (checksum of the metadata and of the
-   * file on disk) and makes it the current downloaded file, so `installerPath` resolves to it.
+   * file on disk) and makes it the current downloaded file, so `installerPath` resolves to it. For an NSIS web installer
+   * the app package is re-validated as well and exposed as `packageFile`.
    * @returns Path to the validated installer or `null` if the cache is unusable.
    */
   async validateCachedPendingInstall(fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
@@ -143,6 +146,40 @@ export class DownloadedUpdateHelper {
       this._file = cachedUpdateFile
     }
     return cachedUpdateFile
+  }
+
+  /**
+   * NSIS web installer: removes the app package of a pending update that is already installed, i.e. whose version is the version of
+   * the running app. The web installer installs its own copy of the package passed via `--package-file`, so after the update the
+   * package in the pending directory is not used anymore. Nothing else is removed: `update-info.json` and the installer stay, as for
+   * a full installer, and a pending update of another version (not installed yet, a failed install that a retry reuses, or a
+   * downgrade) keeps its package.
+   * @param currentVersion The version of the running app.
+   * @returns Whether a package was removed.
+   */
+  async removeInstalledWebPackage(currentVersion: string, logger: Logger): Promise<boolean> {
+    let cachedInfo: CachedUpdateInfo | null
+    try {
+      cachedInfo = await fsExtra.readJson(this.getUpdateInfoFile())
+    } catch (_ignored) {
+      // no pending update
+      return false
+    }
+    const version = cachedInfo?.packageFileName == null || cachedInfo.version == null ? null : parseVersion(cachedInfo.version)
+    if (version == null || !isVersionsEqual(version, currentVersion)) {
+      return false
+    }
+    const packageFile = path.join(this.cacheDirForPendingUpdate, path.basename(cachedInfo!.packageFileName!))
+    try {
+      await fsExtra.unlink(packageFile)
+    } catch (e: any) {
+      if (e.code !== "ENOENT") {
+        logger.warn(`Cannot remove the web installer package of the installed update ${version.format()}: ${e.message || e}`)
+      }
+      return false
+    }
+    logger.info(`Removed the web installer package of the installed update ${version.format()}: ${packageFile}`)
+    return true
   }
 
   async clear(): Promise<void> {
@@ -216,7 +253,22 @@ export class DownloadedUpdateHelper {
       await this.cleanCacheDirForPendingUpdate()
       return null
     }
+
+    // NSIS web installer: the package is passed to the installer via --package-file, so it must match the latest update info as well
+    let packageFile: string | null = null
+    const packageInfo = fileInfo.packageInfo
+    if (packageInfo != null) {
+      packageFile = cachedInfo.packageFileName == null ? null : path.join(this.cacheDirForPendingUpdate, path.basename(cachedInfo.packageFileName))
+      if (packageFile == null || !(await fsExtra.pathExists(packageFile)) || (await hashFile(packageFile)) !== packageInfo.sha512) {
+        logger.warn(
+          `Cached web installer package doesn't match the latest available update. New update must be downloaded. Expected: ${packageInfo.sha512}. Directory for cached update will be cleaned`
+        )
+        await this.cleanCacheDirForPendingUpdate()
+        return null
+      }
+    }
     this._downloadedFileInfo = cachedInfo
+    this._packageFile = packageFile
     return updateFile
   }
 
@@ -234,6 +286,16 @@ export interface CachedUpdateInfo {
    * meaning the cached update should be installed on the next application launch after successful re-validation.
    */
   readonly installOnNextLaunch?: boolean
+  /**
+   * NSIS web installer only: file name (in the pending cache dir) of the downloaded app package, re-validated together with
+   * the installer before a cached update is reused or installed on next launch and passed to the installer via `--package-file`.
+   */
+  readonly packageFileName?: string
+  /**
+   * NSIS web installer only, set together with `packageFileName`: the version of the pending update. Once the running app has this
+   * version, the update is installed and its package is removed (see {@link DownloadedUpdateHelper.removeInstalledWebPackage}).
+   */
+  readonly version?: string
 }
 
 export async function createTempUpdateFile(name: string, cacheDir: string, log: Logger): Promise<string> {

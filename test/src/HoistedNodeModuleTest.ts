@@ -443,6 +443,38 @@ describe("node_module collectors", () => {
       }
     ))
 
+  // https://github.com/electron-userland/electron-builder/issues/10277
+  // The app is named `debug` and depends on debug@4.4.1. Resolving the app's own package.json by name found
+  // node_modules/debug instead, so only debug@4.4.1's dependencies (ms) were kept and the app's own `debug`
+  // and `is-number` were silently left out of the asar.
+  test("pnpm app named like one of its dependencies", ({ expect }) =>
+    assertPack(
+      expect,
+      "test-app-hoisted",
+      {
+        targets: linuxDirTarget,
+      },
+      {
+        storeDepsLockfileSnapshot: true,
+        projectDirCreated: projectDir =>
+          modifyPackageJson(projectDir, data => {
+            data.packageManager =
+              "pnpm@10.34.5+sha512.a4ee05f2f73658255bd6a89859c065a45c28a57daefae2c893a168ee2b73168c37b91e83e57ea67654ad03f03031746430e8bce38e362e042605fb8abc80192e"
+            data.name = "debug"
+            data.dependencies = {
+              debug: "4.4.1",
+              "is-number": "7.0.0",
+              ms: "2.1.3",
+            }
+          }),
+        packed: async context => {
+          const asarFs = await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))
+          const packages = [...(await readAsarPackageVersions(asarFs))].map(([dir, version]) => `${dir}@${version}`).sort()
+          expect(packages).toEqual(["node_modules/debug@4.4.1", "node_modules/is-number@7.0.0", "node_modules/ms@2.1.3"])
+        },
+      }
+    ))
+
   test("pnpm optional dependencies", ({ expect }) =>
     assertPack(
       expect,

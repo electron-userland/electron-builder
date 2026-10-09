@@ -531,6 +531,15 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
   electronVersion?: string | null
 
   /**
+   * Whether to write `builder-effective-config.yaml` (the resolved configuration, including the detected
+   * `electronVersion`) to the output directory.
+   *
+   * Defaults to writing it only for local interactive builds: not on CI and not when stdout is piped.
+   * Set `true` to always write it, e.g. to read the resolved configuration in a CI step, or `false` to never write it.
+   */
+  readonly writeEffectiveConfig?: boolean | null
+
+  /**
    * One or more configuration presets or file paths to merge into this configuration.
    *
    * Accepts a string or array of strings, each of which is either:
@@ -559,6 +568,10 @@ export interface NativeModulesConfig {
    *
    * Useful when pre-built binaries are not available for the target platform/arch combination,
    * or when you need to ensure native modules are compiled against the exact Electron ABI.
+   *
+   * Only honored when the target platform matches the host platform: native modules cannot be
+   * cross-compiled from source for another OS, so for a cross-platform target native dependencies are
+   * rebuilt with prebuilt binaries for that target instead (and a warning is logged).
    *
    * @default false
    */
@@ -605,6 +618,30 @@ export interface NativeModulesConfig {
    * @default "sequential"
    */
   readonly rebuildMode?: "sequential" | "parallel" | null
+
+  /**
+   * Whether to verify, after the app is packed, that every native binary shipped in the app was built for
+   * the target platform and architecture.
+   *
+   * electron-builder reads the header of each `.node` addon (and of other native libraries and executables
+   * such as `.so`, `.dylib`, `.dll`, `.exe`) in `app.asar`, `app.asar.unpacked` or the unpacked `app`
+   * directory, and compares its format (ELF / Mach-O / PE) and machine type against the target (for
+   * a macOS universal build, each per-arch slice is checked before the slices are merged). This catches a
+   * stale or host-platform binary left in `node_modules` by a skipped or cached rebuild, which otherwise
+   * only surfaces at runtime as `invalid ELF header` / `not a valid Win32 application` /
+   * `incompatible architecture`.
+   *
+   * Files whose package declares another platform via `package.json` `os`/`cpu`, or whose path names
+   * another platform/arch (e.g. prebuildify's `prebuilds/linux-arm64/`), are not loaded for this target
+   * and are ignored.
+   *
+   * - `true` (default) — a mismatched `.node` addon fails the build; other mismatched native files log a warning.
+   * - `"warn"` — log every mismatch as a warning and continue.
+   * - `false` — skip the check.
+   *
+   * @default true
+   */
+  readonly verifyNativeBinaries?: boolean | "warn" | null
 }
 
 export type Hook<T, V> = (contextOrPath: T) => Promise<V> | V
@@ -692,6 +729,9 @@ export interface ToolsetConfig {
    * | `"1.2.1"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md
+   *
+   * A custom bundle (a {@link ToolsetCustom} object) must follow the layout at
+   * https://www.electron.build/docs/toolsets#custom-nsis-bundle-layout
    *
    * @default "latest"
    */
@@ -832,13 +872,16 @@ export interface ToolsetConfig {
  *
  * File formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.
  *
+ * `checksum` is the SHA-256 of the archive as 64 hex characters or its SHA-512 as 88 base64 characters (the format v26
+ * used for all toolset checksums), the same for every toolset. See https://www.electron.build/docs/toolsets#custom-toolset-checksum
+ *
  * @example
  * ```json
  * {
  *   "toolsets": {
  *     "nsis": {
  *       "url": "file:///path/to/my-nsis-bundle.tar.gz",
- *       "checksum": "abc123...",
+ *       "checksum": "56997fdefe25e7928a1a68b4583d08b240b66cf660234053b20131a74cc082f4",
  *       "version": "my-custom-1.0"
  *     }
  *   }
@@ -858,17 +901,24 @@ export interface ToolsetCustom {
   readonly url: string
 
   /**
-   * SHA-256 checksum of the custom toolset bundle for verification, as a lowercase hex string
-   * (e.g. the output of `shasum -a 256 bundle.tar.gz`) — not the base64 values GitHub release
-   * notes may show.
+   * Checksum of the bundle archive, in one of two formats:
+   * - the SHA-256 as 64 hex characters (uppercase is lowercased), e.g. `shasum -a 256 <archive>` (macOS / Linux),
+   *   `(Get-FileHash -Algorithm SHA256 <archive>).Hash` (PowerShell) or `certutil -hashfile <archive> SHA256`;
+   * - the SHA-512 as 88 base64 characters, the format v26 used for all toolset checksums, e.g.
+   *   `openssl dgst -sha512 -binary <archive> | openssl base64 -A`.
+   *
+   * Prefixed forms such as `sha256:…` or `sha512-…`, and a hex-encoded SHA-512, are rejected before anything is downloaded.
+   * A downloaded archive is verified before it is cached or extracted, and a local `file://` archive before it is extracted.
+   *
    * Required for remote (`https://`) URLs and local archive files (`file://`).
-   * Not needed for bare directory paths — the directory is used as-is with no caching.
+   * Not needed for bare directory paths — the directory is used as-is with no caching and no verification.
+   * @see https://www.electron.build/docs/toolsets#custom-toolset-checksum
    */
   readonly checksum?: string
 
   /**
    * Optional version label used in the local cache directory name.
-   * Falls back to the first 8 characters of `checksum` when omitted.
+   * Falls back to the first 8 hex characters of the `checksum` digest when omitted.
    */
   readonly version?: string
 }

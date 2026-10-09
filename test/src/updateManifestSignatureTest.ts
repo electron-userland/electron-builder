@@ -573,3 +573,40 @@ describe("validateSignedManifestShape", () => {
     expect(verifyManifestSignatures(info, [publicKeyPem])).toEqual({ ok: false })
   })
 })
+
+describe("blockMapUrl is signed only when present", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const BLOCKMAP = "https://cdn.example.com/App-1.2.3.exe.blockmap?X-Amz-Signature=abc"
+  const withBlockMapUrl = (blockMapUrl: unknown) => makeInfo({ files: [{ url: "App-1.2.3.exe", sha512: "abc123", size: 8123456, blockMapUrl: blockMapUrl as string }] })
+
+  test("adds a field to the file record; a manifest without it canonicalizes to the same bytes as before", ({ expect }) => {
+    expect(canonicalizeForSigning(withBlockMapUrl(BLOCKMAP))).toBe(
+      ["EBUM1", 'version:"1.2.3"', "staging:", "minimumSystemVersion:", `file:"App-1.2.3.exe"\t"abc123"\t8123456\t${JSON.stringify(BLOCKMAP)}`].join("\n")
+    )
+    const without = ["EBUM1", 'version:"1.2.3"', "staging:", "minimumSystemVersion:", 'file:"App-1.2.3.exe"\t"abc123"\t8123456'].join("\n")
+    expect(canonicalizeForSigning(makeInfo())).toBe(without)
+    expect(canonicalizeForSigning(withBlockMapUrl(undefined))).toBe(without)
+    expect(canonicalizeForSigning(withBlockMapUrl(null))).toBe(without)
+  })
+
+  test("a signed manifest with a blockMapUrl verifies; a changed, added or removed blockMapUrl does not", ({ expect }) => {
+    const info = signed(withBlockMapUrl(BLOCKMAP), privateKeyPem)
+    expect(verifyManifestSignatures(info, [publicKeyPem]).ok).toBe(true)
+
+    const files = (blockMapUrl?: string) => [{ ...info.files[0], blockMapUrl }]
+    expect(verifyManifestSignatures({ ...info, files: files("https://evil.example.net/App-1.2.3.exe.blockmap") }, [publicKeyPem]).ok).toBe(false)
+    expect(verifyManifestSignatures({ ...info, files: files(undefined) }, [publicKeyPem]).ok).toBe(false)
+
+    const plain = signed(makeInfo(), privateKeyPem)
+    expect(verifyManifestSignatures(plain, [publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures({ ...plain, files: [{ ...plain.files[0], blockMapUrl: BLOCKMAP }] }, [publicKeyPem]).ok).toBe(false)
+  })
+
+  test.for<[string, unknown, RegExp]>([
+    ["a non-string blockMapUrl", 1, /files\[0\]\.blockMapUrl must be a non-empty string/],
+    ["an empty blockMapUrl", "", /files\[0\]\.blockMapUrl must be a non-empty string/],
+    ["a control character in blockMapUrl", "a\nb", /files\[0\]\.blockMapUrl contains a control character/],
+  ])("the shape check rejects %s", ([_name, blockMapUrl, expected], { expect }) => {
+    expect(validateSignedManifestShape(withBlockMapUrl(blockMapUrl))).toMatch(expected)
+  })
+})

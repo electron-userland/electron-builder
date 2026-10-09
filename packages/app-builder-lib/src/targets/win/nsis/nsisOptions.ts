@@ -1,46 +1,6 @@
 import { CommonWindowsInstallerConfiguration } from "../../../options/CommonWindowsInstallerConfiguration.js"
 import { TargetSpecificOptions } from "../../../core.js"
 
-export interface CustomNsisBinary {
-  /**
-   * @default https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z
-   */
-  readonly url: string | null
-
-  /**
-   * @default VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==
-   */
-  readonly checksum?: string | null
-
-  /**
-   * @default 3.0.4.1
-   */
-  readonly version?: string | null
-
-  /**
-   * Whether or not to enable NSIS logging for debugging.
-   * Note: Requires a debug-enabled NSIS build.
-   * electron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `customNsisBinary?: CustomNsisBinary`
-   * In your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`
-   */
-  readonly debugLogging?: boolean | null
-}
-export interface CustomNsisResources {
-  /**
-   * @default https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z
-   */
-  readonly url: string
-
-  /**
-   * @default Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==
-   */
-  readonly checksum: string
-
-  /**
-   * @default 3.4.1
-   */
-  readonly version: string
-}
 export interface CommonNsisOptions {
   /**
    * Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
@@ -64,20 +24,10 @@ export interface CommonNsisOptions {
   readonly warningsAsErrors?: boolean
 
   /**
-   * Forces zip compression format instead of LZMA. Used internally for differential update packages.
+   * Use zip instead of 7z (LZMA) for the embedded app package. Only applies to portable targets and to installers built with `differentialPackage: false`; ignored (with a warning) when `differentialPackage` is enabled and for `nsis-web`, which always use 7z.
    * @default false
    */
   readonly useZip?: boolean
-
-  /**
-   * Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)
-   */
-  readonly customNsisBinary?: CustomNsisBinary | null
-
-  /**
-   * Allows you to provide your own `nsis-resources`
-   */
-  readonly customNsisResources?: CustomNsisResources | null
 }
 
 export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerConfiguration, TargetSpecificOptions {
@@ -86,6 +36,18 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    * @default true
    */
   readonly oneClick?: boolean
+
+  /**
+   * Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation
+   * directory). In your custom NSIS scripts, write to the log via `${LogText}`.
+   *
+   * Requires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. The default `toolsets.nsis` bundle
+   * is not log-enabled, so supply one as a custom `toolsets.nsis` bundle; the build fails otherwise.
+   * Replaces the v26 `customNsisBinary.debugLogging`.
+   * @see https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis
+   * @default false
+   */
+  readonly installerDebugLogging?: boolean
 
   /**
    * Whether to show install mode installer page (choice per-machine or per-user) for assisted installer. Or whether installation always per all users (per-machine).
@@ -220,8 +182,13 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    *   re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every
    *   block). Storing it keeps unchanged regions byte-identical between releases, making the delta
    *   proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%
-   *   instead of 100%). Trade-off: the installer and full package grow by roughly what compressing the asar
-   *   saved.
+   *   instead of 100%). The stored asar's byte range is also chunked with finer content-defined blocks
+   *   (4/8/16 KiB instead of the 8/16/32 KiB used for the rest of the installer), so a small change costs
+   *   proportionally fewer bytes still. Trade-off: the installer and full package grow by roughly what
+   *   compressing the asar saved. Without an `app.asar` (e.g. `asar` is disabled) there is nothing to store,
+   *   so it behaves like `true`. Upgrading from an electron-builder without the finer chunking changes the
+   *   block boundaries once: the first differential update from an installer built before it re-downloads
+   *   close to the whole asar, and updates between installers built with it are proportional again.
    * - anything else (`true`, `"compressed"`, unset) — differential-aware, whole package compressed.
    * @default true
    */
@@ -317,8 +284,19 @@ export interface NsisWebOptions extends NsisOptions {
    * Please note — it is [full URL](https://github.com/electron-userland/electron-builder/issues/1810#issuecomment-317650878).
    *
    * Custom `X-Arch` http header is set to `32` or `64`.
+   *
+   * The installer does not checksum-verify a package downloaded from an explicit `appPackageUrl`; a package downloaded from the default (publish-derived) URL is verified against the packages built with the installer.
    */
   readonly appPackageUrl?: string | null
+
+  /**
+   * Whether the web installer may install an app package that doesn't match any package built with it: a package passed via `--package-file`,
+   * or (when `appPackageUrl` is not set) the downloaded package. By default such a package aborts the installation.
+   *
+   * Enable only if you intentionally run one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).
+   * @default false
+   */
+  readonly allowUnverifiedAppPackage?: boolean
 
   /**
    * The [artifact file name template](https://www.electron.build/docs/configuration#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.

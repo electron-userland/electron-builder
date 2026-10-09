@@ -217,22 +217,53 @@ type CollectorRunner = (pm: PM, dir: string) => Promise<CollectedNodeModules>
 // collected tree and cannot be used to validate it.
 const LOCAL_DEPENDENCY_SPEC = /^(?:workspace|file|link|portal):/
 
+// Log-summary buckets in which a collector reports a declared dependency it deliberately or
+// unavoidably left out of the collected tree. A direct dependency recorded in one of these is
+// accounted for even though it is absent from the top level of an otherwise correct collection.
+const ACCOUNTED_ABSENT_DEPENDENCY_KEYS: ReadonlyArray<LogMessageByKey> = [
+  // dropped by the target arch/platform filter (`archFilter`, package.json `cpu`/`os`)
+  LogMessageByKey.PKG_INCOMPATIBLE_PLATFORM,
+  // not installed / not resolvable on disk — whether that is fatal is decided afterwards by
+  // `allowMissingDependencies` (see enforceAllowMissingDependencies), not by collection matching
+  LogMessageByKey.PKG_NOT_FOUND,
+  LogMessageByKey.PKG_NOT_ON_DISK,
+  LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED,
+  LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED,
+  // excluded via `ignoredProductionDependencies` (such modules normally stay in the tree flagged
+  // `excluded`, so this only matters if a collector ever drops them instead)
+  LogMessageByKey.PKG_EXCLUDED_IGNORED,
+  // a dependency that resolves to the package itself is skipped rather than collected
+  LogMessageByKey.PKG_SELF_REF,
+]
+
 /**
  * Determines whether a collected module tree actually describes the package being built.
  *
  * A package-manager `list` invocation can resolve to the wrong project root — most notably when
  * electron-builder is run from a workspace sub-package whose dependencies are hoisted to the
- * workspace root. In that case the collector returns a non-empty but unrelated tree. Accepting it
- * would suppress the manual-traversal fallback that resolves the correct modules, so we need to
- * tell a matching collection from a mismatched one.
+ * workspace root (#9945) — or a collector can resolve the root node to the wrong package (e.g. an
+ * app named like one of its own dependencies, #10277). In both cases the collector returns a
+ * non-empty but wrong tree. Accepting it would suppress the manual-traversal fallback that resolves
+ * the correct modules, so we need to tell a matching collection from a mismatched one.
  *
- * A collection matches when at least one of the package's declared external (registry-installed,
- * non-`workspace:`/`file:`/`link:`/`portal:`) production dependencies is present at the top level —
- * those direct dependencies are always hoisted to the top level of a correct collection. When the
- * package declares no external production dependencies there is nothing to validate against, so any
- * non-empty collection is accepted.
+ * Only the package's declared external (registry-installed, non-`workspace:`/`file:`/`link:`/`portal:`)
+ * production `dependencies` are checked; they are always placed at the top level of a correct
+ * collection. A collection matches when:
+ * - at least one of them is present at the top level, and
+ * - every one of them is either present at the top level (including modules flagged `excluded` by
+ *   `ignoredProductionDependencies`) or reported in the collection's own `logSummary` as
+ *   legitimately absent: dropped by the arch/platform filter, missing on disk (enforced later by
+ *   `allowMissingDependencies`), a missing optional/platform-specific package, excluded as ignored,
+ *   or a self-reference.
+ *
+ * When the package declares no external production dependencies there is nothing to validate
+ * against, so any non-empty collection is accepted.
  */
-export function collectionMatchesAppDependencies(nodeModules: NodeModuleInfo[], dependencies: Record<string, string> | undefined): boolean {
+export function collectionMatchesAppDependencies(
+  nodeModules: NodeModuleInfo[],
+  dependencies: Record<string, string> | undefined,
+  logSummary?: ModuleManager["logSummary"]
+): boolean {
   const requiredExternalDeps = Object.entries(dependencies ?? {})
     .filter(([, spec]) => !LOCAL_DEPENDENCY_SPEC.test(spec))
     .map(([name]) => name)
@@ -240,7 +271,11 @@ export function collectionMatchesAppDependencies(nodeModules: NodeModuleInfo[], 
     return true
   }
   const collected = new Set(nodeModules.map(it => it.name))
-  return requiredExternalDeps.some(name => collected.has(name))
+  if (!requiredExternalDeps.some(name => collected.has(name))) {
+    return false
+  }
+  const accountedAbsent = new Set(ACCOUNTED_ABSENT_DEPENDENCY_KEYS.flatMap(key => logSummary?.[key] ?? []).map(dependencyNameFromSummaryId))
+  return requiredExternalDeps.every(name => collected.has(name) || accountedAbsent.has(name))
 }
 
 /**
@@ -280,7 +315,7 @@ export async function resolveFirstMatchingCollection(options: {
         log.info({ pm, searchDir: dir }, "no node modules found in collection, trying next search directory")
         continue
       }
-      if (collectionMatchesAppDependencies(deps.nodeModules, dependencies)) {
+      if (collectionMatchesAppDependencies(deps.nodeModules, dependencies, deps.logSummary)) {
         log.debug({ pm, searchDir: dir, depCount: deps.nodeModules.length }, "collected node modules")
         return deps
       }

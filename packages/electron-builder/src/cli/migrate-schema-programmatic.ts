@@ -1,18 +1,25 @@
 import { createRequire } from "node:module"
+import { NSIS_CONFIG_KEYS } from "app-builder-lib/internal"
 import * as path from "path"
 import {
   ASAR_PLATFORM_KEYS,
   AZURE_KNOWN_FIELDS,
   ELECTRON_DOWNLOAD_DROPPED,
+  FEED_QUERY_ADVISORY,
   isLegacyElectronDownloadKey,
+  legacyKeyMessage,
   MAC_ENTITLEMENTS_ADVISORY,
   MAC_NULL_MEANS_UNSET_FIELDS,
   MAC_SIGN_FIELDS,
   MAC_SIGN_REMOVED_FIELDS,
   MAC_UNIVERSAL_FIELDS,
+  normalizeTargetName,
+  NSIS_PER_MACHINE_UPDATE_ADVISORY,
   NSIS_WEB_ADVISORY,
+  PORTABLE_DEBUG_LOGGING_DROPPED,
   SNAP_BASES,
   SNAP_CORE24_UNSUPPORTED,
+  WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
 } from "./migrate-schema.js"
 import type { MigrationChange } from "./migrate-schema.js"
 
@@ -369,6 +376,7 @@ class ConfigCodemod {
     this.ruleSnap(root)
     this.ruleHelperBundleId(root)
     this.ruleSquirrelNoMsi(root)
+    this.ruleCustomNsis(root)
     this.ruleWinSign(root)
     for (const platform of ["mac", "mas", "masDev"]) {
       const p = this.getObjectProp(root, platform)
@@ -381,21 +389,17 @@ class ConfigCodemod {
     this.ruleToolsets(root)
     this.ruleNsisWebAdvisory(root)
     this.ruleMacEntitlementsAdvisory(root)
+    this.ruleNsisPerMachineAdvisory(root)
+    this.ruleWinSignHookPublisherNameAdvisory(root)
+    this.ruleFeedQueryAdvisory(root)
   }
 
   // ── Rules ───────────────────────────────────────────────────────────────
 
   // Advisory only — adds no edit, so an nsis-web-only config stays a "no-op" and is never rewritten.
   private ruleNsisWebAdvisory(root: any): void {
-    const ts = this.ts
-    const win = this.getObjectProp(root, "win")
-    const winTarget = win != null ? this.getProp(win, "target") : null
-    const globalTarget = this.getProp(root, "target")
-    for (const prop of [winTarget, globalTarget]) {
-      if (prop != null && ts.isPropertyAssignment(prop) && this.hasNsisWebInTarget(this.unwrap(prop.initializer))) {
-        this.advisories.push(NSIS_WEB_ADVISORY)
-        return
-      }
+    if (this.detectTarget(root, "win", ["nsis-web"])) {
+      this.advisories.push(NSIS_WEB_ADVISORY)
     }
   }
 
@@ -419,6 +423,97 @@ class ConfigCodemod {
       const sign = p == null ? null : this.getObjectProp(p, "sign")
       if (p != null && !namesEntitlements(p) && !namesEntitlements(sign) && !bypassesDefaults(p, sign)) {
         this.advisories.push(MAC_ENTITLEMENTS_ADVISORY)
+        return
+      }
+    }
+  }
+
+  // Advisory only. Mirrors migrateConfig: nsis.perMachine or nsisWeb.perMachine is literally true (a non-literal value is not read).
+  private ruleNsisPerMachineAdvisory(root: any): void {
+    const ts = this.ts
+    if (["nsis", "nsisWeb"].some(name => this.propValue(this.objectLiteral(this.propValue(root, name)), "perMachine")?.kind === ts.SyntaxKind.TrueKeyword)) {
+      this.advisories.push(NSIS_PER_MACHINE_UPDATE_ADVISORY)
+    }
+  }
+
+  // Advisory only. Mirrors migrateConfig on the win.sign it produces: win.sign when set, otherwise the v26 win.azureSignOptions
+  // (else win.signtoolOptions) moved into it, unless signExecutable / signAndEditExecutable: false disabled signing.
+  private ruleWinSignHookPublisherNameAdvisory(root: any): void {
+    const ts = this.ts
+    const isNullish = (v: any) => v === undefined || v.kind === ts.SyntaxKind.NullKeyword
+    // A non-literal flag may be false, so it counts as false (no advisory).
+    const isFalseOrUnread = (v: any) => v !== undefined && (v.kind === ts.SyntaxKind.FalseKeyword || !this.isLiteral(v))
+    const win = this.objectLiteral(this.propValue(root, "win"))
+    if (win == null) {
+      return
+    }
+    const winSign = this.propValue(win, "sign")
+    let legacy: "azure" | "signtool" | null = null
+    let sign: any = null
+    if (!isNullish(winSign)) {
+      sign = this.objectLiteral(winSign)
+    } else if (!["signExecutable", "signAndEditExecutable"].some(k => isFalseOrUnread(this.propValue(win, k)))) {
+      const azure = this.propValue(win, "azureSignOptions")
+      legacy = isNullish(azure) ? "signtool" : "azure"
+      sign = this.objectLiteral(legacy === "azure" ? azure : this.propValue(win, "signtoolOptions"))
+    }
+    // A sign value that is not an object literal may carry publisherName or a certificate (a spread in one counts as a publisherName below).
+    if (sign == null) {
+      return
+    }
+    // migrateConfig moves a string-valued azureSignOptions field that is not a known Azure option into additionalMetadata.
+    const field = (name: string) => {
+      const v = this.propValue(sign, name)
+      return legacy === "azure" && v !== undefined && !AZURE_KNOWN_FIELDS.has(name) && (ts.isStringLiteralLike(v) || ts.isTemplateExpression(v)) ? undefined : v
+    }
+    // Any value but null or a non-string literal counts as a hook: a JS config usually passes a function or an imported module.
+    const hook = field("sign")
+    if (isNullish(hook) || (this.isLiteral(hook) && !ts.isStringLiteralLike(hook))) {
+      return
+    }
+    // Mere presence suppresses: publisherName with any value (null too). A certificate in the config doesn't: a hook needs publisherName.
+    if (field("publisherName") !== undefined || isFalseOrUnread(this.propValue(win, "verifyUpdateCodeSignature"))) {
+      return
+    }
+    this.advisories.push(WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY)
+  }
+
+  // Advisory only. Mirrors migrateConfig, which walks the publish of the root and of each top-level section of the migrated config:
+  // a v26 `snap` moves under snapcraft.<base> (not walked) unless its base is "custom", when its keys replace snapcraft's.
+  private ruleFeedQueryAdvisory(root: any): void {
+    const ts = this.ts
+    const snap = this.objectLiteral(this.propValue(root, "snap"))
+    const snapBase = this.propValue(snap, "base")
+    const snapIsCustom = snapBase !== undefined && ts.isStringLiteral(snapBase) && snapBase.text === "custom"
+    // A base the AST cannot read may be "custom" too, so snapcraft.publish is not read when the snap may replace it.
+    const snapReplacesPublish = (snapIsCustom || (snapBase !== undefined && !this.isLiteral(snapBase))) && this.propValue(snap, "publish") !== undefined
+    const sections: any[] = [root]
+    for (const prop of root.properties) {
+      const name = this.propName(prop)
+      const section = name == null || name === "snap" ? null : this.objectLiteral(this.propValue(root, name))
+      if (section != null && !(name === "snapcraft" && snapReplacesPublish)) {
+        sections.push(section)
+      }
+    }
+    if (snapIsCustom) {
+      sections.push(snap)
+    }
+    // A non-literal url is not read, but a template's static text is: a "?" there is in every url the template produces.
+    const urlHasQuery = (url: any): boolean =>
+      url !== undefined &&
+      (ts.isStringLiteralLike(url)
+        ? url.text.includes("?")
+        : ts.isTemplateExpression(url) && [url.head, ...url.templateSpans.map((s: any) => s.literal)].some((part: any) => part.text.includes("?")))
+    const isGenericWithQuery = (entry: any): boolean => {
+      const obj = this.objectLiteral(this.unwrap(entry))
+      const provider = this.propValue(obj, "provider")
+      return provider !== undefined && ts.isStringLiteralLike(provider) && provider.text === "generic" && urlHasQuery(this.propValue(obj, "url"))
+    }
+    for (const section of sections) {
+      const publish = this.propValue(section, "publish")
+      const entries = publish === undefined ? [] : ts.isArrayLiteralExpression(publish) ? publish.elements : [publish]
+      if (entries.some(isGenericWithQuery)) {
+        this.advisories.push(FEED_QUERY_ADVISORY)
         return
       }
     }
@@ -452,25 +547,26 @@ class ConfigCodemod {
     }
   }
 
-  private hasNsisWebInTarget(value: any): boolean {
+  /** Mirrors migrateConfig's detectTarget: `<platform>.target` or the root target selects one of `names`. */
+  private detectTarget(root: any, platform: "win" | "linux", names: ReadonlyArray<string>): boolean {
+    const platformTarget = this.propValue(this.objectLiteral(this.propValue(root, platform)), "target")
+    return this.hasTargetIn(platformTarget, names) || this.hasTargetIn(this.propValue(root, "target"), names)
+  }
+
+  /** Mirrors migrateConfig's hasTarget: a target name (with an optional ":<arch>" suffix, any case), a `{ target }` object, or an array of either. */
+  private hasTargetIn(value: any, names: ReadonlyArray<string>): boolean {
     const ts = this.ts
-    if (value == null) {
+    if (value === undefined) {
       return false
     }
-    if (ts.isStringLiteral(value)) {
-      return value.text === "nsis-web"
+    // A non-literal name (identifier, template with substitutions, …) is not read.
+    if (ts.isStringLiteralLike(value)) {
+      return names.includes(normalizeTargetName(value.text))
     }
     if (ts.isArrayLiteralExpression(value)) {
-      return value.elements.some((el: any) => this.hasNsisWebInTarget(this.unwrap(el)))
+      return value.elements.some((el: any) => this.hasTargetIn(this.unwrap(el), names))
     }
-    if (ts.isObjectLiteralExpression(value)) {
-      const targetProp = this.getProp(value, "target")
-      if (targetProp != null && ts.isPropertyAssignment(targetProp)) {
-        const inner = this.unwrap(targetProp.initializer)
-        return ts.isStringLiteral(inner) && inner.text === "nsis-web"
-      }
-    }
-    return false
+    return this.hasTargetIn(this.propValue(this.objectLiteral(value), "target"), names)
   }
 
   private ruleRemoveKeys(obj: any, keys: string[], description: string | ((key: string) => string)): void {
@@ -931,6 +1027,67 @@ class ConfigCodemod {
       this.replaceRange(this.start(noMsi), noMsi.end, `msi: ${this.negate(noMsi.initializer)}`)
     }
     this.changes.push({ key: "squirrelWindows.noMsi", description: "replaced squirrelWindows.noMsi → squirrelWindows.msi (inverted boolean)" })
+  }
+
+  // Mirrors migrateConfig's migrateCustomNsis: customNsisBinary.debugLogging → <section>.installerDebugLogging (dropped for portable),
+  // an emptied or null customNsisBinary / customNsisResources is removed, and a custom bundle is kept and reported, never converted
+  // to toolsets.nsis (the bundle layout differs: it must carry the NSIS plugins).
+  private ruleCustomNsis(root: any): void {
+    const ts = this.ts
+    const isNullLiteral = (prop: any) => ts.isPropertyAssignment(prop) && this.unwrap(prop.initializer).kind === ts.SyntaxKind.NullKeyword
+    for (const section of NSIS_CONFIG_KEYS) {
+      const options = this.getObjectProp(root, section)
+      if (options == null) {
+        continue
+      }
+      const binaryPath = `${section}.customNsisBinary`
+      const binaryProp = this.getProp(options, "customNsisBinary")
+      const binary = this.getObjectProp(options, "customNsisBinary")
+      if (binaryProp != null && isNullLiteral(binaryProp)) {
+        this.removeProp(binaryProp)
+        this.changes.push({ key: binaryPath, description: `removed ${binaryPath}: null (the key was removed in v27)` })
+      } else if (binary != null) {
+        const found = this.getProp(binary, "debugLogging")
+        // A method / accessor named debugLogging is not read; it stays and keeps the key.
+        const debugProp = found != null && (ts.isPropertyAssignment(found) || ts.isShorthandPropertyAssignment(found)) ? found : null
+        // A shorthand, spread, method or computed key may hold a custom bundle, so only `name: null` counts as unset.
+        const keepsBundle = binary.properties.some((p: any) => p !== debugProp && !isNullLiteral(p))
+        if (debugProp != null) {
+          const valueText = ts.isShorthandPropertyAssignment(debugProp) ? debugProp.name.text : this.valueText(debugProp.initializer, this.propIndentFor(options))
+          if (section === "portable") {
+            if (!isNullLiteral(debugProp)) {
+              this.warnings.push(PORTABLE_DEBUG_LOGGING_DROPPED)
+            }
+            this.changes.push({ key: `${binaryPath}.debugLogging`, description: `removed ${binaryPath}.debugLogging (no effect on portable targets)` })
+          } else if (!isNullLiteral(debugProp) && this.getProp(options, "installerDebugLogging") == null) {
+            this.insertIntoObject(options, [`installerDebugLogging: ${valueText}`])
+            this.changes.push({ key: `${binaryPath}.debugLogging`, description: `moved ${binaryPath}.debugLogging → ${section}.installerDebugLogging` })
+          } else {
+            this.changes.push({ key: `${binaryPath}.debugLogging`, description: `removed ${binaryPath}.debugLogging` })
+          }
+          if (keepsBundle) {
+            this.removeProp(debugProp)
+          }
+        }
+        if (keepsBundle) {
+          this.warnings.push(legacyKeyMessage(binaryPath))
+        } else {
+          this.removeProp(binaryProp)
+          this.changes.push({ key: binaryPath, description: `removed ${binaryPath} (no custom bundle was set)` })
+        }
+      } else if (binaryProp != null) {
+        this.warnings.push(legacyKeyMessage(binaryPath))
+      }
+
+      const resourcesPath = `${section}.customNsisResources`
+      const resourcesProp = this.getProp(options, "customNsisResources")
+      if (resourcesProp != null && isNullLiteral(resourcesProp)) {
+        this.removeProp(resourcesProp)
+        this.changes.push({ key: resourcesPath, description: `removed ${resourcesPath}: null (the key was removed in v27)` })
+      } else if (resourcesProp != null) {
+        this.warnings.push(legacyKeyMessage(resourcesPath))
+      }
+    }
   }
 
   private ruleWinSign(root: any): void {
@@ -1456,6 +1613,44 @@ class ConfigCodemod {
     }
     const v = this.unwrap(prop.initializer)
     return ts.isObjectLiteralExpression(v) ? v : null
+  }
+
+  /**
+   * Value of property `name` for the advisory rules: undefined when `objLit` is null or lacks the property (or sets it to `undefined`,
+   * which JSON drops), else the unwrapped initializer of a `name: value` property, or a node the AST cannot read: the property itself
+   * for a shorthand / method, or a spread / computed key that may set the property (one after it, or anywhere when it is absent).
+   */
+  private propValue(objLit: any, name: string): any {
+    const ts = this.ts
+    if (objLit == null) {
+      return undefined
+    }
+    const prop = this.getProp(objLit, name)
+    const unread = objLit.properties
+      .slice(prop == null ? 0 : objLit.properties.indexOf(prop) + 1)
+      .find((p: any) => ts.isSpreadAssignment(p) || (p.name != null && ts.isComputedPropertyName(p.name)))
+    if (unread != null || prop == null) {
+      return unread
+    }
+    const value = ts.isPropertyAssignment(prop) ? this.unwrap(prop.initializer) : prop
+    return ts.isIdentifier(value) && value.text === "undefined" ? undefined : value
+  }
+
+  /** `node` when it is an object literal, else null. */
+  private objectLiteral(node: any): any | null {
+    return node != null && this.ts.isObjectLiteralExpression(node) ? node : null
+  }
+
+  /** True for a value the AST reads like JSON: a string, number, boolean, null, or an object / array literal. */
+  private isLiteral(node: any): boolean {
+    const ts = this.ts
+    return (
+      ts.isStringLiteralLike(node) ||
+      ts.isNumericLiteral(node) ||
+      ts.isObjectLiteralExpression(node) ||
+      ts.isArrayLiteralExpression(node) ||
+      [ts.SyntaxKind.TrueKeyword, ts.SyntaxKind.FalseKeyword, ts.SyntaxKind.NullKeyword].includes(node.kind)
+    )
   }
 
   private propName(prop: any): string | undefined {

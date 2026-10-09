@@ -7,6 +7,10 @@ exports[`assisted > allowElevation false, app requestedExecutionLevel admin 1`] 
       "arch": "x64",
       "file": "test Setup 1.1.0.exe",
       "safeArtifactName": "test-Setup-1.1.0.exe",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+      },
     },
   ],
 }
@@ -113,6 +117,7 @@ exports[`assisted > assisted, only perMachine 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
+        "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -122,6 +127,7 @@ exports[`assisted > assisted, only perMachine 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
       },
