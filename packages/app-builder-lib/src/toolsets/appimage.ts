@@ -59,7 +59,7 @@ export async function getAppImageTools(toolset: ToolsetConfig["appimage"], targe
   // bypasses both. Never forward an unknown version: without a checksum entry the downloader would run
   // with integrity verification disabled.
   const checksums = (appimageChecksums as Partial<Record<string, Record<string, string>>>)[version]
-  if (checksums == null) {
+  if (checksums == null || !Object.prototype.hasOwnProperty.call(appimageChecksums, version)) {
     throw new InvalidConfigurationError(
       `Unknown toolsets.appimage version "${version}". Known versions: ${Object.keys(appimageChecksums).join(", ")} (or "latest"). ` +
         `To use a custom bundle, set toolsets.appimage to a ToolsetCustom object (url + checksum) instead.`
