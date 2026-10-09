@@ -21,21 +21,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   protected readonly productionGraph: DependencyGraph = {}
   protected readonly cache: ModuleManager = new ModuleManager()
 
-  protected isHoisted = new Lazy<boolean>(async () => {
-    const { manager } = this.installOptions
-    const command = getPackageManagerCommand(manager)
-    const config = (await this.asyncExec(command, ["config", "list"])).stdout
-    if (config == null) {
-      log.debug({ manager }, "unable to determine node-linker setting; assuming non-hoisted (virtual store) layout")
-      return false
-    }
-    const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
-    if (lines["node-linker"] === "hoisted") {
-      log.debug({ manager }, "node_modules are hoisted")
-      return true
-    }
-    return false
-  })
+  /** Whether `node_modules` uses a hoisted (flat) layout. Overridden by collectors that detect it from disk or config. */
+  protected isHoisted = new Lazy<boolean>(() => Promise.resolve(false))
 
   constructor(
     protected readonly rootDir: string,
@@ -111,8 +98,17 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
     return retry(
       async () => {
-        await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
+        const { code, stderr } = await this.streamCollectorCommandToFile(command, args, this.rootDir, tempOutputFile)
         const shellOutput = await _fsExtra.readFile(tempOutputFile, { encoding: "utf8" })
+        if (shellOutput.trim().length === 0) {
+          // Parsing an empty string would only yield a misleading "No JSON content found in output" (#10208).
+          // With npm this usually means npm itself threw while writing its buffered JSON tree at exit: npm's exit
+          // handler swallows that exception and exits 1 with nothing on stdout and only `verbose exit 1` in its log.
+          throw new Error(
+            `\`${[path.basename(command), ...args].join(" ")}\` (cwd: ${this.rootDir}) exited with code ${code} and produced no output on stdout; ` +
+              `with npm this usually means npm itself failed while writing its JSON dependency tree. stderr: ${stderr.trim().length > 0 ? stderr.trim() : "(empty)"}`
+          )
+        }
         const result = await Promise.resolve(this.parseDependenciesTree(shellOutput))
         return result
       },
@@ -475,10 +471,11 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
    * @param args - Array of command-line arguments
    * @param cwd - The working directory to execute the command in
    * @param tempOutputFile - The path to the temporary file where stdout will be written
-   * @returns Promise that resolves when the command completes successfully or rejects if it fails
+   * @returns Promise that resolves with the exit code and captured stderr when the command completes
+   * successfully (or with a tolerated exit code), or rejects if it fails
    * @throws {Error} If the child process spawn fails or exits with a non-zero, unexpected code
    */
-  protected async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string) {
+  protected async streamCollectorCommandToFile(command: string, args: string[], cwd: string, tempOutputFile: string): Promise<{ code: number; stderr: string }> {
     // Derive execName from the original command so the npm-list shouldIgnore check below keys off the
     // real invocation (e.g. "npm"), not the "powershell" wrapper streamSpawnToFile uses on Windows.
     const execName = path.basename(command, path.extname(command))
@@ -510,5 +507,6 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     if (code !== 0 && !shouldIgnore) {
       throw new Error(`Node module collector process exited with code ${code}:\n${stderr}`)
     }
+    return { code, stderr }
   }
 }

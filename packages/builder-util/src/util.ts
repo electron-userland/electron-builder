@@ -33,8 +33,18 @@ export { escapeForXml, isEmptyOrSpaces } from "./stringUtil.js"
 export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
 export * from "./fs.js"
 
-export { decodeCscLinkBase64, loadCscLink, resolveCscLinkPath } from "./cscLink.js"
 export { generateKsuid } from "./ksuid.js"
+export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink.js"
+export {
+  signUpdateManifest,
+  createUpdateManifestSignatures,
+  parsePrivateKey,
+  derivePublicKeyPem,
+  loadUpdateSigningKey,
+  loadUpdateSigningKeys,
+  UpdateSigningKeySources,
+  generateUpdateSigningKeypair,
+} from "./updateManifestSigner.js"
 
 export const debug7z = _debug("electron-builder:7z")
 
@@ -298,6 +308,14 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
   const childProcess = doSpawn(command, args, options, { isPipeInput: true })
   const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
   return new Promise<any>((resolve, reject) => {
+    const rejectAndClearTimeout = (error: Error) => {
+      try {
+        clearTimeout(timeout)
+      } finally {
+        reject(error)
+      }
+    }
+
     handleProcess(
       "close",
       childProcess,
@@ -309,16 +327,10 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
           resolve(undefined)
         }
       },
-      error => {
-        try {
-          clearTimeout(timeout)
-        } finally {
-          reject(error)
-        }
-      }
+      rejectAndClearTimeout
     )
 
-    childProcess.stdin!.end(data)
+    endStdin(childProcess, data, rejectAndClearTimeout)
   })
 }
 
@@ -358,7 +370,10 @@ export function spawnAndWriteWithOutput(command: string, args: Array<string>, da
       }
     })
 
-    childProcess.stdin!.end(data)
+    endStdin(childProcess, data, (err: Error) => {
+      clearTimeout(timeout)
+      reject(err)
+    })
 
     childProcess.once("close", (code: number) => {
       clearTimeout(timeout)
@@ -371,6 +386,20 @@ export function spawnAndWriteWithOutput(command: string, args: Array<string>, da
       }
     })
   })
+}
+
+// The child may exit (closing its stdin) before all data is written. The resulting "reader went away" write error is
+// expected and must not surface as an unhandled 'error' event: the exit code reported on "close" decides success or failure.
+// POSIX reports EPIPE (or ECONNRESET); on Windows libuv maps ERROR_BROKEN_PIPE to UV_EOF, surfaced as code "EOF".
+const STDIN_CLOSED_ERROR_CODES = new Set(["EPIPE", "ECONNRESET", "EOF"])
+
+function endStdin(childProcess: ChildProcess, data: string, reject: (error: Error) => void) {
+  childProcess.stdin!.on("error", (error: NodeJS.ErrnoException) => {
+    if (!STDIN_CLOSED_ERROR_CODES.has(error.code ?? "")) {
+      reject(error)
+    }
+  })
+  childProcess.stdin!.end(data)
 }
 
 export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
