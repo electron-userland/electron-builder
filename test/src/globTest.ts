@@ -171,6 +171,7 @@ test.ifNotWindows("failed peer dep", ({ expect }) => {
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: async projectDir => {
         return Promise.all([

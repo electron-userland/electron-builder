@@ -38,6 +38,10 @@ export default class AppXTarget extends Target {
     }
   }
 
+  get writesUpdateInfo(): boolean {
+    return this.options.electronUpdaterAware === true
+  }
+
   // https://docs.microsoft.com/en-us/windows/uwp/packaging/create-app-package-with-makeappx-tool#mapping-files
   build(appOutDir: string, arch: Arch): Promise<any> {
     return buildAppxPackage(this, this.packager, this.options, appOutDir, arch, {

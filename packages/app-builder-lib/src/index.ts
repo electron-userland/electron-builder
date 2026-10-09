@@ -68,7 +68,7 @@ export {
 export { BuildResult, Packager } from "./packager.js"
 export { ElectronGetOptions } from "./util/electronGet.js"
 export { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
-export { CommonNsisOptions, CustomNsisBinary, NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis/nsisOptions.js"
+export { CommonNsisOptions, NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis/nsisOptions.js"
 export { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
@@ -94,7 +94,19 @@ export { PlatformPackager } from "./platformPackager.js"
 export { PublishManager } from "./publish/PublishManager.js"
 export { WinPackager } from "./winPackager.js"
 
-const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
+const expectedOptions = new Set([
+  "publish",
+  "targets",
+  "mac",
+  "win",
+  "linux",
+  "projectDir",
+  "platformPackagerFactory",
+  "config",
+  "effectiveOptionComputed",
+  "afterPackTestHook",
+  "prepackaged",
+])
 
 export function checkBuildRequestOptions(options: PackagerOptions & PublishOptions) {
   for (const optionName of Object.keys(options)) {

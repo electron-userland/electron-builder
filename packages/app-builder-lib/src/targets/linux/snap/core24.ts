@@ -74,7 +74,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // Create desktop file in snap/gui/ directory
     // Snapcraft will automatically copy this to meta/gui/ in the final snap
     const desktopFilePath = path.join(guiOutput, `${this.helper.getDesktopFileName(snap.name)}.desktop`)
-    await this.helper.writeDesktopEntry(this.options, this.packager.executableName + " %U", desktopFilePath, desktopExtraProps)
+    await this.helper.writeDesktopEntry(this.options, snap.name + " %U", desktopFilePath, desktopExtraProps)
 
     // Copy app files to the project root `app` directory so `source: app`
     // in the generated `snapcraft.yaml` (which is under `snap/`) can be
@@ -146,7 +146,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     }
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null) {
-      const shouldSkip = await this.packager.packagerOptions.effectiveOptionComputed({ snap, ...buildMode })
+      const shouldSkip = await this.packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile: desktopFilePath, ...buildMode })
       if (shouldSkip) {
         return [artifactPath]
       }
@@ -257,6 +257,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     this.commandArgs = extraArgs
 
     // Create the app configuration
+    // apps.desktop would add a second entry beside the generated snap/gui file.
     const desktopBaseName = this.helper.getDesktopFileName(appName)
     const app: App = {
       command: SNAP_COMMAND_LAUNCHER,
@@ -264,7 +265,6 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       plugs: appPlugs,
       slots: appSlots,
       autostart: options.autoStart ? `${desktopBaseName}.desktop` : undefined,
-      desktop: `meta/gui/${desktopBaseName}.desktop`,
       extensions: resolvedExtensions,
     }
 
