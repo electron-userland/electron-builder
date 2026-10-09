@@ -1,5 +1,25 @@
 # app-builder-lib
 
+## 26.17.1
+
+### Patch Changes
+
+- Fix: import blake2b from `@noble/hashes/blake2.js`, which both @noble/hashes 1.x and 2.x export, so projects that override @noble/hashes to 2.x can load electron-builder again (blockmap checksums are unchanged) _[`#10292`](https://github.com/electron-userland/electron-builder/pull/10292) [`6202a27`](https://github.com/electron-userland/electron-builder/commit/6202a271c2373eb5721acf2416098cd1dff73f83) [@mmaietta](https://github.com/mmaietta)_
+- Fix(nsis): warn when `differentialPackage: "store-asar"` finds no `resources/app.asar` (e.g. `asar: false`) instead of silently compressing the package normally _[`#10249`](https://github.com/electron-userland/electron-builder/pull/10249) [`fcd6897`](https://github.com/electron-userland/electron-builder/commit/fcd6897810846ee8dc367f0abacf34e4eb5a10fb) [@claude](https://github.com/apps/claude)_
+- Fix(nsis): keep installer extraction in sync with the payload format when `useZip` is set (ignored with a warning for differential-aware builds and for `nsis-web`, which always use 7z), and only share an app package between targets (e.g. nsis + portable) whose packaging settings match _[`#10252`](https://github.com/electron-userland/electron-builder/pull/10252) [`160c3b4`](https://github.com/electron-userland/electron-builder/commit/160c3b405ff1e193eadd4d6d76049e23ce334ebd) [@claude](https://github.com/apps/claude)_
+- Fix(pnpm-collector): read the app's own package.json from its directory so an app named like one of its dependencies no longer loses production dependencies from the asar _[`#10282`](https://github.com/electron-userland/electron-builder/pull/10282) [`c60987c`](https://github.com/electron-userland/electron-builder/commit/c60987c538598118d89ea9cede383a06dc2743b8) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.17.1`
+- `electron-builder-squirrel-windows@26.17.1`
+
+</details>
+
 ## 26.17.0
 
 ### Minor Changes
