@@ -142,14 +142,15 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
    * Use `"default"` in the list to keep the defaults and append extras:
    * `["default", "camera"]` adds `camera` to the standard set.
    *
-   * To configure plug attributes (e.g. `allow-sandbox` for Chromium's internal sandbox),
-   * use a descriptor object:
+   * To configure plug attributes, use a descriptor object:
    * ```json
    * [
    *   { "browser-sandbox": { "interface": "browser-support", "allow-sandbox": true } },
    *   "another-simple-plug-name"
    * ]
    * ```
+   * Note that the Snap Store reserves `allow-sandbox` (which keeps Chromium's internal sandbox) for
+   * vetted publishers and rejects other uploads that request it; electron-builder warns when it is set.
    */
   readonly plugs?: Array<string | PlugDescriptor> | PlugDescriptor | null
 
@@ -450,14 +451,28 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
 
   /**
    * [Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) for the app.
-   * When the `gnome` extension is active, content-snap plugs (themes, GNOME platform, GPU)
-   * are added automatically — only list custom plugs here.
-   * Without any extension, defaults to the standard Electron plug set.
+   *
+   * When unset, electron-builder declares its default plug set: `browser-support` (without
+   * `allow-sandbox`, so the app is launched with `--no-sandbox`), plus — unless the `gnome` extension
+   * supplies them — the app-level plugs `["desktop", "desktop-legacy", "home", "x11", "wayland",
+   * "unity7", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]` and, for strict builds
+   * that are not host/destructive-mode, the content-snap plugs `gtk-3-themes`, `icon-themes`,
+   * `sound-themes`, `gnome-46-2404` and `gpu-2404`.
+   *
+   * Include `"default"` to add to that set instead of replacing it: the result is the full default
+   * set (the app-level plugs above plus everything the build flavor declares on its own) together with
+   * your other entries, deduplicated by plug name. A descriptor object named like a default plug
+   * overrides that plug's attributes. Without `"default"`, the list replaces the defaults entirely.
+   * ```json
+   * ["default", "camera", { "home": { "read": "all" } }]
+   * ```
    *
    * Supports descriptor objects for plugs with attributes:
    * ```json
-   * [{ "browser-sandbox": { "interface": "browser-support", "allow-sandbox": true } }]
+   * [{ "dot-config-app": { "interface": "personal-files", "write": ["$HOME/.config/app"] } }]
    * ```
+   * The Snap Store reserves `browser-support`'s `allow-sandbox` attribute for vetted publishers and
+   * rejects other uploads that request it; electron-builder warns when it is set.
    */
   readonly plugs?: Array<string | PlugDescriptor> | PlugDescriptor | null
 
@@ -517,7 +532,7 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
  *
  * @example
  * ```json
- * { "browser-sandbox": { "interface": "browser-support", "allow-sandbox": true } }
+ * { "dot-config-app": { "interface": "personal-files", "write": ["$HOME/.config/app"] } }
  * ```
  */
 export interface PlugDescriptor {

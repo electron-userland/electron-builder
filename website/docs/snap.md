@@ -201,6 +201,25 @@ When `extensions` is empty, electron-builder falls back to the standard Electron
 Start with only the plugs you actually need. Unnecessary plugs may slow Snap Store review. At minimum, `browser-support`, `network`, `desktop`, and `desktop-legacy` are needed for most Electron apps.
 :::
 
+### Plugs
+
+When `plugs` is unset, core24 declares `browser-support`. Without the `gnome` extension it also declares the app-level desktop plugs (`desktop`, `x11`, `wayland`, `home`, `network`, `audio-playback`, …) and, outside destructive mode, the content-snap plugs the extension would otherwise provide (`gnome-46-2404`, `gtk-3-themes`, `icon-themes`, `sound-themes`, `gpu-2404`). Include `"default"` to add plugs to the full default set (the app-level desktop plugs are always part of it); without `"default"`, your list replaces the defaults:
+
+```json
+{
+  "snapcraft": {
+    "base": "core24",
+    "core24": {
+      "plugs": ["default", "camera", { "home": { "read": "all" } }]
+    }
+  }
+}
+```
+
+Entries are deduplicated by plug name, and a descriptor object named like a default plug overrides that plug's attributes.
+
+`browser-support` is requested **without** `allow-sandbox`, so the app is launched with `--no-sandbox` and `chrome-sandbox` is left out of the snap; the snap confinement isolates the app. The Snap Store reserves `allow-sandbox` for vetted publishers and rejects other uploads that request it — electron-builder warns if you configure it.
+
 ---
 
 ### Wayland

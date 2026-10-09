@@ -51,6 +51,7 @@ These are the runtime and default changes that `migrate-schema` **does not** rew
 | **NSIS file-association ProgID format changed** | Associations now register under a unique generated ProgID; update custom NSIS scripts that hard-code the old `name`/extension. | [→](./v27-breaking-changes.md#nsis-file-association-progid-format-changed) |
 | **Linux `.desktop` runs a `*-launcher` script** | Every Linux target launches via a generated `<executableName>-launcher`; the `.desktop` `Exec` points at it. Update custom `.desktop` / AppArmor / MIME tooling. | [→](./v27-breaking-changes.md#linux-launcher-entrypoint) |
 | **AppImage `--no-sandbox` only for legacy FUSE2** | With the default FUSE3 runtime, `--no-sandbox` is no longer auto-added; set `executableArgs: ["--no-sandbox"]` if you need it unconditionally. | [→](./v27-breaking-changes.md#linux-launcher-entrypoint) |
+| **Snap core24 drops `allow-sandbox` by default** | Default core24 snaps request plain `browser-support` (the Snap Store rejects `allow-sandbox` from non-vetted publishers), launch with `--no-sandbox`, and omit `chrome-sandbox`. `"default"` in `core24.plugs` now merges your entries into the full default set. | [→](./v27-breaking-changes.md#snap-core24-no-allow-sandbox-by-default) |
 | **Azure Trusted Signing uses `signtool /dlib`** | The default winCodeSign 1.3.0 ships the ATS `dlib` payload, so ATS uses the faster path automatically; pin below 1.3.0 to force the legacy PowerShell path. | [→](./v27-breaking-changes.md#azure-trusted-signing-signtool-dlib-is-the-default) |
 
 :::note

@@ -86,6 +86,8 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [New: `win.target: "msix"` (beta)](#new-msix-target-beta) | — | Optional, additive — the default `winCodeSign` works (only the legacy `0.0.0` bundle is rejected) |
 | [`PlatformPackager.info` & `platformSpecificBuildOptions` now `protected`](#programmatic-plugin-author-api-changes) | — | Plugin authors: hard break — `.info` no longer compiles externally; use the new pass-through getters |
 | [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | — | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command |
+| [Snap core24: no `allow-sandbox` by default](#snap-core24-no-allow-sandbox-by-default) | — | None for most apps — default core24 snaps now launch with `--no-sandbox` and pass Snap Store review; vetted publishers can request `allow-sandbox` explicitly |
+| [Snap core24: `"default"` in `plugs` merges the full default set](#snap-core24-default-in-plugs-merges-the-full-default-set) | — | `["default", …]` now also adds `browser-support` (and, without the `gnome` extension, the content-snap plugs); list plugs without `"default"` to replace the defaults |
 | [`node_modules` arch/os-filtered on every build](#node_modules-are-now-archos-filtered-on-every-build) | — | Awareness — packages whose `cpu`/`os` mismatch the target are now excluded |
 | [`arch: "all"` now expands to x64 + arm64; 32-bit fails fast on Electron 44+](#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44) | — | `arch: "all"` drops `ia32` — request `ia32` explicitly; ia32/armv7l require `electronVersion` <= 43.x |
 | [macOS `productName`/`executableName` validated, not silently sanitized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | A name needing filename sanitization now throws — pick a name that needs none |
@@ -783,6 +785,24 @@ This makes `executableArgs` apply consistently across all Linux targets and keep
 **Desktop-entry field codes in `executableArgs` are now literal.** v26 passed an argument like `%F` into the `.desktop` `Exec` key unquoted (and skipped appending `%U`). In v27 `executableArgs` are injected into the launcher script and quoted, so `%F` reaches your app as the literal string `"%F"` instead of the file list. If you relied on a field code to receive opened files, remove it from `executableArgs` and set `linux.desktop.entry.Exec` instead. electron-builder warns when it sees one.
 
 **AppImage `--no-sandbox` default changed.** The default `--no-sandbox` launch argument is now injected **only for the legacy FUSE2 runtime** (`toolsets.appimage: "0.0.0"`). With the default static FUSE3 runtime (unset / `"latest"` → `1.1.0`), `--no-sandbox` is no longer added automatically — `AppRun` adds it on its own only when user namespaces are unavailable. If you need the Chromium sandbox disabled unconditionally, set `executableArgs: ["--no-sandbox"]` explicitly.
+
+### Snap core24: no `allow-sandbox` by default {#snap-core24-no-allow-sandbox-by-default}
+
+When `snapcraft.core24.plugs` is unset, core24 snaps now request the plain `browser-support` interface. electron-builder 26 requested `browser-support` with `allow-sandbox: true`, but the Snap Store reserves that attribute for vetted publishers (browsers), so store review rejected those uploads. Without `allow-sandbox` the app is launched with `--no-sandbox` and the setuid `chrome-sandbox` helper is left out of the snap — the same as the legacy bases (core18/core20/core22) — and the snap confinement isolates the app instead of Chromium's own sandbox. The build logs a one-time warning about the change.
+
+**No action is required for most apps.** If your publisher has been granted `allow-sandbox`, request it explicitly to keep Chromium's sandbox:
+
+```json
+{ "snapcraft": { "base": "core24", "core24": { "plugs": ["default", { "browser-support": { "allow-sandbox": true } }] } } }
+```
+
+electron-builder warns whenever a configuration (on any base) requests `allow-sandbox`, because store review rejects it for everyone else.
+
+### Snap core24: `"default"` in `plugs` merges the full default set {#snap-core24-default-in-plugs-merges-the-full-default-set}
+
+`"default"` in `snapcraft.core24.plugs` used to expand to the app-level plug list only (`desktop`, `desktop-legacy`, `home`, `x11`, `wayland`, `unity7`, `network`, `gsettings`, `audio-playback`, `pulseaudio`, `opengl`), so `["default", "camera"]` silently dropped `browser-support` and, without the `gnome` extension, the content-snap plugs that the default `layout` relies on. It now expands to the full default set — the app-level list plus everything electron-builder declares when `plugs` is unset for that build (`browser-support`, and for strict builds without the `gnome` extension or destructive mode, `gtk-3-themes`, `icon-themes`, `sound-themes`, `gnome-46-2404` and `gpu-2404`) — and your other entries are added to it, deduplicated by plug name. A descriptor object named like a default plug overrides that plug's attributes. The build logs a one-time warning listing the plugs the expansion adds.
+
+**Action is required only if** you relied on `"default"` leaving those plugs out. A `plugs` list without `"default"` still replaces the defaults entirely.
 
 ### `node_modules` are now arch/os-filtered on every build
 
