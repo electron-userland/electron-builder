@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": false,
+  "semi": false,
+  "arrowParens": "avoid",
+  "trailingComma": "es5",
+  "printWidth": 180,
+  "quoteProps": "as-needed",
+  "endOfLine": "lf",
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "*.d.ts",
+    "out",
+    "dist"
+  ]
+}

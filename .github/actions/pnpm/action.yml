@@ -4,12 +4,30 @@ description: 'Enable via corepack and install dependencies'
 runs:
   using: 'composite'
   steps:
+    # Hashed so the output is always 64 hex chars, whatever package.json holds (newlines, commas, length).
+    - name: Hash packageManager
+      id: pm
+      run: echo "hash=$(node -p "require('crypto').createHash('sha256').update(String(require('./package.json').packageManager)).digest('hex')")" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    # Corepack downloads pnpm via Node's bundled undici, which can crash with an uncatchable
+    # `assert(!this.paused)` when the registry closes the connection (nodejs/undici#5360).
+    # With the pnpm version already in the corepack home, corepack reuses it without a network request.
+    - name: Cache Corepack
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: |
+          ~/.cache/node/corepack
+          ~\AppData\Local\node\corepack
+        key: corepack-${{ runner.os }}-${{ steps.pm.outputs.hash }}
+
     - name: Enable Corepack for pnpm
       run: |
         corepack enable
         # Pre-activate the exact pnpm version from packageManager so that
         # setup-node can run 'pnpm store path' without triggering a mid-step download.
-        # Retry on transient registry timeouts.
+        # Retries only help on a cold cache for transient registry errors: the undici crash above
+        # tends to repeat on the same runner, so the cache is the actual mitigation.
         for i in 1 2 3; do
           COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack prepare --activate && break
           [ $i -lt 3 ] && echo "corepack prepare failed (attempt $i/3), retrying in 15s…" && sleep 15

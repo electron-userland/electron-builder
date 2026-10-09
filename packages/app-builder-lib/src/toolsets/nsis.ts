@@ -1,4 +1,4 @@
-import { exists } from "builder-util"
+import { exists, InvalidConfigurationError } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
@@ -38,6 +38,22 @@ export const nsisChecksums = {
     "nsis-bundle-3.12.tar.gz": "56997fdefe25e7928a1a68b4583d08b240b66cf660234053b20131a74cc082f4",
   },
 } as const
+
+/**
+ * `installerDebugLogging` emits `LogSet`, which only a `makensis` compiled with `NSIS_CONFIG_LOG=yes` accepts ("LogSet specified,
+ * NSIS_CONFIG_LOG not defined" otherwise). The bundled NSIS toolsets are not log-enabled, so only a custom bundle can support it.
+ */
+export function assertInstallerDebugLoggingSupported(nsis: ToolsetConfig["nsis"] | Nullish, targetName: string): void {
+  if (typeof nsis === "object" && nsis != null) {
+    return
+  }
+  throw new InvalidConfigurationError(
+    `\`installerDebugLogging\` (${targetName} target) needs a log-enabled NSIS (makensis and stubs compiled with NSIS_CONFIG_LOG=yes), ` +
+      `but \`toolsets.nsis\` is ${nsis == null ? "unset" : `"${nsis}"`}, which selects a bundled NSIS that is not log-enabled.\n` +
+      "  Supply a log-enabled NSIS bundle as a custom `toolsets.nsis: { url, checksum, version }`, or remove `installerDebugLogging`.\n" +
+      "  https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis"
+  )
+}
 
 async function getNsisBundlePath(nsis: ToolsetConfig["nsis"] | Nullish, resourcesDir: string): Promise<string> {
   if (typeof nsis === "object" && nsis != null) {
