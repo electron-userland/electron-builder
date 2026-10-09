@@ -1,3 +1,5 @@
+{!./partials/_upgrading-from-v26.md!}
+
 The [publish](./configuration.md#publish) key contains a set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](./features/auto-update.md).
 
 `String | Object | Array<Object | String>` where `Object` it is [Keygen](#keygen), [Generic Server](#byo-generic-create-your-own), [GitHub](#github), [S3](#s3), [Spaces](#spaces), [R2](#r2) or [Snap Store](#snap-store) options. Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](./configuration.md) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
@@ -20,16 +22,10 @@ If `GITHUB_RELEASE_TOKEN` is defined, it will be used instead of (`GH_TOKEN` or 
 - you could make your `GITHUB_TOKEN` "Read-only" when creating a fine-grained personal access token, and "Read and write" for the `GITHUB_RELEASE_TOKEN`.
 - "Contents" fine-grained permission was sufficient. (at time of writing - Apr 2024)
 
-:::warning[Deprecation Notice: Implicit Publishing]
-electron-builder currently auto-detects when to publish based on CI environment conditions:
+:::warning[Implicit publishing was removed in v27]
+In v26 and earlier, electron-builder auto-detected when to publish based on CI environment conditions (npm lifecycle event, a git tag in CI, etc.). **As of v27 this implicit behavior is removed** — publishing never happens unless you request it. This closes a hole where unfinished work or secrets could be published unintentionally.
 
-- Running via `npm run release` → publishes always
-- Git tag detected in CI → publishes on tag
-- CI environment detected → publishes to draft releases
-
-**This implicit publishing behavior is deprecated and will be disabled in electron-builder v27.**
-
-To prepare for this change, please explicitly specify your publish intent using the `--publish` CLI flag (e.g., `--publish always`, `--publish onTag`) or set the `publish` configuration in your `package.json` or `electron-builder.yml`.
+Explicitly specify your publish intent with the `--publish` CLI flag (e.g. `--publish always`, `--publish onTag`, `--publish onTagOrDraft`, `--publish never`) or set the `publish` option in your configuration. See [v27 Breaking Changes → implicit `--publish` removed](./migration/v27-breaking-changes.md#implicit-publish-removed).
 :::
 
 :::info[Snap store]
@@ -57,6 +53,26 @@ win:
       # a string provider for bitbucket that will use default options
     - bitbucket
 ```
+
+### Which settings become the auto-update feed (`app-update.yml`) {#app-update-yml-feed}
+
+The auto-update feed an installed app polls is the **first** provider written to `app-update.yml` inside the packaged app. One packaged app (for example `win-unpacked`, `linux-unpacked` or the `.app` bundle) holds a single `app-update.yml`, shared by every target built from it. It is resolved like this:
+
+1. The targets of that app that write update info — NSIS/NSIS web installer, AppX with `electronUpdaterAware`, macOS dmg/zip, AppImage, deb/rpm/pacman — each resolve their own `publish`: the target-level value (e.g. `nsis.publish`) first, then the platform level (`win.publish`), then the top level.
+2. If one or more of them emit a manifest under those settings, their first provider that receives the manifest becomes the feed — a provider with `publishAutoUpdate: false` gets no `latest*.yml`, so it is skipped (with `publish: [{ provider: "s3", …, publishAutoUpdate: false }, "github"]` the feed is GitHub). They must agree: two such targets whose first providers differ (for example `nsis.publish` pointing at S3 while an AppX inherits `win.publish: github`, or `dmg.publish` differing from `zip.publish`) would leave some installs polling a feed that never receives their manifest. A publishing build then fails at build start with an `InvalidConfigurationError`; a build without a publish policy logs a warning that publishing will fail, and writes no `app-update.yml` for that app. Configure `publish` once at the platform level, or give the targets the same first provider (later providers may differ). Only what decides the feed is compared — the provider and options such as `url`, `bucket`, `region`, `path`, `owner`, `repo` or `channel`; options that only affect the upload (`publishAutoUpdate`, `timeout`, and for S3-compatible providers `acl`, `storageClass`, `encryption`) may differ.
+3. If none of them emits a manifest — only non-updating targets such as snap or portable, or a target with `publish: null` or `publishAutoUpdate: false` on every provider — the platform/top-level `publish` is used, as before.
+4. If no level configures `publish` at all, the feed falls back to GitHub when the `repository` field points there (see [GitHub Repository](#github-repository-and-bintray-package)).
+
+For example, with only a target-level setting
+
+```yaml
+nsis:
+  publish:
+    provider: s3
+    bucket: my-updates
+```
+
+installed NSIS apps poll the S3 bucket and embed the update-manifest trust key. Before this rule, the target-level setting was not read for `app-update.yml`: such a build shipped no `app-update.yml` at all (no feed and no trusted key), or — with a GitHub `repository` — a GitHub feed while the manifests went to S3.
 
 You can also configure publishing using CLI arguments, for example, to force publishing snap not to Snap Store, but to GitHub: `-c.snap.publish=github`
 
@@ -131,12 +147,52 @@ Detected automatically using:
     * or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
 * if no env, from `.git/config` origin url.
 
+:::warning[The detected repository ships inside your app]
+Whatever is detected here becomes the publish/update destination and, for auto-update-capable targets, is written to `app-update.yml` inside every packaged build - that is where electron-updater looks for updates for the lifetime of that install. A build reports the repository it inferred, including the `source` it came from - at info level when it comes from the `repository` field of `package.json` (deliberate configuration), at warn level when it is picked up from CI environment variables or `.git/config`:
+
+```
+• update feed inferred from repository info; it will be used as the publish/update destination
+  (written to app-update.yml in auto-update-capable targets) - specify it explicitly to be sure
+  it stays under your control  reason=owner and repo not specified in the publish configuration
+  source=.git/config provider=github owner=my-org repo=my-app
+```
+
+Check that it is the repository you expect, and keep control of it. GitHub releases an owner or repository name for re-registration once it is renamed, transferred or deleted, so anyone who then claims that name can publish releases that already-installed copies of your app will download. Set `owner` and `repo` explicitly to avoid depending on detection at all:
+
+```json5
+{
+  "build": {
+    "publish": {
+      "provider": "github",
+      "owner": "my-org",
+      "repo": "my-app"
+    }
+  }
+}
+```
+:::
+
 # Publishers
 
 ## Bitbucket
+
+:::note[v27: authentication mode]
+The Bitbucket publisher selects its auth scheme by whether a username is present:
+
+- **With a username** (`bitbucket.username`, or the `BITBUCKET_USERNAME` env var) → HTTP **Basic** auth. Use this for a Bitbucket **app password** or an Atlassian **API token** (the username is your Bitbucket username or Atlassian account email).
+- **Without a username** → the token is sent as `Authorization: Bearer <token>` (a repository / project / workspace **access token**). This is new in v27; previously a token was always sent as Basic auth with the repo owner as the username.
+
+If your CI sets `BITBUCKET_TOKEN` to an app password / API token **without** a username, set `BITBUCKET_USERNAME` too, or the request goes out as Bearer and fails authentication.
+:::
+
   {!./builder-util-runtime.Interface.BitbucketOptions.md!}
 
 ## Github
+
+:::note[v27: tagNamePrefix replaces vPrefixedTagName]
+The GitHub `vPrefixedTagName` boolean was removed — use `tagNamePrefix` to control the tag prefix (defaults to `"v"`; set `tagNamePrefix: ""` for no prefix). `electron-builder migrate-schema` rewrites it. Note that v26 ignored an empty `tagNamePrefix` and still tagged `v<version>`; v27 honors it, so the migrator rewrites a v26 `tagNamePrefix: ""` to `"v"` (with a warning) to keep your existing tag names. (On **GitLab**, `vPrefixedTagName` is unchanged and still works.)
+:::
+
   {!./builder-util-runtime.Interface.GithubOptions.md!}
 
 ## GitLab

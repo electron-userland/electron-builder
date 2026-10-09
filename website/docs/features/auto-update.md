@@ -74,7 +74,7 @@ The `electron-updater` package offers a different functionality compared to Elec
 5. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
 
 :::note
-Do not call `setFeedURL`. electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
+Do not call `setFeedURL`. electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). Its feed is the first provider that receives the update manifest (`publishAutoUpdate` not `false`) in the `publish` settings of the targets that write update info — a target-level `publish` such as `nsis.publish` counts — see [which settings become the auto-update feed](../publish.md#app-update-yml-feed).
 :::
 
 ## Examples
@@ -122,6 +122,63 @@ export default class AppUpdater {
 }
 ```
 
+:::note[Credentials are only sent to the update feed's origin]
+The credential headers in `requestHeaders` / `addAuthHeader` — headers such as `Authorization`, the same set that is removed on a cross-origin redirect — and the query string of the feed `url` are only sent to the feed's origin (scheme, host and port; as on redirects, an `http` → `https` upgrade of the feed host on the default ports keeps the headers and the feed query). With the generic, s3, spaces, r2, keygen, bitbucket, github and gitlab providers, an update file whose URL in `latest*.yml` is on another origin, and the blockmaps and differential range requests derived from it, are downloaded without them; such a URL keeps its own query string. A blockmap is downloaded from `${url}.blockmap` with the file URL's query string, so a pre-signed installer URL's signature does not fit it: set `files[].blockMapUrl` in `latest*.yml` to the blockmap's own (pre-signed) URL. A relative value resolves like `url` (against the feed URL); an absolute URL is used as-is, with its own host and query string. Either follows the same origin rule. With a `blockMapUrl`, the old version's blockmap comes from the local cache or from `previousBlockmapBaseUrlOverride`; when neither has it, that one update is downloaded in full, which fills the cache for the next one (the private GitHub and GitLab providers, which resolve files from the release assets, ignore `blockMapUrl`). With every provider, including custom ones, a URL that electron-updater resolves against the feed URL (such as `files[].url` or a blockmap) gets the feed query only on the feed's origin. Serve the update files from the feed origin (relative `files[].url`, the default) or use pre-signed URLs. [Signed update manifests](./signed-update-manifests.md) cover `files[].url` and `packages.<arch>.path`, so a pre-signed URL has to be in `latest*.yml` before it is signed (see [Key storage](./key-rotation.md#key-storage)). A custom provider (one that does not extend a built-in provider such as `GenericProvider`) declares where these headers go by overriding `Provider.feedBaseUrl`: return its feed URL to send them only to that origin, or `null` to send the request headers to every download URL. If it declares neither and the downloads carry credential headers, `downloadUpdate()` fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` before any download request:
+
+```typescript
+class MyProvider extends Provider<UpdateInfo> {
+  get feedBaseUrl(): URL | null {
+    return new URL("https://updates.example.com/") // or null
+  }
+  // getLatestVersion(), resolveFiles(), …
+}
+```
+:::
+
+### Custom downloaded-file verification
+
+All updater classes inherit `AppUpdater.verifyUpdateFile`, which lets you run your own verification step on an update file before it is allowed to become installable.
+If the verification fails, the update is aborted, the file is deleted and an `ERR_UPDATER_INVALID_UPDATE_FILE` error is emitted.
+
+The hook runs on **every** path that can lead to an install, so a rejected file can never reach the installer:
+
+| When | `updateFilePath` points to |
+| --- | --- |
+| Right after a fresh download | the file under a **temporary** name — it is renamed to `originalUpdateFileName` only after your verification succeeds, so an unverified file is never executable under its real name |
+| An update downloaded by an earlier session and reused from the cache | the cached file, under its real name |
+| Before an install-on-next-launch spawns the cached installer | the pending installer, under its real name |
+
+Only the first case can quarantine the file under a temporary name; in the other two the bytes are already on disk under their real name from a previous session, and the hook is a re-verification of a file at rest. `cancellationToken` is set only when the verification belongs to a download.
+
+For NSIS web installers, `packageFilePath` is also provided and points to the downloaded companion `.7z` package. It is omitted when no such package was downloaded.
+
+This hook is generic and works across updater implementations. On Windows NSIS updates, the built-in Authenticode verification remains available separately as `NsisUpdater.verifyUpdateFileAuthenticodeSignature`, and both run — Authenticode first, then your hook.
+
+```ts
+import { NsisUpdater } from "electron-updater"
+
+const updater = new NsisUpdater()
+
+updater.verifyUpdateFile = async ({ updateFilePath, originalUpdateFileName, packageFilePath, cancellationToken }) => {
+  try {
+    // Example for your custom code, which can inspect the update file at `updateFilePath`,
+    // can use the expected filename `originalUpdateFileName`, and for NSIS web installers can also inspect
+    // the downloaded companion package at `packageFilePath`.
+    const signatureFile = getCorrespondingSignatureFile(originalUpdateFileName)
+    checkSignature(updateFilePath, signatureFile)
+    return { response: "success" }
+  }
+  catch (err) {
+    return { response: "failure", message: `${err}` }
+  }
+}
+
+// assigning null restores the default (a stub that always succeeds)
+updater.verifyUpdateFile = null
+```
+
+A `failure` must carry a `message`; it is what the emitted error reports as the reason.
+
 ## Install on Next Launch (Windows/Linux)
 
 When a downloaded update is automatically installed is controlled by `autoUpdater.autoInstallEvent` (`"manual" | "onQuit" | "onNextLaunch"`, default `"onQuit"`). With the default `"onQuit"`, the update is installed when the app quits: the updater spawns the installer as a detached process while the app is exiting. If the quit happens because the OS session is ending (shutdown, reboot or log off on Windows), the OS can kill that installer mid-install and leave the app in a broken, partially-uninstalled state ([#7807](https://github.com/electron-userland/electron-builder/issues/7807)).
@@ -163,6 +220,8 @@ The *automatic* install at startup only runs for targets that can install the pe
 | AppImage | ✓ | ✓ |
 | deb / rpm / pacman | skipped — package managers always elevate (pkexec/sudo) | ✓ (auth prompt) |
 | macOS | n/a — Squirrel.Mac stages updates natively and applies them on relaunch | resolves `false` |
+
+electron-builder v27 sets `isAdminRightsRequired` in the update info of every per-machine `nsis` and `nsis-web` build (`perMachine: true`), including assisted installers (`oneClick: false`) and builds with `differentialPackage: false`, so their updates are started with `elevate.exe` and skipped by the automatic install at launch.
 
 :::note[Planned default change in v28]
 `autoInstallEvent` defaults to `"onQuit"` in v27; `"onNextLaunch"` is planned to become the **default** in v28 to resolve this class of session-end corruption once and for all. macOS is unaffected: Squirrel.Mac natively stages downloaded updates and applies them on relaunch, without a killable installer process (there `"onQuit"` and `"onNextLaunch"` behave identically).
@@ -213,6 +272,45 @@ Metadata format history:
 * `1.0.0` latest-mac.json
 * `2.15.0` path
 * `2.16.0` files
+
+:::warning[sha2-only metadata is deprecated]
+Update metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated — v27 warns and **v28 rejects it (fail-closed)**. Avoid pinning `electronUpdaterCompatibility` to a legacy range unless you actually ship 1.x–2.15 clients.
+:::
+
+## Update security options
+
+Two `AppUpdater` settings changed or were added in v27. See the [Security & Hardening](./security.md#update-security-electron-updater) page for the full rationale.
+
+The update manifest (`latest*.yml`) itself **is** cryptographically signed and verified before any download as of v27. Publishing a build that emits update metadata fails unless an Ed25519 signing key resolves; `updateManifest: false` is the only opt-out — see [Signed Update Manifests](./signed-update-manifests.md).
+
+Changing a signing key or certificate that installs in the field already trust requires a transition release — see [Key Rotation](./key-rotation.md).
+
+### `disableWebInstaller` (now defaults to `true`)
+
+NSIS **web** installers download their full payload at install time from a manifest-supplied URL, which may not undergo signature verification. As of v27, `AppUpdater.disableWebInstaller` defaults to **`true`**, so a web-installer update is not loaded unless you opt in.
+
+Unless the flag is `false`, a web-installer update is rejected with `ERR_UPDATER_WEB_INSTALLER_DISABLED` — at download time (including an update already cached by a previous launch), before an [install on next launch](#install-on-next-launch-windowslinux), and at install time.
+
+Installs made by an `nsis-web` installer built with electron-builder v27+ carry a `resources/package-type` marker, and `NsisUpdater` then defaults the flag to `false` automatically. Set it yourself only for web-installer installs without that marker (installed by an installer built before v27, or with a custom script) or when switching an app from `nsis` to `nsis-web`:
+
+```ts
+import { NsisUpdater } from "electron-updater"
+const updater = new NsisUpdater()
+updater.disableWebInstaller = false // only if you intentionally ship a web installer
+```
+
+Set it before the app is `ready`, e.g. right after creating the updater: with `autoInstallEvent: "onNextLaunch"`, a pending web-installer update is checked against the flag when the app is ready, and rejected (its pending-install marker cleared) while the flag is `true`.
+
+A web update cached by a previous launch, or pending an install on next launch, is used only if its web package still matches the freshly fetched manifest; otherwise it is discarded. The `nsis-web` installer itself verifies the package electron-updater passes to it and installs its own copy — see [Web Installer](../nsis.md#web-installer). Once the app runs the version of that update, `NsisUpdater` removes the package from its `pending` cache directory at startup (app `ready`); the package of an update that is not installed yet, or whose install failed, is kept for the install or a retry. Because the manifest vouches for the web package, don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./signed-update-manifests.md) cover its path, SHA-512 and size.
+
+### `allowUnverifiedLinuxPackages` (new)
+
+`AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**, preserving historical behavior) controls GPG signature enforcement when installing `.deb` / `.rpm` auto-updates. Because electron-builder does not sign Linux packages itself, the default is permissive; set it to **`false`** to enforce signature checks where the package manager supports them:
+
+```ts
+import { autoUpdater } from "electron-updater"
+autoUpdater.allowUnverifiedLinuxPackages = false
+```
 
 ## Staged Rollouts
 
@@ -287,7 +385,7 @@ Emitted on progress.
 
 #### Event: `update-downloaded`
 
-* `info` [UpdateInfo](#updateinfo) — for generic and github providers. [VersionInfo](#VersionInfo) for Bintray provider.
+* `info` [UpdateInfo](#updateinfo) — for generic and github providers.
 
 #### Event: `update-cancelled`
 

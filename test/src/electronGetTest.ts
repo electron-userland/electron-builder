@@ -1,4 +1,5 @@
 import { exec } from "builder-util"
+import { createHash } from "crypto"
 import { readFileSync } from "fs"
 import * as fs from "fs/promises"
 import * as http from "http"
@@ -17,7 +18,15 @@ import {
   getBinariesMirrorUrl,
   reinitializeProxy,
 } from "app-builder-lib/internal"
-import { getCacheDirectoryInternal } from "app-builder-lib/src/util/electronGet.js"
+import { HttpError } from "builder-util-runtime"
+import {
+  buildElectronArtifactConfig,
+  defaultElectronGetCacheRoot,
+  getCacheDirectoryInternal,
+  parseChecksumFile,
+  resolveSeededChecksums,
+  shouldRetryDownloadError,
+} from "app-builder-lib/src/util/electronGet.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
@@ -226,6 +235,79 @@ describe("getBinariesMirrorUrl", () => {
   })
 })
 
+// ─── shouldRetryDownloadError ─────────────────────────────────────────────────
+
+// Regression tests for the CI failures of 2026-08-12 (GitHub release-asset 503s /
+// connection resets): @electron/get v5's FetchDownloader throws its own `HTTPError extends Error`
+// (name "HTTPError", fetch Response on `.response`, NO `.code`), and undici wraps socket errors in
+// `TypeError: fetch failed` with the code on `error.cause.code`. Neither shape matched the old
+// shouldRetry predicate, so transient download failures got zero retries.
+describe("shouldRetryDownloadError", () => {
+  /** Mirrors @electron/get v5's HTTPError shape (Error subclass, name "HTTPError", `.response`, no `.code`). */
+  function electronGetHttpError(status: number): Error {
+    const e = new Error(`Response code ${status} for https://example.com/electron.zip`)
+    e.name = "HTTPError"
+    ;(e as any).response = { status, statusText: "whatever", url: "https://example.com/electron.zip" }
+    return e
+  }
+
+  /** Mirrors undici's fetch error shape: `TypeError: fetch failed` with the real cause nested. */
+  function undiciFetchFailed(causeCode: string): TypeError {
+    const e = new TypeError("fetch failed")
+    ;(e as any).cause = Object.assign(new Error("underlying failure"), { code: causeCode })
+    return e
+  }
+
+  test("retries builder-util-runtime HttpError on 5xx, not on 4xx", ({ expect }) => {
+    expect(shouldRetryDownloadError(new HttpError(503))).toBe(true)
+    expect(shouldRetryDownloadError(new HttpError(500))).toBe(true)
+    expect(shouldRetryDownloadError(new HttpError(404))).toBe(false)
+  })
+
+  test("retries @electron/get HTTPError on 5xx and 429", ({ expect }) => {
+    expect(shouldRetryDownloadError(electronGetHttpError(503))).toBe(true)
+    expect(shouldRetryDownloadError(electronGetHttpError(502))).toBe(true)
+    expect(shouldRetryDownloadError(electronGetHttpError(500))).toBe(true)
+    expect(shouldRetryDownloadError(electronGetHttpError(429))).toBe(true)
+  })
+
+  test("does not retry @electron/get HTTPError on non-transient statuses", ({ expect }) => {
+    expect(shouldRetryDownloadError(electronGetHttpError(404))).toBe(false)
+    expect(shouldRetryDownloadError(electronGetHttpError(403))).toBe(false)
+    expect(shouldRetryDownloadError(electronGetHttpError(400))).toBe(false)
+  })
+
+  test("does not retry an HTTPError-named error without a usable response status", ({ expect }) => {
+    const e = new Error("mystery")
+    e.name = "HTTPError"
+    expect(shouldRetryDownloadError(e)).toBe(false)
+  })
+
+  test("retries undici 'fetch failed' with a transient code on error.cause.code", ({ expect }) => {
+    for (const code of ["UND_ERR_SOCKET", "UND_ERR_CONNECT_TIMEOUT", "ECONNRESET", "ETIMEDOUT", "ECONNREFUSED", "EAI_AGAIN", "EPIPE"]) {
+      expect(shouldRetryDownloadError(undiciFetchFailed(code)), code).toBe(true)
+    }
+  })
+
+  test("does not retry undici 'fetch failed' with a non-transient cause code", ({ expect }) => {
+    expect(shouldRetryDownloadError(undiciFetchFailed("ERR_INVALID_URL"))).toBe(false)
+    expect(shouldRetryDownloadError(new TypeError("fetch failed"))).toBe(false) // no cause at all
+  })
+
+  test("retries plain errors with a transient code directly on error.code", ({ expect }) => {
+    expect(shouldRetryDownloadError(Object.assign(new Error("reset"), { code: "ECONNRESET" }))).toBe(true)
+    expect(shouldRetryDownloadError(Object.assign(new Error("dns"), { code: "ENOTFOUND" }))).toBe(true)
+    expect(shouldRetryDownloadError(Object.assign(new Error("gone"), { code: "ENOENT" }))).toBe(true)
+  })
+
+  test("does not retry generic errors, non-transient codes, or nullish values", ({ expect }) => {
+    expect(shouldRetryDownloadError(new Error("dest already exists"))).toBe(false)
+    expect(shouldRetryDownloadError(Object.assign(new Error("denied"), { code: "EACCES" }))).toBe(false)
+    expect(shouldRetryDownloadError(null)).toBe(false)
+    expect(shouldRetryDownloadError(undefined)).toBe(false)
+  })
+})
+
 // ─── Shared temp cache dir for functional tests ───────────────────────────────
 
 const sharedCacheTmpDir = new TmpDir("eb-electronGet-test")
@@ -252,7 +334,7 @@ const DOWNLOAD_TIMEOUT = { timeout: 120_000 }
 // Running them concurrently causes proper-lockfile contention: the first download holds the lock
 // longer than the retry budget allows. Sequential order ensures test 1 writes the complete state
 // before tests 2 and 3 run, so they hit the pre-lock cache fast-path instead of waiting on the lock.
-describe("downloadBuilderToolset", { sequential: true }, () => {
+describe("downloadBuilderToolset", { concurrent: false }, () => {
   afterEach(() => {
     vi.unstubAllEnvs()
   })
@@ -421,7 +503,7 @@ describe("downloadBuilderToolset: filenameWithExt validation", () => {
 
 // ─── Toolset archive cache (no network) ──────────────────────────────────────
 
-describe("toolset archive cache", { sequential: true }, () => {
+describe("toolset archive cache", { concurrent: false }, () => {
   let freshCache: string
 
   beforeEach(async context => {
@@ -537,6 +619,330 @@ describe("toolset archive cache", { sequential: true }, () => {
   })
 })
 
+// ─── Checksum formats: SHA-256 hex vs base64 SHA-512 (#10040) ────────────────
+
+// The base64 SHA-512 checksums v26 used for all toolsets cannot be parsed by @electron/get's sumchecker (SHA-256 hex
+// only), so downloadBuilderToolset verifies those itself, after the download and before the archive is cached or extracted.
+// Every test routes downloads to a local server (or a dead port) and counts the requests, so no network is touched.
+describe("downloadBuilderToolset checksum formats (#10040)", { concurrent: false }, () => {
+  const digestOf = (data: Buffer | string, algorithm: "sha256" | "sha512", encoding: "hex" | "base64") => createHash(algorithm).update(data).digest(encoding)
+
+  let freshCache: string
+
+  beforeEach(async context => {
+    freshCache = await context.tmpDir.createTempDir({ prefix: "eb-checksum-format-test" })
+    vi.stubEnv("ELECTRON_BUILDER_CACHE", freshCache)
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  async function serveFixture(files: Record<string, string>) {
+    const fixture = path.join(freshCache, "fixture.tar.gz")
+    await createMinimalTarGz(fixture, files)
+    const server = await startArtifactServer(fixture)
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", `http://127.0.0.1:${server.port}/`)
+    return { server, data: await fs.readFile(fixture) }
+  }
+
+  test("an uppercase SHA-256 hex is lowercased and verified by @electron/get", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const { server, data } = await serveFixture({ sentinel: "sha256-ok" })
+    const fileName = "sha256-artifact.tar.gz"
+    try {
+      const result = await downloadBuilderToolset({
+        releaseName: "sha256-upper@0.1",
+        filenameWithExt: fileName,
+        checksums: { [fileName]: digestOf(data, "sha256", "hex").toUpperCase() },
+      })
+      expect(await fs.readdir(result)).toContain("sentinel")
+      expect(server.requestedPaths.length).toBe(1)
+    } finally {
+      await server.close()
+    }
+  })
+
+  test("a SHA-256 hex mismatch is still reported by @electron/get, not by the SHA-512 verification", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const { server } = await serveFixture({ sentinel: "served-bytes" })
+    const fileName = "sha256-corrupt.tar.gz"
+    try {
+      const error = await downloadBuilderToolset({
+        releaseName: "sha256-mismatch@0.1",
+        filenameWithExt: fileName,
+        checksums: { [fileName]: digestOf("other bytes", "sha256", "hex") },
+      }).catch(e => e)
+      expect(error).toBeInstanceOf(Error)
+      expect(error.message).not.toMatch(/checksum mismatch for/)
+      expect(server.requestedPaths.length).toBeGreaterThan(0)
+    } finally {
+      await server.close()
+    }
+  })
+
+  test("a base64 SHA-512 download is verified by electron-builder, cached and extracted", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const { server, data } = await serveFixture({ sentinel: "sha512-ok" })
+    const releaseName = "sha512-happy@0.1"
+    const fileName = "sha512-artifact.tar.gz"
+    try {
+      // sumchecker cannot parse base64, so this only succeeds if @electron/get's validation is bypassed and ours runs instead
+      const result = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: digestOf(data, "sha512", "base64") } })
+      expect(await fs.readdir(result)).toContain("sentinel")
+    } finally {
+      await server.close()
+    }
+    // the verified archive was persisted to the archive cache
+    expect(Buffer.compare(await fs.readFile(path.join(freshCache, releaseName, fileName)), data)).toBe(0)
+  })
+
+  test("a base64 SHA-512 mismatch throws with expected and actual and removes the download", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const { server, data } = await serveFixture({ sentinel: "served-bytes" })
+    const releaseName = "sha512-mismatch@0.1"
+    const fileName = "sha512-corrupt.tar.gz"
+    const wrongSha512 = digestOf("some other content entirely", "sha512", "base64")
+    try {
+      const error = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: wrongSha512 } }).catch(e => e)
+      expect(error.message).toMatch(/sha512 checksum mismatch for sha512-corrupt\.tar\.gz/)
+      expect(error.message).toContain(wrongSha512)
+      expect(error.message).toContain(digestOf(data, "sha512", "base64"))
+      expect(error.message).toContain("The corrupted download has been removed")
+    } finally {
+      await server.close()
+    }
+    // the corrupted download survives nowhere: neither in @electron/get's download cache nor in the archive cache,
+    // and nothing was extracted
+    const leftovers = (await fs.readdir(freshCache, { recursive: true })).map(String).filter(p => p.endsWith(fileName))
+    expect(leftovers).toEqual([])
+    const extracted = (await fs.readdir(path.join(freshCache, releaseName))).filter(e => !e.endsWith(".lock") && !e.endsWith(".state") && !e.endsWith(".tmp"))
+    for (const dir of extracted) {
+      expect(await fs.readdir(path.join(freshCache, releaseName, dir))).toEqual([])
+    }
+  })
+
+  test.for([
+    ["an unrecognized value", { "artifact.tar.gz": "clearly-not-a-checksum" }, /must be the SHA-256 of the archive as 64 hex characters/],
+    ["a sha256: prefixed value", { "artifact.tar.gz": `sha256:${"a".repeat(64)}` }, /must be the SHA-256/],
+    [
+      "mixed formats",
+      {
+        "artifact.tar.gz": "84021a78ee214ae6fd33a2d62a92ba25542dd10bc86bf117a9b2d0bba44e7665",
+        "other.tar.gz": "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==",
+      },
+      /mix formats/,
+    ],
+    [
+      "a SHA-512 table without an entry for the file",
+      { "other.tar.gz": "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==" },
+      /No checksum for "artifact\.tar\.gz"/,
+    ],
+  ] as const)("%s fails fast, before anything is downloaded", async ([, checksums, message], { expect }) => {
+    const { server } = await serveFixture({ sentinel: "never-served" })
+    try {
+      await expect(downloadBuilderToolset({ releaseName: "bad-format@0.1", filenameWithExt: "artifact.tar.gz", checksums: { ...checksums } })).rejects.toThrow(message)
+      expect(server.requestedPaths).toEqual([])
+    } finally {
+      await server.close()
+    }
+  })
+
+  test("an archive cache hit is verified with a base64 SHA-512 (no download)", async ({ expect }) => {
+    const releaseName = "sha512-cache@0.1"
+    const fileName = "sha512-cached.tar.gz"
+    const archiveCachePath = path.join(freshCache, releaseName, fileName)
+    await fs.mkdir(path.dirname(archiveCachePath), { recursive: true })
+    await createMinimalTarGz(archiveCachePath, { sentinel: "cached-sha512" })
+    // Dead man's switch: any download attempt fails with ECONNREFUSED (port 1 is never open)
+    vi.stubEnv("ELECTRON_BUILDER_BINARIES_MIRROR", "http://127.0.0.1:1/")
+
+    const result = await downloadBuilderToolset({
+      releaseName,
+      filenameWithExt: fileName,
+      checksums: { [fileName]: digestOf(await fs.readFile(archiveCachePath), "sha512", "base64") },
+    })
+    expect(await fs.readdir(result)).toContain("sentinel")
+  })
+
+  test("an archive cache entry failing its base64 SHA-512 is discarded and re-downloaded", DOWNLOAD_TIMEOUT, async ({ expect }) => {
+    const { server, data } = await serveFixture({ sentinel: "pristine" })
+    const releaseName = "sha512-stale-cache@0.1"
+    const fileName = "sha512-stale.tar.gz"
+    const archiveCachePath = path.join(freshCache, releaseName, fileName)
+    await fs.mkdir(path.dirname(archiveCachePath), { recursive: true })
+    await fs.writeFile(archiveCachePath, "corrupt data")
+    try {
+      const result = await downloadBuilderToolset({ releaseName, filenameWithExt: fileName, checksums: { [fileName]: digestOf(data, "sha512", "base64") } })
+      expect(await fs.readdir(result)).toContain("sentinel")
+      expect(server.requestedPaths.length).toBe(1)
+    } finally {
+      await server.close()
+    }
+    // the stale archive was replaced by the verified download
+    expect(Buffer.compare(await fs.readFile(archiveCachePath), data)).toBe(0)
+  })
+})
+
+// ─── Seeded SHASUMS256 checksums (air-gapped builds, #10039) ─────────────────
+
+// Without inline checksums, @electron/get fetches SHASUMS256.txt with a hardcoded
+// cacheMode: Bypass on every build — even artifact cache hits — which breaks air-gapped
+// builds. These tests cover the seeded-SHASUMS lookup that suppresses that fetch.
+describe("seeded SHASUMS256 checksums", () => {
+  const VERSION = "35.0.0"
+  const ZIP_NAME = `electron-v${VERSION}-linux-x64.zip`
+  const ZIP_HASH = "877617029f4c0f2b24f3805a1c3554ba166fda65c4e88df9480ae7b6ffa26a22"
+  const OTHER_HASH = "0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0"
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  describe("parseChecksumFile", () => {
+    test("parses binary-mode lines (<hash> *<filename>)", ({ expect }) => {
+      const parsed = parseChecksumFile(`${ZIP_HASH} *${ZIP_NAME}\n${OTHER_HASH} *electron-v${VERSION}-linux-arm64.zip\n`)
+      expect(parsed).toEqual({
+        [ZIP_NAME]: ZIP_HASH,
+        [`electron-v${VERSION}-linux-arm64.zip`]: OTHER_HASH,
+      })
+    })
+
+    test("parses text-mode lines (<hash>  <filename>)", ({ expect }) => {
+      const parsed = parseChecksumFile(`${ZIP_HASH}  ${ZIP_NAME}`)
+      expect(parsed).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+
+    test("handles CRLF line endings", ({ expect }) => {
+      const parsed = parseChecksumFile(`${ZIP_HASH} *${ZIP_NAME}\r\n${OTHER_HASH} *other.zip\r\n`)
+      expect(parsed[ZIP_NAME]).toBe(ZIP_HASH)
+      expect(parsed["other.zip"]).toBe(OTHER_HASH)
+    })
+
+    test("normalises uppercase hashes to lowercase", ({ expect }) => {
+      const parsed = parseChecksumFile(`${ZIP_HASH.toUpperCase()} *${ZIP_NAME}`)
+      expect(parsed[ZIP_NAME]).toBe(ZIP_HASH)
+    })
+
+    test("skips malformed lines", ({ expect }) => {
+      const content = [
+        "not a checksum line",
+        "deadbeef *too-short-hash.zip",
+        `${ZIP_HASH}`, // hash without filename
+        "",
+        `${ZIP_HASH} *${ZIP_NAME}`,
+        `zz${ZIP_HASH.slice(2)} *non-hex.zip`,
+      ].join("\n")
+      expect(parseChecksumFile(content)).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+
+    test("returns empty record for unusable content", ({ expect }) => {
+      expect(parseChecksumFile("complete garbage\nanother bad line\n")).toEqual({})
+    })
+  })
+
+  describe("resolveSeededChecksums", () => {
+    test("returns null when no SHASUMS file is seeded", async ({ expect, tmpDir }) => {
+      const cacheRoot = await tmpDir.createTempDir()
+      expect(await resolveSeededChecksums(cacheRoot, VERSION, ZIP_NAME)).toBeNull()
+    })
+
+    test("picks up SHASUMS256.txt-<version> at the cache root (flatpak-node-generator layout)", async ({ expect, tmpDir }) => {
+      const cacheRoot = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheRoot, `SHASUMS256.txt-${VERSION}`), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      expect(await resolveSeededChecksums(cacheRoot, VERSION, ZIP_NAME)).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+
+    test("falls back to plain SHASUMS256.txt at the cache root", async ({ expect, tmpDir }) => {
+      const cacheRoot = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheRoot, "SHASUMS256.txt"), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      expect(await resolveSeededChecksums(cacheRoot, VERSION, ZIP_NAME)).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+
+    test("versioned file wins over the plain file", async ({ expect, tmpDir }) => {
+      const cacheRoot = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheRoot, `SHASUMS256.txt-${VERSION}`), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      await fs.writeFile(path.join(cacheRoot, "SHASUMS256.txt"), `${OTHER_HASH} *${ZIP_NAME}\n`)
+      expect(await resolveSeededChecksums(cacheRoot, VERSION, ZIP_NAME)).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+
+    test("ignores a seeded file that has no entry for the requested artifact", async ({ expect, tmpDir }) => {
+      const cacheRoot = await tmpDir.createTempDir()
+      // e.g. a stale SHASUMS for a different Electron version — must not poison the config
+      await fs.writeFile(path.join(cacheRoot, `SHASUMS256.txt-${VERSION}`), `${OTHER_HASH} *electron-v34.0.0-linux-x64.zip\n`)
+      expect(await resolveSeededChecksums(cacheRoot, VERSION, ZIP_NAME)).toBeNull()
+    })
+
+    test("falls through to the plain file when the versioned file is unusable", async ({ expect, tmpDir }) => {
+      const cacheRoot = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheRoot, `SHASUMS256.txt-${VERSION}`), "malformed content\n")
+      await fs.writeFile(path.join(cacheRoot, "SHASUMS256.txt"), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      expect(await resolveSeededChecksums(cacheRoot, VERSION, ZIP_NAME)).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+  })
+
+  describe("buildElectronArtifactConfig checksum wiring", () => {
+    const baseOptions: ArtifactDownloadOptions = {
+      artifactName: "electron",
+      platformName: "linux",
+      arch: "x64",
+      version: VERSION,
+    }
+
+    test("injects seeded checksums when SHASUMS256.txt-<version> exists in the cache root", async ({ expect, tmpDir }) => {
+      const cacheDir = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheDir, `SHASUMS256.txt-${VERSION}`), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      const config = await buildElectronArtifactConfig({ ...baseOptions, cacheDir })
+      expect(config.checksums).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+
+    test("leaves checksums undefined when nothing is seeded", async ({ expect, tmpDir }) => {
+      const cacheDir = await tmpDir.createTempDir()
+      const config = await buildElectronArtifactConfig({ ...baseOptions, cacheDir })
+      expect(config.checksums).toBeUndefined()
+    })
+
+    test("user-provided checksums win over the seeded file", async ({ expect, tmpDir }) => {
+      const cacheDir = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheDir, `SHASUMS256.txt-${VERSION}`), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      const userChecksums = { [ZIP_NAME]: OTHER_HASH }
+      const config = await buildElectronArtifactConfig({ ...baseOptions, cacheDir, options: { checksums: userChecksums } })
+      expect(config.checksums).toEqual(userChecksums)
+    })
+
+    test("does not look up seeded checksums when unsafelyDisableChecksums is set", async ({ expect, tmpDir }) => {
+      const cacheDir = await tmpDir.createTempDir()
+      await fs.writeFile(path.join(cacheDir, `SHASUMS256.txt-${VERSION}`), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      const config = await buildElectronArtifactConfig({ ...baseOptions, cacheDir, options: { unsafelyDisableChecksums: true } })
+      expect(config.checksums).toBeUndefined()
+    })
+
+    test("without cacheDir, the seeded file is resolved from @electron/get's default cache root", async ({ expect, skip, tmpDir }) => {
+      if (process.platform !== "linux") {
+        skip() // default root layout is asserted per-platform in the defaultElectronGetCacheRoot test
+        return
+      }
+      const xdgCache = await tmpDir.createTempDir()
+      vi.stubEnv("XDG_CACHE_HOME", xdgCache)
+      const electronCacheRoot = path.join(xdgCache, "electron")
+      await fs.mkdir(electronCacheRoot, { recursive: true })
+      await fs.writeFile(path.join(electronCacheRoot, `SHASUMS256.txt-${VERSION}`), `${ZIP_HASH} *${ZIP_NAME}\n`)
+      const config = await buildElectronArtifactConfig(baseOptions)
+      expect(config.checksums).toEqual({ [ZIP_NAME]: ZIP_HASH })
+    })
+  })
+
+  describe("defaultElectronGetCacheRoot", () => {
+    test("matches @electron/get's documented per-platform default", ({ expect }) => {
+      const result = defaultElectronGetCacheRoot()
+      if (process.platform === "darwin") {
+        expect(result).toBe(path.join(os.homedir(), "Library", "Caches", "electron"))
+      } else if (process.platform === "win32") {
+        expect(result.toLowerCase()).toContain(path.join("electron", "Cache").toLowerCase())
+      } else {
+        expect(path.basename(result)).toBe("electron")
+        expect(result).toBe(path.join(process.env.XDG_CACHE_HOME || path.join(os.homedir(), ".cache"), "electron"))
+      }
+    })
+  })
+})
+
 // ─── downloadElectronArtifact: electron platform artifacts (.zip) ────────────
 
 // Resolve electron platform/arch naming from Node process values
@@ -546,7 +952,7 @@ const electronArch = process.arch === "arm64" ? "arm64" : "x64"
 // Expected ffmpeg library filename by platform
 const ffmpegLibName = electronPlatform === "darwin" ? "libffmpeg.dylib" : electronPlatform === "linux" ? "libffmpeg.so" : "ffmpeg.dll"
 
-describe("downloadElectronArtifact", { sequential: true }, () => {
+describe("downloadElectronArtifact", { concurrent: false }, () => {
   test("downloads and extracts electron ffmpeg zip for current platform", DOWNLOAD_TIMEOUT, async ({ expect }) => {
     const options: ArtifactDownloadOptions = {
       artifactName: "ffmpeg",

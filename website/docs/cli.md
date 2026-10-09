@@ -74,6 +74,24 @@ For other commands please see help using `--help` arg, e.g. `./node_modules/.bin
 electron-builder v27 requires **Node.js >=22.12.0**. Upgrading from v26? Review the [v27 breaking changes](./migration/v27-breaking-changes), then follow the [migration walkthrough](./migration/v26-to-v27).
 :::
 
+## `migrate-schema`
+
+New in v27. Rewrites your build configuration from the v26 shape to the v27 shape **in place**, applying every config-level breaking change (see the [walkthrough](./migration/v26-to-v27#step-1-run-the-automated-migrator)).
+
+```bash
+electron-builder migrate-schema            # apply changes in place
+electron-builder migrate-schema --dry-run  # preview without writing (alias: -n)
+```
+
+- Auto-detects your config: the `package.json` `build` key, or `electron-builder.{yml,yaml,json,json5,toml,js,cjs,mjs,ts}`. Pass `--config <path>` for a non-default file and `--project-dir <dir>` for the project root.
+- Rewrites **static** configs (`json`/`json5`/`yaml`/`package.json`) and **programmatic** ones (`.js`/`.ts`/`.cjs`/`.mjs`, via an AST codemod that preserves comments and formatting when the config reduces to a single object literal).
+- **TOML** is detected but not rewritten (the `toml` library is read-only) — it prints the required changes for you to apply. **JSON5** is re-serialized as JSON (comments are not preserved).
+- Prints a **warning** for anything it cannot rewrite mechanically (e.g. `squirrelWindows.customSquirrelVendorDir`) and an **advisory** for runtime defaults and behavior changes worth checking (an `nsis-web` target, a per-machine `nsis` / `nsisWeb` installer, a custom `win.sign.sign` hook without a publisher name, a `generic` publish `url` with a query string, macOS configs relying on the default entitlements). Advisories never change the file. See [what it does and does not do](./migration/v27-breaking-changes.md#new-command-migrate-schema).
+
+:::note[Removed CLI flags]
+The v22-era `--em.build` / `--em.directories` flags were removed — pass build config inline with `-c` (e.g. `-c.directories.output=dist`). Implicit publishing was also removed: pass [`--publish`](./publish) explicitly.
+:::
+
 Prepend `npx` to sample commands below if you run them from Terminal and not from `package.json` scripts.
 
 :::note[build for macOS, Windows and Linux]
@@ -90,7 +108,7 @@ Prepend `npx` to sample commands below if you run them from Terminal and not fro
 [Electron 44 removed Windows ia32 builds](https://github.com/electron/electron/pull/51816) — ia32 requires `electronVersion` <= 43.x (supported until the v43 series reaches end-of-life in January 2027).
 :::
 
-:::note[set package.json property `foo` to `bar`]
+:::note[set package.json property foo to bar]
 `electron-builder -c.extraMetadata.foo=bar`
 :::
 

@@ -1,12 +1,15 @@
 import { HsmSignManager } from "app-builder-lib/src/codeSign/win/hsmSignManager"
 import { Pkcs11SignManager } from "app-builder-lib/src/codeSign/win/pkcs11SignManager"
-import { SigntoolSignManager } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
+import { publisherNameMatchesCertificate, SigntoolBaseSignManager, SigntoolSignManager } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
 import { WindowsSignTaskConfiguration } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
 import { readCertInfoFromX509 } from "app-builder-lib/src/codeSign/certInfo"
 import { WindowsSignAzureManager } from "app-builder-lib/src/codeSign/win/windowsSignAzureManager"
 import { getAtsBundleDir, getDotnetRuntimeDir, getWindowsKitsBundle } from "app-builder-lib/src/toolsets/winCodeSign"
+import type { WinPackager } from "app-builder-lib/src/winPackager"
+import { InvalidConfigurationError } from "builder-util"
 import { writeFile } from "fs/promises"
 import * as path from "path"
+import type { TmpDir } from "temp-file"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 vi.mock("app-builder-lib/src/toolsets/winCodeSign", async importOriginal => {
@@ -358,7 +361,7 @@ describe("HSM validation errors", () => {
   test(".crt file without HSM mode → throws pkcs12 error", () => {
     const manager = makeManager("1.1.0")
     const config = makeTaskConfig({
-      options: { sign: { type: "signtool" as const } } as any,
+      options: { sign: { type: "signtool" as const } },
       cscInfo: { file: "/certs/cert.crt", password: null },
     })
     expect(() => manager.computeSignToolArgs(config, true)).toThrow(/pkcs12/)
@@ -418,7 +421,7 @@ describe("computeSignToolArgs — PKCS#11 (isWin=false)", () => {
   test("HSM csp/kc on non-Windows → throws Windows-only error (via HsmSignManager)", () => {
     const manager = makeHsmManager("1.1.0")
     const config = makeTaskConfig({
-      options: { sign: { type: "hsm" as const, cryptoServiceProvider: "Google Cloud KMS Provider", keyContainer: "my-key" } } as any,
+      options: { sign: { type: "hsm" as const, cryptoServiceProvider: "Google Cloud KMS Provider", keyContainer: "my-key" } },
     })
     expect(() => manager.computeSignToolArgs(config, false)).toThrow(/only supported on Windows/)
   })
@@ -443,7 +446,7 @@ describe("PKCS#11 timestamp flags", () => {
 
   test("sha256 → uses -ts (RFC 3161)", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha256" })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base }, hash: "sha256" })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-ts")
     expect(args).not.toContain("-t")
@@ -451,7 +454,7 @@ describe("PKCS#11 timestamp flags", () => {
 
   test("sha1 → uses -t (HTTP Authenticode)", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha1" })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base }, hash: "sha1" })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-t")
     expect(args).not.toContain("-ts")
@@ -459,14 +462,14 @@ describe("PKCS#11 timestamp flags", () => {
 
   test("sha256 nested → uses -ts", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha256", isNest: true })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base }, hash: "sha256", isNest: true })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-ts")
   })
 
   test("sha1 nested → uses -ts (nested always RFC 3161)", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha1", isNest: true })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base }, hash: "sha1", isNest: true })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).toContain("-ts")
     expect(args).not.toContain("-t")
@@ -475,7 +478,7 @@ describe("PKCS#11 timestamp flags", () => {
   test("custom rfc3161TimeStampServer is used for -ts", () => {
     const manager = makePkcs11Manager()
     const config = makeTaskConfig({
-      options: { sign: { ...pkcs11Base, rfc3161TimeStampServer: "http://my-ts.example.com" } } as any,
+      options: { sign: { ...pkcs11Base, rfc3161TimeStampServer: "http://my-ts.example.com" } },
       hash: "sha256",
     })
     const args = manager.computeSignToolArgs(config, false)
@@ -486,7 +489,7 @@ describe("PKCS#11 timestamp flags", () => {
   test("custom timeStampServer is used for -t", () => {
     const manager = makePkcs11Manager()
     const config = makeTaskConfig({
-      options: { sign: { ...pkcs11Base, timeStampServer: "http://old-ts.example.com" } } as any,
+      options: { sign: { ...pkcs11Base, timeStampServer: "http://old-ts.example.com" } },
       hash: "sha1",
     })
     const args = manager.computeSignToolArgs(config, false)
@@ -499,7 +502,7 @@ describe("PKCS#11 timestamp flags", () => {
     process.env.ELECTRON_BUILDER_OFFLINE = "true"
     try {
       const manager = makePkcs11Manager()
-      const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, hash: "sha256" })
+      const config = makeTaskConfig({ options: { sign: pkcs11Base }, hash: "sha256" })
       const args = manager.computeSignToolArgs(config, false)
       expect(args).not.toContain("-ts")
       expect(args).not.toContain("-t")
@@ -525,7 +528,7 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
   test("certificateFile set → -certs present with correct path", () => {
     const manager = makePkcs11Manager()
     const config = makeTaskConfig({
-      options: { sign: { ...pkcs11Base, certificateFile: "/certs/chain.pem" } } as any,
+      options: { sign: { ...pkcs11Base, certificateFile: "/certs/chain.pem" } },
       cscInfo: { file: "/certs/chain.pem", password: null },
     })
     const args = manager.computeSignToolArgs(config, false)
@@ -536,7 +539,7 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
 
   test("no certificateFile → no -certs arg", () => {
     const manager = makePkcs11Manager()
-    const config = makeTaskConfig({ options: { sign: pkcs11Base } as any, cscInfo: null })
+    const config = makeTaskConfig({ options: { sign: pkcs11Base }, cscInfo: null })
     const args = manager.computeSignToolArgs(config, false)
     expect(args).not.toContain("-certs")
   })
@@ -544,7 +547,7 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
   test("-certs appears between -key and -h", () => {
     const manager = makePkcs11Manager()
     const config = makeTaskConfig({
-      options: { sign: { ...pkcs11Base, certificateFile: "/certs/chain.crt" } } as any,
+      options: { sign: { ...pkcs11Base, certificateFile: "/certs/chain.crt" } },
       cscInfo: { file: "/certs/chain.crt", password: null },
     })
     const args = manager.computeSignToolArgs(config, false)
@@ -558,7 +561,7 @@ describe("PKCS#11 certificateFile passed as -certs to osslsigncode", () => {
 
 // ─── PKCS#11 PIN via env vars ─────────────────────────────────────────────────
 
-describe("PKCS#11 PIN via env var (no cert file)", { sequential: true }, () => {
+describe("PKCS#11 PIN via env var (no cert file)", { concurrent: false }, () => {
   const pkcs11Options = {
     sign: {
       type: "pkcs11" as const,
@@ -690,7 +693,7 @@ o4qne60TB3wolLhOJqQ3uJLPvOmFI5oMnEAmhP0JlwFSBj3SiYoHScLuNP2YQXB+
 // the x64 kit. From v1.3.0 the dlib lives in a separate ats-bundle (not the
 // kits bundle) and the .NET runtime root is injected via DOTNET_ROOT.
 
-describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential: true }, () => {
+describe("WindowsSignAzureManager signFileWithDlib arch selection", { concurrent: false }, () => {
   const originalArch = process.arch
 
   beforeEach(async () => {
@@ -736,7 +739,7 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     Object.defineProperty(process, "arch", { value: arch })
     const exec = vi.fn().mockResolvedValue(undefined)
     const manager = makeAzureManager(tmpDir, exec, toVmFile, toolsets)
-    await manager.signFile({ path: path.join(tmpDir, "app.exe"), options: {} as any })
+    await manager.signFile({ path: path.join(tmpDir, "app.exe"), options: {} })
     const [signtool, args, execOptions] = exec.mock.calls[0]
     const dlib = args[args.indexOf("/dlib") + 1]
     return { signtool, dlib, dotnetRoot: execOptions?.env?.DOTNET_ROOT }
@@ -789,5 +792,275 @@ describe("WindowsSignAzureManager signFileWithDlib arch selection", { sequential
     const tmpDirPath = await tmpDir.createTempDir()
     const { dotnetRoot } = await signedInfo(tmpDirPath, "x64", wineToVmFile)
     expect(dotnetRoot).toBe(path.win32.join("Z:", "/mock-dotnet-runtime"))
+  })
+})
+
+// ─── publisherName ↔ signing certificate validation ──────────────────────────
+
+const acmeCertInfo = {
+  commonName: "Acme Corp",
+  bloodyMicrosoftSubjectDn: "CN=Acme Corp, O=Acme Corporation, L=San Francisco, S=California, C=US",
+}
+
+describe("publisherNameMatchesCertificate", () => {
+  test("plain string matches the certificate CN strictly", () => {
+    expect(publisherNameMatchesCertificate(["Acme Corp"], acmeCertInfo)).toBe(true)
+  })
+
+  test("plain string with a different CN does not match", () => {
+    expect(publisherNameMatchesCertificate(["Evil Corp"], acmeCertInfo)).toBe(false)
+    // strict equality — no substring/case-insensitive matching
+    expect(publisherNameMatchesCertificate(["acme corp"], acmeCertInfo)).toBe(false)
+    expect(publisherNameMatchesCertificate(["Acme"], acmeCertInfo)).toBe(false)
+  })
+
+  test("DN matches when every configured RDN equals the subject's value (subset match)", () => {
+    expect(publisherNameMatchesCertificate(["CN=Acme Corp, O=Acme Corporation"], acmeCertInfo)).toBe(true)
+    // full DN, different RDN order
+    expect(publisherNameMatchesCertificate(["O=Acme Corporation, CN=Acme Corp, C=US, S=California, L=San Francisco"], acmeCertInfo)).toBe(true)
+  })
+
+  test("DN with one mismatched RDN value does not match", () => {
+    expect(publisherNameMatchesCertificate(["CN=Acme Corp, O=Other Org"], acmeCertInfo)).toBe(false)
+  })
+
+  test("DN with an RDN key absent from the subject does not match", () => {
+    expect(publisherNameMatchesCertificate(["CN=Acme Corp, OU=Engineering"], acmeCertInfo)).toBe(false)
+  })
+
+  test("any of multiple configured names matching passes (certificate rotation)", () => {
+    expect(publisherNameMatchesCertificate(["Old Corp Name", "Acme Corp"], acmeCertInfo)).toBe(true)
+    expect(publisherNameMatchesCertificate(["CN=Old Corp, O=Old Org", "CN=Acme Corp, O=Acme Corporation"], acmeCertInfo)).toBe(true)
+  })
+
+  test("no configured name matching fails even with multiple names", () => {
+    expect(publisherNameMatchesCertificate(["Old Corp Name", "Other Corp"], acmeCertInfo)).toBe(false)
+  })
+})
+
+describe("validateExplicitPublisherName", () => {
+  function makeValidationManager(sign: any, certInfo: unknown | null, options: { certInfoRejects?: boolean } = {}) {
+    const manager: any = Object.create(SigntoolSignManager.prototype)
+    manager.platformSpecificBuildOptions = { sign }
+    manager.lazyCertInfo = {
+      value: options.certInfoRejects ? Promise.reject(new Error("cannot read cert")) : Promise.resolve(certInfo),
+    }
+    return manager
+  }
+
+  const validate = (manager: any) => manager.validateExplicitPublisherName()
+
+  test("passes when the configured name matches the certificate CN", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: "Acme Corp" }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("passes when a configured DN subset matches the certificate subject", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: "CN=Acme Corp, O=Acme Corporation" }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("throws on mismatch, naming both the configured value and the certificate subject", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: "Evil Corp" }, acmeCertInfo)
+    await expect(validate(manager)).rejects.toThrow(/Evil Corp/)
+    await expect(validate(manager)).rejects.toThrow(/CN=Acme Corp, O=Acme Corporation, L=San Francisco, S=California, C=US/)
+    await expect(validate(manager)).rejects.toThrow(/wrong certificate/)
+    await expect(validate(manager)).rejects.toThrow(/Fix win\.sign\.publisherName/)
+  })
+
+  test("passes when any of multiple configured names matches (certificate rotation)", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: ["Old Corp Name", "Acme Corp"] }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("throws when none of multiple configured names matches", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: ["Old Corp Name", "Other Corp"] }, acmeCertInfo)
+    await expect(validate(manager)).rejects.toThrow(/Old Corp Name \| Other Corp/)
+  })
+
+  test("skips when certificate info is unavailable (null)", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: "Evil Corp" }, null)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("skips when certificate info cannot be read (rejects)", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: "Evil Corp" }, null, { certInfoRejects: true })
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("skips when a custom sign hook is configured (actual signing certificate unknown)", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: "Evil Corp", sign: "./my-sign-hook.js" }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("skips when publisherName is not configured (auto-derive path)", async () => {
+    const manager = makeValidationManager({ type: "signtool" }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("skips on explicit publisherName: null opt-out", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: null }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  test("skips for azure signing config (no local certificate)", async () => {
+    const manager = makeValidationManager({ type: "azure", publisherName: "Evil Corp" }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+})
+
+// ─── computedPublisherName: a signed build must resolve a publisher name ─────
+// electron-updater verifies downloaded updates against the publisherName in app-update.yml, so a
+// code-signed build whose publisher name cannot be determined must fail.
+
+describe("computedPublisherName: signed builds must resolve a publisher name", () => {
+  // a real self-signed certificate whose subject (O=No CN Org, C=US) has no Common Name
+  const noCommonNameCertificatePem = `-----BEGIN CERTIFICATE-----
+MIIBmDCCAT+gAwIBAgIUZhMJYIkw4i5RjyJOVDh0pzF9uY8wCgYIKoZIzj0EAwIw
+ITESMBAGA1UECgwJTm8gQ04gT3JnMQswCQYDVQQGEwJVUzAgFw0yNjA5MjcwMjUx
+MTdaGA8yMTI2MDkwMzAyNTExN1owITESMBAGA1UECgwJTm8gQ04gT3JnMQswCQYD
+VQQGEwJVUzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABMai2MgYpjg5dnkqJUa3
+gcfg+Ik33mEtOxLsqw+lXzWSpgPAwHb7yBaC/f9cKCBxxdtMfWC18v2XIyEmFoGm
+23ujUzBRMB0GA1UdDgQWBBTWiHaBT33GpXFMX84Ry934sqrwAjAfBgNVHSMEGDAW
+gBTWiHaBT33GpXFMX84Ry934sqrwAjAPBgNVHRMBAf8EBTADAQH/MAoGCCqGSM49
+BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
+6pIwCDrcmO3YuFQm/66dzUn3NC6iXXQnnHHApA==
+-----END CERTIFICATE-----`
+
+  async function writeNoCommonNameCertificate(tmpDir: TmpDir): Promise<string> {
+    const file = path.join(await tmpDir.createTempDir(), "chain.crt")
+    await writeFile(file, noCommonNameCertificatePem)
+    return file
+  }
+
+  // Real constructors (computedPublisherName is a class field). `getCscLink` stands in for WIN_CSC_LINK / CSC_LINK,
+  // so a certificate link in the environment of the test run is not picked up.
+  function makePublisherNameManager(sign: any, packagerOverrides: Record<string, unknown> = {}): SigntoolBaseSignManager {
+    const packager = {
+      platformOptions: { sign },
+      config: {},
+      projectDir: process.cwd(),
+      getCscLink: () => null,
+      getCscPassword: () => null,
+      ...packagerOverrides,
+    } as unknown as WinPackager
+    switch (sign?.type) {
+      case "hsm":
+        return new HsmSignManager(packager)
+      case "pkcs11":
+        return new Pkcs11SignManager(packager)
+      default:
+        return new SigntoolSignManager(packager)
+    }
+  }
+
+  const hsmSign = { type: "hsm", cryptoServiceProvider: "Google Cloud KMS Provider", keyContainer: "my-key-container" }
+
+  async function expectMissingPublisherNameError(manager: SigntoolBaseSignManager) {
+    const error = await manager.computedPublisherName.value.then(
+      () => null,
+      (e: Error) => e
+    )
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error!.message).toMatch(/win\.sign\.publisherName/)
+    expect(error!.message).toMatch(/win\.verifyUpdateCodeSignature: false/)
+  }
+
+  test("custom sign hook without a certificate throws (documented win.md example)", async () => {
+    await expectMissingPublisherNameError(makePublisherNameManager({ type: "signtool", sign: "./customSign.js" }))
+  })
+
+  test("HSM + custom sign hook without a certificate identifier throws", async () => {
+    await expectMissingPublisherNameError(makePublisherNameManager({ ...hsmSign, sign: "./customSign.js" }))
+  })
+
+  test("HSM certificateFile without a Common Name throws", async ({ tmpDir }) => {
+    const certificateFile = await writeNoCommonNameCertificate(tmpDir)
+    await expectMissingPublisherNameError(makePublisherNameManager({ ...hsmSign, certificateFile }))
+  })
+
+  test("PKCS#11 certificateFile without a Common Name throws", async ({ tmpDir }) => {
+    const certificateFile = await writeNoCommonNameCertificate(tmpDir)
+    await expectMissingPublisherNameError(makePublisherNameManager({ type: "pkcs11", pkcs11Module: "m.so", pkcs11KeyUri: "pkcs11:object=k", certificateFile }))
+  })
+
+  test("certificate-store lookup failure swallowed for a custom sign hook throws", async () => {
+    const manager = makePublisherNameManager(
+      { type: "signtool", certificateSubjectName: "My Company", sign: "./customSign.js" },
+      {
+        // getter, so the rejected promise is only created when cscInfo asks for the VM
+        vm: {
+          get value() {
+            return Promise.reject(new Error("no Windows VM"))
+          },
+        },
+      }
+    )
+    await expectMissingPublisherNameError(manager)
+  })
+
+  test("unreadable .pfx certificateFile names win.sign.publisherName as the workaround", async ({ tmpDir }) => {
+    const certificateFile = path.join(await tmpDir.createTempDir(), "broken.pfx")
+    await writeFile(certificateFile, "not a PKCS#12 file")
+    const manager = makePublisherNameManager({ type: "signtool", certificateFile })
+    await expect(manager.computedPublisherName.value).rejects.toThrow(InvalidConfigurationError)
+    await expect(manager.computedPublisherName.value).rejects.toThrow(/As workaround, set win\.sign\.publisherName\./)
+  })
+
+  test("custom sign hook + explicit publisherName returns it (documented fix)", async () => {
+    const manager = makePublisherNameManager({ type: "signtool", sign: "./customSign.js", publisherName: "CN=My Company, O=My Company, C=US" })
+    await expect(manager.computedPublisherName.value).resolves.toEqual(["CN=My Company, O=My Company, C=US"])
+  })
+
+  test("custom sign hook + publisherName: null stays an explicit opt-out", async () => {
+    const manager = makePublisherNameManager({ type: "signtool", sign: "./customSign.js", publisherName: null })
+    await expect(manager.computedPublisherName.value).resolves.toBeNull()
+  })
+
+  // A hook may sign with another certificate than any electron-builder can read, so a readable certificate (in the config or from
+  // WIN_CSC_LINK / CSC_LINK) never supplies the publisher name of a hook: it must be set explicitly.
+  test.for([
+    ["certificateFile", { type: "signtool", sign: "./customSign.js", certificateFile: "cert.pfx" }, {}],
+    ["certificateSubjectName", { type: "signtool", sign: "./customSign.js", certificateSubjectName: "Acme Corp" }, {}],
+    ["certificateSha1", { type: "signtool", sign: "./customSign.js", certificateSha1: "ABCDEF" }, {}],
+    ["win.cscLink", { type: "signtool", sign: "./customSign.js" }, { platformOptions: { sign: { type: "signtool", sign: "./customSign.js" }, cscLink: "cert.pfx" } }],
+    ["the top-level cscLink", { type: "signtool", sign: "./customSign.js" }, { config: { cscLink: "cert.pfx" } }],
+    ["WIN_CSC_LINK / CSC_LINK", { type: "signtool", sign: "./customSign.js" }, { getCscLink: () => "env-cert.pfx" }],
+    ["HSM certificateFile", { ...hsmSign, sign: "./customSign.js", certificateFile: "chain.crt" }, {}],
+  ] as const)("custom sign hook with a readable certificate (%s) throws without publisherName", async ([, sign, overrides]) => {
+    const manager: any = makePublisherNameManager(sign, overrides)
+    manager.lazyCertInfo = {
+      get value() {
+        throw new Error("the certificate must not be read for a custom sign hook")
+      },
+    }
+    await expectMissingPublisherNameError(manager)
+  })
+
+  test("certificate-store subject without a Common Name throws instead of an undefined publisher name", async () => {
+    const manager: any = makePublisherNameManager({ type: "signtool", certificateSubjectName: "No CN Org" })
+    manager.cscInfo = { value: Promise.resolve({ thumbprint: "AB12", subject: "O=No CN Org, C=US", store: "My", isLocalMachineStore: false }) }
+    await expect(manager.lazyCertInfo.value).resolves.toEqual({ commonName: "", bloodyMicrosoftSubjectDn: "O=No CN Org, C=US" })
+    await expectMissingPublisherNameError(manager)
+  })
+
+  test("implicit signtool with a certificate without a Common Name from WIN_CSC_LINK / CSC_LINK throws", async () => {
+    const manager: any = makePublisherNameManager(undefined)
+    manager.cscInfo = { value: Promise.resolve({ file: "env-cert.pfx", password: null }) }
+    manager.lazyCertInfo = { value: Promise.resolve({ commonName: "", bloodyMicrosoftSubjectDn: "O=No CN Org, C=US" }) }
+    await expectMissingPublisherNameError(manager)
+  })
+
+  test("unsigned build (no certificate, no hook) resolves null", async () => {
+    await expect(makePublisherNameManager({ type: "signtool" }).computedPublisherName.value).resolves.toBeNull()
+    await expect(makePublisherNameManager(undefined).computedPublisherName.value).resolves.toBeNull()
+  })
+
+  test("win.sign: false with a certificate link resolves null (signing disabled)", async ({ tmpDir }) => {
+    const certificateFile = await writeNoCommonNameCertificate(tmpDir)
+    const manager = makePublisherNameManager(false, { getCscLink: () => certificateFile })
+    // the certificate link is still resolved, but nothing is signed, so there is no publisher name to require
+    await expect(manager.cscInfo.value).resolves.toEqual({ file: certificateFile, password: null })
+    await expect(manager.computedPublisherName.value).resolves.toBeNull()
   })
 })

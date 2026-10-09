@@ -6,84 +6,122 @@
   !include webPackage.nsh
 !endif
 
-!macro installApplicationFiles
-  !ifdef APP_BUILD_DIR
-    File /r "${APP_BUILD_DIR}\*.*"
-  !else
+# nsis-web: sets $packageFile to the package to install (the installer's copy of a local package, or a download) and verifies it.
+# installSection.nsh inserts this before the installed version is uninstalled, so a package that is refused or cannot be downloaded
+# leaves that version in place; installApplicationFiles only extracts and stores the package. Empty for other installers.
+!macro prepareWebPackage
+  !ifndef APP_BUILD_DIR
     !ifdef APP_PACKAGE_URL
+      !define WEB_PACKAGE_PREPARED
       Var /GLOBAL packageFile
       Var /GLOBAL isPackageFileExplicitlySpecified
 
       ${StdUtils.GetParameter} $packageFile "package-file" ""
       ${if} $packageFile == ""
-        !ifdef APP_64_NAME
-          !ifdef APP_32_NAME
-            !ifdef APP_ARM64_NAME
-              ${if} ${IsNativeARM64}
-                StrCpy $packageFile "${APP_ARM64_NAME}"
-                StrCpy $1 "${APP_ARM64_HASH}"
-              ${elseif} ${IsNativeAMD64}
-                StrCpy $packageFile "${APP_64_NAME}"
-                StrCpy $1 "${APP_64_HASH}"
-              ${else}
-                StrCpy $packageFile "${APP_32_NAME}"
-                StrCpy $1 "${APP_32_HASH}"
-              ${endif}
-            !else
-              ${if} ${RunningX64}
-                StrCpy $packageFile "${APP_64_NAME}"
-                StrCpy $1 "${APP_64_HASH}"
-              ${else}
-                StrCpy $packageFile "${APP_32_NAME}"
-                StrCpy $1 "${APP_32_HASH}"
-              ${endif}
-            !endif
-          !else
-            StrCpy $packageFile "${APP_64_NAME}"
-            StrCpy $1 "${APP_64_HASH}"
-          !endif
-        !else
-          StrCpy $packageFile "${APP_32_NAME}"
-          StrCpy $1 "${APP_32_HASH}"
-        !endif
+        !insertmacro selectWebPackage $packageFile $1
         StrCpy $4 "$packageFile"
         StrCpy $packageFile "$EXEDIR/$packageFile"
         StrCpy $isPackageFileExplicitlySpecified "false"
       ${else}
+        StrCpy $4 "$packageFile"
         StrCpy $isPackageFileExplicitlySpecified "true"
       ${endIf}
 
-      # we do not check file hash is specifed explicitly using --package-file because it is clear that user definitely want to use this file and it is user responsibility to check
-      # 1. auto-updater uses --package-file and validates checksum
-      # 2. user can user another package file (use case - one installer suitable for any app version (use latest version))
+      # An explicit --package-file (electron-updater passes the package it verified against the update manifest) must match one of the
+      # packages built with this installer. Any arch is accepted: electron-updater selects the package by its process arch, this installer
+      # by the native machine arch. nsisWeb.allowUnverifiedAppPackage (ALLOW_UNVERIFIED_APP_PACKAGE) skips this for a deliberately foreign
+      # package (use case - one installer suitable for any app version).
       ${if} ${FileExists} "$packageFile"
+        # A local package ($4) is copied into the installer's own temporary directory first. The copy is what is verified and
+        # extracted. It isn't named package.7z, which a download resumes into.
+        Push "$PLUGINSDIR\package-staged.7z"
+        Push "$packageFile"
+        System::Call 'kernel32::CopyFileW(w s, w s, i 1) i .r0'
+        ${if} $0 = 0
+          # An explicit --package-file that cannot be copied aborts the installation. A package found next to the installer is ignored
+          # and the package is downloaded instead, as when its checksum doesn't match.
+          ${if} $isPackageFileExplicitlySpecified == "true"
+            MessageBox MB_OK|MB_ICONSTOP "Package file $4 cannot be copied to $PLUGINSDIR. Installation aborted." /SD IDOK
+            SetErrorLevel 2
+            Quit
+          ${endIf}
+          MessageBox MB_OK "Package file $4 found locally, but it cannot be copied to $PLUGINSDIR.$\r$\nLocal file is ignored and package will be downloaded from Internet." /SD IDOK
+          Goto web_package_download
+        ${endIf}
+        StrCpy $packageFile "$PLUGINSDIR\package-staged.7z"
+
         ${if} $isPackageFileExplicitlySpecified == "true"
-          Goto fun_extract
+          !ifndef ALLOW_UNVERIFIED_APP_PACKAGE
+            ${StdUtils.HashFile} $3 "SHA2-512" "$packageFile"
+            !ifdef APP_64_HASH
+              StrCmp $3 "${APP_64_HASH}" web_package_ready
+            !endif
+            !ifdef APP_32_HASH
+              StrCmp $3 "${APP_32_HASH}" web_package_ready
+            !endif
+            !ifdef APP_ARM64_HASH
+              StrCmp $3 "${APP_ARM64_HASH}" web_package_ready
+            !endif
+            MessageBox MB_OK|MB_ICONSTOP "Package file $4 doesn't match any package of this installer (checksum $3). Installation aborted." /SD IDOK
+            SetErrorLevel 2
+            Quit
+          !endif
+          Goto web_package_ready
         ${else}
           ${StdUtils.HashFile} $3 "SHA2-512" "$packageFile"
           ${if} $3 == $1
-            Goto fun_extract
+            Goto web_package_ready
           ${else}
-            MessageBox MB_OK "Package file $4 found locally, but checksum doesn't match — expected $1, actual $3.$\r$\nLocal file is ignored and package will be downloaded from Internet."
+            Delete "$packageFile"
+            MessageBox MB_OK "Package file $4 found locally, but checksum doesn't match — expected $1, actual $3.$\r$\nLocal file is ignored and package will be downloaded from Internet." /SD IDOK
           ${endIf}
         ${endIf}
       ${endIf}
 
+      web_package_download:
       !insertmacro downloadApplicationFiles
 
-      fun_extract:
-        !insertmacro extractUsing7za "$packageFile"
+      # A publish-derived (versioned) URL names exactly the package built with this installer: the download must match its hash
+      # ($1, set by selectWebPackage in downloadApplicationFiles under the same define). An explicit appPackageUrl (e.g. a
+      # version-independent "latest" URL) can serve packages of other builds and is not verified.
+      !ifdef APP_PACKAGE_URL_IS_INCOMPLETE
+        !ifndef ALLOW_UNVERIFIED_APP_PACKAGE
+          ${StdUtils.HashFile} $3 "SHA2-512" "$packageFile"
+          ${if} $3 != $1
+            MessageBox MB_OK|MB_ICONSTOP "Package downloaded from $packageUrl doesn't match this installer — expected checksum $1, actual $3. Installation aborted." /SD IDOK
+            SetErrorLevel 2
+            Quit
+          ${endIf}
+        !endif
+      !endif
 
-        # electron always uses per user app data
-        ${if} $installMode == "all"
-          SetShellVarContext current
-        ${endif}
+      web_package_ready:
+    !endif
+  !endif
+!macroend
 
-        !insertmacro moveFile "$packageFile" "$LOCALAPPDATA\${APP_PACKAGE_STORE_FILE}"
+!macro installApplicationFiles
+  !ifdef APP_BUILD_DIR
+    File /r "${APP_BUILD_DIR}\*.*"
+  !else
+    !ifdef APP_PACKAGE_URL
+      # A custom script that doesn't insert prepareWebPackage before uninstallOldVersion gets the package here.
+      !ifndef WEB_PACKAGE_PREPARED
+        !insertmacro prepareWebPackage
+      !endif
 
-        ${if} $installMode == "all"
-          SetShellVarContext all
-        ${endif}
+      !insertmacro extractUsing7za "$packageFile"
+
+      # electron always uses per user app data
+      ${if} $installMode == "all"
+        SetShellVarContext current
+      ${endif}
+
+      !insertmacro moveFile "$packageFile" "$LOCALAPPDATA\${APP_PACKAGE_STORE_FILE}"
+
+      ${if} $installMode == "all"
+        SetShellVarContext all
+      ${endif}
     !else
       !insertmacro extractEmbeddedAppPackage
       # electron always uses per user app data

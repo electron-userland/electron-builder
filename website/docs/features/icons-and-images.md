@@ -220,13 +220,13 @@ See the [AppX configuration](../appx.md) page for the full set of AppX options, 
 
 electron-builder bundles a portable icon conversion toolset (`icon-tool.js` + `resvg.wasm`) that handles all PNG/SVG → ICNS/ICO/set conversions without native dependencies. The toolset is downloaded automatically on first use and cached in the electron-builder cache directory.
 
-**Override with a local bundle** (useful for offline builds or development):
+**Override with a local bundle** (useful for offline builds or development). Supply a [custom toolset](../toolsets.md#custom-toolsets) via `toolsets.icons` (there is no `ELECTRON_BUILDER_ICONS_TOOLSET_PATH` environment variable):
 
-```bash
-ELECTRON_BUILDER_ICONS_TOOLSET_PATH=/path/to/icons-bundle pnpm build
+```json5
+{ "build": { "toolsets": { "icons": { "url": "file:///path/to/icons-bundle" } } } }
 ```
 
-The path must point to a directory containing `icon-tool.js` and `resvg.wasm`.
+The directory must contain `icon-tool.js` and `resvg.wasm` (the same layout as the built-in bundle).
 
 ---
 

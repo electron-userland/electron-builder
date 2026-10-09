@@ -22,6 +22,7 @@ import { pipeline } from "stream/promises"
 import * as tar from "tar"
 import * as unzipper from "unzipper"
 import { getPath7za } from "../toolsets/7zip.js"
+import { checksumMismatchMessage, ExpectedChecksum, parseChecksum, verifyFileChecksum } from "./checksum.js"
 import { CacheState, cleanupCacheDirectory, computeCacheMetadata, readCacheStateFile, validateCacheDirectory, writeCacheState } from "./cacheState.js"
 
 export interface ElectronGetOptions extends Omit<
@@ -283,6 +284,49 @@ export function reinitializeProxy(): void {
   get.initializeProxy()
 }
 
+/**
+ * Error codes considered transient for artifact downloads. Plain node socket errors carry the code
+ * directly on `error.code`; undici (the fetch implementation used by @electron/get v5) wraps them in
+ * a `TypeError: fetch failed` whose code lives on `error.cause.code` — including undici's own
+ * `UND_ERR_*` codes for connection resets and connect timeouts.
+ */
+const TRANSIENT_DOWNLOAD_ERROR_CODES = new Set([
+  "ENOTFOUND",
+  "ETIMEDOUT",
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "EAI_AGAIN",
+  "EPIPE",
+  "ENOENT",
+  "UND_ERR_SOCKET",
+  "UND_ERR_CONNECT_TIMEOUT",
+])
+
+/**
+ * Decides whether a failed @electron/get download should be retried. Handles all three error shapes
+ * seen in practice (exported for tests):
+ * - builder-util-runtime's `HttpError` — retry on 5xx.
+ * - @electron/get v5's `HTTPError` (`FetchDownloader`) — a plain `Error` subclass with the fetch
+ *   `Response` on `.response` and NO `.code`; retry on 5xx and 429. Matched by class and by
+ *   `name === "HTTPError"` as a fallback in case multiple @electron/get copies are loaded.
+ * - transient network errors — code on `error.code`, or on `error.cause.code` for undici's
+ *   `TypeError: fetch failed` wrapper.
+ */
+export function shouldRetryDownloadError(e: any): boolean {
+  if (e == null) {
+    return false
+  }
+  if (e instanceof HttpError) {
+    return e.isServerError()
+  }
+  if (e instanceof get.HTTPError || e.name === "HTTPError") {
+    const status = e.response?.status
+    return typeof status === "number" && (status >= 500 || status === 429)
+  }
+  const code = typeof e.code === "string" ? e.code : typeof e.cause?.code === "string" ? e.cause.code : undefined
+  return code != null && TRANSIENT_DOWNLOAD_ERROR_CODES.has(code)
+}
+
 async function downloadArtifactToFile(config: ElectronArtifactDetails, label: string): Promise<string> {
   // Serialize concurrent downloads of the same artifact across vitest workers to prevent @electron/get's
   // non-atomic putFileInCache (remove + move) from racing with a concurrent reader.
@@ -351,8 +395,7 @@ async function downloadArtifactToFile(config: ElectronArtifactDetails, label: st
         retries: 3,
         interval: 2000,
         backoff: 2000,
-        shouldRetry: (e: any) =>
-          e instanceof HttpError ? e.isServerError() : typeof e?.code === "string" && ["ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EPIPE", "ENOENT"].includes(e.code),
+        shouldRetry: shouldRetryDownloadError,
       })
     } catch (err) {
       if (typeof (err as any)?.message === "string" && (err as any).message.includes("dest already exists")) {
@@ -378,26 +421,23 @@ async function downloadArtifactToFile(config: ElectronArtifactDetails, label: st
 
 /**
  * Checks electron-builder's own archive cache for a previously downloaded archive.
- * Validates the SHA-256 checksum when one is known. Returns the cached path on hit,
+ * Validates the checksum (SHA-256 hex or base64 SHA-512) when one is known. Returns the cached path on hit,
  * null on miss or checksum mismatch (mismatch also deletes the stale file).
+ *
+ * Air-gapped seeding contract: placing the archive at
+ * `<cacheDir>/<releaseName>/<archive>` (e.g. `$ELECTRON_BUILDER_CACHE/appimage@1.0.3/appimage-tools-runtime-20251108.tar.gz`)
+ * is sufficient for a fully offline toolset resolution — the checksum here is computed locally
+ * against the value hardcoded in the toolset module, and extraction happens locally too. No
+ * `.state` file needs to be seeded. See https://www.electron.build/tutorials/offline-air-gapped-builds.
  */
-async function resolveFromArchiveCache(archiveCachePath: string, label: string, expectedSha256: string | undefined): Promise<string | null> {
+async function resolveFromArchiveCache(archiveCachePath: string, label: string, expected: ExpectedChecksum | undefined): Promise<string | null> {
   if (!(await exists(archiveCachePath))) {
     return null
   }
-  if (expectedSha256) {
-    const hash = await new Promise<string>((resolve, reject) => {
-      const h = crypto.createHash("sha256")
-      const s = createReadStream(archiveCachePath)
-      s.on("error", reject)
-      s.on("data", (chunk: Buffer | string) => h.update(chunk))
-      s.on("end", () => resolve(h.digest("hex")))
-    })
-    if (hash !== expectedSha256) {
-      log.warn({ file: label, archiveCachePath }, "cached archive checksum mismatch — removing and re-downloading")
-      await fs.rm(archiveCachePath).catch(() => {})
-      return null
-    }
+  if (expected != null && !(await verifyFileChecksum(archiveCachePath, expected)).matches) {
+    log.warn({ file: label, archiveCachePath }, "cached archive checksum mismatch — removing and re-downloading")
+    await fs.rm(archiveCachePath).catch(() => {})
+    return null
   }
   log.debug({ file: label, archiveCachePath }, "using cached archive — skipping download")
   return archiveCachePath
@@ -421,7 +461,13 @@ async function persistToArchiveCache(sourcePath: string, archiveCachePath: strin
  * progress bar, extraction (.zip or .tar.gz), and completion marker.
  * Both public download functions delegate here after building their respective configs.
  */
-async function downloadAndExtract(config: ElectronArtifactDetails, extractDir: string, label: string, archiveCachePath?: string): Promise<string> {
+async function downloadAndExtract(
+  config: ElectronArtifactDetails,
+  extractDir: string,
+  label: string,
+  archiveCachePath?: string,
+  expectedChecksum?: ExpectedChecksum
+): Promise<string> {
   // Create only the PARENT dir (e.g. <cache>/fpm@2.2.1), never extractDir itself, before locking.
   // The parent is stable — cleanup only ever removes extractDir and its .state/.tmp/.lock siblings —
   // so extractDir's whole lifecycle (mkdir, rm, re-mkdir) stays inside the lock. ensureDir absorbs
@@ -480,7 +526,7 @@ async function downloadAndExtract(config: ElectronArtifactDetails, extractDir: s
     // This lets repeated builds (or offline environments) skip the download entirely once
     // the archive has been fetched at least once.
     if (archiveCachePath) {
-      downloadedFile = await resolveFromArchiveCache(archiveCachePath, label, (config as any).checksums?.[label])
+      downloadedFile = await resolveFromArchiveCache(archiveCachePath, label, expectedChecksum)
     }
 
     if (!downloadedFile) {
@@ -488,6 +534,17 @@ async function downloadAndExtract(config: ElectronArtifactDetails, extractDir: s
       downloadedFile = await downloadArtifactToFile(config, label)
       if (!downloadedFile) {
         throw new Error(`Failed to download artifact: ${label}`)
+      }
+      // A SHA-256 hex checksum is verified by @electron/get during the download. A base64 SHA-512 was passed with
+      // unsafelyDisableChecksums (sumchecker only understands SHA-256 hex), so verify it here, before the archive is
+      // persisted to the archive cache or extracted.
+      if (expectedChecksum != null && expectedChecksum.algorithm !== "sha256") {
+        const { matches, actual } = await verifyFileChecksum(downloadedFile, expectedChecksum)
+        if (!matches) {
+          await fs.rm(downloadedFile, { force: true }).catch(() => {})
+          throw new Error(`${checksumMismatchMessage(label, expectedChecksum, actual)} The corrupted download has been removed.`)
+        }
+        log.debug({ file: label, algorithm: expectedChecksum.algorithm }, "checksum verified")
       }
       // Persist the downloaded archive so future builds (and offline environments) can
       // skip the network request entirely.
@@ -563,7 +620,7 @@ const CUSTOM_DIR_ENV_VARS = [
  * Resolves the final download URL for a builder binary, honouring:
  *   ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL  – fully replaces the URL directory
  *   ELECTRON_BUILDER_BINARIES_CUSTOM_DIR (and npm_ variants) – replaces releaseName in the path
- *   overrideUrl (caller-supplied)                     – used as-is when no env var is set
+ *   overrideUrl (caller-supplied)                     – the complete file URL, used as-is when no env var is set
  *
  * Exported for unit testing; not part of the public API.
  * @internal
@@ -574,7 +631,9 @@ export function resolveBuilderBinaryUrl(releaseName: string, filenameWithExt: st
     return `${envOverrideUrl}/${filenameWithExt}`
   }
   if (overrideUrl != null) {
-    return `${overrideUrl}/${filenameWithExt}`
+    // The caller-supplied override (ToolsetCustom.url) points directly at the file — appending
+    // filenameWithExt would double the last path segment (e.g. …/bundle.7z/bundle.7z, issue #10084).
+    return overrideUrl
   }
   const customDirEntry = CUSTOM_DIR_ENV_VARS.map(name => ({ name, value: process.env[name] })).find(e => e.value != null)
   if (customDirEntry != null) {
@@ -587,6 +646,24 @@ export function resolveBuilderBinaryUrl(releaseName: string, filenameWithExt: st
  * Downloads a generic artifact (.tar.gz or .zip) from a GitHub release.
  * Used for electron-builder-binaries tools (appimage, etc.).
  */
+/** Toolsets already announced this process, so a multi-target build logs each one once. */
+const announcedToolsets = new Set<string>()
+
+/**
+ * Every `toolsets.*` property now defaults to "latest", which resolves to a newer bundle than v26
+ * pinned (NSIS 3.0.4.1 -> 3.12, winCodeSign 2.6.0 -> 1.3.0, Wine 4.0.1 -> 11.0, AppImage FUSE2 ->
+ * static FUSE3). Nothing recorded which version was used: `downloadBuilderToolset` logged only at
+ * debug level, and on a warm cache it printed nothing at all — so a regression introduced by a new
+ * bundle had no trace in the build log tying it to the toolset.
+ */
+function announceToolsetVersion(releaseName: string): void {
+  if (announcedToolsets.has(releaseName)) {
+    return
+  }
+  announcedToolsets.add(releaseName)
+  log.info({ toolset: releaseName }, "using toolset")
+}
+
 export async function downloadBuilderToolset(options: {
   releaseName: string
   filenameWithExt: string
@@ -595,10 +672,13 @@ export async function downloadBuilderToolset(options: {
   overrideUrl?: string
 }): Promise<string> {
   const { releaseName, filenameWithExt, checksums, githubOrgRepo = "electron-userland/electron-builder-binaries", overrideUrl } = options
+  announceToolsetVersion(releaseName)
 
   if (/[/\\]|^\.\./.test(filenameWithExt) || filenameWithExt.includes("..")) {
     throw new Error(`downloadBuilderToolset: unsafe filenameWithExt "${filenameWithExt}" — must be a plain filename with no path separators or traversal sequences`)
   }
+
+  const { expectedChecksum, electronGetChecksums } = resolveToolsetChecksums(releaseName, filenameWithExt, checksums)
 
   const baseUrl = getBinariesMirrorUrl(githubOrgRepo)
   const fullUrl = resolveBuilderBinaryUrl(releaseName, filenameWithExt, baseUrl, overrideUrl)
@@ -627,20 +707,131 @@ export async function downloadBuilderToolset(options: {
     artifactName: filenameWithExt,
     cacheRoot: path.resolve(await cacheDirectoryOverrideAllowed.value, "downloads"),
     cacheMode: resolveCacheMode(),
-    ...(checksums != null ? { checksums } : { unsafelyDisableChecksums: true }),
+    ...(electronGetChecksums != null ? { checksums: electronGetChecksums } : { unsafelyDisableChecksums: true }),
     mirrorOptions,
     isGeneric: true,
   }
-  return downloadAndExtract(config, extractDir, filenameWithExt, archiveCachePath)
+  return downloadAndExtract(config, extractDir, filenameWithExt, archiveCachePath, expectedChecksum)
+}
+
+/**
+ * Classifies every entry of a toolset checksum table up front, so a malformed value fails before anything is downloaded
+ * instead of as a sumchecker parse error or a generic mismatch afterwards. Returns the checksum for `filenameWithExt` and,
+ * when every entry is SHA-256 hex, the (lowercased) table to hand to `@electron/get`; base64 SHA-512 checksums are verified
+ * by electron-builder after the download instead (#10040).
+ */
+function resolveToolsetChecksums(
+  releaseName: string,
+  filenameWithExt: string,
+  checksums: Record<string, string> | undefined
+): { expectedChecksum?: ExpectedChecksum; electronGetChecksums?: Record<string, string> } {
+  if (checksums == null) {
+    return {}
+  }
+  const parsed = Object.entries(checksums).map(([file, value]) => [file, parseChecksum(value, `The checksum for "${file}" (${releaseName})`)] as const)
+  const algorithms = new Set(parsed.map(([, checksum]) => checksum.algorithm))
+  if (algorithms.size > 1) {
+    throw new Error(`Checksums for ${releaseName} mix formats: use a single format for all entries, either SHA-256 hex or base64 SHA-512`)
+  }
+  const expectedChecksum = parsed.find(([file]) => file === filenameWithExt)?.[1]
+  if (algorithms.has("sha256")) {
+    return { expectedChecksum, electronGetChecksums: Object.fromEntries(parsed.map(([file, checksum]) => [file, checksum.value])) }
+  }
+  if (expectedChecksum == null) {
+    // @electron/get would reject a missing entry itself, but its validation is disabled for SHA-512 checksums: never let a
+    // table without an entry for this file turn into an unverified download.
+    throw new Error(`No checksum for "${filenameWithExt}" in the checksums for ${releaseName}`)
+  }
+  return { expectedChecksum }
+}
+
+/**
+ * Mirrors @electron/get's default cache root (`env-paths("electron", { suffix: "" }).cache`).
+ * @electron/get does not export it and its package `exports` map blocks deep imports, so the
+ * (deliberately tiny) platform switch is replicated here. Must stay in sync with the
+ * `cacheRoot` default documented in @electron/get's `ElectronDownloadRequestOptions`.
+ * @internal exported for unit testing
+ */
+export function defaultElectronGetCacheRoot(): string {
+  const name = "electron"
+  const homeDir = os.homedir()
+  switch (os.platform()) {
+    case "darwin":
+      return path.join(homeDir, "Library", "Caches", name)
+    case "win32":
+      return path.join(process.env.LOCALAPPDATA || path.join(homeDir, "AppData", "Local"), name, "Cache")
+    default:
+      return path.join(process.env.XDG_CACHE_HOME || path.join(homeDir, ".cache"), name)
+  }
+}
+
+/**
+ * Parses the upstream `SHASUMS256.txt` format into the `Record<filename, sha256-hex>` shape that
+ * @electron/get accepts as inline `checksums`. Each line is `<sha256-hex> *<filename>` (binary
+ * mode) or `<sha256-hex>  <filename>` (text mode); malformed lines are ignored.
+ * @internal exported for unit testing
+ */
+export function parseChecksumFile(content: string): Record<string, string> {
+  const checksums: Record<string, string> = {}
+  for (const rawLine of content.split("\n")) {
+    const match = /^([a-fA-F0-9]{64})\s+\*?(.+)$/.exec(rawLine.trim())
+    if (match != null) {
+      checksums[match[2]] = match[1].toLowerCase()
+    }
+  }
+  return checksums
+}
+
+/**
+ * Looks for a locally seeded SHASUMS256 file at the root of the @electron/get cache and returns
+ * its contents as inline `checksums`, or null when nothing usable is seeded.
+ *
+ * Why: without inline `checksums`, @electron/get re-downloads `SHASUMS256.txt` with a hardcoded
+ * `cacheMode: Bypass` on EVERY build — even when the artifact itself is a cache hit — so a fully
+ * seeded cache still requires network access and air-gapped builds fail (#10039). Cache-seeding
+ * tools (e.g. flatpak-node-generator) already place `SHASUMS256.txt-<version>` flat at the cache
+ * root; feeding it back as inline `checksums` keeps checksum validation enabled while making it
+ * fully offline. A plain `SHASUMS256.txt` at the cache root is accepted as a manual-seeding
+ * fallback. A candidate file is only used when it actually contains an entry for the requested
+ * artifact, so a stale file for another version can never break an online build.
+ * See https://www.electron.build/tutorials/offline-air-gapped-builds for the seeding contract.
+ * @internal exported for unit testing
+ */
+export async function resolveSeededChecksums(cacheRoot: string, version: string, artifactFileName: string): Promise<Record<string, string> | null> {
+  const candidates = [path.join(cacheRoot, `SHASUMS256.txt-${version}`), path.join(cacheRoot, "SHASUMS256.txt")]
+  for (const candidate of candidates) {
+    if (!(await exists(candidate))) {
+      continue
+    }
+    let content: string
+    try {
+      content = await fs.readFile(candidate, "utf-8")
+    } catch (err: any) {
+      log.warn({ file: log.filePath(candidate), err: err.message }, "failed to read seeded SHASUMS file — ignoring it")
+      continue
+    }
+    const checksums = parseChecksumFile(content)
+    if (checksums[artifactFileName] == null) {
+      log.warn({ file: log.filePath(candidate), artifactFileName }, "seeded SHASUMS file has no entry for the requested artifact — ignoring it")
+      continue
+    }
+    log.debug({ file: log.filePath(candidate), artifactFileName }, "using locally seeded SHASUMS256 checksums — checksum validation can run offline")
+    return checksums
+  }
+  return null
 }
 
 /**
  * Assembles the `@electron/get` artifact config (`ElectronPlatformArtifactDetails`) from
  * `ArtifactDownloadOptions`: spreads the caller's options and pins `cacheRoot`/`platform`/`arch`/
  * `version`/`artifactName` and the resolved cache mode, warning when checksum verification is
- * disabled. Performs no I/O — callers pass the result to `downloadArtifactToFile` / `downloadAndExtract`.
+ * disabled. When the caller provides no `checksums` (user-provided `electronGet.checksums` always
+ * wins) and verification is not disabled, a locally seeded `SHASUMS256.txt-<version>` at the cache
+ * root is picked up as inline `checksums` so validation works offline (see resolveSeededChecksums).
+ * Callers pass the result to `downloadArtifactToFile` / `downloadAndExtract`.
+ * @internal exported for unit testing
  */
-function buildElectronArtifactConfig(artifactOptions: ArtifactDownloadOptions): ElectronPlatformArtifactDetails {
+export async function buildElectronArtifactConfig(artifactOptions: ArtifactDownloadOptions): Promise<ElectronPlatformArtifactDetails> {
   const { options, arch, version, platformName: platform, artifactName, cacheDir: cacheRoot } = artifactOptions
 
   if (options?.unsafelyDisableChecksums) {
@@ -651,6 +842,15 @@ function buildElectronArtifactConfig(artifactOptions: ArtifactDownloadOptions): 
   }
 
   const artifactConfig: ElectronPlatformArtifactDetails = { ...options, cacheRoot, platform, arch, version, artifactName, cacheMode: resolveCacheMode() }
+  if (artifactConfig.checksums == null && !artifactConfig.unsafelyDisableChecksums) {
+    // Matches @electron/get's getArtifactFileName for non-generic artifacts; `artifactSuffix` and
+    // `customFilename` cannot diverge here — both are excluded from ElectronGetOptions.
+    const artifactFileName = `${artifactName}-v${version}-${platform}-${arch}.zip`
+    const seededChecksums = await resolveSeededChecksums(cacheRoot ?? defaultElectronGetCacheRoot(), version, artifactFileName)
+    if (seededChecksums != null) {
+      artifactConfig.checksums = seededChecksums
+    }
+  }
   return artifactConfig
 }
 
@@ -658,8 +858,8 @@ function buildElectronArtifactConfig(artifactOptions: ArtifactDownloadOptions): 
  * Downloads the electron artifact zip via @electron/get (with caching) and returns the zip file path.
  * Use when you need to extract the zip yourself (e.g. directly to appOutDir to preserve empty dirs and symlinks).
  */
-export function downloadElectronArtifactZip(options: ArtifactDownloadOptions): Promise<string> {
-  const config = buildElectronArtifactConfig(options)
+export async function downloadElectronArtifactZip(options: ArtifactDownloadOptions): Promise<string> {
+  const config = await buildElectronArtifactConfig(options)
   return downloadArtifactToFile(config, config.artifactName)
 }
 
@@ -670,7 +870,7 @@ export function downloadElectronArtifactZip(options: ArtifactDownloadOptions): P
  */
 export async function downloadElectronArtifact(options: ArtifactDownloadOptions): Promise<string> {
   const { arch, version, platformName: platform, artifactName } = options
-  const artifactConfig = buildElectronArtifactConfig(options)
+  const artifactConfig = await buildElectronArtifactConfig(options)
 
   const suffix = hashUrlSafe(JSON.stringify(artifactConfig), 5)
   const folderName = `${artifactName}-v${version}-${platform}-${arch}-${suffix}`

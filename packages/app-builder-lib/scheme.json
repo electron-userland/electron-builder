@@ -481,7 +481,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -520,6 +520,23 @@
             "string"
           ]
         },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -556,66 +573,6 @@
       ],
       "type": "object"
     },
-    "CustomNsisBinary": {
-      "additionalProperties": false,
-      "properties": {
-        "checksum": {
-          "default": "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "debugLogging": {
-          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `customNsisBinary?: CustomNsisBinary`\nIn your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`",
-          "type": [
-            "null",
-            "boolean"
-          ]
-        },
-        "url": {
-          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "version": {
-          "default": "3.0.4.1",
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      },
-      "required": [
-        "url"
-      ],
-      "type": "object"
-    },
-    "CustomNsisResources": {
-      "additionalProperties": false,
-      "properties": {
-        "checksum": {
-          "default": "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==",
-          "type": "string"
-        },
-        "url": {
-          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z",
-          "type": "string"
-        },
-        "version": {
-          "default": "3.4.1",
-          "type": "string"
-        }
-      },
-      "required": [
-        "checksum",
-        "url",
-        "version"
-      ],
-      "type": "object"
-    },
     "CustomPublishOptions": {
       "additionalProperties": {},
       "properties": {
@@ -626,7 +583,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -653,6 +610,23 @@
             "null",
             "number"
           ]
+        },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updateProvider": {
           "description": "The Provider to provide UpdateInfo regarding available updates.  Required\nto use custom providers with electron-updater.",
@@ -749,7 +723,7 @@
             "libuuid1",
             "libsecret-1-0"
           ],
-          "description": "Package dependencies.\nIf need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).\nIf need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2)."
+          "description": "Package dependencies.\nIf need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).\nIf need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used [by GNOME](https://packages.debian.org/bullseye/gconf2).\n\nUse the `\"default\"` keyword to extend the default list instead of replacing it:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults. The resulting list is deduplicated."
         },
         "description": {
           "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
@@ -935,7 +909,8 @@
           "enum": [
             "dir",
             "file",
-            "link"
+            "link",
+            "position"
           ],
           "type": "string"
         },
@@ -1219,7 +1194,7 @@
     },
     "ElectronSignOptions": {
       "additionalProperties": false,
-      "description": "Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control\nitself — `app`, `keychain`, `platform`, `version`, `optionsForFile`, and `type` (derived from the\nbuild flavor: `mas-dev` → `development`, otherwise `distribution`) — and forwards everything else.\n\nAdditionally exposes a small set of per-file convenience fields that electron-builder maps\ninternally through `optionsForFile`.",
+      "description": "Signing options passed to `@electron/osx-sign`. Electron-builder owns the fields it must control\nitself — `app`, `keychain`, `platform`, `version`, and `optionsForFile` — and forwards everything else.\n\nAdditionally exposes a small set of per-file convenience fields that electron-builder maps\ninternally through `optionsForFile`.",
       "properties": {
         "additionalArguments": {
           "anyOf": [
@@ -1247,14 +1222,14 @@
           "type": "array"
         },
         "entitlements": {
-          "description": "Path to the main app entitlements file.\nFalls back to `build/entitlements.mac.plist` if it exists, then to `@electron/osx-sign`'s\nbuilt-in defaults.",
+          "description": "Path to the main app entitlements file. Resolved relative to the build resources directory, then the project directory.\nFalls back to `build/entitlements.mac.plist` (or `build/entitlements.mas.plist` for MAS targets) if it exists.\nOtherwise `mac` builds use the bundled default, which grants only `com.apple.security.cs.allow-jit`\n(ad-hoc builds use a bundled ad-hoc template that also disables library validation), and MAS builds use\n`@electron/osx-sign`'s built-in sandboxed `default.mas.plist`.",
           "type": [
             "null",
             "string"
           ]
         },
         "entitlementsInherit": {
-          "description": "Path to child entitlements inherited by embedded frameworks and bundles.\nFalls back to `build/entitlements.mac.inherit.plist` if it exists.",
+          "description": "Path to child entitlements inherited by embedded frameworks and bundles. Resolved relative to the build resources directory, then the project directory.\nFalls back to `build/entitlements.mac.inherit.plist` (or `build/entitlements.mas.inherit.plist` for MAS targets) if it exists.\nOtherwise nested binaries receive `@electron/osx-sign`'s per-file defaults (renderer/GPU helpers: `allow-jit`;\nplugin helper: Chromium's looser set; everything else: `default.darwin.plist`); ad-hoc `mac` builds use the\nbundled ad-hoc template instead.",
           "type": [
             "null",
             "string"
@@ -1331,6 +1306,14 @@
             "null",
             "string"
           ]
+        },
+        "type": {
+          "description": "The type of certificate to use when signing: `development` or `distribution`.\n\nDefaults to a value derived from the build flavor: `mas-dev` → `development`, otherwise `distribution`.\nSet it explicitly to override — e.g. `development` on a darwin build signs with a `Mac Developer` or\n`Apple Development` certificate instead of `Developer ID Application` and embeds a matching\ndevelopment provisioning profile.\n\nDevelopment-signed apps are blocked by Gatekeeper on other machines; users must use the\nright-click → Open workaround documented at https://support.apple.com/en-us/guide/mac-help/mh40616/mac.\nSuch builds are not suitable for production distribution and cannot be notarized.",
+          "enum": [
+            "development",
+            "distribution"
+          ],
+          "type": "string"
         }
       },
       "type": "object"
@@ -1719,7 +1702,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -1746,6 +1729,23 @@
             "null",
             "number"
           ]
+        },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -1796,7 +1796,7 @@
           ]
         },
         "private": {
-          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](https://www.electron.build/auto-update#private-github-update-repo).",
+          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](https://www.electron.build/docs/features/auto-update#private-github-update-repo).",
           "type": [
             "null",
             "boolean"
@@ -1825,7 +1825,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -1883,11 +1883,28 @@
           ]
         },
         "token": {
-          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](https://www.electron.build/auto-update#appupdatersetfeedurloptions).",
+          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](https://www.electron.build/docs/features/auto-update#custom-options-instantiating-updater-directly).",
           "type": [
             "null",
             "string"
           ]
+        },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -1936,7 +1953,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -1970,6 +1987,23 @@
             "null",
             "string"
           ]
+        },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -2054,7 +2088,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -2081,6 +2115,23 @@
             "null",
             "number"
           ]
+        },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -2207,7 +2258,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -2327,7 +2378,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
           "default": false,
@@ -2468,7 +2519,21 @@
             }
           ],
           "default": "AppImage",
-          "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](https://www.electron.build/multi-platform-build#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
+          "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](https://www.electron.build/docs/features/multi-platform-build#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
+        },
+        "updateManifest": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/UpdateManifestSigningOptions"
+            },
+            {
+              "const": false
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         },
         "vendor": {
           "description": "The vendor. Defaults to [author](https://www.electron.build/configuration#author).",
@@ -2580,7 +2645,7 @@
               "type": "null"
             }
           ],
-          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
+          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`\n\nUse the `\"default\"` keyword to extend the target's default list instead of replacing it:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults. The resulting list is deduplicated."
         },
         "description": {
           "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
@@ -2851,7 +2916,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -2977,7 +3042,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
           "default": false,
@@ -3204,6 +3269,20 @@
             }
           ],
           "description": "Options forwarded to `@electron/universal` when building a universal (multi-arch) app.\nHas no effect unless the target arch is `universal`."
+        },
+        "updateManifest": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/UpdateManifestSigningOptions"
+            },
+            {
+              "const": false
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         }
       },
       "type": "object"
@@ -3332,7 +3411,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -3458,7 +3537,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
           "default": false,
@@ -3685,6 +3764,20 @@
             }
           ],
           "description": "Options forwarded to `@electron/universal` when building a universal (multi-arch) app.\nHas no effect unless the target arch is `universal`."
+        },
+        "updateManifest": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/UpdateManifestSigningOptions"
+            },
+            {
+              "const": false
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         }
       },
       "type": "object"
@@ -4260,7 +4353,7 @@
       "properties": {
         "buildDependenciesFromSource": {
           "default": false,
-          "description": "Whether to pass `--build-from-source` to the package manager when installing native\ndependencies, forcing them to compile from source rather than using pre-built binaries.\n\nUseful when pre-built binaries are not available for the target platform/arch combination,\nor when you need to ensure native modules are compiled against the exact Electron ABI.",
+          "description": "Whether to pass `--build-from-source` to the package manager when installing native\ndependencies, forcing them to compile from source rather than using pre-built binaries.\n\nUseful when pre-built binaries are not available for the target platform/arch combination,\nor when you need to ensure native modules are compiled against the exact Electron ABI.\n\nOnly honored when the target platform matches the host platform: native modules cannot be\ncross-compiled from source for another OS, so for a cross-platform target native dependencies are\nrebuilt with prebuilt binaries for that target instead (and a warning is logged).",
           "type": "boolean"
         },
         "nodeGypRebuild": {
@@ -4288,6 +4381,22 @@
           ],
           "default": "sequential",
           "description": "Compilation mode for `@electron/rebuild`.\n\n- `\"sequential\"` — rebuilds native modules one at a time. Safer in memory-constrained\n  environments and produces cleaner log output.\n- `\"parallel\"` — rebuilds all native modules concurrently. Faster on machines with many cores\n  and plentiful memory, but may exhaust resources on CI agents with limited RAM."
+        },
+        "verifyNativeBinaries": {
+          "anyOf": [
+            {
+              "enum": [
+                false,
+                true,
+                "warn"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": true,
+          "description": "Whether to verify, after the app is packed, that every native binary shipped in the app was built for\nthe target platform and architecture.\n\nelectron-builder reads the header of each `.node` addon (and of other native libraries and executables\nsuch as `.so`, `.dylib`, `.dll`, `.exe`) in `app.asar`, `app.asar.unpacked` or the unpacked `app`\ndirectory, and compares its format (ELF / Mach-O / PE) and machine type against the target (for\na macOS universal build, each per-arch slice is checked before the slices are merged). This catches a\nstale or host-platform binary left in `node_modules` by a skipped or cached rebuild, which otherwise\nonly surfaces at runtime as `invalid ELF header` / `not a valid Win32 application` /\n`incompatible architecture`.\n\nFiles whose package declares another platform via `package.json` `os`/`cpu`, or whose path names\nanother platform/arch (e.g. prebuildify's `prebuilds/linux-arm64/`), are not loaded for this target\nand are ignored.\n\n- `true` (default) — a mismatched `.node` addon fails the build; other mismatched native files log a warning.\n- `\"warn\"` — log every mismatch as a warning and continue.\n- `false` — skip the check."
         }
       },
       "type": "object"
@@ -4331,36 +4440,20 @@
           "description": "Whether to create start menu shortcut.",
           "type": "boolean"
         },
-        "customNsisBinary": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisBinary"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
-        },
-        "customNsisResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisResources"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `nsis-resources`"
-        },
         "deleteAppDataOnUninstall": {
           "default": false,
           "description": "*one-click installer only.* Whether to delete app data on uninstall.",
           "type": "boolean"
         },
         "differentialPackage": {
-          "description": "Marks the package as built with differential download support for the update server.",
-          "type": "boolean"
+          "default": true,
+          "description": "Marks the package as built with differential download support for the update server, and selects how the\napp package is compressed:\n\n- `false` — no differential download support.\n- `\"store-asar\"` — differential-aware, with the app's `resources/app.asar` stored uncompressed (7-Zip\n  `Copy`) inside the package. The differential updater diffs the *compressed* package with a\n  content-defined blockmap, and the asar is a single compressed member — so any change to app code\n  re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every\n  block). Storing it keeps unchanged regions byte-identical between releases, making the delta\n  proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%\n  instead of 100%). The stored asar's byte range is also chunked with finer content-defined blocks\n  (4/8/16 KiB instead of the 8/16/32 KiB used for the rest of the installer), so a small change costs\n  proportionally fewer bytes still. Trade-off: the installer and full package grow by roughly what\n  compressing the asar saved. Without an `app.asar` (e.g. `asar` is disabled) there is nothing to store,\n  so it behaves like `true`. Upgrading from an electron-builder without the finer chunking changes the\n  block boundaries once: the first differential update from an installer built before it re-downloads\n  close to the whole asar, and updates between installers built with it are proportional again.\n- anything else (`true`, `\"compressed\"`, unset) — differential-aware, whole package compressed.",
+          "enum": [
+            "compressed",
+            false,
+            "store-asar",
+            true
+          ]
         },
         "displayLanguageSelector": {
           "default": false,
@@ -4375,11 +4468,26 @@
           ]
         },
         "include": {
-          "description": "The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The path to NSIS include script to customize installer, or an array of such paths to include multiple scripts. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).\n\nEach path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.\nWhen an array is provided, all scripts are included in the specified order."
+        },
+        "installerDebugLogging": {
+          "default": false,
+          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. The default `toolsets.nsis` bundle\nis not log-enabled, so supply one as a custom `toolsets.nsis` bundle; the build fails otherwise.\nReplaces the v26 `customNsisBinary.debugLogging`.",
+          "type": "boolean"
         },
         "installerHeader": {
           "default": "build/installerHeader.bmp",
@@ -4628,7 +4736,7 @@
         },
         "useZip": {
           "default": false,
-          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
+          "description": "Use zip instead of 7z (LZMA) for the embedded app package. Only applies to portable targets and to installers built with `differentialPackage: false`; ignored (with a warning) when `differentialPackage` is enabled and for `nsis-web`, which always use 7z.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -4653,8 +4761,13 @@
           "description": "*assisted installer only.* Whether to allow user to change installation directory.",
           "type": "boolean"
         },
+        "allowUnverifiedAppPackage": {
+          "default": false,
+          "description": "Whether the web installer may install an app package that doesn't match any package built with it: a package passed via `--package-file`,\nor (when `appPackageUrl` is not set) the downloaded package. By default such a package aborts the installation.\n\nEnable only if you intentionally run one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).",
+          "type": "boolean"
+        },
         "appPackageUrl": {
-          "description": "The application package download URL. Optional — by default computed using publish configuration.\n\nURL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).\nPlease note — it is [full URL](https://github.com/electron-userland/electron-builder/issues/1810#issuecomment-317650878).\n\nCustom `X-Arch` http header is set to `32` or `64`.",
+          "description": "The application package download URL. Optional — by default computed using publish configuration.\n\nURL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).\nPlease note — it is [full URL](https://github.com/electron-userland/electron-builder/issues/1810#issuecomment-317650878).\n\nCustom `X-Arch` http header is set to `32` or `64`.\n\nThe installer does not checksum-verify a package downloaded from an explicit `appPackageUrl`; a package downloaded from the default (publish-derived) URL is verified against the packages built with the installer.",
           "type": [
             "null",
             "string"
@@ -4687,36 +4800,20 @@
           "description": "Whether to create start menu shortcut.",
           "type": "boolean"
         },
-        "customNsisBinary": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisBinary"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
-        },
-        "customNsisResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisResources"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `nsis-resources`"
-        },
         "deleteAppDataOnUninstall": {
           "default": false,
           "description": "*one-click installer only.* Whether to delete app data on uninstall.",
           "type": "boolean"
         },
         "differentialPackage": {
-          "description": "Marks the package as built with differential download support for the update server.",
-          "type": "boolean"
+          "default": true,
+          "description": "Marks the package as built with differential download support for the update server, and selects how the\napp package is compressed:\n\n- `false` — no differential download support.\n- `\"store-asar\"` — differential-aware, with the app's `resources/app.asar` stored uncompressed (7-Zip\n  `Copy`) inside the package. The differential updater diffs the *compressed* package with a\n  content-defined blockmap, and the asar is a single compressed member — so any change to app code\n  re-downloads the entire compressed asar (~100% of the member; its header rewrite alone diverges every\n  block). Storing it keeps unchanged regions byte-identical between releases, making the delta\n  proportional to what actually changed (measured on a ~32 MB asar: a one-line source change cost 0.2%\n  instead of 100%). The stored asar's byte range is also chunked with finer content-defined blocks\n  (4/8/16 KiB instead of the 8/16/32 KiB used for the rest of the installer), so a small change costs\n  proportionally fewer bytes still. Trade-off: the installer and full package grow by roughly what\n  compressing the asar saved. Without an `app.asar` (e.g. `asar` is disabled) there is nothing to store,\n  so it behaves like `true`. Upgrading from an electron-builder without the finer chunking changes the\n  block boundaries once: the first differential update from an installer built before it re-downloads\n  close to the whole asar, and updates between installers built with it are proportional again.\n- anything else (`true`, `\"compressed\"`, unset) — differential-aware, whole package compressed.",
+          "enum": [
+            "compressed",
+            false,
+            "store-asar",
+            true
+          ]
         },
         "displayLanguageSelector": {
           "default": false,
@@ -4731,11 +4828,26 @@
           ]
         },
         "include": {
-          "description": "The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).",
-          "type": [
-            "null",
-            "string"
-          ]
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The path to NSIS include script to customize installer, or an array of such paths to include multiple scripts. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).\n\nEach path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.\nWhen an array is provided, all scripts are included in the specified order."
+        },
+        "installerDebugLogging": {
+          "default": false,
+          "description": "Whether to enable NSIS logging in the installer and uninstaller (`LogSet on`, which writes `install.log` to the installation\ndirectory). In your custom NSIS scripts, write to the log via `${LogText}`.\n\nRequires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. The default `toolsets.nsis` bundle\nis not log-enabled, so supply one as a custom `toolsets.nsis` bundle; the build fails otherwise.\nReplaces the v26 `customNsisBinary.debugLogging`.",
+          "type": "boolean"
         },
         "installerHeader": {
           "default": "build/installerHeader.bmp",
@@ -4984,7 +5096,7 @@
         },
         "useZip": {
           "default": false,
-          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
+          "description": "Use zip instead of 7z (LZMA) for the embedded app package. Only applies to portable targets and to installers built with `differentialPackage: false`; ignored (with a warning) when `differentialPackage` is enabled and for `nsis-web`, which always use 7z.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -5495,7 +5607,7 @@
               "type": "null"
             }
           ],
-          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
+          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`\n\nUse the `\"default\"` keyword to extend the target's default list instead of replacing it:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults. The resulting list is deduplicated."
         },
         "description": {
           "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
@@ -5762,7 +5874,7 @@
           ]
         },
         "identity": {
-          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/code-signing) instead of specifying this option.",
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://www.electron.build/docs/features/code-signing) instead of specifying this option.",
           "type": [
             "null",
             "string"
@@ -5937,34 +6049,29 @@
           "description": "Disable building an universal installer of the archs specified in the target configuration",
           "type": "boolean"
         },
-        "customNsisBinary": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisBinary"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
-        },
-        "customNsisResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/CustomNsisResources"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Allows you to provide your own `nsis-resources`"
-        },
         "guid": {
           "description": "The GUID for the installer. Used to identify the application for upgrade and uninstall operations.\nIf not specified, a deterministic GUID is generated from the app ID (`appId`) — but this means\nchanging your `appId` will break silent upgrades of existing installs.",
           "type": [
             "null",
             "string"
           ]
+        },
+        "include": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The path to NSIS include script to customize the portable launcher, or an array of such paths to include multiple scripts. See [Custom NSIS script](#custom-nsis-script).\n\nEach path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.\nWhen an array is provided, all scripts are included in the specified order.\n\nUnlike the installer targets, the portable target does **not** fall back to `build/installer.nsh` — a custom script is only included when this option is explicitly set."
         },
         "publish": {
           "anyOf": [
@@ -6043,7 +6150,7 @@
         },
         "useZip": {
           "default": false,
-          "description": "Forces zip compression format instead of LZMA. Used internally for differential update packages.",
+          "description": "Use zip instead of 7z (LZMA) for the embedded app package. Only applies to portable targets and to installers built with `differentialPackage: false`; ignored (with a warning) when `differentialPackage` is enabled and for `nsis-web`, which always use 7z.",
           "type": "boolean"
         },
         "warningsAsErrors": {
@@ -6144,7 +6251,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -6171,6 +6278,23 @@
             "null",
             "number"
           ]
+        },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -6400,7 +6524,7 @@
               "type": "null"
             }
           ],
-          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"http-parser\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`"
+          "description": "Package dependencies.\n`rpm` defaults to `[\"gtk3\", \"libnotify\", \"nss\", \"libXScrnSaver\", \"(libXtst or libXtst6)\", \"xdg-utils\", \"at-spi2-core\", \"(libuuid or libuuid1)\"]`\n`pacman` defaults to `[\"c-ares\", \"ffmpeg\", \"gtk3\", \"libevent\", \"libvpx\", \"libxslt\", \"libxss\", \"minizip\", \"nss\", \"re2\", \"snappy\", \"libnotify\", \"libappindicator-gtk3\"]`\n\nUse the `\"default\"` keyword to extend the target's default list instead of replacing it:\n`[\"default\", \"my-extra-lib\"]` appends `my-extra-lib` to the defaults. The resulting list is deduplicated."
         },
         "description": {
           "description": "As [description](https://www.electron.build/configuration#description) from application package.json, but allows you to specify different for Linux.",
@@ -6624,7 +6748,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -6675,6 +6799,23 @@
             "null",
             "number"
           ]
+        },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -7499,7 +7640,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -7530,6 +7671,23 @@
             "null",
             "number"
           ]
+        },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
         },
         "updaterCacheDirName": {
           "type": [
@@ -7976,7 +8134,7 @@
         },
         "publishAutoUpdate": {
           "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.\nA provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:\nthe first provider that does is embedded instead.",
           "type": "boolean"
         },
         "publisherName": {
@@ -8008,6 +8166,23 @@
             "number"
           ]
         },
+        "updateManifestPublicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update\nmanifest before downloading — the install's trust list. A manifest is accepted when any listed key\nvalidates one of its signatures. Embedded into `app-update.yml` at build time when update manifest\nsigning is enabled: a single string for one key, an array for several. Managed by electron-builder —\npopulated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it\nmanually in the `publish` configuration is rejected as a configuration error."
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -8031,10 +8206,6 @@
             "null",
             "string"
           ]
-        },
-        "customSquirrelVendorDir": {
-          "description": "The custom squirrel vendor dir. If not specified will use the Squirrel.Windows that is shipped with electron-installer(https://github.com/electron/windows-installer/tree/main/vendor).\nAfter https://github.com/electron-userland/electron-builder-binaries/pull/56 merged, will add `electron-builder-binaries` to get the latest version of squirrel.",
-          "type": "string"
         },
         "iconUrl": {
           "description": "A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.\n\nPlease note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.\n\nIf you don't plan to build windows installer, you can omit it.\nIf your project repository is public on GitHub, it will be `https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true` by default.",
@@ -8205,14 +8376,14 @@
             },
             {
               "enum": [
-                "1.2.1",
+                "1.2.3",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.2.1\"` | `wasm-vips` + `@resvg/resvg-wasm` |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md"
+          "description": "Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,\nand PNG icon sets.\n\nSet to a {@link ToolsetCustom} object to supply your own icons bundle directory.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.2.3\"` | Writes 16px/32px ICNS entries as `ic04`/`ic05` ARGB (fixes corrupt small icons in Finder) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/icons/CHANGELOG.md"
         },
         "linuxToolsMac": {
           "anyOf": [
@@ -8222,13 +8393,14 @@
             {
               "enum": [
                 "1.0.0",
+                "1.0.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md"
+          "description": "Version of the Linux-tools-mac bundle used to produce `.tar.lz` archives and build\nLinux targets on macOS hosts.\n\nThe bundle ships macOS-native builds of `ar`, `lzip`, and `gtar` (GNU tar).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |\n| `\"1.0.1\"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md"
         },
         "nsis": {
           "anyOf": [
@@ -8245,7 +8417,7 @@
             }
           ],
           "default": "latest",
-          "description": "Version of the NSIS toolset bundle used to compile Windows installers.\n\nThe bundle ships:\n- **`makensis`** — the NSIS compiler invoked to build `.nsi` scripts into `.exe` installers.\n- **NSIS plugins** — the plugin DLLs (`NsisMultiUser`, `UAC`, `StdUtils`, etc.) referenced by\n  electron-builder's default installer scripts.\n- **`elevate.exe`** — UAC elevation helper included in NSIS installers.\n\nAvailable versions:\n| Version | `makensis` version | Notes |\n|---------|------------------|-------|\n| `\"0.0.0\"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27) |\n| `\"1.2.1\"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md"
+          "description": "Version of the NSIS toolset bundle used to compile Windows installers.\n\nThe bundle ships:\n- **`makensis`** — the NSIS compiler invoked to build `.nsi` scripts into `.exe` installers.\n- **NSIS plugins** — the plugin DLLs (`NsisMultiUser`, `UAC`, `StdUtils`, etc.) referenced by\n  electron-builder's default installer scripts.\n- **`elevate.exe`** — UAC elevation helper included in NSIS installers.\n\nAvailable versions:\n| Version | `makensis` version | Notes |\n|---------|------------------|-------|\n| `\"0.0.0\"` | 3.0.4.1 | Legacy split bundle — `nsis` + `nsis-resources` archives (pre-v27) |\n| `\"1.2.1\"` | 3.12 | Unified bundle — single archive, entrypoint scripts auto-set `NSISDIR` |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md\n\nA custom bundle (a {@link ToolsetCustom} object) must follow the layout at\nhttps://www.electron.build/docs/toolsets#custom-nsis-bundle-layout"
         },
         "sevenZip": {
           "anyOf": [
@@ -8255,13 +8427,30 @@
             {
               "enum": [
                 "1.0.0",
+                "1.0.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.\n\nSet to a {@link ToolsetCustom} object to supply your own 7za binary.\nThe `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains\n`bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).\n\n**Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive\n(or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because\nextracting them requires 7za — a circular dependency."
+          "description": "Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.\n\nSet to a {@link ToolsetCustom} object to supply your own 7za binary.\nThe `url` must point to a directory (or a `.tar.gz`/`.zip` archive of one) that contains\n`bin/7za` (macOS/Linux) or `bin/7za.exe` (Windows).\n\n**Bootstrap constraint:** the custom bundle itself must be a `.tar.gz` or `.zip` archive\n(or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because\nextracting them requires 7za — a circular dependency.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.0.0\"` | Shipped the 32-bit `7za.exe` for every Windows arch (1.75 GiB memory cap, no LZMA2 multithreading on x64/arm64) |\n| `\"1.0.1\"` | Correct per-arch Windows binaries (x64, ia32, arm64) |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/7zip/CHANGELOG.md"
+        },
+        "squirrel": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "enum": [
+                "1.1.1",
+                "latest"
+              ],
+              "type": "string"
+            }
+          ],
+          "default": "latest",
+          "description": "Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.\n\nThe bundle ships the Squirrel vendor toolset under `electron-winstaller/vendor/`:\n- **`Squirrel.exe`** / **`Squirrel-Mono.exe`** — releasify the app into `Setup.exe` (and an optional MSI).\n- **`SyncReleases.exe`** — downloads prior releases to produce delta packages.\n- **`nuget.exe`**, **`7z`** — pack the app into a `.nupkg` and compress release assets.\n\n`rcedit.exe` is provisioned from the {@link winCodeSign} toolset at runtime (on every platform;\nunder Wine on non-Windows hosts). Building an MSI additionally uses the shared WiX toolset.\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"1.1.1\"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |\n\nSet to a {@link ToolsetCustom} object to supply your own bundle — it must contain the\n`electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/squirrel.windows/CHANGELOG.md"
         },
         "winCodeSign": {
           "anyOf": [
@@ -8293,23 +8482,24 @@
               "enum": [
                 "0.0.0",
                 "1.0.1",
-                "latest"
+                "latest",
+                "system"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n\nTo use a custom Wine binary, use a `ToolsetCustom` object.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
+          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n| `\"system\"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |\n\n`\"system\"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and\nis what `\"latest\"` (the default) currently resolves to on every platform: the published `\"1.0.1\"`\nbundles ship no PE builtins, so a host Wine installation is required to build Windows targets on\nmacOS or Linux.\n\nTo use a custom Wine binary, use a `ToolsetCustom` object.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
         }
       },
       "type": "object"
     },
     "ToolsetCustom": {
       "additionalProperties": false,
-      "description": "A custom toolset bundle supplied by the user in place of a built-in versioned bundle.\n\nThe bundle must mirror the expected directory layout of the corresponding built-in bundle.\nSee the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.\n\nFile formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.",
+      "description": "A custom toolset bundle supplied by the user in place of a built-in versioned bundle.\n\nThe bundle must mirror the expected directory layout of the corresponding built-in bundle.\nSee the build scripts at\nhttps://github.com/electron-userland/electron-builder-binaries/tree/master/packages.\n\nFile formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.\n\n`checksum` is the SHA-256 of the archive as 64 hex characters or its SHA-512 as 88 base64 characters (the format v26\nused for all toolset checksums), the same for every toolset. See https://www.electron.build/docs/toolsets#custom-toolset-checksum",
       "properties": {
         "checksum": {
-          "description": "SHA checksum of the custom toolset bundle for verification.\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching.",
+          "description": "Checksum of the bundle archive, in one of two formats:\n- the SHA-256 as 64 hex characters (uppercase is lowercased), e.g. `shasum -a 256 <archive>` (macOS / Linux),\n  `(Get-FileHash -Algorithm SHA256 <archive>).Hash` (PowerShell) or `certutil -hashfile <archive> SHA256`;\n- the SHA-512 as 88 base64 characters, the format v26 used for all toolset checksums, e.g.\n  `openssl dgst -sha512 -binary <archive> | openssl base64 -A`.\n\nPrefixed forms such as `sha256:…` or `sha512-…`, and a hex-encoded SHA-512, are rejected before anything is downloaded.\nA downloaded archive is verified before it is cached or extracted, and a local `file://` archive before it is extracted.\n\nRequired for remote (`https://`) URLs and local archive files (`file://`).\nNot needed for bare directory paths — the directory is used as-is with no caching and no verification.",
           "type": "string"
         },
         "url": {
@@ -8317,13 +8507,70 @@
           "type": "string"
         },
         "version": {
-          "description": "Optional version label used in the local cache directory name.\nFalls back to the first 8 characters of `checksum` when omitted.",
+          "description": "Optional version label used in the local cache directory name.\nFalls back to the first 8 hex characters of the `checksum` digest when omitted.",
           "type": "string"
         }
       },
       "required": [
         "url"
       ],
+      "type": "object"
+    },
+    "UpdateManifestSigningOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "publicKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.\nThe updater accepts a manifest when any listed key validates one of its signatures. Optional — when\nomitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust\nadditional keys ahead of a rotation (for example `[current, next]`).\n\nA `publicKey` on its own does not satisfy the signing requirement — electron-builder still has no key to\nsign with. An external signer (HSM/KMS) that signs `latest*.yml` in a later step therefore either builds\nwithout a publish policy, where the requirement only warns and the unsigned manifest is written locally, or\nkeeps publishing with `publishAutoUpdate: false` on every publish provider - electron-builder then uploads the\nartifacts and embeds this key, but writes no `latest*.yml`, so the external step has to produce it too."
+        },
+        "signingKey": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Ed25519 private key(s) in PEM (PKCS#8) format used to sign the update manifest. A single PEM string may\ncontain several concatenated keys, or pass an array with one key each; the manifest is signed by every key\n(dual-signing for [key rotation](https://www.electron.build/features/key-rotation)) and the first key also\nfills the legacy single `signature` field.\nSecret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable in CI over committing this to config."
+        },
+        "signingKeyFile": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Path(s) to file(s) containing the Ed25519 private key (PEM, PKCS#8). Alternative to `signingKey`.\nAn array signs with every listed key, in order. Relative paths are resolved against the project directory."
+        }
+      },
       "type": "object"
     },
     "WindowsAzureSigningConfig": {
@@ -8466,7 +8713,7 @@
           "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
-          "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+          "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
           "type": [
             "null",
             "string"
@@ -8572,7 +8819,7 @@
               ]
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
         },
         "forceCodeSigning": {
           "default": false,
@@ -8703,7 +8950,7 @@
               "type": "null"
             }
           ],
-          "description": "Code signing configuration. Code signing stamps every installer and executable\nelectron-builder produces with an Authenticode signature, so that Windows (SmartScreen / UAC)\nand your auto-updater can verify the publisher and that the files were not tampered with.\n\nHow this option behaves:\n- Leave **unset** to sign using credentials discovered from the environment — primarily a\n  certificate supplied via `WIN_CSC_LINK` (or `CSC_LINK`) with its password in\n  `WIN_CSC_KEY_PASSWORD` (or `CSC_KEY_PASSWORD`). `WIN_CSC_LINK` accepts a file path, an\n  `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.\n- Set to `false` or `null` to **disable** code signing entirely (executable resources such as\n  the icon and metadata are still edited).\n- Set to an **object** to configure signing explicitly. The **required** `type` field selects the\n  signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign\n  manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`\n  backend is used with env-discovered credentials. Each output artifact is signed individually,\n  and by default executables are dual-signed (see `signingHashAlgorithms`).\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and\n  `osslsigncode` on macOS/Linux.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires a modern `winCodeSign` toolset (the default — only the legacy\n  `\"0.0.0\"` pin is unsupported). Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication.\n\nSee [Code Signing](https://www.electron.build/code-signing)."
+          "description": "Code signing configuration. Code signing stamps every installer and executable\nelectron-builder produces with an Authenticode signature, so that Windows (SmartScreen / UAC)\nand your auto-updater can verify the publisher and that the files were not tampered with.\n\nHow this option behaves:\n- Leave **unset** to sign using credentials discovered from the environment — primarily a\n  certificate supplied via `WIN_CSC_LINK` (or `CSC_LINK`) with its password in\n  `WIN_CSC_KEY_PASSWORD` (or `CSC_KEY_PASSWORD`). `WIN_CSC_LINK` accepts a file path, an\n  `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.\n- Set to `false` or `null` to **disable** code signing entirely (executable resources such as\n  the icon and metadata are still edited).\n- Set to an **object** to configure signing explicitly. The **required** `type` field selects the\n  signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign\n  manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`\n  backend is used with env-discovered credentials. Each output artifact is signed individually,\n  and by default executables are dual-signed (see `signingHashAlgorithms`).\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and\n  `osslsigncode` on macOS/Linux.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires a modern `winCodeSign` toolset (the default — only the legacy\n  `\"0.0.0\"` pin is unsupported). Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication.\n\nSee [Code Signing](https://www.electron.build/docs/features/code-signing)."
         },
         "signExts": {
           "anyOf": [
@@ -8747,6 +8994,20 @@
           ],
           "default": "nsis",
           "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable app](https://www.electron.build/nsis#portable) without installation), `appx`, `msix`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX and MSIX packages can be built on Windows 10 or Windows Server 2012 R2 (version 6.3+) or later, and on macOS via Parallels Desktop.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
+        },
+        "updateManifest": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/UpdateManifestSigningOptions"
+            },
+            {
+              "const": false
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         },
         "verifyUpdateCodeSignature": {
           "default": true,
@@ -8810,7 +9071,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. Set to `null`\nto opt out."
+          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -8832,7 +9093,7 @@
               ]
             }
           ],
-          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/code-signing)."
+          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing).\n\nelectron-builder cannot tell which certificate the hook signs with, so also set\n[publisherName](#publisherName) to that certificate's subject: it is never derived from a\ncertificate for a hook (not even one in the config), and without it a build that writes\n`app-update.yml` fails."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -8915,7 +9176,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. Set to `null`\nto opt out."
+          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -8937,7 +9198,7 @@
               ]
             }
           ],
-          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/code-signing)."
+          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing).\n\nelectron-builder cannot tell which certificate the hook signs with, so also set\n[publisherName](#publisherName) to that certificate's subject: it is never derived from a\ncertificate for a hook (not even one in the config), and without it a build that writes\n`app-update.yml` fails."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -8991,7 +9252,7 @@
           ]
         },
         "certificateFile": {
-          "description": "Path to the PKCS#12 certificate file (`.pfx` or `.p12`) holding both the signing certificate\nand its private key. Passed to signtool via `/f` (or osslsigncode via `-pkcs12`).\n\nPrefer supplying this out-of-band via the `WIN_CSC_LINK` (or `CSC_LINK`) environment variable\ninstead of hardcoding a path — that variable also accepts an `https://` URL or a base64-encoded\ncertificate, which is safer and more convenient on CI. See\n[Code Signing](https://www.electron.build/code-signing).",
+          "description": "Path to the PKCS#12 certificate file (`.pfx` or `.p12`) holding both the signing certificate\nand its private key. Passed to signtool via `/f` (or osslsigncode via `-pkcs12`).\n\nPrefer supplying this out-of-band via the `WIN_CSC_LINK` (or `CSC_LINK`) environment variable\ninstead of hardcoding a path — that variable also accepts an `https://` URL or a base64-encoded\ncertificate, which is safer and more convenient on CI. See\n[Code Signing](https://www.electron.build/docs/features/code-signing).",
           "type": [
             "null",
             "string"
@@ -9033,7 +9294,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. Set to `null`\nto opt out."
+          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9055,7 +9316,7 @@
               ]
             }
           ],
-          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/code-signing)."
+          "description": "A custom signing hook that **replaces** electron-builder's built-in `signtool` /\n`osslsigncode` invocation. Provide a function, or the path / module id of a file that exports\na `sign` function (resolved relative to the project, then as a module).\n\nThe hook is invoked once per signing pass (i.e. once per entry in\n[signingHashAlgorithms](#signingHashAlgorithms)) and receives a configuration object describing\nthe file to sign (`path`), the resolved certificate info (`cscInfo`), the current `hash`, and\nwhether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper\nthat returns the default arguments electron-builder would otherwise have used. Use this to\nintegrate an external or cloud signing service. See\n[Code Signing](https://www.electron.build/docs/features/code-signing).\n\nelectron-builder cannot tell which certificate the hook signs with, so also set\n[publisherName](#publisherName) to that certificate's subject: it is never derived from a\ncertificate for a hook (not even one in the config), and without it a build that writes\n`app-update.yml` fails."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -9153,6 +9414,24 @@
         }
       ],
       "description": "Called after code signing but **before** the signed app is packed into the final\ndistributable format (e.g. before `dmg` is created from the signed `.app`).\n\nUse this hook to perform post-sign validation or to add signed resources that are not part of\nthe main app bundle.\n\nReceives an {@link AfterPackContext}."
+    },
+    "allowMissingDependencies": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        }
+      ],
+      "default": false,
+      "description": "Whether production dependencies that cannot be resolved during node-module collection are\nallowed — i.e. whether the build should continue with a warning instead of failing.\n\nDuring collection every production dependency must resolve to an installed package on disk. A\ndependency that does not resolve (`cannot find path for dependency` / `dependency not found on\ndisk`) is not bundled, which typically breaks the packaged app at runtime with\n`MODULE_NOT_FOUND`.\n\n- `false` or `null` (default): the build fails after dependency collection completes,\n  reporting the **complete** list of missing production dependencies at once.\n- `string[]`: the listed dependency names are allowed to be missing; any other missing\n  production dependency still fails the build. Entries match the package name of the reported\n  `name@version` entry (e.g. `some-native-module`, `@scope/pkg`), or an exact `name@version`\n  string to allow only that resolved version to be missing.\n- `true`: missing production dependencies are only logged as warnings (the electron-builder\n  ≤ 26 behavior).\n\nMissing *optional* dependencies (declared in `optionalDependencies`, e.g. `fsevents` on\nLinux/Windows, or platform-specific packages) are always allowed and never fail the build.\n\nIndependent of {@link ignoredProductionDependencies}, which controls which dependencies are\nexcluded from the copied `node_modules`; this option only controls validation of the\ncollection result."
     },
     "apk": {
       "anyOf": [
@@ -9433,7 +9712,7 @@
           "type": "null"
         }
       ],
-      "description": "Options forwarded to [`@electron/get`](https://github.com/electron/get) when downloading the\nElectron distribution to package."
+      "description": "Options forwarded to [`@electron/get`](https://github.com/electron/get) when downloading the\nElectron distribution to package.\n\n`checksums` (a map of artifact file name → SHA-256 hex) makes checksum validation fully offline —\nwithout it, `@electron/get` fetches `SHASUMS256.txt` from the network on every build, even when the\nartifact itself is already cached. When `checksums` is not configured, electron-builder automatically\npicks up a locally seeded `SHASUMS256.txt-<version>` (or `SHASUMS256.txt`) file at the root of the\nElectron cache directory. See the\n[air-gapped / offline builds guide](https://www.electron.build/tutorials/offline-air-gapped-builds)."
     },
     "electronLanguages": {
       "anyOf": [
@@ -9450,7 +9729,7 @@
       "description": "The electron locales to keep. By default, all Electron locales used as-is."
     },
     "electronUpdaterCompatibility": {
-      "description": "The [electron-updater compatibility](https://www.electron.build/auto-update#compatibility) semver range.",
+      "description": "The [electron-updater compatibility](https://www.electron.build/docs/features/auto-update#compatibility) semver range.",
       "type": [
         "null",
         "string"
@@ -9583,7 +9862,7 @@
           ]
         }
       ],
-      "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+      "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
     },
     "flatpak": {
       "anyOf": [
@@ -9998,6 +10277,20 @@
       ],
       "description": "Pinned versions of the binary toolsets electron-builder downloads and uses internally.\n\nEach property selects a specific release of the corresponding tool bundle. Set a property to\n`\"0.0.0\"` to force the legacy bundle (pre-v27 behaviour). Leave a property unset (or set it to\n`\"latest\"`) to use the modern default (newest bundle) for that toolset.\n\nNote: Toolset versioning can drop intermediate releases (such as if a problem is discovered in a bundle). If you need to pin to a specific release, check the release notes for the toolset to ensure the version you specify is valid."
     },
+    "updateManifest": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/UpdateManifestSigningOptions"
+        },
+        {
+          "const": false
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+    },
     "win": {
       "anyOf": [
         {
@@ -10008,6 +10301,13 @@
         }
       ],
       "description": "Windows-specific build options (signing, NSIS, icon, file associations, etc.)."
+    },
+    "writeEffectiveConfig": {
+      "description": "Whether to write `builder-effective-config.yaml` (the resolved configuration, including the detected\n`electronVersion`) to the output directory.\n\nDefaults to writing it only for local interactive builds: not on CI and not when stdout is piped.\nSet `true` to always write it, e.g. to read the resolved configuration in a CI step, or `false` to never write it.",
+      "type": [
+        "null",
+        "boolean"
+      ]
     },
     "$schema": {
       "description": "JSON Schema for this document.",

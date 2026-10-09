@@ -4,9 +4,24 @@ import { createUpdateInfoTasks, writeUpdateInfoFiles, UpdateInfoFileTask } from 
 import { Platform } from "app-builder-lib"
 import { Arch, TmpDir } from "builder-util"
 import { load as yamlLoad } from "js-yaml"
-import { vi } from "vitest"
+import { afterEach, vi } from "vitest"
+import { generateKeyPairSync, KeyObject } from "crypto"
+import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, loadUpdateSigningKeys, log, parsePrivateKey } from "builder-util"
+import { computeUpdateManifestKeyId, verifyManifestSignature, verifyManifestSignatures } from "builder-util-runtime"
+import { getAppUpdatePublishConfiguration } from "app-builder-lib/src/publish/PublishManager"
+import { PlatformPackager } from "app-builder-lib/src/platformPackager"
+import { SigntoolSignManager } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
 
 const basePublishConfig = { provider: "s3", bucket: "test-bucket" } as const
+
+// writeUpdateInfoFiles only needs the key-resolution seam off the packager; resolving the keys from config/env
+// and enforcing the signing requirement is PlatformPackager's job and is covered separately below.
+function makeTaskPackager(...signingKeys: Array<KeyObject>): any {
+  return {
+    updateSigningKeys: { value: Promise.resolve(signingKeys) },
+    requireUpdateSigningKeys: () => Promise.resolve(signingKeys),
+  }
+}
 
 function makeTask(dir: string, url: string, sha512: string, arch: Arch | null, filename = "latest.yml"): UpdateInfoFileTask {
   return {
@@ -17,8 +32,8 @@ function makeTask(dir: string, url: string, sha512: string, arch: Arch | null, f
       path: url,
       sha512,
     } as any,
-    publishConfiguration: basePublishConfig as any,
-    packager: {} as any,
+    publishConfiguration: basePublishConfig,
+    packager: makeTaskPackager(),
     arch,
   }
 }
@@ -148,18 +163,22 @@ test("arch-specific only (no universal) – all entries present", async ({ expec
   })
 })
 
-test("publishAutoUpdate: false skips writing the yml", async ({ expect }) => {
+test("publishAutoUpdate: false skips writing the yml and waives the signing requirement", async ({ expect }) => {
+  const requireUpdateSigningKeys = vi.fn().mockRejectedValue(new Error("signing requirement must not be enforced when no manifest is emitted"))
   await withTmpDir(async dir => {
     const tasks: UpdateInfoFileTask[] = [
       {
         file: path.join(dir, "latest.yml"),
         info: { version: "1.0.0", files: [{ url: "App.exe", sha512: "sha" }], path: "App.exe", sha512: "sha" } as any,
         publishConfiguration: { provider: "s3", bucket: "test", publishAutoUpdate: false } as any,
-        packager: {} as any,
+        // rejects on purpose: publishAutoUpdate: false emits no manifest, so the signing requirement must be
+        // waived before the keys are ever resolved - this pins that gate ordering
+        packager: { requireUpdateSigningKeys } as any,
         arch: null,
       },
     ]
-    await writeUpdateInfoFiles(tasks, makePackager() as any)
+    await writeUpdateInfoFiles(tasks, makePackager() as any, true)
+    expect(requireUpdateSigningKeys).not.toHaveBeenCalled()
     const exists = await fsp
       .access(path.join(dir, "latest.yml"))
       .then(() => true)
@@ -223,6 +242,553 @@ test("emitArtifactCreated is called once per unique yml file", async ({ expect }
   })
 })
 
+// ── A1: update manifest signing ──────────────────────────────────────────────
+
+test("manifest is signed when the packager yields a signing key, and the signature verifies", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    const task = { ...makeTask(dir, "App-1.0.0.exe", "sha-universal", null), packager: makeTaskPackager(parsePrivateKey(privateKeyPem)) }
+    await writeUpdateInfoFiles([task], makePackager() as any)
+    const yml = await readYml(path.join(dir, "latest.yml"))
+    expect(yml.signature).toBeDefined()
+    expect(verifyManifestSignature(yml, publicKeyPem)).toBe(true)
+  })
+})
+
+test("per-task signing: only the task whose packager yields a key is signed", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { privateKeyPem } = generateUpdateSigningKeypair()
+    // two distinct yml files: linux configures signing, mac does not
+    const linuxTask = {
+      ...makeTask(dir, "App-1.0.0.AppImage", "sha-linux", null),
+      file: path.join(dir, "latest-linux.yml"),
+      packager: makeTaskPackager(parsePrivateKey(privateKeyPem)),
+    }
+    const macTask = { ...makeTask(dir, "App-1.0.0.zip", "sha-mac", null), file: path.join(dir, "latest-mac.yml") }
+    await writeUpdateInfoFiles([linuxTask, macTask], makePackager() as any)
+    expect((await readYml(path.join(dir, "latest-linux.yml"))).signature).toBeDefined()
+    expect((await readYml(path.join(dir, "latest-mac.yml"))).signature).toBeUndefined()
+  })
+})
+
+test("single key: `signatures` carries one entry tagged with the key id and `signature` repeats it", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    const task = { ...makeTask(dir, "App-1.0.0.exe", "sha", null), packager: makeTaskPackager(parsePrivateKey(privateKeyPem)) }
+    await writeUpdateInfoFiles([task], makePackager() as any)
+    const yml = await readYml(path.join(dir, "latest.yml"))
+    expect(yml.signatures).toEqual([{ keyId: computeUpdateManifestKeyId(publicKeyPem), signature: yml.signature }])
+  })
+})
+
+test("dual-signing: every configured key signs, `signature` is the first key's, and each keyId matches its key", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const oldKey = generateUpdateSigningKeypair()
+    const newKey = generateUpdateSigningKeypair()
+    const task = { ...makeTask(dir, "App-1.0.0.exe", "sha", null), packager: makeTaskPackager(parsePrivateKey(oldKey.privateKeyPem), parsePrivateKey(newKey.privateKeyPem)) }
+    await writeUpdateInfoFiles([task], makePackager() as any)
+    const yml = await readYml(path.join(dir, "latest.yml"))
+    expect(yml.signatures.map((it: any) => it.keyId)).toEqual([computeUpdateManifestKeyId(oldKey.publicKeyPem), computeUpdateManifestKeyId(newKey.publicKeyPem)])
+    expect(yml.signature).toBe(yml.signatures[0].signature)
+    // an install trusting only the old key and one trusting only the new key both verify this manifest
+    expect(verifyManifestSignatures(yml, [oldKey.publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures(yml, [newKey.publicKeyPem]).ok).toBe(true)
+    // and the legacy single-key verifier (pre-trust-list updaters) still accepts it with the first key
+    expect(verifyManifestSignature(yml, oldKey.publicKeyPem)).toBe(true)
+  })
+})
+
+// ── A1: PlatformPackager.updateSigningKeys resolution ─────────────────────────
+
+// Point the two signing env vars at exactly the values under test and unset the rest. vi.stubEnv records
+// the original values so the afterEach(vi.unstubAllEnvs) below restores the real environment after each test.
+function stubSigningEnv(env: { ELECTRON_BUILDER_UPDATE_SIGN_KEY?: string; ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE?: string }) {
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", env.ELECTRON_BUILDER_UPDATE_SIGN_KEY)
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", env.ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE)
+}
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
+// PlatformPackager is abstract with only two abstract members, so the real class (and therefore the
+// real `updateSigningKeys` MemoLazy) can be exercised without standing up a full Packager.
+class TestPackager extends PlatformPackager<any> {
+  constructor(config: any, projectDir?: string) {
+    super({ config, projectDir } as any, Platform.LINUX)
+  }
+
+  protected override prepareAppInfo(): any {
+    return null
+  }
+
+  get defaultTarget(): Array<string> {
+    return []
+  }
+
+  createTargets(): void {
+    // not used
+  }
+}
+
+const publicKeysOf = (keys: Array<KeyObject>) => keys.map(derivePublicKeyPem)
+
+test("updateSigningKeys resolves the key from the root config", async ({ expect }) => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const keys = await new TestPackager({ updateManifest: { signingKey: privateKeyPem } }).updateSigningKeys.value
+  expect(publicKeysOf(keys)).toEqual([publicKeyPem])
+})
+
+test("updateSigningKeys prefers platform-specific updateManifest over the root config", async ({ expect }) => {
+  const root = generateUpdateSigningKeypair()
+  const platform = generateUpdateSigningKeypair()
+  const packager = new TestPackager({
+    updateManifest: { signingKey: root.privateKeyPem },
+    linux: { updateManifest: { signingKey: platform.privateKeyPem } },
+  })
+  expect(publicKeysOf(await packager.updateSigningKeys.value)).toEqual([platform.publicKeyPem])
+})
+
+test("updateSigningKeys falls back to ELECTRON_BUILDER_UPDATE_SIGN_KEY when no updateManifest config block exists", async ({ expect }) => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: privateKeyPem })
+  expect(publicKeysOf(await new TestPackager({}).updateSigningKeys.value)).toEqual([publicKeyPem])
+})
+
+test("updateSigningKeys reads a PEM file from signingKeyFile and from ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    const keyFile = path.join(dir, "update-key.pem")
+    await fsp.writeFile(keyFile, privateKeyPem)
+
+    expect(publicKeysOf(await new TestPackager({ updateManifest: { signingKeyFile: keyFile } }).updateSigningKeys.value)).toEqual([publicKeyPem])
+
+    stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: keyFile })
+    expect(publicKeysOf(await new TestPackager({}).updateSigningKeys.value)).toEqual([publicKeyPem])
+  })
+})
+
+test("a relative signingKeyFile resolves against the project directory, a relative ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE against cwd", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    const relativeKeyFile = path.join("build", "update-key.pem")
+    await fsp.mkdir(path.join(dir, "build"))
+    await fsp.writeFile(path.join(dir, relativeKeyFile), privateKeyPem)
+
+    stubSigningEnv({})
+    // the config path is project-relative like every other path in the build configuration...
+    expect(loadUpdateSigningKeys({ signingKeyFile: relativeKeyFile }, dir).map(derivePublicKeyPem)).toEqual([publicKeyPem])
+    expect(publicKeysOf(await new TestPackager({ updateManifest: { signingKeyFile: relativeKeyFile } }, dir).updateSigningKeys.value)).toEqual([publicKeyPem])
+    // ...so it is NOT looked up relative to the current working directory (where it does not exist)
+    expect(() => loadUpdateSigningKeys({ signingKeyFile: relativeKeyFile })).toThrow(/ENOENT/)
+    // the env var keeps ordinary environment-variable semantics: baseDir does not apply to it
+    stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: relativeKeyFile })
+    expect(() => loadUpdateSigningKeys(null, dir)).toThrow(/ENOENT/)
+  })
+})
+
+test("updateSigningKeys stays empty and does not throw when nothing is configured - enforcement lives in requireUpdateSigningKeys", async ({ expect }) => {
+  stubSigningEnv({})
+  expect(await new TestPackager({}).updateSigningKeys.value).toEqual([])
+})
+
+// ── the signing requirement (updateManifest is required unless explicitly set to false) ──────────────
+
+test("updateManifest: false short-circuits the env-var ladder", async ({ expect }) => {
+  // security-critical: a leftover CI secret must not re-enable signing (and re-embed a public key)
+  // behind the back of an explicit opt-out
+  const { privateKeyPem } = generateUpdateSigningKeypair()
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: privateKeyPem })
+  const packager = new TestPackager({ updateManifest: false })
+  expect(packager.updateManifestOptions).toBe(false)
+  expect(await packager.updateSigningKeys.value).toEqual([])
+  expect(await packager.requireUpdateSigningKeys(true)).toEqual([])
+})
+
+test("requireUpdateSigningKeys throws when publishing and no key resolves", async ({ expect }) => {
+  stubSigningEnv({})
+  const error = await new TestPackager({}).requireUpdateSigningKeys(true).then(
+    () => null,
+    (e: Error) => e
+  )
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  // the message has to name both the fix and the opt-out, or the user has nowhere to go
+  expect(error!.message).toContain("electron-builder create-update-key")
+  expect(error!.message).toContain("ELECTRON_BUILDER_UPDATE_SIGN_KEY")
+  expect(error!.message).toContain("`updateManifest: false`")
+})
+
+test("requireUpdateSigningKeys only warns when the build is not publishing", async ({ expect }) => {
+  stubSigningEnv({})
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    expect(await new TestPackager({}).requireUpdateSigningKeys(false)).toEqual([])
+    expect(warn).toHaveBeenCalledTimes(1)
+    // the advisory must say that publishing WILL fail, so it works as a fail-fast preview
+    expect(warn.mock.calls[0][1]).toContain("Publishing this configuration will fail")
+  } finally {
+    warn.mockRestore()
+  }
+})
+
+test("requireUpdateSigningKeys warns once per packager for updateManifest: false", async ({ expect }) => {
+  stubSigningEnv({})
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    const packager = new TestPackager({ updateManifest: false })
+    for (let i = 0; i < 3; i++) {
+      expect(await packager.requireUpdateSigningKeys(true)).toEqual([])
+    }
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][1]).toContain("auto-update manifests will be unsigned")
+    // one-shot is per packager, not per process: a second platform warns on its own line
+    expect(await new TestPackager({ updateManifest: false }).requireUpdateSigningKeys(true)).toEqual([])
+    expect(warn).toHaveBeenCalledTimes(2)
+  } finally {
+    warn.mockRestore()
+  }
+})
+
+test("an environment-variable key satisfies the requirement with no updateManifest config block", async ({ expect }) => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: privateKeyPem })
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    expect(publicKeysOf(await new TestPackager({}).requireUpdateSigningKeys(true))).toEqual([publicKeyPem])
+    expect(warn).not.toHaveBeenCalled()
+  } finally {
+    warn.mockRestore()
+  }
+})
+
+test("a platform-level updateManifest: false shadows a root signing key, and a platform-level key block shadows a root false", async ({ expect }) => {
+  stubSigningEnv({})
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+
+  const optedOut = new TestPackager({ updateManifest: { signingKey: privateKeyPem }, linux: { updateManifest: false } })
+  expect(optedOut.updateManifestOptions).toBe(false)
+  expect(await optedOut.requireUpdateSigningKeys(true)).toEqual([])
+
+  // the converse, which the packTester harness default relies on: a root `false` does not disable a platform key
+  const signed = new TestPackager({ updateManifest: false, linux: { updateManifest: { signingKey: privateKeyPem } } })
+  expect(publicKeysOf(await signed.requireUpdateSigningKeys(true))).toEqual([publicKeyPem])
+})
+
+test("a platform-level updateManifest: null is not an opt-out - it falls back to the root", async ({ expect }) => {
+  stubSigningEnv({})
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const packager = new TestPackager({ updateManifest: { signingKey: privateKeyPem }, linux: { updateManifest: null } })
+  expect(publicKeysOf(await packager.requireUpdateSigningKeys(true))).toEqual([publicKeyPem])
+})
+
+test("a publicKey-only block does not satisfy the requirement", async ({ expect }) => {
+  stubSigningEnv({})
+  const { publicKeyPem } = generateUpdateSigningKeypair()
+  await expect(new TestPackager({ updateManifest: { publicKey: publicKeyPem } }).requireUpdateSigningKeys(true)).rejects.toThrow(InvalidConfigurationError)
+  // ...but the external-signer workflow stays viable on a build without a publish policy
+  expect(await new TestPackager({ updateManifest: { publicKey: publicKeyPem } }).requireUpdateSigningKeys(false)).toEqual([])
+})
+
+test("updateSigningKeys parses the PEMs once and memoizes the result", async ({ expect }) => {
+  const { privateKeyPem } = generateUpdateSigningKeypair()
+  const packager = new TestPackager({ updateManifest: { signingKey: privateKeyPem } })
+  // same array identity across reads => the creator ran only once
+  expect(await packager.updateSigningKeys.value).toBe(await packager.updateSigningKeys.value)
+})
+
+// ── multi-key resolution (key rotation) ──────────────────────────────────────
+
+test("loadUpdateSigningKeys: array config yields every key in order", async ({ expect }) => {
+  const a = generateUpdateSigningKeypair()
+  const b = generateUpdateSigningKeypair()
+  stubSigningEnv({})
+  expect(loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, b.privateKeyPem] }).map(derivePublicKeyPem)).toEqual([a.publicKeyPem, b.publicKeyPem])
+  const keys = await new TestPackager({ updateManifest: { signingKey: [a.privateKeyPem, b.privateKeyPem] } }).updateSigningKeys.value
+  expect(publicKeysOf(keys)).toEqual([a.publicKeyPem, b.publicKeyPem])
+})
+
+test("loadUpdateSigningKeys: ELECTRON_BUILDER_UPDATE_SIGN_KEY may hold several concatenated PEM blocks", async ({ expect }) => {
+  const a = generateUpdateSigningKeypair()
+  const b = generateUpdateSigningKeypair()
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: `${a.privateKeyPem}\n${b.privateKeyPem}\n` })
+  expect(loadUpdateSigningKeys().map(derivePublicKeyPem)).toEqual([a.publicKeyPem, b.publicKeyPem])
+})
+
+test("loadUpdateSigningKeys: ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE may hold several paths joined with path.delimiter", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const a = generateUpdateSigningKeypair()
+    const b = generateUpdateSigningKeypair()
+    const fileA = path.join(dir, "a.pem")
+    const fileB = path.join(dir, "b.pem")
+    await fsp.writeFile(fileA, a.privateKeyPem)
+    await fsp.writeFile(fileB, b.privateKeyPem)
+    stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: [fileA, fileB].join(path.delimiter) })
+    expect(loadUpdateSigningKeys().map(derivePublicKeyPem)).toEqual([a.publicKeyPem, b.publicKeyPem])
+    // and signingKeyFile accepts an array of paths
+    stubSigningEnv({})
+    expect(loadUpdateSigningKeys({ signingKeyFile: [fileB, fileA] }).map(derivePublicKeyPem)).toEqual([b.publicKeyPem, a.publicKeyPem])
+  })
+})
+
+test("loadUpdateSigningKeys: the first configured SOURCE wins even when a later source has more keys", async ({ expect }) => {
+  const a = generateUpdateSigningKeypair()
+  const b = generateUpdateSigningKeypair()
+  const c = generateUpdateSigningKeypair()
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: `${b.privateKeyPem}\n${c.privateKeyPem}` })
+  expect(loadUpdateSigningKeys({ signingKey: a.privateKeyPem }).map(derivePublicKeyPem)).toEqual([a.publicKeyPem])
+})
+
+test("loadUpdateSigningKeys rejects duplicate keys and non-Ed25519 keys with a clear error", async ({ expect }) => {
+  const a = generateUpdateSigningKeypair()
+  stubSigningEnv({})
+  expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, a.privateKeyPem] })).toThrow(/duplicates key #1/)
+  const rsa = generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey.export({ type: "pkcs8", format: "pem" }).toString()
+  expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, rsa] })).toThrow(/key #2 from updateManifest\.signingKey is not a valid Ed25519/)
+  expect(() => loadUpdateSigningKeys({ signingKey: "garbage" })).toThrow(/not a valid Ed25519/)
+})
+
+// ── A1: app-update.yml public key embedding ──────────────────────────────────
+
+// minimal PlatformPackager stub for getAppUpdatePublishConfiguration (generic provider avoids any network/token resolution)
+function makeAppUpdateConfigPackager(signingKeys: Array<KeyObject> = [], updateManifest?: any, publishConfig?: any): any {
+  return {
+    platform: Platform.LINUX,
+    platformOptions: updateManifest == null ? {} : { updateManifest },
+    // the accessor PublishManager actually reads; `false ?? null` is `false`, so the opt-out survives
+    updateManifestOptions: updateManifest ?? null,
+    config: { publish: publishConfig ?? { provider: "generic", url: "https://example.com/updates" } },
+    appInfo: { updaterCacheDirName: "test-app", channel: null, version: "1.0.0" },
+    expandMacro: (value: string) => value,
+    updateSigningKeys: { value: Promise.resolve(signingKeys) },
+    requireUpdateSigningKeys: () => Promise.resolve(signingKeys),
+  }
+}
+
+test("app-update.yml embeds the public key derived from the packager's signing key", async ({ expect }) => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  // signing (updateInfoBuilder) and embedding (PublishManager) read the same packager.updateSigningKeys,
+  // so they cannot disagree about whether manifests are signed
+  const publishConfig = await getAppUpdatePublishConfiguration(makeAppUpdateConfigPackager([parsePrivateKey(privateKeyPem)]), null, Arch.x64, false)
+  // exactly one key => plain string, byte-identical to the single-key format
+  expect(publishConfig?.updateManifestPublicKey).toBe(publicKeyPem)
+})
+
+test("app-update.yml embeds a trust LIST when several signing keys are configured", async ({ expect }) => {
+  const a = generateUpdateSigningKeypair()
+  const b = generateUpdateSigningKeypair()
+  const packager = makeAppUpdateConfigPackager([parsePrivateKey(a.privateKeyPem), parsePrivateKey(b.privateKeyPem)])
+  const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
+  expect(publishConfig?.updateManifestPublicKey).toEqual([a.publicKeyPem, b.publicKeyPem])
+})
+
+test("app-update.yml: an explicit publicKey LIST wins as-is over derivation, and does not warn when it contains the signing key", async ({ expect }) => {
+  const current = generateUpdateSigningKeypair()
+  const next = generateUpdateSigningKeypair()
+  const warn = vi.spyOn(log, "warn")
+  try {
+    const packager = makeAppUpdateConfigPackager([parsePrivateKey(current.privateKeyPem)], { publicKey: [current.publicKeyPem, next.publicKeyPem] })
+    const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
+    expect(publishConfig?.updateManifestPublicKey).toEqual([current.publicKeyPem, next.publicKeyPem])
+    // oxlint-disable-next-line typescript/no-base-to-string -- substring check over log.warn args; an object fallback stringifying to "[object Object]" simply does not match
+    expect(warn.mock.calls.some(c => String(c[1] ?? c[0]).includes("updateManifest.publicKey"))).toBe(false)
+  } finally {
+    warn.mockRestore()
+  }
+})
+
+test("app-update.yml: a single explicit publicKey string holding two PEM blocks is embedded as a list", async ({ expect }) => {
+  const a = generateUpdateSigningKeypair()
+  const b = generateUpdateSigningKeypair()
+  const packager = makeAppUpdateConfigPackager([], { publicKey: `${a.publicKeyPem}\n${b.publicKeyPem}` })
+  const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
+  expect(publishConfig?.updateManifestPublicKey).toEqual([a.publicKeyPem, b.publicKeyPem])
+})
+
+test("app-update.yml warns when none of the signing keys is in the explicit trust list (old-style bridge release)", async ({ expect }) => {
+  const oldKey = generateUpdateSigningKeypair()
+  const newKey = generateUpdateSigningKeypair()
+  const warn = vi.spyOn(log, "warn")
+  try {
+    const packager = makeAppUpdateConfigPackager([parsePrivateKey(oldKey.privateKeyPem)], { publicKey: newKey.publicKeyPem })
+    const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
+    // still a warning, not an error: the release is built, but cannot verify its own manifests
+    expect(publishConfig?.updateManifestPublicKey).toBe(newKey.publicKeyPem)
+    // oxlint-disable-next-line typescript/no-base-to-string -- substring check over log.warn args; an object fallback stringifying to "[object Object]" simply does not match
+    expect(warn.mock.calls.some(c => String(c[1] ?? c[0]).includes("none of the update-manifest signing keys"))).toBe(true)
+  } finally {
+    warn.mockRestore()
+  }
+})
+
+test("app-update.yml rejects duplicate or non-Ed25519 entries in an explicit publicKey list", async ({ expect }) => {
+  const a = generateUpdateSigningKeypair()
+  await expect(getAppUpdatePublishConfiguration(makeAppUpdateConfigPackager([], { publicKey: [a.publicKeyPem, a.publicKeyPem] }), null, Arch.x64, false)).rejects.toThrow(
+    /publicKey #2 duplicates entry #1/
+  )
+  const rsa = generateKeyPairSync("rsa", { modulusLength: 2048 }).publicKey.export({ type: "spki", format: "pem" }).toString()
+  await expect(getAppUpdatePublishConfiguration(makeAppUpdateConfigPackager([], { publicKey: rsa }), null, Arch.x64, false)).rejects.toThrow(/publicKey #1 is not a valid Ed25519/)
+})
+
+test("app-update.yml prefers an explicitly configured publicKey over the derived one", async ({ expect }) => {
+  const { privateKeyPem } = generateUpdateSigningKeypair()
+  const explicit = generateUpdateSigningKeypair().publicKeyPem
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    const packager = makeAppUpdateConfigPackager([parsePrivateKey(privateKeyPem)], { publicKey: explicit })
+    const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
+    expect(publishConfig?.updateManifestPublicKey).toBe(explicit)
+  } finally {
+    warn.mockRestore()
+  }
+})
+
+test("app-update.yml carries no public key when signing is opted out of with updateManifest: false", async ({ expect }) => {
+  const publishConfig = await getAppUpdatePublishConfiguration(makeAppUpdateConfigPackager([], false), null, Arch.x64, false)
+  expect(publishConfig?.updateManifestPublicKey).toBeUndefined()
+})
+
+test("app-update.yml carries no public key when no key is configured and the build is not publishing", async ({ expect }) => {
+  const publishConfig = await getAppUpdatePublishConfiguration(makeAppUpdateConfigPackager(), null, Arch.x64, false)
+  expect(publishConfig?.updateManifestPublicKey).toBeUndefined()
+})
+
+test("app-update.yml generation fails when publishing and the manifest cannot be signed", async ({ expect }) => {
+  const packager = makeAppUpdateConfigPackager()
+  packager.requireUpdateSigningKeys = (required: boolean) =>
+    required ? Promise.reject(new InvalidConfigurationError("auto-update manifests must be signed")) : Promise.resolve([])
+  // 4th argument is the publish gate: false only warns, true enforces
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)).resolves.toBeTruthy()
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, true)).rejects.toThrow(/must be signed/)
+})
+
+test("publishAutoUpdate: false waives the signing requirement for app-update.yml", async ({ expect }) => {
+  const requireUpdateSigningKeys = vi.fn().mockRejectedValue(new Error("must not be called - no manifest is emitted"))
+  const packager = makeAppUpdateConfigPackager([], undefined, { provider: "generic", url: "https://example.com/updates", publishAutoUpdate: false })
+  packager.requireUpdateSigningKeys = requireUpdateSigningKeys
+  const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, true)
+  expect(publishConfig?.updateManifestPublicKey).toBeUndefined()
+  expect(requireUpdateSigningKeys).not.toHaveBeenCalled()
+})
+
+test("publishAutoUpdate: false still embeds the trust list when keys are configured (waived, not suppressed)", async ({ expect }) => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const packager = makeAppUpdateConfigPackager([parsePrivateKey(privateKeyPem)], undefined, {
+    provider: "generic",
+    url: "https://example.com/updates",
+    publishAutoUpdate: false,
+  })
+  const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, true)
+  expect(publishConfig?.updateManifestPublicKey).toBe(publicKeyPem)
+})
+
+test("publishAutoUpdate: false on the first provider does not waive the requirement when a later provider emits a manifest", async ({ expect }) => {
+  // createUpdateInfoTasks writes latest*.yml for every provider, so only an all-disabled list emits no manifest
+  const packager = makeAppUpdateConfigPackager([], undefined, [
+    { provider: "generic", url: "https://example.com/no-manifest", publishAutoUpdate: false },
+    { provider: "generic", url: "https://example.com/updates" },
+  ])
+  packager.requireUpdateSigningKeys = (required: boolean) =>
+    required ? Promise.reject(new InvalidConfigurationError("auto-update manifests must be signed")) : Promise.resolve([])
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, true)).rejects.toThrow(/must be signed/)
+
+  const requireUpdateSigningKeys = vi.fn().mockRejectedValue(new Error("must not be called - no provider emits a manifest"))
+  const allDisabled = makeAppUpdateConfigPackager([], undefined, [
+    { provider: "generic", url: "https://example.com/a", publishAutoUpdate: false },
+    { provider: "generic", url: "https://example.com/b", publishAutoUpdate: false },
+  ])
+  allDisabled.requireUpdateSigningKeys = requireUpdateSigningKeys
+  await expect(getAppUpdatePublishConfiguration(allDisabled, null, Arch.x64, true)).resolves.toBeTruthy()
+  expect(requireUpdateSigningKeys).not.toHaveBeenCalled()
+})
+
+test("the managed publish.updateManifestPublicKey error wins over the signing requirement", async ({ expect }) => {
+  // both wrong at once: the actionable message is the managed-key one, so its guard must stay first
+  const { publicKeyPem } = generateUpdateSigningKeypair()
+  const packager = makeAppUpdateConfigPackager()
+  packager.requireUpdateSigningKeys = () => Promise.reject(new InvalidConfigurationError("auto-update manifests must be signed"))
+  packager.config.publish.updateManifestPublicKey = publicKeyPem
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, true)).rejects.toThrow(/is managed by electron-builder/)
+})
+
+test("writeUpdateInfoFiles writes nothing when a manifest that must be signed has no key", async ({ expect }) => {
+  const { privateKeyPem } = generateUpdateSigningKeypair()
+  await withTmpDir(async dir => {
+    const signable = { ...makeTask(dir, "App-1.0.0.exe", "sha", null, "latest.yml"), packager: makeTaskPackager(parsePrivateKey(privateKeyPem)) }
+    const unsignable = {
+      ...makeTask(dir, "App-1.0.0.zip", "sha", null, "latest-mac.yml"),
+      packager: { requireUpdateSigningKeys: () => Promise.reject(new InvalidConfigurationError("auto-update manifests must be signed")) } as any,
+    }
+
+    await expect(writeUpdateInfoFiles([signable, unsignable], makePackager() as any, true)).rejects.toThrow(/must be signed/)
+    // the requirement is resolved for every task before the first write, so nothing is left half-published
+    for (const file of ["latest.yml", "latest-mac.yml"]) {
+      const exists = await fsp
+        .access(path.join(dir, file))
+        .then(() => true)
+        .catch(() => false)
+      expect(exists).toBe(false)
+    }
+  })
+})
+
+test("app-update.yml rejects a manually configured publish.updateManifestPublicKey", async ({ expect }) => {
+  // the trust list is owned by electron-builder (derived from the signing keys or taken from
+  // updateManifest.publicKey); a hand-set value would bypass validation and could silently shadow the derived one
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const packager = makeAppUpdateConfigPackager([parsePrivateKey(privateKeyPem)])
+  packager.config.publish.updateManifestPublicKey = publicKeyPem
+  const error = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false).then(
+    () => null,
+    (e: Error) => e
+  )
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toBe("publish.updateManifestPublicKey is managed by electron-builder and must not be set; configure updateManifest.publicKey instead")
+})
+
+// ── app-update.yml: Windows publisherName ────────────────────────────────────
+
+// Windows variant: the real SigntoolSignManager computes publisherName; getCscLink keeps a WIN_CSC_LINK / CSC_LINK
+// from the test environment out of it
+function makeWinAppUpdateConfigPackager(sign: any, verifyUpdateCodeSignature = true): any {
+  const packager: any = {
+    ...makeAppUpdateConfigPackager(),
+    platform: Platform.WINDOWS,
+    platformOptions: { sign },
+    isForceCodeSigningVerification: verifyUpdateCodeSignature,
+    getCscLink: () => null,
+    getCscPassword: () => null,
+  }
+  packager.signingManager = { value: Promise.resolve(new SigntoolSignManager(packager)) }
+  return packager
+}
+
+test("app-update.yml: a Windows build signed by a custom sign hook without publisherName fails", async ({ expect }) => {
+  const packager = makeWinAppUpdateConfigPackager({ type: "signtool", sign: "./customSign.js" })
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)).rejects.toThrow(InvalidConfigurationError)
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)).rejects.toThrow(/win\.sign\.publisherName/)
+})
+
+test("app-update.yml: the publisherName configured for a custom sign hook is written", async ({ expect }) => {
+  const packager = makeWinAppUpdateConfigPackager({ type: "signtool", sign: "./customSign.js", publisherName: "CN=My Company, O=My Company, C=US" })
+  const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
+  expect(publishConfig?.publisherName).toEqual(["CN=My Company, O=My Company, C=US"])
+})
+
+test("app-update.yml: verifyUpdateCodeSignature: false skips publisherName for a custom sign hook", async ({ expect }) => {
+  const packager = makeWinAppUpdateConfigPackager({ type: "signtool", sign: "./customSign.js" }, false)
+  const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
+  expect(publishConfig).not.toBeNull()
+  expect(publishConfig?.publisherName).toBeUndefined()
+})
+
+test("no signature field is written when the packager yields no signing key", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    await writeUpdateInfoFiles([makeTask(dir, "App-1.0.0.exe", "sha", null)], makePackager() as any)
+    const yml = await readYml(path.join(dir, "latest.yml"))
+    expect(yml.signature).toBeUndefined()
+  })
+})
+
 // ── createUpdateInfoTasks unit tests ─────────────────────────────────────────
 
 function makePlatformPackager(electronUpdaterCompatibility = ">=2.16"): any {
@@ -244,6 +810,47 @@ test("createUpdateInfoTasks passes event.arch to the created task", async ({ exp
     const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
     expect(tasks).toHaveLength(1)
     expect(tasks[0].arch).toBe(Arch.arm64)
+  })
+})
+
+test.for([
+  ["full installer", { sha512: "c2hhNTEy", isAdminRightsRequired: true }],
+  ["web installer", { packages: { x64: { path: "App-1.0.0-x64.nsis.7z", sha512: "p64", size: 5000 } }, isAdminRightsRequired: true }],
+] as const)("createUpdateInfoTasks writes isAdminRightsRequired of a %s into the file entry of the installer", async ([, updateInfo], { expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: null, packager: makePlatformPackager(), target: { outDir: dir }, updateInfo }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
+    const info: any = tasks[0].info
+    expect(info.files[0].isAdminRightsRequired).toBe(true)
+    expect(info.isAdminRightsRequired).toBeUndefined()
+    if ("packages" in updateInfo) {
+      expect(info.packages).toEqual(updateInfo.packages)
+    }
+  })
+})
+
+test.for([
+  ["full installer", `{"sha512": "c2hhNTEy", "__proto__": {"inherited": true}}`],
+  ["web installer", `{"packages": {"x64": {"path": "App-1.0.0-x64.nsis.7z", "sha512": "p64"}}, "__proto__": {"inherited": true}}`],
+] as const)("createUpdateInfoTasks keeps the plain Object prototype for the update info of a %s with a __proto__ key", async ([, json], { expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const updateInfo = JSON.parse(json)
+    const event: any = { file: artifactFile, arch: null, packager: makePlatformPackager(), target: { outDir: dir }, updateInfo }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
+    const info: any = tasks[0].info
+    for (const target of [info, info.files[0]]) {
+      expect(Object.getPrototypeOf(target)).toBe(Object.prototype)
+      expect(target.inherited).toBeUndefined()
+    }
+    if ("packages" in updateInfo) {
+      expect(info.packages).toEqual(updateInfo.packages)
+    } else {
+      expect(info.files[0].sha512).toBe(updateInfo.sha512)
+    }
   })
 })
 
@@ -360,6 +967,33 @@ test("createUpdateInfoTasks with 1.1 emits legacy path/sha512 and legacy latest-
   })
 })
 
+test("createUpdateInfoTasks GitHub safeArtifactName does not leak into other providers' update info", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App 1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = {
+      file: artifactFile,
+      arch: null,
+      safeArtifactName: "App-1.0.0.exe",
+      // legacy compatibility range so the top-level path is emitted too — the leak historically affected it as well
+      packager: makePlatformPackager(">=1.0.0"),
+      target: { outDir: dir },
+    }
+    const tasks = await createUpdateInfoTasks(event, [
+      { provider: "github", repo: "owner/repo" },
+      { provider: "s3", bucket: "test" },
+    ] as any)
+
+    const githubTask = tasks.find(task => task.publishConfiguration.provider === "github")!
+    const s3Task = tasks.find(task => task.publishConfiguration.provider === "s3")!
+    // GitHub gets the safe name, but the shared info used by other providers must keep the real file name
+    expect(githubTask.info.files[0].url).toBe("App-1.0.0.exe")
+    expect((githubTask.info as any).path).toBe("App-1.0.0.exe")
+    expect(s3Task.info.files[0].url).toBe("App 1.0.0.exe")
+    expect((s3Task.info as any).path).toBe("App 1.0.0.exe")
+  })
+})
+
 test("empty tasks array is a no-op", async ({ expect }) => {
   const mockPackager = makePackager()
   await expect(writeUpdateInfoFiles([], mockPackager as any)).resolves.toBeUndefined()
@@ -381,5 +1015,74 @@ test("sha512 values are preserved correctly for each file entry", async ({ expec
     expect(byUrl["App-1.0.0.exe"]).toBe("sha512-universal-value")
     expect(byUrl["App-1.0.0-x64.exe"]).toBe("sha512-x64-value")
     expect(byUrl["App-1.0.0-arm64.exe"]).toBe("sha512-arm64-value")
+  })
+})
+
+function makeAllChannelsPackager(): any {
+  return { ...makePlatformPackager(), config: { releaseInfo: undefined, generateUpdatesFilesForAllChannels: true } }
+}
+
+test("beta channel with arch suffix expands to alpha carrying the same suffix", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0-arm64.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: Arch.arm64, packager: makeAllChannelsPackager(), target: { outDir: dir } }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test", channel: "beta-arm64" }] as any)
+    const names = tasks.map(t => path.basename(t.file)).sort()
+    expect(names).toEqual(["alpha-arm64.yml", "beta-arm64.yml"])
+  })
+})
+
+test("latest channel with arch suffix expands to alpha and beta carrying the same suffix", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0-arm64.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: Arch.arm64, packager: makeAllChannelsPackager(), target: { outDir: dir } }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test", channel: "latest-arm64" }] as any)
+    const names = tasks.map(t => path.basename(t.file)).sort()
+    expect(names).toEqual(["alpha-arm64.yml", "beta-arm64.yml", "latest-arm64.yml"])
+  })
+})
+
+test("alpha channel with arch suffix does not expand", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App-1.0.0-arm64.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: Arch.arm64, packager: makeAllChannelsPackager(), target: { outDir: dir } }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test", channel: "alpha-arm64" }] as any)
+    expect(tasks.map(t => path.basename(t.file))).toEqual(["alpha-arm64.yml"])
+  })
+})
+
+test("web installer: `packages` and `minimumSystemVersion` are signed as written to YAML and tampering them fails verification", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    const base = makeTask(dir, "App-1.0.0.exe", "sha-web", null)
+    const task: UpdateInfoFileTask = {
+      ...base,
+      packager: makeTaskPackager(parsePrivateKey(privateKeyPem)),
+      info: {
+        ...base.info,
+        minimumSystemVersion: "10.0.19041",
+        // as produced by createNsisWebDifferentialUpdateInfo: basename path plus the untyped `file` mirror
+        packages: {
+          x64: { path: "App-1.0.0-x64.nsis.7z", file: "App-1.0.0-x64.nsis.7z", sha512: "p64", size: 5000, blockMapSize: 120 },
+          ia32: { path: "App-1.0.0-ia32.nsis.7z", file: "App-1.0.0-ia32.nsis.7z", sha512: "p32", size: 4000, blockMapSize: 100 },
+        },
+      } as any,
+    }
+    await writeUpdateInfoFiles([task], makePackager() as any)
+    const yml = await readYml(path.join(dir, "latest.yml"))
+    expect(yml.minimumSystemVersion).toBe("10.0.19041")
+    expect(yml.packages.x64).toMatchObject({ path: "App-1.0.0-x64.nsis.7z", sha512: "p64", size: 5000, blockMapSize: 120 })
+    // the parsed YAML (what the updater sees) verifies against the signature computed before serialization
+    expect(verifyManifestSignature(yml, publicKeyPem)).toBe(true)
+    expect(verifyManifestSignature({ ...yml, packages: { ...yml.packages, x64: { ...yml.packages.x64, sha512: "evil" } } }, publicKeyPem)).toBe(false)
+    expect(verifyManifestSignature({ ...yml, packages: { x64: yml.packages.x64 } }, publicKeyPem)).toBe(false)
+    expect(verifyManifestSignature({ ...yml, minimumSystemVersion: "6.1.7601" }, publicKeyPem)).toBe(false)
+    const { minimumSystemVersion: _dropped, ...withoutMin } = yml
+    expect(verifyManifestSignature(withoutMin, publicKeyPem)).toBe(false)
+    // cosmetic fields stay editable after signing
+    expect(verifyManifestSignature({ ...yml, releaseNotes: "edited later", releaseName: "Renamed", releaseDate: "2099-01-01T00:00:00.000Z" }, publicKeyPem)).toBe(true)
   })
 })

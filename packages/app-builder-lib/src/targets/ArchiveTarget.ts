@@ -19,6 +19,10 @@ export class ArchiveTarget extends Target {
     this.options = (this.packager.config as any)[this.name]
   }
 
+  get writesUpdateInfo(): boolean {
+    return this.isWriteUpdateInfo
+  }
+
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
     const isMac = packager.platform === Platform.MAC
@@ -78,7 +82,7 @@ export class ArchiveTarget extends Target {
 
         if (this.isWriteUpdateInfo && format === "zip") {
           if (isMac) {
-            updateInfo = await createBlockmap(artifactPath, this, packager, artifactName)
+            updateInfo = await createBlockmap(artifactPath, this, packager, artifactName, arch)
           } else {
             updateInfo = await appendBlockmap(artifactPath)
           }

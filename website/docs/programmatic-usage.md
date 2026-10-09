@@ -66,8 +66,9 @@ const options = {
 
   mac: {
     target: 'dmg',
-    hardenedRuntime: true,
-    gatekeeperAssess: true,
+    sign: {
+      hardenedRuntime: true,
+    },
     extendInfo: {
       NSAppleEventsUsageDescription: 'Let me use Apple Events.',
       NSCameraUsageDescription: 'Let me use the camera.',

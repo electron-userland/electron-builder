@@ -145,7 +145,7 @@ This is the main packaging phase. electron-builder:
 
 1. Computes the file set based on the `files` glob patterns (defaulting to everything except `node_modules` and dev artifacts).
 2. Filters `node_modules` — only production deps are included by default.
-3. Creates an ASAR archive if `asar: true` (the default).
+3. Creates an ASAR archive (enabled by default). In v27 the `asar: true` sentinel was removed — omit the key to keep defaults, pass an `asar: {}` object to configure it, or `asar: false` to disable.
 4. Copies `extraResources` into the platform resources directory.
 5. Copies `extraFiles` into the app root.
 
@@ -243,9 +243,13 @@ For a fully custom signing implementation (replacing the built-in signer):
 mac:
   sign: ./scripts/custom-sign.js
 win:
-  signtoolOptions:
+  sign:
+    type: signtool
     sign: ./scripts/custom-sign.js
+    publisherName: "CN=My Company, O=My Company, C=US"
 ```
+
+On Windows, electron-builder cannot read the certificate a custom hook signs with, so set `win.sign.publisherName` to that certificate's subject — it is written to `app-update.yml` for update signature verification, and a build that writes `app-update.yml` fails without it. Copy it from a binary the hook already signed, as shown in [How do you delegate code signing?](../win.md#how-do-you-delegate-code-signing); every component you list must match exactly.
 
 ---
 
@@ -451,6 +455,6 @@ See [Multi Platform Build](/docs/features/multi-platform-build) and [Build Archi
 
 - [Hooks Reference](/docs/features/hooks) — full API for every hook, with examples
 - [File Patterns](/docs/file-patterns) — how `files`, `extraResources`, and `extraFiles` work
-- [Code Signing](/docs/features/code-signing/code-signing) — signing setup for macOS and Windows
+- [Code Signing](/docs/features/code-signing) — signing setup for macOS and Windows
 - [Publish Configuration](/docs/publish) — provider setup and update metadata
 - [Programmatic Usage](/docs/programmatic-usage) — drive the build from Node.js

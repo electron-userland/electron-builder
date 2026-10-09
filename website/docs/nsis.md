@@ -27,19 +27,42 @@ To customize web installer, use the top-level `nsisWeb` key (not `nsis`).
 
 If for some reasons web installer cannot download (antivirus, offline):
 
-* Download package file into the same directory where installer located. It will be detected automatically and used instead of downloading from the Internet. Please note — only original package file is allowed (checksum is checked).
-* Specify any local package file using `--package-file=path_to_file`.
+- Download package file into the same directory where installer located. It will be detected automatically and used instead of downloading from the Internet. Please note — only original package file is allowed (checksum is checked).
+- Specify a local package file using `--package-file=path_to_file`. It must be one of the packages built with the installer (any arch; checksum is checked).
+
+The web installer verifies the package it installs against the SHA-512 of the packages built with it:
+
+- A package passed via `--package-file` (electron-updater passes the package it verified against the update manifest) must match one of them, for any arch.
+- A package downloaded from the default, publish-derived (versioned) URL must match the package for the detected arch.
+- A package downloaded from an explicit `appPackageUrl` (e.g. a version-independent `latest` URL) is **not** verified, since that URL can serve packages of other builds.
+
+A local package (passed via `--package-file`, or found next to the installer) is first copied into the installer's own temporary directory. The installer verifies and installs that copy. The local file itself is left in place; for an update, electron-updater removes the package it passed once the updated app starts. With `allowUnverifiedAppPackage` a package passed via `--package-file` is still copied, but not verified.
+
+A mismatch, a `--package-file` package that cannot be copied, or a package that cannot be downloaded (also a download cancelled in the progress window) aborts the installation (exit code `2`); a package next to the installer that doesn't match or cannot be copied is ignored and the package is downloaded instead. When a download fails, an interactive run first offers to retry, and a silent run (`/S`) aborts right away. The installer copies, verifies and, if needed, downloads the package before it removes an installed version, so an installation aborted for one of these reasons leaves that version in place. Because the download can take a while, a run that isn't an update (`--updated`) then checks again whether the app is running, with the same prompt as at the start (Cancel aborts with exit code `2`), before the installed version is removed; a custom `customCheckAppRunning` macro is not run a second time. Set `nsisWeb.allowUnverifiedAppPackage: true` (default `false`) to skip the `--package-file` and versioned-download checksum checks (a package next to the installer is still checked) only if you intentionally use one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).
+
+For auto-update, electron-updater installs web-installer updates only when `disableWebInstaller` is `false`; installs made by an `nsis-web` installer built with electron-builder v27+ default to `false` automatically — see [Auto Update](./features/auto-update.md#disablewebinstaller-now-defaults-to-true). Don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./features/signed-update-manifests.md) cover the web package's path, SHA-512 and size.
 
 ## Custom NSIS script
 
 Two options are available — [include](#include) and [script](#script). `script` allows you to provide completely different NSIS script. For most cases it is not required as you need only to customise some aspects, but still use well-tested and maintained default NSIS script. So, `include` is recommended.
 
+:::warning[Custom `script` disables built-in safeguards]
+When you provide a custom `script`, electron-builder no longer generates (and signs) the uninstaller for you and skips installer size verification. Prefer `include` unless you really need to replace the whole script.
+:::
+
+For `nsis-web`, a custom `script` that copies installSection.nsh should insert `!insertmacro prepareWebPackage` before `uninstallOldVersion`; otherwise the package is prepared in `installApplicationFiles`, after the installed version is removed.
+
 Keep in mind — if you customize the NSIS script, you should always mention it in issue reports. And don't expect that your issue will be resolved.
 
-1. Add file `build/installer.nsh`.
+:::warning[v27: file-association ProgID format changed]
+NSIS installers now register each `fileAssociations` entry under a unique generated **ProgID** (`<program>.<component>`, derived from `productName` + the app GUID) instead of using the association `name`/extension verbatim, which could collide with unrelated apps. `fileAssociations` and its `name`/`ext`/`description` fields are unchanged and nothing needs migrating — **but** if your custom `include`/`script` (or external tooling) hard-codes the old ProgID (the association name or extension) to add shell verbs or registry keys, update it to the new generated value. See [v27 Breaking Changes → NSIS file-association ProgID](./migration/v27-breaking-changes.md#nsis-file-association-progid-format-changed).
+:::
+
+1. Add file `build/installer.nsh` (or set [include](#include) explicitly — a single path, or an array of paths that are all included in order, e.g. `"include": ["build/installer.nsh", "build/signing.nsh"]`; each path is resolved relative to the build resources directory first, then relative to the project directory).
 2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`, `customInstallMode`, `customWelcomePage`, `customUnWelcomePage`, `customUnInstallSection`.
 
 :::note[Example]
+
 ```nsis
 !macro customHeader
   !system "echo '' > ${BUILD_RESOURCES_DIR}/customHeader"
@@ -81,13 +104,22 @@ Keep in mind — if you customize the NSIS script, you should always mention it 
   SectionEnd
 !macroend
 ```
+
 :::
 
-* `BUILD_RESOURCES_DIR` and `PROJECT_DIR` are defined.
-* `build` is added as `addincludedir` (i.e. you don't need to use `BUILD_RESOURCES_DIR` to include files).
-* `build/x86-unicode` and `build/x86-ansi` are added as `addplugindir`.
-* File associations macro `registerFileAssociations` and `unregisterFileAssociations` are still defined.
-* All other electron-builder specific flags (e.g. `ONE_CLICK`) are still defined.
+- `BUILD_RESOURCES_DIR` and `PROJECT_DIR` are defined.
+- `build` is added as `addincludedir` (i.e. you don't need to use `BUILD_RESOURCES_DIR` to `!include` sibling files from the build resources directory).
+- `build/x86-unicode` and `build/x86-ansi` are added as `addplugindir` (each one only when the directory exists, regardless of the `unicode` option).
+- File associations macro `registerFileAssociations` and `unregisterFileAssociations` are still defined.
+- All other electron-builder specific flags (e.g. `ONE_CLICK`) are still defined.
+
+:::note[Uninstaller lifecycle — `customUnInstall` changes take effect one version later]
+The uninstaller that runs during an uninstall **or during an update** is the `Uninstall <app>.exe` that was written to disk by the **previously installed** version — not the one embedded in the installer that is currently running. So when you add or change `customUnInstall` (or anything else affecting the uninstaller), the change only becomes active after the _next_ install: version N ships the new uninstaller, and it is first executed when version N is uninstalled or updated to N+1. If your `customUnInstall` "does not fire", it is almost always because the machine still runs the old uninstaller from the previous version.
+:::
+
+:::warning[Uninstall registry key — do not hard-code `...\Uninstall\<appId>`]
+electron-builder registers the uninstall entry under `Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTALL_APP_KEY}`, where `UNINSTALL_APP_KEY` is the application **GUID** (with each `\` replaced by " - ", i.e. space, hyphen, space) — _not_ the `appId`. In a custom script use the provided defines instead of building the path yourself: `${UNINSTALL_REGISTRY_KEY}` (the full key, see `multiUser.nsh`) or `${UNINSTALL_APP_KEY}`. A hard-coded `Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_ID}` points at a key electron-builder never writes.
+:::
 
 If you want to include additional resources for use during installation, such as scripts or additional installers, you can place them in the `build` directory and include them with `File`. For example, to include and run `extramsi.msi` during installation, place it in the `build` directory and use the following:
 
@@ -106,6 +138,7 @@ ${ifNot} ${isUpdated}
   # your code
 ${endIf}
 ```
+
 :::
 
 ## GUID vs Application Name
@@ -127,9 +160,11 @@ To build portable app, set target to `portable` (or pass `--win portable`).
 
 For portable app, following environment variables are available:
 
-* `PORTABLE_EXECUTABLE_FILE` - path to the portable executable.
-* `PORTABLE_EXECUTABLE_DIR` - directory where the portable executable is located.
-* `PORTABLE_EXECUTABLE_APP_FILENAME` - sanitized app name to use in [file paths](https://github.com/electron-userland/electron-builder/issues/3186#issue-345489962).
+- `PORTABLE_EXECUTABLE_FILE` - path to the portable executable.
+- `PORTABLE_EXECUTABLE_DIR` - directory where the portable executable is located.
+- `PORTABLE_EXECUTABLE_APP_FILENAME` - sanitized app name to use in [file paths](https://github.com/electron-userland/electron-builder/issues/3186#issue-345489962).
+
+The portable target also supports a custom NSIS script via `portable.include` (a single path or an array of paths). Unlike the installer targets, `build/installer.nsh` is **not** auto-discovered for portable builds — a custom script is only included when the option is explicitly set, so an `installer.nsh` written for the installer target does not silently leak into portable builds.
 
 ## Common Questions
 
@@ -147,6 +182,7 @@ It is very specific requirement. Do not do if you are not sure. Add [custom macr
   WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
 !macroend
 ```
+
 :::
 
 :::tip[Is it possible to make a single installer that will allow configuring user/machine installation?]
@@ -154,6 +190,7 @@ It is very specific requirement. Do not do if you are not sure. Add [custom macr
 Yes, you need to switch to assisted installer (not default one-click).
 
 package.json
+
 ```json
 "build": {
   "nsis": {
@@ -161,13 +198,16 @@ package.json
   }
 }
 ```
+
 electron-builder.yml
+
 ```yaml
 nsis:
   oneClick: false
 ```
+
 :::
 
 ## Configuration
 
-  {!./app-builder-lib.Interface.NsisOptions.md!}
+{!./app-builder-lib.Interface.NsisOptions.md!}

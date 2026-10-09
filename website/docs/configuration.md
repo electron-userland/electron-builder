@@ -2,6 +2,8 @@
 title: "Configuration"
 ---
 
+{!./partials/_upgrading-from-v26.md!}
+
 electron-builder configuration can be defined
 
 * in the `package.json` file of your project using the `build` key on the top level:
@@ -35,6 +37,12 @@ Most of the options accept `null` — for example, to explicitly set that DMG ic
 
 Env file `electron-builder.env` in the current dir ([example](https://github.com/motdotla/dotenv-expand/blob/1cc80d02e1f8aa749253a04a2061c0fecb9bdb69/tests/.env)). Supported only for CLI usage.
 
+## Effective Configuration
+
+Before packaging, electron-builder writes the resolved configuration to `builder-effective-config.yaml` in the output directory (`directories.output`, `dist` by default). It is the merged result of `package.json`, the config file, presets and CLI overrides, plus values detected during the build such as `electronVersion`. Sensitive fields (passwords, tokens, `cscLink`) are masked.
+
+By default the file is written only for local interactive builds, not on CI or when stdout is piped. Set `writeEffectiveConfig` to `true` to always write it (e.g. `electron-builder -c.writeEffectiveConfig=true` in a CI step), or to `false` to never write it.
+
 ## How to Read Docs
 
 * Name of optional property is normal, **required** is bold.
@@ -59,10 +67,23 @@ Some standard fields should be defined in the `package.json`.
 
   {!./app-builder-lib.Interface.Metadata.md!}
 
-## Proton Native
+## Electron Download & Mirror
 
-To package [Proton Native](https://proton-native.js.org/) app, set `protonNodeVersion` option to `current` or specific NodeJS version that you are packaging for.
-Currently, only macOS and Linux are supported.
+electron-builder downloads the Electron distribution to package via [`@electron/get`](https://github.com/electron/get). Point it at a mirror (e.g. a corporate proxy or a China mirror) with the `electronGet` option:
+
+```json5
+{
+  "build": {
+    "electronGet": {
+      "mirrorOptions": { "mirror": "https://npmmirror.com/mirrors/electron/" }
+    }
+  }
+}
+```
+
+:::note[v27: renamed from electronDownload]
+This key was `electronDownload` in v26. In v27 it is `electronGet`, reshaped to `@electron/get` v5 options: the flat `mirror` moved under `mirrorOptions.mirror`, `isVerifyChecksum: false` became `unsafelyDisableChecksums: true`, and `cache` / `customDir` / `customFilename` / `strictSSL` / `force` were dropped. `electron-builder migrate-schema` performs the rename. See [v27 Breaking Changes → electronGet](./migration/v27-breaking-changes.md#electrondownload-electronget).
+:::
 
 ## Build Version Management
 `CFBundleVersion` (macOS) and `FileVersion` (Windows) will be set automatically to `version.build_number` on CI server (Travis, AppVeyor, CircleCI and Bamboo supported).

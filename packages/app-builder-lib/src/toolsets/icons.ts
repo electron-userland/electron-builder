@@ -7,7 +7,7 @@ import { getCustomToolsetPath } from "./custom.js"
 import { resolveToolsetVersion } from "./version.js"
 
 // Newest icons-conversion bundle — selected when the config is unset / null / "latest".
-const ICONS_LATEST = "1.2.1"
+const ICONS_LATEST = "1.2.3"
 
 const iconsToolsChecksums = {
   "1.1.0": {
@@ -18,6 +18,9 @@ const iconsToolsChecksums = {
   },
   "1.2.1": {
     "icons-bundle.tar.gz": "193241afc7c81ab165fa0af15ef0af88f796eb69e8e5bb4249a49310d8be242a",
+  },
+  "1.2.3": {
+    "icons-bundle.tar.gz": "4e5bb546c9d3ab0c2bbacc22857467bf415f742a34c2be9dd138779d2fc066f9",
   },
 } as const
 

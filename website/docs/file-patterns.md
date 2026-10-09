@@ -41,6 +41,23 @@ Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
  ]
  ```
 
+## Default Ignored Files
+
+electron-builder excludes a set of files from the packaged app by default (development files, and certain extensions/names such as Wavefront `.obj` 3D models). In **v27** the `disableDefaultIgnoredFiles` option was removed. To keep a file that is excluded by default, add an explicit `files` glob that **names it concretely** — an explicit include now overrides the matching default exclusion:
+
+```json5
+{
+  "build": {
+    "files": [
+      "**/*",
+      "**/*.obj"  // opt a default-excluded extension back in
+    ]
+  }
+}
+```
+
+Broad patterns such as `**/*` still honor the defaults; only a pattern that names the extension or directory concretely opts it back in. See [v27 Breaking Changes → `disableDefaultIgnoredFiles`](./migration/v27-breaking-changes.md#disabledefaultignoredfiles).
+
 ## File Macros
 
 You can use macros in the file patterns, artifact file name patterns and publish configuration url:

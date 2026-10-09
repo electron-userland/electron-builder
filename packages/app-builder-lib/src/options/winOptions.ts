@@ -54,7 +54,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    * - `{ type: "azure", ... }` — Sign via Azure Trusted Signing (cloud service). Requires
    *   Azure Entra ID environment variables for authentication.
    *
-   * See [Code Signing](https://www.electron.build/code-signing).
+   * See [Code Signing](https://www.electron.build/docs/features/code-signing).
    */
   readonly sign?: WindowsSigningConfiguration | false | null
 
@@ -123,8 +123,10 @@ interface WindowsSigningSharedOptions {
    *   subject, so electron-builder derives it from this value (or the certificate) to keep them
    *   in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.
    *
-   * Defaults to the Common Name (CN) extracted from your code signing certificate. Set to `null`
-   * to opt out.
+   * Defaults to the Common Name (CN) extracted from your code signing certificate. **Required**
+   * (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom
+   * [sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —
+   * otherwise the build fails. Set to `null` to opt out.
    *
    * @see https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073
    */
@@ -183,7 +185,12 @@ interface WindowsSigningSharedOptions {
    * whether this pass is a nested signature (`isNest`), plus a `computeSignToolArgs(isWin)` helper
    * that returns the default arguments electron-builder would otherwise have used. Use this to
    * integrate an external or cloud signing service. See
-   * [Code Signing](https://www.electron.build/code-signing).
+   * [Code Signing](https://www.electron.build/docs/features/code-signing).
+   *
+   * electron-builder cannot tell which certificate the hook signs with, so also set
+   * [publisherName](#publisherName) to that certificate's subject: it is never derived from a
+   * certificate for a hook (not even one in the config), and without it a build that writes
+   * `app-update.yml` fails.
    */
   readonly sign?: CustomWindowsSign | string | null
 }
@@ -208,7 +215,7 @@ export interface WindowsSigntoolSigningConfig extends WindowsSigningSharedOption
    * Prefer supplying this out-of-band via the `WIN_CSC_LINK` (or `CSC_LINK`) environment variable
    * instead of hardcoding a path — that variable also accepts an `https://` URL or a base64-encoded
    * certificate, which is safer and more convenient on CI. See
-   * [Code Signing](https://www.electron.build/code-signing).
+   * [Code Signing](https://www.electron.build/docs/features/code-signing).
    */
   readonly certificateFile?: string | null
 
