@@ -58,13 +58,13 @@ export async function getAppImageTools(toolset: ToolsetConfig["appimage"], targe
   // The `toolsets.appimage` type and scheme.json only admit known versions, but a programmatic config
   // bypasses both. Never forward an unknown version: without a checksum entry the downloader would run
   // with integrity verification disabled.
-  const checksums = (appimageChecksums as Partial<Record<string, Record<string, string>>>)[version]
-  if (checksums == null || !Object.prototype.hasOwnProperty.call(appimageChecksums, version)) {
+  if (!Object.prototype.hasOwnProperty.call(appimageChecksums, version)) {
     throw new InvalidConfigurationError(
       `Unknown toolsets.appimage version "${version}". Known versions: ${Object.keys(appimageChecksums).join(", ")} (or "latest"). ` +
         `To use a custom bundle, set toolsets.appimage to a ToolsetCustom object (url + checksum) instead.`
     )
   }
+  const checksums: Record<string, string> = appimageChecksums[version]
   // Each release ships a single archive: its checksum entry's key.
   const filenameWithExt = Object.keys(checksums)[0]
   // Only the explicit legacy pin selects the FUSE2 runtime, published under the pre-v27 release name.
