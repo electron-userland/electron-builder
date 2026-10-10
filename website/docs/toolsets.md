@@ -198,7 +198,7 @@ This is the same bundle we use for vanilla-builds and can be explored to get an 
 | `/mac/arm64/makensis`| A native `makensis` binary compiled for Apple-Silicon macintosh computers. Routed to by `/makensis` entrypoint |
 | `/linux/x64/makensis` | A native `makensis` binary compiled for x64 Linux computers. Routed to by `/makensis` entrypoint |
 | `/linux/arm64/makensis`| A native `makensis` binary compiled for arm64 Linux computers. Routed to by `/makensis` entrypoint |
-| `/windows/makensis.exe` | A native `makensis.exe` binary compiled for x64 Windows computers. Routed to by `/makensis.cmd` & `/makensis.ps1` entrypoints |
+| `/windows/makensis.exe` | A native `makensis.exe` binary compiled to run on x64 Windows computers. Routed to by `/makensis.cmd` & `/makensis.ps1` entrypoints |
 
 All `makensis/makensis.exe` binaries in this bundle were compiled with the `x86-unicode` build `Target`.
 
