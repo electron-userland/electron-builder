@@ -99,7 +99,7 @@ const CUSTOM_NSIS_ANCHOR = "nsiscustomnsisbinary-toolsetsnsis"
 const TOOLSETS_NSIS_DETAIL =
   "Set a custom NSIS bundle via `toolsets.nsis: { url, checksum, version }`. " +
   "This is not a rename. The artifacts provided by `.customNsisBinary` & `.customNsisResources` have been merged into one toolset. " +
-  "To continue using custom NSIS binary/resources in your build see (https://www.electron.build/docs/toolsets#custom-nsis-bundle-layout). "
+  "To continue using custom NSIS binary/resources in your build see (https://www.electron.build/docs/toolsets#custom-nsis-bundle-layout). " +
   "For a complete migration guide from `.customNsisBinary` & `.customNsisResources` to " +
   "the new `toolsets.nsis` bundle see (https://www.electron.build/docs/migration/v26-to-v27#step-4-custom-nsis-migration-guide)."
 
