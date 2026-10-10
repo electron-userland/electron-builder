@@ -212,12 +212,12 @@ Here are the files that are absolutely required for a functional NSIS bundle. No
 
 | File | Purpose |
 |-|-|
-| `/makensis` | A bash script to route all builds running from macOS/Linux hosts to the appropriate `makensis` binary. Also sets `NSISDIR` (NSIS Resource Directory) to be `/windows/` |
-| `/makensis.cmd` | A command script used to route incoming windows builds to the `/windows/makensis.exe` binary. Also sets `NSISDIR` (NSIS Resource Directory) to be `/windows/` |
-| `/makensis.ps1` | A PowerShell script wich may be used in the future by electron-builder to route incoming windows builds from to the `/windows/makensis.exe` binary. Also sets `NSISDIR` (NSIS Resource Directory) to be `/windows/`. Technically it is unused now and you don't **need** to include it for a functional bundle. It is still considered required to prevent unexpected breaks in your custom-bundle build from future electron-builder updates. |
-| `/elevate.exe` | A script used by 3rd party UAC plugin for privledge management. **You must include this file in your bundle if you use ElectronBuilder's included NSIS scripts**  |
+| `/makensis` | A bash script to route all builds running from macOS/Linux hosts to the appropriate `makensis` binary. Also sets `NSISDIR` (NSIS Resource Directory) |
+| `/makensis.cmd` | A command script used to route incoming windows builds to the appropriate `makensis.exe` binary. Also sets `NSISDIR` (NSIS Resource Directory) |
+| `/makensis.ps1` | A PowerShell script wich may be used in the future by electron-builder to route incoming windows builds to the appropriate `makensis.exe` binary. Also sets `NSISDIR` (NSIS Resource Directory). Technically it is unused now and you don't **need** to include it for a functional bundle. It is still considered required to prevent unexpected breaks in your custom-bundle build that are created in future electron-builder updates |
+| `/elevate.exe` | A script used by 3rd party plugins for privledge management. **You must include this file in your bundle if you use ElectronBuilder's included NSIS scripts**  |
 | `/<NSISDIR>/Plugins/<Target>/*` | You must include the plugins provided by NSIS in your NSISDIR` (NSIS Resource Directory). **If you use Electron Builder's built-in NSIS scripts. You also must provide DLLs for these required 3rd party plugins [INetC, StdUtils, SpiderBanner, NsProcess, UAC, WinShell, EmbedHTML, Nsisunz, NSISunzU]** |
-| `/<SomePath>/makensis` \|\| `<SomePath>/makensis.exe` | You'll need at least one `makensis/makensis.exe` binary in your bundle and your entry script must pass on makensis execution to it. **You only need to include entrypoint-scripts or binaries for the OS/Arch flavor your electron builder flow runs on**  |
+| `/<SomePath>/makensis` \|\| `<SomePath>/makensis.exe` | You'll need at least one `makensis/makensis.exe` binary in your bundle and your entry script must pass on makensis execution to it. **You only need to include entrypoint-scripts or binaries for the OS/Arch flavor your electron builder flow runs on**. |
 
 Note soft requirements of `elevate.exe` and `3rd party plugin DLLs` only if you use electron-builder's NSIS scripts. In practice these are almost definitely required without a ton of NSIS scripting work to create entirely custom NSIS scripts for electron-builder.
 
