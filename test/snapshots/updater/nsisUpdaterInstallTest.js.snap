@@ -1,0 +1,41 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`windowsElevation script building > invocation uses the hardened powershell.exe arguments and strips PSModulePath from the env 1`] = `
+[
+  "-NoProfile",
+  "-NonInteractive",
+  "-InputFormat",
+  "None",
+  "-WindowStyle",
+  "Hidden",
+  "-EncodedCommand",
+]
+`;
+
+exports[`windowsElevation script building > invocation uses the hardened powershell.exe arguments and strips PSModulePath from the env 2`] = `
+"$ProgressPreference = 'SilentlyContinue'; Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Management"; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; try {
+  Start-Process -FilePath 'C:\\Users\\me\\AppData\\Local\\test-updater-app\\pending\\installer.exe' -ArgumentList @('--updated', '/S') -Verb RunAs -ErrorAction Stop
+} catch {
+  $e = $_.Exception
+  while ($null -ne $e) {
+    if (($e -is [System.ComponentModel.Win32Exception]) -and ($e.NativeErrorCode -eq 1223)) { exit 1223 }
+    $e = $e.InnerException
+  }
+  exit 1
+}
+exit 0"
+`;
+
+exports[`windowsElevation script building > script starts the installer via Start-Process -Verb RunAs and maps the outcome to exit codes 1`] = `
+"try {
+  Start-Process -FilePath 'C:\\Users\\me\\AppData\\Local\\test-updater-app\\pending\\installer.exe' -ArgumentList @('--updated', '/S', '--force-run') -Verb RunAs -ErrorAction Stop
+} catch {
+  $e = $_.Exception
+  while ($null -ne $e) {
+    if (($e -is [System.ComponentModel.Win32Exception]) -and ($e.NativeErrorCode -eq 1223)) { exit 1223 }
+    $e = $e.InnerException
+  }
+  exit 1
+}
+exit 0"
+`;
