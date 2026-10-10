@@ -10,6 +10,7 @@ import { BlockMapDataHolder } from "builder-util-runtime"
 import { APP_RUN_ENTRYPOINT } from "./AppImageTarget.js"
 import { ToolsetConfig } from "../../../configuration.js"
 import { IconInfo } from "../../../util/iconConverter.js"
+import { StagedMetainfo } from "../metainfo.js"
 
 interface Options {
   productName: string
@@ -33,6 +34,8 @@ interface Options {
   compression?: "gzip" | "zstd" | "xz"
   /** Pre-computed desktop basename (already validated). When absent, falls back to `executableName`. */
   desktopBaseName?: string
+  /** Pre-validated AppStream metainfo file to stage into `usr/share/metainfo` (see `CommonLinuxOptions.metainfo`). */
+  metainfo?: StagedMetainfo | null
 }
 
 export interface AppImageBuilderOptions {
@@ -180,6 +183,12 @@ async function writeAppLauncherAndRelatedFiles(opts: AppImageBuilderOptions): Pr
   const desktopFileName = `${desktopBaseName ?? executableName}.desktop`
   await fs.writeFile(path.join(stageDir, desktopFileName), desktopEntry, { mode: 0o644 })
   await copyIcons(opts)
+
+  // Stage the AppStream metainfo file (already validated by AppImageTarget)
+  const metainfo = opts.options.metainfo
+  if (metainfo != null) {
+    await copyFile(metainfo.file, path.join(stageDir, "usr", "share", "metainfo", metainfo.installBasename))
+  }
 
   const templateConfig: AppRunScriptBase = {
     DesktopFileName: desktopFileName,
