@@ -66,6 +66,48 @@ function mapLinuxCompressionToSnap(level: CompressionLevel | null | undefined): 
 
 export const installPrefix = "/opt"
 
+/**
+ * Portage's semantics, from `portage/versions.py`:
+ * `(\d+)((\.\d+)*)([a-z]?)((_(pre|p|beta|alpha|rc)\d*)*)(-r\d+)?`
+ */
+const EBUILD_VERSION = /^\d+(\.\d+)*[a-z]?(_(pre|p|beta|alpha|rc)\d*)*(-r\d+)?$/
+const SEMVER_PRERELEASE = /^(alpha|beta|pre|rc|p)[._-]?(\d*)$/
+
+/**
+ * Convert a semver version to a Portage-legal ebuild version.
+ *
+ * `1.2.3-beta.1` has to be `1.2.3_beta1`. Build metadata (`+sha`) has no ebuild equivalent and is
+ * dropped. Unrecognised prerelease falls back to `_pre`, which sorts *below* the release using
+ * `_p` here would sort it above, making the prerelease newer than the final version.
+ */
+export function toEbuildVersion(version: string): string {
+  const withoutBuildMetadata = version.split("+")[0]
+  const separator = withoutBuildMetadata.indexOf("-")
+
+  let result: string
+  if (separator < 0) {
+    result = withoutBuildMetadata
+  } else {
+    const base = withoutBuildMetadata.substring(0, separator)
+    const prerelease = withoutBuildMetadata.substring(separator + 1).toLowerCase()
+    const known = SEMVER_PRERELEASE.exec(prerelease)
+    if (known == null) {
+      const trailingNumber = /(\d+)$/.exec(prerelease)
+      result = `${base}_pre${trailingNumber == null ? "" : trailingNumber[1]}`
+    } else {
+      result = `${base}_${known[1]}${known[2]}`
+    }
+  }
+
+  if (!EBUILD_VERSION.test(result)) {
+    throw new InvalidConfigurationError(
+      `Version "${version}" cannot be expressed as an ebuild version (computed "${result}").\n` +
+        "Portage accepts digits separated by dots, an optional trailing letter, and optional _alpha/_beta/_pre/_rc/_p suffixes."
+    )
+  }
+  return result
+}
+
 export class LinuxTargetHelper {
   private readonly iconPromise = new Lazy(() => this.computeDesktopIcons())
 
@@ -196,6 +238,8 @@ export class LinuxTargetHelper {
       case "rpm":
       case "deb":
         return version.replace(/-/g, "~")
+      case "gentoo":
+        return toEbuildVersion(version)
       default:
         return version
     }
