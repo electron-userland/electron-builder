@@ -162,7 +162,7 @@ Because 7-Zip is the tool electron-builder uses to extract `.7z` and `.tar.xz` a
 ### Custom NSIS bundle layout {#custom-nsis-bundle-layout}
 
 :::warning[Did you use deprecated `.customNsisBinary`/`.customNsisResources` properties in `v26` config?]
-Checkout our [`v26`-> `v27` migration guide](./v26-to-v27#step-4-custom-nsis-migration-guide) and relevant [breaking changes note](./v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis).
+Checkout our [`v26`-> `v27` migration guide](./migration/v26-to-v27#step-4-custom-nsis-migration-guide) and relevant [breaking changes note](./migration/v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis).
 :::
 
 
