@@ -264,7 +264,7 @@ The `makensis/makensis.exe` binary can use a whole directory pattern of various 
 | Resource Type | NSIS Directory Location | Description |
 |---|--|---|
 | Plugins  | `/Plugins/{ x86-unicode \|\| x86-ansi \|\| amd64-unicode }/<name>.dll`  | Compiled binary DLLs to expose advanced execution to NSIS scripts. These must be compiled with the same `Target` as the `makensis/makensis.exe` binary |
-| Include | `/Plugins/<name>.nsh` | These are `.nsh` headers which can contain code/macros used by NSIS scripts |
+| Include | `/Include/<name>.nsh` | These are `.nsh` headers which can contain code/macros used by NSIS scripts |
 | Conf File | `/nsiconfig.nsh` |  The global config file makensis processes automatically at startup, before your NSIS scripts. It sets default flags and defines like NSIS_MAX_STRLEN, NSIS_CONFIG_* options, etc. |
 | Contrib | `/Contrib/<various>` | These are language/image assets that are baked into the `makensis/makensis.exe` binary when it's created. They are not read during `makensis` exec. |
 | Stubs | `/Stubs/<name>` | Functional complete binaries that NSIS uses as a base to customize by appending byte-code to them. In newer versions of NSIS these must also match the `makensis/makensis.exe` binary `Target` flavor |
