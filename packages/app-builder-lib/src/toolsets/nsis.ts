@@ -51,7 +51,7 @@ export function assertInstallerDebugLoggingSupported(nsis: ToolsetConfig["nsis"]
     `\`installerDebugLogging\` (${targetName} target) needs a log-enabled NSIS (makensis and stubs compiled with NSIS_CONFIG_LOG=yes), ` +
       `but \`toolsets.nsis\` is ${nsis == null ? "unset" : `"${nsis}"`}, which selects a bundled NSIS that is not log-enabled.\n` +
       "  Supply a log-enabled NSIS bundle as a custom `toolsets.nsis: { url, checksum, version }`, or remove `installerDebugLogging`.\n" +
-      "  https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis"
+      "  https://www.electron.build/docs/migration/v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis"
   )
 }
 

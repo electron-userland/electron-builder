@@ -97,9 +97,11 @@ const ELECTRON_GET_ANCHOR = "electrondownload-electronget"
 const WIN_SIGN_ANCHOR = "windows-signing-winsign"
 const CUSTOM_NSIS_ANCHOR = "nsiscustomnsisbinary-toolsetsnsis"
 const TOOLSETS_NSIS_DETAIL =
-  "Set a custom NSIS bundle via `toolsets.nsis: { url, checksum, version }`. The v26 checksum (base64 SHA-512) works unchanged, as does a SHA-256 hex " +
-  "(https://www.electron.build/docs/toolsets#custom-toolset-checksum), but it is not a rename: the bundle must contain the " +
-  "NSIS plugins (`plugins/` or `windows/Plugins/`), which v26 read from a separate resources bundle (https://www.electron.build/docs/toolsets#custom-nsis-bundle-layout)."
+  "Set a custom NSIS bundle via `toolsets.nsis: { url, checksum, version }`. " +
+  "This is not a rename. The artifacts provided by `.customNsisBinary` & `.customNsisResources` have been merged into one toolset. " +
+  "To continue using custom NSIS binary/resources in your build see (https://www.electron.build/docs/toolsets#custom-nsis-bundle-layout). " +
+  "For a complete migration guide from `.customNsisBinary` & `.customNsisResources` to " +
+  "the new `toolsets.nsis` bundle see (https://www.electron.build/docs/migration/v26-to-v27#step-4-custom-nsis-migration-guide)."
 
 export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
   // ── Removed outright ──────────────────────────────────────────────────────
@@ -338,10 +340,11 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
       autoMigrated: false,
       severity: "error",
       detail:
+        `Custom  NSIS binaries now come from the \`toolsets.nsis\` bundle. ${TOOLSETS_NSIS_DETAIL} ` +
         (section === "portable"
-          ? "Its `debugLogging` never had an effect on portable targets and has no equivalent. "
-          : `Its \`debugLogging\` is now \`${section}.installerDebugLogging\` (which needs a log-enabled NSIS bundle). `) +
-        `${TOOLSETS_NSIS_DETAIL} \`electron-builder migrate-schema\` moves \`debugLogging\` but cannot convert \`url\` / \`checksum\` / \`version\`.`,
+          ? "Property `debugLogging` never had an effect on portable targets and has no equivalent. "
+          : `Property \`debugLogging\` is now \`${section}.installerDebugLogging\` (which needs a log-enabled NSIS bundle). `) +
+        `\`electron-builder migrate-schema\` moves \`debugLogging\` but cannot convert \`url\` / \`checksum\` / \`version\`.`,
       anchor: CUSTOM_NSIS_ANCHOR,
     },
     {
@@ -350,7 +353,7 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
       replacement: "toolsets.nsis",
       autoMigrated: false,
       severity: "error",
-      detail: `The NSIS plugins now come from the \`toolsets.nsis\` bundle. Remove the key to use the default plugins. ${TOOLSETS_NSIS_DETAIL}`,
+      detail: `Custom  NSIS resources now come from the \`toolsets.nsis\` bundle. ${TOOLSETS_NSIS_DETAIL}.`,
       anchor: CUSTOM_NSIS_ANCHOR,
     },
   ]),
