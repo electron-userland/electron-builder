@@ -102,7 +102,7 @@ for (const incomplete of [false, true]) {
       // the download that follows starts right after the label
       const downloadLabel = script.indexOf("web_package_download:")
       expect(downloadLabel).toBeGreaterThan(script.indexOf(staged))
-      expect(script.slice(downloadLabel + 1).find(line => line.startsWith("inetc::get ") || line.startsWith("StrCpy $packageUrl "))).toMatch(/^StrCpy \$packageUrl /)
+      expect(script.slice(downloadLabel + 1).find(line => line.startsWith("NScurl::http GET ") || line.startsWith("StrCpy $packageUrl "))).toMatch(/^StrCpy \$packageUrl /)
 
       // Then the package file is hashed, removed, reassigned, extracted and moved in this order, a package that matches is extracted.
       const hashPackageFile = ["push `$packageFile`", "StdUtils::HashFile /NOUNLOAD"]
@@ -130,7 +130,7 @@ for (const incomplete of [false, true]) {
       // Every check, message, abort and download comes before the installed version is uninstalled. Only the extraction and the
       // storing of the package follow (the fixture's moveFile ends the installer).
       const uninstalled = script.indexOf(uninstall)
-      const checkOrExit = /^(quit|seterrorlevel|messagebox|inetc::get|stdutils::hashfile|system::call)\b/i
+      const checkOrExit = /^(quit|seterrorlevel|messagebox|NScurl::http|stdutils::hashfile|system::call)\b/i
       expect(script.slice(uninstalled + 1).filter(line => checkOrExit.test(line))).toEqual(["SetErrorLevel 0", "Quit"])
 
       // Every abort before the uninstall exits with code 2: a failed copy, an explicit package that doesn't match (unless unverified
@@ -139,17 +139,18 @@ for (const incomplete of [false, true]) {
       expect(aborts).toHaveLength(4 + (allowUnverified ? 0 : 1) + (incomplete && !allowUnverified ? 1 : 0))
       expect(aborts.map(index => script[index - 1])).toEqual(aborts.map(() => "SetErrorLevel 2"))
 
-      // The package is downloaded with and without proxy. A silent run doesn't pass /RESUME: after a connection error inetc would ask
-      // to reconnect, a prompt without a silent default. An interactive run keeps it.
-      const downloads = script.slice(0, uninstalled).flatMap((line, index) => (line.startsWith("inetc::get ") ? [index] : []))
+      // The package is downloaded with and without proxy. A silent run passes /SILENT instead of /RESUME: NScurl suppresses its UI
+      // in silent mode. An interactive run passes /RESUME to support resuming interrupted downloads.
+      const downloads = script.slice(0, uninstalled).flatMap((line, index) => (line.startsWith("NScurl::http GET ") ? [index] : []))
       expect(downloads).toHaveLength(4)
       for (const [silent, interactive] of [downloads.slice(0, 2), downloads.slice(2)]) {
         const interactiveLabel = /^IfSilent `` `(\w+)`$/.exec(script[silent - 1])?.[1]
         expect(interactiveLabel).toBeDefined()
+        expect(script[silent]).toContain("/SILENT")
         expect(script[silent]).not.toContain("/RESUME")
         expect(script[interactive - 1]).toBe(`${interactiveLabel}:`)
-        expect(script[interactive]).toContain(' /RESUME "" ')
-        expect(script[interactive].replace(' /RESUME ""', "")).toBe(script[silent])
+        expect(script[interactive]).toContain(" /RESUME ")
+        expect(script[interactive].replace(" /RESUME", "").replace("/SILENT", "/RESUME")).toBe(script[silent].replace("/SILENT", "/RESUME"))
       }
 
       // A script that inserts only installApplicationFiles (e.g. a custom script based on an older installSection.nsh) gets the same
@@ -271,7 +272,7 @@ for (const { packages, expected, completeUrl, allowUnverified, nsis } of [
   ...cases.map(value => ({ ...value, completeUrl: false, allowUnverified: false, nsis: undefined })),
   { ...cases[0], completeUrl: true, allowUnverified: false, nsis: undefined },
   { ...cases[cases.length - 1], completeUrl: false, allowUnverified: true, nsis: undefined },
-  // the legacy NSIS toolset (its StdUtils, inetc and System plugins) at run time
+  // the legacy NSIS toolset (its StdUtils, NScurl and System plugins) at run time
   { ...cases[1], completeUrl: false, allowUnverified: false, nsis: "0.0.0" as const },
 ]) {
   const suffix = `${completeUrl ? " (complete URL)" : ""}${allowUnverified ? " (unverified allowed)" : ""}${nsis == null ? "" : ` (NSIS ${nsis})`}`
@@ -432,8 +433,8 @@ for (const { packages, expected, completeUrl, allowUnverified, nsis } of [
       expect(requests.length).toBeLessThanOrEqual(2)
       expect(new Set(requests)).toEqual(new Set([`/app-${expected[2]}.7z`]))
 
-      // A connection that is closed without a response (not an HTTP status) ends a silent run the same way: without /RESUME, inetc
-      // returns the error instead of asking to reconnect.
+      // A connection that is closed without a response (not an HTTP status) ends a silent run the same way: NScurl
+      // returns the error in silent mode (/SILENT) instead of showing a reconnect prompt.
       failedStatus = undefined
       dropConnection = true
       await expectRefused(run("ARM64"))

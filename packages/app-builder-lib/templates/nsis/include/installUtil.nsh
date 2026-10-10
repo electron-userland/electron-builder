@@ -1,3 +1,5 @@
+!include "FileFunc.nsh"
+
 !macro moveFile FROM TO
   ClearErrors
   Rename `${FROM}` `${TO}`
@@ -10,7 +12,7 @@
 !macroend
 
 !macro copyFile FROM TO
-  ${StdUtils.GetParentPath} $R5 `${TO}`
+  ${GetParent} `${TO}` $R5
   CreateDirectory `$R5`
   ClearErrors
   CopyFiles /SILENT `${FROM}` `${TO}`
