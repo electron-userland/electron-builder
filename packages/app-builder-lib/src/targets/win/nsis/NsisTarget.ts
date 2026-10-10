@@ -282,6 +282,9 @@ export class NsisTarget extends Target {
 
   private storeAsarChecked = false
 
+  // logged once per target, not once per installer (per-arch installers share the packed apps' publish setup)
+  private updaterConfigMissingLogged = false
+
   protected installerFilenamePattern(primaryArch?: Arch | null, defaultArch?: string): string {
     const setupText = this.isPortable ? "" : "Setup "
     const archSuffix = !this.shouldBuildUniversalInstaller && primaryArch != null ? getArchSuffix(primaryArch, defaultArch) : ""
@@ -406,8 +409,17 @@ export class NsisTarget extends Target {
     const { packageFiles, estimatedSize, storedMemberFiles } = await this.resolveArchPackageFiles(archs, defines, packager)
 
     this.configureDefinesForAllTypeOfInstaller(defines)
-    if (!this.isWebInstaller && (await hasUpdaterConfig(packager, archs))) {
-      defines.KEEP_INSTALLER_FOR_UPDATER = null
+    // the web installer has no copy of itself to keep, and the portable template never writes one
+    if (!this.isWebInstaller && !isPortable) {
+      if (await hasUpdaterConfig(packager, archs)) {
+        defines.KEEP_INSTALLER_FOR_UPDATER = null
+      } else if (!this.updaterConfigMissingLogged) {
+        this.updaterConfigMissingLogged = true
+        log.info(
+          { reason: "resources/app-update.yml not found (no publish configuration)" },
+          "installer copy for electron-updater's differential download cache is skipped, so an app that sets updateConfigPath elsewhere will download updates in full"
+        )
+      }
     }
     if (isPortable) {
       const { unpackDirName, requestExecutionLevel, splashImage } = options as PortableOptions
