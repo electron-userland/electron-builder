@@ -282,7 +282,7 @@ Plugins are particularly of-note here. NSIS scripts do not offer a lot of functi
 
 
 :::info[ You can toggle logging on an NSIS bundle via: ]
-`.installerDebugLogging` However it additionally needs `makensis/makensis.exe` binaries and the stubs compiled with `NSIS_CONFIG_LOG=yes`, the default bundle NSIS versions is not not.
+`.installerDebugLogging` However it additionally needs `makensis/makensis.exe` binaries and the stubs compiled with `NSIS_CONFIG_LOG=yes`, which the default bundle's NSIS versions are not.
 :::
 
 ## Replacing removed environment variables
