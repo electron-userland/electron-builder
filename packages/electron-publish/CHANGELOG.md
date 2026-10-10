@@ -1,5 +1,24 @@
 # electron-publish
 
+## 27.0.0-alpha.11
+
+### Patch Changes
+
+- Fix: encode GitLab publisher package path segments _[`#10140`](https://github.com/electron-userland/electron-builder/pull/10140) [`4b6e63f`](https://github.com/electron-userland/electron-builder/commit/4b6e63f3490a50806839fa44fb790612cf5da1a2) [@OskarEichler](https://github.com/OskarEichler)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`68aa2ff`](https://github.com/electron-userland/electron-builder/commit/68aa2ff1d5bc713819cd98bfb34c890fbe03a93a)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.10`
+- `builder-util@27.0.0-alpha.11`
+
+</details>
+
 ## 27.0.0-alpha.10
 
 ### Patch Changes

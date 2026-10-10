@@ -1,5 +1,24 @@
 # electron-builder-squirrel-windows
 
+## 27.0.0-alpha.11
+
+### Patch Changes
+
+- Fix: escape Squirrel project URLs in nuspec XML _[`#10141`](https://github.com/electron-userland/electron-builder/pull/10141) [`09a2f30`](https://github.com/electron-userland/electron-builder/commit/09a2f305dc550bf817d5564631073c14c002ea6b) [@OskarEichler](https://github.com/OskarEichler)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`86298ab`](https://github.com/electron-userland/electron-builder/commit/86298abd9857f56e7124d59e4c5373333d05ceda) [`a49daae`](https://github.com/electron-userland/electron-builder/commit/a49daae0ad0a2ca8a53e07aa031c5d00fde8bbb5) [`86298ab`](https://github.com/electron-userland/electron-builder/commit/86298abd9857f56e7124d59e4c5373333d05ceda) [`d2c979b`](https://github.com/electron-userland/electron-builder/commit/d2c979b19f222f4c296c96acd0d2f3917acbf536)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.11`
+- `builder-util@27.0.0-alpha.11`
+
+</details>
+
 ## 27.0.0-alpha.10
 
 ### Patch Changes

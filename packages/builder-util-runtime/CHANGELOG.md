@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 10.0.0-alpha.10
+
+### Patch Changes
+
+- Fix: stop retry backoff immediately when cancelled _[`#10126`](https://github.com/electron-userland/electron-builder/pull/10126) [`68aa2ff`](https://github.com/electron-userland/electron-builder/commit/68aa2ff1d5bc713819cd98bfb34c890fbe03a93a) [@OskarEichler](https://github.com/OskarEichler)_
+
 ## 10.0.0-alpha.9
 
 ### Minor Changes
