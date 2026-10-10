@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-fix: retry a stalled Electron/toolset download instead of failing the build. Before, the 10 minute download timeout was shared by all attempts and its abort was not treated as retryable, so one silent connection failed the build. After, each attempt gets its own timeout and a stalled attempt is retried once.
+fix: retry an Electron/toolset download that times out instead of failing the build. Before, a silent connection ended in undici's 300s headers/body timeout, which was not treated as retryable, and the 10 minute cap on a download was one `AbortSignal.timeout()` shared by all attempts, so no attempt could follow it. After, each attempt gets its own 10 minute cap, and an attempt that hits it or undici's timeouts is retried once, with a warning in the log.

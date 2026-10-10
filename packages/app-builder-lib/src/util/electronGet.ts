@@ -328,26 +328,41 @@ export function shouldRetryDownloadError(e: any): boolean {
 
 const DOWNLOAD_ATTEMPT_TIMEOUT_MS = 10 * 60 * 1000
 
+/** undici gives up on a silent connection after its own headersTimeout/bodyTimeout (300s by default). */
+const STALLED_DOWNLOAD_ERROR_CODES = new Set(["UND_ERR_HEADERS_TIMEOUT", "UND_ERR_BODY_TIMEOUT"])
+
+export interface RetryDownloadOptions {
+  readonly label?: string
+  readonly callerSignal?: AbortSignal | null
+  readonly attemptTimeoutMs?: number
+}
+
 /**
- * Runs a download with the transient-error retries, giving each attempt its own timeout signal: a shared
- * `AbortSignal.timeout()` stays aborted once it fires, so any retry after a stall would fail immediately.
- * A stalled attempt is retried once. A caller-supplied signal is passed through as is, and its abort is final.
+ * Runs a download with the transient-error retries. Each attempt gets its own `AbortSignal.timeout()` capping
+ * its total duration: a shared one stays aborted once it fires, so any later attempt would fail immediately.
+ * An attempt that hits that cap, or that undici drops as silent, is retried once. A caller-supplied signal is
+ * passed through as is, and its abort is final.
  * Exported for tests.
  */
-export function retryDownload<T>(download: (signal: AbortSignal) => Promise<T>, callerSignal?: AbortSignal | null, attemptTimeoutMs = DOWNLOAD_ATTEMPT_TIMEOUT_MS): Promise<T> {
+export function retryDownload<T>(download: (signal: AbortSignal) => Promise<T>, options: RetryDownloadOptions = {}): Promise<T> {
+  const { label, callerSignal, attemptTimeoutMs = DOWNLOAD_ATTEMPT_TIMEOUT_MS } = options
   let timedOut = false
   return retry(() => download(callerSignal ?? AbortSignal.timeout(attemptTimeoutMs)), {
     retries: 3,
     interval: 2000,
     backoff: 2000,
     shouldRetry: e => {
-      // the timeout abort is a DOMException with a numeric `code`, which shouldRetryDownloadError never matches
-      if (callerSignal == null && e?.name === "TimeoutError") {
-        const retryStall = !timedOut
-        timedOut = true
-        return retryStall
+      // our own timeout abort is a DOMException with a numeric `code`, which shouldRetryDownloadError never matches
+      const reason = callerSignal == null && e?.name === "TimeoutError" ? "TimeoutError" : STALLED_DOWNLOAD_ERROR_CODES.has(e?.cause?.code) ? e.cause.code : null
+      if (reason == null) {
+        return shouldRetryDownloadError(e)
       }
-      return shouldRetryDownloadError(e)
+      if (timedOut) {
+        return false
+      }
+      timedOut = true
+      log.warn({ label, reason }, "download timed out, retrying")
+      return true
     },
   })
 }
@@ -417,7 +432,7 @@ async function downloadArtifactToFile(config: ElectronArtifactDetails, label: st
   try {
     let filePath: string
     try {
-      filePath = await retryDownload(signal => get.downloadArtifact(withSignal(signal)), callerSignal)
+      filePath = await retryDownload(signal => get.downloadArtifact(withSignal(signal)), { label, callerSignal })
     } catch (err) {
       if (typeof (err as any)?.message === "string" && (err as any).message.includes("dest already exists")) {
         filePath = await get.downloadArtifact(withSignal())
