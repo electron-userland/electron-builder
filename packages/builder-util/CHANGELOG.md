@@ -1,5 +1,21 @@
 # builder-util
 
+## 27.0.0-alpha.11
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`68aa2ff`](https://github.com/electron-userland/electron-builder/commit/68aa2ff1d5bc713819cd98bfb34c890fbe03a93a)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.10`
+
+</details>
+
 ## 27.0.0-alpha.10
 
 ### Patch Changes

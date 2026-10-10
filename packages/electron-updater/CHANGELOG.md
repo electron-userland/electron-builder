@@ -1,5 +1,26 @@
 ## 4.3.0
 
+## 7.0.0-alpha.10
+
+### Patch Changes
+
+- Fix: reject missing and path-valued cached update file names _[`#10115`](https://github.com/electron-userland/electron-builder/pull/10115) [`4ca053b`](https://github.com/electron-userland/electron-builder/commit/4ca053bb8a84735b4d807239c6cbebe59ebe4365) [@OskarEichler](https://github.com/OskarEichler)_
+- Fix(updater): make GitHubProvider pick the highest eligible release for alpha/beta channel clients instead of the first feed entry, so a stable hotfix published after a pre-release no longer hides that newer pre-release (or offers a downgrade) (#10287) _[`#10289`](https://github.com/electron-userland/electron-builder/pull/10289) [`a1ad1a5`](https://github.com/electron-userland/electron-builder/commit/a1ad1a5c2f1147d7e9242c0f3067464cad76e026) [@claude](https://github.com/apps/claude)_
+- Fix: handle a deferred native macOS update download only once _[`#10116`](https://github.com/electron-userland/electron-builder/pull/10116) [`10c4b54`](https://github.com/electron-userland/electron-builder/commit/10c4b5433dce8c325adabe3630b244919d5bc0a2) [@OskarEichler](https://github.com/OskarEichler)_
+- Fix: handle multipart headers split across download chunks _[`#10117`](https://github.com/electron-userland/electron-builder/pull/10117) [`dde668d`](https://github.com/electron-userland/electron-builder/commit/dde668d148c5d88b8369b447f2e791c724b8743c) [@OskarEichler](https://github.com/OskarEichler)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`68aa2ff`](https://github.com/electron-userland/electron-builder/commit/68aa2ff1d5bc713819cd98bfb34c890fbe03a93a)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.10`
+
+</details>
+
 ## 7.0.0-alpha.9
 
 ### Major Changes

@@ -1,5 +1,38 @@
 # app-builder-lib
 
+## 27.0.0-alpha.11
+
+### Minor Changes
+
+- Feat(app-builder-lib): warn at build start when a `process.env` variable removed in v26 → v27 is still set _[`#10293`](https://github.com/electron-userland/electron-builder/pull/10293) [`d2c979b`](https://github.com/electron-userland/electron-builder/commit/d2c979b19f222f4c296c96acd0d2f3917acbf536) [@mmaietta](https://github.com/mmaietta)_
+
+  - Added `warnOnRemovedEnvVars()` (registry in `app-builder-lib/src/util/removedEnvVars.ts`), invoked once per build from the `Packager` constructor so both the CLI and programmatic `build()` API surface the same guidance. When a removed variable is still present in the environment it is otherwise silently ignored — this logs a one-time deprecation warning naming the variable and its replacement.
+  - Covers the removed toolset-path overrides (`APPIMAGE_TOOLS_PATH`, `MKSQUASHFS_PATH`, `LINUX_TOOLS_MAC_PATH`, `CUSTOM_FPM_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `ELECTRON_BUILDER_NSIS_RESOURCES_DIR`, `CUSTOM_NSIS_RESOURCES`, `ELECTRON_BUILDER_WINE_TOOLSET_DIR`, `ELECTRON_BUILDER_7ZIP_PATH`, `ELECTRON_BUILDER_ICONS_TOOLSET_DIR`, `ELECTRON_BUILDER_OSSL_SIGNCODE_PATH`, `ELECTRON_BUILDER_RCEDIT_PATH`, `ELECTRON_BUILDER_WINDOWS_KITS_PATH`, `SIGNTOOL_PATH`) → `toolsets.*` / `win.sign`; the `USE_SYSTEM_*` toggles; `ELECTRON_BUILDER_BINARIES_ALLOW_HTTP` → `ELECTRON_BUILDER_DANGEROUSLY_ALLOW_HTTP`; `CI_BUILD_TAG` → `CI_COMMIT_TAG`; and `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` → `ignoredProductionDependencies`.
+  - Internal/test-only variables (`JEST_WORKER_ID`, `TEST_SET_BABEL_PRESET`) and `npm_lifecycle_event` (set by npm for every script) are intentionally excluded from the runtime scan.
+  - Migration docs: filled the previously undocumented removed vars in the v27 breaking-changes catalogue (the toolset-path family plus `MKSQUASHFS_PATH`), added a "Replace with" column, and documented the `ELECTRON_BUILDER_BINARIES_ALLOW_HTTP` rename and the removed `npm run release` implicit-publish behavior.
+
+### Patch Changes
+
+- Fix(appimage): resolve a `toolsets.appimage` version pin to exactly that release instead of letting any pin other than `"1.0.3"` float to the newest bundle, and reject unknown versions with an `InvalidConfigurationError` rather than downloading without a checksum _[`#10291`](https://github.com/electron-userland/electron-builder/pull/10291) [`86298ab`](https://github.com/electron-userland/electron-builder/commit/86298abd9857f56e7124d59e4c5373333d05ceda) [@mmaietta](https://github.com/mmaietta)_
+- Chore(deps): update @electron/_\_\_ dependencies to `latest` _[`#10244`](https://github.com/electron-userland/electron-builder/pull/10244) [`a49daae`](https://github.com/electron-userland/electron-builder/commit/a49daae0ad0a2ca8a53e07aa031c5d00fde8bbb5) [@mmaietta](https://github.com/mmaietta)\_
+- Fix(snap): pack legacy-base (core18/core20/core22) template snaps with the `mksquashfs` from `toolsets.appimage` instead of the hardwired legacy `"0.0.0"` bundle, whose mksquashfs supports only gzip/xz, so `compression: "lzo"` (and `linux.compression: "store"`, which maps to lzo) builds again (#7013); a `toolsets.appimage: "0.0.0"` pin combined with `lzo` now fails early with an `InvalidConfigurationError` instead of inside `mksquashfs` _[`#10291`](https://github.com/electron-userland/electron-builder/pull/10291) [`86298ab`](https://github.com/electron-userland/electron-builder/commit/86298abd9857f56e7124d59e4c5373333d05ceda) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`68aa2ff`](https://github.com/electron-userland/electron-builder/commit/68aa2ff1d5bc713819cd98bfb34c890fbe03a93a) [`4b6e63f`](https://github.com/electron-userland/electron-builder/commit/4b6e63f3490a50806839fa44fb790612cf5da1a2) [`09a2f30`](https://github.com/electron-userland/electron-builder/commit/09a2f305dc550bf817d5564631073c14c002ea6b)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.10`
+- `electron-publish@27.0.0-alpha.11`
+- `electron-builder-squirrel-windows@27.0.0-alpha.11`
+- `dmg-builder@27.0.0-alpha.11`
+- `builder-util@27.0.0-alpha.11`
+
+</details>
+
 ## 27.0.0-alpha.10
 
 ### Major Changes

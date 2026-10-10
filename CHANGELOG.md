@@ -1,3 +1,24 @@
+# [27.0.0-alpha.11](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.10...electron-builder@27.0.0-alpha.11) (2026-10-10)
+
+
+### Bug Fixes
+
+* encode GitLab package path segments ([#10140](https://github.com/electron-userland/electron-builder/issues/10140)) ([4b6e63f](https://github.com/electron-userland/electron-builder/commit/4b6e63f3490a50806839fa44fb790612cf5da1a2))
+* escape Squirrel project URLs in nuspec XML ([#10141](https://github.com/electron-userland/electron-builder/issues/10141)) ([09a2f30](https://github.com/electron-userland/electron-builder/commit/09a2f305dc550bf817d5564631073c14c002ea6b))
+* **runtime:** cancel retry backoff promptly ([#10126](https://github.com/electron-userland/electron-builder/issues/10126)) ([68aa2ff](https://github.com/electron-userland/electron-builder/commit/68aa2ff1d5bc713819cd98bfb34c890fbe03a93a))
+* **snap:** pack legacy-base (core18/core20/core22) template snaps with the `mksquashfs` from `toolsets.appimage`  ([#10291](https://github.com/electron-userland/electron-builder/issues/10291)) ([86298ab](https://github.com/electron-userland/electron-builder/commit/86298abd9857f56e7124d59e4c5373333d05ceda))
+* **updater:** handle deferred macOS install once ([#10116](https://github.com/electron-userland/electron-builder/issues/10116)) ([10c4b54](https://github.com/electron-userland/electron-builder/commit/10c4b5433dce8c325adabe3630b244919d5bc0a2))
+* **updater:** parse split multipart headers ([#10117](https://github.com/electron-userland/electron-builder/issues/10117)) ([dde668d](https://github.com/electron-userland/electron-builder/commit/dde668d148c5d88b8369b447f2e791c724b8743c))
+* **updater:** pick highest version for alpha/beta channel instead of first feed entry ([#10289](https://github.com/electron-userland/electron-builder/issues/10289)) ([a1ad1a5](https://github.com/electron-userland/electron-builder/commit/a1ad1a5c2f1147d7e9242c0f3067464cad76e026))
+* **updater:** validate cached update filenames ([#10115](https://github.com/electron-userland/electron-builder/issues/10115)) ([4ca053b](https://github.com/electron-userland/electron-builder/commit/4ca053bb8a84735b4d807239c6cbebe59ebe4365))
+
+
+### Features
+
+* warn at build start when a `process.env` variable removed in v26 → v27 is still set ([#10293](https://github.com/electron-userland/electron-builder/issues/10293)) ([d2c979b](https://github.com/electron-userland/electron-builder/commit/d2c979b19f222f4c296c96acd0d2f3917acbf536))
+
+
+
 # [27.0.0-alpha.10](https://github.com/electron-userland/electron-builder/compare/electron-builder@27.0.0-alpha.9...electron-builder@27.0.0-alpha.10) (2026-10-08)
 
 
