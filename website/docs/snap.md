@@ -263,7 +263,7 @@ Key differences from core24:
 - **`allowNativeWayland` defaults to `false`** — Wayland is disabled by default for older Electron compatibility. Set to `true` to enable. (The legacy interface uses `allowNativeWayland`; core24 uses `forceX11`.)
 - **No extensions** — no GNOME extension support; uses the `desktop-gtk2` part instead.
 - **`useTemplateApp`** — when `stagePackages` is not customised, electron-builder uses a pre-built Electron snap template for faster assembly (x64 and armv7l only).
-- Build is handled by the `app-builder-bin` binary, not by a direct `snapcraft` invocation.
+- **Template builds skip `snapcraft`** — the image is packed directly with the `mksquashfs` from the [`toolsets.appimage`](./toolsets.md) bundle (non-template builds run the `snapcraft` CLI). `compression: "lzo"` needs a toolset other than the legacy `"0.0.0"`, whose `mksquashfs` supports only `gzip` and `xz`.
 
 ---
 

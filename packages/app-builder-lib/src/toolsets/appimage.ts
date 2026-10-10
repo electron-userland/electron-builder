@@ -1,8 +1,9 @@
-import { Arch } from "builder-util"
+import { Arch, InvalidConfigurationError } from "builder-util"
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { getCustomToolsetPath } from "./custom.js"
+import { resolveToolsetVersion } from "./version.js"
 
 // Newest AppImage bundle — selected when the config is unset / null / "latest".
 const APPIMAGE_LATEST = "1.1.0"
@@ -47,33 +48,32 @@ export async function getAppImageTools(toolset: ToolsetConfig["appimage"], targe
     }
   }
 
-  // Only the explicit legacy pin selects the FUSE2 runtime; unset / null / "latest" → newest.
-  const isFuse2 = toolset === "0.0.0"
-
-  if (isFuse2) {
-    const filenameWithExt = "appimage-12.0.1.7z"
-    const artifactPath = await downloadBuilderToolset({
-      releaseName: "appimage-12.0.1",
-      filenameWithExt,
-      checksums: { [filenameWithExt]: appimageChecksums["0.0.0"][filenameWithExt] },
-      githubOrgRepo: "electron-userland/electron-builder-binaries",
-    })
-    return getFuse2Paths(artifactPath)
-  }
-
   if (typeof toolset === "object" && toolset != null) {
     const vendorPath = await getCustomToolsetPath(toolset, resourcesDir)
     return getPaths(vendorPath)
   }
 
-  // Unset / null / "latest" → newest ("1.1.0"); only an explicit "1.0.3" pin stays on 1.0.3.
-  const effectiveVersion: "1.0.3" | typeof APPIMAGE_LATEST = toolset === "1.0.3" ? "1.0.3" : APPIMAGE_LATEST
-  const filenameWithExt = "appimage-tools-runtime-20251108.tar.gz"
+  // Unset / null / "latest" → newest; an explicit pin selects exactly that release.
+  const version = resolveToolsetVersion(toolset, APPIMAGE_LATEST)
+  // The `toolsets.appimage` type and scheme.json only admit known versions, but a programmatic config
+  // bypasses both. Never forward an unknown version: without a checksum entry the downloader would run
+  // with integrity verification disabled.
+  if (!Object.prototype.hasOwnProperty.call(appimageChecksums, version)) {
+    throw new InvalidConfigurationError(
+      `Unknown toolsets.appimage version "${version}". Known versions: ${Object.keys(appimageChecksums).join(", ")} (or "latest"). ` +
+        `To use a custom bundle, set toolsets.appimage to a ToolsetCustom object (url + checksum) instead.`
+    )
+  }
+  const checksums: Record<string, string> = appimageChecksums[version]
+  // Each release ships a single archive: its checksum entry's key.
+  const filenameWithExt = Object.keys(checksums)[0]
+  // Only the explicit legacy pin selects the FUSE2 runtime, published under the pre-v27 release name.
+  const isFuse2 = version === "0.0.0"
   const artifactPath = await downloadBuilderToolset({
-    releaseName: `appimage@${effectiveVersion}`,
+    releaseName: isFuse2 ? "appimage-12.0.1" : `appimage@${version}`,
     filenameWithExt,
-    checksums: { [filenameWithExt]: appimageChecksums[effectiveVersion][filenameWithExt] },
+    checksums,
     githubOrgRepo: "electron-userland/electron-builder-binaries",
   })
-  return getPaths(artifactPath)
+  return isFuse2 ? getFuse2Paths(artifactPath) : getPaths(artifactPath)
 }

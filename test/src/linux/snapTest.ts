@@ -1,5 +1,7 @@
 import { Arch, Platform } from "electron-builder"
-import { app, assertPack, snapTarget } from "../helpers/packTester.js"
+import * as path from "path"
+import { readSquashfsCompression } from "../helpers/fileAssert.js"
+import { app, appThrows, assertPack, snapTarget } from "../helpers/packTester.js"
 
 test.ifNotWindows("snap", ({ expect }) =>
   app(expect, {
@@ -374,4 +376,58 @@ test.ifNotWindows("use template app", ({ expect }) =>
       return Promise.resolve(true)
     },
   })
+)
+
+test.ifNotWindows("template app with lzo compression (#7013)", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: snapTarget,
+      config: {
+        extraMetadata: {
+          name: "sep",
+        },
+        productName: "Sep",
+        snapcraft: {
+          base: "core20",
+          core20: {
+            useTemplateApp: true,
+            compression: "lzo",
+          },
+        },
+      },
+    },
+    {
+      packed: async context => {
+        // Template builds pack with toolsets.appimage's mksquashfs; the legacy "0.0.0" one supported only gzip/xz.
+        expect(await readSquashfsCompression(path.join(context.outDir, "sep_1.1.0_amd64.snap"))).toBe("lzo")
+      },
+    }
+  )
+)
+
+test.ifNotWindows("template app honors toolsets.appimage pin", ({ expect }) =>
+  appThrows(
+    expect,
+    {
+      targets: snapTarget,
+      config: {
+        extraMetadata: {
+          name: "sep",
+        },
+        productName: "Sep",
+        toolsets: { appimage: "0.0.0" },
+        snapcraft: {
+          base: "core20",
+          core20: {
+            useTemplateApp: true,
+            compression: "lzo",
+          },
+        },
+      },
+    },
+    {},
+    // The pinned legacy "0.0.0" mksquashfs supports only gzip/xz, so the pin reaching the template build is rejected up front.
+    error => expect(error.message).toContain('Snap compression "lzo" is not supported with toolsets.appimage "0.0.0"')
+  )
 )

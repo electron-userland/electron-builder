@@ -213,6 +213,8 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
    * When not set, `linux.compression` is mapped automatically:
    * `"store"` → `"lzo"`, `"maximum"` → `"xz"`, `"normal"` → snapcraft default.
    * Explicitly setting this field always overrides the mapped value.
+   *
+   * Template app builds (`useTemplateApp`) pack the image with the `mksquashfs` from the `toolsets.appimage` bundle. `lzo` requires a toolset other than the legacy `"0.0.0"`, whose `mksquashfs` supports only `gzip` and `xz`.
    */
   readonly compression?: "xz" | "lzo" | null
 
