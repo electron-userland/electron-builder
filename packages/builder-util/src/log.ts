@@ -1,3 +1,4 @@
+import { LogLimiter } from "builder-util-runtime/internal"
 import chalk from "chalk"
 import { Chalk } from "chalk"
 import _debug from "debug"
@@ -20,12 +21,75 @@ export type LogLevel = "info" | "warn" | "debug" | "error"
 
 export const PADDING = 2
 
+export interface LogLimitOptions {
+  /** Stable identifier of the message. Use an explicit key, not the message text: messages embed values (paths, platforms) that vary between calls. */
+  readonly key: string
+  /** How many times the message may be emitted. Defaults to 1. */
+  readonly max?: number
+  /**
+   * Object whose lifetime bounds the count (a packager, a target, a build's cancellation token), so each one gets
+   * its own quota and the counters are garbage-collected with it. Defaults to the Logger itself: once per process
+   * for the `log` singleton.
+   */
+  readonly scope?: object
+}
+
+/** The `info`/`warn`/`error`/`debug` methods of a {@link Logger}, each emitting only while the limit allows. Each returns whether it emitted. */
+export interface LimitedLogger {
+  info(messageOrFields: Fields | null | string, message?: string): boolean
+  warn(messageOrFields: Fields | null | string, message?: string): boolean
+  error(messageOrFields: Fields | null | string, message?: string): boolean
+  /** Does not consume the quota while debug logging is disabled. */
+  debug(fields: Fields | null, message: string): boolean
+  /** Whether the limit has been reached, so a call site can skip computing an expensive message. */
+  readonly isExhausted: boolean
+}
+
 // clean up logs since concurrent tests are impossible to track logic execution with console concurrency "noise"
 export const shouldDisableNonErrorLoggingVitest = process.env.VITEST && !debug.enabled
 export class Logger {
   constructor(protected readonly stream: WritableStream) {}
 
   messageTransformer: (message: string, level: LogLevel) => string = it => it
+
+  private readonly limiter = new LogLimiter()
+
+  /**
+   * Emits through the returned methods at most `max` times per `key` (and `scope`), replacing hand-rolled
+   * `xxxWarned = false` flags and `Set`s of already-warned keys:
+   *
+   * ```ts
+   * log.limit({ key: "arch-all-expansion" }).warn({ expandsTo: "x64, arm64" }, "arch all no longer includes ia32")
+   * log.limit({ key: "unsigned-update-manifest", scope: this }).warn(fields, message) // once per packager
+   * ```
+   *
+   * Each emission still goes through {@link Logger.info} / {@link Logger.warn} / ..., so spies on those see only what was emitted.
+   */
+  limit(options: LogLimitOptions): LimitedLogger {
+    const { key, max = 1, scope } = options
+    const limiter = this.limiter
+    const take = () => limiter.take(key, max, scope)
+    return {
+      info: (messageOrFields, message) => take() && (this.info(messageOrFields, message), true),
+      warn: (messageOrFields, message) => take() && (this.warn(messageOrFields, message), true),
+      error: (messageOrFields, message) => take() && (this.error(messageOrFields, message), true),
+      // counted only when it would print: a debug-suppressed message must not use up the quota
+      debug: (fields, message) => this.isDebugEnabled && take() && (this.debug(fields, message), true),
+      get isExhausted() {
+        return limiter.isExhausted(key, max, scope)
+      },
+    }
+  }
+
+  /** Shorthand for `limit({ key, max: 1, scope })`. */
+  once(key: string, scope?: object): LimitedLogger {
+    return this.limit({ key, scope })
+  }
+
+  /** Forgets recorded emissions of `key` (in `scope`), of every key in `scope`, or of everything. Intended for tests. */
+  resetLimits(key?: string, scope?: object): void {
+    this.limiter.reset(key, scope)
+  }
 
   filePath(file: string) {
     const cwd = process.cwd()

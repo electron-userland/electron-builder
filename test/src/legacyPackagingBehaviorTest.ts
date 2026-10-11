@@ -1,7 +1,9 @@
 import { checkMetadata } from "app-builder-lib/internal"
+import { log } from "builder-util"
+import { createTargets, Platform } from "electron-builder"
 import { promises as fs } from "fs"
 import * as path from "path"
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
 
 const srcRoot = path.join(__dirname, "..", "..", "packages")
 
@@ -40,9 +42,25 @@ describe('arch "all" no longer includes ia32', () => {
   test("createTargets warns once for non-mac platforms", async () => {
     const source = await fs.readFile(path.join(srcRoot, "electron-builder", "src", "builder.ts"), "utf8")
     expect(source).toContain("warnAboutArchAllExpansion")
-    expect(source).toContain("archAllWarningEmitted")
+    expect(source).toContain('.once("arch-all-expansion")')
     // macOS "all" still expands to x64 + arm64 + universal and never included ia32, so it must stay quiet.
     expect(source).toContain("platforms.some(platform => platform !== Platform.MAC)")
+  })
+
+  test("createTargets announces the expansion once per process, and not for mac-only builds", () => {
+    log.resetLimits("arch-all-expansion")
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    try {
+      createTargets([Platform.MAC], null, "all")
+      expect(warn).not.toHaveBeenCalled()
+      createTargets([Platform.WINDOWS], null, "all")
+      createTargets([Platform.LINUX, Platform.WINDOWS], null, "all")
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(warn.mock.calls[0][0]).toMatchObject({ expandsTo: "x64, arm64" })
+    } finally {
+      warn.mockRestore()
+      log.resetLimits("arch-all-expansion")
+    }
   })
 
   test("the warning names the new expansion and the explicit-ia32 escape hatch", async () => {

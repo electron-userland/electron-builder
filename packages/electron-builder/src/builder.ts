@@ -196,24 +196,23 @@ export function coerceTypes(host: any): any {
   return host
 }
 
-/** Emitted once per process — createTargets is called per invocation, not per platform. */
-let archAllWarningEmitted = false
-
 /**
  * `arch: "all"` dropped ia32 in v27. The build stays green and simply produces no 32-bit artifact
  * (plus an unexpected arm64 one), so the only evidence is a missing file in dist — nothing ties that
  * back to the upgrade.
  */
 function warnAboutArchAllExpansion(platforms: Array<Platform>): void {
-  if (archAllWarningEmitted || !platforms.some(platform => platform !== Platform.MAC)) {
+  if (!platforms.some(platform => platform !== Platform.MAC)) {
     return
   }
-  archAllWarningEmitted = true
-  log.warn(
-    { expandsTo: "x64, arm64", previously: "x64, ia32", solution: "request ia32 explicitly (--ia32 / Arch.ia32) with electronVersion <= 43.x if you still ship 32-bit builds" },
-    'arch "all" no longer includes ia32. Electron 44 removed Windows ia32 builds and Linux ia32 zips ended at Electron 19, so the old expansion produced broken builds on current Electron. ' +
-      "See https://www.electron.build/docs/migration/v27-breaking-changes#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44"
-  )
+  // once per process — createTargets is called per invocation, not per platform
+  log
+    .once("arch-all-expansion")
+    .warn(
+      { expandsTo: "x64, arm64", previously: "x64, ia32", solution: "request ia32 explicitly (--ia32 / Arch.ia32) with electronVersion <= 43.x if you still ship 32-bit builds" },
+      'arch "all" no longer includes ia32. Electron 44 removed Windows ia32 builds and Linux ia32 zips ended at Electron 19, so the old expansion produced broken builds on current Electron. ' +
+        "See https://www.electron.build/docs/migration/v27-breaking-changes#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44"
+    )
 }
 
 export function createTargets(platforms: Array<Platform>, type?: string | null, arch?: string | null): Map<Platform, Map<Arch, Array<string>>> {
