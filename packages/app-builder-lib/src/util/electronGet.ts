@@ -327,6 +327,47 @@ export function shouldRetryDownloadError(e: any): boolean {
   return code != null && TRANSIENT_DOWNLOAD_ERROR_CODES.has(code)
 }
 
+const DOWNLOAD_ATTEMPT_TIMEOUT_MS = 10 * 60 * 1000
+
+/** undici gives up on a silent connection after its own headersTimeout/bodyTimeout (300s by default). */
+const STALLED_DOWNLOAD_ERROR_CODES = new Set(["UND_ERR_HEADERS_TIMEOUT", "UND_ERR_BODY_TIMEOUT"])
+
+export interface RetryDownloadOptions {
+  readonly label?: string
+  readonly callerSignal?: AbortSignal | null
+  readonly attemptTimeoutMs?: number
+}
+
+/**
+ * Runs a download with the transient-error retries. Each attempt gets its own `AbortSignal.timeout()` capping
+ * its total duration: a shared one stays aborted once it fires, so any later attempt would fail immediately.
+ * An attempt that hits that cap, or that undici drops as silent, is retried once. A caller-supplied signal is
+ * passed through as is, and its abort is final.
+ * Exported for tests.
+ */
+export function retryDownload<T>(download: (signal: AbortSignal) => Promise<T>, options: RetryDownloadOptions = {}): Promise<T> {
+  const { label, callerSignal, attemptTimeoutMs = DOWNLOAD_ATTEMPT_TIMEOUT_MS } = options
+  let timedOut = false
+  return retry(() => download(callerSignal ?? AbortSignal.timeout(attemptTimeoutMs)), {
+    retries: 3,
+    interval: 2000,
+    backoff: 2000,
+    shouldRetry: e => {
+      // our own timeout abort is a DOMException with a numeric `code`, which shouldRetryDownloadError never matches
+      const reason = callerSignal == null && e?.name === "TimeoutError" ? "TimeoutError" : STALLED_DOWNLOAD_ERROR_CODES.has(e?.cause?.code) ? e.cause.code : null
+      if (reason == null) {
+        return shouldRetryDownloadError(e)
+      }
+      if (timedOut) {
+        return false
+      }
+      timedOut = true
+      log.warn({ label, reason }, "download timed out, retrying")
+      return true
+    },
+  })
+}
+
 async function downloadArtifactToFile(config: ElectronArtifactDetails, label: string): Promise<string> {
   // Serialize concurrent downloads of the same artifact across vitest workers to prevent @electron/get's
   // non-atomic putFileInCache (remove + move) from racing with a concurrent reader.
@@ -358,7 +399,6 @@ async function downloadArtifactToFile(config: ElectronArtifactDetails, label: st
   initializeProxyOnce()
 
   const downloadOptions: FetchDownloaderOptions = {
-    signal: AbortSignal.timeout(10 * 60 * 1000), // prevent indefinite hang on stalled connections
     ...config.downloadOptions,
     getProgressCallback: info => {
       // @electron/get passes downloadOptions (including this callback) to its internal
@@ -387,26 +427,23 @@ async function downloadArtifactToFile(config: ElectronArtifactDetails, label: st
     },
   }
 
-  const configWithProgress = { ...config, downloadOptions }
+  const callerSignal = config.downloadOptions?.signal
+  // every call gets a fresh timeout signal, to prevent an indefinite hang on stalled connections
+  const withSignal = (signal: AbortSignal = callerSignal ?? AbortSignal.timeout(DOWNLOAD_ATTEMPT_TIMEOUT_MS)) => ({ ...config, downloadOptions: { ...downloadOptions, signal } })
   try {
     let filePath: string
     try {
-      filePath = await retry(() => get.downloadArtifact(configWithProgress), {
-        retries: 3,
-        interval: 2000,
-        backoff: 2000,
-        shouldRetry: shouldRetryDownloadError,
-      })
+      filePath = await retryDownload(signal => get.downloadArtifact(withSignal(signal)), { label, callerSignal })
     } catch (err) {
       if (typeof (err as any)?.message === "string" && (err as any).message.includes("dest already exists")) {
-        filePath = await get.downloadArtifact(configWithProgress)
+        filePath = await get.downloadArtifact(withSignal())
       } else {
         throw err
       }
     }
     if (!(await exists(filePath))) {
       log.warn({ filePath, label }, "cached artifact missing from disk; retrying with cache write")
-      filePath = await get.downloadArtifact({ ...configWithProgress, cacheMode: ElectronDownloadCacheMode.WriteOnly })
+      filePath = await get.downloadArtifact({ ...withSignal(), cacheMode: ElectronDownloadCacheMode.WriteOnly })
     }
     if (!state.bar && lastLoggedMilestone === -1) {
       log.info({ label }, "using cached artifact")

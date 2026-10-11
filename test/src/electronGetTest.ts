@@ -3,6 +3,7 @@ import { createHash } from "crypto"
 import { readFileSync } from "fs"
 import * as fs from "fs/promises"
 import * as http from "http"
+import { createRequire } from "module"
 import * as net from "net"
 import * as os from "os"
 import * as path from "path"
@@ -25,6 +26,7 @@ import {
   getCacheDirectoryInternal,
   parseChecksumFile,
   resolveSeededChecksums,
+  retryDownload,
   shouldRetryDownloadError,
 } from "app-builder-lib/src/util/electronGet.js"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
@@ -305,6 +307,97 @@ describe("shouldRetryDownloadError", () => {
     expect(shouldRetryDownloadError(Object.assign(new Error("denied"), { code: "EACCES" }))).toBe(false)
     expect(shouldRetryDownloadError(null)).toBe(false)
     expect(shouldRetryDownloadError(undefined)).toBe(false)
+  })
+})
+
+// ─── retryDownload ────────────────────────────────────────────────────────────
+
+describe("retryDownload", () => {
+  // undici is a dependency of app-builder-lib, not of the test package
+  const { Agent } = createRequire(require.resolve("app-builder-lib"))("undici")
+
+  /**
+   * HTTP server that stalls its first `stalledRequests` requests and answers "ok" afterwards.
+   * A stalled request gets no response at all, or headers and a partial body with `stallMidBody`.
+   */
+  async function startStallingServer(stalledRequests: number, stallMidBody = false) {
+    let requests = 0
+    const server = http.createServer((_req, res) => {
+      if (++requests > stalledRequests) {
+        res.end("ok")
+      } else if (stallMidBody) {
+        res.writeHead(200, { "content-length": "1000" })
+        res.write("partial")
+      }
+    })
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    return {
+      url: `http://127.0.0.1:${(server.address() as net.AddressInfo).port}/toolset.tar.gz`,
+      requests: () => requests,
+      close: () => {
+        server.closeAllConnections()
+        return new Promise(resolve => server.close(resolve))
+      },
+    }
+  }
+
+  const download = (url: string) => (signal: AbortSignal) => fetch(url, { signal }).then(it => it.text())
+
+  test("retries a stalled attempt with a fresh timeout signal", async ({ expect }) => {
+    const server = await startStallingServer(1)
+    try {
+      expect(await retryDownload(download(server.url), { attemptTimeoutMs: 300 })).toBe("ok")
+      expect(server.requests()).toBe(2)
+    } finally {
+      await server.close()
+    }
+  })
+
+  test("gives up after a second stall", async ({ expect }) => {
+    const server = await startStallingServer(Infinity)
+    try {
+      await expect(retryDownload(download(server.url), { attemptTimeoutMs: 300 })).rejects.toMatchObject({ name: "TimeoutError" })
+      expect(server.requests()).toBe(2)
+    } finally {
+      await server.close()
+    }
+  })
+
+  test("does not retry when the caller's signal aborts", async ({ expect }) => {
+    const server = await startStallingServer(Infinity)
+    try {
+      await expect(retryDownload(download(server.url), { callerSignal: AbortSignal.timeout(300) })).rejects.toMatchObject({ name: "TimeoutError" })
+      expect(server.requests()).toBe(1)
+    } finally {
+      await server.close()
+    }
+  })
+
+  // These two leave the attempt timeout at its 10 min default, so only undici's own timeouts can end the stall.
+  test("retries an attempt undici drops for sending no headers", async ({ expect }) => {
+    const server = await startStallingServer(1)
+    const dispatcher = new Agent({ headersTimeout: 300 })
+    try {
+      const downloadText = (signal: AbortSignal) => fetch(server.url, { signal, dispatcher } as RequestInit).then(it => it.text())
+      expect(await retryDownload(downloadText)).toBe("ok")
+      expect(server.requests()).toBe(2)
+    } finally {
+      await dispatcher.destroy()
+      await server.close()
+    }
+  })
+
+  test("retries an attempt undici drops for a silent body, then gives up", async ({ expect }) => {
+    const server = await startStallingServer(Infinity, true)
+    const dispatcher = new Agent({ bodyTimeout: 300 })
+    try {
+      const downloadText = (signal: AbortSignal) => fetch(server.url, { signal, dispatcher } as RequestInit).then(it => it.text())
+      await expect(retryDownload(downloadText)).rejects.toMatchObject({ cause: { code: "UND_ERR_BODY_TIMEOUT" } })
+      expect(server.requests()).toBe(2)
+    } finally {
+      await dispatcher.destroy()
+      await server.close()
+    }
   })
 })
 
