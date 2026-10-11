@@ -168,7 +168,7 @@ toolsets:
 AppImage files use [squashfs](https://en.wikipedia.org/wiki/SquashFS) internally. The compression algorithm affects file size and launch speed.
 
 :::info[Compression support by toolset]
-- **Legacy FUSE2 (`0.0.0`)**: only `xz` can be passed explicitly (when the root `compression` is `"maximum"`). All other values use mksquashfs's default (gzip).
+- **Legacy FUSE2 (`0.0.0`)**: an explicit `appImage.compression` of `xz` or `gzip` is forwarded to mksquashfs; otherwise the root `compression: "maximum"` selects `xz`. All other values use mksquashfs's default (gzip).
 - **Static runtime (default)**: supports `gzip` and `zstd`. The `appImage.compression` option selects the algorithm directly; `"xz"` is mapped to `"zstd"` (xz is not compiled into the static runtime binary).
 :::
 
@@ -178,7 +178,7 @@ AppImage files use [squashfs](https://en.wikipedia.org/wiki/SquashFS) internally
 | `gzip` | Moderate | Moderate | Legacy mksquashfs default |
 | `xz` | Smallest | Slowest | Mapped to `zstd` on static runtime |
 
-Direct algorithm selection (static runtime only):
+Direct algorithm selection (the legacy `0.0.0` toolset forwards only `gzip` and `xz`):
 
 ```yaml
 appImage:

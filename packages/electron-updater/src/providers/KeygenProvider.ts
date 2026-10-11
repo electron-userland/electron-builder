@@ -21,6 +21,10 @@ export class KeygenProvider extends Provider<UpdateInfo> {
     this.baseUrl = newBaseUrl(`https://${host}/v1/accounts/${this.configuration.account}/artifacts?product=${this.configuration.product}`)
   }
 
+  get feedBaseUrl(): URL {
+    return this.baseUrl
+  }
+
   private get channel(): string {
     return this.updater.channel || this.configuration.channel || "stable"
   }

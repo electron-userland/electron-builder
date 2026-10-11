@@ -28,6 +28,12 @@ export interface SelfSignedIdentityOptions {
    * sidesteps the prompt entirely — which is why the previously committed `WIN_CSC_LINK` blob used one too.
    */
   password?: string
+  /**
+   * Additional subject RDN attributes appended after the CN, as OpenSSL `[dn]` section keys
+   * (e.g. `{ O: "EB Test Org", C: "US" }` → subject `CN=<commonName>, O=EB Test Org, C=US`).
+   * Default: subject contains only the CN.
+   */
+  additionalDnFields?: Record<string, string>
 }
 
 /**
@@ -45,6 +51,10 @@ export async function createSelfSignedCodeSigningIdentity(commonName: string, tm
   const p12Path = path.join(dir, "cert.p12")
   const configPath = path.join(dir, "openssl.cnf")
 
+  const dnLines = [`CN = ${commonName}`]
+  for (const [key, value] of Object.entries(options.additionalDnFields ?? {})) {
+    dnLines.push(`${key} = ${value}`)
+  }
   await outputFile(
     configPath,
     `[req]
@@ -52,7 +62,7 @@ distinguished_name = dn
 x509_extensions = v3
 prompt = no
 [dn]
-CN = ${commonName}
+${dnLines.join("\n")}
 [v3]
 basicConstraints = critical,CA:false
 keyUsage = critical,digitalSignature

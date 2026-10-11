@@ -19,7 +19,7 @@ const docsDir = join(__dirname, "docs")
 // tells website/scripts/build-versioned-site.sh which git ref to build at which
 // path, and is read here for the navbar version dropdown, so labels and paths
 // are declared once.
-type DocsVersion = { label: string; path: string; ref?: string; current?: boolean }
+type DocsVersion = { label: string; path: string; ref?: string; current?: boolean; prerelease?: boolean }
 
 // normalize to a leading + trailing slash so hrefs are stable
 const normalizePath = (path: string) => `/${path.replace(/^\/+/, "").replace(/\/+$/, "")}/`.replace(/^\/\/$/, "/")
@@ -46,6 +46,37 @@ const baseUrl = normalizePath(process.env.DOCS_BASE_URL || docsVersions.find(v =
 
 // Which declared version this build is, so the dropdown can name itself.
 const activeVersion = docsVersions.find(v => v.path === baseUrl) ?? docsVersions.find(v => v.current)
+
+// Version banner. The unreleased line is published at the site root, so
+// readers who land on www.electron.build without picking a version are shown
+// docs that may not match the electron-builder they have installed (and copy
+// config that only exists in the newer major). A build of an entry flagged
+// `prerelease` therefore carries a non-dismissible announcement bar that names
+// the version being read and links to the newest stable line — the first entry
+// in file order without `prerelease`. Stable builds get no banner.
+//
+// The link is a plain absolute href: the other version is a separate Docusaurus
+// instance, so it must be a full page load rather than an SPA route (see the
+// version dropdown below for the same reasoning).
+const stableVersion = docsVersions.find(v => !v.prerelease)
+const versionBanner =
+  activeVersion?.prerelease && stableVersion
+    ? {
+        announcementBar: {
+          id: `version-banner-${activeVersion.label
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "")}`,
+          content: `You are reading the documentation for <b>${activeVersion.label}</b>, which has not been released yet. For the current stable release, see the <a href="${stableVersion.path}">${stableVersion.label} documentation</a>.`,
+          isCloseable: false,
+          // Docusaurus applies these as inline styles (defaulting to #fff/#000).
+          // The banner uses its own variables (defined per theme in custom.css)
+          // so that both light and dark mode meet WCAG AA (>= 4.5:1) contrast.
+          backgroundColor: "var(--eb-version-banner-bg)",
+          textColor: "var(--eb-version-banner-fg)",
+        },
+      }
+    : {}
 
 const config: Config = {
   title: "electron-builder",
@@ -121,6 +152,7 @@ const config: Config = {
   themes: ["@docusaurus/theme-mermaid"],
 
   themeConfig: {
+    ...versionBanner,
     colorMode: {
       respectPrefersColorScheme: true,
     },
