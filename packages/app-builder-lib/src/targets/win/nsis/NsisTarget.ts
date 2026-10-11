@@ -932,7 +932,9 @@ export class NsisTarget extends Target {
    * Only warns when a custom script is actually supplied; the generated ProgID is invisible otherwise.
    */
   private async warnAboutProgIdFormatChange(fileAssociations: Array<FileAssociation>, progIdMaker: ProgIdMaker): Promise<void> {
-    if (this.progIdWarningEmitted) {
+    // checked first: resolving the custom script is not free, and computeFinalScript runs for every installer script
+    const limited = log.once("nsis-progid-format-change", this)
+    if (limited.isExhausted) {
       return
     }
     const packager = this.packager
@@ -940,7 +942,6 @@ export class NsisTarget extends Target {
     if (!hasCustomScript) {
       return
     }
-    this.progIdWarningEmitted = true
     const examples = fileAssociations
       .slice(0, 3)
       .map(item => {
@@ -948,15 +949,13 @@ export class NsisTarget extends Target {
         return `${item.name || ext} -> ${progIdMaker.progId(item.name || ext)}`
       })
       .join(", ")
-    log.warn(
+    limited.warn(
       { progIds: examples, solution: "update any registry keys, shell verbs, or external tooling that references the old ProgID" },
       "NSIS file associations now register a generated ProgID instead of the association name or extension. " +
         "You ship a custom NSIS script (nsis.include / nsis.script), which may reference the old value. " +
         "See https://www.electron.build/docs/migration/v27-breaking-changes#nsis-file-association-progid-format-changed"
     )
   }
-
-  private progIdWarningEmitted = false
 
   private async computeFinalScript(originalScript: string, isInstaller: boolean, archs: Map<Arch, string>): Promise<string> {
     const packager = this.packager

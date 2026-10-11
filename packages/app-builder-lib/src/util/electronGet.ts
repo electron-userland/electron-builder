@@ -646,9 +646,6 @@ export function resolveBuilderBinaryUrl(releaseName: string, filenameWithExt: st
  * Downloads a generic artifact (.tar.gz or .zip) from a GitHub release.
  * Used for electron-builder-binaries tools (appimage, etc.).
  */
-/** Toolsets already announced this process, so a multi-target build logs each one once. */
-const announcedToolsets = new Set<string>()
-
 /**
  * Every `toolsets.*` property now defaults to "latest", which resolves to a newer bundle than v26
  * pinned (NSIS 3.0.4.1 -> 3.12, winCodeSign 2.6.0 -> 1.3.0, Wine 4.0.1 -> 11.0, AppImage FUSE2 ->
@@ -657,11 +654,8 @@ const announcedToolsets = new Set<string>()
  * bundle had no trace in the build log tying it to the toolset.
  */
 function announceToolsetVersion(releaseName: string): void {
-  if (announcedToolsets.has(releaseName)) {
-    return
-  }
-  announcedToolsets.add(releaseName)
-  log.info({ toolset: releaseName }, "using toolset")
+  // once per toolset per process, so a multi-target build logs each one once
+  log.once(`toolset:${releaseName}`).info({ toolset: releaseName }, "using toolset")
 }
 
 export async function downloadBuilderToolset(options: {

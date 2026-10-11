@@ -306,10 +306,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   updateManifestPublicKey: string | Array<string> | null = null
 
-  // v27 behaviour changes a plain-JavaScript app would otherwise not notice: each is announced once per updater
-  private crossOriginHeadersWarned = false
-  private crossOriginFeedQueryWarned = false
-
   /**
    *  The request headers.
    */
@@ -955,18 +951,17 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   private announceCrossOriginDownload(url: URL, credentialOrigin: URL, headers: OutgoingHttpHeaders, feedBaseUrl: URL | null): void {
     const docs = "https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
     const names = HttpExecutor.sensitiveHeaderNames(headers)
-    if (names.length !== 0 && !this.crossOriginHeadersWarned) {
-      this.crossOriginHeadersWarned = true
-      this._logger.warn(
+    // v27 behaviour changes a plain-JavaScript app would otherwise not notice: each is announced once per updater
+    if (names.length !== 0) {
+      this.limitedLogger("cross-origin-headers").warn(
         `electron-updater 7 (electron-builder v27) sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (${credentialOrigin.origin}): ` +
           `${names.join(", ")} not sent to ${url.origin}, which is another origin. ` +
           `If that server needs them, serve the update files from the feed origin or use pre-signed URLs. ${docs}`
       )
     }
     const feedQueryNames = feedBaseUrl == null ? [] : [...new Set(feedBaseUrl.searchParams.keys())]
-    if (feedQueryNames.length !== 0 && !this.crossOriginFeedQueryWarned) {
-      this.crossOriginFeedQueryWarned = true
-      this._logger.warn(
+    if (feedQueryNames.length !== 0) {
+      this.limitedLogger("cross-origin-feed-query").warn(
         `electron-updater 7 (electron-builder v27) adds the feed URL's query string (${feedQueryNames.join(", ")}) only to URLs on the update feed's origin (${feedBaseUrl!.origin}): ` +
           `not added to the download from ${url.origin}, which keeps its own query string. ` +
           `If that server needs it, serve the update files from the feed origin or use pre-signed URLs. ${docs}`
