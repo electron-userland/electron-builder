@@ -1,16 +1,17 @@
 import _aws4 from "aws4"
 const { sign } = _aws4
 import { request } from "https"
-import { resolveAwsCredentials } from "./awsCredentials.js"
+import { resolveAwsCredentialsForS3 } from "./awsCredentials.js"
 
 /**
  * Resolves the AWS region for a bucket via the S3 GetBucketLocation API (SigV4-signed).
  * Uses path-style endpoint so dotted bucket names pass TLS hostname validation.
- * Credentials are resolved via the standard provider chain (env vars → ~/.aws/credentials).
+ * Credentials are resolved from env, shared credentials, or shared config (when enabled).
  * AWS returns an empty LocationConstraint element for us-east-1 (the implicit default region).
  * Mirrors the behaviour of the `get-bucket-location` app-builder subcommand.
  */
-export function getBucketLocation(bucket: string): Promise<string> {
+export async function getBucketLocation(bucket: string): Promise<string> {
+  const credentials = await resolveAwsCredentialsForS3()
   return new Promise((resolve, reject) => {
     let settled = false
     const settle = (fn: (v: any) => void, v: any) => {
@@ -28,7 +29,7 @@ export function getBucketLocation(bucket: string): Promise<string> {
         host: "s3.amazonaws.com",
         path: `/${bucket}?location`,
       },
-      resolveAwsCredentials()
+      credentials
     )
 
     const req = request(

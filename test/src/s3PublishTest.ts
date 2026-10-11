@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 vi.mock("https")
 vi.mock("electron-publish/src/s3/awsCredentials", () => ({
   resolveAwsCredentials: vi.fn().mockReturnValue({ accessKeyId: "test-key", secretAccessKey: "test-secret" }),
+  resolveAwsCredentialsForS3: vi.fn().mockResolvedValue({ accessKeyId: "test-key", secretAccessKey: "test-secret" }),
 }))
 
 // ─── Imports after mocks ──────────────────────────────────────────────────────
@@ -15,7 +16,7 @@ import * as https from "https"
 import { Arch } from "builder-util"
 import { CancellationToken, S3Options, SpacesOptions } from "builder-util-runtime"
 import { PublishContext, UploadTask } from "electron-publish"
-import { resolveAwsCredentials } from "electron-publish/src/s3/awsCredentials"
+import { resolveAwsCredentials, resolveAwsCredentialsForS3 } from "electron-publish/src/s3/awsCredentials"
 import { S3Publisher } from "electron-publish/internal"
 import { SpacesPublisher } from "electron-publish/internal"
 import { getS3ContentType } from "electron-publish/src/s3/s3UploadHelper"
@@ -120,6 +121,23 @@ describe("S3Publisher — getS3UploadConfig", () => {
   it("forcePathStyle is undefined when not set", () => {
     const config = makeS3Publisher({ forcePathStyle: undefined }).getS3UploadConfig()
     expect(config.forcePathStyle).toBeUndefined()
+  })
+
+  it("resolves shared-config credentials before signing the upload", async () => {
+    const { capturedOpts } = mockSuccessfulUpload()
+    const { writeFile, mkdtemp, rm } = await import("fs/promises")
+    const { tmpdir } = await import("os")
+    const fileDir = await mkdtemp(path.join(tmpdir(), "s3-upload-"))
+    const file = path.join(fileDir, "artifact.zip")
+    await writeFile(file, "artifact")
+    vi.mocked(resolveAwsCredentialsForS3).mockResolvedValueOnce({ accessKeyId: "CONFIG_KEY", secretAccessKey: "config-secret", sessionToken: "config-token" })
+    try {
+      await makeS3Publisher().upload(makeTask(file))
+      expect(capturedOpts()?.headers.Authorization).toContain("CONFIG_KEY")
+      expect(capturedOpts()?.headers["X-Amz-Security-Token"] ?? capturedOpts()?.headers["x-amz-security-token"]).toBe("config-token")
+    } finally {
+      await rm(fileDir, { recursive: true, force: true })
+    }
   })
 
   it("uses credentials from resolveAwsCredentials()", () => {
@@ -333,7 +351,7 @@ describe("BaseS3Publisher.upload — key construction and S3 request", { concurr
     expect(auth).toMatch(/x-amz-content-sha256/)
   })
 
-  it("cancellation destroys the request", async () => {
+  it("cancellation prevents the request or destroys one already started", async () => {
     let destroyCalled = false
     vi.mocked(https.request).mockImplementationOnce((_opts: unknown, _cb: unknown) => {
       const req = new EventEmitter() as ReturnType<typeof https.request>
@@ -351,7 +369,7 @@ describe("BaseS3Publisher.upload — key construction and S3 request", { concurr
     const uploadPromise = publisher.upload(makeTask(testFile))
     context.cancellationToken.cancel()
     await uploadPromise.catch(() => null)
-    expect(destroyCalled).toBe(true)
+    expect(destroyCalled || vi.mocked(https.request).mock.calls.length === 0).toBe(true)
   })
 })
 

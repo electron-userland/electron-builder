@@ -7,11 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 vi.mock("https")
 vi.mock("electron-publish/src/s3/awsCredentials", () => ({
   resolveAwsCredentials: vi.fn().mockReturnValue({ accessKeyId: "test-key", secretAccessKey: "test-secret" }),
+  resolveAwsCredentialsForS3: vi.fn().mockResolvedValue({ accessKeyId: "test-key", secretAccessKey: "test-secret" }),
 }))
 
 // Import after mock is in place.
 import * as https from "https"
-import { resolveAwsCredentials } from "electron-publish/src/s3/awsCredentials"
+import { resolveAwsCredentials, resolveAwsCredentialsForS3 } from "electron-publish/src/s3/awsCredentials"
 import { getBucketLocation } from "electron-publish/src/s3/bucketLocation"
 
 // ─── Mock helper ─────────────────────────────────────────────────────────────
@@ -114,22 +115,22 @@ describe("getBucketLocation — XML response parsing", () => {
 describe("getBucketLocation — credential chain", { concurrent: false }, () => {
   beforeEach(() => {
     vi.mocked(https.request).mockClear()
-    vi.mocked(resolveAwsCredentials).mockClear()
+    vi.mocked(resolveAwsCredentialsForS3).mockClear()
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
   })
 
-  it("calls resolveAwsCredentials() and uses the result for signing", async () => {
-    vi.mocked(resolveAwsCredentials).mockReturnValueOnce({ accessKeyId: "AKIATEST", secretAccessKey: "secret" })
+  it("calls resolveAwsCredentialsForS3() and uses the result for signing", async () => {
+    vi.mocked(resolveAwsCredentialsForS3).mockResolvedValueOnce({ accessKeyId: "AKIATEST", secretAccessKey: "secret" })
     mockHttpResponse(200, "<LocationConstraint>us-west-2</LocationConstraint>")
 
     await getBucketLocation("my.bucket")
 
     // toHaveBeenCalled (not CalledOnce) because concurrent tests in other describes
     // may also call resolveAwsCredentials via getBucketLocation at the same time.
-    expect(resolveAwsCredentials).toHaveBeenCalled()
+    expect(resolveAwsCredentialsForS3).toHaveBeenCalled()
     // The Authorization header in the request should reference the access key
     const callArgs = vi.mocked(https.request).mock.calls.at(-1)?.[0] as any
     const authHeader = callArgs?.headers?.Authorization ?? callArgs?.headers?.authorization ?? ""
@@ -137,7 +138,7 @@ describe("getBucketLocation — credential chain", { concurrent: false }, () => 
   })
 
   it("still makes the request when no credentials are found (anonymous request)", async () => {
-    vi.mocked(resolveAwsCredentials).mockReturnValueOnce(undefined)
+    vi.mocked(resolveAwsCredentialsForS3).mockResolvedValueOnce(undefined)
     mockHttpResponse(200, "<LocationConstraint>eu-central-1</LocationConstraint>")
 
     const region = await getBucketLocation("public-bucket")
