@@ -378,7 +378,6 @@ export class GitlabPublisher extends HttpPublisher {
   }
 }
 
-/** @internal */
 export function getGenericPackageUrl(baseApiPath: string, projectId: string, version: string, fileName: string): string {
   return `${baseApiPath}/projects/${encodeURIComponent(projectId)}/packages/generic/releases/${encodeURIComponent(version)}/${encodeURIComponent(fileName)}`
 }
