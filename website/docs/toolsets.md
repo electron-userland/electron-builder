@@ -161,46 +161,129 @@ Because 7-Zip is the tool electron-builder uses to extract `.7z` and `.tar.xz` a
 
 ### Custom NSIS bundle layout {#custom-nsis-bundle-layout}
 
-A custom `toolsets.nsis` bundle replaces the whole NSIS toolset: the `makensis` compiler, the NSIS data directory (`NSISDIR`: stubs, headers and UIs), the plugins and `elevate.exe`. electron-builder looks these up relative to the bundle root, in this order:
+:::warning[Did you use deprecated `.customNsisBinary`/`.customNsisResources` properties in `v26` config?]
+Checkout our [`v26`-> `v27` migration guide](./migration/v26-to-v27#step-4-custom-nsis-migration-guide) and relevant [breaking changes note](./migration/v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis).
+:::
 
-| What | Where electron-builder looks | Needed |
-|---|---|---|
-| `makensis`, entrypoint layout | `makensis` (macOS, Linux) or `makensis.cmd` (Windows) at the root. It is run as-is and must set `NSISDIR` itself. | One of the two `makensis` layouts |
-| `makensis`, fallback layout (the v26 bundle layout) | Used when the entrypoint is missing: `Bin/makensis.exe` (Windows), `mac/makensis` (macOS) or `linux/makensis` (Linux), with `NSISDIR` set to the bundle root. | |
-| NSIS data (`NSISDIR`) | `Stubs/`, `Include/` and `Contrib/` (including `Modern UI 2`, `Language files` and `Graphics`) inside `NSISDIR`: `windows/` in the default bundle, whose entrypoint sets it, or the bundle root in the fallback layout. | Yes |
-| Plugins | `plugins/<arch>/`, else `windows/Plugins/<arch>/`. `<arch>` is `x86-unicode`, or `x86-ansi` with `unicode: false`; no other architecture folder is read. The names are case-sensitive on case-sensitive file systems. | Yes |
-| `elevate.exe` | At the bundle root. | Unless `packElevateHelper: false` (and `perMachine` is not `true`) |
 
-The default bundle (`nsis-bundle-3.12.tar.gz` from the [`nsis@1.2.1` release](https://github.com/electron-userland/electron-builder-binaries/releases) of electron-builder-binaries) uses the entrypoint layout:
+#### Custom NSIS bundle Explanation
 
-```text
-nsis-bundle/                 top-level folder, stripped on extraction
-├── makensis                 POSIX entrypoint: runs mac/<x64|arm64>/makensis or linux/<x64|arm64>/makensis with NSISDIR=windows
-├── makensis.cmd             Windows entrypoint: runs windows/makensis.exe with NSISDIR=windows
-├── elevate.exe
-├── mac/x64/makensis, mac/arm64/makensis
-├── linux/x64/makensis, linux/arm64/makensis
-└── windows/                 NSISDIR
-    ├── makensis.exe
-    ├── Stubs/  Include/  Contrib/
-    └── Plugins/x86-unicode/, Plugins/x86-ansi/, …
-```
+The new NSIS bundle is extremely flexible in-that it provides entrypoints to give you full control of how NSIS execution begins & where NSIS Resources are checked for. There is one bash script entry-point for linux/mac builds at `/makensis` in the bundle and two entrypoints for windows cmd/powershell builds respectively `/makensis.cmd` & `/makensis.ps1`. Any time makensis is invoked by electron-builder with a custom-nsis-toolset it passes off all the execution arguments to the relevant flavored script-shim based on the build-machine OS. These scripts also make it trivial to set the `NSISDIR` (NSIS Resources Directory) wherever you want.
 
-**What electron-builder brings itself:** the installer scripts and their `.nsh` headers (including the headers for `StdUtils`, `UAC` and `nsProcess`), the installer messages, and any extra plugins you put in `build/x86-unicode/` or `build/x86-ansi/`. It does not patch the bundle.
+The flexible nature of this toolset provides a greener-pasture for custom NSIS development to make some practical and exotic progress.
 
-**What the bundle must carry:** the plugin DLLs. Besides the plugins that ship with NSIS (`System`, `nsExec`, `nsDialogs`, `BgImage`, …), the installer scripts call `StdUtils`, `UAC`, `nsProcess`, `WinShell` and `SpiderBanner`, plus `nsis7z` (7z app package), `nsisunz` (zip app package) and `INetC` (`nsis-web`). The default bundle also patches a few files in `Contrib/Language files` (Finnish, Hungarian, Korean, Simplified Chinese, Thai, Turkish); a bundle built from a stock NSIS release lacks those fixes unless you copy them over.
+:::note[NSIS Entrypoint Shim Scripts]
+If you do not need to support builds on Linux/MacOS then you can ommit the `/makensis` bash-script entrypoint from your bundle. Similarly if you do not need to support builds on Windows you can ommit the `/makensis.cmd`/`/makensis.ps1` entrypoint shim scripts from your bundle. At present `/makensis.ps1` is not actually used by electron-builder - It is still considered a required file & not including it may cause your bundle to break unexpectedly from a future electron-builder update.
+:::
 
-**`makensis` and the stubs must come from the same build**: the same NSIS version or fork (for example NSISBI) and the same compile-time options. Official NSIS and NSISBI releases ship only a Windows `makensis.exe`, so to build on macOS or Linux, compile `makensis` for that host from the same source with the same options (`scons … install-compiler`). [`installerDebugLogging`](./migration/v27-breaking-changes.md#nsiscustomnsisbinary-toolsetsnsis) additionally needs `makensis` and the stubs compiled with `NSIS_CONFIG_LOG=yes`, which the bundled versions are not.
+---
 
-#### Repacking an NSIS or NSISBI release
+#### Default Custom NSIS bundle Anatomy
 
-1. Start from the default bundle (above) so you keep its entrypoints, `elevate.exe` and plugins.
-2. Replace `windows/makensis.exe` and `windows/Stubs/` with those of your NSIS or NSISBI release, and `windows/Include/` and `windows/Contrib/` too if the release changes them. Keep `windows/Plugins/`, adding the release's own plugins where they differ.
-3. For each macOS or Linux host you build on, replace `mac/<arch>/makensis` or `linux/<arch>/makensis` with one compiled from the same source and options. If you build only on Windows, the other hosts' binaries are never run.
-4. Pack it with one top-level folder (`tar -czf my-nsis.tar.gz nsis-bundle`) and compute its [checksum](#custom-toolset-checksum).
-5. Point `toolsets.nsis` at it: `{ "url": "https://…/my-nsis.tar.gz", "checksum": "<that value>", "version": "nsisbi-3.10" }`. While testing, `{ "url": "file:///abs/path/to/nsis-bundle" }` uses the unpacked folder directly, without a checksum.
+A functional flushed out example NSIS Bundle can be found from `electron-builder-binaries` [Default NSIS Bundle](https://github.com/electron-userland/electron-builder-binaries/tree/master/artifacts/nsis). It contains some resources not required for builds that we think still could be useful.
 
-For a Windows-only build you can instead use the fallback layout: the unpacked folder of a stock NSIS release zip already has `Bin/makensis.exe`, `Stubs/`, `Include/`, `Contrib/` and `Plugins/` (check that your fork's does too). Add `elevate.exe` at its root and the extra plugins listed above to `Plugins/x86-unicode/`, then zip its contents with the files at the root of the zip.
+This is the same bundle we use for vanilla-builds and can be explored to get an idea of how custom-nsis bundles work. Here's a breakdown of some highlights:
+
+| File Path | Purpose |
+|-|-|
+| `/makensis` | A bash script to route all builds running from macOS/Linux hosts to the appropriate `makensis` binary. Also sets `NSISDIR` (NSIS Resource Directory) to be `/windows/` |
+| `/makensis.cmd` | A command script to route incoming windows builds to the `/windows/makensis.exe` binary. Also sets `NSISDIR` (NSIS Resource Directory) to be `/windows/` |
+| `/makensis.ps1` | A PowerShell script wich may be used in the future by electron-builder to route incoming windows builds from to the `/windows/makensis.exe` binary. Also sets `NSISDIR` (NSIS Resource Directory) to be `/windows/` |
+| `/elevate.exe` | A script used by 3rd party UAC plugin for privledge management. **You must include this file in your bundle if you use ElectronBuilder's included NSIS scripts**  |
+| `/windows/` | This is the directory used as the NSIS dir for Custom NSIS Resources |
+| `/windows/Plugins/x86-unicode/` | This is where all Plugin DLLs called into by NSIS scripts live for this bundle. Some plugins ship with NSIS, some are 3rd party plugins. The 3rd party plugins found here will be required in your custom-build if you use ElectronBuilder's standard NSIS scripts. All `makensis/makensis.exe` binaries in this bundle were compiled with the `x86-unicode` target. They will only call DLLs from this directory.|
+| `/windows/Contrib` | These files in here were used **during** the compilation of `makensis/makensis.exe` binaries in this bundle. They are not included at build-time but baked into the running binary. |
+|`/windows/nsiconfig.nsh` |  The global config file makensis processes automatically at startup, before your NSIS scripts. It sets default flags and defines like NSIS_MAX_STRLEN, NSIS_CONFIG_* options, etc. |
+| `/mac/x64/makensis` | A native `makensis` binary compiled for Intel-CPU macintosh computers. Routed to by `/makensis` entrypoint |
+| `/mac/arm64/makensis`| A native `makensis` binary compiled for Apple-Silicon macintosh computers. Routed to by `/makensis` entrypoint |
+| `/linux/x64/makensis` | A native `makensis` binary compiled for x64 Linux computers. Routed to by `/makensis` entrypoint |
+| `/linux/arm64/makensis`| A native `makensis` binary compiled for arm64 Linux computers. Routed to by `/makensis` entrypoint |
+| `/windows/makensis.exe` | A native `makensis.exe` binary compiled to run on x64 Windows computers. Routed to by `/makensis.cmd` & `/makensis.ps1` entrypoints |
+
+All `makensis/makensis.exe` binaries in this bundle were compiled with the `x86-unicode` build `Target`.
+
+Many files are omitted from this list, but most of the important ones are covered. See also [NSIS Resources](#nsis-resources)
+
+The default bundle (`nsis-bundle-3.12.tar.gz` from the [`nsis@1.2.1` release](https://github.com/electron-userland/electron-builder-binaries/tree/master/artifacts/nsis)
+
+#### Custom NSIS bundle Anatomy (minimal)
+
+Here are the files that are absolutely required for a functional NSIS bundle. Note, you only have to provide shims for the operating system & architecture you intend to build on, you're also free to use wine if you have no native `makensis` binary. Hell go-wild on JIT compile custom NSIS binaries to bake in aesthetic installer choices at build time... Or you know w/e.
+
+| File | Purpose |
+|-|-|
+| `/makensis` | A bash script to route all builds running from macOS/Linux hosts to the appropriate `makensis` binary. Also sets `NSISDIR` (NSIS Resource Directory) |
+| `/makensis.cmd` | A command script used to route incoming windows builds to the appropriate `makensis.exe` binary. Also sets `NSISDIR` (NSIS Resource Directory) |
+| `/makensis.ps1` | A PowerShell script wich may be used in the future by electron-builder to route incoming windows builds to the appropriate `makensis.exe` binary. Also sets `NSISDIR` (NSIS Resource Directory). Technically it is unused now and you don't **need** to include it for a functional bundle. It is still considered required to prevent unexpected breaks in your custom-bundle build that are created in future electron-builder updates |
+| `/elevate.exe` | A script used by 3rd party plugins for privledge management. **You must include this file in your bundle if you use ElectronBuilder's included NSIS scripts**  |
+| `/<NSISDIR>/Plugins/<Target>/*` | You must include the plugins provided by NSIS in your NSISDIR` (NSIS Resource Directory). **If you use Electron Builder's built-in NSIS scripts. You also must provide DLLs for these required 3rd party plugins [INetC, StdUtils, SpiderBanner, NsProcess, UAC, WinShell, EmbedHTML, Nsisunz, NSISunzU]** |
+| `/<SomePath>/makensis` \|\| `<SomePath>/makensis.exe` | You'll need at least one `makensis/makensis.exe` binary in your bundle and your entry script must pass on makensis execution to it. **You only need to include entrypoint-scripts or binaries for the OS/Arch flavor your electron builder flow runs on**. |
+
+Note soft requirements of `elevate.exe` and `3rd party plugin DLLs` only if you use electron-builder's NSIS scripts. In practice these are almost definitely required without a ton of NSIS scripting work to create entirely custom NSIS scripts for electron-builder.
+
+You can grab these soft-required resources for your own custom bundle `electron-builder-binaries` [Default NSIS Bundle](https://github.com/electron-userland/electron-builder-binaries/tree/master/artifacts/nsis)
+
+:::warning[Limited amd64-unicode support]
+Tracking in issue [electron-builder-binaries#230](https://github.com/electron-userland/electron-builder-binaries/issues/230) there are no `amd64-unicode` compiled versions of soft-required 3rd party plugin DLLs. For best results with available NSIS resources, compile your custom NSIS binaries under the `x86-unicode` build `Target`.
+:::
+
+#### Out of the NSIS Bundle Anatomy
+
+Worth a quick note that while the bundle itself provides the full and complete NSIS build tools. Electron-Builder and anything building with NSIS still passes in it's own NSIS scripts to use it.
+
+---
+
+#### Helpful Context
+
+A custom `toolsets.nsis` bundle provides the whole NSIS toolset. The NSIS toolset is a build-tool used to compile installer/uninstaller executables for Windows build targets. To be frank, NSIS is an old tool which suffers from a complicated structure and a lot of nuance that is not cohesively documented in all areas. On the flip side NSIS is extremely battle-tested and enjoys one of the largest ecosystem of installer related plugins, tweaks and 3rd party tools. Notably it is a go-to installer type for supporting automatic-updates.
+
+Since documentation can be a bit sparse with regards to the artifacts provided by NSIS and their interactions. A brief breakdown of some key things provided by NSIS are in-order.
+
+---
+
+#### NSIS Binary
+
+As you'd expect, a functional NSIS toolset provides a binary `makensis/makensis.exe` for compiling installers/uninstaller executables for Windows build targets.
+
+While NSIS is a windows build-target tool, it can be natively compiled to run on mac/windows/linux. On mac/linux it compiles to the `makensis` executable file and on windows it compiles to `makensis.exe` executable file.
+
+Unlike modern compilers which allow for multiple output types from one compiler, the `Target` output type a `makensis/makensis.exe` binary compiles to is baked in at compile time. Valid NSIS `Target` types include `x86-unicode`,`x86-ansi`,`amd64-unicode` and one must be chosen when the tool is compiled.
+
+A `makensis/makensis.exe` binary will only build outputs of the `Target` type it was compiled for. Also very important to note, a `makensis/makensis.exe` will only be compatible with resources built for the same `Target` type it was compiled for.
+
+A `makensis/makensis.exe` must be compiled with `NSIS_CONFIG_LOG=yes` to make it possible to enable logging in NSIS scripts.
+
+Many images and assets that effect the installer appearance are also baked into the `makensis/makensis.exe` binary when it is compiled. A custom compiled `makensis/makensis.exe` binary is required for certain aesthetic customizations to the install.
+
+---
+
+#### NSIS Resources
+
+The `makensis/makensis.exe` binary can use a whole directory pattern of various resources for various parts of it's compilation execution. These resources are commonly arranged in a folder-tree like so:
+
+| Resource Type | NSIS Directory Location | Description |
+|---|--|---|
+| Plugins  | `/Plugins/{ x86-unicode \|\| x86-ansi \|\| amd64-unicode }/<name>.dll`  | Compiled binary DLLs to expose advanced execution to NSIS scripts. These must be compiled with the same `Target` as the `makensis/makensis.exe` binary |
+| Include | `/Include/<name>.nsh` | These are `.nsh` headers which can contain code/macros used by NSIS scripts |
+| Conf File | `/nsiconfig.nsh` |  The global config file makensis processes automatically at startup, before your NSIS scripts. It sets default flags and defines like NSIS_MAX_STRLEN, NSIS_CONFIG_* options, etc. |
+| Contrib | `/Contrib/<various>` | These are language/image assets that are baked into the `makensis/makensis.exe` binary when it's created. They are not read during `makensis` exec. |
+| Stubs | `/Stubs/<name>` | Functional complete binaries that NSIS uses as a base to customize by appending byte-code to them. In newer versions of NSIS these must also match the `makensis/makensis.exe` binary `Target` flavor |
+| Bin | `/Bin/<name>` | Executables that can be used by plugins |
+
+This is a non-exhaustive list of potential resources.
+
+Plugins are particularly of-note here. NSIS scripts do not offer a lot of functionality on their own, so even very basic things can require a Plugin .dll to provide the functionality.
+
+
+---
+
+
+#### Debug NSIS logging
+
+
+:::info[ You can toggle logging on an NSIS bundle via: ]
+`.installerDebugLogging` However it additionally needs `makensis/makensis.exe` binaries and the stubs compiled with `NSIS_CONFIG_LOG=yes`, which the default bundle's NSIS versions are not.
+:::
 
 ## Replacing removed environment variables
 
