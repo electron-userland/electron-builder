@@ -95,7 +95,7 @@ const ASAR_ANCHOR = "asar-options-asar"
 const NATIVE_MODULES_ANCHOR = "native-module-options-nativemodules"
 const ELECTRON_GET_ANCHOR = "electrondownload-electronget"
 const WIN_SIGN_ANCHOR = "windows-signing-winsign"
-const CUSTOM_NSIS_ANCHOR = "nsiscustomnsisbinary-toolsetsnsis"
+const CUSTOM_NSIS_ANCHOR = "customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis"
 const TOOLSETS_NSIS_DETAIL =
   "Set a custom NSIS bundle via `toolsets.nsis: { url, checksum, version }`. " +
   "This is not a rename. The artifacts provided by `.customNsisBinary` & `.customNsisResources` have been merged into one toolset. " +
@@ -340,7 +340,7 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
       autoMigrated: false,
       severity: "error",
       detail:
-        `Custom  NSIS binaries now come from the \`toolsets.nsis\` bundle. ${TOOLSETS_NSIS_DETAIL} ` +
+        `Custom NSIS binaries now come from the \`toolsets.nsis\` bundle. ${TOOLSETS_NSIS_DETAIL} ` +
         (section === "portable"
           ? "Property `debugLogging` never had an effect on portable targets and has no equivalent. "
           : `Property \`debugLogging\` is now \`${section}.installerDebugLogging\` (which needs a log-enabled NSIS bundle). `) +
@@ -353,7 +353,7 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
       replacement: "toolsets.nsis",
       autoMigrated: false,
       severity: "error",
-      detail: `Custom  NSIS resources now come from the \`toolsets.nsis\` bundle. ${TOOLSETS_NSIS_DETAIL}.`,
+      detail: `Custom NSIS resources now come from the \`toolsets.nsis\` bundle. ${TOOLSETS_NSIS_DETAIL}`,
       anchor: CUSTOM_NSIS_ANCHOR,
     },
   ]),
