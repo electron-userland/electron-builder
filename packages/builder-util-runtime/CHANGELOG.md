@@ -1,5 +1,16 @@
 # builder-util-runtime
 
+## 10.0.0-alpha.9
+
+### Minor Changes
+
+- Feat(updater): optional `files[].blockMapUrl` in `latest*.yml` names a file's blockmap URL (e.g. a separately pre-signed one) instead of `${url}.blockmap` with the file URL's query string. A relative value resolves like `url` (against the feed URL); an absolute URL is used as-is, with its own host and query string. It gets the feed query and credential headers only on the feed's origin. With a `blockMapUrl`, the old blockmap is not derived from the new file's URL: it comes from the local cache, else from `previousBlockmapBaseUrlOverride`, else that update is downloaded in full (which caches the new blockmap). The manifest signature covers `blockMapUrl` when present, as an extra field on the file record, so manifests without it canonicalize and verify exactly as before; an electron-updater without this change refuses a signed manifest that has one. electron-builder does not write it. The private GitHub and GitLab providers, which resolve files from the release assets, ignore it. _[`#10270`](https://github.com/electron-userland/electron-builder/pull/10270) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [@mmaietta](https://github.com/mmaietta)_
+- Feat!: electron-updater sends update-feed credentials only to downloads on the feed's origin. With the generic, s3, spaces, r2, keygen, bitbucket, github and gitlab providers, a download on another origin than the feed (scheme, host or port) — an absolute `files[].url` or `packages.<arch>.path` in `latest*.yml`, a GitLab release asset link, and the blockmaps and differential range requests derived from them — is requested without the credential headers from `requestHeaders` / `addAuthHeader` (headers such as `Authorization`, the same set that is removed on a cross-origin redirect) and without the feed URL's query string. Such a URL keeps its own query string, so pre-signed URLs work. With every provider, including custom ones, a URL that electron-updater resolves against the feed URL (such as a `files[].url` or a blockmap) gets the feed query only on the feed's origin; as on redirects, an `http` → `https` upgrade of the feed host on the default ports keeps the headers and the query. Downloads on the feed origin are unchanged, and the old blockmap from an app-set `previousBlockmapBaseUrlOverride` keeps the credentials on that origin. If your `latest*.yml` points downloads at another origin that needs these credentials, serve the files from the feed origin or use pre-signed URLs. The NSIS web-package differential download now uses the same per-download headers as other downloads. A custom provider that does not extend a built-in one must declare `Provider.feedBaseUrl` — its feed URL (the credential headers then only go to that origin) or `null` (the request headers go to every download URL) — when the download headers include a credential header: if it does not, `downloadUpdate()` fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` before any download request. The first download that loses the credential headers, and the first that does not get the feed query, each log a warning once per updater, naming the headers, the query parameters and the origins (never their values), with a link to the migration guide; `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` links it too. New APIs: `Provider.feedBaseUrl` (`undefined`, not declared, by default), `HttpExecutor.sensitiveHeaderNames`, `HttpExecutor.removeCrossOriginSensitiveHeaders` and `HttpExecutor.isCrossOrigin`. _[`#10270`](https://github.com/electron-userland/electron-builder/pull/10270) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix: `HttpExecutor.removeCrossOriginSensitiveHeaders` copies the headers with `deepAssign`, which ignores `__proto__`, `constructor` and `prototype` keys _[`#10270`](https://github.com/electron-userland/electron-builder/pull/10270) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [@mmaietta](https://github.com/mmaietta)_
+
 ## 10.0.0-alpha.8
 
 ### Minor Changes
@@ -160,6 +171,7 @@
   Replace hardcoded service-specific hostname checks with sophisticated cross-origin redirect detection that matches industry standards from Python requests library and Apache HttpClient.
 
   **Key improvements:**
+
   - **Case-insensitive hostname comparison** for robust origin detection
   - **HTTP→HTTPS upgrade allowance** on standard ports (80→443) for backward compatibility
   - **Proper default port handling** that treats implicit and explicit default ports as equivalent

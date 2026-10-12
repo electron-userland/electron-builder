@@ -116,6 +116,9 @@ export type Defines = {
 
   APP_INSTALLER_STORE_FILE?: string
 
+  // defined when the packed app has an app-update.yml: only then does the installer keep its copy in the updater cache
+  KEEP_INSTALLER_FOR_UPDATER?: null
+
   ZIP_COMPRESSION?: null
 
   COMPRESSION_METHOD?: "zip" | "7z"

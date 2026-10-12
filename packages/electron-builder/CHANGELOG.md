@@ -1,5 +1,42 @@
 # electron-builder
 
+## 27.0.0-alpha.10
+
+### Patch Changes
+
+- Fix(migrate-schema): print an advisory, for JS/TS configs as well as JSON, YAML, TOML and package.json ones, for a `generic` publish `url` with a query string: electron-updater sends the feed query and the credential headers only to downloads on the feed's origin. The build prints the same warning once per feed (naming the query parameters, not their values) when it writes such a feed to `app-update.yml`, so it does not depend on `migrate-schema` having been run _[`#10270`](https://github.com/electron-userland/electron-builder/pull/10270) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [@mmaietta](https://github.com/mmaietta)_
+- Fix(migrate-schema): print advisories, for JS/TS configs as well as JSON, YAML, TOML and package.json ones, for `nsis.perMachine` / `nsisWeb.perMachine` (per-machine NSIS updates) and a custom `win.sign.sign` hook without `win.sign.publisherName` (whatever certificate the config names); the `nsis-web` advisory now says that web-installer updates are rejected unless `autoUpdater.disableWebInstaller` is `false` and when to set `nsisWeb.allowUnverifiedAppPackage`, and target names with an `:arch` suffix (e.g. `nsis-web:ia32`) are detected _[`#10264`](https://github.com/electron-userland/electron-builder/pull/10264) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [@mmaietta](https://github.com/mmaietta)_
+- Feat!: remove `customNsisBinary` / `customNsisResources` in favour of `toolsets.nsis` and `installerDebugLogging`; hint `--config` in `migrate-schema` _[`#10276`](https://github.com/electron-userland/electron-builder/pull/10276) [`a5eff4b`](https://github.com/electron-userland/electron-builder/commit/a5eff4b2179b949f72f791e7ff2406a30f077795) [@claude](https://github.com/apps/claude)_
+
+  v27 had stopped using a custom NSIS bundle set via `nsis.customNsisBinary` (also on `nsisWeb` / `portable`) or `customNsisResources` and silently built with the default NSIS. Both keys and the exported `CustomNsisBinary` type are now removed, and a config that sets them fails the build with a message naming the replacement:
+
+  - a custom NSIS build moves to `toolsets.nsis: { url, checksum, version }`. The url and the v26 base64 SHA-512 checksum work as before (see https://www.electron.build/docs/toolsets#custom-toolset-checksum), but the bundle must contain the NSIS plugins (`plugins/` or `windows/Plugins/`), which v26 read from a separate resources bundle
+  - `customNsisBinary.debugLogging` becomes `nsis.installerDebugLogging` (also on `nsisWeb`). It needs a log-enabled NSIS (`makensis` and stubs compiled with `NSIS_CONFIG_LOG=yes`), which the bundled `toolsets.nsis` versions are not, so setting it without a custom `toolsets.nsis` now fails with a configuration error instead of a `LogSet` error from `makensis`
+
+  `electron-builder migrate-schema` (static and JS/TS configs) moves `debugLogging` to `installerDebugLogging` (dropping it, with a warning, for `portable`, where it had no effect) and removes a `customNsisBinary` that sets nothing else. It leaves a custom bundle in place and warns, without printing its url or checksum, because the bundle itself has to change.
+
+  Any custom toolset (`toolsets.<name>: { url, checksum }`) with a checksum that is neither a SHA-256 hex value nor a base64 SHA-512 (for example a `sha256:` prefixed value) now fails with a configuration error linking to https://www.electron.build/docs/toolsets#custom-toolset-checksum before anything is downloaded, instead of a generic checksum mismatch afterwards. An uppercase hex value is lowercased.
+
+  When `migrate-schema` finds no config, its error now lists every auto-detected file name (including `electron-builder.mjs`) and says that a config file with another name needs `--config <path>`.
+
+- Chore: replace ESLint and Prettier with oxlint and oxfmt _[`#10240`](https://github.com/electron-userland/electron-builder/pull/10240) [`a578e53`](https://github.com/electron-userland/electron-builder/commit/a578e53441ede7f6fb3e9d69292dc135ef37ed17) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`e75e896`](https://github.com/electron-userland/electron-builder/commit/e75e896b93e28b1dd21a704a2f48439e09c05a10) [`6e84132`](https://github.com/electron-userland/electron-builder/commit/6e841322856c4d3aca91ae0783aa38f61fe21a40) [`2b3417b`](https://github.com/electron-userland/electron-builder/commit/2b3417bd76bcfeb539a835205e1507eb554a7b86) [`79f0062`](https://github.com/electron-userland/electron-builder/commit/79f0062e2746fcb20cd116149795ac07ce8f1b65) [`f63691e`](https://github.com/electron-userland/electron-builder/commit/f63691e78c396fb83606e520dada1687ab3ef2ae) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`02bf5b0`](https://github.com/electron-userland/electron-builder/commit/02bf5b09790e4ff36b7b639437ef765a7d185e73) [`4bc95cc`](https://github.com/electron-userland/electron-builder/commit/4bc95cce39b2862e798365dc4687443e64f001a1) [`bd7786f`](https://github.com/electron-userland/electron-builder/commit/bd7786f24b3b9eeb026931a2c0af9aad928afe7a) [`2f6d7d1`](https://github.com/electron-userland/electron-builder/commit/2f6d7d1c4bd8965909cf2e2fabbed95dc7c78d80) [`7619d08`](https://github.com/electron-userland/electron-builder/commit/7619d08a1c02049b0dd40e043346e5263c0a3e50) [`56d2d74`](https://github.com/electron-userland/electron-builder/commit/56d2d746123efa1edd4caa6871fadfedec261438) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`1b0225e`](https://github.com/electron-userland/electron-builder/commit/1b0225e22436c578533ad280b64eab7c41947a48) [`ba65cf6`](https://github.com/electron-userland/electron-builder/commit/ba65cf6db5648581677d77bfe4a06403f0a6f2cd) [`6312a4d`](https://github.com/electron-userland/electron-builder/commit/6312a4d47d8fc20371ba3be8f6063ac1b581dd77) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`581e6f5`](https://github.com/electron-userland/electron-builder/commit/581e6f55cd1e11dca7ea7743e18c7c72f687698d) [`a5eff4b`](https://github.com/electron-userland/electron-builder/commit/a5eff4b2179b949f72f791e7ff2406a30f077795) [`a578e53`](https://github.com/electron-userland/electron-builder/commit/a578e53441ede7f6fb3e9d69292dc135ef37ed17) [`871e622`](https://github.com/electron-userland/electron-builder/commit/871e622e56f8fc77682eb17bba37341ac9f31188) [`63de366`](https://github.com/electron-userland/electron-builder/commit/63de366290b074ce163070a3399a648062bcc0ad) [`ecde932`](https://github.com/electron-userland/electron-builder/commit/ecde93298dbf7ba0063d4733584aa07910e8d718) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`0966275`](https://github.com/electron-userland/electron-builder/commit/0966275eda68f3f27e6e179ad2d2c7645790a2e2) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`5f2f906`](https://github.com/electron-userland/electron-builder/commit/5f2f9065a6bd28842cbef786f41753641ad747ee)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.10`
+- `builder-util@27.0.0-alpha.10`
+- `builder-util-runtime@10.0.0-alpha.9`
+- `electron-publish@27.0.0-alpha.10`
+- `dmg-builder@27.0.0-alpha.10`
+
+</details>
+
 ## 27.0.0-alpha.9
 
 ### Minor Changes
@@ -8,6 +45,7 @@
 - Feat(migrate-schema): cover every v27 breaking config change _[`#10241`](https://github.com/electron-userland/electron-builder/pull/10241) [`6ebe0ac`](https://github.com/electron-userland/electron-builder/commit/6ebe0ac5077a5f41adb3a4e87c8f1a958ace16b1) [@claude](https://github.com/apps/claude)_
 
   `electron-builder migrate-schema` (static and JS/TS configs) now also rewrites the v26 shapes it previously left behind, which failed v27 schema validation on the next build:
+
   - platform-level `mac`/`mas`/`masDev`/`win`/`linux` `asarUnpack` → `<platform>.asar.unpack`, merging the root ASAR options in because a platform-level `asar` replaces the root one in v27; root ASAR keys that have no effect under `asar: false` are removed
   - `toolsets.*: null` entries are removed and the retired `toolsets.appimage: "1.0.2"` pin becomes `"1.0.3"`
   - `nativeRebuilder: "legacy"`, `electronDownload.force`, and v26 `null` ("unset") values on `mac.type` / `provisioningProfile` / `binaries` / `signIgnore` / `singleArchFiles` / `x64ArchFiles` are dropped instead of carried into keys that reject them; a hand-renamed `electronGet` still in the v26 shape is reshaped

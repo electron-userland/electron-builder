@@ -1,5 +1,73 @@
 ## 4.3.0
 
+## 7.0.0-alpha.9
+
+### Major Changes
+
+- Feat(updater): add `verifyUpdateFile` to `AppUpdater`, and rename the NSIS Authenticode verification interface _[`#10239`](https://github.com/electron-userland/electron-builder/pull/10239) [`317fc9e`](https://github.com/electron-userland/electron-builder/commit/317fc9e7a820c55005179d3c648b36204efd1288) [@Lemonexe](https://github.com/Lemonexe)_
+
+  `AppUpdater.verifyUpdateFile` lets an app run its own verification of an update file before that file is allowed to become installable. The default implementation is a stub that immediately succeeds. It runs on every path that can lead to an install — right after a fresh download (while the file still sits under a temporary name, so an unverified file is never executable under its real name), when an update downloaded by an earlier session is reused from the cache, and before an install-on-next-launch spawns the cached installer. On failure the file is deleted and an `ERR_UPDATER_INVALID_UPDATE_FILE` error is emitted. Assigning `null` restores the default.
+
+  The NSIS Authenticode verification interface now returns an unambiguous result object instead of the `null`-means-success / `string`-means-error convention:
+
+  ```ts
+  type VerifyUpdateFileResult =
+    | { response: "success" }
+    | { response: "failure"; message: string };
+  ```
+
+  BREAKING CHANGE: `NsisUpdater.verifyUpdateCodeSignature` is deprecated in favour of `verifyUpdateFileAuthenticodeSignature`, which differs in return type. The old name is kept as a compatibility shim that translates in both directions and shall be removed in electron-builder v28.
+
+  ```ts
+  // Before
+  autoUpdater.verifyUpdateCodeSignature = async (publisherNames, path) =>
+    isValid ? null : "why it failed";
+
+  // After
+  autoUpdater.verifyUpdateFileAuthenticodeSignature = async (
+    publisherNames,
+    path
+  ) =>
+    isValid
+      ? { response: "success" }
+      : { response: "failure", message: "why it failed" };
+  ```
+
+  BREAKING CHANGE: the protected `NsisUpdater._verifyUpdateCodeSignature` member is renamed to `_verifyUpdateFileAuthenticodeSignature` and takes the new return type. A deprecated accessor under the old name forwards to it, so a subclass that **assigns** `this._verifyUpdateCodeSignature` keeps working; a subclass that **redeclares** it as a class field shadows the accessor and must be migrated.
+
+  BREAKING CHANGE: the protected `BaseUpdater.verifyInstallerSignatureOnLaunch` returns `Promise<VerifyUpdateFileResult>` instead of `Promise<string | null>`. An override that resolves `null` to mean "verified" now reports every install-on-next-launch as unsigned; return `{ response: "success" }` instead. (This member was introduced earlier in the same v27 pre-release cycle, so only apps on a 7.0.0-alpha are affected.)
+
+- Feat!: electron-updater sends update-feed credentials only to downloads on the feed's origin. With the generic, s3, spaces, r2, keygen, bitbucket, github and gitlab providers, a download on another origin than the feed (scheme, host or port) — an absolute `files[].url` or `packages.<arch>.path` in `latest*.yml`, a GitLab release asset link, and the blockmaps and differential range requests derived from them — is requested without the credential headers from `requestHeaders` / `addAuthHeader` (headers such as `Authorization`, the same set that is removed on a cross-origin redirect) and without the feed URL's query string. Such a URL keeps its own query string, so pre-signed URLs work. With every provider, including custom ones, a URL that electron-updater resolves against the feed URL (such as a `files[].url` or a blockmap) gets the feed query only on the feed's origin; as on redirects, an `http` → `https` upgrade of the feed host on the default ports keeps the headers and the query. Downloads on the feed origin are unchanged, and the old blockmap from an app-set `previousBlockmapBaseUrlOverride` keeps the credentials on that origin. If your `latest*.yml` points downloads at another origin that needs these credentials, serve the files from the feed origin or use pre-signed URLs. The NSIS web-package differential download now uses the same per-download headers as other downloads. A custom provider that does not extend a built-in one must declare `Provider.feedBaseUrl` — its feed URL (the credential headers then only go to that origin) or `null` (the request headers go to every download URL) — when the download headers include a credential header: if it does not, `downloadUpdate()` fails with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` before any download request. The first download that loses the credential headers, and the first that does not get the feed query, each log a warning once per updater, naming the headers, the query parameters and the origins (never their values), with a link to the migration guide; `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED` links it too. New APIs: `Provider.feedBaseUrl` (`undefined`, not declared, by default), `HttpExecutor.sensitiveHeaderNames`, `HttpExecutor.removeCrossOriginSensitiveHeaders` and `HttpExecutor.isCrossOrigin`. _[`#10270`](https://github.com/electron-userland/electron-builder/pull/10270) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [@mmaietta](https://github.com/mmaietta)_
+- Feat!: NSIS web-installer updates are rejected unless `disableWebInstaller` is `false` (the v27 grace period is removed; cached and install-on-next-launch web updates re-verify the web package), and the nsis-web installer verifies `--package-file` and versioned package downloads against its built-in SHA-512 hashes (opt out with `nsisWeb.allowUnverifiedAppPackage`). Set `disableWebInstaller` before the app is ready: a pending install-on-next-launch web update is checked against it at app `ready` _[`#10264`](https://github.com/electron-userland/electron-builder/pull/10264) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [@mmaietta](https://github.com/mmaietta)_
+
+### Minor Changes
+
+- Feat(updater): optional `files[].blockMapUrl` in `latest*.yml` names a file's blockmap URL (e.g. a separately pre-signed one) instead of `${url}.blockmap` with the file URL's query string. A relative value resolves like `url` (against the feed URL); an absolute URL is used as-is, with its own host and query string. It gets the feed query and credential headers only on the feed's origin. With a `blockMapUrl`, the old blockmap is not derived from the new file's URL: it comes from the local cache, else from `previousBlockmapBaseUrlOverride`, else that update is downloaded in full (which caches the new blockmap). The manifest signature covers `blockMapUrl` when present, as an extra field on the file record, so manifests without it canonicalize and verify exactly as before; an electron-updater without this change refuses a signed manifest that has one. electron-builder does not write it. The private GitHub and GitLab providers, which resolve files from the release assets, ignore it. _[`#10270`](https://github.com/electron-userland/electron-builder/pull/10270) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [@mmaietta](https://github.com/mmaietta)_
+
+### Patch Changes
+
+- Fix: report accurate differential download progress deltas _[`#10118`](https://github.com/electron-userland/electron-builder/pull/10118) [`58e5d2e`](https://github.com/electron-userland/electron-builder/commit/58e5d2e2b26cc7665f39e7f19e93c59259d5ee76) [@OskarEichler](https://github.com/OskarEichler)_
+- Feat!: a code-signed Windows build that writes `app-update.yml` (an `nsis`, `nsis-web` or `electronUpdaterAware` `appx` target with a publish configuration, including one inferred from a GitHub `repository`) now fails with an `InvalidConfigurationError` when its publisher name cannot be determined: any custom `win.sign.sign` hook without `win.sign.publisherName` (its publisher name is never derived from a certificate, not even one in the config — `certificateFile`, `certificateSubjectName`, `certificateSha1`, `cscLink` — or from `WIN_CSC_LINK` / `CSC_LINK`, because the hook may sign with another one), or a certificate without a Common Name (including a certificate-store subject, which no longer yields an undefined publisher name). Set `win.sign.publisherName` to the subject of the signing certificate (copy it from a binary your hook already signed), or set `win.verifyUpdateCodeSignature: false` only if your updates are not Authenticode-signed or you don't use electron-updater. Error and warning messages now name `win.sign.publisherName` instead of the removed `win.publisherName`. _[`#10264`](https://github.com/electron-userland/electron-builder/pull/10264) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [@mmaietta](https://github.com/mmaietta)_
+- Fix(updater): pass the web installer package to `verifyUpdateFile` as `packageFilePath` when a pending web update is installed on next launch _[`#10264`](https://github.com/electron-userland/electron-builder/pull/10264) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [@mmaietta](https://github.com/mmaietta)_
+- Fix: handle background download rejections from `checkForUpdatesAndNotify` _[`#10113`](https://github.com/electron-userland/electron-builder/pull/10113) [`c10345f`](https://github.com/electron-userland/electron-builder/commit/c10345f7c016cb1ebaa3cf954a55e61df56d50a4) [@OskarEichler](https://github.com/OskarEichler)_
+- Fix(updater): pass the NSIS install directory (`installDirectory`, `/D=`) as the last installer argument, after `--package-file` _[`#10264`](https://github.com/electron-userland/electron-builder/pull/10264) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [@mmaietta](https://github.com/mmaietta)_
+- Chore: replace ESLint and Prettier with oxlint and oxfmt _[`#10240`](https://github.com/electron-userland/electron-builder/pull/10240) [`a578e53`](https://github.com/electron-userland/electron-builder/commit/a578e53441ede7f6fb3e9d69292dc135ef37ed17) [@claude](https://github.com/apps/claude)_
+- Fix: reject traversal segments as update cache filenames _[`#10127`](https://github.com/electron-userland/electron-builder/pull/10127) [`e832c81`](https://github.com/electron-userland/electron-builder/commit/e832c8135b2e42ec06919434b678f777ef986ff1) [@OskarEichler](https://github.com/OskarEichler)_
+- Fix(updater): the warning about `disableWebInstaller` set to `false` for a full-installer update is logged only when the app set it; for the default of an install made by an nsis-web installer an info line says that web-installer updates need `disableWebInstaller = false` after that update _[`#10264`](https://github.com/electron-userland/electron-builder/pull/10264) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [@mmaietta](https://github.com/mmaietta)_
+- Feat!: the nsis-web installer verifies and installs its own copy of a local app package. A package passed via `--package-file` (electron-updater does this for updates) or found next to the installer is first copied into the installer's own temporary directory; the checksum is computed on that copy and that copy is what is extracted. With `nsisWeb.allowUnverifiedAppPackage` a package passed via `--package-file` is still copied, but not verified. The local package file is now left in place (the installer's copy is moved into the app's update cache instead), and the installation is aborted (exit code `2`) if a `--package-file` package cannot be copied; a package found next to the installer that cannot be copied is ignored and the package is downloaded, as when its checksum doesn't match. electron-updater removes the package it passed via `--package-file` from its `pending` cache directory at startup once the app runs the version of that update (`update-info.json` records the version of a web installer update for this); the package of an update that is not installed yet, or whose install failed, is kept. _[`#10264`](https://github.com/electron-userland/electron-builder/pull/10264) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [@mmaietta](https://github.com/mmaietta)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.9`
+
+</details>
+
 ## 7.0.0-alpha.8
 
 ### Major Changes
@@ -10,25 +78,25 @@
 
   ```ts
   // Before (v6)
-  const files = await autoUpdater.downloadUpdate()
-  const installer = files[0]
-  const webInstallerPackage = files[1] // only for NSIS web installers
+  const files = await autoUpdater.downloadUpdate();
+  const installer = files[0];
+  const webInstallerPackage = files[1]; // only for NSIS web installers
 
   // After (v7)
-  const { updateFile, packageFile } = await autoUpdater.downloadUpdate()
+  const { updateFile, packageFile } = await autoUpdater.downloadUpdate();
   ```
 
   The same applies to the result of `checkForUpdates()`:
 
   ```ts
   // Before (v6)
-  const result = await autoUpdater.checkForUpdates()
-  const [installer] = (await result?.downloadPromise) ?? []
+  const result = await autoUpdater.checkForUpdates();
+  const [installer] = (await result?.downloadPromise) ?? [];
 
   // After (v7)
-  const result = await autoUpdater.checkForUpdates()
-  const download = await result?.downloadPromise
-  const installer = download?.updateFile
+  const result = await autoUpdater.checkForUpdates();
+  const download = await result?.downloadPromise;
+  const installer = download?.updateFile;
   ```
 
   The underlying cache-consistency fix from #10098 already produced this object internally; this change stops converting it back to an array at the public API boundary.
@@ -62,6 +130,7 @@
 ### Patch Changes
 
 - Fix: make multi-range differential downloads work on real servers. Three independent defects made `downloadUpdate` fall back to a full download with `Response ends without calling any handlers`: _[`#10192`](https://github.com/electron-userland/electron-builder/pull/10192) [`8e22767`](https://github.com/electron-userland/electron-builder/commit/8e227679fe34befde8fa31f6b811b86c79f010d5) [@yi-ge](https://github.com/yi-ge)_
+
   - `DataSplitter` only recognised CRLF. Some CDNs answer `multipart/byteranges` with bare LF line endings, so no part was ever split and the whole response accumulated in memory. Header lists now end at whichever of `\r\n\r\n` / `\n\n` comes first, and the `<EOL>--boundary` separator size follows the line ending the server actually uses.
   - A header-list terminator split across two chunks was never found: only the new chunk was searched, the buffered bytes never were, so the parser locked onto the next part's header instead. Only the last few bytes of an unfinished header list are now carried over and searched together with the next chunk, instead of accumulating the whole list.
   - The 10s watchdog armed when a batch response ends was never disarmed after that batch succeeded. With more than 1000 operations (several range requests) it failed the whole download whenever a later batch took longer than the grace period.
@@ -107,6 +176,7 @@
 - Feat: warn on silently skipped update signature verification and validate `publisherName` against the signing certificate at build time _[`#10056`](https://github.com/electron-userland/electron-builder/pull/10056) [`331afdd`](https://github.com/electron-userland/electron-builder/commit/331afdd30bd59aa0185f7df31b5712e62a5acfbf) [@claude](https://github.com/apps/claude)_
 
   Two guards around Windows update signature verification:
+
   - **electron-updater**: when `app-update.yml` exists but contains no `publisherName`, the updater used to skip signature verification (including custom `verifyUpdateCodeSignature` hooks) completely silently. It now logs a warning explaining that verification was skipped, how to fix it (sign the build so `publisherName` is derived automatically, or set `win.publisherName` explicitly), and that this fail-open behavior is deprecated: electron-builder v28 will treat a missing `publisherName` as a verification failure (fail-closed). The no-`app-update.yml` path (unpackaged/dev mode) stays silent.
   - **app-builder-lib**: when `publisherName` is explicitly configured and the subject of the local code signing certificate is known, the build now fails with a clear error if none of the configured names match the certificate (same DN-subset/CN matching semantics as the updater's verifier; any one of multiple configured names matching passes, so certificate-rotation setups keep working). This catches signing with the wrong certificate at build time instead of at update time. The check is skipped whenever the actual signing certificate's subject is not genuinely known (custom `sign` hooks, Azure Trusted Signing, PKCS#11 without an extractable certificate, x509 files without a CN), and `publisherName: null` remains a pure opt-out.
 
@@ -141,6 +211,7 @@
   BREAKING CHANGE: `AppUpdater.disableWebInstaller` now defaults to `true`. NSIS web-installer packages are no longer loaded unless you opt in, because their payload is fetched from a manifest-supplied URL that may not undergo signature verification.
 
   v27 ships a one-major-version grace period so existing deployments are not broken without warning:
+
   - If you never set `disableWebInstaller` (the default) and a web-installer update is received, the updater logs a deprecation warning and still downloads it. In v28 this becomes an error and the download is blocked (`ERR_UPDATER_WEB_INSTALLER_DISABLED`).
   - If you explicitly set `disableWebInstaller = true`, the download throws `ERR_UPDATER_WEB_INSTALLER_DISABLED` immediately.
 
@@ -152,23 +223,24 @@
 
   ```ts
   // Before (v26)
-  autoUpdater.quitAndInstall(true, false)
+  autoUpdater.quitAndInstall(true, false);
 
   // After (v27)
-  autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: false })
+  autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: false });
   ```
 
   **BREAKING:** the `autoInstallOnAppQuit` boolean is replaced by an `autoInstallEvent: "manual" | "onQuit" | "onNextLaunch"` enum (default `"onQuit"`, which preserves prior behavior). There is no compat alias — a single boolean cannot express the three states.
 
   ```ts
   // Before (v26)
-  autoUpdater.autoInstallOnAppQuit = false
+  autoUpdater.autoInstallOnAppQuit = false;
 
   // After (v27)
-  autoUpdater.autoInstallEvent = "manual"
+  autoUpdater.autoInstallEvent = "manual";
   ```
 
   Installing an update while the app quits spawns a detached installer process; when the quit is caused by the OS session ending (shutdown/reboot/log off on Windows), the OS can kill that installer mid-install and leave the app uninstalled but not re-installed (#7807). Two mitigations, both implemented in `BaseUpdater` so NSIS, AppImage, deb, rpm and pacman targets all inherit them:
+
   - **Session-end guard (always on):** when the OS session is ending, the on-quit install is skipped with a warning and the downloaded update stays cached for the next quit. Detection is best-effort: `powerMonitor` `shutdown` on macOS/Linux, `BrowserWindow` `session-end` on Windows (windowless apps cannot be covered on Windows).
   - **`autoInstallEvent: "onNextLaunch"` (opt-in; default is `"onQuit"`):** any app quit persists the downloaded update as pending instead of spawning the installer. On the next launch the updater re-validates the cached installer against freshly fetched update info (checksum, code signature on Windows, and an installable-change version check — newer, or a downgrade when `allowDowngrade` is set — as a loop guard) and installs it silently, restarting the app. A single quit can be deferred via the new `quitAndInstall({ waitUntilNextLaunch: true })` option.
 
@@ -190,6 +262,7 @@
   Adds `AppUpdater.allowUnverifiedLinuxPackages`. Because electron-builder does not sign Linux packages, this defaults to `true`, preserving the existing behavior: `.deb`/`.rpm` auto-updates install with the package manager's signature/GPG checks bypassed where a bypass flag exists (`--allow-unauthenticated` for the apt fallback, `--allow-unsigned-rpm` for zypper, `--nogpgcheck` for dnf/yum).
 
   If you sign your Linux packages through your own pipeline and the target systems trust your keys, set `autoUpdater.allowUnverifiedLinuxPackages = false`. What this enforces depends on the package manager used on the target system:
+
   - dpkg (the default for `.deb`): no effect — dpkg performs no signature verification (a warning is logged); enforcing `.deb` signatures requires a debsig-verify/debsigs policy on the target system.
   - apt (`.deb` fallback): `--allow-unauthenticated` is omitted.
   - zypper: enforced — unsigned/untrusted packages fail to install.
@@ -202,6 +275,7 @@
 
 - Fix: Reject the differential download promise instead of crashing with an uncaughtException when the multipart range response emits a network error _[`#10021`](https://github.com/electron-userland/electron-builder/pull/10021) [`5eed26b`](https://github.com/electron-userland/electron-builder/commit/5eed26b2a9cfd06a1dbe207b25a46ce2c0b05ae9) [@claude](https://github.com/apps/claude)_
 - Fix(updater): make GitHubProvider pick the newest available release if `allowPrerelease=true` but current version is stable _[`#9895`](https://github.com/electron-userland/electron-builder/pull/9895) [`1f681e1`](https://github.com/electron-userland/electron-builder/commit/1f681e18292c318f2563d7b87cc480ee290e99e2) [@AbdulrhmanGoni](https://github.com/AbdulrhmanGoni)_
+
   - `allowPrerelease=true` with no explicit channel and a stable current version now selects the newest valid semver release in the Atom feed (skipping unrelated non-semver tags such as other packages in a monorepo) instead of blindly taking the first feed entry (#9894).
   - When every published release is older than the installed version, the updater now reports "update not available" gracefully (and honors `allowDowngrade`) instead of throwing.
   - `allowPrerelease=false` no longer throws `ERR_UPDATER_NO_PUBLISHED_VERSIONS` when the latest release tag (from `/releases/latest`) is absent from GitHub's truncated Atom feed; it proceeds with the resolved tag.

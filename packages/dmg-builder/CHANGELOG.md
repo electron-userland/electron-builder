@@ -1,5 +1,25 @@
 # dmg-builder
 
+## 27.0.0-alpha.10
+
+### Patch Changes
+
+- Fix: resolve retina backgrounds by terminal extension _[`#10143`](https://github.com/electron-userland/electron-builder/pull/10143) [`63de366`](https://github.com/electron-userland/electron-builder/commit/63de366290b074ce163070a3399a648062bcc0ad) [@OskarEichler](https://github.com/OskarEichler)_
+
+<details><summary>Updated 3 dependencies</summary>
+
+<small>
+
+[`e75e896`](https://github.com/electron-userland/electron-builder/commit/e75e896b93e28b1dd21a704a2f48439e09c05a10) [`6e84132`](https://github.com/electron-userland/electron-builder/commit/6e841322856c4d3aca91ae0783aa38f61fe21a40) [`2b3417b`](https://github.com/electron-userland/electron-builder/commit/2b3417bd76bcfeb539a835205e1507eb554a7b86) [`79f0062`](https://github.com/electron-userland/electron-builder/commit/79f0062e2746fcb20cd116149795ac07ce8f1b65) [`f63691e`](https://github.com/electron-userland/electron-builder/commit/f63691e78c396fb83606e520dada1687ab3ef2ae) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`02bf5b0`](https://github.com/electron-userland/electron-builder/commit/02bf5b09790e4ff36b7b639437ef765a7d185e73) [`4bc95cc`](https://github.com/electron-userland/electron-builder/commit/4bc95cce39b2862e798365dc4687443e64f001a1) [`bd7786f`](https://github.com/electron-userland/electron-builder/commit/bd7786f24b3b9eeb026931a2c0af9aad928afe7a) [`7619d08`](https://github.com/electron-userland/electron-builder/commit/7619d08a1c02049b0dd40e043346e5263c0a3e50) [`56d2d74`](https://github.com/electron-userland/electron-builder/commit/56d2d746123efa1edd4caa6871fadfedec261438) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`1b0225e`](https://github.com/electron-userland/electron-builder/commit/1b0225e22436c578533ad280b64eab7c41947a48) [`ba65cf6`](https://github.com/electron-userland/electron-builder/commit/ba65cf6db5648581677d77bfe4a06403f0a6f2cd) [`6312a4d`](https://github.com/electron-userland/electron-builder/commit/6312a4d47d8fc20371ba3be8f6063ac1b581dd77) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`581e6f5`](https://github.com/electron-userland/electron-builder/commit/581e6f55cd1e11dca7ea7743e18c7c72f687698d) [`a5eff4b`](https://github.com/electron-userland/electron-builder/commit/a5eff4b2179b949f72f791e7ff2406a30f077795) [`a578e53`](https://github.com/electron-userland/electron-builder/commit/a578e53441ede7f6fb3e9d69292dc135ef37ed17) [`ecde932`](https://github.com/electron-userland/electron-builder/commit/ecde93298dbf7ba0063d4733584aa07910e8d718) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`0966275`](https://github.com/electron-userland/electron-builder/commit/0966275eda68f3f27e6e179ad2d2c7645790a2e2) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`5f2f906`](https://github.com/electron-userland/electron-builder/commit/5f2f9065a6bd28842cbef786f41753641ad747ee)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.10`
+- `builder-util@27.0.0-alpha.10`
+- `builder-util-runtime@10.0.0-alpha.9`
+
+</details>
+
 ## 27.0.0-alpha.9
 
 ### Minor Changes
