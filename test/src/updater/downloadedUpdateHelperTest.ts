@@ -1,6 +1,7 @@
 import { createTempUpdateFile, DownloadedUpdateHelper } from "electron-updater/out/DownloadedUpdateHelper"
 import { outputFile, outputJson, pathExists } from "fs-extra"
 import { mkdtemp, rm } from "fs/promises"
+import { createHash } from "crypto"
 import { tmpdir } from "os"
 import * as path from "path"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
@@ -59,6 +60,32 @@ describe("DownloadedUpdateHelper.getValidCachedUpdateFile", () => {
     // cache directory is emptied, info file should be gone
     expect(await pathExists(infoFile)).toBe(false)
     expect(log.infos.some(m => m.includes("No cached update info"))).toBe(true)
+  })
+
+  test("returns null and cleans cache when update-info.json has no file name", async () => {
+    const pending = path.join(cacheDir, "pending")
+    const infoFile = path.join(pending, "update-info.json")
+    await outputJson(infoFile, { sha512: "sha512abc", isAdminRightsRequired: false })
+
+    await expect((helper as any).getValidCachedUpdateFile(makeFileInfo("sha512abc"), log)).resolves.toBeNull()
+    expect(await pathExists(infoFile)).toBe(false)
+    expect(log.warns.some(m => m.includes("invalid fileName"))).toBe(true)
+  })
+
+  test("does not read a cached update path outside the pending directory", async () => {
+    const pending = path.join(cacheDir, "pending")
+    const outsideFile = path.join(cacheDir, "outside.exe")
+    const content = Buffer.from("outside content")
+    const sha512 = createHash("sha512").update(content).digest("base64")
+    await outputFile(outsideFile, content)
+    await outputJson(path.join(pending, "update-info.json"), {
+      fileName: "../outside.exe",
+      sha512,
+      isAdminRightsRequired: false,
+    })
+
+    await expect((helper as any).getValidCachedUpdateFile(makeFileInfo(sha512), log)).resolves.toBeNull()
+    expect(await pathExists(outsideFile)).toBe(true)
   })
 
   test("returns null and cleans cache when sha512 in info does not match expected", async () => {
