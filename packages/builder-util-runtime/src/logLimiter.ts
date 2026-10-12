@@ -52,7 +52,7 @@ export class LogLimiter {
    * nothing) once the limit is reached.
    */
   take(key: string, max = 1, scope?: object): boolean {
-    const counts = this.counts(scope, true)!
+    const counts = this.countsFor(scope)
     const count = counts.get(key) ?? 0
     if (count >= max) {
       return false
@@ -63,7 +63,7 @@ export class LogLimiter {
 
   /** Whether `key` has already been emitted `max` times — lets a call site skip computing an expensive message. */
   isExhausted(key: string, max = 1, scope?: object): boolean {
-    return (this.counts(scope, false)?.get(key) ?? 0) >= max
+    return (this.existingCounts(scope)?.get(key) ?? 0) >= max
   }
 
   /**
@@ -71,16 +71,20 @@ export class LogLimiter {
    * with no arguments — of everything. Intended for tests.
    */
   reset(key?: string, scope?: object): void {
-    if (key == null && scope == null) {
-      this.ownCounts.clear()
-      this.scopedCounts = new WeakMap()
+    if (scope == null) {
+      if (key == null) {
+        this.ownCounts.clear()
+        this.scopedCounts = new WeakMap()
+      } else {
+        this.ownCounts.delete(key)
+      }
       return
     }
     if (key == null) {
-      this.scopedCounts.delete(scope!)
-      return
+      this.scopedCounts.delete(scope)
+    } else {
+      this.existingCounts(scope)?.delete(key)
     }
-    this.counts(scope, false)?.delete(key)
   }
 
   /**
@@ -111,15 +115,29 @@ export class LogLimiter {
     }
   }
 
-  private counts(scope: object | undefined, create: boolean): Map<string, number> | undefined {
-    if (scope == null) {
+  /** The counters of `scope` (the limiter's own without one), or `undefined` when nothing has been recorded in `scope` yet. */
+  private existingCounts(scope: object | undefined): Map<string, number> | undefined {
+    return isWeakMapKey(scope) ? this.scopedCounts.get(scope) : this.ownCounts
+  }
+
+  /** The counters of `scope` (the limiter's own without one), created on first use. */
+  private countsFor(scope: object | undefined): Map<string, number> {
+    if (!isWeakMapKey(scope)) {
       return this.ownCounts
     }
     let counts = this.scopedCounts.get(scope)
-    if (counts == null && create) {
+    if (counts == null) {
       counts = new Map()
       this.scopedCounts.set(scope, counts)
     }
     return counts
   }
+}
+
+/**
+ * `scope` is typed `object`, but an untyped JavaScript caller can still pass a primitive, which `WeakMap#set` rejects with a
+ * `TypeError`: such a scope counts in the default scope instead, so that a log call never throws.
+ */
+function isWeakMapKey(scope: unknown): scope is object {
+  return (typeof scope === "object" && scope !== null) || typeof scope === "function"
 }
