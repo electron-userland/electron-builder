@@ -128,6 +128,68 @@ describe("LogLimiter", () => {
     expect(limiter.take("k", 1)).toBe(false)
     expect(limiter.take("k", 2)).toBe(true)
   })
+
+  describe("reset", () => {
+    // records "a" and "b" in the default scope, in `scope` and in `otherScope`, and returns which of them are exhausted
+    const setup = () => {
+      const limiter = new LogLimiter()
+      const scope = {}
+      const otherScope = {}
+      for (const s of [undefined, scope, otherScope]) {
+        limiter.take("a", 1, s)
+        limiter.take("b", 1, s)
+      }
+      const exhausted = () =>
+        Object.fromEntries(Object.entries({ own: undefined, scope, otherScope }).map(([name, s]) => [name, [limiter.isExhausted("a", 1, s), limiter.isExhausted("b", 1, s)]]))
+      return { limiter, scope, exhausted }
+    }
+
+    test("with no arguments forgets everything", ({ expect }) => {
+      const { limiter, exhausted } = setup()
+      limiter.reset()
+      expect(exhausted()).toEqual({ own: [false, false], scope: [false, false], otherScope: [false, false] })
+    })
+
+    test("with a key only forgets that key in the default scope", ({ expect }) => {
+      const { limiter, exhausted } = setup()
+      limiter.reset("a")
+      expect(exhausted()).toEqual({ own: [false, true], scope: [true, true], otherScope: [true, true] })
+    })
+
+    test("with a scope only forgets every key of that scope", ({ expect }) => {
+      const { limiter, scope, exhausted } = setup()
+      limiter.reset(undefined, scope)
+      expect(exhausted()).toEqual({ own: [true, true], scope: [false, false], otherScope: [true, true] })
+    })
+
+    test("with a key and a scope forgets that key in that scope", ({ expect }) => {
+      const { limiter, scope, exhausted } = setup()
+      limiter.reset("a", scope)
+      expect(exhausted()).toEqual({ own: [true, true], scope: [false, true], otherScope: [true, true] })
+    })
+
+    test("of a key or scope with nothing recorded is a no-op", ({ expect }) => {
+      const { limiter, exhausted } = setup()
+      limiter.reset("unknown")
+      limiter.reset(undefined, {})
+      limiter.reset("a", {})
+      expect(exhausted()).toEqual({ own: [true, true], scope: [true, true], otherScope: [true, true] })
+    })
+  })
+
+  test("a primitive scope from untyped callers counts in the default scope instead of throwing", ({ expect }) => {
+    const limiter = new LogLimiter()
+    const primitive = "not-an-object" as unknown as object
+
+    expect(limiter.take("k", 1, primitive)).toBe(true)
+    expect(limiter.take("k", 1, primitive)).toBe(false)
+    expect(limiter.isExhausted("k")).toBe(true)
+    expect(limiter.isExhausted("k", 1, primitive)).toBe(true)
+    expect(() => limiter.reset(undefined, primitive)).not.toThrow()
+    limiter.reset("k", primitive)
+    expect(limiter.isExhausted("k")).toBe(false)
+    expect(limiter.wrap(() => newTarget(), { key: "w", scope: primitive }).warn("m")).toBe(true)
+  })
 })
 
 const newTarget = () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() })
