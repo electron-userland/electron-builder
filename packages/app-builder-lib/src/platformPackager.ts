@@ -166,8 +166,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   )
 
-  private updateManifestSigningWarned = false
-
   /**
    * Resolves the signing keys for a build step that will emit auto-update metadata, enforcing that manifests are
    * signed: an unsigned `latest*.yml` lets anyone who can write to the update feed point every install at an
@@ -196,9 +194,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       )
     }
 
-    if (!this.updateManifestSigningWarned) {
-      this.updateManifestSigningWarned = true
-      log.warn(
+    log
+      .once("unsigned-update-manifest", this)
+      .warn(
         { platform: this.platform.name, reason: optedOut ? "updateManifest is set to false" : "no Ed25519 signing key is configured" },
         "auto-update manifests will be unsigned: anyone who can overwrite latest*.yml on your update server can point installs at an arbitrary payload. " +
           (optedOut
@@ -207,7 +205,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           "Note that installs which already embed a public key reject unsigned manifests (ERR_UPDATER_MANIFEST_NOT_SIGNED). " +
           "See https://www.electron.build/features/signed-update-manifests"
       )
-    }
     return keys
   }
 

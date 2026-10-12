@@ -1,4 +1,5 @@
 import { createRequire } from "node:module"
+import { LogLimiter } from "builder-util-runtime/internal"
 import {
   AllPublishOptions,
   asArray,
@@ -16,6 +17,7 @@ import {
   collectManifestSignatures,
   normalizePublicKeyList,
   verifyManifestSignatures,
+  type LimitedLogger,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
@@ -305,7 +307,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   updateManifestPublicKey: string | Array<string> | null = null
 
-  private manifestVerificationWarned = false
   // v27 behaviour changes a plain-JavaScript app would otherwise not notice: each is announced once per updater
   private crossOriginHeadersWarned = false
   private crossOriginFeedQueryWarned = false
@@ -325,6 +326,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   protected _logger: Logger = console
+
+  // per updater instance, so several updaters (and tests) keep their own counts
+  private readonly logLimiter = new LogLimiter()
+
+  /**
+   * The current logger (`this.logger`, whichever one is set at call time), emitting at most `max` times per `key`
+   * for this updater instance. The counting stays here: a logger supplied through `autoUpdater.logger` is called
+   * exactly as before and does not need to support anything beyond {@link Logger}.
+   * @internal
+   */
+  protected limitedLogger(key: string, max = 1): LimitedLogger<Logger> {
+    return this.logLimiter.wrap(() => this._logger, { key, max })
+  }
 
   // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
   get netSession(): Session {
@@ -703,10 +717,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     if (trustedKeys.length === 0) {
-      if (!this.manifestVerificationWarned) {
-        this.manifestVerificationWarned = true
-        this._logger.warn("update manifest signature verification is disabled. Configure updateManifestPublicKey (and sign manifests at build time) to enable it.")
-      }
+      this.limitedLogger("manifest-verification-disabled").warn(
+        "update manifest signature verification is disabled. Configure updateManifestPublicKey (and sign manifests at build time) to enable it."
+      )
       return
     }
 
