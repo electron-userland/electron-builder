@@ -108,14 +108,14 @@ HSM signing is available in v27 as a **beta** feature. The configuration interfa
 
 Signs using a Hardware Security Module (HSM), FIPS-compliant token, or smart card via `signtool.exe`'s `/csp` (cryptographic service provider) and `/kc` (key container) flags. The private key never leaves the hardware; only the public certificate chain needs to be accessible to electron-builder.
 
-**Platform:** Windows only. For macOS/Linux CI without a Windows VM, use [`type: "pkcs11"`](#pkcs11-signing-typepkcs11-beta) instead.
+**Platform:** Windows only. For macOS/Linux CI without a Windows VM, use [`type: "pkcs11"`](#pkcs11-signing-type-pkcs11-beta) instead.
 
 **Requirement:** a modern `winCodeSign` toolset, which is the default — you do not need to pin a version. Only an explicit legacy pin (`toolsets.winCodeSign: "0.0.0"`) is unsupported, because it predates the required signtool version.
 
 ### Setup
 
 1. Install the CSP driver for your HSM/token on the build machine. Examples:
-   - Google Cloud KMS: the [Cloud KMS Windows CNG Provider](https://cloud.google.com/kms/docs/reference/code-signing).
+   - Google Cloud KMS: the [Cloud KMS Windows CNG Provider](https://cloud.google.com/kms/docs/reference/cng-provider).
    - Smart card / FIPS token: `"Microsoft Base Smart Card Crypto Provider"` (built into Windows).
 2. Obtain the certificate chain file (`.crt`, `.cer`, or `.pfx` — public key only).
 3. Configure electron-builder:
@@ -163,7 +163,7 @@ PKCS#11 signing is available in v27 as a **beta** feature. The configuration int
 
 Signs using a PKCS#11 hardware token via `osslsigncode`. Unlike HSM signing, this works on macOS and Linux without a Windows VM, making it suitable for cloud CI environments where a physical token is accessible via network HSM or PKCS#11-over-network software.
 
-**Platform:** macOS and Linux only (uses `osslsigncode`). On Windows, use [`type: "hsm"`](#hsm-signing-typehsm-beta) instead.
+**Platform:** macOS and Linux only (uses `osslsigncode`). On Windows, use [`type: "hsm"`](#hsm-signing-type-hsm-beta) instead.
 
 ### Setup
 

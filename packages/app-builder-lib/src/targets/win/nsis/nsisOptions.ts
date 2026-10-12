@@ -141,7 +141,7 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   /**
    * The path to NSIS include script to customize installer, or an array of such paths to include multiple scripts. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).
    *
-   * Each path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.
+   * Each path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#directories) first and then relative to the project directory.
    * When an array is provided, all scripts are included in the specified order.
    */
   readonly include?: string | Array<string> | null
@@ -265,7 +265,7 @@ export interface PortableOptions extends TargetSpecificOptions, CommonNsisOption
   /**
    * The path to NSIS include script to customize the portable launcher, or an array of such paths to include multiple scripts. See [Custom NSIS script](#custom-nsis-script).
    *
-   * Each path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.
+   * Each path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#directories) first and then relative to the project directory.
    * When an array is provided, all scripts are included in the specified order.
    *
    * Unlike the installer targets, the portable target does **not** fall back to `build/installer.nsh` — a custom script is only included when this option is explicitly set.

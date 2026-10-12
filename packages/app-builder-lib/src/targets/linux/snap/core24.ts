@@ -184,7 +184,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
           `     required stage-packages manually.\n` +
           `  2. Switch to an isolated build environment by setting snapcraft.core24.useLXD: true\n` +
           `     or snapcraft.core24.useMultipass: true instead of useDestructiveMode.\n\n` +
-          `See: https://snapcraft.io/docs/gnome-extension`
+          `See: https://documentation.ubuntu.com/snapcraft/stable/reference/extensions/gnome-extension/`
       )
     }
     const resolvedExtensions = extensionsList.length > 0 ? extensionsList : undefined
