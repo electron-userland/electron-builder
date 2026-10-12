@@ -44,7 +44,7 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    * Requires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. The default `toolsets.nsis` bundle
    * is not log-enabled, so supply one as a custom `toolsets.nsis` bundle; the build fails otherwise.
    * Replaces the v26 `customNsisBinary.debugLogging`.
-   * @see https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis
+   * @see https://www.electron.build/docs/migration/v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis
    * @default false
    */
   readonly installerDebugLogging?: boolean
