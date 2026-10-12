@@ -1,3 +1,40 @@
+export type LogLevel = "info" | "warn" | "debug" | "error"
+
+export interface LogLimitOptions {
+  /** Stable identifier of the message. Use an explicit key, not the message text: messages embed values (paths, platforms) that vary between calls. */
+  readonly key: string
+  /** How many times the message may be emitted. Defaults to 1. */
+  readonly max?: number
+  /**
+   * Object whose lifetime bounds the count (a packager, a target, a build's cancellation token), so each one gets
+   * its own quota and the counters are garbage-collected with it. Defaults to the limiter itself: once per process
+   * for builder-util's `log` singleton, once per updater instance in electron-updater.
+   */
+  readonly scope?: object
+}
+
+/** Any logger with `info`/`warn`/`error` and an optional `debug` — builder-util's `Logger`, electron-updater's `Logger`, `console`. */
+export interface LoggerLike {
+  info(...args: any[]): unknown
+  warn(...args: any[]): unknown
+  error(...args: any[]): unknown
+  debug?(...args: any[]): unknown
+}
+
+/**
+ * The `info`/`warn`/`error`/`debug` methods of a wrapped logger `T` (taking the same arguments), each emitting only while
+ * the limit allows. Each returns whether it emitted.
+ */
+export interface LimitedLogger<T extends LoggerLike = LoggerLike> {
+  info(...args: Parameters<T["info"]>): boolean
+  warn(...args: Parameters<T["warn"]>): boolean
+  error(...args: Parameters<T["error"]>): boolean
+  /** Does not consume the quota when the logger has no `debug` method or debug logging is disabled. */
+  debug(...args: Parameters<NonNullable<T["debug"]>>): boolean
+  /** Whether the limit has been reached, so a call site can skip computing an expensive message. */
+  readonly isExhausted: boolean
+}
+
 /**
  * Counts how many times each keyed log message has been emitted, so a call site can say "log this at most N times"
  * instead of keeping its own `xxxWarned = false` flag or `Set` of already-warned keys.
@@ -44,6 +81,34 @@ export class LogLimiter {
       return
     }
     this.counts(scope, false)?.delete(key)
+  }
+
+  /**
+   * Wraps the logger returned by `target` (read on every call, so a logger set later receives whatever quota is left)
+   * so that each of its levels emits `key` at most `max` times. A call consumes the quota only when the logger has that
+   * method and `isLevelEnabled` (if given) does not return `false` for the level.
+   */
+  wrap<T extends LoggerLike>(target: () => T, options: LogLimitOptions & { readonly isLevelEnabled?: (level: LogLevel) => boolean }): LimitedLogger<T> {
+    const { key, max = 1, scope, isLevelEnabled } = options
+    const emit = (level: LogLevel, args: unknown[]): boolean => {
+      const logger: LoggerLike = target()
+      const method = logger[level]
+      if (method == null || isLevelEnabled?.(level) === false || !this.take(key, max, scope)) {
+        return false
+      }
+      method.apply(logger, args)
+      return true
+    }
+    const isExhausted = () => this.isExhausted(key, max, scope)
+    return {
+      info: (...args) => emit("info", args),
+      warn: (...args) => emit("warn", args),
+      error: (...args) => emit("error", args),
+      debug: (...args) => emit("debug", args),
+      get isExhausted() {
+        return isExhausted()
+      },
+    }
   }
 
   private counts(scope: object | undefined, create: boolean): Map<string, number> | undefined {

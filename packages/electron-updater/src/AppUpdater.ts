@@ -17,6 +17,7 @@ import {
   collectManifestSignatures,
   normalizePublicKeyList,
   verifyManifestSignatures,
+  type LimitedLogger,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
@@ -335,15 +336,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * exactly as before and does not need to support anything beyond {@link Logger}.
    * @internal
    */
-  protected limitedLogger(key: string, max = 1): Logger {
-    const take = () => this.logLimiter.take(key, max)
-    return {
-      info: message => take() && this._logger.info(message),
-      warn: message => take() && this._logger.warn(message),
-      error: message => take() && this._logger.error(message),
-      // an optional debug() the logger does not implement must not use up the quota
-      debug: message => this._logger.debug != null && take() && this._logger.debug(message),
-    }
+  protected limitedLogger(key: string, max = 1): LimitedLogger<Logger> {
+    return this.logLimiter.wrap(() => this._logger, { key, max })
   }
 
   // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
