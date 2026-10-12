@@ -1,5 +1,6 @@
 import { Logger } from "builder-util"
 import { LogLimiter } from "builder-util-runtime/internal"
+import type { LoggerLike } from "builder-util-runtime"
 import { describe, test, vi } from "vitest"
 
 // Each test builds its own Logger, so the counters never leak between (concurrent) tests.
@@ -29,9 +30,9 @@ describe("Logger.limit / Logger.once", () => {
     logger.once("a").warn("a-warn")
     logger.once("b").error("b-error")
 
-    expect(info.mock.calls).toEqual([["a-info", undefined]])
+    expect(info.mock.calls).toEqual([["a-info"]])
     expect(warn).not.toHaveBeenCalled()
-    expect(error.mock.calls).toEqual([["b-error", undefined]])
+    expect(error.mock.calls).toEqual([["b-error"]])
   })
 
   test("limit emits up to max times, then reports itself exhausted", ({ expect }) => {
@@ -126,5 +127,117 @@ describe("LogLimiter", () => {
 
     expect(limiter.take("k", 1)).toBe(false)
     expect(limiter.take("k", 2)).toBe(true)
+  })
+})
+
+const newTarget = () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() })
+
+describe("LogLimiter.wrap", () => {
+  test("forwards every argument to the wrapped logger and returns whether it emitted", ({ expect }) => {
+    const target = newTarget()
+    const limited = new LogLimiter().wrap(() => target, { key: "k", max: 2 })
+
+    expect(limited.warn("a", { file: "x" }, 3)).toBe(true)
+    expect(limited.info("b")).toBe(true)
+    expect(limited.error("c")).toBe(false)
+
+    expect(target.warn.mock.calls).toEqual([["a", { file: "x" }, 3]])
+    expect(target.info.mock.calls).toEqual([["b"]])
+    expect(target.error).not.toHaveBeenCalled()
+    expect(limited.isExhausted).toBe(true)
+  })
+
+  test("a logger without the optional debug() does not use up the quota", ({ expect }) => {
+    const { info, warn, error } = newTarget()
+    const limited = new LogLimiter().wrap((): LoggerLike => ({ info, warn, error }), { key: "k" })
+
+    expect(limited.debug("dropped")).toBe(false)
+    expect(limited.isExhausted).toBe(false)
+    expect(limited.warn("shown")).toBe(true)
+  })
+
+  test("a level reported disabled by isLevelEnabled does not use up the quota", ({ expect }) => {
+    const target = newTarget()
+    let debugEnabled = false
+    const isLevelEnabled = vi.fn((level: string) => level !== "debug" || debugEnabled)
+    const limited = new LogLimiter().wrap(() => target, { key: "k", isLevelEnabled })
+
+    expect(limited.debug("suppressed")).toBe(false)
+    expect(limited.isExhausted).toBe(false)
+    debugEnabled = true
+    expect(limited.debug("shown")).toBe(true)
+    expect(limited.debug("again")).toBe(false)
+
+    expect(target.debug.mock.calls).toEqual([["shown"]])
+    expect(isLevelEnabled).toHaveBeenCalledWith("debug")
+  })
+
+  test("the target is read on every call, so a logger set later receives what is left of the quota", ({ expect }) => {
+    const before = newTarget()
+    const after = newTarget()
+    let current = before
+    const limited = new LogLimiter().wrap(() => current, { key: "k", max: 2 })
+
+    limited.warn("one")
+    current = after
+    limited.warn("two")
+    limited.warn("three")
+
+    expect(before.warn.mock.calls).toEqual([["one"]])
+    expect(after.warn.mock.calls).toEqual([["two"]])
+  })
+
+  test("calls the method with the wrapped logger as this", ({ expect }) => {
+    const target = {
+      ...newTarget(),
+      prefix: "p",
+      warn: vi.fn(function (this: { prefix: string }, message: string) {
+        return `${this.prefix}:${message}`
+      }),
+    }
+    new LogLimiter().wrap(() => target, { key: "k" }).warn("m")
+
+    expect(target.warn.mock.results[0].value).toBe("p:m")
+  })
+
+  test("wrappers of one limiter share the quota per key and scope, and reset re-arms it", ({ expect }) => {
+    const target = newTarget()
+    const limiter = new LogLimiter()
+    const scope = {}
+    const emitAll = () => [
+      limiter.wrap(() => target, { key: "k" }).warn("process-wide"),
+      limiter.wrap(() => target, { key: "k", scope }).warn("scoped"),
+      limiter.wrap(() => target, { key: "k", scope: {} }).warn("other scope"),
+    ]
+
+    expect(emitAll()).toEqual([true, true, true])
+    expect(emitAll()).toEqual([false, false, true])
+    limiter.reset(undefined, scope)
+    expect(emitAll()).toEqual([false, true, true])
+    limiter.reset()
+    expect(emitAll()).toEqual([true, true, true])
+  })
+})
+
+// spies on the global console: sequential, and restores only its own spies (a restoreAllMocks would also undo other tests' spies)
+describe("LogLimiter.wrap around console", { concurrent: false }, () => {
+  test("emits each key once through console, including console.debug", ({ expect }) => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined)
+    const debug = vi.spyOn(console, "debug").mockImplementation(() => undefined)
+    try {
+      const limiter = new LogLimiter()
+      const once = (key: string) => limiter.wrap(() => console, { key })
+
+      expect(once("a").warn("a", 1)).toBe(true)
+      expect(once("a").warn("a again")).toBe(false)
+      expect(once("b").debug("b")).toBe(true)
+      expect(once("b").warn("b as warn")).toBe(false)
+
+      expect(warn.mock.calls).toEqual([["a", 1]])
+      expect(debug.mock.calls).toEqual([["b"]])
+    } finally {
+      warn.mockRestore()
+      debug.mockRestore()
+    }
   })
 })
