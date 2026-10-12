@@ -86,6 +86,8 @@ async function computeInstallerDefines(tmpDir: TmpDir, targetName: "nsis" | "nsi
   const target =
     targetName === "nsis-web" ? new WebInstallerTarget(packager, projectDir, targetName, packageHelper) : new NsisTarget(packager, projectDir, targetName, packageHelper)
   const info = vi.spyOn(log, "info")
+  // count only this target's calls (spyOn returns the existing spy when a test builds several targets)
+  info.mockClear()
   // one installer per arch, as for a per-arch artifact name: the skipped-copy notice is still logged once
   for (const [arch, appOutDir] of await packedApps(tmpDir, withUpdateConfig)) {
     await (target as any).buildInstaller(new Map([[arch, appOutDir]]))
@@ -102,6 +104,12 @@ test("nsis with a publish configuration (app-update.yml) defines KEEP_INSTALLER_
 
 test("nsis without app-update.yml does not define KEEP_INSTALLER_FOR_UPDATER and logs the skipped copy once", async ({ expect, tmpDir }) => {
   expect(await computeInstallerDefines(tmpDir, "nsis", [false, false])).toStrictEqual({ keepInstaller: [false, false], skippedLogs: 1 })
+})
+
+test("the skipped-copy notice is limited per target, not per process", async ({ expect, tmpDir }) => {
+  // log.once is scoped to the NsisTarget instance, so a second nsis target in the same process logs it again
+  expect(await computeInstallerDefines(tmpDir, "nsis", [false, false])).toStrictEqual({ keepInstaller: [false, false], skippedLogs: 1 })
+  expect(await computeInstallerDefines(tmpDir, "nsis", [false, false, false])).toStrictEqual({ keepInstaller: [false, false, false], skippedLogs: 1 })
 })
 
 test("nsis-web never defines KEEP_INSTALLER_FOR_UPDATER (and does not log)", async ({ expect, tmpDir }) => {

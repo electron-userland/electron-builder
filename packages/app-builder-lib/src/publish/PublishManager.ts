@@ -81,9 +81,6 @@ function checkOptions(publishPolicy: any) {
   }
 }
 
-/** Emitted once per feed (the url without its query) per process — app-update.yml is written for every pack, and platforms may use different feeds. */
-const feedQueryWarnedFeeds = new Set<string>()
-
 /**
  * electron-updater 7 adds the query string of a generic feed url (typically a token), like the credential headers, only to
  * downloads on the feed's origin. An app whose latest*.yml points downloads at another origin that relies on that query gets
@@ -98,13 +95,9 @@ export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): 
   if (queryStart < 0) {
     return
   }
-  const feed = url!.slice(0, queryStart)
-  if (feedQueryWarnedFeeds.has(feed)) {
-    return
-  }
-  feedQueryWarnedFeeds.add(feed)
+  // once per feed (the url without its query) per process — app-update.yml is written for every pack, and platforms may use different feeds
   const queryParameters = [...new Set(new URLSearchParams(url!.slice(queryStart + 1).split("#")[0]).keys())]
-  log.warn(
+  log.once(`generic-feed-query:${url!.slice(0, queryStart)}`).warn(
     {
       queryParameters: queryParameters.length === 0 ? "(none)" : queryParameters.join(", "),
       solution: "serve the update files from the feed origin (relative files[].url, the default) or use pre-signed URLs",
@@ -114,11 +107,6 @@ export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): 
       "Nothing changes for the relative URLs electron-builder writes. " +
       "See https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
   )
-}
-
-/** @internal exported for tests — re-arms the once-per-feed warning. */
-export function resetGenericFeedQueryWarning(): void {
-  feedQueryWarnedFeeds.clear()
 }
 
 /**
@@ -466,10 +454,6 @@ async function resolvePackAppUpdatePublishConfigs(
   return { publishConfigs: writers[0].publishConfigs, emitsManifest: true }
 }
 
-// keyed by platform packager (one per platform and build): afterPack and the targets writing app-update.yml themselves
-// resolve the same pack, and every arch usually repeats the same conflict - report each one once
-const reportedFeedConflicts = new WeakMap<PlatformPackager<any>, Set<string>>()
-
 /**
  * Targets of one pack resolve different app-update.yml feeds: an InvalidConfigurationError when publishing, otherwise
  * a warning that says so, so the misconfiguration surfaces before a release is built with it.
@@ -490,20 +474,15 @@ function reportConflictingAppUpdateFeeds(
     throw new InvalidConfigurationError(`${problem}. To fix it, ${solution}.`)
   }
 
-  let reported = reportedFeedConflicts.get(packager)
-  if (reported == null) {
-    reported = new Set<string>()
-    reportedFeedConflicts.set(packager, reported)
-  }
-  if (reported.has(feeds)) {
-    return
-  }
-  reported.add(feeds)
-  log.warn(
-    { solution },
-    `${problem}. No app-update.yml is written, so installed apps get neither an update feed nor the update-manifest public key. ` +
-      "Publishing this configuration fails with an InvalidConfigurationError."
-  )
+  // scoped to the platform packager (one per platform and build): afterPack and the targets writing app-update.yml themselves
+  // resolve the same pack, and every arch usually repeats the same conflict - report each one once
+  log
+    .once(`conflicting-app-update-feeds:${feeds}`, packager)
+    .warn(
+      { solution },
+      `${problem}. No app-update.yml is written, so installed apps get neither an update feed nor the update-manifest public key. ` +
+        "Publishing this configuration fails with an InvalidConfigurationError."
+    )
 }
 
 // Options that only the publisher reads (the upload itself), never electron-updater, so they cannot make two otherwise
@@ -926,10 +905,6 @@ function isDetectUpdateChannel(platformSpecificConfiguration: PlatformSpecificBu
   return value == null ? configuration.detectUpdateChannel !== false : value
 }
 
-// keyed by the build's CancellationToken (one instance per Packager) so that a build reports a given feed once - getResolvedPublishConfig
-// is called per target and arch - without leaking state between programmatic builds running in the same process
-const reportedInferredUpdateFeeds = new WeakMap<CancellationToken, Set<string>>()
-
 /** @internal */
 export function parseGithubRepoShorthand(repo: string): { owner: string; repo: string } | null {
   const separator = repo.indexOf("/")
@@ -948,17 +923,9 @@ function logInferredUpdateFeed(
   source: string | undefined,
   inferredFields: Array<string>
 ): void {
-  let reported = reportedInferredUpdateFeeds.get(buildId)
-  if (reported == null) {
-    reported = new Set<string>()
-    reportedInferredUpdateFeeds.set(buildId, reported)
-  }
-
-  const feed = `${provider}:${owner}/${project}`
-  if (reported.has(feed)) {
-    return
-  }
-  reported.add(feed)
+  // scoped to the build's CancellationToken (one instance per Packager) so that a build reports a given feed once - getResolvedPublishConfig
+  // is called per target and arch - without leaking state between programmatic builds running in the same process
+  const limited = log.once(`inferred-update-feed:${provider}:${owner}/${project}`, buildId)
 
   const fields = {
     reason: `${inferredFields.join(" and ")} not specified in the publish configuration`,
@@ -970,9 +937,9 @@ function logInferredUpdateFeed(
   const message =
     "update feed inferred from repository info; it will be used as the publish/update destination (written to app-update.yml in auto-update-capable targets) - specify it explicitly to be sure it stays under your control"
   if (source === "package.json") {
-    log.info(fields, message)
+    limited.info(fields, message)
   } else {
-    log.warn(fields, message)
+    limited.warn(fields, message)
   }
 }
 

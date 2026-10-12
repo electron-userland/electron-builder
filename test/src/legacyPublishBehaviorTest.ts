@@ -14,13 +14,13 @@ describe("suffixed update channels", () => {
   test("expansion warns once per channel and names the files written", async () => {
     const source = await read("app-builder-lib", "src", "publish", "updateInfoBuilder.ts")
     expect(source).toContain("warnAboutSuffixedChannelExpansion")
-    expect(source).toContain("suffixedChannelWarnings")
+    expect(source).toContain("log.once(`suffixed-channel-expansion:${currentChannel}`)")
     expect(source).toContain("suffixed-update-channels-now-expand-to-lower-channels")
   })
 
   test("a bare alpha/beta/latest channel does not warn — only suffixed ones changed", async () => {
     const source = await read("app-builder-lib", "src", "publish", "updateInfoBuilder.ts")
-    expect(source).toContain("if (suffix.length === 0 || suffixedChannelWarnings.has(currentChannel))")
+    expect(source).toContain("if (suffix.length === 0) {")
   })
 })
 
@@ -30,7 +30,8 @@ describe("electronUpdaterCompatibility legacy pin", () => {
     expect(source).toContain("warnAboutLegacyUpdaterCompatibility")
     expect(source).toContain("v28 will reject it")
     // Gated on needsLegacyPathSha512, so the default ">=2.16" stays silent.
-    expect(source).toContain("if (!needsLegacyPathSha512 || legacyCompatibilityWarningEmitted)")
+    expect(source).toContain("if (!needsLegacyPathSha512) {")
+    expect(source).toContain('.once("legacy-updater-compatibility")')
   })
 })
 
@@ -56,8 +57,7 @@ describe("toolset version visibility", () => {
   test("the resolved toolset is logged once per release name", async () => {
     const source = await read("app-builder-lib", "src", "util", "electronGet.ts")
     expect(source).toContain("announceToolsetVersion")
-    expect(source).toContain("announcedToolsets")
-    expect(source).toContain('log.info({ toolset: releaseName }, "using toolset")')
+    expect(source).toContain('log.once(`toolset:${releaseName}`).info({ toolset: releaseName }, "using toolset")')
   })
 })
 

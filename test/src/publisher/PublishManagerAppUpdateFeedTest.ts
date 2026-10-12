@@ -1,5 +1,5 @@
 import { Arch, LinuxPackager, Packager, Platform, PlatformPackager, Target } from "app-builder-lib"
-import { getAppUpdatePublishConfiguration, getPackAppUpdatePublishConfiguration, PublishManager, resetGenericFeedQueryWarning } from "app-builder-lib/src/publish/PublishManager"
+import { getAppUpdatePublishConfiguration, getPackAppUpdatePublishConfiguration, PublishManager } from "app-builder-lib/src/publish/PublishManager"
 import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, log, parsePrivateKey } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { outputFile, outputJson, pathExists, readFile } from "fs-extra"
@@ -372,7 +372,7 @@ test("prepackaged multi-arch: each arch's targets look up their own pack, althou
 })
 
 test("an app-update.yml generic feed with a query string announces the v27 feed-origin rule, by parameter name only", async ({ expect, tmpDir }) => {
-  resetGenericFeedQueryWarning()
+  log.resetLimits()
   const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
   try {
     const feed = { provider: "generic", url: "https://example.com/updates?token=feed-secret-value" }
@@ -385,6 +385,6 @@ test("an app-update.yml generic feed with a query string announces the v27 feed-
     expect(JSON.stringify(notices)).not.toContain("feed-secret-value")
   } finally {
     warn.mockRestore()
-    resetGenericFeedQueryWarning()
+    log.resetLimits()
   }
 })

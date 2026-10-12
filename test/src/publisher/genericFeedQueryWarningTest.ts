@@ -1,11 +1,11 @@
 import { log } from "builder-util"
-import { resetGenericFeedQueryWarning, warnAboutGenericFeedQuery } from "app-builder-lib/src/publish/PublishManager"
+import { warnAboutGenericFeedQuery } from "app-builder-lib/src/publish/PublishManager"
 import type { PublishConfiguration } from "builder-util-runtime"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 
 // The v27 feed-origin rule for the feed query announces itself at build time, since migrate-schema may never have been run.
 describe("generic publish url with a query string", () => {
-  beforeEach(() => resetGenericFeedQueryWarning())
+  beforeEach(() => log.resetLimits())
   afterEach(() => vi.restoreAllMocks())
 
   const generic = (url: string) => ({ provider: "generic", url }) as PublishConfiguration
