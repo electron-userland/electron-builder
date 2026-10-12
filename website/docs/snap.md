@@ -443,6 +443,6 @@ snap run --shell myapp
 
   {!./app-builder-lib.Interface.SnapOptionsCustom.md!}
 
-### `snap` (legacy, deprecated)
+### `SnapOptionsLegacy` (core18 / core20 / core22)
 
-  {!./app-builder-lib.Interface.SnapOptions.md!}
+  {!./app-builder-lib.Interface.SnapOptionsLegacy.md!}
