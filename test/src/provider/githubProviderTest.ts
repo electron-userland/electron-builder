@@ -567,6 +567,40 @@ test.for([
 })
 
 test.for([
+  { name: "empty response body", response: null },
+  { name: "JSON without tag_name", response: JSON.stringify({ name: "no tag" }) },
+])("allowPrerelease=false - /releases/latest with $name still inspects every feed entry, so one without <link> throws", async ({ response }, { expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy)
+  updater.allowPrerelease = false
+
+  requestSpy
+    .mockResolvedValueOnce(
+      mockAtomFeed([
+        { tag: "unused", title: "Malformed href", href: `https://github.com/${MOCK_OWNER}/${MOCK_REPO}/releases` },
+        { tag: "unused", title: "No link", href: null },
+      ])
+    )
+    .mockResolvedValueOnce(response)
+
+  await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_INVALID_RELEASE_FEED", message: expect.stringContaining('No element "link"') })
+})
+
+test("allowPrerelease=false - a numeric tag_name from /releases/latest requests the channel file under download/<tag>/", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy)
+  updater.allowPrerelease = false
+
+  requestSpy
+    .mockResolvedValueOnce(mockAtomFeed([{ tag: STABLE_TAG, title: STABLE_TAG }]))
+    .mockResolvedValueOnce(JSON.stringify({ tag_name: 123 }))
+    .mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  await updater.checkForUpdates()
+  expect(requestedPaths(requestSpy)).toEqual([`${RELEASES_PATH}.atom`, `${RELEASES_PATH}/latest`, `${RELEASES_PATH}/download/123/latest.yml`])
+})
+
+test.for([
   { name: "request failure", mock: (spy: ReturnType<typeof createMockRequest>) => spy.mockRejectedValueOnce(new Error("Connection refused")), detail: "Connection refused" },
   { name: "invalid JSON", mock: (spy: ReturnType<typeof createMockRequest>) => spy.mockResolvedValueOnce("not json"), detail: "JSON" },
 ])('allowPrerelease=false - /releases/latest $name is wrapped as "Unable to find latest version" inside ERR_UPDATER_INVALID_RELEASE_FEED', async ({ mock, detail }, { expect }) => {
@@ -652,6 +686,24 @@ test("allowPrerelease=false - latest tag missing from the Atom feed leaves relea
   expect(result?.updateInfo.releaseNotes).toBeUndefined()
 })
 
+// a comment-only channel file gives the same error whether or not the latest tag has a feed entry
+test.for([
+  { name: "present in", feedTag: STABLE_TAG },
+  { name: "missing from", feedTag: "v1.0.0" },
+])("allowPrerelease=false - a comment-only channel file fails the same way when the latest tag is $name the Atom feed", async ({ feedTag }, { expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy)
+  updater.allowPrerelease = false
+
+  requestSpy
+    .mockResolvedValueOnce(mockAtomFeed([{ tag: feedTag, title: feedTag }]))
+    .mockResolvedValueOnce(mockReleaseJson(STABLE_TAG))
+    .mockResolvedValueOnce("# no update info\n")
+
+  await expect(updater.checkForUpdates()).rejects.toBeInstanceOf(TypeError)
+  expect(requestSpy).toHaveBeenCalledTimes(3)
+})
+
 test("allowPrerelease=false - a pre-release tag from /releases/latest still fetches the default channel file", async ({ expect }) => {
   const requestSpy = createMockRequest()
   const updater = await createPublicUpdater(requestSpy)
@@ -670,6 +722,7 @@ test("allowPrerelease=false - a pre-release tag from /releases/latest still fetc
 test.for([
   { name: "app-update.yml channel option", configChannel: "beta", updaterChannel: undefined },
   { name: "updater.channel", configChannel: undefined, updaterChannel: "beta" },
+  { name: "updater.channel when the app-update.yml channel option is also set", configChannel: "alpha", updaterChannel: "beta" },
 ])("allowPrerelease=false - channel file name comes from the $name", async ({ configChannel, updaterChannel }, { expect }) => {
   const requestSpy = createMockRequest()
   const updater = await createPublicUpdater(requestSpy, "0.0.1", configChannel == null ? {} : { channel: configChannel })
@@ -944,6 +997,31 @@ test('allowPrerelease=true with stable current and explicit channel = "beta" - s
   expect(requestedPaths(requestSpy)[1]).toBe(`${RELEASES_PATH}/download/v1.3.0/beta.yml`)
 })
 
+test.for([
+  { name: "explicit updater.channel", version: "1.0.0-alpha.1", configChannel: undefined, updaterChannel: "alpha" },
+  { name: "app-update.yml channel option", version: "0.9.0", configChannel: "alpha", updaterChannel: undefined },
+])("allowPrerelease=true - a pre-release tag names the channel file after its own channel, not the $name", async ({ version, configChannel, updaterChannel }, { expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy, version, configChannel == null ? {} : { channel: configChannel })
+  if (updaterChannel != null) {
+    updater.channel = updaterChannel
+  }
+  updater.allowPrerelease = true
+
+  requestSpy
+    .mockResolvedValueOnce(
+      mockAtomFeed([
+        { tag: "v1.0.0-beta.2", title: "v1.0.0-beta.2" },
+        { tag: "v1.0.0-alpha.3", title: "v1.0.0-alpha.3" },
+      ])
+    )
+    .mockResolvedValueOnce(mockYaml("1.0.0-beta.2"))
+
+  const result = await updater.checkForUpdates()
+  expect((result!.updateInfo as any).tag).toBe("v1.0.0-beta.2")
+  expect(requestedPaths(requestSpy)[1]).toBe(`${RELEASES_PATH}/download/v1.0.0-beta.2/beta.yml`)
+})
+
 // --- allowPrerelease=true channel file fallback ---
 
 test.for([
@@ -962,6 +1040,21 @@ test.for([
 
   const result = await updater.checkForUpdates()
   expect(result?.updateInfo.version).toBe(BETA_VERSION)
+  expect(requestedPaths(requestSpy)).toEqual([`${RELEASES_PATH}.atom`, `${RELEASES_PATH}/download/${BETA_TAG}/beta.yml`, `${RELEASES_PATH}/download/${BETA_TAG}/latest.yml`])
+})
+
+test("allowPrerelease=true - the fallback is the default channel file even when a channel is set explicitly", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy, "1.0.0-alpha.1")
+  updater.channel = "alpha"
+  updater.allowPrerelease = true
+
+  requestSpy
+    .mockResolvedValueOnce(mockAtomFeed([{ tag: BETA_TAG, title: BETA_TAG }]))
+    .mockRejectedValueOnce(new HttpError(404))
+    .mockResolvedValueOnce(mockYaml(BETA_VERSION))
+
+  await updater.checkForUpdates()
   expect(requestedPaths(requestSpy)).toEqual([`${RELEASES_PATH}.atom`, `${RELEASES_PATH}/download/${BETA_TAG}/beta.yml`, `${RELEASES_PATH}/download/${BETA_TAG}/latest.yml`])
 })
 

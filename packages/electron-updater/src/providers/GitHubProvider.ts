@@ -91,13 +91,12 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     // latestRelease can be null in the allowPrerelease=false path when the resolved tag (from the
     // /releases/latest API) is not present in the truncated Atom feed; the update still proceeds
     // with the resolved tag, only the feed-derived release name/notes are omitted.
-    if (latestRelease != null) {
-      if (result.releaseName == null) {
-        result.releaseName = latestRelease.elementValueOrEmpty("title")
-      }
-      if (result.releaseNotes == null) {
-        result.releaseNotes = computeReleaseNotes(this.updater.currentVersion, this.updater.fullChangelog, releaseEntries, latestRelease)
-      }
+    if (result.releaseName == null && latestRelease != null) {
+      result.releaseName = latestRelease.elementValueOrEmpty("title")
+    }
+
+    if (result.releaseNotes == null && latestRelease != null) {
+      result.releaseNotes = computeReleaseNotes(this.updater.currentVersion, this.updater.fullChangelog, releaseEntries, latestRelease)
     }
     return {
       tag: tag,
@@ -121,7 +120,12 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
   // allowPrerelease=false: the tag comes from the /releases/latest API; the feed only supplies the release name/notes.
   private async findLatestRelease(releaseEntries: Array<XElement>, cancellationToken: CancellationToken): Promise<FeedRelease> {
     const tag = await this.getLatestTagName(cancellationToken)
-    const entry = releaseEntries.find(releaseEntry => releaseTagOf(releaseEntry) === tag) ?? null
+    // only entries whose href has a /tag/ segment are compared with the latest tag
+    const entry =
+      releaseEntries.find(releaseEntry => {
+        const releaseTag = releaseTagOf(releaseEntry)
+        return releaseTag != null && releaseTag === tag
+      }) ?? null
     return { tag, entry }
   }
 
@@ -141,7 +145,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
   private async requestChannelFile(tag: string, channelName: string, cancellationToken: CancellationToken): Promise<ChannelFileData> {
     const channelFile = getChannelFilename(channelName)
-    const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(tag, channelFile), this.baseUrl)
+    const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(String(tag), channelFile), this.baseUrl)
     try {
       const rawData = (await this.executor.request(this.createRequestOptions(channelFileUrl), cancellationToken))!
       return { rawData, channelFile, channelFileUrl }
