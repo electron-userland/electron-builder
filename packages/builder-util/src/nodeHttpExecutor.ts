@@ -10,12 +10,12 @@ export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
   // noinspection JSUnusedGlobalSymbols
   createRequest(options: any, callback: (response: any) => void): ClientRequest {
     if (options.protocol === "https:") {
-      const proxy = getProxyEnv("HTTPS_PROXY", "https_proxy")
+      const proxy = getProxyEnv("HTTPS_PROXY")
       if (proxy != null) {
         options.agent = new HttpsProxyAgent(proxy)
       }
     } else if (options.protocol === "http:") {
-      const proxy = getProxyEnv("HTTP_PROXY", "http_proxy")
+      const proxy = getProxyEnv("HTTP_PROXY")
       if (proxy != null) {
         options.agent = new HttpProxyAgent(proxy)
       }
@@ -26,13 +26,13 @@ export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
 
 export const httpExecutor = new NodeHttpExecutor()
 
-function getProxyEnv(uppercaseName: "HTTP_PROXY" | "HTTPS_PROXY", lowercaseName: "http_proxy" | "https_proxy"): string | undefined {
-  return [process.env[uppercaseName], process.env[lowercaseName]].find(value => !isEmptyOrSpaces(value))
+function getProxyEnv(name: "HTTP_PROXY" | "HTTPS_PROXY"): string | undefined {
+  return [process.env[name], process.env[name.toLowerCase()]].find(value => !isEmptyOrSpaces(value))
 }
 
 export function buildGotProxyAgent(): { http?: HttpProxyAgent<string>; https?: HttpsProxyAgent<string> } | undefined {
-  const httpsProxy = getProxyEnv("HTTPS_PROXY", "https_proxy")
-  const httpProxy = getProxyEnv("HTTP_PROXY", "http_proxy")
+  const httpsProxy = getProxyEnv("HTTPS_PROXY")
+  const httpProxy = getProxyEnv("HTTP_PROXY")
   if (!httpsProxy && !httpProxy) {
     return undefined
   }
