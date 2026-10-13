@@ -51,7 +51,11 @@ export abstract class FileCopyHelper {
 
 /** @internal */
 export function isOutsidePath(relativePath: string): boolean {
-  return relativePath === ".." || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath)
+  if (relativePath === ".." || path.isAbsolute(relativePath)) {
+    return true
+  }
+  // Windows path APIs accept both "/" and "\" as separators; on POSIX a backslash is an ordinary filename character
+  return relativePath.startsWith("../") || (path.sep === "\\" && relativePath.startsWith("..\\"))
 }
 
 function createAppFilter(matcher: FileMatcher, packager: PlatformPackager<any>): Filter | null {
