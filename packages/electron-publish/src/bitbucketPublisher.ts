@@ -26,7 +26,7 @@ export class BitbucketPublisher extends HttpPublisher {
     }
 
     this.info = info
-    // Bitbucket Cloud is retiring app passwords (https://www.atlassian.com/blog/bitbucket/bitbucket-cloud-transitions-to-api-tokens).
+    // Bitbucket Cloud is retiring app passwords (https://www.atlassian.com/blog/bitbucket/bitbucket-cloud-transitions-to-api-tokens-enhancing-security-with-app-password-deprecation).
     // - With a username, the token is sent as HTTP Basic auth: a Bitbucket username + app password, or an Atlassian account email + API token.
     // - Without a username, the token is treated as a repository/project/workspace access token and sent as Bearer auth.
     if (isEmptyOrSpaces(username)) {

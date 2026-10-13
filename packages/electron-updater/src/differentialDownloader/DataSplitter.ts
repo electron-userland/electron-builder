@@ -111,6 +111,7 @@ export class DataSplitter extends Writable {
   _write(data: Buffer, encoding: string, callback: (error?: Error) => void): void {
     if (this.isFinished) {
       this.logger?.error?.(`Trailing ignored data: ${data.length} bytes`)
+      callback()
       return
     }
 

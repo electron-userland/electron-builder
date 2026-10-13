@@ -57,7 +57,7 @@
     "conventional-changelog-cli": "5.0.0",
     "depcheck": "1.4.7",
     "fs-extra": "^10.1.0",
-    "oxfmt": "0.68.0",
+    "oxfmt": "0.71.0",
     "oxlint": "1.83.0",
     "oxlint-tsgolint": "7.0.2002",
     "tsx": "^4.0.0",

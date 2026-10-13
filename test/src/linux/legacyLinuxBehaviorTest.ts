@@ -1,6 +1,8 @@
+import { LinuxTargetHelper } from "app-builder-lib/src/targets/linux/LinuxTargetHelper"
+import { log } from "builder-util"
 import { promises as fs } from "fs"
 import * as path from "path"
-import { describe, expect, test } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
 
 const srcRoot = path.join(__dirname, "..", "..", "..", "packages", "app-builder-lib", "src")
 
@@ -61,11 +63,36 @@ describe("linux.executableArgs desktop field codes", () => {
 })
 
 describe("installed .desktop filename", () => {
-  test("LinuxTargetHelper warns once when the name changes from the v26 default", async () => {
-    const source = await fs.readFile(path.join(srcRoot, "targets", "linux", "LinuxTargetHelper.ts"), "utf8")
-    expect(source).toContain("desktopFilenameChangeWarningEmitted")
-    expect(source).toContain("linuxsyncdesktopname-always-synced")
-    // Only when the resolved name actually differs from the v26 fallback — otherwise every build warns.
-    expect(source).toContain("resolved !== fallback")
+  const helperFor = (desktopName: string | undefined) => new LinuxTargetHelper({ metadata: { desktopName }, executableName: "my-app" } as any)
+  const spyWarn = () => vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  afterEach(() => vi.restoreAllMocks())
+
+  test("LinuxTargetHelper warns once per helper when the name changes from the v26 default", () => {
+    const warn = spyWarn()
+    const helper = helperFor("com.example.MyApp")
+    expect(helper.getDesktopFileName()).toBe("com.example.MyApp")
+    expect(helper.getDesktopFileName()).toBe("com.example.MyApp")
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toEqual({ desktopName: "com.example.MyApp", previousFileName: "my-app.desktop", fileName: "com.example.MyApp.desktop" })
+    expect(String(warn.mock.calls[0][1])).toContain("linuxsyncdesktopname-always-synced")
+
+    // another build (helper) announces it again
+    helperFor("com.example.MyApp").getDesktopFileName()
+    expect(warn).toHaveBeenCalledTimes(2)
+  })
+
+  test("LinuxTargetHelper stays quiet when desktopName matches the v26 default", () => {
+    const warn = spyWarn()
+    expect(helperFor("my-app.desktop").getDesktopFileName()).toBe("my-app")
+    expect(warn).not.toHaveBeenCalled()
+  })
+
+  test("a missing desktopName is reported once per helper, however often it is resolved", () => {
+    const warn = spyWarn()
+    const helper = helperFor(undefined)
+    expect(helper.getDesktopFileName()).toBe("my-app")
+    expect(helper.getDesktopFileName("fallback")).toBe("fallback")
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toMatchObject({ reason: "desktopName is not set in package.json" })
   })
 })

@@ -153,7 +153,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly compression?: CompressionLevel | null
 
   /**
-   * Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
+   * Whether to package the application's source code into an archive, using [Electron's archive format](https://www.electronjs.org/docs/latest/tutorial/asar-archives).
    *
    * Node modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack.
    * @default true

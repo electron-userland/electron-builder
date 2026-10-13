@@ -14,7 +14,7 @@ This page is the **canonical reference for _what_ changed** in v27. For the **_h
 
 - The `build()` API is unchanged; configuration keys that were renamed or restructured are rewritten automatically by `migrate-schema` (see each entry below) and keep their v26 behavior, and exported types that survive keep their shape.
 - CJS `require()` continues to work without code changes on supported Node.js versions.
-- Every **config-level** breaking change below that has a mechanical v27 equivalent is rewritten automatically by `electron-builder migrate-schema` (look for the **Auto** ✓ marker). The config keys it cannot rewrite, [`squirrelWindows.customSquirrelVendorDir`](#squirrelwindowscustomsquirrelvendordir) and a custom NSIS bundle in [`nsis.customNsisBinary` / `customNsisResources`](#nsiscustomnsisbinary-toolsetsnsis), are reported with a warning. Runtime, CLI, env-var, and behavior changes require manual action — see [what `migrate-schema` does and does not do](#new-command-migrate-schema).
+- Every **config-level** breaking change below that has a mechanical v27 equivalent is rewritten automatically by `electron-builder migrate-schema` (look for the **Auto** ✓ marker). The config keys it cannot rewrite, [`squirrelWindows.customSquirrelVendorDir`](#squirrelwindowscustomsquirrelvendordir) and a custom NSIS bundle in [`nsis.customNsisBinary` / `customNsisResources`](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis), are reported with a warning. Runtime, CLI, env-var, and behavior changes require manual action — see [what `migrate-schema` does and does not do](#new-command-migrate-schema).
 
 :::tip[Run the automated migrator first]
 ```bash
@@ -68,7 +68,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`build.helper-bundle-id` removed](#buildhelper-bundle-id) | ✓ | Moved to `mac.helperBundleId` |
 | [`squirrelWindows.noMsi` removed](#squirrelwindowsnomsi) | ✓ | Replaced by `msi` (inverted) |
 | [`squirrelWindows.customSquirrelVendorDir` removed](#squirrelwindowscustomsquirrelvendordir) | — | Supply a custom Squirrel bundle via `toolsets.squirrel` (a `ToolsetCustom` object); `migrate-schema` warns but cannot rewrite it (different bundle layout) |
-| [`nsis.customNsisBinary` / `customNsisResources` removed](#nsiscustomnsisbinary-toolsetsnsis) | partial | `debugLogging` → `nsis.installerDebugLogging` (auto); supply a custom NSIS bundle via `toolsets.nsis` (the v26 [checksum](../toolsets.md#custom-toolset-checksum) keeps working) with the plugins inside (`migrate-schema` warns, cannot convert it). `installerDebugLogging` needs a log-enabled custom bundle |
+| [`.customNsisBinary` / `.customNsisResources` removed](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis) | partial | Originally avail on nsis, nsisWeb, portable. Now combined and moved to a [NSIS Toolset Bundle](../toolsets#custom-nsis-bundle-layout) configured under `toolsets.nsis`. **Manual action required** - [A complete migration guide is available](./v26-to-v27#step-4-custom-nsis-migration-guide). A config that still sets removed key(s) fails the build with a message naming the replacement. (`migrate-schema` warns, cannot convert it).  |
 | [`GithubOptions.vPrefixedTagName` removed](#githuboptions-gitlaboptions-vprefixedtagname) | ✓ | Use `tagNamePrefix`; an empty `tagNamePrefix: ""` is now honored (v26 ignored it) |
 | [`GitlabOptions.vPrefixedTagName` retained](#githuboptions-gitlaboptions-vprefixedtagname) | — | None — still functional; the migrator leaves GitLab entries untouched |
 | [`devMetadata` / `extraMetadata` in `PackagerOptions` removed](#devmetadata-extrametadata-programmatic-packageroptions) | — | Use `config` / `config.extraMetadata` |
@@ -280,28 +280,61 @@ The shape and behaviour differ, so this is not a 1-to-1 rename:
 
 For a fully offline build, seed the `squirrel.windows@<version>` archive (plus `winCodeSign` and, for MSI, the WiX bundle) in the toolset cache or point `toolsets.squirrel` at a local bundle — see [Offline / Air-Gapped Builds](../tutorials/offline-air-gapped-builds.md). Nothing is downloaded outside the checksummed toolset bundles.
 
-### `nsis.customNsisBinary` / `customNsisResources` removed → `toolsets.nsis` {#nsiscustomnsisbinary-toolsetsnsis}
+### customNsisBinary and customNsisResources replaced by `toolsets.nsis`
 
-Removed, on `nsis`, `nsisWeb` and `portable`, together with the exported `CustomNsisBinary` type. The NSIS compiler and its plugins now come only from the [`toolsets.nsis`](#toolset-env-var-overrides-removed) bundle, and NSIS logging has its own option. A config that still sets either key fails the build with a message naming the replacement.
+Removed (`.customNsisBinary` / `customNsisResources`), on `nsis`, `nsisWeb` and `portable` configs, together with the exported `CustomNsisBinary` type.
 
-- **A custom NSIS build** (for example an NSISbi fork for installers over 2 GB, or a log-enabled `makensis`) moves to `toolsets.nsis`.
+The 1 to 1 replacement for either/both is the new [`toolsets.nsis`](../toolsets#custom-nsis-bundle-layout) bundle. A config that still sets either key fails the build with a message naming the replacement.
+
+In general, the NSIS resources/binary are married quite closely and in nuanced ways - the new unified structure gives easy access to both in the same place and simplifies build-flow.
+
+See [Custom NSIS Migration Guide](./v26-to-v27#step-4-custom-nsis-migration-guide) & [NSIS toolset documentation](../toolsets.md#custom-nsis-bundle-layout) for more details.
+
+- **A Custom NSIS Binary** Custom compiled NSIS binaries are practical to facillitate builds with unique requirements (like bypassing the 2Gib limit on installer.exe generation). A custom NSIS binary can also be used to adjust to the appearance of the installer in a variety of ways through the many images that get baked into it. If you were using (`.customNsisBinary`) in `v26`, now you must provide that binary via a `toolsets.nsis` bundle for parity on `v27`.
+- **Custom NSIS Resources** Custom NSIS resources are required to expose any additional 3rd party plugins that may be needed in custom `.nsh` scripts. If you were using (`.customNsisResources`) in `v26`, now you must provide that resource via a `toolsets.nsis` bundle for parity on `v27`.
 - **`customNsisBinary.debugLogging`** moves to `nsis.installerDebugLogging` (or `nsisWeb.installerDebugLogging`). It never had an effect on `portable`, which has no equivalent.
-- **`customNsisResources`** has no separate replacement: a custom `toolsets.nsis` bundle carries its own plugins.
+
+
 
 ```json5
 // Before (v26):
-{ "nsis": { "customNsisBinary": { "url": "https://example.com/my-nsis.7z", "checksum": "<checksum>", "version": "3.10", "debugLogging": true } } }
-// After:
+// Custom NSIS artifacts provided via 2 seperate bundles
 {
-  "toolsets": { "nsis": { "url": "https://example.com/my-nsis.7z", "checksum": "<checksum>", "version": "3.10" } },
+  "nsis": {
+    "customNsisBinary": {
+      "url": "https://example.com/my-nsis-executable.7z",
+      "checksum": "<checksum>",
+      "version": "3.10",
+      "debugLogging": true
+    },
+    "customNsisResources": {
+      "url": "https://example.com/my-nsis-resources.7z",
+      "checksum": "<checksum>",
+      "version": "3.4.1"
+    }
+  }
+}
+// After:
+// Custom NSIS artifacts provided by a unified toolset
+// Note: Debug-logging still controlled on NSIS and not by toolsets.nsis
+{
+  "toolsets": {
+    "nsis": {
+      "url": "https://example.com/my-nsis.7z",
+      "checksum": "<checksum>",
+      "version": "3.10"
+    }
+  },
   "nsis": { "installerDebugLogging": true }
 }
 ```
 
-Moving a custom bundle is not a pure rename:
+You can see the relative escape hatch of providing an archive for the full toolset is generally the same from `v26` -> `v27` simply in a more consolidated form.
 
-- **The checksum carries over.** The `url` and `checksum` work as before, including for an NSISBI drop-in: v26 used base64-encoded SHA-512 for all toolset checksums, and `toolsets.nsis` accepts such a value unchanged, as well as a SHA-256 hex value. SHA-256 hex is the v27 default because toolset downloads moved to the official `@electron/get` package, whose checksum verification (`sumchecker`) only supports SHA-256 hex (see [Custom toolset checksums](../toolsets.md#custom-toolset-checksum)). Only an archive you repack, for example to add the plugins, needs a new checksum.
-- **The bundle must carry the plugins.** v26 read the NSIS plugins from a separate resources bundle (`customNsisResources`, or the default one), while a custom `toolsets.nsis` bundle must contain them itself, in a `plugins/` or `windows/Plugins/` directory (`elevate.exe` is still read from the bundle root, as in v26). A bundle with the v26 layout (`Bin/makensis.exe` or `linux/makensis`) is still found. See [Custom NSIS bundle layout](../toolsets.md#custom-nsis-bundle-layout) for the exact paths, the plugins the bundle must contain, and how to repack an NSIS or NSISBI release.
+Of note, `v27` also accepts a `file://` path in the `url` field. A `file://` path to an unpacked bundle directory needs no checksum and is used as-is with no caching; a `file://` path to an archive still needs a `checksum`.
+
+- `https://` — downloaded and cached locally; the archive is extracted before use.
+- `file:///absolute/path` — used directly; relative paths must be within the project resources dir.
 
 **`installerDebugLogging` needs a log-enabled NSIS**, that is `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`; any other `makensis` rejects the `LogSet` it emits. The bundled `toolsets.nsis` versions are not log-enabled, so the build fails with a configuration error when `installerDebugLogging` is set without a custom `toolsets.nsis` bundle. This is unchanged from v26, where the option also only worked with your own `customNsisBinary`. When building on Linux or macOS, the bundle's `makensis` for that host must be log-enabled too.
 
@@ -613,7 +646,7 @@ v27 adds `electron-builder migrate-schema`, which rewrites your config to v27 fo
 
 **It rewrites** every entry marked **Auto ✓** on this page: removed keys (`electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, `disableDefaultIgnoredFiles`, `appImage.systemIntegration`, `linux.syncDesktopName`, `mac.gatekeeperAssess`), the `nativeModules`, `asar` (root and platform-level), `mac.sign`, `mac.universal`, `win.sign`, `electronGet`, and `snapcraft` restructurings, GitHub `vPrefixedTagName` → `tagNamePrefix`, `helper-bundle-id`, `squirrelWindows.noMsi`, root-level `directories` in `package.json`, and `toolsets.*` values v27 rejects (`null`, the retired `appimage: "1.0.2"`). Values with no v27 equivalent (for example `nativeRebuilder: "legacy"` or `electronDownload.strictSSL`) are dropped with a warning.
 
-**It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom NSIS bundle in `customNsisBinary` / `customNsisResources` ([→ `toolsets.nsis`](#nsiscustomnsisbinary-toolsetsnsis); it does move `customNsisBinary.debugLogging` → `installerDebugLogging`), a custom `mac.sign` signer combined with sibling signing options, and (in JS/TS configs) platform-level `asarUnpack` next to root-level ASAR options.
+**It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom NSIS bundle in `customNsisBinary` / `customNsisResources` ([→ `toolsets.nsis`](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis); it does move `customNsisBinary.debugLogging` → `installerDebugLogging`), a custom `mac.sign` signer combined with sibling signing options, and (in JS/TS configs) platform-level `asarUnpack` next to root-level ASAR options.
 
 **It prints an advisory** (without changing the config) for runtime defaults and behavior changes you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)), `nsis.perMachine` or `nsisWeb.perMachine` set to `true` ([per-machine NSIS updates](#nsis-per-machine-builds-set-isadminrightsrequired)), a custom `win.sign.sign` hook without `win.sign.publisherName`, unless `win.verifyUpdateCodeSignature` is `false` ([publisher name](#windows-publishername-is-validated-against-the-signing-certificate)), a `generic` publish configuration whose `url` has a query string ([update credentials](#update-credentials-stay-on-the-feeds-origin)), and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
 
@@ -664,26 +697,34 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 
 This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias may be removed in a future major release.
 
+Legacy-base snap template builds (`core18`/`core20`/`core22` with `useTemplateApp`) now pack with the `mksquashfs` from `toolsets.appimage` instead of always using the legacy `"0.0.0"` bundle, so an `appimage: "0.0.0"` pin applies to them too — and its `mksquashfs` supports only `gzip`/`xz`, so snap `compression: "lzo"` (or `linux.compression: "store"`) needs a newer toolset.
+
 ### Toolset env-var overrides removed
 
 **This is a breaking change if you used env-var toolset overrides.** The following environment variables are **removed** — replace each with a [`ToolsetCustom`](#toolset-env-var-overrides-removed) object on the relevant `toolsets` key:
 
-| Removed env var | Toolset it controlled |
-|---|---|
-| `APPIMAGE_TOOLS_PATH` | AppImage build tools (`mksquashfs`, runtime) |
-| `LINUX_TOOLS_MAC_PATH` | Linux-tools-mac bundle (`ar`, `lzip`, `gtar`) |
-| `CUSTOM_FPM_PATH` | FPM executable |
-| `ELECTRON_BUILDER_NSIS_DIR` | NSIS compiler bundle directory |
-| `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` | NSIS resources/plugins directory |
-| `CUSTOM_NSIS_RESOURCES` | Alternate NSIS resources bundle |
-| `ELECTRON_BUILDER_WINE_TOOLSET_DIR` | Wine bundle directory |
-| `USE_SYSTEM_WINE` | Forced the host-installed Wine instead of the downloaded bundle (now the default — `toolsets.wine: "system"`) |
-| `USE_SYSTEM_SIGNCODE` | Forced the host `signtool`/`signcode` instead of the bundled `winCodeSign` toolset |
-| `USE_SYSTEM_OSSLSIGNCODE` | Forced the host `osslsigncode` instead of the bundled one |
-| `USE_SYSTEM_FPM` | Forced the host-installed `fpm` instead of the bundled FPM |
-| `SIGNTOOL_PATH` | Path to `signtool.exe` |
-| `ELECTRON_BUILDER_7ZIP_PATH` | The 7-Zip executable |
-| `ELECTRON_BUILDER_ICONS_TOOLSET_DIR` | Icons toolset bundle directory |
+| Removed env var | Toolset it controlled | Replace with |
+|---|---|---|
+| `APPIMAGE_TOOLS_PATH` | AppImage build tools (`mksquashfs`, runtime) | `toolsets.appimage` |
+| `MKSQUASHFS_PATH` | `mksquashfs` for legacy (core18/20/22) snap builds | `toolsets.appimage` |
+| `LINUX_TOOLS_MAC_PATH` | Linux-tools-mac bundle (`ar`, `lzip`, `gtar`) | `toolsets.linuxToolsMac` |
+| `CUSTOM_FPM_PATH` | FPM executable | `toolsets.fpm` |
+| `ELECTRON_BUILDER_NSIS_DIR` | NSIS compiler bundle directory | `toolsets.nsis` |
+| `ELECTRON_BUILDER_NSIS_RESOURCES_DIR` | NSIS resources/plugins directory | `toolsets.nsis` |
+| `CUSTOM_NSIS_RESOURCES` | Alternate NSIS resources bundle | `toolsets.nsis` |
+| `ELECTRON_BUILDER_WINE_TOOLSET_DIR` | Wine bundle directory | `toolsets.wine` |
+| `ELECTRON_BUILDER_7ZIP_PATH` | 7-Zip executable | `toolsets.sevenZip` |
+| `ELECTRON_BUILDER_ICONS_TOOLSET_DIR` | Icon-conversion tools bundle | `toolsets.icons` |
+| `ELECTRON_BUILDER_OSSL_SIGNCODE_PATH` | `osslsigncode` binary | `toolsets.winCodeSign` |
+| `ELECTRON_BUILDER_RCEDIT_PATH` | `rcedit` binary | `toolsets.winCodeSign` |
+| `ELECTRON_BUILDER_WINDOWS_KITS_PATH` | Windows SDK / signtool kit directory | `toolsets.winCodeSign` |
+| `SIGNTOOL_PATH` | Path to `signtool.exe` | `win.sign` / `toolsets.winCodeSign` |
+| `USE_SYSTEM_WINE` | Forced the host-installed Wine instead of the downloaded bundle (now the default — `toolsets.wine: "system"`) | `toolsets.wine` (see note) |
+| `USE_SYSTEM_SIGNCODE` | Forced the host `signtool`/`signcode` instead of the bundled `winCodeSign` toolset | `win.sign` + `winCodeSign` |
+| `USE_SYSTEM_OSSLSIGNCODE` | Forced the host `osslsigncode` instead of the bundled one | `win.sign` + `winCodeSign` |
+| `USE_SYSTEM_FPM` | Forced the host-installed `fpm` instead of the bundled FPM | `toolsets.fpm` |
+
+> **v27 warns you at build start.** If any removed variable in this section is still set in the build environment, electron-builder logs a one-time deprecation warning naming the variable and its replacement (it is otherwise silently ignored). Unset it once you have migrated to the `toolsets`/`win.sign` config.
 
 Setting any of these now **fails the build** with a message naming the `toolsets` replacement, rather than being silently ignored. The two signing `USE_SYSTEM_*` variables (`USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var replacement** — configure signing through [`win.sign`](#windows-signing-winsign) and the `winCodeSign` toolset instead. `USE_SYSTEM_WINE` is replaced by `toolsets.wine: "system"`, which is already the default. `USE_SYSTEM_FPM` is now **also removed** (it was still functional in earlier v27 prereleases): supply a custom FPM via `toolsets.fpm: { url: "file:///path/to/dir" }`. On Windows there is no bundled FPM, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` and otherwise throws a clear configuration error (previously it silently fell back to a host `fpm` on `PATH`).
 
@@ -716,6 +757,14 @@ The `force` field has no equivalent in `@electron/get` v5 and was dropped from `
 ### `CI_BUILD_TAG` environment variable
 
 Removed. Use `CI_COMMIT_TAG` (the standard GitLab CI variable) to provide the release tag.
+
+### `ELECTRON_BUILDER_BINARIES_ALLOW_HTTP` renamed
+
+Renamed to `ELECTRON_BUILDER_DANGEROUSLY_ALLOW_HTTP` to make the security implication explicit. The behavior is unchanged: set it to `true` to permit non-`localhost` plain-HTTP mirror / download-override URLs that would otherwise be rejected. Set the new name instead; the old one is no longer read.
+
+### Implicit publish on `npm run release` removed
+
+electron-builder no longer inspects `npm_lifecycle_event`: naming your npm/yarn/pnpm script `release` (e.g. `npm run release`) no longer forces publishing on. Publish explicitly instead — pass a `--publish` flag (`--publish always`, `--publish onTag`, `--publish onTagOrDraft`) or set the `publish` option in your electron-builder config.
 
 ### Azure Trusted Signing `signtool /dlib` is the default
 
@@ -1195,7 +1244,7 @@ External consumers should use the two new public helpers instead:
 
 ## Removed exports
 
-`ProtonFramework`, `LibUiFramework`, and `SnapOptions` are removed from the public exports of `app-builder-lib` and `electron-builder`. `CustomNsisBinary` is removed from the public exports of `app-builder-lib`, together with the [`customNsisBinary` option](#nsiscustomnsisbinary-toolsetsnsis); use `ToolsetCustom` (for `toolsets.nsis`) instead. Use the Electron framework and the [`snapcraft`](#snap-snapcraft) config shape respectively. The removed framework support means `framework: "proton" | "libui"` no longer has any effect — see [`framework` removed](#framework-nodeversion-launchuiversion).
+`ProtonFramework`, `LibUiFramework`, and `SnapOptions` are removed from the public exports of `app-builder-lib` and `electron-builder`. `CustomNsisBinary` is removed from the public exports of `app-builder-lib`, together with the [`customNsisBinary` option](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis); use `ToolsetCustom` (for `toolsets.nsis`) instead. Use the Electron framework and the [`snapcraft`](#snap-snapcraft) config shape respectively. The removed framework support means `framework: "proton" | "libui"` no longer has any effect — see [`framework` removed](#framework-nodeversion-launchuiversion).
 
 ### Renamed type exports
 

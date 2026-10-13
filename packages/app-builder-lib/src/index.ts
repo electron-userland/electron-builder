@@ -19,6 +19,7 @@ export {
   MetadataDirectories,
   PackContext,
   ToolsetConfig,
+  ToolsetCustom,
 } from "./configuration.js"
 export {
   BeforeBuildContext,
@@ -54,7 +55,7 @@ export { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
 export { MsixOptions, MsixWindowsService } from "./options/MsixOptions.js"
 export { BackgroundAlignment, BackgroundScaling, PkgBackgroundOptions, PkgOptions } from "./options/pkgOptions.js"
 export { AsarOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions.js"
-export { PlugDescriptor, SlotDescriptor, SnapcraftOptions } from "./options/SnapOptions.js"
+export { PlugDescriptor, RemoteBuildOptions, SlotDescriptor, SnapcraftOptions, SnapOptions24, SnapOptionsCustom, SnapOptionsLegacy } from "./options/SnapOptions.js"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js"
 export {
   WindowsAzureSigningConfig,

@@ -20,6 +20,7 @@ import {
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 
 class TestNativeUpdater extends EventEmitter {
+  quitAndInstallCalls = 0
   private updateUrl: string | null = null
   // Squirrel.Mac sends the headers from setFeedURL (incl. the Basic auth the proxy server requires) with
   // every request — mirror that here so the mock can authenticate against MacUpdater's local proxy.
@@ -44,8 +45,23 @@ class TestNativeUpdater extends EventEmitter {
     this.updateUrl = updateUrl.url
     this.headers = updateUrl.headers ?? {}
   }
+
+  quitAndInstall() {
+    this.quitAndInstallCalls++
+  }
 }
 
+test.ifMac("quitAndInstall handles one future native download", async ({ expect }) => {
+  const mockNativeUpdater = new TestNativeUpdater()
+  mockForNodeRequire("electron", { autoUpdater: mockNativeUpdater })
+  const updater = new MacUpdater(undefined, await createTestAppAdapter())
+
+  updater.quitAndInstall()
+  mockNativeUpdater.emit("update-downloaded")
+  mockNativeUpdater.emit("update-downloaded")
+
+  expect(mockNativeUpdater.quitAndInstallCalls).toBe(1)
+})
 const MAC_ZIP_NAME = "TestApp-1.1.0-mac.zip"
 const MAC_ZIP_CONTENT = Buffer.from("electron-builder localhost update-server test zip payload — not a real archive")
 

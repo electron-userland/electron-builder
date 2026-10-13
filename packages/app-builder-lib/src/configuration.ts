@@ -696,7 +696,7 @@ export interface ToolsetConfig {
    * Version of the AppImage toolset bundle used for building `.AppImage` files.
    *
    * The bundle ships:
-   * - **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage.
+   * - **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage. It also packs legacy-base (core18/core20/core22) snaps built from the snap template app.
    * - **`desktop-file-validate`** — validates the generated `.desktop` entry.
    * - **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.
    *
@@ -706,6 +706,8 @@ export interface ToolsetConfig {
    * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |
    * | `"1.0.3"` | 20251108 | Introduces static AppImage runtime |
    * | `"1.1.0"` | 20251108 | Adds `unsquashfs` support |
+   *
+   * An explicit version pin always selects exactly that release.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/appimage/CHANGELOG.md
    *

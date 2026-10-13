@@ -1,4 +1,5 @@
 import { createRequire } from "node:module"
+import { LogLimiter } from "builder-util-runtime/internal"
 import {
   AllPublishOptions,
   asArray,
@@ -16,6 +17,7 @@ import {
   collectManifestSignatures,
   normalizePublicKeyList,
   verifyManifestSignatures,
+  type LimitedLogger,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
@@ -280,7 +282,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * `allowDowngrade` will be automatically set to `true`. If this behavior is not suitable for you, simple set `allowDowngrade` explicitly after.
    */
   set channel(value: string | null) {
-    if (this._channel != null) {
+    if (value != null) {
       // noinspection SuspiciousTypeOfGuard
       if (typeof value !== "string") {
         throw newError(`Channel must be a string, but got: ${value}`, "ERR_UPDATER_INVALID_CHANNEL")
@@ -305,11 +307,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   updateManifestPublicKey: string | Array<string> | null = null
 
-  private manifestVerificationWarned = false
-  // v27 behaviour changes a plain-JavaScript app would otherwise not notice: each is announced once per updater
-  private crossOriginHeadersWarned = false
-  private crossOriginFeedQueryWarned = false
-
   /**
    *  The request headers.
    */
@@ -325,6 +322,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   protected _logger: Logger = console
+
+  // per updater instance, so several updaters (and tests) keep their own counts
+  private readonly logLimiter = new LogLimiter()
+
+  /**
+   * The current logger (`this.logger`, whichever one is set at call time), emitting at most `max` times per `key`
+   * for this updater instance. The counting stays here: a logger supplied through `autoUpdater.logger` is called
+   * exactly as before and does not need to support anything beyond {@link Logger}.
+   * @internal
+   */
+  protected limitedLogger(key: string, max = 1): LimitedLogger<Logger> {
+    return this.logLimiter.wrap(() => this._logger, { key, max })
+  }
 
   // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
   get netSession(): Session {
@@ -478,7 +488,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * Configure update provider. If value is `string`, [GenericServerOptions](https://www.electron.build/publish#genericserveroptions) will be set with value as `url`.
+   * Configure update provider. If value is `string`, [GenericServerOptions](https://www.electron.build/publish#byo-generic-create-your-own) will be set with value as `url`.
    * @param options If you want to override configuration in the `app-update.yml`.
    */
   setFeedURL(options: PublishConfiguration | AllPublishOptions | string) {
@@ -703,10 +713,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     if (trustedKeys.length === 0) {
-      if (!this.manifestVerificationWarned) {
-        this.manifestVerificationWarned = true
-        this._logger.warn("update manifest signature verification is disabled. Configure updateManifestPublicKey (and sign manifests at build time) to enable it.")
-      }
+      this.limitedLogger("manifest-verification-disabled").warn(
+        "update manifest signature verification is disabled. Configure updateManifestPublicKey (and sign manifests at build time) to enable it."
+      )
       return
     }
 
@@ -936,18 +945,17 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   private announceCrossOriginDownload(url: URL, credentialOrigin: URL, headers: OutgoingHttpHeaders, feedBaseUrl: URL | null): void {
     const docs = "https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
     const names = HttpExecutor.sensitiveHeaderNames(headers)
-    if (names.length !== 0 && !this.crossOriginHeadersWarned) {
-      this.crossOriginHeadersWarned = true
-      this._logger.warn(
+    // v27 behaviour changes a plain-JavaScript app would otherwise not notice: each is announced once per updater
+    if (names.length !== 0) {
+      this.limitedLogger("cross-origin-headers").warn(
         `electron-updater 7 (electron-builder v27) sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (${credentialOrigin.origin}): ` +
           `${names.join(", ")} not sent to ${url.origin}, which is another origin. ` +
           `If that server needs them, serve the update files from the feed origin or use pre-signed URLs. ${docs}`
       )
     }
     const feedQueryNames = feedBaseUrl == null ? [] : [...new Set(feedBaseUrl.searchParams.keys())]
-    if (feedQueryNames.length !== 0 && !this.crossOriginFeedQueryWarned) {
-      this.crossOriginFeedQueryWarned = true
-      this._logger.warn(
+    if (feedQueryNames.length !== 0) {
+      this.limitedLogger("cross-origin-feed-query").warn(
         `electron-updater 7 (electron-builder v27) adds the feed URL's query string (${feedQueryNames.join(", ")}) only to URLs on the update feed's origin (${feedBaseUrl!.origin}): ` +
           `not added to the download from ${url.origin}, which keeps its own query string. ` +
           `If that server needs it, serve the update files from the feed origin or use pre-signed URLs. ${docs}`

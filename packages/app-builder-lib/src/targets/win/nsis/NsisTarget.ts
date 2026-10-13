@@ -74,6 +74,18 @@ export function createAppPackageArchiveOptions(compression: ArchiveOptions["comp
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
+/**
+ * Whether a packed app can use the copy of the installer that the NSIS installer keeps in the updater cache
+ * (`APP_INSTALLER_STORE_FILE`). Only electron-updater reads it, as the base for a differential download, and
+ * electron-updater finds that cache through the `app-update.yml` written into the app's resources when
+ * publishing is configured. Without that file nothing reads the copy, so the installer does not write it
+ * (and the uninstaller does not leave it behind, #9505).
+ */
+export async function hasUpdaterConfig(packager: Pick<WinPackager, "getResourcesDir">, archs: Map<Arch, string>): Promise<boolean> {
+  const found = await Promise.all(Array.from(archs.values(), appOutDir => statOrNull(path.join(packager.getResourcesDir(appOutDir), "app-update.yml"))))
+  return found.some(it => it != null)
+}
+
 export class NsisTarget extends Target {
   readonly options: NsisOptions
 
@@ -394,6 +406,20 @@ export class NsisTarget extends Target {
     const { packageFiles, estimatedSize, storedMemberFiles } = await this.resolveArchPackageFiles(archs, defines, packager)
 
     this.configureDefinesForAllTypeOfInstaller(defines)
+    // the web installer has no copy of itself to keep, and the portable template never writes one
+    if (!this.isWebInstaller && !isPortable) {
+      if (await hasUpdaterConfig(packager, archs)) {
+        defines.KEEP_INSTALLER_FOR_UPDATER = null
+      } else {
+        // logged once per target, not once per installer (per-arch installers share the packed apps' publish setup)
+        log
+          .once("nsis-updater-config-missing", this)
+          .info(
+            { reason: "resources/app-update.yml not found (no publish configuration)" },
+            "installer copy for electron-updater's differential download cache is skipped, so an app that sets updateConfigPath elsewhere will download updates in full"
+          )
+      }
+    }
     if (isPortable) {
       const { unpackDirName, requestExecutionLevel, splashImage } = options as PortableOptions
       defines.REQUEST_EXECUTION_LEVEL = requestExecutionLevel || "user"
@@ -917,7 +943,9 @@ export class NsisTarget extends Target {
    * Only warns when a custom script is actually supplied; the generated ProgID is invisible otherwise.
    */
   private async warnAboutProgIdFormatChange(fileAssociations: Array<FileAssociation>, progIdMaker: ProgIdMaker): Promise<void> {
-    if (this.progIdWarningEmitted) {
+    // checked first: resolving the custom script is not free, and computeFinalScript runs for every installer script
+    const limited = log.once("nsis-progid-format-change", this)
+    if (limited.isExhausted) {
       return
     }
     const packager = this.packager
@@ -925,7 +953,6 @@ export class NsisTarget extends Target {
     if (!hasCustomScript) {
       return
     }
-    this.progIdWarningEmitted = true
     const examples = fileAssociations
       .slice(0, 3)
       .map(item => {
@@ -933,15 +960,13 @@ export class NsisTarget extends Target {
         return `${item.name || ext} -> ${progIdMaker.progId(item.name || ext)}`
       })
       .join(", ")
-    log.warn(
+    limited.warn(
       { progIds: examples, solution: "update any registry keys, shell verbs, or external tooling that references the old ProgID" },
       "NSIS file associations now register a generated ProgID instead of the association name or extension. " +
         "You ship a custom NSIS script (nsis.include / nsis.script), which may reference the old value. " +
         "See https://www.electron.build/docs/migration/v27-breaking-changes#nsis-file-association-progid-format-changed"
     )
   }
-
-  private progIdWarningEmitted = false
 
   private async computeFinalScript(originalScript: string, isInstaller: boolean, archs: Map<Arch, string>): Promise<string> {
     const packager = this.packager
