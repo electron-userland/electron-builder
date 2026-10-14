@@ -427,7 +427,7 @@
           "type": "boolean"
         },
         "ordering": {
-          "description": "Path to a file containing the order in which files should be packed into the asar archive.\nEach line of the file is a relative path from the app directory. Files listed first are\npacked first, which can improve app startup time by front-loading frequently accessed modules.\nSee the [asar documentation](https://github.com/electron/asar) for details.",
+          "description": "Path to a file containing the order in which files should be packed into the asar archive.\nEach line of the file is a relative path from the app directory. Files listed first are\npacked first, which can improve app startup time by front-loading frequently accessed modules.\nSee the [asar documentation](https://github.com/electron/asar) for details.\n\nLines use the same syntax `@electron/asar` accepts: the path may carry a leading `/` or a\n`<count>:` prefix (as written by a load counter), and blank lines are ignored. Directories keep\ntheir positions, listed files follow in the order of the file, and every other file keeps its\noriginal order after them. Listed files that are not in the archive are skipped.",
           "type": [
             "null",
             "string"

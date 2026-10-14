@@ -36,6 +36,11 @@ export interface AsarOptions {
    * Each line of the file is a relative path from the app directory. Files listed first are
    * packed first, which can improve app startup time by front-loading frequently accessed modules.
    * See the [asar documentation](https://github.com/electron/asar) for details.
+   *
+   * Lines use the same syntax `@electron/asar` accepts: the path may carry a leading `/` or a
+   * `<count>:` prefix (as written by a load counter), and blank lines are ignored. Directories keep
+   * their positions, listed files follow in the order of the file, and every other file keeps its
+   * original order after them. Listed files that are not in the archive are skipped.
    */
   ordering?: string | null
 
