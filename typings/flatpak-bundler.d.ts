@@ -68,9 +68,9 @@ declare module "@malept/flatpak-bundler" {
     sdkFlatpakref?: string
     baseFlatpakref?: string
     bundleRepoUrl?: string
-    extraFlatpakBuilderArgs?: any
-    extraFlatpakBuildExportArgs?: any
-    extraFlatpakBuildBundleArgs?: any
+    extraFlatpakBuilderArgs?: string[]
+    extraFlatpakBuildExportArgs?: string[]
+    extraFlatpakBuildBundleArgs?: string[]
   }
 
   export function bundle(manifest: FlatpakManifest, options: FlatpakBundlerBuildOptions): Promise<void>

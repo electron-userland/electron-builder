@@ -133,6 +133,11 @@ export default class FlatpakTarget extends Target {
       bundlePath: path.join(this.outDir, artifactName),
       files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...extraFiles],
       symlinks: [[path.join("/lib", appIdentifier, executableName), path.join("/bin", executableName)], ...(this.options.symlinks || [])],
+      extraFlatpakBuilderArgs: this.options.extraFlatpakBuilderArgs,
+      extraFlatpakBuildExportArgs: this.options.extraFlatpakBuildExportArgs,
+      autoInstallRuntime: this.options.autoInstallRuntime,
+      autoInstallSdk: this.options.autoInstallSdk,
+      autoInstallBase: this.options.autoInstallBase,
     }
 
     return { manifest, buildOptions }

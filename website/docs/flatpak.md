@@ -132,6 +132,27 @@ flatpak:
   useWaylandFlags: true   # Appends --enable-features=UseOzonePlatform --ozone-platform=wayland when running under a Wayland session
 ```
 
+## Customizing the Flatpak Build
+
+Pass extra arguments to the underlying `flatpak-builder` and `flatpak build-export` commands:
+
+```yaml
+flatpak:
+  extraFlatpakBuilderArgs:
+    - "--disable-rofiles-fuse"
+  extraFlatpakBuildExportArgs:
+    - "--disable-sandbox"
+```
+
+By default, electron-builder installs or updates the runtime, SDK and base app from their remotes on every build. To build against what's already installed on the build machine (e.g. offline or pre-provisioned CI), turn this off:
+
+```yaml
+flatpak:
+  autoInstallRuntime: false
+  autoInstallSdk: false
+  autoInstallBase: false
+```
+
 ## Local Testing
 
 Build and install the Flatpak locally:

@@ -327,4 +327,39 @@ export interface FlatpakOptions extends CommonLinuxOptions, TargetSpecificOption
    * Whether to enable the Wayland specific flags (`--enable-features=UseOzonePlatform --ozone-platform=wayland`) in the wrapper script. These flags are only available starting with Electron version 12. Defaults to `false`.
    */
   readonly useWaylandFlags?: boolean
+
+  /**
+   * Extra arguments to pass to the [flatpak-builder](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html) command during the build phase.
+   *
+   * See [@malept/flatpak-bundler documentation](https://github.com/malept/flatpak-bundler#build-options).
+   */
+  readonly extraFlatpakBuilderArgs?: string[]
+
+  /**
+   * Extra arguments to pass to the [flatpak build-export](https://docs.flatpak.org/en/latest/flatpak-command-reference.html#flatpak-build-export) command.
+   *
+   * See [@malept/flatpak-bundler documentation](https://github.com/malept/flatpak-bundler#build-options).
+   */
+  readonly extraFlatpakBuildExportArgs?: string[]
+
+  /**
+   * Whether to install or update the runtime from its remote while building. Set to `false` to use the runtime already installed on the build machine. Defaults to `true`.
+   *
+   * See [@malept/flatpak-bundler documentation](https://github.com/malept/flatpak-bundler#build-options).
+   */
+  readonly autoInstallRuntime?: boolean
+
+  /**
+   * Whether to install or update the SDK from its remote while building. Set to `false` to use the SDK already installed on the build machine. Defaults to `true`.
+   *
+   * See [@malept/flatpak-bundler documentation](https://github.com/malept/flatpak-bundler#build-options).
+   */
+  readonly autoInstallSdk?: boolean
+
+  /**
+   * Whether to install or update the base app from its remote while building. Set to `false` to use the base app already installed on the build machine. Defaults to `true`.
+   *
+   * See [@malept/flatpak-bundler documentation](https://github.com/malept/flatpak-bundler#build-options).
+   */
+  readonly autoInstallBase?: boolean
 }
