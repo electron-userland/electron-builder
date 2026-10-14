@@ -252,7 +252,7 @@ test.ifNotWindows("hooks as functions", ({ expect }) => {
     {
       packed: async () => {
         expect(artifactBuildStartedCalled).toEqual(2)
-        expect(artifactBuildCompletedCalled).toEqual(3) // 2 artifacts + blockmap
+        expect(artifactBuildCompletedCalled).toEqual(4) // 2 artifacts + blockmap + blockmap3
         expect(beforePackCalled).toEqual(2)
         expect(afterExtractCalled).toEqual(2)
         expect(afterPackCalled).toEqual(2)

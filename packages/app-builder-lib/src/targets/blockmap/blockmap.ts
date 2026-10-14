@@ -70,6 +70,16 @@ export interface BuildBlockMapOptions {
    * at a different offset or surrounded by different data.
    */
   regions?: Array<BlockMapRegion> | null
+
+  /**
+   * Absolute offsets at which a block boundary is forced in addition to the content-defined ones: the
+   * pending block ends right before the offset and the chunker state is reset, so the blocks on either
+   * side depend only on their own bytes. Unlike a region edge this changes no chunker parameters and
+   * (in a v3 map) closes no group. Offsets must be ascending; duplicates, `0` and offsets at or past the
+   * end of the input are ignored. Used to cut a stored asar at every packed file's content start, so a
+   * change inside one file never alters a block that also covers its neighbour.
+   */
+  boundaries?: Array<number> | null
 }
 
 interface BlockMap {
@@ -150,32 +160,28 @@ function normalizeRegions(regions: Array<BlockMapRegion>, fileSize: number): Arr
 }
 
 /**
- * Build a content-defined block map for `inFile` using Rabin fingerprinting.
- *
- * Files are processed via streaming (peak memory ≈ the largest chunker `max` — 32 KB by default —
- * per chunk, not the full file size), making this safe for large installers.
- *
- * - If `outFile` is omitted: compressed blockmap is appended to `inFile`
- *   (used for NSIS web installer / AppImage embed); `blockMapSize` is returned.
- * - If `outFile` is provided: compressed blockmap is written to that file;
- *   `blockMapSize` is not included in the result.
- *
- * `options.regions` lets byte ranges of the input be chunked with their own parameters (see
- * `BuildBlockMapOptions`). Chunk boundaries are forced at both edges of every region and the chunker
- * state is reset there, so the blocks of a region depend only on the region's own bytes. Without
- * regions the output is exactly what the default chunker produces. Regions never affect the returned
- * `size` or `sha512`.
- *
- * Returned `sha512` is SHA-512 of the full file as it exists after the call.
+ * Receives every block the chunker produces, in file order. `chunk` is a view into an internal buffer
+ * that is reused for the next block, so it is only valid for the duration of the call (hash it or copy it).
+ * `offset` is the absolute offset of the block's first byte in the input.
  */
-export async function buildBlockMap(inFile: string, compressionFormat: CompressionFormat, outFile?: string, options?: BuildBlockMapOptions): Promise<BlockMapDataHolder> {
+export type ChunkListener = (chunk: Buffer, offset: number) => void
+
+/**
+ * Streams `inFile` through the region-aware Rabin chunker, invoking `onChunk` for every block (see
+ * `BuildBlockMapOptions.regions` for the forced boundaries at region edges). `onData`, when given,
+ * receives every raw read buffer in order, so callers can hash the whole file in the same pass.
+ *
+ * Peak memory ≈ the largest chunker `max` (32 KB by default) — not the file size. Returns the number of
+ * bytes read. This is the single per-byte loop shared by the v2 (`buildBlockMap`) and v3
+ * (`buildBlockMapV3`) block map builders; the blocks it yields are independent of the output format.
+ */
+export async function chunkFile(inFile: string, options: BuildBlockMapOptions | undefined, onChunk: ChunkListener, onData?: (data: Buffer) => void): Promise<number> {
   const requestedRegions = options?.regions
   // The input is pre-stat'ed only when regions are given, so a region past the end of the file fails before any work is done.
   const regions = requestedRegions == null || requestedRegions.length === 0 ? [] : normalizeRegions(requestedRegions, (await stat(inFile)).size)
+  const boundaries = normalizeBoundaries(options?.boundaries)
+  let nextBoundary = 0 // index into `boundaries` of the next boundary not yet reached
 
-  const fileHash = createHash("sha512")
-  const checksums: string[] = []
-  const sizes: number[] = []
   let totalSize = 0
 
   // Chunker parameters of the current segment. A segment is either a region (its own parameters) or
@@ -196,14 +202,15 @@ export async function buildBlockMap(inFile: string, compressionFormat: Compressi
   }
   const chunkBuf = Buffer.allocUnsafe(maxChunkSize)
   let chunkN = 0 // bytes accumulated for current chunk
+  let chunkOffset = 0 // absolute offset of the first byte of the current chunk
   let hi = 0
   let lo = 0
   const win = new Uint8Array(RABIN_WINDOW) // rolling window ring buffer
   let wpos = 0
 
   function emitChunk() {
-    checksums.push(Buffer.from(blake2b(chunkBuf.subarray(0, chunkN), { dkLen: 18 })).toString("base64"))
-    sizes.push(chunkN)
+    onChunk(chunkBuf.subarray(0, chunkN), chunkOffset)
+    chunkOffset += chunkN
     chunkN = 0
     hi = 0
     lo = 0
@@ -277,23 +284,33 @@ export async function buildBlockMap(inFile: string, compressionFormat: Compressi
     }
   }
 
-  // Stream-read the file, feeding SHA-512 and the Rabin chunker simultaneously
+  // Stream-read the file, feeding `onData` (e.g. SHA-512) and the Rabin chunker simultaneously
   await new Promise<void>((resolve, reject) => {
     const rs = createReadStream(inFile, { highWaterMark: 256 * 1024 })
     rs.on("data", (chunk: Buffer | string) => {
       const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
-      fileHash.update(buf)
+      if (onData != null) {
+        onData(buf)
+      }
       totalSize += buf.length
       let i = 0
       while (i < buf.length) {
-        // Feed bytes up to the end of the buffer or of the current segment, whichever comes first;
-        // `segmentEnd` is Infinity once the last region is behind us.
-        const n = Math.min(buf.length - i, segmentEnd - filePos)
+        // Feed bytes up to the end of the buffer, of the current segment or the next forced boundary,
+        // whichever comes first; `segmentEnd` is Infinity once the last region is behind us.
+        const boundaryAt = nextBoundary < boundaries.length ? boundaries[nextBoundary] : Infinity
+        const n = Math.min(buf.length - i, Math.min(segmentEnd, boundaryAt) - filePos)
         const stop = i + n
         for (; i < stop; i++) {
           processByte(buf[i])
         }
         filePos += n
+        if (filePos === boundaryAt) {
+          // Forced boundary inside a segment: end the pending block here, keep the chunker parameters.
+          if (chunkN > 0) {
+            emitChunk()
+          }
+          nextBoundary++
+        }
         if (filePos === segmentEnd) {
           // Forced boundary at a region edge: flush whatever is pending and switch parameters.
           if (chunkN > 0) {
@@ -316,6 +333,64 @@ export async function buildBlockMap(inFile: string, compressionFormat: Compressi
     })
     rs.on("error", reject)
   })
+
+  return totalSize
+}
+
+/** Validates `BuildBlockMapOptions.boundaries`: ascending non-negative integers; `0` and duplicates are dropped. */
+function normalizeBoundaries(boundaries: Array<number> | null | undefined): Array<number> {
+  if (boundaries == null || boundaries.length === 0) {
+    return []
+  }
+  const result: Array<number> = []
+  for (const boundary of boundaries) {
+    if (!Number.isSafeInteger(boundary) || boundary < 0) {
+      throw new Error(`blockmap boundary must be a non-negative integer, got ${String(boundary)}`)
+    }
+    const previous = result.length === 0 ? 0 : result[result.length - 1]
+    if (boundary < previous) {
+      throw new Error(`blockmap boundaries must be ascending: ${boundary} follows ${previous}`)
+    }
+    if (boundary > previous) {
+      result.push(boundary)
+    }
+  }
+  return result
+}
+
+/**
+ * Build a content-defined block map for `inFile` using Rabin fingerprinting.
+ *
+ * Files are processed via streaming (peak memory ≈ the largest chunker `max` — 32 KB by default —
+ * per chunk, not the full file size), making this safe for large installers.
+ *
+ * - If `outFile` is omitted: compressed blockmap is appended to `inFile`
+ *   (used for NSIS web installer / AppImage embed); `blockMapSize` is returned.
+ * - If `outFile` is provided: compressed blockmap is written to that file;
+ *   `blockMapSize` is not included in the result.
+ *
+ * `options.regions` lets byte ranges of the input be chunked with their own parameters (see
+ * `BuildBlockMapOptions`). Chunk boundaries are forced at both edges of every region and the chunker
+ * state is reset there, so the blocks of a region depend only on the region's own bytes. Without
+ * regions the output is exactly what the default chunker produces. Regions never affect the returned
+ * `size` or `sha512`.
+ *
+ * Returned `sha512` is SHA-512 of the full file as it exists after the call.
+ */
+export async function buildBlockMap(inFile: string, compressionFormat: CompressionFormat, outFile?: string, options?: BuildBlockMapOptions): Promise<BlockMapDataHolder> {
+  const fileHash = createHash("sha512")
+  const checksums: string[] = []
+  const sizes: number[] = []
+
+  const totalSize = await chunkFile(
+    inFile,
+    options,
+    chunk => {
+      checksums.push(Buffer.from(blake2b(chunk, { dkLen: 18 })).toString("base64"))
+      sizes.push(chunk.length)
+    },
+    data => fileHash.update(data)
+  )
 
   const blockMap: BlockMap = {
     version: "2",

@@ -8,6 +8,7 @@ exports[`Mac Intel 1`] = `
       "file": "Test App ßW-1.0.0-mac.zip",
       "safeArtifactName": "TestApp-1.0.0-mac.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -17,15 +18,22 @@ exports[`Mac Intel 1`] = `
       "file": "Test App ßW-1.0.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.0-mac.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.0-mac.zip.blockmap3",
+      "safeArtifactName": "Test App ßW-1.0.0-mac.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.0-mac.zip",
@@ -96,6 +104,7 @@ exports[`Mac Intel 3`] = `
       "file": "Test App ßW-1.0.1-mac.zip",
       "safeArtifactName": "TestApp-1.0.1-mac.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -105,15 +114,22 @@ exports[`Mac Intel 3`] = `
       "file": "Test App ßW-1.0.1-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.1-mac.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.1-mac.zip.blockmap3",
+      "safeArtifactName": "Test App ßW-1.0.1-mac.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.1-mac.zip",
@@ -203,6 +219,7 @@ exports[`Mac arm64 1`] = `
       "file": "Test App ßW-1.0.0-arm64-mac.zip",
       "safeArtifactName": "TestApp-1.0.0-arm64-mac.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -212,15 +229,22 @@ exports[`Mac arm64 1`] = `
       "file": "Test App ßW-1.0.0-arm64-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.0-arm64-mac.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.0.0-arm64-mac.zip.blockmap3",
+      "safeArtifactName": "Test App ßW-1.0.0-arm64-mac.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.0-arm64-mac.zip",
@@ -291,6 +315,7 @@ exports[`Mac arm64 3`] = `
       "file": "Test App ßW-1.0.1-arm64-mac.zip",
       "safeArtifactName": "TestApp-1.0.1-arm64-mac.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -300,15 +325,22 @@ exports[`Mac arm64 3`] = `
       "file": "Test App ßW-1.0.1-arm64-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.1-arm64-mac.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "arm64",
+      "file": "Test App ßW-1.0.1-arm64-mac.zip.blockmap3",
+      "safeArtifactName": "Test App ßW-1.0.1-arm64-mac.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.1-arm64-mac.zip",
@@ -398,6 +430,7 @@ exports[`Mac universal 1`] = `
       "file": "Test App ßW-1.0.0-universal-mac.zip",
       "safeArtifactName": "TestApp-1.0.0-universal-mac.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -407,15 +440,22 @@ exports[`Mac universal 1`] = `
       "file": "Test App ßW-1.0.0-universal-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.0-universal-mac.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "universal",
+      "file": "Test App ßW-1.0.0-universal-mac.zip.blockmap3",
+      "safeArtifactName": "Test App ßW-1.0.0-universal-mac.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.0-universal-mac.zip",
@@ -486,6 +526,7 @@ exports[`Mac universal 3`] = `
       "file": "Test App ßW-1.0.1-universal-mac.zip",
       "safeArtifactName": "TestApp-1.0.1-universal-mac.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -495,15 +536,22 @@ exports[`Mac universal 3`] = `
       "file": "Test App ßW-1.0.1-universal-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.0.1-universal-mac.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "universal",
+      "file": "Test App ßW-1.0.1-universal-mac.zip.blockmap3",
+      "safeArtifactName": "Test App ßW-1.0.1-universal-mac.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.1-universal-mac.zip",

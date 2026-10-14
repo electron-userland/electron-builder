@@ -8,6 +8,7 @@ exports[`differential-win > nsis 1`] = `
       "file": "Test App ßW Setup 1.0.0.exe",
       "safeArtifactName": "TestApp-Setup-1.0.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -17,15 +18,22 @@ exports[`differential-win > nsis 1`] = `
       "file": "Test App ßW Setup 1.0.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.0.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.0.0.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup-1.0.0.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW Setup 1.0.0.exe",
@@ -47,6 +55,7 @@ exports[`differential-win > nsis 2`] = `
       "file": "Test App ßW Setup 1.0.1.exe",
       "safeArtifactName": "TestApp-Setup-1.0.1.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -56,15 +65,22 @@ exports[`differential-win > nsis 2`] = `
       "file": "Test App ßW Setup 1.0.1.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.0.1.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.0.1.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup-1.0.1.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW Setup 1.0.1.exe",

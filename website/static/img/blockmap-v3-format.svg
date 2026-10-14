@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="830" viewBox="0 0 1600 830">
+  <style>
+  html,body{margin:0;background:#fff}
+  svg{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;fill:#1f2937}
+  .t{font-size:22px;font-weight:700}.h{font-size:17px;font-weight:700}.s{font-size:13px;fill:#4b5563}
+  .m{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}.lbl{font-size:13px;fill:#374151}.num{font-weight:700}
+</style>
+  <rect width="1600" height="830" fill="#ffffff"/>
+  <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker></defs>
+  <text x="40" y="44" class="t">Block map v3 (.blockmap3) — a range-fetchable, three-level map</text>
+  <text x="40" y="70" class="s">v2 is gzipped JSON, ~22 B per block, downloaded whole on every update. v3 is uncompressed with fixed-size tables, so an updater can fetch the parts it needs by byte range.</text>
+
+  <!-- 1. file layout -->
+  <text x="40" y="118" class="h">1 · File layout — every offset is computable from the header</text>
+  <rect x="40" y="134" width="330" height="56" fill="#fde68a" stroke="#d97706" stroke-width="1.5"/>
+  <text x="205" y="157" text-anchor="middle" class="lbl" font-weight="700">header (fixed size)</text>
+  <text x="205" y="177" text-anchor="middle" class="m">magic · sizes · chunkers · regions</text>
+  <rect x="370" y="134" width="330" height="56" fill="#fde68a" stroke="#d97706" stroke-width="1.5"/>
+  <text x="535" y="157" text-anchor="middle" class="lbl" font-weight="700">super-groups — superCount × 16 B</text>
+  <text x="535" y="177" text-anchor="middle" class="m">{ superHash, blockCount, groupCount }</text>
+  <rect x="700" y="134" width="340" height="56" fill="#bbf7d0" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="870" y="157" text-anchor="middle" class="lbl" font-weight="700">groups — groupCount × 16 B</text>
+  <text x="870" y="177" text-anchor="middle" class="m">{ groupHash, byteLength, blockCount }</text>
+  <rect x="1040" y="134" width="520" height="56" fill="#e3eef9" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="1300" y="157" text-anchor="middle" class="lbl" font-weight="700">records — blockCount × 10 B, in file order</text>
+  <text x="1300" y="177" text-anchor="middle" class="m">{ blockHash u64 (first 8 B of the blake2b-18 digest), size u16 }</text>
+  <text x="40" y="214" class="s">Cumulative sums of groupCount / blockCount / byteLength give every super-group's entries, every group's records and every block's offset → each is one Range request.</text>
+  <text x="40" y="233" class="s">32 MB asar at 512 B/1/2 KiB, cut at every file ≈ 28k blocks / 741 groups / 38 super-groups: a 0.6 KB super table, a 11.9 KB group table, 284 KB of records — only what changed is ever fetched.</text>
+
+  <!-- 2. blocks -> groups -->
+  <text x="40" y="266" class="h">2 · Build — blocks are grouped content-defined on the hash stream (not by index), and groups again into super-groups</text>
+  <text x="40" y="286" class="s">content-defined Rabin blocks (512 B/1/2 KiB inside the stored asar region, cut at every packed file; 8/16/32 KiB elsewhere) → one 10-byte record each:</text>
+  <!-- blocks row -->
+  <g>
+    <rect x="40" y="294" width="1520" height="34" fill="#f1f6fc" stroke="#9ec2eb"/>
+    <g stroke="#5b9bd5" stroke-width="1">
+      <line x1="80" y1="294" x2="80" y2="328"/><line x1="112" y1="294" x2="112" y2="328"/><line x1="150" y1="294" x2="150" y2="328"/><line x1="184" y1="294" x2="184" y2="328"/><line x1="230" y1="294" x2="230" y2="328"/><line x1="262" y1="294" x2="262" y2="328"/><line x1="300" y1="294" x2="300" y2="328"/><line x1="336" y1="294" x2="336" y2="328"/><line x1="372" y1="294" x2="372" y2="328"/><line x1="416" y1="294" x2="416" y2="328"/><line x1="450" y1="294" x2="450" y2="328"/><line x1="486" y1="294" x2="486" y2="328"/><line x1="530" y1="294" x2="530" y2="328"/><line x1="566" y1="294" x2="566" y2="328"/><line x1="600" y1="294" x2="600" y2="328"/><line x1="640" y1="294" x2="640" y2="328"/><line x1="676" y1="294" x2="676" y2="328"/><line x1="720" y1="294" x2="720" y2="328"/><line x1="756" y1="294" x2="756" y2="328"/><line x1="790" y1="294" x2="790" y2="328"/><line x1="830" y1="294" x2="830" y2="328"/><line x1="868" y1="294" x2="868" y2="328"/><line x1="900" y1="294" x2="900" y2="328"/><line x1="946" y1="294" x2="946" y2="328"/><line x1="980" y1="294" x2="980" y2="328"/><line x1="1016" y1="294" x2="1016" y2="328"/><line x1="1060" y1="294" x2="1060" y2="328"/><line x1="1096" y1="294" x2="1096" y2="328"/><line x1="1130" y1="294" x2="1130" y2="328"/><line x1="1170" y1="294" x2="1170" y2="328"/><line x1="1206" y1="294" x2="1206" y2="328"/><line x1="1250" y1="294" x2="1250" y2="328"/><line x1="1286" y1="294" x2="1286" y2="328"/><line x1="1320" y1="294" x2="1320" y2="328"/><line x1="1360" y1="294" x2="1360" y2="328"/><line x1="1398" y1="294" x2="1398" y2="328"/><line x1="1430" y1="294" x2="1430" y2="328"/><line x1="1476" y1="294" x2="1476" y2="328"/><line x1="1510" y1="294" x2="1510" y2="328"/>
+    </g>
+  </g>
+  <!-- group brackets -->
+  <g stroke="#16a34a" stroke-width="2" fill="none">
+    <path d="M40,342 v10 h330 v-10"/><path d="M372,342 v10 h304 v-10"/><path d="M678,342 v10 h268 v-10"/><path d="M948,342 v10 h302 v-10"/><path d="M1252,342 v10 h308 v-10"/>
+  </g>
+  <g class="m" fill="#166534" text-anchor="middle"><text x="205" y="370">group 0 · hash g0</text><text x="524" y="370">group 1 · hash g1</text><text x="812" y="370">group 2 · hash g2</text><text x="1099" y="370">group 3 · hash g3</text><text x="1406" y="370">group 4 · hash g4</text></g>
+  <text x="40" y="400" class="s">A group ends when the low 5 bits of a block's hash are all set (≈ every 32 blocks; min 8, max 128), or at a region edge / EOF; a super-group ends the same way on the group hashes (≈ 16 groups).</text>
+  <text x="40" y="420" class="s">groupHash = blake2b of the group's records, superHash = blake2b of the super-group's group entries. Boundaries come from the hashes, so an edit only perturbs the group(s) and super-group(s) containing it:</text>
+  <!-- before/after -->
+  <g>
+    <text x="40" y="454" class="lbl" font-weight="700">previous release</text>
+    <rect x="200" y="440" width="330" height="22" fill="#bbf7d0" stroke="#16a34a"/><rect x="530" y="440" width="304" height="22" fill="#bbf7d0" stroke="#16a34a"/><rect x="834" y="440" width="268" height="22" fill="#bbf7d0" stroke="#16a34a"/><rect x="1102" y="440" width="302" height="22" fill="#bbf7d0" stroke="#16a34a"/>
+    <g class="m" text-anchor="middle" fill="#166534" style="font-size:12px"><text x="365" y="455">g0</text><text x="682" y="455">g1</text><text x="968" y="455">g2</text><text x="1253" y="455">g3</text></g>
+    <text x="40" y="492" class="lbl" font-weight="700">new (+7 B in g1)</text>
+    <rect x="200" y="478" width="330" height="22" fill="#bbf7d0" stroke="#16a34a"/><rect x="530" y="478" width="312" height="22" fill="#fecaca" stroke="#dc2626"/><rect x="842" y="478" width="268" height="22" fill="#bbf7d0" stroke="#16a34a"/><rect x="1110" y="478" width="302" height="22" fill="#bbf7d0" stroke="#16a34a"/>
+    <g class="m" text-anchor="middle" style="font-size:12px"><text x="365" y="493" fill="#166534">g0 ✓</text><text x="686" y="493" fill="#b91c1c">g1′ — changed, fetch its records</text><text x="976" y="493" fill="#166534">g2 ✓ (shifted, same hash)</text><text x="1261" y="493" fill="#166534">g3 ✓</text></g>
+  </g>
+
+  <!-- 3. cost -->
+  <text x="40" y="548" class="h">3 · Why this changes the trade-off</text>
+  <rect x="40" y="564" width="740" height="120" rx="8" fill="#f9fafb" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="56" y="588" class="lbl" font-weight="700">v2 (.blockmap, unchanged, still published)</text>
+  <text x="56" y="612" class="lbl">cost per update ≈ <tspan class="num">22 B × every block</tspan>, whole file, every time</text>
+  <text x="56" y="634" class="lbl">32 MB asar: 38 KB at 16 KiB blocks → 560 KB at 1 KiB blocks</text>
+  <text x="56" y="664" class="s">→ blocks finer than ~8 KiB cost more map than they save in data; floor ≈ 96 KB / one-line change</text>
+  <rect x="820" y="564" width="740" height="120" rx="8" fill="#f1f6fc" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="836" y="588" class="lbl" font-weight="700">v3 (.blockmap3, additional artifact)</text>
+  <text x="836" y="612" class="lbl">cost per update ≈ <tspan class="num">super table + entries of changed supers + records of changed groups</tspan></text>
+  <text x="836" y="634" class="lbl">32 MB asar, one-line change: 2.0 KB first request + 1.0 KB entries + 1.8 KB records = <tspan class="num">4.9 KB</tspan> of map</text>
+  <text x="836" y="664" class="s">→ map cost grows with the change, not the installer, so 512 B blocks finally pay: 9.1 KB total (8.6 KB aligned)</text>
+
+  <rect x="40" y="712" width="1520" height="86" rx="8" fill="#f3f4f6" stroke="#d1d5db"/>
+  <text x="56" y="738" class="lbl" font-weight="700">Compatibility</text>
+  <text x="56" y="762" class="lbl">• v2 is emitted byte-for-byte as today with its 4/8/16 KiB stored-asar region; old electron-updater never sees .blockmap3.   • latest.yml files[] gains <tspan class="m">blockMapV3: true</tspan> (unknown keys are ignored).</text>
+  <text x="56" y="784" class="lbl">• Never appended to the .blockmap file: Node's gunzipSync concatenates gzip members and old updaters' JSON.parse would fail → full download.   • Same blake2b digests as v2, just 8 bytes; the final sha512 of the installer is still the safety net.</text>
+</svg>

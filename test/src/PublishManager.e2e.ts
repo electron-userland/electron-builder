@@ -259,6 +259,7 @@ test.ifNotWindows("os macro", ({ expect }) =>
           "latest/linux/x64/TestApp-1.1.0.zip",
           "latest/mac/x64/Test App ßW-1.1.0-mac.zip",
           "latest/mac/x64/Test App ßW-1.1.0-mac.zip.blockmap",
+          "latest/mac/x64/Test App ßW-1.1.0-mac.zip.blockmap3",
           "latest/mac/x64/latest-mac.yml",
         ])
       },

@@ -5,6 +5,38 @@ import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter.js"
 import { DifferentialDownloader } from "./DifferentialDownloader.js"
 import { Operation, OperationKind } from "./downloadPlanBuilder.js"
 
+/**
+ * Maximum number of DOWNLOAD ranges packed into one `multipart/byteranges` request. Apache's `MaxRanges`
+ * default is 200 (more → a plain 200 response with the whole file, which fails the multipart content-type
+ * check), and at ~19 B per range more than ~400–500 ranges push the `Range` header alone past the 8 KB
+ * request-header limits of nginx and Apache (HTTP 400). Both failures degrade to a full download.
+ */
+export const MAX_RANGES_PER_REQUEST = 200
+
+/** Maximum number of operations (COPY + DOWNLOAD) handled by one request/batch. */
+export const MAX_TASKS_PER_REQUEST = 1000
+
+/**
+ * Returns the exclusive end index of the batch starting at `start`: at most `maxTasks` operations and at
+ * most `maxRanges` DOWNLOAD operations. COPY operations following the last DOWNLOAD of a batch stay in it
+ * (they cost nothing on the wire), the batch is cut right before the DOWNLOAD that would exceed the cap.
+ */
+export function computeBatchEnd(tasks: Array<Operation>, start: number, maxRanges: number = MAX_RANGES_PER_REQUEST, maxTasks: number = MAX_TASKS_PER_REQUEST): number {
+  const limit = Math.min(tasks.length, start + maxTasks)
+  let rangeCount = 0
+  let end = start
+  while (end < limit) {
+    if (tasks[end].kind === OperationKind.DOWNLOAD) {
+      if (rangeCount >= maxRanges) {
+        break
+      }
+      rangeCount++
+    }
+    end++
+  }
+  return end
+}
+
 export function executeTasksUsingMultipleRangeRequests(
   differentialDownloader: DifferentialDownloader,
   tasks: Array<Operation>,
@@ -21,13 +53,13 @@ export function executeTasksUsingMultipleRangeRequests(
       return
     }
 
-    const nextOffset = taskOffset + 1000
+    const nextOffset = computeBatchEnd(tasks, taskOffset)
     doExecuteTasks(
       differentialDownloader,
       {
         tasks,
         start: taskOffset,
-        end: Math.min(tasks.length, nextOffset),
+        end: nextOffset,
         oldFileFd,
       },
       out,

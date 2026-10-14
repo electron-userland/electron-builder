@@ -8,6 +8,7 @@ exports[`msiWrapped > msiWrapped allows capitalized nsis target 1`] = `
       "file": "Test MSI Setup 1.1.0.exe",
       "safeArtifactName": "Test-MSI-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -22,9 +23,15 @@ exports[`msiWrapped > msiWrapped allows capitalized nsis target 1`] = `
       "file": "Test MSI Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "Test-MSI-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "Test MSI Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "Test-MSI-Setup-1.1.0.exe.blockmap3",
     },
   ],
 }
@@ -38,6 +45,7 @@ exports[`msiWrapped > msiWrapped impersonate no if not provided 1`] = `
       "file": "MSIWrappingEXE Setup 1.1.0.exe",
       "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -52,9 +60,15 @@ exports[`msiWrapped > msiWrapped impersonate no if not provided 1`] = `
       "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap3",
     },
   ],
 }
@@ -68,6 +82,7 @@ exports[`msiWrapped > msiWrapped impersonate yes if true 1`] = `
       "file": "MSIWrappingEXE Setup 1.1.0.exe",
       "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -82,9 +97,15 @@ exports[`msiWrapped > msiWrapped impersonate yes if true 1`] = `
       "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap3",
     },
   ],
 }
@@ -98,6 +119,7 @@ exports[`msiWrapped > msiWrapped includes packaged exe 1`] = `
       "file": "MSIWrappingEXE Setup 1.1.0.exe",
       "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -112,9 +134,15 @@ exports[`msiWrapped > msiWrapped includes packaged exe 1`] = `
       "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap3",
     },
   ],
 }
@@ -128,6 +156,7 @@ exports[`msiWrapped > msiWrapped wrappedInstallerArgs provided 1`] = `
       "file": "MSIWrappingEXE Setup 1.1.0.exe",
       "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -142,9 +171,15 @@ exports[`msiWrapped > msiWrapped wrappedInstallerArgs provided 1`] = `
       "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap3",
     },
   ],
 }

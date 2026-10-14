@@ -8,6 +8,7 @@ exports[`nsisWine > custom include — build 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -17,9 +18,15 @@ exports[`nsisWine > custom include — build 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap3",
     },
   ],
 }
@@ -33,6 +40,7 @@ exports[`nsisWine > menuCategory — build + install 1`] = `
       "file": "Test Menu Category CustomName 1.1.0.exe",
       "safeArtifactName": "Test-Menu-Category-CustomName-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -42,9 +50,15 @@ exports[`nsisWine > menuCategory — build + install 1`] = `
       "file": "Test Menu Category CustomName 1.1.0.exe.blockmap",
       "safeArtifactName": "Test-Menu-Category-CustomName-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "ia32",
+      "file": "Test Menu Category CustomName 1.1.0.exe.blockmap3",
+      "safeArtifactName": "Test-Menu-Category-CustomName-1.1.0.exe.blockmap3",
     },
   ],
 }
@@ -58,6 +72,7 @@ exports[`nsisWine > multi-language license — build 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -67,9 +82,15 @@ exports[`nsisWine > multi-language license — build 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "ia32",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap3",
     },
   ],
 }
@@ -83,6 +104,7 @@ exports[`nsisWine > perMachine oneClick — build + install 1`] = `
       "file": "TestApp Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
@@ -93,16 +115,23 @@ exports[`nsisWine > perMachine oneClick — build + install 1`] = `
       "file": "TestApp Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
+      "arch": "ia32",
+      "file": "TestApp Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap3",
+    },
+    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "isAdminRightsRequired": true,
             "sha512": "@sha512",
             "size": "@size",
@@ -133,6 +162,7 @@ exports[`nsisWine > perUser file associations — build + install 1`] = `
       "file": "TestApp Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -142,9 +172,15 @@ exports[`nsisWine > perUser file associations — build + install 1`] = `
       "file": "TestApp Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "ia32",
+      "file": "TestApp Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap3",
     },
   ],
 }
@@ -158,6 +194,7 @@ exports[`nsisWine > perUser oneClick — build + install 1`] = `
       "file": "TestApp Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -167,9 +204,15 @@ exports[`nsisWine > perUser oneClick — build + install 1`] = `
       "file": "TestApp Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "ia32",
+      "file": "TestApp Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap3",
     },
   ],
 }
@@ -183,6 +226,7 @@ exports[`nsisWine > string menuCategory — build + install 1`] = `
       "file": "Test Menu Category ' CustomName 1.1.0.exe",
       "safeArtifactName": "test-menu-category-setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -192,9 +236,15 @@ exports[`nsisWine > string menuCategory — build + install 1`] = `
       "file": "Test Menu Category ' CustomName 1.1.0.exe.blockmap",
       "safeArtifactName": "test-menu-category-setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "ia32",
+      "file": "Test Menu Category ' CustomName 1.1.0.exe.blockmap3",
+      "safeArtifactName": "test-menu-category-setup-1.1.0.exe.blockmap3",
     },
   ],
 }
@@ -208,6 +258,7 @@ exports[`nsisWine > x64 oneClick — build 1`] = `
       "file": "TestApp Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -217,9 +268,15 @@ exports[`nsisWine > x64 oneClick — build 1`] = `
       "file": "TestApp Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap3",
     },
   ],
 }
