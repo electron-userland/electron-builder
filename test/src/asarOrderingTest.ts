@@ -3,7 +3,7 @@ import { readAsarHeader } from "app-builder-lib/src/asar/asar"
 import { orderAsarStreams } from "app-builder-lib/src/asar/asarUtil"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { app, linuxDirTarget } from "./helpers/packTester.js"
+import { app, appThrows, linuxDirTarget } from "./helpers/packTester.js"
 
 type AsarStreamType = Parameters<typeof orderAsarStreams>[0][number]
 
@@ -77,6 +77,24 @@ test.ifNotWindows("asar.ordering packs listed files first", ({ expect }) =>
         expect(byOffset.slice(0, 3)).toEqual(["zeta.js", "mid.js", "index.js"])
         expect(byOffset.indexOf("alpha.js")).toBeGreaterThan(2)
       },
+    }
+  )
+)
+
+// v27 breaking change: a configured ordering file that does not exist fails the build (v26 ignored the option).
+test.ifNotWindows("asar.ordering fails the build when the file is missing", ({ expect }) =>
+  appThrows(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        asar: { ordering: "no-such-order.txt" },
+      },
+    },
+    {},
+    error => {
+      expect(error.message).toContain('asar.ordering file "no-such-order.txt" was not found')
+      expect(error.message).toContain("v27-breaking-changes#asar-ordering-is-now-applied")
     }
   )
 )

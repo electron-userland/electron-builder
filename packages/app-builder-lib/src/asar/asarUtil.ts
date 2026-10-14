@@ -1,5 +1,5 @@
 import type { AsarStreamType, AsarDirectory } from "@electron/asar"
-import { exists, Filter, FilterStats, isEmptyOrSpaces, log } from "builder-util"
+import { exists, Filter, FilterStats, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { dynamicImport } from "../util/dynamicImport.js"
 import fs from "fs-extra"
 
@@ -140,15 +140,31 @@ export class AsarPackager {
     let streams = await this.processFileSets(orderedFileSets)
     const ordering = this.config.options.ordering
     if (!isEmptyOrSpaces(ordering)) {
-      const orderingFile = path.resolve(this.packager.projectDir, ordering)
+      const orderingFile = await this.resolveOrderingFile(ordering)
       const { streams: ordered, listed, matched } = orderAsarStreams(streams, (await fs.readFile(orderingFile, "utf8")).split(/\r?\n/))
-      log.info({ ordering: log.filePath(orderingFile), matched: `${matched}/${listed}` }, "applied asar ordering")
+      log.once("asar-ordering", this.packager).info({ ordering: log.filePath(orderingFile), matched: `${matched}/${listed}` }, "applied asar ordering")
       if (matched < listed) {
         log.debug({ ordering: log.filePath(orderingFile), missing: listed - matched }, "asar ordering lists files that are not in the archive")
       }
       streams = ordered
     }
     await this.executeElectronAsar(streams)
+  }
+
+  // resolved like every other build resource: build resources dir first, then the project dir
+  private async resolveOrderingFile(ordering: string): Promise<string> {
+    try {
+      return (await this.packager.getResource(ordering))!
+    } catch (e: any) {
+      if (e instanceof InvalidConfigurationError) {
+        throw new InvalidConfigurationError(
+          `asar.ordering file "${ordering}" was not found (looked in the build resources directory and the project directory). ` +
+            `electron-builder 27 applies the ordering file to the packed archive, so it must exist; remove the option to keep the default layout. ` +
+            `See https://www.electron.build/docs/migration/v27-breaking-changes#asar-ordering-is-now-applied`
+        )
+      }
+      throw e
+    }
   }
 
   private async executeElectronAsar(streams: AsarStreamType[]) {

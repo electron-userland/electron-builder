@@ -41,6 +41,9 @@ export interface AsarOptions {
    * `<count>:` prefix (as written by a load counter), and blank lines are ignored. Directories keep
    * their positions, listed files follow in the order of the file, and every other file keeps its
    * original order after them. Listed files that are not in the archive are skipped.
+   *
+   * The path is resolved like other build resources: relative to the [build resources directory](#directories)
+   * first, then to the project directory. A missing file fails the build.
    */
   ordering?: string | null
 

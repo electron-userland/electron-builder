@@ -58,6 +58,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`npmSkipBuildFromSource` removed](#npmskipbuildfromsource) | ✓ | Replaced by `nativeModules.buildDependenciesFromSource` |
 | [Native-module options grouped under `nativeModules`](#native-module-options-nativemodules) | ✓ | `nativeRebuilder` → `rebuildMode`; the `"legacy"` rebuilder is removed (dropped with a warning) |
 | [ASAR options consolidated under `asar`](#asar-options-asar) | ✓ | `asarUnpack` → `asar.unpack`, etc., including platform-level `mac.asarUnpack` → `mac.asar.unpack` (`asar: true` is still valid, just redundant) |
+| [`asar.ordering` is now applied](#asar-ordering-is-now-applied) | — | v26 ignored the option; v27 packs the listed files first and fails when the file is missing. Remove the option to keep the dependencies-first layout |
 | [macOS signing consolidated under `mac.sign`](#macos-signing-macsign) | ✓ | `identity`/`entitlements`/`hardenedRuntime`/… → `mac.sign.*`; `signIgnore` → `sign.ignore` |
 | [`mac.universal` options consolidated](#macuniversal) | ✓ | `mergeASARs`/`singleArchFiles`/`x64ArchFiles` → `mac.universal.*` |
 | [Windows signing unified under `win.sign`](#windows-signing-winsign) | ✓ | Discriminated union `type: "signtool" \| "hsm" \| "pkcs11" \| "azure"` |
@@ -446,6 +447,17 @@ When `asar: false`, the root-level sub-options have no effect and the migrator r
 // After (v27)
 { "asar": { "unpack": ["**/*.node"] }, "mac": { "asar": { "unpack": ["**/*.node", "Resources/**"] } } }
 ```
+
+### `asar.ordering` is now applied {#asar-ordering-is-now-applied}
+
+`asar.ordering` was documented and validated in v26 but never read: the archive was always packed dependencies first, app files last. v27 honors it: directories keep their positions, the files listed in the ordering file are packed first in the order of the file, and everything else follows in its original order.
+
+Two consequences for projects that already set the option:
+
+- **The archive layout changes once.** Differential updates download most of `app.asar` on the first update after upgrading; later updates are unaffected.
+- **A missing ordering file is now an error.** The path is resolved relative to the build resources directory, then the project directory, and the build fails with `InvalidConfigurationError` when neither has it.
+
+Remove the option to keep the default layout, which is tuned for small differential updates.
 
 ### macOS signing → `mac.sign` {#macos-signing-macsign}
 
