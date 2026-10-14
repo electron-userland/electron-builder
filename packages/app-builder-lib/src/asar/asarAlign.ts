@@ -94,8 +94,9 @@ async function copyRange(inFd: number, outFd: number, start: number, size: numbe
  * can grow within its slot and no other offset moves.
  *
  * Streams the archive (peak memory ≈ header + 1 MiB, whatever the alignment: padding is written from
- * one shared zero buffer), writes `<file>.aligning`, verifies its size against the computed layout and
- * renames it over the original; on any failure the original is untouched and the temp file removed.
+ * one shared zero buffer), writes `<file>.aligning`, verifies its size against the computed layout, closes
+ * both handles and renames it over the original; on any failure the original is untouched and the temp
+ * file removed.
  * Idempotent: an already aligned archive is rewritten byte-identically.
  */
 export async function alignAsarContent(asarFile: string, alignment: number): Promise<AsarAlignmentResult> {
@@ -124,7 +125,7 @@ export async function alignAsarContent(asarFile: string, alignment: number): Pro
   const expectedSize = newHeader.length + cursor
 
   const tempFile = `${asarFile}.aligning`
-  const inFd = await fs.open(asarFile, "r")
+  let inFd: number | null = await fs.open(asarFile, "r")
   let outFd: number | null = null
   try {
     outFd = await fs.open(tempFile, "w")
@@ -149,6 +150,9 @@ export async function alignAsarContent(asarFile: string, alignment: number): Pro
     }
     await fs.close(outFd)
     outFd = null
+    // Windows refuses to replace a file that still has an open handle (EPERM): close the source before the rename
+    await fs.close(inFd)
+    inFd = null
     await fs.rename(tempFile, asarFile)
   } catch (e) {
     if (outFd != null) {
@@ -158,7 +162,9 @@ export async function alignAsarContent(asarFile: string, alignment: number): Pro
     await fs.remove(tempFile).catch(() => undefined)
     throw e
   } finally {
-    await fs.close(inFd)
+    if (inFd != null) {
+      await fs.close(inFd)
+    }
     if (outFd != null) {
       await fs.close(outFd)
     }
