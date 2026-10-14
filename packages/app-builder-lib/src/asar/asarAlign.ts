@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { InvalidConfigurationError, log } from "builder-util"
 import chromiumPickleJs from "chromium-pickle-js"
 import fs from "fs-extra"
 import { Node, readAsarHeader } from "./asar.js"
@@ -14,6 +14,19 @@ export interface AsarAlignmentResult {
 }
 
 const COPY_CHUNK = 1024 * 1024
+
+/** Above this alignment every file is padded up to a boundary that is likely much larger than the file itself. */
+export const CONTENT_ALIGNMENT_WARN_THRESHOLD = 64 * 1024
+
+/**
+ * Validates an `asar.contentAlignment` value. Called from `computeAsarOptions` before packing starts and
+ * again by `alignAsarContent` (which is public and used directly by the benchmark).
+ */
+export function validateContentAlignment(alignment: unknown): asserts alignment is number {
+  if (typeof alignment !== "number" || !Number.isInteger(alignment) || alignment < 1) {
+    throw new InvalidConfigurationError(`asar.contentAlignment must be a positive integer, got ${String(alignment)}`)
+  }
+}
 
 interface PackedFile {
   node: Node
@@ -44,6 +57,18 @@ function serializeHeader(headerJson: string): Buffer {
   return Buffer.concat([sizePickle.toBuffer(), headerBuf])
 }
 
+/** `fs.write` may write fewer bytes than asked; loop until the whole range is on disk. */
+async function writeFully(fd: number, buffer: Buffer, length: number): Promise<void> {
+  let done = 0
+  while (done < length) {
+    const { bytesWritten } = await fs.write(fd, buffer, done, length - done)
+    if (bytesWritten <= 0) {
+      throw new Error(`short write while aligning asar content: ${done} of ${length} bytes written`)
+    }
+    done += bytesWritten
+  }
+}
+
 async function copyRange(inFd: number, outFd: number, start: number, size: number, buffer: Buffer): Promise<void> {
   let copied = 0
   while (copied < size) {
@@ -52,7 +77,7 @@ async function copyRange(inFd: number, outFd: number, start: number, size: numbe
     if (bytesRead !== n) {
       throw new Error(`Unexpected end of asar content: wanted ${n} bytes at ${start + copied}, got ${bytesRead}`)
     }
-    await fs.write(outFd, buffer, 0, n)
+    await writeFully(outFd, buffer, n)
     copied += n
   }
 }
@@ -68,13 +93,13 @@ async function copyRange(inFd: number, outFd: number, start: number, size: numbe
  * byte shifts the offset of every later file, rewriting most of the header — with alignment a file
  * can grow within its slot and no other offset moves.
  *
- * Streams the archive (peak memory ≈ header + 1 MiB), writes `<file>.aligning` and renames it over
- * the original. Idempotent: an already aligned archive is rewritten byte-identically.
+ * Streams the archive (peak memory ≈ header + 1 MiB, whatever the alignment: padding is written from
+ * one shared zero buffer), writes `<file>.aligning`, verifies its size against the computed layout and
+ * renames it over the original; on any failure the original is untouched and the temp file removed.
+ * Idempotent: an already aligned archive is rewritten byte-identically.
  */
 export async function alignAsarContent(asarFile: string, alignment: number): Promise<AsarAlignmentResult> {
-  if (!Number.isInteger(alignment) || alignment < 1) {
-    throw new Error(`asar contentAlignment must be a positive integer, got ${String(alignment)}`)
-  }
+  validateContentAlignment(alignment)
 
   const { header: headerJson, size: headerSize } = await readAsarHeader(asarFile)
   const header = JSON.parse(headerJson) as Node
@@ -95,26 +120,49 @@ export async function alignAsarContent(asarFile: string, alignment: number): Pro
     return { ...file, newOffset: aligned }
   })
 
+  const newHeader = serializeHeader(JSON.stringify(header))
+  const expectedSize = newHeader.length + cursor
+
   const tempFile = `${asarFile}.aligning`
   const inFd = await fs.open(asarFile, "r")
-  const outFd = await fs.open(tempFile, "w")
+  let outFd: number | null = null
   try {
-    await fs.write(outFd, serializeHeader(JSON.stringify(header)))
+    outFd = await fs.open(tempFile, "w")
+    await writeFully(outFd, newHeader, newHeader.length)
     const buffer = Buffer.allocUnsafe(COPY_CHUNK)
+    const zeros = Buffer.alloc(Math.min(alignment, COPY_CHUNK))
     let written = 0
     for (const file of layout) {
-      if (file.newOffset > written) {
-        const gap = file.newOffset - written
-        await fs.write(outFd, Buffer.alloc(gap))
-        written += gap
+      for (let gap = file.newOffset - written; gap > 0;) {
+        const n = Math.min(gap, zeros.length)
+        await writeFully(outFd, zeros, n)
+        gap -= n
+        written += n
       }
       await copyRange(inFd, outFd, contentStart + file.offset, file.size, buffer)
       written += file.size
     }
+
+    const { size: actualSize } = await fs.fstat(outFd)
+    if (written !== cursor || actualSize !== expectedSize) {
+      throw new Error(`aligned asar is ${actualSize} bytes (${written} content bytes written), expected ${expectedSize} (${cursor} content bytes)`)
+    }
+    await fs.close(outFd)
+    outFd = null
+    await fs.rename(tempFile, asarFile)
+  } catch (e) {
+    if (outFd != null) {
+      await fs.close(outFd).catch(() => undefined)
+      outFd = null
+    }
+    await fs.remove(tempFile).catch(() => undefined)
+    throw e
   } finally {
-    await Promise.all([fs.close(inFd), fs.close(outFd)])
+    await fs.close(inFd)
+    if (outFd != null) {
+      await fs.close(outFd)
+    }
   }
-  await fs.rename(tempFile, asarFile)
 
   const sizeAfter = (await fs.stat(asarFile)).size
   log.info({ file: log.filePath(asarFile), alignment, files: files.length, padding: paddingBytes, size: `${sizeBefore} → ${sizeAfter}` }, "aligned asar content")

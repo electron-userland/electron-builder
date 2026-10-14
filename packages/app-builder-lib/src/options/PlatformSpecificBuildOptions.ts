@@ -57,6 +57,11 @@ export interface AsarOptions {
    * asar size. Padding does not help when a file is added or removed (a new header entry shifts all later
    * offsets) or when growth crosses the slot. File order, sizes and per-file integrity are unchanged;
    * Electron and `@electron/asar` read files by offset + size and ignore the gaps.
+   *
+   * Must be a positive integer; values above 64 KiB log a warning because every file is padded up to the
+   * boundary. The alignment is applied when electron-builder packs `app.asar`, so it is lost when the
+   * archive is rebuilt afterwards: macOS universal builds with `mac.universal.mergeASARs` (the default)
+   * repack the merged asar, and `--prepackaged` skips packing entirely.
    * @default 0
    */
   contentAlignment?: number | null

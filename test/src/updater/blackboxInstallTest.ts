@@ -1,5 +1,6 @@
 import { AppImageOptions, Configuration, DebOptions, PacmanOptions, RpmOptions, Target, ToolsetConfig } from "app-builder-lib"
 import { PM } from "app-builder-lib/internal"
+import { readAsarHeader } from "app-builder-lib/src/asar/asar"
 import { Arch, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { archFromString, log } from "builder-util"
@@ -50,6 +51,29 @@ describe.heavy.ifLinux("linux install", optionsForInstall, () => {
         }
       }
     })
+    describe.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true")(`AppImage asar.contentAlignment`, optionsForInstall, () => {
+      // Electron runs with the asar integrity fuses on (see runInstallTest), so a launch that reports its
+      // version proves it reads every file of the aligned archive through the rewritten offsets.
+      test.ifEnv(process.arch === "x64")(`x64 - toolset: 1.1.0 - compression: ${compression} - compressor: zstd - contentAlignment: 512`, async context => {
+        const config: Configuration = { toolsets: { appimage: "1.1.0" }, compression, appImage: { compression: "zstd" }, asar: { contentAlignment: 512 } }
+        await runInstallTest(context, "appImage", Arch.x64, config, async ctx => {
+          const asarFile = path.join(ctx.outDir, "linux-unpacked", "resources", "app.asar")
+          const offsets: number[] = []
+          const walk = (node: any) => {
+            for (const child of Object.values<any>(node.files ?? {})) {
+              if (child.files != null) {
+                walk(child)
+              } else if (child.offset != null && !child.unpacked && child.link == null) {
+                offsets.push(parseInt(child.offset, 10))
+              }
+            }
+          }
+          walk(JSON.parse((await readAsarHeader(asarFile)).header))
+          context.expect(offsets.length).toBeGreaterThan(0)
+          context.expect(offsets.filter(offset => offset % 512 !== 0)).toEqual([])
+        })
+      })
+    })
     describe(`compression: ${compression}`, () => {
       const debCompressions: DebOptions["compression"][] = ["gz", "bzip2", "xz", "zst"]
       // DEB compression tests — debian container only
@@ -85,7 +109,13 @@ describe.heavy.ifLinux("linux install", optionsForInstall, () => {
   }
 })
 
-async function runInstallTest(context: TestContext, target: ConstructorParameters<typeof Target>[0], arch: Arch, extraConfig: Configuration): Promise<void> {
+async function runInstallTest(
+  context: TestContext,
+  target: ConstructorParameters<typeof Target>[0],
+  arch: Arch,
+  extraConfig: Configuration,
+  verifyPacked?: (ctx: PackedContext) => Promise<void>
+): Promise<void> {
   const { expect, tmpDir } = context
 
   let artifactsDir: string | undefined
@@ -136,6 +166,7 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
       storeDepsLockfileSnapshot: false,
       packageManager: PM.PNPM,
       packed: async (ctx: PackedContext) => {
+        await verifyPacked?.(ctx)
         artifactsDir = await tmpDir.getTempDir({ prefix: "artifacts" })
         await move(ctx.outDir, artifactsDir)
       },

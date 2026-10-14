@@ -1,8 +1,11 @@
-import { alignAsarContent } from "app-builder-lib/src/asar/asarAlign"
+import { alignAsarContent, validateContentAlignment } from "app-builder-lib/src/asar/asarAlign"
+import { InvalidConfigurationError } from "builder-util"
 import { readAsar, readAsarHeader } from "app-builder-lib/src/asar/asar"
 import { dynamicImport } from "app-builder-lib/src/util/dynamicImport"
+import { Platform } from "app-builder-lib"
 import * as fs from "fs/promises"
 import * as path from "path"
+import { app, appThrows, linuxDirTarget } from "./helpers/packTester.js"
 
 type Asar = { createPackage(src: string, dest: string): Promise<void>; extractFile(archive: string, filename: string): Buffer }
 const asar = () => dynamicImport<Asar>("@electron/asar")
@@ -86,8 +89,10 @@ describe("alignAsarContent", () => {
     const electronAsar = await asar()
     const ownReader = await readAsar(file)
     for (const [rel, content] of files) {
-      expect(electronAsar.extractFile(file, rel).equals(content), `extractFile(${rel})`).toBe(true)
-      expect((await ownReader.readFile(rel)).equals(content), `readFile(${rel})`).toBe(true)
+      // both readers split the lookup path on path.sep
+      const native = rel.split("/").join(path.sep)
+      expect(electronAsar.extractFile(file, native).equals(content), `extractFile(${rel})`).toBe(true)
+      expect((await ownReader.readFile(native)).equals(content), `readFile(${rel})`).toBe(true)
     }
   })
 
@@ -150,13 +155,118 @@ describe("alignAsarContent", () => {
     const after = await headerEntries(file)
     expect(after.get("src/deep/er/file4.txt")).toEqual(before.get("src/deep/er/file4.txt"))
     expect(after.get("lib/alias.js")).toEqual(before.get("lib/alias.js"))
-    expect((await asar()).extractFile(file, "lib/mod0.js").equals(files.get("lib/mod0.js")!)).toBe(true)
+    expect((await asar()).extractFile(file, path.join("lib", "mod0.js")).equals(files.get("lib/mod0.js")!)).toBe(true)
   })
 
-  test("rejects a non-positive or fractional alignment", async ({ expect, tmpDir }) => {
+  test("rejects a non-positive or fractional alignment with InvalidConfigurationError", async ({ expect, tmpDir }) => {
     const tmp = await tmpDir.createTempDir()
     const file = await packTree(tmp, "bad", makeTree())
-    await expect(alignAsarContent(file, 0)).rejects.toThrow("positive integer")
-    await expect(alignAsarContent(file, 1.5)).rejects.toThrow("positive integer")
+    for (const bad of [0, -512, 1.5, NaN]) {
+      await expect(alignAsarContent(file, bad)).rejects.toThrow(InvalidConfigurationError)
+      await expect(alignAsarContent(file, bad)).rejects.toThrow("positive integer")
+    }
+    expect(() => validateContentAlignment("512")).toThrow(InvalidConfigurationError)
+    expect(() => validateContentAlignment(512)).not.toThrow()
+  })
+
+  test("leaves the original untouched and removes the temp file when the rewrite fails", async ({ expect, tmpDir }) => {
+    const tmp = await tmpDir.createTempDir()
+    const file = await packTree(tmp, "broken", makeTree())
+    const original = await fs.readFile(file)
+    // truncate the content region: copying the last file must hit EOF and abort the rewrite
+    await fs.truncate(file, original.length - 1)
+    const truncated = await fs.readFile(file)
+
+    await expect(alignAsarContent(file, 512)).rejects.toThrow("Unexpected end of asar content")
+    expect((await fs.readFile(file)).equals(truncated), "input must not be replaced").toBe(true)
+    await expect(fs.stat(`${file}.aligning`)).rejects.toThrow()
+  })
+
+  // The two controls the differential updater relies on: a byte inside a padding gap belongs to no file,
+  // a byte inside a file's content is seen through the rewritten offset of exactly that file.
+  test("padding gaps are outside every file; content is read through the new offsets", async ({ expect, tmpDir }) => {
+    const tmp = await tmpDir.createTempDir()
+    const files = makeTree()
+    const file = await packTree(tmp, "flip", files)
+    await alignAsarContent(file, 512)
+    const { size: headerSize } = await readAsarHeader(file)
+    const contentStart = 8 + headerSize
+    const packed = [...(await headerEntries(file))]
+      .filter(([, e]) => e.offset != null)
+      .map(([rel, e]) => ({ rel, offset: parseInt(e.offset, 10), size: e.size as number }))
+      .sort((a, b) => a.offset - b.offset)
+    const withGap = packed.find((f, i) => i + 1 < packed.length && f.offset + f.size < packed[i + 1].offset)!
+    expect(withGap, "expected a padding gap between two files").toBeDefined()
+
+    const readAll = async () => {
+      const reader = await readAsar(file)
+      const out = new Map<string, Buffer>()
+      for (const { rel } of packed) {
+        out.set(rel, await reader.readFile(rel.split("/").join(path.sep)))
+      }
+      return out
+    }
+    const flip = async (position: number) => {
+      const fd = await fs.open(file, "r+")
+      try {
+        const one = Buffer.alloc(1)
+        await fd.read(one, 0, 1, position)
+        one[0] ^= 0xff
+        await fd.write(one, 0, 1, position)
+      } finally {
+        await fd.close()
+      }
+    }
+
+    const before = await readAll()
+    await flip(contentStart + withGap.offset + withGap.size) // first padding byte after the file
+    expect(await readAll()).toEqual(before)
+
+    await flip(contentStart + withGap.offset + Math.floor(withGap.size / 2)) // inside the file
+    const after = await readAll()
+    expect(after.get(withGap.rel)!.equals(before.get(withGap.rel)!)).toBe(false)
+    for (const [rel, content] of before) {
+      if (rel !== withGap.rel) {
+        expect(after.get(rel)!.equals(content), rel).toBe(true)
+      }
+    }
   })
 })
+
+// Through the packager: `asar.contentAlignment` is validated before anything is packed and applied to
+// the app.asar electron-builder writes. (A launch of the aligned archive under the integrity fuses is
+// covered by the AppImage case in updater/blackboxInstallTest.)
+test.ifNotWindows("asar.contentAlignment aligns the packed app.asar", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: { asar: { contentAlignment: 512 } },
+    },
+    {
+      packed: async context => {
+        const entries = await headerEntries(path.join(context.getResources(Platform.LINUX), "app.asar"))
+        const packed = [...entries].filter(([, e]) => e.offset != null)
+        expect(packed.length).toBeGreaterThan(0)
+        for (const [rel, e] of packed) {
+          expect(parseInt(e.offset, 10) % 512, `${rel} @ ${e.offset}`).toBe(0)
+        }
+      },
+    }
+  )
+)
+
+test.ifNotWindows("an invalid asar.contentAlignment fails before packing", ({ expect }) =>
+  appThrows(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: { asar: { contentAlignment: -512 } },
+    },
+    {},
+    error => {
+      expect(error).toBeInstanceOf(InvalidConfigurationError)
+      expect(error.message).toContain("asar.contentAlignment must be a positive integer")
+    }
+  )
+)

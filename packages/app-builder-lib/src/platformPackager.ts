@@ -1,5 +1,6 @@
 import type { FuseConfig, FuseV1Config } from "@electron/fuses"
 import { dynamicImport } from "./util/dynamicImport.js"
+import { CONTENT_ALIGNMENT_WARN_THRESHOLD, validateContentAlignment } from "./asar/asarAlign.js"
 import {
   Arch,
   asArray,
@@ -819,7 +820,19 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return {}
     }
 
-    return deepAssign({}, result)
+    const asarOptions: AsarOptions = deepAssign({}, result)
+    const alignment = asarOptions.contentAlignment
+    if (alignment != null && alignment !== 0) {
+      // fail before anything is packed, not after @electron/asar has written the archive
+      validateContentAlignment(alignment)
+      if (alignment > CONTENT_ALIGNMENT_WARN_THRESHOLD) {
+        log.warn(
+          { contentAlignment: alignment, threshold: CONTENT_ALIGNMENT_WARN_THRESHOLD },
+          "asar.contentAlignment pads every packed file up to the next boundary; such a large alignment makes app.asar much bigger"
+        )
+      }
+    }
+    return asarOptions
   }
 
   public getElectronSrcDir(dist: string): string {
