@@ -44,6 +44,7 @@
 //
 // The region sweep targets `buildBlockMap(..., { regions })` (BuildBlockMapOptions).
 
+import { alignAsarContent } from "app-builder-lib/src/asar/asarAlign"
 import { archive, ArchiveOptions } from "app-builder-lib/src/targets/archive"
 import { buildBlockMap, BuildBlockMapOptions, ChunkerParams } from "app-builder-lib/src/targets/blockmap/blockmap"
 import { configureDifferentialAwareArchiveOptions } from "app-builder-lib/src/targets/differentialUpdateInfoBuilder"
@@ -305,23 +306,10 @@ interface AsarFileNode {
  *   size pickle   = uint32 LE payload size (4) + uint32 LE header pickle length            → 8 bytes
  *   header pickle = uint32 LE payload size + int32 LE string byte length + utf8 bytes + zero padding to 4
  */
-function parseAsarHeader(asar: Buffer): { headerPickle: Buffer; json: string } {
+function parseAsarHeader(asar: Buffer): { json: string } {
   const headerPickle = asar.subarray(8, readAsarHeaderBytes(asar))
   const stringLength = headerPickle.readInt32LE(4)
-  return { headerPickle, json: headerPickle.toString("utf8", 8, 8 + stringLength) }
-}
-
-function serializeAsarHeader(json: string): Buffer {
-  const stringLength = Buffer.byteLength(json)
-  const payloadSize = 4 + stringLength + ((4 - (stringLength % 4)) % 4)
-  const headerPickle = Buffer.alloc(4 + payloadSize)
-  headerPickle.writeUInt32LE(payloadSize, 0)
-  headerPickle.writeInt32LE(stringLength, 4)
-  headerPickle.write(json, 8)
-  const sizePickle = Buffer.alloc(8)
-  sizePickle.writeUInt32LE(4, 0)
-  sizePickle.writeUInt32LE(headerPickle.length, 4)
-  return Buffer.concat([sizePickle, headerPickle])
+  return { json: headerPickle.toString("utf8", 8, 8 + stringLength) }
 }
 
 /** All packed file nodes (in-archive content, i.e. neither unpacked nor links) keyed by archive path. */
@@ -370,38 +358,16 @@ interface AlignedAsar {
  */
 async function alignAsar(src: string, dest: string, align: number): Promise<AlignedAsar> {
   const original = await fs.readFile(src)
-  const { headerPickle, json } = parseAsarHeader(original)
-  // self-check of the hand-rolled pickle framing against what @electron/asar wrote
-  if (!serializeAsarHeader(json).subarray(8).equals(headerPickle)) {
-    throw new Error(`pickle re-serialization of ${src} does not round-trip`)
-  }
-  const header = JSON.parse(json) as AsarFileNode
-  const contentStart = readAsarHeaderBytes(original)
-  const files = [...collectPackedFiles(header).values()].sort((a, b) => parseInt(a.offset!, 10) - parseInt(b.offset!, 10))
-  const chunks: Array<Buffer> = []
-  let cursor = 0
-  let contentBytes = 0
-  for (const node of files) {
-    const aligned = Math.ceil(cursor / align) * align
-    if (aligned > cursor) {
-      chunks.push(Buffer.alloc(aligned - cursor))
-    }
-    const start = contentStart + parseInt(node.offset!, 10)
-    chunks.push(original.subarray(start, start + node.size!))
-    node.offset = String(aligned)
-    cursor = aligned + node.size!
-    contentBytes += node.size!
-  }
-  const newHeader = serializeAsarHeader(JSON.stringify(header))
-  const aligned = Buffer.concat([newHeader, ...chunks])
-  await fs.writeFile(dest, aligned)
+  await fs.copyFile(src, dest)
+  const result = await alignAsarContent(dest, align)
+  const aligned = await fs.readFile(dest)
   return {
     file: dest,
-    originalBytes: original.length,
-    alignedBytes: aligned.length,
-    paddingBytes: cursor - contentBytes,
-    headerBytesBefore: contentStart,
-    headerBytesAfter: newHeader.length,
+    originalBytes: result.sizeBefore,
+    alignedBytes: result.sizeAfter,
+    paddingBytes: result.paddingBytes,
+    headerBytesBefore: readAsarHeaderBytes(original),
+    headerBytesAfter: readAsarHeaderBytes(aligned),
   }
 }
 

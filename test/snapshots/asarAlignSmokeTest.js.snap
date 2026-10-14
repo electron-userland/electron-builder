@@ -1,0 +1,7 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`asar.contentAlignment — real Electron with ASAR integrity fuses > Electron launches with the integrity fuses on and reads every aligned file byte-exact 1`] = `
+{
+  "linux": [],
+}
+`;

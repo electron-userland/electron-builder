@@ -8,6 +8,7 @@ import { AsarOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier.js"
 import { detectUnpackedDirs } from "./unpackDetector.js"
+import { alignAsarContent } from "./asarAlign.js"
 import { Readable } from "stream"
 import * as os from "os"
 const { readlink } = fs
@@ -91,6 +92,11 @@ export class AsarPackager {
 
     const streams = await this.processFileSets(orderedFileSets)
     await this.executeElectronAsar(streams)
+
+    const contentAlignment = this.config.options.contentAlignment
+    if (contentAlignment != null && contentAlignment !== 0) {
+      await alignAsarContent(this.outFile, contentAlignment)
+    }
   }
 
   private async executeElectronAsar(streams: AsarStreamType[]) {
