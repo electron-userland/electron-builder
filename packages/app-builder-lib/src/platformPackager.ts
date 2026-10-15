@@ -60,7 +60,7 @@ import type {
 import type { PlatformType } from "./targets/mac/MacTargetHelper.js"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, transformFiles } from "./util/appFileCopier.js"
 import { verifyNativeBinaries } from "./util/nativeBinaryVerifier.js"
-import { getTrustedSourceRoots } from "./util/trustedSourceRoots.js"
+import { getTrustedSourceRoots, resolveAllowExternalLinks } from "./util/trustedSourceRoots.js"
 import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/mac/macosIconComposer.js"
@@ -120,12 +120,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   private externalLinkPolicy: Promise<ExternalLinkPolicy> | null = null
 
   /**
-   * The resolved `allowExternalLinks` option: the platform-level value (`config.mac.allowExternalLinks`, ...) or the root one. Computed
-   * once; a listed path that does not exist fails the build.
+   * The resolved `fileOptions.allowExternalLinks` option: the platform-level value (`config.mac.fileOptions.allowExternalLinks`, ...) or the
+   * root one (see {@link resolveAllowExternalLinks}). Computed once; a listed path that does not exist fails the build.
    */
   getExternalLinkPolicy(): Promise<ExternalLinkPolicy> {
     if (this.externalLinkPolicy == null) {
-      this.externalLinkPolicy = ExternalLinkPolicy.create(this.platformSpecificBuildOptions.allowExternalLinks ?? this.config.allowExternalLinks, this.projectDir)
+      const { value, optionPath } = resolveAllowExternalLinks(this.config, this.platformSpecificBuildOptions, this.platform.buildConfigurationKey)
+      this.externalLinkPolicy = ExternalLinkPolicy.create(value, this.projectDir, optionPath)
     }
     return this.externalLinkPolicy
   }

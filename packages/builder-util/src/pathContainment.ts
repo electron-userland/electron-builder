@@ -107,14 +107,17 @@ function displayPath(file: string): string {
   return log.filePath(file)
 }
 
-/** The name of the build option that allows a link to lead outside the app, the workspace and the package-manager store. */
-export const ALLOW_EXTERNAL_LINKS_OPTION = "allowExternalLinks"
+/**
+ * The path of the build option that allows a link to lead outside the app, the workspace and the package-manager store: `allowExternalLinks`
+ * under `fileOptions`, at the configuration root or per platform (`mac.fileOptions.allowExternalLinks`, ...).
+ */
+export const ALLOW_EXTERNAL_LINKS_OPTION = "fileOptions.allowExternalLinks"
 
-/** The value of the `allowExternalLinks` build option, see `PlatformSpecificBuildOptions.allowExternalLinks`. */
+/** The value of the `fileOptions.allowExternalLinks` build option, see `FilesBuildOptions.allowExternalLinks`. */
 export type AllowExternalLinksValue = boolean | ReadonlyArray<string> | null | undefined
 
 /**
- * The resolved `allowExternalLinks` build option: which symlinks may lead outside the app, the workspace and the package-manager store,
+ * The resolved `fileOptions.allowExternalLinks` build option: which symlinks may lead outside the app, the workspace and the package-manager store,
  * by the real path of what they point to. It only relaxes what is packaged (a file reached through a link, a copied link, a link in a
  * Windows archive or installer); a write through a symlink is refused regardless (see {@link WriteContainment}).
  */
@@ -127,7 +130,7 @@ export class ExternalLinkPolicy {
     readonly projectDir: string | null,
     /** its real path, to suggest an entry relative to it */
     private readonly realProjectDir: string | null,
-    /** `allowExternalLinks: true` */
+    /** `fileOptions.allowExternalLinks: true` */
     readonly allowAll: boolean,
     /** the real paths of the listed entries */
     readonly realRoots: ReadonlyArray<string>
@@ -135,10 +138,11 @@ export class ExternalLinkPolicy {
 
   /**
    * Resolves the option: an entry is a path relative to `projectDir`, or absolute, and is compared by its real path.
+   * `optionPath` is where the value was set (e.g. `mac.fileOptions.allowExternalLinks`), for the errors below.
    *
    * @throws InvalidConfigurationError when the value is not a boolean or a list of paths, or when a listed path does not exist
    */
-  static async create(value: AllowExternalLinksValue, projectDir: string): Promise<ExternalLinkPolicy> {
+  static async create(value: AllowExternalLinksValue, projectDir: string, optionPath: string = ALLOW_EXTERNAL_LINKS_OPTION): Promise<ExternalLinkPolicy> {
     const realProjectDir = await resolvePhysicalPath(projectDir)
     if (value == null || value === false) {
       return new ExternalLinkPolicy(projectDir, realProjectDir, false, [])
@@ -147,12 +151,12 @@ export class ExternalLinkPolicy {
       return new ExternalLinkPolicy(projectDir, realProjectDir, true, [])
     }
     if (!Array.isArray(value)) {
-      throw new InvalidConfigurationError(`"${ALLOW_EXTERNAL_LINKS_OPTION}" must be a boolean or a list of paths, got ${JSON.stringify(value)}`)
+      throw new InvalidConfigurationError(`"${optionPath}" must be a boolean or a list of paths, got ${JSON.stringify(value)}`)
     }
     const realRoots: Array<string> = []
     for (const entry of value) {
       if (typeof entry !== "string" || entry.trim().length === 0) {
-        throw new InvalidConfigurationError(`"${ALLOW_EXTERNAL_LINKS_OPTION}" must list paths, got ${JSON.stringify(entry)}`)
+        throw new InvalidConfigurationError(`"${optionPath}" must list paths, got ${JSON.stringify(entry)}`)
       }
       const absolute = path.resolve(projectDir, entry)
       try {
@@ -162,7 +166,7 @@ export class ExternalLinkPolicy {
           throw e
         }
         throw new InvalidConfigurationError(
-          `"${ALLOW_EXTERNAL_LINKS_OPTION}" lists "${entry}", which does not exist (resolved against the project directory to "${absolute}"). ` +
+          `"${optionPath}" lists "${entry}", which does not exist (resolved against the project directory to "${absolute}"). ` +
             `List the directories that symlinks among the packaged files may lead into, relative to the project directory or absolute.`
         )
       }
@@ -210,7 +214,7 @@ export class ExternalLinkPolicy {
         suggestions.push(suggestion)
       }
     }
-    return `To allow it, set "${ALLOW_EXTERNAL_LINKS_OPTION}": ${JSON.stringify(suggestions)} (or true) in your build configuration.`
+    return `To allow it, set "fileOptions": { "allowExternalLinks": ${JSON.stringify(suggestions)} } (or { "allowExternalLinks": true }) in your build configuration.`
   }
 
   private async suggestEntry(resolved: string): Promise<string> {
@@ -370,7 +374,7 @@ export async function findEscapingSymlinks(dir: string, allowedRoots: ReadonlyAr
 /**
  * For a step that stores what a symlink points to instead of the symlink (a Windows archive or installer, an AppX/MSIX package, a
  * NuGet package): refuses a symlink in `dir` that leads outside it, which would put files from elsewhere on the build machine into
- * the artifact, unless the `allowExternalLinks` build option (`externalLinks`) allows it.
+ * the artifact, unless the `fileOptions.allowExternalLinks` build option (`externalLinks`) allows it.
  *
  * @param consumer what dereferences, for the error message, e.g. "the Windows zip archive"
  * @throws InvalidConfigurationError with code {@link ERR_PATH_OUTSIDE_ROOT}

@@ -319,7 +319,7 @@ describe.runIf(process.platform !== "win32")("allowExternalLinks", () => {
 
     const error = await expectEscapeError(copyDir(src, root, { externalLinks: await ExternalLinkPolicy.create(false, base) }), expect)
     expect(error.message).toContain(`resolves to "${path.join(await fs.realpath(outside), "secret")}"`)
-    expect(error.message).toContain(`To allow it, set "allowExternalLinks": ["outside"] (or true) in your build configuration.`)
+    expect(error.message).toContain(`To allow it, set "fileOptions": { "allowExternalLinks": ["outside"] } (or { "allowExternalLinks": true }) in your build configuration.`)
     expect(error.message.endsWith(`See ${V27_LINK}`)).toBe(true)
     await expect(fs.lstat(path.join(root, "leak"))).rejects.toThrow("ENOENT")
   })
@@ -369,13 +369,24 @@ describe.runIf(process.platform !== "win32")("allowExternalLinks", () => {
       (e: unknown) => e as Error
     )
     expect(error).toBeInstanceOf(InvalidConfigurationError)
-    expect(error!.message).toContain(`"allowExternalLinks" lists "missing-dir", which does not exist`)
+    expect(error!.message).toContain(`"fileOptions.allowExternalLinks" lists "missing-dir", which does not exist`)
     expect(error!.message).toContain(path.join(base, "missing-dir"))
+  })
+
+  test("the errors about a malformed value name where it was set", async ({ expect, tmpDir }) => {
+    const base = await tmpDir.createTempDir({ prefix: "containment" })
+    await expect(ExternalLinkPolicy.create(["missing-dir"], base, "mac.fileOptions.allowExternalLinks")).rejects.toThrow(
+      `"mac.fileOptions.allowExternalLinks" lists "missing-dir", which does not exist`
+    )
+    await expect(ExternalLinkPolicy.create("yes" as any, base, "linux.fileOptions.allowExternalLinks")).rejects.toThrow(
+      `"linux.fileOptions.allowExternalLinks" must be a boolean or a list of paths, got "yes"`
+    )
   })
 
   test("a value that is neither a boolean nor a list of paths fails", async ({ expect, tmpDir }) => {
     const base = await tmpDir.createTempDir({ prefix: "containment" })
     await expect(ExternalLinkPolicy.create("yes" as any, base)).rejects.toThrow(InvalidConfigurationError)
+    await expect(ExternalLinkPolicy.create("yes" as any, base)).rejects.toThrow(`"fileOptions.allowExternalLinks" must be a boolean or a list of paths`)
     await expect(ExternalLinkPolicy.create([""], base)).rejects.toThrow(InvalidConfigurationError)
   })
 
@@ -418,7 +429,7 @@ describe.runIf(process.platform !== "win32")("allowExternalLinks", () => {
 
     expect(warn).toHaveBeenCalledTimes(1)
     const [fields, message] = warn.mock.calls[0]
-    expect(String(message)).toContain(`"allowExternalLinks" allows it`)
+    expect(String(message)).toContain(`"fileOptions.allowExternalLinks" allows it`)
     expect(JSON.stringify(fields)).not.toContain(SECRET_CONTENT)
     expect(String(message)).not.toContain(SECRET_CONTENT)
   })

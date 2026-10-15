@@ -53,7 +53,7 @@ export interface CopyAppFilesOptions {
   readonly containmentRoot: string
   /** The real paths files may be copied from, see `getTrustedSourceRoots`. Each file is checked when given. */
   readonly trustedSourceRoots?: ReadonlyArray<string> | null
-  /** The `allowExternalLinks` build option: allows a file outside the trusted source roots, or a kept symlink that leaves the containment root. */
+  /** The `fileOptions.allowExternalLinks` build option: allows a file outside the trusted source roots, or a kept symlink that leaves the containment root. */
   readonly externalLinks?: ExternalLinkPolicy | null
 }
 

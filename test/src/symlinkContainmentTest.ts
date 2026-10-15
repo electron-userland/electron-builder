@@ -1,10 +1,18 @@
-import { ERR_PATH_OUTSIDE_ROOT, ExternalLinkPolicy, InvalidConfigurationError, log } from "builder-util"
+import { doMergeConfigs, validateConfiguration } from "app-builder-lib/internal"
+import { DebugLogger, ERR_PATH_OUTSIDE_ROOT, ExternalLinkPolicy, InvalidConfigurationError, log } from "builder-util"
 import { CancellationToken, GenericServerOptions } from "builder-util-runtime"
 import { copyFiles, FileMatcher } from "app-builder-lib/src/fileMatcher"
 import { writeAppUpdateYaml } from "app-builder-lib/src/publish/PublishManager"
 import { archive } from "app-builder-lib/src/targets/archive"
 import { copyAppFiles, ResolvedFileSet } from "app-builder-lib/src/util/appFileCopier"
-import { assertSourceFileInTrustedRoots, getTrustedSourceRoots, LINKED_FILES_DOCS_URL, readPackageManagerStoreDirs } from "app-builder-lib/src/util/trustedSourceRoots"
+import {
+  assertSourceFileInTrustedRoots,
+  getTrustedSourceRoots,
+  LINKED_FILES_DOCS_URL,
+  readPackageManagerStoreDirs,
+  resolveAllowExternalLinks,
+} from "app-builder-lib/src/util/trustedSourceRoots"
+import { Configuration } from "electron-builder"
 import { Stats } from "fs"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -250,7 +258,9 @@ describe.runIf(process.platform !== "win32")("allowExternalLinks", () => {
     expect(error.message).toContain(`symlinked to file [${path.join(await fs.realpath(lib), "src", "index.js")}]`)
     expect(error.message).toContain("electron-builder v27")
     // the whole linked package, not only the directory of the file checked first
-    expect(error.message).toContain(`To allow it, set "allowExternalLinks": ${JSON.stringify([await fs.realpath(lib)])} (or true) in your build configuration.`)
+    expect(error.message).toContain(
+      `To allow it, set "fileOptions": { "allowExternalLinks": ${JSON.stringify([await fs.realpath(lib)])} } (or { "allowExternalLinks": true }) in your build configuration.`
+    )
     expect(error.message.endsWith(`See ${LINKED_FILES_DOCS_URL}`)).toBe(true)
   })
 
@@ -319,5 +329,54 @@ describe.runIf(process.platform !== "win32")("allowExternalLinks", () => {
     )
     expect(error.message).toContain(`"allowExternalLinks": ${JSON.stringify([await fs.realpath(outside)])}`)
     expect(error.message).toContain(`"${path.join("dist", "linux-unpacked", "resources", "leak")}"`)
+  })
+})
+
+describe("fileOptions.allowExternalLinks in the configuration", () => {
+  test("is read from the root fileOptions, and a platform's fileOptions value replaces it", ({ expect }) => {
+    const root = { fileOptions: { allowExternalLinks: ["../shared-lib"] } }
+    expect(resolveAllowExternalLinks(root, undefined, "linux")).toEqual({ value: ["../shared-lib"], optionPath: "fileOptions.allowExternalLinks" })
+    expect(resolveAllowExternalLinks(root, { fileOptions: { files: ["dist/**"] } }, "linux")).toEqual({
+      value: ["../shared-lib"],
+      optionPath: "fileOptions.allowExternalLinks",
+    })
+    // replaced, not combined like the file lists, false included
+    expect(resolveAllowExternalLinks(root, { fileOptions: { allowExternalLinks: true } }, "linux")).toEqual({ value: true, optionPath: "linux.fileOptions.allowExternalLinks" })
+    expect(resolveAllowExternalLinks(root, { fileOptions: { allowExternalLinks: false } }, "mac")).toEqual({ value: false, optionPath: "mac.fileOptions.allowExternalLinks" })
+    expect(resolveAllowExternalLinks(root, { fileOptions: { allowExternalLinks: ["../other"] } }, "win").value).toEqual(["../other"])
+    // a platform-level null falls back to the root value
+    expect(resolveAllowExternalLinks(root, { fileOptions: { allowExternalLinks: null } }, "win").value).toEqual(["../shared-lib"])
+    expect(resolveAllowExternalLinks({}, { fileOptions: null }, "win")).toEqual({ value: undefined, optionPath: "fileOptions.allowExternalLinks" })
+  })
+
+  test("a malformed platform value is reported with its path", async ({ expect, tmpDir }) => {
+    const projectDir = await tmpDir.createTempDir({ prefix: "symlink-containment" })
+    const { value, optionPath } = resolveAllowExternalLinks({ fileOptions: { allowExternalLinks: true } }, { fileOptions: { allowExternalLinks: ["missing-dir"] } }, "linux")
+    await expect(ExternalLinkPolicy.create(value, projectDir, optionPath)).rejects.toThrow(`"linux.fileOptions.allowExternalLinks" lists "missing-dir", which does not exist`)
+  })
+
+  test("the schema accepts it under fileOptions, at the root and per platform", async ({ expect }) => {
+    const config: Configuration = {
+      fileOptions: { files: ["dist/**"], allowExternalLinks: ["../shared-lib"] },
+      mac: { fileOptions: { allowExternalLinks: true } },
+      linux: { fileOptions: { allowExternalLinks: false } },
+      win: { fileOptions: { allowExternalLinks: null } },
+    }
+    await expect(validateConfiguration(config, new DebugLogger(false))).resolves.toBeUndefined()
+  })
+
+  test("it has no flat form: a top-level or platform-level allowExternalLinks is an unknown property, like any other", async ({ expect }) => {
+    for (const config of [{ allowExternalLinks: true }, { linux: { allowExternalLinks: ["../lib"] } }]) {
+      await expect(validateConfiguration(config as Configuration, new DebugLogger(false))).rejects.toThrow(/unknown property[\s\S]*allowExternalLinks/)
+    }
+  })
+
+  test("an extends parent's value is kept when the child sets the file lists, flat or nested", ({ expect }) => {
+    const parent = { fileOptions: { allowExternalLinks: ["../shared-lib"] } }
+    for (const child of [{ fileOptions: { files: ["dist/**"] } }, { files: ["dist/**"] }]) {
+      const merged = doMergeConfigs([{ ...parent }, { ...child }] as Configuration[])
+      expect(merged.fileOptions?.allowExternalLinks).toEqual(["../shared-lib"])
+      expect(merged.fileOptions?.files).toEqual([{ filter: ["dist/**"] }])
+    }
   })
 })

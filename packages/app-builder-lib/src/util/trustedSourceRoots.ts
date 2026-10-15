@@ -1,7 +1,9 @@
-import { ExternalLinkPolicy, InvalidConfigurationError, isPathWithin, log, resolvePhysicalPath } from "builder-util"
+import { ALLOW_EXTERNAL_LINKS_OPTION, AllowExternalLinksValue, ExternalLinkPolicy, InvalidConfigurationError, isPathWithin, log, resolvePhysicalPath } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 import { readFile } from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
+import type { FilesBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
 
 /** Where the v27 narrowing of followed symlinks is documented. */
 export const LINKED_FILES_DOCS_URL = "https://www.electron.build/docs/migration/v27-breaking-changes#linked-files-must-resolve-inside-the-workspace"
@@ -11,6 +13,30 @@ export interface SourceRootsInfo {
   readonly projectDir: string
   readonly appDir: string
   getWorkspaceRoot(): Promise<string>
+}
+
+/** The configuration root, or a platform section (`mac`, `win`, `linux`): both may set `fileOptions`. */
+interface FileOptionsHolder {
+  readonly fileOptions?: FilesBuildOptions | null
+}
+
+/**
+ * The effective `fileOptions.allowExternalLinks` value for a platform, read from the normalized `fileOptions` like `files`,
+ * `extraResources` and `extraFiles`: the platform-level value (`mac.fileOptions.allowExternalLinks`, ...) when it is set, `false`
+ * included, otherwise the root one. Unlike the file lists, the two are not combined: the platform value replaces the root one.
+ *
+ * `optionPath` names where the value came from, for the errors about a malformed value.
+ */
+export function resolveAllowExternalLinks(
+  config: FileOptionsHolder,
+  platformOptions: FileOptionsHolder | Nullish,
+  platformKey: string
+): { value: AllowExternalLinksValue; optionPath: string } {
+  const platformValue = platformOptions?.fileOptions?.allowExternalLinks
+  if (platformValue != null) {
+    return { value: platformValue, optionPath: `${platformKey}.${ALLOW_EXTERNAL_LINKS_OPTION}` }
+  }
+  return { value: config.fileOptions?.allowExternalLinks, optionPath: ALLOW_EXTERNAL_LINKS_OPTION }
 }
 
 /**
@@ -71,7 +97,7 @@ async function computeTrustedSourceRoots(info: SourceRootsInfo): Promise<Array<s
 
 /**
  * Refuses a file of the app (packed into the asar archive or copied with `asar: false`) whose real path, through symlinks, is outside
- * every trusted source root ({@link getTrustedSourceRoots}), unless the `allowExternalLinks` build option (`externalLinks`) allows it.
+ * every trusted source root ({@link getTrustedSourceRoots}), unless the `fileOptions.allowExternalLinks` build option (`externalLinks`) allows it.
  *
  * electron-builder <= 26 refused only some system directories (`/etc`, `/usr`, `C:\Windows`, ...) and let everything else through,
  * explicitly anything under the home and temp directories. In v27 only the workspace and the package-manager store are trusted.
@@ -98,7 +124,7 @@ export async function assertSourceFileInTrustedRoots(file: string, trustedRoots:
 
 /**
  * Where the linked tree that `file` (real path `resolved`) is part of starts: the real path of its highest ancestor that is still outside
- * the trusted roots, e.g. the linked package `../lib` for `node_modules/lib/src/index.js`, so that a suggested `allowExternalLinks` entry
+ * the trusted roots, e.g. the linked package `../lib` for `node_modules/lib/src/index.js`, so that a suggested `fileOptions.allowExternalLinks` entry
  * covers the whole package rather than the one file that was checked first.
  */
 async function outermostOutsideTrustedRoots(file: string, resolved: string, trustedRoots: ReadonlyArray<string>): Promise<string> {
@@ -121,7 +147,7 @@ async function outermostOutsideTrustedRoots(file: string, resolved: string, trus
 
 /**
  * The `copyDir` options for copying the app output directory into a staging directory (snap, AppImage): a symlink that the
- * `extraResources`/`extraFiles` copy kept, because it leads into the workspace or the store or `allowExternalLinks` allows it, is kept
+ * `extraResources`/`extraFiles` copy kept, because it leads into the workspace or the store or `fileOptions.allowExternalLinks` allows it, is kept
  * again rather than failing the staging copy.
  */
 export async function getStagingCopyLinkOptions(

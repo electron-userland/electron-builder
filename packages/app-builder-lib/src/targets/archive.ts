@@ -102,7 +102,7 @@ export interface ArchiveOptions {
   preserveSymlinks?: boolean
 
   /**
-   * The `allowExternalLinks` build option. When symlinks are dereferenced (`preserveSymlinks` false, 7za), a symlink that leads outside
+   * The `fileOptions.allowExternalLinks` build option. When symlinks are dereferenced (`preserveSymlinks` false, 7za), a symlink that leads outside
    * the archived directory fails the archive unless it allows it.
    */
   externalLinks?: ExternalLinkPolicy | null

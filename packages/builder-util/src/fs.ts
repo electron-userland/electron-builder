@@ -301,7 +301,7 @@ export interface CopyDirOptions {
    */
   allowedSymlinkRoots?: ReadonlyArray<string> | null
   /**
-   * The `allowExternalLinks` build option: a copied symlink that leads outside the containment root and the allowed roots is kept when it
+   * The `fileOptions.allowExternalLinks` build option: a copied symlink that leads outside the containment root and the allowed roots is kept when it
    * allows it. It does not allow a write through a symlink.
    */
   externalLinks?: ExternalLinkPolicy | null
@@ -309,7 +309,7 @@ export interface CopyDirOptions {
 
 /**
  * Checks the symlinks `copyDir` and the app file copier recreate, once all of them exist: each must lead (through the others, also when
- * the end does not exist) into the containment root or one of `allowedRoots`, or be allowed by the `allowExternalLinks` build option
+ * the end does not exist) into the containment root or one of `allowedRoots`, or be allowed by the `fileOptions.allowExternalLinks` build option
  * (`externalLinks`). A symlink that is not is removed and the copy fails.
  */
 export async function assertCopiedSymlinksContained(

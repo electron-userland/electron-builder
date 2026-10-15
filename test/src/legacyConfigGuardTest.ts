@@ -64,6 +64,7 @@ describe("checkLegacyConfiguration — never rejects a valid v27 config", () => 
     ["gitlab publish keeps vPrefixedTagName", { publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: false } }],
     ["fileOptions", { fileOptions: { files: ["dist/**"], extraResources: [{ from: "a", to: "b" }] }, mac: { fileOptions: null }, win: { fileOptions: { extraFiles: "x" } } }],
     ["v26 flat files keys (still accepted in v27)", { files: ["dist/**"], linux: { extraResources: ["r"] } }],
+    ["fileOptions.allowExternalLinks", { fileOptions: { allowExternalLinks: ["../shared-lib"] }, linux: { fileOptions: { allowExternalLinks: true } } }],
   ])("%s passes the guard", (_name, config) => {
     expect(() => checkLegacyConfiguration({ appId: "com.example.app", ...config } as any)).not.toThrow()
   })

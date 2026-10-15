@@ -57,7 +57,7 @@ export interface InstallerOptions {
   setupMsi?: string | null
   fixUpPaths?: boolean
   createTempDir: (options: { prefix: string }) => Promise<string>
-  /** The `allowExternalLinks` build option: NuGet stores what a symlink points to, so a symlink that leaves the app fails unless it allows it. */
+  /** The `fileOptions.allowExternalLinks` build option: NuGet stores what a symlink points to, so a symlink that leaves the app fails unless it allows it. */
   externalLinks?: ExternalLinkPolicy | null
 }
 

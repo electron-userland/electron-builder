@@ -78,8 +78,9 @@ export interface AsarOptions {
 }
 
 /**
- * Which files are copied into the packaged app, set under `fileOptions` at the configuration root or per platform
- * (e.g. `mac.fileOptions`). A platform's lists are added to the root ones.
+ * Which files are copied into the packaged app, and which symlinks among them may lead outside it, set under `fileOptions` at the
+ * configuration root or per platform (e.g. `mac.fileOptions`). A platform's lists are added to the root ones; a platform's
+ * `allowExternalLinks` replaces the root one.
  *
  * In v26 these options were flat keys (`files`, `extraResources`, `extraFiles`) directly on the configuration and the
  * platform options. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
@@ -162,6 +163,12 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
    * An allowed symlink is packaged as before v27: what it points to is copied (or stored by the archive), and a copied symlink is kept
    * as it is. A warning is logged once when this allows a symlink.
    *
+   * Set it under `fileOptions`, at the configuration root or per platform; a platform's value (`false` included) replaces the root one
+   * rather than being added to it:
+   * ```json
+   * { "fileOptions": { "allowExternalLinks": ["../shared-lib"] }, "linux": { "fileOptions": { "allowExternalLinks": true } } }
+   * ```
+   *
    * This does not allow writing through a symlink: a copy or a file written by electron-builder whose destination leads outside the
    * output directory through a symlink is always refused, and a symlink at such a file name is replaced, never followed.
    * @default false
@@ -171,8 +178,10 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
 
 export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   /**
-   * Which files to copy into the packaged app: `files` (the app sources), `extraResources` and `extraFiles`.
-   * Set at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones.
+   * Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among
+   * them may lead outside the app and the workspace (`allowExternalLinks`).
+   * Set at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,
+   * and a platform's `allowExternalLinks` replaces the root one.
    *
    * ```json
    * {

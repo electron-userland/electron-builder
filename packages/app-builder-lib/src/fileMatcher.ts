@@ -599,7 +599,7 @@ export interface CopyFilesContainment {
   readonly roots: ReadonlyArray<string>
   /** Besides the root, the directories a copied symlink may lead into, such as the workspace root and the package-manager store. */
   readonly allowedSymlinkRoots?: ReadonlyArray<string> | null
-  /** The `allowExternalLinks` build option: a copied symlink that leads anywhere else is kept when it allows it. */
+  /** The `fileOptions.allowExternalLinks` build option: a copied symlink that leads anywhere else is kept when it allows it. */
   readonly externalLinks?: ExternalLinkPolicy | null
 }
 
