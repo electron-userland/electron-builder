@@ -271,6 +271,10 @@ export class AsarPackager {
       return { path: destination, unpacked, type: "directory" }
     }
 
+    // verify that the file is not a direct link or symlinked to a file outside the workspace and the package-manager store,
+    // before any content is used: the transformer (e.g. for a node_modules package.json) reads the file through its symlinks too
+    await assertSourceFileInTrustedRoots(file, await getTrustedSourceRoots(this.packager), await this.packager.getExternalLinkPolicy())
+
     // Handle transformed data (pre-processed content)
     if (transformedData != null) {
       const size = Buffer.byteLength(transformedData)
@@ -288,9 +292,6 @@ export class AsarPackager {
         stat: { mode: stat.mode, size },
       }
     }
-
-    // verify that the file is not a direct link or symlinked to a file outside the workspace and the package-manager store
-    await assertSourceFileInTrustedRoots(file, await getTrustedSourceRoots(this.packager), await this.packager.getExternalLinkPolicy())
 
     const baseConfig = {
       path: destination,

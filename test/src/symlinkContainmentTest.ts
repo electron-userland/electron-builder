@@ -1,10 +1,12 @@
-import { doMergeConfigs, validateConfiguration } from "app-builder-lib/internal"
-import { DebugLogger, ERR_PATH_OUTSIDE_ROOT, ExternalLinkPolicy, InvalidConfigurationError, log } from "builder-util"
+import { doMergeConfigs, readAsarJson, validateConfiguration } from "app-builder-lib/internal"
+import { AsarPackager } from "app-builder-lib/src/asar/asarUtil"
+import { createTransformer } from "app-builder-lib/src/fileTransformer"
+import { DebugLogger, ERR_PATH_OUTSIDE_ROOT, ExternalLinkPolicy, Filter, InvalidConfigurationError, log } from "builder-util"
 import { CancellationToken, GenericServerOptions } from "builder-util-runtime"
 import { copyFiles, FileMatcher } from "app-builder-lib/src/fileMatcher"
 import { writeAppUpdateYaml } from "app-builder-lib/src/publish/PublishManager"
 import { archive } from "app-builder-lib/src/targets/archive"
-import { copyAppFiles, ResolvedFileSet } from "app-builder-lib/src/util/appFileCopier"
+import { copyAppFiles, ResolvedFileSet, transformFiles } from "app-builder-lib/src/util/appFileCopier"
 import {
   assertSourceFileInTrustedRoots,
   getTrustedSourceRoots,
@@ -329,6 +331,81 @@ describe.runIf(process.platform !== "win32")("allowExternalLinks", () => {
     )
     expect(error.message).toContain(`"allowExternalLinks": ${JSON.stringify([await fs.realpath(outside)])}`)
     expect(error.message).toContain(`"${path.join("dist", "linux-unpacked", "resources", "leak")}"`)
+  })
+})
+
+describe.runIf(process.platform !== "win32")("a transformed file is checked like any other (node_modules package.json)", () => {
+  /** app/node_modules/pkg/package.json -> outside/pkg.json: the default transformer rewrites it (drops `scripts`), reading it through the symlink */
+  async function linkedPackageJson(base: string) {
+    const project = await createProject(base)
+    const pkgDir = path.join(project.appDir, "node_modules", "pkg")
+    await fs.mkdir(pkgDir, { recursive: true })
+    await fs.writeFile(path.join(pkgDir, "index.js"), "pkg")
+    await fs.writeFile(path.join(project.outside, "pkg.json"), JSON.stringify({ name: "pkg", version: "1.0.0", scripts: { postinstall: "secret" } }))
+    await fs.symlink(path.join(project.outside, "pkg.json"), path.join(pkgDir, "package.json"))
+    await fs.writeFile(path.join(project.appDir, "main.js"), "main")
+    const names = ["main.js", path.join("node_modules", "pkg", "index.js"), path.join("node_modules", "pkg", "package.json")]
+    const transformer = createTransformer(project.appDir, {}, null, null)
+    return { ...project, names, transformer, destination: path.join(project.resourcesDir, "app") }
+  }
+
+  async function transformedFileSet(project: Awaited<ReturnType<typeof linkedPackageJson>>) {
+    const fileSet = await fileSetOf(project.appDir, project.destination, project.names)
+    await transformFiles(project.transformer, fileSet)
+    return fileSet
+  }
+
+  async function packAsar(project: Awaited<ReturnType<typeof linkedPackageJson>>, fileSet: ResolvedFileSet, externalLinks: ExternalLinkPolicy, unpackPattern?: Filter) {
+    const packager = { ...sourceRootsInfo(project.workspace, project.appDir), getExternalLinkPolicy: () => Promise.resolve(externalLinks) }
+    await new AsarPackager(packager as any, {
+      defaultDestination: project.destination,
+      resourcePath: project.resourcesDir,
+      options: { smartUnpack: false },
+      unpackPattern,
+    }).pack([fileSet])
+    return path.join(project.resourcesDir, "app.asar")
+  }
+
+  for (const [name, unpackPattern] of [
+    ["packed", undefined],
+    ["unpacked", (file: string) => file.endsWith("package.json")],
+  ] as Array<[string, Filter | undefined]>) {
+    test(`asar (${name}): refused by default, packaged when fileOptions.allowExternalLinks covers it`, async ({ expect, tmpDir }) => {
+      const project = await linkedPackageJson(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
+      const fileSet = await transformedFileSet(project)
+      // the package.json is transformed, so it takes the transformed-content branch of the packer
+      expect(Array.from(fileSet.transformedFiles!.keys())).toEqual([2])
+
+      const error = await rejection(packAsar(project, fileSet, await ExternalLinkPolicy.create(null, project.workspace), unpackPattern))
+      expect(error).toBeInstanceOf(InvalidConfigurationError)
+      expect((error as NodeJS.ErrnoException).code).toBe("ERR_ELECTRON_BUILDER_FILE_OUTSIDE_WORKSPACE")
+      expect(error.message).toContain(`symlinked to file [${path.join(await fs.realpath(project.outside), "pkg.json")}]`)
+      await expect(fs.lstat(path.join(project.resourcesDir, "app.asar"))).rejects.toThrow("ENOENT")
+
+      const asarFile = await packAsar(project, fileSet, await ExternalLinkPolicy.create(["../outside"], project.workspace), unpackPattern)
+      expect(await readAsarJson(asarFile, path.join("node_modules", "pkg", "package.json"))).toEqual({ name: "pkg", version: "1.0.0" })
+    })
+  }
+
+  test("asar: false: refused by default, copied when fileOptions.allowExternalLinks covers it", async ({ expect, tmpDir }) => {
+    const project = await linkedPackageJson(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
+    const trustedSourceRoots = await getTrustedSourceRoots(sourceRootsInfo(project.workspace, project.appDir), {})
+    // a fresh destination for each copy: the refused one has copied the files before the package.json
+    const copy = async (externalLinks: ExternalLinkPolicy, destination: string) =>
+      copyAppFiles(await fileSetOf(project.appDir, destination, project.names), packagerStub, project.transformer, {
+        containmentRoot: project.resourcesDir,
+        trustedSourceRoots,
+        externalLinks,
+      })
+    const copiedPackageJson = (destination: string) => path.join(destination, "node_modules", "pkg", "package.json")
+
+    const refused = path.join(project.resourcesDir, "refused")
+    const error = await rejection(copy(await ExternalLinkPolicy.create(null, project.workspace), refused))
+    expect((error as NodeJS.ErrnoException).code).toBe("ERR_ELECTRON_BUILDER_FILE_OUTSIDE_WORKSPACE")
+    await expect(fs.lstat(copiedPackageJson(refused))).rejects.toThrow("ENOENT")
+
+    await copy(await ExternalLinkPolicy.create(["../outside"], project.workspace), project.destination)
+    expect(JSON.parse(await fs.readFile(copiedPackageJson(project.destination), "utf8"))).toEqual({ name: "pkg", version: "1.0.0" })
   })
 })
 
