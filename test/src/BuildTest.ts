@@ -53,39 +53,45 @@ test.ifLinux("cli", ({ expect }) => {
 test("merge configurations", ({ expect }) => {
   const result = doMergeConfigs([
     {
-      files: [
-        {
-          from: "dist/renderer",
-        },
-        {
-          from: "dist/renderer-dll",
-        },
-      ],
+      fileOptions: {
+        files: [
+          {
+            from: "dist/renderer",
+          },
+          {
+            from: "dist/renderer-dll",
+          },
+        ],
+      },
     },
     {
-      files: [
-        {
-          from: ".",
-          filter: ["package.json"],
-        },
-        {
-          from: "dist/main",
-        },
-      ],
+      fileOptions: {
+        files: [
+          {
+            from: ".",
+            filter: ["package.json"],
+          },
+          {
+            from: "dist/main",
+          },
+        ],
+      },
     },
     {
-      files: ["**/*", "!webpack", "!.*", "!config/jsdoc.json", "!package.*"],
+      fileOptions: { files: ["**/*", "!webpack", "!.*", "!config/jsdoc.json", "!package.*"] },
     },
     {
-      files: [
-        {
-          from: ".",
-          filter: ["!docs"],
-        },
-      ],
+      fileOptions: {
+        files: [
+          {
+            from: ".",
+            filter: ["!docs"],
+          },
+        ],
+      },
     },
     {
-      files: ["!private"],
+      fileOptions: { files: ["!private"] },
     },
   ])
 
@@ -112,7 +118,8 @@ test("merge configurations", ({ expect }) => {
       ],
     },
   })
-  expect(result).not.toHaveProperty("files")
+  // `files` is only a non-enumerable forwarding accessor on the merged config
+  expect(Object.keys(result)).not.toContain("files")
 })
 
 test("build in the app package.json", ({ expect }) =>
@@ -420,10 +427,12 @@ test("smart unpack local module with dll file", ({ expect }) => {
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       config: {
-        files: [
-          "!foo",
-          "!**/NuGet", // for some reason, NuGet only shows up on CI builds, but no Windows VMs or local linux/mac machines
-        ],
+        fileOptions: {
+          files: [
+            "!foo",
+            "!**/NuGet", // for some reason, NuGet only shows up on CI builds, but no Windows VMs or local linux/mac machines
+          ],
+        },
       },
     },
     {
@@ -464,12 +473,14 @@ test.ifNotWindows("posix smart unpack", ({ expect }) =>
           // Force include this directory in the package
           return filePath.includes("node_modules/three/examples")
         },
-        files: [
-          // test ignore pattern for node_modules defined as file set filter
-          {
-            filter: ["!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz", "!node_modules/node-abi/*", "!node_modules/**/eslint-format.js"],
-          },
-        ],
+        fileOptions: {
+          files: [
+            // test ignore pattern for node_modules defined as file set filter
+            {
+              filter: ["!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz", "!node_modules/node-abi/*", "!node_modules/**/eslint-format.js"],
+            },
+          ],
+        },
       },
     },
     {

@@ -304,7 +304,7 @@ test.skip("big file pack", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
     {
       targets: nsisTarget,
       config: {
-        extraResources: ["**/*.mov"],
+        fileOptions: { extraResources: ["**/*.mov"] },
         nsis: {
           differentialPackage: false,
         },

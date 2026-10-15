@@ -1,6 +1,6 @@
 import { InvalidConfigurationError, log } from "builder-util"
 import { Configuration } from "../../configuration.js"
-import { isPlainObject } from "./fileOptions.js"
+import { hasFlatFileOption, isPlainObject } from "./fileOptions.js"
 import { ALL_PLATFORM_KEYS, BREAKING_CHANGES_URL, FILE_OPTION_KEYS, FILE_OPTIONS_ANCHOR, formatLegacyOptionMessage, RESOLVED_LEGACY_CONFIG_OPTIONS } from "./legacyOptions.js"
 
 /**
@@ -190,7 +190,7 @@ function checkFileOptionsShape(config: Record<string, any>, errors: string[]): v
     if (value == null || isPlainObject(value)) {
       return
     }
-    const flatKeys = FILE_OPTION_KEYS.filter(key => holder[key] !== undefined).map(key => `${prefix}${key}`)
+    const flatKeys = FILE_OPTION_KEYS.filter(key => hasFlatFileOption(holder, key)).map(key => `${prefix}${key}`)
     const files = Array.isArray(value) || typeof value === "string" ? JSON.stringify(value) : '["**/*"]'
     errors.push(
       `\`${prefix}fileOptions\` must be an object holding \`files\`, \`extraResources\` and/or \`extraFiles\`, not ${Array.isArray(value) ? "an array" : `a ${typeof value}`}` +

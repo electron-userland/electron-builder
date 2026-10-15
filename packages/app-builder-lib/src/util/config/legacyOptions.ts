@@ -74,7 +74,8 @@ export const BREAKING_CHANGES_URL = "https://www.electron.build/docs/migration/v
  * (`files` → `fileOptions.files`, `mac.extraResources` → `mac.fileOptions.extraResources`, …).
  *
  * Unlike the options in {@link LEGACY_CONFIG_OPTIONS}, the flat keys are not rejected: they are still accepted in
- * v27 (normalized into `fileOptions` with a warning when the configuration is loaded) and are removed in v28.
+ * v27 (normalized into `fileOptions` with a warning when the configuration is loaded, before validation), although
+ * they are no longer in the v27 types and schema.
  */
 export const FILE_OPTION_KEYS = ["files", "extraResources", "extraFiles"] as const
 

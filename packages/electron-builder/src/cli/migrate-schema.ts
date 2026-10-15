@@ -561,7 +561,7 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
 
 /**
  * Moves the flat `files` / `extraResources` / `extraFiles` keys of `holder` (the root or a platform config) into its
- * `fileOptions`. The flat keys still build in v27 (with a warning) and are removed in v28. A key also set in `fileOptions`
+ * `fileOptions`. The v26 flat keys are still accepted in v27 (with a warning). A key also set in `fileOptions`
  * is dropped: v27 ignores the flat key then, so dropping it keeps the build output unchanged.
  */
 function migrateFileOptions(holder: Record<string, any>, prefix: string, changes: MigrationChange[], warnings: string[], keptKeyWarnings: string[]): void {
@@ -1344,7 +1344,7 @@ function printManualSteps() {
     "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true; drop cache/customDir/customFilename/strictSSL/platform/arch/version/force)",
     '• Remove toolsets.* entries set to null (unset resolves to "latest"); replace toolsets.appimage "1.0.2" with "1.0.3"',
     "• Move root-level package.json directories → build.directories",
-    "• Move files / extraResources / extraFiles → fileOptions.files / fileOptions.extraResources / fileOptions.extraFiles, at the root and in mac/mas/masDev/win/linux (the flat keys still build in v27, with a warning, and are removed in v28)",
+    "• Move files / extraResources / extraFiles → fileOptions.files / fileOptions.extraResources / fileOptions.extraFiles, at the root and in mac/mas/masDev/win/linux (the v26 flat keys are still accepted in v27, with a warning)",
     "",
     "• For programmatic configs (JS/TS/MJS/CJS), apply the above changes manually to your config object",
     "• For additional guidance, check the migration walkthrough: https://www.electron.build/docs/migration/v26-to-v27",

@@ -121,7 +121,7 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
         bucket: "develar",
         path: "test",
       },
-      files: ["**/*", "../**/node_modules/**", "!path/**"],
+      fileOptions: { files: ["**/*", "../**/node_modules/**", "!path/**"] },
     },
     extraConfig
   )

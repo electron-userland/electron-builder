@@ -1,5 +1,5 @@
 import { archFromString, copyDir } from "builder-util"
-import { DIR_TARGET, Platform } from "electron-builder"
+import { Configuration, DIR_TARGET, Platform } from "electron-builder"
 import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -14,7 +14,7 @@ test.ifNotWindows("expand not defined env", ({ expect }) =>
     config: {
       asar: false,
       // tslint:disable:no-invalid-template-strings
-      files: ["${env.FOO_NOT_DEFINED}"],
+      fileOptions: { files: ["${env.FOO_NOT_DEFINED}"] },
     },
   })
 )
@@ -29,7 +29,7 @@ test.ifNotWindows("files", ({ expect }) =>
       config: {
         asar: false,
         // tslint:disable:no-invalid-template-strings
-        files: ["**/*", "!ignoreMe${/*}", "${env.__NOT_BAR__}", "dist/electron/**/*"],
+        fileOptions: { files: ["**/*", "!ignoreMe${/*}", "${env.__NOT_BAR__}", "dist/electron/**/*"] },
       },
     },
     {
@@ -57,7 +57,7 @@ test.ifNotWindows("re-include default-excluded extension via files glob", ({ exp
       targets: linuxDirTarget,
       config: {
         asar: false,
-        files: ["**/*", "**/*.obj"],
+        fileOptions: { files: ["**/*", "**/*.obj"] },
       },
     },
     {
@@ -79,7 +79,7 @@ test.ifNotWindows("default-excluded extension stays excluded without a re-includ
       targets: linuxDirTarget,
       config: {
         asar: false,
-        files: ["**/*"],
+        fileOptions: { files: ["**/*"] },
       },
     },
     {
@@ -99,17 +99,19 @@ test.ifNotWindows("files.from asar", ({ expect }) =>
     {
       targets: linuxDirTarget,
       config: {
-        files: [
-          {
-            from: ".",
-            to: ".",
-            filter: ["package.json"],
-          },
-          {
-            from: "app/node",
-            to: "app/node",
-          },
-        ],
+        fileOptions: {
+          files: [
+            {
+              from: ".",
+              to: ".",
+              filter: ["package.json"],
+            },
+            {
+              from: "app/node",
+              to: "app/node",
+            },
+          ],
+        },
       },
     },
     {
@@ -160,7 +162,8 @@ test.ifNotWindows("map resources", ({ expect }) =>
   )
 )
 
-// Uses the v26 flat keys, which v27 still accepts (normalized into `fileOptions`); "extraResources - two-package" uses the nested form.
+// Uses the v26 flat keys: no longer in the v27 types (hence the cast), but still accepted at runtime, moved into
+// `fileOptions` with a warning. The snapshot is the same as for the nested form ("extraResources - two-package" uses that).
 async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
   const osName = platform.buildConfigurationKey
   await assertPack(
@@ -174,7 +177,7 @@ async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
           extraResources: ["platformSpecificR"],
           extraFiles: ["platformSpecificF"],
         },
-      },
+      } as Configuration,
     },
     {
       projectDirCreated: async projectDir => {

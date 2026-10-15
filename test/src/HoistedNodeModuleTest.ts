@@ -304,7 +304,7 @@ describe("node_module collectors", () => {
         projectDir: "app",
         config: {
           electronVersion: ELECTRON_VERSION,
-          files: ["index.js", "package.json", invalidPath],
+          fileOptions: { files: ["index.js", "package.json", invalidPath] },
         },
       },
       {
@@ -799,14 +799,16 @@ describe("node_module collectors", () => {
         targets: linuxDirTarget,
         projectDir: "packages/test-app",
         config: {
-          files: [
-            "!node_modules/better-sqlite3/**",
-            {
-              from: "node_modules/better-sqlite3/build/Release",
-              to: "./",
-              filter: ["*.node"],
-            },
-          ],
+          fileOptions: {
+            files: [
+              "!node_modules/better-sqlite3/**",
+              {
+                from: "node_modules/better-sqlite3/build/Release",
+                to: "./",
+                filter: ["*.node"],
+              },
+            ],
+          },
         },
       },
       {

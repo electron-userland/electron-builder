@@ -2373,60 +2373,6 @@
             "string"
           ]
         },
-        "extraFiles": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Deprecated: moved to `fileOptions.extraFiles` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.extraFiles` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
-        },
-        "extraResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Deprecated: moved to `fileOptions.extraResources` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.extraResources` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
-        },
         "fileAssociations": {
           "anyOf": [
             {
@@ -2450,34 +2396,7 @@
               "type": "null"
             }
           ],
-          "description": "Which files to copy into the packaged app: `files` (the app sources), `extraResources` and `extraFiles`.\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```"
-        },
-        "files": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Deprecated: moved to `fileOptions.files` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.files` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
+          "description": "Which files to copy into the packaged app: `files` (the app sources), `extraResources` and `extraFiles`.\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\nThe v26 flat keys (`files`, `extraResources`, `extraFiles` directly on the configuration or a platform section) are\nstill accepted in v27: they are moved here when the configuration is loaded, with a warning. Run\n`electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -3048,60 +2967,6 @@
           ],
           "description": "Extra files to put in archive. Not applicable for `tar.*`."
         },
-        "extraFiles": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Deprecated: moved to `fileOptions.extraFiles` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.extraFiles` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
-        },
-        "extraResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Deprecated: moved to `fileOptions.extraResources` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.extraResources` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
-        },
         "fileAssociations": {
           "anyOf": [
             {
@@ -3125,34 +2990,7 @@
               "type": "null"
             }
           ],
-          "description": "Which files to copy into the packaged app: `files` (the app sources), `extraResources` and `extraFiles`.\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```"
-        },
-        "files": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Deprecated: moved to `fileOptions.files` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.files` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
+          "description": "Which files to copy into the packaged app: `files` (the app sources), `extraResources` and `extraFiles`.\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\nThe v26 flat keys (`files`, `extraResources`, `extraFiles` directly on the configuration or a platform section) are\nstill accepted in v27: they are moved here when the configuration is loaded, with a warning. Run\n`electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -3554,60 +3392,6 @@
           ],
           "description": "Extra files to put in archive. Not applicable for `tar.*`."
         },
-        "extraFiles": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Deprecated: moved to `fileOptions.extraFiles` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.extraFiles` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
-        },
-        "extraResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Deprecated: moved to `fileOptions.extraResources` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.extraResources` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
-        },
         "fileAssociations": {
           "anyOf": [
             {
@@ -3631,34 +3415,7 @@
               "type": "null"
             }
           ],
-          "description": "Which files to copy into the packaged app: `files` (the app sources), `extraResources` and `extraFiles`.\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```"
-        },
-        "files": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Deprecated: moved to `fileOptions.files` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.files` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
+          "description": "Which files to copy into the packaged app: `files` (the app sources), `extraResources` and `extraFiles`.\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\nThe v26 flat keys (`files`, `extraResources`, `extraFiles` directly on the configuration or a platform section) are\nstill accepted in v27: they are moved here when the configuration is loaded, with a warning. Run\n`electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -8847,60 +8604,6 @@
             "string"
           ]
         },
-        "extraFiles": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Deprecated: moved to `fileOptions.extraFiles` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.extraFiles` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
-        },
-        "extraResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Deprecated: moved to `fileOptions.extraResources` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.extraResources` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
-        },
         "fileAssociations": {
           "anyOf": [
             {
@@ -8924,34 +8627,7 @@
               "type": "null"
             }
           ],
-          "description": "Which files to copy into the packaged app: `files` (the app sources), `extraResources` and `extraFiles`.\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```"
-        },
-        "files": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "Deprecated: moved to `fileOptions.files` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.files` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
+          "description": "Which files to copy into the packaged app: `files` (the app sources), `extraResources` and `extraFiles`.\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\nThe v26 flat keys (`files`, `extraResources`, `extraFiles` directly on the configuration or a platform section) are\nstill accepted in v27: they are moved here when the configuration is loaded, with a warning. Run\n`electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -9898,62 +9574,8 @@
       ],
       "description": "One or more configuration presets or file paths to merge into this configuration.\n\nAccepts a string or array of strings, each of which is either:\n- A built-in preset name (`\"react-cra\"` is the only currently supported value).\n- A path to a JS/JSON config file relative to the project directory.\n\nConfigs are merged left-to-right using a deep-assign strategy that properly combines `files`\nglob patterns rather than replacing them.\n\nThe `react-cra` preset is applied automatically when `react-scripts` is found in\n`dependencies`. Set `extends: null` to opt out of automatic preset detection."
     },
-    "extraFiles": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/FileSet"
-        },
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/FileSet"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "type": "array"
-        },
-        {
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      ],
-      "description": "Deprecated: moved to `fileOptions.extraFiles` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.extraFiles` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
-    },
     "extraMetadata": {
       "description": "Additional properties to deep-merge into the app's `package.json` at build time.\n\nUseful for injecting build-time metadata (e.g., a git commit hash or CI build URL) that\nshould be readable at runtime via `require('./package.json')` or `import.meta.url`."
-    },
-    "extraResources": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/FileSet"
-        },
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/FileSet"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "type": "array"
-        },
-        {
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      ],
-      "description": "Deprecated: moved to `fileOptions.extraResources` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.extraResources` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
     },
     "fileAssociations": {
       "anyOf": [
@@ -9978,34 +9600,7 @@
           "type": "null"
         }
       ],
-      "description": "Which files to copy into the packaged app: `files` (the app sources), `extraResources` and `extraFiles`.\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```"
-    },
-    "files": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/FileSet"
-        },
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/FileSet"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "type": "array"
-        },
-        {
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      ],
-      "description": "Deprecated: moved to `fileOptions.files` in v27. The flat key still works in v27 (with a warning) and is removed in v28.\nWhen both are set on the same object, `fileOptions.files` wins and this key is ignored.\nRun `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions)."
+      "description": "Which files to copy into the packaged app: `files` (the app sources), `extraResources` and `extraFiles`.\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\nThe v26 flat keys (`files`, `extraResources`, `extraFiles` directly on the configuration or a platform section) are\nstill accepted in v27: they are moved here when the configuration is loaded, with a warning. Run\n`electron-builder migrate-schema` to update the configuration."
     },
     "flatpak": {
       "anyOf": [

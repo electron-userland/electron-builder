@@ -155,32 +155,12 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    *   }
    * }
    * ```
+   *
+   * The v26 flat keys (`files`, `extraResources`, `extraFiles` directly on the configuration or a platform section) are
+   * still accepted in v27: they are moved here when the configuration is loaded, with a warning. Run
+   * `electron-builder migrate-schema` to update the configuration.
    */
   fileOptions?: FilesBuildOptions | null
-
-  /**
-   * Deprecated: moved to `fileOptions.files` in v27. The flat key still works in v27 (with a warning) and is removed in v28.
-   * When both are set on the same object, `fileOptions.files` wins and this key is ignored.
-   * Run `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
-   * @deprecated Use {@link FilesBuildOptions.files | fileOptions.files}. Removed in v28.
-   */
-  files?: Array<FileSet | string> | FileSet | string | null
-
-  /**
-   * Deprecated: moved to `fileOptions.extraResources` in v27. The flat key still works in v27 (with a warning) and is removed in v28.
-   * When both are set on the same object, `fileOptions.extraResources` wins and this key is ignored.
-   * Run `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
-   * @deprecated Use {@link FilesBuildOptions.extraResources | fileOptions.extraResources}. Removed in v28.
-   */
-  extraResources?: Array<FileSet | string> | FileSet | string | null
-
-  /**
-   * Deprecated: moved to `fileOptions.extraFiles` in v27. The flat key still works in v27 (with a warning) and is removed in v28.
-   * When both are set on the same object, `fileOptions.extraFiles` wins and this key is ignored.
-   * Run `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
-   * @deprecated Use {@link FilesBuildOptions.extraFiles | fileOptions.extraFiles}. Removed in v28.
-   */
-  extraFiles?: Array<FileSet | string> | FileSet | string | null
 
   /**
    * The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as

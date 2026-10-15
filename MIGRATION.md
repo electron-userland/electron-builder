@@ -37,7 +37,7 @@ It handles every config-level breaking change that has a mechanical v27 equivale
 | Legacy `asar-unpack` / `asar.unpack*` keys consolidated | ✓ | All ASAR config moved under `asar` object: `asar.unpack`, `asar.disableSanityCheck`, `asar.disableIntegrity` |
 | macOS signing fields consolidated under `mac.sign` | ✓ | `identity`, `entitlements`, `hardenedRuntime`, `type`, etc. → `mac.sign.*`; `signIgnore` → `sign.ignore` (also `mas`/`masDev`) |
 | `mac.universal` consolidation | ✓ | `mergeASARs`, `singleArchFiles`, `x64ArchFiles` → `mac.universal.*` |
-| `files` / `extraResources` / `extraFiles` nested under `fileOptions` | ✓ | `files` → `fileOptions.files`, etc., at the root and per platform; the flat keys still build in v27 with a warning and are removed in v28 |
+| `files` / `extraResources` / `extraFiles` nested under `fileOptions` | ✓ | `files` → `fileOptions.files`, etc., at the root and per platform; the v26 flat keys are still accepted in v27 with a warning |
 | `electronDownload` → `electronGet` | ✓ | Renamed; `mirror` → `mirrorOptions.mirror`, `isVerifyChecksum` → `unsafelyDisableChecksums` |
 | `appImage.systemIntegration` removed | ✓ | Removed automatically |
 | `GithubOptions.vPrefixedTagName` removed | ✓ | Replaced by `tagNamePrefix` |

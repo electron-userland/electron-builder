@@ -468,7 +468,7 @@ describe("Package Managers", { concurrent: false }, () => {
           {
             targets: linuxDirTarget,
             config: {
-              files: ["**/*"],
+              fileOptions: { files: ["**/*"] },
               asar: { unpack: ["**/node_modules/foo/**/*"] },
               // npm >= 10 (install-links=false) symlinks a `file:` dependency and does NOT install
               // its transitive deps into the project tree (`npm ls` reports `ms` as missing), and

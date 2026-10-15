@@ -11,7 +11,7 @@ import { FileSet, FilesBuildOptions } from "../../options/PlatformSpecificBuildO
 import { reactCra } from "../../presets/rectCra.js"
 import { PACKAGE_VERSION } from "../../version.js"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
-import { isPlainObject, normalizeFileOptions } from "./fileOptions.js"
+import { forwardFlatFileOptionReads, isPlainObject, normalizeFileOptions } from "./fileOptions.js"
 import { checkLegacyConfiguration } from "./legacyConfigGuard.js"
 import { validateSchema } from "./schemaValidator.js"
 import _fsExtra from "fs-extra"
@@ -225,6 +225,7 @@ export function doMergeConfigs(configs: Configuration[]): Configuration {
   if (result.fileOptions == null || isPlainObject(result.fileOptions)) {
     result.fileOptions = { ...result.fileOptions, files: mergeFileSets(fileLists) }
   }
+  forwardFlatFileOptionReads(result)
   return result
 }
 
@@ -240,6 +241,10 @@ function getDefaultConfig(): Configuration {
 const schemeDataPromise = new Lazy(() => readJson(path.join(import.meta.dirname, "..", "..", "..", "scheme.json")))
 
 export async function validateConfiguration(config: Configuration, debugLogger: DebugLogger) {
+  // The v26 flat file keys are not in the v27 schema. `getConfig` has already moved them; this covers a configuration
+  // validated directly (programmatic callers, tests).
+  normalizeFileOptions(config)
+
   // Runs first so a v26 option produces a targeted "moved to X" message instead of ajv's generic
   // "has an unknown property" — see util/config/legacyConfigGuard.ts.
   checkLegacyConfiguration(config)
