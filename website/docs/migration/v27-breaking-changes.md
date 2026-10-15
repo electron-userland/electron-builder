@@ -86,7 +86,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Azure Trusted Signing `/dlib` is the default](#azure-trusted-signing-signtool-dlib-is-the-default) | — | Pin `winCodeSign` below `1.3.0` only to force the legacy PowerShell path |
 | [New: `win.target: "msix"` (beta)](#new-msix-target-beta) | — | Optional, additive — the default `winCodeSign` works (only the legacy `0.0.0` bundle is rejected) |
 | [`PlatformPackager.info` & `platformSpecificBuildOptions` now `protected`](#programmatic-plugin-author-api-changes) | — | Plugin authors: hard break — `.info` no longer compiles externally; use the new pass-through getters |
-| [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | — | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command |
+| [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | — | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command (the flatpak target is not affected) |
 | [`node_modules` arch/os-filtered on every build](#node_modules-are-now-archos-filtered-on-every-build) | — | Awareness — packages whose `cpu`/`os` mismatch the target are now excluded |
 | [`arch: "all"` now expands to x64 + arm64; 32-bit fails fast on Electron 44+](#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44) | — | `arch: "all"` drops `ia32` — request `ia32` explicitly; ia32/armv7l require `electronVersion` <= 43.x |
 | [macOS `productName`/`executableName` validated, not silently sanitized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | A name needing filename sanitization now throws — pick a name that needs none |
@@ -100,7 +100,14 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Custom Windows signing hook moved to `win.sign.sign`](#custom-windows-signing-hooks-move-to-winsignsign) | ✓ | `win.signtoolOptions.sign` moves with the rest of `signtoolOptions` to `win.sign.sign` |
 | [macOS names are no longer NFD-normalized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | Update tooling that matches the normalized on-disk bundle filename |
 | [Linux `executableArgs` field codes are now literal](#linux-launcher-entrypoint) | — | Remove `%F`/`%U` from `executableArgs`; use `linux.desktop.entry.Exec` |
+| [Linux desktop entry keys and values are validated](#linux-desktop-entry-keys-and-values-are-validated) | — | A line break in a `.desktop` value, a key that is empty or contains `=`, a line break or a stray bracket, or `[`, `]` or a control character in a `desktopActions` name now throws |
 | [`http-parser` dropped from default pacman `depends`](#pacman-default-dependencies-changed) | — | Add it back with `"depends": ["default", "http-parser"]` only if your app really needs it |
+| [Flatpak target requires `flatpak` >= 1.12.4 and `flatpak-builder` >= 1.2.2](#flatpak-tooling-requirements) | — | Only for tools older than the stock packages of Ubuntu 22.04 and Debian 12: update them (the `electronuserland/builder` images with a date tag newer than `-05.26` include them, those up to `-05.26` none); replace `DEBUG=@malept/flatpak-bundler` with `DEBUG=electron-builder` |
+| [Flatpak `runtimeVersion` / `baseVersion` default to `26.08`](#flatpak-tooling-requirements) | — | A build that sets neither is built for the `26.08` runtime and installs the three `26.08` refs (about 3.2 GB) on the build machine if they are missing — install them in images and on offline machines that held the `20.08` ones. Set both to `"20.08"` to keep the previous, end-of-life runtime |
+| [Flatpak `useWaylandFlags` no longer adds `--enable-features=UseOzonePlatform` for Electron 16 to 37](#flatpak-wayland-flags) | — | Only with `flatpak.useWaylandFlags`: add the flag to `flatpak.executableArgs` if the app needs it |
+| [Flatpak `files` and `symlinks` must stay inside the app](#flatpak-tooling-requirements) | — | A `flatpak.files` destination or `flatpak.symlinks` link that leaves the app prefix with `..`, or a directory in `flatpak.files` copied onto a symlink to a directory, now fails the build |
+| [Flatpak default permissions no longer include the home directory](#flatpak-default-permissions) | — | Only without `flatpak.finishArgs`: the app gets the Downloads folder (`--filesystem=xdg-download`) instead of read/write access to the whole home directory; its data under `~/.var/app` is unaffected. If it opens other paths on its own (recent files, `~/Documents`, dotfiles, `~/.pki/nssdb` certificates), set `finishArgs` to the v26 list or add narrower grants such as `--filesystem=xdg-documents` |
+| [Flatpak default permissions leave out the notifications talk-name](#flatpak-default-permissions) | — | Only without `flatpak.finishArgs`, and unless the base is `org.electronjs.Electron2.BaseApp` before `23.08` (the default is `26.08`; any other `base` gets no talk-name either): notifications go through the notification portal. Where the desktop has no portal backend for notifications (e.g. sway with only `xdg-desktop-portal-wlr`) they no longer appear — add `--talk-name=org.freedesktop.Notifications` to `finishArgs`, or users run `flatpak override --user --talk-name=org.freedesktop.Notifications <id>` |
 | [New: Cloudflare R2 publish provider](#new-cloudflare-r2-publish-provider-additive) | — | None — additive; needs `accountId` and an `https` `publicUrl` |
 | [New command: `migrate-schema`](#new-command-migrate-schema) | — | None — run it to apply every **Auto ✓** change above |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
@@ -832,18 +839,110 @@ The guard around the `customInstallMode` macro in `multiUserUi.nsh` previously c
 
 ### Linux launcher entrypoint
 
-Every Linux target (deb/rpm, AppImage, snap, flatpak) now launches through a generated `<executableName>-launcher` shell script rather than invoking the executable directly. Two things change in the built artifact:
+Every Linux target except flatpak (deb/rpm, AppImage, snap) now launches through a generated `<executableName>-launcher` shell script rather than invoking the executable directly. Two things change in the built artifact:
 
 - The package ships a **new file** — `<executableName>-launcher` (e.g. `/opt/<app>/MyApp-launcher`).
 - The generated `.desktop` **`Exec` key points at the launcher** instead of the executable (e.g. `Exec=/opt/MyApp/MyApp-launcher %U`), and `executableArgs` / `forceX11` flags are injected into the launcher rather than inlined into `Exec`.
 
 This makes `executableArgs` apply consistently across all Linux targets and keeps the `.desktop` `Exec` a plain command.
 
+The flatpak target keeps the entrypoint it had in v26: its own `/app/bin/electron-wrapper` script (which runs the app through `zypak-wrapper`), with `Exec=electron-wrapper %U` in the `.desktop` file and no `*-launcher` file. `executableArgs` are injected into that script, and in v27 they are single-quoted there as in the other launchers.
+
 **Action is required only if** you ship a custom `.desktop` override, an AppArmor/snap profile, a MIME handler, or external tooling that hard-codes the `Exec` command or assumes the executable itself is the launch target. Point those at the `*-launcher` script (or the executable, as appropriate).
 
 **Desktop-entry field codes in `executableArgs` are now literal.** v26 passed an argument like `%F` into the `.desktop` `Exec` key unquoted (and skipped appending `%U`). In v27 `executableArgs` are injected into the launcher script and quoted, so `%F` reaches your app as the literal string `"%F"` instead of the file list. If you relied on a field code to receive opened files, remove it from `executableArgs` and set `linux.desktop.entry.Exec` instead. electron-builder warns when it sees one.
 
-**AppImage `--no-sandbox` default changed.** The default `--no-sandbox` launch argument is now injected **only for the legacy FUSE2 runtime** (`toolsets.appimage: "0.0.0"`). With the default static FUSE3 runtime (unset / `"latest"` → `1.1.0`), `--no-sandbox` is no longer added automatically — `AppRun` adds it on its own only when user namespaces are unavailable. If you need the Chromium sandbox disabled unconditionally, set `executableArgs: ["--no-sandbox"]` explicitly.
+**AppImage `--no-sandbox` default changed.** The default `--no-sandbox` launch argument is now injected **only for the legacy FUSE2 runtime** (`toolsets.appimage: "0.0.0"`). With the default static FUSE3 runtime (unset / `"latest"` → `1.1.0`), `--no-sandbox` is no longer added automatically — `AppRun` adds it on its own only when user namespaces are unavailable. If you need the Chromium sandbox disabled unconditionally, set `appImage.executableArgs: ["--no-sandbox"]` explicitly: in `linux.executableArgs` it would reach the other Linux targets too, the [flatpak](../flatpak.md#executable-args) included.
+
+### Linux desktop entry keys and values are validated {#linux-desktop-entry-keys-and-values-are-validated}
+
+v26 wrote the keys and values of the `.desktop` file as given, so a line break in a value ended the line, and the rest of the value became a new line of the file: another key, which could replace one such as `Exec`, or a new group. v27 checks them first, for every Linux target that writes a desktop entry, and fails the build with an `InvalidConfigurationError` naming the key or action when:
+
+- a key in `linux.desktop.entry` or in an action of `linux.desktop.desktopActions` is empty, contains `=` or a line break, or has brackets other than around a trailing locale of letters, digits, `-`, `_`, `.` and `@`, right after the key, such as `Name[de]`. Keys that the specification does not allow but desktop environments read, such as `X_Foo`, are kept;
+- a value contains a line break (`\r` or `\n`) before its end; line breaks at the end, as in a YAML block scalar, are dropped. This covers the `entry` and action values and the values built from other options: `Categories` from `linux.category`, and `MimeType` from `linux.mimeTypes`, `fileAssociations` and `protocols`. `Name`, `Comment` and `StartupWMClass`, which electron-builder escapes, are not affected;
+- an action name contains `[`, `]` or a control character.
+
+Values are still written as given otherwise, so escape sequences such as `\;` in a list value are kept. Each of these cases wrote a file that desktop environments read differently from what was configured, or not at all.
+
+**Action is required only if** a build starts failing here — write the value on one line (a newline in a string value is written as `\n`), and use a key that the [Desktop Entry Specification](https://specifications.freedesktop.org/desktop-entry/latest/basic-format.html) allows; your own keys start with `X-`, such as `X-MyApp-Feature`. See [Desktop File Customization](../linux.md#desktop-file-customization).
+
+### Flatpak: native build, minimum tool versions, `26.08` runtime by default {#flatpak-tooling-requirements}
+
+The flatpak target no longer depends on `@malept/flatpak-bundler`: electron-builder now drives `flatpak` and `flatpak-builder` itself. It also has a newer default runtime. Six things change:
+
+- **`flatpak` 1.12.4+ and `flatpak-builder` 1.2.2+ are required.** Both versions are checked before the target installs a runtime or runs `flatpak-builder`, and an older tool fails the build with a message naming the required version, e.g. `flatpak-builder 1.0.12 is not supported - version 1.2.2 or newer is required to build the flatpak target`. v26 checked no version. The stock packages of Ubuntu 22.04 (Flatpak 1.12.7, `flatpak-builder` 1.2.2), Debian 12 (1.14.10, 1.2.3), RHEL 8 and 9 (1.12.9, 1.2.3) and newer releases are new enough; those of older releases, such as Ubuntu 20.04 (now only covered by Ubuntu Pro) and Debian 11, are not. With `flatpak-builder` older than 1.4, AppStream metadata in the app cannot be composed with the current SDKs, and with one older than 1.4.4 a build with `flatpak.modules` warns — see [Build Requirements](../flatpak#build-requirements). The `electronuserland/builder` Docker images with a date tag newer than `-05.26`, the first ones published after this release, include both tools from the Flatpak team's PPA; those with the date tag `-05.26` or an older one include neither — see [Flatpak in the Docker Images](../features/multi-platform-build#flatpak-in-the-docker-images).
+- **`flatpak.runtimeVersion` and `flatpak.baseVersion` default to `26.08`.** They defaulted to `20.08`, which Flathub reports as end-of-life (no longer receiving fixes and security updates). A build that sets neither option now produces a bundle for the `26.08` freedesktop runtime, built on the `26.08` Electron base app; a build that sets only one of them gets the new default for the other. The build machine needs the three `26.08` refs (runtime, SDK and base app): whichever is missing is installed at the start of the build — about 3.2 GB in the user installation for all three, measured on aarch64 — and where no remote of the user installation can supply them, for example offline, the build fails with `No remote refs found`. Installed `20.08` refs are no longer used; electron-builder does not remove them. Installing the `26.08` refs and building against them works with the stock tools of Ubuntu 24.04 (Flatpak 1.14.6, `flatpak-builder` 1.4.2). A build that leaves either option unset warns once, naming this change. To keep the previous runtime, set both options to `"20.08"` (quoted in YAML). Setting both, to either version, also keeps the build on that version when a later release changes the default — see [Choosing Versions](../flatpak#choosing-versions).
+- **`DEBUG=@malept/flatpak-bundler` no longer has any effect.** A flatpak build warns once when `DEBUG` still names it. A failed `flatpak` / `flatpak-builder` command now prints that tool's own output as part of the build error, and `DEBUG=electron-builder` logs every command that is run.
+- **The scratch directory is removed when the build finishes.** v26 left a `flatpak-bundler-*` directory (a full copy of the app plus an OSTree repository) in the system temp directory after every build. The stage directory `<outDir>/__flatpak-<arch>`, which v26 left behind when a build failed, is now removed in that case too (unless `DEBUG=electron-builder` is set).
+- **`flatpak.files` destinations and `flatpak.symlinks` links must stay inside the app prefix.** v26 joined them to the build directory as given, so a path that climbed out with `..` wrote outside the app, for example over the app's `metadata` file. v27 fails the build with `flatpak.files destination "<path>" is outside the app prefix` (or `flatpak.symlinks link`) before anything is installed. A destination or link that leads out of the prefix through a symlink placed there by the base app, a module or an earlier `files` pair fails the build too, with `... resolves outside the app prefix (/app in the sandbox) through a symlink`, when it is about to be written. Paths are relative to `/app` in the sandbox, as before.
+- **A directory in `flatpak.files` can no longer be copied onto a symlink to a directory.** v26 copied through such a link, into the directory it points to; v27 fails the build with `Cannot overwrite non-directory with directory` (`ERR_FS_CP_DIR_TO_NON_DIR`). No `org.electronjs.Electron2.BaseApp` branch from 20.08 to 26.08 contains such a link, so this only matters when another base app, a module or an earlier `files` pair creates one — use the directory the link points to as the destination. Symlinks inside a copied directory are now kept as they are, including ones that do not resolve on the build machine, which failed the build in v26.
+
+As in v26, every build updates the runtime, SDK and base app that are already installed and installs whichever is missing into the user installation (`flatpak install --user`, which only searches the remotes of the user installation). The commands differ in details: `flatpak install` and `flatpak update` run with `--noninteractive` instead of `--assumeyes`; an install that fails with `No remote refs found` logs a hint with the `flatpak remote-add --user` command to run; and the `flatpak` commands no longer see environment variables whose names look like credentials (`*TOKEN*`, `*KEY*`, `*SECRET*`, `*PASS*`, …). `flatpak-builder` still receives the whole environment when the manifest has `modules`, whose sources may need those variables to download, and the filtered one otherwise.
+
+New in v27: `flatpak.additionalArgs` passes extra arguments to the underlying tools (`flatpakBuilder`, `buildExport` and `buildBundle`, for `flatpak-builder`, `flatpak build-export` and `flatpak build-bundle`), which is what makes [building in unprivileged containers](../flatpak#building-in-unprivileged-containers) possible. electron-builder never adds such arguments on its own; when a build fails for lack of FUSE or user namespaces it logs a hint naming the option to set. [Building Flatpak Bundles in CI and Containers](../tutorials/flatpak-in-ci-and-containers) covers the image and the build command for such a container.
+
+### Flatpak: narrower default permissions {#flatpak-default-permissions}
+
+A build that does not set `flatpak.finishArgs` gets electron-builder's default permissions. Two of them change:
+
+- the app gets the Downloads folder (`--filesystem=xdg-download`) instead of the whole home directory (`--filesystem=home`);
+- `--talk-name=org.freedesktop.Notifications` is in the list only for the Electron base app before `23.08`.
+
+A build that sets `finishArgs` is not affected: its list is used as given, as before. The build does not fail either way: the changes show on the users' machines once they update the app. A build that uses the default list warns once, with a link to this section.
+
+**To keep the v26 permissions,** set `finishArgs` to the complete v26 default list:
+
+```yaml
+flatpak:
+  finishArgs:
+    - "--socket=wayland"
+    - "--socket=x11"
+    - "--share=ipc"
+    - "--device=dri"
+    - "--socket=pulseaudio"
+    - "--filesystem=home"
+    - "--share=network"
+    - "--talk-name=org.freedesktop.Notifications"
+```
+
+#### No home directory access
+
+**Why.** `--filesystem=home` gives the app read/write access to everything in the home directory, dotfiles included, except other apps' data under `~/.var/app` and the flatpak installation in `~/.local/share/flatpak`. Code that runs in the app, such as a compromised dependency or a script injected into a window with `nodeIntegration`, could write `~/.config/autostart/*.desktop`, `~/.bashrc`, `~/.profile` or a unit in `~/.config/systemd/user`, which the desktop or the shell then runs outside the sandbox at the next login. It could also read `~/.ssh` and `~/.gnupg`.
+
+**What keeps working:**
+
+- **App data.** Inside the sandbox `XDG_CONFIG_HOME`, `XDG_DATA_HOME` and `XDG_CACHE_HOME` always point into `~/.var/app/<id>`, with or without home access, so `app.getPath("userData")` and the data that existing installs keep there do not move.
+- **Files the user picks.** File dialogs go through the file chooser portal (Electron 14 and later), which gives the app access to the chosen files.
+- **Files opened from the desktop.** The desktop entry runs `electron-wrapper %U`, and flatpak forwards those files to the app through the document portal.
+
+**What breaks.** Without home access the app can no longer reach:
+
+- absolute paths outside Downloads that it did not get from a dialog, such as recent-file lists, project folders and paths stored in its settings or typed by the user;
+- default save locations such as `~/Documents`: `app.getPath("documents")`, `"desktop"`, `"pictures"`, `"music"` and `"videos"` return folders the app cannot reach;
+- other apps' configuration and dotfiles, such as `~/.gitconfig` or `~/.ssh`, and its own data in a hard-coded `~/.myapp` instead of `app.getPath()`: that is no longer found, and what the app writes there is not kept;
+- files passed on a terminal command line (`flatpak run <id> ~/notes.txt`): flatpak forwards only the files of a launch from the desktop entry;
+- the user's certificate database in `~/.pki/nssdb`: corporate CA certificates, which TLS-inspecting proxies need, and client certificates are no longer used. Grant `--filesystem=~/.pki/nssdb:ro`, or `--filesystem=~/.pki/nssdb` if the app imports certificates.
+
+**To grant less than the whole home directory,** start from the v27 default list in the [option reference](../flatpak#configuration), since `finishArgs` replaces it, and add what the app needs:
+
+- `--filesystem=xdg-documents`, `xdg-download`, `xdg-desktop`, `xdg-pictures`, `xdg-music` or `xdg-videos`: one of the user's folders, without the dotfiles around it;
+- `--persist=.myapp`: keeps a hard-coded `~/.myapp` between runs, stored in `~/.var/app/<id>/.myapp`. Data that an earlier version left in the real `~/.myapp` is not moved there; grant `--filesystem=~/.myapp` to keep using it;
+- `:ro` after a filesystem grant, for example `--filesystem=xdg-documents:ro`, for read-only access.
+
+#### No notifications talk-name on current base apps
+
+Electron shows notifications through libnotify. From version 0.8, libnotify sends them through the notification portal when it runs in a sandbox, and talks to the notification daemon (`org.freedesktop.Notifications`) directly only when no portal answers. The Electron base app ships libnotify 0.8 or later since `23.08`, so the default list has the talk-name only when `base` is `org.electronjs.Electron2.BaseApp` (the default) and `baseVersion` is older than `23.08`. With the default `26.08`, and with any other `base`, it is left out. Without it the app can no longer show notifications under another app's name and icon, or replace and close other apps' notifications: the portal attributes them to the app's ID.
+
+**Who is affected:** users whose desktop has no xdg-desktop-portal backend that implements notifications, for example sway with only `xdg-desktop-portal-wlr`. The app's notifications no longer appear there. To bring them back:
+
+- add `--talk-name=org.freedesktop.Notifications` to `finishArgs`, or
+- the user runs `flatpak override --user --talk-name=org.freedesktop.Notifications <id>`.
+
+### Flatpak: `useWaylandFlags` no longer adds `--enable-features=UseOzonePlatform` from Electron 16 {#flatpak-wayland-flags}
+
+With `flatpak.useWaylandFlags`, v26 added `--enable-features=UseOzonePlatform --ozone-platform=wayland` in a Wayland session whatever the Electron version. v27 adds only `--ozone-platform=wayland` for Electron 16 to 37, where Ozone is on by default, and nothing from Electron 38, which picks Wayland by itself. The second `--enable-features` that v26 added could replace one in `executableArgs`, such as `--enable-features=WaylandWindowDecorations`, because Chromium keeps the last value of a repeated switch. Electron 12 to 15 and an unknown version still get both flags. A build with Electron 16 to 37 warns once about the change.
+
+**Action is required only if** the app relied on the `UseOzonePlatform` feature being passed: add `--enable-features=UseOzonePlatform` to `flatpak.executableArgs`. See [Wayland Support](../flatpak.md#wayland-support).
 
 ### `node_modules` are now arch/os-filtered on every build
 

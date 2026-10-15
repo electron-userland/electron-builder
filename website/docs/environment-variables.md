@@ -184,6 +184,8 @@ DEBUG=electron-builder electron-builder --linux snap
 
 Namespaced channels are also available — e.g. `DEBUG=electron-builder:7z` for archive operations, or `DEBUG=electron-builder*` for everything.
 
+The flatpak target no longer has a namespace of its own: `DEBUG=@malept/flatpak-bundler`, which v26 needed to show the output of `flatpak` and `flatpak-builder`, has no effect in v27. `DEBUG=electron-builder` logs every command the target runs, and a failed command prints its output without any `DEBUG` setting.
+
 ---
 
 ## Removed in v27
