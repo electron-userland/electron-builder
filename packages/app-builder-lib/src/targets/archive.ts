@@ -1,4 +1,4 @@
-import { debug7z, exec, exists, log, statOrNull, unlinkIfExists } from "builder-util"
+import { assertNoSymlinkLeaves, debug7z, exec, exists, log, statOrNull, unlinkIfExists } from "builder-util"
 import * as path from "path"
 import { create } from "tar"
 import type { TarOptionsWithAliasesAsync } from "tar"
@@ -265,6 +265,10 @@ export async function archive(format: string, outFile: string, dirToArchive: str
   }
 
   if (use7z) {
+    if (!options.preserveSymlinks) {
+      // 7za stores what a symlink points to: one that leaves the archived directory would package files from elsewhere
+      await assertNoSymlinkLeaves(dirToArchive, `the ${format} archive "${path.basename(outFile)}"`)
+    }
     const args = compute7zCompressArgs(format, options)
     // Modern 7-Zip (24.09) dereferences symlinks by default; the 7-Zip 16.02 bundled before
     // 26.15 stored them as links. Without -snl, a macOS .framework `Versions/Current` extracts

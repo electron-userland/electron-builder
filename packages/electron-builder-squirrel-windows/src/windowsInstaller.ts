@@ -1,4 +1,4 @@
-import { exec, exists, log, prepareFixedNameWrite } from "builder-util"
+import { assertNoSymlinkLeaves, exec, exists, log, prepareFixedNameWrite } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 
@@ -119,6 +119,8 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
   await fs.writeFile(nuspecPath, nuspecContent)
 
   const nugetExe = path.join(vendorDirectory, "nuget.exe")
+  // NuGet stores what a symlink points to: one that leaves the app would package files from elsewhere on the build machine
+  await assertNoSymlinkLeaves(appDirectory, "the Squirrel.Windows NuGet package")
   const nugetArgs = ["pack", nuspecPath, "-BasePath", appDirectory, "-OutputDirectory", nugetOutput, "-NoDefaultExcludes"]
   await (useMono ? exec("mono", [nugetExe, ...nugetArgs]) : exec(nugetExe, nugetArgs))
 
