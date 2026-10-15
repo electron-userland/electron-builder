@@ -39,8 +39,13 @@ function encodeField(value: unknown): string {
  *                               so one cannot be added after the fact)
  *   - each file's `url`, `sha512`, `size` — the artifact identity + integrity hash the updater enforces — and its
  *     `blockMapUrl` when present (an extra field on the file record only then, so other manifests are unaffected)
+ *   - each file's `isAdminRightsRequired` when it is `true` — electron-updater reads it from the installer's file entry to decide
+ *     whether to run the NSIS installer through `elevate.exe` (per-machine installs), so it must not be flippable
+ *     by whoever serves the manifest. Like `blockMapUrl`, it only adds fields to the file record when set
  *   - each NSIS web-installer package's arch key and `path`, `sha512`, `size`, `blockMapSize`, `isAdminRightsRequired`
- *     (`WindowsUpdateInfo.packages`, keyed by arch) — the payload the web installer downloads and verifies
+ *     (`WindowsUpdateInfo.packages`, keyed by arch) — the payload the web installer downloads and verifies. (The
+ *     per-package `isAdminRightsRequired` column is part of the `EBUM1` wire format but is not what the updater reads;
+ *     the elevation decision comes from the signed `files[].isAdminRightsRequired` above.)
  *
  * Cosmetic/operational fields (`releaseDate`, `releaseNotes`, `releaseName`) are intentionally excluded so
  * they can be edited post-signing without invalidating the signature. The `signature`/`signatures` fields are
@@ -57,7 +62,16 @@ function encodeField(value: unknown): string {
  *     minimumSystemVersion:"10.0.19041"
  *     file:"App-1.2.3.exe"<TAB>"<sha512>"<TAB>8123456
  *     file:"App-1.2.4.exe"<TAB>"<sha512>"<TAB>8123456<TAB>"https://cdn.example.com/App-1.2.4.exe.blockmap?sig=…"   (with a blockMapUrl)
+ *     file:"App-1.2.5.exe"<TAB>"<sha512>"<TAB>8123456<TAB><TAB>1                     (isAdminRightsRequired: true, no blockMapUrl)
+ *     file:"App-1.2.6.exe"<TAB>"<sha512>"<TAB>8123456<TAB>"<blockMapUrl>"<TAB>1      (isAdminRightsRequired: true, with a blockMapUrl)
  *     package:"x64"<TAB>"App-1.2.3-x64.nsis.7z"<TAB>"<sha512>"<TAB>5000<TAB>120<TAB>1
+ *
+ * A `file:` record therefore has 3, 4 or 5 fields: `url`, `sha512`, `size`, then `blockMapUrl` (a JSON string) when it is
+ * set or the flag follows, then `1` when `isAdminRightsRequired` is `true`. When the flag is set without a `blockMapUrl`,
+ * the `blockMapUrl` column is emitted empty (the "absent" encoding) so the flag always sits in the fifth column and can
+ * never be read as, or shifted into, a `blockMapUrl`. `isAdminRightsRequired: false` and an absent flag both mean "no
+ * elevation" to the updater (it checks `=== true`), so both emit nothing and a manifest without the flag canonicalizes
+ * exactly as it did before the flag was signed.
  *
  * Every value goes through {@link encodeField} (JSON-quoted strings, bare numbers, empty for absent), which is
  * what makes the encoding injective: a value can never contain an unescaped newline or tab, so no choice of
@@ -81,7 +95,11 @@ export function canonicalizeForSigning(info: UpdateInfo): string {
 
   const files = (info.files ?? []).map(f => {
     const record = `file:${encodeField(f?.url)}\t${encodeField(f?.sha512)}\t${encodeField(f?.size)}`
-    // only emitted when present, so manifests without a blockMapUrl canonicalize exactly as before
+    // optional columns are only emitted when needed, so manifests with neither canonicalize exactly as before:
+    // the flag takes a fixed fifth column, with an empty (absent) blockMapUrl column in front of it when unset
+    if (f?.isAdminRightsRequired === true) {
+      return `${record}\t${encodeField(f.blockMapUrl)}\t1`
+    }
     return f?.blockMapUrl == null ? record : `${record}\t${encodeField(f.blockMapUrl)}`
   })
   // Sort so file ordering in the manifest cannot change the signed payload.
@@ -128,8 +146,8 @@ function isNonEmptyString(value: unknown): value is string {
  * so that a manifest the updater would reject is never signed in the first place:
  *   - `version` is a non-empty string
  *   - `files` is a non-empty array whose entries have a non-empty string `url` and `sha512` (and a numeric
- *     `size` and a non-empty string `blockMapUrl` when present) — a signed manifest must describe its own files, so the updater never consults the
- *     unsigned legacy top-level `path`/`sha512` for it
+ *     `size`, a non-empty string `blockMapUrl` and a boolean `isAdminRightsRequired` when present) — a signed manifest must
+ *     describe its own files, so the updater never consults the unsigned legacy top-level `path`/`sha512` for it
  *   - `stagingPercentage` is a number when present, `minimumSystemVersion` a string when present
  *   - every `packages` entry (NSIS web installer) has a non-empty string `path` and `sha512`, numeric
  *     `size`/`blockMapSize` when present, and a boolean `isAdminRightsRequired` when present
@@ -172,6 +190,9 @@ export function validateSignedManifestShape(info: UpdateInfo): string | null {
         return `files[${i}].blockMapUrl must be a non-empty string`
       }
       strings.push([`files[${i}].blockMapUrl`, file.blockMapUrl])
+    }
+    if (file.isAdminRightsRequired != null && typeof file.isAdminRightsRequired !== "boolean") {
+      return `files[${i}].isAdminRightsRequired must be a boolean`
     }
   }
 

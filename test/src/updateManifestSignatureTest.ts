@@ -610,3 +610,73 @@ describe("blockMapUrl is signed only when present", () => {
     expect(validateSignedManifestShape(withBlockMapUrl(blockMapUrl))).toMatch(expected)
   })
 })
+
+describe("files[].isAdminRightsRequired is signed only when true", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const BLOCKMAP = "https://cdn.example.com/App-1.2.3.exe.blockmap?X-Amz-Signature=abc"
+  const HEADER = ["EBUM1", 'version:"1.2.3"', "staging:", "minimumSystemVersion:"]
+  const withFile = (extra: { isAdminRightsRequired?: unknown; blockMapUrl?: string }) =>
+    makeInfo({ files: [{ url: "App-1.2.3.exe", sha512: "abc123", size: 8123456, ...extra } as UpdateInfo["files"][number]] })
+
+  test("adds a fixed fifth column to the file record; manifests without the flag (or with false) canonicalize unchanged", ({ expect }) => {
+    // flag without a blockMapUrl: the blockMapUrl column is emitted empty so the flag always sits in column five
+    expect(canonicalizeForSigning(withFile({ isAdminRightsRequired: true }))).toBe([...HEADER, 'file:"App-1.2.3.exe"\t"abc123"\t8123456\t\t1'].join("\n"))
+    expect(canonicalizeForSigning(withFile({ isAdminRightsRequired: true, blockMapUrl: BLOCKMAP }))).toBe(
+      [...HEADER, `file:"App-1.2.3.exe"\t"abc123"\t8123456\t${JSON.stringify(BLOCKMAP)}\t1`].join("\n")
+    )
+
+    // the bytes signed before this field was covered: unchanged for absent / undefined / false
+    const without = [...HEADER, 'file:"App-1.2.3.exe"\t"abc123"\t8123456'].join("\n")
+    expect(canonicalizeForSigning(makeInfo())).toBe(without)
+    expect(canonicalizeForSigning(withFile({ isAdminRightsRequired: undefined }))).toBe(without)
+    expect(canonicalizeForSigning(withFile({ isAdminRightsRequired: false }))).toBe(without)
+    const withoutFlagWithBlockMap = [...HEADER, `file:"App-1.2.3.exe"\t"abc123"\t8123456\t${JSON.stringify(BLOCKMAP)}`].join("\n")
+    expect(canonicalizeForSigning(withFile({ blockMapUrl: BLOCKMAP }))).toBe(withoutFlagWithBlockMap)
+    expect(canonicalizeForSigning(withFile({ blockMapUrl: BLOCKMAP, isAdminRightsRequired: false }))).toBe(withoutFlagWithBlockMap)
+  })
+
+  test("the four blockMapUrl/flag combinations produce four distinct file records", ({ expect }) => {
+    const payloads = new Set([
+      canonicalizeForSigning(withFile({})),
+      canonicalizeForSigning(withFile({ blockMapUrl: BLOCKMAP })),
+      canonicalizeForSigning(withFile({ isAdminRightsRequired: true })),
+      canonicalizeForSigning(withFile({ isAdminRightsRequired: true, blockMapUrl: BLOCKMAP })),
+    ])
+    expect(payloads.size).toBe(4)
+  })
+
+  test("flipping files[0].isAdminRightsRequired either way invalidates the signature", ({ expect }) => {
+    // per-machine build (what NsisTarget + updateInfoBuilder write): signed with the flag set
+    const perMachine = signed(withFile({ isAdminRightsRequired: true }), privateKeyPem)
+    expect(verifyManifestSignatures(perMachine, [publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures({ ...perMachine, files: [{ ...perMachine.files[0], isAdminRightsRequired: false }] }, [publicKeyPem]).ok).toBe(false)
+    expect(verifyManifestSignatures({ ...perMachine, files: [{ ...perMachine.files[0], isAdminRightsRequired: undefined }] }, [publicKeyPem]).ok).toBe(false)
+
+    // per-user build: signed without the flag; a mirror must not be able to add it
+    const perUser = signed(makeInfo(), privateKeyPem)
+    expect(verifyManifestSignatures(perUser, [publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures({ ...perUser, files: [{ ...perUser.files[0], isAdminRightsRequired: true }] }, [publicKeyPem]).ok).toBe(false)
+
+    // with a blockMapUrl too
+    const both = signed(withFile({ isAdminRightsRequired: true, blockMapUrl: BLOCKMAP }), privateKeyPem)
+    expect(verifyManifestSignatures(both, [publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures({ ...both, files: [{ ...both.files[0], isAdminRightsRequired: false }] }, [publicKeyPem]).ok).toBe(false)
+  })
+
+  test.for<[string, unknown]>([
+    ["a string", "true"],
+    ["a number", 1],
+    ["an object", {}],
+  ])("the shape check rejects %s isAdminRightsRequired", ([_name, isAdminRightsRequired], { expect }) => {
+    const info = withFile({ isAdminRightsRequired })
+    expect(validateSignedManifestShape(info)).toMatch(/files\[0\]\.isAdminRightsRequired must be a boolean/)
+    const result = verifyManifestSignatures({ ...info, signature: signUpdateManifest(makeInfo(), privateKeyPem) }, [publicKeyPem])
+    expect(result.ok).toBe(false)
+    expect(result.reason).toMatch(/files\[0\]\.isAdminRightsRequired must be a boolean/)
+  })
+
+  test("the shape check accepts a boolean isAdminRightsRequired", ({ expect }) => {
+    expect(validateSignedManifestShape(withFile({ isAdminRightsRequired: true }))).toBeNull()
+    expect(validateSignedManifestShape(withFile({ isAdminRightsRequired: false }))).toBeNull()
+  })
+})
