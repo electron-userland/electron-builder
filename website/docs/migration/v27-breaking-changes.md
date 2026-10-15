@@ -450,7 +450,7 @@ When `asar: false`, the root-level sub-options have no effect and the migrator r
 
 ### `asar.ordering` is now applied {#asar-ordering-is-now-applied}
 
-`asar.ordering` was documented and validated in v26 but never read: the archive was always packed dependencies first, app files last. v27 honors it: directories keep their positions, the files listed in the ordering file are packed first in the order of the file, and everything else follows in its original order.
+`asar.ordering` was documented and validated in v26 but never read: the archive was always packed dependencies first, app files last. v27 honors it: the files listed in the ordering file are packed first in the order of the file, ahead of the default dependencies-first layout, and everything else follows in its original order. Builds that apply an ordering file log a one-time warning pointing here.
 
 Two consequences for projects that already set the option:
 

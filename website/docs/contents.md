@@ -197,12 +197,19 @@ asar:
   ordering: build/asar-ordering.txt
 ```
 
-```
-# build/asar-ordering.txt — list files loaded at startup first
+```text
 index.js
 renderer.js
-node_modules/electron/index.js
+node_modules/some-dependency/lib/index.js
 ```
+
+- **Where the file is found:** the `ordering` path is resolved like other build resources, relative to the build resources directory (`directories.buildResources`, default `build`) first, then the project directory. A missing file fails the build.
+- **Line syntax:** one file per line, relative to the app directory (where the app's `package.json` sits, i.e. the root of `app.asar`). A leading `/` and a `<count>:` prefix (as written by load counters) are accepted, `\` separators are treated as `/`, and blank lines are ignored. There is no comment syntax: a `#` line is read as a path and never matches. Lines naming a directory are ignored, and listed files that are not packaged (for example `node_modules/electron`, which is never in the archive) are skipped. The build log reports `matched N/M`; run with `DEBUG=electron-builder` to see the first unmatched lines.
+- **Resulting layout:** directory entries first (they hold no data), then the listed files in the order of the file, then everything else in its default order.
+
+:::note[Trade-off with differential updates]
+Without an ordering file, electron-builder packs dependencies first and your app files last, so the files that change most often sit at the end of the archive and differential updates download less. An ordering file moves the listed files to the front, so a change to any of them shifts the offsets of everything packed after it, which can increase differential update download size. Measure startup gains against update size before adopting it.
+:::
 
 ## Practical Examples
 

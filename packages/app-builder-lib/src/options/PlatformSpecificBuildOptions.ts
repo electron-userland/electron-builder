@@ -38,12 +38,15 @@ export interface AsarOptions {
    * See the [asar documentation](https://github.com/electron/asar) for details.
    *
    * Lines use the same syntax `@electron/asar` accepts: the path may carry a leading `/` or a
-   * `<count>:` prefix (as written by a load counter), and blank lines are ignored. Directories keep
-   * their positions, listed files follow in the order of the file, and every other file keeps its
-   * original order after them. Listed files that are not in the archive are skipped.
+   * `<count>:` prefix (as written by a load counter), and blank lines are ignored. There is no comment
+   * syntax, and `\` separators are accepted. Directory entries are moved to the front in their original
+   * relative order (they hold no data), listed files follow in the order of the file, and every other
+   * file keeps its original order after them. Lines naming a directory are ignored, and listed files
+   * that are not in the archive are skipped.
    *
    * The path is resolved like other build resources: relative to the [build resources directory](#directories)
-   * first, then to the project directory. A missing file fails the build.
+   * first, then to the project directory. A missing file fails the build. Packing files ahead of the default
+   * dependencies-first layout can increase differential update download size.
    */
   ordering?: string | null
 
