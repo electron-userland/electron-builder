@@ -75,7 +75,7 @@ export default class AppImageTarget extends Target {
     ])
 
     if (publishConfig != null) {
-      await writeAppUpdateYaml(packager.getResourcesDir(appOutDir), publishConfig)
+      await writeAppUpdateYaml(packager.getResourcesDir(appOutDir), publishConfig, appOutDir)
     }
 
     // Validated once here; throws InvalidConfigurationError for path traversal / NUL.

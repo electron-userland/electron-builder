@@ -1,6 +1,7 @@
 import { ERR_PATH_OUTSIDE_ROOT, InvalidConfigurationError } from "builder-util"
-import { CancellationToken } from "builder-util-runtime"
+import { CancellationToken, GenericServerOptions } from "builder-util-runtime"
 import { copyFiles, FileMatcher } from "app-builder-lib/src/fileMatcher"
+import { writeAppUpdateYaml } from "app-builder-lib/src/publish/PublishManager"
 import { copyAppFiles, ResolvedFileSet } from "app-builder-lib/src/util/appFileCopier"
 import { Stats } from "fs"
 import * as fs from "fs/promises"
@@ -8,6 +9,7 @@ import * as path from "path"
 
 const SYMLINK_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#symlinks-that-leave-the-app-are-refused"
 const noMacro = (it: string) => it
+const genericFeed: GenericServerOptions = { provider: "generic", url: "https://example.com" }
 
 async function rejection(promise: Promise<unknown>): Promise<Error> {
   const error = await promise.then(
@@ -125,5 +127,30 @@ describe.runIf(process.platform !== "win32")("app files without asar (copyAppFil
 
     expect(await fs.readFile(path.join(resourcesDir, "app", "main.js"), "utf8")).toBe("main")
     expect(await fs.readFile(path.join(outside, "victim"), "utf8")).toBe("original")
+  })
+})
+
+describe.runIf(process.platform !== "win32")("fixed-name writes", () => {
+  test("app-update.yml replaces a symlink copied in from extraResources", async ({ expect, tmpDir }) => {
+    const { appOutDir, resourcesDir, outside } = await createProject(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
+    const victim = path.join(outside, ".bashrc")
+    await fs.writeFile(victim, "original")
+    await fs.symlink(victim, path.join(resourcesDir, "app-update.yml"))
+
+    await writeAppUpdateYaml(resourcesDir, genericFeed, appOutDir)
+
+    expect((await fs.lstat(path.join(resourcesDir, "app-update.yml"))).isSymbolicLink()).toBe(false)
+    expect(await fs.readFile(path.join(resourcesDir, "app-update.yml"), "utf8")).toContain("provider: generic")
+    expect(await fs.readFile(victim, "utf8")).toBe("original")
+  })
+
+  test("app-update.yml is not written into a resources directory that leads outside the app", async ({ expect, tmpDir }) => {
+    const { appOutDir, outside } = await createProject(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
+    const linkedResources = path.join(appOutDir, "linked-resources")
+    await fs.symlink(outside, linkedResources)
+
+    const error = await rejection(writeAppUpdateYaml(linkedResources, genericFeed, appOutDir))
+    expect((error as NodeJS.ErrnoException).code).toBe(ERR_PATH_OUTSIDE_ROOT)
+    expect(await fs.readdir(outside)).toEqual([])
   })
 })

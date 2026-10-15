@@ -1,4 +1,4 @@
-import { Arch, copyFile, debug7z, dirSize, exec, log } from "builder-util"
+import { Arch, copyFile, debug7z, dirSize, exec, log, prepareFixedNameWrite } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -141,7 +141,12 @@ export class CopyElevateHelper {
     // binary lives in tempDirManager, which is cleaned up only after the build finishes.
     if (!this.stagedUnpackedCopies.has(appOutDir)) {
       this.stagedUnpackedCopies.add(appOutDir)
-      target.packager.addBuildFinalizeTask(() => copyFile(stagedElevate, path.join(appOutDir, "resources", "elevate.exe"), false))
+      target.packager.addBuildFinalizeTask(async () => {
+        // into a directory that extraResources were copied into: replace, never follow, a symlink at the name
+        const unpackedElevate = path.join(appOutDir, "resources", "elevate.exe")
+        await prepareFixedNameWrite(appOutDir, unpackedElevate, "elevate.exe helper")
+        await copyFile(stagedElevate, unpackedElevate, false)
+      })
     }
   }
 }
