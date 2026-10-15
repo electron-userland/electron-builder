@@ -59,6 +59,7 @@ import type {
 import type { PlatformType } from "./targets/mac/MacTargetHelper.js"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, transformFiles } from "./util/appFileCopier.js"
 import { verifyNativeBinaries } from "./util/nativeBinaryVerifier.js"
+import { getTrustedSourceRoots } from "./util/trustedSourceRoots.js"
 import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/mac/macosIconComposer.js"
@@ -558,8 +559,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const transformerForExtraFiles = this.createTransformerForExtraFiles(packContext)
-    await copyFiles(extraResourceMatchers, transformerForExtraFiles)
-    await copyFiles(extraFileMatchers, transformerForExtraFiles)
+    // confined, by real path, to the app output directory (or the output directory, for a "to" that leaves it); a copied symlink may lead into the workspace or the package-manager store
+    const extraFilesContainment = { roots: [appOutDir, outDir], allowedSymlinkRoots: await getTrustedSourceRoots(this) }
+    await copyFiles(extraResourceMatchers, transformerForExtraFiles, undefined, extraFilesContainment)
+    await copyFiles(extraFileMatchers, transformerForExtraFiles, undefined, extraFilesContainment)
 
     if (this.info.cancellationToken.cancelled) {
       return
@@ -734,7 +737,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (this.info.isPrepackedAppAsar) {
       taskManager.add(async () => {
         const fileSets = await _computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)])
-        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, transformer)))
+        const copyOptions = { containmentRoot: resourcePath }
+        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, transformer, copyOptions)))
         await taskManager.awaitTasks()
       })
     } else if (asarOptions == null) {
@@ -753,7 +757,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
       taskManager.add(async () => {
         const fileSets = await _computeFileSets(mainMatchers)
-        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, combinedTransformer)))
+        const copyOptions = { containmentRoot: resourcePath }
+        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, combinedTransformer, copyOptions)))
         await taskManager.awaitTasks()
       })
     } else {
