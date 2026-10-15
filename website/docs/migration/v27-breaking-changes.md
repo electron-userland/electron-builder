@@ -100,7 +100,6 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Custom Windows signing hook moved to `win.sign.sign`](#custom-windows-signing-hooks-move-to-winsignsign) | ✓ | `win.signtoolOptions.sign` moves with the rest of `signtoolOptions` to `win.sign.sign` |
 | [macOS names are no longer NFD-normalized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | Update tooling that matches the normalized on-disk bundle filename |
 | [Linux `executableArgs` field codes are now literal](#linux-launcher-entrypoint) | — | Remove `%F`/`%U` from `executableArgs`; use `linux.desktop.entry.Exec` |
-| [Linux desktop entry keys and values are validated](#linux-desktop-entry-keys-and-values-are-validated) | — | A line break in a `.desktop` value, a key that is empty or contains `=`, a line break or a stray bracket, or `[`, `]` or a control character in a `desktopActions` name now throws |
 | [`http-parser` dropped from default pacman `depends`](#pacman-default-dependencies-changed) | — | Add it back with `"depends": ["default", "http-parser"]` only if your app really needs it |
 | [Flatpak target requires `flatpak` >= 1.12.4 and `flatpak-builder` >= 1.2.2](#flatpak-tooling-requirements) | — | Only for tools older than the stock packages of Ubuntu 22.04 and Debian 12: update them (the `electronuserland/builder` images with a date tag newer than `-05.26` include them, those up to `-05.26` none); replace `DEBUG=@malept/flatpak-bundler` with `DEBUG=electron-builder` |
 | [Flatpak `runtimeVersion` / `baseVersion` default to `26.08`](#flatpak-tooling-requirements) | — | A build that sets neither is built for the `26.08` runtime and installs the three `26.08` refs (about 3.2 GB) on the build machine if they are missing — install them in images and on offline machines that held the `20.08` ones. Set both to `"20.08"` to keep the previous, end-of-life runtime |
@@ -853,18 +852,6 @@ The flatpak target keeps the entrypoint it had in v26: its own `/app/bin/electro
 **Desktop-entry field codes in `executableArgs` are now literal.** v26 passed an argument like `%F` into the `.desktop` `Exec` key unquoted (and skipped appending `%U`). In v27 `executableArgs` are injected into the launcher script and quoted, so `%F` reaches your app as the literal string `"%F"` instead of the file list. If you relied on a field code to receive opened files, remove it from `executableArgs` and set `linux.desktop.entry.Exec` instead. electron-builder warns when it sees one.
 
 **AppImage `--no-sandbox` default changed.** The default `--no-sandbox` launch argument is now injected **only for the legacy FUSE2 runtime** (`toolsets.appimage: "0.0.0"`). With the default static FUSE3 runtime (unset / `"latest"` → `1.1.0`), `--no-sandbox` is no longer added automatically — `AppRun` adds it on its own only when user namespaces are unavailable. If you need the Chromium sandbox disabled unconditionally, set `appImage.executableArgs: ["--no-sandbox"]` explicitly: in `linux.executableArgs` it would reach the other Linux targets too, the [flatpak](../flatpak.md#executable-args) included.
-
-### Linux desktop entry keys and values are validated {#linux-desktop-entry-keys-and-values-are-validated}
-
-v26 wrote the keys and values of the `.desktop` file as given, so a line break in a value ended the line, and the rest of the value became a new line of the file: another key, which could replace one such as `Exec`, or a new group. v27 checks them first, for every Linux target that writes a desktop entry, and fails the build with an `InvalidConfigurationError` naming the key or action when:
-
-- a key in `linux.desktop.entry` or in an action of `linux.desktop.desktopActions` is empty, contains `=` or a line break, or has brackets other than around a trailing locale of letters, digits, `-`, `_`, `.` and `@`, right after the key, such as `Name[de]`. Keys that the specification does not allow but desktop environments read, such as `X_Foo`, are kept;
-- a value contains a line break (`\r` or `\n`) before its end; line breaks at the end, as in a YAML block scalar, are dropped. This covers the `entry` and action values and the values built from other options: `Categories` from `linux.category`, and `MimeType` from `linux.mimeTypes`, `fileAssociations` and `protocols`. `Name`, `Comment` and `StartupWMClass`, which electron-builder escapes, are not affected;
-- an action name contains `[`, `]` or a control character.
-
-Values are still written as given otherwise, so escape sequences such as `\;` in a list value are kept. Each of these cases wrote a file that desktop environments read differently from what was configured, or not at all.
-
-**Action is required only if** a build starts failing here — write the value on one line (a newline in a string value is written as `\n`), and use a key that the [Desktop Entry Specification](https://specifications.freedesktop.org/desktop-entry/latest/basic-format.html) allows; your own keys start with `X-`, such as `X-MyApp-Feature`. See [Desktop File Customization](../linux.md#desktop-file-customization).
 
 ### Flatpak: native build, minimum tool versions, `26.08` runtime by default {#flatpak-tooling-requirements}
 

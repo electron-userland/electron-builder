@@ -393,9 +393,7 @@ export class LinuxTargetHelper {
       // the name ends up in a group header, which may not contain brackets or control characters
       // eslint-disable-next-line no-control-regex
       if (/[[\]\x00-\x1f\x7f]/.test(actionName)) {
-        throw new InvalidConfigurationError(
-          `Invalid desktop action name ${JSON.stringify(actionName)} — it must not contain "[", "]" or control characters.`
-        )
+        throw new InvalidConfigurationError(`Invalid desktop action name ${JSON.stringify(actionName)} — it must not contain "[", "]" or control characters.`)
       }
       const group = `[Desktop Action ${actionName}]`
       data += `\n${group}`

@@ -77,11 +77,15 @@ linux:
 
 Standard freedesktop.org category values include: `AudioVideo`, `Audio`, `Video`, `Development`, `Education`, `Game`, `Graphics`, `Network`, `Office`, `Science`, `Settings`, `System`, `Utility`.
 
-Keys and values are written to the file as given, so escape sequences such as `\;` in a list value are kept. electron-builder checks them first and fails the build with an `InvalidConfigurationError` when:
+### Desktop entry validation {#desktop-entry-validation}
+
+Keys and values are written to the file as given, so escape sequences such as `\;` in a list value are kept. Every Linux target that writes a desktop entry checks them first, and fails the build with an `InvalidConfigurationError` that names the group and the key (or the action) when:
 
 - a key, in `entry` or in an action, is empty, contains `=` or a line break, or has brackets other than around a trailing locale of letters, digits, `-`, `_`, `.` and `@`, right after the key, such as `Name[de]` or `Comment[sr@latin]`. These are the keys that GLib, which most desktops read the file with, rejects, and it then ignores the whole file. Keys that the specification does not allow but desktop environments read, such as `X_Foo`, are kept;
 - a value contains a line break, which would end the line and start a new key or group. A value must be on one line: write a newline in a string value as `\n`. Line breaks at the end of a value, as in a YAML block scalar (`|`), are dropped. This also applies to the values built from other options: `Categories` from `linux.category`, and `MimeType` from `linux.mimeTypes`, `fileAssociations` and `protocols`;
 - an action name contains `[`, `]` or a control character.
+
+The `Name`, `Comment` and `StartupWMClass` values that electron-builder derives from the product name, the description and `desktopName` are escaped instead, so they are not affected. Each of these cases would otherwise produce a file that desktop environments read differently from what was configured, or not at all. To fix the error, write the value on one line and use a key that the [Desktop Entry Specification](https://specifications.freedesktop.org/desktop-entry/latest/basic-format.html) allows; your own keys start with `X-`, such as `X-MyApp-Feature`.
 
 ## Window Association (`desktopName`)
 
