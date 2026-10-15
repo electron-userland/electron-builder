@@ -6,6 +6,7 @@ import {
   AsyncTaskManager,
   DebugLogger,
   defaultArchFromString,
+  ExternalLinkPolicy,
   FileTransformer,
   getArchSuffix,
   getArtifactArchName,
@@ -114,6 +115,19 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
    */
   getOptionsForTarget<T>(key: string): T {
     return deepAssign({}, this.platformSpecificBuildOptions, (this.config as any)[key] ?? {}) as T
+  }
+
+  private externalLinkPolicy: Promise<ExternalLinkPolicy> | null = null
+
+  /**
+   * The resolved `allowExternalLinks` option: the platform-level value (`config.mac.allowExternalLinks`, ...) or the root one. Computed
+   * once; a listed path that does not exist fails the build.
+   */
+  getExternalLinkPolicy(): Promise<ExternalLinkPolicy> {
+    if (this.externalLinkPolicy == null) {
+      this.externalLinkPolicy = ExternalLinkPolicy.create(this.platformSpecificBuildOptions.allowExternalLinks ?? this.config.allowExternalLinks, this.projectDir)
+    }
+    return this.externalLinkPolicy
   }
 
   get resourceList(): Promise<Array<string>> {
@@ -560,7 +574,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const transformerForExtraFiles = this.createTransformerForExtraFiles(packContext)
     // confined, by real path, to the app output directory (or the output directory, for a "to" that leaves it); a copied symlink may lead into the workspace or the package-manager store
-    const extraFilesContainment = { roots: [appOutDir, outDir], allowedSymlinkRoots: await getTrustedSourceRoots(this) }
+    const extraFilesContainment = { roots: [appOutDir, outDir], allowedSymlinkRoots: await getTrustedSourceRoots(this), externalLinks: await this.getExternalLinkPolicy() }
     await copyFiles(extraResourceMatchers, transformerForExtraFiles, undefined, extraFilesContainment)
     await copyFiles(extraFileMatchers, transformerForExtraFiles, undefined, extraFilesContainment)
 
@@ -737,7 +751,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (this.info.isPrepackedAppAsar) {
       taskManager.add(async () => {
         const fileSets = await _computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)])
-        const copyOptions = { containmentRoot: resourcePath, trustedSourceRoots: await getTrustedSourceRoots(this) }
+        const copyOptions = { containmentRoot: resourcePath, trustedSourceRoots: await getTrustedSourceRoots(this), externalLinks: await this.getExternalLinkPolicy() }
         fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, transformer, copyOptions)))
         await taskManager.awaitTasks()
       })
@@ -757,7 +771,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
       taskManager.add(async () => {
         const fileSets = await _computeFileSets(mainMatchers)
-        const copyOptions = { containmentRoot: resourcePath, trustedSourceRoots: await getTrustedSourceRoots(this) }
+        const copyOptions = { containmentRoot: resourcePath, trustedSourceRoots: await getTrustedSourceRoots(this), externalLinks: await this.getExternalLinkPolicy() }
         fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, combinedTransformer, copyOptions)))
         await taskManager.awaitTasks()
       })

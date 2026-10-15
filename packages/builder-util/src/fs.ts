@@ -8,7 +8,7 @@ import * as path from "path"
 import statMode from "stat-mode"
 import asyncPool from "tiny-async-pool"
 import { log } from "./log.js"
-import { ERR_PATH_OUTSIDE_ROOT, isPathWithin, resolvePhysicalPath, SYMLINK_CONTAINMENT_DOCS_URL, WriteContainment } from "./pathContainment.js"
+import { ERR_PATH_OUTSIDE_ROOT, ExternalLinkPolicy, isPathWithin, resolvePhysicalPath, SYMLINK_CONTAINMENT_DOCS_URL, WriteContainment } from "./pathContainment.js"
 import { orIfFileNotExist, orNullIfFileNotExist } from "./promise.js"
 import { InvalidConfigurationError } from "./util.js"
 
@@ -300,17 +300,24 @@ export interface CopyDirOptions {
    * anywhere else fails the copy. A symlink is kept as it is, so one that leads into these roots points outside the output.
    */
   allowedSymlinkRoots?: ReadonlyArray<string> | null
+  /**
+   * The `allowExternalLinks` build option: a copied symlink that leads outside the containment root and the allowed roots is kept when it
+   * allows it. It does not allow a write through a symlink.
+   */
+  externalLinks?: ExternalLinkPolicy | null
 }
 
 /**
  * Checks the symlinks `copyDir` and the app file copier recreate, once all of them exist: each must lead (through the others, also when
- * the end does not exist) into the containment root or one of `allowedRoots`. A symlink that does not is removed and the copy fails.
+ * the end does not exist) into the containment root or one of `allowedRoots`, or be allowed by the `allowExternalLinks` build option
+ * (`externalLinks`). A symlink that is not is removed and the copy fails.
  */
 export async function assertCopiedSymlinksContained(
   containment: WriteContainment,
   links: ReadonlyArray<Link & { readonly source: string }>,
   allowedRoots: ReadonlyArray<string>,
-  what: string
+  what: string,
+  externalLinks: ExternalLinkPolicy | null = null
 ): Promise<void> {
   if (links.length === 0) {
     return
@@ -333,12 +340,16 @@ export async function assertCopiedSymlinksContained(
         )
       continue
     }
+    const policy = externalLinks ?? ExternalLinkPolicy.NONE
+    if (policy.allows(it.source, resolved)) {
+      continue
+    }
     await unlinkIfExists(it.file)
     throw new InvalidConfigurationError(
-      `refusing to copy the ${what} symlink "${log.filePath(it.source)}" -> "${it.link}": in the output it resolves to "${resolved}", ` +
-        `which is outside "${log.filePath(containment.root)}". electron-builder v27 only recreates a symlink that stays inside the output ` +
+      `refusing to copy the ${what} symlink "${policy.displayPath(it.source)}" -> "${it.link}": in the output it resolves to "${resolved}", ` +
+        `which is outside "${policy.displayPath(containment.root)}". electron-builder v27 only recreates a symlink that stays inside the output ` +
         `(or leads into the workspace or the package-manager store): replace the symlink with what it points to, or exclude it with a "!" ` +
-        `pattern. See ${SYMLINK_CONTAINMENT_DOCS_URL}`,
+        `pattern. ${await policy.hint([resolved])} See ${SYMLINK_CONTAINMENT_DOCS_URL}`,
       ERR_PATH_OUTSIDE_ROOT
     )
   }
@@ -360,7 +371,8 @@ export function rebaseCopiedSymlinkTarget(sourceRoot: string, sourceLink: string
  * Hard links is used if supported and allowed.
  *
  * Writes are checked by their real path (see {@link CopyDirOptions.containmentRoot}): a symlink at a destination is replaced, never
- * followed, and a symlink is recreated only when it stays inside the containment root or leads into an allowed root.
+ * followed, and a symlink is recreated only when it stays inside the containment root, leads into an allowed root or is allowed by
+ * {@link CopyDirOptions.externalLinks}.
  */
 export async function copyDir(src: string, destination: string, options: CopyDirOptions = {}): Promise<any> {
   const fileCopier = new FileCopier(options.isUseHardLink, options.transformer)
@@ -391,7 +403,7 @@ export async function copyDir(src: string, destination: string, options: CopyDir
     await containment.prepareFile(it.file)
     await symlink(it.link, it.file, symlinkType)
   })
-  await assertCopiedSymlinksContained(containment, links, options.allowedSymlinkRoots ?? [], "copied")
+  await assertCopiedSymlinksContained(containment, links, options.allowedSymlinkRoots ?? [], "copied", options.externalLinks)
 }
 
 export async function dirSize(dirPath: string): Promise<number> {

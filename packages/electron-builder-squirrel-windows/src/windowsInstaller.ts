@@ -1,4 +1,4 @@
-import { assertNoSymlinkLeaves, exec, exists, log, prepareFixedNameWrite } from "builder-util"
+import { assertNoSymlinkLeaves, exec, exists, ExternalLinkPolicy, log, prepareFixedNameWrite } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 
@@ -57,6 +57,8 @@ export interface InstallerOptions {
   setupMsi?: string | null
   fixUpPaths?: boolean
   createTempDir: (options: { prefix: string }) => Promise<string>
+  /** The `allowExternalLinks` build option: NuGet stores what a symlink points to, so a symlink that leaves the app fails unless it allows it. */
+  externalLinks?: ExternalLinkPolicy | null
 }
 
 export async function createWindowsInstaller(options: InstallerOptions): Promise<void> {
@@ -76,6 +78,7 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
     setupMsi,
     fixUpPaths = false,
     createTempDir,
+    externalLinks,
   } = options
 
   const useMono = process.platform !== "win32"
@@ -120,7 +123,7 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
 
   const nugetExe = path.join(vendorDirectory, "nuget.exe")
   // NuGet stores what a symlink points to: one that leaves the app would package files from elsewhere on the build machine
-  await assertNoSymlinkLeaves(appDirectory, "the Squirrel.Windows NuGet package")
+  await assertNoSymlinkLeaves(appDirectory, "the Squirrel.Windows NuGet package", externalLinks)
   const nugetArgs = ["pack", nuspecPath, "-BasePath", appDirectory, "-OutputDirectory", nugetOutput, "-NoDefaultExcludes"]
   await (useMono ? exec("mono", [nugetExe, ...nugetArgs]) : exec(nugetExe, nugetArgs))
 

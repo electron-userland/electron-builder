@@ -326,6 +326,7 @@ export default class SquirrelWindowsTarget extends Target {
       remoteReleases,
       remoteToken: firstNonBlank(this.options.remoteToken, process.env.GH_TOKEN, process.env.GITHUB_TOKEN),
       createTempDir: opts => this.packager.tempDirManager.createTempDir(opts),
+      externalLinks: await packager.getExternalLinkPolicy(),
     }
   }
 }

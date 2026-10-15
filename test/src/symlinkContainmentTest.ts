@@ -1,4 +1,4 @@
-import { ERR_PATH_OUTSIDE_ROOT, InvalidConfigurationError } from "builder-util"
+import { ERR_PATH_OUTSIDE_ROOT, ExternalLinkPolicy, InvalidConfigurationError, log } from "builder-util"
 import { CancellationToken, GenericServerOptions } from "builder-util-runtime"
 import { copyFiles, FileMatcher } from "app-builder-lib/src/fileMatcher"
 import { writeAppUpdateYaml } from "app-builder-lib/src/publish/PublishManager"
@@ -8,6 +8,7 @@ import { assertSourceFileInTrustedRoots, getTrustedSourceRoots, LINKED_FILES_DOC
 import { Stats } from "fs"
 import * as fs from "fs/promises"
 import * as path from "path"
+import { afterEach, vi } from "vitest"
 
 const SYMLINK_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#symlinks-that-leave-the-app-are-refused"
 const noMacro = (it: string) => it
@@ -217,5 +218,106 @@ describe.runIf(process.platform !== "win32")("archives that dereference symlinks
     expect(error.message).toContain('cannot build the zip archive "app.zip"')
     expect(error.message).toContain("electron-builder v27")
     expect(error.message).toContain(SYMLINK_DOCS)
+  })
+})
+
+describe.runIf(process.platform !== "win32")("allowExternalLinks", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    log.resetLimits("allow-external-links")
+  })
+
+  /** app/node_modules/lib -> outside/lib, like `npm link` or a `file:` dependency outside the repository */
+  async function linkedPackage(base: string) {
+    const project = await createProject(base)
+    const lib = path.join(project.outside, "lib")
+    await fs.mkdir(path.join(lib, "src"), { recursive: true })
+    await fs.writeFile(path.join(lib, "src", "index.js"), "lib")
+    await fs.mkdir(path.join(project.appDir, "node_modules"))
+    await fs.symlink(lib, path.join(project.appDir, "node_modules", "lib"))
+    const file = path.join(project.appDir, "node_modules", "lib", "src", "index.js")
+    return { ...project, lib, file }
+  }
+
+  test("by default a linked package outside the workspace is refused with a hint naming the linked package", async ({ expect, tmpDir }) => {
+    const { workspace, appDir, lib, file } = await linkedPackage(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
+    const roots = await getTrustedSourceRoots(sourceRootsInfo(workspace, appDir), {})
+
+    const error = await rejection(assertSourceFileInTrustedRoots(file, roots, await ExternalLinkPolicy.create(null, workspace)))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect((error as NodeJS.ErrnoException).code).toBe("ERR_ELECTRON_BUILDER_FILE_OUTSIDE_WORKSPACE")
+    expect(error.message).toContain(`Cannot copy file [${path.join("app", "node_modules", "lib", "src", "index.js")}]`)
+    expect(error.message).toContain(`symlinked to file [${path.join(await fs.realpath(lib), "src", "index.js")}]`)
+    expect(error.message).toContain("electron-builder v27")
+    // the whole linked package, not only the directory of the file checked first
+    expect(error.message).toContain(`To allow it, set "allowExternalLinks": ${JSON.stringify([await fs.realpath(lib)])} (or true) in your build configuration.`)
+    expect(error.message.endsWith(`See ${LINKED_FILES_DOCS_URL}`)).toBe(true)
+  })
+
+  test("true, or a list with the linked package's directory (relative or absolute), packages it", async ({ expect, tmpDir }) => {
+    const { workspace, appDir, outside, lib, file } = await linkedPackage(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
+    const roots = await getTrustedSourceRoots(sourceRootsInfo(workspace, appDir), {})
+    for (const value of [true, ["../outside/lib"], [outside], [lib]]) {
+      await expect(assertSourceFileInTrustedRoots(file, roots, await ExternalLinkPolicy.create(value, workspace))).resolves.toBeUndefined()
+    }
+    await expect(assertSourceFileInTrustedRoots(file, roots, await ExternalLinkPolicy.create(["app"], workspace))).rejects.toThrow("allowExternalLinks")
+  })
+
+  test("asar: false copies an allowed linked file and still refuses one outside the list", async ({ expect, tmpDir }) => {
+    const base = await tmpDir.createTempDir({ prefix: "symlink-containment" })
+    const { workspace, appDir, resourcesDir, outside } = await createProject(base)
+    const elsewhere = path.join(base, "elsewhere")
+    await fs.mkdir(elsewhere)
+    await fs.writeFile(path.join(outside, "allowed.txt"), "allowed")
+    await fs.writeFile(path.join(elsewhere, "refused.txt"), "refused")
+    await fs.symlink(path.join(outside, "allowed.txt"), path.join(appDir, "allowed.txt"))
+    await fs.symlink(path.join(elsewhere, "refused.txt"), path.join(appDir, "refused.txt"))
+    const trustedSourceRoots = await getTrustedSourceRoots(sourceRootsInfo(workspace, appDir), {})
+    const externalLinks = await ExternalLinkPolicy.create(["../outside"], workspace)
+    const destination = path.join(resourcesDir, "app")
+
+    await copyAppFiles(await fileSetOf(appDir, destination, ["allowed.txt"]), packagerStub, () => null, { containmentRoot: resourcesDir, trustedSourceRoots, externalLinks })
+    expect(await fs.readFile(path.join(destination, "allowed.txt"), "utf8")).toBe("allowed")
+
+    const error = await rejection(
+      copyAppFiles(await fileSetOf(appDir, destination, ["refused.txt"]), packagerStub, () => null, { containmentRoot: resourcesDir, trustedSourceRoots, externalLinks })
+    )
+    expect(error.message).toContain(`"allowExternalLinks": ${JSON.stringify([await fs.realpath(elsewhere)])}`)
+  })
+
+  test("extraResources keeps an allowed symlink that leaves the app, warning once", async ({ expect, tmpDir }) => {
+    const { workspace, appOutDir, resourcesDir, outside } = await createProject(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
+    const extra = path.join(workspace, "extra")
+    await fs.mkdir(extra)
+    await fs.symlink(outside, path.join(extra, "data"))
+    await fs.symlink(path.join(outside, "x"), path.join(extra, "x"))
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+
+    const refused = await rejection(
+      copyFiles([new FileMatcher(extra, resourcesDir, noMacro)], null, false, { roots: [appOutDir], externalLinks: await ExternalLinkPolicy.create(false, workspace) })
+    )
+    expect((refused as NodeJS.ErrnoException).code).toBe(ERR_PATH_OUTSIDE_ROOT)
+    expect(refused.message).toContain("allowExternalLinks")
+
+    await copyFiles([new FileMatcher(extra, resourcesDir, noMacro)], null, false, { roots: [appOutDir], externalLinks: await ExternalLinkPolicy.create(true, workspace) })
+    expect(await fs.readlink(path.join(resourcesDir, "data"))).toBe(outside)
+    expect(await fs.readlink(path.join(resourcesDir, "x"))).toBe(path.join(outside, "x"))
+    expect(warn.mock.calls.filter(it => String(it[1]).includes("allowExternalLinks"))).toHaveLength(1)
+  })
+
+  test("a Windows archive refuses a symlink outside the list, with the hint", async ({ expect, tmpDir }) => {
+    const { workspace, appOutDir, outside } = await createProject(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
+    await fs.writeFile(path.join(outside, "secret"), "secret")
+    await fs.symlink(path.join(outside, "secret"), path.join(appOutDir, "resources", "leak"))
+
+    const error = await rejection(
+      archive("zip", path.join(path.dirname(appOutDir), "app.zip"), appOutDir, {
+        withoutDir: true,
+        preserveSymlinks: false,
+        externalLinks: await ExternalLinkPolicy.create(["dist/linux-unpacked/resources"], workspace),
+      })
+    )
+    expect(error.message).toContain(`"allowExternalLinks": ${JSON.stringify([await fs.realpath(outside)])}`)
+    expect(error.message).toContain(`"${path.join("dist", "linux-unpacked", "resources", "leak")}"`)
   })
 })

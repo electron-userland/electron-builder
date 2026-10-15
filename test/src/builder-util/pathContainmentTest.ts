@@ -3,6 +3,7 @@ import {
   assertWritableWithin,
   copyDir,
   ERR_PATH_OUTSIDE_ROOT,
+  ExternalLinkPolicy,
   findEscapingSymlinks,
   InvalidConfigurationError,
   isPathWithin,
@@ -288,5 +289,137 @@ describe.runIf(process.platform !== "win32")("symlinks for steps that dereferenc
     await fs.writeFile(path.join(root, "inside.txt"), "x")
     await fs.symlink("inside.txt", path.join(root, "ok"))
     await expect(assertNoSymlinkLeaves(root, "the test archive")).resolves.toBeUndefined()
+  })
+})
+
+describe.runIf(process.platform !== "win32")("allowExternalLinks", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    log.resetLimits("allow-external-links")
+  })
+
+  const SECRET_CONTENT = "id_ed25519-private-key-content"
+
+  /** base/ is the project directory, with root/ (the output), src/ (copied) and outside/ and other/ (both outside the output) */
+  async function project(base: string) {
+    const { root, outside } = await layout(base)
+    const other = path.join(base, "other")
+    const src = path.join(base, "src")
+    await fs.mkdir(other)
+    await fs.mkdir(src)
+    await fs.writeFile(path.join(outside, "secret"), SECRET_CONTENT)
+    await fs.writeFile(path.join(other, "secret"), SECRET_CONTENT)
+    return { root, outside, other, src }
+  }
+
+  test("by default the refusal says what was detected and suggests the directory to allow, relative to the project", async ({ expect, tmpDir }) => {
+    const base = await tmpDir.createTempDir({ prefix: "containment" })
+    const { root, outside, src } = await project(base)
+    await fs.symlink(path.join(outside, "secret"), path.join(src, "leak"))
+
+    const error = await expectEscapeError(copyDir(src, root, { externalLinks: await ExternalLinkPolicy.create(false, base) }), expect)
+    expect(error.message).toContain(`resolves to "${path.join(await fs.realpath(outside), "secret")}"`)
+    expect(error.message).toContain(`To allow it, set "allowExternalLinks": ["outside"] (or true) in your build configuration.`)
+    expect(error.message.endsWith(`See ${V27_LINK}`)).toBe(true)
+    await expect(fs.lstat(path.join(root, "leak"))).rejects.toThrow("ENOENT")
+  })
+
+  test("without a project directory, the suggested directory is absolute", async ({ expect, tmpDir }) => {
+    const base = await tmpDir.createTempDir({ prefix: "containment" })
+    const { root, outside, src } = await project(base)
+    await fs.symlink(outside, path.join(src, "dir-link"))
+
+    const error = await expectEscapeError(copyDir(src, root), expect)
+    expect(error.message).toContain(`"allowExternalLinks": ${JSON.stringify([await fs.realpath(outside)])}`)
+  })
+
+  test("true keeps a copied symlink that leads anywhere", async ({ expect, tmpDir }) => {
+    const base = await tmpDir.createTempDir({ prefix: "containment" })
+    const { root, outside, src } = await project(base)
+    await fs.symlink(path.join(outside, "secret"), path.join(src, "leak"))
+
+    await copyDir(src, root, { externalLinks: await ExternalLinkPolicy.create(true, base) })
+    expect(await fs.readlink(path.join(root, "leak"))).toBe(path.join(outside, "secret"))
+  })
+
+  test("a list allows only symlinks into the listed directories, relative or absolute", async ({ expect, tmpDir }) => {
+    const base = await tmpDir.createTempDir({ prefix: "containment" })
+    const { root, outside, other, src } = await project(base)
+    await fs.symlink(path.join(outside, "secret"), path.join(src, "allowed"))
+
+    for (const entry of ["outside", outside, "./outside/"]) {
+      const dest = path.join(root, `copy-${Math.random().toString(36).slice(2)}`)
+      await copyDir(src, dest, { containmentRoot: root, externalLinks: await ExternalLinkPolicy.create([entry], base) })
+      expect(await fs.readlink(path.join(dest, "allowed"))).toBe(path.join(outside, "secret"))
+    }
+
+    await fs.symlink(path.join(other, "secret"), path.join(src, "refused"))
+    const error = await expectEscapeError(
+      copyDir(src, path.join(root, "last"), { containmentRoot: root, externalLinks: await ExternalLinkPolicy.create(["outside"], base) }),
+      expect
+    )
+    expect(error.message).toContain(`"allowExternalLinks": ["other"]`)
+  })
+
+  test("a listed path that does not exist fails, naming it", async ({ expect, tmpDir }) => {
+    const base = await tmpDir.createTempDir({ prefix: "containment" })
+    await project(base)
+    const error = await ExternalLinkPolicy.create(["outside", "missing-dir"], base).then(
+      () => null,
+      (e: unknown) => e as Error
+    )
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error!.message).toContain(`"allowExternalLinks" lists "missing-dir", which does not exist`)
+    expect(error!.message).toContain(path.join(base, "missing-dir"))
+  })
+
+  test("a value that is neither a boolean nor a list of paths fails", async ({ expect, tmpDir }) => {
+    const base = await tmpDir.createTempDir({ prefix: "containment" })
+    await expect(ExternalLinkPolicy.create("yes" as any, base)).rejects.toThrow(InvalidConfigurationError)
+    await expect(ExternalLinkPolicy.create([""], base)).rejects.toThrow(InvalidConfigurationError)
+  })
+
+  test("never allows a write through a symlink, even with true", async ({ expect, tmpDir }) => {
+    const base = await tmpDir.createTempDir({ prefix: "containment" })
+    const { root, outside, src } = await project(base)
+    await fs.mkdir(path.join(src, "data"))
+    await fs.writeFile(path.join(src, "data", "file.txt"), "payload")
+    // already in the output (e.g. from the app copy): root/data -> outside
+    await fs.symlink(outside, path.join(root, "data"))
+
+    await expectEscapeError(copyDir(src, root, { externalLinks: await ExternalLinkPolicy.create(true, base) }), expect)
+    expect(await fs.readdir(outside)).toEqual(["secret"])
+  })
+
+  test("assertNoSymlinkLeaves lets an allowed symlink through and suggests the directory of a refused one", async ({ expect, tmpDir }) => {
+    const base = await tmpDir.createTempDir({ prefix: "containment" })
+    const { root, outside, other } = await project(base)
+    await fs.symlink(path.join(outside, "secret"), path.join(root, "allowed"))
+    await expect(assertNoSymlinkLeaves(root, "the test archive", await ExternalLinkPolicy.create(["outside"], base))).resolves.toBeUndefined()
+    await expect(assertNoSymlinkLeaves(root, "the test archive", await ExternalLinkPolicy.create(true, base))).resolves.toBeUndefined()
+
+    await fs.symlink(path.join(other, "secret"), path.join(root, "refused"))
+    const error = await expectEscapeError(assertNoSymlinkLeaves(root, "the test archive", await ExternalLinkPolicy.create(["outside"], base)), expect)
+    expect(error.message).toContain(`"${path.join("root", "refused")}" -> "${path.join(other, "secret")}"`)
+    expect(error.message).not.toContain('"root/allowed"')
+    expect(error.message).toContain(`"allowExternalLinks": ["other"]`)
+  })
+
+  test("warns once per process when it allows a symlink, without file contents", async ({ expect, tmpDir }) => {
+    const base = await tmpDir.createTempDir({ prefix: "containment" })
+    const { root, outside, src } = await project(base)
+    await fs.symlink(path.join(outside, "secret"), path.join(src, "one"))
+    await fs.symlink(outside, path.join(src, "two"))
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    const policy = await ExternalLinkPolicy.create(true, base)
+
+    await copyDir(src, path.join(root, "first"), { containmentRoot: root, externalLinks: policy })
+    await assertNoSymlinkLeaves(root, "the test archive", policy)
+
+    expect(warn).toHaveBeenCalledTimes(1)
+    const [fields, message] = warn.mock.calls[0]
+    expect(String(message)).toContain(`"allowExternalLinks" allows it`)
+    expect(JSON.stringify(fields)).not.toContain(SECRET_CONTENT)
+    expect(String(message)).not.toContain(SECRET_CONTENT)
   })
 })

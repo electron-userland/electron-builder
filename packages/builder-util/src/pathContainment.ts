@@ -1,4 +1,4 @@
-import { lstat, mkdir, readdir, readlink, realpath, unlink } from "fs/promises"
+import { lstat, mkdir, readdir, readlink, realpath, stat, unlink } from "fs/promises"
 import * as path from "path"
 import { log } from "./log.js"
 import { InvalidConfigurationError } from "./util.js"
@@ -105,6 +105,128 @@ async function realpathOfDeepestExisting(file: string): Promise<string> {
 
 function displayPath(file: string): string {
   return log.filePath(file)
+}
+
+/** The name of the build option that allows a link to lead outside the app, the workspace and the package-manager store. */
+export const ALLOW_EXTERNAL_LINKS_OPTION = "allowExternalLinks"
+
+/** The value of the `allowExternalLinks` build option, see `PlatformSpecificBuildOptions.allowExternalLinks`. */
+export type AllowExternalLinksValue = boolean | ReadonlyArray<string> | null | undefined
+
+/**
+ * The resolved `allowExternalLinks` build option: which symlinks may lead outside the app, the workspace and the package-manager store,
+ * by the real path of what they point to. It only relaxes what is packaged (a file reached through a link, a copied link, a link in a
+ * Windows archive or installer); a write through a symlink is refused regardless (see {@link WriteContainment}).
+ */
+export class ExternalLinkPolicy {
+  /** Allows nothing, for callers that have no build configuration. */
+  static readonly NONE = new ExternalLinkPolicy(null, null, false, [])
+
+  private constructor(
+    /** the project directory, as configured, to show paths relative to it */
+    readonly projectDir: string | null,
+    /** its real path, to suggest an entry relative to it */
+    private readonly realProjectDir: string | null,
+    /** `allowExternalLinks: true` */
+    readonly allowAll: boolean,
+    /** the real paths of the listed entries */
+    readonly realRoots: ReadonlyArray<string>
+  ) {}
+
+  /**
+   * Resolves the option: an entry is a path relative to `projectDir`, or absolute, and is compared by its real path.
+   *
+   * @throws InvalidConfigurationError when the value is not a boolean or a list of paths, or when a listed path does not exist
+   */
+  static async create(value: AllowExternalLinksValue, projectDir: string): Promise<ExternalLinkPolicy> {
+    const realProjectDir = await resolvePhysicalPath(projectDir)
+    if (value == null || value === false) {
+      return new ExternalLinkPolicy(projectDir, realProjectDir, false, [])
+    }
+    if (value === true) {
+      return new ExternalLinkPolicy(projectDir, realProjectDir, true, [])
+    }
+    if (!Array.isArray(value)) {
+      throw new InvalidConfigurationError(`"${ALLOW_EXTERNAL_LINKS_OPTION}" must be a boolean or a list of paths, got ${JSON.stringify(value)}`)
+    }
+    const realRoots: Array<string> = []
+    for (const entry of value) {
+      if (typeof entry !== "string" || entry.trim().length === 0) {
+        throw new InvalidConfigurationError(`"${ALLOW_EXTERNAL_LINKS_OPTION}" must list paths, got ${JSON.stringify(entry)}`)
+      }
+      const absolute = path.resolve(projectDir, entry)
+      try {
+        realRoots.push(await realpath(absolute))
+      } catch (e: any) {
+        if (!isMissing(e)) {
+          throw e
+        }
+        throw new InvalidConfigurationError(
+          `"${ALLOW_EXTERNAL_LINKS_OPTION}" lists "${entry}", which does not exist (resolved against the project directory to "${absolute}"). ` +
+            `List the directories that symlinks among the packaged files may lead into, relative to the project directory or absolute.`
+        )
+      }
+    }
+    return new ExternalLinkPolicy(projectDir, realProjectDir, false, realRoots)
+  }
+
+  /**
+   * Whether the option allows the link `link` (or a file reached through it), whose real target is `resolved`. When it does, a warning is
+   * logged once per process, so that an allowed link does not go unnoticed.
+   */
+  allows(link: string, resolved: string): boolean {
+    if (!this.allowAll && !this.realRoots.some(root => isPathWithin(root, resolved))) {
+      return false
+    }
+    log
+      .once("allow-external-links")
+      .warn(
+        { link: this.displayPath(link), resolvesTo: resolved },
+        `packaging a symlink that leads outside the app, the workspace and the package-manager store, because "${ALLOW_EXTERNAL_LINKS_OPTION}" ` +
+          `allows it in the build configuration (further ones are not logged). Depending on the target, what it points to on the build machine is ` +
+          `packaged, or the symlink is kept pointing there.`
+      )
+    return true
+  }
+
+  /** `file` relative to the project directory when it is inside it, otherwise as it is. */
+  displayPath(file: string): string {
+    if (this.projectDir == null) {
+      return displayPath(file)
+    }
+    const relative = path.relative(this.projectDir, file)
+    return relative !== "" && isPathWithin(this.projectDir, file) ? relative : file
+  }
+
+  /**
+   * The sentence that tells how to allow links leading to `resolved` (real paths): the directory of each (itself when it is one),
+   * relative to the project directory when it is inside it, otherwise absolute.
+   */
+  async hint(resolved: ReadonlyArray<string>): Promise<string> {
+    const suggestions: Array<string> = []
+    for (const it of resolved) {
+      const suggestion = await this.suggestEntry(it)
+      if (!suggestions.includes(suggestion)) {
+        suggestions.push(suggestion)
+      }
+    }
+    return `To allow it, set "${ALLOW_EXTERNAL_LINKS_OPTION}": ${JSON.stringify(suggestions)} (or true) in your build configuration.`
+  }
+
+  private async suggestEntry(resolved: string): Promise<string> {
+    let dir = resolved
+    try {
+      if (!(await stat(resolved)).isDirectory()) {
+        dir = path.dirname(resolved)
+      }
+    } catch (_e: any) {
+      dir = path.dirname(resolved)
+    }
+    if (this.realProjectDir != null && isPathWithin(this.realProjectDir, dir)) {
+      return path.relative(this.realProjectDir, dir).split(path.sep).join("/") || "."
+    }
+    return dir
+  }
 }
 
 /**
@@ -248,24 +370,27 @@ export async function findEscapingSymlinks(dir: string, allowedRoots: ReadonlyAr
 /**
  * For a step that stores what a symlink points to instead of the symlink (a Windows archive or installer, an AppX/MSIX package, a
  * NuGet package): refuses a symlink in `dir` that leads outside it, which would put files from elsewhere on the build machine into
- * the artifact.
+ * the artifact, unless the `allowExternalLinks` build option (`externalLinks`) allows it.
  *
  * @param consumer what dereferences, for the error message, e.g. "the Windows zip archive"
  * @throws InvalidConfigurationError with code {@link ERR_PATH_OUTSIDE_ROOT}
  */
-export async function assertNoSymlinkLeaves(dir: string, consumer: string): Promise<void> {
-  const escaping = await findEscapingSymlinks(dir)
+export async function assertNoSymlinkLeaves(dir: string, consumer: string, externalLinks: ExternalLinkPolicy | null = null): Promise<void> {
+  const policy = externalLinks ?? ExternalLinkPolicy.NONE
+  const escaping = (await findEscapingSymlinks(dir)).filter(it => !policy.allows(it.file, it.resolved))
   if (escaping.length === 0) {
     return
   }
-  const shown = escaping.slice(0, 5).map(it => `"${displayPath(it.file)}" -> "${it.target}" (resolves to "${it.resolved}")`)
+  const listed = escaping.slice(0, 5)
+  const shown = listed.map(it => `"${policy.displayPath(it.file)}" -> "${it.target}" (resolves to "${it.resolved}")`)
   if (escaping.length > shown.length) {
     shown.push(`and ${escaping.length - shown.length} more`)
   }
   throw new InvalidConfigurationError(
     `cannot build ${consumer}: it stores the files symlinks point to, and ${escaping.length === 1 ? "a symlink leads" : "symlinks lead"} outside ` +
-      `"${displayPath(dir)}": ${shown.join(", ")}. Files from elsewhere on the build machine would be packaged. electron-builder v27 refuses ` +
-      `this: replace the symlink with a copy of what it points to, or exclude it. See ${SYMLINK_CONTAINMENT_DOCS_URL}`,
+      `"${policy.displayPath(dir)}": ${shown.join(", ")}. Files from elsewhere on the build machine would be packaged. electron-builder v27 refuses ` +
+      `this: replace the symlink with a copy of what it points to, or exclude it. ${await policy.hint(listed.map(it => it.resolved))} ` +
+      `See ${SYMLINK_CONTAINMENT_DOCS_URL}`,
     ERR_PATH_OUTSIDE_ROOT
   )
 }

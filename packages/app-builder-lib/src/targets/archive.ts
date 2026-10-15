@@ -1,4 +1,4 @@
-import { assertNoSymlinkLeaves, debug7z, exec, exists, log, statOrNull, unlinkIfExists } from "builder-util"
+import { assertNoSymlinkLeaves, debug7z, exec, exists, ExternalLinkPolicy, log, statOrNull, unlinkIfExists } from "builder-util"
 import * as path from "path"
 import { create } from "tar"
 import type { TarOptionsWithAliasesAsync } from "tar"
@@ -100,6 +100,12 @@ export interface ArchiveOptions {
    * @default false
    */
   preserveSymlinks?: boolean
+
+  /**
+   * The `allowExternalLinks` build option. When symlinks are dereferenced (`preserveSymlinks` false, 7za), a symlink that leads outside
+   * the archived directory fails the archive unless it allows it.
+   */
+  externalLinks?: ExternalLinkPolicy | null
 
   /**
    * Paths, relative to the archived directory, to append as uncompressed (`Copy`) members instead of
@@ -267,7 +273,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
   if (use7z) {
     if (!options.preserveSymlinks) {
       // 7za stores what a symlink points to: one that leaves the archived directory would package files from elsewhere
-      await assertNoSymlinkLeaves(dirToArchive, `the ${format} archive "${path.basename(outFile)}"`)
+      await assertNoSymlinkLeaves(dirToArchive, `the ${format} archive "${path.basename(outFile)}"`, options.externalLinks)
     }
     const args = compute7zCompressArgs(format, options)
     // Modern 7-Zip (24.09) dereferences symlinks by default; the 7-Zip 16.02 bundled before

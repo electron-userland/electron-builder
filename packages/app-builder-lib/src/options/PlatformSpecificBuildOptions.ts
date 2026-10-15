@@ -140,6 +140,33 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
    * The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows).
    */
   extraFiles?: Array<FileSet | string> | FileSet | string | null
+
+  /**
+   * Whether symlinks among the packaged files may lead outside the app, the workspace and the package-manager store.
+   *
+   * Only the build configuration is trusted, not the files it packages: by default (`false`) electron-builder v27 refuses
+   * - a file of the app (`app.asar` or `asar: false`) that is a symlink, or is reached through one, whose real path is outside the workspace
+   *   root, the project and app directories and the package-manager store (`npm link`, a `file:../lib` dependency outside the repository,
+   *   a symlink into the home or temp directory),
+   * - a copied symlink that resolves outside the app: one in `extraResources` / `extraFiles` (other than into the workspace or the store),
+   *   one kept by an `asar: false` copy, and any symlink leaving the app in a target that stores what symlinks point to (Windows `zip` / `7z`,
+   *   the NSIS app package, AppX/MSIX, Squirrel.Windows).
+   *
+   * Without these checks, a symlink planted in a dependency or a copied directory could package files from elsewhere on the build machine (SSH keys,
+   * credentials) into the artifact, which is why this is off by default.
+   *
+   * - `true` allows any such symlink.
+   * - A list of paths, relative to the project directory or absolute, allows a symlink only when the real path of what it points to is
+   *   inside the real path of one of them (e.g. `["../shared-lib"]`). A listed path that does not exist fails the build.
+   *
+   * An allowed symlink is packaged as before v27: what it points to is copied (or stored by the archive), and a copied symlink is kept
+   * as it is. A warning is logged once when this allows a symlink.
+   *
+   * This does not allow writing through a symlink: a copy or a file written by electron-builder whose destination leads outside the
+   * output directory through a symlink is always refused, and a symlink at such a file name is replaced, never followed.
+   * @default false
+   */
+  allowExternalLinks?: boolean | Array<string> | null
 }
 
 export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
