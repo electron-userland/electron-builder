@@ -737,7 +737,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (this.info.isPrepackedAppAsar) {
       taskManager.add(async () => {
         const fileSets = await _computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)])
-        const copyOptions = { containmentRoot: resourcePath }
+        const copyOptions = { containmentRoot: resourcePath, trustedSourceRoots: await getTrustedSourceRoots(this) }
         fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, transformer, copyOptions)))
         await taskManager.awaitTasks()
       })
@@ -757,7 +757,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
       taskManager.add(async () => {
         const fileSets = await _computeFileSets(mainMatchers)
-        const copyOptions = { containmentRoot: resourcePath }
+        const copyOptions = { containmentRoot: resourcePath, trustedSourceRoots: await getTrustedSourceRoots(this) }
         fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, combinedTransformer, copyOptions)))
         await taskManager.awaitTasks()
       })

@@ -1,0 +1,7 @@
+---
+"app-builder-lib": major
+"builder-util": major
+"electron-builder-squirrel-windows": patch
+---
+
+fix!: check copy and write destinations by real path, so that a symlink among copied files (app directory, `extraResources`/`extraFiles`/`extraDistFiles` sources, `node_modules`) cannot make electron-builder write or package files elsewhere on the build machine. `copyDir` (extraResources/extraFiles) and the `asar: false` app copy refuse a destination whose directory resolves outside the app output directory, replace (never follow) a symlink at a destination file, and recreate a symlink only when it stays inside the output (or, for extraResources/extraFiles, leads into the workspace or the package-manager store, with a one-time warning). The fixed-name files written after the copies (`app-update.yml`, `package-type`, `apparmor-profile`, NSIS `elevate.exe`, the snap `command.sh`, `Squirrel.exe` and the Squirrel execution stub) replace a planted symlink instead of writing through it. Windows `zip`/`7z` archives, the NSIS app package, AppX/MSIX and Squirrel.Windows packages, which store what a symlink points to, fail when a symlink leaves the app. Errors are `InvalidConfigurationError` with code `ERR_ELECTRON_BUILDER_PATH_OUTSIDE_ROOT` and link to https://www.electron.build/docs/migration/v27-breaking-changes#symlinks-that-leave-the-app-are-refused. New builder-util helpers: `assertWritableWithin`, `prepareFixedNameWrite`, `WriteContainment`, `resolvePhysicalPath`, `findEscapingSymlinks`, `assertNoSymlinkLeaves`.
