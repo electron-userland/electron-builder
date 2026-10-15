@@ -7,12 +7,16 @@ import { PlatformSpecificBuildOptions } from "./PlatformSpecificBuildOptions.js"
 export interface LinuxDesktopFile {
   /**
    * `[Desktop Entry]` metadata entries (name to value). Overwrites default values calculated by electron-builder
+   *
+   * Keys and values are written as given. A key must not be empty or contain `=` or a line break, and brackets are only allowed around a trailing locale of letters, digits, `-`, `_`, `.` and `@`, right after the key, such as `Name[de]`. A value must be on one line: a line break inside a value fails the build (write a newline in a string value as `\n`), and line breaks at its end are dropped.
    */
   entry?: {
     [k: string]: string
   } | null
   /**
    * `[Desktop Actions <ActionName>]` metadata entries (name to value).
+   *
+   * An action name must not contain `[`, `]` or control characters. Its keys and values follow the rules of `entry`.
    *
    * Config Example:
    * ```js

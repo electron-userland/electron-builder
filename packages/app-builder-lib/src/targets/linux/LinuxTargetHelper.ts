@@ -11,9 +11,12 @@ import { SnapCore } from "./snap/SnapTarget.js"
 import { SnapCore24 } from "./snap/core24.js"
 import { SnapCoreCustom } from "./snap/coreCustom.js"
 import { SnapCoreLegacy } from "./snap/coreLegacy.js"
+import { BREAKING_CHANGES_URL } from "../../util/config/legacyOptions.js"
 import { IconInfo } from "../../util/iconConverter.js"
 import _fsExtra from "fs-extra"
 const { outputFile } = _fsExtra
+
+const DESKTOP_ENTRY_CHECK_IS_NEW = `This check is new in electron-builder v27. See ${BREAKING_CHANGES_URL}#linux-desktop-entry-keys-and-values-are-validated`
 
 /**
  * Escape a string value for use in a freedesktop .desktop file string field
@@ -34,6 +37,32 @@ const { outputFile } = _fsExtra
  */
 function desktopStringEscape(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")
+}
+
+/**
+ * One `key=value` line of a .desktop file. Values from the configuration are written as given, so that escape sequences
+ * such as `\;` in a list keep working; a raw line break inside a value, which would end the value and start a new key or
+ * group, is rejected instead. Line breaks at the end of a value, as in a YAML block scalar, only add blank lines, so they are
+ * dropped. A key is rejected when GLib, which most desktops read the file with, would not read it back (g_key_file_is_key_name):
+ * empty, with `=` or a line break, or with brackets other than a trailing locale of letters, digits, `-`, `_`, `.` and `@`,
+ * such as `Name[de]`. Keys the specification does not allow but parsers accept, such as `X_Foo`, are kept.
+ *
+ * @see https://specifications.freedesktop.org/desktop-entry/latest/basic-format.html
+ */
+function desktopEntryLine(group: string, key: string, value: unknown): string {
+  // leading and trailing blanks are trimmed when the file is read, but not a blank before the locale
+  if (!/^[ \t]*[^=[\]\s](?:[^=[\]\r\n]*[^=[\]\s])?(?:\[[\p{L}\p{Nd}_.@-]+\])?[ \t]*$/u.test(key)) {
+    throw new InvalidConfigurationError(
+      `Invalid key ${JSON.stringify(key)} in the ${group} group of the .desktop file — a key must not be empty or contain "=" or a line break, and brackets are only allowed around a trailing locale of letters, digits, "-", "_", "." and "@", right after the key, such as Name[de] or Name[sr@latin]. ${DESKTOP_ENTRY_CHECK_IS_NEW}`
+    )
+  }
+  const text = String(value).replace(/[\r\n]+$/, "")
+  if (/[\r\n]/.test(text)) {
+    throw new InvalidConfigurationError(
+      `The value of ${key} in the ${group} group of the .desktop file contains a line break — a value must be on one line (write a newline in a string value as \\n). ${DESKTOP_ENTRY_CHECK_IS_NEW}`
+    )
+  }
+  return `\n${key}=${text}`
 }
 
 /**
@@ -259,7 +288,10 @@ export class LinuxTargetHelper {
     return resolved
   }
 
-  computeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, extra?: Record<string, string>): Promise<string> {
+  // async, so that a configuration error rejects the promise instead of throwing at the call, where the AppImage target
+  // builds the list of its concurrent steps
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async computeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, extra?: Record<string, string>): Promise<string> {
     if (exec != null && exec.length === 0) {
       throw new Error("Specified exec is empty")
     }
@@ -353,7 +385,7 @@ export class LinuxTargetHelper {
 
     let data = `[Desktop Entry]`
     for (const name of Object.keys(desktopMeta)) {
-      data += `\n${name}=${desktopMeta[name]}`
+      data += desktopEntryLine("[Desktop Entry]", name, desktopMeta[name])
     }
     data += "\n"
     const desktopActions = targetSpecificOptions.desktop?.desktopActions ?? {}
@@ -361,13 +393,21 @@ export class LinuxTargetHelper {
       if (!Object.keys(config ?? {}).length) {
         continue
       }
-      data += `\n[Desktop Action ${actionName}]`
+      // the name ends up in a group header, which may not contain brackets or control characters
+      // eslint-disable-next-line no-control-regex
+      if (/[[\]\x00-\x1f\x7f]/.test(actionName)) {
+        throw new InvalidConfigurationError(
+          `Invalid desktop action name ${JSON.stringify(actionName)} — it must not contain "[", "]" or control characters. ${DESKTOP_ENTRY_CHECK_IS_NEW}`
+        )
+      }
+      const group = `[Desktop Action ${actionName}]`
+      data += `\n${group}`
       for (const [key, value] of Object.entries(config ?? {})) {
-        data += `\n${key}=${value}`
+        data += desktopEntryLine(group, key, value)
       }
       data += "\n"
     }
-    return Promise.resolve(data)
+    return data
   }
 }
 

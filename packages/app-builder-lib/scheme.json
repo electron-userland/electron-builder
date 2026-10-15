@@ -2558,7 +2558,7 @@
               "type": "null"
             }
           ],
-          "description": "`[Desktop Actions <ActionName>]` metadata entries (name to value).\n\nConfig Example:\n```js\ndesktopActions: {\n   NewWindow: {\n      Name: 'New Window',\n      Exec: 'app --new-window',\n   }\n}\n```"
+          "description": "`[Desktop Actions <ActionName>]` metadata entries (name to value).\n\nAn action name must not contain `[`, `]` or control characters. Its keys and values follow the rules of `entry`.\n\nConfig Example:\n```js\ndesktopActions: {\n   NewWindow: {\n      Name: 'New Window',\n      Exec: 'app --new-window',\n   }\n}\n```"
         },
         "entry": {
           "anyOf": [
@@ -2569,7 +2569,7 @@
               "type": "null"
             }
           ],
-          "description": "`[Desktop Entry]` metadata entries (name to value). Overwrites default values calculated by electron-builder"
+          "description": "`[Desktop Entry]` metadata entries (name to value). Overwrites default values calculated by electron-builder\n\nKeys and values are written as given. A key must not be empty or contain `=` or a line break, and brackets are only allowed around a trailing locale of letters, digits, `-`, `_`, `.` and `@`, right after the key, such as `Name[de]`. A value must be on one line: a line break inside a value fails the build (write a newline in a string value as `\\n`), and line breaks at its end are dropped."
         }
       },
       "type": "object"
