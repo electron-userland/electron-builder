@@ -31,6 +31,7 @@ import { AppFileWalker } from "./AppFileWalker.js"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
 import { NodeModuleInfo } from "../node-module-collector/types.js"
 import { archToNodeCpu } from "./archCompatibility.js"
+import { assertSourceFileInTrustedRoots } from "./trustedSourceRoots.js"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
@@ -49,17 +50,21 @@ export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
 export interface CopyAppFilesOptions {
   /** Every file, directory and symlink is written inside it, checked by its real path: the resources directory of the app. */
   readonly containmentRoot: string
+  /** The real paths files may be copied from, see `getTrustedSourceRoots`. Each file is checked when given. */
+  readonly trustedSourceRoots?: ReadonlyArray<string> | null
 }
 
 /**
- * Copies the files of the app when they are not packed into an asar archive. It writes only inside the containment root, checked by real
- * path, and recreates a symlink only when it stays inside the containment root.
+ * Copies the files of the app when they are not packed into an asar archive. Like the asar packer, it refuses a file whose real path is
+ * outside the trusted source roots, writes only inside the containment root, checked by real path, and recreates a symlink only when it
+ * stays inside the containment root.
  */
 export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Pick<Packager, "cancellationToken">, transformer: FileTransformer, options?: CopyAppFilesOptions | null) {
   const metadata = fileSet.metadata
   // search auto unpacked dir
   const taskManager = new AsyncTaskManager(packager.cancellationToken)
   const containment = new WriteContainment(options?.containmentRoot ?? fileSet.destination, "app file")
+  const trustedSourceRoots = options?.trustedSourceRoots
 
   const fileCopier = new FileCopier(file => {
     return !isLibOrExe(file)
@@ -71,6 +76,10 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Pick<Pack
     if (stat == null) {
       // dir
       continue
+    }
+
+    if (trustedSourceRoots != null) {
+      await assertSourceFileInTrustedRoots(sourceFile, trustedSourceRoots)
     }
 
     const destinationFile = getDestinationPath(sourceFile, fileSet)

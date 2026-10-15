@@ -4,6 +4,7 @@ import { copyFiles, FileMatcher } from "app-builder-lib/src/fileMatcher"
 import { writeAppUpdateYaml } from "app-builder-lib/src/publish/PublishManager"
 import { archive } from "app-builder-lib/src/targets/archive"
 import { copyAppFiles, ResolvedFileSet } from "app-builder-lib/src/util/appFileCopier"
+import { assertSourceFileInTrustedRoots, getTrustedSourceRoots, LINKED_FILES_DOCS_URL, readPackageManagerStoreDirs } from "app-builder-lib/src/util/trustedSourceRoots"
 import { Stats } from "fs"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -35,6 +36,8 @@ async function createProject(base: string) {
   }
   return { workspace, appDir, appOutDir, resourcesDir, outside }
 }
+
+const sourceRootsInfo = (workspace: string, appDir: string) => ({ projectDir: workspace, appDir, getWorkspaceRoot: () => Promise.resolve(workspace) })
 
 async function fileSetOf(src: string, destination: string, names: Array<string>): Promise<ResolvedFileSet> {
   const metadata = new Map<string, Stats>()
@@ -91,15 +94,32 @@ describe.runIf(process.platform !== "win32")("app files without asar (copyAppFil
     await fs.symlink(path.join(workspace, "packages", "shared", "index.js"), path.join(appDir, "shared.js"))
     await fs.writeFile(path.join(appDir, "main.js"), "main")
 
+    const trustedSourceRoots = await getTrustedSourceRoots(sourceRootsInfo(workspace, appDir), {})
     const destination = path.join(resourcesDir, "app")
-    await copyAppFiles(await fileSetOf(appDir, destination, ["main.js", "shared.js"]), packagerStub, () => null, { containmentRoot: resourcesDir })
+    await copyAppFiles(await fileSetOf(appDir, destination, ["main.js", "shared.js"]), packagerStub, () => null, { containmentRoot: resourcesDir, trustedSourceRoots })
 
     expect(await fs.readFile(path.join(destination, "shared.js"), "utf8")).toBe("shared")
     expect(await fs.readFile(path.join(destination, "main.js"), "utf8")).toBe("main")
   })
 
+  test("refuses a file whose real path is outside the workspace, naming electron-builder v27", async ({ expect, tmpDir }) => {
+    const { workspace, appDir, resourcesDir, outside } = await createProject(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
+    await fs.writeFile(path.join(outside, "secret"), "secret")
+    await fs.symlink(path.join(outside, "secret"), path.join(appDir, "leak.txt"))
+
+    const trustedSourceRoots = await getTrustedSourceRoots(sourceRootsInfo(workspace, appDir), {})
+    const error = await rejection(
+      copyAppFiles(await fileSetOf(appDir, path.join(resourcesDir, "app"), ["leak.txt"]), packagerStub, () => null, { containmentRoot: resourcesDir, trustedSourceRoots })
+    )
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain("outside the package")
+    expect(error.message).toContain("electron-builder v27")
+    expect(error.message.endsWith(`See ${LINKED_FILES_DOCS_URL}`)).toBe(true)
+    await expect(fs.lstat(path.join(resourcesDir, "app", "leak.txt"))).rejects.toThrow("ENOENT")
+  })
+
   test("refuses a kept symlink that leaves the app through another kept symlink", async ({ expect, tmpDir }) => {
-    const { appDir, resourcesDir } = await createProject(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
+    const { workspace, appDir, resourcesDir } = await createProject(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
     await fs.mkdir(path.join(appDir, "x"))
     // both are inside the app directory lexically (x/a is x/up/.. = x), so they are kept as symlinks; but x/up is the app directory, and
     // x/a leads to its parent: the workspace in the source, which is trusted, and the resources directory in the copy
@@ -109,6 +129,7 @@ describe.runIf(process.platform !== "win32")("app files without asar (copyAppFil
     const error = await rejection(
       copyAppFiles(await fileSetOf(appDir, path.join(resourcesDir, "app"), [path.join("x", "up"), path.join("x", "a")]), packagerStub, () => null, {
         containmentRoot: path.join(resourcesDir, "app"),
+        trustedSourceRoots: await getTrustedSourceRoots(sourceRootsInfo(workspace, appDir), {}),
       })
     )
     expect((error as NodeJS.ErrnoException).code).toBe(ERR_PATH_OUTSIDE_ROOT)
@@ -116,7 +137,7 @@ describe.runIf(process.platform !== "win32")("app files without asar (copyAppFil
   })
 
   test("replaces a symlink planted at a destination file", async ({ expect, tmpDir }) => {
-    const { appDir, resourcesDir, outside } = await createProject(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
+    const { workspace, appDir, resourcesDir, outside } = await createProject(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
     await fs.writeFile(path.join(appDir, "main.js"), "main")
     await fs.writeFile(path.join(outside, "victim"), "original")
     await fs.mkdir(path.join(resourcesDir, "app"))
@@ -124,10 +145,39 @@ describe.runIf(process.platform !== "win32")("app files without asar (copyAppFil
 
     await copyAppFiles(await fileSetOf(appDir, path.join(resourcesDir, "app"), ["main.js"]), packagerStub, () => null, {
       containmentRoot: resourcesDir,
+      trustedSourceRoots: await getTrustedSourceRoots(sourceRootsInfo(workspace, appDir), {}),
     })
 
     expect(await fs.readFile(path.join(resourcesDir, "app", "main.js"), "utf8")).toBe("main")
     expect(await fs.readFile(path.join(outside, "victim"), "utf8")).toBe("original")
+  })
+})
+
+describe.runIf(process.platform !== "win32")("trusted source roots (asar and non-asar)", () => {
+  test("the pnpm store outside the workspace is trusted, other directories outside it are not", async ({ expect, tmpDir }) => {
+    const base = await tmpDir.createTempDir({ prefix: "symlink-containment" })
+    const { workspace, appDir, outside } = await createProject(base)
+    const store = path.join(base, "pnpm-store")
+    await fs.mkdir(path.join(store, "v11", "links", "dep"), { recursive: true })
+    await fs.writeFile(path.join(store, "v11", "links", "dep", "index.js"), "dep")
+    await fs.mkdir(path.join(workspace, "node_modules"), { recursive: true })
+    await fs.writeFile(path.join(workspace, "node_modules", ".modules.yaml"), JSON.stringify({ storeDir: path.join(store, "v11"), virtualStoreDir: ".pnpm" }))
+    await fs.symlink(path.join(store, "v11", "links", "dep"), path.join(workspace, "node_modules", "dep"))
+    // v26 allowed anything under the home and temp directories; `outside` stands for such a directory
+    await fs.writeFile(path.join(outside, "file"), "x")
+    await fs.symlink(path.join(outside, "file"), path.join(appDir, "home-file"))
+
+    expect(await readPackageManagerStoreDirs(path.join(workspace, "node_modules"))).toEqual([path.join(store, "v11"), path.join(workspace, "node_modules", ".pnpm")])
+    const roots = await getTrustedSourceRoots(sourceRootsInfo(workspace, appDir), {})
+    await expect(assertSourceFileInTrustedRoots(path.join(workspace, "node_modules", "dep", "index.js"), roots)).resolves.toBeUndefined()
+    await expect(assertSourceFileInTrustedRoots(path.join(appDir, "home-file"), roots)).rejects.toThrow(LINKED_FILES_DOCS_URL)
+  })
+
+  test("a missing or invalid pnpm modules file adds no store", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir({ prefix: "symlink-containment" })
+    expect(await readPackageManagerStoreDirs(dir)).toEqual([])
+    await fs.writeFile(path.join(dir, ".modules.yaml"), "{ not: [valid")
+    expect(await readPackageManagerStoreDirs(dir)).toEqual([])
   })
 })
 
