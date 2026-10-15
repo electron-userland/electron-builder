@@ -468,7 +468,8 @@ describe("Package Managers", { concurrent: false }, () => {
           {
             targets: linuxDirTarget,
             config: {
-              fileOptions: { files: ["**/*"] },
+              // `foo` is a `file:` dependency in another temporary directory, outside the workspace: npm links it into node_modules
+              fileOptions: { files: ["**/*"], allowExternalLinks: true },
               asar: { unpack: ["**/node_modules/foo/**/*"] },
               // npm >= 10 (install-links=false) symlinks a `file:` dependency and does NOT install
               // its transitive deps into the project tree (`npm ls` reports `ms` as missing), and

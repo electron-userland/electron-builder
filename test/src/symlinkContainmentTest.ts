@@ -56,7 +56,7 @@ async function fileSetOf(src: string, destination: string, names: Array<string>)
     files.push(file)
     const stat = await fs.lstat(file)
     // like the app file walker: a symlink that leaves the app directory is followed and its target copied
-    metadata.set(file, stat.isSymbolicLink() && path.relative(src, path.resolve(src, await fs.readlink(file))).startsWith("..") ? await fs.stat(file) : stat)
+    metadata.set(file, stat.isSymbolicLink() && path.relative(src, path.resolve(path.dirname(file), await fs.readlink(file))).startsWith("..") ? await fs.stat(file) : stat)
   }
   return { src, destination, files, metadata }
 }
