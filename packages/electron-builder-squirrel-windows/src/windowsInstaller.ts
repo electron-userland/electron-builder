@@ -1,4 +1,4 @@
-import { exec, exists, log } from "builder-util"
+import { exec, exists, log, prepareFixedNameWrite } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 
@@ -84,7 +84,10 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
   }
 
   // Squirrel.exe must live in the app directory so the nuspec can reference it
-  await fs.copyFile(path.join(vendorDirectory, "Squirrel.exe"), path.join(appDirectory, "Squirrel.exe"))
+  // into the app output directory, which untrusted files were copied into: replace, never follow, a symlink at the name
+  const squirrelExe = path.join(appDirectory, "Squirrel.exe")
+  await prepareFixedNameWrite(appDirectory, squirrelExe, "Squirrel.exe")
+  await fs.copyFile(path.join(vendorDirectory, "Squirrel.exe"), squirrelExe)
 
   const nugetVersion = convertVersion(version)
   const authors = options.authors || ""

@@ -1,4 +1,4 @@
-import { Arch, archFromString, copyDir, InvalidConfigurationError, log, removeNullish, toLinuxArchString } from "builder-util"
+import { Arch, archFromString, copyDir, InvalidConfigurationError, log, prepareFixedNameWrite, removeNullish, toLinuxArchString } from "builder-util"
 
 import { deepAssign, isValidKey, Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
@@ -94,6 +94,8 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // Write the launcher script the command always points at (see SNAP_COMMAND_LAUNCHER).
     // It lands at the snap root ($SNAP/command.sh) — it is intentionally not added to `organize`.
     const launcherPath = path.join(appDir, SNAP_COMMAND_LAUNCHER)
+    // the app files were just copied there: replace, never follow, a symlink at the name
+    await prepareFixedNameWrite(stageDir, launcherPath, "snap command launcher")
     await writeFile(launcherPath, buildSnapCommandLauncherScript({ execName: this.packager.executableName, args: this.commandArgs }), { mode: 0o755 })
     await chmod(launcherPath, 0o755)
 
