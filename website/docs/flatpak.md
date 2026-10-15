@@ -29,10 +29,12 @@ Key characteristics:
 Install `flatpak` and `flatpak-builder` on your Linux build machine — see [Flatpak setup](https://flatpak.org/setup/). On Debian and Ubuntu:
 
 ```bash
-sudo apt-get install -y flatpak flatpak-builder
+sudo apt-get install -y flatpak flatpak-builder fuse3
 ```
 
-electron-builder requires **`flatpak` 1.12.4 or newer** and **`flatpak-builder` 1.2.2 or newer**. `flatpak-builder` 1.2.2 is the one of Ubuntu 22.04, the oldest current distribution release, and it needs `flatpak` 1.12.4 or newer for its fix of CVE-2022-21682. It checks both when the flatpak target starts, before it installs a runtime or runs `flatpak-builder`, and fails the build if a tool is missing or too old:
+`fuse3` provides `fusermount3`, which `flatpak-builder` needs unless it runs with `--disable-rofiles-fuse`; Ubuntu 22.04's `flatpak-builder` does not pull it in.
+
+electron-builder requires **`flatpak` 1.12.4 or newer** and **`flatpak-builder` 1.2.2 or newer**. `flatpak-builder` 1.2.2 is the one of Ubuntu 22.04, the oldest current distribution release, and it needs `flatpak` 1.12.4 or newer for its fix of CVE-2022-21682. electron-builder checks both when the flatpak target starts, before it installs a runtime or runs `flatpak-builder`, and fails the build if a tool is missing or too old:
 
 ```
 cannot run flatpak - flatpak and flatpak-builder must be installed to build the flatpak target

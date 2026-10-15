@@ -47,7 +47,7 @@ sudo snap install multipass --beta --classic
 
 To build flatpak:
 ```bash
-sudo apt-get install -y flatpak flatpak-builder
+sudo apt-get install -y flatpak flatpak-builder fuse3
 ```
 
 `flatpak` 1.12.4+ and `flatpak-builder` 1.2.2+ are required: the stock packages of Ubuntu 22.04, Debian 12 and newer releases are new enough. See [Flatpak](../flatpak.md). The [Docker](#docker) images with a date tag newer than `-05.26` include both tools — see [Flatpak in the Docker Images](#flatpak-in-the-docker-images).

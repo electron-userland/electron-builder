@@ -53,10 +53,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Debian 13 has Flatpak 1.16.6 and flatpak-builder 1.4.4
 RUN apt-get update \
- && apt-get install -y flatpak flatpak-builder ca-certificates \
+ && apt-get install -y flatpak flatpak-builder fuse3 ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
-# Node.js and npm, copied out of the official image, which is Debian 12 (flatpak-builder 1.2.3)
+# Node.js and npm, copied out of the official image, which is Debian 12, whose flatpak-builder package is 1.2.3
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
 RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
