@@ -243,7 +243,7 @@ export class LinuxTargetHelper {
   // https://github.com/electron/electron/blob/9a7b73b5334f1d72c08e2d5e94106706ed751186/lib/browser/init.ts#L128-L133
   // Returns the validated base name (desktopName minus the .desktop suffix), or null when
   // desktopName is unset — callers apply their own fallback (filename vs WM_CLASS).
-  private resolveDesktopName(): string | null {
+  resolveDesktopName(): string | null {
     const trimmedDesktopName = this.packager.metadata.desktopName?.trim()
     if (isEmptyOrSpaces(trimmedDesktopName)) {
       // at most once per build, even though both getDesktopFileName() and computeDesktopEntry() resolve the desktop name

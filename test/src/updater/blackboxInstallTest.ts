@@ -13,6 +13,7 @@ import { assertPack, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext, readDeb
 import { readAppImageCompression } from "../helpers/fileAssert"
 import { ELECTRON_VERSION, PACMAN_TEST_DEPENDS } from "../helpers/testConfig"
 import { OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { canRunFlatpak, cleanupFlatpak, installFlatpak } from "./blackboxInstallLinux"
 
 const optionsForInstall: TestOptions = { concurrent: false, retry: 0, timeout: EXTENDED_TIMEOUT }
 
@@ -20,6 +21,9 @@ const STANDARD_COMPRESSIONS: NonNullable<Configuration["compression"]>[] = ["sto
 const APPIMAGE_COMPRESSIONS: AppImageOptions["compression"][] = ["xz", "gzip", "zstd"]
 const LEGACY_COMPRESSIONS: AppImageOptions["compression"][] = ["xz", "gzip", "zstd"]
 // xz/lzo = forwarded as --compression to FUSE2; zstd/null = flag omitted → mksquashfs defaults to gzip (or xz when compression="maximum")
+
+// flatpak installs and runs the app by its id
+const APP_ID = "com.test.app"
 
 // Test runtime check. Can't be executed during test initialization (e.g. `ifEnv`)
 const determineEnvironment = (distro: string) => {
@@ -83,6 +87,14 @@ describe.heavy.ifLinux("linux install", optionsForInstall, () => {
       }
     })
   }
+
+  // The installed app runs in its sandbox, which needs a bubblewrap that can create namespaces. The docker images of the
+  // tests above cannot provide that, so this runs where flatpak can run: the native flatpak job in CI.
+  for (const arch of ["x64", "arm64"] as NodeJS.Architecture[]) {
+    test.ifEnv(arch === process.arch && canRunFlatpak())(`flatpak - ${arch}`, async context => {
+      await runInstallTest(context, "flatpak", archFromString(arch), {})
+    })
+  }
 })
 
 async function runInstallTest(context: TestContext, target: ConstructorParameters<typeof Target>[0], arch: Arch, extraConfig: Configuration): Promise<void> {
@@ -95,7 +107,7 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
       nativeModules: { npmRebuild: true },
       productName: "TestApp",
       executableName: "TestApp",
-      appId: "com.test.app",
+      appId: APP_ID,
       artifactName: "${productName}.${ext}",
       electronLanguages: ["en"],
       extraMetadata: {
@@ -218,6 +230,8 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
       console
     )
     appPath = "/opt/TestApp/TestApp"
+  } else if (target === "flatpak") {
+    appPath = installFlatpak(path.join(artifactsDir, "TestApp.flatpak"), APP_ID)
   } else {
     throw new Error(`Unsupported install test target: ${target}`)
   }
@@ -241,9 +255,16 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
       ...(isLegacyToolset ? { APPIMAGE_EXTRACT_AND_RUN: "1" } : {}),
     },
     waitForExit: true,
+  }).finally(() => {
+    // the packages above are installed into a throwaway container; this one is in the user's flatpak installation
+    if (target === "flatpak") {
+      cleanupFlatpak(APP_ID)
+    }
   })
 
-  log.info({ version: result.version, compression: config[target]?.compression ?? config.compression, target }, "Install test launch completed")
+  // flatpak has no compression option of its own
+  const compression = target === "flatpak" ? config.compression : (config[target]?.compression ?? config.compression)
+  log.info({ version: result.version, compression, target }, "Install test launch completed")
   if (result.version == null) {
     throw new Error("App did not report version after launch")
   }
