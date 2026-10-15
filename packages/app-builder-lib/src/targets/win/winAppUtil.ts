@@ -1,4 +1,4 @@
-import { Arch, asArray, copyOrLinkFile, ensureNotBusy, escapeForXml, InvalidConfigurationError, log, sanitizeDirPath, walk } from "builder-util"
+import { Arch, asArray, assertNoSymlinkLeaves, copyOrLinkFile, ensureNotBusy, escapeForXml, InvalidConfigurationError, log, sanitizeDirPath, walk } from "builder-util"
 import type { MsixWindowsService } from "../../options/MsixOptions.js"
 import { Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
@@ -135,6 +135,8 @@ export function assertSafeMappingPath(value: string, kind: string): void {
  * by the AppX and MSIX targets. Each relative path is validated via {@link assertSafeMappingPath}.
  */
 export async function buildAppFileMappings(vm: VmManager, appOutDir: string): Promise<Array<string>> {
+  // makeappx stores what a symlink points to: one that leaves the app would package files from elsewhere on the build machine
+  await assertNoSymlinkLeaves(appOutDir, "the AppX/MSIX package")
   return (await walk(appOutDir)).map(file => {
     let relPath = file.substring(appOutDir.length + 1)
     if (path.sep !== "\\") {

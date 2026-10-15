@@ -2,6 +2,7 @@ import { ERR_PATH_OUTSIDE_ROOT, InvalidConfigurationError } from "builder-util"
 import { CancellationToken, GenericServerOptions } from "builder-util-runtime"
 import { copyFiles, FileMatcher } from "app-builder-lib/src/fileMatcher"
 import { writeAppUpdateYaml } from "app-builder-lib/src/publish/PublishManager"
+import { archive } from "app-builder-lib/src/targets/archive"
 import { copyAppFiles, ResolvedFileSet } from "app-builder-lib/src/util/appFileCopier"
 import { Stats } from "fs"
 import * as fs from "fs/promises"
@@ -152,5 +153,19 @@ describe.runIf(process.platform !== "win32")("fixed-name writes", () => {
     const error = await rejection(writeAppUpdateYaml(linkedResources, genericFeed, appOutDir))
     expect((error as NodeJS.ErrnoException).code).toBe(ERR_PATH_OUTSIDE_ROOT)
     expect(await fs.readdir(outside)).toEqual([])
+  })
+})
+
+describe.runIf(process.platform !== "win32")("archives that dereference symlinks (Windows zip/7z/NSIS)", () => {
+  test("refuse a symlink that leaves the archived directory, before 7za runs", async ({ expect, tmpDir }) => {
+    const { appOutDir, outside } = await createProject(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
+    await fs.writeFile(path.join(outside, "secret"), "secret")
+    await fs.symlink(path.join(outside, "secret"), path.join(appOutDir, "resources", "leak"))
+
+    const error = await rejection(archive("zip", path.join(path.dirname(appOutDir), "app.zip"), appOutDir, { withoutDir: true, preserveSymlinks: false }))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain('cannot build the zip archive "app.zip"')
+    expect(error.message).toContain("electron-builder v27")
+    expect(error.message).toContain(SYMLINK_DOCS)
   })
 })
