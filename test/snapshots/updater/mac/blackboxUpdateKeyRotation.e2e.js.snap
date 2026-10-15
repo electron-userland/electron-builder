@@ -37,6 +37,10 @@ exports[`mac > mac auto-update > x64 - key rotation 1`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.0",
       },
@@ -135,6 +139,14 @@ exports[`mac > mac auto-update > x64 - key rotation 3`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.1",
       },
@@ -225,6 +237,10 @@ exports[`mac > mac auto-update > x64 - key rotation 5`] = `
         "releaseDate": "@releaseDate",
         "signature": "@signature",
         "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
           {
             "keyId": "@keyId",
             "signature": "@signature",

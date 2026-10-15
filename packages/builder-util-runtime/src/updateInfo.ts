@@ -100,17 +100,19 @@ export interface UpdateInfo {
    * publish time when update manifest signing is enabled. Verified by electron-updater against the
    * configured `updateManifestPublicKey` before any download starts. See `canonicalizeForSigning`.
    *
-   * Always the signature of the *first* configured signing key; `signatures` carries the same value
-   * (tagged with its key id) plus one entry per additional signing key. Kept so updaters that only know
-   * this single-signature form keep verifying.
+   * Always the first configured signing key's signature over the legacy `EBUM1` payload; `signatures` carries the
+   * same value (tagged with its key id) plus the other entries. Kept so updaters that only know this
+   * single-signature form keep verifying.
    */
   readonly signature?: string
 
   /**
-   * One Ed25519 signature per signing key the manifest was signed with, each tagged with the id of the
-   * key that produced it (see `computeUpdateManifestKeyId`). All entries sign the same canonical payload.
-   * A manifest carrying several entries is "dual-signed": an install verifies it as long as *any* of its
-   * trusted keys matches *any* entry, which is what makes key rotation possible without a flag day.
+   * The Ed25519 signatures the manifest was signed with, each tagged with the id of the key that produced it
+   * (see `computeUpdateManifestKeyId`). electron-builder writes two entries per signing key: first one per key over
+   * the legacy `EBUM1` payload (what electron-updater 7.0.0-alpha.8 and alpha.9 verify), then one per key over the
+   * current `EBUM2` payload (see `canonicalizeForSigning`). An install verifies the manifest as long as *any* of its
+   * trusted keys matches *any* entry in a format it accepts, which is what makes key rotation possible without a
+   * flag day and lets older updaters ignore the entries they do not understand.
    */
   readonly signatures?: Array<UpdateManifestSignature>
 }

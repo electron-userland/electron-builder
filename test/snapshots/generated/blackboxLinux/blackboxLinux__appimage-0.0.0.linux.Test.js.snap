@@ -92,6 +92,10 @@ exports[`linux > appimage tool: 0.0.0 > AppImage - key rotation - x64 1`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.0",
       },
@@ -126,6 +130,14 @@ exports[`linux > appimage tool: 0.0.0 > AppImage - key rotation - x64 2`] = `
         "releaseDate": "@releaseDate",
         "signature": "@signature",
         "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
           {
             "keyId": "@keyId",
             "signature": "@signature",
@@ -172,6 +184,10 @@ exports[`linux > appimage tool: 0.0.0 > AppImage - key rotation - x64 3`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.2",
       },
@@ -210,6 +226,10 @@ exports[`linux > appimage tool: 0.0.0 > AppImage - signed update manifest - x64 
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.0",
       },
@@ -244,6 +264,10 @@ exports[`linux > appimage tool: 0.0.0 > AppImage - signed update manifest - x64 
         "releaseDate": "@releaseDate",
         "signature": "@signature",
         "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
           {
             "keyId": "@keyId",
             "signature": "@signature",

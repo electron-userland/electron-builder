@@ -6,7 +6,7 @@ import { Arch, TmpDir } from "builder-util"
 import { load as yamlLoad } from "js-yaml"
 import { afterEach, vi } from "vitest"
 import { generateKeyPairSync, KeyObject } from "crypto"
-import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, loadUpdateSigningKeys, log, parsePrivateKey } from "builder-util"
+import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, loadUpdateSigningKeys, log, parsePrivateKey, signUpdateManifest } from "builder-util"
 import { computeUpdateManifestKeyId, verifyManifestSignature, verifyManifestSignatures } from "builder-util-runtime"
 import { getAppUpdatePublishConfiguration } from "app-builder-lib/src/publish/PublishManager"
 import { PlatformPackager } from "app-builder-lib/src/platformPackager"
@@ -271,13 +271,43 @@ test("per-task signing: only the task whose packager yields a key is signed", as
   })
 })
 
-test("single key: `signatures` carries one entry tagged with the key id and `signature` repeats it", async ({ expect }) => {
+test("single key: `signatures` carries an EBUM1 then an EBUM2 entry tagged with the key id, and `signature` repeats the EBUM1 one", async ({ expect }) => {
   await withTmpDir(async dir => {
     const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
     const task = { ...makeTask(dir, "App-1.0.0.exe", "sha", null), packager: makeTaskPackager(parsePrivateKey(privateKeyPem)) }
     await writeUpdateInfoFiles([task], makePackager() as any)
     const yml = await readYml(path.join(dir, "latest.yml"))
-    expect(yml.signatures).toEqual([{ keyId: computeUpdateManifestKeyId(publicKeyPem), signature: yml.signature }])
+    const keyId = computeUpdateManifestKeyId(publicKeyPem)
+    const { signature: _signature, signatures: _signatures, ...unsigned } = yml
+    expect(yml.signatures).toEqual([
+      { keyId, signature: signUpdateManifest(unsigned, privateKeyPem, "EBUM1") },
+      { keyId, signature: signUpdateManifest(unsigned, privateKeyPem, "EBUM2") },
+    ])
+    expect(yml.signature).toBe(yml.signatures[0].signature)
+    expect(verifyManifestSignatures(yml, [publicKeyPem])).toEqual({ ok: true, keyId, signatureFormat: "EBUM2" })
+  })
+})
+
+test("per-machine NSIS manifest: the EBUM2 signature covers files[].isAdminRightsRequired, the EBUM1 one is what 27.0.0-alpha.10 wrote", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    const base = makeTask(dir, "App-1.0.0.exe", "sha", null)
+    const task = {
+      ...base,
+      info: { ...base.info, files: base.info.files.map(it => ({ ...it, isAdminRightsRequired: true })) },
+      packager: makeTaskPackager(parsePrivateKey(privateKeyPem)),
+    }
+    await writeUpdateInfoFiles([task], makePackager() as any)
+    const yml = await readYml(path.join(dir, "latest.yml"))
+    expect(yml.files[0].isAdminRightsRequired).toBe(true)
+    expect(verifyManifestSignatures(yml, [publicKeyPem])).toMatchObject({ ok: true, signatureFormat: "EBUM2" })
+    // the EBUM1 entry is over the flag-less bytes, as before
+    const { signature: _signature, signatures: _signatures, ...unsigned } = yml
+    expect(yml.signature).toBe(signUpdateManifest({ ...unsigned, files: unsigned.files.map(({ isAdminRightsRequired: _flag, ...file }: any) => file) }, privateKeyPem, "EBUM1"))
+    // dropping the flag invalidates EBUM2; EBUM1 still validates and, the manifest no longer being per-machine, the
+    // pre-release fallback accepts it — the known residual until 27.0.0 stable (see updateManifestSignatureTest)
+    const flipped = { ...yml, files: yml.files.map((it: any) => ({ ...it, isAdminRightsRequired: false })) }
+    expect(verifyManifestSignatures(flipped, [publicKeyPem])).toMatchObject({ ok: true, signatureFormat: "EBUM1" })
   })
 })
 
@@ -288,7 +318,9 @@ test("dual-signing: every configured key signs, `signature` is the first key's, 
     const task = { ...makeTask(dir, "App-1.0.0.exe", "sha", null), packager: makeTaskPackager(parsePrivateKey(oldKey.privateKeyPem), parsePrivateKey(newKey.privateKeyPem)) }
     await writeUpdateInfoFiles([task], makePackager() as any)
     const yml = await readYml(path.join(dir, "latest.yml"))
-    expect(yml.signatures.map((it: any) => it.keyId)).toEqual([computeUpdateManifestKeyId(oldKey.publicKeyPem), computeUpdateManifestKeyId(newKey.publicKeyPem)])
+    const ids = [computeUpdateManifestKeyId(oldKey.publicKeyPem), computeUpdateManifestKeyId(newKey.publicKeyPem)]
+    // EBUM1 per key (as 27.0.0-alpha.10 wrote it), then EBUM2 per key
+    expect(yml.signatures.map((it: any) => it.keyId)).toEqual([...ids, ...ids])
     expect(yml.signature).toBe(yml.signatures[0].signature)
     // an install trusting only the old key and one trusting only the new key both verify this manifest
     expect(verifyManifestSignatures(yml, [oldKey.publicKeyPem]).ok).toBe(true)

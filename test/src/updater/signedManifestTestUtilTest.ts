@@ -26,21 +26,23 @@ describe("resignManifest", () => {
 
   test("re-signs a manifest by the given keys only, dropping the previous signatures", ({ expect }) => {
     const signedByA = resignManifest(makeInfo(), [keyA.privateKeyPem])
-    expect(signedByA.signatures?.map(it => it.keyId)).toEqual([computeUpdateManifestKeyId(keyA.publicKeyPem)])
+    // one EBUM1 and one EBUM2 entry per key
+    expect(signedByA.signatures?.map(it => it.keyId)).toEqual([computeUpdateManifestKeyId(keyA.publicKeyPem), computeUpdateManifestKeyId(keyA.publicKeyPem)])
     expect(signedByA.signature).toBe(signedByA.signatures![0].signature)
 
     const signedByB = resignManifest(signedByA, [keyB.privateKeyPem])
-    expect(signedByB.signatures?.map(it => it.keyId)).toEqual([computeUpdateManifestKeyId(keyB.publicKeyPem)])
+    expect(signedByB.signatures?.map(it => it.keyId)).toEqual([computeUpdateManifestKeyId(keyB.publicKeyPem), computeUpdateManifestKeyId(keyB.publicKeyPem)])
     expect(signedByB.signature).toBe(signedByB.signatures![0].signature)
     expect(verifyManifestSignatures(signedByB, [keyB.publicKeyPem]).ok).toBe(true)
     // the installed app trusting A only must refuse it — this is the key-rotation negative case
     expect(verifyManifestSignatures(signedByB, [keyA.publicKeyPem]).ok).toBe(false)
-    expect(collectManifestSignatures(signedByB)).toHaveLength(1)
+    expect(collectManifestSignatures(signedByB)).toHaveLength(2)
   })
 
   test("dual-signs in key order, the first key filling the legacy signature", ({ expect }) => {
     const info = resignManifest(makeInfo(), [keyA.privateKeyPem, keyB.privateKeyPem])
-    expect(info.signatures?.map(it => it.keyId)).toEqual([computeUpdateManifestKeyId(keyA.publicKeyPem), computeUpdateManifestKeyId(keyB.publicKeyPem)])
+    const ids = [computeUpdateManifestKeyId(keyA.publicKeyPem), computeUpdateManifestKeyId(keyB.publicKeyPem)]
+    expect(info.signatures?.map(it => it.keyId)).toEqual([...ids, ...ids])
     expect(info.signature).toBe(info.signatures![0].signature)
     expect(verifyManifestSignatures(info, [keyA.publicKeyPem]).ok).toBe(true)
     expect(verifyManifestSignatures(info, [keyB.publicKeyPem]).ok).toBe(true)
@@ -134,6 +136,10 @@ test("removeUnstableProperties scrubs manifest signatures and key ids for snapsh
     sha512: "@sha512",
     releaseDate: "@releaseDate",
     signature: "@signature",
-    signatures: [{ keyId: "@keyId", signature: "@signature" }],
+    // EBUM1 then EBUM2
+    signatures: [
+      { keyId: "@keyId", signature: "@signature" },
+      { keyId: "@keyId", signature: "@signature" },
+    ],
   })
 })

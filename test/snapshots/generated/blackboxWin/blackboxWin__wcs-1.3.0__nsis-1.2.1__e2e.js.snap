@@ -194,6 +194,10 @@ exports[`blackboxWin > windows > nsis - key rotation 1`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.0",
       },
@@ -236,6 +240,14 @@ exports[`blackboxWin > windows > nsis - key rotation 2`] = `
         "releaseDate": "@releaseDate",
         "signature": "@signature",
         "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
           {
             "keyId": "@keyId",
             "signature": "@signature",
@@ -290,6 +302,10 @@ exports[`blackboxWin > windows > nsis - key rotation 3`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.2",
       },
@@ -336,6 +352,10 @@ exports[`blackboxWin > windows > nsis - signed update manifest 1`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.0",
       },
@@ -378,6 +398,10 @@ exports[`blackboxWin > windows > nsis - signed update manifest 2`] = `
         "releaseDate": "@releaseDate",
         "signature": "@signature",
         "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
           {
             "keyId": "@keyId",
             "signature": "@signature",

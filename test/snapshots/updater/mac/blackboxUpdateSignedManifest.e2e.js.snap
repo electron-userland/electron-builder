@@ -37,6 +37,10 @@ exports[`mac > mac auto-update > x64 - signed update manifest 1`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.0",
       },
@@ -127,6 +131,10 @@ exports[`mac > mac auto-update > x64 - signed update manifest 3`] = `
         "releaseDate": "@releaseDate",
         "signature": "@signature",
         "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
           {
             "keyId": "@keyId",
             "signature": "@signature",

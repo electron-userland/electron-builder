@@ -136,6 +136,10 @@ exports[`linux > arch - key rotation 1`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.0",
       },
@@ -168,6 +172,14 @@ exports[`linux > arch - key rotation 2`] = `
         "releaseDate": "@releaseDate",
         "signature": "@signature",
         "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
           {
             "keyId": "@keyId",
             "signature": "@signature",
@@ -212,6 +224,10 @@ exports[`linux > arch - key rotation 3`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.2",
       },
@@ -248,6 +264,10 @@ exports[`linux > arch - signed update manifest 1`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.0",
       },
@@ -280,6 +300,10 @@ exports[`linux > arch - signed update manifest 2`] = `
         "releaseDate": "@releaseDate",
         "signature": "@signature",
         "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
           {
             "keyId": "@keyId",
             "signature": "@signature",
@@ -1138,6 +1162,10 @@ exports[`linux > debian - key rotation 1`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.0",
       },
@@ -1276,6 +1304,14 @@ exports[`linux > debian - key rotation 5`] = `
         "releaseDate": "@releaseDate",
         "signature": "@signature",
         "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
           {
             "keyId": "@keyId",
             "signature": "@signature",
@@ -1426,6 +1462,10 @@ exports[`linux > debian - key rotation 9`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.2",
       },
@@ -1568,6 +1608,10 @@ exports[`linux > debian - signed update manifest 1`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.0",
       },
@@ -1706,6 +1750,10 @@ exports[`linux > debian - signed update manifest 5`] = `
         "releaseDate": "@releaseDate",
         "signature": "@signature",
         "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
           {
             "keyId": "@keyId",
             "signature": "@signature",
@@ -2142,6 +2190,10 @@ exports[`linux > fedora - key rotation 1`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.0",
       },
@@ -2174,6 +2226,14 @@ exports[`linux > fedora - key rotation 2`] = `
         "releaseDate": "@releaseDate",
         "signature": "@signature",
         "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
           {
             "keyId": "@keyId",
             "signature": "@signature",
@@ -2218,6 +2278,10 @@ exports[`linux > fedora - key rotation 3`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.2",
       },
@@ -2254,6 +2318,10 @@ exports[`linux > fedora - signed update manifest 1`] = `
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.0",
       },
@@ -2286,6 +2354,10 @@ exports[`linux > fedora - signed update manifest 2`] = `
         "releaseDate": "@releaseDate",
         "signature": "@signature",
         "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
           {
             "keyId": "@keyId",
             "signature": "@signature",

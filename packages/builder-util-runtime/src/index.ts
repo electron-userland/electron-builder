@@ -51,6 +51,8 @@ export {
   collectManifestSignatures,
   computeUpdateManifestKeyId,
   createManifestSignatureEntry,
+  LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION,
+  ManifestSignatureVerification,
   normalizePublicKeyList,
   parsePublicKey,
   splitPemBlocks,
@@ -58,6 +60,7 @@ export {
   verifyManifestSignature,
   verifyManifestSignatures,
   UPDATE_MANIFEST_SIGNATURE_VERSION,
+  UpdateManifestSignatureFormat,
 } from "./updateManifestSignature.js"
 export { UUID } from "./uuid.js"
 export { parseXml, XElement } from "./xml.js"

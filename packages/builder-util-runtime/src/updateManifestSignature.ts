@@ -2,13 +2,25 @@ import { createHash, createPublicKey, KeyObject, verify as cryptoVerify } from "
 import { PackageFileInfo, UpdateFileInfo, UpdateInfo, UpdateManifestSignature, WindowsUpdateInfo } from "./updateInfo.js"
 
 /**
- * Version tag of the canonical signing format. Prefixed onto the signed payload so the
- * scheme can evolve without ambiguity: an updater that only understands `EBUM1` will refuse
- * a future `EBUM2` payload rather than silently mis-verify it.
+ * Version tag of the canonical signing format written and verified by this release. Prefixed onto the signed
+ * payload so the scheme can evolve without ambiguity: a signature over one format never verifies against
+ * another, so an updater that only understands `EBUM1` simply fails an `EBUM2` signature (and tries the next
+ * one) rather than mis-verifying it.
  *
- * EBUM = "electron-builder update manifest".
+ * EBUM = "electron-builder update manifest". `EBUM2` is `EBUM1` plus `files[].isAdminRightsRequired` (see
+ * {@link canonicalizeForSigning}).
  */
-export const UPDATE_MANIFEST_SIGNATURE_VERSION = "EBUM1"
+export const UPDATE_MANIFEST_SIGNATURE_VERSION = "EBUM2"
+
+/**
+ * The previous canonical format, the only one written by electron-builder 27.0.0-alpha.9 and alpha.10 and the only
+ * one verified by electron-updater 7.0.0-alpha.8 and alpha.9. electron-builder keeps writing an `EBUM1` signature
+ * next to the `EBUM2` one so installs running those updaters keep verifying new manifests.
+ */
+export const LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION = "EBUM1"
+
+/** A canonical signing format: {@link UPDATE_MANIFEST_SIGNATURE_VERSION} or {@link LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION}. */
+export type UpdateManifestSignatureFormat = typeof UPDATE_MANIFEST_SIGNATURE_VERSION | typeof LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION
 
 /**
  * Encodes one field value for the canonical payload. Strings are JSON-quoted, which escapes `"`, `\`,
@@ -30,7 +42,8 @@ function encodeField(value: unknown): string {
 }
 
 /**
- * Produces the exact byte string that is Ed25519-signed at publish time and verified at update time.
+ * Produces the exact byte string that is Ed25519-signed at publish time and verified at update time, in the
+ * given canonical format (by default {@link UPDATE_MANIFEST_SIGNATURE_VERSION}, `EBUM2`).
  *
  * Only integrity- and rollout-critical fields are covered:
  *   - `version`               — prevents version downgrade/substitution
@@ -38,14 +51,11 @@ function encodeField(value: unknown): string {
  *   - `minimumSystemVersion`  — prevents bypassing or forging the OS-version gate (its absence is signed too,
  *                               so one cannot be added after the fact)
  *   - each file's `url`, `sha512`, `size` — the artifact identity + integrity hash the updater enforces — and its
- *     `blockMapUrl` when present (an extra field on the file record only then, so other manifests are unaffected)
- *   - each file's `isAdminRightsRequired` when it is `true` — electron-updater reads it from the installer's file entry to decide
- *     whether to run the NSIS installer through `elevate.exe` (per-machine installs), so it must not be flippable
- *     by whoever serves the manifest. Like `blockMapUrl`, it only adds fields to the file record when set
+ *     `blockMapUrl`
+ *   - each file's `isAdminRightsRequired` (`EBUM2` only) — electron-updater reads it from the installer's file entry
+ *     to decide whether to run the NSIS installer through `elevate.exe` (per-machine installs)
  *   - each NSIS web-installer package's arch key and `path`, `sha512`, `size`, `blockMapSize`, `isAdminRightsRequired`
- *     (`WindowsUpdateInfo.packages`, keyed by arch) — the payload the web installer downloads and verifies. (The
- *     per-package `isAdminRightsRequired` column is part of the `EBUM1` wire format but is not what the updater reads;
- *     the elevation decision comes from the signed `files[].isAdminRightsRequired` above.)
+ *     (`WindowsUpdateInfo.packages`, keyed by arch) — the payload the web installer downloads and verifies
  *
  * Cosmetic/operational fields (`releaseDate`, `releaseNotes`, `releaseName`) are intentionally excluded so
  * they can be edited post-signing without invalidating the signature. The `signature`/`signatures` fields are
@@ -54,24 +64,26 @@ function encodeField(value: unknown): string {
  * signed manifest without a non-empty `files` list (see {@link validateSignedManifestShape}), so the updater
  * never falls back to those legacy fields for a verified manifest.
  *
- * Wire format (`EBUM1`): one record per line, `label:` followed by tab-separated fields, e.g.
+ * Wire format: one record per line, `label:` followed by tab-separated fields. `EBUM2`:
  *
- *     EBUM1
+ *     EBUM2
  *     version:"1.2.3"
  *     staging:25
  *     minimumSystemVersion:"10.0.19041"
- *     file:"App-1.2.3.exe"<TAB>"<sha512>"<TAB>8123456
- *     file:"App-1.2.4.exe"<TAB>"<sha512>"<TAB>8123456<TAB>"https://cdn.example.com/App-1.2.4.exe.blockmap?sig=…"   (with a blockMapUrl)
- *     file:"App-1.2.5.exe"<TAB>"<sha512>"<TAB>8123456<TAB><TAB>1                     (isAdminRightsRequired: true, no blockMapUrl)
- *     file:"App-1.2.6.exe"<TAB>"<sha512>"<TAB>8123456<TAB>"<blockMapUrl>"<TAB>1      (isAdminRightsRequired: true, with a blockMapUrl)
+ *     file:"App-1.2.3.exe"<TAB>"<sha512>"<TAB>8123456<TAB><TAB>                         (no blockMapUrl, no flag)
+ *     file:"App-1.2.4.exe"<TAB>"<sha512>"<TAB>8123456<TAB>"<blockMapUrl>"<TAB>1          (blockMapUrl, isAdminRightsRequired: true)
  *     package:"x64"<TAB>"App-1.2.3-x64.nsis.7z"<TAB>"<sha512>"<TAB>5000<TAB>120<TAB>1
  *
- * A `file:` record therefore has 3, 4 or 5 fields: `url`, `sha512`, `size`, then `blockMapUrl` (a JSON string) when it is
- * set or the flag follows, then `1` when `isAdminRightsRequired` is `true`. When the flag is set without a `blockMapUrl`,
- * the `blockMapUrl` column is emitted empty (the "absent" encoding) so the flag always sits in the fifth column and can
- * never be read as, or shifted into, a `blockMapUrl`. `isAdminRightsRequired: false` and an absent flag both mean "no
- * elevation" to the updater (it checks `=== true`), so both emit nothing and a manifest without the flag canonicalizes
- * exactly as it did before the flag was signed.
+ * An `EBUM2` `file:` record always has five columns: `url`, `sha512`, `size`, `blockMapUrl` (empty when absent) and
+ * `isAdminRightsRequired` (`1` when it is `true`, empty otherwise — the updater only elevates on `=== true`, so `false`
+ * and an absent flag are the same to it and sign the same). Fixed columns keep every combination distinct.
+ *
+ * `EBUM1` ({@link LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION}) is byte-for-byte the format electron-builder 27.0.0-alpha.9
+ * and alpha.10 sign: the same records with an `EBUM1` tag line, except that the `file:` record has no flag column and
+ * carries `blockMapUrl` as a fourth column only when present:
+ *
+ *     file:"App-1.2.3.exe"<TAB>"<sha512>"<TAB>8123456
+ *     file:"App-1.2.4.exe"<TAB>"<sha512>"<TAB>8123456<TAB>"https://cdn.example.com/App-1.2.4.exe.blockmap?sig=…"   (with a blockMapUrl)
  *
  * Every value goes through {@link encodeField} (JSON-quoted strings, bare numbers, empty for absent), which is
  * what makes the encoding injective: a value can never contain an unescaped newline or tab, so no choice of
@@ -84,9 +96,10 @@ function encodeField(value: unknown): string {
  * resolves `files[].url` / `packages[arch].path` against the feed base URL. This function never throws; shape
  * problems are reported by {@link validateSignedManifestShape} instead.
  */
-export function canonicalizeForSigning(info: UpdateInfo): string {
+export function canonicalizeForSigning(info: UpdateInfo, format: UpdateManifestSignatureFormat = UPDATE_MANIFEST_SIGNATURE_VERSION): string {
+  const legacy = format === LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION
   const lines: string[] = [
-    UPDATE_MANIFEST_SIGNATURE_VERSION,
+    legacy ? LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION : UPDATE_MANIFEST_SIGNATURE_VERSION,
     `version:${encodeField(info.version)}`,
     `staging:${encodeField(info.stagingPercentage)}`,
     // always emitted (empty when unset) so that adding a minimumSystemVersion to a signed manifest is detected
@@ -95,12 +108,11 @@ export function canonicalizeForSigning(info: UpdateInfo): string {
 
   const files = (info.files ?? []).map(f => {
     const record = `file:${encodeField(f?.url)}\t${encodeField(f?.sha512)}\t${encodeField(f?.size)}`
-    // optional columns are only emitted when needed, so manifests with neither canonicalize exactly as before:
-    // the flag takes a fixed fifth column, with an empty (absent) blockMapUrl column in front of it when unset
-    if (f?.isAdminRightsRequired === true) {
-      return `${record}\t${encodeField(f.blockMapUrl)}\t1`
+    if (legacy) {
+      // EBUM1: blockMapUrl only when present, no isAdminRightsRequired — must stay exactly as 27.0.0-alpha builders sign it
+      return f?.blockMapUrl == null ? record : `${record}\t${encodeField(f.blockMapUrl)}`
     }
-    return f?.blockMapUrl == null ? record : `${record}\t${encodeField(f.blockMapUrl)}`
+    return `${record}\t${encodeField(f?.blockMapUrl)}\t${f?.isAdminRightsRequired === true ? "1" : ""}`
   })
   // Sort so file ordering in the manifest cannot change the signed payload.
   files.sort()
@@ -146,8 +158,8 @@ function isNonEmptyString(value: unknown): value is string {
  * so that a manifest the updater would reject is never signed in the first place:
  *   - `version` is a non-empty string
  *   - `files` is a non-empty array whose entries have a non-empty string `url` and `sha512` (and a numeric
- *     `size`, a non-empty string `blockMapUrl` and a boolean `isAdminRightsRequired` when present) — a signed manifest must
- *     describe its own files, so the updater never consults the unsigned legacy top-level `path`/`sha512` for it
+ *     `size`, a non-empty string `blockMapUrl` and a boolean `isAdminRightsRequired` when present) — a signed manifest
+ *     must describe its own files, so the updater never consults the unsigned legacy top-level `path`/`sha512` for it
  *   - `stagingPercentage` is a number when present, `minimumSystemVersion` a string when present
  *   - every `packages` entry (NSIS web installer) has a non-empty string `path` and `sha512`, numeric
  *     `size`/`blockMapSize` when present, and a boolean `isAdminRightsRequired` when present
@@ -390,32 +402,42 @@ function verifySignatureBytes(data: Buffer, key: KeyObject, signature: string): 
   }
 }
 
+/** Outcome of {@link verifyManifestSignatures}. */
+export interface ManifestSignatureVerification {
+  /** True when the manifest is accepted. */
+  readonly ok: boolean
+  /**
+   * When `ok`, the id of the trusted key that verified. When not `ok` and {@link signatureFormat} is `EBUM1`, the id of
+   * the trusted key that validates the manifest's `EBUM1` signature, which was not accepted (see {@link signatureFormat}).
+   */
+  readonly keyId?: string
+  /**
+   * The format of the signature {@link keyId} validates. `EBUM2` is the normal case. `EBUM1` means the manifest carries
+   * no valid `EBUM2` signature, only one in the format electron-builder 27.0.0-alpha.9 and alpha.10 wrote: with `ok` it
+   * was accepted through the pre-release fallback (no `isAdminRightsRequired: true` anywhere); without `ok` it was
+   * rejected because the manifest is per-machine (`isAdminRightsRequired: true`), which `EBUM1` does not fully cover.
+   * Unset when no trusted key validates any signature.
+   */
+  readonly signatureFormat?: UpdateManifestSignatureFormat
+  /** Set when the manifest fails {@link validateSignedManifestShape}; no signature was tried. */
+  readonly reason?: string
+}
+
+/** True when any file entry or NSIS web package of the manifest requires admin rights (a per-machine install). */
+// (an `UpdateInfo` is a `WindowsUpdateInfo` without `packages`, so no cast is needed to look for them)
+function requiresAdminRights(info: WindowsUpdateInfo): boolean {
+  if ((info.files ?? []).some(f => f?.isAdminRightsRequired === true)) {
+    return true
+  }
+  const packages = info.packages
+  return packages != null && Object.keys(packages).some(arch => packages[arch]?.isAdminRightsRequired === true)
+}
+
 /**
- * Verifies a manifest against a trust list of Ed25519 public keys. The manifest is accepted when ANY
- * trusted key validates ANY of the signatures it carries (see {@link collectManifestSignatures}); this is
- * what lets a release be dual-signed during key rotation and an install trust `[old, new]`.
- *
- * For each trusted key, signatures tagged with that key's {@link computeUpdateManifestKeyId} are tried
- * first, then untagged (legacy `signature`) entries — so a stale or foreign `keyId` never prevents a
- * legitimately signed manifest from verifying. Never throws on a bad signature; malformed *keys* still
- * throw, since that is a configuration error. Returns the id of the trusted key that verified, if any.
- *
- * Before any signature is tried the manifest must pass {@link validateSignedManifestShape}; a manifest that
- * does not is rejected with `reason` set, regardless of what it is signed with.
+ * Tries every trusted key against every candidate signature over `data` and returns the id of the first trusted key
+ * that validates one. Keys are parsed in order, so a malformed key throws once it is reached, as before.
  */
-export function verifyManifestSignatures(info: UpdateInfo, publicKeys: Array<string | KeyObject>): { ok: boolean; keyId?: string; reason?: string } {
-  const candidates = collectManifestSignatures(info)
-  if (candidates.length === 0 || publicKeys.length === 0) {
-    return { ok: false }
-  }
-  // A signed manifest must have the shape the signature is meant to protect (non-empty files, plain string
-  // fields, ...) — checked before any cryptography so that a structurally hostile manifest is rejected even
-  // if its bytes happened to be signed.
-  const shapeProblem = validateSignedManifestShape(info)
-  if (shapeProblem != null) {
-    return { ok: false, reason: shapeProblem }
-  }
-  const data = Buffer.from(canonicalizeForSigning(info), "utf8")
+function findVerifyingKey(data: Buffer, publicKeys: Array<string | KeyObject>, candidates: Array<{ readonly keyId?: string; readonly signature: string }>): string | null {
   const seen = new Set<string>()
   for (const publicKey of publicKeys) {
     const key = typeof publicKey === "string" ? parsePublicKey(publicKey) : publicKey
@@ -428,16 +450,65 @@ export function verifyManifestSignatures(info: UpdateInfo, publicKeys: Array<str
     const untagged = candidates.filter(it => it.keyId == null)
     for (const candidate of [...tagged, ...untagged]) {
       if (verifySignatureBytes(data, key, candidate.signature)) {
-        return { ok: true, keyId }
+        return keyId
       }
     }
   }
-  return { ok: false }
+  return null
+}
+
+/**
+ * Verifies a manifest against a trust list of Ed25519 public keys. The manifest is accepted when ANY
+ * trusted key validates ANY of the signatures it carries (see {@link collectManifestSignatures}) over the
+ * `EBUM2` payload ({@link canonicalizeForSigning}); this is what lets a release be dual-signed during key rotation
+ * and an install trust `[old, new]`.
+ *
+ * Pre-release fallback: when no `EBUM2` signature verifies, a valid `EBUM1` signature (the format electron-builder
+ * 27.0.0-alpha.9 and alpha.10 wrote, which does not cover `files[].isAdminRightsRequired`) is accepted, but only when
+ * no file entry or web-installer package has `isAdminRightsRequired: true`. The result then has `signatureFormat:
+ * "EBUM1"` so the caller can warn. A per-machine manifest signed only with `EBUM1` is rejected (`ok: false`,
+ * `signatureFormat: "EBUM1"`). What this leaves open is stripping the `EBUM2` signature from a per-machine manifest and
+ * flipping its flag from `true` to `false`; electron-updater then still elevates through `elevate.exe` when the
+ * installer needs it. Adding the flag (`false` → `true`) to an `EBUM1`-only manifest is always rejected.
+ * TODO(v27): remove the EBUM1 fallback before 27.0.0 stable, so only EBUM2 is accepted.
+ *
+ * For each trusted key, signatures tagged with that key's {@link computeUpdateManifestKeyId} are tried
+ * first, then untagged (legacy `signature`) entries — so a stale or foreign `keyId` never prevents a
+ * legitimately signed manifest from verifying. A manifest written by electron-builder carries both an `EBUM1` and an
+ * `EBUM2` entry per key under the same `keyId`; the one over the other format simply fails. Never throws on a bad
+ * signature; malformed *keys* still throw, since that is a configuration error.
+ *
+ * Before any signature is tried the manifest must pass {@link validateSignedManifestShape}; a manifest that
+ * does not is rejected with `reason` set, regardless of what it is signed with.
+ */
+export function verifyManifestSignatures(info: UpdateInfo, publicKeys: Array<string | KeyObject>): ManifestSignatureVerification {
+  const candidates = collectManifestSignatures(info)
+  if (candidates.length === 0 || publicKeys.length === 0) {
+    return { ok: false }
+  }
+  // A signed manifest must have the shape the signature is meant to protect (non-empty files, plain string
+  // fields, ...) — checked before any cryptography so that a structurally hostile manifest is rejected even
+  // if its bytes happened to be signed.
+  const shapeProblem = validateSignedManifestShape(info)
+  if (shapeProblem != null) {
+    return { ok: false, reason: shapeProblem }
+  }
+  const keyId = findVerifyingKey(Buffer.from(canonicalizeForSigning(info), "utf8"), publicKeys, candidates)
+  if (keyId != null) {
+    return { ok: true, keyId, signatureFormat: UPDATE_MANIFEST_SIGNATURE_VERSION }
+  }
+
+  // TODO(v27): remove this EBUM1 fallback before 27.0.0 stable.
+  const legacyKeyId = findVerifyingKey(Buffer.from(canonicalizeForSigning(info, LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION), "utf8"), publicKeys, candidates)
+  if (legacyKeyId == null) {
+    return { ok: false }
+  }
+  return { ok: !requiresAdminRights(info), keyId: legacyKeyId, signatureFormat: LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION }
 }
 
 /**
  * Single-key convenience over {@link verifyManifestSignatures}: true when `publicKey` validates the
- * legacy `info.signature` or any entry of `info.signatures`. Returns a boolean and never throws on a bad
+ * legacy `info.signature` or any entry of `info.signatures` (accepted under the same rules, including the `EBUM1` fallback). Returns a boolean and never throws on a bad
  * signature — the caller decides whether an unverified manifest is fatal. (Malformed keys still throw.)
  */
 export function verifyManifestSignature(info: UpdateInfo, publicKey: string | KeyObject): boolean {

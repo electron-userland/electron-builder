@@ -285,9 +285,11 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     // releaseDate is excluded from the signed payload, so setting it above does not affect them.
     // The keys are resolved per task (not once for the batch) so each manifest is signed iff that
     // platform's config requires it, matching the per-platform public-key embedding in PublishManager.
-    // Every configured key signs (dual-signing during key rotation): `signatures` holds one tagged entry
-    // per key and the legacy single `signature` field repeats the first key's signature, so the manifest
-    // shape is the same whether one or several keys are configured.
+    // Every configured key signs (dual-signing during key rotation), in both canonical formats: `signatures` holds
+    // one tagged EBUM1 entry per key (what electron-updater 7.0.0-alpha.8/alpha.9 verify), then one tagged EBUM2
+    // entry per key (what this electron-updater verifies; it also covers files[].isAdminRightsRequired). The legacy
+    // single `signature` field repeats the first key's EBUM1 signature, so the manifest shape is the same whether
+    // one or several keys are configured.
     const signingKeys = await task.packager.requireUpdateSigningKeys(isPublish)
     let info: UpdateInfo = task.info
     // empty only when signing is opted out of with `updateManifest: false`, or on a build without a publish

@@ -5,20 +5,24 @@ import {
   canonicalizeForSigning,
   computeUpdateManifestKeyId,
   createManifestSignatureEntry,
+  LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION,
   splitPemBlocks,
+  UPDATE_MANIFEST_SIGNATURE_VERSION,
   UpdateInfo,
   UpdateManifestSignature,
+  UpdateManifestSignatureFormat,
   validateSignedManifestShape,
 } from "builder-util-runtime"
 
 /**
  * Build-time counterpart to `verifyManifestSignature`. Lives in builder-util (never bundled into a
- * shipped app) because it handles the private key. Produces the base64 Ed25519 signature embedded as
- * `UpdateInfo.signature`, computed over the same canonical payload the runtime verifier reconstructs.
+ * shipped app) because it handles the private key. Produces a base64 Ed25519 signature over the canonical
+ * payload in the given format (`EBUM2` by default, see `canonicalizeForSigning`), the same bytes the runtime
+ * verifier reconstructs.
  * Throws when the manifest does not have the shape the verifier requires of a signed manifest
  * (`validateSignedManifestShape`), so a build never publishes a signed manifest the updater would refuse.
  */
-export function signUpdateManifest(info: UpdateInfo, privateKey: string | KeyObject): string {
+export function signUpdateManifest(info: UpdateInfo, privateKey: string | KeyObject, format: UpdateManifestSignatureFormat = UPDATE_MANIFEST_SIGNATURE_VERSION): string {
   const key = typeof privateKey === "string" ? parsePrivateKey(privateKey) : privateKey
   if (key.asymmetricKeyType !== "ed25519") {
     throw new Error(`Update manifest signing key must be Ed25519, got: ${key.asymmetricKeyType}`)
@@ -27,23 +31,26 @@ export function signUpdateManifest(info: UpdateInfo, privateKey: string | KeyObj
   if (shapeProblem != null) {
     throw new Error(`Cannot sign update manifest for version ${info.version}: ${shapeProblem} (the updater would reject it)`)
   }
-  const data = Buffer.from(canonicalizeForSigning(info), "utf8")
+  const data = Buffer.from(canonicalizeForSigning(info, format), "utf8")
   return cryptoSign(null, data, key).toString("base64")
 }
 
 /**
- * Signs the manifest with every given key and returns one `signatures` entry per key, in order, each
- * tagged with the id of the key that produced it. `UpdateInfo.signature` is the first entry's signature.
+ * Signs the manifest with every given key, in both canonical formats, and returns the `signatures` entries, each
+ * tagged with the id of the key that produced it: first one `EBUM1` entry per key, in order — exactly the list
+ * electron-builder 27.0.0-alpha.9 and alpha.10 wrote, which is what electron-updater 7.0.0-alpha.8 and alpha.9
+ * verify — then one `EBUM2` entry per key, in order, which also covers `files[].isAdminRightsRequired` and is what
+ * this electron-updater verifies. An older updater tries every entry, fails the `EBUM2` ones and verifies an `EBUM1`
+ * one. `UpdateInfo.signature` is the first entry's signature (the first key's `EBUM1` signature).
  * Throws when `privateKeys` is empty — callers decide whether an unsigned manifest is acceptable.
  */
 export function createUpdateManifestSignatures(info: UpdateInfo, privateKeys: Array<string | KeyObject>): Array<UpdateManifestSignature> {
   if (privateKeys.length === 0) {
     throw new Error("Cannot sign update manifest: no signing key provided")
   }
-  return privateKeys.map(privateKey => {
-    const key = typeof privateKey === "string" ? parsePrivateKey(privateKey) : privateKey
-    return createManifestSignatureEntry(key, signUpdateManifest(info, key))
-  })
+  const keys = privateKeys.map(privateKey => (typeof privateKey === "string" ? parsePrivateKey(privateKey) : privateKey))
+  const sign = (format: UpdateManifestSignatureFormat) => keys.map(key => createManifestSignatureEntry(key, signUpdateManifest(info, key, format)))
+  return [...sign(LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION), ...sign(UPDATE_MANIFEST_SIGNATURE_VERSION)]
 }
 
 /** Accepts an Ed25519 private key as a PEM string (PKCS#8) and returns a normalized KeyObject. */

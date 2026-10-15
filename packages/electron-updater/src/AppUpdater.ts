@@ -15,6 +15,7 @@ import {
   BlockMap,
   retry,
   collectManifestSignatures,
+  LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION,
   normalizePublicKeyList,
   verifyManifestSignatures,
   type LimitedLogger,
@@ -73,6 +74,8 @@ export type AppUpdaterEvents = {
   "update-cancelled": (info: UpdateInfo) => void
   "appimage-filename-updated": (path: string) => void
 }
+
+const LEGACY_MANIFEST_SIGNATURE_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#update-manifests-are-signed-in-the-ebum2-format"
 
 export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter<AppUpdaterEvents>) {
   /**
@@ -693,10 +696,15 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * - Key(s) configured, manifest carries no signature at all → throws ERR_UPDATER_MANIFEST_NOT_SIGNED.
    * - Key(s) configured, no trusted key validates any signature → throws ERR_UPDATER_MANIFEST_SIGNATURE_INVALID.
    *
-   * A manifest may carry several signatures (`signatures`, one per signing key, tagged with the key id) plus
-   * the legacy single `signature`; any trusted key matching any of them is sufficient, which is what allows
+   * A manifest may carry several signatures (`signatures`, tagged with the key id) plus the legacy single
+   * `signature`; any trusted key matching any of them in the `EBUM2` format is sufficient, which is what allows
    * a release to be dual-signed while installs trust `[old, new]` during key rotation. Never fails open once
    * a key is configured. A throw here propagates before any download starts (fail-closed).
+   *
+   * During the v27 pre-release a manifest signed only in the legacy `EBUM1` format (electron-builder 27.0.0-alpha.9
+   * and alpha.10) is still accepted, with a one-time warning, unless it is a per-machine install
+   * (`isAdminRightsRequired: true`), which `EBUM1` does not fully cover — see `verifyManifestSignatures`.
+   * TODO(v27): remove the EBUM1 fallback (and its warning) before 27.0.0 stable.
    */
   private async verifyManifestSignature(info: UpdateInfo): Promise<void> {
     let trustedKeys = normalizePublicKeyList(this.updateManifestPublicKey)
@@ -724,6 +732,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     const result = verifyManifestSignatures(info, trustedKeys)
+    if (!result.ok && result.signatureFormat === LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION) {
+      throw newError(
+        `electron-updater 7 (electron-builder v27) accepts a manifest signed only in the legacy EBUM1 format, which does not cover files[].isAdminRightsRequired, ` +
+          `only when it does not require admin rights. The manifest for version ${info.version} is a per-machine install (isAdminRightsRequired: true) ` +
+          `and its only valid signature (trusted key ${result.keyId}) is EBUM1, as written by electron-builder 27.0.0-alpha.9 and alpha.10, so it is refused. ` +
+          `Rebuild and re-sign the release with an electron-builder at least as new as the electron-updater in this app, which also writes the EBUM2 signature. ` +
+          LEGACY_MANIFEST_SIGNATURE_DOCS,
+        "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID"
+      )
+    }
     if (!result.ok) {
       // `reason` is set when the manifest fails the structural checks a signed manifest must pass (e.g. an empty
       // `files` list or control characters in a signed field) — those are rejected before any key is tried.
@@ -740,8 +758,26 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       )
     }
 
+    if (result.signatureFormat === LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION) {
+      this.warnLegacyManifestSignature(info.version, result.keyId)
+    }
     this._logger.debug?.(`Update manifest for version ${info.version} verified with trusted key ${result.keyId}`)
     this._logger.info(`Update manifest signature verified for version ${info.version}`)
+  }
+
+  // TODO(v27): remove with the EBUM1 fallback before 27.0.0 stable. Once per updater instance; a logger that throws
+  // must not turn an accepted manifest into a failed update check.
+  private warnLegacyManifestSignature(version: string, keyId: string | undefined): void {
+    try {
+      this.limitedLogger("manifest-legacy-signature").warn(
+        `electron-updater 7 (electron-builder v27) verifies the EBUM2 manifest signature, which also covers files[].isAdminRightsRequired. ` +
+          `The manifest for version ${version} has no valid EBUM2 signature, only the legacy EBUM1 one (trusted key ${keyId ?? "unknown"}), as written by electron-builder 27.0.0-alpha.9 and alpha.10: ` +
+          `it is accepted because it does not require admin rights, but only during the v27 pre-release — 27.0.0 stable refuses it. ` +
+          `Rebuild and re-sign the release with an electron-builder at least as new as the electron-updater in this app. ${LEGACY_MANIFEST_SIGNATURE_DOCS}`
+      )
+    } catch {
+      // never let logging fail the update check
+    }
   }
 
   private createProviderRuntimeOptions() {

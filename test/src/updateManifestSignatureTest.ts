@@ -2,8 +2,10 @@ import { describe, expect, test } from "vitest"
 import {
   canonicalizeForSigning,
   collectManifestSignatures,
+  LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION,
   computeUpdateManifestKeyId,
   normalizePublicKeyList,
+  PackageFileInfo,
   splitPemBlocks,
   UpdateInfo,
   UPDATE_MANIFEST_SIGNATURE_VERSION,
@@ -13,7 +15,7 @@ import {
   WindowsUpdateInfo,
 } from "builder-util-runtime"
 import { createUpdateManifestSignatures, derivePublicKeyPem, generateUpdateSigningKeypair, parsePrivateKey, signUpdateManifest } from "builder-util"
-import { createPublicKey, generateKeyPairSync } from "crypto"
+import { createPublicKey, generateKeyPairSync, verify as cryptoVerify } from "crypto"
 
 function makeInfo(overrides: Partial<UpdateInfo> = {}): UpdateInfo {
   return {
@@ -50,7 +52,10 @@ describe("canonicalizeForSigning", () => {
 
   test("includes version prefix, version, staging and files; excludes cosmetic fields", () => {
     const canonical = canonicalizeForSigning(makeInfo({ stagingPercentage: 25, releaseNotes: "irrelevant", releaseName: "irrelevant" }))
-    expect(canonical.startsWith(UPDATE_MANIFEST_SIGNATURE_VERSION)).toBe(true)
+    expect(UPDATE_MANIFEST_SIGNATURE_VERSION).toBe("EBUM2")
+    expect(LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION).toBe("EBUM1")
+    expect(canonical.startsWith(`${UPDATE_MANIFEST_SIGNATURE_VERSION}\n`)).toBe(true)
+    expect(canonicalizeForSigning(makeInfo(), LEGACY_UPDATE_MANIFEST_SIGNATURE_VERSION).startsWith("EBUM1\n")).toBe(true)
     expect(canonical).toContain('version:"1.2.3"')
     expect(canonical).toContain("staging:25")
     expect(canonical).toContain('file:"App-1.2.3.exe"\t"abc123"\t8123456')
@@ -207,18 +212,21 @@ describe("verifyManifestSignatures (trust list, multi-signature)", () => {
   const newKey = generateUpdateSigningKeypair()
   const strangerKey = generateUpdateSigningKeypair()
 
-  test("createUpdateManifestSignatures emits one tagged entry per key, in order", () => {
+  test("createUpdateManifestSignatures emits one tagged EBUM1 entry per key, in order, then one tagged EBUM2 entry per key", () => {
     const signatures = createUpdateManifestSignatures(makeInfo(), [oldKey.privateKeyPem, newKey.privateKeyPem])
-    expect(signatures.map(it => it.keyId)).toEqual([computeUpdateManifestKeyId(oldKey.publicKeyPem), computeUpdateManifestKeyId(newKey.publicKeyPem)])
-    expect(signatures[0].signature).toBe(signUpdateManifest(makeInfo(), oldKey.privateKeyPem))
-    expect(signatures[1].signature).toBe(signUpdateManifest(makeInfo(), newKey.privateKeyPem))
+    const ids = [computeUpdateManifestKeyId(oldKey.publicKeyPem), computeUpdateManifestKeyId(newKey.publicKeyPem)]
+    expect(signatures.map(it => it.keyId)).toEqual([...ids, ...ids])
+    expect(signatures[0].signature).toBe(signUpdateManifest(makeInfo(), oldKey.privateKeyPem, "EBUM1"))
+    expect(signatures[1].signature).toBe(signUpdateManifest(makeInfo(), newKey.privateKeyPem, "EBUM1"))
+    expect(signatures[2].signature).toBe(signUpdateManifest(makeInfo(), oldKey.privateKeyPem))
+    expect(signatures[3].signature).toBe(signUpdateManifest(makeInfo(), newKey.privateKeyPem, "EBUM2"))
     expect(() => createUpdateManifestSignatures(makeInfo(), [])).toThrow(/no signing key/)
   })
 
   test("dual-signed manifest verifies with old-only, new-only and both trusted", () => {
     const info = multiSigned(makeInfo(), [oldKey.privateKeyPem, newKey.privateKeyPem])
-    expect(verifyManifestSignatures(info, [oldKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem) })
-    expect(verifyManifestSignatures(info, [newKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(newKey.publicKeyPem) })
+    expect(verifyManifestSignatures(info, [oldKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem), signatureFormat: "EBUM2" })
+    expect(verifyManifestSignatures(info, [newKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(newKey.publicKeyPem), signatureFormat: "EBUM2" })
     expect(verifyManifestSignatures(info, [oldKey.publicKeyPem, newKey.publicKeyPem]).ok).toBe(true)
     // the trust-list order decides which key is reported
     expect(verifyManifestSignatures(info, [newKey.publicKeyPem, oldKey.publicKeyPem]).keyId).toBe(computeUpdateManifestKeyId(newKey.publicKeyPem))
@@ -227,7 +235,11 @@ describe("verifyManifestSignatures (trust list, multi-signature)", () => {
   test("legacy single `signature` verifies against a trust list containing the signer", () => {
     const info = signed(makeInfo(), oldKey.privateKeyPem)
     expect(info.signatures).toBeUndefined()
-    expect(verifyManifestSignatures(info, [newKey.publicKeyPem, oldKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem) })
+    expect(verifyManifestSignatures(info, [newKey.publicKeyPem, oldKey.publicKeyPem])).toEqual({
+      ok: true,
+      keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem),
+      signatureFormat: "EBUM2",
+    })
     expect(verifyManifestSignatures(info, [newKey.publicKeyPem]).ok).toBe(false)
   })
 
@@ -251,7 +263,7 @@ describe("verifyManifestSignatures (trust list, multi-signature)", () => {
       // tagged with old's id but produced by a stranger — must not be accepted, and must not prevent fallback
       signatures: [{ keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem), signature: signUpdateManifest(base, strangerKey.privateKeyPem) }],
     }
-    expect(verifyManifestSignatures(info, [oldKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem) })
+    expect(verifyManifestSignatures(info, [oldKey.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(oldKey.publicKeyPem), signatureFormat: "EBUM2" })
   })
 
   test("a signature tagged with an unknown keyId is still tried by no trusted key unless untagged", () => {
@@ -304,8 +316,9 @@ describe("collectManifestSignatures", () => {
   })
 
   test("does not duplicate the legacy signature when `signatures` already carries it", () => {
+    // one key: its EBUM1 entry (repeated in `signature`) and its EBUM2 entry
     const info = multiSigned(makeInfo(), [privateKeyPem])
-    expect(collectManifestSignatures(info)).toHaveLength(1)
+    expect(collectManifestSignatures(info)).toHaveLength(2)
   })
 
   test("is empty for an unsigned manifest", () => {
@@ -329,9 +342,9 @@ function makeWebInfo(overrides: Partial<WindowsUpdateInfo> = {}): WindowsUpdateI
 }
 
 describe("canonicalizeForSigning: minimumSystemVersion and packages", () => {
-  test("pins the exact wire format (EBUM1) including the minimumSystemVersion and package lines", () => {
+  test("pins the exact wire format (EBUM1, unchanged from 27.0.0-alpha.10) including the minimumSystemVersion and package lines", () => {
     const info = makeWebInfo({ stagingPercentage: 25, minimumSystemVersion: "10.0.22631", releaseNotes: "irrelevant" })
-    expect(canonicalizeForSigning(info)).toBe(
+    expect(canonicalizeForSigning(info, "EBUM1")).toBe(
       [
         "EBUM1",
         // strings are JSON-quoted (so a value can never contain a raw newline/tab), numbers are bare
@@ -346,14 +359,33 @@ describe("canonicalizeForSigning: minimumSystemVersion and packages", () => {
     )
   })
 
+  test("pins the exact wire format (EBUM2): EBUM1 with a fixed five-column file record", () => {
+    const info = makeWebInfo({ stagingPercentage: 25, minimumSystemVersion: "10.0.22631", releaseNotes: "irrelevant" })
+    const expected = [
+      "EBUM2",
+      'version:"1.2.3"',
+      "staging:25",
+      'minimumSystemVersion:"10.0.22631"',
+      // url, sha512, size, blockMapUrl (empty: absent), isAdminRightsRequired (empty: not true)
+      'file:"App-1.2.3.exe"\t"abc123"\t8123456\t\t',
+      'package:"ia32"\t"App-1.2.3-ia32.nsis.7z"\t"p32"\t4000\t\t',
+      'package:"x64"\t"App-1.2.3-x64.nsis.7z"\t"p64"\t5000\t120\t1',
+    ].join("\n")
+    expect(canonicalizeForSigning(info)).toBe(expected)
+    expect(canonicalizeForSigning(info, "EBUM2")).toBe(expected)
+  })
+
   test("pins the exact wire format for a manifest with neither field: empty minimumSystemVersion line, no package lines", () => {
     // absent optional fields are empty (no JSON encoding is empty, so "absent" is distinct from the empty string "")
     const expected = ["EBUM1", 'version:"1.2.3"', "staging:", "minimumSystemVersion:", 'file:"App-1.2.3.exe"\t"abc123"\t8123456'].join("\n")
-    expect(canonicalizeForSigning(makeInfo())).toBe(expected)
+    expect(canonicalizeForSigning(makeInfo(), "EBUM1")).toBe(expected)
     // null / empty `packages` (non-web NSIS manifests, YAML `packages: null`) canonicalize identically
-    expect(canonicalizeForSigning({ ...makeInfo(), packages: null } as WindowsUpdateInfo)).toBe(expected)
-    expect(canonicalizeForSigning({ ...makeInfo(), packages: {} } as WindowsUpdateInfo)).toBe(expected)
-    expect(canonicalizeForSigning({ ...makeInfo(), minimumSystemVersion: undefined })).toBe(expected)
+    expect(canonicalizeForSigning({ ...makeInfo(), packages: null } as WindowsUpdateInfo, "EBUM1")).toBe(expected)
+    expect(canonicalizeForSigning({ ...makeInfo(), packages: {} } as WindowsUpdateInfo, "EBUM1")).toBe(expected)
+    expect(canonicalizeForSigning({ ...makeInfo(), minimumSystemVersion: undefined }, "EBUM1")).toBe(expected)
+    const expected2 = ["EBUM2", 'version:"1.2.3"', "staging:", "minimumSystemVersion:", 'file:"App-1.2.3.exe"\t"abc123"\t8123456\t\t'].join("\n")
+    expect(canonicalizeForSigning(makeInfo())).toBe(expected2)
+    expect(canonicalizeForSigning({ ...makeInfo(), packages: null } as WindowsUpdateInfo)).toBe(expected2)
   })
 
   test("is stable regardless of package (arch key) order", () => {
@@ -493,10 +525,13 @@ describe("canonicalizeForSigning is injective", () => {
     })
     expect(canonicalizeForSigning(smuggled)).not.toBe(canonicalizeForSigning(genuine))
     // every encoded line is exactly one record: no raw newline or tab survives inside a value
-    for (const info of [smuggled, makeInfo({ version: "1.2.3\nstaging:100" }), makeInfo({ minimumSystemVersion: "10\tx" })]) {
-      const lines = canonicalizeForSigning(info).split("\n")
-      expect(lines.length).toBe(canonicalizeForSigning(base).split("\n").length)
-      expect(lines.every(line => /^(EBUM1|version:|staging:|minimumSystemVersion:|file:|package:)/.test(line))).toBe(true)
+    for (const format of ["EBUM1", "EBUM2"] as const) {
+      expect(canonicalizeForSigning(smuggled, format)).not.toBe(canonicalizeForSigning(genuine, format))
+      for (const info of [smuggled, makeInfo({ version: "1.2.3\nstaging:100" }), makeInfo({ minimumSystemVersion: "10\tx" })]) {
+        const lines = canonicalizeForSigning(info, format).split("\n")
+        expect(lines.length).toBe(canonicalizeForSigning(base, format).split("\n").length)
+        expect(lines.every(line => /^(EBUM[12]|version:|staging:|minimumSystemVersion:|file:|package:)/.test(line))).toBe(true)
+      }
     }
   })
 
@@ -579,12 +614,21 @@ describe("blockMapUrl is signed only when present", () => {
   const BLOCKMAP = "https://cdn.example.com/App-1.2.3.exe.blockmap?X-Amz-Signature=abc"
   const withBlockMapUrl = (blockMapUrl: unknown) => makeInfo({ files: [{ url: "App-1.2.3.exe", sha512: "abc123", size: 8123456, blockMapUrl: blockMapUrl as string }] })
 
-  test("adds a field to the file record; a manifest without it canonicalizes to the same bytes as before", ({ expect }) => {
-    expect(canonicalizeForSigning(withBlockMapUrl(BLOCKMAP))).toBe(
+  test("EBUM1: adds a field to the file record; a manifest without it canonicalizes to the same bytes as before", ({ expect }) => {
+    expect(canonicalizeForSigning(withBlockMapUrl(BLOCKMAP), "EBUM1")).toBe(
       ["EBUM1", 'version:"1.2.3"', "staging:", "minimumSystemVersion:", `file:"App-1.2.3.exe"\t"abc123"\t8123456\t${JSON.stringify(BLOCKMAP)}`].join("\n")
     )
     const without = ["EBUM1", 'version:"1.2.3"', "staging:", "minimumSystemVersion:", 'file:"App-1.2.3.exe"\t"abc123"\t8123456'].join("\n")
-    expect(canonicalizeForSigning(makeInfo())).toBe(without)
+    expect(canonicalizeForSigning(makeInfo(), "EBUM1")).toBe(without)
+    expect(canonicalizeForSigning(withBlockMapUrl(undefined), "EBUM1")).toBe(without)
+    expect(canonicalizeForSigning(withBlockMapUrl(null), "EBUM1")).toBe(without)
+  })
+
+  test("EBUM2: the blockMapUrl column is always there, empty when absent", ({ expect }) => {
+    expect(canonicalizeForSigning(withBlockMapUrl(BLOCKMAP))).toBe(
+      ["EBUM2", 'version:"1.2.3"', "staging:", "minimumSystemVersion:", `file:"App-1.2.3.exe"\t"abc123"\t8123456\t${JSON.stringify(BLOCKMAP)}\t`].join("\n")
+    )
+    const without = ["EBUM2", 'version:"1.2.3"', "staging:", "minimumSystemVersion:", 'file:"App-1.2.3.exe"\t"abc123"\t8123456\t\t'].join("\n")
     expect(canonicalizeForSigning(withBlockMapUrl(undefined))).toBe(without)
     expect(canonicalizeForSigning(withBlockMapUrl(null))).toBe(without)
   })
@@ -611,33 +655,108 @@ describe("blockMapUrl is signed only when present", () => {
   })
 })
 
-describe("files[].isAdminRightsRequired is signed only when true", () => {
+// ── files[].isAdminRightsRequired: EBUM2, dual-signing, and the pre-release EBUM1 fallback ────────────────────
+
+/**
+ * `canonicalizeForSigning` exactly as electron-builder 27.0.0-alpha.10 / electron-updater 7.0.0-alpha.9 ship it
+ * (master before EBUM2), copied verbatim so the tests notice if the EBUM1 bytes the builder signs ever drift.
+ */
+function shippedEbum1Canonicalize(info: UpdateInfo): string {
+  const encodeField = (value: unknown): string => {
+    if (value === undefined || value === null) {
+      return ""
+    }
+    const encoded = JSON.stringify(value)
+    return encoded === undefined ? "" : encoded
+  }
+  const lines: string[] = [
+    "EBUM1",
+    `version:${encodeField(info.version)}`,
+    `staging:${encodeField(info.stagingPercentage)}`,
+    `minimumSystemVersion:${encodeField(info.minimumSystemVersion)}`,
+  ]
+  const files = (info.files ?? []).map(f => {
+    const record = `file:${encodeField(f?.url)}\t${encodeField(f?.sha512)}\t${encodeField(f?.size)}`
+    return f?.blockMapUrl == null ? record : `${record}\t${encodeField(f.blockMapUrl)}`
+  })
+  files.sort()
+  lines.push(...files)
+  const packages = (info as WindowsUpdateInfo).packages
+  if (packages != null) {
+    const packageLines = Object.keys(packages).map(arch => {
+      const p: Partial<PackageFileInfo> = packages[arch] ?? {}
+      return `package:${encodeField(arch)}\t${encodeField(p.path)}\t${encodeField(p.sha512)}\t${encodeField(p.size)}\t${encodeField(p.blockMapSize)}\t${p.isAdminRightsRequired === true ? "1" : ""}`
+    })
+    packageLines.sort()
+    lines.push(...packageLines)
+  }
+  return lines.join("\n")
+}
+
+/**
+ * The verification loop of electron-updater 7.0.0-alpha.8 / alpha.9 (`verifyManifestSignatures` at those tags, shape
+ * check aside): every trusted key against its tagged entries, then the untagged ones, over the EBUM1 bytes.
+ */
+function shippedVerify(info: UpdateInfo, publicKeyPems: Array<string>): boolean {
+  const candidates = collectManifestSignatures(info)
+  const data = Buffer.from(shippedEbum1Canonicalize(info), "utf8")
+  return publicKeyPems.some(pem => {
+    const keyId = computeUpdateManifestKeyId(pem)
+    const ordered = [...candidates.filter(it => it.keyId === keyId), ...candidates.filter(it => it.keyId == null)]
+    return ordered.some(it => {
+      try {
+        return cryptoVerify(null, data, createPublicKey(pem), Buffer.from(it.signature, "base64"))
+      } catch {
+        return false
+      }
+    })
+  })
+}
+
+describe("files[].isAdminRightsRequired", () => {
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const second = generateUpdateSigningKeypair()
   const BLOCKMAP = "https://cdn.example.com/App-1.2.3.exe.blockmap?X-Amz-Signature=abc"
-  const HEADER = ["EBUM1", 'version:"1.2.3"', "staging:", "minimumSystemVersion:"]
-  const withFile = (extra: { isAdminRightsRequired?: unknown; blockMapUrl?: string }) =>
+  const HEADER2 = ["EBUM2", 'version:"1.2.3"', "staging:", "minimumSystemVersion:"]
+  const withFile = (extra: { isAdminRightsRequired?: unknown; blockMapUrl?: string } = {}) =>
     makeInfo({ files: [{ url: "App-1.2.3.exe", sha512: "abc123", size: 8123456, ...extra } as UpdateInfo["files"][number]] })
+  const flagged = (info: UpdateInfo, isAdminRightsRequired: boolean | undefined): UpdateInfo => ({ ...info, files: [{ ...info.files[0], isAdminRightsRequired }] })
+  /** Only the EBUM1 signatures, the way electron-builder 27.0.0-alpha.9 / alpha.10 wrote them. */
+  const legacySigned = (info: UpdateInfo, privateKeyPems: Array<string>): UpdateInfo => {
+    const signatures = privateKeyPems.map(pem => ({ keyId: computeUpdateManifestKeyId(derivePublicKeyPem(pem)), signature: signUpdateManifest(info, pem, "EBUM1") }))
+    return { ...info, signature: signatures[0].signature, signatures }
+  }
+  const withoutEbum2 = (info: UpdateInfo): UpdateInfo => {
+    const ebum1 = Buffer.from(canonicalizeForSigning(info, "EBUM1"), "utf8")
+    return { ...info, signatures: (info.signatures ?? []).filter(it => cryptoVerify(null, ebum1, createPublicKey(publicKeyPem), Buffer.from(it.signature, "base64"))) }
+  }
 
-  test("adds a fixed fifth column to the file record; manifests without the flag (or with false) canonicalize unchanged", ({ expect }) => {
-    // flag without a blockMapUrl: the blockMapUrl column is emitted empty so the flag always sits in column five
-    expect(canonicalizeForSigning(withFile({ isAdminRightsRequired: true }))).toBe([...HEADER, 'file:"App-1.2.3.exe"\t"abc123"\t8123456\t\t1'].join("\n"))
-    expect(canonicalizeForSigning(withFile({ isAdminRightsRequired: true, blockMapUrl: BLOCKMAP }))).toBe(
-      [...HEADER, `file:"App-1.2.3.exe"\t"abc123"\t8123456\t${JSON.stringify(BLOCKMAP)}\t1`].join("\n")
-    )
-
-    // the bytes signed before this field was covered: unchanged for absent / undefined / false
-    const without = [...HEADER, 'file:"App-1.2.3.exe"\t"abc123"\t8123456'].join("\n")
-    expect(canonicalizeForSigning(makeInfo())).toBe(without)
-    expect(canonicalizeForSigning(withFile({ isAdminRightsRequired: undefined }))).toBe(without)
-    expect(canonicalizeForSigning(withFile({ isAdminRightsRequired: false }))).toBe(without)
-    const withoutFlagWithBlockMap = [...HEADER, `file:"App-1.2.3.exe"\t"abc123"\t8123456\t${JSON.stringify(BLOCKMAP)}`].join("\n")
-    expect(canonicalizeForSigning(withFile({ blockMapUrl: BLOCKMAP }))).toBe(withoutFlagWithBlockMap)
-    expect(canonicalizeForSigning(withFile({ blockMapUrl: BLOCKMAP, isAdminRightsRequired: false }))).toBe(withoutFlagWithBlockMap)
+  test("EBUM1 bytes are exactly what 27.0.0-alpha.10 signs, with or without the flag", ({ expect }) => {
+    const manifests: Array<UpdateInfo> = [
+      makeInfo(),
+      withFile({ isAdminRightsRequired: true }),
+      withFile({ isAdminRightsRequired: false }),
+      withFile({ isAdminRightsRequired: true, blockMapUrl: BLOCKMAP }),
+      withFile({ blockMapUrl: BLOCKMAP }),
+      makeWebInfo({ stagingPercentage: 25 }),
+      { ...makeWebInfo(), files: [{ url: "App-1.2.3.exe", sha512: "abc123", size: 8123456, isAdminRightsRequired: true }] },
+    ]
+    for (const info of manifests) {
+      expect(canonicalizeForSigning(info, "EBUM1")).toBe(shippedEbum1Canonicalize(info))
+    }
+    // the flag is invisible to EBUM1
+    expect(canonicalizeForSigning(withFile({ isAdminRightsRequired: true }), "EBUM1")).toBe(canonicalizeForSigning(makeInfo(), "EBUM1"))
   })
 
-  test("the four blockMapUrl/flag combinations produce four distinct file records", ({ expect }) => {
+  test("EBUM2 file record: fixed blockMapUrl and flag columns, the four combinations distinct", ({ expect }) => {
+    expect(canonicalizeForSigning(withFile({ isAdminRightsRequired: true }))).toBe([...HEADER2, 'file:"App-1.2.3.exe"\t"abc123"\t8123456\t\t1'].join("\n"))
+    expect(canonicalizeForSigning(withFile({ isAdminRightsRequired: true, blockMapUrl: BLOCKMAP }))).toBe(
+      [...HEADER2, `file:"App-1.2.3.exe"\t"abc123"\t8123456\t${JSON.stringify(BLOCKMAP)}\t1`].join("\n")
+    )
+    // `false` and absent both mean "no elevation" to the updater (it checks `=== true`) and sign the same
+    expect(canonicalizeForSigning(withFile({ isAdminRightsRequired: false }))).toBe(canonicalizeForSigning(withFile()))
     const payloads = new Set([
-      canonicalizeForSigning(withFile({})),
+      canonicalizeForSigning(withFile()),
       canonicalizeForSigning(withFile({ blockMapUrl: BLOCKMAP })),
       canonicalizeForSigning(withFile({ isAdminRightsRequired: true })),
       canonicalizeForSigning(withFile({ isAdminRightsRequired: true, blockMapUrl: BLOCKMAP })),
@@ -645,22 +764,100 @@ describe("files[].isAdminRightsRequired is signed only when true", () => {
     expect(payloads.size).toBe(4)
   })
 
-  test("flipping files[0].isAdminRightsRequired either way invalidates the signature", ({ expect }) => {
-    // per-machine build (what NsisTarget + updateInfoBuilder write): signed with the flag set
+  test("an EBUM2 signature covers the flag: true→false, true→unset and unset→true all fail", ({ expect }) => {
     const perMachine = signed(withFile({ isAdminRightsRequired: true }), privateKeyPem)
-    expect(verifyManifestSignatures(perMachine, [publicKeyPem]).ok).toBe(true)
-    expect(verifyManifestSignatures({ ...perMachine, files: [{ ...perMachine.files[0], isAdminRightsRequired: false }] }, [publicKeyPem]).ok).toBe(false)
-    expect(verifyManifestSignatures({ ...perMachine, files: [{ ...perMachine.files[0], isAdminRightsRequired: undefined }] }, [publicKeyPem]).ok).toBe(false)
+    expect(verifyManifestSignatures(perMachine, [publicKeyPem])).toMatchObject({ ok: true, signatureFormat: "EBUM2" })
+    expect(verifyManifestSignatures(flagged(perMachine, false), [publicKeyPem]).ok).toBe(false)
+    expect(verifyManifestSignatures(flagged(perMachine, undefined), [publicKeyPem]).ok).toBe(false)
 
-    // per-user build: signed without the flag; a mirror must not be able to add it
     const perUser = signed(makeInfo(), privateKeyPem)
     expect(verifyManifestSignatures(perUser, [publicKeyPem]).ok).toBe(true)
-    expect(verifyManifestSignatures({ ...perUser, files: [{ ...perUser.files[0], isAdminRightsRequired: true }] }, [publicKeyPem]).ok).toBe(false)
+    expect(verifyManifestSignatures(flagged(perUser, true), [publicKeyPem]).ok).toBe(false)
+  })
 
-    // with a blockMapUrl too
-    const both = signed(withFile({ isAdminRightsRequired: true, blockMapUrl: BLOCKMAP }), privateKeyPem)
-    expect(verifyManifestSignatures(both, [publicKeyPem]).ok).toBe(true)
-    expect(verifyManifestSignatures({ ...both, files: [{ ...both.files[0], isAdminRightsRequired: false }] }, [publicKeyPem]).ok).toBe(false)
+  test("the builder dual-signs: EBUM1 entries per key first (legacy `signature` = first), then EBUM2 entries per key", ({ expect }) => {
+    const info = withFile({ isAdminRightsRequired: true })
+    const signatures = createUpdateManifestSignatures(info, [privateKeyPem, second.privateKeyPem])
+    const ids = [computeUpdateManifestKeyId(publicKeyPem), computeUpdateManifestKeyId(second.publicKeyPem)]
+    expect(signatures).toEqual([
+      { keyId: ids[0], signature: signUpdateManifest(info, privateKeyPem, "EBUM1") },
+      { keyId: ids[1], signature: signUpdateManifest(info, second.privateKeyPem, "EBUM1") },
+      { keyId: ids[0], signature: signUpdateManifest(info, privateKeyPem, "EBUM2") },
+      { keyId: ids[1], signature: signUpdateManifest(info, second.privateKeyPem, "EBUM2") },
+    ])
+    // the EBUM1 prefix is what 27.0.0-alpha.10 wrote for the same keys (Ed25519 is deterministic)
+    expect(signatures.slice(0, 2)).toEqual(legacySigned(info, [privateKeyPem, second.privateKeyPem]).signatures)
+  })
+
+  test("an electron-updater 7.0.0-alpha.8/alpha.9 verifier accepts the dual-signed manifest, per-user and per-machine", ({ expect }) => {
+    for (const info of [makeInfo(), withFile({ isAdminRightsRequired: true }), makeWebInfo()]) {
+      const dual = multiSigned(info, [privateKeyPem, second.privateKeyPem])
+      expect(shippedVerify(dual, [publicKeyPem])).toBe(true)
+      expect(shippedVerify(dual, [second.publicKeyPem])).toBe(true)
+      // only through the `signatures` list too (an old verifier skips the EBUM2 entries it cannot verify)
+      const { signature: _legacy, ...listOnly } = dual
+      expect(shippedVerify(listOnly, [second.publicKeyPem])).toBe(true)
+      // and the EBUM2 entries alone do not verify for it, so it is the EBUM1 entries doing the work
+      const { signature: _l, ...rest } = dual
+      expect(shippedVerify({ ...rest, signatures: (dual.signatures ?? []).slice(2) }, [publicKeyPem])).toBe(false)
+    }
+  })
+
+  test("this verifier accepts the dual-signed manifest through EBUM2", ({ expect }) => {
+    const dual = multiSigned(withFile({ isAdminRightsRequired: true }), [privateKeyPem])
+    expect(verifyManifestSignatures(dual, [publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(publicKeyPem), signatureFormat: "EBUM2" })
+  })
+
+  test("pre-release fallback: an EBUM1-only per-user manifest is accepted, reported as EBUM1", ({ expect }) => {
+    for (const info of [
+      makeInfo(),
+      withFile({ isAdminRightsRequired: false }),
+      withFile({ blockMapUrl: BLOCKMAP }),
+      makeWebInfo({ packages: { x64: { path: "p.7z", sha512: "s" } } }),
+    ]) {
+      expect(verifyManifestSignatures(legacySigned(info, [privateKeyPem]), [publicKeyPem])).toEqual({
+        ok: true,
+        keyId: computeUpdateManifestKeyId(publicKeyPem),
+        signatureFormat: "EBUM1",
+      })
+    }
+  })
+
+  test("an EBUM1-only per-machine manifest is rejected, files[] or packages flag", ({ expect }) => {
+    const keyId = computeUpdateManifestKeyId(publicKeyPem)
+    expect(verifyManifestSignatures(legacySigned(withFile({ isAdminRightsRequired: true }), [privateKeyPem]), [publicKeyPem])).toEqual({
+      ok: false,
+      keyId,
+      signatureFormat: "EBUM1",
+    })
+    // makeWebInfo's x64 package has isAdminRightsRequired: true (which EBUM1 does sign): rejected as well
+    expect(verifyManifestSignatures(legacySigned(makeWebInfo(), [privateKeyPem]), [publicKeyPem])).toEqual({ ok: false, keyId, signatureFormat: "EBUM1" })
+    expect(verifyManifestSignature(legacySigned(withFile({ isAdminRightsRequired: true }), [privateKeyPem]), publicKeyPem)).toBe(false)
+  })
+
+  test("stripping the EBUM2 entries and flipping the flag to true is rejected", ({ expect }) => {
+    const stripped = withoutEbum2(multiSigned(makeInfo(), [privateKeyPem]))
+    expect(stripped.signatures).toHaveLength(1)
+    expect(verifyManifestSignatures(stripped, [publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures(flagged(stripped, true), [publicKeyPem])).toMatchObject({ ok: false, signatureFormat: "EBUM1" })
+    // without stripping, too: EBUM2 fails on the flag, EBUM1 verifies but the manifest is now per-machine
+    expect(verifyManifestSignatures(flagged(multiSigned(makeInfo(), [privateKeyPem]), true), [publicKeyPem])).toMatchObject({ ok: false, signatureFormat: "EBUM1" })
+  })
+
+  test("known, accepted residual until 27.0.0 stable: a per-machine manifest flipped true→false verifies through the EBUM1 fallback", ({ expect }) => {
+    // EBUM1 does not cover files[].isAdminRightsRequired, so dropping the flag leaves a valid EBUM1 signature on a manifest
+    // that no longer requires admin rights. The updater warns, and still elevates through elevate.exe (NsisUpdater)
+    // when the per-machine installer fails with EACCES, so this yields a UAC prompt rather than a silent install.
+    // Removing the fallback before 27.0.0 stable closes it; adding the flag (false→true) stays blocked.
+    const dual = multiSigned(withFile({ isAdminRightsRequired: true }), [privateKeyPem])
+    expect(verifyManifestSignatures(flagged(withoutEbum2(dual), false), [publicKeyPem])).toMatchObject({ ok: true, signatureFormat: "EBUM1" })
+    expect(verifyManifestSignatures(flagged(dual, false), [publicKeyPem])).toMatchObject({ ok: true, signatureFormat: "EBUM1" })
+    expect(verifyManifestSignatures(flagged(dual, undefined), [publicKeyPem])).toMatchObject({ ok: true, signatureFormat: "EBUM1" })
+  })
+
+  test("a manifest no trusted key validates in either format reports no format", ({ expect }) => {
+    const foreign = multiSigned(makeInfo(), [second.privateKeyPem])
+    expect(verifyManifestSignatures(foreign, [publicKeyPem])).toEqual({ ok: false })
   })
 
   test.for<[string, unknown]>([
@@ -671,8 +868,8 @@ describe("files[].isAdminRightsRequired is signed only when true", () => {
     const info = withFile({ isAdminRightsRequired })
     expect(validateSignedManifestShape(info)).toMatch(/files\[0\]\.isAdminRightsRequired must be a boolean/)
     const result = verifyManifestSignatures({ ...info, signature: signUpdateManifest(makeInfo(), privateKeyPem) }, [publicKeyPem])
-    expect(result.ok).toBe(false)
-    expect(result.reason).toMatch(/files\[0\]\.isAdminRightsRequired must be a boolean/)
+    expect(result).toEqual({ ok: false, reason: "files[0].isAdminRightsRequired must be a boolean" })
+    expect(() => signUpdateManifest(info, privateKeyPem)).toThrow(/isAdminRightsRequired must be a boolean/)
   })
 
   test("the shape check accepts a boolean isAdminRightsRequired", ({ expect }) => {

@@ -110,6 +110,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Update credentials are only sent to the feed's origin (electron-updater)](#update-credentials-stay-on-the-feeds-origin) | — | Only if `latest*.yml` points downloads at another origin (another host, or another port or scheme) that needs your `requestHeaders` / `addAuthHeader` credentials or a token in the feed URL's query: serve the files from the feed origin or use pre-signed URLs. A custom provider used with credential headers must override `Provider.feedBaseUrl` (else `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`) |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | — | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
 | [Signed update manifests are required](#signed-update-manifests-are-required) | — | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY`, or set `updateManifest: false` to keep publishing unsigned manifests |
+| [Update manifests are signed in the `EBUM2` format](#update-manifests-are-signed-in-the-ebum2-format) | — | Only if you build with electron-builder 27.0.0-alpha.9/alpha.10: rebuild and re-sign per-machine NSIS releases with a matching electron-builder |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | — | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
 | [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | — | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
 | [`quitAndInstall` takes an options object (electron-updater)](#quitandinstall-takes-an-options-object) | — | Replace positional args: `quitAndInstall(true, false)` → `quitAndInstall({ isSilent: true, isForceRunAfter: false })` |
@@ -1103,6 +1104,20 @@ Once a release embeds a public key, its installs are **fail-closed**: an unsigne
 Note that installs already in the field are unaffected but also unprotected: they carry whatever `app-update.yml` they shipped with, so those built before you adopted signing keep accepting unsigned manifests. Full protection begins with the installs built after the public key was embedded.
 
 See [Signed Update Manifests](../features/signed-update-manifests.md) and [Key Rotation](../features/key-rotation.md).
+
+### Update manifests are signed in the `EBUM2` format {#update-manifests-are-signed-in-the-ebum2-format}
+
+electron-builder 27.0.0-alpha.9 and alpha.10 signed `latest*.yml` in the `EBUM1` canonical format, which does not cover `files[].isAdminRightsRequired` — the flag that makes electron-updater run a per-machine NSIS installer through `elevate.exe`. electron-builder now signs every manifest twice with each key: the `EBUM1` signature, unchanged, so installs on electron-updater 7.0.0-alpha.8/alpha.9 keep updating, and an additional `EBUM2` signature that also covers the flag (see [What is written](../features/signed-update-manifests.md#what-is-written)).
+
+electron-updater now verifies the `EBUM2` signature. During the v27 pre-release a manifest that has only an `EBUM1` signature is still accepted when no file or package in it has `isAdminRightsRequired: true`, and the updater logs once:
+
+```
+electron-updater 7 (electron-builder v27) verifies the EBUM2 manifest signature, which also covers files[].isAdminRightsRequired. The manifest for version 1.2.3 has no valid EBUM2 signature, only the legacy EBUM1 one (…): it is accepted because it does not require admin rights, but only during the v27 pre-release — 27.0.0 stable refuses it. Rebuild and re-sign the release with an electron-builder at least as new as the electron-updater in this app. …
+```
+
+A per-machine manifest (`isAdminRightsRequired: true`) with only an `EBUM1` signature is refused with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`.
+
+**Action:** none if your releases are built with an electron-builder at least as new as the electron-updater in your app. If you publish (or roll back to) a manifest built with electron-builder 27.0.0-alpha.9 or alpha.10, rebuild and re-sign it with a current electron-builder; per-machine NSIS releases must be re-signed before apps with this electron-updater can install them. 27.0.0 stable accepts `EBUM2` only.
 
 ### `app-update.yml` feed follows the update-writing targets
 

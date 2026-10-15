@@ -290,3 +290,91 @@ describe("AppUpdater.verifyManifestSignature: blockMapUrl", () => {
     expect(error.message).not.toContain("blockMapUrl")
   })
 })
+
+// TODO(v27): drop with the EBUM1 fallback before 27.0.0 stable.
+describe("AppUpdater.verifyManifestSignature: EBUM1-only manifests (electron-builder 27.0.0-alpha.9/alpha.10)", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#update-manifests-are-signed-in-the-ebum2-format"
+  const makeUpdater = () => {
+    const updater = new DebUpdater(null, stubApp)
+    updater.updateManifestPublicKey = publicKeyPem
+    // own logger instance: the default is the global console, which must not be mutated by a concurrent test
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+    updater.logger = logger
+    return { updater, logger }
+  }
+  const verify = (updater: DebUpdater, info: UpdateInfo) => (updater as any).verifyManifestSignature(info)
+  /** Signed the way electron-builder 27.0.0-alpha.9 / alpha.10 sign: EBUM1 only. */
+  const legacySigned = (info: UpdateInfo): UpdateInfo => {
+    const signature = signUpdateManifest(info, privateKeyPem, "EBUM1")
+    return { ...info, signature, signatures: [{ keyId: computeUpdateManifestKeyId(publicKeyPem), signature }] }
+  }
+  const perMachine = (info: UpdateInfo): UpdateInfo => ({ ...info, files: info.files.map(it => ({ ...it, isAdminRightsRequired: true })) })
+  const legacyWarnings = (logger: { warn: ReturnType<typeof vi.fn> }) => logger.warn.mock.calls.filter(c => String(c[0]).includes("only the legacy EBUM1 one"))
+
+  it("accepts a per-user EBUM1-only manifest and warns once per updater instance, naming the version, what happens, what to do and the docs", async ({ expect }) => {
+    const { updater, logger } = makeUpdater()
+    const info = legacySigned(makeInfo())
+    await expect(verify(updater, info)).resolves.toBeUndefined()
+    await expect(verify(updater, info)).resolves.toBeUndefined()
+    await expect(verify(updater, legacySigned({ ...makeInfo(), version: "2.0.1" }))).resolves.toBeUndefined()
+    const warnings = legacyWarnings(logger)
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0][0]).toBe(
+      "electron-updater 7 (electron-builder v27) verifies the EBUM2 manifest signature, which also covers files[].isAdminRightsRequired. " +
+        `The manifest for version 2.0.0 has no valid EBUM2 signature, only the legacy EBUM1 one (trusted key ${computeUpdateManifestKeyId(publicKeyPem)}), as written by electron-builder 27.0.0-alpha.9 and alpha.10: ` +
+        "it is accepted because it does not require admin rights, but only during the v27 pre-release — 27.0.0 stable refuses it. " +
+        `Rebuild and re-sign the release with an electron-builder at least as new as the electron-updater in this app. ${DOCS}`
+    )
+    expect(logger.info.mock.calls.some(c => String(c[0]).includes("Update manifest signature verified for version 2.0.0"))).toBe(true)
+
+    // another updater instance warns again
+    const other = makeUpdater()
+    await expect(verify(other.updater, info)).resolves.toBeUndefined()
+    expect(legacyWarnings(other.logger)).toHaveLength(1)
+  })
+
+  it("does not warn for a manifest electron-builder dual-signs", async ({ expect }) => {
+    const { updater, logger } = makeUpdater()
+    await expect(verify(updater, multiSigned(perMachine(makeInfo()), [privateKeyPem]))).resolves.toBeUndefined()
+    await expect(verify(updater, multiSigned(makeInfo(), [privateKeyPem]))).resolves.toBeUndefined()
+    expect(legacyWarnings(logger)).toHaveLength(0)
+  })
+
+  it("a logger that throws does not fail an accepted EBUM1-only manifest", async ({ expect }) => {
+    const { updater, logger } = makeUpdater()
+    logger.warn.mockImplementation(() => {
+      throw new Error("logger broke")
+    })
+    await expect(verify(updater, legacySigned(makeInfo()))).resolves.toBeUndefined()
+  })
+
+  it("rejects a per-machine EBUM1-only manifest, saying what to do", async ({ expect }) => {
+    const { updater, logger } = makeUpdater()
+    const error = await verify(updater, legacySigned(perMachine(makeInfo()))).catch((e: Error) => e)
+    expect(error).toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+    expect(error.message).toBe(
+      "electron-updater 7 (electron-builder v27) accepts a manifest signed only in the legacy EBUM1 format, which does not cover files[].isAdminRightsRequired, " +
+        "only when it does not require admin rights. The manifest for version 2.0.0 is a per-machine install (isAdminRightsRequired: true) " +
+        `and its only valid signature (trusted key ${computeUpdateManifestKeyId(publicKeyPem)}) is EBUM1, as written by electron-builder 27.0.0-alpha.9 and alpha.10, so it is refused. ` +
+        "Rebuild and re-sign the release with an electron-builder at least as new as the electron-updater in this app, which also writes the EBUM2 signature. " +
+        DOCS
+    )
+    expect(legacyWarnings(logger)).toHaveLength(0)
+  })
+
+  it("rejects an EBUM1-only manifest a mirror marked per-machine (false→true stays blocked)", async ({ expect }) => {
+    const { updater } = makeUpdater()
+    const info = legacySigned(makeInfo())
+    await expect(verify(updater, perMachine(info))).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID", message: expect.stringContaining("is refused") })
+  })
+
+  it("known, accepted residual until 27.0.0 stable: dropping the flag of a dual-signed per-machine manifest is accepted with the warning", async ({ expect }) => {
+    // EBUM1 does not cover files[].isAdminRightsRequired; NsisUpdater still elevates via elevate.exe on EACCES, so this ends in a UAC prompt
+    const { updater, logger } = makeUpdater()
+    const dual = multiSigned(perMachine(makeInfo()), [privateKeyPem])
+    const flipped: UpdateInfo = { ...dual, files: dual.files.map(it => ({ ...it, isAdminRightsRequired: false })) }
+    await expect(verify(updater, flipped)).resolves.toBeUndefined()
+    expect(legacyWarnings(logger)).toHaveLength(1)
+  })
+})

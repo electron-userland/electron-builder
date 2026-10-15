@@ -38,6 +38,10 @@ exports[`blackboxWebWin > windows > nsis - web-installer update is rejected 1`] 
             "keyId": "@keyId",
             "signature": "@signature",
           },
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
         ],
         "version": "1.0.0",
       },
@@ -90,6 +94,10 @@ exports[`blackboxWebWin > windows > nsis - web-installer update is rejected 2`] 
         "releaseDate": "@releaseDate",
         "signature": "@signature",
         "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
           {
             "keyId": "@keyId",
             "signature": "@signature",

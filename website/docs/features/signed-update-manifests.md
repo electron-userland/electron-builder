@@ -128,19 +128,23 @@ Legitimate reasons to opt out: an app that does not auto-update at all. A pipeli
 Each signed `latest*.yml` gains:
 
 ```yaml
-signature: b0Qk…               # legacy single field: the FIRST signing key's signature
+signature: b0Qk…               # legacy single field: the FIRST signing key's EBUM1 signature
 signatures:
   - keyId: 3f9c…e1             # hex SHA-256 of the signing key's public key (SPKI DER), as printed by create-update-key
-    signature: b0Qk…           # same value as `signature` above
-  - keyId: a71d…04             # one more entry per additional signing key
+    signature: b0Qk…           # EBUM1, same value as `signature` above
+  - keyId: a71d…04             # EBUM1, one more entry per additional signing key
     signature: Xr2w…
+  - keyId: 3f9c…e1             # EBUM2, first key
+    signature: Lp7e…
+  - keyId: a71d…04             # EBUM2, additional key
+    signature: 9cQa…
 ```
 
-Both fields are always written, even with a single key, so the manifest shape does not change when a second key is added. Each entry signs the same payload; the `keyId` lets an updater holding several trusted keys pick the matching signature directly, and lets you tell at a glance which keys signed a release.
+Both fields are always written, even with a single key, so the manifest shape does not change when a second key is added. Every key signs two canonical payloads: `EBUM1`, the format electron-builder 27.0.0-alpha.9 and alpha.10 signed and electron-updater 7.0.0-alpha.8 and alpha.9 verify, and `EBUM2`, which this electron-updater verifies and which also covers `files[].isAdminRightsRequired`. The `EBUM1` entries come first, in key order, exactly as those releases wrote them; the `EBUM2` entries follow, under the same `keyId`s. An updater tries every entry and fails the ones over a format it does not use, so older installs keep updating. The `keyId` lets an updater holding several trusted keys pick the matching signatures directly, and lets you tell at a glance which keys signed a release.
 
 ## What is signed
 
-Every signature covers the integrity-critical fields of the manifest: `version`, `stagingPercentage`, `minimumSystemVersion` (its absence is signed too, so an OS-version gate cannot be added or removed after signing), every file entry's `url`, `sha512`, and `size` (and its `blockMapUrl` when present), and — for the NSIS web installer — every `packages` entry's `path`, `sha512`, `size`, `blockMapSize`, and `isAdminRightsRequired` (all in a canonical, order-independent form). Cosmetic fields — `releaseName`, `releaseNotes`, and `releaseDate` — are not covered, so they remain editable after publishing without invalidating the signature. The `signature`/`signatures` fields themselves (including `keyId`) are not part of the signed payload, so signatures can be added or removed without invalidating the others.
+Every signature covers the integrity-critical fields of the manifest: `version`, `stagingPercentage`, `minimumSystemVersion` (its absence is signed too, so an OS-version gate cannot be added or removed after signing), every file entry's `url`, `sha512`, `size`, `blockMapUrl` and (`EBUM2` only) `isAdminRightsRequired` — the flag electron-updater uses to run a per-machine NSIS installer through `elevate.exe` —, and — for the NSIS web installer — every `packages` entry's `path`, `sha512`, `size`, `blockMapSize`, and `isAdminRightsRequired` (all in a canonical, order-independent form). Cosmetic fields — `releaseName`, `releaseNotes`, and `releaseDate` — are not covered, so they remain editable after publishing without invalidating the signature. The `signature`/`signatures` fields themselves (including `keyId`) are not part of the signed payload, so signatures can be added or removed without invalidating the others.
 
 The canonical form is injective: every string value is JSON-quoted (so a value can never contain an unescaped newline or tab and cannot impersonate another record), numbers are written bare, and an absent optional field is encoded differently from an empty one. Two manifests therefore produce the same signed bytes only if every covered field is identical.
 
@@ -152,7 +156,9 @@ When at least one public key is configured (embedded or set at runtime), verific
 
 | Manifest state | Result |
 | --- | --- |
-| At least one signature validates against a trusted key | Update proceeds |
+| At least one `EBUM2` signature validates against a trusted key | Update proceeds |
+| Only an `EBUM1` signature validates (manifest from electron-builder 27.0.0-alpha.9/alpha.10), no `isAdminRightsRequired: true` | Update proceeds, with a one-time warning — v27 pre-release only, see [migration](../migration/v27-breaking-changes.md#update-manifests-are-signed-in-the-ebum2-format) |
+| Only an `EBUM1` signature validates, per-machine manifest (`isAdminRightsRequired: true`) | Error `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` asking to rebuild and re-sign |
 | No `signature` and no `signatures` | Error `ERR_UPDATER_MANIFEST_NOT_SIGNED` |
 | Signed, but tampered or signed only by keys the install does not trust | Error `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` |
 
