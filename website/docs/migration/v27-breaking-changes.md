@@ -51,13 +51,14 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [All packages are native ESM](#native-esm-output) | — | None — `require()` still works on Node >=22.12 |
 | [`electron-forge-maker-*` are now ESM](#electron-forge-maker-plugins) | — | None — same API, same export shape |
 | [`electronCompile` removed](#electroncompile) | ✓ | Remove from config; migrate off `electron-compile` |
-| [`disableDefaultIgnoredFiles` removed](#disabledefaultignoredfiles) | ✓ | Removed automatically; re-include specific files via a `files` glob (e.g. `**/*.obj`) |
+| [`disableDefaultIgnoredFiles` removed](#disabledefaultignoredfiles) | ✓ | Removed automatically; re-include specific files via a `fileOptions.files` glob (e.g. `**/*.obj`) |
 | [`framework` / `nodeVersion` / `launchUiVersion` removed](#framework-nodeversion-launchuiversion) | ✓ | Removed automatically (Electron is the only framework) |
 | [ProtonFramework & LibUiFramework removed](#removed-exports) | — | Migrate to an Electron-based build setup |
 | [`appImage.systemIntegration` removed](#appimagesystemintegration) | ✓ | Removed automatically |
 | [`npmSkipBuildFromSource` removed](#npmskipbuildfromsource) | ✓ | Replaced by `nativeModules.buildDependenciesFromSource` |
 | [Native-module options grouped under `nativeModules`](#native-module-options-nativemodules) | ✓ | `nativeRebuilder` → `rebuildMode`; the `"legacy"` rebuilder is removed (dropped with a warning) |
 | [ASAR options consolidated under `asar`](#asar-options-asar) | ✓ | `asarUnpack` → `asar.unpack`, etc., including platform-level `mac.asarUnpack` → `mac.asar.unpack` (`asar: true` is still valid, just redundant) |
+| [`files` / `extraResources` / `extraFiles` nested under `fileOptions`](#file-options-fileoptions) | ✓ | `files` → `fileOptions.files`, etc., at the root and per platform (`mac.extraResources` → `mac.fileOptions.extraResources`). The flat keys still build in v27 with a deprecation warning and are removed in v28 |
 | [`asar.ordering` is now applied](#asar-ordering-is-now-applied) | — | v26 ignored the option; v27 packs the listed files first and fails when the file is missing. Remove the option to keep the dependencies-first layout |
 | [macOS signing consolidated under `mac.sign`](#macos-signing-macsign) | ✓ | `identity`/`entitlements`/`hardenedRuntime`/… → `mac.sign.*`; `signIgnore` → `sign.ignore` |
 | [`mac.universal` options consolidated](#macuniversal) | ✓ | `mergeASARs`/`singleArchFiles`/`x64ArchFiles` → `mac.universal.*` |
@@ -191,16 +192,18 @@ These three fields are removed. Only Electron is supported as a target framework
 
 ### `disableDefaultIgnoredFiles`
 
-The `disableDefaultIgnoredFiles` option has been **removed**. To include a file that is excluded by default (for example a Wavefront `.obj` 3D model, or any other default-excluded extension/name), add an explicit `files` glob that targets it — an explicit include now overrides the matching default exclusion:
+The `disableDefaultIgnoredFiles` option has been **removed**. To include a file that is excluded by default (for example a Wavefront `.obj` 3D model, or any other default-excluded extension/name), add an explicit `fileOptions.files` glob that targets it — an explicit include now overrides the matching default exclusion:
 
 ```json5
 {
   "build": {
     "disableDefaultIgnoredFiles": true,  // ← delete this line
-    "files": [
-      "**/*",
-      "**/*.obj"  // ← add a glob for the default-excluded files you want to keep
-    ]
+    "fileOptions": {
+      "files": [
+        "**/*",
+        "**/*.obj"  // ← add a glob for the default-excluded files you want to keep
+      ]
+    }
   }
 }
 ```
@@ -633,6 +636,40 @@ The top-level `snap` configuration key is removed. Use `snapcraft` with an expli
 
 Supported `base` values: `"core18"`, `"core20"`, `"core22"`, `"core24"`, and `"custom"`. `migrate-schema` performs this restructuring; when the old config has no `base`, it assumes `"core20"` and warns so you can confirm. A `base: "custom"` config (inline/path `snapcraft.yaml`) is moved verbatim. The `SnapOptions` export is also removed — see [Removed exports](#removed-exports).
 
+### `files` / `extraResources` / `extraFiles` → `fileOptions` {#file-options-fileoptions}
+
+The three options that choose which files are copied into the app are grouped under a `fileOptions` object, the same way `directories` groups the input and output directories. This applies at the configuration root and in every platform section (`mac`, `mas`, `masDev`, `win`, `linux`). `PlatformSpecificBuildOptions` no longer extends `FilesBuildOptions`; it has a `fileOptions?: FilesBuildOptions | null` property instead.
+
+| v26 key | v27 key |
+|---|---|
+| `files` | `fileOptions.files` |
+| `extraResources` | `fileOptions.extraResources` |
+| `extraFiles` | `fileOptions.extraFiles` |
+| `<platform>.files` / `.extraResources` / `.extraFiles` | `<platform>.fileOptions.files` / `.extraResources` / `.extraFiles` |
+
+```json5
+// Before (v26)
+{ "files": ["dist/**/*", "package.json"], "extraResources": [{ "from": "assets/bin", "to": "bin" }], "mac": { "extraFiles": ["mac-only/**"] } }
+
+// After (v27)
+{
+  "fileOptions": { "files": ["dist/**/*", "package.json"], "extraResources": [{ "from": "assets/bin", "to": "bin" }] },
+  "mac": { "fileOptions": { "extraFiles": ["mac-only/**"] } }
+}
+```
+
+The values themselves are unchanged (glob strings and `FileSet` objects), and so is how they combine: a platform's lists are added to the root ones, and a `files` list from an `extends` parent is merged with the child's.
+
+**The flat keys still work in v27.** When the configuration is loaded they are moved into `fileOptions`, and the build logs one warning naming the keys it found and their replacements. They stay in the TypeScript types, marked `@deprecated`, so typed configs keep compiling. The flat keys are removed in v28.
+
+**If a flat key and its `fileOptions` counterpart are both set on the same object**, `fileOptions` wins: the flat key is ignored and the build warns about the conflict. `migrate-schema` removes such a flat key with a warning, so move any patterns you still need into `fileOptions` yourself. A flat key from another source is merged rather than ignored: a CLI override such as `-c.files=…` is added to the config file's `fileOptions.files`, and a parent config's flat keys are merged with the child's `fileOptions`.
+
+`fileOptions` must be an object. A list written directly under it (`"fileOptions": ["dist/**"]`) fails the build with a message showing the nested form.
+
+`flatpak.files` (a list of `[source, destination]` pairs) is a separate Flatpak option and is not affected.
+
+Plugin authors who read `config.files` / `extraResources` / `extraFiles`, or the same keys on `platformSpecificBuildOptions`, read `fileOptions.files` / `fileOptions.extraResources` / `fileOptions.extraFiles` instead. Only the nested values are set once the configuration is loaded.
+
 ---
 
 ## CLI changes
@@ -656,7 +693,7 @@ These flags are removed (they have thrown since v22).
 
 v27 adds `electron-builder migrate-schema`, which rewrites your config to v27 form in place and auto-migrates **static** (`json`/`json5`/`yaml`/package.json) **and programmatic** (`.js`/`.ts`/`.cjs`/`.mjs`) configs. TOML configs are parsed and the required changes printed, but not written. See the [walkthrough](./v26-to-v27#step-1-run-the-automated-migrator) for flags and the before/after of every rewrite.
 
-**It rewrites** every entry marked **Auto ✓** on this page: removed keys (`electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, `disableDefaultIgnoredFiles`, `appImage.systemIntegration`, `linux.syncDesktopName`, `mac.gatekeeperAssess`), the `nativeModules`, `asar` (root and platform-level), `mac.sign`, `mac.universal`, `win.sign`, `electronGet`, and `snapcraft` restructurings, GitHub `vPrefixedTagName` → `tagNamePrefix`, `helper-bundle-id`, `squirrelWindows.noMsi`, root-level `directories` in `package.json`, and `toolsets.*` values v27 rejects (`null`, the retired `appimage: "1.0.2"`). Values with no v27 equivalent (for example `nativeRebuilder: "legacy"` or `electronDownload.strictSSL`) are dropped with a warning.
+**It rewrites** every entry marked **Auto ✓** on this page: removed keys (`electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, `disableDefaultIgnoredFiles`, `appImage.systemIntegration`, `linux.syncDesktopName`, `mac.gatekeeperAssess`), the `nativeModules`, `asar` (root and platform-level), `fileOptions` (root and platform-level), `mac.sign`, `mac.universal`, `win.sign`, `electronGet`, and `snapcraft` restructurings, GitHub `vPrefixedTagName` → `tagNamePrefix`, `helper-bundle-id`, `squirrelWindows.noMsi`, root-level `directories` in `package.json`, and `toolsets.*` values v27 rejects (`null`, the retired `appimage: "1.0.2"`). Values with no v27 equivalent (for example `nativeRebuilder: "legacy"` or `electronDownload.strictSSL`) are dropped with a warning.
 
 **It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom NSIS bundle in `customNsisBinary` / `customNsisResources` ([→ `toolsets.nsis`](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis); it does move `customNsisBinary.debugLogging` → `installerDebugLogging`), a custom `mac.sign` signer combined with sibling signing options, and (in JS/TS configs) platform-level `asarUnpack` next to root-level ASAR options.
 
@@ -1303,6 +1340,10 @@ In v26, ~15 signing options were scattered across the root of `MacConfiguration`
 ### Why rename `electronDownload` to `electronGet`?
 
 v27 upgrades to `@electron/get` v5, which downloads via `fetch` (replacing the `got`-based path) and exposes a `mirrorOptions` object rather than the old flat `mirror`/`customDir` fields. Renaming the config key to `electronGet` and typing it directly as the library's own options removes electron-builder's hand-maintained translation layer — what you set is what `@electron/get` receives. A few legacy fields (`customDir`, `customFilename`, `strictSSL`) have no v5 equivalent; `migrate-schema` drops them with a warning. `cache` is not gone — it moved out of the config surface and is set with the `ELECTRON_BUILDER_CACHE` environment variable instead.
+
+### Why nest `files`, `extraResources` and `extraFiles` under `fileOptions`?
+
+`PlatformSpecificBuildOptions` used to extend `FilesBuildOptions`, so the three file-copy lists sat at the root of every configuration level next to dozens of unrelated options. A `fileOptions` property, like `directories`, keeps related options together, gives them one place in the docs and in IntelliSense, and leaves room for more file-copy options without adding them to every configuration level. Unlike the other restructurings on this page, the flat keys are kept for one more major version (with a warning), because almost every configuration sets `files`.
 
 ### Why consolidate ASAR options under `asar`?
 

@@ -95,21 +95,24 @@ test("merge configurations", ({ expect }) => {
       output: "dist",
       buildResources: "build",
     },
-    files: [
-      {
-        filter: ["package.json", "**/*", "!webpack", "!.*", "!config/jsdoc.json", "!package.*", "!docs", "!private"],
-      },
-      {
-        from: "dist/main",
-      },
-      {
-        from: "dist/renderer",
-      },
-      {
-        from: "dist/renderer-dll",
-      },
-    ],
+    fileOptions: {
+      files: [
+        {
+          filter: ["package.json", "**/*", "!webpack", "!.*", "!config/jsdoc.json", "!package.*", "!docs", "!private"],
+        },
+        {
+          from: "dist/main",
+        },
+        {
+          from: "dist/renderer",
+        },
+        {
+          from: "dist/renderer-dll",
+        },
+      ],
+    },
   })
+  expect(result).not.toHaveProperty("files")
 })
 
 test("build in the app package.json", ({ expect }) =>

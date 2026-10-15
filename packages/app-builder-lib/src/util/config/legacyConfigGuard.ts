@@ -1,6 +1,7 @@
 import { InvalidConfigurationError, log } from "builder-util"
 import { Configuration } from "../../configuration.js"
-import { BREAKING_CHANGES_URL, formatLegacyOptionMessage, RESOLVED_LEGACY_CONFIG_OPTIONS } from "./legacyOptions.js"
+import { isPlainObject } from "./fileOptions.js"
+import { ALL_PLATFORM_KEYS, BREAKING_CHANGES_URL, FILE_OPTION_KEYS, FILE_OPTIONS_ANCHOR, formatLegacyOptionMessage, RESOLVED_LEGACY_CONFIG_OPTIONS } from "./legacyOptions.js"
 
 /**
  * Build-time guard for configurations still written against v26.
@@ -43,10 +44,6 @@ const SNAPCRAFT_BASES = ["core18", "core20", "core22", "core24", "custom"]
 
 function docLink(anchor: string): string {
   return `  ${BREAKING_CHANGES_URL}#${anchor}`
-}
-
-function isPlainObject(value: unknown): value is Record<string, any> {
-  return value != null && typeof value === "object" && !Array.isArray(value)
 }
 
 /** Resolves `path` against `config`, returning the holding object or null when any segment is missing. */
@@ -182,6 +179,37 @@ function checkPublishEntries(config: Record<string, any>, errors: string[]): voi
 }
 
 /**
+ * `fileOptions` is an object holding the `files` / `extraResources` / `extraFiles` lists. Writing the `files` list itself
+ * there (`"fileOptions": ["dist/**"]`) is an easy mistake when moving a v26 `files` key by hand, and ajv only reports
+ * that `fileOptions` "should be object". `normalizeFileOptions` leaves the flat keys next to such a value in place, so
+ * they are named here too.
+ */
+function checkFileOptionsShape(config: Record<string, any>, errors: string[]): void {
+  const check = (holder: Record<string, any>, prefix: string) => {
+    const value = holder.fileOptions
+    if (value == null || isPlainObject(value)) {
+      return
+    }
+    const flatKeys = FILE_OPTION_KEYS.filter(key => holder[key] !== undefined).map(key => `${prefix}${key}`)
+    const files = Array.isArray(value) || typeof value === "string" ? JSON.stringify(value) : '["**/*"]'
+    errors.push(
+      `\`${prefix}fileOptions\` must be an object holding \`files\`, \`extraResources\` and/or \`extraFiles\`, not ${Array.isArray(value) ? "an array" : `a ${typeof value}`}` +
+        (flatKeys.length > 0 ? ` (the configuration also sets [${flatKeys.join(", ")}], which belong inside it)` : "") +
+        ".\n" +
+        `  e.g. \`${prefix}fileOptions: { files: ${files} }\`.\n` +
+        "  Run `electron-builder migrate-schema` (with `--config <path>` if your config file has another name) to move v26 `files` / `extraResources` / `extraFiles` keys automatically.\n" +
+        docLink(FILE_OPTIONS_ANCHOR)
+    )
+  }
+  check(config, "")
+  for (const platform of ALL_PLATFORM_KEYS) {
+    if (isPlainObject(config[platform])) {
+      check(config[platform], `${platform}.`)
+    }
+  }
+}
+
+/**
  * Throws a single aggregated {@link InvalidConfigurationError} naming every v26 option found, and
  * warns about the ones that are merely discouraged. Runs before schema validation.
  */
@@ -195,6 +223,7 @@ export function checkLegacyConfiguration(config: Configuration): void {
   checkWinSignDiscriminator(raw, errors)
   checkSnapcraftShape(raw, errors)
   checkPublishEntries(raw, errors)
+  checkFileOptionsShape(raw, errors)
 
   for (const warning of warnings) {
     log.warn(warning)

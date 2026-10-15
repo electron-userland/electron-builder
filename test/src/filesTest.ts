@@ -131,16 +131,18 @@ test.ifNotWindows("map resources", ({ expect }) =>
       targets: linuxDirTarget,
       config: {
         asar: false,
-        extraResources: [
-          {
-            from: "foo/old",
-            to: "foo/new",
-          },
-          {
-            from: "license.txt",
-            to: ".",
-          },
-        ],
+        fileOptions: {
+          extraResources: [
+            {
+              from: "foo/old",
+              to: "foo/new",
+            },
+            {
+              from: "license.txt",
+              to: ".",
+            },
+          ],
+        },
       },
     },
     {
@@ -158,6 +160,7 @@ test.ifNotWindows("map resources", ({ expect }) =>
   )
 )
 
+// Uses the v26 flat keys, which v27 still accepts (normalized into `fileOptions`); "extraResources - two-package" uses the nested form.
 async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
   const osName = platform.buildConfigurationKey
   await assertPack(
@@ -219,10 +222,14 @@ test.ifNotWindows("extraResources - two-package", ({ expect }) => {
       // to check NuGet package
       targets: platform.createTarget(DIR_TARGET),
       config: {
-        extraResources: ["foo", "bar/hello.txt", "bar/${arch}.txt", "${os}/${arch}.txt", "executable*"],
+        fileOptions: {
+          extraResources: ["foo", "bar/hello.txt", "bar/${arch}.txt", "${os}/${arch}.txt", "executable*"],
+        },
         [osName]: {
-          extraResources: ["platformSpecificR"],
-          extraFiles: ["platformSpecificF"],
+          fileOptions: {
+            extraResources: ["platformSpecificR"],
+            extraFiles: ["platformSpecificF"],
+          },
         },
       },
     },

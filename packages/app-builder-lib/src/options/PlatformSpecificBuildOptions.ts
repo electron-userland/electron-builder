@@ -77,6 +77,13 @@ export interface AsarOptions {
   disableIntegrity?: boolean
 }
 
+/**
+ * Which files are copied into the packaged app, set under `fileOptions` at the configuration root or per platform
+ * (e.g. `mac.fileOptions`). A platform's lists are added to the root ones.
+ *
+ * In v26 these options were flat keys (`files`, `extraResources`, `extraFiles`) directly on the configuration and the
+ * platform options. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
+ */
 export interface FilesBuildOptions {
   /**
    * A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.
@@ -103,7 +110,7 @@ Development dependencies are never copied in any case. You don't need to ignore 
 
 Default pattern \`**\/*\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \`**\/node_modules/**\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.
 
-May be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).
+May be specified in the platform options as well (e.g. `mac.fileOptions.files`, see [mac](https://www.electron.build/mac)).
 
 You may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.
 
@@ -135,7 +142,46 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
   extraFiles?: Array<FileSet | string> | FileSet | string | null
 }
 
-export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, FilesBuildOptions {
+export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
+  /**
+   * Which files to copy into the packaged app: `files` (the app sources), `extraResources` and `extraFiles`.
+   * Set at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones.
+   *
+   * ```json
+   * {
+   *   "fileOptions": {
+   *     "files": ["dist/**\/*", "package.json"],
+   *     "extraResources": [{ "from": "assets/bin", "to": "bin" }]
+   *   }
+   * }
+   * ```
+   */
+  fileOptions?: FilesBuildOptions | null
+
+  /**
+   * Deprecated: moved to `fileOptions.files` in v27. The flat key still works in v27 (with a warning) and is removed in v28.
+   * When both are set on the same object, `fileOptions.files` wins and this key is ignored.
+   * Run `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
+   * @deprecated Use {@link FilesBuildOptions.files | fileOptions.files}. Removed in v28.
+   */
+  files?: Array<FileSet | string> | FileSet | string | null
+
+  /**
+   * Deprecated: moved to `fileOptions.extraResources` in v27. The flat key still works in v27 (with a warning) and is removed in v28.
+   * When both are set on the same object, `fileOptions.extraResources` wins and this key is ignored.
+   * Run `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
+   * @deprecated Use {@link FilesBuildOptions.extraResources | fileOptions.extraResources}. Removed in v28.
+   */
+  extraResources?: Array<FileSet | string> | FileSet | string | null
+
+  /**
+   * Deprecated: moved to `fileOptions.extraFiles` in v27. The flat key still works in v27 (with a warning) and is removed in v28.
+   * When both are set on the same object, `fileOptions.extraFiles` wins and this key is ignored.
+   * Run `electron-builder migrate-schema` to move it. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
+   * @deprecated Use {@link FilesBuildOptions.extraFiles | fileOptions.extraFiles}. Removed in v28.
+   */
+  extraFiles?: Array<FileSet | string> | FileSet | string | null
+
   /**
    * The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
    * [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.

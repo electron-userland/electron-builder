@@ -1147,6 +1147,8 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
     ["electronDownload force", { electronDownload: { force: true, mirrorOptions: { mirror: "https://m/" } } }],
     ["publish in a target section", { nsis: { publish: { provider: "github", vPrefixedTagName: false } }, dmg: { publish: [{ provider: "github", tagNamePrefix: "" }] } }],
     ["snap core24", { snap: { base: "core24", allowNativeWayland: true, useTemplateApp: false, grade: "stable" } }],
+    ["file options", { files: ["dist/**"], extraResources: [{ from: "a", to: "b" }], mac: { extraFiles: "x", files: ["!m/**"] }, masDev: { extraResources: null } }],
+    ["file options next to fileOptions", { files: ["flat/**"], fileOptions: { files: ["nested/**"], extraFiles: ["e"] }, win: { extraResources: ["r"], fileOptions: null } }],
     [
       "win signing disabled with legacy options",
       { win: { signExecutable: false, azureSignOptions: { endpoint: "https://e/", certificateProfileName: "p", codeSigningAccountName: "a" } } },
@@ -1219,6 +1221,8 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
         toolsets: { wine: null, appimage: "1.0.2", nsis: "1.2.1", winCodeSign: "0.0.0" },
         nsis: { publish: { provider: "github", vPrefixedTagName: false } },
         dmg: { publish: [{ provider: "github", tagNamePrefix: "" }] },
+        files: ["**/*", "!src/**"],
+        extraFiles: [{ from: "bin", to: "bin" }],
       },
     ],
   ]
@@ -1273,5 +1277,56 @@ describe("migrateConfig — removed customNsisBinary / customNsisResources", () 
   test("an existing installerDebugLogging wins over the v26 debugLogging", () => {
     const result = migrateConfig({ nsis: { installerDebugLogging: false, customNsisBinary: { debugLogging: true } } })
     expect(result.migrated).toEqual({ nsis: { installerDebugLogging: false } })
+  })
+})
+
+describe("migrateConfig — files / extraResources / extraFiles → fileOptions", () => {
+  test("moves the root-level keys under fileOptions", () => {
+    const result = migrateConfig({ appId: "a", files: ["dist/**"], extraResources: "r", extraFiles: [{ from: "bin", to: "bin" }] })
+    expect(result.migrated).toEqual({ appId: "a", fileOptions: { files: ["dist/**"], extraResources: "r", extraFiles: [{ from: "bin", to: "bin" }] } })
+    expect(result.changes.map(c => c.description)).toEqual([
+      "moved files → fileOptions.files",
+      "moved extraResources → fileOptions.extraResources",
+      "moved extraFiles → fileOptions.extraFiles",
+    ])
+    expect(result.warnings).toHaveLength(0)
+    expect(result.modified).toBe(true)
+  })
+
+  test.each(["mac", "mas", "masDev", "win", "linux"])("moves the %s platform-level keys under its fileOptions", platform => {
+    const result = migrateConfig({ [platform]: { target: "dir", files: ["!x/**"], extraFiles: "f" } })
+    expect(result.migrated).toEqual({ [platform]: { target: "dir", fileOptions: { files: ["!x/**"], extraFiles: "f" } } })
+    expect(result.changes.map(c => c.key)).toEqual([`${platform}.files`, `${platform}.extraFiles`])
+  })
+
+  test("merges into an existing fileOptions object; a null fileOptions is replaced", () => {
+    const result = migrateConfig({ extraFiles: ["e"], fileOptions: { files: ["dist/**"] }, linux: { extraResources: ["r"], fileOptions: null } })
+    expect(result.migrated).toEqual({ fileOptions: { files: ["dist/**"], extraFiles: ["e"] }, linux: { fileOptions: { extraResources: ["r"] } } })
+  })
+
+  test("a flat key also set under fileOptions is removed with a warning: v27 already ignores it", () => {
+    const result = migrateConfig({ files: ["flat/**"], fileOptions: { files: ["nested/**"] }, mac: { extraResources: ["flat"], fileOptions: { extraResources: ["nested"] } } })
+    expect(result.migrated).toEqual({ fileOptions: { files: ["nested/**"] }, mac: { fileOptions: { extraResources: ["nested"] } } })
+    expect(result.changes.map(c => c.description)).toEqual([
+      "removed files (fileOptions.files is also set and takes precedence)",
+      "removed mac.extraResources (mac.fileOptions.extraResources is also set and takes precedence)",
+    ])
+    expect(result.warnings).toHaveLength(2)
+    expect(result.warnings[0]).toContain("v27 builds with fileOptions.files and ignores files")
+  })
+
+  test("a fileOptions that is not an object is left alone with a warning", () => {
+    const input = { files: ["dist/**"], fileOptions: ["x"] }
+    const result = migrateConfig(structuredClone(input))
+    expect(result.migrated).toEqual(input)
+    expect(result.modified).toBe(false)
+    expect(result.warnings).toEqual(["fileOptions is not an object; move files into it manually (e.g. fileOptions: { files: [...] })."])
+  })
+
+  test("target sections are untouched (flatpak.files is a [src, dest] list of its own)", () => {
+    const input = { flatpak: { files: [["build/a", "/share/a"]] }, fileOptions: { files: ["dist/**"] } }
+    const result = migrateConfig(structuredClone(input))
+    expect(result.modified).toBe(false)
+    expect(result.migrated).toEqual(input)
   })
 })

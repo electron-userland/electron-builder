@@ -1,11 +1,13 @@
 import { createRequire } from "node:module"
-import { NSIS_CONFIG_KEYS } from "app-builder-lib/internal"
+import { ALL_PLATFORM_KEYS, FILE_OPTION_KEYS, NSIS_CONFIG_KEYS } from "app-builder-lib/internal"
 import * as path from "path"
 import {
   ASAR_PLATFORM_KEYS,
   AZURE_KNOWN_FIELDS,
   ELECTRON_DOWNLOAD_DROPPED,
   FEED_QUERY_ADVISORY,
+  fileOptionsChange,
+  fileOptionsConflictWarning,
   isLegacyElectronDownloadKey,
   legacyKeyMessage,
   MAC_ENTITLEMENTS_ADVISORY,
@@ -343,7 +345,7 @@ class ConfigCodemod {
     this.indentUnit = this.detectIndentUnit(root)
     this.ruleRemoveKeys(root, ["electronCompile"], "removed electronCompile (unsupported since v27; migrate to electron-vite, esbuild, or webpack)")
     this.ruleRemoveKeys(root, ["framework", "nodeVersion", "launchUiVersion"], key => `removed ${key} (Electron is the only supported framework in v27)`)
-    const disableDefaultIgnoredFilesDesc = "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `files` glob, e.g. `**/*.obj`)"
+    const disableDefaultIgnoredFilesDesc = "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `fileOptions.files` glob, e.g. `**/*.obj`)"
     this.ruleRemoveKeys(root, ["disableDefaultIgnoredFiles"], disableDefaultIgnoredFilesDesc)
     // mas/masDev are MacConfiguration-derived, so they accept the (now-removed) key too.
     for (const platform of ["mac", "mas", "masDev", "win", "linux"]) {
@@ -387,6 +389,13 @@ class ConfigCodemod {
     }
     this.ruleElectronDownload(root)
     this.ruleToolsets(root)
+    this.ruleFileOptions(root, "")
+    for (const platform of ALL_PLATFORM_KEYS) {
+      const p = this.getObjectProp(root, platform)
+      if (p != null) {
+        this.ruleFileOptions(p, `${platform}.`)
+      }
+    }
     this.ruleNsisWebAdvisory(root)
     this.ruleMacEntitlementsAdvisory(root)
     this.ruleNsisPerMachineAdvisory(root)
@@ -1344,6 +1353,41 @@ class ConfigCodemod {
     const ok = this.moveInto(platform, "universal", sources, [])
     if (!ok) {
       this.warnings.push(`${name}.universal already exists but is not an object literal; move ${present.join(", ")} into it manually.`)
+    }
+  }
+
+  /** Mirrors migrateConfig's `migrateFileOptions`: flat `files` / `extraResources` / `extraFiles` → `fileOptions`. */
+  private ruleFileOptions(holder: any, prefix: string): void {
+    const present = FILE_OPTION_KEYS.filter(key => this.getProp(holder, key) != null)
+    if (present.length === 0) {
+      return
+    }
+    const fileOptionsProp = this.getProp(holder, "fileOptions")
+    const existing = this.getObjectProp(holder, "fileOptions")
+    const isNull = fileOptionsProp != null && existing == null && this.propValue(holder, "fileOptions")?.kind === this.ts.SyntaxKind.NullKeyword
+    if (fileOptionsProp != null && existing == null && !isNull) {
+      this.warnings.push(`${prefix}fileOptions is not an object literal; move ${present.map(key => prefix + key).join(", ")} into it manually.`)
+      return
+    }
+
+    const sources: { prop: any }[] = []
+    for (const key of present) {
+      const prop = this.getProp(holder, key)
+      const conflict = existing != null && this.getProp(existing, key) != null
+      if (conflict) {
+        this.removeProp(prop)
+        this.warnings.push(fileOptionsConflictWarning(prefix, key))
+      } else {
+        sources.push({ prop })
+      }
+      this.changes.push(fileOptionsChange(prefix, key, conflict))
+    }
+    if (sources.length > 0) {
+      if (isNull) {
+        // replaced by the object moveInto creates
+        this.removeProp(fileOptionsProp)
+      }
+      this.moveInto(holder, "fileOptions", sources, [], /* treatNullAsAbsent */ true)
     }
   }
 

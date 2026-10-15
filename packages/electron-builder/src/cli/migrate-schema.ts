@@ -1,7 +1,9 @@
 import { createRequire } from "node:module"
 import {
+  ALL_PLATFORM_KEYS,
   AZURE_KNOWN_FIELDS,
   ELECTRON_DOWNLOAD_DROPPED,
+  FILE_OPTION_KEYS,
   formatLegacyOptionMessage,
   MAC_SIGN_FIELDS,
   MAC_SIGN_REMOVED_FIELDS,
@@ -197,7 +199,7 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
       delete obj.disableDefaultIgnoredFiles
       changes.push({
         key: "disableDefaultIgnoredFiles",
-        description: "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `files` glob, e.g. `**/*.obj`)",
+        description: "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `fileOptions.files` glob, e.g. `**/*.obj`)",
       })
     }
   }
@@ -520,6 +522,18 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     migrateToolsets(c.toolsets, changes)
   }
 
+  // Kept keys are reported only after `modified` is computed: a key that is merely kept must not re-serialize the file
+  // (dropping YAML/JSON5 comments) when nothing else changed. The build then fails with the same targeted message.
+  const keptKeyWarnings: string[] = []
+
+  // ── 16. files / extraResources / extraFiles → fileOptions (root + platform configs) ──
+  migrateFileOptions(c, "", changes, warnings, keptKeyWarnings)
+  for (const platform of ALL_PLATFORM_KEYS) {
+    if (isPlainObject(c[platform])) {
+      migrateFileOptions(c[platform], `${platform}.`, changes, warnings, keptKeyWarnings)
+    }
+  }
+
   // Advisories (not config changes): v27 runtime defaults and behavior changes that a config rewrite cannot address.
   if (detectTarget(c, "win", ["nsis-web"])) {
     advisories.push(NSIS_WEB_ADVISORY)
@@ -538,14 +552,56 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   }
 
   // ── nsis/nsisWeb/portable customNsisBinary / customNsisResources removed ──
-  // Kept keys are reported only after `modified` is computed: a key that is merely kept must not re-serialize the file
-  // (dropping YAML/JSON5 comments) when nothing else changed. The build then fails with the same targeted message.
-  const keptKeyWarnings: string[] = []
   migrateCustomNsis(c, changes, warnings, keptKeyWarnings)
   const modified = changes.length > 0 || warnings.length > 0
   warnings.push(...keptKeyWarnings)
 
   return { migrated: c, changes, warnings, advisories, modified }
+}
+
+/**
+ * Moves the flat `files` / `extraResources` / `extraFiles` keys of `holder` (the root or a platform config) into its
+ * `fileOptions`. The flat keys still build in v27 (with a warning) and are removed in v28. A key also set in `fileOptions`
+ * is dropped: v27 ignores the flat key then, so dropping it keeps the build output unchanged.
+ */
+function migrateFileOptions(holder: Record<string, any>, prefix: string, changes: MigrationChange[], warnings: string[], keptKeyWarnings: string[]): void {
+  const present = FILE_OPTION_KEYS.filter(key => key in holder)
+  if (present.length === 0) {
+    return
+  }
+  const existing = holder.fileOptions
+  if (existing != null && !isPlainObject(existing)) {
+    keptKeyWarnings.push(
+      `${prefix}fileOptions is not an object; move ${present.map(key => prefix + key).join(", ")} into it manually (e.g. ${prefix}fileOptions: { files: [...] }).`
+    )
+    return
+  }
+
+  const fileOptions: Record<string, any> = { ...existing }
+  for (const key of present) {
+    const conflict = key in fileOptions
+    if (conflict) {
+      warnings.push(fileOptionsConflictWarning(prefix, key))
+    } else {
+      fileOptions[key] = holder[key]
+    }
+    changes.push(fileOptionsChange(prefix, key, conflict))
+    delete holder[key]
+  }
+  holder.fileOptions = fileOptions
+}
+
+/** The change a flat `files` / `extraResources` / `extraFiles` key makes; shared with the JS/TS codemod. */
+export function fileOptionsChange(prefix: string, key: string, conflict: boolean): MigrationChange {
+  const nested = `${prefix}fileOptions.${key}`
+  return { key: prefix + key, description: conflict ? `removed ${prefix}${key} (${nested} is also set and takes precedence)` : `moved ${prefix}${key} → ${nested}` }
+}
+
+/** Warning for a flat key removed because its `fileOptions` counterpart is also set; shared with the JS/TS codemod. */
+export function fileOptionsConflictWarning(prefix: string, key: string): string {
+  const flat = prefix + key
+  const nested = `${prefix}fileOptions.${key}`
+  return `${flat} and ${nested} were both set. v27 builds with ${nested} and ignores ${flat}, so ${flat} was removed; move any patterns you still need into ${nested}.`
 }
 
 /** The build-time guard's message for a removed key (`nsis.customNsisBinary`), reused for the keys migrate-schema leaves in place. */
@@ -1288,6 +1344,7 @@ function printManualSteps() {
     "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true; drop cache/customDir/customFilename/strictSSL/platform/arch/version/force)",
     '• Remove toolsets.* entries set to null (unset resolves to "latest"); replace toolsets.appimage "1.0.2" with "1.0.3"',
     "• Move root-level package.json directories → build.directories",
+    "• Move files / extraResources / extraFiles → fileOptions.files / fileOptions.extraResources / fileOptions.extraFiles, at the root and in mac/mas/masDev/win/linux (the flat keys still build in v27, with a warning, and are removed in v28)",
     "",
     "• For programmatic configs (JS/TS/MJS/CJS), apply the above changes manually to your config object",
     "• For additional guidance, check the migration walkthrough: https://www.electron.build/docs/migration/v26-to-v27",
