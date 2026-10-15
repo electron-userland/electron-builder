@@ -1,4 +1,17 @@
-import { asArray, copyDir, copyOrLinkFile, FileTransformer, Filter, InvalidConfigurationError, isPathWithin, log, statOrNull, USE_HARD_LINKS, WriteContainment } from "builder-util"
+import {
+  asArray,
+  copyDir,
+  copyOrLinkFile,
+  ExternalLinkPolicy,
+  FileTransformer,
+  Filter,
+  InvalidConfigurationError,
+  isPathWithin,
+  log,
+  statOrNull,
+  USE_HARD_LINKS,
+  WriteContainment,
+} from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { Minimatch } from "minimatch"
 import * as path from "path"
@@ -582,6 +595,8 @@ export interface CopyFilesContainment {
   readonly roots: ReadonlyArray<string>
   /** Besides the root, the directories a copied symlink may lead into, such as the workspace root and the package-manager store. */
   readonly allowedSymlinkRoots?: ReadonlyArray<string> | null
+  /** The `allowExternalLinks` build option: a copied symlink that leads anywhere else is kept when it allows it. */
+  readonly externalLinks?: ExternalLinkPolicy | null
 }
 
 function containmentRootFor(destination: string, containment: CopyFilesContainment | Nullish): string {
@@ -632,6 +647,7 @@ export function copyFiles(
         isUseHardLink: isUseHardLink ? USE_HARD_LINKS : null,
         containmentRoot,
         allowedSymlinkRoots: containment?.allowedSymlinkRoots,
+        externalLinks: containment?.externalLinks,
       })
     })
   )

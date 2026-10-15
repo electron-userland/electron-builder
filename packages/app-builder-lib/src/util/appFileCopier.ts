@@ -2,6 +2,7 @@ import {
   Arch,
   assertCopiedSymlinksContained,
   AsyncTaskManager,
+  ExternalLinkPolicy,
   FileCopier,
   FileTransformer,
   InvalidConfigurationError,
@@ -52,6 +53,8 @@ export interface CopyAppFilesOptions {
   readonly containmentRoot: string
   /** The real paths files may be copied from, see `getTrustedSourceRoots`. Each file is checked when given. */
   readonly trustedSourceRoots?: ReadonlyArray<string> | null
+  /** The `allowExternalLinks` build option: allows a file outside the trusted source roots, or a kept symlink that leaves the containment root. */
+  readonly externalLinks?: ExternalLinkPolicy | null
 }
 
 /**
@@ -79,7 +82,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Pick<Pack
     }
 
     if (trustedSourceRoots != null) {
-      await assertSourceFileInTrustedRoots(sourceFile, trustedSourceRoots)
+      await assertSourceFileInTrustedRoots(sourceFile, trustedSourceRoots, options?.externalLinks)
     }
 
     const destinationFile = getDestinationPath(sourceFile, fileSet)
@@ -106,7 +109,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Pick<Pack
     await fsExtra.ensureSymlink(it.link, it.file)
   })
   // the walker follows a symlink that leaves the app directory and copies what it points to, so a symlink kept as it is has to stay inside
-  await assertCopiedSymlinksContained(containment, links, [], "app file")
+  await assertCopiedSymlinksContained(containment, links, [], "app file", options?.externalLinks)
 }
 
 // os path separator is used

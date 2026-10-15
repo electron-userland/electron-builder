@@ -228,6 +228,8 @@ export class NsisTarget extends Target {
       preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`),
       storedPaths
     )
+    // 7za stores what a symlink points to: one that leaves the app fails the package unless allowExternalLinks allows it
+    archiveOptions.externalLinks = await packager.getExternalLinkPolicy()
 
     const timer = time(`nsis package, ${Arch[arch]}`)
     await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)

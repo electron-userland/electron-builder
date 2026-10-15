@@ -290,7 +290,7 @@ export class AsarPackager {
     }
 
     // verify that the file is not a direct link or symlinked to a file outside the workspace and the package-manager store
-    await assertSourceFileInTrustedRoots(file, await getTrustedSourceRoots(this.packager))
+    await assertSourceFileInTrustedRoots(file, await getTrustedSourceRoots(this.packager), await this.packager.getExternalLinkPolicy())
 
     const baseConfig = {
       path: destination,

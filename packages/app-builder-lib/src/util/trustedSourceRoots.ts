@@ -1,4 +1,4 @@
-import { InvalidConfigurationError, isPathWithin, log, resolvePhysicalPath } from "builder-util"
+import { ExternalLinkPolicy, InvalidConfigurationError, isPathWithin, log, resolvePhysicalPath } from "builder-util"
 import { readFile } from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -71,22 +71,61 @@ async function computeTrustedSourceRoots(info: SourceRootsInfo): Promise<Array<s
 
 /**
  * Refuses a file of the app (packed into the asar archive or copied with `asar: false`) whose real path, through symlinks, is outside
- * every trusted source root ({@link getTrustedSourceRoots}).
+ * every trusted source root ({@link getTrustedSourceRoots}), unless the `allowExternalLinks` build option (`externalLinks`) allows it.
  *
  * electron-builder <= 26 refused only some system directories (`/etc`, `/usr`, `C:\Windows`, ...) and let everything else through,
  * explicitly anything under the home and temp directories. In v27 only the workspace and the package-manager store are trusted.
  */
-export async function assertSourceFileInTrustedRoots(file: string, trustedRoots: ReadonlyArray<string>): Promise<void> {
+export async function assertSourceFileInTrustedRoots(file: string, trustedRoots: ReadonlyArray<string>, externalLinks: ExternalLinkPolicy | null = null): Promise<void> {
   const resolved = await resolvePhysicalPath(file)
   if (trustedRoots.some(root => isPathWithin(root, resolved))) {
     return
   }
+  const policy = externalLinks ?? ExternalLinkPolicy.NONE
+  if (policy.allows(file, resolved)) {
+    return
+  }
   log.error({ source: file, realPath: resolved }, "denied access to a file outside the workspace")
   throw new InvalidConfigurationError(
-    `Cannot copy file [${file}] symlinked to file [${resolved}] outside the package: electron-builder v27 only packages files whose real path ` +
+    `Cannot copy file [${policy.displayPath(file)}] symlinked to file [${resolved}] outside the package: electron-builder v27 only packages files whose real path ` +
       `is inside the workspace root (${trustedRoots[0] ?? "unknown"}) or the package-manager store; v26 also accepted anything outside system ` +
       `directories, such as the home and temp directories. Add the linked package to the workspace (or install it from a tarball or ` +
-      `the registry instead of linking it), or replace the symlink with a copy. See ${LINKED_FILES_DOCS_URL}`,
+      `the registry instead of linking it), or replace the symlink with a copy. ${await policy.hint([await outermostOutsideTrustedRoots(file, resolved, trustedRoots)])} ` +
+      `See ${LINKED_FILES_DOCS_URL}`,
     "ERR_ELECTRON_BUILDER_FILE_OUTSIDE_WORKSPACE"
   )
+}
+
+/**
+ * Where the linked tree that `file` (real path `resolved`) is part of starts: the real path of its highest ancestor that is still outside
+ * the trusted roots, e.g. the linked package `../lib` for `node_modules/lib/src/index.js`, so that a suggested `allowExternalLinks` entry
+ * covers the whole package rather than the one file that was checked first.
+ */
+async function outermostOutsideTrustedRoots(file: string, resolved: string, trustedRoots: ReadonlyArray<string>): Promise<string> {
+  let result = resolved
+  let current = path.resolve(file)
+  for (;;) {
+    const parent = path.dirname(current)
+    if (parent === current) {
+      // not below a trusted root at all: only the file itself is known to be linked
+      return resolved
+    }
+    const realParent = await resolvePhysicalPath(parent)
+    if (trustedRoots.some(root => isPathWithin(root, realParent))) {
+      return result
+    }
+    result = realParent
+    current = parent
+  }
+}
+
+/**
+ * The `copyDir` options for copying the app output directory into a staging directory (snap, AppImage): a symlink that the
+ * `extraResources`/`extraFiles` copy kept, because it leads into the workspace or the store or `allowExternalLinks` allows it, is kept
+ * again rather than failing the staging copy.
+ */
+export async function getStagingCopyLinkOptions(
+  packager: SourceRootsInfo & { getExternalLinkPolicy(): Promise<ExternalLinkPolicy> }
+): Promise<{ allowedSymlinkRoots: ReadonlyArray<string>; externalLinks: ExternalLinkPolicy }> {
+  return { allowedSymlinkRoots: await getTrustedSourceRoots(packager), externalLinks: await packager.getExternalLinkPolicy() }
 }

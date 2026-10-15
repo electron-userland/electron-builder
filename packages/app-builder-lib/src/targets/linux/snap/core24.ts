@@ -6,6 +6,7 @@ import * as yaml from "js-yaml"
 import * as path from "path"
 import { PlugDescriptor, SlotDescriptor, SnapOptions24 } from "../../../options/SnapOptions.js"
 import { SnapCore } from "./SnapTarget.js"
+import { getStagingCopyLinkOptions } from "../../../util/trustedSourceRoots.js"
 import { buildSnapCommandLauncherScript } from "./snapCommand.js"
 import { App, Part, SnapcraftYAML } from "./snapcraft.js"
 import { buildSnap, DEFAULT_STAGE_PACKAGES, SNAPCRAFT_YAML_OPTIONS } from "./snapcraftBuilder.js"
@@ -82,7 +83,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     const appDir = path.resolve(stageDir, "app")
     if (path.resolve(appDir) !== path.resolve(appOutDir)) {
       log.debug({ to: log.filePath(appDir), from: log.filePath(appOutDir) }, "copying app files to project root app directory")
-      await copyDir(appOutDir, appDir)
+      await copyDir(appOutDir, appDir, await getStagingCopyLinkOptions(this.packager))
     }
 
     // Drop the setuid chrome-sandbox helper before snapcraft stages the app — it is unusable under
