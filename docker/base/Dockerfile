@@ -49,15 +49,23 @@ RUN echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] http://
 # added here. It is added for root, the user this image runs as, because the flatpak target installs into the user installation.
 # elfutils and zstd are the tools flatpak-builder recommends that the image does not have yet: without eu-strip, a module of
 # flatpak.modules that builds a binary fails. fuse3 has the fusermount3 that rofiles-fuse needs, where /dev/fuse is available.
+# keyserver.ubuntu.com and ppa.launchpadcontent.net answer 503 now and then, sometimes for minutes, so every download is retried:
+# apt retries each file up to 10 times, and update and install run again, up to 3 times, keeping the packages already downloaded.
+# update fails on any index it cannot fetch: otherwise a missing PPA index would install Ubuntu's older flatpak without an error.
 ARG FLATPAK_PPA_FINGERPRINT="5C6D153A17C02C337EF6C663B8B9D41229DFA5F5"
-RUN curl -fsSL --tlsv1.2 --proto "=https" -o /usr/share/keyrings/flatpak-stable.asc \
+RUN curl -fsSL --tlsv1.2 --proto "=https" --retry 5 --retry-all-errors -o /usr/share/keyrings/flatpak-stable.asc \
     "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x${FLATPAK_PPA_FINGERPRINT}" \
   && gpg --show-keys --with-colons /usr/share/keyrings/flatpak-stable.asc \
   | awk -F: -v fpr="${FLATPAK_PPA_FINGERPRINT}" '$1 == "pub" { keys++ } $1 == "fpr" && first == "" { first = $10 } END { exit !(keys == 1 && first == fpr) }' \
   && echo "deb [signed-by=/usr/share/keyrings/flatpak-stable.asc] https://ppa.launchpadcontent.net/flatpak/stable/ubuntu jammy main" \
   | tee /etc/apt/sources.list.d/flatpak-stable.list \
-  && apt-get update \
-  && apt-get install -y --no-install-recommends flatpak flatpak-builder fuse3 elfutils zstd \
+  && for attempt in 1 2 3; do \
+       { apt-get -o Acquire::Retries=10 update --error-on=any \
+         && apt-get -o Acquire::Retries=10 install -y --no-install-recommends flatpak flatpak-builder fuse3 elfutils zstd; \
+       } && break; \
+       [ "$attempt" -lt 3 ] || exit 1; \
+       sleep $((attempt * 60)); \
+     done \
   && flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
