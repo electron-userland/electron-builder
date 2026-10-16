@@ -72,7 +72,8 @@ export function orderAsarStreams(
     if (line.startsWith("/")) {
       line = line.slice(1)
     }
-    const key = path.normalize(line)
+    // `path.normalize` keeps a trailing separator ("src/") that directory stream paths lack; a bare "/" is left alone
+    const key = path.normalize(line).replace(/(?<=.)[/\\]+$/, "")
     if (!rank.has(key)) {
       rank.set(key, rank.size)
     }

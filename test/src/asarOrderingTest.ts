@@ -56,6 +56,14 @@ describe("orderAsarStreams", () => {
     expect(matched).toBe(1)
     expect(missing).toEqual(["nope.js"])
   })
+
+  test("directory lines with a trailing separator are neither listed nor reported missing", ({ expect }) => {
+    const { streams: out, listed, matched, missing } = orderAsarStreams(streams, ["src/", "main.js", "lib\\", "/src//", "nope.js"])
+    expect(paths(out)).toEqual(["lib", "src", "main.js", "lib/a.js", "lib/b.js", "src/c.js", "package.json"])
+    expect(listed).toBe(2)
+    expect(matched).toBe(1)
+    expect(missing).toEqual(["nope.js"])
+  })
 })
 
 describe("applyAsarOrdering", () => {
