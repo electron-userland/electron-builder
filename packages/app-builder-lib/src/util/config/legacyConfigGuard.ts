@@ -180,7 +180,7 @@ function checkPublishEntries(config: Record<string, any>, errors: string[]): voi
 
 /**
  * `fileOptions` is an object holding the `files` / `extraResources` / `extraFiles` lists. Writing the `files` list itself
- * there (`"fileOptions": ["dist/**"]`) is an easy mistake when moving a v26 `files` key by hand, and ajv only reports
+ * there (`"fileOptions": ["dist/**"]`) is an easy mistake when moving a `files` key into it by hand, and ajv only reports
  * that `fileOptions` "should be object". `normalizeFileOptions` leaves the flat keys next to such a value in place, so
  * they are named here too.
  */
@@ -197,7 +197,7 @@ function checkFileOptionsShape(config: Record<string, any>, errors: string[]): v
         (flatKeys.length > 0 ? ` (the configuration also sets [${flatKeys.join(", ")}], which belong inside it)` : "") +
         ".\n" +
         `  e.g. \`${prefix}fileOptions: { files: ${files} }\`.\n` +
-        "  Run `electron-builder migrate-schema` (with `--config <path>` if your config file has another name) to move v26 `files` / `extraResources` / `extraFiles` keys automatically.\n" +
+        "  Run `electron-builder migrate-schema` (with `--config <path>` if your config file has another name) to move flat `files` / `extraResources` / `extraFiles` keys into it automatically.\n" +
         docLink(FILE_OPTIONS_ANCHOR)
     )
   }

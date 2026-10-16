@@ -70,12 +70,12 @@ export const ALL_PLATFORM_KEYS = ["mac", "mas", "masDev", "win", "linux"] as con
 export const BREAKING_CHANGES_URL = "https://www.electron.build/docs/migration/v27-breaking-changes"
 
 /**
- * File-copy options that v27 nests under `fileOptions`, at the configuration root and on every platform key
+ * File-copy options nested under `fileOptions`, at the configuration root and on every platform key
  * (`files` → `fileOptions.files`, `mac.extraResources` → `mac.fileOptions.extraResources`, …).
  *
- * Unlike the options in {@link LEGACY_CONFIG_OPTIONS}, the flat keys are not rejected: they are still accepted in
- * v27 (normalized into `fileOptions` with a warning when the configuration is loaded, before validation), although
- * they are no longer in the v27 types and schema.
+ * Unlike the options in {@link LEGACY_CONFIG_OPTIONS}, flat keys are not rejected: they are normalized into
+ * `fileOptions` with a warning when the configuration is loaded, before validation, although the types and the
+ * schema only have `fileOptions`.
  */
 export const FILE_OPTION_KEYS = ["files", "extraResources", "extraFiles"] as const
 

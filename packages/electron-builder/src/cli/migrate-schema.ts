@@ -561,8 +561,8 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
 
 /**
  * Moves the flat `files` / `extraResources` / `extraFiles` keys of `holder` (the root or a platform config) into its
- * `fileOptions`. The v26 flat keys are still accepted in v27 (with a warning). A key also set in `fileOptions`
- * is dropped: v27 ignores the flat key then, so dropping it keeps the build output unchanged.
+ * `fileOptions`. A key also set in `fileOptions` is dropped: the build ignores the flat key then, so dropping it keeps
+ * the build output unchanged.
  */
 function migrateFileOptions(holder: Record<string, any>, prefix: string, changes: MigrationChange[], warnings: string[], keptKeyWarnings: string[]): void {
   const present = FILE_OPTION_KEYS.filter(key => key in holder)
@@ -601,7 +601,7 @@ export function fileOptionsChange(prefix: string, key: string, conflict: boolean
 export function fileOptionsConflictWarning(prefix: string, key: string): string {
   const flat = prefix + key
   const nested = `${prefix}fileOptions.${key}`
-  return `${flat} and ${nested} were both set. v27 builds with ${nested} and ignores ${flat}, so ${flat} was removed; move any patterns you still need into ${nested}.`
+  return `${flat} and ${nested} are both set; the build uses ${nested} and ignores ${flat}, so ${flat} was removed. Move any patterns you still need into ${nested}.`
 }
 
 /** The build-time guard's message for a removed key (`nsis.customNsisBinary`), reused for the keys migrate-schema leaves in place. */
@@ -1344,7 +1344,7 @@ function printManualSteps() {
     "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true; drop cache/customDir/customFilename/strictSSL/platform/arch/version/force)",
     '• Remove toolsets.* entries set to null (unset resolves to "latest"); replace toolsets.appimage "1.0.2" with "1.0.3"',
     "• Move root-level package.json directories → build.directories",
-    "• Move files / extraResources / extraFiles → fileOptions.files / fileOptions.extraResources / fileOptions.extraFiles, at the root and in mac/mas/masDev/win/linux (the v26 flat keys are still accepted in v27, with a warning)",
+    "• Move files / extraResources / extraFiles → fileOptions.files / fileOptions.extraResources / fileOptions.extraFiles, at the root and in mac/mas/masDev/win/linux",
     "",
     "• For programmatic configs (JS/TS/MJS/CJS), apply the above changes manually to your config object",
     "• For additional guidance, check the migration walkthrough: https://www.electron.build/docs/migration/v26-to-v27",

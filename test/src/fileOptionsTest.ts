@@ -32,7 +32,7 @@ afterEach(() => {
   log.resetLimits()
 })
 
-/** Merges v26-shaped configurations: the flat keys are no longer in the v27 types. */
+/** Merges configurations that may set flat keys, which the `Configuration` type does not have. */
 function merge(...configs: Array<Record<string, any>>): Configuration {
   return doMergeConfigs(configs as Configuration[])
 }
@@ -92,18 +92,14 @@ describe("flat files / extraResources / extraFiles are normalized into fileOptio
   })
 })
 
-describe("deprecation warning", () => {
-  test("names v27, what moved, the replacement and migrate-schema, and ends with the breaking-changes link", ({ expect }) => {
+describe("flat-key warning", () => {
+  test("names the keys found, the fileOptions paths they are applied as and migrate-schema, and ends with the docs link", ({ expect }) => {
     merge({ files: ["dist/**"], mac: { extraResources: ["r"] } })
-    expect(warnings()).toHaveLength(1)
-    const [message] = warnings()
-    expect(message).toContain("electron-builder v27")
-    expect(message).toContain("[files, mac.extraResources]")
-    expect(message).toContain("`fileOptions.files`, `mac.fileOptions.extraResources`")
-    expect(message).toContain("electron-builder migrate-schema")
-    expect(message).toContain("still accepted in v27")
-    expect(message).not.toContain("v28")
-    expect(message.endsWith(FILE_OPTIONS_URL)).toBe(true)
+    expect(warnings()).toEqual([
+      "`files`, `extraResources` and `extraFiles` belong under `fileOptions`. Found [files, mac.extraResources] outside it; " +
+        "they are applied as `fileOptions.files`, `mac.fileOptions.extraResources`. " +
+        `Run \`electron-builder migrate-schema\` to update the configuration. ${FILE_OPTIONS_URL}`,
+    ])
   })
 
   test("links a section that exists on the breaking-changes page", ({ expect }) => {
@@ -127,7 +123,6 @@ describe("flat and nested key both set on the same object", () => {
     expect(enumeratedFlatKeys(result)).toEqual([])
     expect(warnings()).toHaveLength(1)
     const [message] = warnings()
-    expect(message).toContain("electron-builder v27")
     expect(message).toContain("`files` and `fileOptions.files` are both set")
     expect(message).toContain("`fileOptions.files` is used and `files` is ignored")
     expect(message.endsWith(FILE_OPTIONS_URL)).toBe(true)
@@ -175,7 +170,7 @@ describe("malformed fileOptions", () => {
 })
 
 describe("schema", () => {
-  test("has no flat keys any more, at the root or per platform", ({ expect }) => {
+  test("has only fileOptions, not the flat keys, at the root and per platform", ({ expect }) => {
     const scheme = JSON.parse(readFileSync(path.join(import.meta.dirname, "../../packages/app-builder-lib/scheme.json"), "utf8"))
     for (const definition of [scheme, scheme.definitions.MacConfiguration, scheme.definitions.WindowsConfiguration, scheme.definitions.LinuxConfiguration]) {
       expect(Object.keys(definition.properties)).toContain("fileOptions")
@@ -276,21 +271,21 @@ describe("every config entry path is normalized before validation", () => {
 describe("reads of the flat keys on the loaded configuration are forwarded", () => {
   test("the root and platform getters return the fileOptions value", ({ expect }) => {
     const config = merge({ fileOptions: { files: ["dist/**"], extraFiles: ["e"] }, mac: { fileOptions: { extraResources: ["m"] } } })
-    const legacy = config as Record<string, any>
-    expect(legacy.files).toBe(config.fileOptions?.files)
-    expect(legacy.extraFiles).toBe(config.fileOptions?.extraFiles)
-    expect(legacy.extraResources).toBeUndefined()
+    const loaded = config as Record<string, any>
+    expect(loaded.files).toBe(config.fileOptions?.files)
+    expect(loaded.extraFiles).toBe(config.fileOptions?.extraFiles)
+    expect(loaded.extraResources).toBeUndefined()
     expect((config.mac as Record<string, any>).extraResources).toEqual(["m"])
   })
 
   test("each read path warns once, naming the nested replacement and the docs link", ({ expect }) => {
-    const legacy = merge({ fileOptions: { files: ["dist/**"] }, mac: {} }) as Record<string, any>
-    void legacy.files
-    void legacy.files
-    void legacy.mac.extraResources
+    const loaded = merge({ fileOptions: { files: ["dist/**"] }, mac: {} }) as Record<string, any>
+    void loaded.files
+    void loaded.files
+    void loaded.mac.extraResources
     expect(warnings()).toEqual([
-      `electron-builder v27: \`config.files\` is now \`config.fileOptions.files\`. Reading \`config.files\` still returns that value in v27, with this warning; read \`config.fileOptions.files\` instead. ${FILE_OPTIONS_URL}`,
-      expect.stringContaining("`config.mac.extraResources` is now `config.mac.fileOptions.extraResources`"),
+      `\`config.files\` is not a configuration property; read \`config.fileOptions.files\`. ${FILE_OPTIONS_URL}`,
+      `\`config.mac.extraResources\` is not a configuration property; read \`config.mac.fileOptions.extraResources\`. ${FILE_OPTIONS_URL}`,
     ])
   })
 
@@ -319,13 +314,15 @@ describe("reads of the flat keys on the loaded configuration are forwarded", () 
   })
 
   test("assigning a flat key throws a configuration error naming the nested replacement", ({ expect }) => {
-    const legacy = merge({ win: {} }) as Record<string, any>
+    const loaded = merge({ win: {} }) as Record<string, any>
     expect(() => {
-      legacy.files = ["x"]
+      loaded.files = ["x"]
     }).toThrow(InvalidConfigurationError)
     expect(() => {
-      legacy.win.extraResources = ["x"]
-    }).toThrow(/`config\.win\.extraResources` cannot be assigned, it is now `config\.win\.fileOptions\.extraResources`.*#file-options-fileoptions/)
+      loaded.win.extraResources = ["x"]
+    }).toThrow(
+      /`config\.win\.extraResources` is not a configuration property and cannot be assigned; set `config\.win\.fileOptions\.extraResources` instead.*#file-options-fileoptions/
+    )
   })
 })
 

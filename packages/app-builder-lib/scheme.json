@@ -1438,7 +1438,7 @@
     },
     "FilesBuildOptions": {
       "additionalProperties": false,
-      "description": "Which files are copied into the packaged app, and which symlinks among them may lead outside it, set under `fileOptions` at the\nconfiguration root or per platform (e.g. `mac.fileOptions`). A platform's lists are added to the root ones; a platform's\n`allowExternalLinks` replaces the root one.\n\nIn v26 these options were flat keys (`files`, `extraResources`, `extraFiles`) directly on the configuration and the\nplatform options. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).",
+      "description": "Which files are copied into the packaged app, and which symlinks among them may lead outside it, set under `fileOptions` at the\nconfiguration root or per platform (e.g. `mac.fileOptions`). A platform's lists are added to the root ones; a platform's\n`allowExternalLinks` replaces the root one.\nSee [file options](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).",
       "properties": {
         "allowExternalLinks": {
           "anyOf": [
@@ -2414,7 +2414,7 @@
               "type": "null"
             }
           ],
-          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\nThe v26 flat keys (`files`, `extraResources`, `extraFiles` directly on the configuration or a platform section) are\nstill accepted in v27: they are moved here when the configuration is loaded, with a warning. Run\n`electron-builder migrate-schema` to update the configuration."
+          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -3008,7 +3008,7 @@
               "type": "null"
             }
           ],
-          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\nThe v26 flat keys (`files`, `extraResources`, `extraFiles` directly on the configuration or a platform section) are\nstill accepted in v27: they are moved here when the configuration is loaded, with a warning. Run\n`electron-builder migrate-schema` to update the configuration."
+          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -3433,7 +3433,7 @@
               "type": "null"
             }
           ],
-          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\nThe v26 flat keys (`files`, `extraResources`, `extraFiles` directly on the configuration or a platform section) are\nstill accepted in v27: they are moved here when the configuration is loaded, with a warning. Run\n`electron-builder migrate-schema` to update the configuration."
+          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -8645,7 +8645,7 @@
               "type": "null"
             }
           ],
-          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\nThe v26 flat keys (`files`, `extraResources`, `extraFiles` directly on the configuration or a platform section) are\nstill accepted in v27: they are moved here when the configuration is loaded, with a warning. Run\n`electron-builder migrate-schema` to update the configuration."
+          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -9618,7 +9618,7 @@
           "type": "null"
         }
       ],
-      "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\nThe v26 flat keys (`files`, `extraResources`, `extraFiles` directly on the configuration or a platform section) are\nstill accepted in v27: they are moved here when the configuration is loaded, with a warning. Run\n`electron-builder migrate-schema` to update the configuration."
+      "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
     },
     "flatpak": {
       "anyOf": [

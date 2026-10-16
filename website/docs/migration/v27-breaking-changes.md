@@ -58,7 +58,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`npmSkipBuildFromSource` removed](#npmskipbuildfromsource) | ✓ | Replaced by `nativeModules.buildDependenciesFromSource` |
 | [Native-module options grouped under `nativeModules`](#native-module-options-nativemodules) | ✓ | `nativeRebuilder` → `rebuildMode`; the `"legacy"` rebuilder is removed (dropped with a warning) |
 | [ASAR options consolidated under `asar`](#asar-options-asar) | ✓ | `asarUnpack` → `asar.unpack`, etc., including platform-level `mac.asarUnpack` → `mac.asar.unpack` (`asar: true` is still valid, just redundant) |
-| [`files` / `extraResources` / `extraFiles` nested under `fileOptions`](#file-options-fileoptions) | ✓ | `files` → `fileOptions.files`, etc., at the root and per platform (`mac.extraResources` → `mac.fileOptions.extraResources`). The v26 flat keys are still accepted in v27 with a warning; `migrate-schema` moves them |
+| [`files` / `extraResources` / `extraFiles` nested under `fileOptions`](#file-options-fileoptions) | ✓ | `files` → `fileOptions.files`, etc., at the root and per platform (`mac.extraResources` → `mac.fileOptions.extraResources`) |
 | [`asar.ordering` is now applied](#asar-ordering-is-now-applied) | — | v26 ignored the option; v27 packs the listed files first and fails when the file is missing. Remove the option to keep the dependencies-first layout |
 | [macOS signing consolidated under `mac.sign`](#macos-signing-macsign) | ✓ | `identity`/`entitlements`/`hardenedRuntime`/… → `mac.sign.*`; `signIgnore` → `sign.ignore` |
 | [`mac.universal` options consolidated](#macuniversal) | ✓ | `mergeASARs`/`singleArchFiles`/`x64ArchFiles` → `mac.universal.*` |
@@ -638,9 +638,9 @@ Supported `base` values: `"core18"`, `"core20"`, `"core22"`, `"core24"`, and `"c
 
 ### `files` / `extraResources` / `extraFiles` → `fileOptions` {#file-options-fileoptions}
 
-The three options that choose which files are copied into the app are grouped under a `fileOptions` object, the same way `directories` groups the input and output directories. This applies at the configuration root and in every platform section (`mac`, `mas`, `masDev`, `win`, `linux`). `PlatformSpecificBuildOptions` no longer extends `FilesBuildOptions`; it has a `fileOptions?: FilesBuildOptions | null` property instead.
+The three options that choose which files are copied into the app are grouped under a `fileOptions` object, the same way `directories` groups the input and output directories. This applies at the configuration root and in every platform section (`mac`, `mas`, `masDev`, `win`, `linux`). `PlatformSpecificBuildOptions` has a `fileOptions?: FilesBuildOptions | null` property for them and does not extend `FilesBuildOptions`.
 
-| v26 key | v27 key |
+| Key | Location under `fileOptions` |
 |---|---|
 | `files` | `fileOptions.files` |
 | `extraResources` | `fileOptions.extraResources` |
@@ -648,19 +648,21 @@ The three options that choose which files are copied into the app are grouped un
 | `<platform>.files` / `.extraResources` / `.extraFiles` | `<platform>.fileOptions.files` / `.extraResources` / `.extraFiles` |
 
 ```json5
-// Before (v26)
-{ "files": ["dist/**/*", "package.json"], "extraResources": [{ "from": "assets/bin", "to": "bin" }], "mac": { "extraFiles": ["mac-only/**"] } }
-
-// After (v27)
 {
   "fileOptions": { "files": ["dist/**/*", "package.json"], "extraResources": [{ "from": "assets/bin", "to": "bin" }] },
   "mac": { "fileOptions": { "extraFiles": ["mac-only/**"] } }
 }
 ```
 
-The values themselves are unchanged (glob strings and `FileSet` objects), and so is how they combine: a platform's lists are added to the root ones, and a `files` list from an `extends` parent is merged with the child's.
+Run `electron-builder migrate-schema` to move `files`, `extraResources` and `extraFiles` keys into `fileOptions`, at the root and per platform:
 
-**The v26 flat keys are still accepted in v27, with a warning.** They are no longer part of the v27 configuration: the `Configuration` types and the JSON schema only have `fileOptions`, so a typed (TypeScript) config that sets them stops compiling. At runtime, a configuration that still uses them (from a config file, an `extends` parent, `-c.files=…` on the command line, or the `config` object passed to `build()`) has them moved into `fileOptions` before it is validated, and the build logs one warning naming the keys it found and their replacements. Run `electron-builder migrate-schema` to update the configuration.
+```bash
+npx electron-builder migrate-schema
+```
+
+The values are glob strings and `FileSet` objects. A platform's lists are added to the root ones, and a `files` list from an `extends` parent is merged with the child's.
+
+**Keys set outside `fileOptions`.** The `Configuration` types and the JSON schema only have `fileOptions`, so a typed (TypeScript) config that sets `files`, `extraResources` or `extraFiles` directly on the configuration or a platform section does not compile. At runtime, such flat keys (from a config file, an `extends` parent, `-c.files=…` on the command line, or the `config` object passed to `build()`) are applied as their `fileOptions` counterparts before the configuration is validated, and the build logs one warning naming the keys found and where they belong.
 
 **If a flat key and its `fileOptions` counterpart are both set on the same object**, `fileOptions` wins: the flat key is ignored and the build warns about the conflict. `migrate-schema` removes such a flat key with a warning, so move any patterns you still need into `fileOptions` yourself. A flat key from another source is merged rather than ignored: a CLI override such as `-c.files=…` is added to the config file's `fileOptions.files`, and a parent config's flat keys are merged with the child's `fileOptions`.
 
@@ -668,7 +670,7 @@ The values themselves are unchanged (glob strings and `FileSet` objects), and so
 
 `flatpak.files` (a list of `[source, destination]` pairs) is a separate Flatpak option and is not affected.
 
-**Code that reads the flat keys from the loaded configuration** (a hook reading `context.packager.config.files` or `context.packager.platformOptions.extraResources`, a `build()` caller reading `buildResult.configuration.extraFiles`) still gets the value in v27: the loaded configuration and its platform sections forward reads of `files`, `extraResources` and `extraFiles` to `fileOptions`, logging one warning per key. These forwarding properties are not enumerable, so they never appear in the effective configuration (`builder-effective-config.yaml`), in `JSON.stringify` output or in `Object.keys`. Assigning one of them (for example `context.packager.config.files = […]` in a hook) throws a configuration error naming the `fileOptions` property to set instead. Update such code to read and write `fileOptions.files` / `fileOptions.extraResources` / `fileOptions.extraFiles`.
+**Code that reads `files`, `extraResources` or `extraFiles` from the loaded configuration** (a hook reading `context.packager.config.files` or `context.packager.platformOptions.extraResources`, a `build()` caller reading `buildResult.configuration.extraFiles`) gets the `fileOptions` value: the loaded configuration and its platform sections forward these reads to `fileOptions`, logging one warning per key. These forwarding properties are not enumerable, so they never appear in the effective configuration (`builder-effective-config.yaml`), in `JSON.stringify` output or in `Object.keys`. Assigning one of them (for example `context.packager.config.files = […]` in a hook) throws a configuration error naming the `fileOptions` property to set instead. Read and write `fileOptions.files` / `fileOptions.extraResources` / `fileOptions.extraFiles` directly.
 
 ---
 
@@ -1343,7 +1345,7 @@ v27 upgrades to `@electron/get` v5, which downloads via `fetch` (replacing the `
 
 ### Why nest `files`, `extraResources` and `extraFiles` under `fileOptions`?
 
-`PlatformSpecificBuildOptions` used to extend `FilesBuildOptions`, so the three file-copy lists sat at the root of every configuration level next to dozens of unrelated options. A `fileOptions` property, like `directories`, keeps related options together, gives them one place in the docs and in IntelliSense, and leaves room for more file-copy options without adding them to every configuration level. Because almost every configuration sets `files`, the v26 flat keys are still accepted at runtime with a warning, unlike the other restructurings on this page, and reads of them from the loaded configuration are forwarded.
+A `fileOptions` property, like `directories`, keeps the three file-copy lists together instead of at the root of every configuration level next to dozens of unrelated options, gives them one place in the docs and in IntelliSense, and leaves room for more file-copy options without adding them to every configuration level. Because almost every configuration sets `files`, flat keys are applied with a warning rather than rejected, unlike the other restructurings on this page, and reads of them from the loaded configuration are forwarded.
 
 ### Why consolidate ASAR options under `asar`?
 

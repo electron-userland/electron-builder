@@ -120,7 +120,7 @@ export default class FlatpakTarget extends Target {
       modules: this.options.modules,
     }
 
-    // `this.options` is `linux` deep-merged with `flatpak`, and deepAssign concatenates arrays. A v26 `linux.files`
+    // `this.options` is `linux` deep-merged with `flatpak`, and deepAssign concatenates arrays. A flat `linux.files`
     // is moved into `linux.fileOptions.files` when the configuration is loaded, but read the flatpak-specific
     // [src, dest] tuple list from the raw config anyway, so that no shared list can leak into it.
     const extraFiles = this.packager.config.flatpak?.files ?? []

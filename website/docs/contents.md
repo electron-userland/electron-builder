@@ -26,7 +26,7 @@ By default, electron-builder includes all files matching `**/*` from the app dir
 
 These exclusions are always applied even when you define custom patterns.
 
-In v27 the file options are nested under `fileOptions` (`fileOptions.files`, `fileOptions.extraResources`, `fileOptions.extraFiles`), at the configuration root and in the platform sections (e.g. `mac.fileOptions`). A platform's lists are added to the root ones. The v26 flat keys (`files`, `extraResources`, `extraFiles` directly on the configuration) are still accepted in v27 with a warning. Run `electron-builder migrate-schema` to move them, see [v27 breaking changes](./migration/v27-breaking-changes.md#file-options-fileoptions).
+The file options are nested under `fileOptions` (`fileOptions.files`, `fileOptions.extraResources`, `fileOptions.extraFiles`), at the configuration root and in the platform sections (e.g. `mac.fileOptions`). A platform's lists are added to the root ones. Run `electron-builder migrate-schema` to move `files`, `extraResources` and `extraFiles` keys set directly on the configuration into `fileOptions`; see [file options](./migration/v27-breaking-changes.md#file-options-fileoptions).
 
 ## The `files` Option
 

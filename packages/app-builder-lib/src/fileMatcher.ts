@@ -567,8 +567,8 @@ export function getFileMatchers(
     }
   }
 
-  // `extraDistFiles` is a mac option of its own; the others are read from `fileOptions`, into which the v26 flat keys
-  // were normalized when the configuration was loaded (see util/config/fileOptions.ts)
+  // `extraDistFiles` is a mac option of its own; the others are read from `fileOptions`, into which flat keys are
+  // normalized when the configuration is loaded (see util/config/fileOptions.ts)
   if (name === "extraDistFiles") {
     addPatterns((options.customBuildOptions as any).extraDistFiles)
   } else {

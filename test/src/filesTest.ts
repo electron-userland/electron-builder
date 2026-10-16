@@ -162,8 +162,8 @@ test.ifNotWindows("map resources", ({ expect }) =>
   )
 )
 
-// Uses the v26 flat keys: no longer in the v27 types (hence the cast), but still accepted at runtime, moved into
-// `fileOptions` with a warning. The snapshot is the same as for the nested form ("extraResources - two-package" uses that).
+// Sets flat keys (not in the `Configuration` type, hence the cast), which are moved into `fileOptions` with a warning.
+// The snapshot is the same as for the nested form ("extraResources - two-package" uses that).
 async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
   const osName = platform.buildConfigurationKey
   await assertPack(
