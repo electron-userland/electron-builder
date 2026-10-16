@@ -1304,7 +1304,7 @@ describe("migrateConfig — files / extraResources / extraFiles → fileOptions"
     expect(result.migrated).toEqual({ fileOptions: { files: ["dist/**"], extraFiles: ["e"] }, linux: { fileOptions: { extraResources: ["r"] } } })
   })
 
-  test("a flat key also set under fileOptions is removed with a warning: v27 already ignores it", () => {
+  test("a flat key also set under fileOptions is removed with a warning: the build already ignores it", () => {
     const result = migrateConfig({ files: ["flat/**"], fileOptions: { files: ["nested/**"] }, mac: { extraResources: ["flat"], fileOptions: { extraResources: ["nested"] } } })
     expect(result.migrated).toEqual({ fileOptions: { files: ["nested/**"] }, mac: { fileOptions: { extraResources: ["nested"] } } })
     expect(result.changes.map(c => c.description)).toEqual([
@@ -1312,7 +1312,7 @@ describe("migrateConfig — files / extraResources / extraFiles → fileOptions"
       "removed mac.extraResources (mac.fileOptions.extraResources is also set and takes precedence)",
     ])
     expect(result.warnings).toHaveLength(2)
-    expect(result.warnings[0]).toContain("v27 builds with fileOptions.files and ignores files")
+    expect(result.warnings[0]).toContain("the build uses fileOptions.files and ignores files")
   })
 
   test("a fileOptions that is not an object is left alone with a warning", () => {

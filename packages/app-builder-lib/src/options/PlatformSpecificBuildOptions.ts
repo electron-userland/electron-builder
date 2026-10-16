@@ -80,9 +80,7 @@ export interface AsarOptions {
 /**
  * Which files are copied into the packaged app, set under `fileOptions` at the configuration root or per platform
  * (e.g. `mac.fileOptions`). A platform's lists are added to the root ones.
- *
- * In v26 these options were flat keys (`files`, `extraResources`, `extraFiles`) directly on the configuration and the
- * platform options. See [v27 breaking changes](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
+ * See [file options](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
  */
 export interface FilesBuildOptions {
   /**
@@ -156,9 +154,8 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    * }
    * ```
    *
-   * The v26 flat keys (`files`, `extraResources`, `extraFiles` directly on the configuration or a platform section) are
-   * still accepted in v27: they are moved here when the configuration is loaded, with a warning. Run
-   * `electron-builder migrate-schema` to update the configuration.
+   * `files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here
+   * when the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration.
    */
   fileOptions?: FilesBuildOptions | null
 

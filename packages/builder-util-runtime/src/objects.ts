@@ -66,7 +66,7 @@ function assignKey(target: any, from: any, key: string) {
 
 function assign(to: any, from: any) {
   if (to !== from) {
-    // enumerable keys only: non-enumerable accessors (e.g. the forwarded v26 `config.files`) are not configuration values
+    // enumerable keys only: non-enumerable accessors (e.g. the forwarded `config.files`) are not configuration values
     for (const key of Object.keys(from)) {
       if (isValidKey(key)) {
         assignKey(to, from, key)
