@@ -1,4 +1,4 @@
-import { Arch, archFromString, copyDir, InvalidConfigurationError, log, removeNullish, toLinuxArchString } from "builder-util"
+import { Arch, archFromString, copyDir, InvalidConfigurationError, log, prepareFixedNameWrite, removeNullish, toLinuxArchString } from "builder-util"
 
 import { deepAssign, isValidKey, Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
@@ -6,6 +6,7 @@ import * as yaml from "js-yaml"
 import * as path from "path"
 import { PlugDescriptor, SlotDescriptor, SnapOptions24 } from "../../../options/SnapOptions.js"
 import { SnapCore } from "./SnapTarget.js"
+import { getStagingCopyLinkOptions } from "../../../util/trustedSourceRoots.js"
 import { buildSnapCommandLauncherScript } from "./snapCommand.js"
 import { App, Part, SnapcraftYAML } from "./snapcraft.js"
 import { buildSnap, DEFAULT_STAGE_PACKAGES, SNAPCRAFT_YAML_OPTIONS } from "./snapcraftBuilder.js"
@@ -91,7 +92,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     const appDir = path.resolve(stageDir, "app")
     if (path.resolve(appDir) !== path.resolve(appOutDir)) {
       log.debug({ to: log.filePath(appDir), from: log.filePath(appOutDir) }, "copying app files to project root app directory")
-      await copyDir(appOutDir, appDir)
+      await copyDir(appOutDir, appDir, await getStagingCopyLinkOptions(this.packager))
     }
 
     // Drop the setuid chrome-sandbox helper before snapcraft stages the app — it is unusable under
@@ -103,6 +104,8 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // Write the launcher script the command always points at (see SNAP_COMMAND_LAUNCHER).
     // It lands at the snap root ($SNAP/command.sh) — it is intentionally not added to `organize`.
     const launcherPath = path.join(appDir, SNAP_COMMAND_LAUNCHER)
+    // the app files were just copied there: replace, never follow, a symlink at the name
+    await prepareFixedNameWrite(stageDir, launcherPath, "snap command launcher")
     await writeFile(launcherPath, buildSnapCommandLauncherScript({ execName: this.packager.executableName, args: this.commandArgs }), { mode: 0o755 })
     await chmod(launcherPath, 0o755)
 
@@ -193,7 +196,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
           `     required stage-packages manually.\n` +
           `  2. Switch to an isolated build environment by setting snapcraft.core24.useLXD: true\n` +
           `     or snapcraft.core24.useMultipass: true instead of useDestructiveMode.\n\n` +
-          `See: https://snapcraft.io/docs/gnome-extension`
+          `See: https://documentation.ubuntu.com/snapcraft/stable/reference/extensions/gnome-extension/`
       )
     }
     const resolvedExtensions = extensionsList.length > 0 ? extensionsList : undefined

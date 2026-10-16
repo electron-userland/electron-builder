@@ -44,7 +44,7 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    * Requires a log-enabled NSIS: `makensis` and its stubs compiled with `NSIS_CONFIG_LOG=yes`. The default `toolsets.nsis` bundle
    * is not log-enabled, so supply one as a custom `toolsets.nsis` bundle; the build fails otherwise.
    * Replaces the v26 `customNsisBinary.debugLogging`.
-   * @see https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis
+   * @see https://www.electron.build/docs/migration/v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis
    * @default false
    */
   readonly installerDebugLogging?: boolean
@@ -141,7 +141,7 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   /**
    * The path to NSIS include script to customize installer, or an array of such paths to include multiple scripts. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).
    *
-   * Each path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.
+   * Each path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#directories) first and then relative to the project directory.
    * When an array is provided, all scripts are included in the specified order.
    */
   readonly include?: string | Array<string> | null
@@ -265,7 +265,7 @@ export interface PortableOptions extends TargetSpecificOptions, CommonNsisOption
   /**
    * The path to NSIS include script to customize the portable launcher, or an array of such paths to include multiple scripts. See [Custom NSIS script](#custom-nsis-script).
    *
-   * Each path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#buildresources) first and then relative to the project directory.
+   * Each path is resolved relative to the [build resources directory](https://www.electron.build/docs/configuration#directories) first and then relative to the project directory.
    * When an array is provided, all scripts are included in the specified order.
    *
    * Unlike the installer targets, the portable target does **not** fall back to `build/installer.nsh` — a custom script is only included when this option is explicitly set.

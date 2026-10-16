@@ -120,9 +120,9 @@ export default class FlatpakTarget extends Target {
       modules: this.options.modules,
     }
 
-    // `this.options` is `linux` deep-merged with `flatpak`, and deepAssign concatenates arrays, so the
-    // shared `linux.files` globs (string | FileSet | array of either) would leak into this [src, dest] tuple
-    // list. Read the flatpak-specific list from the raw config instead of the merged options.
+    // `this.options` is `linux` deep-merged with `flatpak`, and deepAssign concatenates arrays. A flat `linux.files`
+    // is moved into `linux.fileOptions.files` when the configuration is loaded, but read the flatpak-specific
+    // [src, dest] tuple list from the raw config anyway, so that no shared list can leak into it.
     const extraFiles = this.packager.config.flatpak?.files ?? []
 
     const buildOptions: FlatpakBundlerBuildOptions = {

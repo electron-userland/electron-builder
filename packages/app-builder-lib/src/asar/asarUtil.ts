@@ -1,5 +1,5 @@
 import type { AsarStreamType, AsarDirectory } from "@electron/asar"
-import { exists, Filter, FilterStats, isEmptyOrSpaces, log } from "builder-util"
+import { Filter, FilterStats, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { dynamicImport } from "../util/dynamicImport.js"
 import fs from "fs-extra"
 
@@ -8,39 +8,118 @@ import { AsarOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier.js"
 import { detectUnpackedDirs } from "./unpackDetector.js"
+import { assertSourceFileInTrustedRoots, getTrustedSourceRoots } from "../util/trustedSourceRoots.js"
 import { Readable } from "stream"
-import * as os from "os"
 const { readlink } = fs
 
-const resolvePath = async (file: string | undefined): Promise<string | undefined> => (file && (await exists(file)) ? fs.realpath(file).catch(() => path.resolve(file)) : undefined)
-const resolvePaths = async (filepaths: (string | undefined)[]) => {
-  return Promise.all(filepaths.map(resolvePath)).then(paths => paths.filter((it): it is string => it != null))
+/** @internal */
+export function isPathInside(root: string, target: string): boolean {
+  return target === root || target.startsWith(root + path.sep)
 }
 
-const DENYLIST = resolvePaths([
-  "/usr",
-  "/lib",
-  "/bin",
-  "/sbin",
-  "/etc",
+/**
+ * Applies an asar ordering file (`asar.ordering`) to the stream list `@electron/asar` packs: directory entries move to
+ * the front in their original relative order (they hold no data), the listed files follow in the order of the file,
+ * then everything else in its original order. Lines use the same syntax `@electron/asar` accepts — a path relative to
+ * the app root, optionally prefixed with `/` or with a `<anything>:` prefix (e.g. a load counter) — blank lines are
+ * ignored and `\` separators are accepted. Lines naming a directory are ignored; files listed but not present are
+ * counted in `listed`, reported in `missing` and skipped.
+ */
+export function orderAsarStreams(
+  streams: Array<AsarStreamType>,
+  orderingLines: Array<string>
+): { streams: Array<AsarStreamType>; listed: number; matched: number; missing: Array<string> } {
+  const rank = new Map<string, number>()
+  for (const rawLine of orderingLines) {
+    // ordering files written on Windows use `\` — convert it so they match on macOS and Linux too
+    let line = rawLine
+      .slice(rawLine.lastIndexOf(":") + 1)
+      .trim()
+      .replace(/\\/g, "/")
+    if (line.length === 0) {
+      continue
+    }
+    if (line.startsWith("/")) {
+      line = line.slice(1)
+    }
+    // `path.normalize` keeps a trailing separator ("src/") that directory stream paths lack; a bare "/" is left alone
+    const key = path.normalize(line).replace(/(?<=.)[/\\]+$/, "")
+    if (!rank.has(key)) {
+      rank.set(key, rank.size)
+    }
+  }
+  if (rank.size === 0) {
+    return { streams, listed: 0, matched: 0, missing: [] }
+  }
+  const directories: Array<AsarStreamType> = []
+  const listed: Array<{ stream: AsarStreamType; rank: number }> = []
+  const rest: Array<AsarStreamType> = []
+  // entries are removed from `rank` as they are consumed, so what is left at the end is missing from the archive
+  for (const stream of streams) {
+    const key = path.normalize(stream.path)
+    if (stream.type === "directory") {
+      directories.push(stream)
+      // a line naming a directory orders nothing (directories hold no data), so it is neither listed nor missing
+      rank.delete(key)
+      continue
+    }
+    const position = rank.get(key)
+    if (position == null) {
+      rest.push(stream)
+    } else {
+      rank.delete(key)
+      listed.push({ stream, rank: position })
+    }
+  }
+  listed.sort((a, b) => a.rank - b.rank)
+  const missing = [...rank.keys()]
+  return { streams: [...directories, ...listed.map(it => it.stream), ...rest], listed: listed.length + missing.length, matched: listed.length, missing }
+}
 
-  "/tmp",
-  "/var", // block whole /var by default. If $HOME is under /var, it's explicitly in ALLOWLIST - https://github.com/electron-userland/electron-builder/issues/9025#issuecomment-3575380041
+type AsarOrderingPackager = Pick<PlatformPackager<any>, "getResource" | "buildResourcesDir" | "projectDir">
 
-  // macOS system directories
-  "/System",
-  "/Library",
-  "/private",
+const ASAR_ORDERING_MIGRATION_URL = "https://www.electron.build/docs/migration/v27-breaking-changes#asar-ordering-is-now-applied"
 
-  // Windows system directories
-  process.env.SystemRoot,
-  process.env.WINDIR,
-])
+/**
+ * Resolves `asar.ordering` like other build resources (build resources directory first, then the project directory),
+ * applies it to `streams` and announces the v27 behaviour change once per process.
+ * @internal
+ */
+export async function applyAsarOrdering(packager: AsarOrderingPackager, ordering: string, streams: Array<AsarStreamType>): Promise<Array<AsarStreamType>> {
+  const orderingFile = await resolveAsarOrderingFile(packager, ordering)
+  const { streams: ordered, listed, matched, missing } = orderAsarStreams(streams, (await fs.readFile(orderingFile, "utf8")).split(/\r?\n/))
+  const orderingPath = log.filePath(orderingFile)
+  log
+    .once("asar-ordering-applied")
+    .warn(
+      { ordering: orderingPath },
+      "asar.ordering is now applied to app.asar (electron-builder v26 and earlier silently ignored it): the listed files are packed first, " +
+        "ahead of the default dependencies-first layout, which can increase differential update download size. " +
+        `Remove the option to keep the default layout. See ${ASAR_ORDERING_MIGRATION_URL}`
+    )
+  log.once("asar-ordering", packager).info({ ordering: orderingPath, matched: `${matched}/${listed}` }, "applied asar ordering")
+  if (missing.length > 0) {
+    log.debug({ ordering: orderingPath, missing: missing.length, first: missing.slice(0, 5).join(", ") }, "asar ordering lists files that are not in the archive")
+  }
+  return ordered
+}
 
-const ALLOWLIST = resolvePaths([
-  os.tmpdir(), // always allow temp dir
-  os.homedir(), // always allow home dir
-])
+async function resolveAsarOrderingFile(packager: AsarOrderingPackager, ordering: string): Promise<string> {
+  try {
+    return (await packager.getResource(ordering))!
+  } catch (e: any) {
+    if (!(e instanceof InvalidConfigurationError)) {
+      throw e
+    }
+    const candidates = [...new Set([path.resolve(packager.buildResourcesDir, ordering), path.resolve(packager.projectDir, ordering)])]
+    throw new InvalidConfigurationError(
+      `asar.ordering file "${ordering}" was not found at ${candidates.join(" or ")} ` +
+        "(the path resolves relative to the build resources directory, then the project directory). " +
+        "electron-builder v27 applies the ordering file to app.asar (v26 and earlier ignored the option), so it must exist; fix the path or remove the option to keep the default layout. " +
+        `See ${ASAR_ORDERING_MIGRATION_URL}`
+    )
+  }
+}
 
 /** @internal */
 export async function withElectronAsarLogging<T>(task: () => Promise<T>): Promise<T> {
@@ -84,7 +163,11 @@ export class AsarPackager {
       fileSets[0],
     ].map(set => this.orderFileSet(set))
 
-    const streams = await this.processFileSets(orderedFileSets)
+    let streams = await this.processFileSets(orderedFileSets)
+    const ordering = this.config.options.ordering
+    if (!isEmptyOrSpaces(ordering)) {
+      streams = await applyAsarOrdering(this.packager, ordering, streams)
+    }
     await this.executeElectronAsar(streams)
   }
 
@@ -222,6 +305,10 @@ export class AsarPackager {
       return { path: destination, unpacked, type: "directory" }
     }
 
+    // verify that the file is not a direct link or symlinked to a file outside the workspace and the package-manager store,
+    // before any content is used: the transformer (e.g. for a node_modules package.json) reads the file through its symlinks too
+    await assertSourceFileInTrustedRoots(file, await getTrustedSourceRoots(this.packager), await this.packager.getExternalLinkPolicy())
+
     // Handle transformed data (pre-processed content)
     if (transformedData != null) {
       const size = Buffer.byteLength(transformedData)
@@ -239,9 +326,6 @@ export class AsarPackager {
         stat: { mode: stat.mode, size },
       }
     }
-
-    // verify that the file is not a direct link or symlinked to access/copy a system file
-    await this.protectSystemAndUnsafePaths(file, await this.packager.getWorkspaceRoot())
 
     const baseConfig = {
       path: destination,
@@ -315,45 +399,5 @@ export class AsarPackager {
       files: sortedFileEntries.map(([, file]) => file),
       transformedFiles,
     }
-  }
-
-  private async checkAgainstRoots(target: string, allowRoots: string[]): Promise<boolean> {
-    const resolved = await resolvePath(target)
-    if (resolved == null || isEmptyOrSpaces(resolved)) {
-      return false
-    }
-
-    for (const root of allowRoots) {
-      if (resolved === root || resolved.startsWith(root + path.sep)) {
-        return true
-      }
-    }
-    return false
-  }
-
-  private async protectSystemAndUnsafePaths(file: string, workspaceRoot: string): Promise<void> {
-    const resolved = await resolvePath(file)
-    const logFields = { source: file, realPath: resolved }
-
-    const workspace = await resolvePath(workspaceRoot)
-
-    // If in workspace, always safe
-    if (workspace && resolved?.startsWith(workspace)) {
-      return
-    }
-
-    // Check allowlist (priority)
-    if (await this.checkAgainstRoots(file, await ALLOWLIST)) {
-      return
-    }
-
-    // Check denylist
-    if (await this.checkAgainstRoots(file, await DENYLIST)) {
-      log.error(logFields, `denied access to system or unsafe path`)
-      throw new Error(`Cannot copy file [${file}] symlinked to file [${resolved}] outside the package to a system or unsafe path`)
-    }
-
-    // Default: outside explicit paths but not explicitly denied
-    log.debug(logFields, `path is outside of explicit safe paths, defaulting to safe`)
   }
 }

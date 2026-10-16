@@ -7,6 +7,7 @@ import { visit } from "unist-util-visit"
  *    - If no anchor, strips the link to plain text
  * 2. Lowercases all self-referential anchor links (#CamelCase -> #camelcase)
  * 3. Strips links whose target anchor doesn't exist as a heading in the document
+ *    (headings with an explicit `{#custom-id}` are matched by that id, verbatim)
  *
  * Must run AFTER remark-include so TypeDoc content is already inlined.
  */
@@ -14,7 +15,14 @@ export default function remarkFixAnchors() {
   return function (tree) {
     // First pass: collect all heading slugs in the document
     const headingSlugs = new Set()
+    // Explicit `## Heading {#custom-id}` ids, which Docusaurus uses verbatim instead of the slug
+    const explicitIds = new Set()
     visit(tree, "heading", (node) => {
+      const explicitId = extractExplicitId(node)
+      if (explicitId) {
+        explicitIds.add(explicitId)
+        return
+      }
       const text = extractText(node)
       const slug = slugify(text)
       if (slug) headingSlugs.add(slug)
@@ -44,6 +52,9 @@ export default function remarkFixAnchors() {
       if (!url.startsWith("#")) return
 
       const anchor = url.slice(1)
+      // Links to an explicit heading id are already exact — leave them untouched
+      if (explicitIds.has(anchor)) return
+
       const slug = slugify(anchor)
 
       if (headingSlugs.has(slug)) {
@@ -69,12 +80,16 @@ function isTypedocSymbolLink(url) {
   return base !== filename && base.split(".").length >= 3
 }
 
+// The `{#custom-id}` marker always sits at the end of the heading's last text node
+function extractExplicitId(node) {
+  const last = node.children.at(-1)
+  return last?.type === "text" ? last.value.match(/\{#([^}]+)\}\s*$/)?.[1] : undefined
+}
+
 function extractText(node) {
   let text = ""
-  visit(node, "text", (n) => {
-    text += n.value
-  })
-  visit(node, "inlineCode", (n) => {
+  // A single pass keeps document order: `### \`a\` and \`b\`` must read "a and b", not " and ab"
+  visit(node, ["text", "inlineCode"], (n) => {
     text += n.value
   })
   return text

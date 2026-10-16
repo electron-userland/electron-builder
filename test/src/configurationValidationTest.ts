@@ -33,7 +33,8 @@ test.ifNotWindows("appId as object", ({ expect }) =>
 
 // https://github.com/electron-userland/electron-builder/issues/1302
 // extraFiles are copied into the app directory; the explicit dir target overrides `linux.target` below, so the config
-// value is only validated, not built.
+// value is only validated, not built. `extraFiles` is set as a flat key (not in the `Configuration` type, hence the
+// cast), which is moved into `fileOptions` before schema validation.
 test.ifNotWindows("extraFiles", ({ expect }) =>
   app(expect, {
     targets: Platform.LINUX.createTarget(DIR_TARGET, Arch.x64),
@@ -60,7 +61,7 @@ test.ifNotWindows("extraFiles", ({ expect }) =>
           to: ".",
         },
       ],
-    },
+    } as Configuration,
   })
 )
 
@@ -68,7 +69,7 @@ test.ifNotWindows("files", () => {
   return validateConfiguration(
     {
       appId: "com.example.myapp",
-      files: [{ from: "dist/app", to: "app", filter: "*.js" }],
+      fileOptions: { files: [{ from: "dist/app", to: "app", filter: "*.js" }] },
       win: {
         target: "NSIS",
         icon: "build/icon.ico",

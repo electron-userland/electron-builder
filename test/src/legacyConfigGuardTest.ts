@@ -62,6 +62,9 @@ describe("checkLegacyConfiguration — never rejects a valid v27 config", () => 
     ["snapcraft", { snapcraft: { base: "core22", core22: { confinement: "strict" } } }],
     ["github publish with tagNamePrefix", { publish: { provider: "github", owner: "o", repo: "r", tagNamePrefix: "" } }],
     ["gitlab publish keeps vPrefixedTagName", { publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: false } }],
+    ["fileOptions", { fileOptions: { files: ["dist/**"], extraResources: [{ from: "a", to: "b" }] }, mac: { fileOptions: null }, win: { fileOptions: { extraFiles: "x" } } }],
+    ["flat files keys (applied as fileOptions)", { files: ["dist/**"], linux: { extraResources: ["r"] } }],
+    ["fileOptions.allowExternalLinks", { fileOptions: { allowExternalLinks: ["../shared-lib"] }, linux: { fileOptions: { allowExternalLinks: true } } }],
   ])("%s passes the guard", (_name, config) => {
     expect(() => checkLegacyConfiguration({ appId: "com.example.app", ...config } as any)).not.toThrow()
   })
@@ -174,12 +177,12 @@ describe("checkLegacyConfiguration — removed custom NSIS bundle keys", () => {
   const url = "https://downloads.example.com/nsisbi.7z?token=s3cr3t-token"
   const checksum = "374cfc092fd1bd1898472df627549ecc165b0d6ba88e82deba085673aec95336"
 
-  test("customNsisBinary names toolsets.nsis, installerDebugLogging, the checksum change and the plugins, never its values", () => {
+  test("customNsisBinary names toolsets.nsis, installerDebugLogging, the bundle layout and the migration guide, never its values", () => {
     const message = expectRejected({ nsis: { customNsisBinary: { url, checksum, debugLogging: true } } })
     expect(message).toContain("`nsis.customNsisBinary` was replaced by `toolsets.nsis` and `nsis.installerDebugLogging` in electron-builder v27.")
-    expect(message).toContain("toolsets#custom-toolset-checksum")
-    expect(message).toContain("windows/Plugins/")
-    expect(message).toContain("v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis")
+    expect(message).toContain("toolsets#custom-nsis-bundle-layout")
+    expect(message).toContain("v26-to-v27#step-4-custom-nsis-migration-guide")
+    expect(message).toContain("v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis")
     expect(message).not.toContain(url)
     expect(message).not.toContain(checksum)
   })
@@ -214,7 +217,7 @@ describe("assertInstallerDebugLoggingSupported", () => {
     expect(message).toContain("`installerDebugLogging` (nsis-web target) needs a log-enabled NSIS")
     expect(message).toContain("NSIS_CONFIG_LOG=yes")
     expect(message).toContain(`\`toolsets.nsis\` is ${shown}`)
-    expect(message.endsWith("https://www.electron.build/docs/migration/v27-breaking-changes#nsiscustomnsisbinary-toolsetsnsis")).toBe(true)
+    expect(message.endsWith("https://www.electron.build/docs/migration/v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis")).toBe(true)
   })
 
   test("accepts a custom toolsets.nsis bundle", () => {

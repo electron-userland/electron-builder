@@ -7,10 +7,11 @@ import { deepAssign, Nullish } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Configuration } from "../../configuration.js"
-import { FileSet } from "../../options/PlatformSpecificBuildOptions.js"
+import { FileSet, FilesBuildOptions } from "../../options/PlatformSpecificBuildOptions.js"
 import { reactCra } from "../../presets/rectCra.js"
 import { PACKAGE_VERSION } from "../../version.js"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
+import { forwardFlatFileOptionReads, isPlainObject, normalizeFileOptions } from "./fileOptions.js"
 import { checkLegacyConfiguration } from "./legacyConfigGuard.js"
 import { validateSchema } from "./schemaValidator.js"
 import _fsExtra from "fs-extra"
@@ -51,9 +52,11 @@ export async function getConfig(
 ): Promise<Configuration> {
   const configRequest: ReadConfigRequest = { packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata }
   const configAndEffectiveFile = await _getConfig<Configuration>(configRequest, configPath)
-  const config = configAndEffectiveFile == null ? {} : configAndEffectiveFile.result
+  // Before merging: a CLI `-c.files` must be added to a `fileOptions.files` from the config file, not conflict with it.
+  // Both are normalized copies, so the caller's `configFromOptions` (the `config` passed to `build()`) is not rewritten.
+  const config = normalizeFileOptions<Configuration>(configAndEffectiveFile == null ? {} : configAndEffectiveFile.result)
   if (configFromOptions != null) {
-    mergePublish(config, configFromOptions)
+    mergePublish(config, normalizeFileOptions(configFromOptions))
   }
 
   if (configAndEffectiveFile != null) {
@@ -109,15 +112,14 @@ async function loadParentConfigsRecursively(configExtends: Configuration["extend
 }
 
 // normalize for easy merge
-function normalizeFiles(configuration: Configuration, name: "files" | "extraFiles" | "extraResources") {
-  let value = configuration[name]
+function normalizeFiles(fileOptions: FilesBuildOptions, name: "files" | "extraFiles" | "extraResources") {
+  let value = fileOptions[name]
   if (value == null) {
     return
   }
 
-  if (!Array.isArray(value)) {
-    value = [value]
-  }
+  // copies, here and for every FileSet below: the list can be the caller's own (programmatic `config`)
+  value = Array.isArray(value) ? value.slice() : [value]
 
   itemLoop: for (let i = 0; i < value.length; i++) {
     let item = value[i]
@@ -146,7 +148,13 @@ function normalizeFiles(configuration: Configuration, name: "files" | "extraFile
       }
       value[i] = item
     } else if (Array.isArray(item)) {
-      throw new Error(`${name} configuration is invalid, nested array not expected for index ${i}: ${item}`)
+      throw new InvalidConfigurationError(`fileOptions.${name} configuration is invalid, nested array not expected for index ${i}: ${item}`)
+    } else {
+      item = { ...item }
+      if (item.filter != null) {
+        item.filter = asArray(item.filter).slice()
+      }
+      value[i] = item
     }
 
     // make sure that merge logic is not complex - unify different presentations
@@ -157,13 +165,9 @@ function normalizeFiles(configuration: Configuration, name: "files" | "extraFile
     if (item.to === ".") {
       item.to = undefined
     }
-
-    if (item.filter != null && typeof item.filter === "string") {
-      item.filter = [item.filter]
-    }
   }
 
-  configuration[name] = value.filter(it => it != null)
+  fileOptions[name] = value.filter(it => it != null)
 }
 
 function isSimilarFileSet(value: FileSet, other: FileSet): boolean {
@@ -197,21 +201,29 @@ function mergeFileSets(lists: FileSet[][]): FileSet[] {
  * `doMergeConfigs` takes configs in the order you would pass them to
  * Object.assign as sources.
  */
-export function doMergeConfigs(configs: Configuration[]): Configuration {
+export function doMergeConfigs(inputConfigs: Configuration[]): Configuration {
+  // Copies (root, platform sections and their `fileOptions`): `normalizeFiles`, `deepAssign` and
+  // `forwardFlatFileOptionReads` write into them, and they can be the caller's own objects.
+  const configs = inputConfigs.map(it => normalizeFileOptions(it))
   for (const config of configs) {
-    normalizeFiles(config, "files")
-    normalizeFiles(config, "extraFiles")
-    normalizeFiles(config, "extraResources")
+    // A non-object `fileOptions` is left as is for `checkLegacyConfiguration` to report.
+    if (isPlainObject(config.fileOptions)) {
+      normalizeFiles(config.fileOptions, "files")
+      normalizeFiles(config.fileOptions, "extraFiles")
+      normalizeFiles(config.fileOptions, "extraResources")
+    }
   }
-
-  const result = deepAssign(getDefaultConfig(), ...configs)
 
   // `deepAssign` prioritises latter configs, while `mergeFilesSets` prioritises
   // former configs, so we have to reverse the order, because latter configs
   // must have higher priority.
-  configs = configs.slice().reverse()
+  const fileLists = configs.map(config => (config.fileOptions?.files ?? []) as FileSet[]).reverse()
 
-  result.files = mergeFileSets(configs.map(config => (config.files ?? []) as FileSet[]))
+  const result = deepAssign(getDefaultConfig(), ...configs)
+  if (result.fileOptions == null || isPlainObject(result.fileOptions)) {
+    result.fileOptions = { ...result.fileOptions, files: mergeFileSets(fileLists) }
+  }
+  forwardFlatFileOptionReads(result)
   return result
 }
 

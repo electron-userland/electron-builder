@@ -216,6 +216,12 @@ exports[`Package Managers > pnpm 2`] = `
 }
 `;
 
+exports[`Package Managers > pnpm workspace with peer-dependency variants (pnpm 10.29.3+ deduped list output) 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`Package Managers > traversal hoisted 1`] = `
 {
   "linux": [],
