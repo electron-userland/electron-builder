@@ -118,8 +118,9 @@ export function core24GeneratedPlugs(flavor: Core24PlugFlavor, appDefaults: Read
  * - unset: the generated set for the build flavor (see core24GeneratedPlugs)
  * - a list containing `"default"`: the full default set — the app-level default plugs plus everything the
  *   flavor generates — with the user's other entries added to it, deduplicated by plug name. A descriptor
- *   whose name matches a default plug overrides that plug's attributes (shallow merge; `null` resets it to
- *   the snapd defaults for the interface).
+ *   whose name matches a default plug overrides that plug's attributes (shallow merge). `null` resets a default
+ *   plug named like its interface (e.g. `browser-support`) to the snapd defaults for that interface, and removes a
+ *   content-snap plug (not named like its interface) from both the root and the app plugs.
  * - anything else: the user's plugs replace the defaults.
  */
 export function resolveCore24Plugs(plugs: SnapPlugsConfig, flavor: Core24PlugFlavor, appDefaults: ReadonlyArray<string> = CORE24_DEFAULT_APP_PLUGS): Core24PlugResolution {
@@ -165,18 +166,30 @@ export function resolveCore24Plugs(plugs: SnapPlugsConfig, flavor: Core24PlugFla
   }
 
   const root: Record<string, any> = { ...defaultRoot }
+  const contentPlugs = core24ContentPlugs()
+  const removed = new Set<string>()
   for (const [name, config] of Object.entries(userRoot)) {
     const base = defaultRoot[name]
+    // `null` drops the root definition, which leaves snapd to treat the plug name as the interface. A content-snap
+    // plug (e.g. `gpu-2404`, interface `content`) is not named like its interface, so the app would reference an
+    // undefined plug — remove it entirely instead. The content plugs are checked even when this flavor does not
+    // declare them (host builds, the gnome extension), so `null` never leaves such a reference behind.
+    if (config == null && isRenamedPlug(name, base ?? contentPlugs[name])) {
+      removed.add(name)
+      delete root[name]
+      continue
+    }
     root[name] = isPlainObject(base) && isPlainObject(config) ? { ...base, ...config } : config
   }
+  const appPlugs = app.filter(name => !removed.has(name))
 
   // Before v27, "default" expanded to the app-level default list only, followed by the user's own entries.
   const previousExpansion = new Set<string>([...appDefaults, ...userNames])
-  const addedByDefaultExpansion = [...new Set([...app, ...Object.keys(root)])].filter(name => !previousExpansion.has(name))
+  const addedByDefaultExpansion = [...new Set([...appPlugs, ...Object.keys(root)])].filter(name => !previousExpansion.has(name))
 
   return {
     root: Object.keys(root).length > 0 ? root : undefined,
-    app: app.length > 0 ? app : undefined,
+    app: appPlugs.length > 0 ? appPlugs : undefined,
     source: "merged",
     addedByDefaultExpansion,
   }
@@ -295,6 +308,11 @@ function assertValidPlugName(name: string): void {
   if (!isValidKey(name)) {
     throw new Error(`Invalid plug/slot name: ${name}`)
   }
+}
+
+/** Whether a default plug definition declares an interface other than its own name (the content-snap plugs). */
+function isRenamedPlug(name: string, definition: unknown): boolean {
+  return isPlainObject(definition) && typeof definition.interface === "string" && definition.interface !== name
 }
 
 function isPlainObject(value: unknown): value is Record<string, any> {

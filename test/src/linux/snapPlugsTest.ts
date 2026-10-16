@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { log, removeNullish } from "builder-util"
 import {
   BROWSER_SUPPORT_INTERFACE,
   CORE24_DEFAULT_APP_PLUGS,
@@ -8,6 +8,7 @@ import {
   isBrowserSandboxAllowed,
   resetSnapPlugNoticesForTests,
   resolveCore24Plugs,
+  SnapPlugsConfig,
   warnAboutAllowSandboxPlugs,
   warnAboutCore24DefaultPlugsExpansion,
   warnAboutCore24NoSandboxDefault,
@@ -91,9 +92,54 @@ describe("core24 plug resolution", { concurrent: false }, () => {
       expect(result.app).toEqual([BROWSER_SUPPORT_INTERFACE, ...CORE24_DEFAULT_APP_PLUGS])
     })
 
-    test("a null descriptor resets a default plug to the snapd defaults", ({ expect }) => {
-      const result = resolveCore24Plugs(["default", { "gpu-2404": null }], "strict")
-      expect(result.root!["gpu-2404"]).toBeNull()
+    test.for(CONTENT_PLUGS)("a null descriptor removes the default content plug %s from both the root and the app plugs", (name, { expect }) => {
+      const result = resolveCore24Plugs(["default", { [name]: null }], "strict")
+      expect(result.app).not.toContain(name)
+      expect(Object.keys(result.root!)).not.toContain(name)
+      // the other defaults are untouched
+      expect(Object.keys(result.root!).sort()).toEqual([...CONTENT_PLUGS.filter(it => it !== name), BROWSER_SUPPORT_INTERFACE].sort())
+      expect(result.app).toEqual([...CORE24_DEFAULT_APP_PLUGS, BROWSER_SUPPORT_INTERFACE])
+      expect(result.addedByDefaultExpansion).not.toContain(name)
+    })
+
+    test("a null content plug descriptor before the default keyword or next to a plain entry still removes it", ({ expect }) => {
+      const result = resolveCore24Plugs(["gpu-2404", { "gpu-2404": null }, "default"], "strict")
+      expect(result.app).not.toContain("gpu-2404")
+      expect(result.root).not.toHaveProperty("gpu-2404")
+    })
+
+    test("a null descriptor resets browser-support to the snapd defaults", ({ expect }) => {
+      const result = resolveCore24Plugs(["default", { [BROWSER_SUPPORT_INTERFACE]: null }], "strict")
+      // the app keeps referencing the plug; with no root definition snapd uses the interface named like it
+      expect(result.app).toContain(BROWSER_SUPPORT_INTERFACE)
+      expect(result.root![BROWSER_SUPPORT_INTERFACE]).toBeNull()
+      expect(removeNullish(result.root)).not.toHaveProperty(BROWSER_SUPPORT_INTERFACE)
+      expect(isBrowserSandboxAllowed(result.root)).toBe(false)
+    })
+
+    test("a null descriptor for a plug that is not a default keeps the plain interface reference", ({ expect }) => {
+      const result = resolveCore24Plugs(["default", { camera: null }], "strict")
+      expect(result.app).toContain("camera")
+      expect(removeNullish(result.root)).not.toHaveProperty("camera")
+    })
+
+    // The snapcraft.yaml is passed through removeNullish (see SnapCore24), which drops null root definitions.
+    // Every app plug must then either have a root definition or be named like a real interface.
+    test.for(["strict", "host", "gnome-extension"] as const)("after removeNullish every app plug resolves to an interface (%s)", (flavor, { expect }) => {
+      const configs: SnapPlugsConfig[] = [
+        undefined,
+        ["default"],
+        ["default", "camera", { camera: null }],
+        ["default", ...CONTENT_PLUGS.map(name => ({ [name]: null })), { [BROWSER_SUPPORT_INTERFACE]: null }],
+        ["default", { "gpu-2404": null }, { "gtk-3-themes": { "default-provider": "custom-themes" } }],
+      ]
+      const renamedDefaults = new Set(Object.keys(core24ContentPlugs()))
+      for (const plugs of configs) {
+        const resolved = resolveCore24Plugs(plugs, flavor)
+        const { plugs: root, apps } = removeNullish({ plugs: resolved.root, apps: { app: { plugs: resolved.app } } })
+        const dangling = (apps.app.plugs ?? []).filter(name => root?.[name] == null && renamedDefaults.has(name))
+        expect(dangling, JSON.stringify(plugs)).toEqual([])
+      }
     })
 
     test("classic confinement keeps the previous expansion", ({ expect }) => {

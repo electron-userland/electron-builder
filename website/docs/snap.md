@@ -216,7 +216,7 @@ When `plugs` is unset, core24 declares `browser-support`. Without the `gnome` ex
 }
 ```
 
-Entries are deduplicated by plug name, and a descriptor object named like a default plug overrides that plug's attributes.
+Entries are deduplicated by plug name, and a descriptor object named like a default plug overrides that plug's attributes. A `null` descriptor resets a default plug named like its interface (`browser-support`) to the snapd defaults, and removes a default content-snap plug (`gtk-3-themes`, `icon-themes`, `sound-themes`, `gnome-46-2404`, `gpu-2404`) from the snap — for example `["default", { "sound-themes": null }]`. The default `layout` binds into `gnome-46-2404` and `gpu-2404`, so set `layout` as well if you remove either of those.
 
 `browser-support` is requested **without** `allow-sandbox`, so the app is launched with `--no-sandbox` and `chrome-sandbox` is left out of the snap; the snap confinement isolates the app. The Snap Store reserves `allow-sandbox` for vetted publishers and rejects other uploads that request it — electron-builder warns if you configure it.
 

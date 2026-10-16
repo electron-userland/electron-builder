@@ -462,7 +462,11 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
    * Include `"default"` to add to that set instead of replacing it: the result is the full default
    * set (the app-level plugs above plus everything the build flavor declares on its own) together with
    * your other entries, deduplicated by plug name. A descriptor object named like a default plug
-   * overrides that plug's attributes. Without `"default"`, the list replaces the defaults entirely.
+   * overrides that plug's attributes. A `null` descriptor resets a default plug named like its interface
+   * (`browser-support`) to the snapd defaults, and removes a default content-snap plug (`gtk-3-themes`,
+   * `icon-themes`, `sound-themes`, `gnome-46-2404`, `gpu-2404`) from the snap; the default `layout`
+   * binds into `gnome-46-2404` and `gpu-2404`, so set `layout` too when removing those.
+   * Without `"default"`, the list replaces the defaults entirely.
    * ```json
    * ["default", "camera", { "home": { "read": "all" } }]
    * ```
