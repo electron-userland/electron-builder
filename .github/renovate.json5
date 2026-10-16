@@ -21,12 +21,12 @@
     schedule: ["before 3am on the first day of the month"],
     packageRules: [
       {
-        groupName: "ESLint and Prettier",
+        // oxlint and oxlint-tsgolint are version-coupled; keep the oxc tooling on one PR
+        groupName: "oxc (oxlint, oxfmt)",
         matchPackageNames: [
-          "eslint",
-          "prettier",
-          "/^eslint-config-/",
-          "/^eslint-plugin-/",
+          "oxlint",
+          "oxlint-tsgolint",
+          "oxfmt",
         ],
       },
     ],

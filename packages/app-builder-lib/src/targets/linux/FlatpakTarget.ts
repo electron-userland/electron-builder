@@ -120,13 +120,18 @@ export default class FlatpakTarget extends Target {
       modules: this.options.modules,
     }
 
+    // `this.options` is `linux` deep-merged with `flatpak`, and deepAssign concatenates arrays. A flat `linux.files`
+    // is moved into `linux.fileOptions.files` when the configuration is loaded, but read the flatpak-specific
+    // [src, dest] tuple list from the raw config anyway, so that no shared list can leak into it.
+    const extraFiles = this.packager.config.flatpak?.files ?? []
+
     const buildOptions: FlatpakBundlerBuildOptions = {
       baseFlatpakref: `app/${manifest.base}/${flatpakArch}/${manifest.baseVersion}`,
       runtimeFlatpakref: `runtime/${manifest.runtime}/${flatpakArch}/${manifest.runtimeVersion}`,
       sdkFlatpakref: `runtime/${manifest.sdk}/${flatpakArch}/${manifest.runtimeVersion}`,
       arch: flatpakArch as any,
       bundlePath: path.join(this.outDir, artifactName),
-      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...(this.options.files || [])],
+      files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...extraFiles],
       symlinks: [[path.join("/lib", appIdentifier, executableName), path.join("/bin", executableName)], ...(this.options.symlinks || [])],
     }
 

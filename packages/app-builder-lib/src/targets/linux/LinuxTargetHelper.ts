@@ -208,10 +208,6 @@ export class LinuxTargetHelper {
     return file
   }
 
-  // Emit the "desktopName not set" warning at most once per build, even though both
-  // getDesktopFileName() and computeDesktopEntry() resolve the desktop name.
-  private desktopNameWarningEmitted = false
-
   // https://github.com/electron-userland/electron-builder/issues/9103
   // Electron derives app_id / WM_CLASS from desktopName in package.json; the installed
   // .desktop filename and StartupWMClass must match it for window association to work.
@@ -221,16 +217,14 @@ export class LinuxTargetHelper {
   private resolveDesktopName(): string | null {
     const trimmedDesktopName = this.packager.metadata.desktopName?.trim()
     if (isEmptyOrSpaces(trimmedDesktopName)) {
-      if (!this.desktopNameWarningEmitted) {
-        this.desktopNameWarningEmitted = true
-        log.warn(
-          {
-            reason: "desktopName is not set in package.json",
-            docs: "https://www.electron.build/docs/linux/#window-association-desktopname",
-          },
-          'Electron derives the app_id / WM_CLASS used for Linux window association from desktopName. Without it, desktop environments may not link the running window to its launcher entry (taskbar grouping, dock icon, etc.). Set desktopName to a reverse-DNS identifier in package.json, e.g. "com.myapp.MyApp".'
-        )
-      }
+      // at most once per build, even though both getDesktopFileName() and computeDesktopEntry() resolve the desktop name
+      log.once("desktop-name-not-set", this).warn(
+        {
+          reason: "desktopName is not set in package.json",
+          docs: "https://www.electron.build/docs/linux/#window-association-desktopname",
+        },
+        'Electron derives the app_id / WM_CLASS used for Linux window association from desktopName. Without it, desktop environments may not link the running window to its launcher entry (taskbar grouping, dock icon, etc.). Set desktopName to a reverse-DNS identifier in package.json, e.g. "com.myapp.MyApp".'
+      )
       return null
     }
     const basename = trimmedDesktopName.replace(/\.desktop$/, "")
@@ -243,7 +237,26 @@ export class LinuxTargetHelper {
   }
 
   getDesktopFileName(fallback: string = this.packager.executableName): string {
-    return this.resolveDesktopName() ?? fallback
+    const resolved = this.resolveDesktopName()
+    if (resolved == null) {
+      return fallback
+    }
+    // v26 only synced the installed filename to desktopName when linux.syncDesktopName was set, and
+    // its default was off — so any project that set desktopName without opting in now installs a
+    // differently-named .desktop file. On upgrade the old entry stays behind until the previous
+    // package is removed, which shows up as a duplicate or stale launcher rather than a build error.
+    if (resolved !== fallback) {
+      // at most once per build — getDesktopFileName is called per target
+      log
+        .once("desktop-filename-change", this)
+        .warn(
+          { desktopName: resolved, previousFileName: `${fallback}.desktop`, fileName: `${resolved}.desktop` },
+          "the installed .desktop filename is now always derived from `desktopName` (electron-builder v26 only did this with `linux.syncDesktopName: true`, which defaulted to off). " +
+            "Update any packaging, AppArmor, or MIME tooling that referenced the old filename. " +
+            "See https://www.electron.build/docs/migration/v27-breaking-changes#linuxsyncdesktopname-always-synced"
+        )
+    }
+    return resolved
   }
 
   computeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, extra?: Record<string, string>): Promise<string> {

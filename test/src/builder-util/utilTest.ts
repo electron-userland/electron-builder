@@ -1,6 +1,6 @@
 import { parseValidEnvVarUrl } from "builder-util/internal"
 import { resolveEnvShellValue, validateShellEmbeddable } from "builder-util/src/envUtil"
-import { removePassword, removePasswordFromArgs, filterSensitiveEnv, spawnAndWriteWithOutput, ExecError } from "builder-util"
+import { removePassword, removePasswordFromArgs, filterSensitiveEnv, spawnAndWrite, spawnAndWriteWithOutput, ExecError } from "builder-util"
 import { afterEach, expect, vi } from "vitest"
 
 const testValue = "secretValue"
@@ -373,7 +373,7 @@ describe("resolveEnvShellValue", () => {
     expect(resolveEnvShellValue(VAR)).toBe("/some/path")
   })
 
-  const UNSAFE_CHARS = [";", "&", "|", "`", "$", "<", ">", '"', "'"]
+  const UNSAFE_CHARS = [";", "&", "|", "`", "$", "<", ">", '"', "'", "\n", "\r"]
   for (const ch of UNSAFE_CHARS) {
     test(`throws on shell-unsafe character: ${ch}`, ({ expect }) => {
       vi.stubEnv(VAR, `/some/path${ch}foo`)
@@ -392,6 +392,10 @@ describe("resolveEnvShellValue", () => {
   })
 })
 // ─── spawnAndWriteWithOutput ────────────────────────────────────────────────
+
+// the child exits without reading stdin, so writing a large payload reliably fails with EPIPE;
+// the exit code (not the stdin write error) must decide the outcome, with no unhandled 'error' event
+const largePayload = "x".repeat(16 * 1024 * 1024)
 
 describe("spawnAndWriteWithOutput", () => {
   afterEach(() => {
@@ -448,12 +452,34 @@ describe("spawnAndWriteWithOutput", () => {
     expect(stdout).toBe("HELLO WORLD")
   })
 
+  test("resolves when process exits 0 before stdin is fully written (EPIPE)", async ({ expect }) => {
+    const { stdout, stderr } = await spawnAndWriteWithOutput(process.execPath, ["-e", "process.exit(0)"], largePayload)
+    expect(stdout).toBe("")
+    expect(stderr).toBe("")
+  })
+
+  test("rejects with ExecError when process exits non-zero before stdin is fully written (EPIPE)", async ({ expect }) => {
+    const promise = spawnAndWriteWithOutput(process.execPath, ["-e", "process.exit(3)"], largePayload)
+    await expect(promise).rejects.toBeInstanceOf(ExecError)
+    await expect(promise).rejects.toMatchObject({ exitCode: 3 })
+  })
+
   test("rejects with a timeout error when process does not finish within 4 minutes", async ({ expect }) => {
     vi.useFakeTimers()
     const script = `setInterval(() => {}, 999999)`
     const promise = spawnAndWriteWithOutput(process.execPath, ["-e", script], "")
     vi.advanceTimersByTime(4 * 60 * 1000 + 100)
     await expect(promise).rejects.toThrow(/timed out/i)
+  })
+})
+
+describe("spawnAndWrite", () => {
+  test("resolves when process exits 0 before stdin is fully written (EPIPE)", async ({ expect }) => {
+    await expect(spawnAndWrite(process.execPath, ["-e", "process.exit(0)"], largePayload)).resolves.toBeUndefined()
+  })
+
+  test("rejects when process exits non-zero before stdin is fully written (EPIPE)", async ({ expect }) => {
+    await expect(spawnAndWrite(process.execPath, ["-e", "process.exit(3)"], largePayload)).rejects.toBeInstanceOf(ExecError)
   })
 })
 
@@ -478,6 +504,7 @@ describe("validateShellEmbeddable", () => {
       ['index.js"evil"', "double-quote"],
       ["index.js\\evil", "backslash"],
       ["index.js\nevil", "newline"],
+      ["index.js\revil", "carriage return"],
       ["$(rm -rf /)", "command substitution"],
       ["`id`", "backtick substitution"],
     ])("rejects %j (contains %s)", value => {

@@ -2,15 +2,25 @@ import { serializeToYaml, TmpDir } from "builder-util"
 import { configureRequestOptionsFromUrl, GenericServerOptions } from "builder-util-runtime"
 import { createHash } from "crypto"
 import { MacUpdater } from "electron-updater"
+import { ProviderPlatform } from "electron-updater/src/providers/Provider"
 import { EventEmitter } from "events"
 import fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
-import { createTestAppAdapter, httpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import {
+  createTestAppAdapter,
+  createVerifyUpdateFileMock,
+  expectVerifyUpdateFileFailure,
+  httpExecutor,
+  trackEvents,
+  tuneTestUpdater,
+  writeUpdateConfig,
+} from "../helpers/updaterTestUtil.js"
 import { mockForNodeRequire } from "vitest-mock-commonjs"
 
 class TestNativeUpdater extends EventEmitter {
+  quitAndInstallCalls = 0
   private updateUrl: string | null = null
   // Squirrel.Mac sends the headers from setFeedURL (incl. the Basic auth the proxy server requires) with
   // every request — mirror that here so the mock can authenticate against MacUpdater's local proxy.
@@ -35,6 +45,52 @@ class TestNativeUpdater extends EventEmitter {
     this.updateUrl = updateUrl.url
     this.headers = updateUrl.headers ?? {}
   }
+
+  quitAndInstall() {
+    this.quitAndInstallCalls++
+  }
+}
+
+test.ifMac("quitAndInstall handles one future native download", async ({ expect }) => {
+  const mockNativeUpdater = new TestNativeUpdater()
+  mockForNodeRequire("electron", { autoUpdater: mockNativeUpdater })
+  const updater = new MacUpdater(undefined, await createTestAppAdapter())
+
+  updater.quitAndInstall()
+  mockNativeUpdater.emit("update-downloaded")
+  mockNativeUpdater.emit("update-downloaded")
+
+  expect(mockNativeUpdater.quitAndInstallCalls).toBe(1)
+})
+const MAC_ZIP_NAME = "TestApp-1.1.0-mac.zip"
+const MAC_ZIP_CONTENT = Buffer.from("electron-builder localhost update-server test zip payload — not a real archive")
+
+/**
+ * Serves a synthetic mac update (latest-mac.yml + zip) from a localhost static server, for the generic provider.
+ */
+async function serveMacUpdate(prefix: string): Promise<{ port: number; close: () => Promise<void> }> {
+  const sha512 = createHash("sha512").update(MAC_ZIP_CONTENT).digest("base64")
+  const tmpDir = new TmpDir(prefix)
+  const root = await tmpDir.getTempDir()
+  await fsExtra.outputFile(
+    path.join(root, "latest-mac.yml"),
+    serializeToYaml({
+      version: "1.1.0",
+      files: [{ url: MAC_ZIP_NAME, sha512, size: MAC_ZIP_CONTENT.length }],
+      path: MAC_ZIP_NAME,
+      sha512,
+      releaseDate: "2024-01-01T00:00:00.000Z",
+    })
+  )
+  await fsExtra.outputFile(path.join(root, MAC_ZIP_NAME), MAC_ZIP_CONTENT)
+  const { server, port } = await createLocalServer(root)
+  return {
+    port,
+    close: async () => {
+      server.close()
+      await tmpDir.cleanup()
+    },
+  }
 }
 
 test.ifMac("mac updates", async ({ expect }) => {
@@ -44,25 +100,8 @@ test.ifMac("mac updates", async ({ expect }) => {
     autoUpdater: mockNativeUpdater,
   })
 
-  // serve a synthetic mac update (latest-mac.yml + zip) from a localhost static server via the
-  // generic provider — MacUpdater then proxies the downloaded zip to the (mocked) Squirrel.Mac updater
-  const zipName = "TestApp-1.1.0-mac.zip"
-  const zipContent = Buffer.from("electron-builder localhost update-server test zip payload — not a real archive")
-  const sha512 = createHash("sha512").update(zipContent).digest("base64")
-  const tmpDir = new TmpDir("mac-updater-test")
-  const root = await tmpDir.getTempDir()
-  await fsExtra.outputFile(
-    path.join(root, "latest-mac.yml"),
-    serializeToYaml({
-      version: "1.1.0",
-      files: [{ url: zipName, sha512, size: zipContent.length }],
-      path: zipName,
-      sha512,
-      releaseDate: "2024-01-01T00:00:00.000Z",
-    })
-  )
-  await fsExtra.outputFile(path.join(root, zipName), zipContent)
-  const { server, port } = await createLocalServer(root)
+  // MacUpdater then proxies the downloaded zip to the (mocked) Squirrel.Mac updater
+  const { port, close } = await serveMacUpdate("mac-updater-test")
 
   try {
     const updater = new MacUpdater(undefined, await createTestAppAdapter())
@@ -82,12 +121,50 @@ test.ifMac("mac updates", async ({ expect }) => {
     const updateCheckResult = await updater.checkForUpdates()
     // todo when will be updated to use files
     // expect(removeUnstableProperties(updateCheckResult?.updateInfo.files)).toMatchSnapshot()
-    const files = await updateCheckResult?.downloadPromise
-    expect(files!.length).toEqual(1)
-    await assertThat(expect, files![0]).isFile()
+    const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
+    expect(packageFile).toBeUndefined()
+    await assertThat(expect, updateFile).isFile()
     expect(actualEvents).toMatchSnapshot()
   } finally {
-    server.close()
-    await tmpDir.cleanup()
+    await close()
+  }
+})
+
+test.ifMac("mac updates abort when verifyUpdateFile rejects the downloaded temp zip", async ({ expect }) => {
+  const mockNativeUpdater = new TestNativeUpdater()
+
+  mockForNodeRequire("electron", {
+    autoUpdater: mockNativeUpdater,
+  })
+
+  const { port, close } = await serveMacUpdate("mac-updater-verify-hook-test")
+
+  try {
+    const updater = new MacUpdater(undefined, await createTestAppAdapter())
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
+      provider: "generic",
+      url: `http://127.0.0.1:${port}`,
+    })
+
+    const { mock, observations } = createVerifyUpdateFileMock(() => ({ response: "failure", message: "custom verification failed" }))
+    updater.verifyUpdateFile = mock
+
+    tuneTestUpdater(updater)
+    updater._testOnlyOptions!.platform = process.platform as ProviderPlatform
+    const actualEvents = trackEvents(updater)
+    const updateCheckResult = await updater.checkForUpdates()
+
+    const observation = await expectVerifyUpdateFileFailure({
+      expect,
+      downloadPromise: updateCheckResult?.downloadPromise,
+      verifyUpdateFile: mock,
+      observations,
+      expectedErrorMessageSubstring: "custom verification failed",
+    })
+
+    expect(observation.originalUpdateFileName).toBe(MAC_ZIP_NAME)
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
+  } finally {
+    await close()
   }
 })

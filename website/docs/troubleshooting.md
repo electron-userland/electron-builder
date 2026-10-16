@@ -67,21 +67,22 @@ asar:
 ```
 
 **"ENOENT: no such file or directory" at runtime**
-: A file that exists in development is missing from the packaged app. Check if it's being excluded by a `files` pattern or by the default exclusions. Build with `DEBUG=electron-builder` and look for "excluding" log lines. Also check `asar.unpack` — files inside ASAR must be accessed via `app.getAppPath()`, not via `__dirname` relative paths.
+: A file that exists in development is missing from the packaged app. Check if it's being excluded by a `fileOptions.files` pattern or by the default exclusions. Build with `DEBUG=electron-builder` and look for "excluding" log lines. Also check `asar.unpack` — files inside ASAR must be accessed via `app.getAppPath()`, not via `__dirname` relative paths.
 
 **App directory is too large**
 : Profile the ASAR after building:
 ```bash
 npx asar list dist/mac/MyApp.app/Contents/Resources/app.asar | sort
 ```
-Common culprits: TypeScript source files (`.ts`), source maps (`.map`), test fixtures, large binary assets. Add exclusion patterns to `files`:
+Common culprits: TypeScript source files (`.ts`), source maps (`.map`), test fixtures, large binary assets. Add exclusion patterns to `fileOptions.files`:
 ```yaml
-files:
-  - "**/*"
-  - "!src/**"
-  - "!**/*.ts"
-  - "!**/*.map"
-  - "!**/__tests__/**"
+fileOptions:
+  files:
+    - "**/*"
+    - "!src/**"
+    - "!**/*.ts"
+    - "!**/*.map"
+    - "!**/__tests__/**"
 ```
 
 **"Cannot find module" at runtime after packaging**
@@ -120,7 +121,7 @@ asar:
 : The downloaded update file is corrupt or the wrong file is being served. Verify that the artifact and the `.yml` metadata file were generated together in the same build and not mixed from different builds. As of electron-builder 27, the manifest `sha512` should be base64-encoded — a 128-hex-character "expected" value in the error message is the tell that a hand-rolled manifest still uses hex, which is accepted but deprecated in v27 and will be removed in v28; convert it with `sha512sum file.ext | cut -d' ' -f1 | xxd -r -p | base64 -w0`.
 
 **Delta updates (AppImage / NSIS-Web) fail**
-: For AppImage delta updates, electron-builder embeds a blockmap directly in the AppImage binary — no separate file needs to be published. If delta updates aren't working, verify the AppImage was built with electron-builder and that a publish provider is configured. For NSIS differential packages, `nsis.differentialPackage` must be `true`.
+: For AppImage delta updates, electron-builder embeds a blockmap directly in the AppImage binary — no separate file needs to be published. If delta updates aren't working, verify the AppImage was built with electron-builder and that a publish provider is configured. For NSIS differential packages, `nsis.differentialPackage` must not be `false` (any other value — `true`, `"compressed"`, `"store-asar"`, or unset — builds a differential-aware package; `"store-asar"` additionally stores `resources/app.asar` uncompressed so app-code deltas stay proportional to what changed).
 
 ---
 
@@ -236,5 +237,4 @@ docker run --rm -ti \
 
 - Run `DEBUG=electron-builder electron-builder build 2>&1 | tee build.log` to capture full debug output
 - Search [GitHub Issues](https://github.com/electron-userland/electron-builder/issues)
-- Check the [Discussions](https://github.com/electron-userland/electron-builder/discussions)
 - When filing a bug report, use [electron/minimal-repro](https://github.com/electron/minimal-repro) to create a minimal reproduction case — issues with a repro get resolved significantly faster

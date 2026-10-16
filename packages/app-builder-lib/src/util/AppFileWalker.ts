@@ -34,7 +34,7 @@ export abstract class FileCopyHelper {
   private handleSymlink(fileStat: fsExtra.Stats, file: string, parent: string, linkTarget: string): Promise<fsExtra.Stats> | null {
     const resolvedLinkTarget = path.resolve(parent, linkTarget)
     const link = path.relative(this.matcher.from, resolvedLinkTarget)
-    if (link.startsWith("..")) {
+    if (isOutsidePath(link)) {
       // outside of project, linked module (https://github.com/electron-userland/electron-builder/issues/675)
       return fsExtra.stat(resolvedLinkTarget).then(targetFileStat => {
         this.metadata.set(file, targetFileStat)
@@ -47,6 +47,15 @@ export abstract class FileCopyHelper {
     }
     return null
   }
+}
+
+/** @internal */
+export function isOutsidePath(relativePath: string): boolean {
+  if (relativePath === ".." || path.isAbsolute(relativePath)) {
+    return true
+  }
+  // Windows path APIs accept both "/" and "\" as separators; on POSIX a backslash is an ordinary filename character
+  return relativePath.startsWith("../") || (path.sep === "\\" && relativePath.startsWith("..\\"))
 }
 
 function createAppFilter(matcher: FileMatcher, packager: PlatformPackager<any>): Filter | null {

@@ -1,5 +1,5 @@
 import { archFromString, copyDir } from "builder-util"
-import { DIR_TARGET, Platform } from "electron-builder"
+import { Configuration, DIR_TARGET, Platform } from "electron-builder"
 import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -14,7 +14,7 @@ test.ifNotWindows("expand not defined env", ({ expect }) =>
     config: {
       asar: false,
       // tslint:disable:no-invalid-template-strings
-      files: ["${env.FOO_NOT_DEFINED}"],
+      fileOptions: { files: ["${env.FOO_NOT_DEFINED}"] },
     },
   })
 )
@@ -29,7 +29,7 @@ test.ifNotWindows("files", ({ expect }) =>
       config: {
         asar: false,
         // tslint:disable:no-invalid-template-strings
-        files: ["**/*", "!ignoreMe${/*}", "${env.__NOT_BAR__}", "dist/electron/**/*"],
+        fileOptions: { files: ["**/*", "!ignoreMe${/*}", "${env.__NOT_BAR__}", "dist/electron/**/*"] },
       },
     },
     {
@@ -57,7 +57,7 @@ test.ifNotWindows("re-include default-excluded extension via files glob", ({ exp
       targets: linuxDirTarget,
       config: {
         asar: false,
-        files: ["**/*", "**/*.obj"],
+        fileOptions: { files: ["**/*", "**/*.obj"] },
       },
     },
     {
@@ -79,7 +79,7 @@ test.ifNotWindows("default-excluded extension stays excluded without a re-includ
       targets: linuxDirTarget,
       config: {
         asar: false,
-        files: ["**/*"],
+        fileOptions: { files: ["**/*"] },
       },
     },
     {
@@ -99,17 +99,19 @@ test.ifNotWindows("files.from asar", ({ expect }) =>
     {
       targets: linuxDirTarget,
       config: {
-        files: [
-          {
-            from: ".",
-            to: ".",
-            filter: ["package.json"],
-          },
-          {
-            from: "app/node",
-            to: "app/node",
-          },
-        ],
+        fileOptions: {
+          files: [
+            {
+              from: ".",
+              to: ".",
+              filter: ["package.json"],
+            },
+            {
+              from: "app/node",
+              to: "app/node",
+            },
+          ],
+        },
       },
     },
     {
@@ -131,16 +133,18 @@ test.ifNotWindows("map resources", ({ expect }) =>
       targets: linuxDirTarget,
       config: {
         asar: false,
-        extraResources: [
-          {
-            from: "foo/old",
-            to: "foo/new",
-          },
-          {
-            from: "license.txt",
-            to: ".",
-          },
-        ],
+        fileOptions: {
+          extraResources: [
+            {
+              from: "foo/old",
+              to: "foo/new",
+            },
+            {
+              from: "license.txt",
+              to: ".",
+            },
+          ],
+        },
       },
     },
     {
@@ -158,21 +162,22 @@ test.ifNotWindows("map resources", ({ expect }) =>
   )
 )
 
+// Sets flat keys (not in the `Configuration` type, hence the cast), which are moved into `fileOptions` with a warning.
+// The snapshot is the same as for the nested form ("extraResources - two-package" uses that).
 async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
   const osName = platform.buildConfigurationKey
   await assertPack(
     expect,
     "test-app-one",
     {
-      // to check NuGet package
-      targets: platform.createTarget(platform === Platform.WINDOWS ? "squirrel" : DIR_TARGET),
+      targets: platform.createTarget(DIR_TARGET),
       config: {
         extraResources: ["foo", "bar/hello.txt", "./dir-relative/f.txt", "bar/${arch}.txt", "${os}/${arch}.txt"],
         [osName]: {
           extraResources: ["platformSpecificR"],
           extraFiles: ["platformSpecificF"],
         },
-      },
+      } as Configuration,
     },
     {
       projectDirCreated: async projectDir => {
@@ -203,10 +208,8 @@ async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
   )
 }
 
+// The Windows variant builds a Squirrel.Windows package to check the NuGet payload — see files.e2e.ts.
 test.ifNotWindows("extraResources on Linux", ({ expect }) => doExtraResourcesTest(expect, Platform.LINUX))
-
-// wine arm64 currently throws a native crash when running the test, so we skip on arm64 for now
-test.ifLinux.ifEnv(process.arch !== "arm64")("extraResources on Windows", ({ expect }) => doExtraResourcesTest(expect, Platform.WINDOWS))
 
 test.ifMac("extraResources on macOS", ({ expect }) => doExtraResourcesTest(expect, Platform.MAC))
 
@@ -222,10 +225,14 @@ test.ifNotWindows("extraResources - two-package", ({ expect }) => {
       // to check NuGet package
       targets: platform.createTarget(DIR_TARGET),
       config: {
-        extraResources: ["foo", "bar/hello.txt", "bar/${arch}.txt", "${os}/${arch}.txt", "executable*"],
+        fileOptions: {
+          extraResources: ["foo", "bar/hello.txt", "bar/${arch}.txt", "${os}/${arch}.txt", "executable*"],
+        },
         [osName]: {
-          extraResources: ["platformSpecificR"],
-          extraFiles: ["platformSpecificF"],
+          fileOptions: {
+            extraResources: ["platformSpecificR"],
+            extraFiles: ["platformSpecificF"],
+          },
         },
       },
     },

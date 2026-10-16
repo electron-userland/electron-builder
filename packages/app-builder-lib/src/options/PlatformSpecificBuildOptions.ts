@@ -36,6 +36,17 @@ export interface AsarOptions {
    * Each line of the file is a relative path from the app directory. Files listed first are
    * packed first, which can improve app startup time by front-loading frequently accessed modules.
    * See the [asar documentation](https://github.com/electron/asar) for details.
+   *
+   * Lines use the same syntax `@electron/asar` accepts: the path may carry a leading `/` or a
+   * `<count>:` prefix (as written by a load counter), and blank lines are ignored. There is no comment
+   * syntax, and `\` separators are accepted. Directory entries are moved to the front in their original
+   * relative order (they hold no data), listed files follow in the order of the file, and every other
+   * file keeps its original order after them. Lines naming a directory are ignored, and listed files
+   * that are not in the archive are skipped.
+   *
+   * The path is resolved like other build resources: relative to the [build resources directory](#directories)
+   * first, then to the project directory. A missing file fails the build. Packing files ahead of the default
+   * dependencies-first layout can increase differential update download size.
    */
   ordering?: string | null
 
@@ -69,6 +80,12 @@ export interface AsarOptions {
   disableIntegrity?: boolean
 }
 
+/**
+ * Which files are copied into the packaged app, and which symlinks among them may lead outside it, set under `fileOptions` at the
+ * configuration root or per platform (e.g. `mac.fileOptions`). A platform's lists are added to the root ones; a platform's
+ * `allowExternalLinks` replaces the root one.
+ * See [file options](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
+ */
 export interface FilesBuildOptions {
   /**
    * A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.
@@ -95,7 +112,7 @@ Development dependencies are never copied in any case. You don't need to ignore 
 
 Default pattern \`**\/*\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \`**\/node_modules/**\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.
 
-May be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).
+May be specified in the platform options as well (e.g. `mac.fileOptions.files`, see [mac](https://www.electron.build/mac)).
 
 You may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.
 
@@ -125,9 +142,63 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
    * The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows).
    */
   extraFiles?: Array<FileSet | string> | FileSet | string | null
+
+  /**
+   * Whether symlinks among the packaged files may lead outside the app, the workspace and the package-manager store.
+   *
+   * Only the build configuration is trusted, not the files it packages: by default (`false`) electron-builder refuses
+   * - a file of the app (`app.asar` or `asar: false`) that is a symlink, or is reached through one, whose real path is outside the workspace
+   *   root, the project and app directories and the package-manager store (`npm link`, a `file:../lib` dependency outside the repository,
+   *   a symlink into the home or temp directory),
+   * - a copied symlink that resolves outside the app: one in `extraResources` / `extraFiles` (other than into the workspace or the store),
+   *   one kept by an `asar: false` copy, and any symlink leaving the app in a target that stores what symlinks point to (Windows `zip` / `7z`,
+   *   the NSIS app package, AppX/MSIX, Squirrel.Windows).
+   *
+   * Without these checks, a symlink planted in a dependency or a copied directory could package files from elsewhere on the build machine (SSH keys,
+   * credentials) into the artifact, which is why this is off by default.
+   *
+   * - `true` allows any such symlink.
+   * - A list of paths, relative to the project directory or absolute, allows a symlink only when the real path of what it points to is
+   *   inside the real path of one of them (e.g. `["../shared-lib"]`). A listed path that does not exist fails the build.
+   *
+   * An allowed symlink is packaged: what it points to is copied (or stored by the archive), and a copied symlink is kept
+   * as it is. A warning is logged once when this allows a symlink.
+   *
+   * Set it under `fileOptions`, at the configuration root or per platform; a platform's value (`false` included) replaces the root one
+   * rather than being added to it:
+   * ```json
+   * { "fileOptions": { "allowExternalLinks": ["../shared-lib"] }, "linux": { "fileOptions": { "allowExternalLinks": true } } }
+   * ```
+   *
+   * This does not allow writing through a symlink: a copy or a file written by electron-builder whose destination leads outside the
+   * output directory through a symlink is always refused, and a symlink at such a file name is replaced, never followed.
+   * See [Symbolic links](https://www.electron.build/docs/contents#symbolic-links).
+   * @default false
+   */
+  allowExternalLinks?: boolean | Array<string> | null
 }
 
-export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, FilesBuildOptions {
+export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
+  /**
+   * Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among
+   * them may lead outside the app and the workspace (`allowExternalLinks`).
+   * Set at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,
+   * and a platform's `allowExternalLinks` replaces the root one.
+   *
+   * ```json
+   * {
+   *   "fileOptions": {
+   *     "files": ["dist/**\/*", "package.json"],
+   *     "extraResources": [{ "from": "assets/bin", "to": "bin" }]
+   *   }
+   * }
+   * ```
+   *
+   * `files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here
+   * when the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration.
+   */
+  fileOptions?: FilesBuildOptions | null
+
   /**
    * The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
    * [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.
@@ -153,7 +224,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly compression?: CompressionLevel | null
 
   /**
-   * Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
+   * Whether to package the application's source code into an archive, using [Electron's archive format](https://www.electronjs.org/docs/latest/tutorial/asar-archives).
    *
    * Node modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack.
    * @default true
@@ -207,6 +278,31 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
   readonly generateUpdatesFilesForAllChannels?: boolean
 
   /**
+   * Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is
+   * embedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.
+   *
+   * **Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key
+   * resolves. Generate one once with `electron-builder create-update-key`, then supply it via
+   * `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via
+   * `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and
+   * resolves the key from the environment; `null` is not an opt-out.
+   *
+   * Set to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then
+   * logs a warning. `false` also short-circuits the environment variables, so a leftover
+   * `ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.
+   *
+   * The requirement is only enforced when a publish policy is in effect (`--publish`); a build without one
+   * warns instead, so local builds and pipelines that sign the manifest in a later step of their own are
+   * unaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is
+   * emitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,
+   * mas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed
+   * or uploaded.
+   *
+   * See [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests).
+   */
+  readonly updateManifest?: UpdateManifestSigningOptions | false | null
+
+  /**
    * The release info. Intended for command line usage:
    *
    * ```
@@ -234,6 +330,37 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions, Fil
    * Defaults to the current machine's architecture.
    */
   readonly defaultArch?: string
+}
+
+export interface UpdateManifestSigningOptions {
+  /**
+   * Ed25519 private key(s) in PEM (PKCS#8) format used to sign the update manifest. A single PEM string may
+   * contain several concatenated keys, or pass an array with one key each; the manifest is signed by every key
+   * (dual-signing for [key rotation](https://www.electron.build/features/key-rotation)) and the first key also
+   * fills the legacy single `signature` field.
+   * Secret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable in CI over committing this to config.
+   */
+  readonly signingKey?: string | Array<string> | null
+
+  /**
+   * Path(s) to file(s) containing the Ed25519 private key (PEM, PKCS#8). Alternative to `signingKey`.
+   * An array signs with every listed key, in order. Relative paths are resolved against the project directory.
+   */
+  readonly signingKeyFile?: string | Array<string> | null
+
+  /**
+   * The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.
+   * The updater accepts a manifest when any listed key validates one of its signatures. Optional — when
+   * omitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust
+   * additional keys ahead of a rotation (for example `[current, next]`).
+   *
+   * A `publicKey` on its own does not satisfy the signing requirement — electron-builder still has no key to
+   * sign with. An external signer (HSM/KMS) that signs `latest*.yml` in a later step therefore either builds
+   * without a publish policy, where the requirement only warns and the unsigned manifest is written locally, or
+   * keeps publishing with `publishAutoUpdate: false` on every publish provider - electron-builder then uploads the
+   * artifacts and embeds this key, but writes no `latest*.yml`, so the external step has to produce it too.
+   */
+  readonly publicKey?: string | Array<string> | null
 }
 
 export interface ReleaseInfo {

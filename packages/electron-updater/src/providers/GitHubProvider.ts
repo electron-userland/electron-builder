@@ -48,6 +48,10 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     super(options, "github.com", runtimeOptions)
   }
 
+  get feedBaseUrl(): URL {
+    return this.baseUrl
+  }
+
   private get channel(): string {
     const result = this.updater.channel || this.options.channel
     return result == null ? this.getDefaultChannelName() : this.getCustomChannelName(result)
@@ -119,17 +123,14 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
             // Allow moving from alpha to beta but not down
             const channelMismatch = currentChannel === "beta" && hrefChannel === "alpha"
 
-            if (shouldFetchVersion && !isCustomChannel && !channelMismatch) {
-              tag = hrefTag
-              latestRelease = releaseEntry
-              break
-            }
+            const isNextPreRelease = hrefChannel !== null && hrefChannel === currentChannel
+            const isEligible = (shouldFetchVersion && !isCustomChannel && !channelMismatch) || isNextPreRelease
 
-            const isNextPreRelease = hrefChannel && hrefChannel === currentChannel
-            if (isNextPreRelease) {
+            // The Atom feed is ordered by publication date, not by version: a stable hotfix published after a
+            // pre-release would otherwise hide that newer pre-release (#10287). Pick the highest eligible version instead.
+            if (isEligible && (tag == null || semver.gt(hrefTag, tag))) {
               tag = hrefTag
               latestRelease = releaseEntry
-              break
             }
           }
         }
