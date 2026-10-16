@@ -40,6 +40,12 @@ Two independent mechanisms protect the code inside your packaged app:
 
 **See also:** [Adding Electron Fuses](../tutorials/adding-electron-fuses.md)
 
+## Files from the build machine
+
+Only the build configuration is trusted, not the files it packages. Files reached through symlinks must resolve inside the workspace or the package-manager store, copies and the files electron-builder writes stay inside the output directory by real path, and Windows archives and installers refuse a symlink that leaves the app. Intended links can be allowed with `fileOptions.allowExternalLinks`; writes through a symlink are always refused.
+
+**See also:** [Symbolic links](../contents.md#symbolic-links)
+
 ## Code signing & notarization
 
 Signing proves your app's identity and lets the OS confirm it hasn't been tampered with since it was signed. On macOS, notarization is additionally required for Gatekeeper when distributing outside the Mac App Store. electron-builder discovers signing credentials from the environment and signs automatically when they are present.

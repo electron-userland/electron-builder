@@ -1,6 +1,18 @@
-import { asArray, copyDir, copyOrLinkFile, FileTransformer, Filter, InvalidConfigurationError, log, statOrNull, USE_HARD_LINKS } from "builder-util"
+import {
+  asArray,
+  copyDir,
+  copyOrLinkFile,
+  ExternalLinkPolicy,
+  FileTransformer,
+  Filter,
+  InvalidConfigurationError,
+  isPathWithin,
+  log,
+  statOrNull,
+  USE_HARD_LINKS,
+  WriteContainment,
+} from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { mkdir } from "fs/promises"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import type { Configuration } from "./configuration.js"
@@ -578,8 +590,30 @@ export function getFileMatchers(
   return fileMatchers.length === 0 ? null : fileMatchers
 }
 
+/** Where {@link copyFiles} may write, and where a copied symlink may lead. */
+export interface CopyFilesContainment {
+  /**
+   * The output directories the matchers copy into, most specific first (e.g. the app output directory, then the output directory).
+   * Each matcher is confined, by real path, to the first one its destination is in.
+   */
+  readonly roots: ReadonlyArray<string>
+  /** Besides the root, the directories a copied symlink may lead into, such as the workspace root and the package-manager store. */
+  readonly allowedSymlinkRoots?: ReadonlyArray<string> | null
+  /** The `fileOptions.allowExternalLinks` build option: a copied symlink that leads anywhere else is kept when it allows it. */
+  readonly externalLinks?: ExternalLinkPolicy | null
+}
+
+function containmentRootFor(destination: string, containment: CopyFilesContainment | Nullish): string {
+  return containment?.roots.find(root => isPathWithin(path.resolve(root), path.resolve(destination))) ?? destination
+}
+
 /** @internal */
-export function copyFiles(matchers: Array<FileMatcher> | null, transformer: FileTransformer | null, isUseHardLink?: boolean): Promise<any> {
+export function copyFiles(
+  matchers: Array<FileMatcher> | null,
+  transformer: FileTransformer | null,
+  isUseHardLink?: boolean,
+  containment?: CopyFilesContainment | null
+): Promise<any> {
   if (matchers == null || matchers.length === 0) {
     return Promise.resolve()
   }
@@ -592,14 +626,18 @@ export function copyFiles(matchers: Array<FileMatcher> | null, transformer: File
         return
       }
 
+      const containmentRoot = containmentRootFor(matcher.to, containment)
       if (fromStat.isFile()) {
+        const writes = new WriteContainment(containmentRoot, "copied file")
         const toStat = await statOrNull(matcher.to)
         // https://github.com/electron-userland/electron-builder/issues/1245
         if (toStat != null && toStat.isDirectory()) {
-          return await copyOrLinkFile(matcher.from, path.join(matcher.to, path.basename(matcher.from)), fromStat, isUseHardLink)
+          const dest = path.join(matcher.to, path.basename(matcher.from))
+          await writes.prepareFile(dest)
+          return await copyOrLinkFile(matcher.from, dest, fromStat, isUseHardLink)
         }
 
-        await mkdir(path.dirname(matcher.to), { recursive: true })
+        await writes.prepareFile(matcher.to)
         return await copyOrLinkFile(matcher.from, matcher.to, fromStat)
       }
 
@@ -607,7 +645,14 @@ export function copyFiles(matchers: Array<FileMatcher> | null, transformer: File
         matcher.prependPattern("**/*")
       }
       log.debug({ matcher }, "copying files using pattern")
-      return await copyDir(matcher.from, matcher.to, { filter: matcher.createFilter(), transformer, isUseHardLink: isUseHardLink ? USE_HARD_LINKS : null })
+      return await copyDir(matcher.from, matcher.to, {
+        filter: matcher.createFilter(),
+        transformer,
+        isUseHardLink: isUseHardLink ? USE_HARD_LINKS : null,
+        containmentRoot,
+        allowedSymlinkRoots: containment?.allowedSymlinkRoots,
+        externalLinks: containment?.externalLinks,
+      })
     })
   )
 }

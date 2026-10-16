@@ -32,6 +32,7 @@ export { escapeForXml, isEmptyOrSpaces } from "./stringUtil.js"
 
 export { asArray, deepAssign, isValidKey } from "builder-util-runtime"
 export * from "./fs.js"
+export * from "./pathContainment.js"
 
 export { generateKsuid } from "./ksuid.js"
 export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink.js"

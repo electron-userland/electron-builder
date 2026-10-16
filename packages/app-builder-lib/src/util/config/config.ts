@@ -112,7 +112,7 @@ async function loadParentConfigsRecursively(configExtends: Configuration["extend
 }
 
 // normalize for easy merge
-function normalizeFiles(fileOptions: FilesBuildOptions, name: keyof FilesBuildOptions) {
+function normalizeFiles(fileOptions: FilesBuildOptions, name: "files" | "extraFiles" | "extraResources") {
   let value = fileOptions[name]
   if (value == null) {
     return

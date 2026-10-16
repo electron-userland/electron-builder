@@ -432,6 +432,8 @@ test("smart unpack local module with dll file", ({ expect }) => {
             "!foo",
             "!**/NuGet", // for some reason, NuGet only shows up on CI builds, but no Windows VMs or local linux/mac machines
           ],
+          // `foo` is a `file:` dependency in another temporary directory, which npm links into node_modules: it is outside the workspace
+          allowExternalLinks: true,
         },
       },
     },

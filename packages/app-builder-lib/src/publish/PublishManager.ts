@@ -8,6 +8,7 @@ import {
   isEmptyOrSpaces,
   isPullRequest,
   log,
+  prepareFixedNameWrite,
   safeStringifyJson,
   serializeToYaml,
 } from "builder-util"
@@ -205,7 +206,7 @@ export class PublishManager implements PublishContext {
       }
       const publishConfig = await createAppUpdateConfiguration(packager, publishConfigs, this.isPublish, false)
       if (publishConfig != null) {
-        await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig)
+        await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig, event.appOutDir)
       }
     })
 
@@ -612,8 +613,14 @@ function normalizeExplicitPublicKeys(value: string | Array<string> | null | unde
   return keys
 }
 
-export async function writeAppUpdateYaml(resourcesDir: string, publishConfig: PublishConfiguration): Promise<void> {
-  await outputFile(path.join(resourcesDir, "app-update.yml"), serializeToYaml(publishConfig))
+/**
+ * Writes `app-update.yml` into the resources directory. Untrusted files (extraResources, the app directory) were copied there before,
+ * so the write is confined to `containmentRoot` by real path and replaces, rather than follows, a symlink already at the file name.
+ */
+export async function writeAppUpdateYaml(resourcesDir: string, publishConfig: PublishConfiguration, containmentRoot: string = resourcesDir): Promise<void> {
+  const file = path.join(resourcesDir, "app-update.yml")
+  await prepareFixedNameWrite(containmentRoot, file, "auto-update configuration")
+  await outputFile(file, serializeToYaml(publishConfig))
 }
 
 export async function getPublishConfigsForUpdateInfo(
