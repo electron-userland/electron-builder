@@ -69,23 +69,21 @@ export const IS_LINUX = PLATFORM === "linux"
 export const UNSTABLE_FAIL_RATIO = 0.2
 // Add here broken tests to exclude from smart sharding
 // TODO: FIX ALL OF THESE 😅
-export const skippedTests =
-  process.env.SKIPPED_TESTS?.split(",")
-    .map(s => s.trim())
-    .filter(Boolean) ||
-  [
-    // Runs natively in the "Test Flatpak" job (TEST_FILES=flatpak, which bypasses this list — see collectTests in
-    // file-discovery.ts). Kept out of the docker Linux shards, where it would only `describe.ifEnv`-skip: that skip
-    // still records a ~0 ms run for linux/flatpak.e2e.ts under the same `linux` cache key as the real native run, and
-    // merge-smart-cache.ts keeps whichever equal-runs artifact it reads first, making shard estimates nondeterministic.
-    "flatpak.e2e",
-    // These tests are run separately due to different docker images used for testing, and they are currently unstable in the CI environment
-    // Test via `./test/src/linux/test-snap.sh`
-    // "snapHeavy.e2e",
-    // "snapTest",
-    // General instability tests are below
-    // None currently, but this is where we would add any test that is currently unstable in the CI environment and needs to be excluded from smart sharding until it can be fixed.
-  ]
+export const skippedTests = process.env.SKIPPED_TESTS?.split(",")
+  .map(s => s.trim())
+  .filter(Boolean) || [
+  // Runs natively in the "Test Flatpak" job (TEST_FILES=flatpak, which bypasses this list — see collectTests in
+  // file-discovery.ts). Kept out of the docker Linux shards, where it would only `describe.ifEnv`-skip: that skip
+  // still records a ~0 ms run for linux/flatpak.e2e.ts under the same `linux` cache key as the real native run, and
+  // merge-smart-cache.ts keeps whichever equal-runs artifact it reads first, making shard estimates nondeterministic.
+  "flatpak.e2e",
+  // These tests are run separately due to different docker images used for testing, and they are currently unstable in the CI environment
+  // Test via `./test/src/linux/test-snap.sh`
+  // "snapHeavy.e2e",
+  // "snapTest",
+  // General instability tests are below
+  // None currently, but this is where we would add any test that is currently unstable in the CI environment and needs to be excluded from smart sharding until it can be fixed.
+]
 export const skipPerOSTests: Record<SupportedPlatforms, string[]> = {
   darwin: ["fpm.e2e"],
   linux: [],

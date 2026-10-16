@@ -100,7 +100,7 @@ test("allowPrerelease=true with stable current - picks the newest available vali
 
   // only 2 calls: feed + channel file (no getLatestTagName)
   expect(requestSpy).toHaveBeenCalledTimes(2)
-  expect((result?.updateInfo as any).tag).toBe(BETA_TAG)
+  expect((result!.updateInfo as any).tag).toBe(BETA_TAG)
   expect(result?.updateInfo.version).toBe(BETA_VERSION)
 })
 
@@ -126,7 +126,7 @@ test("allowPrerelease=true with stable current - picks the newest available vali
 
   // only 2 calls: feed + channel file (no getLatestTagName)
   expect(requestSpy).toHaveBeenCalledTimes(2)
-  expect((result?.updateInfo as any).tag).toBe(newVersionTag)
+  expect((result!.updateInfo as any).tag).toBe(newVersionTag)
   expect(result?.updateInfo.version).toBe(newVersion)
 })
 
@@ -149,8 +149,63 @@ test("allowPrerelease=true with beta channel current - picks matching beta entry
     .mockResolvedValueOnce(mockYaml("1.2.0-beta.2"))
 
   const result = await updater.checkForUpdates()
-  expect((result?.updateInfo as any).tag).toBe(newerBeta)
+  expect((result!.updateInfo as any).tag).toBe(newerBeta)
   expect(result?.updateInfo.version).toBe("1.2.0-beta.2")
+})
+
+// regression for #10287: the Atom feed is ordered by publication date, so a stable hotfix published after a
+// pre-release comes first. A beta client must still be offered the newer pre-release, not the (lower) hotfix.
+test.for([
+  { name: "channel derived from current version", channel: undefined },
+  { name: 'explicit channel = "beta"', channel: "beta" },
+])("allowPrerelease=true with beta channel current - picks the highest pre-release when a lower stable hotfix was published after it ($name)", async ({ channel }, { expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy, "1.1.0-beta.3")
+  if (channel != null) {
+    // the channel setter also enables allowPrerelease (and allowDowngrade)
+    updater.channel = channel
+  }
+  updater.allowPrerelease = true
+
+  // newest-first by publication date, as GitHub serves releases.atom
+  requestSpy
+    .mockResolvedValueOnce(
+      mockAtomFeed([
+        { tag: "v1.0.4", title: "v1.0.4", content: "Stable hotfix notes" },
+        { tag: "v1.1.0-beta.4", title: "v1.1.0-beta.4", content: "Beta 4 notes" },
+        { tag: "v1.1.0-beta.3", title: "v1.1.0-beta.3", content: "Beta 3 notes" },
+      ])
+    )
+    .mockResolvedValueOnce(mockYaml("1.1.0-beta.4"))
+
+  const result = await updater.checkForUpdates()
+  expect((result!.updateInfo as any).tag).toBe("v1.1.0-beta.4")
+  expect(result?.updateInfo.version).toBe("1.1.0-beta.4")
+  expect(result?.isUpdateAvailable).toBe(true)
+  expect(requestSpy.mock.calls[1][0].path as string).toContain("/download/v1.1.0-beta.4/")
+})
+
+// counterpart of #10287: a beta client still moves on to a stable release when it is the highest eligible version,
+// even when a lower stable hotfix was published after it
+test("allowPrerelease=true with beta channel current - picks a higher stable release over a later-published lower hotfix", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy, "1.1.0-beta.4")
+  updater.allowPrerelease = true
+
+  requestSpy
+    .mockResolvedValueOnce(
+      mockAtomFeed([
+        { tag: "v1.0.5", title: "v1.0.5", content: "Stable hotfix notes" },
+        { tag: "v1.1.0", title: "v1.1.0", content: "Stable 1.1.0 notes" },
+        { tag: "v1.1.0-beta.4", title: "v1.1.0-beta.4", content: "Beta 4 notes" },
+      ])
+    )
+    .mockResolvedValueOnce(mockYaml("1.1.0"))
+
+  const result = await updater.checkForUpdates()
+  expect((result!.updateInfo as any).tag).toBe("v1.1.0")
+  expect(result?.updateInfo.version).toBe("1.1.0")
+  expect(result?.isUpdateAvailable).toBe(true)
 })
 
 // allowPrerelease=true: beta.yml 404 → falls back to latest.yml without error
@@ -221,7 +276,7 @@ test("allowPrerelease=true with stable current newer than all releases - reports
 
   const result = await updater.checkForUpdates()
   expect(result?.isUpdateAvailable).toBe(false)
-  expect((result?.updateInfo as any).tag).toBe(BETA_TAG)
+  expect((result!.updateInfo as any).tag).toBe(BETA_TAG)
   // newest available release is older than current → AppUpdater takes the graceful no-update path
   expect(events).toEqual(["checking-for-update", "update-not-available"])
 })

@@ -283,7 +283,7 @@ deb:
   appArmorProfile: build/apparmor-profile
 ```
 
-Without a profile, the app may be restricted by Ubuntu's default profile. See the [AppArmor documentation](https://ubuntu.com/security/apparmor) for profile syntax.
+Without a profile, the app may be restricted by Ubuntu's default profile. See the [AppArmor documentation](https://ubuntu.com/server/docs/how-to/security/apparmor/) for profile syntax.
 
 ## Base Linux Configuration
 

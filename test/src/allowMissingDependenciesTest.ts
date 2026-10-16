@@ -163,7 +163,7 @@ describe("allowMissingDependencies (npm collector summary integration)", { concu
         "never-found": { name: "never-found", version: "2.0.0", path: undefined as unknown as string, _dependencies: {} },
       },
     }
-    const collector = new StubbedNpmNodeModulesCollector(root, projectTmpDir as unknown as TmpDir, tree)
+    const collector = new StubbedNpmNodeModulesCollector(root, projectTmpDir, tree)
     return collector.getNodeModules({ packageName: "my-app" })
   }
 
@@ -247,7 +247,7 @@ describe("allowMissingDependencies (pnpm declared-optional classification)", { c
       },
     } as unknown as PnpmDependency
 
-    const collector = new StubbedPnpmNodeModulesCollector(root, projectTmpDir as unknown as TmpDir, tree)
+    const collector = new StubbedPnpmNodeModulesCollector(root, projectTmpDir, tree)
     const { nodeModules, logSummary } = await collector.getNodeModules({ packageName: "my-app" })
 
     expect(nodeModules.map(m => m.name)).toContain("keep-me")

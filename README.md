@@ -103,7 +103,7 @@ See the full documentation on [electron.build](https://www.electron.build).
 > ```bash
 > electron-builder migrate-schema
 > ```
-> Step-by-step walkthrough: **[v26 → v27 migration guide](./MIGRATION.md)** · [electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27)
+> Step-by-step walkthrough: **[v26 → v27 migration guide](https://github.com/electron-userland/electron-builder/blob/master/MIGRATION.md)** · [electron.build/docs/migration/v26-to-v27](https://www.electron.build/docs/migration/v26-to-v27)
 
 ## Installation
 ```
@@ -147,7 +147,7 @@ This instructs Yarn to use node-modules instead of PnP.
 
 4. Add [icons](https://www.electron.build/docs/features/icons-and-images).
 
-5. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
+5. Add the [scripts](https://docs.npmjs.com/cli/using-npm/scripts) key to the development `package.json`:
     ```json
     "scripts": {
       "app:dir": "electron-builder --dir",

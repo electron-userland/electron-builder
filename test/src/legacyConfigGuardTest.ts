@@ -1,6 +1,7 @@
 import { checkLegacyConfiguration, RESOLVED_LEGACY_CONFIG_OPTIONS, validateConfiguration } from "app-builder-lib/internal"
-import { DebugLogger } from "builder-util"
+import { DebugLogger, InvalidConfigurationError } from "builder-util"
 import { describe, expect, test } from "vitest"
+import { assertInstallerDebugLoggingSupported } from "../../packages/app-builder-lib/src/toolsets/nsis"
 
 function expectRejected(config: Record<string, any>): string {
   try {
@@ -61,6 +62,9 @@ describe("checkLegacyConfiguration — never rejects a valid v27 config", () => 
     ["snapcraft", { snapcraft: { base: "core22", core22: { confinement: "strict" } } }],
     ["github publish with tagNamePrefix", { publish: { provider: "github", owner: "o", repo: "r", tagNamePrefix: "" } }],
     ["gitlab publish keeps vPrefixedTagName", { publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: false } }],
+    ["fileOptions", { fileOptions: { files: ["dist/**"], extraResources: [{ from: "a", to: "b" }] }, mac: { fileOptions: null }, win: { fileOptions: { extraFiles: "x" } } }],
+    ["flat files keys (applied as fileOptions)", { files: ["dist/**"], linux: { extraResources: ["r"] } }],
+    ["fileOptions.allowExternalLinks", { fileOptions: { allowExternalLinks: ["../shared-lib"] }, linux: { fileOptions: { allowExternalLinks: true } } }],
   ])("%s passes the guard", (_name, config) => {
     expect(() => checkLegacyConfiguration({ appId: "com.example.app", ...config } as any)).not.toThrow()
   })
@@ -165,5 +169,58 @@ describe("PackagerOptions — removed programmatic fields", () => {
   test("a valid v27 options object is accepted", async () => {
     const { Packager } = await import("app-builder-lib")
     expect(() => new Packager({ projectDir: process.cwd(), config: { extraMetadata: { foo: 1 } } } as any)).not.toThrow()
+  })
+})
+
+// Issue #10274: v26 customNsisBinary / customNsisResources are removed in favour of toolsets.nsis + installerDebugLogging.
+describe("checkLegacyConfiguration — removed custom NSIS bundle keys", () => {
+  const url = "https://downloads.example.com/nsisbi.7z?token=s3cr3t-token"
+  const checksum = "374cfc092fd1bd1898472df627549ecc165b0d6ba88e82deba085673aec95336"
+
+  test("customNsisBinary names toolsets.nsis, installerDebugLogging, the bundle layout and the migration guide, never its values", () => {
+    const message = expectRejected({ nsis: { customNsisBinary: { url, checksum, debugLogging: true } } })
+    expect(message).toContain("`nsis.customNsisBinary` was replaced by `toolsets.nsis` and `nsis.installerDebugLogging` in electron-builder v27.")
+    expect(message).toContain("toolsets#custom-nsis-bundle-layout")
+    expect(message).toContain("v26-to-v27#step-4-custom-nsis-migration-guide")
+    expect(message).toContain("v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis")
+    expect(message).not.toContain(url)
+    expect(message).not.toContain(checksum)
+  })
+
+  test("portable.customNsisBinary has no installerDebugLogging replacement", () => {
+    const message = expectRejected({ portable: { customNsisBinary: { debugLogging: true } } })
+    expect(message).toContain("`portable.customNsisBinary` was replaced by `toolsets.nsis` in electron-builder v27.")
+    expect(message).not.toContain("portable.installerDebugLogging")
+  })
+
+  test("installerDebugLogging is a valid v27 option for nsis and nsisWeb, not for portable", async () => {
+    const logger = new DebugLogger(false)
+    await expect(validateConfiguration({ nsis: { installerDebugLogging: true }, nsisWeb: { installerDebugLogging: false } } as any, logger)).resolves.toBeUndefined()
+    await expect(validateConfiguration({ portable: { installerDebugLogging: true } } as any, logger)).rejects.toThrow("installerDebugLogging")
+  })
+})
+
+describe("assertInstallerDebugLoggingSupported", () => {
+  test.each([
+    ["unset", undefined, "unset"],
+    ["latest", "latest", '"latest"'],
+    ["a pinned version", "1.2.1", '"1.2.1"'],
+  ] as const)("rejects %s toolsets.nsis, which is not log-enabled", (_name, nsis, shown) => {
+    let error: unknown
+    try {
+      assertInstallerDebugLoggingSupported(nsis, "nsis-web")
+    } catch (e) {
+      error = e
+    }
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    const message = (error as Error).message
+    expect(message).toContain("`installerDebugLogging` (nsis-web target) needs a log-enabled NSIS")
+    expect(message).toContain("NSIS_CONFIG_LOG=yes")
+    expect(message).toContain(`\`toolsets.nsis\` is ${shown}`)
+    expect(message.endsWith("https://www.electron.build/docs/migration/v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis")).toBe(true)
+  })
+
+  test("accepts a custom toolsets.nsis bundle", () => {
+    expect(() => assertInstallerDebugLoggingSupported({ url: "file:///opt/nsis-log" }, "nsis")).not.toThrow()
   })
 })

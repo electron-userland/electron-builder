@@ -1,11 +1,12 @@
-import { archive, compute7zCompressArgs, shouldPreserveSymlinks } from "app-builder-lib/src/targets/archive"
+import { archive, ArchiveOptions, compute7zCompressArgs, shouldPreserveSymlinks } from "app-builder-lib/src/targets/archive"
+import { configureDifferentialAwareArchiveOptions } from "app-builder-lib/src/targets/differentialUpdateInfoBuilder"
 import { Platform } from "app-builder-lib/src/core"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { afterEach, vi } from "vitest"
-import { listArchiveEntries, listArchiveEntryMethods, listArchiveEntryPackedSizes, listArchiveMethods, NON_DECODABLE_NSIS_FILTER } from "./helpers/archiveHelper"
+import { afterEach, ExpectStatic, vi } from "vitest"
+import { listArchiveEntries, listArchiveEntryMethods, listArchiveFolderRanges, listArchiveMethods, NON_DECODABLE_NSIS_FILTER } from "./helpers/archiveHelper"
 
-async function makeSrcDir(tmpDir: string, files: Record<string, string> = { "hello.txt": "hello world", "sub/nested.txt": "nested" }): Promise<string> {
+async function makeSrcDir(tmpDir: string, files: Record<string, string | Buffer> = { "hello.txt": "hello world", "sub/nested.txt": "nested" }): Promise<string> {
   const src = path.join(tmpDir, "src")
   for (const [rel, content] of Object.entries(files)) {
     const abs = path.join(src, rel)
@@ -477,35 +478,59 @@ describe("archive() storedPaths", { concurrent: false }, () => {
   })
 
   // The other half of the blockmap property: the append pass must not disturb what the compressed
-  // pass wrote. Asserted at the byte level — an archive built with the asar stored must contain,
-  // verbatim, the file packed streams of an archive built from the same compressed-pass member set
-  // (same files, asar absent). 7z layout: the file packed streams sit back-to-back immediately
-  // after the 32-byte signature header (the — legitimately differing — archive header lives after
-  // them), so [32, 32 + Σ packed sizes) is exactly the compressed pass's stream region, and the
-  // appended Copy member must follow right behind it.
-  test("append pass leaves the compressed pass's packed streams byte-identical", async ({ expect, tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
-    const dir = await makeSrcDir(tmpDirPath, appFiles)
+  // pass wrote. Asserted at the byte level against a baseline archive built from the compressed
+  // pass's exact member set (same files, asar absent): every one of the baseline's folders (packed
+  // streams) must appear verbatim in the final archive, clear of the stored member's verbatim bytes.
+  // Not asserted by position: 7-Zip orders folders by filter group (7zUpdate.cpp), and the appended
+  // Copy member joins the no-filter group, which can sort before or between the compressed folders.
+  // Returns the stored member's offset.
+  async function expectCompressedPassUndisturbed(expect: ExpectStatic, tmpDirPath: string, files: Record<string, string | Buffer>, options: ArchiveOptions): Promise<number> {
+    const dir = await makeSrcDir(tmpDirPath, files)
     const storedOut = path.join(tmpDirPath, "with-stored.7z")
-    await archive("7z", storedOut, dir, { withoutDir: true, storedPaths: ["resources/app.asar"] })
+    await archive("7z", storedOut, dir, { ...options, withoutDir: true, storedPaths: ["resources/app.asar"] })
 
-    // Baseline: the compressed pass's exact member set — same files with the asar absent, keeping
-    // the (now empty) resources directory entry the -x! exclude leaves behind.
-    const baselineDir = path.join(tmpDirPath, "baseline-src")
+    // Baseline: same files with the asar absent, keeping the (now empty) resources directory entry
+    // the -x! exclude leaves behind.
+    const baselineFiles = { ...files }
+    delete baselineFiles["resources/app.asar"]
+    const baselineDir = await makeSrcDir(path.join(tmpDirPath, "baseline"), baselineFiles)
     await fs.mkdir(path.join(baselineDir, "resources"), { recursive: true })
-    await fs.writeFile(path.join(baselineDir, "app.txt"), appFiles["app.txt"])
     const baselineOut = path.join(tmpDirPath, "baseline.7z")
-    await archive("7z", baselineOut, baselineDir, { withoutDir: true })
-
-    const packedStreamsEnd = [...(await listArchiveEntryPackedSizes(baselineOut)).values()].reduce((sum, size) => sum + size, 0)
-    expect(packedStreamsEnd).toBeGreaterThan(0)
+    await archive("7z", baselineOut, baselineDir, { ...options, withoutDir: true })
 
     const storedBytes = await fs.readFile(storedOut)
     const baselineBytes = await fs.readFile(baselineOut)
-    expect(storedBytes.subarray(32, 32 + packedStreamsEnd).equals(baselineBytes.subarray(32, 32 + packedStreamsEnd))).toBe(true)
-    // …and the stored member's verbatim bytes start exactly where the compressed streams end.
     const asarBytes = await fs.readFile(path.join(dir, "resources", "app.asar"))
-    expect(storedBytes.indexOf(asarBytes)).toBe(32 + packedStreamsEnd)
+    const storedStart = storedBytes.indexOf(asarBytes)
+    expect(storedStart).toBeGreaterThanOrEqual(32)
+    expect(storedBytes.lastIndexOf(asarBytes)).toBe(storedStart)
+    const storedEnd = storedStart + asarBytes.length
+
+    const baselineFolders = await listArchiveFolderRanges(baselineOut)
+    expect(baselineFolders.length).toBeGreaterThan(0)
+    for (const { start, end } of baselineFolders) {
+      expect(end).toBeGreaterThan(start)
+      const folderStart = storedBytes.indexOf(baselineBytes.subarray(start, end))
+      expect(folderStart).toBeGreaterThanOrEqual(32)
+      const folderEnd = folderStart + (end - start)
+      expect(folderEnd <= storedStart || folderStart >= storedEnd, `folder [${folderStart}, ${folderEnd}) overlaps stored [${storedStart}, ${storedEnd})`).toBe(true)
+    }
+    return storedStart
+  }
+
+  // With default options 7za auto-selects BCJ2 for the x64 PE, so the stored member lands between the
+  // LZMA2 and BCJ2 folders rather than after all of them.
+  const appFilesWithExe = { ...appFiles, "app.exe": buildMinimalPE(0x8664) }
+
+  test("append pass leaves the compressed pass's packed streams byte-identical", async ({ expect, tmpDir }) => {
+    await expectCompressedPassUndisturbed(expect, await tmpDir.createTempDir(), appFilesWithExe, {})
+  })
+
+  test("append pass leaves the compressed pass's packed streams byte-identical with the NSIS options", async ({ expect, tmpDir }) => {
+    const options = configureDifferentialAwareArchiveOptions({ installTimeDecodable: true })
+    const storedStart = await expectCompressedPassUndisturbed(expect, await tmpDir.createTempDir(), appFilesWithExe, options)
+    // -mf=BCJ puts every compressed folder in the BCJ group; the Copy member's no-filter group sorts first.
+    expect(storedStart).toBe(32)
   })
 
   // The append pass rewrites the archive's end header, so it must honor the same header-compression

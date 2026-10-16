@@ -76,7 +76,7 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
   readonly useTemplateApp?: boolean
 
   /**
-   * The type of [snap confinement](https://snapcraft.io/docs/reference/confinement).
+   * The type of [snap confinement](https://snapcraft.io/docs/snap-confinement).
    * - `strict` — recommended; the snap runs in a fully isolated sandbox.
    * - `devmode` — sandbox violations are logged but not enforced; for development only.
    * - `classic` — no confinement; equivalent to a traditionally packaged application.
@@ -94,7 +94,7 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
 
   /**
    * A short summary of the snap (max 78 characters).
-   * Defaults to [productName](./configuration.md#productName).
+   * Defaults to [productName](https://www.electron.build/docs/configuration#productname).
    */
   readonly summary?: string | null
 
@@ -127,7 +127,7 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
   readonly stagePackages?: Array<string> | null
 
   /**
-   * Directory containing [snap hooks](https://snapcraft.io/docs/snap-hooks), relative to
+   * Directory containing [snap hooks](https://snapcraft.io/docs/supported-snap-hooks), relative to
    * the build resources directory (`build/`).
    * @default build/snap-hooks
    */
@@ -200,7 +200,7 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
   /**
    * Display title for the snap (may contain uppercase letters and spaces).
    * Defaults to `productName`.
-   * See [snap format](https://snapcraft.io/docs/snap-format).
+   * See [snap format](https://snapcraft.io/docs/the-snap-format).
    */
   readonly title?: string | null
 
@@ -213,6 +213,8 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
    * When not set, `linux.compression` is mapped automatically:
    * `"store"` → `"lzo"`, `"maximum"` → `"xz"`, `"normal"` → snapcraft default.
    * Explicitly setting this field always overrides the mapped value.
+   *
+   * Template app builds (`useTemplateApp`) pack the image with the `mksquashfs` from the `toolsets.appimage` bundle. `lzo` requires a toolset other than the legacy `"0.0.0"`, whose `mksquashfs` supports only `gzip` and `xz`.
    */
   readonly compression?: "xz" | "lzo" | null
 
@@ -371,14 +373,14 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
    * Defaults to `["gnome"]` in normal builds (recommended for Electron apps on Ubuntu 24.04+).
    * Automatically set to `[]` in `useDestructiveMode` builds, where the gnome extension is
    * incompatible. Explicitly including `"gnome"` while `useDestructiveMode` is set will throw.
-   * See: https://snapcraft.io/docs/gnome-extension
+   * See: https://documentation.ubuntu.com/snapcraft/stable/reference/extensions/gnome-extension/
    */
   readonly extensions?: Array<string> | null
 
   // ─── Snap metadata ───────────────────────────────────────────────────────────
 
   /**
-   * The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap.
+   * The type of [confinement](https://snapcraft.io/docs/snap-confinement) supported by the snap.
    * @default strict
    */
   readonly confinement?: "devmode" | "strict" | "classic" | null
@@ -398,7 +400,7 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
 
   /**
    * An optional display title (may contain uppercase letters and spaces). Defaults to `productName`.
-   * See [snap format](https://snapcraft.io/docs/snap-format).
+   * See [snap format](https://snapcraft.io/docs/the-snap-format).
    */
   readonly title?: string | null
 
@@ -504,7 +506,7 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
   // ─── Hooks ───────────────────────────────────────────────────────────────────
 
   /**
-   * Directory containing [snap hooks](https://snapcraft.io/docs/snap-hooks), relative to
+   * Directory containing [snap hooks](https://snapcraft.io/docs/supported-snap-hooks), relative to
    * the build resources directory.
    * @default build/snap-hooks
    */

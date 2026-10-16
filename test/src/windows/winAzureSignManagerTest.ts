@@ -80,7 +80,7 @@ describe("WindowsSignAzureManager.signFile", { concurrent: false }, () => {
   const filePath = "C:\\builds\\app\\my-app.exe"
   const signOptions: WindowsSignOptions = {
     path: filePath,
-    options: { sign: baseAzureOpts } as any,
+    options: { sign: baseAzureOpts },
   }
 
   beforeEach(() => {
@@ -127,7 +127,7 @@ describe("WindowsSignAzureManager.signFile", { concurrent: false }, () => {
       fileDigest: "SHA512",
     }
     const manager2 = new WindowsSignAzureManager(makePackager(opts, makeVm(execSpy)))
-    await manager2.signFile({ path: filePath, options: { sign: opts } as any })
+    await manager2.signFile({ path: filePath, options: { sign: opts } })
     const psCommand = captureEncodedCommand(execSpy.mock.calls[0] as ExecArgs)
     expect(psCommand).toContain("-TimestampRfc3161 'http://custom-tsa.example.com'")
     expect(psCommand).toContain("-TimestampDigest 'SHA384'")
@@ -145,7 +145,7 @@ describe("WindowsSignAzureManager.signFile", { concurrent: false }, () => {
   test("passes additionalMetadata args through to the command", async ({ expect }) => {
     const opts = { ...baseAzureOpts, additionalMetadata: { ExcludeCredentials: "true" } }
     const manager2 = new WindowsSignAzureManager(makePackager(opts, makeVm(execSpy)))
-    await manager2.signFile({ path: filePath, options: { sign: opts } as any })
+    await manager2.signFile({ path: filePath, options: { sign: opts } })
     const psCommand = captureEncodedCommand(execSpy.mock.calls[0] as ExecArgs)
     expect(psCommand).toContain("-ExcludeCredentials 'true'")
   })
@@ -158,7 +158,7 @@ describe("WindowsSignAzureManager.signFile", { concurrent: false }, () => {
 
   test("escapes single quotes in parameter values", async ({ expect }) => {
     const pathWithQuote = "C:\\user's documents\\app.exe"
-    await manager.signFile({ path: pathWithQuote, options: { sign: baseAzureOpts } as any })
+    await manager.signFile({ path: pathWithQuote, options: { sign: baseAzureOpts } })
     const psCommand = captureEncodedCommand(execSpy.mock.calls[0] as ExecArgs)
     // PowerShell single-quote escaping: ' → ''
     expect(psCommand).toContain(`-Files 'C:\\user''s documents\\app.exe'`)

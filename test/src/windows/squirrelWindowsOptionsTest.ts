@@ -77,7 +77,7 @@ describe("SquirrelWindowsTarget.computeEffectiveDistOptions", () => {
       appId: "org.electron-builder.testApp",
       ...fixture.config,
       // the fixture apps always set iconUrl (test-app-one/package.json); tests pass `iconUrl: undefined` to unset it
-      squirrelWindows: { iconUrl: DEFAULT_ICON_URL, ...fixture.squirrelWindows } as any,
+      squirrelWindows: { iconUrl: DEFAULT_ICON_URL, ...fixture.squirrelWindows },
     }
     const fakePackagerInfo = {
       config,

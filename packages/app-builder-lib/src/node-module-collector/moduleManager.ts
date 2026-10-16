@@ -120,7 +120,8 @@ export class ModuleManager {
   // this allows dot-notation access while still supporting async retrieval
   // e.g., cache.packageJson[somePath] returns Promise<PackageJson>
   private createAsyncProxy<T>(map: Map<string, Promise<T>>, compute: (key: string) => T | Promise<T>): Record<string, Promise<T>> {
-    return new Proxy({} as Record<string, Promise<T>>, {
+    const target: Record<string, Promise<T>> = {}
+    return new Proxy(target, {
       get(_, key: string) {
         const cached = map.get(key)
         if (cached != null) {
@@ -315,9 +316,10 @@ export class ModuleManager {
     const visited = new Set<string>()
     const queue: Array<{ dir: string; depth: number }> = [{ dir: start, depth: 0 }]
     let explored = 0
+    let queueIndex = 0
 
-    while (queue.length > 0) {
-      const { dir, depth } = queue.shift()!
+    while (queueIndex < queue.length) {
+      const { dir, depth } = queue[queueIndex++]
       if (explored++ > maxExplored) {
         break
       }

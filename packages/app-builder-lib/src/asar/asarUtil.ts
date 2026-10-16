@@ -1,5 +1,5 @@
 import type { AsarStreamType, AsarDirectory } from "@electron/asar"
-import { exists, Filter, FilterStats, isEmptyOrSpaces, log } from "builder-util"
+import { Filter, FilterStats, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { dynamicImport } from "../util/dynamicImport.js"
 import fs from "fs-extra"
 
@@ -8,39 +8,62 @@ import { AsarOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier.js"
 import { detectUnpackedDirs } from "./unpackDetector.js"
+import { assertSourceFileInTrustedRoots, getTrustedSourceRoots } from "../util/trustedSourceRoots.js"
 import { Readable } from "stream"
-import * as os from "os"
 const { readlink } = fs
 
-const resolvePath = async (file: string | undefined): Promise<string | undefined> => (file && (await exists(file)) ? fs.realpath(file).catch(() => path.resolve(file)) : undefined)
-const resolvePaths = async (filepaths: (string | undefined)[]) => {
-  return Promise.all(filepaths.map(resolvePath)).then(paths => paths.filter((it): it is string => it != null))
+/** @internal */
+export function isPathInside(root: string, target: string): boolean {
+  return target === root || target.startsWith(root + path.sep)
 }
 
-const DENYLIST = resolvePaths([
-  "/usr",
-  "/lib",
-  "/bin",
-  "/sbin",
-  "/etc",
-
-  "/tmp",
-  "/var", // block whole /var by default. If $HOME is under /var, it's explicitly in ALLOWLIST - https://github.com/electron-userland/electron-builder/issues/9025#issuecomment-3575380041
-
-  // macOS system directories
-  "/System",
-  "/Library",
-  "/private",
-
-  // Windows system directories
-  process.env.SystemRoot,
-  process.env.WINDIR,
-])
-
-const ALLOWLIST = resolvePaths([
-  os.tmpdir(), // always allow temp dir
-  os.homedir(), // always allow home dir
-])
+/**
+ * Applies an asar ordering file (`asar.ordering`) to the stream list `@electron/asar` packs: directories keep
+ * their (root-to-leaf) positions, the listed files follow in the order of the file, then everything else in
+ * its original order. Lines use the same syntax `@electron/asar` accepts — a path relative to the app root,
+ * optionally prefixed with `/` or with a `<anything>:` prefix (e.g. a load counter) — blank lines are ignored.
+ * Files listed but not present are counted in `listed` and skipped.
+ */
+export function orderAsarStreams(streams: Array<AsarStreamType>, orderingLines: Array<string>): { streams: Array<AsarStreamType>; listed: number; matched: number } {
+  const rank = new Map<string, number>()
+  for (const rawLine of orderingLines) {
+    let line = rawLine
+    if (line.includes(":")) {
+      line = line.split(":").pop()!
+    }
+    line = line.trim()
+    if (line.length === 0) {
+      continue
+    }
+    if (line.startsWith("/")) {
+      line = line.slice(1)
+    }
+    const key = path.normalize(line)
+    if (!rank.has(key)) {
+      rank.set(key, rank.size)
+    }
+  }
+  if (rank.size === 0) {
+    return { streams, listed: 0, matched: 0 }
+  }
+  const directories: Array<AsarStreamType> = []
+  const listed: Array<{ stream: AsarStreamType; rank: number }> = []
+  const rest: Array<AsarStreamType> = []
+  for (const stream of streams) {
+    if (stream.type === "directory") {
+      directories.push(stream)
+      continue
+    }
+    const position = rank.get(path.normalize(stream.path))
+    if (position == null) {
+      rest.push(stream)
+    } else {
+      listed.push({ stream, rank: position })
+    }
+  }
+  listed.sort((a, b) => a.rank - b.rank)
+  return { streams: [...directories, ...listed.map(it => it.stream), ...rest], listed: rank.size, matched: listed.length }
+}
 
 /** @internal */
 export async function withElectronAsarLogging<T>(task: () => Promise<T>): Promise<T> {
@@ -84,8 +107,34 @@ export class AsarPackager {
       fileSets[0],
     ].map(set => this.orderFileSet(set))
 
-    const streams = await this.processFileSets(orderedFileSets)
+    let streams = await this.processFileSets(orderedFileSets)
+    const ordering = this.config.options.ordering
+    if (!isEmptyOrSpaces(ordering)) {
+      const orderingFile = await this.resolveOrderingFile(ordering)
+      const { streams: ordered, listed, matched } = orderAsarStreams(streams, (await fs.readFile(orderingFile, "utf8")).split(/\r?\n/))
+      log.once("asar-ordering", this.packager).info({ ordering: log.filePath(orderingFile), matched: `${matched}/${listed}` }, "applied asar ordering")
+      if (matched < listed) {
+        log.debug({ ordering: log.filePath(orderingFile), missing: listed - matched }, "asar ordering lists files that are not in the archive")
+      }
+      streams = ordered
+    }
     await this.executeElectronAsar(streams)
+  }
+
+  // resolved like every other build resource: build resources dir first, then the project dir
+  private async resolveOrderingFile(ordering: string): Promise<string> {
+    try {
+      return (await this.packager.getResource(ordering))!
+    } catch (e: any) {
+      if (e instanceof InvalidConfigurationError) {
+        throw new InvalidConfigurationError(
+          `asar.ordering file "${ordering}" was not found (looked in the build resources directory and the project directory). ` +
+            `electron-builder 27 applies the ordering file to the packed archive, so it must exist; remove the option to keep the default layout. ` +
+            `See https://www.electron.build/docs/migration/v27-breaking-changes#asar-ordering-is-now-applied`
+        )
+      }
+      throw e
+    }
   }
 
   private async executeElectronAsar(streams: AsarStreamType[]) {
@@ -222,6 +271,10 @@ export class AsarPackager {
       return { path: destination, unpacked, type: "directory" }
     }
 
+    // verify that the file is not a direct link or symlinked to a file outside the workspace and the package-manager store,
+    // before any content is used: the transformer (e.g. for a node_modules package.json) reads the file through its symlinks too
+    await assertSourceFileInTrustedRoots(file, await getTrustedSourceRoots(this.packager), await this.packager.getExternalLinkPolicy())
+
     // Handle transformed data (pre-processed content)
     if (transformedData != null) {
       const size = Buffer.byteLength(transformedData)
@@ -239,9 +292,6 @@ export class AsarPackager {
         stat: { mode: stat.mode, size },
       }
     }
-
-    // verify that the file is not a direct link or symlinked to access/copy a system file
-    await this.protectSystemAndUnsafePaths(file, await this.packager.getWorkspaceRoot())
 
     const baseConfig = {
       path: destination,
@@ -315,45 +365,5 @@ export class AsarPackager {
       files: sortedFileEntries.map(([, file]) => file),
       transformedFiles,
     }
-  }
-
-  private async checkAgainstRoots(target: string, allowRoots: string[]): Promise<boolean> {
-    const resolved = await resolvePath(target)
-    if (resolved == null || isEmptyOrSpaces(resolved)) {
-      return false
-    }
-
-    for (const root of allowRoots) {
-      if (resolved === root || resolved.startsWith(root + path.sep)) {
-        return true
-      }
-    }
-    return false
-  }
-
-  private async protectSystemAndUnsafePaths(file: string, workspaceRoot: string): Promise<void> {
-    const resolved = await resolvePath(file)
-    const logFields = { source: file, realPath: resolved }
-
-    const workspace = await resolvePath(workspaceRoot)
-
-    // If in workspace, always safe
-    if (workspace && resolved?.startsWith(workspace)) {
-      return
-    }
-
-    // Check allowlist (priority)
-    if (await this.checkAgainstRoots(file, await ALLOWLIST)) {
-      return
-    }
-
-    // Check denylist
-    if (await this.checkAgainstRoots(file, await DENYLIST)) {
-      log.error(logFields, `denied access to system or unsafe path`)
-      throw new Error(`Cannot copy file [${file}] symlinked to file [${resolved}] outside the package to a system or unsafe path`)
-    }
-
-    // Default: outside explicit paths but not explicitly denied
-    log.debug(logFields, `path is outside of explicit safe paths, defaulting to safe`)
   }
 }

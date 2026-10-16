@@ -139,7 +139,7 @@ describe("macPackager", { concurrent: false }, () => {
         targets: Platform.MAC.createTarget("zip", Arch.universal),
         config: {
           nativeModules: { npmRebuild: true, rebuildMode: "sequential" },
-          files: ["!**/*.stamp", "!**/*.Makefile"],
+          fileOptions: { files: ["!**/*.stamp", "!**/*.Makefile"] },
         },
       },
       {
@@ -156,7 +156,7 @@ describe("macPackager", { concurrent: false }, () => {
         targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
         config: {
           mac: { notarize: false },
-          extraFiles: ["extraTestFile.txt"],
+          fileOptions: { extraFiles: ["extraTestFile.txt"] },
         },
       },
       {
@@ -204,10 +204,12 @@ describe("macPackager", { concurrent: false }, () => {
       {
         targets: Platform.MAC.createTarget("zip", Arch.x64),
         config: {
-          extraResources: [
-            { from: "build", to: "./", filter: "*.asar" },
-            { from: "build/subdir", to: "./subdir", filter: "*.asar" },
-          ],
+          fileOptions: {
+            extraResources: [
+              { from: "build", to: "./", filter: "*.asar" },
+              { from: "build/subdir", to: "./subdir", filter: "*.asar" },
+            ],
+          },
           electronLanguages: "en",
         },
       },

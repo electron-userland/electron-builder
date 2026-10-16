@@ -1,12 +1,12 @@
 import { NodeHttpExecutor, serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, DownloadOptions } from "builder-util-runtime"
-import { AppUpdater, NsisUpdater } from "electron-updater"
+import { AppUpdater, NsisUpdater, type VerifyUpdateFile, type VerifyUpdateFileResult } from "electron-updater"
 import { NoOpLogger, TestOnlyUpdaterOptions } from "electron-updater/src/AppUpdater"
 import fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./fileAssert.js"
 import { TestAppAdapter } from "./TestAppAdapter.js"
-import { ExpectStatic, vi } from "vitest"
+import { type ExpectStatic, type Mock, vi } from "vitest"
 
 const tmpDir = new TmpDir("updater-test-util")
 
@@ -52,6 +52,84 @@ export async function validateDownload(expect: ExpectStatic, updater: AppUpdater
 
   expect(actualEvents).toMatchSnapshot()
   return updateCheckResult
+}
+
+/**
+ * What a `verifyUpdateFile` hook saw at the moment it ran. Recorded inside the hook because the interesting facts are
+ * about the state of the cache *during* verification — afterwards the failure path empties the whole pending-cache
+ * directory, so a post-hoc `pathExists` check cannot tell "never renamed" from "renamed and then wiped".
+ */
+export type VerifyUpdateFileObservation = {
+  updateFilePath: string
+  originalUpdateFileName: string
+  packageFilePath: string | undefined
+  /** the file handed to the verifier was on disk when the verifier ran */
+  updateFileExisted: boolean
+  /** the installable path this update gets on success */
+  finalFilePath: string
+  /** a file already sat at the installable path when the verifier ran */
+  finalFileExisted: boolean
+}
+
+export function createVerifyUpdateFileMock(onVerify: (params: Parameters<VerifyUpdateFile>[0]) => VerifyUpdateFileResult | Promise<VerifyUpdateFileResult>): {
+  mock: Mock<VerifyUpdateFile>
+  observations: Array<VerifyUpdateFileObservation>
+} {
+  const observations: Array<VerifyUpdateFileObservation> = []
+  const mock = vi.fn<VerifyUpdateFile>(async params => {
+    const finalFilePath = path.join(path.dirname(params.updateFilePath), params.originalUpdateFileName)
+    observations.push({
+      updateFilePath: params.updateFilePath,
+      originalUpdateFileName: params.originalUpdateFileName,
+      packageFilePath: params.packageFilePath,
+      updateFileExisted: await fsExtra.pathExists(params.updateFilePath),
+      finalFilePath,
+      finalFileExisted: await fsExtra.pathExists(finalFilePath),
+    })
+    return await onVerify(params)
+  })
+  return { mock, observations }
+}
+
+type ExpectVerifyUpdateFileFailureParams = {
+  expect: ExpectStatic
+  downloadPromise: Promise<unknown> | null | undefined
+  verifyUpdateFile: Mock<VerifyUpdateFile>
+  observations: Array<VerifyUpdateFileObservation>
+  expectedErrorMessageSubstring: string
+}
+
+/**
+ * Asserts that a fresh download was aborted by `verifyUpdateFile` without the update ever becoming installable.
+ */
+export async function expectVerifyUpdateFileFailure({
+  expect,
+  downloadPromise,
+  verifyUpdateFile,
+  observations,
+  expectedErrorMessageSubstring,
+}: ExpectVerifyUpdateFileFailureParams): Promise<VerifyUpdateFileObservation> {
+  // Test the external behavior: the download flow, observed from outside, aborts early with the verification error.
+  expect(downloadPromise).toBeInstanceOf(Promise)
+  await expect(downloadPromise).rejects.toMatchObject({
+    code: "ERR_UPDATER_INVALID_UPDATE_FILE",
+    message: expect.stringContaining(expectedErrorMessageSubstring),
+  })
+
+  // Test the internal behaviors:
+  expect(verifyUpdateFile).toHaveBeenCalledTimes(1)
+  // guaranteed non-empty by the call-count assertion above: the mock records an observation before it awaits onVerify
+  const observation = observations[0]
+  // The downloaded bytes were offered to the verifier under a temporary name...
+  expect(path.basename(observation.updateFilePath)).toBe(`temp-${observation.originalUpdateFileName}`)
+  expect(observation.updateFileExisted).toBe(true)
+  // ...and, most importantly, the original filename held nothing at that point: an unverified file is never promoted
+  // to the name it would be executed under.
+  expect(observation.finalFileExisted).toBe(false)
+  // Afterwards neither the temporary nor the original filename survives.
+  await assertThat(expect, observation.updateFilePath).doesNotExist()
+  await assertThat(expect, observation.finalFilePath).doesNotExist()
+  return observation
 }
 
 export class TestNodeHttpExecutor extends NodeHttpExecutor {

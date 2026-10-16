@@ -55,6 +55,10 @@ export class DmgTarget extends Target {
     super("dmg")
   }
 
+  get writesUpdateInfo(): boolean {
+    return this.options.writeUpdateInfo !== false
+  }
+
   async build(appPath: string, arch: Arch) {
     const packager = this.packager
     // tslint:disable-next-line:no-invalid-template-strings

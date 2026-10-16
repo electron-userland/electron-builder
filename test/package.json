@@ -38,7 +38,7 @@
     "lazy-val": "^1.0.5",
     "minimatch": "^10.2.5",
     "path-sort": "^0.1.0",
-    "resedit": "1.7.0",
+    "resedit": "^3.1.0",
     "sanitize-filename": "^1.6.3",
     "semver": "7.7.2",
     "stat-mode": "^1.0.0",

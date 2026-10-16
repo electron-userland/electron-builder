@@ -31,7 +31,7 @@ async function buildPackageTree(packages: Record<string, object>): Promise<strin
 }
 
 async function runCollector(rootDir: string, packageName: string, ignoredDependencies?: ReadonlyArray<string>) {
-  const collector = new TraversalNodeModulesCollector(rootDir, projectTmpDir as unknown as TmpDir)
+  const collector = new TraversalNodeModulesCollector(rootDir, projectTmpDir)
   return collector.getNodeModules({ packageName, ignoredDependencies })
 }
 
@@ -349,7 +349,7 @@ describe("ignoredProductionDependencies (npm collector graph ids)", { concurrent
   }
 
   const runNpmCollector = (rootDir: string, tree: NpmDependency, ignoredDependencies?: ReadonlyArray<string>) =>
-    new StubbedNpmNodeModulesCollector(rootDir, projectTmpDir as unknown as TmpDir, tree).getNodeModules({ packageName: "my-app", ignoredDependencies })
+    new StubbedNpmNodeModulesCollector(rootDir, projectTmpDir, tree).getNodeModules({ packageName: "my-app", ignoredDependencies })
 
   test("marks an ignored dependency excluded through the npm list graph", async ({ expect }) => {
     root = await buildPackageTree({

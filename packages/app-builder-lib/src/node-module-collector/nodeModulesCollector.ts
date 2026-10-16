@@ -21,21 +21,8 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
   protected readonly productionGraph: DependencyGraph = {}
   protected readonly cache: ModuleManager = new ModuleManager()
 
-  protected isHoisted = new Lazy<boolean>(async () => {
-    const { manager } = this.installOptions
-    const command = getPackageManagerCommand(manager)
-    const config = (await this.asyncExec(command, ["config", "list"])).stdout
-    if (config == null) {
-      log.debug({ manager }, "unable to determine node-linker setting; assuming non-hoisted (virtual store) layout")
-      return false
-    }
-    const lines = Object.fromEntries(config.split("\n").map(line => line.split("=").map(s => s.trim())))
-    if (lines["node-linker"] === "hoisted") {
-      log.debug({ manager }, "node_modules are hoisted")
-      return true
-    }
-    return false
-  })
+  /** Whether `node_modules` uses a hoisted (flat) layout. Overridden by collectors that detect it from disk or config. */
+  protected isHoisted = new Lazy<boolean>(() => Promise.resolve(false))
 
   constructor(
     protected readonly rootDir: string,

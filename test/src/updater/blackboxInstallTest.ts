@@ -40,7 +40,7 @@ describe.heavy.ifLinux("linux install", optionsForInstall, () => {
             await runInstallTest(context, "appImage", archFromString(arch), { toolsets: { appimage: "0.0.0" }, compression, appImage: { compression: legacyCompression } })
           })
         }
-        const toolsetAppImage: ToolsetConfig["appimage"][] = ["1.1.0", "1.0.3"]
+        const toolsetAppImage = ["1.1.0", "1.0.3"] satisfies ToolsetConfig["appimage"][]
         for (const appimage of toolsetAppImage) {
           for (const appImageCompression of APPIMAGE_COMPRESSIONS) {
             test.ifEnv(arch === process.arch)(`${arch} - toolset: ${appimage} - compression: ${compression} - compressor: ${appImageCompression}`, async context => {
@@ -121,7 +121,12 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
         bucket: "develar",
         path: "test",
       },
-      files: ["**/*", "../**/node_modules/**", "!path/**"],
+      fileOptions: {
+        files: ["**/*", "../**/node_modules/**", "!path/**"],
+        // electron-updater and builder-util-runtime are `link:`ed from this repository (see projectDirCreated below), so their files
+        // and dependencies resolve into the repository, outside the temporary test workspace: allow exactly that tree
+        allowExternalLinks: [path.resolve(__dirname, "../../..")],
+      },
     },
     extraConfig
   )

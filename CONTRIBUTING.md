@@ -107,7 +107,7 @@ TEST_APP_TMP_DIR=/tmp/electron-builder-test TEST_FILES=oneClickInstallerTest pnp
 pnpm ci:validate
 ```
 
-This runs dependency checks, ESLint, type-checking for both source and tests, regenerates the JSON schema, and applies Prettier. **Commit anything it regenerates** (most commonly `packages/app-builder-lib/scheme.json` and formatting fixes).
+This runs dependency checks, oxlint (type-aware), type-checking for both source and tests, regenerates the JSON schema, and formats the sources with oxfmt. **Commit anything it regenerates** (most commonly `packages/app-builder-lib/scheme.json` and formatting fixes).
 
 ### 6. Generate a changeset
 
@@ -171,7 +171,8 @@ In the PR body, describe what you're trying to do, how you verified it, and link
 pnpm install               # install dependencies
 pnpm compile               # build + generate toolset tests (pnpm compile:watch for iteration)
 TEST_FILES=<name> pnpm ci:test   # run scoped tests
-pnpm ci:validate           # lint + typecheck + regenerate schema + prettier
+pnpm ci:validate           # lint + typecheck + regenerate schema + format
+pnpm format:check          # verify formatting (CI fails on unformatted files)
 pnpm generate:changeset    # create the changeset for your change
 ```
 

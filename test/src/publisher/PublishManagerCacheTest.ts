@@ -1,6 +1,5 @@
 import { PublishManager } from "app-builder-lib/src/publish/PublishManager"
 import { Packager } from "app-builder-lib"
-import { AppInfo } from "app-builder-lib/src/appInfo"
 import { CancellationToken, GithubOptions } from "builder-util-runtime"
 import * as path from "path"
 import { afterEach, beforeEach } from "vitest"
@@ -35,6 +34,9 @@ function fakePackager(projectDir: string): Packager {
   return {
     projectDir,
     config: {},
+    onTargetsCreated: () => {
+      // ignore
+    },
     onAfterPack: () => {
       // ignore
     },
@@ -46,7 +48,7 @@ function fakePackager(projectDir: string): Packager {
 
 // getOrCreatePublisher is private — reach it through `any`, with a minimal AppInfo
 function getOrCreatePublisher(manager: PublishManager, publishConfig: GithubOptions) {
-  return (manager as any).getOrCreatePublisher(publishConfig, { version: "1.0.0" } as AppInfo)
+  return (manager as any).getOrCreatePublisher(publishConfig, { version: "1.0.0" })
 }
 
 function createManager() {
