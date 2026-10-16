@@ -33,18 +33,24 @@ function nestedPath(flatPath: string): string {
 }
 
 /**
- * Moves the v26 flat `files` / `extraResources` / `extraFiles` keys of one configuration object into `fileOptions`,
- * at the root and on every platform key, so that schema validation and everything after config loading see only `fileOptions`.
+ * Returns `config` with the v26 flat `files` / `extraResources` / `extraFiles` keys moved into `fileOptions`, at the root
+ * and on every platform key, so that schema validation and everything after config loading see only `fileOptions`.
+ *
+ * The root, each platform section and their `fileOptions` are shallow copies, never the caller's objects: those can be
+ * the `config` passed to `build()`, and the merge and {@link forwardFlatFileOptionReads} write into what is returned.
  *
  * The flat keys are still accepted in v27; using them logs one warning per process. When a flat key and its `fileOptions`
  * counterpart are both set on the same object, the nested value wins and the flat one is dropped with a warning.
  * A `fileOptions` that is not an object is left alone (flat keys included) for `checkLegacyConfiguration` to report.
- *
- * Mutates `config`. Idempotent: a normalized configuration has no flat keys left.
  */
-export function normalizeFileOptions(config: Record<string, any>): void {
+export function normalizeFileOptions<T extends Record<string, any>>(config: T): T {
   const moved: string[] = []
-  forEachFileOptionsHolder(config, (holder, prefix) => moveFlatFileOptions(holder, prefix, moved))
+  const result = copyHolder(config, "", moved)
+  for (const platform of ALL_PLATFORM_KEYS) {
+    if (isPlainObject(result[platform])) {
+      result[platform] = copyHolder(result[platform], `${platform}.`, moved)
+    }
+  }
 
   if (moved.length > 0) {
     log
@@ -56,25 +62,28 @@ export function normalizeFileOptions(config: Record<string, any>): void {
           `Run \`electron-builder migrate-schema\` to update your configuration automatically. ${FILE_OPTIONS_URL}`
       )
   }
+  return result as T
 }
 
-function moveFlatFileOptions(holder: Record<string, any>, prefix: string, moved: string[]): void {
-  const present = FILE_OPTION_KEYS.filter(key => hasFlatFileOption(holder, key))
-  if (present.length === 0) {
-    return
+/** A shallow copy of `holder` (and of its `fileOptions`) with its flat keys moved into `fileOptions`. */
+function copyHolder(holder: Record<string, any>, prefix: string, moved: string[]): Record<string, any> {
+  // only enumerable properties: the read-forwarding accessors of an already loaded configuration are not copied
+  const copy: Record<string, any> = { ...holder }
+  const existing = copy.fileOptions
+  if (isPlainObject(existing)) {
+    copy.fileOptions = { ...existing }
   }
 
-  const existing = holder.fileOptions
-  if (existing != null && !isPlainObject(existing)) {
-    return
+  const present = FILE_OPTION_KEYS.filter(key => hasFlatFileOption(copy, key))
+  if (present.length === 0 || (existing != null && !isPlainObject(existing))) {
+    return copy
   }
 
-  // A new object: `existing` may be shared with another configuration (a preset, a parent config).
-  const fileOptions: Record<string, any> = { ...existing }
+  const fileOptions: Record<string, any> = copy.fileOptions ?? {}
   for (const key of present) {
     const flatPath = `${prefix}${key}`
     if (fileOptions[key] === undefined) {
-      fileOptions[key] = holder[key]
+      fileOptions[key] = copy[key]
       moved.push(flatPath)
     } else {
       log
@@ -84,13 +93,15 @@ function moveFlatFileOptions(holder: Record<string, any>, prefix: string, moved:
             `Remove \`${flatPath}\`, moving any patterns you still need into \`${nestedPath(flatPath)}\`. ${FILE_OPTIONS_URL}`
         )
     }
-    delete holder[key]
+    delete copy[key]
   }
-  holder.fileOptions = fileOptions
+  copy.fileOptions = fileOptions
+  return copy
 }
 
 /**
- * Defines `files` / `extraResources` / `extraFiles` on a normalized configuration (root and platform sections) as
+ * Defines `files` / `extraResources` / `extraFiles` on a normalized configuration (root and platform sections, which
+ * {@link normalizeFileOptions} made copies of, so a caller's own objects are never decorated) as
  * non-enumerable accessors, so that code written against v26 (a hook reading `context.packager.config.files`, a
  * `build()` caller reading `buildResult.configuration.extraResources`) keeps getting the value, with a once-per-key warning.
  *

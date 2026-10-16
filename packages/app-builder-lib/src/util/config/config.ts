@@ -52,12 +52,11 @@ export async function getConfig(
 ): Promise<Configuration> {
   const configRequest: ReadConfigRequest = { packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata }
   const configAndEffectiveFile = await _getConfig<Configuration>(configRequest, configPath)
-  const config = configAndEffectiveFile == null ? {} : configAndEffectiveFile.result
   // Before merging: a CLI `-c.files` must be added to a `fileOptions.files` from the config file, not conflict with it.
-  normalizeFileOptions(config)
+  // Both are normalized copies, so the caller's `configFromOptions` (the `config` passed to `build()`) is not rewritten.
+  const config = normalizeFileOptions<Configuration>(configAndEffectiveFile == null ? {} : configAndEffectiveFile.result)
   if (configFromOptions != null) {
-    normalizeFileOptions(configFromOptions)
-    mergePublish(config, configFromOptions)
+    mergePublish(config, normalizeFileOptions(configFromOptions))
   }
 
   if (configAndEffectiveFile != null) {
@@ -202,17 +201,16 @@ function mergeFileSets(lists: FileSet[][]): FileSet[] {
  * `doMergeConfigs` takes configs in the order you would pass them to
  * Object.assign as sources.
  */
-export function doMergeConfigs(configs: Configuration[]): Configuration {
+export function doMergeConfigs(inputConfigs: Configuration[]): Configuration {
+  // Copies (root, platform sections and their `fileOptions`): `normalizeFiles`, `deepAssign` and
+  // `forwardFlatFileOptionReads` write into them, and they can be the caller's own objects.
+  const configs = inputConfigs.map(it => normalizeFileOptions(it))
   for (const config of configs) {
-    normalizeFileOptions(config)
     // A non-object `fileOptions` is left as is for `checkLegacyConfiguration` to report.
     if (isPlainObject(config.fileOptions)) {
-      // A copy: it can be the caller's own object (programmatic `config`), and both `normalizeFiles` and `deepAssign` write into it.
-      const fileOptions: FilesBuildOptions = { ...config.fileOptions }
-      normalizeFiles(fileOptions, "files")
-      normalizeFiles(fileOptions, "extraFiles")
-      normalizeFiles(fileOptions, "extraResources")
-      config.fileOptions = fileOptions
+      normalizeFiles(config.fileOptions, "files")
+      normalizeFiles(config.fileOptions, "extraFiles")
+      normalizeFiles(config.fileOptions, "extraResources")
     }
   }
 
@@ -241,10 +239,6 @@ function getDefaultConfig(): Configuration {
 const schemeDataPromise = new Lazy(() => readJson(path.join(import.meta.dirname, "..", "..", "..", "scheme.json")))
 
 export async function validateConfiguration(config: Configuration, debugLogger: DebugLogger) {
-  // The v26 flat file keys are not in the v27 schema. `getConfig` has already moved them; this covers a configuration
-  // validated directly (programmatic callers, tests).
-  normalizeFileOptions(config)
-
   // Runs first so a v26 option produces a targeted "moved to X" message instead of ajv's generic
   // "has an unknown property" — see util/config/legacyConfigGuard.ts.
   checkLegacyConfiguration(config)

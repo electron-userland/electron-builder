@@ -188,12 +188,6 @@ describe("schema", () => {
     await expect(validateConfiguration(config, new DebugLogger(false))).resolves.toBeUndefined()
   })
 
-  test("a flat-key config validated directly is normalized first, so it passes", async ({ expect }) => {
-    const config: Record<string, any> = { files: ["dist/**"], extraResources: "r", win: { extraFiles: [{ from: "a" }] } }
-    await expect(validateConfiguration(config as Configuration, new DebugLogger(false))).resolves.toBeUndefined()
-    expect(config).toEqual({ fileOptions: { files: ["dist/**"], extraResources: "r" }, win: { fileOptions: { extraFiles: [{ from: "a" }] } } })
-  })
-
   test("rejects an unknown key inside fileOptions", async ({ expect }) => {
     await expect(validateConfiguration({ fileOptions: { asarUnpack: ["x"] } } as Configuration, new DebugLogger(false))).rejects.toThrow(/asarUnpack/)
   })
@@ -210,6 +204,49 @@ describe("getConfig", () => {
     expect(config.fileOptions?.files).toEqual([{ filter: ["from-file/**", "from-cli/**"] }])
     expect(enumeratedFlatKeys(config)).toEqual([])
     expect(warnings()).toEqual([expect.stringContaining("[files]")])
+  })
+
+  test("the caller's config object and its platform sections are not rewritten or decorated", async ({ expect, tmpDir }) => {
+    const projectDir = await tmpDir.getTempDir({ prefix: "file-options-caller" })
+    await mkdir(projectDir, { recursive: true })
+    await writeFile(path.join(projectDir, "package.json"), JSON.stringify({ name: "app", version: "1.0.0" }))
+
+    const mac: Record<string, any> = { target: "dir", extraResources: ["mac-r"] }
+    const win: Record<string, any> = { fileOptions: { extraFiles: ["win-f"] } }
+    const options: Record<string, any> = { files: ["dist/**"], publish: null, mac, win }
+    const snapshot = (it: object) => ({ names: Object.getOwnPropertyNames(it), descriptors: JSON.stringify(Object.getOwnPropertyDescriptors(it)) })
+    const before = [options, mac, win, win.fileOptions].map(snapshot)
+
+    const config = await getConfig(projectDir, null, options as Configuration)
+
+    expect([options, mac, win, win.fileOptions].map(snapshot)).toEqual(before)
+    for (const holder of [options, mac, win]) {
+      for (const key of FILE_OPTION_KEYS) {
+        expect(Object.getOwnPropertyDescriptor(holder, key)?.get).toBeUndefined()
+      }
+    }
+    // still plain writable objects
+    mac.files = ["mine"]
+    options.extraFiles = ["mine"]
+    expect(mac.files).toEqual(["mine"])
+
+    // while the returned configuration (its own copies) forwards reads and rejects writes
+    expect(config.mac).not.toBe(mac)
+    expect(config.win).not.toBe(win)
+    expect((config.mac as Record<string, any>).extraResources).toEqual(["mac-r"])
+    expect((config as Record<string, any>).files).toEqual([{ filter: ["dist/**"] }])
+    expect(() => {
+      ;(config.mac as Record<string, any>).files = ["x"]
+    }).toThrow(InvalidConfigurationError)
+  })
+
+  test("doMergeConfigs leaves the configs it is given untouched", ({ expect }) => {
+    const mac: Record<string, any> = { extraFiles: ["f"] }
+    const input: Record<string, any> = { files: ["a/**"], mac }
+    const merged = merge(input, { mac: { extraFiles: ["g"] } })
+    expect(input).toEqual({ files: ["a/**"], mac: { extraFiles: ["f"] } })
+    expect(Object.getOwnPropertyNames(mac)).toEqual(["extraFiles"])
+    expect(merged.mac?.fileOptions).toEqual({ extraFiles: ["f", "g"] })
   })
 })
 
