@@ -164,6 +164,13 @@ async function runInstallLaunchTest(expect: any, core: "core18" | "core20" | "co
         expect(desktopContent).toContain("[Desktop Entry]")
         expect(desktopContent).toContain("Type=Application")
         expect(desktopContent).toContain("Exec=se-wo-template %U")
+
+        // The snap build must not delete chrome-sandbox from linux-unpacked: deb, rpm and AppImage pack from that same dir concurrently.
+        expect(existsSync(path.join(context.getAppPath(Platform.LINUX, Arch.x64), "chrome-sandbox"))).toBe(true)
+        if (core !== "core24") {
+          // Legacy snaps launch with --no-sandbox, so the helper is left out of the snap itself.
+          expect(existsSync(path.join(path.dirname(binaryPath), "chrome-sandbox"))).toBe(false)
+        }
         log.info({ extractDir }, "snap structure validated")
 
         // ── 3. launch binary (must stay inside packed callback) ────────────
