@@ -51,29 +51,6 @@ describe.heavy.ifLinux("linux install", optionsForInstall, () => {
         }
       }
     })
-    describe.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true")(`AppImage asar.contentAlignment`, optionsForInstall, () => {
-      // Electron runs with the asar integrity fuses on (see runInstallTest), so a launch that reports its
-      // version proves it reads every file of the aligned archive through the rewritten offsets.
-      test.ifEnv(process.arch === "x64")(`x64 - toolset: 1.1.0 - compression: ${compression} - compressor: zstd - contentAlignment: 512`, async context => {
-        const config: Configuration = { toolsets: { appimage: "1.1.0" }, compression, appImage: { compression: "zstd" }, asar: { contentAlignment: 512 } }
-        await runInstallTest(context, "appImage", Arch.x64, config, async ctx => {
-          const asarFile = path.join(ctx.outDir, "linux-unpacked", "resources", "app.asar")
-          const offsets: number[] = []
-          const walk = (node: any) => {
-            for (const child of Object.values<any>(node.files ?? {})) {
-              if (child.files != null) {
-                walk(child)
-              } else if (child.offset != null && !child.unpacked && child.link == null) {
-                offsets.push(parseInt(child.offset, 10))
-              }
-            }
-          }
-          walk(JSON.parse((await readAsarHeader(asarFile)).header))
-          context.expect(offsets.length).toBeGreaterThan(0)
-          context.expect(offsets.filter(offset => offset % 512 !== 0)).toEqual([])
-        })
-      })
-    })
     describe(`compression: ${compression}`, () => {
       const debCompressions: DebOptions["compression"][] = ["gz", "bzip2", "xz", "zst"]
       // DEB compression tests — debian container only
@@ -107,6 +84,30 @@ describe.heavy.ifLinux("linux install", optionsForInstall, () => {
       }
     })
   }
+  // One case, outside the compression loop: default compression, latest appimage toolset. Electron runs
+  // with the asar integrity fuses on (see runInstallTest), so a launch that reports its version proves it
+  // reads every file of the aligned archive through the rewritten offsets.
+  describe.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true")(`AppImage asar.contentAlignment`, optionsForInstall, () => {
+    test.ifEnv(process.arch === "x64")(`x64 - toolset: latest - compression: default - compressor: zstd - contentAlignment: 512`, async context => {
+      const config: Configuration = { appImage: { compression: "zstd" }, asar: { contentAlignment: 512 } }
+      await runInstallTest(context, "appImage", Arch.x64, config, async ctx => {
+        const asarFile = path.join(ctx.outDir, "linux-unpacked", "resources", "app.asar")
+        const offsets: number[] = []
+        const walk = (node: any) => {
+          for (const child of Object.values<any>(node.files ?? {})) {
+            if (child.files != null) {
+              walk(child)
+            } else if (child.offset != null && !child.unpacked && child.link == null) {
+              offsets.push(parseInt(child.offset, 10))
+            }
+          }
+        }
+        walk(JSON.parse((await readAsarHeader(asarFile)).header))
+        context.expect(offsets.length).toBeGreaterThan(0)
+        context.expect(offsets.filter(offset => offset % 512 !== 0)).toEqual([])
+      })
+    })
+  })
 })
 
 async function runInstallTest(

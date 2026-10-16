@@ -214,7 +214,8 @@ describe("alignAsarContent", () => {
         one[0] ^= 0xff
         await fd.write(one, 0, 1, position)
       } finally {
-        await fd.close()
+        // a failed close must not replace an error thrown by the read/write above
+        await fd.close().catch((e: unknown) => console.warn(`flip: closing ${file} failed: ${(e as Error).message}`))
       }
     }
 
