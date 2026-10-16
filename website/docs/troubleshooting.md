@@ -67,21 +67,22 @@ asar:
 ```
 
 **"ENOENT: no such file or directory" at runtime**
-: A file that exists in development is missing from the packaged app. Check if it's being excluded by a `files` pattern or by the default exclusions. Build with `DEBUG=electron-builder` and look for "excluding" log lines. Also check `asar.unpack` — files inside ASAR must be accessed via `app.getAppPath()`, not via `__dirname` relative paths.
+: A file that exists in development is missing from the packaged app. Check if it's being excluded by a `fileOptions.files` pattern or by the default exclusions. Build with `DEBUG=electron-builder` and look for "excluding" log lines. Also check `asar.unpack` — files inside ASAR must be accessed via `app.getAppPath()`, not via `__dirname` relative paths.
 
 **App directory is too large**
 : Profile the ASAR after building:
 ```bash
 npx asar list dist/mac/MyApp.app/Contents/Resources/app.asar | sort
 ```
-Common culprits: TypeScript source files (`.ts`), source maps (`.map`), test fixtures, large binary assets. Add exclusion patterns to `files`:
+Common culprits: TypeScript source files (`.ts`), source maps (`.map`), test fixtures, large binary assets. Add exclusion patterns to `fileOptions.files`:
 ```yaml
-files:
-  - "**/*"
-  - "!src/**"
-  - "!**/*.ts"
-  - "!**/*.map"
-  - "!**/__tests__/**"
+fileOptions:
+  files:
+    - "**/*"
+    - "!src/**"
+    - "!**/*.ts"
+    - "!**/*.map"
+    - "!**/__tests__/**"
 ```
 
 **"Cannot find module" at runtime after packaging**

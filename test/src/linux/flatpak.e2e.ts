@@ -74,7 +74,7 @@ describe.heavy.ifEnv(canRunFlatpak())("Linux Flatpak Test", () => {
       targets: Platform.LINUX.createTarget("flatpak"),
       config: {
         linux: {
-          files: ["**/*", "!**/*.ts"],
+          fileOptions: { files: ["**/*", "!**/*.ts"] },
         },
       },
     }))
@@ -87,7 +87,7 @@ describe.heavy.ifEnv(canRunFlatpak())("Linux Flatpak Test", () => {
       targets: Platform.LINUX.createTarget("flatpak"),
       config: {
         linux: {
-          files: "**/*",
+          fileOptions: { files: "**/*" },
         },
       },
     }))
@@ -97,7 +97,7 @@ describe.heavy.ifEnv(canRunFlatpak())("Linux Flatpak Test", () => {
       targets: Platform.LINUX.createTarget("flatpak"),
       config: {
         linux: {
-          files: { from: ".", filter: ["**/*"] },
+          fileOptions: { files: { from: ".", filter: ["**/*"] } },
         },
       },
     }))

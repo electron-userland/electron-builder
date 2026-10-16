@@ -18,7 +18,7 @@ async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
       // to check NuGet package
       targets: platform.createTarget("squirrel"),
       config: {
-        extraResources: ["foo", "bar/hello.txt", "./dir-relative/f.txt", "bar/${arch}.txt", "${os}/${arch}.txt"],
+        fileOptions: { extraResources: ["foo", "bar/hello.txt", "./dir-relative/f.txt", "bar/${arch}.txt", "${os}/${arch}.txt"] },
         [osName]: {
           extraResources: ["platformSpecificR"],
           extraFiles: ["platformSpecificF"],

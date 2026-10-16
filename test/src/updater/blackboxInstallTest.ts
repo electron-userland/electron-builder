@@ -133,7 +133,12 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
         bucket: "develar",
         path: "test",
       },
-      files: ["**/*", "../**/node_modules/**", "!path/**"],
+      fileOptions: {
+        files: ["**/*", "../**/node_modules/**", "!path/**"],
+        // electron-updater and builder-util-runtime are `link:`ed from this repository (see projectDirCreated below), so their files
+        // and dependencies resolve into the repository, outside the temporary test workspace: allow exactly that tree
+        allowExternalLinks: [path.resolve(__dirname, "../../..")],
+      },
     },
     extraConfig
   )

@@ -62,6 +62,9 @@ describe("checkLegacyConfiguration — never rejects a valid v27 config", () => 
     ["snapcraft", { snapcraft: { base: "core22", core22: { confinement: "strict" } } }],
     ["github publish with tagNamePrefix", { publish: { provider: "github", owner: "o", repo: "r", tagNamePrefix: "" } }],
     ["gitlab publish keeps vPrefixedTagName", { publish: { provider: "gitlab", projectId: 1, vPrefixedTagName: false } }],
+    ["fileOptions", { fileOptions: { files: ["dist/**"], extraResources: [{ from: "a", to: "b" }] }, mac: { fileOptions: null }, win: { fileOptions: { extraFiles: "x" } } }],
+    ["flat files keys (applied as fileOptions)", { files: ["dist/**"], linux: { extraResources: ["r"] } }],
+    ["fileOptions.allowExternalLinks", { fileOptions: { allowExternalLinks: ["../shared-lib"] }, linux: { fileOptions: { allowExternalLinks: true } } }],
   ])("%s passes the guard", (_name, config) => {
     expect(() => checkLegacyConfiguration({ appId: "com.example.app", ...config } as any)).not.toThrow()
   })

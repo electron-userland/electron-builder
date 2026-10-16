@@ -1,5 +1,5 @@
 import type { AsarStreamType, AsarDirectory } from "@electron/asar"
-import { exists, Filter, FilterStats, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { Filter, FilterStats, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { dynamicImport } from "../util/dynamicImport.js"
 import fs from "fs-extra"
 
@@ -8,44 +8,14 @@ import { AsarOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier.js"
 import { detectUnpackedDirs } from "./unpackDetector.js"
+import { assertSourceFileInTrustedRoots, getTrustedSourceRoots } from "../util/trustedSourceRoots.js"
 import { Readable } from "stream"
-import * as os from "os"
 const { readlink } = fs
-
-const resolvePath = async (file: string | undefined): Promise<string | undefined> => (file && (await exists(file)) ? fs.realpath(file).catch(() => path.resolve(file)) : undefined)
-const resolvePaths = async (filepaths: (string | undefined)[]) => {
-  return Promise.all(filepaths.map(resolvePath)).then(paths => paths.filter((it): it is string => it != null))
-}
 
 /** @internal */
 export function isPathInside(root: string, target: string): boolean {
   return target === root || target.startsWith(root + path.sep)
 }
-
-const DENYLIST = resolvePaths([
-  "/usr",
-  "/lib",
-  "/bin",
-  "/sbin",
-  "/etc",
-
-  "/tmp",
-  "/var", // block whole /var by default. If $HOME is under /var, it's explicitly in ALLOWLIST - https://github.com/electron-userland/electron-builder/issues/9025#issuecomment-3575380041
-
-  // macOS system directories
-  "/System",
-  "/Library",
-  "/private",
-
-  // Windows system directories
-  process.env.SystemRoot,
-  process.env.WINDIR,
-])
-
-const ALLOWLIST = resolvePaths([
-  os.tmpdir(), // always allow temp dir
-  os.homedir(), // always allow home dir
-])
 
 /**
  * Applies an asar ordering file (`asar.ordering`) to the stream list `@electron/asar` packs: directories keep
@@ -301,6 +271,10 @@ export class AsarPackager {
       return { path: destination, unpacked, type: "directory" }
     }
 
+    // verify that the file is not a direct link or symlinked to a file outside the workspace and the package-manager store,
+    // before any content is used: the transformer (e.g. for a node_modules package.json) reads the file through its symlinks too
+    await assertSourceFileInTrustedRoots(file, await getTrustedSourceRoots(this.packager), await this.packager.getExternalLinkPolicy())
+
     // Handle transformed data (pre-processed content)
     if (transformedData != null) {
       const size = Buffer.byteLength(transformedData)
@@ -318,9 +292,6 @@ export class AsarPackager {
         stat: { mode: stat.mode, size },
       }
     }
-
-    // verify that the file is not a direct link or symlinked to access/copy a system file
-    await this.protectSystemAndUnsafePaths(file, await this.packager.getWorkspaceRoot())
 
     const baseConfig = {
       path: destination,
@@ -394,45 +365,5 @@ export class AsarPackager {
       files: sortedFileEntries.map(([, file]) => file),
       transformedFiles,
     }
-  }
-
-  private async checkAgainstRoots(target: string, allowRoots: string[]): Promise<boolean> {
-    const resolved = await resolvePath(target)
-    if (resolved == null || isEmptyOrSpaces(resolved)) {
-      return false
-    }
-
-    for (const root of allowRoots) {
-      if (isPathInside(root, resolved)) {
-        return true
-      }
-    }
-    return false
-  }
-
-  private async protectSystemAndUnsafePaths(file: string, workspaceRoot: string): Promise<void> {
-    const resolved = await resolvePath(file)
-    const logFields = { source: file, realPath: resolved }
-
-    const workspace = await resolvePath(workspaceRoot)
-
-    // If in workspace, always safe
-    if (workspace && resolved && isPathInside(workspace, resolved)) {
-      return
-    }
-
-    // Check allowlist (priority)
-    if (await this.checkAgainstRoots(file, await ALLOWLIST)) {
-      return
-    }
-
-    // Check denylist
-    if (await this.checkAgainstRoots(file, await DENYLIST)) {
-      log.error(logFields, `denied access to system or unsafe path`)
-      throw new Error(`Cannot copy file [${file}] symlinked to file [${resolved}] outside the package to a system or unsafe path`)
-    }
-
-    // Default: outside explicit paths but not explicitly denied
-    log.debug(logFields, `path is outside of explicit safe paths, defaulting to safe`)
   }
 }

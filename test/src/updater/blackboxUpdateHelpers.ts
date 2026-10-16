@@ -83,7 +83,7 @@ export async function doBuild(
       {
         targets: currentPlatform.createTarget(target, arch),
         // Deep-merge so callers can override individual sub-object keys (e.g. nsis.perMachine)
-        // without replacing the entire sub-object. publish/files are pinned last so they cannot
+        // without replacing the entire sub-object. publish/fileOptions are pinned last so they cannot
         // be accidentally overridden by a caller's extraConfig.
         config: Object.assign(
           deepAssign<Configuration>(
@@ -129,7 +129,12 @@ export async function doBuild(
               bucket: "develar",
               path: "test",
             },
-            files: ["**/*", "../**/node_modules/**", "!path/**"],
+            fileOptions: {
+              files: ["**/*", "../**/node_modules/**", "!path/**"],
+              // electron-updater and builder-util-runtime are `link:`ed from this repository (see projectDirCreated below), so their files
+              // and dependencies resolve into the repository, outside the temporary test workspace: allow exactly that tree
+              allowExternalLinks: [path.resolve(__dirname, "../../..")],
+            },
           }
         ),
       },

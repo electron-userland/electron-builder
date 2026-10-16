@@ -13,7 +13,9 @@ export async function reactCra(projectDir: string): Promise<Configuration> {
     directories: {
       buildResources: "assets",
     },
-    files: ["build/**/*"],
+    fileOptions: {
+      files: ["build/**/*"],
+    },
     extraMetadata: {
       main: "build/electron.js",
     },
