@@ -1,5 +1,5 @@
 import { alignAsarContent, validateContentAlignment } from "app-builder-lib/src/asar/asarAlign"
-import { InvalidConfigurationError } from "builder-util"
+import { InvalidConfigurationError, log } from "builder-util"
 import { readAsar, readAsarHeader } from "app-builder-lib/src/asar/asar"
 import { dynamicImport } from "app-builder-lib/src/util/dynamicImport"
 import { Platform } from "app-builder-lib"
@@ -215,7 +215,7 @@ describe("alignAsarContent", () => {
         await fd.write(one, 0, 1, position)
       } finally {
         // a failed close must not replace an error thrown by the read/write above
-        await fd.close().catch((e: unknown) => console.warn(`flip: closing ${file} failed: ${(e as Error).message}`))
+        await fd.close().catch((e: unknown) => log.warn({ file, error: (e as Error).message }, "flip: closing failed"))
       }
     }
 
