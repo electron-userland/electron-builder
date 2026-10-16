@@ -170,6 +170,7 @@ Standard consumer distribution?
 **Flatpak** — use for cross-distro sandboxed distribution.
 - Works on any distro with `flatpak` installed
 - electron-builder produces single-file bundles (not Flathub repository packages)
+- Requires `flatpak` 1.12.4+ and `flatpak-builder` 1.2.2+ on the Linux build machine, which the stock packages of Ubuntu 22.04, Debian 12 and newer provide (included in the `electronuserland/builder` [Docker images](features/multi-platform-build.md#flatpak-in-the-docker-images) with a date tag newer than `-05.26`)
 - See [Flatpak Configuration](flatpak.md)
 
 **Pacman** — use for Arch Linux and Arch-based distributions.
