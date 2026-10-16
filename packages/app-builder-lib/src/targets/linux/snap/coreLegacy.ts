@@ -15,6 +15,7 @@ import { SnapCore } from "./SnapTarget.js"
 import { getStagingCopyLinkOptions } from "../../../util/trustedSourceRoots.js"
 import { shellQuote } from "./snapCommand.js"
 import { SnapcraftYAML } from "./snapcraft.js"
+import { warnAboutAllowSandboxPlugs } from "./snapPlugs.js"
 import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder.js"
 const { outputFile, readFile } = _fsExtra
 
@@ -56,6 +57,9 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
     const options = this.options
 
     const plugs = this.normalizePlugConfiguration(this.options.plugs)
+    if (options.confinement !== "classic") {
+      warnAboutAllowSandboxPlugs(plugs, `snapcraft.${options.base}.plugs`, this.packager)
+    }
 
     const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), this.defaultPlugs)
 
