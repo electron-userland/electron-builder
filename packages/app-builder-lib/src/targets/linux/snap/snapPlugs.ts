@@ -247,30 +247,23 @@ export function findAllowSandboxPlugs(rootPlugs: Record<string, any> | Nullish):
     .map(([name]) => name)
 }
 
-const emittedNotices = new Set<string>()
-
-/** Log a warning once per process (keyed by `key`), so multi-arch builds do not repeat it. */
-function warnOnce(key: string, fields: Record<string, any>, message: string): void {
-  if (emittedNotices.has(key)) {
-    return
-  }
-  emittedNotices.add(key)
-  log.warn(fields, message)
-}
-
-/** @internal test-only: forget which once-per-process snap plug notices were already logged. */
-export function resetSnapPlugNoticesForTests(): void {
-  emittedNotices.clear()
+/**
+ * Log a snap plug notice once per `scope` (the build's packager) and `key`, so a multi-arch build of one app warns once
+ * while every project built in the same process (programmatic API, watch tooling) still gets its own warning.
+ */
+function warnOncePerBuild(key: string, scope: object, fields: Record<string, any>, message: string): void {
+  log.once(`snap-plugs:${key}`, scope).warn(fields, message)
 }
 
 /** Warn that the snap store reserves `allow-sandbox` for vetted publishers. The configuration is left as is. */
-export function warnAboutAllowSandboxPlugs(rootPlugs: Record<string, any> | Nullish, optionPath: string): void {
+export function warnAboutAllowSandboxPlugs(rootPlugs: Record<string, any> | Nullish, optionPath: string, scope: object): void {
   const plugNames = findAllowSandboxPlugs(rootPlugs)
   if (plugNames.length === 0) {
     return
   }
-  warnOnce(
+  warnOncePerBuild(
     `allow-sandbox:${optionPath}:${plugNames.join(",")}`,
+    scope,
     { plugs: plugNames.join(", "), option: optionPath },
     `${optionPath} requests the browser-support interface with "allow-sandbox: true". ` +
       "The Snap Store reserves allow-sandbox for vetted publishers (browsers), so store review rejects this snap unless your publisher has been granted it. " +
@@ -280,9 +273,10 @@ export function warnAboutAllowSandboxPlugs(rootPlugs: Record<string, any> | Null
 }
 
 /** v27 behaviour-change notice: default core24 plugs no longer keep Chromium's sandbox. */
-export function warnAboutCore24NoSandboxDefault(): void {
-  warnOnce(
+export function warnAboutCore24NoSandboxDefault(scope: object): void {
+  warnOncePerBuild(
     "core24-no-sandbox-default",
+    scope,
     { reason: "the Snap Store rejects allow-sandbox from non-vetted publishers", solution: "no action needed unless you are a vetted publisher" },
     `snapcraft.core24 now requests the plain browser-support interface by default (electron-builder <= 26 added "allow-sandbox: true", which the Snap Store rejects for most publishers). ` +
       "The app is launched with --no-sandbox and chrome-sandbox is left out of the snap; snap confinement isolates the app instead. " +
@@ -291,12 +285,13 @@ export function warnAboutCore24NoSandboxDefault(): void {
 }
 
 /** v27 behaviour-change notice: `"default"` in core24 `plugs` now expands to the full default set. */
-export function warnAboutCore24DefaultPlugsExpansion(added: string[]): void {
+export function warnAboutCore24DefaultPlugsExpansion(added: string[], scope: object): void {
   if (added.length === 0) {
     return
   }
-  warnOnce(
+  warnOncePerBuild(
     `core24-default-plugs:${added.join(",")}`,
+    scope,
     { added: added.join(", ") },
     `"default" in snapcraft.core24.plugs now expands to the full default plug set, so these plugs are added to your snap. ` +
       `electron-builder <= 26 expanded it to the app-level desktop plugs only. ` +

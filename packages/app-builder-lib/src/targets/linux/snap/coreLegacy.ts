@@ -58,7 +58,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
 
     const plugs = this.normalizePlugConfiguration(this.options.plugs)
     if (options.confinement !== "classic") {
-      warnAboutAllowSandboxPlugs(plugs, `snapcraft.${options.base}.plugs`)
+      warnAboutAllowSandboxPlugs(plugs, `snapcraft.${options.base}.plugs`, this.packager)
     }
 
     const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), this.defaultPlugs)

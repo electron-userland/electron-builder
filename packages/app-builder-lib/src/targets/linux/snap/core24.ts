@@ -230,9 +230,9 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     const plugFlavor: Core24PlugFlavor = isClassic ? "classic" : useGnomeExtension ? "gnome-extension" : hostMode ? "host" : "strict"
     const plugResolution = resolveCore24Plugs(options.plugs, plugFlavor, this.defaultPlugs)
     const { root: rootPlugs, app: appPlugs } = plugResolution
-    warnAboutAllowSandboxPlugs(rootPlugs, "snapcraft.core24.plugs")
+    warnAboutAllowSandboxPlugs(rootPlugs, "snapcraft.core24.plugs", this.packager)
     if (plugResolution.source === "merged") {
-      warnAboutCore24DefaultPlugsExpansion(plugResolution.addedByDefaultExpansion)
+      warnAboutCore24DefaultPlugsExpansion(plugResolution.addedByDefaultExpansion, this.packager)
     }
 
     const { root: rootSlots, app: appSlots } = options.slots ? this.processPlugOrSlots(options.slots) : { root: undefined, app: undefined }
@@ -254,7 +254,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     }
     // electron-builder <= 26 generated browser-support with allow-sandbox, which kept Chromium's sandbox.
     if (noSandbox && plugResolution.source === "generated" && plugFlavor !== "classic") {
-      warnAboutCore24NoSandboxDefault()
+      warnAboutCore24NoSandboxDefault(this.packager)
     }
     // With --no-sandbox the setuid chrome-sandbox helper is unused; strip it from the snap.
     this.removeChromeSandbox = noSandbox

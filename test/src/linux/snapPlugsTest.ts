@@ -6,7 +6,6 @@ import {
   core24ContentPlugs,
   findAllowSandboxPlugs,
   isBrowserSandboxAllowed,
-  resetSnapPlugNoticesForTests,
   resolveCore24Plugs,
   SnapPlugsConfig,
   warnAboutAllowSandboxPlugs,
@@ -195,9 +194,11 @@ describe("core24 plug resolution", { concurrent: false }, () => {
 
 describe("core24 plug notices", { concurrent: false }, () => {
   let warn: ReturnType<typeof vi.spyOn>
+  // Stands in for the build's packager: notices are counted per scope, so each test gets fresh quotas.
+  let project: object
 
   beforeEach(() => {
-    resetSnapPlugNoticesForTests()
+    project = {}
     warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
   })
 
@@ -207,8 +208,8 @@ describe("core24 plug notices", { concurrent: false }, () => {
 
   test("warns that the Snap Store reserves an explicitly configured allow-sandbox", ({ expect }) => {
     const { root } = resolveCore24Plugs([{ "browser-sandbox": { interface: "browser-support", "allow-sandbox": true } }, "network"], "strict")
-    warnAboutAllowSandboxPlugs(root, "snapcraft.core24.plugs")
-    warnAboutAllowSandboxPlugs(root, "snapcraft.core24.plugs")
+    warnAboutAllowSandboxPlugs(root, "snapcraft.core24.plugs", project)
+    warnAboutAllowSandboxPlugs(root, "snapcraft.core24.plugs", project)
     expect(warn).toHaveBeenCalledTimes(1)
     const [fields, message] = warn.mock.calls[0] as [Record<string, string>, string]
     expect(fields.plugs).toBe("browser-sandbox")
@@ -220,14 +221,15 @@ describe("core24 plug notices", { concurrent: false }, () => {
 
   test("does not warn about allow-sandbox for the generated defaults", ({ expect }) => {
     for (const flavor of ["strict", "gnome-extension", "host", "classic"] as const) {
-      warnAboutAllowSandboxPlugs(resolveCore24Plugs(undefined, flavor).root, "snapcraft.core24.plugs")
+      warnAboutAllowSandboxPlugs(resolveCore24Plugs(undefined, flavor).root, "snapcraft.core24.plugs", project)
     }
     expect(warn).not.toHaveBeenCalled()
   })
 
-  test("announces the --no-sandbox default once per process", ({ expect }) => {
-    warnAboutCore24NoSandboxDefault()
-    warnAboutCore24NoSandboxDefault()
+  test("announces the --no-sandbox default once per project", ({ expect }) => {
+    // a multi-arch build of one app resolves the descriptor once per arch
+    warnAboutCore24NoSandboxDefault(project)
+    warnAboutCore24NoSandboxDefault(project)
     expect(warn).toHaveBeenCalledTimes(1)
     const message = warn.mock.calls[0][1] as string
     expect(message).toContain("--no-sandbox")
@@ -235,12 +237,38 @@ describe("core24 plug notices", { concurrent: false }, () => {
   })
 
   test('announces the plugs that the "default" expansion now adds', ({ expect }) => {
-    warnAboutCore24DefaultPlugsExpansion([])
+    warnAboutCore24DefaultPlugsExpansion([], project)
     expect(warn).not.toHaveBeenCalled()
-    warnAboutCore24DefaultPlugsExpansion(resolveCore24Plugs(["default", "camera"], "gnome-extension").addedByDefaultExpansion)
+    warnAboutCore24DefaultPlugsExpansion(resolveCore24Plugs(["default", "camera"], "gnome-extension").addedByDefaultExpansion, project)
     expect(warn).toHaveBeenCalledTimes(1)
     const [fields, message] = warn.mock.calls[0] as [Record<string, string>, string]
     expect(fields.added).toBe(BROWSER_SUPPORT_INTERFACE)
     expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#snap-core24-default-in-plugs-merges-the-full-default-set")
+  })
+
+  test("warns again for each other project built in the same process", ({ expect }) => {
+    const { root } = resolveCore24Plugs([{ "browser-sandbox": { interface: "browser-support", "allow-sandbox": true } }], "strict")
+    const added = resolveCore24Plugs(["default", "camera"], "gnome-extension").addedByDefaultExpansion
+    const notify = (scope: object) => {
+      warnAboutAllowSandboxPlugs(root, "snapcraft.core24.plugs", scope)
+      warnAboutCore24NoSandboxDefault(scope)
+      warnAboutCore24DefaultPlugsExpansion(added, scope)
+    }
+
+    notify(project)
+    notify(project)
+    expect(warn).toHaveBeenCalledTimes(3)
+
+    const otherProject = {}
+    notify(otherProject)
+    notify(otherProject)
+    expect(warn).toHaveBeenCalledTimes(6)
+    // the second project gets the same three notices as the first
+    const messages = warn.mock.calls.map((call: unknown[]) => call[1])
+    expect(messages.slice(3)).toEqual(messages.slice(0, 3))
+
+    // and the first project stays deduplicated
+    notify(project)
+    expect(warn).toHaveBeenCalledTimes(6)
   })
 })
