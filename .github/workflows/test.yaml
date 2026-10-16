@@ -454,15 +454,27 @@ jobs:
         with:
           name: snap-${{ matrix.core }}
 
-  # The flatpak suite (test/src/linux/flatpak.e2e.ts) is gated on a `flatpak` binary being on PATH, so it
-  # silently skips inside the docker shards and on every other runner. It needs flatpak-builder, whose
-  # bubblewrap sandbox wants user namespaces that are painful inside Docker, so it runs natively here.
-  # @malept/flatpak-bundler installs missing refs with `flatpak install --user` (no explicit remote), so
+  # The flatpak suite (test/src/linux/flatpak.e2e.ts) is gated on `flatpak` being on PATH and on bubblewrap
+  # being able to create namespaces (canRunFlatpak in test/src/updater/blackboxInstallLinux.ts), so it skips inside the docker shards,
+  # whose image includes flatpak but which run unprivileged, and on every other runner. It needs FUSE
+  # (flatpak-builder's rofiles-fuse) and user namespaces (the bubblewrap sandbox of flatpak build-export's
+  # icon validator), which are painful inside Docker, so it runs natively here.
+  # The flatpak case of the blackbox install suite (test/src/updater/blackboxInstallTest.ts) runs here too: it
+  # installs the bundle and starts the app with `flatpak run`, which needs bubblewrap again, plus an X display.
+  # The flatpak target installs missing refs with `flatpak install --user` (no explicit remote), so
   # the runtimes are pre-installed into the same user installation from a user-level flathub remote.
+  # It runs with the stock packages of two runners: ubuntu-latest, and ubuntu-22.04, which has the oldest tools of any current
+  # distribution release: flatpak-builder 1.2.2, the target's minimum, and flatpak 1.12.7 (the minimum is 1.12.4). The ubuntu-22.04
+  # image is deprecated: GitHub's brownouts in March and April 2027 fail that leg, and the image is removed on 2027-04-17
+  # (actions/runner-images#14254), so the leg has to move, for example into a 22.04 container, before then.
   test-flatpak:
-    name: Test Flatpak
-    runs-on: ubuntu-latest
+    name: Test Flatpak (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-22.04]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -487,53 +499,54 @@ jobs:
             sleep 2
           done
           sudo apt-get update
-          sudo apt-get install -y flatpak flatpak-builder
-          # Ubuntu 24.04 restricts unprivileged user namespaces via AppArmor; flatpak-builder's bubblewrap
-          # sandbox needs them. The flatpak package ships a bwrap profile, but lift the restriction too so a
-          # runner image without that profile does not fail the build with "setting up uid map: Permission denied".
+          # fuse3 has the fusermount3 that rofiles-fuse needs; nothing pulls it in on Ubuntu 22.04
+          sudo apt-get install -y flatpak flatpak-builder fuse3 xvfb
+          # Ubuntu 24.04 restricts unprivileged user namespaces via AppArmor; the bubblewrap sandbox of
+          # flatpak build-export's icon validator needs them. The apparmor package ships a profile that allows
+          # them for /usr/bin/flatpak, but lift the restriction too so a runner image without that profile
+          # does not fail the build with "setting up uid map: Permission denied".
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
           flatpak --version
           flatpak-builder --version
+          # The suite skips itself where bubblewrap cannot create namespaces. Fail here instead, so that this job
+          # cannot pass without having run it.
+          bwrap --ro-bind / / true
 
-      # The flatpak user installation (remote config + installed runtimes/SDKs/base app). The 20.08 SDK
-      # alone is well over a GB, so restoring it beats re-downloading from flathub every run. Bump the
+      # The flatpak user installation (remote config + installed runtimes/SDKs/base app). An SDK alone
+      # is well over a GB, so restoring it beats re-downloading from flathub every run. Bump the
       # -vN suffix whenever the ref list in the install step below changes.
       # The key includes run_id so it never exactly matches: the job restores the newest entry via
       # restore-keys and re-saves at the end. With a static key, actions/cache never saves after an exact
-      # hit, so an incomplete first save (e.g. the 19.08 refs failed to install) would be re-downloaded forever.
+      # hit, so an incomplete first save would be re-downloaded forever. The ubuntu-22.04 leg is the exception: it
+      # keeps one entry, with a static key, so that the two legs do not both save several GB on every run.
       - name: Cache flatpak runtimes
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.local/share/flatpak
-          key: flatpak-user-${{ runner.os }}-fdo-20.08-19.08-electron2-v1-${{ github.run_id }}
+          key: flatpak-user-${{ matrix.runner }}-fdo-26.08-25.08-electron2-v1${{ matrix.runner != 'ubuntu-22.04' && format('-{0}', github.run_id) || '' }}
           restore-keys: |
-            flatpak-user-${{ runner.os }}-fdo-20.08-19.08-electron2-v1-
+            flatpak-user-${{ matrix.runner }}-fdo-26.08-25.08-electron2-v1
 
-      # Pre-install every ref the suite needs so the bundler's own `flatpak install` inside a test does not
-      # eat the test timeout. `flatpak install` is a no-op for refs already restored from the cache.
-      # 20.08 is the FlatpakTarget default runtime/base version; 19.08 is what the
-      # "custom runtime and base app version" test asks for. Both branches are end-of-life on flathub,
-      # so the 19.08 trio is installed best-effort: if flathub ever drops it, only that one test fails
-      # (visibly, from the bundler's own install attempt) instead of the whole job before any test runs.
+      # Pre-install every ref the suite needs so the flatpak target's own `flatpak install` inside a test
+      # does not eat the test timeout. `flatpak install` is a no-op for refs already restored from the cache.
+      # 26.08 is the FlatpakTarget default runtime/base version; 25.08 is what the
+      # "custom runtime and base app version" test asks for. Both are supported on flathub.
       - name: Install flatpak runtimes
         run: |
           flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak install --user -y --noninteractive flathub \
-            org.freedesktop.Platform//20.08 \
-            org.freedesktop.Sdk//20.08 \
-            org.electronjs.Electron2.BaseApp//20.08
-          flatpak install --user -y --noninteractive flathub \
-            org.freedesktop.Platform//19.08 \
-            org.freedesktop.Sdk//19.08 \
-            org.electronjs.Electron2.BaseApp//19.08 \
-            || echo "::warning::Could not pre-install the 19.08 refs; the 'custom runtime and base app version' test will try to install them itself"
+            org.freedesktop.Platform//26.08 \
+            org.freedesktop.Sdk//26.08 \
+            org.electronjs.Electron2.BaseApp//26.08 \
+            org.freedesktop.Platform//25.08 \
+            org.freedesktop.Sdk//25.08 \
+            org.electronjs.Electron2.BaseApp//25.08
           flatpak list --user --columns=ref,size
 
       - name: Test flatpak
         run: pnpm ci:test
         env:
-          TEST_FILES: flatpak
-          DEBUG: "@malept/flatpak-bundler"
+          TEST_FILES: flatpak,blackboxInstallTest
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
@@ -541,7 +554,7 @@ jobs:
         if: always()
         uses: ./.github/actions/upload-test-artifacts
         with:
-          name: flatpak
+          name: flatpak-${{ matrix.runner }}
 
   test-e2e:
     name: Test e2e Auto Updater Linux

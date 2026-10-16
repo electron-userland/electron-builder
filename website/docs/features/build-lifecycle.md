@@ -406,7 +406,7 @@ Each target runs inside Phase 2h. Here is what happens inside each one:
 | **AppImage** | Create squashfs image → embed ELF header → emit |
 | **DEB / RPM / Pacman** | Package via `fpm` → emit |
 | **Snap** | Write `snapcraft.yaml` → run `snapcraft` → emit |
-| **Flatpak** | Write manifest → run `flatpak-builder` → emit |
+| **Flatpak** | Write manifest → run `flatpak-builder` → `flatpak build-export` + `flatpak build-bundle` → emit |
 
 ---
 

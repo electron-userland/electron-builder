@@ -41,6 +41,27 @@ RUN echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] http://
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
+# flatpak and flatpak-builder, for the flatpak target. Ubuntu 22.04's own 1.12 and 1.2 meet its minimum, but flatpak-builder 1.4
+# and newer also handle AppStream metadata with the current SDKs, and 1.4.4 and newer meson and cmake modules, so both come from the
+# Flatpak team's PPA, whose signing key is pinned by its fingerprint:
+# the downloaded key file has to hold exactly that one key.
+# No runtime is installed: a build downloads the runtime, the SDK and the base app that it needs from the flathub remote
+# added here. It is added for root, the user this image runs as, because the flatpak target installs into the user installation.
+# elfutils and zstd are the tools flatpak-builder recommends that the image does not have yet: without eu-strip, a module of
+# flatpak.modules that builds a binary fails. fuse3 has the fusermount3 that rofiles-fuse needs, where /dev/fuse is available.
+ARG FLATPAK_PPA_FINGERPRINT="5C6D153A17C02C337EF6C663B8B9D41229DFA5F5"
+RUN curl -fsSL --tlsv1.2 --proto "=https" -o /usr/share/keyrings/flatpak-stable.asc \
+    "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x${FLATPAK_PPA_FINGERPRINT}" \
+  && gpg --show-keys --with-colons /usr/share/keyrings/flatpak-stable.asc \
+  | awk -F: -v fpr="${FLATPAK_PPA_FINGERPRINT}" '$1 == "pub" { keys++ } $1 == "fpr" && first == "" { first = $10 } END { exit !(keys == 1 && first == fpr) }' \
+  && echo "deb [signed-by=/usr/share/keyrings/flatpak-stable.asc] https://ppa.launchpadcontent.net/flatpak/stable/ubuntu jammy main" \
+  | tee /etc/apt/sources.list.d/flatpak-stable.list \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends flatpak flatpak-builder fuse3 elfutils zstd \
+  && flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /project
 
 # fix error /usr/local/bundle/gems/fpm-1.5.0/lib/fpm/package/freebsd.rb:72:in `encode': "\xE2" from ASCII-8BIT to UTF-8 (Encoding::UndefinedConversionError)

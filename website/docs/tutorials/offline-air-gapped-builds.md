@@ -7,7 +7,7 @@ electron-builder downloads two kinds of artifacts at build time:
 1. The **Electron distribution** (`electron-v<version>-<platform>-<arch>.zip`), fetched via [@electron/get](https://github.com/electron/get).
 2. **electron-builder toolsets** (AppImage tools, fpm, NSIS, winCodeSign, 7-Zip, …), fetched from [electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries) releases.
 
-Both can be pre-seeded so that a build runs with **no network access at all** — the pattern used by Flathub builds, locked-down CI, and other air-gapped environments. This page describes the exact on-disk contracts.
+Both can be pre-seeded so that a build runs with **no network access at all** — the pattern used by Flathub builds, locked-down CI, and other air-gapped environments. This page describes the exact on-disk contracts. The `flatpak` target has one more requirement, which is not a cache: see [Flatpak target](#flatpak-target).
 
 :::tip[Warm the cache online, then copy]
 The simplest approach: run one full build on an online machine with the same OS, architecture, Electron version and targets, then copy both cache directories (see below) to the offline machine. Everything on this page also works with manually seeded files.
@@ -119,6 +119,15 @@ Older seeding conventions — extracted tool directories such as `electron-build
   (a `checksum` is required when `url` points to an archive file rather than a directory).
 
 - **LAN mirror** — `ELECTRON_BUILDER_BINARIES_MIRROR` redirects toolset downloads and `ELECTRON_MIRROR` redirects Electron downloads to an internal HTTP(S) server; not network-free, but internet-free.
+
+## Flatpak target
+
+The `flatpak` target builds on three Flatpak refs that neither cache holds: the runtime, the SDK and the base app (`org.freedesktop.Platform`, `org.freedesktop.Sdk` and `org.electronjs.Electron2.BaseApp` by default, in the configured `runtimeVersion` / `baseVersion`, which both default to `26.08`). They are downloaded by `flatpak` itself into a Flatpak installation (by default `~/.local/share/flatpak` for the user installation), and all three must be installed for a build.
+
+- **Install all three while the machine or image is online.** electron-builder installs whichever of them is missing with `flatpak install --user`, which needs a user-level remote such as Flathub (`flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo`), so a build that has succeeded online leaves all three installed. Offline, a missing ref fails the build with `No remote refs found`. That includes the refs of a new default version after an electron-builder upgrade (v27 changed the default from `20.08` to `26.08`): set `runtimeVersion` and `baseVersion` explicitly to stay on the installed ones — see [Choosing Versions](../flatpak.md#choosing-versions).
+- **Once they are installed, the build needs neither the network nor a remote.** electron-builder still runs `flatpak update` for each of the three on every build; offline that prints `Nothing to do.` and exits successfully, and the build continues with the installed versions. Set `flatpak.installOrUpdateRefs` to `[]` to skip the update and the install: a missing ref then fails the build with an error that names it, instead of `No remote refs found` — see [Building With Installed Refs](../flatpak.md#building-with-installed-refs).
+
+`flatpak` and `flatpak-builder` themselves are not toolsets either: they must be installed on the build machine. See [Flatpak](../flatpak.md), and [Building Flatpak Bundles in CI and Containers](flatpak-in-ci-and-containers.md#prepare-the-image) for installing the refs into a container image.
 
 ## Environment variables: what works and what doesn't
 

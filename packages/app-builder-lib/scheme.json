@@ -1542,9 +1542,69 @@
       },
       "type": "object"
     },
+    "FlatpakAdditionalArgs": {
+      "additionalProperties": false,
+      "description": "Additional arguments for the tools that build a flatpak bundle.",
+      "properties": {
+        "buildBundle": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Passed to `flatpak build-bundle`.\n\nExample: `[\"--runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo\"]`"
+        },
+        "buildExport": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Passed to `flatpak build-export`.\n\nExample: `[\"--disable-sandbox\"]`, which runs the icon validator without its sandbox and is required where bubblewrap cannot create namespaces, typically in unprivileged containers."
+        },
+        "flatpakBuilder": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Passed to `flatpak-builder`, on both of its invocations (the one that builds and the one that finishes the app).\n\nExample: `[\"--disable-rofiles-fuse\"]`, which is required where FUSE is not available, typically in unprivileged containers."
+        }
+      },
+      "type": "object"
+    },
     "FlatpakOptions": {
       "additionalProperties": false,
       "properties": {
+        "additionalArgs": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FlatpakAdditionalArgs"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "*Advanced only* Additional arguments for the tools that build the bundle, by tool. Nothing is added unless it is set.\n\nA build in an unprivileged container, which has neither FUSE nor user namespaces for bubblewrap, needs `{ flatpakBuilder: [\"--disable-rofiles-fuse\"], buildExport: [\"--disable-sandbox\"] }`."
+        },
         "artifactName": {
           "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
@@ -1557,7 +1617,7 @@
           "type": "string"
         },
         "baseVersion": {
-          "description": "Use this specific version of the application specified in base. Defaults to `20.08`.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
+          "description": "Use this specific version of the application specified in base. It is not derived from `runtimeVersion`. Defaults to `26.08`.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
           "type": "string"
         },
         "branch": {
@@ -1604,7 +1664,7 @@
           "description": "The executable parameters. Pass to executableName"
         },
         "files": {
-          "description": "Files to copy directly into the app. Should be a list of [source, dest] tuples. Source should be a relative/absolute path to a file/directory to copy into the flatpak, and dest should be the path inside the app install prefix (e.g. /share/applications/).\n\nSee [@malept/flatpak-bundler documentation](https://github.com/malept/flatpak-bundler#build-options).",
+          "description": "Extra files and directories for the app, as `[source, destination]` pairs. A source is a path on the build machine; a relative one is resolved against the current working directory. A destination is a path relative to the app prefix, which is `/app` inside the sandbox: `[\"build/extra.so\", \"/lib/extra.so\"]` ends up at `/app/lib/extra.so`. A directory is merged into a destination that already exists. For a file, the destination is the path of the file itself, not of the directory that receives it. The pairs are copied in order, after the app itself, so a later pair can replace what an earlier one placed. A destination outside the app prefix (one that climbs out of it with `..`, or that leads out of it through a symlink placed by the base app, a module or an earlier pair) fails the build.",
           "items": {
             "items": [
               {
@@ -1621,11 +1681,34 @@
           "type": "array"
         },
         "finishArgs": {
-          "description": "An array of arguments passed to the flatpak build-finish command. Defaults to:\n```json\n[\n  // Wayland/X11 Rendering\n  \"--socket=wayland\",\n  \"--socket=x11\",\n  \"--share=ipc\",\n  // Open GL\n  \"--device=dri\",\n  // Audio output\n  \"--socket=pulseaudio\",\n  // Read/write home directory access\n  \"--filesystem=home\",\n  // Allow communication with network\n  \"--share=network\",\n  // System notifications with libnotify\n  \"--talk-name=org.freedesktop.Notifications\",\n]\n```\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
+          "description": "An array of arguments passed to the flatpak build-finish command: the permissions of the sandboxed app. Setting it replaces the default list. The defaults are broad grants for a typical Electron app, not requirements: each one widens what code running in the app can reach, see [Finish Args](https://www.electron.build/docs/flatpak#finish-args-permissions). Defaults to:\n```json\n[\n  // Wayland/X11 Rendering\n  \"--socket=wayland\",\n  \"--socket=x11\",\n  \"--share=ipc\",\n  // Open GL\n  \"--device=dri\",\n  // Sound: playback and recording (microphone included), MIDI and the /dev/snd devices\n  \"--socket=pulseaudio\",\n  // Read/write access to the Downloads folder only\n  \"--filesystem=xdg-download\",\n  // Allow communication with network\n  \"--share=network\",\n]\n```\n\nWhen `base` is the default `org.electronjs.Electron2.BaseApp` and `baseVersion` is older than `23.08`, the default list also has `\"--talk-name=org.freedesktop.Notifications\"`, for system notifications: those base apps ship a libnotify older than 0.8, which talks to the notification daemon instead of the notification portal.\n\nBefore v27 the default list had `--filesystem=home`, read/write access to the whole home directory, instead of `--filesystem=xdg-download`, and always had `--talk-name=org.freedesktop.Notifications`.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
           "items": {
             "type": "string"
           },
           "type": "array"
+        },
+        "installOrUpdateRefs": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "base",
+                  "runtime",
+                  "sdk"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "const": "all",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Which of the runtime, the SDK and the base app the build installs when they are missing and updates when they are installed: `\"all\"`, or a list of `\"runtime\"`, `\"sdk\"` and `\"base\"`. A ref that is left out is neither installed nor updated: the build uses it as it is installed on the build machine, for the user or system-wide, and fails before it installs or builds anything if it is not installed. Set `[]` to build with the refs that are already installed, for example in an image that has them, without network access, or where the build user cannot update them. Defaults to `\"all\"`."
         },
         "license": {
           "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.",
@@ -1649,7 +1732,7 @@
           "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
         },
         "modules": {
-          "description": "An array of objects specifying the modules to be built in order.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
+          "description": "An array of objects specifying the modules to be built in order. Modules are built in a bubblewrap sandbox, so they cannot be built where bubblewrap cannot create namespaces, such as an unprivileged container.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
           "items": {},
           "type": "array"
         },
@@ -1704,7 +1787,7 @@
           "type": "string"
         },
         "runtimeVersion": {
-          "description": "The version of the runtime that the application uses. Defaults to `20.08`.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
+          "description": "The version of the runtime that the application uses, which is also the version of the SDK. Defaults to `26.08`. Set it together with `baseVersion`.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
           "type": "string"
         },
         "sdk": {
@@ -1712,7 +1795,7 @@
           "type": "string"
         },
         "symlinks": {
-          "description": "Symlinks to create in the app files. Should be a list of [target, location] symlink tuples. Target can be either a relative or absolute path inside the app install prefix, and location should be a absolute path inside the prefix to create the symlink at.\n\nSee [@malept/flatpak-bundler documentation](https://github.com/malept/flatpak-bundler#build-options).",
+          "description": "Symlinks for the app, as `[target, link]` pairs. Both are paths relative to the app prefix, which is `/app` inside the sandbox: `[\"/lib/tool\", \"/bin/tool\"]` creates `/app/bin/tool`, pointing at `/app/lib/tool`. The links are created after the files are copied. A link outside the app prefix (also through a symlink that leads out of it) fails the build.",
           "items": {
             "items": [
               {
@@ -1736,7 +1819,7 @@
           ]
         },
         "useWaylandFlags": {
-          "description": "Whether to enable the Wayland specific flags (`--enable-features=UseOzonePlatform --ozone-platform=wayland`) in the wrapper script. These flags are only available starting with Electron version 12. Defaults to `false`.",
+          "description": "Whether the wrapper script makes Electron use Wayland when the session is a Wayland one (`XDG_SESSION_TYPE` is `wayland`). The flags depend on the Electron version: none from Electron 38, which picks Wayland there by itself (the build logs that the option has no effect), `--ozone-platform=wayland` from Electron 16, and `--enable-features=UseOzonePlatform --ozone-platform=wayland` before that. Electron 12 or later is required. Defaults to `false`.",
           "type": "boolean"
         }
       },
@@ -2594,7 +2677,7 @@
               "type": "null"
             }
           ],
-          "description": "`[Desktop Actions <ActionName>]` metadata entries (name to value).\n\nConfig Example:\n```js\ndesktopActions: {\n   NewWindow: {\n      Name: 'New Window',\n      Exec: 'app --new-window',\n   }\n}\n```"
+          "description": "`[Desktop Actions <ActionName>]` metadata entries (name to value).\n\nAn action name must not contain `[`, `]` or control characters. Its keys and values follow the rules of `entry`.\n\nConfig Example:\n```js\ndesktopActions: {\n   NewWindow: {\n      Name: 'New Window',\n      Exec: 'app --new-window',\n   }\n}\n```"
         },
         "entry": {
           "anyOf": [
@@ -2605,7 +2688,7 @@
               "type": "null"
             }
           ],
-          "description": "`[Desktop Entry]` metadata entries (name to value). Overwrites default values calculated by electron-builder"
+          "description": "`[Desktop Entry]` metadata entries (name to value). Overwrites default values calculated by electron-builder\n\nKeys and values are written as given. A key must not be empty or contain `=` or a line break, and brackets are only allowed around a trailing locale of letters, digits, `-`, `_`, `.` and `@`, right after the key, such as `Name[de]`. A value must be on one line: a line break inside a value fails the build (write a newline in a string value as `\\n`), and line breaks at its end are dropped."
         }
       },
       "type": "object"
