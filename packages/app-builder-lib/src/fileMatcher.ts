@@ -449,8 +449,8 @@ export function getNodeModuleFileMatcher(
     }
   }
 
-  addPatterns(packager.config.files)
-  addPatterns(platformSpecificBuildOptions.files)
+  addPatterns(packager.config.fileOptions?.files)
+  addPatterns(platformSpecificBuildOptions.fileOptions?.files)
 
   if (!matcher.isEmpty()) {
     matcher.prependPattern("**/*")
@@ -555,10 +555,14 @@ export function getFileMatchers(
     }
   }
 
-  if (name !== "extraDistFiles") {
-    addPatterns((config as any)[name])
+  // `extraDistFiles` is a mac option of its own; the others are read from `fileOptions`, into which flat keys are
+  // normalized when the configuration is loaded (see util/config/fileOptions.ts)
+  if (name === "extraDistFiles") {
+    addPatterns((options.customBuildOptions as any).extraDistFiles)
+  } else {
+    addPatterns(config.fileOptions?.[name])
+    addPatterns(options.customBuildOptions.fileOptions?.[name])
   }
-  addPatterns((options.customBuildOptions as any)[name])
 
   if (!defaultMatcher.isEmpty()) {
     // default matcher should be first in the array

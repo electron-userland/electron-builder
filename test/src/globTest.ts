@@ -139,7 +139,7 @@ test.ifNotWindows("symlinks everywhere with static framework", ({ expect }) =>
     {
       targets: linuxDirTarget,
       config: {
-        files: ["!hello-world"],
+        fileOptions: { files: ["!hello-world"] },
       },
     },
     {
@@ -201,7 +201,7 @@ test.ifNotWindows("ignore node_modules", ({ expect }) => {
       targets: linuxDirTarget,
       config: {
         asar: false,
-        files: ["!node_modules/**/*"],
+        fileOptions: { files: ["!node_modules/**/*"] },
       },
     },
     {

@@ -287,6 +287,9 @@ describe("migrateProgrammaticSource — per-rule coverage (CJS, drift-checked vs
     winSignAndEditFalse: `module.exports = { win: { signAndEditExecutable: false } }\n`,
     winSignDisabledLegacy: `module.exports = { win: { signExecutable: false, signtoolOptions: { certificateFile: "c.pfx" } } }\n`,
     winSignNullSigntool: `module.exports = { win: { sign: null, signtoolOptions: { certificateFile: "c.pfx" } } }\n`,
+    fileOptions: `module.exports = { files: ["dist/**"], extraResources: "r", mac: { extraFiles: ["f"] }, linux: { files: ["!x"], fileOptions: null } }\n`,
+    fileOptionsExisting: `module.exports = { extraFiles: ["e"], fileOptions: { files: ["dist/**"] }, win: { files: ["flat"], fileOptions: { files: ["nested"] } } }\n`,
+    fileOptionsWithMacSign: `module.exports = { mac: { identity: "Dev", files: ["!x"], extraResources: [{ from: "a", to: "b" }] }, masDev: { extraFiles: "f" } }\n`,
   }
 
   for (const [name, src] of Object.entries(fixtures)) {
@@ -740,5 +743,48 @@ describe("migrateProgrammaticSource — removed customNsisBinary / customNsisRes
     )
     expect(result.code).toBe(`const shared = {}\nmodule.exports = {\n  portable: {\n    ...shared,\n  },\n  nsisWeb: {\n    ...shared,\n  },\n}\n`)
     expect(result.warnings).toEqual([PORTABLE_DEBUG_LOGGING_DROPPED])
+  })
+})
+
+describe("migrateProgrammaticSource — files / extraResources / extraFiles → fileOptions", () => {
+  test("moves the flat keys under fileOptions, preserving comments and the values' source text", () => {
+    const src = `// config
+export default {
+  appId: "com.example.app",
+  // app sources
+  files: [
+    "dist/**", // compiled output
+    "package.json",
+  ],
+  mac: {
+    extraResources: [{ from: "assets/mac", to: "." }],
+  },
+}
+`
+    const result = run(src)
+    expect(result.status).toBe("migrated")
+    expect(result.code).toContain("// config")
+    expect(result.code).toContain('"dist/**", // compiled output')
+    expect(objFromCjs(result.code)).toEqual({
+      appId: "com.example.app",
+      fileOptions: { files: ["dist/**", "package.json"] },
+      mac: { fileOptions: { extraResources: [{ from: "assets/mac", to: "." }] } },
+    })
+    expect(result.changes.map(c => c.description)).toEqual(["moved files → fileOptions.files", "moved mac.extraResources → mac.fileOptions.extraResources"])
+  })
+
+  test("a flat key also set under fileOptions is removed with the same warning as migrateConfig", () => {
+    const src = `module.exports = { files: ["flat"], fileOptions: { files: ["nested"] } }\n`
+    const result = run(src, "electron-builder.cjs")
+    expect(objFromCjs(result.code)).toEqual({ fileOptions: { files: ["nested"] } })
+    expect(result.warnings).toEqual(migrateConfig(objFromCjs(src)).warnings)
+  })
+
+  test("a fileOptions that is not an object literal is not rewritten", () => {
+    const src = `const shared = { files: ["dist/**"] }\nmodule.exports = { fileOptions: shared, extraFiles: ["e"] }\n`
+    const result = run(src, "electron-builder.cjs")
+    expect(result.status).toBe("no-op")
+    expect(result.code).toBe(src)
+    expect(result.warnings).toEqual(["fileOptions is not an object literal; move extraFiles into it manually."])
   })
 })

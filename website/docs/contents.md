@@ -26,17 +26,20 @@ By default, electron-builder includes all files matching `**/*` from the app dir
 
 These exclusions are always applied even when you define custom patterns.
 
+The file options are nested under `fileOptions` (`fileOptions.files`, `fileOptions.extraResources`, `fileOptions.extraFiles`), at the configuration root and in the platform sections (e.g. `mac.fileOptions`). A platform's lists are added to the root ones. Run `electron-builder migrate-schema` to move `files`, `extraResources` and `extraFiles` keys set directly on the configuration into `fileOptions`; see [file options](./migration/v27-breaking-changes.md#file-options-fileoptions).
+
 ## The `files` Option
 
-Override which files are included using the `files` option. Patterns are glob expressions relative to the app directory:
+Override which files are included using the `fileOptions.files` option. Patterns are glob expressions relative to the app directory:
 
 ```yaml
-files:
-  - "**/*"
-  - "!src/**"           # exclude source files
-  - "!tests/**"         # exclude test directory
-  - "!**/*.map"         # exclude source maps
-  - "dist/**"           # include dist directory
+fileOptions:
+  files:
+    - "**/*"
+    - "!src/**"           # exclude source files
+    - "!tests/**"         # exclude test directory
+    - "!**/*.map"         # exclude source maps
+    - "dist/**"           # include dist directory
 ```
 
 **Important behavior:**
@@ -47,33 +50,36 @@ files:
 ### Simple Include Example
 
 ```yaml
-files:
-  - "**/*"
-  - "!src/**"
-  - "!*.ts"
-  - "!tsconfig*.json"
+fileOptions:
+  files:
+    - "**/*"
+    - "!src/**"
+    - "!*.ts"
+    - "!tsconfig*.json"
 ```
 
 ### Only Include Specific Directories
 
 ```yaml
-files:
-  - dist/**
-  - assets/**
-  - node_modules/**     # production node_modules (already automatic)
-  - package.json        # always included, but can be explicit
+fileOptions:
+  files:
+    - dist/**
+    - assets/**
+    - node_modules/**     # production node_modules (already automatic)
+    - package.json        # always included, but can be explicit
 ```
 
 ### Exclude Large Unused Files
 
 ```yaml
-files:
-  - "**/*"
-  - "!node_modules/**/README*"
-  - "!node_modules/**/*.md"
-  - "!node_modules/**/*.map"
-  - "!**/test/**"
-  - "!**/__tests__/**"
+fileOptions:
+  files:
+    - "**/*"
+    - "!node_modules/**/README*"
+    - "!node_modules/**/*.md"
+    - "!node_modules/**/*.map"
+    - "!**/test/**"
+    - "!**/__tests__/**"
 ```
 
 ## FileSet Objects
@@ -81,14 +87,15 @@ files:
 For advanced scenarios, use FileSet objects instead of (or alongside) glob strings. FileSets let you copy files from a different source directory:
 
 ```yaml
-files:
-  - from: dist
-    to: .
-    filter:
-      - "**/*"
-      - "!**/*.map"
-  - from: assets
-    to: assets
+fileOptions:
+  files:
+    - from: dist
+      to: .
+      filter:
+        - "**/*"
+        - "!**/*.map"
+    - from: assets
+      to: assets
 ```
 
 | Field | Description |
@@ -100,18 +107,20 @@ files:
 ### Renaming a File
 
 ```yaml
-files:
-  - from: dist/main.js
-    to: app.js
+fileOptions:
+  files:
+    - from: dist/main.js
+      to: app.js
 ```
 
 ### Copying from Outside the App Directory
 
 ```yaml
-files:
-  - "**/*"
-  - from: ../shared/assets
-    to: shared-assets
+fileOptions:
+  files:
+    - "**/*"
+    - from: ../shared/assets
+      to: shared-assets
 ```
 
 ## Extra Files and Resources
@@ -125,12 +134,13 @@ Copies into the `resources/` directory:
 - Windows/Linux: `resources/`
 
 ```yaml
-extraResources:
-  - from: native-binaries/
-    to: bin
-    filter:
-      - "**/*"
-  - "assets/icon.png"     # string shorthand — copies to resources/assets/icon.png
+fileOptions:
+  extraResources:
+    - from: native-binaries/
+      to: bin
+      filter:
+        - "**/*"
+    - "assets/icon.png"     # string shorthand — copies to resources/assets/icon.png
 ```
 
 ### `extraFiles`
@@ -140,10 +150,11 @@ Copies into the app content directory:
 - Windows/Linux: the install directory root
 
 ```yaml
-extraFiles:
-  - from: config/
-    to: config
-  - "LICENSE"
+fileOptions:
+  extraFiles:
+    - from: config/
+      to: config
+    - "LICENSE"
 ```
 
 :::tip[Native Modules and Extra Binaries]
@@ -209,11 +220,12 @@ node_modules/electron/index.js
 ### Electron App with Native Modules
 
 ```yaml
-files:
-  - "**/*"
-  - "!src/**"
-  - "!**/*.ts"
-  - "!**/*.map"
+fileOptions:
+  files:
+    - "**/*"
+    - "!src/**"
+    - "!**/*.ts"
+    - "!**/*.map"
 asar:
   unpack:
     - "**/*.node"
@@ -222,13 +234,14 @@ asar:
 ### App with Large Video Assets
 
 ```yaml
-files:
-  - "**/*"
-  - "!src/**"
-  - "!videos/**"      # exclude from ASAR
-extraResources:
-  - from: videos/
-    to: videos         # place outside ASAR, accessible via process.resourcesPath
+fileOptions:
+  files:
+    - "**/*"
+    - "!src/**"
+    - "!videos/**"      # exclude from ASAR
+  extraResources:
+    - from: videos/
+      to: videos         # place outside ASAR, accessible via process.resourcesPath
 ```
 
 ### Monorepo Setup (Two-Package Structure)
@@ -237,9 +250,10 @@ extraResources:
 directories:
   app: packages/app   # app directory is not the project root
 
-files:
-  - "**/*"
-  - "!src/**"
+fileOptions:
+  files:
+    - "**/*"
+    - "!src/**"
 ```
 
 See [Two package.json Structure](tutorials/two-package-structure.md) for the full monorepo setup.
@@ -250,21 +264,23 @@ electron-builder excludes a set of development-only file extensions and names by
 build artifacts such as `.obj`, `.o`, `.a`, and `.d.ts`, lockfiles such as `yarn.lock` and
 `package-lock.json`, and VCS/tooling metadata such as `.git`, `.idea`, and `.github`.
 
-To ship a file that would otherwise be excluded, add an explicit `files` glob that targets it. An
+To ship a file that would otherwise be excluded, add an explicit `fileOptions.files` glob that targets it. An
 explicit include overrides the matching default exclusion:
 
 ```yaml
-files:
-  - "**/*"
-  - "**/*.obj"        # keep Wavefront .obj 3D models that are excluded by default
+fileOptions:
+  files:
+    - "**/*"
+    - "**/*.obj"        # keep Wavefront .obj 3D models that are excluded by default
 ```
 
 The same applies to default-excluded names — reference the name in a pattern segment, e.g.:
 
 ```yaml
-files:
-  - "**/*"
-  - "**/.github/**"   # keep the .github directory that is excluded by default
+fileOptions:
+  files:
+    - "**/*"
+    - "**/.github/**"   # keep the .github directory that is excluded by default
 ```
 
 Only patterns that name an extension or directory concretely opt it back in; broad patterns such as

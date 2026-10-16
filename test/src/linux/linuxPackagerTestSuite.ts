@@ -142,8 +142,10 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
         targets: appImageTarget,
         config: {
           toolsets,
-          extraResources: {
-            from: "build/icons",
+          fileOptions: {
+            extraResources: {
+              from: "build/icons",
+            },
           },
           fileAssociations: [
             {
