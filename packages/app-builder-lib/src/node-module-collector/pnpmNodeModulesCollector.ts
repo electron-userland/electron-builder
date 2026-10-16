@@ -353,11 +353,12 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
    * Visit a single dependency node, adding it and its transitive deps to allDependencies.
    *
    * pnpm 10.29.3+ prints a repeated subtree only once; every later occurrence is a childless
-   * `deduped` stub. A package whose only occurrences in the walked tree are stubs (its one full
-   * print landed elsewhere in the listing) must still be registered here, or it is dropped from the
-   * asar together with its whole closure (#10253). For any entry pnpm did not expand, we fall back
-   * to the on-disk package.json to discover transitive deps, resolving each one from the package's
-   * own store directory first (where pnpm placed them).
+   * `deduped` stub. Stubs must still be registered here: the one full print can sit under a node
+   * this walk skips, e.g. a second peer variant of a package with the same `name@version` (the
+   * guard below), so a package seen only as stubs was dropped from the asar together with its whole
+   * closure (#10253). For any entry pnpm did not expand, we fall back to the on-disk package.json to
+   * discover transitive deps, resolving each one from the package's own store directory first
+   * (where pnpm placed them).
    */
   private async visitDep(key: string, value: PnpmDependency): Promise<void> {
     const id = `${key}@${value.version}`
