@@ -8,16 +8,27 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, MockInsta
 const APP_ID = "com.example.MyApp"
 const DESKTOP_ID = "com.example.MyApp.desktop"
 
+interface MetainfoXmlOptions {
+  rootName?: string
+  type?: string | null
+  id?: string | null
+  name?: string | null
+  summary?: string | null
+  metadataLicense?: string | null
+  description?: string | null
+  launchable?: string | null
+}
+
 function metainfoXml({
   rootName = "component",
-  type = "desktop-application" as string | null,
-  id = APP_ID as string | null,
-  name = "My App" as string | null,
-  summary = "Does example things" as string | null,
-  metadataLicense = "CC0-1.0" as string | null,
-  description = "<description><p>A longer description of the application.</p></description>" as string | null,
-  launchable = `<launchable type="desktop-id">${DESKTOP_ID}</launchable>` as string | null,
-} = {}): string {
+  type = "desktop-application",
+  id = APP_ID,
+  name = "My App",
+  summary = "Does example things",
+  metadataLicense = "CC0-1.0",
+  description = "<description><p>A longer description of the application.</p></description>",
+  launchable = `<launchable type="desktop-id">${DESKTOP_ID}</launchable>`,
+}: MetainfoXmlOptions = {}): string {
   const child = (tag: string, value: string | null) => (value == null ? "" : `<${tag}>${value}</${tag}>`)
   return `<?xml version="1.0" encoding="UTF-8"?>
 <${rootName}${type == null ? "" : ` type="${type}"`}>
@@ -103,7 +114,7 @@ describe("validateMetainfoFile", () => {
     ["metadata_license", { metadataLicense: null }],
     ["description", { description: null }],
   ])("missing required element <%s> hard-fails", async (elementName, overrides) => {
-    const file = await writeFixture(metainfoXml(overrides as any))
+    const file = await writeFixture(metainfoXml(overrides))
     await expect(validateMetainfoFile(file, APP_ID, DESKTOP_ID)).rejects.toThrowError(new RegExp(`required element <${elementName}> is missing or empty`))
   })
 
