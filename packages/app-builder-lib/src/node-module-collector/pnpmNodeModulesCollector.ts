@@ -356,11 +356,17 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
    * `deduped` stub. Stubs must still be registered here: the one full print can sit under a node
    * this walk skips, e.g. a second peer variant of a package with the same `name@version` (the
    * guard below), so a package seen only as stubs was dropped from the asar together with its whole
-   * closure (#10253). For any entry pnpm did not expand, we fall back to the on-disk package.json to
-   * discover transitive deps, resolving each one from the package's own store directory first
-   * (where pnpm placed them).
+   * closure (#10253). For a stub (and every dependency discovered beneath one, `fromDisk`), we fall
+   * back to the on-disk package.json to discover transitive deps, resolving each one from the
+   * package's own store directory first (where pnpm placed them).
+   *
+   * Other childless entries keep the tree walk. A `link:` package is also printed without children,
+   * but its declared deps resolve from the link target's own `node_modules` (e.g. a linked
+   * electron-updater checkout's monorepo store), outside the app. Walking them would register those
+   * foreign copies under `name@version`, so the guard below then skips the app's own copy of the same
+   * `name@version` together with its subtree (`jsonfile` vanished from under `fs-extra`).
    */
-  private async visitDep(key: string, value: PnpmDependency): Promise<void> {
+  private async visitDep(key: string, value: PnpmDependency, fromDisk = false): Promise<void> {
     const id = `${key}@${value.version}`
     // The pnpm list output can include the same `name@version` thousands of times across a
     // deep workspace; without this guard we re-resolve and re-recurse each occurrence.
@@ -377,7 +383,8 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     // came up empty, e.g. a workspace package, which nothing above it exposes under `node_modules/`.
     const pkg = located ?? (resolvedPath != null ? await this.readPackageJsonAt(resolvedPath) : null)
     const hasTreeDeps = Object.keys(value.dependencies ?? {}).length > 0 || Object.keys(value.optionalDependencies ?? {}).length > 0
-    if (!hasTreeDeps && pkg?.packageJson) {
+    const isDedupedStub = (value.dedupedDependenciesCount ?? 0) > 0
+    if ((isDedupedStub || fromDisk) && !hasTreeDeps && pkg?.packageJson) {
       // Pass the declared version range so that resolution skips wrong-version hoisted packages and
       // finds the correct nested copy.
       const pkgOptionalDecl = pkg.packageJson.optionalDependencies || {}
@@ -391,14 +398,18 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
           this.logMissingDependency(`${depName}@${depRange}`, pkgOptionalDecl[depName] != null)
           continue
         }
-        await this.visitDep(depName, {
-          from: depName,
-          name: depName,
-          version: resolved.packageJson.version,
-          path: resolved.packageDir,
-          dependencies: {},
-          optionalDependencies: {},
-        } as unknown as PnpmDependency)
+        await this.visitDep(
+          depName,
+          {
+            from: depName,
+            name: depName,
+            version: resolved.packageJson.version,
+            path: resolved.packageDir,
+            dependencies: {},
+            optionalDependencies: {},
+          } as unknown as PnpmDependency,
+          true
+        )
       }
     } else {
       await this.collectDepsRecursively(value)
