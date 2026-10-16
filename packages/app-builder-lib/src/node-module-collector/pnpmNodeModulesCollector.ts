@@ -207,12 +207,35 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
         return fromDep
       }
       return this.cache.locatePackageVersion({ pkgName, parentDir: this.rootDir, requiredRange, skipDownwardSearch })
-    })()
+    })().then(pkg => this.toRealPackage(pkg))
 
     if (memoKey != null) {
       this.locateMemo.set(memoKey, promise)
     }
     return promise
+  }
+
+  /**
+   * Resolve a located package to its real directory (the symlink target), leaving a non-symlinked
+   * hit untouched.
+   *
+   * `locatePackageVersion` returns the path it *walked*, which in pnpm's isolated store is the
+   * `node_modules/<name>` symlink rather than `.pnpm/<name>@<ver>/node_modules/<name>`. That
+   * distinction matters because the store keeps a package's dependencies as SIBLINGS inside
+   * `.pnpm/<name>@<ver>/node_modules/`, reachable only from the real path: searching upward from
+   * the symlink walks the dependent's directory instead, and finds the dependency only by accident
+   * (through pnpm's hidden `.pnpm/node_modules` hoist, possibly at the wrong version). `visitDep`
+   * resolves the deps of every package pnpm printed without children (deduped stubs) from disk
+   * through here.
+   *
+   * Resolving the link is what Node itself does (`--preserve-symlinks` is off by default).
+   */
+  private async toRealPackage(pkg: Package | null): Promise<Package | null> {
+    if (pkg == null) {
+      return null
+    }
+    const packageDir = await this.cache.realPath[pkg.packageDir]
+    return packageDir === pkg.packageDir ? pkg : { ...pkg, packageDir }
   }
 
   // pnpm 10+ does not automatically preserve transitive optional platform-specific
@@ -321,28 +344,84 @@ export class PnpmNodeModulesCollector extends NodeModulesCollector<PnpmDependenc
     }
   }
 
-  private async collectDepsRecursively(tree: PnpmDependency): Promise<void> {
-    const visit = async (key: string, value: PnpmDependency) => {
-      if ((value?.dedupedDependenciesCount ?? 0) > 0) {
-        return
+  private async readPackageJsonAt(dir: string): Promise<Package | null> {
+    const packageJson: PackageJson | null = await fs.readJson(path.join(dir, "package.json")).catch(() => null)
+    return packageJson ? { packageDir: dir, packageJson } : null
+  }
+
+  /**
+   * Visit a single dependency node, adding it and its transitive deps to allDependencies.
+   *
+   * pnpm 10.29.3+ prints a repeated subtree only once; every later occurrence is a childless
+   * `deduped` stub. Stubs must still be registered here: the one full print can sit under a node
+   * this walk skips, e.g. a second peer variant of a package with the same `name@version` (the
+   * guard below), so a package seen only as stubs was dropped from the asar together with its whole
+   * closure (#10253). For a stub (and every dependency discovered beneath one, `fromDisk`), we fall
+   * back to the on-disk package.json to discover transitive deps, resolving each one from the
+   * package's own store directory first (where pnpm placed them).
+   *
+   * Other childless entries keep the tree walk. A `link:` package is also printed without children,
+   * but its declared deps resolve from the link target's own `node_modules` (e.g. a linked
+   * electron-updater checkout's monorepo store), outside the app. Walking them would register those
+   * foreign copies under `name@version`, so the guard below then skips the app's own copy of the same
+   * `name@version` together with its subtree (`jsonfile` vanished from under `fs-extra`).
+   */
+  private async visitDep(key: string, value: PnpmDependency, fromDisk = false): Promise<void> {
+    const id = `${key}@${value.version}`
+    // The pnpm list output can include the same `name@version` thousands of times across a
+    // deep workspace; without this guard we re-resolve and re-recurse each occurrence.
+    if (this.collectedDeps.has(id)) {
+      return
+    }
+    this.collectedDeps.add(id)
+
+    const located = await this.locateFromDepOrRoot(key, value.path, value.version)
+    const resolvedPath = located?.packageDir ?? value.path
+    this.allDependencies.set(id, { ...value, path: resolvedPath })
+
+    // Fall back to reading package.json straight from the resolved directory when the by-name lookup
+    // came up empty, e.g. a workspace package, which nothing above it exposes under `node_modules/`.
+    const pkg = located ?? (resolvedPath != null ? await this.readPackageJsonAt(resolvedPath) : null)
+    const hasTreeDeps = Object.keys(value.dependencies ?? {}).length > 0 || Object.keys(value.optionalDependencies ?? {}).length > 0
+    const isDedupedStub = (value.dedupedDependenciesCount ?? 0) > 0
+    if ((isDedupedStub || fromDisk) && !hasTreeDeps && pkg?.packageJson) {
+      // Pass the declared version range so that resolution skips wrong-version hoisted packages and
+      // finds the correct nested copy.
+      const pkgOptionalDecl = pkg.packageJson.optionalDependencies || {}
+      const pkgDepsDecl = { ...(pkg.packageJson.dependencies || {}), ...pkgOptionalDecl }
+      for (const [depName, depRange] of Object.entries(pkgDepsDecl)) {
+        const resolved = await this.locateFromDepOrRoot(depName, pkg.packageDir, typeof depRange === "string" ? depRange : undefined)
+        if (!resolved) {
+          // A miss here silently ships a broken app (the dependency is simply absent from the
+          // asar and only fails at runtime with MODULE_NOT_FOUND), so surface it in the log
+          // summary. Optional deps are an expected miss and get the quieter bucket.
+          this.logMissingDependency(`${depName}@${depRange}`, pkgOptionalDecl[depName] != null)
+          continue
+        }
+        await this.visitDep(
+          depName,
+          {
+            from: depName,
+            name: depName,
+            version: resolved.packageJson.version,
+            path: resolved.packageDir,
+            dependencies: {},
+            optionalDependencies: {},
+          } as unknown as PnpmDependency,
+          true
+        )
       }
-      const id = `${key}@${value.version}`
-      // The pnpm list output can include the same `name@version` thousands of times across a
-      // deep workspace; without this guard we re-resolve and re-recurse each occurrence.
-      if (this.collectedDeps.has(id)) {
-        return
-      }
-      this.collectedDeps.add(id)
-      const pkg = await this.locateFromDepOrRoot(key, value.path, value.version)
-      this.allDependencies.set(id, { ...value, path: pkg?.packageDir ?? value.path })
+    } else {
       await this.collectDepsRecursively(value)
     }
+  }
 
+  private async collectDepsRecursively(tree: PnpmDependency): Promise<void> {
     for (const [key, value] of Object.entries(tree.dependencies || {})) {
-      await visit(key, value)
+      await this.visitDep(key, value)
     }
     for (const [key, value] of Object.entries(tree.optionalDependencies || {})) {
-      await visit(key, value)
+      await this.visitDep(key, value)
     }
   }
 
