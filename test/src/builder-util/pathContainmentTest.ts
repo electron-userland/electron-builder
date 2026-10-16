@@ -16,7 +16,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { afterEach, vi } from "vitest"
 
-const V27_LINK = "https://www.electron.build/docs/migration/v27-breaking-changes#symlinks-that-leave-the-app-are-refused"
+const DOCS_LINK = "https://www.electron.build/docs/contents#symlinks-that-leave-the-app-are-refused"
 
 async function layout(base: string) {
   const root = path.join(base, "root")
@@ -33,13 +33,12 @@ async function expectEscapeError(promise: Promise<unknown>, expect: any) {
   )
   expect(error).toBeInstanceOf(InvalidConfigurationError)
   expect((error as NodeJS.ErrnoException).code).toBe(ERR_PATH_OUTSIDE_ROOT)
-  expect((error as Error).message).toContain("electron-builder v27")
-  expect((error as Error).message).toContain(V27_LINK)
+  expect((error as Error).message).toContain(DOCS_LINK)
   return error as Error
 }
 
-test("the docs link of the containment errors is the v27 anchor", ({ expect }) => {
-  expect(SYMLINK_CONTAINMENT_DOCS_URL).toBe(V27_LINK)
+test("the docs link of the containment errors points at the symbolic links documentation", ({ expect }) => {
+  expect(SYMLINK_CONTAINMENT_DOCS_URL).toBe(DOCS_LINK)
 })
 
 test("isPathWithin does not treat a sibling with a shared prefix as inside", ({ expect }) => {
@@ -239,7 +238,7 @@ describe.runIf(process.platform !== "win32")("copyDir containment", () => {
     await expectEscapeError(copyDir(src, root), expect)
   })
 
-  test("keeps a symlink into an allowed root and warns once, naming electron-builder v27", async ({ expect, tmpDir }) => {
+  test("keeps a symlink into an allowed root and warns once, naming the targets that refuse it", async ({ expect, tmpDir }) => {
     const base = await tmpDir.createTempDir({ prefix: "containment" })
     const { root } = await layout(base)
     const workspace = path.join(base, "workspace")
@@ -256,9 +255,9 @@ describe.runIf(process.platform !== "win32")("copyDir containment", () => {
     expect(await fs.readlink(path.join(root, "first", "shared"))).toBe(path.join(workspace, "packages", "shared"))
     expect(warn).toHaveBeenCalledTimes(1)
     const message = String(warn.mock.calls[0][1])
-    expect(message).toContain("electron-builder v27")
+    expect(message).toContain("Windows archives and installers refuse such a symlink")
     expect(message).toContain("points outside the packaged app")
-    expect(message.endsWith(`See ${V27_LINK}`)).toBe(true)
+    expect(message.endsWith(`See ${DOCS_LINK}`)).toBe(true)
   })
 })
 
@@ -320,7 +319,7 @@ describe.runIf(process.platform !== "win32")("allowExternalLinks", () => {
     const error = await expectEscapeError(copyDir(src, root, { externalLinks: await ExternalLinkPolicy.create(false, base) }), expect)
     expect(error.message).toContain(`resolves to "${path.join(await fs.realpath(outside), "secret")}"`)
     expect(error.message).toContain(`To allow it, set "fileOptions": { "allowExternalLinks": ["outside"] } (or { "allowExternalLinks": true }) in your build configuration.`)
-    expect(error.message.endsWith(`See ${V27_LINK}`)).toBe(true)
+    expect(error.message.endsWith(`See ${DOCS_LINK}`)).toBe(true)
     await expect(fs.lstat(path.join(root, "leak"))).rejects.toThrow("ENOENT")
   })
 

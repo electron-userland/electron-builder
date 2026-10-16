@@ -313,7 +313,7 @@ describe("node_module collectors", () => {
       },
       error => {
         expect(error).toBeInstanceOf(Error)
-        expect(error.message).toContain("outside the package: electron-builder v27 only packages files whose real path is inside the workspace root")
+        expect(error.message).toContain("outside the package: electron-builder only packages files whose real path is inside the workspace root")
       }
     )
   })
@@ -338,7 +338,7 @@ describe("node_module collectors", () => {
       },
       error => {
         expect(error).toBeInstanceOf(Error)
-        expect(error.message).toContain("outside the package: electron-builder v27 only packages files whose real path is inside the workspace root")
+        expect(error.message).toContain("outside the package: electron-builder only packages files whose real path is inside the workspace root")
       }
     )
   })

@@ -5,8 +5,8 @@ import { load } from "js-yaml"
 import * as path from "path"
 import type { FilesBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
 
-/** Where the v27 narrowing of followed symlinks is documented. */
-export const LINKED_FILES_DOCS_URL = "https://www.electron.build/docs/migration/v27-breaking-changes#linked-files-must-resolve-inside-the-workspace"
+/** Where the rule for files reached through symlinks is documented. */
+export const LINKED_FILES_DOCS_URL = "https://www.electron.build/docs/contents#linked-files-must-resolve-inside-the-workspace"
 
 /** What {@link getTrustedSourceRoots} needs to know about the build: `Packager` and `PlatformPackager` both have it. */
 export interface SourceRootsInfo {
@@ -99,8 +99,8 @@ async function computeTrustedSourceRoots(info: SourceRootsInfo): Promise<Array<s
  * Refuses a file of the app (packed into the asar archive or copied with `asar: false`) whose real path, through symlinks, is outside
  * every trusted source root ({@link getTrustedSourceRoots}), unless the `fileOptions.allowExternalLinks` build option (`externalLinks`) allows it.
  *
- * electron-builder <= 26 refused only some system directories (`/etc`, `/usr`, `C:\Windows`, ...) and let everything else through,
- * explicitly anything under the home and temp directories. In v27 only the workspace and the package-manager store are trusted.
+ * Only the workspace and the package-manager store are trusted: a file reached through a symlink that leads anywhere else on the build
+ * machine (the home or temp directory, a system directory) is refused.
  */
 export async function assertSourceFileInTrustedRoots(file: string, trustedRoots: ReadonlyArray<string>, externalLinks: ExternalLinkPolicy | null = null): Promise<void> {
   const resolved = await resolvePhysicalPath(file)
@@ -113,9 +113,8 @@ export async function assertSourceFileInTrustedRoots(file: string, trustedRoots:
   }
   log.error({ source: file, realPath: resolved }, "denied access to a file outside the workspace")
   throw new InvalidConfigurationError(
-    `Cannot copy file [${policy.displayPath(file)}] symlinked to file [${resolved}] outside the package: electron-builder v27 only packages files whose real path ` +
-      `is inside the workspace root (${trustedRoots[0] ?? "unknown"}) or the package-manager store; v26 also accepted anything outside system ` +
-      `directories, such as the home and temp directories. Add the linked package to the workspace (or install it from a tarball or ` +
+    `Cannot copy file [${policy.displayPath(file)}] symlinked to file [${resolved}] outside the package: electron-builder only packages files whose real path ` +
+      `is inside the workspace root (${trustedRoots[0] ?? "unknown"}) or the package-manager store. Add the linked package to the workspace (or install it from a tarball or ` +
       `the registry instead of linking it), or replace the symlink with a copy. ${await policy.hint([await outermostOutsideTrustedRoots(file, resolved, trustedRoots)])} ` +
       `See ${LINKED_FILES_DOCS_URL}`,
     "ERR_ELECTRON_BUILDER_FILE_OUTSIDE_WORKSPACE"

@@ -335,7 +335,7 @@ export async function assertCopiedSymlinksContained(
         .warn(
           { symlink: log.filePath(it.source), target: it.link, resolvesTo: resolved },
           `a ${what} symlink is kept, but it points outside the packaged app (into the workspace or the package-manager store), where it is ` +
-            `dangling on other machines. electron-builder v27 refuses such a symlink in Windows archives and installers; replace it with ` +
+            `dangling on other machines. Windows archives and installers refuse such a symlink; replace it with ` +
             `what it points to. See ${SYMLINK_CONTAINMENT_DOCS_URL}`
         )
       continue
@@ -347,7 +347,7 @@ export async function assertCopiedSymlinksContained(
     await unlinkIfExists(it.file)
     throw new InvalidConfigurationError(
       `refusing to copy the ${what} symlink "${policy.displayPath(it.source)}" -> "${it.link}": in the output it resolves to "${resolved}", ` +
-        `which is outside "${policy.displayPath(containment.root)}". electron-builder v27 only recreates a symlink that stays inside the output ` +
+        `which is outside "${policy.displayPath(containment.root)}". electron-builder only recreates a symlink that stays inside the output ` +
         `(or leads into the workspace or the package-manager store): replace the symlink with what it points to, or exclude it with a "!" ` +
         `pattern. ${await policy.hint([resolved])} See ${SYMLINK_CONTAINMENT_DOCS_URL}`,
       ERR_PATH_OUTSIDE_ROOT

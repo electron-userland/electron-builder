@@ -4,10 +4,10 @@ import { log } from "./log.js"
 import { InvalidConfigurationError } from "./util.js"
 
 /**
- * Where the v27 change that checks copied files and symlinks by their real path is documented. Messages
- * end with this link so that a build which starts failing explains itself.
+ * Where the checks of copied files and symlinks by their real path are documented. Messages
+ * end with this link so that a refused build explains itself.
  */
-export const SYMLINK_CONTAINMENT_DOCS_URL = "https://www.electron.build/docs/migration/v27-breaking-changes#symlinks-that-leave-the-app-are-refused"
+export const SYMLINK_CONTAINMENT_DOCS_URL = "https://www.electron.build/docs/contents#symlinks-that-leave-the-app-are-refused"
 
 /** The `code` of every error thrown here, so that callers and tests can tell it apart from other configuration errors. */
 export const ERR_PATH_OUTSIDE_ROOT = "ERR_ELECTRON_BUILDER_PATH_OUTSIDE_ROOT"
@@ -288,7 +288,7 @@ export class WriteContainment {
       throw new InvalidConfigurationError(
         `refusing to write the ${this.what} "${displayPath(dest)}": the directory it is written into resolves to "${resolved}" through a symlink, ` +
           `which is outside "${displayPath(this.root)}". A symlink among the copied files (app directory, extraResources/extraFiles source, node_modules) ` +
-          `or one already in the output points outside it. electron-builder v27 checks every write by its real path: replace the symlink with ` +
+          `or one already in the output points outside it. electron-builder writes only inside the output directory, checked by real path: replace the symlink with ` +
           `the directory it points to, or exclude it. See ${SYMLINK_CONTAINMENT_DOCS_URL}`,
         ERR_PATH_OUTSIDE_ROOT
       )
@@ -392,8 +392,8 @@ export async function assertNoSymlinkLeaves(dir: string, consumer: string, exter
   }
   throw new InvalidConfigurationError(
     `cannot build ${consumer}: it stores the files symlinks point to, and ${escaping.length === 1 ? "a symlink leads" : "symlinks lead"} outside ` +
-      `"${policy.displayPath(dir)}": ${shown.join(", ")}. Files from elsewhere on the build machine would be packaged. electron-builder v27 refuses ` +
-      `this: replace the symlink with a copy of what it points to, or exclude it. ${await policy.hint(listed.map(it => it.resolved))} ` +
+      `"${policy.displayPath(dir)}": ${shown.join(", ")}. Files from elsewhere on the build machine would be packaged, so this is refused: ` +
+      `replace the symlink with a copy of what it points to, or exclude it. ${await policy.hint(listed.map(it => it.resolved))} ` +
       `See ${SYMLINK_CONTAINMENT_DOCS_URL}`,
     ERR_PATH_OUTSIDE_ROOT
   )

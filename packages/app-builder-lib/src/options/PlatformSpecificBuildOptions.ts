@@ -145,7 +145,7 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
   /**
    * Whether symlinks among the packaged files may lead outside the app, the workspace and the package-manager store.
    *
-   * Only the build configuration is trusted, not the files it packages: by default (`false`) electron-builder v27 refuses
+   * Only the build configuration is trusted, not the files it packages: by default (`false`) electron-builder refuses
    * - a file of the app (`app.asar` or `asar: false`) that is a symlink, or is reached through one, whose real path is outside the workspace
    *   root, the project and app directories and the package-manager store (`npm link`, a `file:../lib` dependency outside the repository,
    *   a symlink into the home or temp directory),
@@ -160,7 +160,7 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
    * - A list of paths, relative to the project directory or absolute, allows a symlink only when the real path of what it points to is
    *   inside the real path of one of them (e.g. `["../shared-lib"]`). A listed path that does not exist fails the build.
    *
-   * An allowed symlink is packaged as before v27: what it points to is copied (or stored by the archive), and a copied symlink is kept
+   * An allowed symlink is packaged: what it points to is copied (or stored by the archive), and a copied symlink is kept
    * as it is. A warning is logged once when this allows a symlink.
    *
    * Set it under `fileOptions`, at the configuration root or per platform; a platform's value (`false` included) replaces the root one
@@ -171,6 +171,7 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
    *
    * This does not allow writing through a symlink: a copy or a file written by electron-builder whose destination leads outside the
    * output directory through a symlink is always refused, and a symlink at such a file name is replaced, never followed.
+   * See [Symbolic links](https://www.electron.build/docs/contents#symbolic-links).
    * @default false
    */
   allowExternalLinks?: boolean | Array<string> | null

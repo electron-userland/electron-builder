@@ -97,8 +97,6 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`allowMissingDependencies` now fails the build](#allowmissingdependencies-now-fails-the-build) | — | A missing production dependency is a hard error; set `allowMissingDependencies: true` to restore v26 warn-only behavior |
 | [Native binaries are verified against the target](#native-binaries-are-verified-against-the-target) | — | A `.node` addon built for another platform/arch now fails the build; set `nativeModules.verifyNativeBinaries: "warn"` (or `false`) to package anyway |
 | [`extraFiles` / `extraResources` `to` is validated](#extrafiles--extraresources-destinations-are-validated) | — | An absolute `to`, or one escaping the output dir, now throws |
-| [Symlinks that leave the app are refused](#symlinks-that-leave-the-app-are-refused) | — | A copied symlink that leads outside the app (or a write through one) now throws; Windows archives/installers refuse any symlink that leaves the app. Replace the symlink with what it points to, exclude it, or opt in with `fileOptions.allowExternalLinks` (writes through a symlink stay refused) |
-| [Linked files must resolve inside the workspace](#linked-files-must-resolve-inside-the-workspace) | — | A packaged file whose real path is outside the workspace and the package-manager store now throws (v26 allowed anything outside system directories, including home and temp). Add the linked package to the workspace, install it from a tarball/registry, or opt in with `fileOptions.allowExternalLinks` |
 | [Windows `publisherName` validated against the certificate](#windows-publishername-is-validated-against-the-signing-certificate) | — | Update `publisherName` after a certificate rotation, or drop it. Custom `win.sign.sign` hooks (even with a certificate configured) and certificates without a CN now **require** it when `app-update.yml` is written (or set `win.verifyUpdateCodeSignature: false` if your updates are not Authenticode-signed) |
 | [Custom Windows signing hook moved to `win.sign.sign`](#custom-windows-signing-hooks-move-to-winsignsign) | ✓ | `win.signtoolOptions.sign` moves with the rest of `signtoolOptions` to `win.sign.sign` |
 | [macOS names are no longer NFD-normalized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | Update tooling that matches the normalized on-disk bundle filename |
@@ -670,8 +668,6 @@ The values themselves are unchanged (glob strings and `FileSet` objects), and so
 
 `flatpak.files` (a list of `[source, destination]` pairs) is a separate Flatpak option and is not affected.
 
-`fileOptions` also holds `allowExternalLinks`, which is new in v27 (see [Allowing external links](#allowing-external-links)). It has no flat form: a top-level `allowExternalLinks` is an unknown configuration property, like any other.
-
 **Code that reads the flat keys from the loaded configuration** (a hook reading `context.packager.config.files` or `context.packager.platformOptions.extraResources`, a `build()` caller reading `buildResult.configuration.extraFiles`) still gets the value in v27: the loaded configuration and its platform sections forward reads of `files`, `extraResources` and `extraFiles` to `fileOptions`, logging one warning per key. These forwarding properties are not enumerable, so they never appear in the effective configuration (`builder-effective-config.yaml`), in `JSON.stringify` output or in `Object.keys`. Assigning one of them (for example `context.packager.config.files = […]` in a hook) throws a configuration error naming the `fileOptions` property to set instead. Update such code to read and write `fileOptions.files` / `fileOptions.extraResources` / `fileOptions.extraFiles`.
 
 ---
@@ -1011,48 +1007,6 @@ Relatedly, `nativeModules.buildDependenciesFromSource` no longer skips the nativ
 A `to` path that is absolute (POSIX, drive-letter, or UNC) or that escapes the build output directory now throws an `InvalidConfigurationError`. v26 accepted these and copied files onto the build machine outside the packaged app.
 
 **Action is required only if** a build starts failing here — make the `to` path relative and keep it inside the output directory.
-
-### Symlinks that leave the app are refused {#symlinks-that-leave-the-app-are-refused}
-
-Only the build configuration is trusted; the files electron-builder copies (the app directory, `extraResources` / `extraFiles` / `extraDistFiles` sources, `node_modules`) and the symlinks among them are not. v26 checked destinations by their path only, so a symlink among copied files could make a later write, or a whole archive, reach elsewhere on the build machine. v27 checks by real path when it writes, and fails with `InvalidConfigurationError` (code `ERR_ELECTRON_BUILDER_PATH_OUTSIDE_ROOT`) when:
-
-- **a copy would be written through a symlink that leads out of the app output directory** — e.g. the app directory (`asar: false`) puts a `resources/data -> /somewhere` symlink in place and `extraResources` then copies into `data/`. The same applies to the files electron-builder writes itself after the copies (`app-update.yml`, `package-type`, `apparmor-profile`, NSIS `elevate.exe`, the snap `command.sh`, Squirrel's `Squirrel.exe` and execution stub). A symlink *at* such a file name is now replaced instead of followed.
-- **a copied symlink would lead outside the output.** `extraResources` / `extraFiles` keep a symlink as it is; v27 keeps it only when it stays inside the app output directory, or leads into the workspace or the package-manager store — in that last case it is dangling on other machines, and the build warns once: `a copied symlink is kept, but it points outside the packaged app …`. With `asar: false`, a symlink in the app directory that leaves it is still copied as the file it points to (unchanged, see [the next section](#linked-files-must-resolve-inside-the-workspace)), and one that is kept must stay inside the app — including through other symlinks (`x/a -> up/..` where `x/up -> ..`).
-- **a Windows archive or installer would store files from outside the app.** The Windows `zip` / `7z` targets, the NSIS app package, AppX/MSIX and Squirrel.Windows store what a symlink points to rather than the symlink. A symlink in the app output directory that leads outside it now fails these targets instead of packaging the outside files.
-
-**Action is required only if** a build fails here — replace the symlink with a copy of what it points to (or point it at a path inside the app), or exclude it from the copy with a `"!"` pattern. If the symlink is intended, opt in with [`fileOptions.allowExternalLinks`](#allowing-external-links): the error names the symlink, where it resolves to and the entry to add. Writing *through* a symlink (the first bullet) is always refused; `allowExternalLinks` does not change that.
-
-### Linked files must resolve inside the workspace {#linked-files-must-resolve-inside-the-workspace}
-
-A file of the app that is a symlink, or is reached through one (a linked package in `node_modules`, a symlinked directory in the app directory), is packaged only when its real path is inside:
-
-- the workspace root (the project directory when there is no workspace), the project directory or the app directory, or
-- the package-manager store (pnpm's `storeDir` and `virtualStoreDir`, read from `node_modules/.modules.yaml`, which covers `enableGlobalVirtualStore`).
-
-v26 refused only some system directories (`/etc`, `/usr`, `/var`, `C:\Windows`, …) and allowed everything else, explicitly anything under the home and temp directories — so `npm link`, a `file:../lib` dependency outside the project or a symlink to `~/secrets` was packaged. v27 applies this to `asar: false` builds as well (v26 checked only files packed into `app.asar`). Anything else now fails the build with `InvalidConfigurationError` (code `ERR_ELECTRON_BUILDER_FILE_OUTSIDE_WORKSPACE`): `Cannot copy file [...] symlinked to file [...] outside the package: electron-builder v27 only packages files whose real path is inside the workspace root ...`. Workspace packages linked by pnpm, yarn, npm or bun workspaces ([#675](https://github.com/electron-userland/electron-builder/issues/675)) are inside the workspace and keep working.
-
-**Action is required only if** a build fails here — add the linked package to the workspace (`pnpm-workspace.yaml`, `workspaces` in `package.json`), or install it from a tarball (`npm pack`) or the registry instead of linking it, or replace the symlink with a copy. If packaging it from where it is is intended, opt in with [`fileOptions.allowExternalLinks`](#allowing-external-links).
-
-#### Allowing external links {#allowing-external-links}
-
-`allowExternalLinks`, under [`fileOptions`](#file-options-fileoptions) at the top level or per platform (`mac.fileOptions` / `win.fileOptions` / `linux.fileOptions`), is the escape hatch for both checks above. It is new in v27, so it exists only there: there is no flat `allowExternalLinks` key. It is `false` by default, because a symlink planted in a dependency or a copied directory could otherwise package files from elsewhere on the build machine (SSH keys, credentials):
-
-- `true` allows any symlink to lead outside the app, the workspace and the package-manager store.
-- A list of paths, relative to the project directory or absolute, allows a symlink only when the real path of what it points to is inside (the real path of) one of them. A listed path that does not exist fails the build.
-
-```json
-{
-  "build": {
-    "fileOptions": {
-      "allowExternalLinks": ["../shared-lib"]
-    }
-  }
-}
-```
-
-A platform's value replaces the top-level one (it is not added to it), so `"linux": { "fileOptions": { "allowExternalLinks": true } }` allows any link for Linux builds only, and `false` there turns the top-level list off for that platform.
-
-An allowed symlink is packaged the way v26 did (what it points to is copied or stored by the archive; a copied symlink is kept as it is), and the build warns once that `fileOptions.allowExternalLinks` allowed a symlink. The refusal message suggests the entry to add, e.g. `To allow it, set "fileOptions": { "allowExternalLinks": ["/home/me/src/shared-lib"] } (or { "allowExternalLinks": true }) in your build configuration.` It does not allow writing through a symlink: a copy, or a file electron-builder writes (`app-update.yml`, ...), whose destination leads out of the output directory through a symlink is always refused.
 
 ### Windows `publisherName` is validated against the signing certificate
 

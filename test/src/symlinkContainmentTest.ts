@@ -20,7 +20,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { afterEach, vi } from "vitest"
 
-const SYMLINK_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#symlinks-that-leave-the-app-are-refused"
+const SYMLINK_DOCS = "https://www.electron.build/docs/contents#symlinks-that-leave-the-app-are-refused"
 const noMacro = (it: string) => it
 const genericFeed: GenericServerOptions = { provider: "generic", url: "https://example.com" }
 
@@ -113,7 +113,7 @@ describe.runIf(process.platform !== "win32")("app files without asar (copyAppFil
     expect(await fs.readFile(path.join(destination, "main.js"), "utf8")).toBe("main")
   })
 
-  test("refuses a file whose real path is outside the workspace, naming electron-builder v27", async ({ expect, tmpDir }) => {
+  test("refuses a file whose real path is outside the workspace, stating the rule", async ({ expect, tmpDir }) => {
     const { workspace, appDir, resourcesDir, outside } = await createProject(await tmpDir.createTempDir({ prefix: "symlink-containment" }))
     await fs.writeFile(path.join(outside, "secret"), "secret")
     await fs.symlink(path.join(outside, "secret"), path.join(appDir, "leak.txt"))
@@ -124,7 +124,7 @@ describe.runIf(process.platform !== "win32")("app files without asar (copyAppFil
     )
     expect(error).toBeInstanceOf(InvalidConfigurationError)
     expect(error.message).toContain("outside the package")
-    expect(error.message).toContain("electron-builder v27")
+    expect(error.message).toContain("electron-builder only packages files whose real path is inside the workspace root")
     expect(error.message.endsWith(`See ${LINKED_FILES_DOCS_URL}`)).toBe(true)
     await expect(fs.lstat(path.join(resourcesDir, "app", "leak.txt"))).rejects.toThrow("ENOENT")
   })
@@ -174,7 +174,7 @@ describe.runIf(process.platform !== "win32")("trusted source roots (asar and non
     await fs.mkdir(path.join(workspace, "node_modules"), { recursive: true })
     await fs.writeFile(path.join(workspace, "node_modules", ".modules.yaml"), JSON.stringify({ storeDir: path.join(store, "v11"), virtualStoreDir: ".pnpm" }))
     await fs.symlink(path.join(store, "v11", "links", "dep"), path.join(workspace, "node_modules", "dep"))
-    // v26 allowed anything under the home and temp directories; `outside` stands for such a directory
+    // `outside` stands for anywhere else on the build machine, such as the home or temp directory
     await fs.writeFile(path.join(outside, "file"), "x")
     await fs.symlink(path.join(outside, "file"), path.join(appDir, "home-file"))
 
@@ -226,7 +226,7 @@ describe.runIf(process.platform !== "win32")("archives that dereference symlinks
     const error = await rejection(archive("zip", path.join(path.dirname(appOutDir), "app.zip"), appOutDir, { withoutDir: true, preserveSymlinks: false }))
     expect(error).toBeInstanceOf(InvalidConfigurationError)
     expect(error.message).toContain('cannot build the zip archive "app.zip"')
-    expect(error.message).toContain("electron-builder v27")
+    expect(error.message).toContain("Files from elsewhere on the build machine would be packaged, so this is refused")
     expect(error.message).toContain(SYMLINK_DOCS)
   })
 })
@@ -258,7 +258,7 @@ describe.runIf(process.platform !== "win32")("allowExternalLinks", () => {
     expect((error as NodeJS.ErrnoException).code).toBe("ERR_ELECTRON_BUILDER_FILE_OUTSIDE_WORKSPACE")
     expect(error.message).toContain(`Cannot copy file [${path.join("app", "node_modules", "lib", "src", "index.js")}]`)
     expect(error.message).toContain(`symlinked to file [${path.join(await fs.realpath(lib), "src", "index.js")}]`)
-    expect(error.message).toContain("electron-builder v27")
+    expect(error.message).toContain("electron-builder only packages files whose real path is inside the workspace root")
     // the whole linked package, not only the directory of the file checked first
     expect(error.message).toContain(
       `To allow it, set "fileOptions": { "allowExternalLinks": ${JSON.stringify([await fs.realpath(lib)])} } (or { "allowExternalLinks": true }) in your build configuration.`
