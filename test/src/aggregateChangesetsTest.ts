@@ -104,8 +104,9 @@ function version(dir: string) {
 }
 
 const rootChangelog = (dir: string) => fs.readFileSync(path.join(dir, "CHANGELOG.md"), "utf8")
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 // a release heading is dated the day the script wrote it
-const dateOf = (dir: string, version: string) => new RegExp(`^# \\[${version.replace(/\./g, "\\.")}\\]\\(.*\\) \\((\\d{4}-\\d{2}-\\d{2})\\)$`, "m").exec(rootChangelog(dir))?.[1]
+const dateOf = (dir: string, version: string) => new RegExp(`^# \\[${escapeRegExp(version)}\\]\\(.*\\) \\((\\d{4}-\\d{2}-\\d{2})\\)$`, "m").exec(rootChangelog(dir))?.[1]
 const notes = (dir: string, tag: string) => aggregate(dir, "--notes", tag).stdout
 
 describe("aggregate-changesets", () => {
