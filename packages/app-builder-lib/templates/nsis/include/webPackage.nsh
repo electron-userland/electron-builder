@@ -49,18 +49,18 @@
     StrCpy $packageArch "32"
   ${endif}
 
-  # Only an interactive run passes /RESUME: after a connection error inetc then asks to reconnect and retry, a prompt without a
-  # silent default. A silent run gets the error back and ends below.
+  # Only an interactive run passes /RESUME: after a connection error NScurl will resume the transfer on retry.
+  # A silent run gets the error back and ends below.
   download:
   ${if} ${Silent}
-    inetc::get /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+    NScurl::http GET "$packageUrl" "$PLUGINSDIR\package.7z" /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" /SILENT /CANCEL /END
   ${else}
-    inetc::get /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+    NScurl::http GET "$packageUrl" "$PLUGINSDIR\package.7z" /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" /RESUME /CANCEL /END
   ${endif}
   Pop $0
 
   # A cancelled download ends the installation with exit code 2, like the other aborts of the web installer.
-  ${if} $0 == "Cancelled"
+  ${if} $0 == "Cancel"
     SetErrorLevel 2
     Quit
   ${endif}
@@ -68,14 +68,14 @@
   ${if} $0 != "OK"
     # try without proxy
     ${if} ${Silent}
-      inetc::get /NOPROXY /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+      NScurl::http GET "$packageUrl" "$PLUGINSDIR\package.7z" /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" /PROXY "none" /SILENT /CANCEL /END
     ${else}
-      inetc::get /NOPROXY /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+      NScurl::http GET "$packageUrl" "$PLUGINSDIR\package.7z" /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" /PROXY "none" /RESUME /CANCEL /END
     ${endif}
     Pop $0
   ${endif}
 
-  ${if} $0 == "Cancelled"
+  ${if} $0 == "Cancel"
     SetErrorLevel 2
     Quit
   ${elseif} $0 != "OK"

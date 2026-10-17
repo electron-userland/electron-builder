@@ -31,6 +31,9 @@
 !ifndef ___STDUTILS__NSH___
 !define ___STDUTILS__NSH___
 
+!include "FileFunc.nsh"
+!include "LogicLib.nsh"
+
 !define StdUtils.Time             '!insertmacro _StdU_Time'          #time(), as in C standard library
 !define StdUtils.GetMinutes       '!insertmacro _StdU_GetMinutes'    #GetSystemTimeAsFileTime(), returns the number of minutes
 !define StdUtils.GetHours         '!insertmacro _StdU_GetHours'      #GetSystemTimeAsFileTime(), returns the number of hours
@@ -312,16 +315,67 @@
 !macroend
 
 !macro _StdU_GetParameter out name default
-	push `${name}`
-	push `${default}`
-	StdUtils::GetParameter /NOUNLOAD
-	pop ${out}
+	Push $0
+	Push $1
+	${GetParameters} $0
+	ClearErrors
+	${GetOptions} $0 "--${name}=" $1
+	${If} ${Errors}
+		ClearErrors
+		${GetOptions} $0 "--${name}" $1
+		${If} ${Errors}
+			ClearErrors
+			${GetOptions} $0 "/${name}=" $1
+			${If} ${Errors}
+				ClearErrors
+				${GetOptions} $0 "/${name}" $1
+				${If} ${Errors}
+					ClearErrors
+					${GetOptions} $0 "-${name}=" $1
+					${If} ${Errors}
+						ClearErrors
+						${GetOptions} $0 "-${name}" $1
+					${EndIf}
+				${EndIf}
+			${EndIf}
+		${EndIf}
+	${EndIf}
+	${If} ${Errors}
+		StrCpy $0 `${default}`
+	${Else}
+		StrCpy $0 $1 1
+		${If} $0 == "="
+			StrCpy $1 $1 "" 1
+		${EndIf}
+		StrCpy $0 $1
+	${EndIf}
+	Pop $1
+	Exch $0
+	Pop ${out}
 !macroend
 
 !macro _StdU_TestParameter out name
-	push `${name}`
-	StdUtils::TestParameter /NOUNLOAD
-	pop ${out}
+	Push $0
+	Push $1
+	${GetParameters} $0
+	ClearErrors
+	${GetOptions} $0 "--${name}" $1
+	${If} ${Errors}
+		ClearErrors
+		${GetOptions} $0 "/${name}" $1
+		${If} ${Errors}
+			ClearErrors
+			${GetOptions} $0 "-${name}" $1
+		${EndIf}
+	${EndIf}
+	${IfNot} ${Errors}
+		StrCpy $0 "true"
+	${Else}
+		StrCpy $0 "false"
+	${EndIf}
+	Pop $1
+	Exch $0
+	Pop ${out}
 !macroend
 
 !macro _StdU_ParameterCnt out
@@ -336,9 +390,7 @@
 !macroend
 
 !macro _StdU_GetAllParams out truncate
-	push `${truncate}`
-	StdUtils::GetAllParameters /NOUNLOAD
-	pop ${out}
+	${GetParameters} ${out}
 !macroend
 
 !macro _StdU_GetRealOSVer out_major out_minor out_spack
@@ -404,9 +456,7 @@
 !macroend
 
 !macro _StdU_GetParentPath out path
-	push `${path}`
-	StdUtils::GetParentPath /NOUNLOAD
-	pop ${out}
+	${GetParent} `${path}` ${out}
 !macroend
 
 !macro _StdU_SplitPath out_drive out_dir out_fname out_ext path
