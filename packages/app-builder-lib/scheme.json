@@ -1458,6 +1458,23 @@
           "default": false,
           "description": "Whether symlinks among the packaged files may lead outside the app, the workspace and the package-manager store.\n\nOnly the build configuration is trusted, not the files it packages: by default (`false`) electron-builder refuses\n- a file of the app (`app.asar` or `asar: false`) that is a symlink, or is reached through one, whose real path is outside the workspace\n  root, the project and app directories and the package-manager store (`npm link`, a `file:../lib` dependency outside the repository,\n  a symlink into the home or temp directory),\n- a copied symlink that resolves outside the app: one in `extraResources` / `extraFiles` (other than into the workspace or the store),\n  one kept by an `asar: false` copy, and any symlink leaving the app in a target that stores what symlinks point to (Windows `zip` / `7z`,\n  the NSIS app package, AppX/MSIX, Squirrel.Windows).\n\nWithout these checks, a symlink planted in a dependency or a copied directory could package files from elsewhere on the build machine (SSH keys,\ncredentials) into the artifact, which is why this is off by default.\n\n- `true` allows any such symlink.\n- A list of paths, relative to the project directory or absolute, allows a symlink only when the real path of what it points to is\n  inside the real path of one of them (e.g. `[\"../shared-lib\"]`). A listed path that does not exist fails the build.\n\nAn allowed symlink is packaged: what it points to is copied (or stored by the archive), and a copied symlink is kept\nas it is. A warning is logged once when this allows a symlink.\n\nSet it under `fileOptions`, at the configuration root or per platform; a platform's value (`false` included) replaces the root one\nrather than being added to it:\n```json\n{ \"fileOptions\": { \"allowExternalLinks\": [\"../shared-lib\"] }, \"linux\": { \"fileOptions\": { \"allowExternalLinks\": true } } }\n```\n\nThis does not allow writing through a symlink: a copy or a file written by electron-builder whose destination leads outside the\noutput directory through a symlink is always refused, and a symlink at such a file name is replaced, never followed.\nSee [Symbolic links](https://www.electron.build/docs/contents#symbolic-links)."
         },
+        "excludedExts": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [
+            "default"
+          ],
+          "description": "File extensions (without the leading dot) excluded from the packaged app files and the copied `node_modules`.\n\n- `\"default\"` expands to the built-in list of excluded extensions (`iml`, `hprof`, `orig`, `pyc`, `pyo`, `rbc`, `swp`, `csproj`, `sln`,\n  `slnx`, `suo`, `xproj`, `cc`, `d.ts`, `mk`, `a`, `o`, `obj`, `forge-meta`, `pdb`).\n- Any other entry adds that extension, e.g. `\"map\"`.\n- An entry starting with `!` removes that extension from the others listed, e.g. `\"!pdb\"` to keep `.pdb` (Program Database)\n  symbol files for Windows crash-dump analysis.\n\nThe list replaces the defaults: list `\"default\"` to extend them rather than replace them. `null` (or omitting it) is `[\"default\"]`,\nand an empty array `[]` excludes no extension.\n\n```json\n{ \"fileOptions\": { \"excludedExts\": [\"default\", \"!pdb\", \"map\"] } }\n```\n\nSet it under `fileOptions`, at the configuration root or per platform; a platform's value replaces the root one rather than being added to it.\nA `files` glob that names a file with an excluded extension concretely (e.g. `**\\/*.obj`) still includes it in the app files."
+        },
         "extraFiles": {
           "anyOf": [
             {
@@ -9758,11 +9775,6 @@
         "electron-builder"
       ],
       "description": "Names of production dependencies that are excluded from the copied `node_modules`, even if they\nare declared in the `dependencies` section of `package.json`.\n\nelectron-builder copies the resolved production dependency tree into the app. Some packages —\nnotably `electron` — are already provided another way (the Electron runtime is embedded\nseparately), so copying them would just duplicate what is already there. Such packages are\nexcluded from the copy rather than rejected: they remain valid production dependencies for\ntooling purposes (e.g. SBOM, license, and vulnerability tracking) without being shipped twice.\n\nOnly dependencies **declared by the app itself** are eligible: a listed name and the transitive\ndependencies required *only* by it are dropped, while anything also required by another (kept)\nproduction dependency stays bundled. A matching name that appears solely as a transitive\ndependency of a kept package is never excluded. Note that a kept package which `require()`s an\nexcluded name at runtime *without declaring it* (relying on hoisting) will fail with\n`MODULE_NOT_FOUND` — declare such a dependency properly or remove the name from this list.\n\nMatching is by the dependency name as declared in `package.json`: an npm alias\n(`\"custom-electron\": \"npm:electron@^30.0.0\"`) is matched by its alias key (`custom-electron`),\nnever by the underlying package name.\n\nOverriding this option **replaces** the default list, so include `electron` and `electron-builder`\nunless you intend to ship them. The most common reason to override is to *add* a dependency that a\nbundler (Vite, webpack, esbuild, …) already inlines into your app code: keep it in `dependencies`\nso SBOM/license tooling still sees it, and list it here so a duplicate copy is not packaged — e.g.\n`[\"electron\", \"electron-builder\", \"react\", \"react-dom\"]`. Removing a default name keeps that\npackage in the copied `node_modules`. Setting the option to `null` (or omitting it) applies the\ndefault list; to disable exclusion entirely, set it to an empty array `[]`. Each excluded package\nis logged once during packaging."
-    },
-    "includePdb": {
-      "default": false,
-      "description": "Whether to include `.pdb` (Program Database) symbol files in the output.\n\nPDB files enable Windows crash-dump analysis but significantly increase artifact size. Enable\nfor internal builds where you want symbol information; disable for public distribution.",
-      "type": "boolean"
     },
     "linux": {
       "anyOf": [

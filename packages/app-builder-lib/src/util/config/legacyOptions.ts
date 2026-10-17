@@ -206,6 +206,17 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
   // ── Renamed / restructured: misc root ─────────────────────────────────────
   { key: "helper-bundle-id", replacement: "mac.helperBundleId", autoMigrated: true, severity: "error", anchor: "buildhelper-bundle-id" },
   {
+    key: "includePdb",
+    replacement: "fileOptions.excludedExts",
+    autoMigrated: true,
+    severity: "error",
+    detail:
+      "`.pdb` symbol files are now one of the extensions excluded by default, so the boolean is replaced by the list of excluded extensions. " +
+      '`includePdb: true` becomes `"fileOptions": { "excludedExts": ["default", "!pdb"] }` (the default extensions except `pdb`); ' +
+      "`includePdb: false` was the default and is removed with no replacement.",
+    anchor: "includepdb-fileoptionsexcludedexts",
+  },
+  {
     key: "noMsi",
     parent: ["squirrelWindows"],
     replacement: "squirrelWindows.msi",

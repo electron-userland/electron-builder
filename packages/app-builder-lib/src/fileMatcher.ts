@@ -65,7 +65,7 @@ export const DEFAULT_EXCLUDED_NAMES: ReadonlyArray<string> = [
   "electron-builder.env",
 ]
 
-// File extensions (without leading dot) excluded by default from the packaged app.
+// File extensions (without leading dot) excluded by default from the packaged app, the `"default"` entry of `fileOptions.excludedExts`.
 export const DEFAULT_EXCLUDED_EXTENSIONS: ReadonlyArray<string> = [
   "iml",
   "hprof",
@@ -87,7 +87,52 @@ export const DEFAULT_EXCLUDED_EXTENSIONS: ReadonlyArray<string> = [
   "o",
   "obj",
   "forge-meta",
+  "pdb",
 ]
+
+// The `fileOptions.excludedExts` entry that expands to DEFAULT_EXCLUDED_EXTENSIONS.
+const DEFAULT_EXCLUDED_EXTENSIONS_ENTRY = "default"
+
+// An extension is spliced into a `!**/*.{…}` glob, so it may only hold characters that are literal there.
+const EXTENSION_PATTERN = /^[\w-]+(\.[\w-]+)*$/
+
+/**
+ * The file extensions (without leading dot) excluded from the app files and the copied `node_modules`, from the
+ * `fileOptions.excludedExts` build option: the platform-level value (`mac.fileOptions.excludedExts`, ...) when it is set,
+ * otherwise the root one, otherwise `["default"]`. See `FilesBuildOptions.excludedExts`.
+ */
+export function resolveExcludedExtensions(config: Pick<Configuration, "fileOptions">, platformOptions: PlatformSpecificBuildOptions | Nullish): Array<string> {
+  const entries = platformOptions?.fileOptions?.excludedExts ?? config.fileOptions?.excludedExts ?? [DEFAULT_EXCLUDED_EXTENSIONS_ENTRY]
+  const excluded = new Set<string>()
+  const removed = new Set<string>()
+  for (const entry of entries) {
+    const isRemoval = entry.startsWith("!")
+    const extension = (isRemoval ? entry.substring(1) : entry).replace(/^\./, "")
+    if (extension === DEFAULT_EXCLUDED_EXTENSIONS_ENTRY) {
+      if (isRemoval) {
+        throw new InvalidConfigurationError(`"${entry}" in \`fileOptions.excludedExts\` is not supported: leave "default" out of the list to not exclude the default extensions.`)
+      }
+      DEFAULT_EXCLUDED_EXTENSIONS.forEach(it => excluded.add(it))
+    } else if (!EXTENSION_PATTERN.test(extension)) {
+      throw new InvalidConfigurationError(
+        `"${entry}" in \`fileOptions.excludedExts\` is not a file extension: write the extension without a dot or glob, e.g. "pdb", or "!pdb" to remove it from the excluded ones.`
+      )
+    } else if (isRemoval) {
+      removed.add(extension)
+    } else {
+      excluded.add(extension)
+    }
+  }
+
+  for (const extension of removed) {
+    if (!excluded.has(extension)) {
+      log
+        .once(`excluded-exts-removal:${extension}`)
+        .warn(`"!${extension}" in \`fileOptions.excludedExts\` has no effect: "${extension}" is not otherwise excluded. List "default" too to exclude the default extensions except "${extension}".`)
+    }
+  }
+  return [...excluded].filter(it => !removed.has(it))
+}
 
 // Hard cap on the number of strings a single pattern may expand to. Real opt-in patterns expand to a
 // handful (`{obj,gltf,glb}`); this bound makes the expansion provably finite so a pathological pattern
@@ -153,15 +198,18 @@ function splitTopLevel(value: string): Array<string> {
 }
 
 /**
- * Determines which default-excluded extensions and names a user has explicitly opted back in to via
- * their `files` patterns, so the corresponding defaults are not re-applied.
+ * Determines which excluded extensions (`excludedExtensions`, see {@link resolveExcludedExtensions}) and default-excluded
+ * names a user has explicitly opted back in to via their `files` patterns, so the corresponding exclusions are not re-applied.
  *
- * A default is treated as opted back in only when a non-negated pattern references it concretely:
+ * An exclusion is treated as opted back in only when a non-negated pattern references it concretely:
  * an extension when a pattern's basename ends with `.<ext>` (e.g. `**\/*.obj`, `assets/*.{obj,gltf}`,
  * `**\/*.d.ts`); a name when any path segment equals it (e.g. `**\/.github/**`, `**\/yarn.lock`).
  * Broad patterns such as `**\/*` reference nothing concrete and therefore opt nothing in.
  */
-export function collectExplicitReincludes(patterns: ReadonlyArray<string>): { extensions: Set<string>; names: Set<string> } {
+export function collectExplicitReincludes(
+  patterns: ReadonlyArray<string>,
+  excludedExtensions: ReadonlyArray<string> = DEFAULT_EXCLUDED_EXTENSIONS
+): { extensions: Set<string>; names: Set<string> } {
   const segments = new Set<string>()
   const basenames: Array<string> = []
   for (const pattern of patterns) {
@@ -177,23 +225,21 @@ export function collectExplicitReincludes(patterns: ReadonlyArray<string>): { ex
     }
   }
 
-  const extensions = new Set(DEFAULT_EXCLUDED_EXTENSIONS.filter(ext => basenames.some(name => name.endsWith(`.${ext}`))))
+  const extensions = new Set(excludedExtensions.filter(ext => basenames.some(name => name.endsWith(`.${ext}`))))
   const names = new Set(DEFAULT_EXCLUDED_NAMES.filter(name => segments.has(name)))
   return { extensions, names }
 }
 
 /**
- * Builds the trailing list of default ignore globs appended to the main app file matcher. Extensions
- * and names the user has explicitly re-included (see {@link collectExplicitReincludes}) are omitted,
- * so a `files` entry like `**\/*.obj` overrides the matching built-in exclusion.
+ * Builds the trailing list of default ignore globs appended to the main app file matcher, excluding `excludedExtensions`
+ * (see {@link resolveExcludedExtensions}) and the default-excluded names. Extensions and names the user has explicitly
+ * re-included (see {@link collectExplicitReincludes}) are omitted, so a `files` entry like `**\/*.obj` overrides the
+ * matching exclusion.
  */
-export function getDefaultIgnoredPatterns(userPatterns: ReadonlyArray<string>, includePdb: boolean): Array<string> {
-  const reincluded = collectExplicitReincludes(userPatterns)
+export function getDefaultIgnoredPatterns(userPatterns: ReadonlyArray<string>, excludedExtensions: ReadonlyArray<string> = DEFAULT_EXCLUDED_EXTENSIONS): Array<string> {
+  const reincluded = collectExplicitReincludes(userPatterns, excludedExtensions)
 
-  const extensions = DEFAULT_EXCLUDED_EXTENSIONS.filter(ext => !reincluded.extensions.has(ext))
-  if (!includePdb) {
-    extensions.push("pdb")
-  }
+  const extensions = excludedExtensions.filter(ext => !reincluded.extensions.has(ext))
   const names = DEFAULT_EXCLUDED_NAMES.filter(name => !reincluded.names.has(name))
 
   const patterns: Array<string> = []
@@ -224,8 +270,8 @@ export function getDefaultIgnoredPatterns(userPatterns: ReadonlyArray<string>, i
  * for display (extensions as `*.<ext>`, names verbatim). Empty when nothing default-excluded is
  * re-included. Used to warn that files normally kept out of the package will now be included.
  */
-export function getReincludedDefaultExclusions(patterns: ReadonlyArray<string>): Array<string> {
-  const reincluded = collectExplicitReincludes(patterns)
+export function getReincludedDefaultExclusions(patterns: ReadonlyArray<string>, excludedExtensions: ReadonlyArray<string> = DEFAULT_EXCLUDED_EXTENSIONS): Array<string> {
+  const reincluded = collectExplicitReincludes(patterns, excludedExtensions)
   return [...[...reincluded.extensions].map(ext => `*.${ext}`), ...reincluded.names]
 }
 
@@ -405,13 +451,14 @@ export function getMainFileMatchers(
   }
   patterns.splice(insertIndex, 0, ...customFirstPatterns)
 
-  const reincludedDefaults = getReincludedDefaultExclusions(userSpecifiedPatterns)
+  const excludedExtensions = resolveExcludedExtensions(platformPackager.config, platformSpecificBuildOptions)
+  const reincludedDefaults = getReincludedDefaultExclusions(userSpecifiedPatterns, excludedExtensions)
   if (reincludedDefaults.length > 0) {
     // These files are kept out of the package by default; a user `files` pattern is opting them back in.
     log.warn({ files: reincludedDefaults.join(", ") }, "`files` configuration re-includes files that are excluded by default — verify this is intentional")
   }
 
-  patterns.push(...getDefaultIgnoredPatterns(userSpecifiedPatterns, platformPackager.config.includePdb === true))
+  patterns.push(...getDefaultIgnoredPatterns(userSpecifiedPatterns, excludedExtensions))
 
   const debugLogger = platformPackager.debugLogger
   if (debugLogger.isEnabled) {

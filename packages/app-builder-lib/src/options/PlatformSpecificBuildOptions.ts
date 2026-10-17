@@ -144,6 +144,28 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
   extraFiles?: Array<FileSet | string> | FileSet | string | null
 
   /**
+   * File extensions (without the leading dot) excluded from the packaged app files and the copied `node_modules`.
+   *
+   * - `"default"` expands to the built-in list of excluded extensions (`iml`, `hprof`, `orig`, `pyc`, `pyo`, `rbc`, `swp`, `csproj`, `sln`,
+   *   `slnx`, `suo`, `xproj`, `cc`, `d.ts`, `mk`, `a`, `o`, `obj`, `forge-meta`, `pdb`).
+   * - Any other entry adds that extension, e.g. `"map"`.
+   * - An entry starting with `!` removes that extension from the others listed, e.g. `"!pdb"` to keep `.pdb` (Program Database)
+   *   symbol files for Windows crash-dump analysis.
+   *
+   * The list replaces the defaults: list `"default"` to extend them rather than replace them. `null` (or omitting it) is `["default"]`,
+   * and an empty array `[]` excludes no extension.
+   *
+   * ```json
+   * { "fileOptions": { "excludedExts": ["default", "!pdb", "map"] } }
+   * ```
+   *
+   * Set it under `fileOptions`, at the configuration root or per platform; a platform's value replaces the root one rather than being added to it.
+   * A `files` glob that names a file with an excluded extension concretely (e.g. `**\/*.obj`) still includes it in the app files.
+   * @default ["default"]
+   */
+  excludedExts?: Array<string> | null
+
+  /**
    * Whether symlinks among the packaged files may lead outside the app, the workspace and the package-manager store.
    *
    * Only the build configuration is trusted, not the files it packages: by default (`false`) electron-builder refuses
