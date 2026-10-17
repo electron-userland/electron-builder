@@ -31,6 +31,7 @@ import { PlatformPackager } from "../platformPackager.js"
 import { AppFileWalker } from "./AppFileWalker.js"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
 import { NodeModuleInfo } from "../node-module-collector/types.js"
+import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { archToNodeCpu } from "./archCompatibility.js"
 import { assertSourceFileInTrustedRoots } from "./trustedSourceRoots.js"
 
@@ -181,9 +182,9 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
   return fileSets
 }
 
-function getNodeModuleExcludedExts(platformPackager: PlatformPackager<any>) {
+function getNodeModuleExcludedExts(platformPackager: PlatformPackager<any>, platformSpecificBuildOptions: PlatformSpecificBuildOptions) {
   // do not exclude *.h files (https://github.com/electron-userland/electron-builder/issues/2852)
-  const result = resolveExcludedExtensions(platformPackager.config, platformPackager.platformOptions).map(it => `.${it}`)
+  const result = resolveExcludedExtensions(platformPackager.config, platformSpecificBuildOptions).map(it => `.${it}`)
   if (platformPackager.platform !== Platform.WINDOWS) {
     // https://github.com/electron-userland/electron-builder/issues/1738
     result.push(".dll")
@@ -202,13 +203,15 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 /** @internal */
 export async function computeNodeModuleFileSets(
   platformPackager: PlatformPackager<any>,
+  platformSpecificBuildOptions: PlatformSpecificBuildOptions,
   mainMatcher: FileMatcher,
   arch: Arch,
   applyArchFilter = true
 ): Promise<Array<ResolvedFileSet>> {
   const deps = await collectNodeModulesWithLogging(platformPackager, applyArchFilter ? arch : null)
 
-  const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
+  // the options this pack uses for the app files too (e.g. mac → mas → masDev cascaded), not always the platform section's own
+  const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager, platformSpecificBuildOptions)
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure
   const result = new Array<ResolvedFileSet>()
   let index = 0

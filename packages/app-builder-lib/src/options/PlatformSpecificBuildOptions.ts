@@ -81,9 +81,9 @@ export interface AsarOptions {
 }
 
 /**
- * Which files are copied into the packaged app, and which symlinks among them may lead outside it, set under `fileOptions` at the
- * configuration root or per platform (e.g. `mac.fileOptions`). A platform's lists are added to the root ones; a platform's
- * `allowExternalLinks` replaces the root one.
+ * Which files are copied into the packaged app, which file extensions are excluded from it, and which symlinks among them may lead outside it,
+ * set under `fileOptions` at the configuration root or per platform (e.g. `mac.fileOptions`). A platform's file lists are added to the root
+ * ones; a platform's `excludedExts` and `allowExternalLinks` replace the root ones.
  * See [file options](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
  */
 export interface FilesBuildOptions {
@@ -159,7 +159,9 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
    * { "fileOptions": { "excludedExts": ["default", "!pdb", "map"] } }
    * ```
    *
-   * Set it under `fileOptions`, at the configuration root or per platform; a platform's value replaces the root one rather than being added to it.
+   * Set it under `fileOptions`, at the configuration root or per platform. Unlike the other lists, a later list replaces an earlier one rather
+   * than being merged with it: a platform's value replaces the root one, `mas` / `masDev` replace `mac`'s, and an `extends` child's (or a
+   * programmatic or `-c` configuration's) replaces its parent's. A `null` value keeps the earlier list.
    * A `files` glob that names a file with an excluded extension concretely (e.g. `**\/*.obj`) still includes it in the app files.
    * @default ["default"]
    */
@@ -202,10 +204,10 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
 
 export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   /**
-   * Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among
-   * them may lead outside the app and the workspace (`allowExternalLinks`).
-   * Set at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,
-   * and a platform's `allowExternalLinks` replaces the root one.
+   * Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), which file extensions to exclude
+   * from it (`excludedExts`), and whether symlinks among them may lead outside the app and the workspace (`allowExternalLinks`).
+   * Set at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's file lists are added to the root ones,
+   * and a platform's `excludedExts` and `allowExternalLinks` replace the root ones.
    *
    * ```json
    * {

@@ -1,4 +1,5 @@
 import { InvalidConfigurationError, log } from "builder-util"
+import { Nullish } from "builder-util-runtime"
 import { ALL_PLATFORM_KEYS, BREAKING_CHANGES_URL, FILE_OPTION_KEYS, FILE_OPTIONS_ANCHOR } from "./legacyOptions.js"
 
 const FILE_OPTIONS_URL = `${BREAKING_CHANGES_URL}#${FILE_OPTIONS_ANCHOR}`
@@ -14,6 +15,36 @@ export function isPlainObject(value: unknown): value is Record<string, any> {
 export function hasFlatFileOption(holder: Record<string, any>, key: string): boolean {
   const descriptor = Object.getOwnPropertyDescriptor(holder, key)
   return descriptor != null && "value" in descriptor && descriptor.value !== undefined
+}
+
+/**
+ * Sets the `fileOptions.excludedExts` of `merged` (the `deepAssign` of `sources`) to the last non-null value among `sources`. `deepAssign`
+ * merges two arrays, but a later configuration's (`extends`) or platform section's (`mac` → `mas` → `masDev`) list replaces an earlier one,
+ * so that it can drop an earlier `"!ext"` (see `FilesBuildOptions.excludedExts`). The `fileOptions` of `merged` is replaced by a copy, since
+ * `deepAssign` may have left it shared with one of `sources`.
+ */
+export function replaceMergedExcludedExts(merged: Record<string, any> | Nullish, sources: ReadonlyArray<Record<string, any> | Nullish>): void {
+  if (merged == null || !isPlainObject(merged.fileOptions)) {
+    return
+  }
+  for (let i = sources.length - 1; i >= 0; i--) {
+    const fileOptions = sources[i]?.fileOptions
+    if (isPlainObject(fileOptions) && fileOptions.excludedExts != null) {
+      merged.fileOptions = { ...merged.fileOptions, excludedExts: fileOptions.excludedExts }
+      return
+    }
+  }
+}
+
+/** {@link replaceMergedExcludedExts} for the configuration root and each platform section of `merged`, the `deepAssign` of `configs`. */
+export function replaceMergedConfigExcludedExts(merged: Record<string, any>, configs: ReadonlyArray<Record<string, any> | Nullish>): void {
+  forEachFileOptionsHolder(merged, (holder, prefix) => {
+    const platform = prefix.substring(0, prefix.length - 1)
+    replaceMergedExcludedExts(
+      holder,
+      configs.map(it => (platform.length === 0 ? it : it?.[platform]))
+    )
+  })
 }
 
 /** Calls `fn` for the configuration root and each platform section that is an object. */
