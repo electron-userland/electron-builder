@@ -1,7 +1,7 @@
 ---
 "electron-publish": major
 "builder-util-runtime": minor
-"app-builder-lib": patch
+"app-builder-lib": major
 ---
 
 feat(s3)!: explicit AWS credential sources for S3 publishing via the new `awsCredentials` option (restores shared config / IAM Identity Center profiles, #10054)
