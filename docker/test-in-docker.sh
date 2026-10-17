@@ -18,7 +18,8 @@ restore_ownership() {
     done
   fi
 }
-# On every exit, also when a step below fails and `set -e` ends the script: the reports of failed tests are the ones that get inspected. The script keeps the exit status of the step, unless the restore itself fails.
+# On every exit, also when a step below fails and `set -e` ends the script: the reports of failed tests are the ones
+# that get inspected. The script keeps the exit status of the step, unless the restore itself fails.
 trap restore_ownership EXIT
 
 npm i -g corepack bun
