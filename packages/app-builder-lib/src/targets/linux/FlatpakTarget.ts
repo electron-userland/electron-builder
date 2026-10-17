@@ -12,6 +12,7 @@ import { buildFlatpakBundle, FlatpakBuilderManifest, FlatpakBundleOptions, Flatp
 import { LinuxTargetHelper } from "./LinuxTargetHelper.js"
 import { generateMimeTypeXml } from "./appimage/appLauncher.js"
 import { buildLauncherScript, shellQuote } from "./launcherScript.js"
+import { prepareMetainfoFile } from "./metainfo.js"
 import { createStageDir, StageDir } from "../targetUtil.js"
 import { Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
@@ -116,6 +117,7 @@ export default class FlatpakTarget extends Target {
         this.writeMimeTypes(stageDir),
         this.copyLicenseFile(stageDir),
         this.copyIcons(stageDir),
+        this.copyMetainfo(stageDir),
       ])
     } catch (e: any) {
       await stageDir.cleanup().catch(() => {})
@@ -189,6 +191,20 @@ export default class FlatpakTarget extends Target {
       const licenseDst = stageDir.getTempFile(path.join("share", "doc", this.appId, "copyright"))
       await copyFile(licenseSrc, licenseDst)
     }
+  }
+
+  private async copyMetainfo(stageDir: StageDir) {
+    if (this.options.metainfo == null) {
+      return
+    }
+    const metainfo = await prepareMetainfoFile({
+      projectDir: this.packager.projectDir,
+      metainfo: this.options.metainfo,
+      appId: this.packager.appInfo.id,
+      expectedDesktopId: `${this.appId}.desktop`,
+      disableValidation: this.options.disableMetainfoValidation === true,
+    })
+    await copyFile(metainfo.file, stageDir.getTempFile(path.join("share", "metainfo", metainfo.installBasename)))
   }
 
   private async copyIcons(stageDir: StageDir) {
