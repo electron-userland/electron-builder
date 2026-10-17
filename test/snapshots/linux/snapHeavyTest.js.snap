@@ -36,7 +36,6 @@ exports[`snap core24 native > core24 build + install + launch 1`] = `
       "organize": {
         "LICENSE.electron.txt": "app/LICENSE.electron.txt",
         "LICENSES.chromium.html": "app/LICENSES.chromium.html",
-        "chrome-sandbox": "app/chrome-sandbox",
         "chrome_100_percent.pak": "app/chrome_100_percent.pak",
         "chrome_200_percent.pak": "app/chrome_200_percent.pak",
         "chrome_crashpad_handler": "app/chrome_crashpad_handler",
@@ -59,7 +58,6 @@ exports[`snap core24 native > core24 build + install + launch 1`] = `
   },
   "plugs": {
     "browser-support": {
-      "allow-sandbox": true,
       "interface": "browser-support",
     },
   },
@@ -116,7 +114,6 @@ exports[`snap core24 native > core24 destructive-mode (no gnome extension) 1`] =
       "organize": {
         "LICENSE.electron.txt": "app/LICENSE.electron.txt",
         "LICENSES.chromium.html": "app/LICENSES.chromium.html",
-        "chrome-sandbox": "app/chrome-sandbox",
         "chrome_100_percent.pak": "app/chrome_100_percent.pak",
         "chrome_200_percent.pak": "app/chrome_200_percent.pak",
         "chrome_crashpad_handler": "app/chrome_crashpad_handler",
@@ -139,7 +136,6 @@ exports[`snap core24 native > core24 destructive-mode (no gnome extension) 1`] =
   },
   "plugs": {
     "browser-support": {
-      "allow-sandbox": true,
       "interface": "browser-support",
     },
   },
@@ -196,7 +192,6 @@ exports[`snap core24 native > core24 with custom stagePackages 1`] = `
       "organize": {
         "LICENSE.electron.txt": "app/LICENSE.electron.txt",
         "LICENSES.chromium.html": "app/LICENSES.chromium.html",
-        "chrome-sandbox": "app/chrome-sandbox",
         "chrome_100_percent.pak": "app/chrome_100_percent.pak",
         "chrome_200_percent.pak": "app/chrome_200_percent.pak",
         "chrome_crashpad_handler": "app/chrome_crashpad_handler",
@@ -227,7 +222,6 @@ exports[`snap core24 native > core24 with custom stagePackages 1`] = `
   },
   "plugs": {
     "browser-support": {
-      "allow-sandbox": true,
       "interface": "browser-support",
     },
   },
@@ -503,7 +497,6 @@ exports[`snap heavy > snap full (core24) 1`] = `
       "organize": {
         "LICENSE.electron.txt": "app/LICENSE.electron.txt",
         "LICENSES.chromium.html": "app/LICENSES.chromium.html",
-        "chrome-sandbox": "app/chrome-sandbox",
         "chrome_100_percent.pak": "app/chrome_100_percent.pak",
         "chrome_200_percent.pak": "app/chrome_200_percent.pak",
         "chrome_crashpad_handler": "app/chrome_crashpad_handler",
@@ -526,7 +519,6 @@ exports[`snap heavy > snap full (core24) 1`] = `
   },
   "plugs": {
     "browser-support": {
-      "allow-sandbox": true,
       "interface": "browser-support",
     },
   },
@@ -802,7 +794,6 @@ exports[`snap heavy > snap install+launch (core24) 1`] = `
       "organize": {
         "LICENSE.electron.txt": "app/LICENSE.electron.txt",
         "LICENSES.chromium.html": "app/LICENSES.chromium.html",
-        "chrome-sandbox": "app/chrome-sandbox",
         "chrome_100_percent.pak": "app/chrome_100_percent.pak",
         "chrome_200_percent.pak": "app/chrome_200_percent.pak",
         "chrome_crashpad_handler": "app/chrome_crashpad_handler",
@@ -825,7 +816,6 @@ exports[`snap heavy > snap install+launch (core24) 1`] = `
   },
   "plugs": {
     "browser-support": {
-      "allow-sandbox": true,
       "interface": "browser-support",
     },
   },

@@ -14,6 +14,8 @@ import { buildSnap, DEFAULT_STAGE_PACKAGES, SNAPCRAFT_YAML_OPTIONS } from "./sna
 const CHROME_SANDBOX = "chrome-sandbox"
 // Launcher script name used when the app command cannot be expressed inline (see resolveSnapCommand).
 const SNAP_COMMAND_LAUNCHER = "command.sh"
+// Packagers already warned about an explicitly configured allow-sandbox, so a multi-arch build warns once.
+const warnedAboutAllowSandbox = new WeakSet<object>()
 
 /** Snap build strategy for core24 — generates a native snapcraft.yaml and invokes the snapcraft CLI. */
 export class SnapCore24 extends SnapCore<SnapOptions24> {
@@ -251,16 +253,18 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       appPlugs = result.app
     }
 
-    // Always add browser-support with allow-sandbox so Chromium's internal sandbox
-    // can create user namespaces under strict confinement.  Without allow-sandbox: true
-    // the app crashes immediately with "FATAL: Permission denied (13)" in credentials.cc.
-    // Skip the injection only when the user has explicitly provided their own plugs
-    // (they are responsible for including browser-support in that case).
+    // Always add plain browser-support when the user has not provided their own plugs (they are
+    // responsible for including browser-support in that case). allow-sandbox is deliberately not
+    // requested: the Snap Store reserves it for vetted publishers. Without it the app is launched
+    // with --no-sandbox below, which is what keeps Chromium from aborting in credentials.cc under
+    // strict confinement (see #9659).
     if (!options.plugs) {
-      rootPlugs = { ...rootPlugs, "browser-support": { interface: "browser-support", "allow-sandbox": true } }
+      rootPlugs = { ...rootPlugs, "browser-support": { interface: "browser-support" } }
       if (!appPlugs?.includes("browser-support")) {
         appPlugs = [...(appPlugs ?? []), "browser-support"]
       }
+    } else {
+      this.warnAboutAllowSandboxPlugs(rootPlugs)
     }
 
     const { root: rootSlots, app: appSlots } = options.slots ? this.processPlugOrSlots(options.slots) : { root: undefined, app: undefined }
@@ -268,7 +272,8 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // Build the effective arg list for the snap command.
     // Start with any user-supplied executableArgs, then conditionally add --no-sandbox
     // if browser-support with allow-sandbox:true is not present in the resolved plugs
-    // (mirrors the same logic in SnapCoreLegacy.buildSnap).
+    // (mirrors the same logic in SnapCoreLegacy.buildSnap). Only user-configured plugs can request
+    // allow-sandbox; the generated defaults never do.
     const extraArgs: string[] = [...(this.options.executableArgs ?? [])]
     if (this.options.forceX11 === true) {
       if (!extraArgs.includes("--ozone-platform=x11")) {
@@ -514,6 +519,27 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     }
 
     return { root: Object.keys(root).length > 0 ? root : undefined, app: app.length > 0 ? app : undefined }
+  }
+
+  /** Warn (once per build) that the Snap Store reserves `allow-sandbox` for vetted publishers. The configuration is left as is. */
+  private warnAboutAllowSandboxPlugs(plugs: Record<string, any> | undefined): void {
+    if (!plugs || warnedAboutAllowSandbox.has(this.packager)) {
+      return
+    }
+    // A plug without an explicit `interface` uses its name as the interface, as snapd does.
+    const plugNames = Object.entries(plugs)
+      .filter(([name, plug]) => plug != null && typeof plug === "object" && (plug.interface ?? name) === "browser-support" && plug["allow-sandbox"] === true)
+      .map(([name]) => name)
+    if (plugNames.length === 0) {
+      return
+    }
+    warnedAboutAllowSandbox.add(this.packager)
+    log.warn(
+      { plugs: plugNames.join(", ") },
+      `snapcraft.core24.plugs requests the browser-support interface with "allow-sandbox: true". ` +
+        "The Snap Store reserves allow-sandbox for vetted publishers (browsers), so store review rejects this snap unless your publisher has been granted it. " +
+        "Remove the attribute to launch with --no-sandbox under snap confinement instead."
+    )
   }
 
   private isBrowserSandboxAllowed(plugs: Record<string, any> | undefined): boolean {
