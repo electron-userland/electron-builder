@@ -1,4 +1,5 @@
 packages:
+  - "docker"
   - "packages/**"
   - "test"
   - "website"

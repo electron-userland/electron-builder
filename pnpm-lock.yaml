@@ -77,6 +77,8 @@ importers:
         specifier: 0.64.0
         version: 0.64.0(@swc/core@1.15.33)
 
+  docker: {}
+
   packages/app-builder-lib:
     dependencies:
       '@electron/asar':
