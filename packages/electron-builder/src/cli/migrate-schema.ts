@@ -2,6 +2,7 @@ import { createRequire } from "node:module"
 import {
   ALL_PLATFORM_KEYS,
   AZURE_KNOWN_FIELDS,
+  DEFAULT_EXCLUDED_EXTENSIONS,
   ELECTRON_DOWNLOAD_DROPPED,
   FILE_OPTION_KEYS,
   formatLegacyOptionMessage,
@@ -12,6 +13,7 @@ import {
   RESOLVED_LEGACY_CONFIG_OPTIONS,
 } from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
+import { resolveDefaultKeywordList } from "builder-util/internal"
 import { promises as fs } from "fs"
 import * as path from "path"
 import type { Argv } from "yargs"
@@ -623,13 +625,13 @@ export function platformExcludedExtsPdbChange(platform: string): MigrationChange
 }
 
 /**
- * True when an `excludedExts` list excludes `.pdb` files: it lists "default" or "pdb", and not "!pdb". A list without "default" replaces the
- * default extensions, so it keeps `.pdb` files, and a "!pdb" added to it would only make the build warn that the entry has no effect.
- * Shared with the JS/TS codemod.
+ * True when an `excludedExts` list excludes `.pdb` files, resolved as the build does: it lists "default" or "pdb", and not "!pdb". A list without
+ * "default" replaces the default extensions, so it keeps `.pdb` files, and a "!pdb" added to it would only make the build warn that the entry has
+ * no effect. Unlike the build, an invalid entry is not rejected: the list is migrated as it is. Shared with the JS/TS codemod.
  */
 export function excludesPdb(entries: ReadonlyArray<string>): boolean {
-  const extension = (entry: string) => entry.replace(/^!/, "").replace(/^\./, "")
-  return !entries.some(it => it.startsWith("!") && extension(it) === "pdb") && entries.some(it => !it.startsWith("!") && ["default", "pdb"].includes(extension(it)))
+  const normalized = entries.map(it => (it.startsWith("!") ? `!${it.substring(1).replace(/^\./, "")}` : it.replace(/^\./, "")))
+  return resolveDefaultKeywordList(normalized, DEFAULT_EXCLUDED_EXTENSIONS).result.includes("pdb")
 }
 
 /**

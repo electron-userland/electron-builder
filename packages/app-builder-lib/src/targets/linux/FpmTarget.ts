@@ -12,6 +12,7 @@ import {
   unlinkIfExists,
   use,
 } from "builder-util"
+import { expandDefaultKeyword } from "builder-util/internal"
 import { Nullish } from "builder-util-runtime"
 
 import { objectToArgs } from "builder-util-runtime"
@@ -442,15 +443,7 @@ export default class FpmTarget extends Target {
    * The result is deduplicated while preserving order.
    */
   private expandDependsDefaults(depends: string[], target: string): string[] {
-    const result: string[] = []
-    for (const item of depends) {
-      if (item === "default") {
-        result.push(...this.getDefaultDepends(target))
-      } else {
-        result.push(item)
-      }
-    }
-    return Array.from(new Set(result))
+    return Array.from(new Set(expandDefaultKeyword(depends, this.getDefaultDepends(target))))
   }
 
   private getDefaultDepends(target: string): string[] {
