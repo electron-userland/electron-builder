@@ -3,6 +3,7 @@ import * as path from "path"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { generateTests } from "../vitest-scripts/generate-tests"
 import { GENERATED_TESTS_DIR } from "../vitest-scripts/runtime-tests/generate-toolset-tests-shared"
+import { latestToolsetVersion, NSIS_VERSIONS, WINE_VERSIONS, WIN_CODE_SIGN_VERSIONS } from "../vitest-scripts/runtime-tests/generate-toolset-versions"
 import { detectFilePlatforms, getAllTestFiles, isE2eTestFile, platformAllowed } from "../vitest-scripts/vitest-config/file-discovery"
 import { resolveCachedMs } from "../vitest-scripts/vitest-config/shard-builder"
 import type { FileStats } from "../vitest-scripts/vitest-config/cache"
@@ -55,7 +56,17 @@ describe("Generated toolset test filenames", () => {
     const files = collectGeneratedFiles(GENERATED_TESTS_DIR)
     // No platform marker → discovered everywhere. winPackager/assistedInstaller use ifWindowsOrWine
     // (native on Windows, via Wine on Linux); linuxPackager/wineToolset/nsisWine use ifNotWindows.
-    const universalSuites = ["linuxPackager", "winPackager", "blackboxWin", "wineToolset", "assistedInstaller", "nsisWine"]
+    const universalSuites = [
+      "linuxPackager",
+      "winPackager",
+      "blackboxWin",
+      "blackboxWebWinUpdate",
+      "blackboxWebWinNextLaunch",
+      "blackboxWebWinRejected",
+      "wineToolset",
+      "assistedInstaller",
+      "nsisWine",
+    ]
     for (const suite of universalSuites) {
       const suiteFiles = files.filter(f => f.includes(`/${suite}/`))
       expect(suiteFiles.length, `${suite} should have generated files`).toBeGreaterThan(0)
@@ -81,6 +92,37 @@ describe("Generated toolset test filenames", () => {
     expect(nsisWineFiles.length).toBe(2)
     expect(nsisWineFiles.some(f => f.includes("wine-0.0.0"))).toBe(true)
     expect(nsisWineFiles.some(f => f.includes("wine-1.0.1"))).toBe(true)
+  })
+
+  // One test per file (the sharder packs whole files), built with the newest winCodeSign; the update cycle once per NSIS version.
+  // Each file needs a hand-written snapshot (test/snapshots/generated/blackboxWebWin*/, see resolveSnapshotPath in run-vitest.ts):
+  // CI doesn't write missing snapshots, and the tests run on Windows only.
+  it("blackboxWebWin suites generate one file per test and toolset combination, each with a snapshot", () => {
+    const files = collectGeneratedFiles(GENERATED_TESTS_DIR).filter(f => path.basename(f).startsWith("blackboxWebWin"))
+    // the version lists are typed to allow custom toolsets (objects), but hold version strings
+    const versions = (list: ReadonlyArray<unknown>) => list.filter((it): it is string => typeof it === "string")
+    const wcs = latestToolsetVersion(versions(WIN_CODE_SIGN_VERSIONS))
+    const nsis = latestToolsetVersion(versions(NSIS_VERSIONS))
+    const expected = versions(WINE_VERSIONS).flatMap(wine => [
+      `blackboxWebWinNextLaunch__wcs-${wcs}__nsis-${nsis}__wine-${wine}__e2e.ts`,
+      `blackboxWebWinRejected__wcs-${wcs}__nsis-${nsis}__wine-${wine}__e2e.ts`,
+      ...versions(NSIS_VERSIONS).map(nsisVersion => `blackboxWebWinUpdate__wcs-${wcs}__nsis-${nsisVersion}__wine-${wine}__e2e.ts`),
+    ])
+    expect(files.map(f => path.basename(f)).sort()).toEqual(expected.sort())
+
+    const snapshotsDir = path.resolve(GENERATED_TESTS_DIR, "../../snapshots/generated")
+    for (const file of files) {
+      const suite = path.basename(path.dirname(file))
+      const snapshot = path.join(
+        snapshotsDir,
+        suite,
+        path
+          .basename(file)
+          .replace(/__wine-\d+(?:\.\d+)*/, "")
+          .replace(/\.ts$/, ".js.snap")
+      )
+      expect(fs.existsSync(snapshot), `hand-written snapshot of ${path.basename(file)}: ${snapshot}`).toBe(true)
+    }
   })
 
   it("platformAllowed correctly filters ifWindows files on Linux", () => {
@@ -151,7 +193,21 @@ describe("Generated toolset test filenames", () => {
   // logic is unchanged, so `.win.e2e.ts` and `__e2e.ts` both occur.
   it("installer-building suites are emitted as .e2e.ts files, app-directory suites as Test.ts files", () => {
     const files = collectGeneratedFiles(GENERATED_TESTS_DIR)
-    const e2eSuites = ["portable", "assistedInstaller", "msi", "msiWrapped", "squirrelWindows", "appx", "msix", "differentialWin", "blackboxWin", "nsisWine"]
+    const e2eSuites = [
+      "portable",
+      "assistedInstaller",
+      "msi",
+      "msiWrapped",
+      "squirrelWindows",
+      "appx",
+      "msix",
+      "differentialWin",
+      "blackboxWin",
+      "blackboxWebWinUpdate",
+      "blackboxWebWinNextLaunch",
+      "blackboxWebWinRejected",
+      "nsisWine",
+    ]
     for (const suite of e2eSuites) {
       const suiteFiles = files.filter(f => f.includes(`/${suite}/`))
       expect(suiteFiles.length, `${suite} should have generated files`).toBeGreaterThan(0)

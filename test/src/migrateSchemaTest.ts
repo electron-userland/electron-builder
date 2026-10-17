@@ -1,5 +1,15 @@
+import { readFileSync } from "fs"
+import * as path from "path"
 import { describe, expect, test } from "vitest"
-import { migrateConfig } from "../../packages/electron-builder/src/cli/migrate-schema"
+import {
+  FEED_QUERY_ADVISORY,
+  MAC_ENTITLEMENTS_ADVISORY,
+  migrateConfig,
+  NSIS_PER_MACHINE_UPDATE_ADVISORY,
+  NSIS_WEB_ADVISORY,
+  PORTABLE_DEBUG_LOGGING_DROPPED,
+  WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
+} from "../../packages/electron-builder/src/cli/migrate-schema"
 
 describe("migrateConfig — no-op cases", () => {
   test("already-migrated config produces no changes", () => {
@@ -675,6 +685,11 @@ describe("migrateConfig — nsis-web advisory", () => {
     expect(result.modified).toBe(false)
   })
 
+  test("win.target: 'nsis-web:ia32' (arch suffix) and { target: 'NSIS-Web' } emit an advisory", () => {
+    expect(migrateConfig({ win: { target: "nsis-web:ia32" } }).advisories).toEqual([NSIS_WEB_ADVISORY])
+    expect(migrateConfig({ win: { target: [{ target: "NSIS-Web", arch: "x64" }] } }).advisories).toEqual([NSIS_WEB_ADVISORY])
+  })
+
   test("global top-level target: 'nsis-web' emits an advisory", () => {
     const result = migrateConfig({ target: "nsis-web" })
     expect(result.advisories).toHaveLength(1)
@@ -691,6 +706,158 @@ describe("migrateConfig — nsis-web advisory", () => {
     expect(result.modified).toBe(true)
     expect(result.changes.some(c => c.key === "electronCompile")).toBe(true)
     expect(result.advisories).toHaveLength(1)
+  })
+})
+
+describe("migrateConfig — updater advisories", () => {
+  const advisoriesOf = (config: Record<string, any>) => migrateConfig(config).advisories
+
+  test.each<[string, string, string]>([
+    ["NSIS_WEB_ADVISORY", NSIS_WEB_ADVISORY, "disablewebinstaller-defaults-to-true"],
+    ["NSIS_PER_MACHINE_UPDATE_ADVISORY", NSIS_PER_MACHINE_UPDATE_ADVISORY, "nsis-per-machine-builds-set-isadminrightsrequired"],
+    ["WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY", WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, "windows-publishername-is-validated-against-the-signing-certificate"],
+    ["FEED_QUERY_ADVISORY", FEED_QUERY_ADVISORY, "update-credentials-stay-on-the-feeds-origin"],
+  ])("%s links its v27 breaking-changes section", (_name, advisory, anchor) => {
+    expect(advisory.endsWith(` See https://www.electron.build/docs/migration/v27-breaking-changes#${anchor}`)).toBe(true)
+    const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-breaking-changes.md"), "utf8")
+    expect(doc.includes(`(#${anchor})`) || doc.includes(`{#${anchor}}`)).toBe(true)
+  })
+
+  test("configs that trigger none of them return no advisories", () => {
+    expect(advisoriesOf({})).toEqual([])
+    expect(
+      advisoriesOf({
+        appId: "com.example.app",
+        win: { target: ["nsis", "portable"], sign: { type: "signtool", sign: "./sign.js", certificateFile: "c.pfx", publisherName: "CN=Acme" } },
+        nsis: { oneClick: false, perMachine: false },
+        publish: [
+          { provider: "generic", url: "https://updates.example.com/app" },
+          { provider: "github", owner: "o", repo: "r" },
+        ],
+      })
+    ).toEqual([])
+  })
+
+  test("all advisories keep their order: nsis-web, mac entitlements, per-machine, sign hook, feed query", () => {
+    const result = migrateConfig({
+      win: { target: "nsis-web", sign: { type: "signtool", sign: "./sign.js" } },
+      nsisWeb: { perMachine: true },
+      mac: { target: "dmg" },
+      publish: { provider: "generic", url: "https://updates.example.com/?token=t" },
+    })
+    expect(result.advisories).toEqual([NSIS_WEB_ADVISORY, MAC_ENTITLEMENTS_ADVISORY, NSIS_PER_MACHINE_UPDATE_ADVISORY, WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, FEED_QUERY_ADVISORY])
+    expect(result.modified).toBe(false)
+  })
+
+  describe("per-machine NSIS", () => {
+    test.each<[string, Record<string, any>]>([
+      ["nsis.perMachine", { win: { target: "nsis" }, nsis: { perMachine: true } }],
+      ["nsisWeb.perMachine", { nsisWeb: { perMachine: true } }],
+    ])("%s: true emits the advisory without changing the config", (_name, input) => {
+      const result = migrateConfig(input)
+      expect(result.advisories).toEqual([NSIS_PER_MACHINE_UPDATE_ADVISORY])
+      expect(result.modified).toBe(false)
+      expect(result.migrated).toEqual(input)
+    })
+
+    test("perMachine false or absent emits nothing", () => {
+      expect(advisoriesOf({ nsis: { perMachine: false }, nsisWeb: { perMachine: false } })).toEqual([])
+      expect(advisoriesOf({ win: { target: "nsis" }, nsis: { oneClick: false } })).toEqual([])
+    })
+  })
+
+  describe("custom Windows signing hook without publisherName", () => {
+    test.each<[string, Record<string, any>]>([
+      ["signtool hook", { type: "signtool", sign: "./sign.js" }],
+      ["hsm hook", { type: "hsm", cryptoServiceProvider: "Google Cloud KMS Provider", keyContainer: "k", sign: "./sign.js" }],
+      ["pkcs11 hook", { type: "pkcs11", pkcs11Module: "/usr/lib/opensc-pkcs11.so", pkcs11KeyUri: "pkcs11:object=k", sign: "./sign.js" }],
+    ])("%s emits the advisory", (_name, sign) => {
+      expect(advisoriesOf({ win: { sign } })).toEqual([WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
+      expect(advisoriesOf({ win: { sign, verifyUpdateCodeSignature: true } })).toEqual([WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
+    })
+
+    test("a v26 win.signtoolOptions.sign hook migrates into win.sign and then emits the advisory", () => {
+      const result = migrateConfig({ win: { signtoolOptions: { sign: "./sign.js", signingHashAlgorithms: ["sha256"] } } })
+      expect(result.migrated.win.sign).toEqual({ type: "signtool", sign: "./sign.js", signingHashAlgorithms: ["sha256"] })
+      expect(result.advisories).toEqual([WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
+      expect(result.modified).toBe(true)
+    })
+
+    test("no advisory with publisherName (set or null), verifyUpdateCodeSignature: false, or no hook", () => {
+      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: "CN=Acme" } } })).toEqual([])
+      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: ["CN=Old", "CN=New"] } } })).toEqual([])
+      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: null } } })).toEqual([])
+      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js" }, verifyUpdateCodeSignature: false } })).toEqual([])
+      expect(advisoriesOf({ win: { sign: { type: "signtool" } } })).toEqual([])
+      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: null } } })).toEqual([])
+      expect(advisoriesOf({ win: { sign: false } })).toEqual([])
+      expect(advisoriesOf({ win: { sign: { type: "azure", endpoint: "https://e/", certificateProfileName: "p", codeSigningAccountName: "a", publisherName: "CN=A" } } })).toEqual(
+        []
+      )
+    })
+
+    test.each<[string, Record<string, any>]>([
+      ["certificateFile", { sign: { type: "signtool", sign: "./sign.js", certificateFile: "c.pfx" } }],
+      ["certificateSubjectName", { sign: { type: "signtool", sign: "./sign.js", certificateSubjectName: "Acme" } }],
+      ["certificateSha1", { sign: { type: "signtool", sign: "./sign.js", certificateSha1: "ABCDEF" } }],
+      ["hsm certificateSha1", { sign: { type: "hsm", cryptoServiceProvider: "p", keyContainer: "k", sign: "./sign.js", certificateSha1: "ABCDEF" } }],
+      ["pkcs11 certificateFile", { sign: { type: "pkcs11", pkcs11Module: "/m.so", pkcs11KeyUri: "pkcs11:object=k", sign: "./sign.js", certificateFile: "c.pem" } }],
+      ["signtool win.cscLink", { sign: { type: "signtool", sign: "./sign.js" }, cscLink: "c.pfx" }],
+    ])("a certificate in the config (%s) doesn't suppress the advisory: a hook always needs publisherName", (_name, win) => {
+      expect(advisoriesOf({ win })).toEqual([WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
+      expect(advisoriesOf({ win: { ...win, sign: { ...win.sign, publisherName: "CN=Acme" } } })).toEqual([])
+    })
+
+    test("a root cscLink doesn't suppress the advisory either", () => {
+      expect(advisoriesOf({ cscLink: "c.pfx", win: { sign: { type: "signtool", sign: "./sign.js" } } })).toEqual([WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
+      expect(advisoriesOf({ cscLink: "c.pfx", win: { sign: { type: "hsm", cryptoServiceProvider: "p", keyContainer: "k", sign: "./sign.js" } } })).toEqual([
+        WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
+      ])
+    })
+
+    test("a v26 hook whose signing was disabled (signExecutable: false) is dropped, so no advisory", () => {
+      const result = migrateConfig({ win: { signExecutable: false, signtoolOptions: { sign: "./sign.js" } } })
+      expect(result.migrated.win).toEqual({ sign: false })
+      expect(result.advisories).toEqual([])
+    })
+  })
+
+  describe("generic publish url with a query string", () => {
+    test.each<[string, Record<string, any>]>([
+      ["root publish object", { publish: { provider: "generic", url: "https://updates.example.com/?token=t" } }],
+      [
+        "root publish array",
+        {
+          publish: [
+            { provider: "github", owner: "o", repo: "r" },
+            { provider: "generic", url: "https://updates.example.com/feed?key=k" },
+          ],
+        },
+      ],
+      ["platform-level publish", { win: { publish: { provider: "generic", url: "https://updates.example.com/win?key=k" } } }],
+      ["target-level publish array", { nsis: { publish: [{ provider: "generic", url: "https://updates.example.com/?key=k" }] } }],
+      ["linux publish", { linux: { publish: [{ provider: "generic", url: "https://updates.example.com/?key=${env.KEY}" }] } }],
+    ])("%s emits the advisory without changing the config", (_name, input) => {
+      const result = migrateConfig(input)
+      expect(result.advisories).toEqual([FEED_QUERY_ADVISORY])
+      expect(result.modified).toBe(false)
+      expect(result.migrated).toEqual(input)
+    })
+
+    test("a generic url without a query, string entries and other providers emit nothing", () => {
+      expect(advisoriesOf({ publish: { provider: "generic", url: "https://updates.example.com/app" } })).toEqual([])
+      expect(advisoriesOf({ publish: { provider: "generic" } })).toEqual([])
+      expect(advisoriesOf({ publish: ["github", "generic"] })).toEqual([])
+      expect(advisoriesOf({ publish: null, win: { publish: [null] } })).toEqual([])
+      expect(
+        advisoriesOf({
+          publish: [
+            { provider: "s3", bucket: "b", endpoint: "https://s3.example.com/?x=1" },
+            { provider: "custom", url: "https://updates.example.com/?token=t" },
+          ],
+        })
+      ).toEqual([])
+    })
   })
 })
 
@@ -980,6 +1147,8 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
     ["electronDownload force", { electronDownload: { force: true, mirrorOptions: { mirror: "https://m/" } } }],
     ["publish in a target section", { nsis: { publish: { provider: "github", vPrefixedTagName: false } }, dmg: { publish: [{ provider: "github", tagNamePrefix: "" }] } }],
     ["snap core24", { snap: { base: "core24", allowNativeWayland: true, useTemplateApp: false, grade: "stable" } }],
+    ["file options", { files: ["dist/**"], extraResources: [{ from: "a", to: "b" }], mac: { extraFiles: "x", files: ["!m/**"] }, masDev: { extraResources: null } }],
+    ["file options next to fileOptions", { files: ["flat/**"], fileOptions: { files: ["nested/**"], extraFiles: ["e"] }, win: { extraResources: ["r"], fileOptions: null } }],
     [
       "win signing disabled with legacy options",
       { win: { signExecutable: false, azureSignOptions: { endpoint: "https://e/", certificateProfileName: "p", codeSigningAccountName: "a" } } },
@@ -1052,6 +1221,8 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
         toolsets: { wine: null, appimage: "1.0.2", nsis: "1.2.1", winCodeSign: "0.0.0" },
         nsis: { publish: { provider: "github", vPrefixedTagName: false } },
         dmg: { publish: [{ provider: "github", tagNamePrefix: "" }] },
+        files: ["**/*", "!src/**"],
+        extraFiles: [{ from: "bin", to: "bin" }],
       },
     ],
   ]
@@ -1061,5 +1232,101 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
     const { validateConfiguration } = await import("app-builder-lib/internal")
     const { DebugLogger } = await import("builder-util")
     await expect(validateConfiguration(migrated as any, new DebugLogger(false))).resolves.toBeUndefined()
+  })
+})
+
+describe("migrateConfig — removed customNsisBinary / customNsisResources", () => {
+  const url = "https://downloads.example.com/nsisbi.7z?token=s3cr3t-token"
+  const checksum = "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q=="
+
+  test("debugLogging moves to installerDebugLogging and an emptied customNsisBinary is removed (nsis and nsisWeb)", () => {
+    const result = migrateConfig({ nsis: { oneClick: false, customNsisBinary: { url: null, debugLogging: true } }, nsisWeb: { customNsisBinary: { debugLogging: false } } })
+    expect(result.migrated).toEqual({ nsis: { oneClick: false, installerDebugLogging: true }, nsisWeb: { installerDebugLogging: false } })
+    expect(result.changes.map(c => c.description)).toContain("moved nsis.customNsisBinary.debugLogging → nsis.installerDebugLogging")
+    expect(result.warnings).toHaveLength(0)
+    expect(result.modified).toBe(true)
+  })
+
+  test("a custom bundle is kept and reported without its values; debugLogging still moves", () => {
+    const result = migrateConfig({ nsis: { customNsisBinary: { url, checksum, debugLogging: true } } })
+    expect(result.migrated).toEqual({ nsis: { customNsisBinary: { url, checksum }, installerDebugLogging: true } })
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain("`nsis.customNsisBinary` was replaced by `toolsets.nsis`")
+    expect(result.warnings[0]).toContain("v26-to-v27#step-4-custom-nsis-migration-guide")
+    expect(result.warnings[0]).not.toContain(url)
+    expect(result.warnings[0]).not.toContain(checksum)
+  })
+
+  test("a kept key alone does not mark the config modified, so the file is not re-serialized", () => {
+    const input = { nsisWeb: { customNsisResources: { url, checksum, version: "3.4.1" } }, portable: { customNsisBinary: { version: "3.10" } } }
+    const result = migrateConfig(structuredClone(input))
+    expect(result.modified).toBe(false)
+    expect(result.migrated).toEqual(input)
+    expect(result.warnings.map(w => w.split("\n")[0])).toEqual([
+      "`nsisWeb.customNsisResources` was replaced by `toolsets.nsis` in electron-builder v27.",
+      "`portable.customNsisBinary` was replaced by `toolsets.nsis` in electron-builder v27.",
+    ])
+  })
+
+  test("portable debugLogging is dropped with a warning; null keys are removed", () => {
+    const result = migrateConfig({ portable: { customNsisBinary: { debugLogging: true }, customNsisResources: null }, nsis: { customNsisBinary: null } })
+    expect(result.migrated).toEqual({ portable: {}, nsis: {} })
+    expect(result.warnings).toEqual([PORTABLE_DEBUG_LOGGING_DROPPED])
+  })
+
+  test("an existing installerDebugLogging wins over the v26 debugLogging", () => {
+    const result = migrateConfig({ nsis: { installerDebugLogging: false, customNsisBinary: { debugLogging: true } } })
+    expect(result.migrated).toEqual({ nsis: { installerDebugLogging: false } })
+  })
+})
+
+describe("migrateConfig — files / extraResources / extraFiles → fileOptions", () => {
+  test("moves the root-level keys under fileOptions", () => {
+    const result = migrateConfig({ appId: "a", files: ["dist/**"], extraResources: "r", extraFiles: [{ from: "bin", to: "bin" }] })
+    expect(result.migrated).toEqual({ appId: "a", fileOptions: { files: ["dist/**"], extraResources: "r", extraFiles: [{ from: "bin", to: "bin" }] } })
+    expect(result.changes.map(c => c.description)).toEqual([
+      "moved files → fileOptions.files",
+      "moved extraResources → fileOptions.extraResources",
+      "moved extraFiles → fileOptions.extraFiles",
+    ])
+    expect(result.warnings).toHaveLength(0)
+    expect(result.modified).toBe(true)
+  })
+
+  test.each(["mac", "mas", "masDev", "win", "linux"])("moves the %s platform-level keys under its fileOptions", platform => {
+    const result = migrateConfig({ [platform]: { target: "dir", files: ["!x/**"], extraFiles: "f" } })
+    expect(result.migrated).toEqual({ [platform]: { target: "dir", fileOptions: { files: ["!x/**"], extraFiles: "f" } } })
+    expect(result.changes.map(c => c.key)).toEqual([`${platform}.files`, `${platform}.extraFiles`])
+  })
+
+  test("merges into an existing fileOptions object; a null fileOptions is replaced", () => {
+    const result = migrateConfig({ extraFiles: ["e"], fileOptions: { files: ["dist/**"] }, linux: { extraResources: ["r"], fileOptions: null } })
+    expect(result.migrated).toEqual({ fileOptions: { files: ["dist/**"], extraFiles: ["e"] }, linux: { fileOptions: { extraResources: ["r"] } } })
+  })
+
+  test("a flat key also set under fileOptions is removed with a warning: the build already ignores it", () => {
+    const result = migrateConfig({ files: ["flat/**"], fileOptions: { files: ["nested/**"] }, mac: { extraResources: ["flat"], fileOptions: { extraResources: ["nested"] } } })
+    expect(result.migrated).toEqual({ fileOptions: { files: ["nested/**"] }, mac: { fileOptions: { extraResources: ["nested"] } } })
+    expect(result.changes.map(c => c.description)).toEqual([
+      "removed files (fileOptions.files is also set and takes precedence)",
+      "removed mac.extraResources (mac.fileOptions.extraResources is also set and takes precedence)",
+    ])
+    expect(result.warnings).toHaveLength(2)
+    expect(result.warnings[0]).toContain("the build uses fileOptions.files and ignores files")
+  })
+
+  test("a fileOptions that is not an object is left alone with a warning", () => {
+    const input = { files: ["dist/**"], fileOptions: ["x"] }
+    const result = migrateConfig(structuredClone(input))
+    expect(result.migrated).toEqual(input)
+    expect(result.modified).toBe(false)
+    expect(result.warnings).toEqual(["fileOptions is not an object; move files into it manually (e.g. fileOptions: { files: [...] })."])
+  })
+
+  test("target sections are untouched (flatpak.files is a [src, dest] list of its own)", () => {
+    const input = { flatpak: { files: [["build/a", "/share/a"]] }, fileOptions: { files: ["dist/**"] } }
+    const result = migrateConfig(structuredClone(input))
+    expect(result.modified).toBe(false)
+    expect(result.migrated).toEqual(input)
   })
 })

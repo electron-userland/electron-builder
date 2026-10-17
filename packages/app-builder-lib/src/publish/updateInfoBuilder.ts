@@ -1,6 +1,6 @@
 import asyncPool from "tiny-async-pool"
 import { Arch, createUpdateManifestSignatures, log, safeStringifyJson, serializeToYaml } from "builder-util"
-import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { deepAssign, GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -64,9 +64,6 @@ function computeChannelNames(packager: PlatformPackager<any>, publishConfig: Pub
   }
 }
 
-/** Emitted once per suffixed channel — computeChannelNames runs per artifact. */
-const suffixedChannelWarnings = new Set<string>()
-
 /**
  * v26 only expanded a channel to its lower channels when the name was exactly alpha/beta/latest, so a
  * suffixed channel (the per-arch `${channel}-${arch}` pattern) published a single file. v27 reads the
@@ -74,11 +71,11 @@ const suffixedChannelWarnings = new Set<string>()
  * overwrites `beta-x64.yml` in the same bucket — changing what live beta-x64 users are offered.
  */
 function warnAboutSuffixedChannelExpansion(currentChannel: string, suffix: string, channels: Array<string>): Array<string> {
-  if (suffix.length === 0 || suffixedChannelWarnings.has(currentChannel)) {
+  if (suffix.length === 0) {
     return channels
   }
-  suffixedChannelWarnings.add(currentChannel)
-  log.warn(
+  // once per suffixed channel — computeChannelNames runs per artifact
+  log.once(`suffixed-channel-expansion:${currentChannel}`).warn(
     {
       channel: currentChannel,
       writes: channels.map(it => `${it}.yml`).join(", "),
@@ -210,12 +207,21 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
 
   if (customUpdateInfo != null) {
     // file info or nsis web installer packages info
-    Object.assign("sha512" in customUpdateInfo ? files[0] : result, customUpdateInfo)
+    if ("sha512" in customUpdateInfo) {
+      deepAssign(files[0], customUpdateInfo)
+    } else {
+      const { isAdminRightsRequired, ...packagesInfo } = customUpdateInfo
+      deepAssign(result, packagesInfo)
+      // electron-updater reads isAdminRightsRequired from the file entry of the installer
+      if (isAdminRightsRequired != null) {
+        deepAssign(files[0], { isAdminRightsRequired })
+      }
+    }
   }
   return result
 }
 
-export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfoFileTask>, packager: Packager) {
+export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfoFileTask>, packager: Packager, isPublish = false) {
   // zip must be first and zip info must be used for old path/sha512 properties in the update info
   // universal installer (arch === null) must precede arch-specific ones so path:/sha512: point to the right artifact
   updateInfoFileTasks.sort((a, b) => {
@@ -245,8 +251,20 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
 
   const releaseDate = new Date().toISOString()
 
+  const tasks = Array.from(updateChannelFileToInfo.values())
+
+  // Resolve (and, when publishing, enforce) the signing keys before writing anything, so a missing key fails the
+  // build instead of leaving some manifests written and others not. MemoLazy and the one-shot warning make the
+  // per-task calls below free after this. Tasks with `publishAutoUpdate: false` are skipped for the same reason
+  // the loop skips them: they emit no manifest.
+  for (const task of tasks) {
+    if (task.publishConfiguration.publishAutoUpdate !== false) {
+      await task.packager.requireUpdateSigningKeys(isPublish)
+    }
+  }
+
   const concurrency = 4
-  await asyncPool<UpdateInfoFileTask, void>(concurrency, Array.from(updateChannelFileToInfo.values()), async task => {
+  await asyncPool<UpdateInfoFileTask, void>(concurrency, tasks, async task => {
     const publishConfig = task.publishConfiguration
     if (publishConfig.publishAutoUpdate === false) {
       log.debug(
@@ -270,8 +288,10 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     // Every configured key signs (dual-signing during key rotation): `signatures` holds one tagged entry
     // per key and the legacy single `signature` field repeats the first key's signature, so the manifest
     // shape is the same whether one or several keys are configured.
-    const signingKeys = await task.packager.updateSigningKeys.value
+    const signingKeys = await task.packager.requireUpdateSigningKeys(isPublish)
     let info: UpdateInfo = task.info
+    // empty only when signing is opted out of with `updateManifest: false`, or on a build without a publish
+    // policy that has no key configured - both of which have already warned
     if (signingKeys.length > 0) {
       const signatures = createUpdateManifestSignatures(task.info, signingKeys)
       info = { ...task.info, signature: signatures[0].signature, signatures }
@@ -324,24 +344,23 @@ async function writeOldMacInfo(
   }
 }
 
-/** Emitted once per process — createUpdateInfoTasks runs per artifact. */
-let legacyCompatibilityWarningEmitted = false
-
 /**
  * The default `electronUpdaterCompatibility` moved to ">=2.16", which is what stops the deprecated
  * top-level path/sha512 descriptor from being written. A range pinned below that keeps emitting it —
  * along with the SHA-256 `sha2` checksum on Windows, which v28 will reject outright. Nothing said so.
  */
 function warnAboutLegacyUpdaterCompatibility(electronUpdaterCompatibility: string, needsLegacyPathSha512: boolean): void {
-  if (!needsLegacyPathSha512 || legacyCompatibilityWarningEmitted) {
+  if (!needsLegacyPathSha512) {
     return
   }
-  legacyCompatibilityWarningEmitted = true
-  log.warn(
-    { electronUpdaterCompatibility, solution: 'drop the pin (the default is ">=2.16") unless you still ship apps embedding electron-updater 1.x-2.15' },
-    "electronUpdaterCompatibility includes electron-updater versions below 2.16.0, so the deprecated top-level path/sha512 descriptor is still written to latest*.yml " +
-      "(and, on Windows, the legacy SHA-256 sha2 checksum). Metadata validated only by sha2 is deprecated and v28 will reject it. " +
-      "Every electron-updater since 2.16.0 reads files[] and ignores these fields. " +
-      "See https://www.electron.build/docs/migration/v27-breaking-changes#latestyml-drops-legacy-top-level-pathsha512"
-  )
+  // once per process — createUpdateInfoTasks runs per artifact
+  log
+    .once("legacy-updater-compatibility")
+    .warn(
+      { electronUpdaterCompatibility, solution: 'drop the pin (the default is ">=2.16") unless you still ship apps embedding electron-updater 1.x-2.15' },
+      "electronUpdaterCompatibility includes electron-updater versions below 2.16.0, so the deprecated top-level path/sha512 descriptor is still written to latest*.yml " +
+        "(and, on Windows, the legacy SHA-256 sha2 checksum). Metadata validated only by sha2 is deprecated and v28 will reject it. " +
+        "Every electron-updater since 2.16.0 reads files[] and ignores these fields. " +
+        "See https://www.electron.build/docs/migration/v27-breaking-changes#latestyml-drops-legacy-top-level-pathsha512"
+    )
 }

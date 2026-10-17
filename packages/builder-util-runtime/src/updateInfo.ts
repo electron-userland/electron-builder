@@ -38,6 +38,13 @@ export interface PackageFileInfo extends BlockMapDataHolder {
 
 export interface UpdateFileInfo extends BlockMapDataHolder {
   url: string
+
+  /**
+   * URL of the file's blockmap, for a blockmap that is not at `${url}.blockmap` with the file's query string (e.g. a separately
+   * pre-signed URL). A relative value is resolved like `url` (against the feed URL); an absolute URL is used as-is, with its own host and query. Not written by
+   * electron-builder; covered by the manifest signature when present.
+   */
+  blockMapUrl?: string
 }
 
 export interface UpdateInfo {

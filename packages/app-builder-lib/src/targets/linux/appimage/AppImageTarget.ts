@@ -5,10 +5,11 @@ import * as path from "path"
 import { Target } from "../../../core.js"
 import { LinuxPackager } from "../../../linuxPackager.js"
 import { AppImageOptions } from "../../../options/linuxOptions.js"
-import { getAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../../publish/PublishManager.js"
+import { getPackAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../../publish/PublishManager.js"
 import { getNotLocalizedLicenseFile } from "../../../util/license.js"
 import { LinuxTargetHelper } from "../LinuxTargetHelper.js"
 import { createStageDir } from "../../targetUtil.js"
+import { getStagingCopyLinkOptions } from "../../../util/trustedSourceRoots.js"
 import { buildLegacyFuse2AppImage, buildStaticRuntimeAppImage } from "./appImageUtil.js"
 import { BlockMapDataHolder } from "builder-util-runtime"
 
@@ -46,6 +47,10 @@ export default class AppImageTarget extends Target {
     )
   }
 
+  get writesUpdateInfo(): boolean {
+    return true
+  }
+
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
 
@@ -63,7 +68,7 @@ export default class AppImageTarget extends Target {
 
     // Parallelize independent async operations
     const [publishConfig, stageDir, desktopEntry, icons, license] = await Promise.all([
-      getAppUpdatePublishConfiguration(packager, options, arch, false),
+      getPackAppUpdatePublishConfiguration(packager, packager.getPackTargets(appOutDir, arch) ?? [this], arch, false),
       createStageDir(this, packager, arch),
       this.desktopEntry.value,
       this.helper.icons,
@@ -71,7 +76,7 @@ export default class AppImageTarget extends Target {
     ])
 
     if (publishConfig != null) {
-      await writeAppUpdateYaml(packager.getResourcesDir(appOutDir), publishConfig)
+      await writeAppUpdateYaml(packager.getResourcesDir(appOutDir), publishConfig, appOutDir)
     }
 
     // Validated once here; throws InvalidConfigurationError for path traversal / NUL.
@@ -88,10 +93,12 @@ export default class AppImageTarget extends Target {
     let updateInfo: BlockMapDataHolder
     try {
       const appimageTool = this.packager.config.toolsets?.appimage
+      const appDirCopyOptions = await getStagingCopyLinkOptions(packager)
       if (appimageTool === "0.0.0") {
         updateInfo = await buildLegacyFuse2AppImage(
           {
             appDir: appOutDir,
+            appDirCopyOptions,
             stageDir: stageDir.dir,
             arch,
             output: artifactPath,
@@ -124,6 +131,7 @@ export default class AppImageTarget extends Target {
           appimageTool,
           {
             appDir: appOutDir,
+            appDirCopyOptions,
             stageDir: stageDir.dir,
             arch,
             output: artifactPath,

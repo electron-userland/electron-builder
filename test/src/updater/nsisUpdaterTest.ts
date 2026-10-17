@@ -1,5 +1,5 @@
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
-import { UpdateCheckResult } from "electron-updater"
+import { NsisUpdater, UpdateCheckResult } from "electron-updater"
 import fsExtra from "fs-extra"
 import { createHash } from "crypto"
 import * as http from "http"
@@ -8,10 +8,19 @@ import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
 import { removeUnstableProperties } from "../helpers/packTester.js"
-import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import {
+  createNsisUpdater,
+  createTestAppAdapter,
+  createVerifyUpdateFileMock,
+  expectVerifyUpdateFileFailure,
+  trackEvents,
+  tuneTestUpdater,
+  validateDownload,
+  writeUpdateConfig,
+} from "../helpers/updaterTestUtil.js"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { serializeToYaml, TmpDir } from "builder-util"
-import { ExpectStatic } from "vitest"
+import { ExpectStatic, vi } from "vitest"
 
 const config = { retry: 3 }
 
@@ -28,7 +37,7 @@ function installerName(version: string) {
   return `TestApp Setup ${version}.exe`
 }
 
-function channelYml(options: { version?: string; sha512?: string; stagingPercentage?: number } = {}): string {
+function channelYml(options: { version?: string; sha512?: string; stagingPercentage?: number; webInstallerPackage?: { fileName: string; content: Buffer } } = {}): string {
   const version = options.version ?? UPDATE_VERSION
   const fileName = installerName(version)
   const sha512 = options.sha512 ?? createHash("sha512").update(INSTALLER_CONTENT).digest("base64")
@@ -41,6 +50,17 @@ function channelYml(options: { version?: string; sha512?: string; stagingPercent
   }
   if (options.stagingPercentage != null) {
     info.stagingPercentage = options.stagingPercentage
+  }
+  if (options.webInstallerPackage != null) {
+    const { fileName: packageFileName, content } = options.webInstallerPackage
+    info.packages = {
+      [process.arch]: {
+        file: packageFileName,
+        path: packageFileName,
+        sha512: createHash("sha512").update(content).digest("base64"),
+        size: content.length,
+      },
+    }
   }
   return serializeToYaml(info)
 }
@@ -104,6 +124,141 @@ test("file url generic", config, async ({ expect }) => {
     const updater = await createNsisUpdater()
     updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
     await validateDownload(expect, updater)
+  } finally {
+    await close()
+  }
+})
+
+// verifyUpdateFile is an inherited property, see baseUpdaterUnitTest.ts for test coverage on the parent class.
+test("file url generic aborts when verifyUpdateFile rejects the downloaded temp file", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+    const { mock, observations } = createVerifyUpdateFileMock(() => ({ response: "failure", message: "custom verification failed" }))
+    updater.verifyUpdateFile = mock
+
+    const actualEvents = trackEvents(updater)
+    const updateCheckResult = await updater.checkForUpdates()
+
+    const observation = await expectVerifyUpdateFileFailure({
+      expect,
+      downloadPromise: updateCheckResult?.downloadPromise,
+      verifyUpdateFile: mock,
+      observations,
+      expectedErrorMessageSubstring: "custom verification failed",
+    })
+    expect(observation.originalUpdateFileName).toBe(installerName(UPDATE_VERSION))
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
+  } finally {
+    await close()
+  }
+})
+
+test("web installer passes packageFilePath to verifyUpdateFile", config, async ({ expect }) => {
+  const packageFileName = `TestApp-${UPDATE_VERSION}.nsis.7z`
+  const packageContent = Buffer.from("electron-builder localhost update-server test nsis-web package payload")
+  const { url, close } = await serveUpdate({
+    "latest.yml": channelYml({ webInstallerPackage: { fileName: packageFileName, content: packageContent } }),
+    [installerName(UPDATE_VERSION)]: INSTALLER_CONTENT,
+    [packageFileName]: packageContent,
+  })
+  try {
+    const updater = await createNsisUpdater()
+    updater.disableWebInstaller = false
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+
+    let packageFileExistedDuringVerification = false
+    const { mock, observations } = createVerifyUpdateFileMock(async params => {
+      packageFileExistedDuringVerification = await fsExtra.pathExists(params.packageFilePath!)
+      return { response: "failure", message: "custom verification failed" }
+    })
+    updater.verifyUpdateFile = mock
+
+    const updateCheckResult = await updater.checkForUpdates()
+    const observation = await expectVerifyUpdateFileFailure({
+      expect,
+      downloadPromise: updateCheckResult?.downloadPromise,
+      verifyUpdateFile: mock,
+      observations,
+      expectedErrorMessageSubstring: "custom verification failed",
+    })
+
+    expect(observation.originalUpdateFileName).toBe(installerName(UPDATE_VERSION))
+    expect(path.basename(observation.packageFilePath!)).toBe(`package-${UPDATE_VERSION}.7z`)
+    expect(packageFileExistedDuringVerification).toBe(true)
+    await assertThat(expect, observation.packageFilePath!).doesNotExist()
+  } finally {
+    await close()
+  }
+})
+
+test("verifyUpdateFile also gates a cached update reused after an app relaunch", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    // both updaters share one app adapter, so the second one reads the cache the first one wrote — the
+    // cross-launch branch of validateDownloadedPath (update-info.json + re-hash), not the in-session one
+    const appAdapter = await createTestAppAdapter()
+    const updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+
+    const firstLaunch = new NsisUpdater(null, appAdapter)
+    tuneTestUpdater(firstLaunch)
+    firstLaunch.updateConfigPath = updateConfigPath
+    const accepting = createVerifyUpdateFileMock(() => ({ response: "success" }))
+    firstLaunch.verifyUpdateFile = accepting.mock
+    const firstDownload = await (await firstLaunch.checkForUpdates())?.downloadPromise
+    await assertThat(expect, firstDownload!.updateFile).isFile()
+
+    // a fresh updater instance, as after a restart: nothing is downloaded again, but the verifier must still run
+    const secondLaunch = new NsisUpdater(null, appAdapter)
+    tuneTestUpdater(secondLaunch)
+    secondLaunch.updateConfigPath = updateConfigPath
+    const rejecting = createVerifyUpdateFileMock(() => ({ response: "failure", message: "stale cached file rejected" }))
+    secondLaunch.verifyUpdateFile = rejecting.mock
+
+    await expect((await secondLaunch.checkForUpdates())?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_INVALID_UPDATE_FILE",
+      message: expect.stringContaining("stale cached file rejected"),
+    })
+
+    expect(rejecting.mock).toHaveBeenCalledTimes(1)
+    expect(rejecting.observations[0].updateFilePath).toBe(firstDownload!.updateFile)
+    await assertThat(expect, firstDownload!.updateFile).doesNotExist()
+  } finally {
+    await close()
+  }
+})
+
+test("verifyUpdateFile also gates an update reused from the cache in the same session", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+
+    // first round: the verifier accepts, so the update lands in the cache under its real filename
+    const accepting = createVerifyUpdateFileMock(() => ({ response: "success" }))
+    updater.verifyUpdateFile = accepting.mock
+    const firstDownload = await (await updater.checkForUpdates())?.downloadPromise
+    expect(accepting.mock).toHaveBeenCalledTimes(1)
+    await assertThat(expect, firstDownload!.updateFile).isFile()
+
+    // second round: nothing is downloaded again, but the verifier must still get to inspect the cached file
+    const rejecting = createVerifyUpdateFileMock(() => ({ response: "failure", message: "cached file rejected" }))
+    updater.verifyUpdateFile = rejecting.mock
+    const actualEvents = trackEvents(updater)
+    await expect((await updater.checkForUpdates())?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_INVALID_UPDATE_FILE",
+      message: expect.stringContaining("cached file rejected"),
+    })
+
+    expect(rejecting.mock).toHaveBeenCalledTimes(1)
+    const [observation] = rejecting.observations
+    // the cached file is re-verified at its real name — there is no temporary name to quarantine it under
+    expect(observation.updateFilePath).toBe(firstDownload!.updateFile)
+    expect(observation.updateFileExisted).toBe(true)
+    // and a rejected cached file does not survive to be installed
+    await assertThat(expect, observation.updateFilePath).doesNotExist()
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
   } finally {
     await close()
   }
@@ -304,8 +459,8 @@ test.ifWindows("test custom signature verifier", config, async ({ expect }) => {
       url,
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
-    updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
-      return Promise.resolve(null)
+    updater.verifyUpdateFileAuthenticodeSignature = (_publisherName: string[], _path: string) => {
+      return Promise.resolve({ response: "success" })
     }
     await validateDownload(expect, updater)
   } finally {
@@ -322,8 +477,8 @@ test.ifWindows("test custom signature verifier - signing error message", config,
       url,
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
-    updater.verifyUpdateCodeSignature = (_publisherName: string[], _path: string) => {
-      return Promise.resolve("signature verification failed")
+    updater.verifyUpdateFileAuthenticodeSignature = (_publisherName: string[], _path: string) => {
+      return Promise.resolve({ response: "failure", message: "signature verification failed" })
     }
     const actualEvents = trackEvents(updater)
     await assertThat(
@@ -331,6 +486,30 @@ test.ifWindows("test custom signature verifier - signing error message", config,
       updater.checkForUpdates().then((it): any => it?.downloadPromise)
     ).throws()
     expect(actualEvents).toMatchSnapshot()
+  } finally {
+    await close()
+  }
+})
+
+test("malformed custom signature verifier result fails closed", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater("1.0.2")
+    updater.updateConfigPath = await writeUpdateConfig({
+      provider: "generic",
+      url,
+      publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
+    })
+    // @ts-expect-error intentionally violating the verifier contract to cover fail-closed behavior
+    updater.verifyUpdateFileAuthenticodeSignature = async (_publisherName: string[], _path: string) => null
+    const actualEvents = trackEvents(updater)
+    const updateCheckResult = await updater.checkForUpdates()
+
+    await expect(updateCheckResult?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_INVALID_SIGNATURE",
+      message: expect.stringContaining("unknown error"),
+    })
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
   } finally {
     await close()
   }
@@ -483,28 +662,78 @@ test.skip("test downloaded installer", config, async ({ expect }) => {
   }
 })
 
-describe("NsisUpdater — disableWebInstaller tri-state", () => {
+describe("NsisUpdater — disableWebInstaller", () => {
+  // disableWebInstaller defaults to true: a web-installer update is rejected with ERR_UPDATER_WEB_INSTALLER_DISABLED
+  // (also when it is already cached) unless the app sets it to false; the downloaded package is then passed via --package-file.
+  // names the updater gives the cached installer (basename of the url) and package (package-<version><ext>) in the pending dir
+  const WEB_INSTALLER_NAME = "TestApp Setup 1.0.1.exe"
+  const CACHED_PACKAGE_NAME = "package-1.0.1.7z"
+  const WEB_PAYLOAD = {
+    installer: INSTALLER_CONTENT,
+    package: Buffer.from("electron-builder localhost update-server test web-installer app package — not a real 7z archive"),
+  }
+
+  function sha512Base64(data: Buffer) {
+    return createHash("sha512").update(data).digest("base64")
+  }
+
   // Serves a synthetic update over a local server. When `web` is true the latest.yml carries a `packages` block
-  // keyed by the test arch, so resolveFiles populates fileInfo.packageInfo → isWebInstaller. No installer/package
-  // files are served: the web + explicit-`true` branch throws before any download, and every warning branch logs
-  // synchronously before the (then-failing) download — so none of these tests depend on a valid payload.
-  async function serveUpdate(web: boolean) {
+  // keyed by the test arch, so resolveFiles populates fileInfo.packageInfo → isWebInstaller. Without `payload` no
+  // installer/package files are served and the checksums are placeholders — enough for the branches that reject or
+  // warn before the download. With `payload` its bytes are served and latest.yml carries their real sha512.
+  async function serveUpdate(web: boolean, payload?: { installer: Buffer; package: Buffer; omitPackageSha512?: boolean; isAdminRightsRequired?: boolean }) {
     const tmpDir = new TmpDir("web-installer-unit")
     const root = await tmpDir.getTempDir()
-    const sha512 = Buffer.alloc(64).toString("base64")
+    const placeholderSha512 = Buffer.alloc(64).toString("base64")
+    const sha512 = payload == null ? placeholderSha512 : sha512Base64(payload.installer)
     const updateInfo: any = {
       version: "1.0.1",
-      files: [{ url: "TestApp Setup 1.0.1.exe", sha512, size: 10 }],
-      path: "TestApp Setup 1.0.1.exe",
+      files: [{ url: WEB_INSTALLER_NAME, sha512, size: payload?.installer.length ?? 10, ...(payload?.isAdminRightsRequired ? { isAdminRightsRequired: true } : {}) }],
+      path: WEB_INSTALLER_NAME,
       sha512,
       releaseDate: new Date(0).toISOString(),
     }
     if (web) {
-      updateInfo.packages = { [process.arch]: { file: "TestApp-1.0.1.nsis.7z", path: "TestApp-1.0.1.nsis.7z", sha512, size: 10 } }
+      const packageInfo: any = { file: "TestApp-1.0.1.nsis.7z", path: "TestApp-1.0.1.nsis.7z", size: payload?.package.length ?? 10 }
+      if (payload?.omitPackageSha512 !== true) {
+        packageInfo.sha512 = payload == null ? placeholderSha512 : sha512Base64(payload.package)
+      }
+      updateInfo.packages = { [process.arch]: packageInfo }
     }
     await fsExtra.outputFile(path.join(root, "latest.yml"), serializeToYaml(updateInfo))
+    if (payload != null) {
+      await fsExtra.outputFile(path.join(root, WEB_INSTALLER_NAME), payload.installer)
+      await fsExtra.outputFile(path.join(root, "TestApp-1.0.1.nsis.7z"), payload.package)
+    }
     const { server, port } = await createLocalServer(root)
     return { server, port, tmpDir }
+  }
+
+  // Seeds the pending cache exactly as a previous launch that downloaded the WEB_PAYLOAD update leaves it, so
+  // validateDownloadedPath returns a cache hit. `updateConfigPath` must be set first (it names the cache dir).
+  async function seedCachedWebUpdate(updater: NsisUpdater) {
+    const pendingDir: string = (await (updater as any).getOrCreateDownloadHelper()).cacheDirForPendingUpdate
+    await fsExtra.outputFile(path.join(pendingDir, WEB_INSTALLER_NAME), WEB_PAYLOAD.installer)
+    await fsExtra.outputFile(path.join(pendingDir, CACHED_PACKAGE_NAME), WEB_PAYLOAD.package)
+    await fsExtra.outputJson(path.join(pendingDir, "update-info.json"), {
+      fileName: WEB_INSTALLER_NAME,
+      sha512: sha512Base64(WEB_PAYLOAD.installer),
+      isAdminRightsRequired: false,
+      packageFileName: CACHED_PACKAGE_NAME,
+    })
+    return { packageFile: path.join(pendingDir, CACHED_PACKAGE_NAME) }
+  }
+
+  // records every non-channel-file request, i.e. installer and package downloads
+  function trackDownloads(server: http.Server) {
+    const downloads: Array<string> = []
+    server.on("request", (request: http.IncomingMessage) => {
+      const pathname = decodeURIComponent(new URL(request.url!, "http://localhost").pathname)
+      if (!pathname.endsWith(".yml")) {
+        downloads.push(pathname)
+      }
+    })
+    return downloads
   }
 
   test("explicit disableWebInstaller=true rejects a web-installer update", config, async ({ expect }) => {
@@ -523,30 +752,212 @@ describe("NsisUpdater — disableWebInstaller tri-state", () => {
     }
   })
 
-  test("unset disableWebInstaller warns about the v28 fail-closed change instead of rejecting as disabled", config, async ({ expect }) => {
+  test("unset disableWebInstaller rejects a web-installer update", config, async ({ expect }) => {
     const { server, port, tmpDir } = await serveUpdate(true)
+    const downloads = trackDownloads(server)
     try {
       const updater = await createNsisUpdater("1.0.0")
-      // Deliberately do NOT set disableWebInstaller — exercise the v27 grace-period default (unset → warn + proceed).
-      const warnings: Array<string> = []
-      updater.logger = { info() {}, warn: (m: string) => warnings.push(m), error() {}, debug() {} }
+      // Deliberately do NOT set disableWebInstaller — the default rejects the update before the installer is requested.
       updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
       trackEvents(updater)
 
       const updateCheckResult = await updater.checkForUpdates()
-      // The grace-period warning is logged synchronously before the download; the subsequent download may fail
-      // (no payload served), but it must never be the explicit-disabled rejection.
-      const rejection: any = await updateCheckResult!.downloadPromise!.then(
-        () => null,
-        (e: any) => e
-      )
-      expect(warnings.some(w => w.includes("v28 will fail-closed"))).toBe(true)
-      expect(rejection?.code).not.toBe("ERR_UPDATER_WEB_INSTALLER_DISABLED")
+      await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })
+      expect(downloads).toEqual([])
     } finally {
       server.close()
       await tmpDir.cleanup()
     }
   })
+
+  test("rejects a web-installer update already cached by a previous launch", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(true, WEB_PAYLOAD)
+    const downloads = trackDownloads(server)
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      await seedCachedWebUpdate(updater)
+      // a valid cache of a web-installer update is rejected as well
+      updater.disableWebInstaller = true
+      const actualEvents = trackEvents(updater)
+
+      const updateCheckResult = await updater.checkForUpdates()
+      await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })
+      expect(actualEvents).not.toContain("update-downloaded")
+      expect(downloads).toEqual([])
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  // positive control for the test above: the same seed is a genuine cache hit
+  test("disableWebInstaller=false reuses a web-installer update cached by a previous launch without downloading it", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(true, WEB_PAYLOAD)
+    const downloads = trackDownloads(server)
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      const { packageFile } = await seedCachedWebUpdate(updater)
+      updater.disableWebInstaller = false
+      const actualEvents = trackEvents(updater)
+
+      const updateCheckResult = await updater.checkForUpdates()
+      const result = await updateCheckResult!.downloadPromise
+      expect(result!.packageFile).toBe(packageFile)
+      expect(actualEvents).toContain("update-downloaded")
+      expect(downloads).toEqual([])
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  test("rejects a web-installer update whose package has no sha512", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(true, { ...WEB_PAYLOAD, omitPackageSha512: true })
+    const downloads = trackDownloads(server)
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      updater.disableWebInstaller = false
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      trackEvents(updater)
+
+      const updateCheckResult = await updater.checkForUpdates()
+      await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_NO_CHECKSUM" })
+      expect(downloads).toEqual([])
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  test("disableWebInstaller=false downloads the web package and installs it via --package-file", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(true, WEB_PAYLOAD)
+    try {
+      const updater = await createNsisUpdater("1.0.0")
+      updater.disableWebInstaller = false
+      // the test app-update.yml has no publisherName (the installer is unsigned)
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      const errors: Array<any> = []
+      updater.on("error", e => errors.push(e))
+
+      const updateCheckResult = await updater.checkForUpdates()
+      const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
+      expect(packageFile).toBeDefined()
+      await assertThat(expect, packageFile).isFile()
+      expect((await fsExtra.readJson(path.join(path.dirname(packageFile!), "update-info.json"))).packageFileName).toBe(path.basename(packageFile!))
+
+      // the policy is re-checked at install time: the web installer must not run once web installers are disabled
+      const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+      updater.disableWebInstaller = true
+      expect(updater.install(true, false)).toBe(false)
+      expect(spawnLog).not.toHaveBeenCalled()
+      expect(errors).toEqual([expect.objectContaining({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })])
+
+      // a refused install() leaves quitAndInstallCalled set (only quitAndInstall() resets it)
+      ;(updater as any).quitAndInstallCalled = false
+      updater.disableWebInstaller = false
+      expect(updater.install(true, false)).toBe(true)
+      expect(spawnLog).toHaveBeenCalledWith(updateFile, expect.arrayContaining([`--package-file=${packageFile}`]))
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  // NSIS takes the rest of the command line after /D= as the install directory, so every other argument comes before it
+  for (const web of [true, false]) {
+    for (const installDirectory of ["C:\\Apps\\TestApp", undefined]) {
+      test(
+        `installer arguments of a ${web ? "web" : "full"} installer ${installDirectory == null ? "without installDirectory" : "with installDirectory (/D= last)"}`,
+        config,
+        async ({ expect }) => {
+          const { server, port, tmpDir } = await serveUpdate(web, WEB_PAYLOAD)
+          try {
+            const updater = await createNsisUpdater("1.0.0")
+            if (web) {
+              updater.disableWebInstaller = false
+            }
+            updater.installDirectory = installDirectory
+            updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+            const errors: Array<any> = []
+            updater.on("error", e => errors.push(e))
+
+            const updateCheckResult = await updater.checkForUpdates()
+            const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
+            expect(packageFile == null).toBe(!web)
+
+            const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+            expect(updater.install(true, true)).toBe(true)
+            expect(spawnLog).toHaveBeenCalledTimes(1)
+            expect(spawnLog).toHaveBeenCalledWith(updateFile, [
+              "--updated",
+              "/S",
+              "--force-run",
+              ...(web ? [`--package-file=${packageFile}`] : []),
+              ...(installDirectory == null ? [] : [`/D=${installDirectory}`]),
+            ])
+            expect(errors).toEqual([])
+          } finally {
+            server.close()
+            await tmpDir.cleanup()
+          }
+        }
+      )
+    }
+  }
+
+  // the update info of a per-machine build has isAdminRightsRequired in the installer's file entry: the installer is started through
+  // elevate.exe from the resources of the running app, with the arguments it would get directly
+  for (const installDirectory of [undefined, "C:\\Apps\\TestApp"]) {
+    test(
+      `an update with isAdminRightsRequired is installed through elevate.exe, --package-file included${installDirectory == null ? "" : " and /D= last"}`,
+      config,
+      async ({ expect }) => {
+        const { server, port, tmpDir } = await serveUpdate(true, { ...WEB_PAYLOAD, isAdminRightsRequired: true })
+        try {
+          const updater = await createNsisUpdater("1.0.0")
+          updater.disableWebInstaller = false
+          updater.installDirectory = installDirectory
+          updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+          const errors: Array<any> = []
+          updater.on("error", e => errors.push(e))
+
+          const updateCheckResult = await updater.checkForUpdates()
+          const { updateFile, packageFile } = (await updateCheckResult!.downloadPromise)!
+          expect(packageFile).toBeDefined()
+          expect((await fsExtra.readJson(path.join(path.dirname(updateFile), "update-info.json"))).isAdminRightsRequired).toBe(true)
+
+          const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+          // process.resourcesPath is only set in Electron; set here for the install only (the constructor reads the package-type marker from it)
+          const resourcesPath = await tmpDir.getTempDir({ prefix: "resources" })
+          const original = Object.getOwnPropertyDescriptor(process, "resourcesPath")
+          Object.defineProperty(process, "resourcesPath", { value: resourcesPath, configurable: true, writable: true })
+          try {
+            expect(updater.install(true, false)).toBe(true)
+          } finally {
+            if (original == null) {
+              delete (process as any).resourcesPath
+            } else {
+              Object.defineProperty(process, "resourcesPath", original)
+            }
+          }
+          expect(spawnLog).toHaveBeenCalledTimes(1)
+          expect(spawnLog).toHaveBeenCalledWith(path.join(resourcesPath, "elevate.exe"), [
+            updateFile,
+            "--updated",
+            "/S",
+            `--package-file=${packageFile}`,
+            ...(installDirectory == null ? [] : [`/D=${installDirectory}`]),
+          ])
+          expect(errors).toEqual([])
+        } finally {
+          server.close()
+          await tmpDir.cleanup()
+        }
+      }
+    )
+  }
 
   test("unset disableWebInstaller stays silent for a regular (non-web) installer", config, async ({ expect }) => {
     const { server, port, tmpDir } = await serveUpdate(false)
@@ -590,6 +1001,95 @@ describe("NsisUpdater — disableWebInstaller tri-state", () => {
           () => null
         )
       expect(warnings.some(w => w.includes("a full installer (not a web installer) was downloaded"))).toBe(true)
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  // process.resourcesPath is only set in Electron: set here while the updater is created, which reads the package-type marker from it
+  async function createNsisUpdaterWithPackageType(tmpDir: TmpDir, packageType: string) {
+    const resourcesPath = await tmpDir.getTempDir({ prefix: "resources" })
+    await fsExtra.outputFile(path.join(resourcesPath, "package-type"), packageType)
+    const original = Object.getOwnPropertyDescriptor(process, "resourcesPath")
+    Object.defineProperty(process, "resourcesPath", { value: resourcesPath, configurable: true, writable: true })
+    try {
+      return await createNsisUpdater("1.0.0")
+    } finally {
+      if (original == null) {
+        delete (process as any).resourcesPath
+      } else {
+        Object.defineProperty(process, "resourcesPath", original)
+      }
+    }
+  }
+
+  // an nsis-web install that receives a full installer (the app moved from nsis-web to nsis) needs no change by the app; the full
+  // installer writes the `nsis` marker, so web-installer updates need an opt-in after it is installed
+  test("the nsis-web default of disableWebInstaller logs an info line, not a warning, for a regular (non-web) installer", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(false, WEB_PAYLOAD)
+    try {
+      const updater = await createNsisUpdaterWithPackageType(tmpDir, "nsis-web")
+      expect(updater.disableWebInstaller).toBe(false)
+      const infos: Array<string> = []
+      const warnings: Array<string> = []
+      updater.logger = { info: (m: string) => infos.push(m), warn: (m: string) => warnings.push(m), error() {}, debug() {} }
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      trackEvents(updater)
+
+      const updateCheckResult = await updater.checkForUpdates()
+      // the download completes, so the full-installer branch ran
+      await expect(updateCheckResult!.downloadPromise).resolves.toMatchObject({ updateFile: expect.stringContaining(WEB_INSTALLER_NAME) })
+      expect(warnings.filter(w => w.includes("disableWebInstaller"))).toEqual([])
+      expect(infos.filter(m => m.includes("disableWebInstaller"))).toEqual([
+        "A full installer (not a web installer) was downloaded for an install made by an nsis-web installer. After it is installed, web-installer updates need disableWebInstaller = false.",
+      ])
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  test("disableWebInstaller=true set by the app wins over the nsis-web default", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(true)
+    const downloads = trackDownloads(server)
+    try {
+      const updater = await createNsisUpdaterWithPackageType(tmpDir, "nsis-web")
+      expect(updater.disableWebInstaller).toBe(false)
+      updater.disableWebInstaller = true
+      expect(updater.disableWebInstaller).toBe(true)
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      trackEvents(updater)
+
+      const updateCheckResult = await updater.checkForUpdates()
+      await expect(updateCheckResult!.downloadPromise).rejects.toMatchObject({ code: "ERR_UPDATER_WEB_INSTALLER_DISABLED" })
+      expect(downloads).toEqual([])
+    } finally {
+      server.close()
+      await tmpDir.cleanup()
+    }
+  })
+
+  test("disableWebInstaller=false set by the app also warns on an nsis-web install for a regular (non-web) installer", config, async ({ expect }) => {
+    const { server, port, tmpDir } = await serveUpdate(false)
+    try {
+      const updater = await createNsisUpdaterWithPackageType(tmpDir, "nsis-web")
+      updater.disableWebInstaller = false
+      const infos: Array<string> = []
+      const warnings: Array<string> = []
+      updater.logger = { info: (m: string) => infos.push(m), warn: (m: string) => warnings.push(m), error() {}, debug() {} }
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({ provider: "generic", url: `http://127.0.0.1:${port}` })
+      trackEvents(updater)
+
+      await updater
+        .checkForUpdates()
+        .then(r => r!.downloadPromise)
+        .then(
+          () => null,
+          () => null
+        )
+      expect(warnings.some(w => w.includes("a full installer (not a web installer) was downloaded"))).toBe(true)
+      expect(infos.filter(m => m.includes("disableWebInstaller"))).toEqual([])
     } finally {
       server.close()
       await tmpDir.cleanup()

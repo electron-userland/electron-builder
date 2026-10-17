@@ -1,6 +1,7 @@
 import path from "path"
 import fs from "fs-extra"
 import { copyOrLinkFile, log, escapeForXml } from "builder-util"
+import { FileAssociation } from "../../../options/FileAssociation.js"
 import { AppImageBuilderOptions } from "./appImageUtil.js"
 
 const ICON_DIR_RELATIVE_PATH = "usr/share/icons/hicolor"
@@ -51,20 +52,11 @@ export async function copyIcons(options: AppImageBuilderOptions): Promise<void> 
   await fs.symlink(iconRelativeToStageFile, path.join(stageDir, ".DirIcon"))
 }
 
-export async function copyMimeTypes(
-  stageDir: string,
-  options: Pick<AppImageBuilderOptions["options"], "fileAssociations" | "productName" | "executableName">
-): Promise<string | null> {
-  const { fileAssociations, productName, executableName } = options
-
-  if (!fileAssociations || fileAssociations.length === 0) {
-    return null
-  }
-
-  if (!fileAssociations || fileAssociations.length === 0) {
-    return null
-  }
-
+/**
+ * The shared-mime-info XML that declares the MIME types of the file associations that have one, or null when none has. Every value
+ * is XML-escaped, and an extension with characters other than `A-Za-z0-9_-` is skipped with a warning.
+ */
+export function generateMimeTypeXml(fileAssociations: ReadonlyArray<FileAssociation>, productName: string): string | null {
   const mimeTypeParts: string[] = []
 
   for (const fileAssociation of fileAssociations) {
@@ -97,13 +89,25 @@ export async function copyMimeTypes(
     return null
   }
 
+  return ['<?xml version="1.0"?>', '<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">', ...mimeTypeParts, "</mime-info>"].join("\n")
+}
+
+export async function copyMimeTypes(
+  stageDir: string,
+  options: Pick<AppImageBuilderOptions["options"], "fileAssociations" | "productName" | "executableName">
+): Promise<string | null> {
+  const { fileAssociations, productName, executableName } = options
+
+  const xmlContent = generateMimeTypeXml(fileAssociations ?? [], productName)
+  if (xmlContent == null) {
+    return null
+  }
+
   const mimeTypeDir = path.join(stageDir, MIME_TYPE_DIR_RELATIVE_PATH)
   const fileName = `${executableName}.xml`
   const mimeTypeFile = path.join(mimeTypeDir, fileName)
 
   await fs.ensureDir(mimeTypeDir)
-
-  const xmlContent = ['<?xml version="1.0"?>', '<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">', ...mimeTypeParts, "</mime-info>"].join("\n")
 
   // Use 0o644 (rw-r--r--) instead of 0o666 to avoid world-writable permissions
   await fs.writeFile(mimeTypeFile, xmlContent, { mode: 0o644 })

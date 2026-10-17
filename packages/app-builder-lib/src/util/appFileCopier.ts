@@ -1,8 +1,24 @@
-import { Arch, AsyncTaskManager, FileCopier, FileTransformer, InvalidConfigurationError, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
+import {
+  Arch,
+  assertCopiedSymlinksContained,
+  AsyncTaskManager,
+  ExternalLinkPolicy,
+  FileCopier,
+  FileTransformer,
+  InvalidConfigurationError,
+  isEmptyOrSpaces,
+  Link,
+  log,
+  MAX_FILE_REQUESTS,
+  rebaseCopiedSymlinkTarget,
+  statOrNull,
+  walk,
+  WriteContainment,
+} from "builder-util"
 import { DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES } from "../configuration.js"
 import { Stats } from "fs"
 import fsExtra from "fs-extra"
-import { mkdir, readlink } from "fs/promises"
+import { readlink } from "fs/promises"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
 import { isLibOrExe } from "../asar/unpackDetector.js"
@@ -16,6 +32,7 @@ import { AppFileWalker } from "./AppFileWalker.js"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
 import { NodeModuleInfo } from "../node-module-collector/types.js"
 import { archToNodeCpu } from "./archCompatibility.js"
+import { assertSourceFileInTrustedRoots } from "./trustedSourceRoots.js"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
@@ -25,22 +42,37 @@ export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   const src = fileSet.src
   const dest = fileSet.destination
   // get node_modules path relative to src and then append to dest
-  if (file.startsWith(src)) {
+  if (file.startsWith(src + path.sep)) {
     return path.join(dest, path.relative(src, file))
   }
   return dest
 }
 
-export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager, transformer: FileTransformer) {
+export interface CopyAppFilesOptions {
+  /** Every file, directory and symlink is written inside it, checked by its real path: the resources directory of the app. */
+  readonly containmentRoot: string
+  /** The real paths files may be copied from, see `getTrustedSourceRoots`. Each file is checked when given. */
+  readonly trustedSourceRoots?: ReadonlyArray<string> | null
+  /** The `fileOptions.allowExternalLinks` build option: allows a file outside the trusted source roots, or a kept symlink that leaves the containment root. */
+  readonly externalLinks?: ExternalLinkPolicy | null
+}
+
+/**
+ * Copies the files of the app when they are not packed into an asar archive. Like the asar packer, it refuses a file whose real path is
+ * outside the trusted source roots, writes only inside the containment root, checked by real path, and recreates a symlink only when it
+ * stays inside the containment root.
+ */
+export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Pick<Packager, "cancellationToken">, transformer: FileTransformer, options?: CopyAppFilesOptions | null) {
   const metadata = fileSet.metadata
   // search auto unpacked dir
   const taskManager = new AsyncTaskManager(packager.cancellationToken)
-  const createdParentDirs = new Set<string>()
+  const containment = new WriteContainment(options?.containmentRoot ?? fileSet.destination, "app file")
+  const trustedSourceRoots = options?.trustedSourceRoots
 
   const fileCopier = new FileCopier(file => {
     return !isLibOrExe(file)
   }, transformer)
-  const links: Array<Link> = []
+  const links: Array<Link & { source: string }> = []
   for (let i = 0, n = fileSet.files.length; i < n; i++) {
     const sourceFile = fileSet.files[i]
     const stat = metadata.get(sourceFile)
@@ -49,17 +81,18 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
       continue
     }
 
+    if (trustedSourceRoots != null) {
+      await assertSourceFileInTrustedRoots(sourceFile, trustedSourceRoots, options?.externalLinks)
+    }
+
     const destinationFile = getDestinationPath(sourceFile, fileSet)
     if (stat.isSymbolicLink()) {
-      links.push({ file: destinationFile, link: await readlink(sourceFile) })
+      links.push({ file: destinationFile, link: rebaseCopiedSymlinkTarget(fileSet.src, sourceFile, await readlink(sourceFile)), source: sourceFile })
       continue
     }
 
-    const fileParent = path.dirname(destinationFile)
-    if (!createdParentDirs.has(fileParent)) {
-      createdParentDirs.add(fileParent)
-      await mkdir(fileParent, { recursive: true })
-    }
+    // creates the directory once, checked by its real path, and removes a symlink planted at the destination
+    await containment.prepareFile(destinationFile)
 
     taskManager.addTask(fileCopier.copy(sourceFile, destinationFile, stat))
     if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
@@ -71,7 +104,12 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
     await taskManager.awaitTasks()
   }
 
-  await asyncPool(MAX_FILE_REQUESTS, links, it => fsExtra.ensureSymlink(it.link, it.file))
+  await asyncPool(MAX_FILE_REQUESTS, links, async it => {
+    await containment.prepareFile(it.file)
+    await fsExtra.ensureSymlink(it.link, it.file)
+  })
+  // the walker follows a symlink that leaves the app directory and copies what it points to, so a symlink kept as it is has to stay inside
+  await assertCopiedSymlinksContained(containment, links, [], "app file", options?.externalLinks)
 }
 
 // os path separator is used
@@ -217,22 +255,53 @@ type CollectorRunner = (pm: PM, dir: string) => Promise<CollectedNodeModules>
 // collected tree and cannot be used to validate it.
 const LOCAL_DEPENDENCY_SPEC = /^(?:workspace|file|link|portal):/
 
+// Log-summary buckets in which a collector reports a declared dependency it deliberately or
+// unavoidably left out of the collected tree. A direct dependency recorded in one of these is
+// accounted for even though it is absent from the top level of an otherwise correct collection.
+const ACCOUNTED_ABSENT_DEPENDENCY_KEYS: ReadonlyArray<LogMessageByKey> = [
+  // dropped by the target arch/platform filter (`archFilter`, package.json `cpu`/`os`)
+  LogMessageByKey.PKG_INCOMPATIBLE_PLATFORM,
+  // not installed / not resolvable on disk — whether that is fatal is decided afterwards by
+  // `allowMissingDependencies` (see enforceAllowMissingDependencies), not by collection matching
+  LogMessageByKey.PKG_NOT_FOUND,
+  LogMessageByKey.PKG_NOT_ON_DISK,
+  LogMessageByKey.PKG_OPTIONAL_NOT_INSTALLED,
+  LogMessageByKey.PKG_OPTIONAL_PLATFORM_NOT_INSTALLED,
+  // excluded via `ignoredProductionDependencies` (such modules normally stay in the tree flagged
+  // `excluded`, so this only matters if a collector ever drops them instead)
+  LogMessageByKey.PKG_EXCLUDED_IGNORED,
+  // a dependency that resolves to the package itself is skipped rather than collected
+  LogMessageByKey.PKG_SELF_REF,
+]
+
 /**
  * Determines whether a collected module tree actually describes the package being built.
  *
  * A package-manager `list` invocation can resolve to the wrong project root — most notably when
  * electron-builder is run from a workspace sub-package whose dependencies are hoisted to the
- * workspace root. In that case the collector returns a non-empty but unrelated tree. Accepting it
- * would suppress the manual-traversal fallback that resolves the correct modules, so we need to
- * tell a matching collection from a mismatched one.
+ * workspace root (#9945) — or a collector can resolve the root node to the wrong package (e.g. an
+ * app named like one of its own dependencies, #10277). In both cases the collector returns a
+ * non-empty but wrong tree. Accepting it would suppress the manual-traversal fallback that resolves
+ * the correct modules, so we need to tell a matching collection from a mismatched one.
  *
- * A collection matches when at least one of the package's declared external (registry-installed,
- * non-`workspace:`/`file:`/`link:`/`portal:`) production dependencies is present at the top level —
- * those direct dependencies are always hoisted to the top level of a correct collection. When the
- * package declares no external production dependencies there is nothing to validate against, so any
- * non-empty collection is accepted.
+ * Only the package's declared external (registry-installed, non-`workspace:`/`file:`/`link:`/`portal:`)
+ * production `dependencies` are checked; they are always placed at the top level of a correct
+ * collection. A collection matches when:
+ * - at least one of them is present at the top level, and
+ * - every one of them is either present at the top level (including modules flagged `excluded` by
+ *   `ignoredProductionDependencies`) or reported in the collection's own `logSummary` as
+ *   legitimately absent: dropped by the arch/platform filter, missing on disk (enforced later by
+ *   `allowMissingDependencies`), a missing optional/platform-specific package, excluded as ignored,
+ *   or a self-reference.
+ *
+ * When the package declares no external production dependencies there is nothing to validate
+ * against, so any non-empty collection is accepted.
  */
-export function collectionMatchesAppDependencies(nodeModules: NodeModuleInfo[], dependencies: Record<string, string> | undefined): boolean {
+export function collectionMatchesAppDependencies(
+  nodeModules: NodeModuleInfo[],
+  dependencies: Record<string, string> | undefined,
+  logSummary?: ModuleManager["logSummary"]
+): boolean {
   const requiredExternalDeps = Object.entries(dependencies ?? {})
     .filter(([, spec]) => !LOCAL_DEPENDENCY_SPEC.test(spec))
     .map(([name]) => name)
@@ -240,7 +309,11 @@ export function collectionMatchesAppDependencies(nodeModules: NodeModuleInfo[], 
     return true
   }
   const collected = new Set(nodeModules.map(it => it.name))
-  return requiredExternalDeps.some(name => collected.has(name))
+  if (!requiredExternalDeps.some(name => collected.has(name))) {
+    return false
+  }
+  const accountedAbsent = new Set(ACCOUNTED_ABSENT_DEPENDENCY_KEYS.flatMap(key => logSummary?.[key] ?? []).map(dependencyNameFromSummaryId))
+  return requiredExternalDeps.every(name => collected.has(name) || accountedAbsent.has(name))
 }
 
 /**
@@ -280,7 +353,7 @@ export async function resolveFirstMatchingCollection(options: {
         log.info({ pm, searchDir: dir }, "no node modules found in collection, trying next search directory")
         continue
       }
-      if (collectionMatchesAppDependencies(deps.nodeModules, dependencies)) {
+      if (collectionMatchesAppDependencies(deps.nodeModules, dependencies, deps.logSummary)) {
         log.debug({ pm, searchDir: dir, depCount: deps.nodeModules.length }, "collected node modules")
         return deps
       }

@@ -17,7 +17,10 @@ function makePackager(publish: any): any {
     config: { publish },
     appInfo: { updaterCacheDirName: "test-app", channel: null, version: "1.0.0" },
     expandMacro: (value: string) => value,
+    // This fixture opts out of manifest signing so the test stays focused on credential metadata.
+    updateManifestOptions: false,
     updateSigningKeys: { value: Promise.resolve([]) },
+    requireUpdateSigningKeys: async () => [],
   }
 }
 

@@ -246,7 +246,10 @@ win:
   sign:
     type: signtool
     sign: ./scripts/custom-sign.js
+    publisherName: "CN=My Company, O=My Company, C=US"
 ```
+
+On Windows, electron-builder cannot read the certificate a custom hook signs with, so set `win.sign.publisherName` to that certificate's subject — it is written to `app-update.yml` for update signature verification, and a build that writes `app-update.yml` fails without it. Copy it from a binary the hook already signed, as shown in [How do you delegate code signing?](../win.md#how-do-you-delegate-code-signing); every component you list must match exactly.
 
 ---
 
@@ -403,7 +406,7 @@ Each target runs inside Phase 2h. Here is what happens inside each one:
 | **AppImage** | Create squashfs image → embed ELF header → emit |
 | **DEB / RPM / Pacman** | Package via `fpm` → emit |
 | **Snap** | Write `snapcraft.yaml` → run `snapcraft` → emit |
-| **Flatpak** | Write manifest → run `flatpak-builder` → emit |
+| **Flatpak** | Write manifest → run `flatpak-builder` → `flatpak build-export` + `flatpak build-bundle` → emit |
 
 ---
 

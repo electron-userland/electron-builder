@@ -18,6 +18,7 @@ export {
   safeGetHeader,
   safeStringifyJson,
 } from "./httpExecutor.js"
+export type { LimitedLogger, LoggerLike, LogLevel, LogLimitOptions } from "./logLimiter.js"
 export { MemoLazy } from "./MemoLazy.js"
 export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform.js"
 export {

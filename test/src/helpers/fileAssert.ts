@@ -135,6 +135,25 @@ export async function readAppImageCompression(filePath: string): Promise<string>
   }
 }
 
+/**
+ * Reads the squashfs compression algorithm from a bare squashfs image (e.g. a `.snap`), whose
+ * superblock starts at offset 0. Throws if the squashfs magic is not there.
+ */
+export async function readSquashfsCompression(filePath: string): Promise<string> {
+  const handle = await fs.open(filePath, "r")
+  try {
+    const superblock = Buffer.alloc(22)
+    await handle.read(superblock, 0, superblock.length, 0)
+    if (superblock.readUInt32LE(0) !== SQUASHFS_MAGIC) {
+      throw new Error(`squashfs magic not found at offset 0 of ${filePath}`)
+    }
+    const type = superblock.readUInt16LE(20)
+    return SQUASHFS_COMPRESSION[type] ?? `unknown(${type})`
+  } finally {
+    await handle.close()
+  }
+}
+
 async function findSquashfsOffset(handle: fs.FileHandle, filePath: string): Promise<number> {
   const { size } = await handle.stat()
 

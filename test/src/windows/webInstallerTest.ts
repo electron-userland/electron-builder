@@ -10,7 +10,7 @@ import { TmpDir } from "temp-file"
 // (nsisWeb.publish → win.publish → publish), macro expansion and the GitHub/S3/generic URL computation are the production
 // ones. The tests that build the web installer and its *.nsis.7z packages live in webInstaller.e2e.ts.
 
-type AppPackageUrlDefines = Pick<Defines, "APP_PACKAGE_URL" | "APP_PACKAGE_URL_IS_INCOMPLETE">
+type AppPackageUrlDefines = Pick<Defines, "APP_PACKAGE_URL" | "APP_PACKAGE_URL_IS_INCOMPLETE" | "ALLOW_UNVERIFIED_APP_PACKAGE">
 
 async function computeDefines(tmpDir: TmpDir, config: Configuration): Promise<AppPackageUrlDefines> {
   const projectDir = await tmpDir.getTempDir({ prefix: "web-installer-url" })
@@ -138,6 +138,31 @@ test("web installer, multiple publish configs — first one is used", async ({ e
   })
   // First config (GitHub) should determine the URL.
   expect(defines).toStrictEqual({ APP_PACKAGE_URL: "https://github.com/foo/bar/releases/download/v1.1.0", APP_PACKAGE_URL_IS_INCOMPLETE: null })
+})
+
+// nsisWeb.allowUnverifiedAppPackage opts out of the installer's package verification; absent by default (the strict-equality tests above).
+test("web installer, allowUnverifiedAppPackage with explicit appPackageUrl sets ALLOW_UNVERIFIED_APP_PACKAGE", async ({ expect, tmpDir }) => {
+  const defines = await computeDefines(tmpDir, {
+    publish: null,
+    nsisWeb: {
+      appPackageUrl: "https://example.com/download/latest",
+      allowUnverifiedAppPackage: true,
+    },
+  })
+  expect(defines).toStrictEqual({ APP_PACKAGE_URL: "https://example.com/download/latest", ALLOW_UNVERIFIED_APP_PACKAGE: null })
+})
+
+test("web installer, allowUnverifiedAppPackage with auto-computed URL sets ALLOW_UNVERIFIED_APP_PACKAGE", async ({ expect, tmpDir }) => {
+  const defines = await computeDefines(tmpDir, {
+    publish: {
+      provider: "generic",
+      url: "https://cdn.example.com/releases",
+    },
+    nsisWeb: {
+      allowUnverifiedAppPackage: true,
+    },
+  })
+  expect(defines).toStrictEqual({ APP_PACKAGE_URL: "https://cdn.example.com/releases", APP_PACKAGE_URL_IS_INCOMPLETE: null, ALLOW_UNVERIFIED_APP_PACKAGE: null })
 })
 
 // When publish is null and no appPackageUrl is given, the build must throw rather than produce a

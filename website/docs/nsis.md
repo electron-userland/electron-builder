@@ -28,7 +28,19 @@ To customize web installer, use the top-level `nsisWeb` key (not `nsis`).
 If for some reasons web installer cannot download (antivirus, offline):
 
 - Download package file into the same directory where installer located. It will be detected automatically and used instead of downloading from the Internet. Please note — only original package file is allowed (checksum is checked).
-- Specify any local package file using `--package-file=path_to_file`.
+- Specify a local package file using `--package-file=path_to_file`. It must be one of the packages built with the installer (any arch; checksum is checked).
+
+The web installer verifies the package it installs against the SHA-512 of the packages built with it:
+
+- A package passed via `--package-file` (electron-updater passes the package it verified against the update manifest) must match one of them, for any arch.
+- A package downloaded from the default, publish-derived (versioned) URL must match the package for the detected arch.
+- A package downloaded from an explicit `appPackageUrl` (e.g. a version-independent `latest` URL) is **not** verified, since that URL can serve packages of other builds.
+
+A local package (passed via `--package-file`, or found next to the installer) is first copied into the installer's own temporary directory. The installer verifies and installs that copy. The local file itself is left in place; for an update, electron-updater removes the package it passed once the updated app starts. With `allowUnverifiedAppPackage` a package passed via `--package-file` is still copied, but not verified.
+
+A mismatch, a `--package-file` package that cannot be copied, or a package that cannot be downloaded (also a download cancelled in the progress window) aborts the installation (exit code `2`); a package next to the installer that doesn't match or cannot be copied is ignored and the package is downloaded instead. When a download fails, an interactive run first offers to retry, and a silent run (`/S`) aborts right away. The installer copies, verifies and, if needed, downloads the package before it removes an installed version, so an installation aborted for one of these reasons leaves that version in place. Because the download can take a while, a run that isn't an update (`--updated`) then checks again whether the app is running, with the same prompt as at the start (Cancel aborts with exit code `2`), before the installed version is removed; a custom `customCheckAppRunning` macro is not run a second time. Set `nsisWeb.allowUnverifiedAppPackage: true` (default `false`) to skip the `--package-file` and versioned-download checksum checks (a package next to the installer is still checked) only if you intentionally use one web installer with packages of other builds (e.g. a version-independent installer with `--package-file`).
+
+For auto-update, electron-updater installs web-installer updates only when `disableWebInstaller` is `false`; installs made by an `nsis-web` installer built with electron-builder v27+ default to `false` automatically — see [Auto Update](./features/auto-update.md#disablewebinstaller-now-defaults-to-true). Don't set `updateManifest: false` for `nsis-web` apps: [signed update manifests](./features/signed-update-manifests.md) cover the web package's path, SHA-512 and size.
 
 ## Custom NSIS script
 
@@ -37,6 +49,8 @@ Two options are available — [include](#include) and [script](#script). `script
 :::warning[Custom `script` disables built-in safeguards]
 When you provide a custom `script`, electron-builder no longer generates (and signs) the uninstaller for you and skips installer size verification. Prefer `include` unless you really need to replace the whole script.
 :::
+
+For `nsis-web`, a custom `script` that copies installSection.nsh should insert `!insertmacro prepareWebPackage` before `uninstallOldVersion`; otherwise the package is prepared in `installApplicationFiles`, after the installed version is removed.
 
 Keep in mind — if you customize the NSIS script, you should always mention it in issue reports. And don't expect that your issue will be resolved.
 

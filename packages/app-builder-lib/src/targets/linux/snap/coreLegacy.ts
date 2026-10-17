@@ -1,9 +1,10 @@
-import { replaceDefault as _replaceDefault, Arch, copyDir, exec, log, serializeToYaml, toLinuxArchString, validateShellEmbeddable } from "builder-util"
+import { replaceDefault as _replaceDefault, Arch, copyDir, exec, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString, validateShellEmbeddable } from "builder-util"
 import { asArray, deepAssign, isValidKey, Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
+import { ToolsetConfig } from "../../../configuration.js"
 import { PlugDescriptor, SnapOptionsLegacy } from "../../../options/SnapOptions.js"
 import { getAppImageTools } from "../../../toolsets/appimage.js"
 import { downloadBuilderToolset } from "../../../util/electronGet.js"
@@ -11,8 +12,10 @@ import { isSnapDestructiveMode } from "../../../util/flags.js"
 import { getTemplatePath } from "../../../util/pathManager.js"
 import { buildLauncherScript } from "../launcherScript.js"
 import { SnapCore } from "./SnapTarget.js"
+import { getStagingCopyLinkOptions } from "../../../util/trustedSourceRoots.js"
 import { shellQuote } from "./snapCommand.js"
 import { SnapcraftYAML } from "./snapcraft.js"
+import { warnAboutAllowSandboxPlugs } from "./snapPlugs.js"
 import { DEFAULT_STAGE_PACKAGES } from "./snapcraftBuilder.js"
 const { outputFile, readFile } = _fsExtra
 
@@ -54,6 +57,9 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
     const options = this.options
 
     const plugs = this.normalizePlugConfiguration(this.options.plugs)
+    if (options.confinement !== "classic") {
+      warnAboutAllowSandboxPlugs(plugs, `snapcraft.${options.base}.plugs`, this.packager)
+    }
 
     const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), this.defaultPlugs)
 
@@ -280,6 +286,9 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
     extraAppArgs: string[]
   }): Promise<void> {
     const { appOutDir, stageDir, snapArch, artifactPath, compression, hooksDir, extraAppArgs } = opts
+    const appimageToolset = this.packager.config.toolsets?.appimage
+    // Fail before downloading the template rather than deep inside mksquashfs.
+    assertTemplateSnapCompressionSupported(appimageToolset, compression)
     const templateArch = snapArch === Arch.x64 ? "amd64" : "armhf"
     const { releaseName, filenameWithExt, checksums } = SNAP_TEMPLATES[templateArch]
 
@@ -296,7 +305,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
       await exec("chmod", ["-R", "g-s", dir]).catch(err => log.warn({ error: err.message }, "chmod g-s failed"))
     }
 
-    const { mksquashfs } = await getAppImageTools("0.0.0", snapArch, this.packager.buildResourcesDir)
+    const { mksquashfs } = await getAppImageTools(appimageToolset, snapArch, this.packager.buildResourcesDir)
 
     // Collect top-level entries from each dir as individual path args (mirrors Go ReadDirContentTo)
     const mksquashfsArgs: string[] = [
@@ -333,7 +342,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
     }
 
     // Copy app dir into stage/app/ so snapcraft can pick it up
-    await copyDir(appOutDir, path.join(stageDir, "app"))
+    await copyDir(appOutDir, path.join(stageDir, "app"), await getStagingCopyLinkOptions(this.packager))
 
     // Run snapcraft (legacy `snap` subcommand)
     const isDestructiveMode = isSnapDestructiveMode()
@@ -453,6 +462,21 @@ async function readDirPaths(dir: string, filter?: (name: string) => boolean): Pr
  * The only difference between template and no-template is the app executable prefix:
  * template apps are at $SNAP/<name>; no-template apps are at $SNAP/app/<name>.
  */
+/**
+ * Template snaps are packed with the `mksquashfs` from `toolsets.appimage`. The legacy `"0.0.0"` bundle's
+ * `mksquashfs` supports only gzip/xz, so reject `lzo` (explicit, or mapped from `linux.compression: "store"`)
+ * up front instead of letting mksquashfs fail with `Compressor "lzo" is not supported`.
+ */
+export function assertTemplateSnapCompressionSupported(appimageToolset: ToolsetConfig["appimage"], compression: string): void {
+  // Only an explicit pin selects "0.0.0"; unset / null / "latest" resolve to the newest bundle, and a custom bundle is the user's choice.
+  if (appimageToolset === "0.0.0" && compression === "lzo") {
+    throw new InvalidConfigurationError(
+      `Snap compression "lzo" is not supported with toolsets.appimage "0.0.0": template snaps (useTemplateApp) are packed with that toolset's mksquashfs, which supports only gzip and xz. ` +
+        `Set toolsets.appimage to "latest" (or "1.0.3" or newer), or set the snap compression to "xz" (note that linux.compression "store" maps to "lzo").`
+    )
+  }
+}
+
 export function buildCommandShContent(opts: { isTemplate: boolean; executableName: string; extraAppArgs: string[] }): string {
   const { isTemplate, executableName, extraAppArgs } = opts
   validateShellEmbeddable(executableName, "executableName")

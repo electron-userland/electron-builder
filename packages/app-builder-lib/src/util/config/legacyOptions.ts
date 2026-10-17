@@ -61,10 +61,26 @@ export const ELECTRON_DOWNLOAD_DROPPED = ["cache", "customDir", "customFilename"
 /** Platform keys that accept the macOS signing/universal options. */
 export const MAC_PLATFORM_KEYS = ["mac", "mas", "masDev"] as const
 
+/** Config sections typed as `CommonNsisOptions`, which accepted `customNsisBinary` / `customNsisResources` in v26. */
+export const NSIS_CONFIG_KEYS = ["nsis", "nsisWeb", "portable"] as const
+
 /** Every platform key that accepted the shared per-platform options in v26. */
 export const ALL_PLATFORM_KEYS = ["mac", "mas", "masDev", "win", "linux"] as const
 
 export const BREAKING_CHANGES_URL = "https://www.electron.build/docs/migration/v27-breaking-changes"
+
+/**
+ * File-copy options nested under `fileOptions`, at the configuration root and on every platform key
+ * (`files` → `fileOptions.files`, `mac.extraResources` → `mac.fileOptions.extraResources`, …).
+ *
+ * Unlike the options in {@link LEGACY_CONFIG_OPTIONS}, flat keys are not rejected: they are normalized into
+ * `fileOptions` with a warning when the configuration is loaded, before validation, although the types and the
+ * schema only have `fileOptions`.
+ */
+export const FILE_OPTION_KEYS = ["files", "extraResources", "extraFiles"] as const
+
+/** Anchor of the `fileOptions` entry within the breaking-changes page. */
+export const FILE_OPTIONS_ANCHOR = "file-options-fileoptions"
 
 export interface LegacyConfigOption {
   /** The removed key itself. */
@@ -92,6 +108,13 @@ const ASAR_ANCHOR = "asar-options-asar"
 const NATIVE_MODULES_ANCHOR = "native-module-options-nativemodules"
 const ELECTRON_GET_ANCHOR = "electrondownload-electronget"
 const WIN_SIGN_ANCHOR = "windows-signing-winsign"
+const CUSTOM_NSIS_ANCHOR = "customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis"
+const TOOLSETS_NSIS_DETAIL =
+  "Set a custom NSIS bundle via `toolsets.nsis: { url, checksum, version }`. " +
+  "This is not a rename. The artifacts provided by `.customNsisBinary` & `.customNsisResources` have been merged into one toolset. " +
+  "To continue using custom NSIS binary/resources in your build see (https://www.electron.build/docs/toolsets#custom-nsis-bundle-layout). " +
+  "For a complete migration guide from `.customNsisBinary` & `.customNsisResources` to " +
+  "the new `toolsets.nsis` bundle see (https://www.electron.build/docs/migration/v26-to-v27#step-4-custom-nsis-migration-guide)."
 
 export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
   // ── Removed outright ──────────────────────────────────────────────────────
@@ -133,7 +156,7 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
     replacement: null,
     autoMigrated: true,
     severity: "error",
-    detail: 'To keep a default-excluded file, name it concretely in a `files` glob instead — e.g. `"files": ["**/*", "**/*.obj"]`.',
+    detail: 'To keep a default-excluded file, name it concretely in a `fileOptions.files` glob instead — e.g. `"fileOptions": { "files": ["**/*", "**/*.obj"] }`.',
     anchor: "disabledefaultignoredfiles",
   },
   {
@@ -320,6 +343,33 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
     detail: "Resource editing always runs in v27. To skip signing only, set `win.sign: false`; there is no equivalent that also skips resource editing.",
     anchor: "winsignexecutable-winsignandeditexecutable-removed",
   },
+
+  // ── NSIS: custom bundles moved to toolsets.nsis ───────────────────────────
+  ...NSIS_CONFIG_KEYS.flatMap((section): LegacyConfigOption[] => [
+    {
+      key: "customNsisBinary",
+      parent: [section],
+      replacement: section === "portable" ? "toolsets.nsis" : `\`toolsets.nsis\` and \`${section}.installerDebugLogging\``,
+      autoMigrated: false,
+      severity: "error",
+      detail:
+        `Custom NSIS binaries now come from the \`toolsets.nsis\` bundle. ${TOOLSETS_NSIS_DETAIL} ` +
+        (section === "portable"
+          ? "Property `debugLogging` never had an effect on portable targets and has no equivalent. "
+          : `Property \`debugLogging\` is now \`${section}.installerDebugLogging\` (which needs a log-enabled NSIS bundle). `) +
+        `\`electron-builder migrate-schema\` moves \`debugLogging\` but cannot convert \`url\` / \`checksum\` / \`version\`.`,
+      anchor: CUSTOM_NSIS_ANCHOR,
+    },
+    {
+      key: "customNsisResources",
+      parent: [section],
+      replacement: "toolsets.nsis",
+      autoMigrated: false,
+      severity: "error",
+      detail: `Custom NSIS resources now come from the \`toolsets.nsis\` bundle. ${TOOLSETS_NSIS_DETAIL}`,
+      anchor: CUSTOM_NSIS_ANCHOR,
+    },
+  ]),
 
   // ── Programmatic PackagerOptions leaking into the config object ───────────
   {

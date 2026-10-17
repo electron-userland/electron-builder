@@ -1,4 +1,17 @@
-import { Arch, asArray, exec, getArchSuffix, InvalidConfigurationError, log, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
+import {
+  Arch,
+  asArray,
+  exec,
+  getArchSuffix,
+  InvalidConfigurationError,
+  log,
+  prepareFixedNameWrite,
+  stripSensitiveEnvVars,
+  TmpDir,
+  toLinuxArchString,
+  unlinkIfExists,
+  use,
+} from "builder-util"
 import { Nullish } from "builder-util-runtime"
 
 import { objectToArgs } from "builder-util-runtime"
@@ -11,7 +24,7 @@ import * as errorMessages from "../../errorMessages.js"
 import { LinuxPackager } from "../../linuxPackager.js"
 import { DebOptions, LinuxTargetSpecificOptions } from "../../options/linuxOptions.js"
 import { ArtifactCreated } from "../../packagerApi.js"
-import { getAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../publish/PublishManager.js"
+import { getPackAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../publish/PublishManager.js"
 import { getFpmPath } from "../../toolsets/fpm.js"
 import { getLinuxToolsPath } from "../../toolsets/linuxToolsMac.js"
 import { computeEnv } from "../../util/bundledTool.js"
@@ -171,20 +184,29 @@ export default class FpmTarget extends Target {
     const resourceDir = packager.getResourcesDir(linuxDistType)
 
     const publishConfig = this.supportsAutoUpdate(target)
-      ? await getAppUpdatePublishConfiguration(packager, this.options, arch, false /* in any case validation will be done on publish step */)
+      ? await getPackAppUpdatePublishConfiguration(
+          packager,
+          packager.getPackTargets(appOutDir, arch) ?? [this],
+          arch,
+          false /* in any case validation will be done on publish step */
+        )
       : null
     if (publishConfig != null) {
       log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}`)
-      await writeAppUpdateYaml(resourceDir, publishConfig)
+      await writeAppUpdateYaml(resourceDir, publishConfig, linuxDistType)
       // Extra file needed for auto-updater to detect installation method
-      await outputFile(path.join(resourceDir, "package-type"), target)
+      const packageTypeFile = path.join(resourceDir, "package-type")
+      await prepareFixedNameWrite(linuxDistType, packageTypeFile, "package type file")
+      await outputFile(packageTypeFile, target)
     }
 
     const scripts = await this.scriptFiles
 
     // Install AppArmor support for ubuntu 24+
     // https://github.com/electron-userland/electron-builder/issues/8635
-    await copyFile(scripts.appArmor, path.join(resourceDir, "apparmor-profile"))
+    const appArmorFile = path.join(resourceDir, "apparmor-profile")
+    await prepareFixedNameWrite(linuxDistType, appArmorFile, "AppArmor profile")
+    await copyFile(scripts.appArmor, appArmorFile)
 
     const appInfo = packager.appInfo
     const options = this.options
@@ -402,6 +424,11 @@ export default class FpmTarget extends Target {
       }
       throw e
     })
+  }
+
+  // an over-approximation: the artifact only carries update info when its publish config resolves
+  get writesUpdateInfo(): boolean {
+    return this.supportsAutoUpdate(this.name)
   }
 
   private supportsAutoUpdate(target: string) {

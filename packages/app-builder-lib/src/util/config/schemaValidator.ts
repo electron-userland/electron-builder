@@ -193,7 +193,14 @@ function formatSchemaType(schema: Record<string, unknown> | undefined): string {
         if (Array.isArray(s.type)) {
           return (s.type as string[]).join(" | ")
         }
-        return typeof s.type === "string" ? s.type : ""
+        if (typeof s.type === "string") {
+          return s.type
+        }
+        // A branch carrying `const` but no `type` is a literal member of the union - `updateManifest: false`, the
+        // update-manifest signing opt-out, is the only one in scheme.json (the `type` is stripped by
+        // scripts/fix-schema.js so ajv's `coerceTypes` cannot turn `null` into `false`). Dropping it would leave the
+        // message advertising `null` as the sole legal value, when `null` specifically is NOT the opt-out.
+        return "const" in s ? JSON.stringify(s.const) : ""
       })
       .filter(Boolean)
       .join(" | ")
