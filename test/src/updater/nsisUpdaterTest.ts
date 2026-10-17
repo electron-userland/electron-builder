@@ -907,11 +907,12 @@ describe("NsisUpdater — disableWebInstaller", () => {
     }
   }
 
-  // the update info of a per-machine build has isAdminRightsRequired in the installer's file entry: the installer is started through
-  // elevate.exe from the resources of the running app, with the arguments it would get directly
+  // the update info of a per-machine build has isAdminRightsRequired in the installer's file entry: the installer is started with UAC
+  // elevation (the PowerShell trampoline, elevate.exe from the resources of the running app as the fallback), with the arguments it
+  // would get directly
   for (const installDirectory of [undefined, "C:\\Apps\\TestApp"]) {
     test(
-      `an update with isAdminRightsRequired is installed through elevate.exe, --package-file included${installDirectory == null ? "" : " and /D= last"}`,
+      `an update with isAdminRightsRequired is installed with UAC elevation (elevate.exe fallback), --package-file included${installDirectory == null ? "" : " and /D= last"}`,
       config,
       async ({ expect }) => {
         const { server, port, tmpDir } = await serveUpdate(true, { ...WEB_PAYLOAD, isAdminRightsRequired: true })
@@ -929,12 +930,19 @@ describe("NsisUpdater — disableWebInstaller", () => {
           expect((await fsExtra.readJson(path.join(path.dirname(updateFile), "update-info.json"))).isAdminRightsRequired).toBe(true)
 
           const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+          // the PowerShell trampoline reports "unavailable" (e.g. blocked by policy), so the install falls back to elevate.exe
+          const runElevationTrampoline = vi.spyOn(updater as any, "runElevationTrampoline").mockResolvedValue("unavailable")
+          const expectedArgs = ["--updated", "/S", `--package-file=${packageFile}`, ...(installDirectory == null ? [] : [`/D=${installDirectory}`])]
           // process.resourcesPath is only set in Electron; set here for the install only (the constructor reads the package-type marker from it)
           const resourcesPath = await tmpDir.getTempDir({ prefix: "resources" })
           const original = Object.getOwnPropertyDescriptor(process, "resourcesPath")
           Object.defineProperty(process, "resourcesPath", { value: resourcesPath, configurable: true, writable: true })
           try {
             expect(updater.install(true, false)).toBe(true)
+            expect(runElevationTrampoline).toHaveBeenCalledTimes(1)
+            expect(runElevationTrampoline).toHaveBeenCalledWith(updateFile, expectedArgs)
+            // the elevation outcome is awaited before the fallback is started
+            await vi.waitFor(() => expect(spawnLog).toHaveBeenCalledTimes(1))
           } finally {
             if (original == null) {
               delete (process as any).resourcesPath
@@ -942,14 +950,7 @@ describe("NsisUpdater — disableWebInstaller", () => {
               Object.defineProperty(process, "resourcesPath", original)
             }
           }
-          expect(spawnLog).toHaveBeenCalledTimes(1)
-          expect(spawnLog).toHaveBeenCalledWith(path.join(resourcesPath, "elevate.exe"), [
-            updateFile,
-            "--updated",
-            "/S",
-            `--package-file=${packageFile}`,
-            ...(installDirectory == null ? [] : [`/D=${installDirectory}`]),
-          ])
+          expect(spawnLog).toHaveBeenCalledWith(path.join(resourcesPath, "elevate.exe"), [updateFile, ...expectedArgs])
           expect(errors).toEqual([])
         } finally {
           server.close()
