@@ -115,6 +115,91 @@ describe("migrateConfig — disableDefaultIgnoredFiles", () => {
   })
 })
 
+describe("migrateConfig — includePdb", () => {
+  const created = 'moved includePdb: true → fileOptions.excludedExts: ["default", "!pdb"]'
+  const appended = 'moved includePdb: true → "!pdb" in fileOptions.excludedExts'
+  const unneeded = "removed includePdb (fileOptions.excludedExts already keeps .pdb files)"
+  const platformChange = (platform: string) => `added "!pdb" to ${platform}.fileOptions.excludedExts (includePdb: true; a platform-level excludedExts replaces the root one)`
+
+  test('includePdb: true becomes fileOptions.excludedExts: ["default", "!pdb"]', () => {
+    const result = migrateConfig({ appId: "com.a.b", includePdb: true })
+    expect(result.migrated).toEqual({ appId: "com.a.b", fileOptions: { excludedExts: ["default", "!pdb"] } })
+    expect(result.changes).toEqual([{ key: "includePdb", description: created }])
+    expect(result.warnings).toHaveLength(0)
+    expect(result.modified).toBe(true)
+  })
+
+  test.each([false, null])("includePdb: %s is removed without adding fileOptions or touching a platform list", value => {
+    const result = migrateConfig({ appId: "com.a.b", includePdb: value, win: { fileOptions: { excludedExts: ["default"] } } })
+    expect(result.migrated).toEqual({ appId: "com.a.b", win: { fileOptions: { excludedExts: ["default"] } } })
+    expect(result.changes).toEqual([{ key: "includePdb", description: "removed includePdb (.pdb files are excluded by default in v27)" }])
+  })
+
+  test("joins the fileOptions the flat keys move into, or an existing (or null) fileOptions", () => {
+    const withFiles = migrateConfig({ includePdb: true, files: ["dist/**"] })
+    expect(withFiles.migrated).toEqual({ fileOptions: { files: ["dist/**"], excludedExts: ["default", "!pdb"] } })
+    expect(withFiles.changes.map(c => c.description)).toEqual(["moved files → fileOptions.files", created])
+    expect(migrateConfig({ includePdb: true, extraFiles: ["e"], fileOptions: { files: ["dist/**"] } }).migrated).toEqual({
+      fileOptions: { files: ["dist/**"], extraFiles: ["e"], excludedExts: ["default", "!pdb"] },
+    })
+    expect(migrateConfig({ includePdb: true, fileOptions: null }).migrated).toEqual({ fileOptions: { excludedExts: ["default", "!pdb"] } })
+  })
+
+  test.each<[string, string[] | null, string[], string]>([
+    ['a list with "default" gets "!pdb"', ["default", "map"], ["default", "map", "!pdb"], appended],
+    ['a list with "pdb" gets "!pdb"', ["map", ".pdb"], ["map", ".pdb", "!pdb"], appended],
+    ['"!pdb" is not added twice', ["default", "!pdb"], ["default", "!pdb"], unneeded],
+    // "!pdb" would only make the build warn that it has no effect
+    ['a list without "default" already keeps .pdb files', ["map"], ["map"], unneeded],
+    ["an empty list already keeps .pdb files", [], [], unneeded],
+    ["a null list is replaced", null, ["default", "!pdb"], created],
+  ])("an existing root fileOptions.excludedExts: %s", (_name, list, expected, description) => {
+    const result = migrateConfig({ includePdb: true, fileOptions: { excludedExts: list } })
+    expect(result.migrated).toEqual({ fileOptions: { excludedExts: expected } })
+    expect(result.changes).toEqual([{ key: "includePdb", description }])
+  })
+
+  test('"!pdb" is added to each platform-level excludedExts that excludes .pdb files, since it replaces the root one', () => {
+    const result = migrateConfig({
+      includePdb: true,
+      mac: { fileOptions: { excludedExts: ["default"] } },
+      mas: { fileOptions: { excludedExts: ["map"] } },
+      masDev: { fileOptions: { excludedExts: null } },
+      win: { files: ["w/**"], fileOptions: { excludedExts: ["default", "map"] } },
+      linux: { fileOptions: { excludedExts: ["default", "!pdb"] } },
+    })
+    expect(result.migrated).toEqual({
+      fileOptions: { excludedExts: ["default", "!pdb"] },
+      mac: { fileOptions: { excludedExts: ["default", "!pdb"] } },
+      mas: { fileOptions: { excludedExts: ["map"] } },
+      masDev: { fileOptions: { excludedExts: null } },
+      win: { fileOptions: { files: ["w/**"], excludedExts: ["default", "map", "!pdb"] } },
+      linux: { fileOptions: { excludedExts: ["default", "!pdb"] } },
+    })
+    expect(result.changes.map(c => c.description)).toEqual(["moved win.files → win.fileOptions.files", created, platformChange("mac"), platformChange("win")])
+    expect(result.changes.map(c => c.key).slice(2)).toEqual(["mac.fileOptions.excludedExts", "win.fileOptions.excludedExts"])
+  })
+
+  test.each<[string, Record<string, any>]>([
+    ["fileOptions is not an object", { includePdb: true, fileOptions: ["x"] }],
+    ["fileOptions.excludedExts is not an array", { includePdb: true, fileOptions: { excludedExts: "pdb" }, win: { fileOptions: { excludedExts: ["default"] } } }],
+  ])("includePdb: true is kept with a warning when %s", (problem, input) => {
+    const result = migrateConfig(structuredClone(input))
+    expect(result.migrated).toEqual(input)
+    expect(result.modified).toBe(false)
+    expect(result.warnings).toEqual([`${problem}; replace includePdb: true with fileOptions.excludedExts: ["default", "!pdb"] manually.`])
+  })
+
+  test("a second run makes no changes", () => {
+    const first = migrateConfig({ includePdb: true, files: ["dist/**"], win: { fileOptions: { excludedExts: ["default"] } } })
+    const second = migrateConfig(first.migrated)
+    expect(second.modified).toBe(false)
+    expect(second.changes).toHaveLength(0)
+    expect(second.warnings).toHaveLength(0)
+    expect(second.migrated).toEqual(first.migrated)
+  })
+})
+
 describe("migrateConfig — nativeModules grouping", () => {
   test("moves buildDependenciesFromSource under nativeModules", () => {
     const result = migrateConfig({ buildDependenciesFromSource: true })
@@ -1149,6 +1234,8 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
     ["snap core24", { snap: { base: "core24", allowNativeWayland: true, useTemplateApp: false, grade: "stable" } }],
     ["file options", { files: ["dist/**"], extraResources: [{ from: "a", to: "b" }], mac: { extraFiles: "x", files: ["!m/**"] }, masDev: { extraResources: null } }],
     ["file options next to fileOptions", { files: ["flat/**"], fileOptions: { files: ["nested/**"], extraFiles: ["e"] }, win: { extraResources: ["r"], fileOptions: null } }],
+    ["includePdb: true", { includePdb: true, files: ["dist/**"], win: { fileOptions: { excludedExts: ["default", "map"] } } }],
+    ["includePdb: false", { includePdb: false, fileOptions: { files: ["dist/**"] } }],
     [
       "win signing disabled with legacy options",
       { win: { signExecutable: false, azureSignOptions: { endpoint: "https://e/", certificateProfileName: "p", codeSigningAccountName: "a" } } },
@@ -1162,6 +1249,7 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
         nodeVersion: "current",
         launchUiVersion: "0.1.0",
         disableDefaultIgnoredFiles: true,
+        includePdb: true,
         nodeGypRebuild: false,
         npmRebuild: true,
         nativeRebuilder: "parallel",

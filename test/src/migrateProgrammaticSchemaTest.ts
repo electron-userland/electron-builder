@@ -147,6 +147,146 @@ describe("migrateProgrammaticSource — disableDefaultIgnoredFiles", () => {
   })
 })
 
+describe("migrateProgrammaticSource — includePdb", () => {
+  test('includePdb: true joins the fileOptions the flat files move into as excludedExts: ["default", "!pdb"], preserving comments (TS satisfies)', () => {
+    const src = `import type { Configuration } from "electron-builder"
+
+// build config
+export default {
+  appId: "com.example.app",
+  includePdb: true,
+  files: [
+    "dist/**", // compiled output
+  ],
+} satisfies Configuration
+`
+    const result = run(src)
+    expect(result.status).toBe("migrated")
+    expect(result.code).toBe(`import type { Configuration } from "electron-builder"
+
+// build config
+export default {
+  fileOptions: {
+    files: [
+      "dist/**", // compiled output
+    ],
+    excludedExts: ["default", "!pdb"],
+  },
+  appId: "com.example.app",
+} satisfies Configuration
+`)
+    expect(result.changes.map(c => c.description)).toEqual(['moved includePdb: true → fileOptions.excludedExts: ["default", "!pdb"]', "moved files → fileOptions.files"])
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  test("includePdb: false is removed without adding fileOptions", () => {
+    const result = run(`export default {\n  appId: "com.a.b",\n  includePdb: false,\n}\n`)
+    expect(result.code).toBe(`export default {\n  appId: "com.a.b",\n}\n`)
+    expect(result.changes).toEqual([{ key: "includePdb", description: "removed includePdb (.pdb files are excluded by default in v27)" }])
+  })
+
+  test("excludedExts goes into an existing fileOptions object literal", () => {
+    const result = run(`module.exports = {\n  includePdb: true,\n  fileOptions: {\n    files: ["dist/**"],\n  },\n}\n`, "electron-builder.cjs")
+    expect(result.code).toBe(`module.exports = {\n  fileOptions: {\n    excludedExts: ["default", "!pdb"],\n    files: ["dist/**"],\n  },\n}\n`)
+  })
+
+  test('"!pdb" is appended to existing root and platform lists that exclude .pdb files, keeping their layout and comments', () => {
+    const src = `export default {
+  includePdb: true,
+  fileOptions: {
+    excludedExts: [
+      "default",
+      "map", // source maps
+    ],
+  },
+  win: {
+    fileOptions: { excludedExts: ["default"] },
+  },
+  linux: {
+    fileOptions: {
+      excludedExts: [
+        "default"
+      ],
+    },
+  },
+  mac: {
+    fileOptions: { excludedExts: ["map"] },
+  },
+}
+`
+    const result = run(src)
+    expect(result.code).toBe(`export default {
+  fileOptions: {
+    excludedExts: [
+      "default",
+      "map", // source maps
+      "!pdb",
+    ],
+  },
+  win: {
+    fileOptions: { excludedExts: ["default", "!pdb"] },
+  },
+  linux: {
+    fileOptions: {
+      excludedExts: [
+        "default",
+        "!pdb"
+      ],
+    },
+  },
+  mac: {
+    fileOptions: { excludedExts: ["map"] },
+  },
+}
+`)
+    expect(result.changes.map(c => c.key)).toEqual(["includePdb", "win.fileOptions.excludedExts", "linux.fileOptions.excludedExts"])
+    expect(result.changes[0].description).toBe('moved includePdb: true → "!pdb" in fileOptions.excludedExts')
+  })
+
+  test('an element the AST cannot read may be "default", so the list still gets "!pdb"', () => {
+    const result = run(`const base = ["map"]\nmodule.exports = { includePdb: true, fileOptions: { excludedExts: [...base] } }\n`, "electron-builder.cjs")
+    expect(result.code).toContain(`excludedExts: [...base, "!pdb"]`)
+  })
+
+  test.each<[string, string]>([
+    ["an expression", `export default {\n  includePdb: process.env.PDB === "1",\n}\n`],
+    ["a shorthand", `const includePdb = true\nexport default {\n  includePdb,\n}\n`],
+  ])("a value that is not a literal (%s) is left in place with a warning", (_name, src) => {
+    const result = run(src)
+    expect(result.status).toBe("no-op")
+    expect(result.code).toBe(src)
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain('excludedExts: <condition> ? ["default", "!pdb"] : ["default"]')
+  })
+
+  test.each<[string, string]>([
+    ["fileOptions: shared", 'fileOptions is not an object literal; replace includePdb: true with fileOptions.excludedExts: ["default", "!pdb"] manually.'],
+    ["fileOptions: { excludedExts: shared }", 'fileOptions.excludedExts is not an array literal (or a spread may set it); add "!pdb" to it and remove includePdb: true manually.'],
+    ["fileOptions: { ...shared }", 'fileOptions.excludedExts is not an array literal (or a spread may set it); add "!pdb" to it and remove includePdb: true manually.'],
+  ])("includePdb: true is left in place when the root list cannot be read (%s)", (fileOptions, warning) => {
+    const src = `const shared = {}\nmodule.exports = { includePdb: true, ${fileOptions} }\n`
+    const result = run(src, "electron-builder.cjs")
+    expect(result.status).toBe("no-op")
+    expect(result.code).toBe(src)
+    expect(result.warnings).toEqual([warning])
+  })
+
+  test("a platform fileOptions the AST cannot read is reported", () => {
+    const result = run(`const shared = {}\nmodule.exports = {\n  includePdb: true,\n  win: { fileOptions: shared },\n}\n`, "electron-builder.cjs")
+    expect(result.code).toBe(`const shared = {}\nmodule.exports = {\n  fileOptions: {\n    excludedExts: ["default", "!pdb"],\n  },\n  win: { fileOptions: shared },\n}\n`)
+    expect(result.warnings).toEqual(['win.fileOptions.excludedExts cannot be read; if it excludes .pdb files, add "!pdb" to it manually (includePdb: true).'])
+  })
+
+  test("a second run is a no-op", () => {
+    const first = run(`export default {\n  includePdb: true,\n  files: ["dist/**"],\n  win: { fileOptions: { excludedExts: ["default"] } },\n}\n`)
+    expect(first.status).toBe("migrated")
+    const second = run(first.code)
+    expect(second.status).toBe("no-op")
+    expect(second.changes).toHaveLength(0)
+    expect(second.warnings).toHaveLength(0)
+  })
+})
+
 describe("migrateProgrammaticSource — unsupported shapes (bail with reason)", () => {
   test("spread is unsupported", () => {
     const result = run(`const base = {}\nexport default {\n  ...base,\n  npmRebuild: true,\n}\n`)
@@ -290,6 +430,11 @@ describe("migrateProgrammaticSource — per-rule coverage (CJS, drift-checked vs
     fileOptions: `module.exports = { files: ["dist/**"], extraResources: "r", mac: { extraFiles: ["f"] }, linux: { files: ["!x"], fileOptions: null } }\n`,
     fileOptionsExisting: `module.exports = { extraFiles: ["e"], fileOptions: { files: ["dist/**"] }, win: { files: ["flat"], fileOptions: { files: ["nested"] } } }\n`,
     fileOptionsWithMacSign: `module.exports = { mac: { identity: "Dev", files: ["!x"], extraResources: [{ from: "a", to: "b" }] }, masDev: { extraFiles: "f" } }\n`,
+    includePdbTrue: `module.exports = { appId: "a", includePdb: true }\n`,
+    includePdbFalse: `module.exports = { includePdb: false, win: { fileOptions: { excludedExts: ["default"] } } }\n`,
+    includePdbWithFiles: `module.exports = { includePdb: true, files: ["dist/**"], fileOptions: null, mac: { files: ["m"] } }\n`,
+    includePdbExistingLists: `module.exports = { includePdb: true, extraFiles: ["e"], fileOptions: { files: ["d"], excludedExts: ["default", "map"] }, win: { files: ["w"], fileOptions: { excludedExts: ["default"] } }, linux: { fileOptions: { excludedExts: ["map"] } }, mas: { fileOptions: { excludedExts: null } } }\n`,
+    includePdbListsKeepPdb: `module.exports = { includePdb: true, fileOptions: { excludedExts: ["default", "!pdb"] }, masDev: { fileOptions: { excludedExts: [] } } }\n`,
   }
 
   for (const [name, src] of Object.entries(fixtures)) {

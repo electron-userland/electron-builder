@@ -534,6 +534,10 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     }
   }
 
+  // ── 16b. includePdb → fileOptions.excludedExts (root only) ─────────────────
+  // After step 16, so the excluded extensions join the fileOptions the flat keys moved into.
+  migrateIncludePdb(c, changes, keptKeyWarnings)
+
   // Advisories (not config changes): v27 runtime defaults and behavior changes that a config rewrite cannot address.
   if (detectTarget(c, "win", ["nsis-web"])) {
     advisories.push(NSIS_WEB_ADVISORY)
@@ -602,6 +606,71 @@ export function fileOptionsConflictWarning(prefix: string, key: string): string 
   const flat = prefix + key
   const nested = `${prefix}fileOptions.${key}`
   return `${flat} and ${nested} are both set; the build uses ${nested} and ignores ${flat}, so ${flat} was removed. Move any patterns you still need into ${nested}.`
+}
+
+/** Descriptions of the change the root `includePdb` makes; shared with the JS/TS codemod. */
+export const INCLUDE_PDB_CHANGES = {
+  removed: "removed includePdb (.pdb files are excluded by default in v27)",
+  created: 'moved includePdb: true → fileOptions.excludedExts: ["default", "!pdb"]',
+  appended: 'moved includePdb: true → "!pdb" in fileOptions.excludedExts',
+  unneeded: "removed includePdb (fileOptions.excludedExts already keeps .pdb files)",
+} as const
+
+/** The change that adds "!pdb" to a platform-level `excludedExts` for `includePdb: true`; shared with the JS/TS codemod. */
+export function platformExcludedExtsPdbChange(platform: string): MigrationChange {
+  const key = `${platform}.fileOptions.excludedExts`
+  return { key, description: `added "!pdb" to ${key} (includePdb: true; a platform-level excludedExts replaces the root one)` }
+}
+
+/**
+ * True when an `excludedExts` list excludes `.pdb` files: it lists "default" or "pdb", and not "!pdb". A list without "default" replaces the
+ * default extensions, so it keeps `.pdb` files, and a "!pdb" added to it would only make the build warn that the entry has no effect.
+ * Shared with the JS/TS codemod.
+ */
+export function excludesPdb(entries: ReadonlyArray<string>): boolean {
+  const extension = (entry: string) => entry.replace(/^!/, "").replace(/^\./, "")
+  return !entries.some(it => it.startsWith("!") && extension(it) === "pdb") && entries.some(it => !it.startsWith("!") && ["default", "pdb"].includes(extension(it)))
+}
+
+/**
+ * `includePdb: true` keeps `.pdb` files: it becomes `fileOptions.excludedExts: ["default", "!pdb"]` ("!pdb" is added to an existing root
+ * list instead), and "!pdb" is added to each platform-level `fileOptions.excludedExts` too, since that list replaces the root one. Any other
+ * value was the v26 default and is removed.
+ */
+function migrateIncludePdb(c: Record<string, any>, changes: MigrationChange[], keptKeyWarnings: string[]): void {
+  if (!("includePdb" in c)) {
+    return
+  }
+  if (c.includePdb !== true) {
+    delete c.includePdb
+    changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.removed })
+    return
+  }
+  const fileOptions = c.fileOptions
+  const list = isPlainObject(fileOptions) ? fileOptions.excludedExts : null
+  if ((fileOptions != null && !isPlainObject(fileOptions)) || (list != null && !Array.isArray(list))) {
+    const problem = isPlainObject(fileOptions) ? "fileOptions.excludedExts is not an array" : "fileOptions is not an object"
+    keptKeyWarnings.push(`${problem}; replace includePdb: true with fileOptions.excludedExts: ["default", "!pdb"] manually.`)
+    return
+  }
+
+  delete c.includePdb
+  if (list == null) {
+    c.fileOptions = { ...fileOptions, excludedExts: ["default", "!pdb"] }
+    changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.created })
+  } else if (excludesPdb(list.filter((it: unknown) => typeof it === "string"))) {
+    list.push("!pdb")
+    changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.appended })
+  } else {
+    changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.unneeded })
+  }
+  for (const platform of ALL_PLATFORM_KEYS) {
+    const platformList = c[platform]?.fileOptions?.excludedExts
+    if (Array.isArray(platformList) && excludesPdb(platformList.filter((it: unknown) => typeof it === "string"))) {
+      platformList.push("!pdb")
+      changes.push(platformExcludedExtsPdbChange(platform))
+    }
+  }
 }
 
 /** The build-time guard's message for a removed key (`nsis.customNsisBinary`), reused for the keys migrate-schema leaves in place. */
@@ -1345,6 +1414,7 @@ function printManualSteps() {
     '• Remove toolsets.* entries set to null (unset resolves to "latest"); replace toolsets.appimage "1.0.2" with "1.0.3"',
     "• Move root-level package.json directories → build.directories",
     "• Move files / extraResources / extraFiles → fileOptions.files / fileOptions.extraResources / fileOptions.extraFiles, at the root and in mac/mas/masDev/win/linux",
+    '• Replace includePdb: true with fileOptions.excludedExts: ["default", "!pdb"] (and add "!pdb" to a mac/mas/masDev/win/linux fileOptions.excludedExts that lists "default"); remove includePdb: false',
     "",
     "• For programmatic configs (JS/TS/MJS/CJS), apply the above changes manually to your config object",
     "• For additional guidance, check the migration walkthrough: https://www.electron.build/docs/migration/v26-to-v27",

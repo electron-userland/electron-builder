@@ -5,9 +5,11 @@ import {
   ASAR_PLATFORM_KEYS,
   AZURE_KNOWN_FIELDS,
   ELECTRON_DOWNLOAD_DROPPED,
+  excludesPdb,
   FEED_QUERY_ADVISORY,
   fileOptionsChange,
   fileOptionsConflictWarning,
+  INCLUDE_PDB_CHANGES,
   isLegacyElectronDownloadKey,
   legacyKeyMessage,
   MAC_ENTITLEMENTS_ADVISORY,
@@ -18,6 +20,7 @@ import {
   normalizeTargetName,
   NSIS_PER_MACHINE_UPDATE_ADVISORY,
   NSIS_WEB_ADVISORY,
+  platformExcludedExtsPdbChange,
   PORTABLE_DEBUG_LOGGING_DROPPED,
   SNAP_BASES,
   SNAP_CORE24_UNSUPPORTED,
@@ -389,7 +392,8 @@ class ConfigCodemod {
     }
     this.ruleElectronDownload(root)
     this.ruleToolsets(root)
-    this.ruleFileOptions(root, "")
+    // ruleFileOptions adds the excludedExts entry ruleIncludePdb returns to the root fileOptions it may create for the flat keys.
+    this.ruleFileOptions(root, "", this.ruleIncludePdb(root))
     for (const platform of ALL_PLATFORM_KEYS) {
       const p = this.getObjectProp(root, platform)
       if (p != null) {
@@ -1356,10 +1360,13 @@ class ConfigCodemod {
     }
   }
 
-  /** Mirrors migrateConfig's `migrateFileOptions`: flat `files` / `extraResources` / `extraFiles` → `fileOptions`. */
-  private ruleFileOptions(holder: any, prefix: string): void {
+  /**
+   * Mirrors migrateConfig's `migrateFileOptions`: flat `files` / `extraResources` / `extraFiles` → `fileOptions`. `extraEntries` (from
+   * ruleIncludePdb, which returns none for a `fileOptions` that is not an object literal) go into the same `fileOptions`.
+   */
+  private ruleFileOptions(holder: any, prefix: string, extraEntries: string[] = []): void {
     const present = FILE_OPTION_KEYS.filter(key => this.getProp(holder, key) != null)
-    if (present.length === 0) {
+    if (present.length === 0 && extraEntries.length === 0) {
       return
     }
     const fileOptionsProp = this.getProp(holder, "fileOptions")
@@ -1382,13 +1389,110 @@ class ConfigCodemod {
       }
       this.changes.push(fileOptionsChange(prefix, key, conflict))
     }
-    if (sources.length > 0) {
+    if (sources.length > 0 || extraEntries.length > 0) {
       if (isNull) {
         // replaced by the object moveInto creates
         this.removeProp(fileOptionsProp)
       }
-      this.moveInto(holder, "fileOptions", sources, [], /* treatNullAsAbsent */ true)
+      this.moveInto(holder, "fileOptions", sources, extraEntries, /* treatNullAsAbsent */ true)
     }
+  }
+
+  /**
+   * Mirrors migrateConfig's `migrateIncludePdb`: `includePdb: true` → `fileOptions.excludedExts: ["default", "!pdb"]` ("!pdb" is added to an
+   * existing root list instead, and to each platform-level list, which replaces the root one); any other literal is removed. A value the AST
+   * cannot read is left in place with a warning. Returns the `excludedExts` entry for ruleFileOptions to add to the root `fileOptions`.
+   */
+  private ruleIncludePdb(root: any): string[] {
+    const ts = this.ts
+    const prop = this.getProp(root, "includePdb")
+    if (prop == null) {
+      return []
+    }
+    const value = ts.isPropertyAssignment(prop) ? this.unwrap(prop.initializer) : null
+    if (value == null || !(this.isLiteral(value) || (ts.isIdentifier(value) && value.text === "undefined"))) {
+      this.warnings.push(
+        "includePdb is not a literal true or false, so it was left in place. In v27, .pdb files are excluded by default: remove includePdb, " +
+          'and where it is true set fileOptions.excludedExts: ["default", "!pdb"] instead (e.g. excludedExts: <condition> ? ["default", "!pdb"] : ["default"]).'
+      )
+      return []
+    }
+    if (value.kind !== ts.SyntaxKind.TrueKeyword) {
+      this.removeProp(prop)
+      this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.removed })
+      return []
+    }
+
+    const fileOptionsProp = this.getProp(root, "fileOptions")
+    const fileOptions = this.getObjectProp(root, "fileOptions")
+    if (fileOptionsProp != null && fileOptions == null && this.propValue(root, "fileOptions")?.kind !== ts.SyntaxKind.NullKeyword) {
+      this.warnings.push('fileOptions is not an object literal; replace includePdb: true with fileOptions.excludedExts: ["default", "!pdb"] manually.')
+      return []
+    }
+    const listProp = fileOptions == null ? null : this.getProp(fileOptions, "excludedExts")
+    const list = this.propValue(fileOptions, "excludedExts")
+    if (list !== undefined && list.kind !== ts.SyntaxKind.NullKeyword && !ts.isArrayLiteralExpression(list)) {
+      this.warnings.push('fileOptions.excludedExts is not an array literal (or a spread may set it); add "!pdb" to it and remove includePdb: true manually.')
+      return []
+    }
+
+    this.removeProp(prop)
+    let entries: string[] = []
+    if (list === undefined && listProp == null) {
+      entries = ['excludedExts: ["default", "!pdb"]']
+      this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.created })
+    } else if (list === undefined || list.kind === ts.SyntaxKind.NullKeyword) {
+      // `excludedExts: null` / `undefined`
+      this.replaceValue(listProp.initializer, '["default", "!pdb"]')
+      this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.created })
+    } else if (this.arrayExcludesPdb(list)) {
+      this.appendToArray(list, '"!pdb"')
+      this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.appended })
+    } else {
+      this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.unneeded })
+    }
+
+    for (const platform of ALL_PLATFORM_KEYS) {
+      const platformFileOptions = this.propValue(this.objectLiteral(this.propValue(root, platform)), "fileOptions")
+      // A fileOptions the AST cannot read may set excludedExts.
+      const platformList =
+        platformFileOptions === undefined || this.isLiteral(platformFileOptions) ? this.propValue(this.objectLiteral(platformFileOptions), "excludedExts") : platformFileOptions
+      if (platformList === undefined || platformList.kind === ts.SyntaxKind.NullKeyword) {
+        continue
+      }
+      if (!ts.isArrayLiteralExpression(platformList)) {
+        this.warnings.push(`${platform}.fileOptions.excludedExts cannot be read; if it excludes .pdb files, add "!pdb" to it manually (includePdb: true).`)
+      } else if (this.arrayExcludesPdb(platformList)) {
+        this.appendToArray(platformList, '"!pdb"')
+        this.changes.push(platformExcludedExtsPdbChange(platform))
+      }
+    }
+    return entries
+  }
+
+  /** `excludesPdb` for an array literal; an element the AST cannot read (an identifier, a spread, …) may be "default". */
+  private arrayExcludesPdb(list: any): boolean {
+    const ts = this.ts
+    const elements = list.elements.map((el: any) => this.unwrap(el))
+    const read = elements.filter((el: any) => ts.isStringLiteralLike(el)).map((el: any) => el.text)
+    return excludesPdb(read.length === elements.length ? read : [...read, "default"])
+  }
+
+  /** Appends `elementText` to a non-empty array literal, on a line of its own when the closing bracket is on one. */
+  private appendToArray(list: any, elementText: string): void {
+    const last = list.elements[list.elements.length - 1]
+    const closePos = list.end - 1
+    const lineStart = this.text.lastIndexOf("\n", closePos - 1) + 1
+    if (lineStart <= last.end || this.text.slice(lineStart, closePos).trim() !== "") {
+      this.insertEdit(last.end, `, ${elementText}`)
+      return
+    }
+    // Before the line of the closing bracket, so a comment after the last element stays on its line.
+    const trailingComma = list.elements.hasTrailingComma === true
+    if (!trailingComma) {
+      this.insertEdit(last.end, ",")
+    }
+    this.insertEdit(lineStart, `${this.lineIndentAt(this.start(last))}${elementText}${trailingComma ? "," : ""}\n`)
   }
 
   private ruleElectronDownload(root: any): void {
