@@ -136,6 +136,38 @@ test.ifNotWindows("pdb files are excluded by default", ({ expect }) => assertPdb
 
 test.ifNotWindows('pdb files are kept with fileOptions.excludedExts ["default", "!pdb"]', ({ expect }) => assertPdbFilesPacked(expect, ["default", "!pdb"], true))
 
+// a files entry naming one .pdb file re-includes only that file, not every .pdb in the app
+test.ifNotWindows("a files entry naming one pdb file ships only that pdb file", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        asar: false,
+        fileOptions: { files: ["**/*", "native/addon.pdb"] },
+      },
+    },
+    {
+      projectDirCreated: projectDir =>
+        Promise.all([
+          fsExtra.outputFile(path.join(projectDir, "native", "addon.pdb"), "pdb-data"),
+          fsExtra.outputFile(path.join(projectDir, "native", "other.pdb"), "pdb-data"),
+          fsExtra.outputFile(path.join(projectDir, "assets", "symbols.pdb"), "pdb-data"),
+          fsExtra.outputFile(path.join(projectDir, "assets", "index.js"), "js"),
+        ]),
+      packed: context => {
+        const appDir = path.join(context.getResources(Platform.LINUX), "app")
+        return Promise.all([
+          assertThat(expect, path.join(appDir, "native", "addon.pdb")).isFile(),
+          assertThat(expect, path.join(appDir, "native", "other.pdb")).doesNotExist(),
+          assertThat(expect, path.join(appDir, "assets", "symbols.pdb")).doesNotExist(),
+          assertThat(expect, path.join(appDir, "assets", "index.js")).isFile(),
+        ])
+      },
+    }
+  )
+)
+
 test.ifNotWindows("files.from asar", ({ expect }) =>
   app(
     expect,

@@ -470,6 +470,12 @@ describe("collectExplicitReincludes", () => {
     expect(extensions.has("d.ts")).toBe(true)
   })
 
+  test("a basename names only the longest excluded extension it ends with", ({ expect }) => {
+    const excluded = [...DEFAULT_EXCLUDED_EXTENSIONS, "ts"]
+    expect([...collectExplicitReincludes(["**/*", "types/*.d.ts"], excluded).extensions]).toEqual(["d.ts"])
+    expect([...collectExplicitReincludes(["**/*", "src/*.ts"], excluded).extensions]).toEqual(["ts"])
+  })
+
   test("a path segment equal to a default name opts that name in", ({ expect }) => {
     const { names } = collectExplicitReincludes(["**/*", "**/.github/**"])
     expect(names.has(".github")).toBe(true)
@@ -514,6 +520,8 @@ describe("collectExplicitReincludes", () => {
 describe("getDefaultIgnoredPatterns", () => {
   const extPatternOf = (patterns: Array<string>) => patterns.find(p => p.startsWith("!**/*.{"))!
   const namePatternOf = (patterns: Array<string>) => patterns.find(p => p.startsWith("!**/{"))!
+  // the patterns between the extension glob and the fixed ignores: none, the matcher's filter lets the files a `files` entry names through
+  const reincludesOf = (patterns: Array<string>) => patterns.slice(patterns.findIndex(p => p.startsWith("!**/*.")) + 1, patterns.indexOf("!**/._*"))
 
   test("by default excludes obj, pdb and electron-builder.env", ({ expect }) => {
     const patterns = getDefaultIgnoredPatterns([])
@@ -529,18 +537,16 @@ describe("getDefaultIgnoredPatterns", () => {
     expect(extPattern).toBe(`!**/*.{${DEFAULT_EXCLUDED_EXTENSIONS.filter(ext => ext !== "pdb").join(",")}}`)
   })
 
-  test("an explicit **/*.obj re-include drops obj from the exclusion glob but keeps the others", ({ expect }) => {
-    const extPattern = extPatternOf(getDefaultIgnoredPatterns(["**/*", "**/*.obj"]))
-    // obj as a {…} list member is gone, but `o` and `forge-meta` remain
-    expect(extPattern.split(/[{,}]/)).not.toContain("obj")
-    expect(extPattern).toContain("forge-meta")
-    expect(extPattern).toContain("o,")
+  test("an explicit **/*.obj re-include keeps obj in the exclusion glob", ({ expect }) => {
+    const patterns = getDefaultIgnoredPatterns(["**/*", "**/*.obj"])
+    expect(extPatternOf(patterns)).toBe(`!**/*.{${DEFAULT_EXCLUDED_EXTENSIONS.join(",")}}`)
+    expect(reincludesOf(patterns)).toEqual([])
   })
 
-  test("an explicit **/*.pdb re-include drops pdb, now a default exclusion, but keeps the others", ({ expect }) => {
-    const extPattern = extPatternOf(getDefaultIgnoredPatterns(["**/*", "**/*.pdb"]))
-    expect(extPattern.split(/[{,}]/)).not.toContain("pdb")
-    expect(extPattern).toContain("obj")
+  test("an explicit **/*.pdb re-include keeps pdb, now a default exclusion, in the glob and is reported", ({ expect }) => {
+    const patterns = getDefaultIgnoredPatterns(["**/*", "**/*.pdb"])
+    expect(extPatternOf(patterns).split(/[{,}]/)).toContain("pdb")
+    expect(reincludesOf(patterns)).toEqual([])
     expect([...collectExplicitReincludes(["**/*.pdb"]).extensions]).toEqual(["pdb"])
     expect(getReincludedDefaultExclusions(["**/*", "**/*.pdb"])).toEqual(["*.pdb"])
   })
@@ -548,7 +554,9 @@ describe("getDefaultIgnoredPatterns", () => {
   test("an extension added by fileOptions.excludedExts is excluded and can be re-included by a files glob", ({ expect }) => {
     const excluded = resolveExcludedExtensions({ fileOptions: { excludedExts: ["default", "map"] } }, null)
     expect(extPatternOf(getDefaultIgnoredPatterns(["**/*"], excluded)).split(/[{,}]/)).toContain("map")
-    expect(extPatternOf(getDefaultIgnoredPatterns(["**/*", "**/*.map"], excluded)).split(/[{,}]/)).not.toContain("map")
+    const patterns = getDefaultIgnoredPatterns(["**/*", "**/*.map"], excluded)
+    expect(extPatternOf(patterns).split(/[{,}]/)).toContain("map")
+    expect(reincludesOf(patterns)).toEqual([])
     expect(getReincludedDefaultExclusions(["**/*", "**/*.map"], excluded)).toEqual(["*.map"])
   })
 
@@ -566,10 +574,10 @@ describe("getDefaultIgnoredPatterns", () => {
     expect(patterns).toContain("!**/._*")
   })
 
-  test("re-including .d.ts drops only d.ts", ({ expect }) => {
-    const extPattern = extPatternOf(getDefaultIgnoredPatterns(["**/*.d.ts"]))
-    expect(extPattern.split(/[{,}]/)).not.toContain("d.ts")
-    expect(extPattern).toContain("iml")
+  test("re-including .d.ts keeps d.ts in the glob", ({ expect }) => {
+    const patterns = getDefaultIgnoredPatterns(["**/*.d.ts"])
+    expect(extPatternOf(patterns).split(/[{,}]/)).toContain("d.ts")
+    expect(reincludesOf(patterns)).toEqual([])
   })
 
   test("re-including a name drops it from the name glob but keeps the rest", ({ expect }) => {
@@ -608,11 +616,9 @@ describe("getDefaultIgnoredPatterns", () => {
     expect(namePatternOf(getDefaultIgnoredPatterns([]))).toBe(`!**/{${DEFAULT_EXCLUDED_NAMES.join(",")}}`)
   })
 
-  test("a lone surviving extension is emitted as a literal (single-member braces don't match in minimatch)", ({ expect }) => {
-    // opt back in every default extension but pdb; only pdb should remain
-    const optInAllButPdb = DEFAULT_EXCLUDED_EXTENSIONS.filter(ext => ext !== "pdb").map(ext => `**/*.${ext}`)
-    const patterns = getDefaultIgnoredPatterns(optInAllButPdb)
-    expect(patterns).toContain("!**/*.pdb")
+  test("a lone excluded extension stays a literal when re-included (single-member braces don't match in minimatch)", ({ expect }) => {
+    const patterns = getDefaultIgnoredPatterns(["**/*", "**/*.map"], ["map"])
+    expect(patterns.slice(0, 2)).toEqual(["!**/*.map", "!**/._*"])
     expect(patterns.some(p => p.startsWith("!**/*.{"))).toBe(false)
   })
 
@@ -746,7 +752,7 @@ describe("getMainFileMatchers – default exclusions respect `files` re-includes
   // separators (on Windows a literal "/app" becomes "\app", and getMainFileMatchers early-returns
   // unless matcher.from === appDir).
   const appDir = path.resolve("/app")
-  function buildMatcherPatterns(files: Array<string>, excludedExts?: Array<string> | null, platformSpecificBuildOptions: PlatformSpecificBuildOptions = {}): Array<string> {
+  function buildMainMatcher(files: Array<string>, excludedExts?: Array<string> | null, platformSpecificBuildOptions: PlatformSpecificBuildOptions = {}): FileMatcher {
     const platformPackager = {
       projectDir: appDir,
       buildResourcesDir: "build",
@@ -755,7 +761,17 @@ describe("getMainFileMatchers – default exclusions respect `files` re-includes
       debugLogger: { isEnabled: false },
     } as any
     const matchers = getMainFileMatchers(appDir, path.resolve("/out"), noMacro, platformSpecificBuildOptions, platformPackager, path.join(appDir, "dist"))
-    return matchers[0].patterns
+    return matchers[0]
+  }
+
+  function buildMatcherPatterns(files: Array<string>, excludedExts?: Array<string> | null, platformSpecificBuildOptions: PlatformSpecificBuildOptions = {}): Array<string> {
+    return buildMainMatcher(files, excludedExts, platformSpecificBuildOptions).patterns
+  }
+
+  // whether the main matcher packages a path relative to the app dir
+  function buildIsIncluded(files: Array<string>, excludedExts?: Array<string> | null): (file: string, isDirectory?: boolean) => boolean {
+    const filter = buildMainMatcher(files, excludedExts).createFilter()
+    return (file, isDirectory = false) => filter(path.join(appDir, file), isDirectory ? dirStat() : fileStat())
   }
 
   test("without an explicit include, .obj and .pdb stay excluded", ({ expect }) => {
@@ -790,9 +806,157 @@ describe("getMainFileMatchers – default exclusions respect `files` re-includes
     expect(() => buildMatcherPatterns(["**/*"], ["default", "*.map"])).toThrow(InvalidConfigurationError)
   })
 
-  test("with **/*.obj, the obj exclusion is dropped (issue #6126)", ({ expect }) => {
-    const extPattern = buildMatcherPatterns(["**/*", "**/*.obj"]).find(p => p.startsWith("!**/*.{"))!
-    expect(extPattern.split(/[{,}]/)).not.toContain("obj")
+  test("with **/*.obj, the obj exclusion stays and the matcher records the files entry that names obj (issue #6126)", ({ expect }) => {
+    const matcher = buildMainMatcher(["**/*", "**/*.obj"])
+    const glob = `!**/*.{${DEFAULT_EXCLUDED_EXTENSIONS.join(",")}}`
+    expect(matcher.patterns[matcher.patterns.indexOf(glob) + 1]).toBe("!**/._*")
+    expect(matcher.extensionReincludes?.glob).toBe(glob)
+    expect([...matcher.extensionReincludes!.namedBy]).toEqual([["obj", ["**/*.obj"]]])
+  })
+
+  test("only the brace alternatives that name an excluded extension, under the longest one, and only user entries are recorded", ({ expect }) => {
+    const namedBy = buildMainMatcher(["**/*", "src/**", "native/{**/*,addon.pdb}", "**/*.d.ts", "!models/secret.obj"], ["default", "ts", "json"]).extensionReincludes?.namedBy
+    expect(namedBy == null ? null : [...namedBy]).toEqual([
+      ["pdb", ["native/addon.pdb"]],
+      ["d.ts", ["**/*.d.ts"]],
+    ])
+    // the injected package.json is not a files entry
+    expect(buildMainMatcher(["**/*"], ["default", "json"]).extensionReincludes).toBeNull()
+    expect(buildIsIncluded(["**/*"], ["default", "json"])("package.json")).toBe(false)
+    expect([...buildMainMatcher(["**/*", "package.json"], ["default", "json"]).extensionReincludes!.namedBy]).toEqual([["json", ["package.json"]]])
+  })
+
+  test("files without an excluded extension are included exactly as without re-includes", ({ expect }) => {
+    // a broad positive after an exclusion still re-includes the files it matches
+    const isIncluded = buildIsIncluded(["**/*", "**/*.pdb", "build/runtime/**/*"])
+    expect(isIncluded("build/runtime/helper.js")).toBe(true)
+    // named by `**/*.pdb`, and the other patterns include it
+    expect(isIncluded("build/runtime/helper.pdb")).toBe(true)
+    // named by no files entry
+    expect(isIncluded("build/runtime/helper.obj")).toBe(false)
+    expect(isIncluded("main.pdb")).toBe(true)
+    expect(buildIsIncluded(["**/*.d.ts", "**/*", "!src/**", "src/main/**"])("src/main/index.js")).toBe(true)
+    expect(buildIsIncluded(["**/*.obj", "!src/**", "src/**/*.js"])("src/main/index.js")).toBe(true)
+  })
+
+  test("a directory named with an excluded extension stays excluded", ({ expect }) => {
+    const isIncluded = buildIsIncluded(["**/*", "**/*.obj", "**/*.d.ts"])
+    expect(isIncluded("assets/foo.pdb", true)).toBe(false)
+    expect(isIncluded("assets/sym.obj", true)).toBe(false)
+    expect(isIncluded("assets", true)).toBe(true)
+  })
+
+  test("a brace alternative without an excluded extension re-includes nothing", ({ expect }) => {
+    const isIncluded = buildIsIncluded(["**/*", "native/{**/*,addon.pdb}"])
+    expect(isIncluded("native/addon.pdb")).toBe(true)
+    expect(isIncluded("native/x.obj")).toBe(false)
+    expect(isIncluded("native/sub/deep.obj")).toBe(false)
+    expect(isIncluded("native/x.js")).toBe(true)
+  })
+
+  test("a files negation with the same text as the extension glob still excludes a named file", ({ expect }) => {
+    const isIncluded = buildIsIncluded(["native/addon.pdb", "**/*", "!**/*.pdb"], ["pdb"])
+    expect(isIncluded("native/addon.pdb")).toBe(false)
+    expect(isIncluded("native/addon.node")).toBe(true)
+  })
+
+  test("a pattern with braces left in its directory part after expansion still re-includes the file it names", ({ expect }) => {
+    // 81 alternatives, more than expandBraces expands: minimatch expands them
+    const isIncluded = buildIsIncluded(["**/*", "{a,b,c,d,e,f,g,h,i}/{a,b,c,d,e,f,g,h,i}/x.obj"])
+    expect(isIncluded("a/a/x.obj")).toBe(true)
+    expect(isIncluded("a/a/y.obj")).toBe(false)
+    // an unbalanced brace is literal
+    expect(buildIsIncluded(["**/*", "foo{/x.obj"])("foo{/x.obj")).toBe(true)
+  })
+
+  test("a basename with braces left after expansion, or a literal brace, still re-includes the files it names", ({ expect }) => {
+    // 65 alternatives in the basename, more than expandBraces expands: minimatch expands them
+    const alternatives = ["x", ...Array.from({ length: 64 }, (_, i) => `n${i}`)]
+    const isIncluded = buildIsIncluded(["**/*", `q/{${alternatives.join(",")}}.obj`])
+    expect(isIncluded("q/x.obj")).toBe(true)
+    expect(isIncluded("q/other.obj")).toBe(false)
+    expect(buildIsIncluded(["**/*", "native/x}.obj"])("native/x}.obj")).toBe(true)
+    expect(getReincludedDefaultExclusions(["**/*", "native/x}.obj"])).toEqual(["*.obj"])
+  })
+
+  test("a files entry naming a shorter excluded extension does not re-include a longer one", ({ expect }) => {
+    const isIncluded = buildIsIncluded(["**/*", "**/*.ts"], ["default", "ts"])
+    expect(isIncluded("src/a.ts")).toBe(true)
+    expect(isIncluded("types/index.d.ts")).toBe(false)
+  })
+
+  test("a files entry naming one .pdb file packages only that .pdb file", ({ expect }) => {
+    const isIncluded = buildIsIncluded(["**/*", "native/addon.pdb"])
+    expect(isIncluded("native/addon.pdb")).toBe(true)
+    expect(isIncluded("native/other.pdb")).toBe(false)
+    expect(isIncluded("vendor/secret.pdb")).toBe(false)
+    expect(isIncluded("native/addon.node")).toBe(true)
+    expect(isIncluded("package.json")).toBe(true)
+  })
+
+  test("a files entry naming one .obj file packages only that .obj file, not every .obj", ({ expect }) => {
+    const isIncluded = buildIsIncluded(["**/*", "models/a.obj"])
+    expect(isIncluded("models/a.obj")).toBe(true)
+    expect(isIncluded("models/b.obj")).toBe(false)
+  })
+
+  test("**/*.obj packages every .obj except in node_modules, the build resources and the output directory", ({ expect }) => {
+    const isIncluded = buildIsIncluded(["**/*", "**/*.obj"])
+    for (const file of ["a.obj", "models/a.obj", "assets/deep/b.obj"]) {
+      expect(isIncluded(file), file).toBe(true)
+    }
+    for (const file of ["dist/x.obj", "dist/linux-unpacked/x.obj", "build/x.obj", "pkg/node_modules/dep/y.obj"]) {
+      expect(isIncluded(file), file).toBe(false)
+    }
+    expect(isIncluded("main.js")).toBe(true)
+    expect(isIncluded("models/a.pdb")).toBe(false)
+  })
+
+  test("an extension added by fileOptions.excludedExts is re-included only for the file a files entry names", ({ expect }) => {
+    const isIncluded = buildIsIncluded(["**/*", "certs/public.pem"], ["default", "pem", "key"])
+    expect(isIncluded("certs/public.pem")).toBe(true)
+    expect(isIncluded("certs/private.pem")).toBe(false)
+    expect(isIncluded("certs/private.key")).toBe(false)
+  })
+
+  test("re-including *.d.ts with ts excluded keeps every other .ts excluded and warns for *.d.ts only", ({ expect }) => {
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
+    try {
+      const isIncluded = buildIsIncluded(["**/*", "**/*.d.ts"], ["default", "ts"])
+      expect(isIncluded("types/index.d.ts")).toBe(true)
+      expect(isIncluded("src/secret.ts")).toBe(false)
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect((warn.mock.calls[0][0] as any).files).toBe("*.d.ts")
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  test("a files negation after a re-include still applies", ({ expect }) => {
+    const isIncluded = buildIsIncluded(["**/*", "**/*.obj", "!models/secret.obj"])
+    expect(isIncluded("models/a.obj")).toBe(true)
+    expect(isIncluded("models/secret.obj")).toBe(false)
+  })
+
+  test("a single-file files entry after a re-include still overrides an exclusion before it", ({ expect }) => {
+    const isIncluded = buildIsIncluded(["**/*", "**/*.obj", "build/icon.png"])
+    expect(isIncluded("build", true)).toBe(true)
+    expect(isIncluded("build/icon.png")).toBe(true)
+    expect(isIncluded("build/other.png")).toBe(false)
+    expect(isIncluded("build/x.obj")).toBe(false)
+
+    const isIncludedDocs = buildIsIncluded(["**/*", "**/*.obj", "!docs/**", "docs/README.md"])
+    expect(isIncludedDocs("docs/README.md")).toBe(true)
+    expect(isIncludedDocs("docs/other.md")).toBe(false)
+    expect(isIncludedDocs("docs/model.obj")).toBe(false)
+  })
+
+  test("a re-included default name is still re-included everywhere", ({ expect }) => {
+    const isIncluded = buildIsIncluded(["**/*", "**/*.obj", "**/.github/**"])
+    expect(isIncluded(".github/workflows/ci.yml")).toBe(true)
+    expect(isIncluded("sub/.github/x.yml")).toBe(true)
+    expect(isIncluded(".github", true)).toBe(true)
+    expect(isIncluded(".git", true)).toBe(false)
   })
 
   test("warns once when a default-excluded file is re-included", ({ expect }) => {

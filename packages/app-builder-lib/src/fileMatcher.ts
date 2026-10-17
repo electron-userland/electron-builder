@@ -193,11 +193,13 @@ function splitTopLevel(value: string): Array<string> {
 
 /**
  * Determines which excluded extensions (`excludedExtensions`, see {@link resolveExcludedExtensions}) and default-excluded
- * names a user has explicitly opted back in to via their `files` patterns, so the corresponding exclusions are not re-applied.
+ * names a user has explicitly opted back in to via their `files` patterns: the extensions for the warning (the files a pattern
+ * names are let through by {@link FileMatcher.extensionReincludes}), the names to leave out of the name exclusion glob.
  *
  * An exclusion is treated as opted back in only when a non-negated pattern references it concretely:
  * an extension when a pattern's basename ends with `.<ext>` (e.g. `**\/*.obj`, `assets/*.{obj,gltf}`,
- * `**\/*.d.ts`); a name when any path segment equals it (e.g. `**\/.github/**`, `**\/yarn.lock`).
+ * `**\/*.d.ts`), only the longest such extension counting (`*.d.ts` names `d.ts`, not also a listed `ts`);
+ * a name when any path segment equals it (e.g. `**\/.github/**`, `**\/yarn.lock`).
  * Broad patterns such as `**\/*` reference nothing concrete and therefore opt nothing in.
  */
 export function collectExplicitReincludes(
@@ -205,7 +207,7 @@ export function collectExplicitReincludes(
   excludedExtensions: ReadonlyArray<string> = DEFAULT_EXCLUDED_EXTENSIONS
 ): { extensions: Set<string>; names: Set<string> } {
   const segments = new Set<string>()
-  const basenames: Array<string> = []
+  const namedExtensions = new Set<string>()
   for (const pattern of patterns) {
     if (pattern.startsWith("!")) {
       continue
@@ -215,37 +217,37 @@ export function collectExplicitReincludes(
       for (const part of parts) {
         segments.add(part)
       }
-      basenames.push(parts[parts.length - 1])
+      const named = longestExcludedExtension(parts[parts.length - 1], excludedExtensions)
+      if (named != null) {
+        namedExtensions.add(named)
+      }
     }
   }
 
-  const extensions = new Set(excludedExtensions.filter(ext => basenames.some(name => name.endsWith(`.${ext}`))))
+  const extensions = new Set(excludedExtensions.filter(ext => namedExtensions.has(ext)))
   const names = new Set(DEFAULT_EXCLUDED_NAMES.filter(name => segments.has(name)))
   return { extensions, names }
 }
 
 /**
- * Builds the trailing list of default ignore globs appended to the main app file matcher, excluding `excludedExtensions`
- * (see {@link resolveExcludedExtensions}) and the default-excluded names. Extensions and names the user has explicitly
- * re-included (see {@link collectExplicitReincludes}) are omitted, so a `files` entry like `**\/*.obj` overrides the
- * matching exclusion.
+ * Builds the trailing list of default ignore globs appended to the main app file matcher: a glob that excludes every one of
+ * `excludedExtensions` (see {@link resolveExcludedExtensions}), then the default-excluded names except those a `files` entry
+ * re-includes (see {@link collectExplicitReincludes}) and the fixed ignores. The files a `files` entry names despite their
+ * excluded extension are let through by {@link FileMatcher.extensionReincludes}, not by these patterns.
  */
 export function getDefaultIgnoredPatterns(userPatterns: ReadonlyArray<string>, excludedExtensions: ReadonlyArray<string> = DEFAULT_EXCLUDED_EXTENSIONS): Array<string> {
-  const reincluded = collectExplicitReincludes(userPatterns, excludedExtensions)
-
-  const extensions = excludedExtensions.filter(ext => !reincluded.extensions.has(ext))
-  const names = DEFAULT_EXCLUDED_NAMES.filter(name => !reincluded.names.has(name))
+  const reincludedNames = collectExplicitReincludes(userPatterns, excludedExtensions).names
+  const names = DEFAULT_EXCLUDED_NAMES.filter(name => !reincludedNames.has(name))
 
   const patterns: Array<string> = []
-  // minimatch does not expand a single-member brace (`{x}` is matched literally), so emit a bare
-  // glob when only one extension/name survives the opt-in filtering.
-  if (extensions.length === 1) {
-    patterns.push(`!**/*.${extensions[0]}`)
-  } else if (extensions.length > 1) {
-    patterns.push(`!**/*.{${extensions.join(",")}}`)
+  const extensionGlob = excludedExtensionsGlob(excludedExtensions)
+  if (extensionGlob != null) {
+    patterns.push(extensionGlob)
   }
   patterns.push("!**/._*")
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
+  // minimatch does not expand a single-member brace (`{x}` is matched literally), so emit a bare
+  // glob when only one name is excluded.
   if (names.length === 1) {
     patterns.push(`!**/${names[0]}`)
   } else if (names.length > 1) {
@@ -257,6 +259,61 @@ export function getDefaultIgnoredPatterns(userPatterns: ReadonlyArray<string>, e
   patterns.push("!.editorconfig")
   patterns.push("!.yarnrc.yml")
   return patterns
+}
+
+/** The glob that excludes `excludedExtensions` (a bare one for a single extension, since minimatch matches `{x}` literally), or null for none. */
+function excludedExtensionsGlob(excludedExtensions: ReadonlyArray<string>): string | null {
+  if (excludedExtensions.length === 0) {
+    return null
+  }
+  return excludedExtensions.length === 1 ? `!**/*.${excludedExtensions[0]}` : `!**/*.{${excludedExtensions.join(",")}}`
+}
+
+/** The longest of `excludedExtensions` that `name` ends with (`index.d.ts` → `d.ts`, not also a listed `ts`), or null. */
+function longestExcludedExtension(name: string, excludedExtensions: ReadonlyArray<string>): string | null {
+  let result: string | null = null
+  for (const ext of excludedExtensions) {
+    if (name.endsWith(`.${ext}`) && (result == null || ext.length > result.length)) {
+      result = ext
+    }
+  }
+  return result
+}
+
+/**
+ * Per excluded extension, the `files` patterns that name it: each brace-expanded alternative of a non-negated pattern whose basename
+ * ends with that extension (the longest one, see {@link longestExcludedExtension}). An alternative of `native/{**\/*,addon.pdb}`
+ * without such an extension names nothing. An alternative that still holds braces (a pattern too large to expand, or a literal brace)
+ * is recorded whole: an extension cannot hold a brace, so the extension it ends with follows its last brace and every alternative minimatch
+ * expands it to ends with it.
+ */
+function collectExtensionReincludes(patterns: ReadonlyArray<string>, excludedExtensions: ReadonlyArray<string>): Map<string, Array<string>> {
+  const result = new Map<string, Array<string>>()
+  for (const pattern of patterns) {
+    if (pattern.startsWith("!")) {
+      continue
+    }
+    for (const expanded of expandBraces(pattern)) {
+      const extension = longestExcludedExtension(expanded.substring(expanded.lastIndexOf("/") + 1), excludedExtensions)
+      if (extension != null) {
+        result.set(extension, [...(result.get(extension) ?? []), expanded])
+      }
+    }
+  }
+  return result
+}
+
+/**
+ * Lets through the files a `files` pattern names despite their excluded extension (see getMainFileMatchers): the extension glob
+ * excludes every file with an excluded extension, and such a file is included only when a pattern that names its extension matches
+ * it and the matcher's other patterns (`node_modules` and the build resources and output directories, `files` negations) include it.
+ */
+export interface ExtensionReincludes {
+  /** The pattern of the matcher that excludes the extensions. */
+  readonly glob: string
+  readonly extensions: ReadonlyArray<string>
+  /** Per excluded extension, the `files` patterns that name it (see {@link collectExtensionReincludes}). */
+  readonly namedBy: ReadonlyMap<string, ReadonlyArray<string>>
 }
 
 /**
@@ -291,6 +348,9 @@ export class FileMatcher {
   readonly patterns: Array<string>
 
   excludePatterns: Array<Minimatch> | null = null
+
+  /** The files a `files` pattern names despite their excluded extension, which the filter lets through the extension glob. */
+  extensionReincludes: ExtensionReincludes | null = null
 
   readonly isSpecifiedAsEmptyArray: boolean
 
@@ -329,16 +389,16 @@ export class FileMatcher {
     return !this.isEmpty() && this.patterns.find(it => !it.startsWith("!")) == null
   }
 
-  computeParsedPatterns(result: Array<Minimatch>, fromDir?: string): void {
+  computeParsedPatterns(result: Array<Minimatch>, fromDir?: string, patterns: ReadonlyArray<string> = this.patterns): void {
     const relativeFrom = fromDir == null ? null : path.relative(fromDir, this.from)
 
-    if (this.patterns.length === 0 && relativeFrom != null) {
+    if (patterns.length === 0 && relativeFrom != null) {
       // file mappings, from here is a file
       result.push(new Minimatch(relativeFrom, minimatchOptions))
       return
     }
 
-    for (let pattern of this.patterns) {
+    for (let pattern of patterns) {
       if (relativeFrom != null) {
         pattern = path.join(relativeFrom, pattern)
       }
@@ -358,7 +418,35 @@ export class FileMatcher {
   createFilter(): Filter {
     const parsedPatterns: Array<Minimatch> = []
     this.computeParsedPatterns(parsedPatterns)
-    return createFilter(this.from, parsedPatterns, this.excludePatterns)
+    const filter = createFilter(this.from, parsedPatterns, this.excludePatterns)
+    const reincludes = this.extensionReincludes
+    if (reincludes == null) {
+      return filter
+    }
+
+    // only the glob getMainFileMatchers appended (the last one): a `files` negation with the same text still applies
+    const globIndex = this.patterns.lastIndexOf(reincludes.glob)
+    const withoutGlob = this.patterns.filter((_, index) => index !== globIndex)
+    const otherPatterns: Array<Minimatch> = []
+    this.computeParsedPatterns(otherPatterns, undefined, withoutGlob)
+    const withoutExtensionGlob = createFilter(this.from, otherPatterns, this.excludePatterns)
+    const namedBy = new Map([...reincludes.namedBy].map(([extension, patterns]) => [extension, patterns.map(it => new Minimatch(it, minimatchOptions))]))
+    return (file, stat) => {
+      if (filter(file, stat)) {
+        return true
+      }
+      // a directory named with an excluded extension stays excluded
+      if (stat.isDirectory()) {
+        return false
+      }
+      const extension = longestExcludedExtension(path.basename(file), reincludes.extensions)
+      const named = extension == null ? undefined : namedBy.get(extension)
+      if (named == null) {
+        return false
+      }
+      const relative = path.relative(this.from, file).split(path.sep).join("/")
+      return named.some(it => it.match(relative)) && withoutExtensionGlob(file, stat)
+    }
   }
 
   toString() {
@@ -453,6 +541,11 @@ export function getMainFileMatchers(
   }
 
   patterns.push(...getDefaultIgnoredPatterns(userSpecifiedPatterns, excludedExtensions))
+  const extensionGlob = excludedExtensionsGlob(excludedExtensions)
+  const namedBy = collectExtensionReincludes(userSpecifiedPatterns, excludedExtensions)
+  if (extensionGlob != null && namedBy.size > 0) {
+    matcher.extensionReincludes = { glob: extensionGlob, extensions: excludedExtensions, namedBy }
+  }
 
   const debugLogger = platformPackager.debugLogger
   if (debugLogger.isEnabled) {

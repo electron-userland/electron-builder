@@ -1,5 +1,11 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`a files entry naming one pdb file ships only that pdb file 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`default-excluded extension stays excluded without a re-include glob 1`] = `
 {
   "linux": [],
