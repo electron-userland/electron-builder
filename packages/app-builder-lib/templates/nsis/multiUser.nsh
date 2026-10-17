@@ -63,14 +63,6 @@ Var installMode
     StrCpy $installMode all
     SetShellVarContext all
 
-    !ifdef BUILD_UNINSTALLER
-      ${IfNot} ${UAC_IsAdmin}
-        ShowWindow $HWNDPARENT ${SW_HIDE}
-        !insertmacro UAC_RunElevated
-        Quit
-      ${endif}
-    !endif
-
     # сheck registry for previous installation path
     ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
     ${if} $perMachineInstallationFolder != ""
@@ -89,6 +81,52 @@ Var installMode
 
       StrCpy $INSTDIR "$0\${APP_FILENAME}"
     ${endif}
+
+    !ifdef BUILD_UNINSTALLER
+      ${ifNot} ${UAC_IsAdmin}
+        ${if} ${Silent}
+          # A silent uninstall reaching here is driven by installSection.nsh's
+          # uninstallOldVersion -- the same silent-update path installer.nsi's own
+          # elevation check (Section "install") was made ACL-aware for. Mirror that
+          # reasoning here: this uninstall section deletes $INSTDIR (RMDir /r),
+          # INSTALL_REGISTRY_KEY and UNINSTALL_REGISTRY_KEY[_2] (DeleteRegKey), and the
+          # Start Menu/desktop shortcut locations (RMDir/Delete), all under the same
+          # all-users SHELL_CONTEXT -- and all of those fail silently when unelevated.
+          # Only elevate if a live check shows at least one of them still needs it.
+          # Interactive (non-silent) uninstalls keep the original unconditional
+          # elevate -- that's a visible, explicit user action, not what this is about.
+          !insertmacro IsDirWritable $INSTDIR $R7
+          !insertmacro IsRegKeyWritable HKLM "${INSTALL_REGISTRY_KEY}" $R8
+          !insertmacro IsRegKeyWritable HKLM "${UNINSTALL_REGISTRY_KEY}" $R6
+          StrCpy $R5 "1"
+          !ifdef UNINSTALL_REGISTRY_KEY_2
+            !insertmacro IsRegKeyWritable HKLM "${UNINSTALL_REGISTRY_KEY_2}" $R5
+          !endif
+          StrCpy $R4 "1"
+          !ifndef DO_NOT_CREATE_START_MENU_SHORTCUT
+            !insertmacro IsDirWritable $SMPROGRAMS $R4
+          !endif
+          StrCpy $R3 "1"
+          !ifndef DO_NOT_CREATE_DESKTOP_SHORTCUT
+            !insertmacro IsDirWritable $DESKTOP $R3
+          !endif
+          ${if} $R7 == "0"
+          ${orIf} $R8 == "0"
+          ${orIf} $R6 == "0"
+          ${orIf} $R5 == "0"
+          ${orIf} $R4 == "0"
+          ${orIf} $R3 == "0"
+            ShowWindow $HWNDPARENT ${SW_HIDE}
+            !insertmacro UAC_RunElevated
+            Quit
+          ${endif}
+        ${else}
+          ShowWindow $HWNDPARENT ${SW_HIDE}
+          !insertmacro UAC_RunElevated
+          Quit
+        ${endif}
+      ${endif}
+    !endif
 
     # allow /D switch to override installation path https://github.com/electron-userland/electron-builder/issues/1551
     !insertmacro GetDParameter $R0
