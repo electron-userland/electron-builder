@@ -352,8 +352,33 @@ function headingDate(text, label) {
   return found && /\((\d{4}-\d{2}-\d{2})\)\s*$/.exec(lines[found.index])?.[1]
 }
 
+// the package and version of a release label: a bare version is electron-builder's
+function parseLabel(label) {
+  const at = label.lastIndexOf("@")
+  return at > 0 ? { name: label.slice(0, at), version: label.slice(at + 1) } : { name: "electron-builder", version: label }
+}
+
+// the version of <name> that the section of release heading i releases: the heading's own, else the one of its
+// "## <name>@<version>" sub-section (electron-updater in a release led by electron-builder)
+function releasedVersion(lines, headings, i, name) {
+  const own = parseLabel(headings[i].label)
+  if (own.name === name) {
+    return own.version
+  }
+  const end = headings[i + 1]?.index ?? lines.length
+  for (let j = headings[i].index + 1; j < end; j++) {
+    const sub = SUB_HEADING.exec(lines[j])?.[1]
+    if (sub && parseLabel(sub).name === name && semver.valid(parseLabel(sub).version)) {
+      return parseLabel(sub).version
+    }
+  }
+  return undefined
+}
+
 // a new release goes to the top and a re-run replaces the section of its release; a past release (--mode range) that
-// is not in the file goes above the first older electron-builder release
+// is not in the file goes above the first release with an older version of its lead package (electron-builder, or
+// e.g. electron-updater released alone: then also a release that has an older electron-updater sub-section), or below
+// the last release of that package when all are newer
 function insertSection(file, section, label) {
   const original = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : ""
   if (!original.trim()) {
@@ -364,8 +389,13 @@ function insertSection(file, section, label) {
   const lines = original.replace(/\r\n/g, "\n").split("\n")
   const headings = releaseHeadings(lines)
   const existing = headings.findIndex(h => h.label === label)
-  const builderHeadings = headings.filter(h => !h.label.includes("@"))
-  const older = !label.includes("@") && builderHeadings.some(h => semver.gt(h.label, label)) ? builderHeadings.find(h => semver.lt(h.label, label)) : headings[0]
+  const { name, version } = parseLabel(label)
+  const same = headings.map((h, i) => ({ i, version: releasedVersion(lines, headings, i, name) })).filter(h => h.version)
+  let older = headings[0]
+  if (same.some(h => semver.gt(h.version, version))) {
+    const next = same.find(h => semver.lt(h.version, version))
+    older = headings[next ? next.i : same[same.length - 1].i + 1]
+  }
   const at = existing === -1 ? (older?.index ?? lines.length) : headings[existing].index
   const end = existing === -1 ? at : (headings[existing + 1]?.index ?? lines.length)
   // conventional-changelog separates releases with three blank lines

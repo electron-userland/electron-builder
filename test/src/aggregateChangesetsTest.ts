@@ -260,4 +260,33 @@ describe("aggregate-changesets", () => {
     aggregate(dir, "--mode", "range", "--from", "electron-builder@1.0.0", "--to", "electron-builder@2.0.0-alpha.0", "--insert", "CHANGELOG.md")
     expect(rootChangelog(dir)).toBe(released.replace(`(${releasedDate})`, "(2020-02-02)"))
   })
+
+  test("puts a missing past release of electron-updater alone between its newer and older releases", async ({ expect, tmpDir }) => {
+    const { dir } = await createRepo(tmpDir)
+    version(dir)
+    commit(dir, "chore(deploy): Release (#2)")
+    git(dir, "tag", "electron-builder@2.0.0-alpha.0")
+    git(dir, "tag", "electron-updater@1.1.0-alpha.0")
+    for (const [i, pre] of ["1", "2"].entries()) {
+      writeChangeset(dir, `h-updater-fix-${pre}`, { "electron-updater": "patch" }, `fix: updater fix ${pre}`)
+      commit(dir, `fix: updater fix ${pre} (#${3 + 2 * i})`)
+      version(dir)
+      commit(dir, `chore(deploy): Release (#${4 + 2 * i})`)
+      git(dir, "tag", `electron-updater@1.1.0-alpha.${pre}`)
+    }
+    const released = rootChangelog(dir)
+    const sections = released.split("\n\n\n\n")
+    expect(sections.map(s => s.split("\n")[0])).toEqual([
+      `# [electron-updater@1.1.0-alpha.2](${COMPARE}/electron-updater@1.1.0-alpha.1...electron-updater@1.1.0-alpha.2) (${dateOf(dir, "electron-updater@1.1.0-alpha.2")})`,
+      `# [electron-updater@1.1.0-alpha.1](${COMPARE}/electron-updater@1.1.0-alpha.0...electron-updater@1.1.0-alpha.1) (${dateOf(dir, "electron-updater@1.1.0-alpha.1")})`,
+      `# [2.0.0-alpha.0](${COMPARE}/electron-builder@1.0.0...electron-builder@2.0.0-alpha.0) (${dateOf(dir, "2.0.0-alpha.0")})`,
+      LEGACY.split("\n")[0],
+    ])
+    // electron-updater@1.1.0-alpha.1 missing: it goes below the newer 1.1.0-alpha.2 and above the release that has the
+    // older electron-updater@1.1.0-alpha.0 sub-section, not to the top
+    fs.writeFileSync(path.join(dir, "CHANGELOG.md"), [sections[0], ...sections.slice(2)].join("\n\n\n\n"))
+    const { stderr } = aggregate(dir, "--mode", "range", "--from", "electron-updater@1.1.0-alpha.0", "--to", "electron-updater@1.1.0-alpha.1", "--insert", "CHANGELOG.md")
+    expect(stderr).toContain("inserted the electron-updater@1.1.0-alpha.1 section")
+    expect(rootChangelog(dir)).toBe(released)
+  })
 })
