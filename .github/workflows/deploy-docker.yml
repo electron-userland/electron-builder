@@ -3,9 +3,14 @@ name: Docker Deployment
 on:
   # release:
   #   types: [published]
-  push:
-    tags:
-      - docker*
+  # a new version of the private package docker, from the Release workflow (pr-release.yml) on master, which also pushes its tag docker@<version>. There is no tag trigger: the Docker Hub secrets are in the `release` environment, whose branch policy a run on a tag does not pass, so pushing a docker@ tag starts nothing
+  workflow_call:
+    # environment secrets of `release` (the deploy job): the caller has to pass them by name, or they are empty in a reusable workflow; required makes a caller that does not pass them fail
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
   workflow_dispatch:
 
 permissions:
@@ -24,6 +29,8 @@ jobs:
     name: Build and Push Docker
     needs: run-docker-build-and-test
     runs-on: ubuntu-latest
+    # DOCKERHUB_USERNAME and DOCKERHUB_TOKEN; the environment allows master, release/* and changeset-release/* only, so a manual run (workflow_dispatch) has to be on one of them
+    environment: release
     strategy:
       # each Node.js version is pushed by its own job: a failed one must not cancel the others in the middle of their pushes. Re-run the failed jobs while the image artifacts are kept (a day, docker-build.yml)
       fail-fast: false
