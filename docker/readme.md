@@ -112,7 +112,7 @@ The images on Docker Hub have the tags of [Tags](#tags), not the package version
 
 4. The tag starts deploy-docker.yml, which runs for every tag that matches `docker*`. It builds the images of every Node.js version and runs test.yaml with them: the Linux tests run in the new `22-wine-mono`, and the other images are only built. When every job of test.yaml has passed, Windows and macOS included, it pushes all tags of `electronuserland/builder` to Docker Hub, with the `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets. When it is run manually (`workflow_dispatch`), it builds and tests, and does not push.
 
-If the deploy fails, re-run all jobs of its run in GitHub Actions (GitHub allows it for 30 days). A re-run builds the commit again, with dated tags of the month of the re-run. One failed job of the push matrix cancels the others, so a failed push can leave some Node.js versions pushed and others not. If the images need a fix, release it as a new version and tag that one.
+If the deploy fails, re-run its failed jobs in GitHub Actions. Each Node.js version is pushed by its own job, and a failed job does not cancel the others. Re-running only the failed jobs works until the image artifacts expire, a day after docker-build.yml uploaded them. After that, re-run all jobs (GitHub allows it for 30 days), which builds the commit again, with dated tags of the month of the re-run. If the images need a fix, release it as a new version and tag that one.
 
 # Notes
 
