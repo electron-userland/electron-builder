@@ -1,6 +1,6 @@
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
 import { getRceditBundle, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
-import { InvalidConfigurationError, isEmptyOrSpaces, log, escapeForXml } from "builder-util"
+import { InvalidConfigurationError, isEmptyOrSpaces, log, escapeForXml, prepareFixedNameWrite } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import * as fs from "fs"
 import * as os from "os"
@@ -135,6 +135,8 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     const filePath = await this.ensurePathInside(appOutDir, path.join(appOutDir, appExe.name), "App executable path")
+    // a symlink at the name, from the copied app files, is replaced rather than resolved onto another file of the app
+    await prepareFixedNameWrite(appOutDir, path.join(appOutDir, `${this.exeName}_ExecutionStub.exe`), "Squirrel execution stub")
     const stubExePath = await this.ensurePathInside(appOutDir, path.join(appOutDir, `${this.exeName}_ExecutionStub.exe`), "Stub executable path")
     const stubExecutableSource = await this.ensurePathInside(vendorDir, path.join(vendorDir, "StubExecutable.exe"), "Stub executable source")
     const writeZipToSetupExe = await this.ensurePathInside(vendorDir, path.join(vendorDir, "WriteZipToSetup.exe"), "WriteZipToSetup executable")
@@ -324,6 +326,7 @@ export default class SquirrelWindowsTarget extends Target {
       remoteReleases,
       remoteToken: firstNonBlank(this.options.remoteToken, process.env.GH_TOKEN, process.env.GITHUB_TOKEN),
       createTempDir: opts => this.packager.tempDirManager.createTempDir(opts),
+      externalLinks: await packager.getExternalLinkPolicy(),
     }
   }
 }

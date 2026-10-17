@@ -7,6 +7,7 @@ import {
   AsyncTaskManager,
   DebugLogger,
   defaultArchFromString,
+  ExternalLinkPolicy,
   FileTransformer,
   getArchSuffix,
   getArtifactArchName,
@@ -60,6 +61,7 @@ import type {
 import type { PlatformType } from "./targets/mac/MacTargetHelper.js"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, transformFiles } from "./util/appFileCopier.js"
 import { verifyNativeBinaries } from "./util/nativeBinaryVerifier.js"
+import { getTrustedSourceRoots, resolveAllowExternalLinks } from "./util/trustedSourceRoots.js"
 import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/mac/macosIconComposer.js"
@@ -114,6 +116,20 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
    */
   getOptionsForTarget<T>(key: string): T {
     return deepAssign({}, this.platformSpecificBuildOptions, (this.config as any)[key] ?? {}) as T
+  }
+
+  private externalLinkPolicy: Promise<ExternalLinkPolicy> | null = null
+
+  /**
+   * The resolved `fileOptions.allowExternalLinks` option: the platform-level value (`config.mac.fileOptions.allowExternalLinks`, ...) or the
+   * root one (see {@link resolveAllowExternalLinks}). Computed once; a listed path that does not exist fails the build.
+   */
+  getExternalLinkPolicy(): Promise<ExternalLinkPolicy> {
+    if (this.externalLinkPolicy == null) {
+      const { value, optionPath } = resolveAllowExternalLinks(this.config, this.platformSpecificBuildOptions, this.platform.buildConfigurationKey)
+      this.externalLinkPolicy = ExternalLinkPolicy.create(value, this.projectDir, optionPath)
+    }
+    return this.externalLinkPolicy
   }
 
   get resourceList(): Promise<Array<string>> {
@@ -559,8 +575,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const transformerForExtraFiles = this.createTransformerForExtraFiles(packContext)
-    await copyFiles(extraResourceMatchers, transformerForExtraFiles)
-    await copyFiles(extraFileMatchers, transformerForExtraFiles)
+    // confined, by real path, to the app output directory (or the output directory, for a "to" that leaves it); a copied symlink may lead into the workspace or the package-manager store
+    const extraFilesContainment = { roots: [appOutDir, outDir], allowedSymlinkRoots: await getTrustedSourceRoots(this), externalLinks: await this.getExternalLinkPolicy() }
+    await copyFiles(extraResourceMatchers, transformerForExtraFiles, undefined, extraFilesContainment)
+    await copyFiles(extraFileMatchers, transformerForExtraFiles, undefined, extraFilesContainment)
 
     if (this.info.cancellationToken.cancelled) {
       return
@@ -735,7 +753,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (this.info.isPrepackedAppAsar) {
       taskManager.add(async () => {
         const fileSets = await _computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)])
-        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, transformer)))
+        const copyOptions = { containmentRoot: resourcePath, trustedSourceRoots: await getTrustedSourceRoots(this), externalLinks: await this.getExternalLinkPolicy() }
+        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, transformer, copyOptions)))
         await taskManager.awaitTasks()
       })
     } else if (asarOptions == null) {
@@ -754,7 +773,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
       taskManager.add(async () => {
         const fileSets = await _computeFileSets(mainMatchers)
-        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, combinedTransformer)))
+        const copyOptions = { containmentRoot: resourcePath, trustedSourceRoots: await getTrustedSourceRoots(this), externalLinks: await this.getExternalLinkPolicy() }
+        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, combinedTransformer, copyOptions)))
         await taskManager.awaitTasks()
       })
     } else {

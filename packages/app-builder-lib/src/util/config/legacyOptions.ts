@@ -69,6 +69,19 @@ export const ALL_PLATFORM_KEYS = ["mac", "mas", "masDev", "win", "linux"] as con
 
 export const BREAKING_CHANGES_URL = "https://www.electron.build/docs/migration/v27-breaking-changes"
 
+/**
+ * File-copy options nested under `fileOptions`, at the configuration root and on every platform key
+ * (`files` → `fileOptions.files`, `mac.extraResources` → `mac.fileOptions.extraResources`, …).
+ *
+ * Unlike the options in {@link LEGACY_CONFIG_OPTIONS}, flat keys are not rejected: they are normalized into
+ * `fileOptions` with a warning when the configuration is loaded, before validation, although the types and the
+ * schema only have `fileOptions`.
+ */
+export const FILE_OPTION_KEYS = ["files", "extraResources", "extraFiles"] as const
+
+/** Anchor of the `fileOptions` entry within the breaking-changes page. */
+export const FILE_OPTIONS_ANCHOR = "file-options-fileoptions"
+
 export interface LegacyConfigOption {
   /** The removed key itself. */
   readonly key: string
@@ -143,7 +156,7 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
     replacement: null,
     autoMigrated: true,
     severity: "error",
-    detail: 'To keep a default-excluded file, name it concretely in a `files` glob instead — e.g. `"files": ["**/*", "**/*.obj"]`.',
+    detail: 'To keep a default-excluded file, name it concretely in a `fileOptions.files` glob instead — e.g. `"fileOptions": { "files": ["**/*", "**/*.obj"] }`.',
     anchor: "disabledefaultignoredfiles",
   },
   {

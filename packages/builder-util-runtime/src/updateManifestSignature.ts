@@ -49,6 +49,13 @@ function encodeField(value: unknown): string {
  * signed manifest without a non-empty `files` list (see {@link validateSignedManifestShape}), so the updater
  * never falls back to those legacy fields for a verified manifest.
  *
+ * `files[].isAdminRightsRequired` is intentionally NOT signed. It is only a launch hint (spawn the installer
+ * directly vs. through `elevate.exe`); the installer itself is pinned by the signed `url`/`sha512`/`size`, so
+ * tampering with the flag cannot change what gets installed — the worst case is an unexpected UAC prompt or an
+ * unnecessary `elevate.exe` launch. Leaving it unsigned lets a publisher correct a misconfigured value in
+ * `latest.yml` without re-signing. The `isAdminRightsRequired` column of the `package:` records below is part of
+ * the `EBUM1` wire format for historic reasons; electron-updater does not read it from `packages`.
+ *
  * Wire format (`EBUM1`): one record per line, `label:` followed by tab-separated fields, e.g.
  *
  *     EBUM1

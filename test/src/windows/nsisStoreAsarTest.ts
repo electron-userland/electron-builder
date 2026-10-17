@@ -1,4 +1,4 @@
-import { Arch, log } from "builder-util"
+import { Arch, ExternalLinkPolicy, log } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { vi } from "vitest"
@@ -8,7 +8,13 @@ import { NsisTarget } from "app-builder-lib/src/targets/win/nsis/NsisTarget"
 // buildAppPackage only needs these packager fields and archives with the 7za toolset, so no
 // Electron download is involved.
 function createTarget(outDir: string, differentialPackage: boolean | "store-asar") {
-  const packager: any = { config: { nsis: { differentialPackage } }, metadata: {}, appInfo: { sanitizedName: "app", version: "1.0.0" }, compression: "normal" }
+  const packager: any = {
+    config: { nsis: { differentialPackage } },
+    metadata: {},
+    appInfo: { sanitizedName: "app", version: "1.0.0" },
+    compression: "normal",
+    getExternalLinkPolicy: () => Promise.resolve(ExternalLinkPolicy.NONE),
+  }
   return new NsisTarget(packager, outDir, "nsis", { refCount: 0 } as any)
 }
 

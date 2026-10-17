@@ -67,21 +67,22 @@ asar:
 ```
 
 **"ENOENT: no such file or directory" at runtime**
-: A file that exists in development is missing from the packaged app. Check if it's being excluded by a `files` pattern or by the default exclusions. Build with `DEBUG=electron-builder` and look for "excluding" log lines. Also check `asar.unpack` — files inside ASAR must be accessed via `app.getAppPath()`, not via `__dirname` relative paths.
+: A file that exists in development is missing from the packaged app. Check if it's being excluded by a `fileOptions.files` pattern or by the default exclusions. Build with `DEBUG=electron-builder` and look for "excluding" log lines. Also check `asar.unpack` — files inside ASAR must be accessed via `app.getAppPath()`, not via `__dirname` relative paths.
 
 **App directory is too large**
 : Profile the ASAR after building:
 ```bash
 npx asar list dist/mac/MyApp.app/Contents/Resources/app.asar | sort
 ```
-Common culprits: TypeScript source files (`.ts`), source maps (`.map`), test fixtures, large binary assets. Add exclusion patterns to `files`:
+Common culprits: TypeScript source files (`.ts`), source maps (`.map`), test fixtures, large binary assets. Add exclusion patterns to `fileOptions.files`:
 ```yaml
-files:
-  - "**/*"
-  - "!src/**"
-  - "!**/*.ts"
-  - "!**/*.map"
-  - "!**/__tests__/**"
+fileOptions:
+  files:
+    - "**/*"
+    - "!src/**"
+    - "!**/*.ts"
+    - "!**/*.map"
+    - "!**/__tests__/**"
 ```
 
 **"Cannot find module" at runtime after packaging**
@@ -170,12 +171,27 @@ Or run with `--appimage-extract-and-run`:
 **AppImage won't run: "squashfs: FATAL ERROR aborting"**
 : This is a symptom of the legacy FUSE2 runtime. Remove any `toolsets.appimage: "0.0.0"` pin so the build uses the default static runtime.
 
-**Flatpak build fails: "runtime not found"**
-: Install the Flatpak runtime before building:
+**Flatpak build fails: "flatpak-builder 1.0.12 is not supported"**
+: As of v27 the flatpak target requires `flatpak` 1.12.4 or newer and `flatpak-builder` 1.2.2 or newer; with an older tool the build fails with `<tool> <version> is not supported - version <minimum> or newer is required to build the flatpak target`. The stock packages of Ubuntu 22.04, Debian 12, RHEL 8 and 9 and newer releases are new enough; older releases, such as Ubuntu 20.04 (now only covered by Ubuntu Pro) and Debian 11, ship older tools. Without the tools the build fails with `cannot run flatpak - flatpak and flatpak-builder must be installed to build the flatpak target`, which is what happens in an `electronuserland/builder` Docker image with the date tag `-05.26` or an older one: only the images with a newer date tag [include the tools](features/multi-platform-build.md#flatpak-in-the-docker-images).
+
+**Flatpak build fails: "No remote refs found"**
+: A build needs the runtime, the SDK and the base app (`org.freedesktop.Platform`, `org.freedesktop.Sdk` and `org.electronjs.Electron2.BaseApp` in version `26.08` by default; [`20.08` before v27](migration/v27-breaking-changes.md#flatpak-tooling-requirements)). electron-builder installs whichever of them is missing itself, with `flatpak install --user`, which only searches the remotes of the user installation. Add Flathub there, and check that the configured `runtimeVersion` and `baseVersion` exist:
 ```bash
-flatpak install flathub org.freedesktop.Platform//24.08
-flatpak install flathub org.freedesktop.Sdk//24.08
+flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 ```
+The `electronuserland/builder` Docker images that include `flatpak` have the remote for `root` with `HOME=/root` only; a container that runs as another user or with another `HOME` has to add it — see [Flatpak in the Docker Images](features/multi-platform-build.md#flatpak-in-the-docker-images).
+
+**Flatpak build fails in a container: "Failure spawning rofiles-fuse" or "is not a valid icon: bwrap: ..."**
+: FUSE or user namespaces are not available, which is typical in unprivileged containers. electron-builder logs a hint naming the option to set for each of the two errors:
+```yaml
+flatpak:
+  additionalArgs:
+    flatpakBuilder:
+      - "--disable-rofiles-fuse"   # for "Failure spawning rofiles-fuse"
+    buildExport:
+      - "--disable-sandbox"        # for "is not a valid icon: bwrap: ..."
+```
+See [Building in unprivileged containers](flatpak.md#building-in-unprivileged-containers) for what the two arguments do and what such a container cannot build, [Building Flatpak Bundles in CI and Containers](tutorials/flatpak-in-ci-and-containers.md) for an image to build in, and [Flatpak → Troubleshooting](flatpak.md#troubleshooting) for other Flatpak errors.
 
 **Snap confinement issues: permission denied at runtime**
 : The snap is trying to access something not declared in its interface plugs. Run `snap run --shell myapp` to get a shell inside the snap, then test access. Add the appropriate plug to `snap.plugs` in your config.
@@ -226,6 +242,7 @@ docker run --rm -ti \
   electronuserland/builder:wine \
   /bin/bash -c "npm ci && npx electron-builder --linux"
 ```
+For the `flatpak` target the image has to be one with a date tag newer than `-05.26`, and the configuration needs `flatpak.additionalArgs` with the two arguments for unprivileged containers — see [Flatpak in the Docker Images](features/multi-platform-build.md#flatpak-in-the-docker-images) and the Flatpak entries under [Linux-Specific](#linux-specific).
 
 **"wine: command not found" when building Windows on Linux**
 : Use the `electronuserland/builder:wine` Docker image which includes Wine. Or install Wine on the host system.

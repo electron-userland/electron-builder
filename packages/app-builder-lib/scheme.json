@@ -435,7 +435,7 @@
           "type": "boolean"
         },
         "ordering": {
-          "description": "Path to a file containing the order in which files should be packed into the asar archive.\nEach line of the file is a relative path from the app directory. Files listed first are\npacked first, which can improve app startup time by front-loading frequently accessed modules.\nSee the [asar documentation](https://github.com/electron/asar) for details.",
+          "description": "Path to a file containing the order in which files should be packed into the asar archive.\nEach line of the file is a relative path from the app directory. Files listed first are\npacked first, which can improve app startup time by front-loading frequently accessed modules.\nSee the [asar documentation](https://github.com/electron/asar) for details.\n\nLines use the same syntax `@electron/asar` accepts: the path may carry a leading `/` or a\n`<count>:` prefix (as written by a load counter), and blank lines are ignored. There is no comment\nsyntax, and `\\` separators are accepted. Directory entries are moved to the front in their original\nrelative order (they hold no data), listed files follow in the order of the file, and every other\nfile keeps its original order after them. Lines naming a directory are ignored, and listed files\nthat are not in the archive are skipped.\n\nThe path is resolved like other build resources: relative to the [build resources directory](#directories)\nfirst, then to the project directory. A missing file fails the build. Packing files ahead of the default\ndependencies-first layout can increase differential update download size.",
           "type": [
             "null",
             "string"
@@ -1444,9 +1444,175 @@
       },
       "type": "object"
     },
+    "FilesBuildOptions": {
+      "additionalProperties": false,
+      "description": "Which files are copied into the packaged app, and which symlinks among them may lead outside it, set under `fileOptions` at the\nconfiguration root or per platform (e.g. `mac.fileOptions`). A platform's lists are added to the root ones; a platform's\n`allowExternalLinks` replaces the root one.\nSee [file options](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).",
+      "properties": {
+        "allowExternalLinks": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "boolean"
+              ]
+            }
+          ],
+          "default": false,
+          "description": "Whether symlinks among the packaged files may lead outside the app, the workspace and the package-manager store.\n\nOnly the build configuration is trusted, not the files it packages: by default (`false`) electron-builder refuses\n- a file of the app (`app.asar` or `asar: false`) that is a symlink, or is reached through one, whose real path is outside the workspace\n  root, the project and app directories and the package-manager store (`npm link`, a `file:../lib` dependency outside the repository,\n  a symlink into the home or temp directory),\n- a copied symlink that resolves outside the app: one in `extraResources` / `extraFiles` (other than into the workspace or the store),\n  one kept by an `asar: false` copy, and any symlink leaving the app in a target that stores what symlinks point to (Windows `zip` / `7z`,\n  the NSIS app package, AppX/MSIX, Squirrel.Windows).\n\nWithout these checks, a symlink planted in a dependency or a copied directory could package files from elsewhere on the build machine (SSH keys,\ncredentials) into the artifact, which is why this is off by default.\n\n- `true` allows any such symlink.\n- A list of paths, relative to the project directory or absolute, allows a symlink only when the real path of what it points to is\n  inside the real path of one of them (e.g. `[\"../shared-lib\"]`). A listed path that does not exist fails the build.\n\nAn allowed symlink is packaged: what it points to is copied (or stored by the archive), and a copied symlink is kept\nas it is. A warning is logged once when this allows a symlink.\n\nSet it under `fileOptions`, at the configuration root or per platform; a platform's value (`false` included) replaces the root one\nrather than being added to it:\n```json\n{ \"fileOptions\": { \"allowExternalLinks\": [\"../shared-lib\"] }, \"linux\": { \"fileOptions\": { \"allowExternalLinks\": true } } }\n```\n\nThis does not allow writing through a symlink: a copy or a file written by electron-builder whose destination leads outside the\noutput directory through a symlink is always refused, and a symlink at such a file name is replaced, never followed.\nSee [Symbolic links](https://www.electron.build/docs/contents#symbolic-links)."
+        },
+        "extraFiles": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows)."
+        },
+        "extraResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
+        },
+        "files": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options as well (e.g. `mac.fileOptions.files`, see [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+        }
+      },
+      "type": "object"
+    },
+    "FlatpakAdditionalArgs": {
+      "additionalProperties": false,
+      "description": "Additional arguments for the tools that build a flatpak bundle.",
+      "properties": {
+        "buildBundle": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Passed to `flatpak build-bundle`.\n\nExample: `[\"--runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo\"]`"
+        },
+        "buildExport": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Passed to `flatpak build-export`.\n\nExample: `[\"--disable-sandbox\"]`, which runs the icon validator without its sandbox and is required where bubblewrap cannot create namespaces, typically in unprivileged containers."
+        },
+        "flatpakBuilder": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Passed to `flatpak-builder`, on both of its invocations (the one that builds and the one that finishes the app).\n\nExample: `[\"--disable-rofiles-fuse\"]`, which is required where FUSE is not available, typically in unprivileged containers."
+        }
+      },
+      "type": "object"
+    },
     "FlatpakOptions": {
       "additionalProperties": false,
       "properties": {
+        "additionalArgs": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FlatpakAdditionalArgs"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "*Advanced only* Additional arguments for the tools that build the bundle, by tool. Nothing is added unless it is set.\n\nA build in an unprivileged container, which has neither FUSE nor user namespaces for bubblewrap, needs `{ flatpakBuilder: [\"--disable-rofiles-fuse\"], buildExport: [\"--disable-sandbox\"] }`."
+        },
         "artifactName": {
           "description": "The [artifact file name template](https://www.electron.build/configuration#artifact-file-name-template).",
           "type": [
@@ -1459,7 +1625,7 @@
           "type": "string"
         },
         "baseVersion": {
-          "description": "Use this specific version of the application specified in base. Defaults to `20.08`.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
+          "description": "Use this specific version of the application specified in base. It is not derived from `runtimeVersion`. Defaults to `26.08`.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
           "type": "string"
         },
         "branch": {
@@ -1506,7 +1672,7 @@
           "description": "The executable parameters. Pass to executableName"
         },
         "files": {
-          "description": "Files to copy directly into the app. Should be a list of [source, dest] tuples. Source should be a relative/absolute path to a file/directory to copy into the flatpak, and dest should be the path inside the app install prefix (e.g. /share/applications/).\n\nSee [@malept/flatpak-bundler documentation](https://github.com/malept/flatpak-bundler#build-options).",
+          "description": "Extra files and directories for the app, as `[source, destination]` pairs. A source is a path on the build machine; a relative one is resolved against the current working directory. A destination is a path relative to the app prefix, which is `/app` inside the sandbox: `[\"build/extra.so\", \"/lib/extra.so\"]` ends up at `/app/lib/extra.so`. A directory is merged into a destination that already exists. For a file, the destination is the path of the file itself, not of the directory that receives it. The pairs are copied in order, after the app itself, so a later pair can replace what an earlier one placed. A destination outside the app prefix (one that climbs out of it with `..`, or that leads out of it through a symlink placed by the base app, a module or an earlier pair) fails the build.",
           "items": {
             "items": [
               {
@@ -1523,11 +1689,34 @@
           "type": "array"
         },
         "finishArgs": {
-          "description": "An array of arguments passed to the flatpak build-finish command. Defaults to:\n```json\n[\n  // Wayland/X11 Rendering\n  \"--socket=wayland\",\n  \"--socket=x11\",\n  \"--share=ipc\",\n  // Open GL\n  \"--device=dri\",\n  // Audio output\n  \"--socket=pulseaudio\",\n  // Read/write home directory access\n  \"--filesystem=home\",\n  // Allow communication with network\n  \"--share=network\",\n  // System notifications with libnotify\n  \"--talk-name=org.freedesktop.Notifications\",\n]\n```\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
+          "description": "An array of arguments passed to the flatpak build-finish command: the permissions of the sandboxed app. Setting it replaces the default list. The defaults are broad grants for a typical Electron app, not requirements: each one widens what code running in the app can reach, see [Finish Args](https://www.electron.build/docs/flatpak#finish-args-permissions). Defaults to:\n```json\n[\n  // Wayland/X11 Rendering\n  \"--socket=wayland\",\n  \"--socket=x11\",\n  \"--share=ipc\",\n  // Open GL\n  \"--device=dri\",\n  // Sound: playback and recording (microphone included), MIDI and the /dev/snd devices\n  \"--socket=pulseaudio\",\n  // Read/write access to the Downloads folder only\n  \"--filesystem=xdg-download\",\n  // Allow communication with network\n  \"--share=network\",\n]\n```\n\nWhen `base` is the default `org.electronjs.Electron2.BaseApp` and `baseVersion` is older than `23.08`, the default list also has `\"--talk-name=org.freedesktop.Notifications\"`, for system notifications: those base apps ship a libnotify older than 0.8, which talks to the notification daemon instead of the notification portal.\n\nBefore v27 the default list had `--filesystem=home`, read/write access to the whole home directory, instead of `--filesystem=xdg-download`, and always had `--talk-name=org.freedesktop.Notifications`.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
           "items": {
             "type": "string"
           },
           "type": "array"
+        },
+        "installOrUpdateRefs": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "base",
+                  "runtime",
+                  "sdk"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "const": "all",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Which of the runtime, the SDK and the base app the build installs when they are missing and updates when they are installed: `\"all\"`, or a list of `\"runtime\"`, `\"sdk\"` and `\"base\"`. A ref that is left out is neither installed nor updated: the build uses it as it is installed on the build machine, for the user or system-wide, and fails before it installs or builds anything if it is not installed. Set `[]` to build with the refs that are already installed, for example in an image that has them, without network access, or where the build user cannot update them. Defaults to `\"all\"`."
         },
         "license": {
           "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.",
@@ -1551,7 +1740,7 @@
           "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
         },
         "modules": {
-          "description": "An array of objects specifying the modules to be built in order.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
+          "description": "An array of objects specifying the modules to be built in order. Modules are built in a bubblewrap sandbox, so they cannot be built where bubblewrap cannot create namespaces, such as an unprivileged container.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
           "items": {},
           "type": "array"
         },
@@ -1606,7 +1795,7 @@
           "type": "string"
         },
         "runtimeVersion": {
-          "description": "The version of the runtime that the application uses. Defaults to `20.08`.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
+          "description": "The version of the runtime that the application uses, which is also the version of the SDK. Defaults to `26.08`. Set it together with `baseVersion`.\n\nSee [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).",
           "type": "string"
         },
         "sdk": {
@@ -1614,7 +1803,7 @@
           "type": "string"
         },
         "symlinks": {
-          "description": "Symlinks to create in the app files. Should be a list of [target, location] symlink tuples. Target can be either a relative or absolute path inside the app install prefix, and location should be a absolute path inside the prefix to create the symlink at.\n\nSee [@malept/flatpak-bundler documentation](https://github.com/malept/flatpak-bundler#build-options).",
+          "description": "Symlinks for the app, as `[target, link]` pairs. Both are paths relative to the app prefix, which is `/app` inside the sandbox: `[\"/lib/tool\", \"/bin/tool\"]` creates `/app/bin/tool`, pointing at `/app/lib/tool`. The links are created after the files are copied. A link outside the app prefix (also through a symlink that leads out of it) fails the build.",
           "items": {
             "items": [
               {
@@ -1638,7 +1827,7 @@
           ]
         },
         "useWaylandFlags": {
-          "description": "Whether to enable the Wayland specific flags (`--enable-features=UseOzonePlatform --ozone-platform=wayland`) in the wrapper script. These flags are only available starting with Electron version 12. Defaults to `false`.",
+          "description": "Whether the wrapper script makes Electron use Wayland when the session is a Wayland one (`XDG_SESSION_TYPE` is `wayland`). The flags depend on the Electron version: none from Electron 38, which picks Wayland there by itself (the build logs that the option has no effect), `--ozone-platform=wayland` from Electron 16, and `--enable-features=UseOzonePlatform --ozone-platform=wayland` before that. Electron 12 or later is required. Defaults to `false`.",
           "type": "boolean"
         }
       },
@@ -2293,60 +2482,6 @@
             "string"
           ]
         },
-        "extraFiles": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows)."
-        },
-        "extraResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
-        },
         "fileAssociations": {
           "anyOf": [
             {
@@ -2361,32 +2496,16 @@
           ],
           "description": "The file associations."
         },
-        "files": {
+        "fileOptions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/FileSet"
+              "$ref": "#/definitions/FilesBuildOptions"
             },
             {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
+              "type": "null"
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -2566,7 +2685,7 @@
               "type": "null"
             }
           ],
-          "description": "`[Desktop Actions <ActionName>]` metadata entries (name to value).\n\nConfig Example:\n```js\ndesktopActions: {\n   NewWindow: {\n      Name: 'New Window',\n      Exec: 'app --new-window',\n   }\n}\n```"
+          "description": "`[Desktop Actions <ActionName>]` metadata entries (name to value).\n\nAn action name must not contain `[`, `]` or control characters. Its keys and values follow the rules of `entry`.\n\nConfig Example:\n```js\ndesktopActions: {\n   NewWindow: {\n      Name: 'New Window',\n      Exec: 'app --new-window',\n   }\n}\n```"
         },
         "entry": {
           "anyOf": [
@@ -2577,7 +2696,7 @@
               "type": "null"
             }
           ],
-          "description": "`[Desktop Entry]` metadata entries (name to value). Overwrites default values calculated by electron-builder"
+          "description": "`[Desktop Entry]` metadata entries (name to value). Overwrites default values calculated by electron-builder\n\nKeys and values are written as given. A key must not be empty or contain `=` or a line break, and brackets are only allowed around a trailing locale of letters, digits, `-`, `_`, `.` and `@`, right after the key, such as `Name[de]`. A value must be on one line: a line break inside a value fails the build (write a newline in a string value as `\\n`), and line breaks at its end are dropped."
         }
       },
       "type": "object"
@@ -2957,60 +3076,6 @@
           ],
           "description": "Extra files to put in archive. Not applicable for `tar.*`."
         },
-        "extraFiles": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows)."
-        },
-        "extraResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
-        },
         "fileAssociations": {
           "anyOf": [
             {
@@ -3025,32 +3090,16 @@
           ],
           "description": "The file associations."
         },
-        "files": {
+        "fileOptions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/FileSet"
+              "$ref": "#/definitions/FilesBuildOptions"
             },
             {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
+              "type": "null"
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -3452,60 +3501,6 @@
           ],
           "description": "Extra files to put in archive. Not applicable for `tar.*`."
         },
-        "extraFiles": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows)."
-        },
-        "extraResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
-        },
         "fileAssociations": {
           "anyOf": [
             {
@@ -3520,32 +3515,16 @@
           ],
           "description": "The file associations."
         },
-        "files": {
+        "fileOptions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/FileSet"
+              "$ref": "#/definitions/FilesBuildOptions"
             },
             {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
+              "type": "null"
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -3803,7 +3782,7 @@
         },
         "buildResources": {
           "default": "build",
-          "description": "The directory that contains static build resources (icons, background images, license files,\ncustom NSIS scripts, etc.) that electron-builder reads during packaging.\n\n**Build resources are not copied into the packaged app.** If you need runtime access to a\nfile (e.g. a tray icon), include it explicitly via the `files` option:\n```json\n{ \"files\": [\"**\\/*\", \"build/icon.*\"] }\n```",
+          "description": "The directory that contains static build resources (icons, background images, license files,\ncustom NSIS scripts, etc.) that electron-builder reads during packaging.\n\n**Build resources are not copied into the packaged app.** If you need runtime access to a\nfile (e.g. a tray icon), include it explicitly via the `fileOptions.files` option:\n```json\n{ \"fileOptions\": { \"files\": [\"**\\/*\", \"build/icon.*\"] } }\n```",
           "type": [
             "null",
             "string"
@@ -7104,7 +7083,7 @@
               "type": "null"
             }
           ],
-          "description": "[Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) for the app.\nWhen the `gnome` extension is active, content-snap plugs (themes, GNOME platform, GPU)\nare added automatically — only list custom plugs here.\nWithout any extension, defaults to the standard Electron plug set.\n\nSupports descriptor objects for plugs with attributes:\n```json\n[{ \"browser-sandbox\": { \"interface\": \"browser-support\", \"allow-sandbox\": true } }]\n```"
+          "description": "[Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) for the app.\n\nWhen unset, electron-builder declares its default plug set: `browser-support` (without\n`allow-sandbox`, so the app is launched with `--no-sandbox`), plus — unless the `gnome` extension\nsupplies them — the app-level plugs `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"wayland\",\n\"unity7\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]` and, for strict builds\nthat are not host/destructive-mode, the content-snap plugs `gtk-3-themes`, `icon-themes`,\n`sound-themes`, `gnome-46-2404` and `gpu-2404`.\n\nInclude `\"default\"` to add to that set instead of replacing it: the result is the full default\nset (the app-level plugs above plus everything the build flavor declares on its own) together with\nyour other entries, deduplicated by plug name. A descriptor object named like a default plug\noverrides that plug's attributes. A `null` descriptor resets a default plug named like its interface\n(`browser-support`) to the snapd defaults, and removes a default content-snap plug (`gtk-3-themes`,\n`icon-themes`, `sound-themes`, `gnome-46-2404`, `gpu-2404`) from the snap; the default `layout`\nbinds into `gnome-46-2404` and `gpu-2404`, so set `layout` too when removing those.\nWithout `\"default\"`, the list replaces the defaults entirely.\n```json\n[\"default\", \"camera\", { \"home\": { \"read\": \"all\" } }]\n```\n\nSupports descriptor objects for plugs with attributes:\n```json\n[{ \"dot-config-app\": { \"interface\": \"personal-files\", \"write\": [\"$HOME/.config/app\"] } }]\n```\nThe Snap Store reserves `browser-support`'s `allow-sandbox` attribute for vetted publishers and\nrejects other uploads that request it; electron-builder warns when it is set."
         },
         "publish": {
           "anyOf": [
@@ -7503,7 +7482,7 @@
               "type": "null"
             }
           ],
-          "description": "[Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) to declare\nfor the app entry point.\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"wayland\", \"unity7\",\n\"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nUse `\"default\"` in the list to keep the defaults and append extras:\n`[\"default\", \"camera\"]` adds `camera` to the standard set.\n\nTo configure plug attributes (e.g. `allow-sandbox` for Chromium's internal sandbox),\nuse a descriptor object:\n```json\n[\n  { \"browser-sandbox\": { \"interface\": \"browser-support\", \"allow-sandbox\": true } },\n  \"another-simple-plug-name\"\n]\n```"
+          "description": "[Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) to declare\nfor the app entry point.\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"wayland\", \"unity7\",\n\"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nUse `\"default\"` in the list to keep the defaults and append extras:\n`[\"default\", \"camera\"]` adds `camera` to the standard set.\n\nTo configure plug attributes, use a descriptor object:\n```json\n[\n  { \"browser-sandbox\": { \"interface\": \"browser-support\", \"allow-sandbox\": true } },\n  \"another-simple-plug-name\"\n]\n```\nNote that the Snap Store reserves `allow-sandbox` (which keeps Chromium's internal sandbox) for\nvetted publishers and rejects other uploads that request it; electron-builder warns when it is set."
         },
         "publish": {
           "anyOf": [
@@ -8734,60 +8713,6 @@
             "string"
           ]
         },
-        "extraFiles": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows)."
-        },
-        "extraResources": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/FileSet"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
-            }
-          ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
-        },
         "fileAssociations": {
           "anyOf": [
             {
@@ -8802,32 +8727,16 @@
           ],
           "description": "The file associations."
         },
-        "files": {
+        "fileOptions": {
           "anyOf": [
             {
-              "$ref": "#/definitions/FileSet"
+              "$ref": "#/definitions/FilesBuildOptions"
             },
             {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/FileSet"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "null",
-                "string"
-              ]
+              "type": "null"
             }
           ],
-          "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -9774,62 +9683,8 @@
       ],
       "description": "One or more configuration presets or file paths to merge into this configuration.\n\nAccepts a string or array of strings, each of which is either:\n- A built-in preset name (`\"react-cra\"` is the only currently supported value).\n- A path to a JS/JSON config file relative to the project directory.\n\nConfigs are merged left-to-right using a deep-assign strategy that properly combines `files`\nglob patterns rather than replacing them.\n\nThe `react-cra` preset is applied automatically when `react-scripts` is found in\n`dependencies`. Set `extends: null` to opt out of automatic preset detection."
     },
-    "extraFiles": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/FileSet"
-        },
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/FileSet"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "type": "array"
-        },
-        {
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      ],
-      "description": "The same as [extraResources](#extraresources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux and Windows)."
-    },
     "extraMetadata": {
       "description": "Additional properties to deep-merge into the app's `package.json` at build time.\n\nUseful for injecting build-time metadata (e.g., a git commit hash or CI build URL) that\nshould be readable at runtime via `require('./package.json')` or `import.meta.url`."
-    },
-    "extraResources": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/FileSet"
-        },
-        {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/FileSet"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "type": "array"
-        },
-        {
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      ],
-      "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).\n\nFile patterns (and support for `from` and `to` fields) the same as for [files](#files)."
     },
     "fileAssociations": {
       "anyOf": [
@@ -9845,32 +9700,16 @@
       ],
       "description": "The file associations."
     },
-    "files": {
+    "fileOptions": {
       "anyOf": [
         {
-          "$ref": "#/definitions/FileSet"
+          "$ref": "#/definitions/FilesBuildOptions"
         },
         {
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/FileSet"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "type": "array"
-        },
-        {
-          "type": [
-            "null",
-            "string"
-          ]
+          "type": "null"
         }
       ],
-      "description": "A [glob patterns](https://www.electron.build/file-patterns) relative to the [app directory](https://www.electron.build/configuration#directories), which specifies which files to include when copying files to create the package.\n\nDefaults to:\n```json\n[\n\"**\\/*\",\n\"!**\\/node_modules/*\\/{CHANGELOG.md,README.md,README,readme.md,readme}\",\n\"!**\\/node_modules/*\\/{test,__tests__,tests,powered-test,example,examples}\",\n\"!**\\/node_modules/*.d.ts\",\n\"!**\\/node_modules/.bin\",\n\"!**\\/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,slnx,xproj}\",\n\"!.editorconfig\",\n\"!**\\/._*\",\n\"!**\\/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}\",\n\"!**\\/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}\",\n\"!**\\/{appveyor.yml,.travis.yml,circle.yml}\",\n\"!**\\/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}\"\n]\n```\n\nDevelopment dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.\n\nDefault pattern \\`**\\/*\\` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and \\`**\\/node_modules/**\\/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.\n\nMay be specified in the platform options (e.g. in the [mac](https://www.electron.build/mac)).\n\nYou may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.\n\n```json\n[\n{\n\"from\": \"path/to/source\",\n\"to\": \"path/to/destination\",\n\"filter\": [\"**\\/*\", \"!foo/*.js\"]\n}\n]\n```\n\nYou can use [file macros](https://www.electron.build/file-patterns#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging."
+      "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
     },
     "flatpak": {
       "anyOf": [

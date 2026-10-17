@@ -1,4 +1,4 @@
-import { Arch, copyDir, copyFile, exec, exists, InvalidConfigurationError, log } from "builder-util"
+import { Arch, copyDir, CopyDirOptions, copyFile, exec, exists, InvalidConfigurationError, log } from "builder-util"
 import fs from "fs-extra"
 import * as path from "path"
 import { FileAssociation } from "../../../options/FileAssociation.js"
@@ -41,6 +41,8 @@ export interface AppImageBuilderOptions {
   arch: Arch
   output: string
   options: Options
+  /** How the copy of `appDir` into the stage treats the symlinks in it (see `getStagingCopyLinkOptions`). */
+  appDirCopyOptions?: Pick<CopyDirOptions, "allowedSymlinkRoots" | "externalLinks"> | null
 }
 
 export async function buildStaticRuntimeAppImage(appimageToolVersion: ToolsetConfig["appimage"], opts: AppImageBuilderOptions, resourcesDir: string): Promise<BlockMapDataHolder> {
@@ -57,7 +59,7 @@ export async function buildStaticRuntimeAppImage(appimageToolVersion: ToolsetCon
 
     // Copy app directory to stage
     // mksquashfs doesn't support merging, so we copy the entire app dir
-    await copyDir(appDir, stageDir)
+    await copyDir(appDir, stageDir, opts.appDirCopyOptions ?? undefined)
 
     const runtimeData = await fs.readFile(runtime)
 
@@ -100,7 +102,7 @@ export async function buildLegacyFuse2AppImage(opts: AppImageBuilderOptions, res
     if (arch === Arch.x64 || arch === Arch.ia32) {
       await copyDir(runtimeLibraries, path.join(stageDir, "usr", "lib"))
     }
-    await copyDir(appDir, stageDir)
+    await copyDir(appDir, stageDir, opts.appDirCopyOptions ?? undefined)
 
     const runtimeData = await fs.readFile(runtime)
 
