@@ -19,6 +19,7 @@
 //   --mode range --from <ref> --to <ref>   the release made between two git refs (rewrites a past section)
 //   --insert <file>        put the section into <file> (a re-run replaces it), instead of printing it
 //   --notes <pkg>@<ver>    print the GitHub release body of that tag from CHANGELOG.md (no GitHub calls)
+//   --max-chars <n>        with --notes: shorten the body to at most <n> characters (default 125000, GitHub's limit)
 //
 // Runs in the repository root. Needs GITHUB_TOKEN (changesets-changelog-clean looks up PR/author links), except with
 // --notes.
@@ -35,6 +36,7 @@ const { values: opt } = parseArgs({
     to: { type: "string" },
     insert: { type: "string" },
     notes: { type: "string" },
+    "max-chars": { type: "string" },
   },
 })
 
@@ -55,6 +57,13 @@ if (!["next", "exit", "range", "after-version"].includes(opt.mode)) {
 if (opt.mode === "range" && !(opt.from && opt.to)) {
   fail("--mode range needs --from <ref> and --to <ref>")
 }
+if (opt["max-chars"] !== undefined && !/^[1-9]\d*$/.test(opt["max-chars"])) {
+  fail(`--max-chars must be a positive integer, got "${opt["max-chars"]}"`)
+}
+if (opt["max-chars"] !== undefined && !opt.notes) {
+  fail("--max-chars needs --notes")
+}
+const maxChars = opt["max-chars"] === undefined ? MAX_CHARS : Number(opt["max-chars"])
 
 const cwd = process.cwd()
 const changelogFile = path.join(cwd, "CHANGELOG.md")
@@ -529,7 +538,7 @@ async function main() {
   }
 
   if (opt.notes) {
-    const { notes, level } = releaseNotes(extractNotes(changelogFile, opt.notes), MAX_CHARS, repo)
+    const { notes, level } = releaseNotes(extractNotes(changelogFile, opt.notes), maxChars, repo)
     process.stdout.write(notes)
     console.error(`aggregate-changesets: release notes for ${opt.notes}: ${notes.length} characters (${level})`)
     return

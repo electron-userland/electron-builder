@@ -261,6 +261,118 @@ describe("aggregate-changesets", () => {
     expect(rootChangelog(dir)).toBe(released.replace(`(${releasedDate})`, "(2020-02-02)"))
   })
 
+  test("shortens a release body to --max-chars, links first", async ({ expect, tmpDir }) => {
+    const { dir } = await createRepo(tmpDir)
+    // entries as changesets-changelog-clean writes them
+    const links = (pr: number, sha: string, user: string) =>
+      `_[\`#${pr}\`](https://github.com/owner/repo/pull/${pr}) [\`${sha}\`](https://github.com/owner/repo/commit/${sha.repeat(6)}abcd) [@${user}](https://github.com/${user})_`
+    const compare = `${COMPARE}/electron-builder@1.0.0...electron-builder@2.0.0`
+    write(
+      dir,
+      "CHANGELOG.md",
+      [
+        `# [2.0.0](${compare}) (2020-03-03)`,
+        "",
+        "## electron-builder@2.0.0",
+        "",
+        "### Major Changes",
+        "",
+        `- feat!: builder breaking ${links(11, "aaaaaaa", "alice")} — \`app-builder-lib\``,
+        "",
+        "  Migrate with `x`.",
+        "",
+        "### Minor Changes",
+        "",
+        `- feat: a feature ${links(12, "bbbbbbb", "bob")}`,
+        "",
+        "### Patch Changes",
+        "",
+        `- fix: one ${links(13, "ccccccc", "carol")} — \`builder-util-runtime\``,
+        "",
+        "  More about the fix, longer than the notice of the next step grows.",
+        `- fix: two ${links(14, "ddddddd", "dave")} · updated in [\`#15\`](https://github.com/owner/repo/pull/15)`,
+        "",
+        "## electron-updater@1.1.0",
+        "",
+        "### Patch Changes",
+        "",
+        `- fix: updater ${links(16, "eeeeeee", "erin")}`,
+        "",
+        `${LEGACY}`,
+      ].join("\n")
+    )
+    const full = notes(dir, "electron-builder@2.0.0")
+    expect(full).toContain(links(11, "aaaaaaa", "alice"))
+
+    const notice = (what: string) =>
+      `> Shortened to fit GitHub's release size limit (${what}). The complete notes are in [CHANGELOG.md](https://github.com/owner/repo/blob/electron-builder@2.0.0/CHANGELOG.md).`
+    const linksOnly = [
+      notice("links shortened to #PR references"),
+      "",
+      "### Major Changes",
+      "",
+      "- feat!: builder breaking _#11_ — `app-builder-lib`",
+      "",
+      "  Migrate with `x`.",
+      "",
+      "### Minor Changes",
+      "",
+      "- feat: a feature _#12_",
+      "",
+      "### Patch Changes",
+      "",
+      "- fix: one _#13_ — `builder-util-runtime`",
+      "",
+      "  More about the fix, longer than the notice of the next step grows.",
+      "",
+      "- fix: two _#14_ · updated in #15",
+      "",
+      `**Full Changelog**: ${compare}`,
+      "",
+    ].join("\n")
+    expect(full.length).toBeGreaterThan(linksOnly.length)
+    // 1. just fits with the links collapsed to #PR references
+    const shortened = aggregate(dir, "--notes", "electron-builder@2.0.0", "--max-chars", String(linksOnly.length))
+    expect(shortened.stdout).toBe(linksOnly)
+    expect(shortened.stderr).toContain(`${linksOnly.length} characters (links shortened to #PR references)`)
+
+    // 2. one character less: the patch entries lose their continuation lines
+    const patchFirstLines = aggregate(dir, "--notes", "electron-builder@2.0.0", "--max-chars", String(linksOnly.length - 1)).stdout
+    expect(patchFirstLines.length).toBeLessThan(linksOnly.length)
+    expect(patchFirstLines).toBe(
+      linksOnly
+        .replace(notice("links shortened to #PR references"), notice("links shortened, patch entries reduced to their first line"))
+        .replace("\n\n  More about the fix, longer than the notice of the next step grows.\n\n", "\n")
+    )
+
+    // 4. every entry reduced to its first line
+    const firstLines = linksOnly
+      .replace(notice("links shortened to #PR references"), notice("links shortened, every entry reduced to its first line"))
+      .replace("\n\n  Migrate with `x`.", "")
+      .replace("\n\n  More about the fix, longer than the notice of the next step grows.\n\n", "\n")
+    expect(aggregate(dir, "--notes", "electron-builder@2.0.0", "--max-chars", String(firstLines.length)).stdout).toBe(firstLines)
+
+    // 5. one character less: the last patch entries are left out (both: "…and 1 more" is longer than the last entry)
+    const limit = firstLines.length - 1
+    const dropped = aggregate(dir, "--notes", "electron-builder@2.0.0", "--max-chars", String(limit))
+    expect(dropped.stdout.length).toBeLessThanOrEqual(limit)
+    expect(dropped.stdout).toBe(
+      firstLines
+        .replace(notice("links shortened, every entry reduced to its first line"), notice("every entry reduced to its first line, the last entries left out"))
+        .replace("- fix: one _#13_ — `builder-util-runtime`\n- fix: two _#14_ · updated in #15", "- …and 2 more patch changes, see the complete notes")
+    )
+    expect(dropped.stderr).toContain("(first lines, 2 entries left out)")
+
+    for (const bad of ["0", "-5", "12k", "1.5", ""]) {
+      const result = spawnSync(process.execPath, [SCRIPT, "--notes", "electron-builder@2.0.0", `--max-chars=${bad}`], { cwd: dir, encoding: "utf8" })
+      expect(result.status).toBe(1)
+      expect(result.stderr).toBe(`aggregate-changesets: --max-chars must be a positive integer, got "${bad}"\n`)
+    }
+    const withoutNotes = spawnSync(process.execPath, [SCRIPT, "--max-chars", "100"], { cwd: dir, encoding: "utf8" })
+    expect(withoutNotes.status).toBe(1)
+    expect(withoutNotes.stderr).toBe("aggregate-changesets: --max-chars needs --notes\n")
+  })
+
   test("puts a missing past release of electron-updater alone between its newer and older releases", async ({ expect, tmpDir }) => {
     const { dir } = await createRepo(tmpDir)
     version(dir)
