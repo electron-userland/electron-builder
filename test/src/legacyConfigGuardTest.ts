@@ -168,10 +168,13 @@ describe("checkLegacyConfiguration — includePdb replaced by fileOptions.exclud
     expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#includepdb-fileoptionsexcludedexts")
   })
 
-  test("includePdb: false is reported too, as removed with no replacement", () => {
+  test('includePdb: false is reported too, with ["default"] (also as a -c value) in its place where it overrides an includePdb: true from another layer', () => {
     const message = expectRejected({ includePdb: false })
-    expect(message).toContain("`includePdb: false` was the default and is removed")
-    expect(message).toContain("#includepdb-fileoptionsexcludedexts")
+    expect(message).toContain("`includePdb: false` was the default: where it overrides an `includePdb: true` from another layer")
+    expect(message).toContain('set `"fileOptions": { "excludedExts": ["default"] }` in its place')
+    expect(message).toContain("`-c.fileOptions.excludedExts=default`")
+    expect(message).toContain("otherwise remove it.")
+    expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#includepdb-fileoptionsexcludedexts")
   })
 
   test("the breaking-changes page has the linked section", () => {
@@ -185,6 +188,9 @@ describe("checkLegacyConfiguration — includePdb replaced by fileOptions.exclud
 
     test.each([
       ["root", { fileOptions: { excludedExts: ["default", "!pdb"] } }],
+      // what migrate-schema writes for includePdb: false, and the -c.fileOptions.excludedExts=default the guard suggests
+      ['["default"]', { fileOptions: { excludedExts: ["default"] } }],
+      ["a single string", { fileOptions: { excludedExts: "default" }, win: { fileOptions: { excludedExts: "map" } } }],
       ["per platform", { linux: { fileOptions: { excludedExts: ["map"] } }, mac: { fileOptions: { excludedExts: ["default", "map"] } } }],
       ["null", { fileOptions: { excludedExts: null } }],
       ["empty", { win: { fileOptions: { excludedExts: [] } } }],
@@ -198,8 +204,8 @@ describe("checkLegacyConfiguration — includePdb replaced by fileOptions.exclud
       expect(() => validateSchema(scheme, { includePdb: value })).toThrow("includePdb")
     })
 
-    test("rejects a fileOptions.excludedExts that is not a list of strings", async () => {
-      await expect(validateConfiguration({ fileOptions: { excludedExts: "pdb" } } as any, logger)).rejects.toThrow("excludedExts")
+    test("rejects a fileOptions.excludedExts that is not a string or a list of strings", async () => {
+      await expect(validateConfiguration({ fileOptions: { excludedExts: ["default", { ext: "pdb" }] } } as any, logger)).rejects.toThrow("excludedExts")
       await expect(validateConfiguration({ linux: { fileOptions: { excludedExts: { pdb: true } } } } as any, logger)).rejects.toThrow("excludedExts")
     })
   })

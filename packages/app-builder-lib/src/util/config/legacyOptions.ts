@@ -213,7 +213,8 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
     detail:
       "`.pdb` symbol files are now one of the extensions excluded by default, so the boolean is replaced by the list of excluded extensions. " +
       '`includePdb: true` becomes `"fileOptions": { "excludedExts": ["default", "!pdb"] }` (the default extensions except `pdb`); ' +
-      "`includePdb: false` was the default and is removed with no replacement.",
+      "`includePdb: false` was the default: where it overrides an `includePdb: true` from another layer (an `extends` parent, or the config file for a `-c` / programmatic value), " +
+      'set `"fileOptions": { "excludedExts": ["default"] }` in its place (on the command line, `-c.fileOptions.excludedExts=default`), otherwise remove it.',
     anchor: "includepdb-fileoptionsexcludedexts",
   },
   {

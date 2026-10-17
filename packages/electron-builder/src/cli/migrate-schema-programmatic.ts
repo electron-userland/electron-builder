@@ -10,6 +10,9 @@ import {
   fileOptionsChange,
   fileOptionsConflictWarning,
   INCLUDE_PDB_CHANGES,
+  INCLUDE_PDB_NOT_BOOLEAN,
+  includePdbManualStep,
+  isAppDirFrom,
   isLegacyElectronDownloadKey,
   legacyKeyMessage,
   MAC_ENTITLEMENTS_ADVISORY,
@@ -17,13 +20,16 @@ import {
   MAC_SIGN_FIELDS,
   MAC_SIGN_REMOVED_FIELDS,
   MAC_UNIVERSAL_FIELDS,
+  namesPdbFiles,
   normalizeTargetName,
   NSIS_PER_MACHINE_UPDATE_ADVISORY,
   NSIS_WEB_ADVISORY,
+  pdbFilesPatternsAdvisory,
   platformExcludedExtsPdbChange,
   PORTABLE_DEBUG_LOGGING_DROPPED,
   SNAP_BASES,
   SNAP_CORE24_UNSUPPORTED,
+  v26IncludePdb,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
 } from "./migrate-schema.js"
 import type { MigrationChange } from "./migrate-schema.js"
@@ -405,6 +411,7 @@ class ConfigCodemod {
     this.ruleNsisPerMachineAdvisory(root)
     this.ruleWinSignHookPublisherNameAdvisory(root)
     this.ruleFeedQueryAdvisory(root)
+    this.rulePdbFilesPatternsAdvisory(root)
   }
 
   // ── Rules ───────────────────────────────────────────────────────────────
@@ -530,6 +537,56 @@ class ConfigCodemod {
         return
       }
     }
+  }
+
+  // Advisory only. Mirrors migrateConfig, which reads the root and platform `fileOptions.files` after the flat keys moved into them: the
+  // `fileOptions.files` of an object literal, else the flat `files` that ruleFileOptions moves there (a `fileOptions` the AST cannot read is skipped).
+  private rulePdbFilesPatternsAdvisory(root: any): void {
+    const ts = this.ts
+    const patterns: Array<{ key: string; pattern: string }> = []
+    const holders: Array<[string, any]> = [["", root], ...ALL_PLATFORM_KEYS.map((platform): [string, any] => [`${platform}.`, this.objectLiteral(this.propValue(root, platform))])]
+    for (const [prefix, holder] of holders) {
+      const fileOptions = this.propValue(holder, "fileOptions")
+      if (holder == null || (fileOptions !== undefined && fileOptions.kind !== ts.SyntaxKind.NullKeyword && !ts.isObjectLiteralExpression(fileOptions))) {
+        continue
+      }
+      const nested = this.objectLiteral(fileOptions) != null && this.getProp(fileOptions, "files") != null
+      const files = nested ? this.propValue(fileOptions, "files") : this.propValue(holder, "files")
+      for (const pattern of this.appFilesPatterns(files).filter(namesPdbFiles)) {
+        patterns.push({ key: `${prefix}fileOptions.files`, pattern })
+      }
+    }
+    if (patterns.length > 0) {
+      this.advisories.push(pdbFilesPatternsAdvisory(patterns))
+    }
+  }
+
+  /**
+   * Mirrors migrateConfig's `appFilesPatterns`: the string literals of a `files` value (a pattern, a FileSet or a list of them) that apply to
+   * the app directory, from the strings and the `filter` of a FileSet without `from` or with from "."; what the AST cannot read is skipped.
+   */
+  private appFilesPatterns(files: any): string[] {
+    const ts = this.ts
+    const elements = (node: any): any[] => (node === undefined ? [] : ts.isArrayLiteralExpression(node) ? node.elements.map((el: any) => this.unwrap(el)) : [node])
+    const result: string[] = []
+    for (const entry of elements(files)) {
+      if (ts.isStringLiteralLike(entry)) {
+        result.push(entry.text)
+        continue
+      }
+      if (!ts.isObjectLiteralExpression(entry)) {
+        continue
+      }
+      const from = this.propValue(entry, "from")
+      if (from === undefined || from.kind === ts.SyntaxKind.NullKeyword || (ts.isStringLiteralLike(from) && isAppDirFrom(from.text))) {
+        result.push(
+          ...elements(this.propValue(entry, "filter"))
+            .filter((it: any) => ts.isStringLiteralLike(it))
+            .map((it: any) => it.text)
+        )
+      }
+    }
+    return result
   }
 
   private ruleToolsets(root: any): void {
@@ -1400,8 +1457,10 @@ class ConfigCodemod {
 
   /**
    * Mirrors migrateConfig's `migrateIncludePdb`: `includePdb: true` → `fileOptions.excludedExts: ["default", "!pdb"]` ("!pdb" is added to an
-   * existing root list instead, and to each platform-level list, which replaces the root one); any other literal is removed. A value the AST
-   * cannot read is left in place with a warning. Returns the `excludedExts` entry for ruleFileOptions to add to the root `fileOptions`.
+   * existing root list instead, and to each platform-level list, which replaces the root one); `false` → `fileOptions.excludedExts: ["default"]`
+   * (unless a root list is set), so that it keeps overriding an `includePdb: true` of another config layer; `undefined` is removed. Literals are read as v26 coerced them. A
+   * value the AST cannot read, or one v26 rejected, is left in place with a warning. A string-literal `excludedExts` is a one-entry list, which
+   * becomes an array literal when "!pdb" is added to it. Returns the `excludedExts` entry for ruleFileOptions to add to the root `fileOptions`.
    */
   private ruleIncludePdb(root: any): string[] {
     const ts = this.ts
@@ -1417,7 +1476,13 @@ class ConfigCodemod {
       )
       return []
     }
-    if (value.kind !== ts.SyntaxKind.TrueKeyword) {
+    const includePdb = v26IncludePdb(this.scalarLiteral(value))
+    if (includePdb == null && !ts.isIdentifier(value)) {
+      this.warnings.push(INCLUDE_PDB_NOT_BOOLEAN)
+      return []
+    }
+    // `undefined` never overrode another layer's value in v26
+    if (includePdb == null) {
       this.removeProp(prop)
       this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.removed })
       return []
@@ -1426,56 +1491,90 @@ class ConfigCodemod {
     const fileOptionsProp = this.getProp(root, "fileOptions")
     const fileOptions = this.getObjectProp(root, "fileOptions")
     if (fileOptionsProp != null && fileOptions == null && this.propValue(root, "fileOptions")?.kind !== ts.SyntaxKind.NullKeyword) {
-      this.warnings.push('fileOptions is not an object literal; replace includePdb: true with fileOptions.excludedExts: ["default", "!pdb"] manually.')
+      this.warnings.push(`fileOptions is not an object literal; ${includePdbManualStep(includePdb)}`)
       return []
     }
     const listProp = fileOptions == null ? null : this.getProp(fileOptions, "excludedExts")
     const list = this.propValue(fileOptions, "excludedExts")
-    if (list !== undefined && list.kind !== ts.SyntaxKind.NullKeyword && !ts.isArrayLiteralExpression(list)) {
-      this.warnings.push('fileOptions.excludedExts is not an array literal (or a spread may set it); add "!pdb" to it and remove includePdb: true manually.')
+    if (list !== undefined && list.kind !== ts.SyntaxKind.NullKeyword && !this.isExcludedExtsLiteral(list)) {
+      this.warnings.push(
+        includePdb
+          ? 'fileOptions.excludedExts is not a string or array literal (or a spread may set it); add "!pdb" to it and remove includePdb: true manually.'
+          : 'fileOptions.excludedExts is not a string or array literal (or a spread may set it); remove includePdb: false manually, and set excludedExts: ["default"] where it is unset (written out, it keeps overriding an includePdb: true from another config layer).'
+      )
       return []
     }
 
     this.removeProp(prop)
+    const replacement = includePdb ? '["default", "!pdb"]' : '["default"]'
+    const created = includePdb ? INCLUDE_PDB_CHANGES.created : INCLUDE_PDB_CHANGES.overridesParent
     let entries: string[] = []
     if (list === undefined && listProp == null) {
-      entries = ['excludedExts: ["default", "!pdb"]']
-      this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.created })
+      entries = [`excludedExts: ${replacement}`]
+      this.changes.push({ key: "includePdb", description: created })
     } else if (list === undefined || list.kind === ts.SyntaxKind.NullKeyword) {
       // `excludedExts: null` / `undefined`
-      this.replaceValue(listProp.initializer, '["default", "!pdb"]')
-      this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.created })
-    } else if (this.arrayExcludesPdb(list)) {
-      this.appendToArray(list, '"!pdb"')
+      this.replaceValue(listProp.initializer, replacement)
+      this.changes.push({ key: "includePdb", description: created })
+    } else if (!includePdb) {
+      // the root list already replaces the parent's
+      this.changes.push({ key: "includePdb", description: this.listExcludesPdb(list) ? INCLUDE_PDB_CHANGES.removed : INCLUDE_PDB_CHANGES.listKeepsPdb })
+    } else if (this.listExcludesPdb(list)) {
+      this.appendPdbRemoval(list)
       this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.appended })
     } else {
       this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.unneeded })
     }
+    if (!includePdb) {
+      return entries
+    }
 
     for (const platform of ALL_PLATFORM_KEYS) {
-      const platformFileOptions = this.propValue(this.objectLiteral(this.propValue(root, platform)), "fileOptions")
+      const platformValue = this.propValue(root, platform)
+      if (platformValue !== undefined && platformValue.kind !== ts.SyntaxKind.NullKeyword && !ts.isObjectLiteralExpression(platformValue)) {
+        this.warnings.push(`${platform} cannot be read; if its fileOptions.excludedExts excludes .pdb files, add "!pdb" to it manually (includePdb: true).`)
+        continue
+      }
+      const platformFileOptions = this.propValue(this.objectLiteral(platformValue), "fileOptions")
       // A fileOptions the AST cannot read may set excludedExts.
       const platformList =
         platformFileOptions === undefined || this.isLiteral(platformFileOptions) ? this.propValue(this.objectLiteral(platformFileOptions), "excludedExts") : platformFileOptions
       if (platformList === undefined || platformList.kind === ts.SyntaxKind.NullKeyword) {
         continue
       }
-      if (!ts.isArrayLiteralExpression(platformList)) {
+      if (!this.isExcludedExtsLiteral(platformList)) {
         this.warnings.push(`${platform}.fileOptions.excludedExts cannot be read; if it excludes .pdb files, add "!pdb" to it manually (includePdb: true).`)
-      } else if (this.arrayExcludesPdb(platformList)) {
-        this.appendToArray(platformList, '"!pdb"')
+      } else if (this.listExcludesPdb(platformList)) {
+        this.appendPdbRemoval(platformList)
         this.changes.push(platformExcludedExtsPdbChange(platform))
       }
     }
     return entries
   }
 
-  /** `excludesPdb` for an array literal; an element the AST cannot read (an identifier, a spread, …) may be "default". */
-  private arrayExcludesPdb(list: any): boolean {
+  /** True for an `excludedExts` value ruleIncludePdb can read and edit: an array literal, or a string literal (a one-entry list). */
+  private isExcludedExtsLiteral(list: any): boolean {
+    return this.ts.isArrayLiteralExpression(list) || this.ts.isStringLiteralLike(list)
+  }
+
+  /** `excludesPdb` for an array or string literal; an array element the AST cannot read (an identifier, a spread, …) may be "default". */
+  private listExcludesPdb(list: any): boolean {
     const ts = this.ts
+    if (ts.isStringLiteralLike(list)) {
+      return excludesPdb([list.text])
+    }
     const elements = list.elements.map((el: any) => this.unwrap(el))
     const read = elements.filter((el: any) => ts.isStringLiteralLike(el)).map((el: any) => el.text)
     return excludesPdb(read.length === elements.length ? read : [...read, "default"])
+  }
+
+  /** Adds "!pdb" to an array literal, or turns a string literal into an array literal of it (its text kept) and "!pdb". */
+  private appendPdbRemoval(list: any): void {
+    if (this.ts.isStringLiteralLike(list)) {
+      this.replaceValue(list, `[${this.text.slice(this.start(list), list.end)}, "!pdb"]`)
+    } else {
+      this.appendToArray(list, '"!pdb"')
+    }
   }
 
   /** Appends `elementText` to a non-empty array literal, on a line of its own when the closing bracket is on one. */
@@ -1782,6 +1881,24 @@ class ConfigCodemod {
     }
     const value = ts.isPropertyAssignment(prop) ? this.unwrap(prop.initializer) : prop
     return ts.isIdentifier(value) && value.text === "undefined" ? undefined : value
+  }
+
+  /** The value of a string, number, boolean or null literal; undefined for any other node. */
+  private scalarLiteral(node: any): unknown {
+    const ts = this.ts
+    if (ts.isStringLiteralLike(node)) {
+      return node.text
+    }
+    if (ts.isNumericLiteral(node)) {
+      return Number(node.text)
+    }
+    if (node.kind === ts.SyntaxKind.TrueKeyword) {
+      return true
+    }
+    if (node.kind === ts.SyntaxKind.FalseKeyword) {
+      return false
+    }
+    return node.kind === ts.SyntaxKind.NullKeyword ? null : undefined
   }
 
   /** `node` when it is an object literal, else null. */
