@@ -63,13 +63,14 @@ This runs [build.sh](build.sh), which builds the five images for that Node.js ve
 # Test in Docker
 
 ```sh
+pnpm test:linux
 TEST_FILES=snapTest pnpm test:linux
-VITEST_SHARD_COUNT=1 pnpm test:linux
 ```
 
 [run-tests.sh](run-tests.sh) runs the tests in `electronuserland/builder:22-wine-mono`, the image of CI's Linux test shards.
 
-* Without `TEST_FILES`, only the first shard of the suite runs. run-tests.sh passes `CI=false` when `CI` is not set, and the shard count (`computeShardCount` in `test/vitest-scripts/vitest-config/shard-builder.ts`) only checks that `CI` is not empty, so the suite is split into shards as on CI. ci-info, which run-vitest.ts uses for `allowOnly`, treats `false` as not CI, so a `test.only` that CI rejects still runs. Set `VITEST_SHARD_COUNT=1` to run the whole suite, or `VITEST_SHARD_INDEX` (from 0) to run another shard.
+* Without `TEST_FILES`, and with `CI` not set, the whole suite runs, which is slow. Set `VITEST_SHARD_COUNT` and `VITEST_SHARD_INDEX` (from 0) to run one shard of it.
+* `CI` is passed as it is set on the host, so a local run is not a CI run, as on the host: vitest writes a missing snapshot instead of failing (a changed one still fails), and the smart reporter prints a line per test (`-e SMART_REPORTER_VERBOSE=false` in `ADDITIONAL_DOCKER_ARGS` turns that off).
 * run-tests.sh mounts the current directory at `/project`, so run it from the repository root. `pnpm test:linux` does that. In the container, [test-in-docker.sh](test-in-docker.sh) installs corepack and bun, then runs `pnpm install --force`, `pnpm compile` and `pnpm ci:test`. pnpm is the version of `packageManager` in the root `package.json`, via corepack, not the pnpm 10.18.0 of the image.
 * The image is pulled, with 3 attempts, only if it is not present locally. So a locally built image of that tag is used as is, and an outdated one is not updated: run `docker pull electronuserland/builder:22-wine-mono` to update it.
 * To test a change of an image, build the images with `pnpm docker-images 22.22.2`, then run the tests. build.sh gives the local images the published tags, so run-tests.sh uses the local `22-wine-mono`.
@@ -82,7 +83,7 @@ VITEST_SHARD_COUNT=1 pnpm test:linux
 | `ELECTRON_BUILDER_CACHE_PATH` | `~/Library/Caches/electron-builder` on macOS, `~/.cache/electron-builder` otherwise | Mounted at `/root/.cache/electron-builder` |
 | `ADDITIONAL_DOCKER_ARGS` | | More `docker run` options, split on whitespace, e.g. `-v /tmp/test-app:/tmp/test-app -e TEST_APP_TMP_DIR=/tmp/test-app` to keep the build output of a test on the host. Quotes in it are kept as is, so no value can contain a space. |
 
-`CI`, `DEBUG`, `TEST_FILES`, `TEST_MODE` (`all`, `unit` or `e2e`), `UPDATE_SNAPSHOT`, `UPDATE_LOCKFILE_FIXTURES`, `VITEST_SHARD_INDEX` and `VITEST_SHARD_COUNT` are passed to the container, even when they are not set: `CI` and `UPDATE_LOCKFILE_FIXTURES` as `false`, the others as empty. Only `UPDATE_SNAPSHOT=true` and `UPDATE_LOCKFILE_FIXTURES=true` update, any other value is ignored. Any other variable has to be passed in `ADDITIONAL_DOCKER_ARGS`, with `-e` or `--env-file`. An `-e` in it comes after the variables above and overrides them, but an `--env-file` does not, because `docker run` lets every `-e` override a value from an `--env-file`, whatever the order.
+`CI`, `DEBUG`, `TEST_FILES`, `TEST_MODE` (`all`, `unit` or `e2e`), `UPDATE_SNAPSHOT`, `UPDATE_LOCKFILE_FIXTURES`, `VITEST_SHARD_INDEX` and `VITEST_SHARD_COUNT` are passed to the container, even when they are not set: `UPDATE_LOCKFILE_FIXTURES` as `false`, the others as empty. Only `UPDATE_SNAPSHOT=true` and `UPDATE_LOCKFILE_FIXTURES=true` update, any other value is ignored. Any other variable has to be passed in `ADDITIONAL_DOCKER_ARGS`, with `-e` or `--env-file`. An `-e` in it comes after the variables above and overrides them, but an `--env-file` does not, because `docker run` lets every `-e` override a value from an `--env-file`, whatever the order.
 
 # CI
 
