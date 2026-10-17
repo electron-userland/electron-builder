@@ -177,6 +177,16 @@ jobs:
         run: |
           set -euo pipefail
           tags=$(node -e 'for (const p of JSON.parse(process.env.PUBLISHED_PACKAGES)) console.log(`${p.name}@${p.version}`)')
+          # only electron-builder and electron-updater have a sub-section in the root CHANGELOG.md (the
+          # @changesets/cli patch tags only those two; a guard should that patch ever be dropped)
+          lead_tags=""
+          for tag in $tags; do
+            case "$tag" in
+              electron-builder@* | electron-updater@*) lead_tags="$lead_tags $tag" ;;
+              *) echo "Skipping $tag: not electron-builder or electron-updater" ;;
+            esac
+          done
+          tags=$lead_tags
           i=0
           for tag in $tags; do
             i=$((i + 1))
