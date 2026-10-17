@@ -59,6 +59,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Native-module options grouped under `nativeModules`](#native-module-options-nativemodules) | ✓ | `nativeRebuilder` → `rebuildMode`; the `"legacy"` rebuilder is removed (dropped with a warning) |
 | [ASAR options consolidated under `asar`](#asar-options-asar) | ✓ | `asarUnpack` → `asar.unpack`, etc., including platform-level `mac.asarUnpack` → `mac.asar.unpack` (`asar: true` is still valid, just redundant) |
 | [`files` / `extraResources` / `extraFiles` nested under `fileOptions`](#file-options-fileoptions) | ✓ | `files` → `fileOptions.files`, etc., at the root and per platform (`mac.extraResources` → `mac.fileOptions.extraResources`) |
+| [`includePdb` replaced by `fileOptions.excludedExts`](#includepdb-fileoptionsexcludedexts) | ✓ | `.pdb` files are now excluded by default; `includePdb: true` → `fileOptions.excludedExts: ["default", "!pdb"]`, `includePdb: false` is removed |
 | [`asar.ordering` is now applied](#asar-ordering-is-now-applied) | — | v26 ignored the option; v27 packs the listed files first and fails when the file is missing. Remove the option to keep the dependencies-first layout |
 | [macOS signing consolidated under `mac.sign`](#macos-signing-macsign) | ✓ | `identity`/`entitlements`/`hardenedRuntime`/… → `mac.sign.*`; `signIgnore` → `sign.ignore` |
 | [`mac.universal` options consolidated](#macuniversal) | ✓ | `mergeASARs`/`singleArchFiles`/`x64ArchFiles` → `mac.universal.*` |
@@ -680,6 +681,36 @@ The values are glob strings and `FileSet` objects. A platform's lists are added 
 
 **Code that reads `files`, `extraResources` or `extraFiles` from the loaded configuration** (a hook reading `context.packager.config.files` or `context.packager.platformOptions.extraResources`, a `build()` caller reading `buildResult.configuration.extraFiles`) gets the `fileOptions` value: the loaded configuration and its platform sections forward these reads to `fileOptions`, logging one warning per key. These forwarding properties are not enumerable, so they never appear in the effective configuration (`builder-effective-config.yaml`), in `JSON.stringify` output or in `Object.keys`. Assigning one of them (for example `context.packager.config.files = […]` in a hook) throws a configuration error naming the `fileOptions` property to set instead. Read and write `fileOptions.files` / `fileOptions.extraResources` / `fileOptions.extraFiles` directly.
 
+### `includePdb` → `fileOptions.excludedExts` {#includepdb-fileoptionsexcludedexts}
+
+The root-level `includePdb` boolean is **removed**. v26 excluded a fixed list of file extensions from the packaged app, and `.pdb` (Program Database) symbol files were the only ones with a switch: they were excluded unless `includePdb` was `true`. In v27 `pdb` is one of the extensions excluded by default, and the boolean for one extension is replaced by a list for all of them: `fileOptions.excludedExts`, set at the configuration root or per platform (`mac`, `mas`, `masDev`, `win`, `linux`).
+
+- `"default"` expands to the built-in list: `iml`, `hprof`, `orig`, `pyc`, `pyo`, `rbc`, `swp`, `csproj`, `sln`, `slnx`, `suo`, `xproj`, `cc`, `d.ts`, `mk`, `a`, `o`, `obj`, `forge-meta`, `pdb`.
+- Any other entry adds that extension, e.g. `"map"`. Write it without a dot or glob (a leading `.` is ignored); an entry that is not a file extension fails the build.
+- An entry starting with `!` removes that extension from the others listed, wherever it appears in the list: `["default", "!pdb"]` is every default except `pdb`. `"!default"` is rejected. A `"!ext"` that removes nothing (e.g. `["!pdb"]` without `"default"`) has no effect and logs a warning.
+- The list **replaces** the defaults rather than being merged with them: list `"default"` to extend them. `["map"]` excludes only `.map` files, `[]` excludes no extension, and `null` (or omitting the option) is `["default"]`.
+- A platform's `fileOptions.excludedExts` **replaces** the root one rather than being added to it (unlike the `files` lists).
+- The extensions are excluded from the app files and from the copied `node_modules`. A `fileOptions.files` glob that names an excluded extension concretely (e.g. `**/*.pdb`) still includes those files in the app files, as described under [`disableDefaultIgnoredFiles`](#disabledefaultignoredfiles).
+
+```json5
+// Before (v26)
+{ "build": { "includePdb": true } }
+// After (v27) — the default extensions except pdb
+{ "build": { "fileOptions": { "excludedExts": ["default", "!pdb"] } } }
+
+// Before (v26)
+{ "build": { "includePdb": false } }  // ← delete this line; .pdb files are excluded by default
+```
+
+```json5
+{
+  "fileOptions": { "excludedExts": ["default", "map"] },              // the defaults plus .map files
+  "win": { "fileOptions": { "excludedExts": ["default", "!pdb"] } }   // Windows keeps .pdb files — and .map files, since this list replaces the root one
+}
+```
+
+`migrate-schema` rewrites `includePdb` in static and JS/TS configs: `true` becomes `"fileOptions": { "excludedExts": ["default", "!pdb"] }`, and `false` is removed. When a platform section already sets its own `fileOptions.excludedExts`, `"!pdb"` is appended to that list too, because it replaces the root one. In a JS/TS config, an `includePdb` whose value is not a literal `true` / `false` (e.g. `includePdb: process.env.CI === "true"`) is left in place with a warning — rewrite it by hand. A config that still sets `includePdb` fails the build with a message naming `fileOptions.excludedExts`.
+
 ---
 
 ## CLI changes
@@ -703,9 +734,9 @@ These flags are removed (they have thrown since v22).
 
 v27 adds `electron-builder migrate-schema`, which rewrites your config to v27 form in place and auto-migrates **static** (`json`/`json5`/`yaml`/package.json) **and programmatic** (`.js`/`.ts`/`.cjs`/`.mjs`) configs. TOML configs are parsed and the required changes printed, but not written. See the [walkthrough](./v26-to-v27#step-1-run-the-automated-migrator) for flags and the before/after of every rewrite.
 
-**It rewrites** every entry marked **Auto ✓** on this page: removed keys (`electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, `disableDefaultIgnoredFiles`, `appImage.systemIntegration`, `linux.syncDesktopName`, `mac.gatekeeperAssess`), the `nativeModules`, `asar` (root and platform-level), `fileOptions` (root and platform-level), `mac.sign`, `mac.universal`, `win.sign`, `electronGet`, and `snapcraft` restructurings, GitHub `vPrefixedTagName` → `tagNamePrefix`, `helper-bundle-id`, `squirrelWindows.noMsi`, root-level `directories` in `package.json`, and `toolsets.*` values v27 rejects (`null`, the retired `appimage: "1.0.2"`). Values with no v27 equivalent (for example `nativeRebuilder: "legacy"` or `electronDownload.strictSSL`) are dropped with a warning.
+**It rewrites** every entry marked **Auto ✓** on this page: removed keys (`electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, `disableDefaultIgnoredFiles`, `appImage.systemIntegration`, `linux.syncDesktopName`, `mac.gatekeeperAssess`), the `nativeModules`, `asar` (root and platform-level), `fileOptions` (root and platform-level), `mac.sign`, `mac.universal`, `win.sign`, `electronGet`, and `snapcraft` restructurings, GitHub `vPrefixedTagName` → `tagNamePrefix`, `includePdb` → `fileOptions.excludedExts`, `helper-bundle-id`, `squirrelWindows.noMsi`, root-level `directories` in `package.json`, and `toolsets.*` values v27 rejects (`null`, the retired `appimage: "1.0.2"`). Values with no v27 equivalent (for example `nativeRebuilder: "legacy"` or `electronDownload.strictSSL`) are dropped with a warning.
 
-**It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom NSIS bundle in `customNsisBinary` / `customNsisResources` ([→ `toolsets.nsis`](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis); it does move `customNsisBinary.debugLogging` → `installerDebugLogging`), a custom `mac.sign` signer combined with sibling signing options, and (in JS/TS configs) platform-level `asarUnpack` next to root-level ASAR options.
+**It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom NSIS bundle in `customNsisBinary` / `customNsisResources` ([→ `toolsets.nsis`](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis); it does move `customNsisBinary.debugLogging` → `installerDebugLogging`), a custom `mac.sign` signer combined with sibling signing options, and, in JS/TS configs, platform-level `asarUnpack` next to root-level ASAR options or an `includePdb` whose value is not a literal boolean.
 
 **It prints an advisory** (without changing the config) for runtime defaults and behavior changes you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)), `nsis.perMachine` or `nsisWeb.perMachine` set to `true` ([per-machine NSIS updates](#nsis-per-machine-builds-set-isadminrightsrequired)), a custom `win.sign.sign` hook without `win.sign.publisherName`, unless `win.verifyUpdateCodeSignature` is `false` ([publisher name](#windows-publishername-is-validated-against-the-signing-certificate)), a `generic` publish configuration whose `url` has a query string ([update credentials](#update-credentials-stay-on-the-feeds-origin)), and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
 
