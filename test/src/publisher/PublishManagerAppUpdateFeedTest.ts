@@ -211,6 +211,14 @@ test("the same feed with different upload-only options is fine", async ({ expect
   expect(await afterPackAppUpdate(tmpDir, makePackager({ platformPublish: s3 }), [target("nsis", s3Upload), target("nsis-web")])).toMatchObject(s3Feed)
 })
 
+test("the same S3 feed with a different credential source is fine (awsCredentials is build-time only)", async ({ expect, tmpDir }) => {
+  const viaProfile = { ...s3Feed, awsCredentials: { source: "profile", profile: "release" } }
+  const packager = makePackager({ platformPublish: s3 })
+  const appUpdate = await afterPackAppUpdate(tmpDir, packager, [target("nsis", { publish: viaProfile }), target("nsis-web")])
+  expect(appUpdate).toMatchObject(s3Feed)
+  expect(appUpdate).not.toHaveProperty("awsCredentials")
+})
+
 test("a different url, bucket, path or channel is a different feed", async ({ expect, tmpDir }) => {
   const conflicts: Array<[any, any]> = [
     [generic, { ...generic, url: "https://example.com/other" }],
