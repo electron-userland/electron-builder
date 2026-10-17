@@ -323,6 +323,58 @@ describe("S3 credentials — source: profile", { concurrent: false }, () => {
     expect(ini).not.toHaveBeenCalled()
   })
 
+  it.each([
+    [
+      "credential_source on the named profile",
+      ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "credential_source = Environment"],
+      /profile "deploy" sets credential_source/,
+    ],
+    [
+      "credential_source further up the source_profile chain",
+      [
+        "[profile deploy]",
+        "role_arn = arn:aws:iam::1:role/a",
+        "source_profile = mid",
+        "[profile mid]",
+        "role_arn = arn:aws:iam::1:role/m",
+        "credential_source = Ec2InstanceMetadata",
+      ],
+      /profile "mid" sets credential_source/,
+    ],
+    ["a credential_source without role_arn", ["[profile deploy]", "credential_source = EcsContainer"], /profile "deploy" sets credential_source/],
+    ["a web identity profile", ["[profile deploy]", "role_arn = arn:aws:iam::1:role/w", "web_identity_token_file = /tmp/token"], /profile "deploy" sets web_identity_token_file/],
+    [
+      "web identity as the source_profile",
+      ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = web", "[profile web]", "role_arn = arn:aws:iam::1:role/w", "web_identity_token_file = /tmp/token"],
+      /profile "web" sets web_identity_token_file/,
+    ],
+  ] as Array<[string, Array<string>, RegExp]>)("rejects %s with InvalidConfigurationError before loading the SDK or reading AWS_*", async (_name, lines, message) => {
+    stubAmbientDecoys({ envKeys: true })
+    // decoys the SDK's web identity / container / instance metadata providers would read
+    vi.stubEnv("AWS_ROLE_ARN", "arn:aws:iam::999999999999:role/DECOY_WEB_IDENTITY")
+    vi.stubEnv("AWS_WEB_IDENTITY_TOKEN_FILE", write("decoy/token", "decoy-token"))
+    vi.stubEnv("AWS_REGION", "ap-south-1")
+    vi.stubEnv("AWS_ENDPOINT_URL_STS", "https://decoy-sts.example.com")
+    vi.stubEnv("AWS_CONTAINER_CREDENTIALS_FULL_URI", "http://127.0.0.1:1/decoy")
+    const configFile = write("custom/config", [...lines, ""].join("\n"))
+    const credentialsFile = write("custom/credentials", "")
+    const loaders = (["ini", "sso", "sts"] as const).map(it => vi.spyOn(awsSdkLoaders, it))
+
+    let error: unknown = null
+    const reads = await recordEnvReads(() =>
+      resolveS3Credentials({ source: "profile", profile: "deploy", configFile, credentialsFile }).catch((e: unknown) => {
+        error = e
+      })
+    )
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect((error as Error).message).toMatch(message)
+    expect((error as Error).message).toMatch(/^"awsCredentials.source": "profile" \(profile "deploy"\): .*which is not supported/)
+    expect(reads.filter(it => it.startsWith("AWS_"))).toEqual([])
+    for (const loader of loaders) {
+      expect(loader).not.toHaveBeenCalled()
+    }
+  })
+
   it("routes credential_process and assume-role profiles to fromIni with explicit paths", async () => {
     stubAmbientDecoys({ envKeys: true })
     const configFile = write(

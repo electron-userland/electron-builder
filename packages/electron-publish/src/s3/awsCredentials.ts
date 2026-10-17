@@ -178,6 +178,47 @@ function isSsoProfile(profile: Record<string, string>): boolean {
   return ["sso_start_url", "sso_account_id", "sso_session", "sso_region", "sso_role_name"].some(key => profile[key] != null)
 }
 
+/** Profile keys a `source: "profile"` profile (or a profile its `source_profile` chain reaches) refuses, with the reason. */
+const UNSUPPORTED_PROFILE_KEYS: ReadonlyArray<[key: string, reason: string]> = [
+  ["credential_source", "credential_source (Environment / Ec2InstanceMetadata / EcsContainer) reads ambient credentials"],
+  [
+    "web_identity_token_file",
+    "web identity (web_identity_token_file) is resolved by an AWS SDK STS client that reads its region and endpoint from AWS_REGION, AWS_ENDPOINT_URL_STS and AWS_CONFIG_FILE",
+  ],
+]
+
+/**
+ * Walks the named profile's `role_arn` + `source_profile` chain the way the AWS SDK resolves it (static keys of a source
+ * profile end it) and refuses a profile that would make the SDK read ambient settings: `credential_source` or web identity.
+ * Only the configured files are read; nothing is loaded or requested.
+ */
+function checkProfileChainIsExplicit(profiles: IniData, profileName: string): void {
+  const visited = new Set<string>()
+  let name = profileName
+  let profile: Record<string, string> | undefined = profiles[name]
+  while (profile != null && !visited.has(name)) {
+    if (visited.size > 0 && isStaticProfile(profile)) {
+      // the AWS SDK uses static keys of a source profile before anything else in it
+      return
+    }
+    visited.add(name)
+    for (const [key, reason] of UNSUPPORTED_PROFILE_KEYS) {
+      if (profile[key] != null) {
+        throw new InvalidConfigurationError(
+          `"awsCredentials.source": "profile" (profile "${profileName}"): profile "${name}" sets ${key}, which is not supported: ${reason}. ` +
+            `Use a profile with static keys, IAM Identity Center (SSO), credential_process or role_arn + source_profile, or "awsCredentials.source": "env" with credentials obtained beforehand.`
+        )
+      }
+    }
+    if (profile.role_arn == null || profile.source_profile == null) {
+      // missing or cyclic source profiles are reported by the SDK
+      return
+    }
+    name = profile.source_profile.trim()
+    profile = profiles[name]
+  }
+}
+
 interface LoadedProfiles {
   profileName: string
   profiles: IniData
@@ -270,6 +311,9 @@ async function resolveFromProfile(options: S3AwsCredentialsOptions): Promise<Aws
   if (isStaticProfile(profile) && !isAssumeRoleProfile(profile)) {
     return { accessKeyId: profile.aws_access_key_id, secretAccessKey: profile.aws_secret_access_key, sessionToken: profile.aws_session_token || undefined }
   }
+
+  // before any SDK is loaded: no credential_source / web identity anywhere in the chain
+  checkProfileChainIsExplicit(profiles, profileName)
 
   const ssoSourceProfile = findSsoSourceProfile(profiles, profileName)
   if (ssoSourceProfile != null) {

@@ -740,6 +740,7 @@ What changed compared with v26:
 - When the configured source has no credentials, publishing **fails** with a clear error. Before, the request was signed with whatever aws4 found in the environment (including the undocumented `AWS_ACCESS_KEY` / `AWS_SECRET_KEY`), or with `Credential=undefined`.
 - For a bucket name with dots and no `region`, the region is now looked up **only when publishing**. Builds that don't publish log a warning and leave `region` unset, so set `region` explicitly for dotted bucket names.
 - With `source: "profile"`, an assume-role profile whose `source_profile` chain starts at an SSO profile is rejected, because the AWS SDK would resolve that SSO profile without the configured files. Use `source: "sso-role-chain"` for it (see below).
+- With `source: "profile"`, a profile that sets `credential_source` (`Environment`, `Ec2InstanceMetadata`, `EcsContainer`) or web identity (`web_identity_token_file`), itself or anywhere in its `source_profile` chain, is rejected with an `InvalidConfigurationError`: they read ambient credentials, or an AWS SDK STS client that takes its region and endpoint from `AWS_REGION` / `AWS_ENDPOINT_URL_STS` / `AWS_CONFIG_FILE`. In CI with OIDC, export the temporary keys first and use `source: "env"`.
 - `awsCredentials` is build-time only and is never written to `app-update.yml`. electron-updater is unaffected: it downloads S3 updates without credentials.
 - DigitalOcean Spaces (`DO_KEY_ID` / `DO_SECRET_KEY`) and Cloudflare R2 (`CF_R2_*`) are unchanged.
 
