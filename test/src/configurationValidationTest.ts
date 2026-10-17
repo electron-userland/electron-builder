@@ -88,6 +88,19 @@ test.ifNotWindows("null string as null", async ({ expect }) => {
   expect((config.mac!.sign as ElectronSignOptions).hardenedRuntime).toBe(false)
 })
 
+test("`-c.fileOptions.excludedExts` takes a single extension or null from the command line", async ({ expect }) => {
+  const yargs = configureBuildCommand(createYargs())
+  const options = normalizeOptions(
+    yargs.parse(["-c.fileOptions.excludedExts=default", "-c.win.fileOptions.excludedExts=null", "-c.mas.fileOptions.excludedExts=null"]) as CliOptions
+  )
+  const config = options.config as Configuration
+  // "null" would otherwise be read as an extension, which turns off every default exclusion
+  expect(config.fileOptions!.excludedExts).toBe("default")
+  expect(config.win!.fileOptions!.excludedExts).toBeNull()
+  expect(config.mas!.fileOptions!.excludedExts).toBeNull()
+  await validateConfiguration(config, new DebugLogger())
+})
+
 test("`-c.updateManifest=false` is coerced to a boolean and passes schema validation", async ({ expect }) => {
   const yargs = configureBuildCommand(createYargs())
   const options = normalizeOptions(yargs.parse(["-c.updateManifest=false", "-c.linux.updateManifest=false"]) as CliOptions)

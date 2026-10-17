@@ -156,6 +156,14 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       }
     }
 
+    // `-c.fileOptions.excludedExts=null` arrives as the string "null", which a single-string excludedExts would read as an extension
+    for (const holder of [config, config.mac, config.mas, config.masDev, config.win, config.linux]) {
+      const fileOptions = holder?.fileOptions
+      if (fileOptions != null && typeof fileOptions === "object" && fileOptions.excludedExts === "null") {
+        fileOptions.excludedExts = null
+      }
+    }
+
     // fix Boolean type by coerceTypes
     if (config.nsis != null) {
       coerceTypes(config.nsis)

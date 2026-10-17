@@ -195,6 +195,21 @@ describe("schema", () => {
   test("rejects an unknown key inside fileOptions", async ({ expect }) => {
     await expect(validateConfiguration({ fileOptions: { asarUnpack: ["x"] } } as Configuration, new DebugLogger(false))).rejects.toThrow(/asarUnpack/)
   })
+
+  // e.g. `-c.fileOptions.excludedExts=default` on the command line
+  test("accepts a single string for fileOptions.excludedExts at the root and per platform", async ({ expect }) => {
+    const config: Configuration = { fileOptions: { excludedExts: "default" }, win: { fileOptions: { excludedExts: "!pdb" } }, mac: { fileOptions: { excludedExts: "map" } } }
+    await expect(validateConfiguration(config, new DebugLogger(false))).resolves.toBeUndefined()
+  })
+
+  // a number or boolean is not rejected: ajv's coerceTypes turns it into a string
+  test.for<[string, unknown]>([
+    ["an object", { default: true }],
+    ["a list with an object", ["default", { ext: "map" }]],
+  ])("rejects %s for fileOptions.excludedExts", async ([, excludedExts], { expect }) => {
+    await expect(validateConfiguration({ fileOptions: { excludedExts } } as Configuration, new DebugLogger(false))).rejects.toThrow(/excludedExts/)
+    await expect(validateConfiguration({ linux: { fileOptions: { excludedExts } } } as Configuration, new DebugLogger(false))).rejects.toThrow(/excludedExts/)
+  })
 })
 
 describe("getConfig", () => {

@@ -741,6 +741,24 @@ describe("resolveExcludedExtensions", () => {
     expect(resolveExcludedExtensions({ fileOptions: { excludedExts: ["map"] } }, {})).toEqual(["map"])
     expect(resolveExcludedExtensions({}, { fileOptions: { excludedExts: null } })).toEqual(DEFAULT_EXCLUDED_EXTENSIONS)
   })
+
+  // e.g. `-c.fileOptions.excludedExts=default` on the command line
+  test.for<[string, ReadonlyArray<string>]>([
+    ["default", DEFAULT_EXCLUDED_EXTENSIONS],
+    ["map", ["map"]],
+    ["!pdb", []],
+  ])("a single string %j resolves like a one-element list", ([entry, expected], { expect }) => {
+    // "!pdb" alone removes nothing and warns
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
+    try {
+      expect(resolveExcludedExtensions({ fileOptions: { excludedExts: entry } }, null)).toEqual(expected)
+      expect(resolveExcludedExtensions({ fileOptions: { excludedExts: entry } }, null)).toEqual(resolve([entry]))
+      // a platform string replaces the root list
+      expect(resolveExcludedExtensions({ fileOptions: { excludedExts: ["default"] } }, { fileOptions: { excludedExts: entry } })).toEqual(expected)
+    } finally {
+      warn.mockRestore()
+    }
+  })
 })
 
 // ---------------------------------------------------------------------------

@@ -1467,13 +1467,16 @@
               "type": "array"
             },
             {
-              "type": "null"
+              "type": [
+                "null",
+                "string"
+              ]
             }
           ],
           "default": [
             "default"
           ],
-          "description": "File extensions (without the leading dot) excluded from the packaged app files and the copied `node_modules`.\n\n- `\"default\"` expands to the built-in list of excluded extensions (`iml`, `hprof`, `orig`, `pyc`, `pyo`, `rbc`, `swp`, `csproj`, `sln`,\n  `slnx`, `suo`, `xproj`, `cc`, `d.ts`, `mk`, `a`, `o`, `obj`, `forge-meta`, `pdb`).\n- Any other entry adds that extension, e.g. `\"map\"`.\n- An entry starting with `!` removes that extension from the others listed, e.g. `\"!pdb\"` to keep `.pdb` (Program Database)\n  symbol files for Windows crash-dump analysis.\n\nThe list replaces the defaults: list `\"default\"` to extend them rather than replace them. `null` (or omitting it) is `[\"default\"]`,\nand an empty array `[]` excludes no extension.\n\n```json\n{ \"fileOptions\": { \"excludedExts\": [\"default\", \"!pdb\", \"map\"] } }\n```\n\nSet it under `fileOptions`, at the configuration root or per platform. Unlike the other lists, a later list replaces an earlier one rather\nthan being merged with it: a platform's value replaces the root one, `mas` / `masDev` replace `mac`'s, and an `extends` child's (or a\nprogrammatic or `-c` configuration's) replaces its parent's. A `null` value keeps the earlier list.\nA `files` glob that names a file with an excluded extension concretely (e.g. `**\\/*.obj`) still includes it in the app files."
+          "description": "File extensions (without the leading dot) excluded from the packaged app files and the copied `node_modules`.\n\n- `\"default\"` expands to the built-in list of excluded extensions (`iml`, `hprof`, `orig`, `pyc`, `pyo`, `rbc`, `swp`, `csproj`, `sln`,\n  `slnx`, `suo`, `xproj`, `cc`, `d.ts`, `mk`, `a`, `o`, `obj`, `forge-meta`, `pdb`).\n- Any other entry adds that extension, e.g. `\"map\"`.\n- An entry starting with `!` removes that extension from the others listed, e.g. `\"!pdb\"` to keep `.pdb` (Program Database)\n  symbol files for Windows crash-dump analysis. `.pdb` files contain symbol names and the source paths of the build machine:\n  keep them only in internal builds or builds for a symbol server, or upload them to a symbol server instead of shipping them.\n\nThe list replaces the defaults: list `\"default\"` to extend them rather than replace them. `null` (or omitting it) is `[\"default\"]`,\nand an empty array `[]` excludes no extension.\n\n```json\n{ \"fileOptions\": { \"excludedExts\": [\"default\", \"!pdb\", \"map\"] } }\n```\n\nSet it under `fileOptions`, at the configuration root or per platform. Unlike the other lists, a later list replaces an earlier one rather\nthan being merged with it. For the root and for each platform section, the last layer that sets the list wins: the `extends` parents in\norder, then the configuration file, then the programmatic or `-c` configuration. For the `mas` and `mas-dev` targets, a `mas` list then\nreplaces the `mac` one, and a `masDev` list (for `mas-dev`) replaces both. A platform's list then replaces the root one, whichever layer\nset either. A `null` value keeps the earlier list.\n\nA `files` pattern that names an excluded extension includes only the app files it matches: `**\\/*.obj` every `.obj` file outside\n`node_modules` and the build resources and output directories, `models/teapot.obj` only that file.\n\nA single entry may be given as a string, e.g. on the command line: `-c.fileOptions.excludedExts=default`."
         },
         "extraFiles": {
           "anyOf": [

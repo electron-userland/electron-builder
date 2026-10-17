@@ -150,7 +150,8 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
    *   `slnx`, `suo`, `xproj`, `cc`, `d.ts`, `mk`, `a`, `o`, `obj`, `forge-meta`, `pdb`).
    * - Any other entry adds that extension, e.g. `"map"`.
    * - An entry starting with `!` removes that extension from the others listed, e.g. `"!pdb"` to keep `.pdb` (Program Database)
-   *   symbol files for Windows crash-dump analysis.
+   *   symbol files for Windows crash-dump analysis. `.pdb` files contain symbol names and the source paths of the build machine:
+   *   keep them only in internal builds or builds for a symbol server, or upload them to a symbol server instead of shipping them.
    *
    * The list replaces the defaults: list `"default"` to extend them rather than replace them. `null` (or omitting it) is `["default"]`,
    * and an empty array `[]` excludes no extension.
@@ -160,12 +161,18 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
    * ```
    *
    * Set it under `fileOptions`, at the configuration root or per platform. Unlike the other lists, a later list replaces an earlier one rather
-   * than being merged with it: a platform's value replaces the root one, `mas` / `masDev` replace `mac`'s, and an `extends` child's (or a
-   * programmatic or `-c` configuration's) replaces its parent's. A `null` value keeps the earlier list.
-   * A `files` glob that names a file with an excluded extension concretely (e.g. `**\/*.obj`) still includes it in the app files.
+   * than being merged with it. For the root and for each platform section, the last layer that sets the list wins: the `extends` parents in
+   * order, then the configuration file, then the programmatic or `-c` configuration. For the `mas` and `mas-dev` targets, a `mas` list then
+   * replaces the `mac` one, and a `masDev` list (for `mas-dev`) replaces both. A platform's list then replaces the root one, whichever layer
+   * set either. A `null` value keeps the earlier list.
+   *
+   * A `files` pattern that names an excluded extension includes only the app files it matches: `**\/*.obj` every `.obj` file outside
+   * `node_modules` and the build resources and output directories, `models/teapot.obj` only that file.
+   *
+   * A single entry may be given as a string, e.g. on the command line: `-c.fileOptions.excludedExts=default`.
    * @default ["default"]
    */
-  excludedExts?: Array<string> | null
+  excludedExts?: Array<string> | string | null
 
   /**
    * Whether symlinks among the packaged files may lead outside the app, the workspace and the package-manager store.

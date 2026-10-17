@@ -101,7 +101,7 @@ const EXTENSION_PATTERN = /^[\w-]+(\.[\w-]+)*$/
  */
 export function resolveExcludedExtensions(config: Pick<Configuration, "fileOptions">, platformOptions: PlatformSpecificBuildOptions | Nullish): Array<string> {
   const entries = platformOptions?.fileOptions?.excludedExts ?? config.fileOptions?.excludedExts ?? [DEFAULT_KEYWORD]
-  const { result, unusedRemovals } = resolveDefaultKeywordList(Array.from(entries, normalizeExcludedExtension), DEFAULT_EXCLUDED_EXTENSIONS)
+  const { result, unusedRemovals } = resolveDefaultKeywordList(asArray(entries).map(normalizeExcludedExtension), DEFAULT_EXCLUDED_EXTENSIONS)
   for (const extension of unusedRemovals) {
     log
       .once(`excluded-exts-removal:${extension}`)
