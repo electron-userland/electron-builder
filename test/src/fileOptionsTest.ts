@@ -79,6 +79,14 @@ describe("flat files / extraResources / extraFiles are normalized into fileOptio
     expect(warnings()).toEqual([])
   })
 
+  test("fileOptions.excludedExts is kept as is at the root and per platform", ({ expect }) => {
+    const result = merge({ fileOptions: { excludedExts: ["default", "!pdb"] }, linux: { fileOptions: { excludedExts: ["map"] } }, win: { fileOptions: { excludedExts: [] } } })
+    expect(result.fileOptions?.excludedExts).toEqual(["default", "!pdb"])
+    expect(result.linux?.fileOptions?.excludedExts).toEqual(["map"])
+    expect(result.win?.fileOptions?.excludedExts).toEqual([])
+    expect(warnings()).toEqual([])
+  })
+
   test("the caller's own fileOptions object is not rewritten", ({ expect }) => {
     const fileOptions = { files: ["a/**"], extraResources: ["r"] }
     merge({ fileOptions }, { fileOptions: { extraResources: ["s"] } })

@@ -1,5 +1,7 @@
-import { checkLegacyConfiguration, RESOLVED_LEGACY_CONFIG_OPTIONS, validateConfiguration } from "app-builder-lib/internal"
+import { checkLegacyConfiguration, RESOLVED_LEGACY_CONFIG_OPTIONS, validateConfiguration, validateSchema } from "app-builder-lib/internal"
 import { DebugLogger, InvalidConfigurationError } from "builder-util"
+import { readFileSync } from "fs"
+import * as path from "path"
 import { describe, expect, test } from "vitest"
 import { assertInstallerDebugLoggingSupported } from "../../packages/app-builder-lib/src/toolsets/nsis"
 
@@ -65,6 +67,8 @@ describe("checkLegacyConfiguration — never rejects a valid v27 config", () => 
     ["fileOptions", { fileOptions: { files: ["dist/**"], extraResources: [{ from: "a", to: "b" }] }, mac: { fileOptions: null }, win: { fileOptions: { extraFiles: "x" } } }],
     ["flat files keys (applied as fileOptions)", { files: ["dist/**"], linux: { extraResources: ["r"] } }],
     ["fileOptions.allowExternalLinks", { fileOptions: { allowExternalLinks: ["../shared-lib"] }, linux: { fileOptions: { allowExternalLinks: true } } }],
+    ["fileOptions.excludedExts", { fileOptions: { excludedExts: ["default", "!pdb"] }, linux: { fileOptions: { excludedExts: ["map"] } } }],
+    ["fileOptions.excludedExts null and empty", { fileOptions: { excludedExts: null }, win: { fileOptions: { excludedExts: [] } } }],
   ])("%s passes the guard", (_name, config) => {
     expect(() => checkLegacyConfiguration({ appId: "com.example.app", ...config } as any)).not.toThrow()
   })
@@ -152,6 +156,52 @@ describe("checkLegacyConfiguration — structural checks", () => {
       })
     ).toContain("tagNamePrefix")
     expect(expectRejected({ win: { publish: { provider: "github", owner: "o", repo: "r", vPrefixedTagName: false } } })).toContain("win.publish.vPrefixedTagName")
+  })
+})
+
+describe("checkLegacyConfiguration — includePdb replaced by fileOptions.excludedExts", () => {
+  test('includePdb: true names fileOptions.excludedExts, the "!pdb" entry, migrate-schema and its breaking-changes section', () => {
+    const message = expectRejected({ includePdb: true })
+    expect(message).toContain("`includePdb` was replaced by `fileOptions.excludedExts` in electron-builder v27.")
+    expect(message).toContain('"excludedExts": ["default", "!pdb"]')
+    expect(message).toContain("electron-builder migrate-schema")
+    expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#includepdb-fileoptionsexcludedexts")
+  })
+
+  test("includePdb: false is reported too, as removed with no replacement", () => {
+    const message = expectRejected({ includePdb: false })
+    expect(message).toContain("`includePdb: false` was the default and is removed")
+    expect(message).toContain("#includepdb-fileoptionsexcludedexts")
+  })
+
+  test("the breaking-changes page has the linked section", () => {
+    const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-breaking-changes.md"), "utf8")
+    expect(doc).toContain("{#includepdb-fileoptionsexcludedexts}")
+  })
+
+  describe("schema", () => {
+    const logger = new DebugLogger(false)
+    const scheme = JSON.parse(readFileSync(path.join(import.meta.dirname, "../../packages/app-builder-lib/scheme.json"), "utf8"))
+
+    test.each([
+      ["root", { fileOptions: { excludedExts: ["default", "!pdb"] } }],
+      ["per platform", { linux: { fileOptions: { excludedExts: ["map"] } }, mac: { fileOptions: { excludedExts: ["default", "map"] } } }],
+      ["null", { fileOptions: { excludedExts: null } }],
+      ["empty", { win: { fileOptions: { excludedExts: [] } } }],
+    ])("accepts fileOptions.excludedExts %s", async (_name, config) => {
+      await expect(validateConfiguration(config as any, logger)).resolves.toBeUndefined()
+    })
+
+    test.each([true, false])("rejects includePdb: %s, and so does scheme.json on its own", async value => {
+      await expect(validateConfiguration({ includePdb: value } as any, logger)).rejects.toThrow("fileOptions.excludedExts")
+      // validateConfiguration runs the guard first; scheme.json (what an editor validates against) must not have the key either
+      expect(() => validateSchema(scheme, { includePdb: value })).toThrow("includePdb")
+    })
+
+    test("rejects a fileOptions.excludedExts that is not a list of strings", async () => {
+      await expect(validateConfiguration({ fileOptions: { excludedExts: "pdb" } } as any, logger)).rejects.toThrow("excludedExts")
+      await expect(validateConfiguration({ linux: { fileOptions: { excludedExts: { pdb: true } } } } as any, logger)).rejects.toThrow("excludedExts")
+    })
   })
 })
 

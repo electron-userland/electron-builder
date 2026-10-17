@@ -93,6 +93,49 @@ test.ifNotWindows("default-excluded extension stays excluded without a re-includ
   )
 )
 
+// .pdb symbol files, in the app and in an installed dependency, are excluded by default (pdb is one of the "default"
+// fileOptions.excludedExts) and kept with ["default", "!pdb"], the replacement of `includePdb: true`
+function assertPdbFilesPacked(expect: ExpectStatic, excludedExts: Array<string> | null, isIncluded: boolean) {
+  return app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        asar: false,
+        fileOptions: { excludedExts },
+      },
+    },
+    {
+      projectDirCreated: async projectDir => {
+        await Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              semver: "6.3.1",
+              ...data.dependencies,
+            }
+          }),
+          fsExtra.outputFile(path.join(projectDir, "assets", "symbols.pdb"), "pdb-data"),
+          fsExtra.outputFile(path.join(projectDir, "assets", "index.js"), "js"),
+        ])
+        return () => fsExtra.outputFile(path.join(projectDir, "node_modules", "semver", "semver.pdb"), "pdb-data")
+      },
+      packed: context => {
+        const appDir = path.join(context.getResources(Platform.LINUX), "app")
+        const pdbFiles = [path.join(appDir, "assets", "symbols.pdb"), path.join(appDir, "node_modules", "semver", "semver.pdb")]
+        return Promise.all([
+          assertThat(expect, path.join(appDir, "assets", "index.js")).isFile(),
+          assertThat(expect, path.join(appDir, "node_modules", "semver", "semver.js")).isFile(),
+          ...pdbFiles.map(file => (isIncluded ? assertThat(expect, file).isFile() : assertThat(expect, file).doesNotExist())),
+        ])
+      },
+    }
+  )
+}
+
+test.ifNotWindows("pdb files are excluded by default", ({ expect }) => assertPdbFilesPacked(expect, null, false))
+
+test.ifNotWindows('pdb files are kept with fileOptions.excludedExts ["default", "!pdb"]', ({ expect }) => assertPdbFilesPacked(expect, ["default", "!pdb"], true))
+
 test.ifNotWindows("files.from asar", ({ expect }) =>
   app(
     expect,

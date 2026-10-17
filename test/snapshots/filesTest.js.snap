@@ -56,6 +56,18 @@ exports[`map resources 1`] = `
 }
 `;
 
+exports[`pdb files are excluded by default 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`pdb files are kept with fileOptions.excludedExts ["default", "!pdb"] 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`re-include default-excluded extension via files glob 1`] = `
 {
   "linux": [],

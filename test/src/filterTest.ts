@@ -1,4 +1,5 @@
-import { FilterStats, log } from "builder-util"
+import { FilterStats, InvalidConfigurationError, log } from "builder-util"
+import type { PlatformSpecificBuildOptions } from "app-builder-lib"
 import {
   collectExplicitReincludes,
   DEFAULT_EXCLUDED_EXTENSIONS,
@@ -13,6 +14,7 @@ import {
 } from "app-builder-lib/internal"
 import * as path from "path"
 import { vi } from "vitest"
+import { resolveExcludedExtensions } from "../../packages/app-builder-lib/src/fileMatcher"
 
 // ---------------------------------------------------------------------------
 // Stat mocks
@@ -513,46 +515,77 @@ describe("getDefaultIgnoredPatterns", () => {
   const extPatternOf = (patterns: Array<string>) => patterns.find(p => p.startsWith("!**/*.{"))!
   const namePatternOf = (patterns: Array<string>) => patterns.find(p => p.startsWith("!**/{"))!
 
-  test("by default excludes obj and electron-builder.env, and appends pdb when includePdb is false", ({ expect }) => {
-    const patterns = getDefaultIgnoredPatterns([], false)
+  test("by default excludes obj, pdb and electron-builder.env", ({ expect }) => {
+    const patterns = getDefaultIgnoredPatterns([])
     const extPattern = extPatternOf(patterns)
     expect(extPattern).toContain("obj")
     expect(extPattern).toContain("pdb")
     expect(namePatternOf(patterns)).toContain("electron-builder.env")
   })
 
-  test("includePdb=true omits pdb from the extension glob", ({ expect }) => {
-    expect(extPatternOf(getDefaultIgnoredPatterns([], true))).not.toContain("pdb")
+  test('the resolved list for ["default", "!pdb"] (formerly includePdb: true) omits pdb from the extension glob', ({ expect }) => {
+    const extPattern = extPatternOf(getDefaultIgnoredPatterns([], resolveExcludedExtensions({ fileOptions: { excludedExts: ["default", "!pdb"] } }, null)))
+    expect(extPattern.split(/[{,}]/)).not.toContain("pdb")
+    expect(extPattern).toBe(`!**/*.{${DEFAULT_EXCLUDED_EXTENSIONS.filter(ext => ext !== "pdb").join(",")}}`)
   })
 
   test("an explicit **/*.obj re-include drops obj from the exclusion glob but keeps the others", ({ expect }) => {
-    const extPattern = extPatternOf(getDefaultIgnoredPatterns(["**/*", "**/*.obj"], false))
+    const extPattern = extPatternOf(getDefaultIgnoredPatterns(["**/*", "**/*.obj"]))
     // obj as a {…} list member is gone, but `o` and `forge-meta` remain
     expect(extPattern.split(/[{,}]/)).not.toContain("obj")
     expect(extPattern).toContain("forge-meta")
     expect(extPattern).toContain("o,")
   })
 
+  test("an explicit **/*.pdb re-include drops pdb, now a default exclusion, but keeps the others", ({ expect }) => {
+    const extPattern = extPatternOf(getDefaultIgnoredPatterns(["**/*", "**/*.pdb"]))
+    expect(extPattern.split(/[{,}]/)).not.toContain("pdb")
+    expect(extPattern).toContain("obj")
+    expect([...collectExplicitReincludes(["**/*.pdb"]).extensions]).toEqual(["pdb"])
+    expect(getReincludedDefaultExclusions(["**/*", "**/*.pdb"])).toEqual(["*.pdb"])
+  })
+
+  test("an extension added by fileOptions.excludedExts is excluded and can be re-included by a files glob", ({ expect }) => {
+    const excluded = resolveExcludedExtensions({ fileOptions: { excludedExts: ["default", "map"] } }, null)
+    expect(extPatternOf(getDefaultIgnoredPatterns(["**/*"], excluded)).split(/[{,}]/)).toContain("map")
+    expect(extPatternOf(getDefaultIgnoredPatterns(["**/*", "**/*.map"], excluded)).split(/[{,}]/)).not.toContain("map")
+    expect(getReincludedDefaultExclusions(["**/*", "**/*.map"], excluded)).toEqual(["*.map"])
+  })
+
+  test("a files glob for an extension that is not excluded is not reported as a re-include", ({ expect }) => {
+    const excluded = resolveExcludedExtensions({ fileOptions: { excludedExts: ["default", "!pdb"] } }, null)
+    expect(collectExplicitReincludes(["**/*.pdb"], excluded).extensions.size).toBe(0)
+    expect(getReincludedDefaultExclusions(["**/*", "**/*.pdb"], excluded)).toEqual([])
+  })
+
+  test("an empty excluded-extension list emits no extension glob at all", ({ expect }) => {
+    const patterns = getDefaultIgnoredPatterns(["**/*"], [])
+    expect(patterns.some(p => p.startsWith("!**/*."))).toBe(false)
+    // the name and fixed ignores are unaffected
+    expect(namePatternOf(patterns)).toBe(`!**/{${DEFAULT_EXCLUDED_NAMES.join(",")}}`)
+    expect(patterns).toContain("!**/._*")
+  })
+
   test("re-including .d.ts drops only d.ts", ({ expect }) => {
-    const extPattern = extPatternOf(getDefaultIgnoredPatterns(["**/*.d.ts"], false))
+    const extPattern = extPatternOf(getDefaultIgnoredPatterns(["**/*.d.ts"]))
     expect(extPattern.split(/[{,}]/)).not.toContain("d.ts")
     expect(extPattern).toContain("iml")
   })
 
   test("re-including a name drops it from the name glob but keeps the rest", ({ expect }) => {
-    const namePattern = namePatternOf(getDefaultIgnoredPatterns(["**/.github/**"], false))
+    const namePattern = namePatternOf(getDefaultIgnoredPatterns(["**/.github/**"]))
     expect(namePattern.split(/[{,}]/)).not.toContain(".github")
     expect(namePattern).toContain("electron-builder.env")
   })
 
   test("broad **/* alone keeps every default exclusion intact", ({ expect }) => {
-    const patterns = getDefaultIgnoredPatterns(["**/*"], false)
+    const patterns = getDefaultIgnoredPatterns(["**/*"])
     expect(extPatternOf(patterns)).toContain("obj")
     expect(namePatternOf(patterns)).toContain("electron-builder.env")
   })
 
   test("always appends the fixed config/editor ignores", ({ expect }) => {
-    const patterns = getDefaultIgnoredPatterns(["**/*"], false)
+    const patterns = getDefaultIgnoredPatterns(["**/*"])
     expect(patterns).toContain("!**/._*")
     expect(patterns).toContain("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
     expect(patterns).toContain("!.yarn{,/**/*}")
@@ -561,27 +594,146 @@ describe("getDefaultIgnoredPatterns", () => {
   })
 
   test("the default (no opt-in) extension glob matches the historical hardcoded list", ({ expect }) => {
-    const expected = `!**/*.{${[...DEFAULT_EXCLUDED_EXTENSIONS, "pdb"].join(",")}}`
-    expect(extPatternOf(getDefaultIgnoredPatterns([], false))).toBe(expected)
+    // the list before `fileOptions.excludedExts`, to which `includePdb: false` (the default) appended pdb last
+    const historical = ["iml", "hprof", "orig", "pyc", "pyo", "rbc", "swp", "csproj", "sln", "slnx", "suo", "xproj", "cc", "d.ts", "mk", "a", "o", "obj", "forge-meta"]
+    expect(DEFAULT_EXCLUDED_EXTENSIONS).toEqual([...historical, "pdb"])
+    const expected = `!**/*.{${[...historical, "pdb"].join(",")}}`
+    expect(extPatternOf(getDefaultIgnoredPatterns([]))).toBe(expected)
+    expect(extPatternOf(getDefaultIgnoredPatterns([], DEFAULT_EXCLUDED_EXTENSIONS))).toBe(expected)
+    // an unset fileOptions.excludedExts resolves to the same glob
+    expect(extPatternOf(getDefaultIgnoredPatterns([], resolveExcludedExtensions({}, null)))).toBe(expected)
   })
 
   test("the default (no opt-in) name glob matches the historical hardcoded list", ({ expect }) => {
-    expect(namePatternOf(getDefaultIgnoredPatterns([], false))).toBe(`!**/{${DEFAULT_EXCLUDED_NAMES.join(",")}}`)
+    expect(namePatternOf(getDefaultIgnoredPatterns([]))).toBe(`!**/{${DEFAULT_EXCLUDED_NAMES.join(",")}}`)
   })
 
   test("a lone surviving extension is emitted as a literal (single-member braces don't match in minimatch)", ({ expect }) => {
-    // opt back in every default extension; only the implicit pdb should remain
-    const optInAll = DEFAULT_EXCLUDED_EXTENSIONS.map(ext => `**/*.${ext}`)
-    const patterns = getDefaultIgnoredPatterns(optInAll, false)
+    // opt back in every default extension but pdb; only pdb should remain
+    const optInAllButPdb = DEFAULT_EXCLUDED_EXTENSIONS.filter(ext => ext !== "pdb").map(ext => `**/*.${ext}`)
+    const patterns = getDefaultIgnoredPatterns(optInAllButPdb)
     expect(patterns).toContain("!**/*.pdb")
+    expect(patterns.some(p => p.startsWith("!**/*.{"))).toBe(false)
+  })
+
+  test("a single-extension list is emitted as a literal", ({ expect }) => {
+    const patterns = getDefaultIgnoredPatterns(["**/*"], resolveExcludedExtensions({ fileOptions: { excludedExts: ["map"] } }, null))
+    expect(patterns).toContain("!**/*.map")
     expect(patterns.some(p => p.startsWith("!**/*.{"))).toBe(false)
   })
 
   test("a lone surviving name is emitted as a literal", ({ expect }) => {
     const optInAllButEnv = DEFAULT_EXCLUDED_NAMES.filter(n => n !== "electron-builder.env").map(n => `**/${n}`)
-    const patterns = getDefaultIgnoredPatterns(optInAllButEnv, true)
+    const patterns = getDefaultIgnoredPatterns(optInAllButEnv)
     expect(patterns).toContain("!**/electron-builder.env")
     expect(patterns.some(p => p.startsWith("!**/{"))).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// resolveExcludedExtensions – the fileOptions.excludedExts build option
+// ---------------------------------------------------------------------------
+
+describe("resolveExcludedExtensions", () => {
+  const withoutPdb = DEFAULT_EXCLUDED_EXTENSIONS.filter(ext => ext !== "pdb")
+  const resolve = (excludedExts: Array<string> | null | undefined, platformExcludedExts?: Array<string> | null) =>
+    resolveExcludedExtensions({ fileOptions: { excludedExts } }, platformExcludedExts === undefined ? null : { fileOptions: { excludedExts: platformExcludedExts } })
+
+  test("unset or null is the default list", ({ expect }) => {
+    expect(resolveExcludedExtensions({}, null)).toEqual(DEFAULT_EXCLUDED_EXTENSIONS)
+    expect(resolveExcludedExtensions({ fileOptions: null }, undefined)).toEqual(DEFAULT_EXCLUDED_EXTENSIONS)
+    expect(resolve(undefined)).toEqual(DEFAULT_EXCLUDED_EXTENSIONS)
+    expect(resolve(null)).toEqual(DEFAULT_EXCLUDED_EXTENSIONS)
+  })
+
+  test('"default" expands to the default list, which includes pdb', ({ expect }) => {
+    expect(resolve(["default"])).toEqual(DEFAULT_EXCLUDED_EXTENSIONS)
+    expect(resolve(["default"])).toContain("pdb")
+  })
+
+  test("an empty list excludes no extension", ({ expect }) => {
+    expect(resolve([])).toEqual([])
+  })
+
+  test('a list without "default" replaces the defaults', ({ expect }) => {
+    expect(resolve(["map"])).toEqual(["map"])
+  })
+
+  test('a list with "default" extends the defaults', ({ expect }) => {
+    expect(resolve(["default", "map"])).toEqual([...DEFAULT_EXCLUDED_EXTENSIONS, "map"])
+  })
+
+  test('"!ext" removes ext from the defaults', ({ expect }) => {
+    expect(resolve(["default", "!pdb"])).toEqual(withoutPdb)
+  })
+
+  test('"!ext" removes ext regardless of its position', ({ expect }) => {
+    expect(resolve(["!pdb", "default"])).toEqual(withoutPdb)
+    expect(resolve(["map", "!map", "default"])).toEqual(DEFAULT_EXCLUDED_EXTENSIONS)
+  })
+
+  test("a single leading dot is stripped, also after !", ({ expect }) => {
+    expect(resolve([".map"])).toEqual(["map"])
+    expect(resolve(["default", "!.pdb"])).toEqual(withoutPdb)
+  })
+
+  test("multi-dot extensions are accepted", ({ expect }) => {
+    expect(resolve(["tar.gz", ".d.ts"])).toEqual(["tar.gz", "d.ts"])
+  })
+
+  test("duplicates are removed", ({ expect }) => {
+    expect(resolve(["map", ".map", "map"])).toEqual(["map"])
+    expect(resolve(["default", "pdb", "obj"])).toEqual(DEFAULT_EXCLUDED_EXTENSIONS)
+  })
+
+  test('"!default" is a configuration error', ({ expect }) => {
+    expect(() => resolve(["!default"])).toThrow(InvalidConfigurationError)
+    expect(() => resolve(["map", "!default"])).toThrow(/"!default" in `fileOptions.excludedExts` is not supported/)
+  })
+
+  test.for(["*.map", "a/b", "{a,b}", "", "!", "!*.pdb", "..", "map.", "m ap"])("%j is not an extension and is a configuration error", (entry, { expect }) => {
+    expect(() => resolve(["default", entry])).toThrow(InvalidConfigurationError)
+    expect(() => resolve(["default", entry])).toThrow(`"${entry}" in \`fileOptions.excludedExts\` is not a file extension`)
+  })
+
+  test('a "!ext" that removes nothing warns once, suggesting to list "default"', ({ expect }) => {
+    // once-keys are per process: use an extension no other test removes, and forget earlier emissions
+    log.resetLimits("excluded-exts-removal:noop-a")
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
+    try {
+      expect(resolve(["!noop-a"])).toEqual([])
+      expect(resolve(["map", "!noop-a"])).toEqual(["map"])
+      expect(warn).toHaveBeenCalledTimes(1)
+      const [message] = warn.mock.calls[0]
+      expect(message).toContain('"!noop-a" in `fileOptions.excludedExts` has no effect')
+      expect(message).toContain('List "default" too')
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  test('a "!ext" that removes an extension does not warn', ({ expect }) => {
+    log.resetLimits("excluded-exts-removal:noop-b")
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
+    try {
+      expect(resolve(["noop-b", "!noop-b"])).toEqual([])
+      expect(warn).not.toHaveBeenCalled()
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  test("a platform value replaces the root value", ({ expect }) => {
+    expect(resolve(["default"], ["map"])).toEqual(["map"])
+    expect(resolve(["default", "!pdb"], ["default"])).toEqual(DEFAULT_EXCLUDED_EXTENSIONS)
+    expect(resolve(["default"], [])).toEqual([])
+  })
+
+  test("a null platform value, or a platform without fileOptions, falls back to the root value", ({ expect }) => {
+    expect(resolve(["map"], null)).toEqual(["map"])
+    expect(resolveExcludedExtensions({ fileOptions: { excludedExts: ["map"] } }, { fileOptions: null })).toEqual(["map"])
+    expect(resolveExcludedExtensions({ fileOptions: { excludedExts: ["map"] } }, {})).toEqual(["map"])
+    expect(resolveExcludedExtensions({}, { fileOptions: { excludedExts: null } })).toEqual(DEFAULT_EXCLUDED_EXTENSIONS)
   })
 })
 
@@ -594,21 +746,48 @@ describe("getMainFileMatchers – default exclusions respect `files` re-includes
   // separators (on Windows a literal "/app" becomes "\app", and getMainFileMatchers early-returns
   // unless matcher.from === appDir).
   const appDir = path.resolve("/app")
-  function buildMatcherPatterns(files: Array<string>): Array<string> {
+  function buildMatcherPatterns(files: Array<string>, excludedExts?: Array<string> | null, platformSpecificBuildOptions: PlatformSpecificBuildOptions = {}): Array<string> {
     const platformPackager = {
       projectDir: appDir,
       buildResourcesDir: "build",
       isPrepackedAppAsar: false,
-      config: { fileOptions: { files }, includePdb: false },
+      config: { fileOptions: { files, excludedExts } },
       debugLogger: { isEnabled: false },
     } as any
-    const matchers = getMainFileMatchers(appDir, path.resolve("/out"), noMacro, {}, platformPackager, path.join(appDir, "dist"))
+    const matchers = getMainFileMatchers(appDir, path.resolve("/out"), noMacro, platformSpecificBuildOptions, platformPackager, path.join(appDir, "dist"))
     return matchers[0].patterns
   }
 
-  test("without an explicit include, .obj stays excluded", ({ expect }) => {
+  test("without an explicit include, .obj and .pdb stay excluded", ({ expect }) => {
     const extPattern = buildMatcherPatterns(["**/*"]).find(p => p.startsWith("!**/*.{"))!
-    expect(extPattern).toContain("obj")
+    expect(extPattern).toBe(`!**/*.{${DEFAULT_EXCLUDED_EXTENSIONS.join(",")}}`)
+    expect(extPattern.split(/[{,}]/)).toContain("obj")
+    expect(extPattern.split(/[{,}]/)).toContain("pdb")
+  })
+
+  test('root fileOptions.excludedExts ["default", "!pdb"] drops pdb from the extension glob', ({ expect }) => {
+    const extPattern = buildMatcherPatterns(["**/*"], ["default", "!pdb"]).find(p => p.startsWith("!**/*.{"))!
+    expect(extPattern.split(/[{,}]/)).not.toContain("pdb")
+    expect(extPattern.split(/[{,}]/)).toContain("obj")
+  })
+
+  test("a platform fileOptions.excludedExts replaces the root one", ({ expect }) => {
+    const patterns = buildMatcherPatterns(["**/*"], ["default", "!pdb"], { fileOptions: { excludedExts: ["map"] } })
+    expect(patterns).toContain("!**/*.map")
+    expect(patterns.some(p => p.startsWith("!**/*.{"))).toBe(false)
+
+    const extPattern = buildMatcherPatterns(["**/*"], ["default", "!pdb"], { fileOptions: { excludedExts: ["default"] } }).find(p => p.startsWith("!**/*.{"))!
+    expect(extPattern.split(/[{,}]/)).toContain("pdb")
+  })
+
+  test("fileOptions.excludedExts [] emits no extension glob", ({ expect }) => {
+    const patterns = buildMatcherPatterns(["**/*"], [])
+    expect(patterns.some(p => p.startsWith("!**/*."))).toBe(false)
+    expect(patterns.some(p => p.startsWith("!**/{"))).toBe(true)
+  })
+
+  test("an invalid fileOptions.excludedExts entry fails the matcher assembly", ({ expect }) => {
+    expect(() => buildMatcherPatterns(["**/*"], ["default", "*.map"])).toThrow(InvalidConfigurationError)
   })
 
   test("with **/*.obj, the obj exclusion is dropped (issue #6126)", ({ expect }) => {
@@ -634,6 +813,21 @@ describe("getMainFileMatchers – default exclusions respect `files` re-includes
     const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
     try {
       buildMatcherPatterns(["**/*", "src/**/*.js"])
+      expect(warn).not.toHaveBeenCalled()
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  test("warns for a **/*.pdb re-include by default, but not when fileOptions.excludedExts no longer excludes pdb", ({ expect }) => {
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
+    try {
+      buildMatcherPatterns(["**/*", "**/*.pdb"])
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect((warn.mock.calls[0][0] as any).files).toBe("*.pdb")
+
+      warn.mockClear()
+      buildMatcherPatterns(["**/*", "**/*.pdb"], ["default", "!pdb"])
       expect(warn).not.toHaveBeenCalled()
     } finally {
       warn.mockRestore()
