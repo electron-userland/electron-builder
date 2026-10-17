@@ -1,3 +1,4 @@
+import { fromIni } from "@aws-sdk/credential-provider-ini"
 import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
@@ -51,7 +52,7 @@ export function resolveAwsCredentials(): AwsCredentials | undefined {
 
   try {
     const profile = process.env.AWS_PROFILE ?? "default"
-    const credsPath = path.join(os.homedir(), ".aws", "credentials")
+    const credsPath = process.env.AWS_SHARED_CREDENTIALS_FILE || path.join(os.homedir(), ".aws", "credentials")
     const raw = fs.readFileSync(credsPath, "utf8")
     const section = parseIniSection(raw, profile)
     if (section?.aws_access_key_id && section?.aws_secret_access_key) {
@@ -66,4 +67,34 @@ export function resolveAwsCredentials(): AwsCredentials | undefined {
   }
 
   return undefined
+}
+
+/** Resolve shared-config profiles, including IAM Identity Center sessions. */
+export async function resolveAwsCredentialsForS3(): Promise<AwsCredentials | undefined> {
+  const credentials = resolveAwsCredentials()
+  if (credentials || process.env.AWS_SDK_LOAD_CONFIG !== "1") {
+    return credentials
+  }
+
+  // The provider handles SSO token caches, credential_process and role profiles.
+  // Do not hide a configured profile's failure behind anonymous signing.
+  const profile = process.env.AWS_PROFILE ?? "default"
+  const configPath = process.env.AWS_CONFIG_FILE || path.join(os.homedir(), ".aws", "config")
+  try {
+    const section = profile === "default" ? "default" : `profile ${profile}`
+    if (!parseIniSection(fs.readFileSync(configPath, "utf8"), section)) {
+      return undefined
+    }
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return undefined
+    }
+    throw error
+  }
+  const resolved = await fromIni({ profile })()
+  return {
+    accessKeyId: resolved.accessKeyId,
+    secretAccessKey: resolved.secretAccessKey,
+    sessionToken: resolved.sessionToken,
+  }
 }

@@ -32,6 +32,10 @@ export abstract class BaseS3Publisher extends Publisher {
 
   public abstract getS3UploadConfig(): S3UploadConfig
 
+  protected getResolvedS3UploadConfig(): Promise<S3UploadConfig> {
+    return Promise.resolve(this.getS3UploadConfig())
+  }
+
   public getUploadExtraParams(): S3UploadExtraParams {
     return {
       acl: this.options.acl !== null ? (this.options.acl ?? "public-read") : undefined,
@@ -53,28 +57,34 @@ export abstract class BaseS3Publisher extends Publisher {
 
     this.createProgressBar(fileName, -1)
 
-    const config = this.getS3UploadConfig()
-    const extraParams = this.getUploadExtraParams()
-
     return await cancellationToken.createPromise((resolve, reject, onCancel) => {
-      const { req, done } = startS3PutObject({
-        bucket: this.getBucketName(),
-        key,
-        file: task.file,
-        contentType: getS3ContentType(task.file),
-        ...config,
-        ...extraParams,
-      })
-
-      onCancel(() => req.destroy())
-
-      done
-        .then(() => {
-          try {
-            log.debug({ provider: this.providerName, file: fileName, bucket: this.getBucketName() }, "uploaded")
-          } finally {
-            resolve(undefined)
+      const config = this.getResolvedS3UploadConfig()
+      const extraParams = this.getUploadExtraParams()
+      config
+        .then(config => {
+          if (cancellationToken.cancelled) {
+            return
           }
+          const { req, done } = startS3PutObject({
+            bucket: this.getBucketName(),
+            key,
+            file: task.file,
+            contentType: getS3ContentType(task.file),
+            ...config,
+            ...extraParams,
+          })
+
+          onCancel(() => req.destroy())
+
+          done
+            .then(() => {
+              try {
+                log.debug({ provider: this.providerName, file: fileName, bucket: this.getBucketName() }, "uploaded")
+              } finally {
+                resolve(undefined)
+              }
+            })
+            .catch(reject)
         })
         .catch(reject)
     })

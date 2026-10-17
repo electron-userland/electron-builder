@@ -1,7 +1,7 @@
 import { InvalidConfigurationError, log } from "builder-util"
 import { S3Options } from "builder-util-runtime"
 import { PublishContext } from "../index.js"
-import { resolveAwsCredentials } from "./awsCredentials.js"
+import { resolveAwsCredentials, resolveAwsCredentialsForS3 } from "./awsCredentials.js"
 import { BaseS3Publisher, S3UploadConfig, S3UploadExtraParams } from "./baseS3Publisher.js"
 import { getBucketLocation } from "./bucketLocation.js"
 
@@ -54,6 +54,10 @@ export class S3Publisher extends BaseS3Publisher {
       forcePathStyle: this.info.forcePathStyle ?? undefined,
       credentials: resolveAwsCredentials(),
     }
+  }
+
+  protected async getResolvedS3UploadConfig(): Promise<S3UploadConfig> {
+    return { ...this.getS3UploadConfig(), credentials: await resolveAwsCredentialsForS3() }
   }
 
   public getUploadExtraParams(): S3UploadExtraParams {
