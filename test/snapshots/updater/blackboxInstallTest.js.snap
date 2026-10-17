@@ -3824,3 +3824,25 @@ exports[`linux install > compression: store > rpm - compression: store - compres
   ],
 }
 `;
+
+exports[`linux install > flatpak - arm64 1`] = `
+{
+  "linux": [
+    {
+      "arch": "arm64",
+      "file": "TestApp.flatpak",
+    },
+  ],
+}
+`;
+
+exports[`linux install > flatpak - x64 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "TestApp.flatpak",
+    },
+  ],
+}
+`;

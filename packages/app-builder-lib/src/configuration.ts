@@ -1093,9 +1093,9 @@ export interface MetadataDirectories {
    * custom NSIS scripts, etc.) that electron-builder reads during packaging.
    *
    * **Build resources are not copied into the packaged app.** If you need runtime access to a
-   * file (e.g. a tray icon), include it explicitly via the `files` option:
+   * file (e.g. a tray icon), include it explicitly via the `fileOptions.files` option:
    * ```json
-   * { "files": ["**\/*", "build/icon.*"] }
+   * { "fileOptions": { "files": ["**\/*", "build/icon.*"] } }
    * ```
    *
    * @default "build"

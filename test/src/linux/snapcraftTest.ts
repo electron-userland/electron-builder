@@ -347,19 +347,41 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
     })
   })
 
-  test("core24 keeps chrome-sandbox when browser-support sandbox is allowed", ({ expect }) => {
+  test("core24 default plugs launch with --no-sandbox and drop chrome-sandbox", ({ expect }) => {
     const appName = "sep"
     return app(expect, {
       targets: snapTarget,
       config: {
         extraMetadata: { name: appName },
         productName: "Sep",
-        // default config injects browser-support with allow-sandbox:true => no --no-sandbox
+        // default config injects plain browser-support (the Snap Store reserves allow-sandbox) => --no-sandbox
         snapcraft: { base: "core24" },
       },
       effectiveOptionComputed: async ({ snap }) => {
         delete snap.platforms
         expect(snap.apps?.[appName]?.command).toBe("command.sh")
+        expect(snap.plugs?.["browser-support"]).toEqual({ interface: "browser-support" })
+        expect(snap.apps?.[appName]?.plugs).toContain("browser-support")
+        const organize = snap.parts?.[appName]?.organize as Record<string, string> | undefined
+        expect(organize?.["chrome-sandbox"]).toBeUndefined()
+        return Promise.resolve(true)
+      },
+    })
+  })
+
+  test("core24 keeps chrome-sandbox when plugs explicitly allow the browser sandbox", ({ expect }) => {
+    const appName = "sep"
+    return app(expect, {
+      targets: snapTarget,
+      config: {
+        extraMetadata: { name: appName },
+        productName: "Sep",
+        // explicit browser-support with allow-sandbox:true (vetted publishers only) => no --no-sandbox
+        snapcraft: { base: "core24", core24: { plugs: ["default", { "browser-support": { "allow-sandbox": true } }] } },
+      },
+      effectiveOptionComputed: async ({ snap }) => {
+        delete snap.platforms
+        expect(snap.plugs?.["browser-support"]).toEqual({ interface: "browser-support", "allow-sandbox": true })
         const organize = snap.parts?.[appName]?.organize as Record<string, string> | undefined
         expect(organize?.["chrome-sandbox"]).toBe("app/chrome-sandbox")
         return Promise.resolve(true)
@@ -382,10 +404,12 @@ describe.heavy.ifEnv(hasSnapInstalled())("snapcraft", { concurrent: false, timeo
       effectiveOptionComputed: async ({ snap }) => {
         delete snap.platforms // arch-specific: varies by host; tested separately via armhf tests
         expect(snap).toMatchSnapshot()
-        // "default" should expand to the full default plug list plus "camera"
+        // "default" should expand to the full default plug set (including browser-support) plus "camera"
         const appPlugs = snap.apps?.testapp?.plugs
         expect(appPlugs).toContain("camera")
         expect(appPlugs).toContain("desktop")
+        expect(appPlugs).toContain("browser-support")
+        expect(snap.plugs?.["browser-support"]).toEqual({ interface: "browser-support" })
         return Promise.resolve(true)
       },
     }))

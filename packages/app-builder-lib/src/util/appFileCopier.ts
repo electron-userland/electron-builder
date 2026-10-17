@@ -1,8 +1,24 @@
-import { Arch, AsyncTaskManager, FileCopier, FileTransformer, InvalidConfigurationError, isEmptyOrSpaces, Link, log, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
+import {
+  Arch,
+  assertCopiedSymlinksContained,
+  AsyncTaskManager,
+  ExternalLinkPolicy,
+  FileCopier,
+  FileTransformer,
+  InvalidConfigurationError,
+  isEmptyOrSpaces,
+  Link,
+  log,
+  MAX_FILE_REQUESTS,
+  rebaseCopiedSymlinkTarget,
+  statOrNull,
+  walk,
+  WriteContainment,
+} from "builder-util"
 import { DEFAULT_IGNORED_PRODUCTION_DEPENDENCIES } from "../configuration.js"
 import { Stats } from "fs"
 import fsExtra from "fs-extra"
-import { mkdir, readlink } from "fs/promises"
+import { readlink } from "fs/promises"
 import * as path from "path"
 import asyncPool from "tiny-async-pool"
 import { isLibOrExe } from "../asar/unpackDetector.js"
@@ -16,6 +32,7 @@ import { AppFileWalker } from "./AppFileWalker.js"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
 import { NodeModuleInfo } from "../node-module-collector/types.js"
 import { archToNodeCpu } from "./archCompatibility.js"
+import { assertSourceFileInTrustedRoots } from "./trustedSourceRoots.js"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
@@ -25,22 +42,37 @@ export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   const src = fileSet.src
   const dest = fileSet.destination
   // get node_modules path relative to src and then append to dest
-  if (file.startsWith(src)) {
+  if (file.startsWith(src + path.sep)) {
     return path.join(dest, path.relative(src, file))
   }
   return dest
 }
 
-export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager, transformer: FileTransformer) {
+export interface CopyAppFilesOptions {
+  /** Every file, directory and symlink is written inside it, checked by its real path: the resources directory of the app. */
+  readonly containmentRoot: string
+  /** The real paths files may be copied from, see `getTrustedSourceRoots`. Each file is checked when given. */
+  readonly trustedSourceRoots?: ReadonlyArray<string> | null
+  /** The `fileOptions.allowExternalLinks` build option: allows a file outside the trusted source roots, or a kept symlink that leaves the containment root. */
+  readonly externalLinks?: ExternalLinkPolicy | null
+}
+
+/**
+ * Copies the files of the app when they are not packed into an asar archive. Like the asar packer, it refuses a file whose real path is
+ * outside the trusted source roots, writes only inside the containment root, checked by real path, and recreates a symlink only when it
+ * stays inside the containment root.
+ */
+export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Pick<Packager, "cancellationToken">, transformer: FileTransformer, options?: CopyAppFilesOptions | null) {
   const metadata = fileSet.metadata
   // search auto unpacked dir
   const taskManager = new AsyncTaskManager(packager.cancellationToken)
-  const createdParentDirs = new Set<string>()
+  const containment = new WriteContainment(options?.containmentRoot ?? fileSet.destination, "app file")
+  const trustedSourceRoots = options?.trustedSourceRoots
 
   const fileCopier = new FileCopier(file => {
     return !isLibOrExe(file)
   }, transformer)
-  const links: Array<Link> = []
+  const links: Array<Link & { source: string }> = []
   for (let i = 0, n = fileSet.files.length; i < n; i++) {
     const sourceFile = fileSet.files[i]
     const stat = metadata.get(sourceFile)
@@ -49,17 +81,18 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
       continue
     }
 
+    if (trustedSourceRoots != null) {
+      await assertSourceFileInTrustedRoots(sourceFile, trustedSourceRoots, options?.externalLinks)
+    }
+
     const destinationFile = getDestinationPath(sourceFile, fileSet)
     if (stat.isSymbolicLink()) {
-      links.push({ file: destinationFile, link: await readlink(sourceFile) })
+      links.push({ file: destinationFile, link: rebaseCopiedSymlinkTarget(fileSet.src, sourceFile, await readlink(sourceFile)), source: sourceFile })
       continue
     }
 
-    const fileParent = path.dirname(destinationFile)
-    if (!createdParentDirs.has(fileParent)) {
-      createdParentDirs.add(fileParent)
-      await mkdir(fileParent, { recursive: true })
-    }
+    // creates the directory once, checked by its real path, and removes a symlink planted at the destination
+    await containment.prepareFile(destinationFile)
 
     taskManager.addTask(fileCopier.copy(sourceFile, destinationFile, stat))
     if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
@@ -71,7 +104,12 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
     await taskManager.awaitTasks()
   }
 
-  await asyncPool(MAX_FILE_REQUESTS, links, it => fsExtra.ensureSymlink(it.link, it.file))
+  await asyncPool(MAX_FILE_REQUESTS, links, async it => {
+    await containment.prepareFile(it.file)
+    await fsExtra.ensureSymlink(it.link, it.file)
+  })
+  // the walker follows a symlink that leaves the app directory and copies what it points to, so a symlink kept as it is has to stay inside
+  await assertCopiedSymlinksContained(containment, links, [], "app file", options?.externalLinks)
 }
 
 // os path separator is used

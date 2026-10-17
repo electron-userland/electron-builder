@@ -41,6 +41,7 @@ export {
   AppImageOptions,
   CommonLinuxOptions,
   DebOptions,
+  FlatpakAdditionalArgs,
   FlatpakOptions,
   LinuxConfiguration,
   LinuxDesktopFile,

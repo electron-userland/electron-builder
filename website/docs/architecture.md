@@ -203,6 +203,8 @@ docker run --rm \
   /bin/bash -c "npm ci && npx electron-builder --linux"
 ```
 
+The `electronuserland/builder` images with a date tag newer than `-05.26` include `flatpak` and `flatpak-builder`; those up to `-05.26` include neither. To build the `flatpak` target this way, the configuration needs `flatpak.additionalArgs` with the two arguments for unprivileged containers (`--disable-rofiles-fuse` and `--disable-sandbox`), and a volume keeps the downloaded runtime between runs — see [Flatpak in the Docker Images](features/multi-platform-build.md#flatpak-in-the-docker-images).
+
 ### Building AppX on macOS (via Parallels VM)
 
 For AppX (Windows Store), `MakeAppx.exe` requires Windows. When building on macOS with Parallels Desktop (Pro Edition), electron-builder automatically detects and uses the running Windows VM.

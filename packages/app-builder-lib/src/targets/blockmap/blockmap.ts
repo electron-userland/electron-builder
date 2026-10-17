@@ -372,8 +372,9 @@ function normalizeBoundaries(boundaries: Array<number> | null | undefined): Arra
  * `options.regions` lets byte ranges of the input be chunked with their own parameters (see
  * `BuildBlockMapOptions`). Chunk boundaries are forced at both edges of every region and the chunker
  * state is reset there, so the blocks of a region depend only on the region's own bytes. Without
- * regions the output is exactly what the default chunker produces. Regions never affect the returned
- * `size` or `sha512`.
+ * regions the output is exactly what the default chunker produces. With `outFile`, regions never affect
+ * the returned `size` or `sha512` (the input is not modified); in append mode they change the appended
+ * block map and therefore the returned `size`, `sha512` and `blockMapSize`.
  *
  * Returned `sha512` is SHA-512 of the full file as it exists after the call.
  */

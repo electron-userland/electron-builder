@@ -45,16 +45,18 @@ const options = {
     output: "dist/artifacts/local",
     buildResources: "installer/resources"
   },
-  files: [
-    "out"
-  ],
-  extraFiles: [
-    {
-      from: "build/Release",
-      to: nodeAddonDir,
-      filter: "*.node"
-    }
-  ],
+  fileOptions: {
+    files: [
+      "out"
+    ],
+    extraFiles: [
+      {
+        from: "build/Release",
+        to: nodeAddonDir,
+        filter: "*.node"
+      }
+    ],
+  },
 
   win: {
     target: 'nsis'

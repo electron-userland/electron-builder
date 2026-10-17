@@ -69,6 +69,7 @@ export class DownloadedUpdateHelper {
     this._downloadedFileInfo = {
       fileName: updateFileName,
       sha512: fileInfo.info.sha512,
+      // unsigned launch hint by design (the installer is pinned by the signed sha512) — see canonicalizeForSigning
       isAdminRightsRequired: fileInfo.info.isAdminRightsRequired === true,
       ...(packageFile == null ? {} : { packageFileName: path.basename(packageFile), version: versionInfo.version }),
     }

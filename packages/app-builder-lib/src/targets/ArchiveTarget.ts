@@ -5,6 +5,7 @@ import { copyFiles, getFileMatchers } from "../fileMatcher.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { archive, shouldPreserveSymlinks, tar } from "./archive.js"
 import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder.js"
+import { getTrustedSourceRoots } from "../util/trustedSourceRoots.js"
 
 export class ArchiveTarget extends Target {
   readonly options: TargetSpecificOptions
@@ -68,7 +69,11 @@ export class ArchiveTarget extends Target {
           if (fileMatchers == null) {
             dirToArchive = appOutDir
           } else {
-            await copyFiles(fileMatchers, null, true)
+            await copyFiles(fileMatchers, null, true, {
+              roots: [dirToArchive, this.outDir],
+              allowedSymlinkRoots: await getTrustedSourceRoots(packager),
+              externalLinks: await packager.getExternalLinkPolicy(),
+            })
             withoutDir = true
           }
         }
@@ -77,6 +82,7 @@ export class ArchiveTarget extends Target {
           compression: packager.compression,
           withoutDir,
           preserveSymlinks: shouldPreserveSymlinks(packager.platform),
+          externalLinks: await packager.getExternalLinkPolicy(),
         }
         await archive(format, artifactPath, dirToArchive, archiveOptions)
 
