@@ -15,7 +15,7 @@ By default, electron-builder includes all files matching `**/*` from the app dir
 
 **Always excluded:**
 - `node_modules` dev dependencies (only production dependencies are included)
-- `*.iml`, `*.o`, `*.hprof`, `*.pyc`, `*.pyo`, `*.rbc`, `*.swp`, `.csproj`, `.sln`, `.slnx`, `.xproj`
+- The extensions of [`fileOptions.excludedExts`](./file-patterns.md#default-ignored-files) (`"default"`: `*.iml`, `*.hprof`, `*.orig`, `*.pyc`, `*.pyo`, `*.rbc`, `*.swp`, `*.csproj`, `*.sln`, `*.slnx`, `*.suo`, `*.xproj`, `*.cc`, `*.d.ts`, `*.mk`, `*.a`, `*.o`, `*.obj`, `*.forge-meta`, `*.pdb`), also in `node_modules`
 - `.editorconfig`, `._*`, `.DS_Store`, `.git`, `.hg`, `.svn`, `.gitignore`, `.gitattributes`
 - `__pycache__`, `.flowconfig`, `.idea`, `.vs`, `.nyc_output`
 - `appveyor.yml`, `.travis.yml`, `circle.yml`
@@ -24,7 +24,7 @@ By default, electron-builder includes all files matching `**/*` from the app dir
 - `*.d.ts` files inside node_modules
 - `node_modules/.bin`
 
-These exclusions are always applied even when you define custom patterns.
+These exclusions are applied even when you define custom patterns. To keep an excluded file, name it concretely in a `fileOptions.files` glob (e.g. `**/*.obj`), or change the excluded extensions with `fileOptions.excludedExts`.
 
 The file options are nested under `fileOptions` (`fileOptions.files`, `fileOptions.extraResources`, `fileOptions.extraFiles`), at the configuration root and in the platform sections (e.g. `mac.fileOptions`). A platform's lists are added to the root ones. Run `electron-builder migrate-schema` to move `files`, `extraResources` and `extraFiles` keys set directly on the configuration into `fileOptions`; see [file options](./migration/v27-breaking-changes.md#file-options-fileoptions).
 

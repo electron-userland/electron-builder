@@ -60,7 +60,7 @@ electron-builder excludes a set of files from the packaged app by default (devel
 
 Broad patterns such as `**/*` still honor the defaults; only a pattern that names the extension or directory concretely opts it back in. See [v27 Breaking Changes → `disableDefaultIgnoredFiles`](./migration/v27-breaking-changes.md#disabledefaultignoredfiles).
 
-The excluded **extensions** are set with `fileOptions.excludedExts`, which applies to the app files and the copied `node_modules`. `"default"` stands for the built-in list (which includes `obj` and `pdb`), any other entry adds an extension, and an entry starting with `!` removes one. A list without `"default"` replaces the defaults, `[]` excludes no extension, and a platform's list (e.g. `win.fileOptions.excludedExts`) replaces the root one:
+The excluded **extensions** are set with `fileOptions.excludedExts`, which applies to the app files and the copied `node_modules`. `"default"` stands for the built-in list (which includes `obj` and `pdb`), any other entry adds an extension, and an entry starting with `!` removes one. A list without `"default"` replaces the defaults, `[]` excludes no extension, and a later list replaces an earlier one: a platform's list (e.g. `win.fileOptions.excludedExts`) replaces the root one, `mas` / `masDev` replace `mac`'s, and an `extends` child's replaces its parent's:
 
 ```json5
 {

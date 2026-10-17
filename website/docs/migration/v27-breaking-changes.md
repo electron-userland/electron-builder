@@ -689,7 +689,7 @@ The root-level `includePdb` boolean is **removed**. v26 excluded a fixed list of
 - Any other entry adds that extension, e.g. `"map"`. Write it without a dot or glob (a leading `.` is ignored); an entry that is not a file extension fails the build.
 - An entry starting with `!` removes that extension from the others listed, wherever it appears in the list: `["default", "!pdb"]` is every default except `pdb`. `"!default"` is rejected. A `"!ext"` that removes nothing (e.g. `["!pdb"]` without `"default"`) has no effect and logs a warning.
 - The list **replaces** the defaults rather than being merged with them: list `"default"` to extend them. `["map"]` excludes only `.map` files, `[]` excludes no extension, and `null` (or omitting the option) is `["default"]`.
-- A platform's `fileOptions.excludedExts` **replaces** the root one rather than being added to it (unlike the `files` lists).
+- A later list **replaces** an earlier one rather than being added to it (unlike the `files` lists): a platform's `fileOptions.excludedExts` replaces the root one, `mas` / `masDev` replace `mac`'s, and an `extends` child's (or a programmatic or `-c` configuration's) replaces its parent's, so a later list can drop an earlier `"!pdb"`. A `null` value keeps the earlier list.
 - The extensions are excluded from the app files and from the copied `node_modules`. A `fileOptions.files` glob that names an excluded extension concretely (e.g. `**/*.pdb`) still includes those files in the app files, as described under [`disableDefaultIgnoredFiles`](#disabledefaultignoredfiles).
 
 ```json5
@@ -709,7 +709,7 @@ The root-level `includePdb` boolean is **removed**. v26 excluded a fixed list of
 }
 ```
 
-`migrate-schema` rewrites `includePdb` in static and JS/TS configs: `true` becomes `"fileOptions": { "excludedExts": ["default", "!pdb"] }`, and `false` is removed. When a platform section already sets its own `fileOptions.excludedExts`, `"!pdb"` is appended to that list too, because it replaces the root one. In a JS/TS config, an `includePdb` whose value is not a literal `true` / `false` (e.g. `includePdb: process.env.CI === "true"`) is left in place with a warning — rewrite it by hand. A config that still sets `includePdb` fails the build with a message naming `fileOptions.excludedExts`.
+`migrate-schema` rewrites `includePdb` in static and JS/TS configs: `true` becomes `"fileOptions": { "excludedExts": ["default", "!pdb"] }`, and `false` is removed. When a platform section already sets its own `fileOptions.excludedExts` that excludes `.pdb` files (it lists `"default"` or `"pdb"`), `"!pdb"` is appended to that list too, because it replaces the root one; an existing root list gets `"!pdb"` the same way. A list that does not exclude `.pdb` files is left as it is. In a JS/TS config, an `includePdb` whose value is not a literal `true` / `false` (e.g. `includePdb: process.env.CI === "true"`) is left in place with a warning — rewrite it by hand. A config that still sets `includePdb` fails the build with a message naming `fileOptions.excludedExts`.
 
 ---
 
