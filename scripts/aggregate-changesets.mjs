@@ -21,8 +21,8 @@
 //   --notes <pkg>@<ver>    print the GitHub release body of that tag from CHANGELOG.md (no GitHub calls)
 //   --max-chars <n>        with --notes: shorten the body to at most <n> characters (default 125000, GitHub's limit)
 //
-// Runs in the repository root. Needs GITHUB_TOKEN (changesets-changelog-clean looks up PR/author links), except with
-// --notes.
+// Runs in the repository root. Needs GITHUB_TOKEN (changesets-changelog-clean looks up the PR of each commit), except
+// with --notes.
 import { execFile, execFileSync } from "node:child_process"
 import fs from "node:fs"
 import { createRequire } from "node:module"
@@ -445,7 +445,7 @@ function extractNotes(file, spec) {
 
 // GitHub release body: the section without its heading (the release title shows it) plus the compare link.
 // Over the limit it is shortened step by step:
-//   1. links: `[`#123`](…/pull/123) [`abc1234`](…/commit/…) [@user](…)` -> `#123` (GitHub autolinks it), nothing else lost
+//   1. links: `[`#123`](…/pull/123) [`abc1234`](…/commit/…)` -> `#123` (GitHub autolinks it), nothing else lost
 //   2-4. patch, then minor, then major entries reduced to their first line
 //   5. entries dropped from the end of the patch, minor, major groups
 function releaseNotes({ tag, body, compare }, limit, repo) {
@@ -457,7 +457,7 @@ function releaseNotes({ tag, body, compare }, limit, repo) {
 
   const notice = what => `> Shortened to fit GitHub's release size limit (${what}). The complete notes are in [CHANGELOG.md](https://github.com/${repo}/blob/${tag}/CHANGELOG.md).\n\n`
   const escaped = repo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-  const links = new RegExp(String.raw`\[\x60#(\d+)\x60\]\(https://github\.com/${escaped}/pull/\d+\)(?: \[\x60[0-9a-f]{7}\x60\]\([^)\s]+\))?(?: \[@[^\]]+\]\([^)\s]+\))?`, "g")
+  const links = new RegExp(String.raw`\[\x60#(\d+)\x60\]\(https://github\.com/${escaped}/pull/\d+\)(?: \[\x60[0-9a-f]{7}\x60\]\([^)\s]+\))?`, "g")
 
   // groups -> items (first line + continuation lines)
   const blocks = []

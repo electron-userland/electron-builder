@@ -1,7 +1,9 @@
 import { spawnSync } from "node:child_process"
 import * as fs from "node:fs"
+import { createRequire } from "node:module"
 import * as path from "node:path"
 import { TmpDir } from "temp-file"
+import { vi } from "vitest"
 
 // scripts/aggregate-changesets.mjs on throwaway git repos versioned by the real changesets CLI (and its pnpm patches),
 // with an offline changelog generator instead of changesets-changelog-clean (which looks up PRs on GitHub)
@@ -263,9 +265,8 @@ describe("aggregate-changesets", () => {
 
   test("shortens a release body to --max-chars, links first", async ({ expect, tmpDir }) => {
     const { dir } = await createRepo(tmpDir)
-    // entries as changesets-changelog-clean writes them
-    const links = (pr: number, sha: string, user: string) =>
-      `_[\`#${pr}\`](https://github.com/owner/repo/pull/${pr}) [\`${sha}\`](https://github.com/owner/repo/commit/${sha.repeat(6)}abcd) [@${user}](https://github.com/${user})_`
+    // entries as .changeset/changelog.cjs writes them
+    const links = (pr: number, sha: string) => `_[\`#${pr}\`](https://github.com/owner/repo/pull/${pr}) [\`${sha}\`](https://github.com/owner/repo/commit/${sha.repeat(6)}abcd)_`
     const compare = `${COMPARE}/electron-builder@1.0.0...electron-builder@2.0.0`
     write(
       dir,
@@ -277,32 +278,32 @@ describe("aggregate-changesets", () => {
         "",
         "### Major Changes",
         "",
-        `- feat!: builder breaking ${links(11, "aaaaaaa", "alice")} — \`app-builder-lib\``,
+        `- feat!: builder breaking ${links(11, "aaaaaaa")} — \`app-builder-lib\``,
         "",
         "  Migrate with `x`.",
         "",
         "### Minor Changes",
         "",
-        `- feat: a feature ${links(12, "bbbbbbb", "bob")}`,
+        `- feat: a feature ${links(12, "bbbbbbb")}`,
         "",
         "### Patch Changes",
         "",
-        `- fix: one ${links(13, "ccccccc", "carol")} — \`builder-util-runtime\``,
+        `- fix: one ${links(13, "ccccccc")} — \`builder-util-runtime\``,
         "",
         "  More about the fix, longer than the notice of the next step grows.",
-        `- fix: two ${links(14, "ddddddd", "dave")} · updated in [\`#15\`](https://github.com/owner/repo/pull/15)`,
+        `- fix: two ${links(14, "ddddddd")} · updated in [\`#15\`](https://github.com/owner/repo/pull/15)`,
         "",
         "## electron-updater@1.1.0",
         "",
         "### Patch Changes",
         "",
-        `- fix: updater ${links(16, "eeeeeee", "erin")}`,
+        `- fix: updater ${links(16, "eeeeeee")}`,
         "",
         `${LEGACY}`,
       ].join("\n")
     )
     const full = notes(dir, "electron-builder@2.0.0")
-    expect(full).toContain(links(11, "aaaaaaa", "alice"))
+    expect(full).toContain(links(11, "aaaaaaa"))
 
     const notice = (what: string) =>
       `> Shortened to fit GitHub's release size limit (${what}). The complete notes are in [CHANGELOG.md](https://github.com/owner/repo/blob/electron-builder@2.0.0/CHANGELOG.md).`
@@ -400,5 +401,31 @@ describe("aggregate-changesets", () => {
     const { stderr } = aggregate(dir, "--mode", "range", "--from", "electron-updater@1.1.0-alpha.0", "--to", "electron-updater@1.1.0-alpha.1", "--insert", "CHANGELOG.md")
     expect(stderr).toContain("inserted the electron-updater@1.1.0-alpha.1 section")
     expect(rootChangelog(dir)).toBe(released)
+  })
+
+  test("the changelog generator links an entry to its PR and commit, without its author", async ({ expect }) => {
+    // .changeset/changelog.cjs, with the GitHub lookup of changesets-changelog-clean (this very module instance) stubbed
+    const requireGenerator = createRequire(path.join(REPO_ROOT, ".changeset/changelog.cjs"))
+    const generator = requireGenerator("./changelog.cjs")
+    const githubInfo = createRequire(fs.realpathSync(requireGenerator.resolve("changesets-changelog-clean")))("@changesets/get-github-info")
+    const commit = "abcdef0123456789abcdef0123456789abcdef01"
+    const commitLink = `[\`abcdef0\`](https://github.com/owner/repo/commit/${commit})`
+    const getInfo = vi.spyOn(githubInfo, "getInfo")
+    try {
+      // a user with a PR, and an app without one
+      getInfo.mockResolvedValueOnce({
+        user: "alice",
+        pull: 11,
+        links: { commit: "", pull: "[#11](https://github.com/owner/repo/pull/11)", user: "[@alice](https://github.com/alice)" },
+      })
+      const line = await generator.getReleaseLine({ id: "a", summary: "feat: a feature\n\nMore about it.\n\n  - nested", releases: [], commit }, "minor", { repo: "owner/repo" })
+      expect(line).toBe(`- Feat: a feature _[\`#11\`](https://github.com/owner/repo/pull/11) ${commitLink}_\n\n  More about it.\n\n    - nested`)
+
+      getInfo.mockResolvedValueOnce({ user: "renovate", pull: null, links: { commit: "", pull: null, user: "[@renovate](https://github.com/apps/renovate)" } })
+      expect(await generator.getReleaseLine({ id: "b", summary: "fix: deps", releases: [], commit }, "patch", { repo: "owner/repo" })).toBe(`- Fix: deps _${commitLink}_`)
+      expect(getInfo).toHaveBeenCalledTimes(2)
+    } finally {
+      getInfo.mockRestore()
+    }
   })
 })
