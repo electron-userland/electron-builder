@@ -1315,12 +1315,14 @@ XElement {
           "isCData": false,
           "name": "bundle-version",
           "value": "
+            
         ",
         },
       ],
       "isCData": false,
       "name": "pkg-ref",
       "value": "
+        
     ",
     },
     XElement {
@@ -1369,12 +1371,14 @@ XElement {
           "isCData": false,
           "name": "allowed-os-versions",
           "value": "
+            
         ",
         },
       ],
       "isCData": false,
       "name": "volume-check",
       "value": "
+        
     ",
     },
     XElement {
@@ -1398,12 +1402,14 @@ XElement {
           "isCData": false,
           "name": "line",
           "value": "
+            
         ",
         },
       ],
       "isCData": false,
       "name": "choices-outline",
       "value": "
+        
     ",
     },
     XElement {
@@ -1437,6 +1443,7 @@ XElement {
       "isCData": false,
       "name": "choice",
       "value": "
+        
     ",
     },
     XElement {
@@ -1465,6 +1472,16 @@ XElement {
   "isCData": false,
   "name": "installer-gui-script",
   "value": "
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 ",
 }
 `;
