@@ -43,6 +43,7 @@ export {
   DebOptions,
   FlatpakAdditionalArgs,
   FlatpakOptions,
+  GentooOptions,
   LinuxConfiguration,
   LinuxDesktopFile,
   LinuxTargetSpecificOptions,
