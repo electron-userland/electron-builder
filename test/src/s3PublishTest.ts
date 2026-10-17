@@ -123,21 +123,15 @@ describe("S3Publisher — getS3UploadConfig", () => {
     expect(config.forcePathStyle).toBeUndefined()
   })
 
-  it("resolves profile credentials before signing the upload", async () => {
+  it("resolves profile credentials before signing the upload", async ({ tmpDir }) => {
     const { capturedOpts } = mockSuccessfulUpload()
-    const { writeFile, mkdtemp, rm } = await import("fs/promises")
-    const { tmpdir } = await import("os")
-    const fileDir = await mkdtemp(path.join(tmpdir(), "s3-upload-"))
-    const file = path.join(fileDir, "artifact.zip")
+    const { writeFile } = await import("fs/promises")
+    const file = path.join(await tmpDir.createTempDir({ prefix: "s3-upload" }), "artifact.zip")
     await writeFile(file, "artifact")
     vi.mocked(resolveS3Credentials).mockResolvedValueOnce({ accessKeyId: "CONFIG_KEY", secretAccessKey: "config-secret", sessionToken: "config-token" })
-    try {
-      await makeS3Publisher({ awsCredentials: { source: "profile", profile: "release" } }).upload(makeTask(file))
-      expect(capturedOpts()?.headers.Authorization).toContain("CONFIG_KEY")
-      expect(capturedOpts()?.headers["X-Amz-Security-Token"] ?? capturedOpts()?.headers["x-amz-security-token"]).toBe("config-token")
-    } finally {
-      await rm(fileDir, { recursive: true, force: true })
-    }
+    await makeS3Publisher({ awsCredentials: { source: "profile", profile: "release" } }).upload(makeTask(file))
+    expect(capturedOpts()?.headers.Authorization).toContain("CONFIG_KEY")
+    expect(capturedOpts()?.headers["X-Amz-Security-Token"] ?? capturedOpts()?.headers["x-amz-security-token"]).toBe("config-token")
   })
 
   it("uses credentials from the configured awsCredentials source", async () => {

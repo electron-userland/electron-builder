@@ -1,5 +1,4 @@
 import * as fs from "fs"
-import * as os from "os"
 import * as path from "path"
 import { Arch, Platform } from "app-builder-lib"
 import { getAppUpdatePublishConfiguration, stripBuildTimeOnlyPublishOptions, writeAppUpdateYaml } from "app-builder-lib/src/publish/PublishManager"
@@ -30,16 +29,12 @@ test("getAppUpdatePublishConfiguration drops awsCredentials from the s3 config",
   expect(publishConfig).not.toHaveProperty("awsCredentials")
 })
 
-test("writeAppUpdateYaml never writes awsCredentials", async ({ expect }) => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "app-update-yml-"))
-  try {
-    await writeAppUpdateYaml(dir, { provider: "s3", bucket: "my-bucket", awsCredentials } as any)
-    const content = fs.readFileSync(path.join(dir, "app-update.yml"), "utf8")
-    expect(content).not.toMatch(/awsCredentials|release|\.aws/)
-    expect(yamlLoad(content)).toEqual({ provider: "s3", bucket: "my-bucket" })
-  } finally {
-    fs.rmSync(dir, { recursive: true, force: true })
-  }
+test("writeAppUpdateYaml never writes awsCredentials", async ({ expect, tmpDir }) => {
+  const dir = await tmpDir.createTempDir({ prefix: "app-update-yml" })
+  await writeAppUpdateYaml(dir, { provider: "s3", bucket: "my-bucket", awsCredentials } as any)
+  const content = fs.readFileSync(path.join(dir, "app-update.yml"), "utf8")
+  expect(content).not.toMatch(/awsCredentials|release|\.aws/)
+  expect(yamlLoad(content)).toEqual({ provider: "s3", bucket: "my-bucket" })
 })
 
 test("stripBuildTimeOnlyPublishOptions does not mutate its input", ({ expect }) => {

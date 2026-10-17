@@ -1,6 +1,5 @@
 import { createHash } from "crypto"
 import * as fs from "fs"
-import * as os from "os"
 import * as path from "path"
 import { Readable } from "stream"
 import { InvalidConfigurationError } from "builder-util"
@@ -46,14 +45,13 @@ function stubAmbientDecoys(options: { envKeys?: boolean } = {}): void {
   }
 }
 
-beforeEach(() => {
-  root = fs.mkdtempSync(path.join(os.tmpdir(), "s3-credentials-"))
+beforeEach(async ({ tmpDir }) => {
+  root = await tmpDir.getTempDir({ prefix: "s3-credentials" })
 })
 
 afterEach(() => {
   vi.unstubAllEnvs()
   vi.restoreAllMocks()
-  fs.rmSync(root, { recursive: true, force: true })
 })
 
 /** Runs `fn` and returns every process.env key it read. */
