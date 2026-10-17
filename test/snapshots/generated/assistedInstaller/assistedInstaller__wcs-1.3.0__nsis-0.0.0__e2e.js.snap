@@ -24,6 +24,7 @@ exports[`assisted > allowToChangeInstallationDirectory 1`] = `
       "file": "Test Custom Installation Dir Setup 1.1.0.exe",
       "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -33,15 +34,22 @@ exports[`assisted > allowToChangeInstallationDirectory 1`] = `
       "file": "Test Custom Installation Dir Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "Test Custom Installation Dir Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
@@ -75,6 +83,7 @@ exports[`assisted > assisted 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -84,9 +93,15 @@ exports[`assisted > assisted 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap3",
     },
   ],
 }
@@ -117,6 +132,7 @@ exports[`assisted > assisted, only perMachine 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
@@ -127,10 +143,16 @@ exports[`assisted > assisted, only perMachine 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap3",
     },
   ],
 }
@@ -144,6 +166,7 @@ exports[`assisted > assisted, only perMachine and elevated 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
@@ -154,10 +177,16 @@ exports[`assisted > assisted, only perMachine and elevated 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap3",
     },
   ],
 }

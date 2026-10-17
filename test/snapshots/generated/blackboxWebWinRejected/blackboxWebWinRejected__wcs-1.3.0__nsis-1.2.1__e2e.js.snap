@@ -8,6 +8,7 @@ exports[`blackboxWebWin > windows > nsis - web-installer update is rejected 1`] 
       "file": "TestApp Setup.exe",
       "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -17,15 +18,22 @@ exports[`blackboxWebWin > windows > nsis - web-installer update is rejected 1`] 
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup.exe",

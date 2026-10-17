@@ -464,6 +464,7 @@ exports[`macPackager > multiple asar resources 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -473,9 +474,15 @@ exports[`macPackager > multiple asar resources 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap3",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap3",
     },
   ],
 }
@@ -557,6 +564,7 @@ exports[`macPackager > one-package 1`] = `
       "file": "Test App ßW-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -566,6 +574,7 @@ exports[`macPackager > one-package 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -575,6 +584,7 @@ exports[`macPackager > one-package 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -584,20 +594,33 @@ exports[`macPackager > one-package 1`] = `
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap3",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap3",
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.dmg.blockmap3",
+      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
           },
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0.dmg",
@@ -971,6 +994,7 @@ exports[`macPackager > yarn two package.json w/ native module 1`] = `
       "arch": "universal",
       "file": "test-app-two-native-modules-1.1.1-universal-mac.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -980,9 +1004,15 @@ exports[`macPackager > yarn two package.json w/ native module 1`] = `
       "file": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
       "safeArtifactName": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "universal",
+      "file": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap3",
+      "safeArtifactName": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap3",
     },
   ],
 }

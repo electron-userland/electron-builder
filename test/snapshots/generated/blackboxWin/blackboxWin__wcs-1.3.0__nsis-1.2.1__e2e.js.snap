@@ -8,6 +8,7 @@ exports[`blackboxWin > windows > nsis - install on next launch 1`] = `
       "file": "TestApp Setup.exe",
       "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -17,15 +18,22 @@ exports[`blackboxWin > windows > nsis - install on next launch 1`] = `
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup.exe",
@@ -47,6 +55,7 @@ exports[`blackboxWin > windows > nsis - install on next launch 2`] = `
       "file": "TestApp Setup.exe",
       "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -56,15 +65,22 @@ exports[`blackboxWin > windows > nsis - install on next launch 2`] = `
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup.exe",
@@ -86,6 +102,7 @@ exports[`blackboxWin > windows > nsis - installer succeeds with sibling process 
       "file": "TestApp Setup.exe",
       "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -95,15 +112,22 @@ exports[`blackboxWin > windows > nsis - installer succeeds with sibling process 
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup.exe",
@@ -125,6 +149,7 @@ exports[`blackboxWin > windows > nsis - installer succeeds with sibling process 
       "file": "TestApp Setup.exe",
       "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -134,15 +159,22 @@ exports[`blackboxWin > windows > nsis - installer succeeds with sibling process 
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup.exe",
@@ -164,6 +196,7 @@ exports[`blackboxWin > windows > nsis - key rotation 1`] = `
       "file": "TestApp Setup.exe",
       "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -173,15 +206,22 @@ exports[`blackboxWin > windows > nsis - key rotation 1`] = `
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup.exe",
@@ -210,6 +250,7 @@ exports[`blackboxWin > windows > nsis - key rotation 2`] = `
       "file": "TestApp Setup.exe",
       "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -219,15 +260,22 @@ exports[`blackboxWin > windows > nsis - key rotation 2`] = `
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup.exe",
@@ -260,6 +308,7 @@ exports[`blackboxWin > windows > nsis - key rotation 3`] = `
       "file": "TestApp Setup.exe",
       "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -269,15 +318,22 @@ exports[`blackboxWin > windows > nsis - key rotation 3`] = `
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup.exe",
@@ -306,6 +362,7 @@ exports[`blackboxWin > windows > nsis - signed update manifest 1`] = `
       "file": "TestApp Setup.exe",
       "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -315,15 +372,22 @@ exports[`blackboxWin > windows > nsis - signed update manifest 1`] = `
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup.exe",
@@ -352,6 +416,7 @@ exports[`blackboxWin > windows > nsis - signed update manifest 2`] = `
       "file": "TestApp Setup.exe",
       "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -361,15 +426,22 @@ exports[`blackboxWin > windows > nsis - signed update manifest 2`] = `
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup.exe",
@@ -398,6 +470,7 @@ exports[`blackboxWin > windows > nsis - uninstaller icon differs from installer 
       "file": "TestApp Setup.exe",
       "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -407,15 +480,22 @@ exports[`blackboxWin > windows > nsis - uninstaller icon differs from installer 
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup.exe",
@@ -437,6 +517,7 @@ exports[`blackboxWin > windows > nsis 1`] = `
       "file": "TestApp Setup.exe",
       "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -446,15 +527,22 @@ exports[`blackboxWin > windows > nsis 1`] = `
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup.exe",
@@ -476,6 +564,7 @@ exports[`blackboxWin > windows > nsis 2`] = `
       "file": "TestApp Setup.exe",
       "safeArtifactName": "TestApp-Setup.exe",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -485,15 +574,22 @@ exports[`blackboxWin > windows > nsis 2`] = `
       "file": "TestApp Setup.exe.blockmap",
       "safeArtifactName": "TestApp-Setup.exe.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp Setup.exe.blockmap3",
+      "safeArtifactName": "TestApp-Setup.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup.exe",

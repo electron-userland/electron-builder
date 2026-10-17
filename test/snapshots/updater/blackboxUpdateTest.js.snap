@@ -7,6 +7,7 @@ exports[`mac > arm64 1`] = `
       "arch": "arm64",
       "file": "TestApp.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -15,15 +16,21 @@ exports[`mac > arm64 1`] = `
       "file": "TestApp.zip.blockmap",
       "safeArtifactName": "TestApp.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "file": "TestApp.zip.blockmap3",
+      "safeArtifactName": "TestApp.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp.zip",
@@ -94,6 +101,7 @@ exports[`mac > arm64 3`] = `
       "arch": "arm64",
       "file": "TestApp.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -102,15 +110,21 @@ exports[`mac > arm64 3`] = `
       "file": "TestApp.zip.blockmap",
       "safeArtifactName": "TestApp.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "file": "TestApp.zip.blockmap3",
+      "safeArtifactName": "TestApp.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp.zip",
@@ -181,6 +195,7 @@ exports[`mac > universal 1`] = `
       "arch": "universal",
       "file": "TestApp.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -189,15 +204,21 @@ exports[`mac > universal 1`] = `
       "file": "TestApp.zip.blockmap",
       "safeArtifactName": "TestApp.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "file": "TestApp.zip.blockmap3",
+      "safeArtifactName": "TestApp.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp.zip",
@@ -268,6 +289,7 @@ exports[`mac > universal 3`] = `
       "arch": "universal",
       "file": "TestApp.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -276,15 +298,21 @@ exports[`mac > universal 3`] = `
       "file": "TestApp.zip.blockmap",
       "safeArtifactName": "TestApp.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "file": "TestApp.zip.blockmap3",
+      "safeArtifactName": "TestApp.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp.zip",
@@ -355,6 +383,7 @@ exports[`mac > x64 1`] = `
       "arch": "x64",
       "file": "TestApp.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -363,15 +392,21 @@ exports[`mac > x64 1`] = `
       "file": "TestApp.zip.blockmap",
       "safeArtifactName": "TestApp.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "file": "TestApp.zip.blockmap3",
+      "safeArtifactName": "TestApp.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp.zip",
@@ -442,6 +477,7 @@ exports[`mac > x64 3`] = `
       "arch": "x64",
       "file": "TestApp.zip",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -450,15 +486,21 @@ exports[`mac > x64 3`] = `
       "file": "TestApp.zip.blockmap",
       "safeArtifactName": "TestApp.zip.blockmap",
       "updateInfo": {
+        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
+    },
+    {
+      "file": "TestApp.zip.blockmap3",
+      "safeArtifactName": "TestApp.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
+            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp.zip",

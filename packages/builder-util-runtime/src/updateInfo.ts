@@ -30,6 +30,13 @@ export interface BlockMapDataHolder {
   readonly sha512: string
 
   readonly isAdminRightsRequired?: boolean
+
+  /**
+   * `true` when a v3 block map (`<file>.blockmap3`, see `blockMapV3.ts`) was published next to the
+   * `.blockmap`, so a v3-capable updater can range-fetch it without probing. Absent for artifacts built
+   * before v3 and for embedded block maps (AppImage, NSIS web installer packages).
+   */
+  blockMapV3?: boolean
 }
 
 export interface PackageFileInfo extends BlockMapDataHolder {

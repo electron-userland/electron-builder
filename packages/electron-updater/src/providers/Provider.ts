@@ -1,4 +1,4 @@
-import { CancellationToken, configureRequestUrl, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { BLOCK_MAP_V3_FILE_SUFFIX, CancellationToken, configureRequestUrl, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import { URL } from "url"
@@ -32,9 +32,21 @@ export abstract class Provider<T extends UpdateInfo> {
   // By default, the blockmap file is in the same directory as the main file
   // But some providers may have a different blockmap file, so we need to override this method
   getBlockMapFiles(baseUrl: URL, oldVersion: string, newVersion: string, oldBlockMapFileBaseUrl: string | null = null): URL[] | Promise<URL[]> {
-    const newBlockMapUrl = newUrlFromBase(`${baseUrl.pathname}.blockmap`, baseUrl)
+    return this.getBlockMapFilesWithSuffix(baseUrl, oldVersion, newVersion, oldBlockMapFileBaseUrl, ".blockmap")
+  }
+
+  /**
+   * URLs of the range-fetchable block map v3 files (`<file>.blockmap3`), `[old, new]` — derived like {@link getBlockMapFiles}.
+   * Providers that locate block maps by asset name override this alongside `getBlockMapFiles`.
+   */
+  getBlockMapV3Files(baseUrl: URL, oldVersion: string, newVersion: string, oldBlockMapFileBaseUrl: string | null = null): URL[] | Promise<URL[]> {
+    return this.getBlockMapFilesWithSuffix(baseUrl, oldVersion, newVersion, oldBlockMapFileBaseUrl, BLOCK_MAP_V3_FILE_SUFFIX)
+  }
+
+  private getBlockMapFilesWithSuffix(baseUrl: URL, oldVersion: string, newVersion: string, oldBlockMapFileBaseUrl: string | null, suffix: string): URL[] {
+    const newBlockMapUrl = newUrlFromBase(`${baseUrl.pathname}${suffix}`, baseUrl)
     const oldBlockMapUrl = newUrlFromBase(
-      `${baseUrl.pathname.replace(new RegExp(escapeRegExp(newVersion), "g"), oldVersion)}.blockmap`,
+      `${baseUrl.pathname.replace(new RegExp(escapeRegExp(newVersion), "g"), oldVersion)}${suffix}`,
       oldBlockMapFileBaseUrl ? new URL(oldBlockMapFileBaseUrl) : baseUrl
     )
 
