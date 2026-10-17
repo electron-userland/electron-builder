@@ -156,12 +156,40 @@ jobs:
           echo "**Type:** \`${STEPS_DIST_TAG_OUTPUTS_BRANCH_TYPE}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
-          echo '${STEPS_CHANGESETS_OUTPUTS_PUBLISHEDPACKAGES}' >> $GITHUB_STEP_SUMMARY
+          echo "${STEPS_CHANGESETS_OUTPUTS_PUBLISHEDPACKAGES}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
         env:
           STEPS_DIST_TAG_OUTPUTS_TAG: ${{ steps.dist-tag.outputs.tag }}
           STEPS_DIST_TAG_OUTPUTS_BRANCH_TYPE: ${{ steps.dist-tag.outputs.branch_type }}
           STEPS_CHANGESETS_OUTPUTS_PUBLISHEDPACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
+
+      # changesets/action created one GitHub release per tag (electron-builder@<v>, electron-updater@<v>) whose body is
+      # that package's own CHANGELOG.md section; use its sub-section of the root CHANGELOG.md instead. Every body is
+      # built before any release is edited, so a tag missing from CHANGELOG.md fails the step without touching a release.
+      # Re-running the job does not run this step again (the tags exist, so nothing is published): redo a failed edit with
+      #   node scripts/aggregate-changesets.mjs --notes <tag> > notes.md && gh release edit <tag> --notes-file notes.md
+      - name: Release notes from the root CHANGELOG.md
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          # github.token cannot edit releases (permissions: {}); the app token can
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
+        run: |
+          set -euo pipefail
+          tags=$(node -e 'for (const p of JSON.parse(process.env.PUBLISHED_PACKAGES)) console.log(`${p.name}@${p.version}`)')
+          i=0
+          for tag in $tags; do
+            i=$((i + 1))
+            node scripts/aggregate-changesets.mjs --notes "$tag" > "$RUNNER_TEMP/release-notes-$i.md"
+          done
+          # edit every release even if one edit fails, then fail the step
+          failed=0
+          i=0
+          for tag in $tags; do
+            i=$((i + 1))
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --notes-file "$RUNNER_TEMP/release-notes-$i.md" || failed=1
+          done
+          exit $failed
 
       - name: No changes to publish
         if: steps.changesets.outputs.published != 'true'
