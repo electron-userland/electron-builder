@@ -1,4 +1,5 @@
 packages:
+  - "docker"
   - "packages/**"
   - "test"
   - "website"
@@ -35,7 +36,6 @@ patchedDependencies:
   estree-walker@3.0.3: patches/estree-walker@3.0.3.patch
 overrides:
   flatted: '>=3.4.2'
-  handlebars: '>=4.7.9'
   # --- Dependabot transitive-dependency security overrides ---
   shell-quote: '>=1.8.4 <2' # GHSA-w7jw-789q-3m8p (critical)
   esbuild: '>=0.28.1 <0.29' # GHSA-gv7w-rqvm-qjhr (high), GHSA-g7r4-m6w7-qqqr (low)

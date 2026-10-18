@@ -188,7 +188,9 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    *   compressing the asar saved. Without an `app.asar` (e.g. `asar` is disabled) there is nothing to store,
    *   so it behaves like `true`. Upgrading from an electron-builder without the finer chunking changes the
    *   block boundaries once: the first differential update from an installer built before it re-downloads
-   *   close to the whole asar, and updates between installers built with it are proportional again.
+   *   close to the whole asar, and updates between installers built with it are proportional again. Pair it
+   *   with `asar.contentAlignment` (e.g. `512`) so that a change which grows a file does not shift every
+   *   later file's offset in the asar header.
    * - anything else (`true`, `"compressed"`, unset) — differential-aware, whole package compressed.
    * @default true
    */
