@@ -1,7 +1,7 @@
 import { replaceDefault as _replaceDefault, Arch, copyDir, exec, log, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray, deepAssign, isValidKey, Nullish } from "builder-util-runtime"
 import { outputFile, readFile } from "fs-extra"
-import { chmod, copyFile, mkdir, readdir, rename, rm, writeFile } from "fs/promises"
+import { chmod, copyFile, mkdir, readdir, rename, writeFile } from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
 import { validateShellEmbeddable } from "../../frameworks/LibUiFramework"
@@ -285,9 +285,6 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
 
     await this.stageSnapFiles({ stageDir, appOutDir, hooksDir, extraAppArgs, isTemplate: true })
 
-    // Best-effort: remove chrome-sandbox from app dir before mksquashfs scans it.
-    await rm(path.join(appOutDir, "chrome-sandbox"), { force: true })
-
     // chmod -R g-s to avoid setgid bits in final image
     for (const dir of [stageDir, appOutDir, templateDir]) {
       await exec("chmod", ["-R", "g-s", dir]).catch(err => log.warn({ error: err.message }, "chmod g-s failed"))
@@ -296,6 +293,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptions> {
     const mksquashfsPath = await getMksquashfsPath(snapArch)
 
     // Collect top-level entries from each dir as individual path args (mirrors Go ReadDirContentTo)
+    // chrome-sandbox is filtered out here, not deleted: appOutDir is shared with the other Linux targets (deb, rpm, AppImage), which pack from it concurrently.
     const mksquashfsArgs: string[] = [
       ...(await readDirPaths(templateDir)),
       ...(await readDirPaths(stageDir)),
