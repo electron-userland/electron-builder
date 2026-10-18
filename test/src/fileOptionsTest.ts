@@ -198,7 +198,7 @@ describe("schema", () => {
 
   // e.g. `-c.fileOptions.excludedExts=default` on the command line
   test("accepts a single string for fileOptions.excludedExts at the root and per platform", async ({ expect }) => {
-    const config: Configuration = { fileOptions: { excludedExts: "default" }, win: { fileOptions: { excludedExts: "!pdb" } }, mac: { fileOptions: { excludedExts: "map" } } }
+    const config: Configuration = { fileOptions: { excludedExts: "default" }, win: { fileOptions: { excludedExts: ".pdb" } }, mac: { fileOptions: { excludedExts: "map" } } }
     await expect(validateConfiguration(config, new DebugLogger(false))).resolves.toBeUndefined()
   })
 

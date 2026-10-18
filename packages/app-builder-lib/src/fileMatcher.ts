@@ -19,6 +19,7 @@ import * as path from "path"
 import type { Configuration } from "./configuration.js"
 import type { Packager } from "./packager.js"
 import { FileSet, PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
+import { normalizeExcludedExtensions } from "./util/config/fileOptions.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { createFilter, hasMagic } from "./util/filter.js"
 
@@ -91,9 +92,6 @@ export const DEFAULT_EXCLUDED_EXTENSIONS: ReadonlyArray<string> = [
   "pdb",
 ]
 
-// An extension is spliced into a `!**/*.{…}` glob, so it may only hold characters that are literal there.
-const EXTENSION_PATTERN = /^[\w-]+(\.[\w-]+)*$/
-
 /**
  * The file extensions (without leading dot) excluded from the app files and the copied `node_modules`, from the
  * `fileOptions.excludedExts` build option: the platform-level value (`mac.fileOptions.excludedExts`, ...) when it is set,
@@ -101,31 +99,8 @@ const EXTENSION_PATTERN = /^[\w-]+(\.[\w-]+)*$/
  */
 export function resolveExcludedExtensions(config: Pick<Configuration, "fileOptions">, platformOptions: PlatformSpecificBuildOptions | Nullish): Array<string> {
   const entries = platformOptions?.fileOptions?.excludedExts ?? config.fileOptions?.excludedExts ?? [DEFAULT_KEYWORD]
-  const { result, unusedRemovals } = resolveDefaultKeywordList(asArray(entries).map(normalizeExcludedExtension), DEFAULT_EXCLUDED_EXTENSIONS)
-  for (const extension of unusedRemovals) {
-    log
-      .once(`excluded-exts-removal:${extension}`)
-      .warn(
-        `"!${extension}" in \`fileOptions.excludedExts\` has no effect: "${extension}" is not otherwise excluded. List "default" too to exclude the default extensions except "${extension}".`
-      )
-  }
-  return result
-}
-
-/** Validates a `fileOptions.excludedExts` entry and returns it as `"default"`, `"ext"` or `"!ext"`, without the leading dot. */
-function normalizeExcludedExtension(entry: string): string {
-  const isRemoval = entry.startsWith("!")
-  const extension = (isRemoval ? entry.substring(1) : entry).replace(/^\./, "")
-  if (extension === DEFAULT_KEYWORD) {
-    if (isRemoval) {
-      throw new InvalidConfigurationError(`"${entry}" in \`fileOptions.excludedExts\` is not supported: leave "default" out of the list to not exclude the default extensions.`)
-    }
-  } else if (!EXTENSION_PATTERN.test(extension)) {
-    throw new InvalidConfigurationError(
-      `"${entry}" in \`fileOptions.excludedExts\` is not a file extension: write the extension without a dot or glob, e.g. "pdb", or "!pdb" to remove it from the excluded ones.`
-    )
-  }
-  return isRemoval ? `!${extension}` : extension
+  // a "!ext" that removes nothing is reported by validateConfiguration, naming the section
+  return resolveDefaultKeywordList(normalizeExcludedExtensions(entries), DEFAULT_EXCLUDED_EXTENSIONS).result
 }
 
 // Hard cap on the number of strings a single pattern may expand to. Real opt-in patterns expand to a

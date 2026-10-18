@@ -363,9 +363,57 @@ export default {
     expect(run(result.code).status).toBe("no-op")
   })
 
-  test('an element the AST cannot read may be "default", so the list still gets "!pdb"', () => {
-    const result = run(`const base = ["map"]\nmodule.exports = { includePdb: true, fileOptions: { excludedExts: [...base] } }\n`, "electron-builder.cjs")
-    expect(result.code).toContain(`excludedExts: [...base, "!pdb"]`)
+  // "!pdb" appended to `[...base]` with an empty `base` would leave only removals, which the build rejects
+  test("includePdb: true next to a root list with an element the AST cannot read is left in place with a warning", () => {
+    const src = `const base = []\nmodule.exports = { includePdb: true, fileOptions: { excludedExts: [...base] } }\n`
+    const result = run(src, "electron-builder.cjs")
+    expect(result.status).toBe("no-op")
+    expect(result.code).toBe(src)
+    expect(result.warnings).toEqual([
+      expect.stringContaining('fileOptions.excludedExts has elements that cannot be read (a spread, an identifier, …); if it excludes .pdb files, add "!pdb" to it'),
+    ])
+  })
+
+  test('a platform list with an element the AST cannot read gets a warning instead of "!pdb"', () => {
+    const result = run(`const base = []\nmodule.exports = { includePdb: true, win: { fileOptions: { excludedExts: [...base] } } }\n`, "electron-builder.cjs")
+    expect(result.code).toContain("excludedExts: [...base]")
+    expect(result.code).not.toContain('[...base, "!pdb"]')
+    expect(result.code).toContain('excludedExts: ["default", "!pdb"]')
+    expect(result.warnings).toEqual([expect.stringContaining('win.fileOptions.excludedExts cannot be read; if it excludes .pdb files, add "!pdb" to it manually')])
+  })
+
+  test('includePdb: true kept next to a root list the AST cannot read still adds "!pdb" to a readable platform list', () => {
+    for (const rootList of ["[...base]", "shared"]) {
+      const result = run(
+        `const base = ["default"]\nconst shared = base\nmodule.exports = { includePdb: true, fileOptions: { excludedExts: ${rootList} }, win: { fileOptions: { excludedExts: ["default"] } } }\n`,
+        "electron-builder.cjs"
+      )
+      expect(result.code).toContain("includePdb: true")
+      expect(result.code).toContain(`excludedExts: ${rootList} }`)
+      expect(result.code).toContain('win: { fileOptions: { excludedExts: ["default", "!pdb"] } }')
+      expect(result.warnings).toHaveLength(1)
+      expect(run(result.code, "electron-builder.cjs").changes).toHaveLength(0)
+    }
+  })
+
+  // as migrateConfig, which reads only the string entries (the schema rejects the others)
+  test("a non-string literal element does not make a list unreadable", () => {
+    const result = run(
+      `module.exports = { includePdb: true, fileOptions: { excludedExts: ["default", 5] }, win: { fileOptions: { excludedExts: ["default", true] } } }\n`,
+      "electron-builder.cjs"
+    )
+    expect(result.code).toContain('excludedExts: ["default", 5, "!pdb"]')
+    expect(result.code).toContain('excludedExts: ["default", true, "!pdb"]')
+    expect(result.code).not.toContain("includePdb")
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  test("includePdb: false next to a root list with an element the AST cannot read is removed, since the list replaces a parent's", () => {
+    const result = run(`const base = ["map"]\nmodule.exports = { includePdb: false, fileOptions: { excludedExts: [...base] } }\n`, "electron-builder.cjs")
+    expect(result.code).not.toContain("includePdb")
+    expect(result.code).toContain("excludedExts: [...base]")
+    expect(result.changes.map(c => c.description)).toEqual([INCLUDE_PDB_CHANGES.removed])
+    expect(result.warnings).toHaveLength(0)
   })
 
   test.each<[string, string]>([

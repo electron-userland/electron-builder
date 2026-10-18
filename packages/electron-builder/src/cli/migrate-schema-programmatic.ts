@@ -1492,6 +1492,10 @@ class ConfigCodemod {
     const fileOptions = this.getObjectProp(root, "fileOptions")
     if (fileOptionsProp != null && fileOptions == null && this.propValue(root, "fileOptions")?.kind !== ts.SyntaxKind.NullKeyword) {
       this.warnings.push(`fileOptions is not an object literal; ${includePdbManualStep(includePdb)}`)
+      // a platform list replaces the root one, so it gets "!pdb" whatever the root list is
+      if (includePdb) {
+        this.appendPdbToPlatformLists(root)
+      }
       return []
     }
     const listProp = fileOptions == null ? null : this.getProp(fileOptions, "excludedExts")
@@ -1502,6 +1506,18 @@ class ConfigCodemod {
           ? 'fileOptions.excludedExts is not a string or array literal (or a spread may set it); add "!pdb" to it and remove includePdb: true manually.'
           : 'fileOptions.excludedExts is not a string or array literal (or a spread may set it); remove includePdb: false manually, and set excludedExts: ["default"] where it is unset (written out, it keeps overriding an includePdb: true from another config layer).'
       )
+      if (includePdb) {
+        this.appendPdbToPlatformLists(root)
+      }
+      return []
+    }
+
+    // "!pdb" appended to a list whose elements cannot be read could leave only removals (e.g. an empty spread), which the build rejects
+    if (includePdb && list !== undefined && list.kind !== ts.SyntaxKind.NullKeyword && this.listExcludesPdb(list) == null) {
+      this.warnings.push(
+        'fileOptions.excludedExts has elements that cannot be read (a spread, an identifier, …); if it excludes .pdb files, add "!pdb" to it, and remove includePdb: true manually.'
+      )
+      this.appendPdbToPlatformLists(root)
       return []
     }
 
@@ -1518,7 +1534,7 @@ class ConfigCodemod {
       this.changes.push({ key: "includePdb", description: created })
     } else if (!includePdb) {
       // the root list already replaces the parent's
-      this.changes.push({ key: "includePdb", description: this.listExcludesPdb(list) ? INCLUDE_PDB_CHANGES.removed : INCLUDE_PDB_CHANGES.listKeepsPdb })
+      this.changes.push({ key: "includePdb", description: this.listExcludesPdb(list) === false ? INCLUDE_PDB_CHANGES.listKeepsPdb : INCLUDE_PDB_CHANGES.removed })
     } else if (this.listExcludesPdb(list)) {
       this.appendPdbRemoval(list)
       this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.appended })
@@ -1529,6 +1545,13 @@ class ConfigCodemod {
       return entries
     }
 
+    this.appendPdbToPlatformLists(root)
+    return entries
+  }
+
+  /** For `includePdb: true`: adds "!pdb" to each platform-level `fileOptions.excludedExts` that excludes `.pdb` files, since it replaces the root list. */
+  private appendPdbToPlatformLists(root: any): void {
+    const ts = this.ts
     for (const platform of ALL_PLATFORM_KEYS) {
       const platformValue = this.propValue(root, platform)
       if (platformValue !== undefined && platformValue.kind !== ts.SyntaxKind.NullKeyword && !ts.isObjectLiteralExpression(platformValue)) {
@@ -1542,14 +1565,14 @@ class ConfigCodemod {
       if (platformList === undefined || platformList.kind === ts.SyntaxKind.NullKeyword) {
         continue
       }
-      if (!this.isExcludedExtsLiteral(platformList)) {
+      const excludesPdb = this.isExcludedExtsLiteral(platformList) ? this.listExcludesPdb(platformList) : null
+      if (excludesPdb == null) {
         this.warnings.push(`${platform}.fileOptions.excludedExts cannot be read; if it excludes .pdb files, add "!pdb" to it manually (includePdb: true).`)
-      } else if (this.listExcludesPdb(platformList)) {
+      } else if (excludesPdb) {
         this.appendPdbRemoval(platformList)
         this.changes.push(platformExcludedExtsPdbChange(platform))
       }
     }
-    return entries
   }
 
   /** True for an `excludedExts` value ruleIncludePdb can read and edit: an array literal, or a string literal (a one-entry list). */
@@ -1557,15 +1580,18 @@ class ConfigCodemod {
     return this.ts.isArrayLiteralExpression(list) || this.ts.isStringLiteralLike(list)
   }
 
-  /** `excludesPdb` for an array or string literal; an array element the AST cannot read (an identifier, a spread, …) may be "default". */
-  private listExcludesPdb(list: any): boolean {
+  /** `excludesPdb` for an array or string literal, or null when an array element cannot be read (an identifier, a spread, …). */
+  private listExcludesPdb(list: any): boolean | null {
     const ts = this.ts
     if (ts.isStringLiteralLike(list)) {
       return excludesPdb([list.text])
     }
     const elements = list.elements.map((el: any) => this.unwrap(el))
-    const read = elements.filter((el: any) => ts.isStringLiteralLike(el)).map((el: any) => el.text)
-    return excludesPdb(read.length === elements.length ? read : [...read, "default"])
+    // a non-string literal is skipped, as migrateConfig does; a spread, an identifier or a call could hold anything
+    if (elements.some((el: any) => !this.isLiteral(el))) {
+      return null
+    }
+    return excludesPdb(elements.filter((el: any) => ts.isStringLiteralLike(el)).map((el: any) => el.text))
   }
 
   /** Adds "!pdb" to an array literal, or turns a string literal into an array literal of it (its text kept) and "!pdb". */

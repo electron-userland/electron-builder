@@ -12,6 +12,7 @@ import {
   NSIS_PER_MACHINE_UPDATE_ADVISORY,
   NSIS_WEB_ADVISORY,
   pdbFilesPatternsAdvisory,
+  platformExcludedExtsPdbChange,
   PORTABLE_DEBUG_LOGGING_DROPPED,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
 } from "../../packages/electron-builder/src/cli/migrate-schema"
@@ -284,15 +285,21 @@ describe("migrateConfig — includePdb", () => {
 
   test.each<[string, Record<string, any>]>([
     ["fileOptions is not an object", { includePdb: true, fileOptions: ["x"] }],
-    [
-      "fileOptions.excludedExts is not a string or an array",
-      { includePdb: true, fileOptions: { excludedExts: { ext: "pdb" } }, win: { fileOptions: { excludedExts: ["default"] } } },
-    ],
+    ["fileOptions.excludedExts is not a string or an array", { includePdb: true, fileOptions: { excludedExts: { ext: "pdb" } } }],
   ])("includePdb: true is kept with a warning when %s", (problem, input) => {
     const result = migrateConfig(structuredClone(input))
     expect(result.migrated).toEqual(input)
     expect(result.modified).toBe(false)
     expect(result.warnings).toEqual([`${problem}; replace includePdb: true with fileOptions.excludedExts: ["default", "!pdb"] manually.`])
+  })
+
+  test('includePdb: true kept next to a root list it cannot migrate still adds "!pdb" to a platform list, which replaces the root one', () => {
+    const input = { includePdb: true, fileOptions: { excludedExts: { ext: "pdb" } }, win: { fileOptions: { excludedExts: ["default"] } } }
+    const result = migrateConfig(structuredClone(input))
+    expect(result.migrated).toEqual({ ...input, win: { fileOptions: { excludedExts: ["default", "!pdb"] } } })
+    expect(result.changes).toEqual([platformExcludedExtsPdbChange("win")])
+    expect(result.warnings).toEqual(['fileOptions.excludedExts is not a string or an array; replace includePdb: true with fileOptions.excludedExts: ["default", "!pdb"] manually.'])
+    expect(migrateConfig(result.migrated).changes).toHaveLength(0)
   })
 
   test("a second run makes no changes", () => {

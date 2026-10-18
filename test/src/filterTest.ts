@@ -702,17 +702,43 @@ describe("resolveExcludedExtensions", () => {
     expect(() => resolve(["default", entry])).toThrow(`"${entry}" in \`fileOptions.excludedExts\` is not a file extension`)
   })
 
-  test('a "!ext" that removes nothing warns once, suggesting to list "default"', ({ expect }) => {
-    // once-keys are per process: use an extension no other test removes, and forget earlier emissions
-    log.resetLimits("excluded-exts-removal:noop-a")
+  // validateConfiguration reports it, naming the section (see legacyConfigGuardTest)
+  test('resolving does not warn about a "!ext" that removes nothing', ({ expect }) => {
     const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
     try {
-      expect(resolve(["!noop-a"])).toEqual([])
+      expect(resolve(["obj", "!noop-a"])).toEqual(["obj"])
       expect(resolve(["map", "!noop-a"])).toEqual(["map"])
-      expect(warn).toHaveBeenCalledTimes(1)
-      const [message] = warn.mock.calls[0]
-      expect(message).toContain('"!noop-a" in `fileOptions.excludedExts` has no effect')
-      expect(message).toContain('List "default" too')
+      expect(warn).not.toHaveBeenCalled()
+    } finally {
+      warn.mockRestore()
+    }
+  })
+
+  // a list without "default" replaces the defaults, so removals alone would remove from nothing and exclude no extension at all
+  test.for<[Array<string> | string, string]>([
+    [["!pdb"], '["default","!pdb"]'],
+    [["!pdb", "!obj"], '["default","!pdb","!obj"]'],
+    ["!pdb", '["default","!pdb"]'],
+    [["!.pdb"], '["default","!pdb"]'],
+  ])('a list of removals only (%j) is a configuration error suggesting to list "default"', ([excludedExts, suggestion], { expect }) => {
+    for (const run of [
+      () => resolveExcludedExtensions({ fileOptions: { excludedExts } }, null),
+      // a platform value replaces the root value, so it must not be only removals either
+      () => resolveExcludedExtensions({ fileOptions: { excludedExts: ["default"] } }, { fileOptions: { excludedExts } }),
+    ]) {
+      expect(run).toThrow(InvalidConfigurationError)
+      expect(run).toThrow(`\`fileOptions.excludedExts\` ${JSON.stringify(excludedExts)} only removes extensions, so it would exclude no extension at all`)
+      expect(run).toThrow(`e.g. ${suggestion}.`)
+    }
+  })
+
+  test('an empty list, or removals with an added extension, is not "removals only"', ({ expect }) => {
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
+    try {
+      expect(resolve([])).toEqual([])
+      expect(resolve(["default"], [])).toEqual([])
+      expect(resolve(["map", "!pdb"])).toEqual(["map"])
+      expect(warn).not.toHaveBeenCalled()
     } finally {
       warn.mockRestore()
     }
@@ -746,18 +772,12 @@ describe("resolveExcludedExtensions", () => {
   test.for<[string, ReadonlyArray<string>]>([
     ["default", DEFAULT_EXCLUDED_EXTENSIONS],
     ["map", ["map"]],
-    ["!pdb", []],
+    [".pdb", ["pdb"]],
   ])("a single string %j resolves like a one-element list", ([entry, expected], { expect }) => {
-    // "!pdb" alone removes nothing and warns
-    const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
-    try {
-      expect(resolveExcludedExtensions({ fileOptions: { excludedExts: entry } }, null)).toEqual(expected)
-      expect(resolveExcludedExtensions({ fileOptions: { excludedExts: entry } }, null)).toEqual(resolve([entry]))
-      // a platform string replaces the root list
-      expect(resolveExcludedExtensions({ fileOptions: { excludedExts: ["default"] } }, { fileOptions: { excludedExts: entry } })).toEqual(expected)
-    } finally {
-      warn.mockRestore()
-    }
+    expect(resolveExcludedExtensions({ fileOptions: { excludedExts: entry } }, null)).toEqual(expected)
+    expect(resolveExcludedExtensions({ fileOptions: { excludedExts: entry } }, null)).toEqual(resolve([entry]))
+    // a platform string replaces the root list
+    expect(resolveExcludedExtensions({ fileOptions: { excludedExts: ["default"] } }, { fileOptions: { excludedExts: entry } })).toEqual(expected)
   })
 })
 
@@ -822,6 +842,12 @@ describe("getMainFileMatchers – default exclusions respect `files` re-includes
 
   test("an invalid fileOptions.excludedExts entry fails the matcher assembly", ({ expect }) => {
     expect(() => buildMatcherPatterns(["**/*"], ["default", "*.map"])).toThrow(InvalidConfigurationError)
+  })
+
+  test("a fileOptions.excludedExts of removals only fails the matcher assembly, also from a platform section", ({ expect }) => {
+    expect(() => buildMatcherPatterns(["**/*"], ["!pdb"])).toThrow(InvalidConfigurationError)
+    expect(() => buildMatcherPatterns(["**/*"], ["default"], { fileOptions: { excludedExts: ["!pdb"] } })).toThrow(InvalidConfigurationError)
+    expect(() => buildMatcherPatterns(["**/*"], ["default"], { fileOptions: { excludedExts: "!pdb" } })).toThrow(/only removes extensions/)
   })
 
   test("with **/*.obj, the obj exclusion stays and the matcher records the files entry that names obj (issue #6126)", ({ expect }) => {

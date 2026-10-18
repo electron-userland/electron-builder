@@ -7,11 +7,12 @@ import { deepAssign, Nullish } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Configuration } from "../../configuration.js"
+import { DEFAULT_EXCLUDED_EXTENSIONS } from "../../fileMatcher.js"
 import { FileSet, FilesBuildOptions } from "../../options/PlatformSpecificBuildOptions.js"
 import { reactCra } from "../../presets/rectCra.js"
 import { PACKAGE_VERSION } from "../../version.js"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
-import { forwardFlatFileOptionReads, isPlainObject, normalizeFileOptions, replaceMergedConfigExcludedExts } from "./fileOptions.js"
+import { forwardFlatFileOptionReads, isPlainObject, normalizeFileOptions, replaceMergedConfigExcludedExts, validateExcludedExtensionsOptions } from "./fileOptions.js"
 import { checkLegacyConfiguration } from "./legacyConfigGuard.js"
 import { validateSchema } from "./schemaValidator.js"
 import _fsExtra from "fs-extra"
@@ -272,6 +273,8 @@ export async function validateConfiguration(config: Configuration, debugLogger: 
 `
     },
   })
+
+  validateExcludedExtensionsOptions(config, DEFAULT_EXCLUDED_EXTENSIONS)
 }
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]

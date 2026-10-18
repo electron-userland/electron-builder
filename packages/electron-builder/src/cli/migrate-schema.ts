@@ -747,6 +747,10 @@ function migrateIncludePdb(c: Record<string, any>, changes: MigrationChange[], k
   if ((fileOptions != null && !isPlainObject(fileOptions)) || (list != null && !Array.isArray(list) && typeof list !== "string")) {
     const problem = isPlainObject(fileOptions) ? "fileOptions.excludedExts is not a string or an array" : "fileOptions is not an object"
     keptKeyWarnings.push(`${problem}; ${includePdbManualStep(includePdb)}`)
+    // a platform list replaces the root one, so it gets "!pdb" whatever the root list is
+    if (includePdb) {
+      appendPdbToPlatformLists(c, changes)
+    }
     return
   }
 
@@ -770,6 +774,11 @@ function migrateIncludePdb(c: Record<string, any>, changes: MigrationChange[], k
   } else {
     changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.unneeded })
   }
+  appendPdbToPlatformLists(c, changes)
+}
+
+/** For `includePdb: true`: adds "!pdb" to each platform-level `fileOptions.excludedExts` that excludes `.pdb` files, since it replaces the root list. */
+function appendPdbToPlatformLists(c: Record<string, any>, changes: MigrationChange[]): void {
   for (const platform of ALL_PLATFORM_KEYS) {
     const platformFileOptions = c[platform]?.fileOptions
     const platformList = platformFileOptions?.excludedExts

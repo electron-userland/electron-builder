@@ -1,8 +1,9 @@
 import { checkLegacyConfiguration, RESOLVED_LEGACY_CONFIG_OPTIONS, validateConfiguration, validateSchema } from "app-builder-lib/internal"
-import { DebugLogger, InvalidConfigurationError } from "builder-util"
+import { DebugLogger, InvalidConfigurationError, log } from "builder-util"
 import { readFileSync } from "fs"
 import * as path from "path"
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
+import { resolveExcludedExtensions } from "../../packages/app-builder-lib/src/fileMatcher"
 import { assertInstallerDebugLoggingSupported } from "../../packages/app-builder-lib/src/toolsets/nsis"
 
 function expectRejected(config: Record<string, any>): string {
@@ -164,6 +165,8 @@ describe("checkLegacyConfiguration — includePdb replaced by fileOptions.exclud
     const message = expectRejected({ includePdb: true })
     expect(message).toContain("`includePdb` was replaced by `fileOptions.excludedExts` in electron-builder v27.")
     expect(message).toContain('"excludedExts": ["default", "!pdb"]')
+    // the command-line form: one flag per entry (quoting is left to the shell: cmd.exe keeps single quotes)
+    expect(message).toContain("`-c.fileOptions.excludedExts=default -c.fileOptions.excludedExts=!pdb`, single-quoting the second one in an interactive bash or zsh")
     expect(message).toContain("electron-builder migrate-schema")
     expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#includepdb-fileoptionsexcludedexts")
   })
@@ -194,8 +197,37 @@ describe("checkLegacyConfiguration — includePdb replaced by fileOptions.exclud
       ["per platform", { linux: { fileOptions: { excludedExts: ["map"] } }, mac: { fileOptions: { excludedExts: ["default", "map"] } } }],
       ["null", { fileOptions: { excludedExts: null } }],
       ["empty", { win: { fileOptions: { excludedExts: [] } } }],
+      [
+        "in every platform section",
+        {
+          fileOptions: { excludedExts: ["default", "!pdb"] },
+          mac: { fileOptions: { excludedExts: null } },
+          mas: { fileOptions: { excludedExts: [] } },
+          // valid, though "!pdb" has no effect without "default" (resolving it warns)
+          masDev: { fileOptions: { excludedExts: ["map", "!pdb"] } },
+          win: { fileOptions: { excludedExts: "default" } },
+          linux: { fileOptions: { excludedExts: ["map"] } },
+        },
+      ],
     ])("accepts fileOptions.excludedExts %s", async (_name, config) => {
       await expect(validateConfiguration(config as any, logger)).resolves.toBeUndefined()
+    })
+
+    // checked for every platform section up front, not only when a target of that platform (e.g. mas-dev) is packed
+    test.each([
+      ["masDev.fileOptions.excludedExts", { masDev: { fileOptions: { excludedExts: ["*.map"] } } }, '"*.map" in `masDev.fileOptions.excludedExts` is not a file extension'],
+      ["win.fileOptions.excludedExts", { win: { fileOptions: { excludedExts: ["!pdb"] } } }, '`win.fileOptions.excludedExts` ["!pdb"] only removes extensions'],
+      ["mas.fileOptions.excludedExts", { mas: { fileOptions: { excludedExts: "!default" } } }, '"!default" in `mas.fileOptions.excludedExts` is not supported'],
+      ["fileOptions.excludedExts", { fileOptions: { excludedExts: ["!pdb"] } }, '`fileOptions.excludedExts` ["!pdb"] only removes extensions'],
+      [
+        "fileOptions.excludedExts, with valid platform values",
+        { fileOptions: { excludedExts: "!pdb" }, win: { fileOptions: { excludedExts: ["default"] } } },
+        '`fileOptions.excludedExts` "!pdb" only removes extensions',
+      ],
+    ])("rejects an invalid %s, naming its path", async (_name, config, message) => {
+      const result = validateConfiguration(config, logger)
+      await expect(result).rejects.toThrow(InvalidConfigurationError)
+      await expect(result).rejects.toThrow(message)
     })
 
     test.each([true, false])("rejects includePdb: %s, and so does scheme.json on its own", async value => {
@@ -207,6 +239,62 @@ describe("checkLegacyConfiguration — includePdb replaced by fileOptions.exclud
     test("rejects a fileOptions.excludedExts that is not a string or a list of strings", async () => {
       await expect(validateConfiguration({ fileOptions: { excludedExts: ["default", { ext: "pdb" }] } } as any, logger)).rejects.toThrow("excludedExts")
       await expect(validateConfiguration({ linux: { fileOptions: { excludedExts: { pdb: true } } } } as any, logger)).rejects.toThrow("excludedExts")
+    })
+
+    test.each([
+      ["mas", { mas: { fileOptions: { excludedExts: "!obj" } } }, "(it replaces the root list and `mac`'s rather than removing from them)"],
+      ["masDev", { masDev: { fileOptions: { excludedExts: ["!obj"] } } }, "(it replaces the root list, `mac`'s and `mas`'s rather than removing from them)"],
+      ["win", { win: { fileOptions: { excludedExts: ["!obj"] } } }, "(it replaces the root list rather than removing from it)"],
+    ])("a removals-only %s list is told that it replaces the lists before it", async (_name, config, note) => {
+      await expect(validateConfiguration(config as any, logger)).rejects.toThrow(note)
+    })
+
+    test("a removals-only root list is not told about other lists", async () => {
+      await expect(validateConfiguration({ fileOptions: { excludedExts: ["!obj"] } } as any, logger)).rejects.toThrow(/^(?![\s\S]*\(it replaces)[\s\S]*only removes extensions/)
+    })
+
+    test('a "!ext" that removes nothing is reported when the configuration is validated, naming the section, and not again when packing', async () => {
+      log.resetLimits()
+      const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
+      try {
+        const excludedExts = ["map", "!zzz-unused"]
+        await validateConfiguration({ masDev: { fileOptions: { excludedExts } } }, logger)
+        expect(warn.mock.calls.map(call => call[0])).toEqual([expect.stringContaining('"!zzz-unused" in `masDev.fileOptions.excludedExts` has no effect')])
+        expect(resolveExcludedExtensions({}, { fileOptions: { excludedExts } })).toEqual(["map"])
+        expect(warn).toHaveBeenCalledTimes(1)
+      } finally {
+        warn.mockRestore()
+        log.resetLimits()
+      }
+    })
+
+    test('the same "!ext" in two sections is reported for each, with advice that fits the list', async () => {
+      log.resetLimits()
+      const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
+      try {
+        await validateConfiguration(
+          {
+            fileOptions: { excludedExts: ["map", "!pdb"] },
+            win: { fileOptions: { excludedExts: ["obj", "!pdb"] } },
+            linux: { fileOptions: { excludedExts: ["default", "!zzz-none"] } },
+            mac: { fileOptions: { excludedExts: ["default", "!PDB"] } },
+            mas: { fileOptions: { excludedExts: ["map", "!PDB", "!MAP"] } },
+          },
+          logger
+        )
+        expect(warn.mock.calls.map(call => call[0])).toEqual([
+          '"!pdb" in `fileOptions.excludedExts` has no effect: "pdb" is not otherwise excluded. List "default" too to exclude the default extensions except "pdb".',
+          '"!PDB" in `mac.fileOptions.excludedExts` has no effect: "PDB" is not otherwise excluded. Extensions are case-sensitive: did you mean "!pdb"?',
+          // without "default", "!pdb" would not remove anything either
+          '"!PDB" in `mas.fileOptions.excludedExts` has no effect: "PDB" is not otherwise excluded. Extensions are case-sensitive, and the list does not have "default": list "default" and "!pdb" to exclude the default extensions except "pdb".',
+          '"!MAP" in `mas.fileOptions.excludedExts` has no effect: "MAP" is not otherwise excluded. Extensions are case-sensitive: did you mean "!map"?',
+          '"!pdb" in `win.fileOptions.excludedExts` has no effect: "pdb" is not otherwise excluded. List "default" too to exclude the default extensions except "pdb".',
+          '"!zzz-none" in `linux.fileOptions.excludedExts` has no effect: "zzz-none" is not otherwise excluded. Remove the entry.',
+        ])
+      } finally {
+        warn.mockRestore()
+        log.resetLimits()
+      }
     })
   })
 })

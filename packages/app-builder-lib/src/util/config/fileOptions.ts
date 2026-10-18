@@ -1,4 +1,5 @@
 import { InvalidConfigurationError, log } from "builder-util"
+import { DEFAULT_KEYWORD, resolveDefaultKeywordList } from "builder-util/internal"
 import { Nullish } from "builder-util-runtime"
 import { ALL_PLATFORM_KEYS, BREAKING_CHANGES_URL, FILE_OPTION_KEYS, FILE_OPTIONS_ANCHOR } from "./legacyOptions.js"
 
@@ -15,6 +16,79 @@ export function isPlainObject(value: unknown): value is Record<string, any> {
 export function hasFlatFileOption(holder: Record<string, any>, key: string): boolean {
   const descriptor = Object.getOwnPropertyDescriptor(holder, key)
   return descriptor != null && "value" in descriptor && descriptor.value !== undefined
+}
+
+// An extension is spliced into a `!**/*.{…}` glob, so it may only hold characters that are literal there.
+const EXTENSION_PATTERN = /^[\w-]+(\.[\w-]+)*$/
+
+/**
+ * Validates a `fileOptions.excludedExts` value and returns its entries as `"default"`, `"ext"` or `"!ext"`, without the leading dot. A list
+ * of removals only (e.g. `["!pdb"]`) is rejected: a list without "default" replaces the default extensions, so it would remove from nothing
+ * and exclude no extension at all. `optionPath` names the option in the errors (e.g. `mac.fileOptions.excludedExts`).
+ */
+export function normalizeExcludedExtensions(value: Array<string> | string, optionPath = "fileOptions.excludedExts"): Array<string> {
+  const entries = (Array.isArray(value) ? value : [value]).map(entry => normalizeExcludedExtension(entry, optionPath))
+  if (entries.length > 0 && entries.every(it => it.startsWith("!"))) {
+    // a platform list replaces the root one (a mas list also mac's, a masDev list mac's and mas's), so it cannot remove from those either
+    const section = optionPath.substring(0, optionPath.indexOf("."))
+    const replaced = section === "masDev" ? "the root list, `mac`'s and `mas`'s" : section === "mas" ? "the root list and `mac`'s" : "the root list"
+    const replaces = section === "fileOptions" ? "" : ` (it replaces ${replaced} rather than removing from ${section === "mas" || section === "masDev" ? "them" : "it"})`
+    throw new InvalidConfigurationError(
+      `\`${optionPath}\` ${JSON.stringify(value)} only removes extensions, so it would exclude no extension at all: a list without "default" replaces ` +
+        `the default extensions${replaces}. List "default" too to exclude the default extensions except those, e.g. ${JSON.stringify([DEFAULT_KEYWORD, ...entries])}.`
+    )
+  }
+  return entries
+}
+
+/** Warns, once per list and extension, about the `"!ext"` entries of a normalized list (`optionPath`) that remove nothing. */
+function warnUnusedRemovals(entries: ReadonlyArray<string>, defaultExtensions: ReadonlyArray<string>, optionPath: string): void {
+  const listsDefault = entries.includes(DEFAULT_KEYWORD)
+  const listed = [...(listsDefault ? defaultExtensions : []), ...entries.filter(it => it !== DEFAULT_KEYWORD && !it.startsWith("!"))]
+  const sameIgnoringCase = (candidates: ReadonlyArray<string>, extension: string) => candidates.find(it => it !== extension && it.toLowerCase() === extension.toLowerCase())
+  for (const extension of resolveDefaultKeywordList(entries, defaultExtensions).unusedRemovals) {
+    const listedCase = sameIgnoringCase(listed, extension)
+    const defaultCase = listsDefault ? undefined : sameIgnoringCase(defaultExtensions, extension)
+    const advice =
+      listedCase != null
+        ? `Extensions are case-sensitive: did you mean "!${listedCase}"?`
+        : !listsDefault && defaultExtensions.includes(extension)
+          ? `List "default" too to exclude the default extensions except "${extension}".`
+          : defaultCase != null
+            ? `Extensions are case-sensitive, and the list does not have "default": list "default" and "!${defaultCase}" to exclude the default extensions except "${defaultCase}".`
+            : "Remove the entry."
+    log.once(`excluded-exts-removal:${optionPath}:${extension}`).warn(`"!${extension}" in \`${optionPath}\` has no effect: "${extension}" is not otherwise excluded. ${advice}`)
+  }
+}
+
+function normalizeExcludedExtension(entry: string, optionPath: string): string {
+  const isRemoval = entry.startsWith("!")
+  const extension = (isRemoval ? entry.substring(1) : entry).replace(/^\./, "")
+  if (extension === DEFAULT_KEYWORD) {
+    if (isRemoval) {
+      throw new InvalidConfigurationError(`"${entry}" in \`${optionPath}\` is not supported: leave "default" out of the list to not exclude the default extensions.`)
+    }
+  } else if (!EXTENSION_PATTERN.test(extension)) {
+    throw new InvalidConfigurationError(
+      `"${entry}" in \`${optionPath}\` is not a file extension: write the extension without a dot or glob, e.g. "pdb", or "!pdb" to remove it from the excluded ones.`
+    )
+  }
+  return isRemoval ? `!${extension}` : extension
+}
+
+/**
+ * Validates `fileOptions.excludedExts` at the configuration root and in each platform section, so an invalid list fails the build up front
+ * rather than only when a target of that platform (e.g. `mas-dev`) is packed, and warns about its `"!ext"` entries that remove nothing, naming
+ * the section. `defaultExtensions` is the list `"default"` stands for. Runs after schema validation.
+ */
+export function validateExcludedExtensionsOptions(config: Record<string, any>, defaultExtensions: ReadonlyArray<string>): void {
+  forEachFileOptionsHolder(config, (holder, prefix) => {
+    const value = isPlainObject(holder.fileOptions) ? holder.fileOptions.excludedExts : null
+    if (value != null) {
+      const optionPath = `${prefix}fileOptions.excludedExts`
+      warnUnusedRemovals(normalizeExcludedExtensions(value, optionPath), defaultExtensions, optionPath)
+    }
+  })
 }
 
 /**
