@@ -1,3 +1,4 @@
+import { createHash } from "crypto"
 import { writeFile } from "fs/promises"
 import { blake2b } from "@noble/hashes/blake2.js"
 import { BlockInput, BlockMapV3Region, encodeBlockMapV3, parseBlockMapV3Header } from "builder-util-runtime"
@@ -23,6 +24,8 @@ export interface BuildBlockMapV3Options {
 export interface BuildBlockMapV3Result {
   /** input size in bytes (the `fileSize` recorded in the header) */
   size: number
+  /** base64 SHA-512 of the input, hashed in the same pass as the chunking (what update info records for the artifact) */
+  sha512: string
   groupCount: number
   blockCount: number
 }
@@ -31,7 +34,7 @@ export interface BuildBlockMapV3Result {
 const MAX_V3_BLOCK_SIZE = 0xffff
 
 /**
- * Builds the v3 block map (`BLOCK_MAP_V3_FILE_SUFFIX`, see `builder-util-runtime/blockMapV3`) of `inFile`
+ * Builds the v3 block map (the `blockmap: "v2"` format, see `builder-util-runtime/blockMapV3`) of `inFile`
  * and writes it to `outFile`.
  *
  * The blocks come from the same region-aware Rabin chunker as the v2 map (`chunkFile`): the default
@@ -50,9 +53,15 @@ export async function buildBlockMapV3(inFile: string, outFile: string, options: 
   }
 
   const blocks: Array<BlockInput> = []
-  const fileSize = await chunkFile(inFile, { regions, boundaries: options.boundaries }, (chunk, offset) => {
-    blocks.push({ digest: blake2b(chunk, { dkLen: 18 }), size: chunk.length, offset })
-  })
+  const fileHash = createHash("sha512")
+  const fileSize = await chunkFile(
+    inFile,
+    { regions, boundaries: options.boundaries },
+    (chunk, offset) => {
+      blocks.push({ digest: blake2b(chunk, { dkLen: 18 }), size: chunk.length, offset })
+    },
+    data => fileHash.update(data)
+  )
 
   const v3Regions: Array<BlockMapV3Region> = regions.map(region => ({
     offset: region.offset,
@@ -63,5 +72,5 @@ export async function buildBlockMapV3(inFile: string, outFile: string, options: 
   }))
   const encoded = encodeBlockMapV3(blocks, { fileSize, defaultChunker: DEFAULT_CHUNKER, regions: v3Regions })
   await writeFile(outFile, encoded)
-  return { size: fileSize, groupCount: parseBlockMapV3Header(encoded).groupCount, blockCount: blocks.length }
+  return { size: fileSize, sha512: fileHash.digest("base64"), groupCount: parseBlockMapV3Header(encoded).groupCount, blockCount: blocks.length }
 }

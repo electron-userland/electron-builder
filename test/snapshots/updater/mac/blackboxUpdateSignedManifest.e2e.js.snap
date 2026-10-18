@@ -7,7 +7,6 @@ exports[`mac > mac auto-update > x64 - signed update manifest 1`] = `
       "arch": "x64",
       "file": "TestApp.zip",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -17,22 +16,15 @@ exports[`mac > mac auto-update > x64 - signed update manifest 1`] = `
       "file": "TestApp.zip.blockmap",
       "safeArtifactName": "TestApp.zip.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp.zip.blockmap3",
-      "safeArtifactName": "TestApp.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp.zip",
@@ -109,7 +101,6 @@ exports[`mac > mac auto-update > x64 - signed update manifest 3`] = `
       "arch": "x64",
       "file": "TestApp.zip",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -119,22 +110,15 @@ exports[`mac > mac auto-update > x64 - signed update manifest 3`] = `
       "file": "TestApp.zip.blockmap",
       "safeArtifactName": "TestApp.zip.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp.zip.blockmap3",
-      "safeArtifactName": "TestApp.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp.zip",

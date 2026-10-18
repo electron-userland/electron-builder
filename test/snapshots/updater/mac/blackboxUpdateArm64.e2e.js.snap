@@ -7,7 +7,6 @@ exports[`mac > mac auto-update > arm64 1`] = `
       "arch": "arm64",
       "file": "TestApp.zip",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -17,22 +16,15 @@ exports[`mac > mac auto-update > arm64 1`] = `
       "file": "TestApp.zip.blockmap",
       "safeArtifactName": "TestApp.zip.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "arm64",
-      "file": "TestApp.zip.blockmap3",
-      "safeArtifactName": "TestApp.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp.zip",
@@ -102,7 +94,6 @@ exports[`mac > mac auto-update > arm64 3`] = `
       "arch": "arm64",
       "file": "TestApp.zip",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -112,22 +103,15 @@ exports[`mac > mac auto-update > arm64 3`] = `
       "file": "TestApp.zip.blockmap",
       "safeArtifactName": "TestApp.zip.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "arm64",
-      "file": "TestApp.zip.blockmap3",
-      "safeArtifactName": "TestApp.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp.zip",

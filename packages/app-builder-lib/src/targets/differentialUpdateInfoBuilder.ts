@@ -1,5 +1,5 @@
-import { Arch, exists, log } from "builder-util"
-import { BLOCK_MAP_V3_FILE_SUFFIX, BlockMapDataHolder, PackageFileInfo } from "builder-util-runtime"
+import { Arch, exists, InvalidConfigurationError, log } from "builder-util"
+import { BlockMapDataHolder, PackageFileInfo } from "builder-util-runtime"
 import { open } from "fs/promises"
 import * as path from "path"
 import { Node, readAsarHeader } from "../asar/asar.js"
@@ -11,6 +11,23 @@ import { buildBlockMapV3 } from "./blockmap/blockmapV3.js"
 import { findPreparedVerbatimRange, prepareVerbatimNeedle, prepareVerbatimNeedleFromBuffer, VerbatimNeedle, VerbatimRange } from "./blockmap/verbatimRange.js"
 
 export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
+
+/** The `.blockmap` formats electron-builder writes (the `blockmap` option); `"latest"` resolves to {@link LATEST_BLOCK_MAP_FORMAT}. */
+export type BlockMapFormat = "v1" | "v2"
+
+/** What `blockmap: "latest"` (the default) writes. */
+export const LATEST_BLOCK_MAP_FORMAT: BlockMapFormat = "v2"
+
+/** The format the `blockmap` option selects: `"v1"` (gzipped JSON) or `"v2"` (binary, range-fetchable); unset means `"latest"`. */
+export function resolveBlockMapFormat(value: unknown): BlockMapFormat {
+  if (value == null || value === "latest") {
+    return LATEST_BLOCK_MAP_FORMAT
+  }
+  if (value === "v1" || value === "v2") {
+    return value
+  }
+  throw new InvalidConfigurationError(`"blockmap" must be "v1", "v2" or "latest", got ${JSON.stringify(value)}`)
+}
 
 /**
  * Chunker parameters for a stored (`Copy`) archive member — e.g. `resources/app.asar` when
@@ -26,7 +43,7 @@ export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
 export const STORED_MEMBER_CHUNKER: ChunkerParams = { min: 4096, avg: 8192, max: 16384 }
 
 /**
- * `STORED_MEMBER_CHUNKER` counterpart for the v3 block map (`BLOCK_MAP_V3_FILE_SUFFIX`). A v3 map costs
+ * `STORED_MEMBER_CHUNKER` counterpart for the `blockmap: "v2"` format (the v3 map of `blockMapV3.ts`). A v3 map costs
  * ~10 B per block in the file but an updater fetches only the super-groups, groups and records that
  * changed, so the v2 trade-off (a finer chunker inflating a map that is re-downloaded in full) no longer
  * applies and the stored member can be chunked at 512 B / 1 KiB / 2 KiB: a one-line change then costs
@@ -229,12 +246,11 @@ async function findUnclaimedVerbatimRange(artifact: string, needle: VerbatimNeed
   }
 }
 
-/** `BuildBlockMapOptions` for `regions`, or `undefined` when there are none so the default chunker path is taken unchanged. */
-/** `BuildBlockMapOptions` of the v2 map plus what only the v3 map built next to it uses. */
+/** `BuildBlockMapOptions` for the `blockmap: "v1"` format, plus what only the `"v2"` format uses. */
 export interface DifferentialBlockMapOptions extends BuildBlockMapOptions {
   /**
-   * Forced block boundaries for the v3 map only (`BuildBlockMapV3Options.boundaries`); the v2 map keeps
-   * its chunking byte-for-byte for the updaters that download it in full.
+   * Forced block boundaries for the `"v2"` format only (`BuildBlockMapV3Options.boundaries`); a `"v1"` map keeps
+   * its chunking byte-for-byte, since every updater downloads it in full.
    */
   v3Boundaries?: Array<number> | null
 }
@@ -335,9 +351,18 @@ export async function createBlockmap(
   arch: Arch | null = null,
   options?: DifferentialBlockMapOptions
 ): Promise<BlockMapDataHolder> {
+  const format = resolveBlockMapFormat(packager.config.blockmap)
   const blockMapFile = `${file}${BLOCK_MAP_FILE_SUFFIX}`
-  log.info({ blockMapFile: log.filePath(blockMapFile) }, "building block map")
-  const updateInfo = await buildBlockMap(file, "gzip", blockMapFile, options == null ? undefined : { regions: options.regions })
+  log.info({ blockMapFile: log.filePath(blockMapFile), format }, "building block map")
+  let updateInfo: BlockMapDataHolder
+  if (format === "v1") {
+    updateInfo = await buildBlockMap(file, "gzip", blockMapFile, options == null ? undefined : { regions: options.regions })
+  } else {
+    // the stored members get the finer v2 chunker, and a stored asar a block boundary at every packed file
+    const built = await buildBlockMapV3(file, blockMapFile, { regions: toV3Regions(options?.regions), boundaries: options?.v3Boundaries })
+    log.debug({ blockMapFile: log.filePath(blockMapFile), blocks: built.blockCount, groups: built.groupCount }, "built block map")
+    updateInfo = { size: built.size, sha512: built.sha512 }
+  }
   await packager.emitArtifactBuildCompleted({
     file: blockMapFile,
     safeArtifactName: safeArtifactName == null ? null : `${safeArtifactName}${BLOCK_MAP_FILE_SUFFIX}`,
@@ -346,23 +371,5 @@ export async function createBlockmap(
     packager,
     updateInfo,
   })
-
-  // The v3 map is an additional artifact (never appended to the v2 file — old updaters gunzip + JSON.parse
-  // that one). It is always built: ~10 B per block, and a v3-capable updater then fetches only the groups
-  // that changed. Emitted without `updateInfo` so it is uploaded like any artifact but does not write
-  // update info; `blockMapV3` on the returned holder reaches the `files[]` entry of latest.yml via the
-  // main artifact's `updateInfo` (see `createUpdateInfo` in publish/updateInfoBuilder.ts).
-  const blockMapV3File = `${file}${BLOCK_MAP_V3_FILE_SUFFIX}`
-  log.info({ blockMapFile: log.filePath(blockMapV3File) }, "building block map v3")
-  const v3 = await buildBlockMapV3(file, blockMapV3File, { regions: toV3Regions(options?.regions), boundaries: options?.v3Boundaries })
-  log.debug({ blockMapFile: log.filePath(blockMapV3File), blocks: v3.blockCount, groups: v3.groupCount }, "built block map v3")
-  await packager.emitArtifactBuildCompleted({
-    file: blockMapV3File,
-    safeArtifactName: safeArtifactName == null ? null : `${safeArtifactName}${BLOCK_MAP_V3_FILE_SUFFIX}`,
-    target,
-    arch,
-    packager,
-  })
-  updateInfo.blockMapV3 = true
   return updateInfo
 }

@@ -115,7 +115,6 @@ exports[`detected github repo is reported once and written to app-update.yml 1`]
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -125,22 +124,15 @@ exports[`detected github repo is reported once and written to app-update.yml 1`]
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-mac.zip.blockmap3",
-      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
@@ -222,7 +214,6 @@ exports[`generic, github and r2 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -232,22 +223,15 @@ exports[`generic, github and r2 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-mac.zip.blockmap3",
-      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap3",
-    },
-    {
       "file": "alpha-mac.yml",
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -262,7 +246,6 @@ exports[`generic, github and r2 1`] = `
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -277,7 +260,6 @@ exports[`generic, github and r2 1`] = `
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -292,7 +274,6 @@ exports[`generic, github and r2 1`] = `
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -307,7 +288,6 @@ exports[`generic, github and r2 1`] = `
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -322,7 +302,6 @@ exports[`generic, github and r2 1`] = `
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
@@ -337,7 +316,6 @@ exports[`generic, github and r2 1`] = `
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -408,7 +386,6 @@ exports[`generic, github and spaces 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -418,22 +395,15 @@ exports[`generic, github and spaces 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-mac.zip.blockmap3",
-      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap3",
-    },
-    {
       "file": "alpha-mac.yml",
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -448,7 +418,6 @@ exports[`generic, github and spaces 1`] = `
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -463,7 +432,6 @@ exports[`generic, github and spaces 1`] = `
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -478,7 +446,6 @@ exports[`generic, github and spaces 1`] = `
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -493,7 +460,6 @@ exports[`generic, github and spaces 1`] = `
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -508,7 +474,6 @@ exports[`generic, github and spaces 1`] = `
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
@@ -523,7 +488,6 @@ exports[`generic, github and spaces 1`] = `
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -676,7 +640,6 @@ exports[`os macro 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -686,22 +649,15 @@ exports[`os macro 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-mac.zip.blockmap3",
-      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -772,7 +728,6 @@ exports[`repo detected from package.json is reported once at info level 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -782,22 +737,15 @@ exports[`repo detected from package.json is reported once at info level 1`] = `
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-mac.zip.blockmap3",
-      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",

@@ -1,5 +1,4 @@
 import {
-  BLOCK_MAP_V3_FILE_SUFFIX,
   CancellationToken,
   getGitlabAuthHeaders,
   GitlabOptions,
@@ -200,8 +199,8 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
   /**
    * Find blockmap file URL in assets map for a specific filename
    */
-  private findBlockMapInAssets(assets: Map<string, string>, filename: string, suffix = ".blockmap"): URL | null {
-    const possibleBlockMapNames = [`${filename}${suffix}`, `${this.normalizeFilename(filename)}${suffix}`]
+  private findBlockMapInAssets(assets: Map<string, string>, filename: string): URL | null {
+    const possibleBlockMapNames = [`${filename}.blockmap`, `${this.normalizeFilename(filename)}.blockmap`]
 
     for (const blockMapName of possibleBlockMapNames) {
       const assetUrl = assets.get(blockMapName)
@@ -264,21 +263,21 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
   /**
    * Find blockmap URLs from version assets
    */
-  private async findBlockMapUrlsFromAssets(oldVersion: string, newVersion: string, baseFilename: string, suffix = ".blockmap"): Promise<[URL | null, URL | null]> {
+  private async findBlockMapUrlsFromAssets(oldVersion: string, newVersion: string, baseFilename: string): Promise<[URL | null, URL | null]> {
     let newBlockMapUrl: URL | null = null
     let oldBlockMapUrl: URL | null = null
 
     // Get new version assets
     const newVersionAssets = await this.getVersionInfoForBlockMap(newVersion)
     if (newVersionAssets) {
-      newBlockMapUrl = this.findBlockMapInAssets(newVersionAssets, baseFilename, suffix)
+      newBlockMapUrl = this.findBlockMapInAssets(newVersionAssets, baseFilename)
     }
 
     // Get old version assets
     const oldVersionAssets = await this.getVersionInfoForBlockMap(oldVersion)
     if (oldVersionAssets) {
       const oldFilename = baseFilename.replace(new RegExp(escapeRegExp(newVersion), "g"), oldVersion)
-      oldBlockMapUrl = this.findBlockMapInAssets(oldVersionAssets, oldFilename, suffix)
+      oldBlockMapUrl = this.findBlockMapInAssets(oldVersionAssets, oldFilename)
     }
 
     return [oldBlockMapUrl, newBlockMapUrl]
@@ -289,36 +288,24 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     // Because each asset has an unique path that includes an identified hash code,
     // e.g. https://gitlab.com/-/project/71361100/uploads/051f27a925eaf679f2ad688105362acc/latest.yml
     if (this.options.uploadTarget === "project_upload") {
-      return await this.getBlockMapFilesFromAssets(oldVersion, newVersion, baseUrl, ".blockmap")
+      // Get the base filename from the URL to find corresponding blockmap files
+      const baseFilename = baseUrl.pathname.split("/").pop() || ""
+
+      // Try to find blockmap files in GitLab assets
+      const [oldBlockMapUrl, newBlockMapUrl] = await this.findBlockMapUrlsFromAssets(oldVersion, newVersion, baseFilename)
+
+      if (!newBlockMapUrl) {
+        throw newError(`Cannot find blockmap file for ${newVersion} in GitLab assets`, "ERR_UPDATER_BLOCKMAP_FILE_NOT_FOUND")
+      }
+
+      if (!oldBlockMapUrl) {
+        throw newError(`Cannot find blockmap file for ${oldVersion} in GitLab assets`, "ERR_UPDATER_BLOCKMAP_FILE_NOT_FOUND")
+      }
+
+      return [oldBlockMapUrl, newBlockMapUrl]
     } else {
       return super.getBlockMapFiles(baseUrl, oldVersion, newVersion, oldBlockMapFileBaseUrl)
     }
-  }
-
-  async getBlockMapV3Files(baseUrl: URL, oldVersion: string, newVersion: string, oldBlockMapFileBaseUrl: string | null = null): Promise<URL[]> {
-    if (this.options.uploadTarget === "project_upload") {
-      return await this.getBlockMapFilesFromAssets(oldVersion, newVersion, baseUrl, BLOCK_MAP_V3_FILE_SUFFIX)
-    } else {
-      return super.getBlockMapV3Files(baseUrl, oldVersion, newVersion, oldBlockMapFileBaseUrl)
-    }
-  }
-
-  private async getBlockMapFilesFromAssets(oldVersion: string, newVersion: string, baseUrl: URL, suffix: string): Promise<URL[]> {
-    // Get the base filename from the URL to find corresponding blockmap files
-    const baseFilename = baseUrl.pathname.split("/").pop() || ""
-
-    // Try to find blockmap files in GitLab assets
-    const [oldBlockMapUrl, newBlockMapUrl] = await this.findBlockMapUrlsFromAssets(oldVersion, newVersion, baseFilename, suffix)
-
-    if (!newBlockMapUrl) {
-      throw newError(`Cannot find blockmap file (${suffix}) for ${newVersion} in GitLab assets`, "ERR_UPDATER_BLOCKMAP_FILE_NOT_FOUND")
-    }
-
-    if (!oldBlockMapUrl) {
-      throw newError(`Cannot find blockmap file (${suffix}) for ${oldVersion} in GitLab assets`, "ERR_UPDATER_BLOCKMAP_FILE_NOT_FOUND")
-    }
-
-    return [oldBlockMapUrl, newBlockMapUrl]
   }
 
   resolveFiles(updateInfo: GitlabUpdateInfo): Array<ResolvedUpdateFileInfo> {

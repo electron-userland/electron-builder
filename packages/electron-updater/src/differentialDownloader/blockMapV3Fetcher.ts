@@ -14,6 +14,7 @@ import {
   groupHashOfRecords,
   groupTableStart,
   HttpExecutor,
+  isBlockMapV3,
   IndexRange,
   parseBlockMapV3Groups,
   parseBlockMapV3Header,
@@ -41,7 +42,7 @@ export const MAX_RANGES_PER_REQUEST = 200
 const MAX_REDIRECTS = 10
 
 export interface BlockMapV3FetchOptions {
-  /** URL of the NEW `.blockmap3` */
+  /** URL of the NEW `.blockmap` */
   readonly url: URL
   /** the cached OLD v3 map (complete file), or null when there is none — then the whole new map is downloaded with a plain GET */
   readonly oldMap: Buffer | null
@@ -54,7 +55,10 @@ export interface BlockMapV3FetchOptions {
 }
 
 export interface BlockMapV3FetchResult {
-  /** the complete NEW v3 map, byte-identical to the remote file */
+  /**
+   * the complete NEW block map, byte-identical to the remote file. Normally a v3 map; when the remote file turns out to be a v1
+   * (gzipped JSON) map it is downloaded whole and returned unverified — telling the formats apart is the caller's job (`isBlockMapV3`)
+   */
   readonly buffer: Buffer
   /** response body bytes received (headers excluded) */
   readonly wireBytes: number
@@ -91,7 +95,9 @@ interface RangeResponse {
  * 4. Assemble and verify every super-group and group hash before returning.
  *
  * Any HTTP error, 416, missing range support that cannot be recovered by a full GET, parse error or verification
- * mismatch throws — the caller (AppUpdater) falls back to the v2 path.
+ * mismatch throws — the caller (AppUpdater) falls back to a full download. A remote file that is not a v3 map (a v1
+ * map published under the same name, e.g. by a release built with `blockmap: "v1"`) is downloaded whole and returned
+ * as is, for the caller to detect.
  */
 export async function fetchBlockMapV3(options: BlockMapV3FetchOptions): Promise<BlockMapV3FetchResult> {
   const fetcher = new BlockMapV3Fetcher(options)
@@ -140,6 +146,9 @@ class BlockMapV3Fetcher {
     if (first.status === 200) {
       // server ignored Range — the body is the whole file
       return this.verifiedWhole(first.body)
+    }
+    if (!isBlockMapV3(first.body)) {
+      return await this.otherFormat(first)
     }
     const header = parseBlockMapV3Header(first.body)
     const fileSize = blockMapV3Size(header)
@@ -227,6 +236,10 @@ class BlockMapV3Fetcher {
   }
 
   private verifiedWhole(body: Buffer): BlockMapV3FetchResult {
+    if (!isBlockMapV3(body)) {
+      this.options.logger?.info?.(`Block map ${this.options.url.href} is not a v3 map; downloaded it whole`)
+      return this.result(body, { supers: 0, groups: 0 }, { supers: 0, groups: 0 })
+    }
     const map = decodeBlockMapV3(body)
     const expected = blockMapV3Size(map.header)
     if (body.length !== expected) {
@@ -234,6 +247,18 @@ class BlockMapV3Fetcher {
     }
     verifyBlockMapV3(body, map.header, map.supers, map.groups)
     return this.result(body, { supers: 0, groups: 0 }, { supers: map.supers.length, groups: map.groups.length })
+  }
+
+  /** The first Range response is not a v3 map: complete the download of the remote file (the rest of it, or all of it). */
+  private async otherFormat(first: RangeResponse): Promise<BlockMapV3FetchResult> {
+    let body = first.body
+    if (first.totalSize == null) {
+      body = await this.fetchWhole()
+    } else if (body.length < first.totalSize) {
+      const rest = await this.rangeRequest([{ start: body.length, end: first.totalSize }])
+      body = rest.status === 200 ? rest.body : Buffer.concat([body, rest.body])
+    }
+    return this.verifiedWhole(body)
   }
 
   private async fetchWhole(): Promise<Buffer> {

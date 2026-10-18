@@ -9,9 +9,17 @@ import { Platform } from "app-builder-lib"
 import { createUpdateInfoTasks, writeUpdateInfoFiles } from "app-builder-lib/internal"
 import { BlockMapRegion, buildBlockMap, ChunkerParams, chunkFile, DEFAULT_CHUNKER } from "app-builder-lib/src/targets/blockmap/blockmap.js"
 import { buildBlockMapV3 } from "app-builder-lib/src/targets/blockmap/blockmapV3.js"
-import { BLOCK_MAP_FILE_SUFFIX, createBlockmap, STORED_MEMBER_CHUNKER, STORED_MEMBER_CHUNKER_V3, toV3Regions } from "app-builder-lib/src/targets/differentialUpdateInfoBuilder.js"
-import { Arch } from "builder-util"
-import { BLOCK_MAP_V3_FILE_SUFFIX, BlockMapV3, BlockMapV3Group, decodeBlockMapV3, GenericServerOptions, GROUP_MAX, GROUP_MIN, HASH_LEN } from "builder-util-runtime"
+import {
+  BLOCK_MAP_FILE_SUFFIX,
+  createBlockmap,
+  LATEST_BLOCK_MAP_FORMAT,
+  resolveBlockMapFormat,
+  STORED_MEMBER_CHUNKER,
+  STORED_MEMBER_CHUNKER_V3,
+  toV3Regions,
+} from "app-builder-lib/src/targets/differentialUpdateInfoBuilder.js"
+import { Arch, InvalidConfigurationError } from "builder-util"
+import { BlockMapV3, BlockMapV3Group, decodeBlockMapV3, GenericServerOptions, GROUP_MAX, GROUP_MIN, HASH_LEN, isBlockMapV3 } from "builder-util-runtime"
 
 // Reproducible deterministic test data (same LCG as blockmapTest.ts)
 function makeTestData(size: number, seed = 12345): Buffer {
@@ -38,7 +46,7 @@ function loadBlake2b() {
 
 async function buildV3(dir: string, name: string, data: Buffer, regions?: Array<BlockMapRegion>) {
   const inFile = path.join(dir, `${name}.bin`)
-  const outFile = path.join(dir, `${name}${BLOCK_MAP_V3_FILE_SUFFIX}`)
+  const outFile = path.join(dir, `${name}${BLOCK_MAP_FILE_SUFFIX}`)
   await writeFile(inFile, data)
   const result = await buildBlockMapV3(inFile, outFile, { regions })
   const bytes = await readFile(outFile)
@@ -209,7 +217,7 @@ describe("buildBlockMapV3", () => {
     const inFile = path.join(dir, "big.bin")
     await writeFile(inFile, makeTestData(100_000, 5))
     await expect(
-      buildBlockMapV3(inFile, path.join(dir, "big.blockmap3"), { regions: [{ offset: 0, size: 50_000, chunker: { min: 4096, avg: 65536, max: 131072 } }] })
+      buildBlockMapV3(inFile, path.join(dir, "big.blockmap"), { regions: [{ offset: 0, size: 50_000, chunker: { min: 4096, avg: 65536, max: 131072 } }] })
     ).rejects.toThrow(/blockmap region #0: chunker\.max must not exceed 65535/)
   })
 })
@@ -291,7 +299,10 @@ describe("chunkFile (shared v2/v3 chunker loop)", () => {
   })
 })
 
-describe("createBlockmap — v3 emission", () => {
+describe("createBlockmap — one .blockmap, in the `blockmap` format", () => {
+  // the PlatformPackager surface createBlockmap touches
+  const blockMapPackager = (blockmap?: unknown) => ({ config: blockmap === undefined ? {} : { blockmap }, emitArtifactBuildCompleted: vi.fn().mockResolvedValue(undefined) })
+
   it("toV3Regions swaps the stored-member chunker and keeps everything else", ({ expect }) => {
     const custom: ChunkerParams = { min: 2048, avg: 4096, max: 8192 }
     const regions: Array<BlockMapRegion> = [
@@ -306,73 +317,107 @@ describe("createBlockmap — v3 emission", () => {
     ])
     expect(toV3Regions(null)).toEqual([])
     expect(toV3Regions(undefined)).toEqual([])
-    // the v2 regions are not mutated
+    // the v1 regions are not mutated
     expect(regions[0].chunker).toBe(STORED_MEMBER_CHUNKER)
     expect(STORED_MEMBER_CHUNKER_V3.max).toBeLessThanOrEqual(0xffff)
   })
 
-  it("emits the .blockmap3 as a second artifact (no updateInfo) and flags the returned holder with blockMapV3", async ({ expect, tmpDir }) => {
+  it('resolves the option: unset and "latest" mean the newest format; anything else is a configuration error', ({ expect }) => {
+    expect(LATEST_BLOCK_MAP_FORMAT).toBe("v2")
+    expect(resolveBlockMapFormat(undefined)).toBe("v2")
+    expect(resolveBlockMapFormat(null)).toBe("v2")
+    expect(resolveBlockMapFormat("latest")).toBe("v2")
+    expect(resolveBlockMapFormat("v1")).toBe("v1")
+    expect(resolveBlockMapFormat("v2")).toBe("v2")
+    expect(() => resolveBlockMapFormat("v3")).toThrow(InvalidConfigurationError)
+    expect(() => resolveBlockMapFormat(2)).toThrow(/"blockmap" must be "v1", "v2" or "latest"/)
+  })
+
+  it("writes the v2 format by default: one .blockmap artifact, carrying the artifact's size and sha512", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir()
     const data = makeTestData(600_000, 4321)
     const file = path.join(dir, "App Setup 1.0.0.exe")
     await writeFile(file, data)
     const regions: Array<BlockMapRegion> = [{ offset: 120_000, size: 300_000, chunker: STORED_MEMBER_CHUNKER }]
 
-    const packager = { emitArtifactBuildCompleted: vi.fn().mockResolvedValue(undefined) }
+    const packager = blockMapPackager()
     const target = { name: "nsis" }
     const updateInfo = await createBlockmap(file, target as any, packager as any, "App-Setup-1.0.0.exe", null, { regions })
 
-    expect(updateInfo.blockMapV3).toBe(true)
-    expect(updateInfo.size).toBe(data.length)
-    expect(updateInfo.sha512).toBe(createHash("sha512").update(data).digest("base64"))
-    expect(updateInfo.blockMapSize).toBeUndefined()
+    expect(updateInfo).toEqual({ size: data.length, sha512: createHash("sha512").update(data).digest("base64") })
+    expect(packager.emitArtifactBuildCompleted).toHaveBeenCalledTimes(1)
+    const [event] = packager.emitArtifactBuildCompleted.mock.calls[0]
+    expect(event).toEqual({ file: `${file}${BLOCK_MAP_FILE_SUFFIX}`, safeArtifactName: `App-Setup-1.0.0.exe${BLOCK_MAP_FILE_SUFFIX}`, target, arch: null, packager, updateInfo })
 
-    expect(packager.emitArtifactBuildCompleted).toHaveBeenCalledTimes(2)
-    const [v2Event] = packager.emitArtifactBuildCompleted.mock.calls[0]
-    const [v3Event] = packager.emitArtifactBuildCompleted.mock.calls[1]
-    expect(v2Event).toEqual({ file: `${file}${BLOCK_MAP_FILE_SUFFIX}`, safeArtifactName: `App-Setup-1.0.0.exe${BLOCK_MAP_FILE_SUFFIX}`, target, arch: null, packager, updateInfo })
-    expect(v3Event).toEqual({ file: `${file}${BLOCK_MAP_V3_FILE_SUFFIX}`, safeArtifactName: `App-Setup-1.0.0.exe${BLOCK_MAP_V3_FILE_SUFFIX}`, target, arch: null, packager })
-    expect(v3Event).not.toHaveProperty("updateInfo")
-    expect(v3Event).not.toHaveProperty("isWriteUpdateInfo")
-
-    // the v2 map is the unchanged v2 build (STORED_MEMBER_CHUNKER inside the region)
-    const v2 = JSON.parse(zlib.gunzipSync(await readFile(v2Event.file)).toString())
-    const v2Region = blocksInRange(v2.files[0].sizes, regions[0].offset, regions[0].size)
-    expectWithinParams(v2.files[0].sizes.slice(v2Region.first, v2Region.last), STORED_MEMBER_CHUNKER)
-
-    // the v3 map covers the same file with the same region at the finer v3 chunker
-    const v3 = decodeBlockMapV3(await readFile(v3Event.file))
-    expect(v3.header.fileSize).toBe(data.length)
-    expect(v3.header.regions).toEqual([{ offset: regions[0].offset, size: regions[0].size, ...STORED_MEMBER_CHUNKER_V3 }])
-    const v3Sizes = v3.records.map(r => r.size)
-    const v3Region = blocksInRange(v3Sizes, regions[0].offset, regions[0].size)
-    expectWithinParams(v3Sizes.slice(v3Region.first, v3Region.last), STORED_MEMBER_CHUNKER_V3)
-    expect(v3Region.last - v3Region.first).toBeGreaterThan(v2Region.last - v2Region.first)
-    // outside the region both maps are chunked identically
-    expect(v3Sizes.slice(0, v3Region.first)).toEqual(v2.files[0].sizes.slice(0, v2Region.first))
-    expect(v3Sizes.slice(v3Region.last)).toEqual(v2.files[0].sizes.slice(v2Region.last))
+    // the binary map, with the region at the finer v2 chunker
+    const bytes = await readFile(event.file)
+    expect(isBlockMapV3(bytes)).toBe(true)
+    const map = decodeBlockMapV3(bytes)
+    expect(map.header.fileSize).toBe(data.length)
+    expect(map.header.regions).toEqual([{ offset: regions[0].offset, size: regions[0].size, ...STORED_MEMBER_CHUNKER_V3 }])
+    const sizes = map.records.map(r => r.size)
+    const region = blocksInRange(sizes, regions[0].offset, regions[0].size)
+    expectWithinParams(sizes.slice(region.first, region.last), STORED_MEMBER_CHUNKER_V3)
   })
 
-  it("passes a null safeArtifactName through and builds v3 without regions", async ({ expect, tmpDir }) => {
+  it('blockmap: "v1" writes the gzipped JSON map with the 4/8/16 KiB stored-member chunker; same size and sha512', async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const data = makeTestData(600_000, 4321)
+    const regions: Array<BlockMapRegion> = [{ offset: 120_000, size: 300_000, chunker: STORED_MEMBER_CHUNKER }]
+    const build = async (name: string, blockmap?: string) => {
+      const file = path.join(dir, name)
+      await writeFile(file, data)
+      const packager = blockMapPackager(blockmap)
+      const updateInfo = await createBlockmap(file, {} as any, packager as any, null, null, { regions })
+      expect(packager.emitArtifactBuildCompleted).toHaveBeenCalledTimes(1)
+      return { updateInfo, bytes: await readFile(`${file}${BLOCK_MAP_FILE_SUFFIX}`) }
+    }
+    const v1 = await build("v1.exe", "v1")
+    const v2 = await build("v2.exe", "v2")
+    const latest = await build("latest.exe", "latest")
+
+    expect(isBlockMapV3(v1.bytes)).toBe(false)
+    expect(v1.updateInfo).toEqual(v2.updateInfo)
+    expect(latest.bytes.equals(v2.bytes)).toBe(true)
+
+    // the v1 map is the v1 build of buildBlockMap (STORED_MEMBER_CHUNKER inside the region)
+    const json = JSON.parse(zlib.gunzipSync(v1.bytes).toString())
+    const v1Region = blocksInRange(json.files[0].sizes, regions[0].offset, regions[0].size)
+    expectWithinParams(json.files[0].sizes.slice(v1Region.first, v1Region.last), STORED_MEMBER_CHUNKER)
+    // outside the region both formats are chunked identically; inside it v2 has more, smaller blocks
+    const v2Sizes = decodeBlockMapV3(v2.bytes).records.map(r => r.size)
+    const v2Region = blocksInRange(v2Sizes, regions[0].offset, regions[0].size)
+    expect(v2Region.last - v2Region.first).toBeGreaterThan(v1Region.last - v1Region.first)
+    expect(v2Sizes.slice(0, v2Region.first)).toEqual(json.files[0].sizes.slice(0, v1Region.first))
+    expect(v2Sizes.slice(v2Region.last)).toEqual(json.files[0].sizes.slice(v1Region.last))
+  })
+
+  it("passes a null safeArtifactName through and builds without regions", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir()
     const file = path.join(dir, "App-1.0.0-mac.zip")
     await writeFile(file, makeTestData(100_000, 9))
-    const packager = { emitArtifactBuildCompleted: vi.fn().mockResolvedValue(undefined) }
-    const updateInfo = await createBlockmap(file, {} as any, packager as any, null)
-    expect(updateInfo.blockMapV3).toBe(true)
+    const packager = blockMapPackager()
+    await createBlockmap(file, {} as any, packager as any, null)
     expect(packager.emitArtifactBuildCompleted.mock.calls.map(([event]) => [path.basename(event.file), event.safeArtifactName])).toEqual([
       [`App-1.0.0-mac.zip${BLOCK_MAP_FILE_SUFFIX}`, null],
-      [`App-1.0.0-mac.zip${BLOCK_MAP_V3_FILE_SUFFIX}`, null],
     ])
-    expect(decodeBlockMapV3(await readFile(`${file}${BLOCK_MAP_V3_FILE_SUFFIX}`)).header.regions).toEqual([])
+    expect(decodeBlockMapV3(await readFile(`${file}${BLOCK_MAP_FILE_SUFFIX}`)).header.regions).toEqual([])
   })
 
-  it("blockMapV3 reaches the files[] entry of latest.yml through the main artifact's updateInfo", async ({ expect, tmpDir }) => {
+  it("rejects an unknown blockmap value before building anything", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const file = path.join(dir, "App Setup 1.0.0.exe")
+    await writeFile(file, makeTestData(10_000, 5))
+    const packager = blockMapPackager("v3")
+    await expect(createBlockmap(file, {} as any, packager as any, null)).rejects.toThrow(InvalidConfigurationError)
+    expect(packager.emitArtifactBuildCompleted).not.toHaveBeenCalled()
+  })
+
+  it("the files[] entry of latest.yml is the same for either format: url, sha512 and size", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir()
     const file = path.join(dir, "App Setup 1.2.3.exe")
     await writeFile(file, makeTestData(50_000, 3))
-    const blockMapPackager = { emitArtifactBuildCompleted: vi.fn().mockResolvedValue(undefined) }
-    const updateInfo = await createBlockmap(file, {} as any, blockMapPackager as any, null)
+    const updateInfo = await createBlockmap(file, {} as any, blockMapPackager() as any, null)
 
     // the minimal PlatformPackager surface createUpdateInfoTasks touches
     const packager = {
@@ -388,11 +433,11 @@ describe("createBlockmap — v3 emission", () => {
       [{ provider: "generic", url: "https://example.com/updates" } as GenericServerOptions]
     )
     expect(tasks).toHaveLength(1)
-    expect(tasks[0].info.files).toEqual([{ url: "App Setup 1.2.3.exe", sha512: updateInfo.sha512, size: 50_000, blockMapV3: true }])
+    expect(tasks[0].info.files).toEqual([{ url: "App Setup 1.2.3.exe", sha512: updateInfo.sha512, size: 50_000 }])
 
     await writeUpdateInfoFiles(tasks, { emitArtifactCreated: vi.fn().mockResolvedValue(undefined) } as any)
     const yml: any = yamlLoad(await readFile(path.join(dir, "latest.yml"), "utf-8"))
-    expect(yml.files[0]).toEqual({ url: "App Setup 1.2.3.exe", sha512: updateInfo.sha512, size: 50_000, blockMapV3: true })
+    expect(yml.files[0]).toEqual({ url: "App Setup 1.2.3.exe", sha512: updateInfo.sha512, size: 50_000 })
     expect(yml.path).toBeUndefined()
   })
 })
@@ -408,7 +453,7 @@ describe("buildBlockMapV3 — boundaries", () => {
       boundaries.push(offset)
     }
     const inFile = path.join(dir, "bounded.bin")
-    const outFile = path.join(dir, `bounded${BLOCK_MAP_V3_FILE_SUFFIX}`)
+    const outFile = path.join(dir, `bounded${BLOCK_MAP_FILE_SUFFIX}`)
     await writeFile(inFile, data)
     const result = await buildBlockMapV3(inFile, outFile, { boundaries })
     const map = decodeBlockMapV3(await readFile(outFile))
@@ -432,26 +477,25 @@ describe("buildBlockMapV3 — boundaries", () => {
 })
 
 describe("createBlockmap — v3Boundaries", () => {
-  it("applies the boundaries to the .blockmap3 only; the v2 .blockmap is byte-identical without them", async ({ expect, tmpDir }) => {
+  it("applies the boundaries to the v2 format only; a v1 map is byte-identical without them", async ({ expect, tmpDir }) => {
     const dir = await tmpDir.createTempDir()
     const data = makeTestData(300_000, 12)
-    const packager = { emitArtifactBuildCompleted: vi.fn().mockResolvedValue(undefined) }
     const target = { name: "nsis" }
     const regions: Array<BlockMapRegion> = [{ offset: 50_000, size: 200_000, chunker: STORED_MEMBER_CHUNKER }]
     const v3Boundaries = [60_000, 90_000, 150_000, 249_999]
+    const build = async (name: string, blockmap: string, withBoundaries: boolean) => {
+      const file = path.join(dir, name)
+      await writeFile(file, data)
+      const packager = { config: { blockmap }, emitArtifactBuildCompleted: vi.fn().mockResolvedValue(undefined) }
+      await createBlockmap(file, target as any, packager as any, null, null, withBoundaries ? { regions, v3Boundaries } : { regions })
+      return readFileSyncAsBuffer(`${file}${BLOCK_MAP_FILE_SUFFIX}`)
+    }
 
-    const plainFile = path.join(dir, "plain.exe")
-    await writeFile(plainFile, data)
-    await createBlockmap(plainFile, target as any, packager as any, null, null, { regions })
-    const boundedFile = path.join(dir, "bounded.exe")
-    await writeFile(boundedFile, data)
-    await createBlockmap(boundedFile, target as any, packager as any, null, null, { regions, v3Boundaries })
+    const v1 = (bytes: Buffer) => zlib.gunzipSync(bytes).toString()
+    expect(v1(await build("v1-bounded.exe", "v1", true))).toBe(v1(await build("v1-plain.exe", "v1", false)))
 
-    const v2 = (file: string) => zlib.gunzipSync(readFileSyncAsBuffer(`${file}${BLOCK_MAP_FILE_SUFFIX}`)).toString()
-    expect(v2(boundedFile)).toBe(v2(plainFile))
-
-    const bounded = decodeBlockMapV3(await readFile(`${boundedFile}${BLOCK_MAP_V3_FILE_SUFFIX}`))
-    const plain = decodeBlockMapV3(await readFile(`${plainFile}${BLOCK_MAP_V3_FILE_SUFFIX}`))
+    const bounded = decodeBlockMapV3(await build("v2-bounded.exe", "v2", true))
+    const plain = decodeBlockMapV3(await build("v2-plain.exe", "v2", false))
     const startsOf = (map: BlockMapV3) => {
       const starts = new Set<number>()
       let offset = 0
@@ -464,7 +508,7 @@ describe("createBlockmap — v3Boundaries", () => {
     const boundedStarts = startsOf(bounded)
     const plainStarts = startsOf(plain)
     for (const boundary of v3Boundaries) {
-      expect(boundedStarts.has(boundary), `v3 block starts at ${boundary}`).toBe(true)
+      expect(boundedStarts.has(boundary), `v2 block starts at ${boundary}`).toBe(true)
     }
     expect(v3Boundaries.some(it => plainStarts.has(it))).toBe(false)
     expect(bounded.header.regions).toEqual(plain.header.regions)

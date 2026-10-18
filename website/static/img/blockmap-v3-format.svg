@@ -8,8 +8,8 @@
 </style>
   <rect width="1600" height="830" fill="#ffffff"/>
   <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker></defs>
-  <text x="40" y="44" class="t">Block map v3 (.blockmap3) — a range-fetchable, three-level map</text>
-  <text x="40" y="70" class="s">v2 is gzipped JSON, ~22 B per block, downloaded whole on every update. v3 is uncompressed with fixed-size tables, so an updater can fetch the parts it needs by byte range.</text>
+  <text x="40" y="44" class="t">Block map format "v2" (.blockmap) — a range-fetchable, three-level map</text>
+  <text x="40" y="70" class="s">v1 is gzipped JSON, ~22 B per block, downloaded whole on every update. v2 is uncompressed with fixed-size tables, so an updater can fetch the parts it needs by byte range.</text>
 
   <!-- 1. file layout -->
   <text x="40" y="118" class="h">1 · File layout — every offset is computable from the header</text>
@@ -58,18 +58,18 @@
   <!-- 3. cost -->
   <text x="40" y="548" class="h">3 · Why this changes the trade-off</text>
   <rect x="40" y="564" width="740" height="120" rx="8" fill="#f9fafb" stroke="#9ca3af" stroke-width="1.5"/>
-  <text x="56" y="588" class="lbl" font-weight="700">v2 (.blockmap, unchanged, still published)</text>
+  <text x="56" y="588" class="lbl" font-weight="700">blockmap: "v1" (gzipped JSON)</text>
   <text x="56" y="612" class="lbl">cost per update ≈ <tspan class="num">22 B × every block</tspan>, whole file, every time</text>
   <text x="56" y="634" class="lbl">32 MB asar: 38 KB at 16 KiB blocks → 560 KB at 1 KiB blocks</text>
   <text x="56" y="664" class="s">→ blocks finer than ~8 KiB cost more map than they save in data; floor ≈ 96 KB / one-line change</text>
   <rect x="820" y="564" width="740" height="120" rx="8" fill="#f1f6fc" stroke="#1565c0" stroke-width="1.5"/>
-  <text x="836" y="588" class="lbl" font-weight="700">v3 (.blockmap3, additional artifact)</text>
+  <text x="836" y="588" class="lbl" font-weight="700">blockmap: "v2" (the default, "latest")</text>
   <text x="836" y="612" class="lbl">cost per update ≈ <tspan class="num">super table + entries of changed supers + records of changed groups</tspan></text>
   <text x="836" y="634" class="lbl">32 MB asar, one-line change: 2.0 KB first request + 1.0 KB entries + 1.8 KB records = <tspan class="num">4.9 KB</tspan> of map</text>
   <text x="836" y="664" class="s">→ map cost grows with the change, not the installer, so 512 B blocks finally pay: 9.1 KB total (8.6 KB aligned)</text>
 
   <rect x="40" y="712" width="1520" height="86" rx="8" fill="#f3f4f6" stroke="#d1d5db"/>
   <text x="56" y="738" class="lbl" font-weight="700">Compatibility</text>
-  <text x="56" y="762" class="lbl">• v2 is emitted byte-for-byte as today with its 4/8/16 KiB stored-asar region; old electron-updater never sees .blockmap3.   • latest.yml files[] gains <tspan class="m">blockMapV3: true</tspan> (unknown keys are ignored).</text>
-  <text x="56" y="784" class="lbl">• Never appended to the .blockmap file: Node's gunzipSync concatenates gzip members and old updaters' JSON.parse would fail → full download.   • Same blake2b digests as v2, just 8 bytes; the final sha512 of the installer is still the safety net.</text>
+  <text x="56" y="762" class="lbl">• One .blockmap per artifact, either format; electron-updater tells them apart by the first bytes (<tspan class="m">EBM3</tspan> vs gzip).   • latest.yml is unchanged.</text>
+  <text x="56" y="784" class="lbl">• electron-updater before 7.0 cannot read v2 → one full download, and the update it installs can.   • Same blake2b digests as v1, just 8 bytes; the final sha512 of the installer is still the safety net.</text>
 </svg>

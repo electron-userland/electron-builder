@@ -8,7 +8,6 @@ exports[`assisted per-machine: update info has isAdminRightsRequired 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
-        "blockMapV3": true,
         "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
@@ -19,23 +18,16 @@ exports[`assisted per-machine: update info has isAdminRightsRequired 1`] = `
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.1.0.exe.blockmap3",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap3",
-    },
-    {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "isAdminRightsRequired": true,
             "sha512": "@sha512",
             "size": "@size",
@@ -139,7 +131,6 @@ exports[`per-machine without elevate.exe: update info has no isAdminRightsRequir
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -149,22 +140,15 @@ exports[`per-machine without elevate.exe: update info has no isAdminRightsRequir
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.1.0.exe.blockmap3",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW Setup 1.1.0.exe",
@@ -186,7 +170,6 @@ exports[`per-user without elevate.exe: update info has no isAdminRightsRequired 
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -196,22 +179,15 @@ exports[`per-user without elevate.exe: update info has no isAdminRightsRequired 
       "file": "Test App ßW Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "x64",
-      "file": "Test App ßW Setup 1.1.0.exe.blockmap3",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap3",
     },
     {
       "file": "latest.yml",
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW Setup 1.1.0.exe",

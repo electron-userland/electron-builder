@@ -19,6 +19,7 @@ import {
   verifyManifestSignatures,
   type LimitedLogger,
   decodeBlockMapV3,
+  isBlockMapV3,
   toBlockMap,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
@@ -40,7 +41,7 @@ import { Provider, ProviderPlatform } from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
-import { gunzipSync, gzipSync } from "zlib"
+import { gunzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
 import { fetchBlockMapV3 } from "./differentialDownloader/blockMapV3Fetcher.js"
@@ -1079,6 +1080,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     let updateFile = path.join(cacheDir, updateFileName)
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
 
+    const pendingBlockMapFile = path.join(cacheDir, "current.blockmap")
+    const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, "current.blockmap")
     const done = async (isSaveCache: boolean) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
       await taskOptions.done!({
@@ -1086,22 +1089,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         downloadedFile: updateFile,
         ...(packageFile == null ? {} : { packageFile }),
       })
-      // promote the block map(s) of the downloaded update to the cache. A differential download writes exactly one of the
-      // two formats, and its stale counterpart from a previous update must not survive: it no longer describes the file the
-      // next update starts from. The same holds when this download produced no block map at all but `taskOptions.done` above
-      // refreshed the cached installer: a stale block map next to a fresh file would poison the next differential download
-      // with a wrong copy plan (https://github.com/electron-userland/electron-builder/issues/10097). The differential
-      // downloader re-fetches the old block map from the server when no cached one exists.
-      const pendingBlockMapFiles = await Promise.all(BLOCK_MAP_FILE_NAMES.map(name => fsExtra.pathExists(path.join(cacheDir, name))))
-      if (pendingBlockMapFiles.some(it => it) || !taskOptions.downloadUpdateOptions.disableDifferentialDownload) {
-        for (let i = 0; i < BLOCK_MAP_FILE_NAMES.length; i++) {
-          const cachedBlockMapFile = path.join(downloadedUpdateHelper.cacheDir, BLOCK_MAP_FILE_NAMES[i])
-          if (pendingBlockMapFiles[i]) {
-            await fsExtra.copyFile(path.join(cacheDir, BLOCK_MAP_FILE_NAMES[i]), cachedBlockMapFile)
-          } else {
-            await fsExtra.remove(cachedBlockMapFile)
-          }
-        }
+      if (await fsExtra.pathExists(pendingBlockMapFile)) {
+        await fsExtra.copyFile(pendingBlockMapFile, cachedBlockMapFile)
+      } else if (!taskOptions.downloadUpdateOptions.disableDifferentialDownload) {
+        // this download did not produce a blockmap, but `taskOptions.done` above refreshes the cached installer —
+        // remove the cached blockmap too, so a stale one cannot sit next to a fresh file and poison the next
+        // differential download with a wrong copy plan (https://github.com/electron-userland/electron-builder/issues/10097).
+        // The differential downloader re-fetches the old blockmap from the server when no cached one exists.
+        await fsExtra.remove(cachedBlockMapFile)
       }
       return withLegacyArrayCompat(packageFile == null ? { updateFile } : { updateFile, packageFile }, this._logger)
     }
@@ -1153,9 +1148,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     // a fresh download starts — drop any blockmap left over from a previous update round, so that when this round
     // does not produce a new one (e.g. the differential download is skipped), the leftover cannot be promoted to the
     // cache next to a file it does not describe
-    for (const name of BLOCK_MAP_FILE_NAMES) {
-      await fsExtra.remove(path.join(cacheDir, name))
-    }
+    await fsExtra.remove(pendingBlockMapFile)
 
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
@@ -1215,15 +1208,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return true
       }
       const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-      // A manifest that names the file's block map (`blockMapUrl`) points at a v2 map, so the range-fetchable v3 path only
-      // runs when the block map URLs are derived from the file URL.
-      if (
-        fileInfo.info.blockMapV3 === true &&
-        fileInfo.blockMapUrl == null &&
-        (await this.differentialDownloadInstallerV3(fileInfo, downloadUpdateOptions, installerPath, provider, oldInstallerFileName))
-      ) {
-        return false
-      }
       const override = this.previousBlockmapBaseUrlOverride
       const getBlockMapFiles = () => provider.getBlockMapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version, override)
       let oldBlockMapUrl: URL | null
@@ -1238,7 +1222,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       }
       this._logger.info(`Download block maps (old: "${oldBlockMapUrl ?? "cache only"}", new: ${newBlockMapUrl})`)
 
-      const downloadBlockMap = async (url: URL, originUrl?: URL): Promise<BlockMap> => {
+      const downloadBlockMap = async (url: URL, originUrl?: URL): Promise<LoadedBlockMap> => {
         const data = await this.httpExecutor.downloadToBuffer(url, {
           headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
           cancellationToken: downloadUpdateOptions.cancellationToken,
@@ -1247,12 +1231,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         if (data == null || data.length === 0) {
           throw new Error(`Blockmap "${url.href}" is empty`)
         }
-
-        try {
-          return JSON.parse(gunzipSync(data).toString())
-        } catch (e: any) {
-          throw new Error(`Cannot parse blockmap "${url.href}", error: ${e}`)
-        }
+        return parseBlockMapData(data, url.href)
       }
 
       const downloadOptions: DifferentialDownloaderOptions = {
@@ -1269,16 +1248,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
       }
 
-      const saveBlockMapToCacheDir = async (blockMapData: BlockMap, cacheDir: string) => {
-        const blockMapFile = path.join(cacheDir, "current.blockmap")
-        await fsExtra.outputFile(blockMapFile, gzipSync(JSON.stringify(blockMapData)))
+      // the cached file is the block map as published (gzipped JSON for v1, the binary map for v2); its first bytes tell them apart
+      const saveBlockMapToCacheDir = async (blockMap: LoadedBlockMap, cacheDir: string) => {
+        await fsExtra.outputFile(path.join(cacheDir, "current.blockmap"), blockMap.data)
       }
 
-      const getBlockMapFromCacheDir = async (cacheDir: string) => {
+      const getBlockMapFromCacheDir = async (cacheDir: string): Promise<LoadedBlockMap | null> => {
         const blockMapFile = path.join(cacheDir, "current.blockmap")
         try {
           if (await fsExtra.pathExists(blockMapFile)) {
-            return JSON.parse(gunzipSync(await fsExtra.readFile(blockMapFile)).toString())
+            return parseBlockMapData(await fsExtra.readFile(blockMapFile), blockMapFile)
           }
         } catch (e: any) {
           this._logger.warn(`Cannot parse blockmap "${blockMapFile}", error: ${e}`)
@@ -1286,12 +1265,27 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return null
       }
 
-      const newBlockMapData = await downloadBlockMap(newBlockMapUrl)
-      await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
-
-      // get old blockmap from cache dir first, if not found, download it
+      // the cached old block map is read first (no request): when it is a v2 map, only the parts of the new map that changed are
+      // fetched (Range requests), else the new map is downloaded in full
       let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
       isOldBlockMapFromCache = oldBlockMapData != null
+      let newBlockMapData: LoadedBlockMap
+      if (oldBlockMapData?.format === "v2") {
+        const fetched = await fetchBlockMapV3({
+          url: newBlockMapUrl,
+          oldMap: oldBlockMapData.data,
+          httpExecutor: this.httpExecutor,
+          requestHeaders: this.downloadRequestHeaders(newBlockMapUrl, downloadUpdateOptions),
+          cancellationToken: downloadUpdateOptions.cancellationToken,
+          isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
+          logger: this._logger,
+        })
+        newBlockMapData = parseBlockMapData(fetched.buffer, newBlockMapUrl.href)
+      } else {
+        newBlockMapData = await downloadBlockMap(newBlockMapUrl)
+      }
+      await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
+
       if (oldBlockMapData == null) {
         if (oldBlockMapUrl == null) {
           // the full download caches the new blockmap downloaded above, so the next update can be differential
@@ -1306,7 +1300,15 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, override ? new URL(override) : undefined)
       }
 
-      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
+      if (oldBlockMapData.format !== newBlockMapData.format) {
+        // e.g. the first release built with a newer `blockmap` format: the new map is cached above, so the next update is differential again
+        throw newError(
+          `Block map format changed (old: ${oldBlockMapData.format}, new: ${newBlockMapData.format}), so the old and new files cannot be compared block by block`,
+          "ERR_UPDATER_BLOCKMAP_FORMAT_CHANGED"
+        )
+      }
+
+      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData.map, newBlockMapData.map)
       return false
     } catch (e: any) {
       if (e.code === "ERR_CHECKSUM_MISMATCH") {
@@ -1324,93 +1326,24 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return true
     }
   }
+}
 
-  /**
-   * Differential download driven by the range-fetchable block map v3 (`<file>.blockmap3`): the new map is reconstructed from the
-   * cached old map plus Range requests for the changed groups only, then the regular block-level differential download runs on both maps.
-   *
-   * Returns `true` when the installer has been downloaded. On ANY failure (HTTP error, 416, non-206 answer to a Range request, parse or
-   * verification error, download error) it logs a warning and returns `false` so that the caller falls back to the v2 block map path.
-   */
-  private async differentialDownloadInstallerV3(
-    fileInfo: ResolvedUpdateFileInfo,
-    downloadUpdateOptions: DownloadUpdateOptions,
-    installerPath: string,
-    provider: Provider<any>,
-    oldInstallerFileName: string
-  ): Promise<boolean> {
-    try {
-      const blockmapFileUrls = await provider.getBlockMapV3Files(
-        fileInfo.url,
-        this.app.version,
-        downloadUpdateOptions.updateInfoAndProvider.info.version,
-        this.previousBlockmapBaseUrlOverride
-      )
-      this._logger.info(`Download block maps v3 (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
+/** A block map file as published (`data`) and decoded (`map`): `v1` is gzipped JSON, `v2` the binary range-fetchable map. */
+interface LoadedBlockMap {
+  readonly format: "v1" | "v2"
+  readonly data: Buffer
+  readonly map: BlockMap
+}
 
-      const fetchBlockMap = (url: URL, oldMap: Buffer | null, originUrl?: URL) =>
-        fetchBlockMapV3({
-          url,
-          oldMap,
-          httpExecutor: this.httpExecutor,
-          requestHeaders: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
-          cancellationToken: downloadUpdateOptions.cancellationToken,
-          isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
-          logger: this._logger,
-        })
-
-      // get old block map from cache dir first, if not found (or unreadable), download it
-      const cachedBlockMapFile = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_BLOCK_MAP_V3_FILE_NAME)
-      let oldBlockMap: Buffer | null = null
-      try {
-        if (await fsExtra.pathExists(cachedBlockMapFile)) {
-          oldBlockMap = await fsExtra.readFile(cachedBlockMapFile)
-          decodeBlockMapV3(oldBlockMap)
-        }
-      } catch (e: any) {
-        this._logger.warn(`Cannot parse blockmap "${cachedBlockMapFile}", error: ${e}`)
-        oldBlockMap = null
-      }
-      if (oldBlockMap == null) {
-        // the old block map comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
-        const override = this.previousBlockmapBaseUrlOverride
-        oldBlockMap = (await fetchBlockMap(blockmapFileUrls[0], null, override ? new URL(override) : undefined)).buffer
-      }
-
-      const newBlockMap = await fetchBlockMap(blockmapFileUrls[1], oldBlockMap)
-      this._logger.info(
-        `Block map v3 reconstructed: ${newBlockMap.wireBytes} bytes in ${newBlockMap.requests} request(s), ${newBlockMap.matchedGroups} group(s) reused, ${newBlockMap.fetchedGroups} fetched`
-      )
-      await fsExtra.outputFile(path.join(this.downloadedUpdateHelper!.cacheDirForPendingUpdate, CURRENT_BLOCK_MAP_V3_FILE_NAME), newBlockMap.buffer)
-
-      const downloadOptions: DifferentialDownloaderOptions = {
-        newUrl: fileInfo.url,
-        oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, oldInstallerFileName),
-        logger: this._logger,
-        newFile: installerPath,
-        isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
-        requestHeaders: this.downloadRequestHeaders(fileInfo.url, downloadUpdateOptions),
-        cancellationToken: downloadUpdateOptions.cancellationToken,
-      }
-      if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-        downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
-      }
-
-      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(
-        toBlockMap(decodeBlockMapV3(oldBlockMap)),
-        toBlockMap(decodeBlockMapV3(newBlockMap.buffer))
-      )
-      return true
-    } catch (e: any) {
-      if (e instanceof CancellationError) {
-        throw e
-      }
-      this._logger.warn(`Cannot download differentially using block map v3, falling back to block map v2: ${e.stack || e}`)
-      await fsExtra.remove(path.join(this.downloadedUpdateHelper!.cacheDirForPendingUpdate, CURRENT_BLOCK_MAP_V3_FILE_NAME)).catch(() => {
-        // ignore
-      })
-      return false
+/** Decodes a block map file in either format; the v2 map starts with its magic, anything else is read as gzipped JSON (v1). */
+function parseBlockMapData(data: Buffer, source: string): LoadedBlockMap {
+  try {
+    if (isBlockMapV3(data)) {
+      return { format: "v2", data, map: toBlockMap(decodeBlockMapV3(data)) }
     }
+    return { format: "v1", data, map: JSON.parse(gunzipSync(data).toString()) }
+  } catch (e: any) {
+    throw new Error(`Cannot parse blockmap "${source}", error: ${e}`)
   }
 }
 
@@ -1426,10 +1359,6 @@ export function getCacheUpdateFileName(fileInfo: ResolvedUpdateFileInfo, fileExt
   }
   return fileName
 }
-
-const CURRENT_BLOCK_MAP_FILE_NAME = "current.blockmap"
-const CURRENT_BLOCK_MAP_V3_FILE_NAME = "current.blockmap3"
-const BLOCK_MAP_FILE_NAMES = [CURRENT_BLOCK_MAP_FILE_NAME, CURRENT_BLOCK_MAP_V3_FILE_NAME]
 
 export interface DownloadUpdateOptions {
   readonly updateInfoAndProvider: UpdateInfoAndProvider

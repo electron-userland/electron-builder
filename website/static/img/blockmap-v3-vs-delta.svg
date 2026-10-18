@@ -45,12 +45,9 @@
   <rect x="830" y="156" width="190" height="44" rx="6" fill="#e5e7eb" stroke="#6b7280"/>
   <text x="925" y="175" text-anchor="middle" class="m">App-Setup-1.0.1.exe</text>
   <text x="925" y="192" text-anchor="middle" class="s">installer, asar stored (36 MB)</text>
-  <rect x="1040" y="156" width="150" height="44" rx="6" fill="#e5e7eb" stroke="#6b7280"/>
-  <text x="1115" y="175" text-anchor="middle" class="m">….exe.blockmap</text>
-  <text x="1115" y="192" text-anchor="middle" class="s">v2, 75 KB, old updaters</text>
-  <rect x="1210" y="156" width="160" height="44" rx="6" fill="#e3eef9" stroke="#1565c0"/>
-  <text x="1290" y="175" text-anchor="middle" class="m">….exe.blockmap3</text>
-  <text x="1290" y="192" text-anchor="middle" class="s">v3, ~300 KB, by Range</text>
+  <rect x="1040" y="156" width="330" height="44" rx="6" fill="#e3eef9" stroke="#1565c0"/>
+  <text x="1205" y="175" text-anchor="middle" class="m">….exe.blockmap</text>
+  <text x="1205" y="192" text-anchor="middle" class="s">v2 ~300 KB, read by Range (v1: 75 KB, read whole)</text>
   <text x="1390" y="175" class="lbl">nothing per</text>
   <text x="1390" y="192" class="lbl">version pair</text>
 
@@ -61,17 +58,17 @@
 
   <text x="830" y="326" class="lbl" font-weight="700">what the client needs</text>
   <text x="830" y="348" class="lbl">• its own installer (any older version) + the cached map of it; no chain, one step from any version</text>
-  <text x="830" y="368" class="lbl">• HTTP Range support on the server; v3 map cost = super table + entries and records of what changed (≈ 5 KB)</text>
-  <text x="830" y="388" class="lbl">• any failure → the v2 path (unchanged), then a full download; the final sha512 is the integrity check</text>
-  <text x="830" y="408" class="lbl">• build: two small map artifacts per installer, independent of how many releases exist</text>
+  <text x="830" y="368" class="lbl">• HTTP Range support on the server; v2 map cost = super table + entries and records of what changed (≈ 5 KB)</text>
+  <text x="830" y="388" class="lbl">• any failure → a full download, as today; the final sha512 is the integrity check</text>
+  <text x="830" y="408" class="lbl">• build: one small map artifact per installer, independent of how many releases exist</text>
 
   <!-- table -->
   <text x="40" y="462" class="h">Bytes on the wire for the update (32 MB asar; lower is better)</text>
   <rect x="40" y="476" width="1520" height="30" fill="#f3f4f6"/>
   <text x="56" y="496" class="th">edit in app.asar</text>
-  <text x="560" y="496" class="th" text-anchor="end">v2 today (best)</text>
-  <text x="740" y="496" class="th" text-anchor="end">v3 (this PR)</text>
-  <text x="960" y="496" class="th" text-anchor="end">v3 + contentAlignment 512</text>
+  <text x="560" y="496" class="th" text-anchor="end">v1 today (best)</text>
+  <text x="740" y="496" class="th" text-anchor="end">blockmap: "v2"</text>
+  <text x="960" y="496" class="th" text-anchor="end">v2 + contentAlignment 512</text>
   <text x="1240" y="496" class="th" text-anchor="end">Velopack delta (BestSize / BestSpeed)</text>
   <text x="1540" y="496" class="th" text-anchor="end">Velopack delta, aligned asar</text>
 
@@ -115,7 +112,7 @@
     <text x="1240" y="692" text-anchor="end">11.4 MB</text>
     <text x="1540" y="692" text-anchor="end">11.4 MB</text>
   </g>
-  <text x="40" y="718" class="s">v2/v3 totals = changed data + map bytes + 120 B per HTTP request, after multipart gap coalescing; the old map is cached (as today). Velopack = size of the delta .nupkg the client downloads.</text>
+  <text x="40" y="718" class="s">v1/v2 totals = changed data + map bytes + 120 B per HTTP request, after multipart gap coalescing; the old map is cached (as today). Velopack = size of the delta .nupkg the client downloads.</text>
   <text x="40" y="736" class="s">* compressed-asar installer (differentialPackage: true); the stored-asar installer (36 MB) is what makes the differential rows possible. Velopack full = its deflate .nupkg.</text>
 
   <!-- where the gap is -->
@@ -138,7 +135,7 @@
   <text x="40" y="864" class="lbl">That is the structural floor of a version-agnostic, single-artifact scheme: ≈ 2.4–2.7× Velopack's chained per-pair delta for in-slot edits. Offset-shifting edits (+600 B, new file) remain</text>
   <text x="40" y="884" class="lbl">dominated by the asar JSON header rewrite (~320 KB of its 789 KB): that is the asar format, not the block map — a header-stable layout is the next lever, outside this PR.</text>
   <rect x="40" y="896" width="1520" height="60" rx="8" fill="#f9fafb" stroke="#9ca3af"/>
-  <text x="56" y="915" class="lbl" font-weight="700">Why v3 and not per-version deltas in electron-builder</text>
-  <text x="56" y="933" class="lbl">publish once per release, serve any old → new in one step from static Range-capable hosting, keep the v2 fallback for every existing updater —</text>
-  <text x="56" y="950" class="lbl">and go from 96–448 KB (v2 today) to 8.6–9.6 KB for in-slot edits — 7z header, gap coalescing, per-file cuts, three-level map and 512 B blocks measured in, not assumed.</text>
+  <text x="56" y="915" class="lbl" font-weight="700">Why v2 and not per-version deltas in electron-builder</text>
+  <text x="56" y="933" class="lbl">publish once per release, serve any old → new in one step from static Range-capable hosting, with a full-download fallback for older updaters —</text>
+  <text x="56" y="950" class="lbl">and go from 96–448 KB (v1 today) to 8.6–9.6 KB for in-slot edits — 7z header, gap coalescing, per-file cuts, three-level map and 512 B blocks measured in, not assumed.</text>
 </svg>

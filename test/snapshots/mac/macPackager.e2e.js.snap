@@ -7,7 +7,6 @@ exports[`macPackager > two-package (e2e) 1`] = `
       "arch": "x64",
       "file": "TestApp-1.1.0-mac-x64.dmg",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -16,7 +15,6 @@ exports[`macPackager > two-package (e2e) 1`] = `
       "arch": "arm64",
       "file": "TestApp-1.1.0-mac-arm64.dmg",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -25,7 +23,6 @@ exports[`macPackager > two-package (e2e) 1`] = `
       "arch": "universal",
       "file": "TestApp-1.1.0-mac-universal.dmg",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -34,7 +31,6 @@ exports[`macPackager > two-package (e2e) 1`] = `
       "arch": "x64",
       "file": "TestApp-1.1.0-mac-x64.zip",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -43,7 +39,6 @@ exports[`macPackager > two-package (e2e) 1`] = `
       "arch": "arm64",
       "file": "TestApp-1.1.0-mac-arm64.zip",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -52,7 +47,6 @@ exports[`macPackager > two-package (e2e) 1`] = `
       "arch": "universal",
       "file": "TestApp-1.1.0-mac-universal.zip",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -61,7 +55,6 @@ exports[`macPackager > two-package (e2e) 1`] = `
       "arch": "x64",
       "file": "TestApp-1.1.0-mac-x64.dmg.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -71,7 +64,6 @@ exports[`macPackager > two-package (e2e) 1`] = `
       "file": "TestApp-1.1.0-mac-x64.zip.blockmap",
       "safeArtifactName": "TestApp-1.1.0-mac-x64.zip.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -80,7 +72,6 @@ exports[`macPackager > two-package (e2e) 1`] = `
       "arch": "arm64",
       "file": "TestApp-1.1.0-mac-arm64.dmg.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -90,7 +81,6 @@ exports[`macPackager > two-package (e2e) 1`] = `
       "file": "TestApp-1.1.0-mac-arm64.zip.blockmap",
       "safeArtifactName": "TestApp-1.1.0-mac-arm64.zip.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -99,7 +89,6 @@ exports[`macPackager > two-package (e2e) 1`] = `
       "arch": "universal",
       "file": "TestApp-1.1.0-mac-universal.dmg.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -109,77 +98,40 @@ exports[`macPackager > two-package (e2e) 1`] = `
       "file": "TestApp-1.1.0-mac-universal.zip.blockmap",
       "safeArtifactName": "TestApp-1.1.0-mac-universal.zip.blockmap",
       "updateInfo": {
-        "blockMapV3": true,
         "sha512": "@sha512",
         "size": "@size",
       },
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.1.0-mac-x64.dmg.blockmap3",
-      "safeArtifactName": "TestApp-1.1.0-mac-x64.dmg.blockmap3",
-    },
-    {
-      "arch": "x64",
-      "file": "TestApp-1.1.0-mac-x64.zip.blockmap3",
-      "safeArtifactName": "TestApp-1.1.0-mac-x64.zip.blockmap3",
-    },
-    {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-mac-arm64.dmg.blockmap3",
-      "safeArtifactName": "TestApp-1.1.0-mac-arm64.dmg.blockmap3",
-    },
-    {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-mac-arm64.zip.blockmap3",
-      "safeArtifactName": "TestApp-1.1.0-mac-arm64.zip.blockmap3",
-    },
-    {
-      "arch": "universal",
-      "file": "TestApp-1.1.0-mac-universal.dmg.blockmap3",
-      "safeArtifactName": "TestApp-1.1.0-mac-universal.dmg.blockmap3",
-    },
-    {
-      "arch": "universal",
-      "file": "TestApp-1.1.0-mac-universal.zip.blockmap3",
-      "safeArtifactName": "TestApp-1.1.0-mac-universal.zip.blockmap3",
     },
     {
       "file": "latest-mac.yml",
       "fileContent": {
         "files": [
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-arm64.dmg",
           },
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-arm64.zip",
           },
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-universal.dmg",
           },
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-universal.zip",
           },
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-x64.dmg",
           },
           {
-            "blockMapV3": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-x64.zip",

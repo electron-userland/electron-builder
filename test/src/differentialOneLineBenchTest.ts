@@ -38,7 +38,7 @@
 //     OLD blockmap is cached locally)
 //   + #DOWNLOAD ranges × BENCH_RANGE_OVERHEAD (multipart range request overhead)
 //
-// Block map v3 rows (`.blockmap3`, builder-util-runtime/src/blockMapV3.ts): the range-fetchable
+// Block map v3 rows (the `blockmap: "v2"` format, builder-util-runtime/src/blockMapV3.ts): the range-fetchable
 // three-level binary map, built by the production builder (`buildBlockMapV3`) with the row's asar chunker,
 // the 7z header region every production map gets, and a forced block boundary at every packed file of
 // the stored asar (`asarContentBoundaries`) — so its blocks differ from the v2 row's. Wire cost of a v3
@@ -864,7 +864,7 @@ describe("differential one-line-change benchmark", () => {
     // The v3 map as production builds it: the same regions with the row's asar chunker, plus a forced
     // block boundary at every packed file of the stored asar (asarContentBoundaries).
     const buildV3Map = async (pkg: PackageInfo, chunker: ChunkerParams | null): Promise<Buffer> => {
-      const out = path.join(bmDir, `${path.basename(pkg.file)}.${bmCounter++}.blockmap3`)
+      const out = path.join(bmDir, `${path.basename(pkg.file)}.${bmCounter++}.v3.blockmap`)
       const regions = regionsOf(pkg, chunker)
       const asarRegion = regions.find(it => it.offset === pkg.asarOffset)
       const boundaries = asarRegion == null ? null : await asarContentBoundaries([{ file: pkg.asarFile, region: asarRegion }])
@@ -925,7 +925,7 @@ describe("differential one-line-change benchmark", () => {
     )
     md.push("")
     md.push(
-      "Block map v3 rows (`.blockmap3`): the same blocks as the v2 row of that config, encoded as the range-fetchable two-level binary map. " +
+      'Block map v3 rows (the `blockmap: "v2"` format): the same blocks as the v2 row of that config, encoded as the range-fetchable two-level binary map. ' +
         "v3 total wire = header + group table (1 Range request) + records of the new groups whose (hash, byteLength, blockCount) match no old group (adjacent groups coalesced into one range) " +
         "+ DOWNLOAD bytes (same plan as the v2 row) + (#map ranges + #data ranges) × overhead. The old v3 map is assumed cached locally (as the old v2 map is today)."
     )
@@ -949,7 +949,7 @@ describe("differential one-line-change benchmark", () => {
       md.push("")
       md.push(renderTable(r.stored))
       md.push("")
-      md.push(`### block map v3 (.blockmap3), stored asar`)
+      md.push(`### block map v3 (blockmap: "v2"), stored asar`)
       md.push("")
       md.push(renderV3Table(r.v3))
       md.push("")

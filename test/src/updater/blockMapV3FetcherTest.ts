@@ -1,5 +1,5 @@
 import { blake2b } from "@noble/hashes/blake2.js"
-import { BlockInput, CancellationToken, decodeBlockMapV3, encodeBlockMapV3, RECORD_SIZE, SUPER_SIZE } from "builder-util-runtime"
+import { BlockInput, CancellationToken, decodeBlockMapV3, encodeBlockMapV3, isBlockMapV3, RECORD_SIZE, SUPER_SIZE } from "builder-util-runtime"
 import {
   coalesce,
   fetchBlockMapV3,
@@ -11,6 +11,7 @@ import {
 import * as http from "http"
 import { AddressInfo } from "net"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
+import { gzipSync } from "zlib"
 import { httpExecutor } from "../helpers/updaterTestUtil"
 
 // Deterministic synthetic blocks: content-derived digests, sizes around a mean (same generator as blockMapV3Test).
@@ -179,8 +180,8 @@ describe("blockMapV3Fetcher", () => {
   })
 
   test("no old map → one plain GET of the whole file", async () => {
-    server.files.set("new.blockmap3", OLD)
-    const result = await fetchWith("new.blockmap3", null)
+    server.files.set("new.blockmap", OLD)
+    const result = await fetchWith("new.blockmap", null)
     expect(result.buffer.equals(OLD)).toBe(true)
     expect(result.requests).toBe(1)
     expect(result.wireBytes).toBe(OLD.length)
@@ -199,9 +200,9 @@ describe("blockMapV3Fetcher", () => {
     }
     const NEW = encode(reoffset(blocks))
     const newMap = decodeBlockMapV3(NEW)
-    server.files.set("new.blockmap3", NEW)
+    server.files.set("new.blockmap", NEW)
 
-    const result = await fetchWith("new.blockmap3", OLD, false)
+    const result = await fetchWith("new.blockmap", OLD, false)
     expect(result.buffer.equals(NEW)).toBe(true)
     expect(result.fetchedGroups).toBe(3)
     expect(result.matchedGroups).toBe(newMap.groups.length - 3)
@@ -229,9 +230,9 @@ describe("blockMapV3Fetcher", () => {
       edit(blocks, firstBlockOf(groupIndex) + 1, "multipart")
     }
     const NEW = encode(reoffset(blocks))
-    server.files.set("new.blockmap3", NEW)
+    server.files.set("new.blockmap", NEW)
 
-    const result = await fetchWith("new.blockmap3", OLD, true)
+    const result = await fetchWith("new.blockmap", OLD, true)
     expect(result.buffer.equals(NEW)).toBe(true)
     expect(result.fetchedGroups).toBe(3)
     // first range + (one multipart request for the group entries, unless the first range covered them) + one for the records
@@ -248,9 +249,9 @@ describe("blockMapV3Fetcher", () => {
       edit(blocks, firstBlockOf(g) + 1, "adjacent")
     }
     const NEW = encode(reoffset(blocks))
-    server.files.set("new.blockmap3", NEW)
+    server.files.set("new.blockmap", NEW)
 
-    const result = await fetchWith("new.blockmap3", OLD, false)
+    const result = await fetchWith("new.blockmap", OLD, false)
     expect(result.buffer.equals(NEW)).toBe(true)
     expect(result.fetchedGroups).toBe(4)
     // the four groups sit in one or two adjacent super-groups: at most one group entry range and exactly one record range
@@ -261,10 +262,10 @@ describe("blockMapV3Fetcher", () => {
   })
 
   test("server without Range support → whole file from the (ignored) Range request, no extra GET", async () => {
-    server.files.set("new.blockmap3", OLD)
+    server.files.set("new.blockmap", OLD)
     server.rangeSupport = false
     try {
-      const result = await fetchWith("new.blockmap3", OLD, false)
+      const result = await fetchWith("new.blockmap", OLD, false)
       expect(result.buffer.equals(OLD)).toBe(true)
       expect(result.requests).toBe(1)
       expect(result.wireBytes).toBe(OLD.length)
@@ -277,44 +278,101 @@ describe("blockMapV3Fetcher", () => {
   test("small map fits into the first range → one request, no record fetch", async () => {
     const small = encode(makeBlocks(120, 5))
     expect(small.length).toBeLessThan(MIN_FIRST_RANGE_SIZE)
-    server.files.set("small.blockmap3", small)
-    const result = await fetchWith("small.blockmap3", OLD, false)
+    server.files.set("small.blockmap", small)
+    const result = await fetchWith("small.blockmap", OLD, false)
     expect(result.buffer.equals(small)).toBe(true)
     expect(result.requests).toBe(1)
   })
 
-  test("corrupted header → throws (AppUpdater falls back to v2)", async () => {
+  test("a file without the v3 magic is not treated as a broken v3 map: it is downloaded whole and returned for the caller to decode", async () => {
+    // AppUpdater then reads it as a v1 (gzipped JSON) map: here that fails too, so the update falls back to a full download
     const corrupt = Buffer.from(OLD)
     corrupt.write("XXXX", 0, 4, "latin1")
-    server.files.set("corrupt.blockmap3", corrupt)
-    await expect(fetchWith("corrupt.blockmap3", OLD, false)).rejects.toThrow(/bad magic/)
-    await expect(fetchWith("corrupt.blockmap3", null, false)).rejects.toThrow(/bad magic/)
+    server.files.set("corrupt.blockmap", corrupt)
+    for (const old of [OLD, null]) {
+      const result = await fetchWith("corrupt.blockmap", old, false)
+      expect(result.buffer.equals(corrupt)).toBe(true)
+      expect(isBlockMapV3(result.buffer)).toBe(false)
+    }
+  })
+
+  describe('a v1 map (gzipped JSON) published under the URL, e.g. by a release built with blockmap: "v1"', () => {
+    // incompressible, so the gzipped file is larger than the first Range request
+    const V1 = gzipSync(
+      Buffer.from(
+        makeBlocks(4000, 77)
+          .map(b => Buffer.from(b.digest).toString("base64"))
+          .join(",")
+      ),
+      { level: 0 }
+    )
+
+    test("the first Range response is not a v3 map → the rest of the file is fetched, and the v1 map is returned unverified", async () => {
+      expect(V1.length).toBeGreaterThan(firstRangeSize(oldMap.header))
+      server.files.set("v1.blockmap", V1)
+      const result = await fetchWith("v1.blockmap", OLD, false)
+      expect(result.buffer.equals(V1)).toBe(true)
+      expect(isBlockMapV3(result.buffer)).toBe(false)
+      const first = firstRangeSize(oldMap.header)
+      expect(server.requests).toEqual([
+        { method: "GET", range: `bytes=0-${first - 1}`, status: 206 },
+        { method: "GET", range: `bytes=${first}-${V1.length - 1}`, status: 206 },
+      ])
+      expect(result.wireBytes).toBe(V1.length)
+    })
+
+    test("a v1 map smaller than the first Range request arrives in one response", async () => {
+      const small = gzipSync(Buffer.from("[]"))
+      server.files.set("v1-small.blockmap", small)
+      const result = await fetchWith("v1-small.blockmap", OLD, false)
+      expect(result.buffer.equals(small)).toBe(true)
+      expect(server.requests).toHaveLength(1)
+    })
+
+    test("a server that ignores Range returns the v1 map whole in one response", async () => {
+      server.files.set("v1.blockmap", V1)
+      server.rangeSupport = false
+      try {
+        const result = await fetchWith("v1.blockmap", OLD, false)
+        expect(result.buffer.equals(V1)).toBe(true)
+        expect(server.requests).toEqual([{ method: "GET", range: expect.stringMatching(/^bytes=0-/), status: 200 }])
+      } finally {
+        server.rangeSupport = true
+      }
+    })
+
+    test("no old map → one plain GET, and the v1 map is returned as is", async () => {
+      server.files.set("v1.blockmap", V1)
+      const result = await fetchWith("v1.blockmap", null, false)
+      expect(result.buffer.equals(V1)).toBe(true)
+      expect(server.requests).toEqual([{ method: "GET", range: null, status: 200 }])
+    })
   })
 
   test("corrupted records (group hash mismatch) → throws", async () => {
     // full download path: verification catches a flipped byte in the last record
     const corrupt = Buffer.from(OLD)
     corrupt[corrupt.length - RECORD_SIZE] ^= 0xff
-    server.files.set("corrupt.blockmap3", corrupt)
-    await expect(fetchWith("corrupt.blockmap3", null, false)).rejects.toThrow(/hash mismatch/)
+    server.files.set("corrupt.blockmap", corrupt)
+    await expect(fetchWith("corrupt.blockmap", null, false)).rejects.toThrow(/hash mismatch/)
 
     // partial path: the last group is unmatched (its second block changed) and its records come from the server, corrupted there
     const blocks = OLD_BLOCKS.map(b => ({ ...b }))
     edit(blocks, firstBlockOf(oldMap.groups.length - 1) + 1, "last")
     const corruptNew = encode(reoffset(blocks))
     corruptNew[corruptNew.length - RECORD_SIZE] ^= 0xff
-    server.files.set("corrupt.blockmap3", corruptNew)
-    await expect(fetchWith("corrupt.blockmap3", OLD, false)).rejects.toThrow(/hash mismatch/)
+    server.files.set("corrupt.blockmap", corruptNew)
+    await expect(fetchWith("corrupt.blockmap", OLD, false)).rejects.toThrow(/hash mismatch/)
 
     // a matched group's records come from the old map, so corruption there is never fetched and the result is the valid map
-    server.files.set("corrupt.blockmap3", corrupt)
-    const result = await fetchWith("corrupt.blockmap3", OLD, false)
+    server.files.set("corrupt.blockmap", corrupt)
+    const result = await fetchWith("corrupt.blockmap", OLD, false)
     expect(result.buffer.equals(OLD)).toBe(true)
   })
 
   test("404 → throws", async () => {
-    await expect(fetchWith("missing.blockmap3", OLD, false)).rejects.toThrow(/404/)
-    await expect(fetchWith("missing.blockmap3", null, false)).rejects.toThrow(/404/)
+    await expect(fetchWith("missing.blockmap", OLD, false)).rejects.toThrow(/404/)
+    await expect(fetchWith("missing.blockmap", null, false)).rejects.toThrow(/404/)
   })
 
   test("coalesce merges adjacent and near ranges only", () => {

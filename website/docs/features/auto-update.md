@@ -336,20 +336,26 @@ Because some of your users will be on the broken 1.0.1, releasing a new 1.0.1 wo
 
 `latest.yml` (or `latest-mac.yml` for macOS, or `latest-linux.yml` for Linux) will be generated and uploaded for all providers except `bintray` (because not required, `bintray` doesn't use `latest.yml`).
 
-### Differential updates: `.blockmap` and `.blockmap3`
+### Differential updates: `.blockmap`
 
-For targets that support differential (delta) updates (NSIS on Windows; AppImage embeds its map in the binary), electron-builder publishes a **block map** next to the installer: a list of content-defined blocks and their hashes. electron-updater compares the new map with the one of the installed version and downloads only the byte ranges that changed, using HTTP `Range` requests.
+For targets that support differential (delta) updates (NSIS on Windows and the macOS update zip; AppImage embeds its map in the binary), electron-builder publishes a **block map** next to the artifact: a list of content-defined blocks and their hashes. electron-updater compares the new map with the one of the installed version and downloads only the byte ranges that changed, using HTTP `Range` requests.
 
-Two block map artifacts are uploaded for every NSIS installer:
+One `<artifact>.blockmap` is published per artifact, in the format set by the `blockmap` option:
 
-* `<installer>.blockmap` — the block map format every electron-updater release understands (gzipped JSON, ~16 KiB blocks). It is downloaded in full on every update, so it is a fixed cost of roughly 20 bytes per block of the installer.
-* `<installer>.blockmap3` — a **block map v3**: an additional, uncompressed binary artifact that a recent electron-updater fetches with `Range` requests. It carries the same blocks in a three-level layout (a small table of *super-groups*, a table of *groups* of blocks, then one 10-byte record per block), so the updater reads the super-group table, compares it with its cached previous map, fetches only the group entries of the super-groups that changed, compares those, and finally fetches only the records of the groups that changed. The map cost of an update therefore grows with the change, not with the installer size, which is what makes 512 B blocks inside `app.asar` affordable.
+* `"v2"` (the default, through `"latest"`): an uncompressed binary map that electron-updater fetches in parts with `Range` requests. It carries the blocks in a three-level layout (a small table of *super-groups*, a table of *groups* of blocks, then one 10-byte record per block), so the updater reads the super-group table, compares it with its cached previous map, fetches only the group entries of the super-groups that changed, compares those, and finally fetches only the records of the groups that changed. The map cost of an update therefore grows with the change, not with the installer size, which is what makes 512 B blocks inside `app.asar` affordable.
+* `"v1"`: the gzipped JSON map (~16 KiB blocks) every electron-updater release reads. It is downloaded in full on every update, a fixed cost of roughly 20 bytes per block of the installer.
 
-![Block map v3 file layout: header, group table and 10-byte block records, with content-defined groups](/img/blockmap-v3-format.svg)
+![Block map file layout: header, super-group and group tables and 10-byte block records, with content-defined groups](/img/blockmap-v3-format.svg)
 
-Compatibility: `.blockmap3` is only ever consumed in addition to `.blockmap`, never instead of it. Older electron-updater versions ignore the unknown file and keep using `.blockmap` exactly as before; a new electron-updater that cannot fetch or parse `.blockmap3` (404, no range support, ...) silently falls back to `.blockmap`. Nothing changes for full downloads. If you upload artifacts yourself (a custom `generic` server), upload both files together with the installer.
+Compatibility: electron-updater tells the two formats apart by the file's first bytes, so `latest.yml` is the same for both. electron-updater before 7.0 cannot read `"v2"`: those apps fall back to a full download once, and the update they install brings an updater that can, so the next update is differential again. The same one-time full download happens whenever the format changes between two releases (switching `blockmap` between `"v1"` and `"v2"`, or a future format under `"latest"`), because blocks of maps in different formats are not compared. Set `blockmap: "v1"` to keep the previous format. Block maps embedded in an artifact (AppImage, the NSIS web installer's app package) are always `"v1"`.
 
-The v3 map pays off most for app-code changes when the asar is stored uncompressed and laid out so that a small edit does not shift the rest of the archive:
+```json
+{
+  "blockmap": "latest"
+}
+```
+
+The `"v2"` format pays off most for app-code changes when the asar is stored uncompressed and laid out so that a small edit does not shift the rest of the archive:
 
 ```json
 {
@@ -358,11 +364,11 @@ The v3 map pays off most for app-code changes when the asar is stored uncompress
 }
 ```
 
-`nsis.differentialPackage: "store-asar"` stores `resources/app.asar` uncompressed in the differential package (so a one-line change maps to a few changed blocks instead of a re-compressed archive), and `asar.contentAlignment` pads file contents inside the asar so that a file growing by a few bytes does not move the offsets of every later file. The v3 map additionally starts a new block at every packed file of the stored asar, so an edit inside one file never touches a block of its neighbour, and the 7z header of every differential package is stored as is and chunked on its own, so the CRCs that change with each build cost a few hundred bytes instead of the package's last block. With all of that, the block map v3 rows of the repository benchmark (`test/src/differentialOneLineBenchTest.ts`) bring a one-line change in a 32 MB asar down to about ten kilobytes on the wire.
+`nsis.differentialPackage: "store-asar"` stores `resources/app.asar` uncompressed in the differential package (so a one-line change maps to a few changed blocks instead of a re-compressed archive), and `asar.contentAlignment` pads file contents inside the asar so that a file growing by a few bytes does not move the offsets of every later file. The `"v2"` format additionally starts a new block at every packed file of the stored asar, so an edit inside one file never touches a block of its neighbour, and the 7z header of every differential package is stored as is and chunked on its own, so the CRCs that change with each build cost a few hundred bytes instead of the package's last block. With all of that, the `"v2"` rows of the repository benchmark (`test/src/differentialOneLineBenchTest.ts`) bring a one-line change in a 32 MB asar down to about ten kilobytes on the wire.
 
-![What electron-updater fetches with block map v3: header and group table, the records of changed groups, then the changed data ranges; any failure falls back to the v2 block map](/img/blockmap-v3-update-flow.svg)
+![What electron-updater fetches for a "v2" block map: header and super-group table, the entries and records of what changed, then the changed data ranges; any failure falls back to a full download](/img/blockmap-v3-update-flow.svg)
 
-How this compares with per-version delta packages (Squirrel, Velopack): those frameworks compute a binary patch between two specific releases on the build machine and publish one delta file per consecutive version pair, which a client applies in sequence from the exact release it has installed. The patch itself is small (a zstd `--patch-from` diff of a one-line change is a few kilobytes), but every release pair needs its own artifact, a client that skipped releases applies several of them, and the old release must still be present in full. A block map describes a single artifact independently of any previous version: one `.blockmap3` per installer serves updates from any older version, the server only needs HTTP `Range` support, and the cost of an update is a handful of kilobytes of map plus the changed blocks. The repository benchmark reports both side by side for the same synthetic app.
+How this compares with per-version delta packages (Squirrel, Velopack): those frameworks compute a binary patch between two specific releases on the build machine and publish one delta file per consecutive version pair, which a client applies in sequence from the exact release it has installed. The patch itself is small (a zstd `--patch-from` diff of a one-line change is a few kilobytes), but every release pair needs its own artifact, a client that skipped releases applies several of them, and the old release must still be present in full. A block map describes a single artifact independently of any previous version: one `.blockmap` per installer serves updates from any older version, the server only needs HTTP `Range` support, and the cost of an update is a handful of kilobytes of map plus the changed blocks. The repository benchmark reports both side by side for the same synthetic app.
 
 ![Per-version delta packages versus block maps: what is published, what a client downloads, measured bytes for the same edits](/img/blockmap-v3-vs-delta.svg)
 
