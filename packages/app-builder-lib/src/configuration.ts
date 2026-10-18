@@ -108,7 +108,8 @@ export interface CommonConfiguration {
    * - `"v2"`: a binary block map that electron-updater fetches in parts with HTTP `Range` requests (only the parts that changed
    *   since the installed version), with finer blocks for stored members such as an uncompressed `app.asar`. electron-updater
    *   before 7.0 cannot read it: those apps fall back to a full download once, and the update they install brings an updater
-   *   that can, so the next update is differential again.
+   *   that can. From electron-updater 6.8.10 the next update is differential again; 6.8.9 and earlier leave the old block map
+   *   in their cache, which can make the next update a full download too.
    * - `"latest"`: the newest format this electron-builder writes (currently `"v2"`). A future format change then costs one full
    *   download per user again, the same way.
    *
