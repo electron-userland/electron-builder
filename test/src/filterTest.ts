@@ -12,6 +12,7 @@ import {
   getReincludedDefaultExclusions,
   resolveFileSetDestination,
 } from "app-builder-lib/internal"
+import { readFileSync } from "fs"
 import * as path from "path"
 import { vi } from "vitest"
 import { resolveExcludedExtensions } from "../../packages/app-builder-lib/src/fileMatcher"
@@ -610,6 +611,13 @@ describe("getDefaultIgnoredPatterns", () => {
     expect(extPatternOf(getDefaultIgnoredPatterns([], DEFAULT_EXCLUDED_EXTENSIONS))).toBe(expected)
     // an unset fileOptions.excludedExts resolves to the same glob
     expect(extPatternOf(getDefaultIgnoredPatterns([], resolveExcludedExtensions({}, null)))).toBe(expected)
+  })
+
+  test("the excludedExts docs table lists every default extension, in order", ({ expect }) => {
+    // scheme.json carries the FilesBuildOptions.excludedExts JSDoc as the description
+    const scheme = JSON.parse(readFileSync(path.join(import.meta.dirname, "../../packages/app-builder-lib/scheme.json"), "utf8"))
+    const description: string = scheme.definitions.FilesBuildOptions.properties.excludedExts.description
+    expect([...description.matchAll(/^\| `\.([^`]+)` \|/gm)].map(it => it[1])).toEqual(DEFAULT_EXCLUDED_EXTENSIONS)
   })
 
   test("the default (no opt-in) name glob matches the historical hardcoded list", ({ expect }) => {
