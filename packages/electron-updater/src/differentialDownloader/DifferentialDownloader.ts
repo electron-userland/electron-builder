@@ -1,4 +1,4 @@
-import { BlockMapDataHolder, createHttpError, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
+import { BlockMapDataHolder, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import { createWriteStream } from "fs"
@@ -8,7 +8,7 @@ import { Logger } from "../types.js"
 import { copyData } from "./DataSplitter.js"
 import { URL } from "url"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder.js"
-import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader.js"
+import { checkIsPartialContent, ERR_MULTIPLE_RANGES_NOT_SUPPORTED, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader.js"
 import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
 
 export interface DifferentialDownloaderOptions {
@@ -30,6 +30,9 @@ export abstract class DifferentialDownloader {
 
   readonly logger: Logger
 
+  // starts from the provider's choice; turned off for the rest of this download when the server rejects multi-range requests
+  private isUseMultipleRangeRequest: boolean
+
   // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
   constructor(
     protected readonly blockAwareFileInfo: BlockMapDataHolder,
@@ -37,6 +40,7 @@ export abstract class DifferentialDownloader {
     readonly options: DifferentialDownloaderOptions
   ) {
     this.logger = options.logger
+    this.isUseMultipleRangeRequest = options.isUseMultipleRangeRequest === true
   }
 
   createRequestOptions(): RequestOptions {
@@ -82,7 +86,16 @@ export abstract class DifferentialDownloader {
 
     logger.info(`Full: ${formatBytes(newSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newSize / 100))}%)`)
 
-    return this.downloadFile(operations)
+    return this.downloadFile(operations).catch((e: any) => {
+      if (e.code !== ERR_MULTIPLE_RANGES_NOT_SUPPORTED || !this.isUseMultipleRangeRequest) {
+        throw e
+      }
+      // The new file is rewritten from the start, and each single-range answer is checked, so a host that ignores ranges
+      // fails on its first request instead of streaming the whole file per range.
+      logger.warn(`${e.message}: retrying with one range per request`)
+      this.isUseMultipleRangeRequest = false
+      return this.downloadFile(operations)
+    })
   }
 
   private downloadFile(tasks: Array<Operation>): Promise<any> {
@@ -131,7 +144,7 @@ export abstract class DifferentialDownloader {
 
       // Create our download info transformer if we have one
       let downloadInfoTransform: ProgressDifferentialDownloadCallbackTransform | undefined = undefined
-      if (!this.options.isUseMultipleRangeRequest && this.options.onProgress) {
+      if (!this.isUseMultipleRangeRequest && this.options.onProgress) {
         const expectedByteCounts: Array<number> = []
         let grandTotalBytes = 0
 
@@ -187,7 +200,7 @@ export abstract class DifferentialDownloader {
       const firstStream = streams[0]
 
       let w: any
-      if (this.options.isUseMultipleRangeRequest) {
+      if (this.isUseMultipleRangeRequest) {
         w = executeTasksUsingMultipleRangeRequests(this, tasks, firstStream, oldFileFd, reject)
         w(0)
         return
@@ -231,14 +244,14 @@ export abstract class DifferentialDownloader {
         }
 
         const request = this.httpExecutor.createRequest(requestOptions, response => {
+          // before the abort listeners: rejecting a response destroys it, which would otherwise report a server abort
+          if (!checkIsPartialContent(response, operation.start, operation.end - 1, reject)) {
+            return
+          }
           response.on("error", reject)
           response.on("aborted", () => {
             reject(new Error("response has been aborted by the server"))
           })
-          // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
-          if (response.statusCode >= 400) {
-            reject(createHttpError(response))
-          }
 
           response.pipe(firstStream, {
             end: false,
@@ -276,7 +289,7 @@ export abstract class DifferentialDownloader {
     const requestOptions = this.createRequestOptions()
     requestOptions.headers!.range = `bytes=${start}-${endInclusive}`
     let position = 0
-    await this.request(requestOptions, chunk => {
+    await this.request(requestOptions, start, endInclusive, chunk => {
       chunk.copy(buffer, position)
       position += chunk.length
     })
@@ -287,10 +300,10 @@ export abstract class DifferentialDownloader {
     return buffer
   }
 
-  private request(requestOptions: RequestOptions, dataHandler: (chunk: Buffer) => void): Promise<void> {
+  private request(requestOptions: RequestOptions, start: number, endInclusive: number, dataHandler: (chunk: Buffer) => void): Promise<void> {
     return new Promise((resolve, reject) => {
       const request = this.httpExecutor.createRequest(requestOptions, response => {
-        if (!checkIsRangesSupported(response, reject)) {
+        if (!checkIsPartialContent(response, start, endInclusive, reject)) {
           return
         }
 
