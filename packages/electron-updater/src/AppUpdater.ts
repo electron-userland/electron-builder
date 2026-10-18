@@ -1271,6 +1271,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
       // get old blockmap from cache dir first, if not found, download it
       let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
+      if (oldBlockMapData != null && !(await isBlockMapOfFile(oldBlockMapData, downloadOptions.oldFile))) {
+        // The cached blockmap is replaced when a download finishes, but NSIS replaces the cached installer only when the update is
+        // installed. A release that arrives before the previous one is installed therefore finds the pending release's blockmap next
+        // to the running release's installer; planning against it downloads every differential byte and then fails the sha512 check.
+        this._logger.warn(`Cached blockmap does not describe the cached "${oldInstallerFileName}" (sizes differ): using the blockmap of the installed version`)
+        oldBlockMapData = null
+      }
       isOldBlockMapFromCache = oldBlockMapData != null
       if (oldBlockMapData == null) {
         if (oldBlockMapUrl == null) {
@@ -1304,6 +1311,23 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return true
     }
   }
+}
+
+/**
+ * Whether `blockMap` can describe `file`: its blocks must end exactly at the file's size. A missing file is not rejected here (the
+ * differential download reports it). Releases almost always differ in size, so this catches a blockmap of another release.
+ * @internal
+ */
+export async function isBlockMapOfFile(blockMap: BlockMap, file: string): Promise<boolean> {
+  const stat = await fsExtra.stat(file).catch(() => null)
+  if (stat == null) {
+    return true
+  }
+  let end = 0
+  for (const blockMapFile of blockMap.files) {
+    end = Math.max(end, blockMapFile.offset + blockMapFile.sizes.reduce((sum, size) => sum + size, 0))
+  }
+  return end === stat.size
 }
 
 /** @internal */
