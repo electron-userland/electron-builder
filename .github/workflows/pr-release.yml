@@ -5,19 +5,22 @@ on:
     branches:
       - master
       - release/v*
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
 
 permissions: {}
 
 jobs:
   pr-release:
+    # on the job, not the workflow: a docker deploy (the deploy-docker job) takes hours and must not hold up the next release
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: false
     permissions:
       id-token: write  # Required for OIDC token
     environment: release
     timeout-minutes: 15
     runs-on: ubuntu-latest
+    outputs:
+      docker-version: ${{ steps.docker.outputs.version }}
     steps:
       - name: Checkout code repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -204,3 +207,73 @@ jobs:
       - name: No changes to publish
         if: steps.changesets.outputs.published != 'true'
         run: echo "No changesets to publish"
+
+      # The private package docker (the electronuserland/builder images) is versioned by changesets on its own, without
+      # an npm release or a tag of changesets: a version of docker/package.json that has no tag docker@<version> yet is
+      # not deployed yet (released by this push, or by an earlier one whose run failed before this step). The tag
+      # records the commit the version is deployed from, and the deploy-docker job below deploys it. A tag on this run's
+      # own commit means a re-run of the run that pushed it, which deploys again; a tag on another commit means the
+      # version is deployed. Neither a new tag nor a re-run deploys once a later commit has a newer docker@ tag (e.g. a
+      # re-run of an older run that failed before this step). It runs only after the publish path of the changesets step
+      # (hasChangesets 'false'; on the version path HEAD is the release PR's unmerged commit), also when the release
+      # notes step failed, and on master only: the images have one set of moving tags (latest, wine, …)
+      - name: Tag a new docker version
+        id: docker
+        if: ${{ !cancelled() && steps.changesets.outcome == 'success' && steps.changesets.outputs.hasChangesets == 'false' && github.ref_name == 'master' }}
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          version=$(node -p 'require("./docker/package.json").version')
+          tag="docker@$version"
+          # checkout fetched every tag (fetch-depth: 0)
+          on_head=false
+          if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
+            if [ "$(git rev-parse "refs/tags/$tag^{commit}")" != "$(git rev-parse HEAD)" ]; then
+              echo "$tag is on another commit: no new docker version"
+              exit 0
+            fi
+            on_head=true
+          fi
+          # not once a later commit has a newer docker@ tag, also when $tag is not there yet (a re-run of an older run
+          # that failed before this step): that would put older images on the moving tags. --contains HEAD also
+          # lists $tag when it is on HEAD, so a tag on HEAD itself is not a later one
+          for later in $(git tag -l 'docker@*' --contains HEAD); do
+            if [ "$(git rev-parse "refs/tags/$later^{commit}")" != "$(git rev-parse HEAD)" ]; then
+              echo "::warning::$later is on a later commit: not tagging/deploying $tag"
+              exit 0
+            fi
+          done
+          if [ "$on_head" = true ]; then
+            echo "$tag is on this commit (a re-run): deploying it again"
+          else
+            # an annotated tag object, then its ref, created through the REST API with the app token (GITHUB_TOKEN has
+            # no contents permission in this workflow). gh reads GH_TOKEN from the environment, so the token never lands
+            # in a command line or the git config. The tagger is the release bot (GIT_COMMITTER_* of export-git-user):
+            # the API documents no default for an omitted tagger
+            tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags" -f tag="$tag" -f message="$tag" \
+              -f object="$(git rev-parse HEAD)" -f type=commit \
+              -f "tagger[name]=$GIT_COMMITTER_NAME" -f "tagger[email]=$GIT_COMMITTER_EMAIL" --jq .sha)
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$tag" -f sha="$tag_sha" > /dev/null
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "## 🐳 docker@$version" >> "$GITHUB_STEP_SUMMARY"
+
+  # the images of the new docker version, from this run's commit: a run on master passes the branch policy of the
+  # `release` environment, which holds the Docker Hub secrets (deploy-docker.yml)
+  deploy-docker:
+    needs: pr-release
+    # also when pr-release failed in its release notes step, which runs before the tag step: the tag is created, and a
+    # later run that finds it does not deploy
+    if: ${{ !cancelled() && needs.pr-release.outputs.docker-version != '' }}
+    # one deploy at a time; a newer version waiting replaces an older one waiting
+    concurrency:
+      group: deploy-docker
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    uses: ./.github/workflows/deploy-docker.yml
+    # by name, not `secrets: inherit`, which would also hand RELEASE_BOT_APP_CREDS to the deploy job (it is in the `release` environment too)
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
