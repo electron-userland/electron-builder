@@ -247,10 +247,14 @@ jobs:
           if [ "$on_head" = true ]; then
             echo "$tag is on this commit (a re-run): deploying it again"
           else
-            # an annotated tag, by the release bot (GIT_COMMITTER_* of export-git-user), pushed with its token:
-            # GITHUB_TOKEN has no contents permission in this workflow
-            git tag -a "$tag" -m "$tag"
-            git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push origin "refs/tags/$tag"
+            # an annotated tag object, then its ref, created through the REST API with the app token (GITHUB_TOKEN has
+            # no contents permission in this workflow). gh reads GH_TOKEN from the environment, so the token never lands
+            # in a command line or the git config. The tagger is the release bot (GIT_COMMITTER_* of export-git-user):
+            # the API documents no default for an omitted tagger
+            tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags" -f tag="$tag" -f message="$tag" \
+              -f object="$(git rev-parse HEAD)" -f type=commit \
+              -f "tagger[name]=$GIT_COMMITTER_NAME" -f "tagger[email]=$GIT_COMMITTER_EMAIL" --jq .sha)
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$tag" -f sha="$tag_sha" > /dev/null
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "## 🐳 docker@$version" >> "$GITHUB_STEP_SUMMARY"
@@ -259,7 +263,7 @@ jobs:
   # `release` environment, which holds the Docker Hub secrets (deploy-docker.yml)
   deploy-docker:
     needs: pr-release
-    # also when pr-release failed in its release notes step, which runs before the tag step: the tag is pushed, and a
+    # also when pr-release failed in its release notes step, which runs before the tag step: the tag is created, and a
     # later run that finds it does not deploy
     if: ${{ !cancelled() && needs.pr-release.outputs.docker-version != '' }}
     # one deploy at a time; a newer version waiting replaces an older one waiting
