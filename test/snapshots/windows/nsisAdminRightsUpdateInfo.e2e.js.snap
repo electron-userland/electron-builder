@@ -1,0 +1,202 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`assisted per-machine: update info has isAdminRightsRequired 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "isAdminRightsRequired": true,
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW Setup 1.1.0.exe",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`nsis-web per-machine: update info has isAdminRightsRequired in the installer's file entry 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Web Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "packages": {
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.1.0-x64.nsis.7z",
+            "path": "TestApp-1.1.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x64.nsis.7z",
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "isAdminRightsRequired": true,
+            "sha512": "@sha512",
+            "url": "Test App ßW Web Setup 1.1.0.exe",
+          },
+        ],
+        "packages": {
+          "x64": {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.1.0-x64.nsis.7z",
+            "path": "TestApp-1.1.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+        "releaseDate": "@releaseDate",
+        "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`per-machine without blockmap: update info has isAdminRightsRequired 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "isAdminRightsRequired": true,
+            "sha512": "@sha512",
+            "url": "Test App ßW Setup 1.1.0.exe",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`per-machine without elevate.exe: update info has no isAdminRightsRequired 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW Setup 1.1.0.exe",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`per-user without elevate.exe: update info has no isAdminRightsRequired 1`] = `
+{
+  "win": [
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW Setup 1.1.0.exe",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;

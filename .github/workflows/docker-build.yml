@@ -9,7 +9,8 @@ permissions:
 
 jobs:
   build-docker-images:
-    runs-on: ubuntu-22.04
+    # the images are Ubuntu 22.04 whatever the runner; the ubuntu-22.04 runner image is removed on 2027-04-17 (actions/runner-images#14254)
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:

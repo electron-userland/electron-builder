@@ -55,6 +55,10 @@ export class DmgTarget extends Target {
     super("dmg")
   }
 
+  get writesUpdateInfo(): boolean {
+    return this.options.writeUpdateInfo !== false
+  }
+
   async build(appPath: string, arch: Arch) {
     const packager = this.packager
     // tslint:disable-next-line:no-invalid-template-strings
@@ -96,7 +100,7 @@ export class DmgTarget extends Target {
     }
 
     const safeArtifactName = packager.computeSafeArtifactName(artifactName, "dmg")
-    const updateInfo = this.options.writeUpdateInfo === false ? null : await createBlockmap(artifactPath, this, packager, safeArtifactName)
+    const updateInfo = this.options.writeUpdateInfo === false ? null : await createBlockmap(artifactPath, this, packager, safeArtifactName, arch)
     await packager.emitArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName,

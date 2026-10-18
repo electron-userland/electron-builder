@@ -68,6 +68,10 @@ export class GitLabProvider extends Provider<GitlabUpdateInfo> {
     return result
   }
 
+  get feedBaseUrl(): URL {
+    return this.baseApiUrl
+  }
+
   private get channel(): string {
     const result = this.updater.channel || this.options.channel
     return result == null ? this.getDefaultChannelName() : this.getCustomChannelName(result)

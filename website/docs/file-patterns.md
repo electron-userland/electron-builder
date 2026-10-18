@@ -43,15 +43,17 @@ Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
 
 ## Default Ignored Files
 
-electron-builder excludes a set of files from the packaged app by default (development files, and certain extensions/names such as Wavefront `.obj` 3D models). In **v27** the `disableDefaultIgnoredFiles` option was removed. To keep a file that is excluded by default, add an explicit `files` glob that **names it concretely** — an explicit include now overrides the matching default exclusion:
+electron-builder excludes a set of files from the packaged app by default (development files, and certain extensions/names such as Wavefront `.obj` 3D models). In **v27** the `disableDefaultIgnoredFiles` option was removed. To keep a file that is excluded by default, add an explicit `fileOptions.files` glob that **names it concretely** — an explicit include now overrides the matching default exclusion:
 
 ```json5
 {
   "build": {
-    "files": [
-      "**/*",
-      "**/*.obj"  // opt a default-excluded extension back in
-    ]
+    "fileOptions": {
+      "files": [
+        "**/*",
+        "**/*.obj"  // opt a default-excluded extension back in
+      ]
+    }
   }
 }
 ```

@@ -34,15 +34,17 @@ test.ifNotWindows("2 ignore", ({ expect }) =>
       targets: linuxDirTarget,
       config: {
         asar: false,
-        files: [
-          "**/*",
-          "!{app,build,electron,mobile,theme,uploads,util,dist,dist-app/aot,dist-app/app.bundle.js,dist-app/dependencies/shim.min.js,dist-app/dependencies/classList.min.js,dist-app/dependencies/web-animations.min.js,main.js,main-aot.js,favicon.ico,index.html,index-aot.html,index-cordova.html,index-aot.js,index-electron.js,index.bundle.js,systemjs.config.js,systemjs-angular-loader.js,package-lock.json}",
-          "!*config*.json",
-          "!**/*.{ts,scss,map,md,csv,wrapped}",
-          "!**/*.{hprof,orig,pyc,pyo,rbc}",
-          "!**/._*",
-          "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}",
-        ],
+        fileOptions: {
+          files: [
+            "**/*",
+            "!{app,build,electron,mobile,theme,uploads,util,dist,dist-app/aot,dist-app/app.bundle.js,dist-app/dependencies/shim.min.js,dist-app/dependencies/classList.min.js,dist-app/dependencies/web-animations.min.js,main.js,main-aot.js,favicon.ico,index.html,index-aot.html,index-cordova.html,index-aot.js,index-electron.js,index.bundle.js,systemjs.config.js,systemjs-angular-loader.js,package-lock.json}",
+            "!*config*.json",
+            "!**/*.{ts,scss,map,md,csv,wrapped}",
+            "!**/*.{hprof,orig,pyc,pyo,rbc}",
+            "!**/._*",
+            "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}",
+          ],
+        },
       },
     },
     {
@@ -86,7 +88,7 @@ test("ignore node_modules dev dep", ({ expect }) =>
       targets: linuxDirTarget,
       config: {
         asar: false,
-        files: ["**/*", "**/submodule-1-test/node_modules/**"],
+        fileOptions: { files: ["**/*", "**/submodule-1-test/node_modules/**"] },
       },
     },
     {
@@ -114,7 +116,7 @@ test.ifNotWindows("copied sub node_modules of the rootDir/node_modules", ({ expe
       targets: currentProcessTarget,
       config: {
         asar: false,
-        files: ["**/*", "**/submodule-1-test/node_modules/**"],
+        fileOptions: { files: ["**/*", "**/submodule-1-test/node_modules/**"] },
       },
     },
     {
@@ -194,7 +196,7 @@ test.ifNotWindows("copied select submodule node_modules", ({ expect }) =>
         // should use **/ instead of */,
         // we use the related path to match, so the relative path is submodule-1-test/node_modules
         // */ will not match submodule-1-test/node_modules
-        files: ["**/*", "**/submodule-1-test/node_modules/**"],
+        fileOptions: { files: ["**/*", "**/submodule-1-test/node_modules/**"] },
       },
     },
     {
@@ -227,7 +229,7 @@ test.ifNotWindows("cannot copied select submodule node_modules by */", ({ expect
       targets: currentProcessTarget,
       config: {
         asar: false,
-        files: ["**/*", "*/submodule-1-test/node_modules/**"],
+        fileOptions: { files: ["**/*", "*/submodule-1-test/node_modules/**"] },
       },
     },
     {
@@ -257,7 +259,7 @@ test.ifNotWindows("cannot copied select submodule node_modules by **/submodule-1
       targets: currentProcessTarget,
       config: {
         asar: false,
-        files: ["**/*", "**/submodule-1-test/node_modules"],
+        fileOptions: { files: ["**/*", "**/submodule-1-test/node_modules"] },
       },
     },
     {

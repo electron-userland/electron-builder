@@ -63,6 +63,7 @@ export class WindowsSignAzureManager implements SignManager {
     const wcs = this.packager.config.toolsets?.winCodeSign
     log.info(
       {
+        // oxlint-disable-next-line typescript/no-base-to-string -- pre-existing log text; a custom toolset object prints as "[object Object]", changing it is out of scope for the lint migration
         reason: `toolsets.winCodeSign "${String(wcs)}" is below the minimum "${minimumWinCodeSignVersionForDlib}"`,
         guidance: `leave toolsets.winCodeSign unset (or set it to "${minimumWinCodeSignVersionForDlib}" / "latest") to use the faster signtool /dlib integration`,
       },

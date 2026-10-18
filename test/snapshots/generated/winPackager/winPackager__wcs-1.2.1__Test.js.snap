@@ -1,0 +1,165 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`winPackager > beta version 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`winPackager > beta version 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "3.0.0-beta.2",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "3.0.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
+exports[`winPackager > icon < 256 1`] = `"ERR_ICON_TOO_SMALL"`;
+
+exports[`winPackager > icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
+
+exports[`winPackager > legacy win-codesign 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`winPackager > legacy win-codesign 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
+exports[`winPackager > sign: false — app executable not signed even when a cert is discoverable 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`winPackager > sign: false — app executable not signed even when a cert is discoverable 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
+exports[`winPackager > sign: false — resedit still edits exe resources 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`winPackager > sign: false — resedit still edits exe resources 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
+exports[`winPackager > win zip 1`] = `
+[
+  {
+    "alg": "SHA256",
+    "file": "resources\\app.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\extraAsar.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\subdir\\extraAsar2.asar",
+    "value": "hash",
+  },
+]
+`;
+
+exports[`winPackager > win zip 2`] = `
+[
+  {
+    "alg": "SHA256",
+    "file": "resources\\app.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\extraAsar.asar",
+    "value": "hash",
+  },
+  {
+    "alg": "SHA256",
+    "file": "resources\\subdir\\extraAsar2.asar",
+    "value": "hash",
+  },
+]
+`;
+
+exports[`winPackager > win zip 3`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`winPackager > win zip 4`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;
+
+exports[`winPackager > zip artifactName 1`] = `
+{
+  "win": [],
+}
+`;
+
+exports[`winPackager > zip artifactName 2`] = `
+{
+  "CompanyName": "Foo Bar",
+  "FileDescription": "Test App ßW",
+  "FileVersion": "1.1.0",
+  "InternalName": "Test App ßW",
+  "LegalCopyright": "Copyright © 2026 Foo Bar",
+  "OriginalFilename": "",
+  "ProductName": "Test App ßW",
+  "ProductVersion": "1.1.0.0",
+  "SquirrelAwareVersion": "1",
+}
+`;

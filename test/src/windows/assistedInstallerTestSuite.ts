@@ -132,18 +132,16 @@ export function registerAssistedInstallerTests(toolsets: ToolsetConfig): void {
     )
   })
 
+  // Needs a log-enabled NSIS bundle (makensis and stubs compiled with NSIS_CONFIG_LOG=yes), which no pinned toolsets.nsis version is:
+  // nsis@1.2.1 ships the stock NSIS, and nsis@2.0.x log-enables only the Windows makensis and stubs, not the Linux / macOS makensis.
+  // Point the file:// url at such a bundle directory to run it.
   test.skip("debug logging enabled", ({ expect }) =>
     app(expect, {
       targets: nsisTarget,
       config: {
-        toolsets,
+        toolsets: { ...toolsets, nsis: { url: "file:///path/to/log-enabled-nsis-bundle" } },
         nsis: {
-          customNsisBinary: {
-            url: "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.2/nsis-3.0.4.2.7z",
-            version: "3.0.4.2",
-            checksum: "o+YZsXHp8LNihhuk7JsCDhdIgx0MKKK+1b3sGD+4zX5djZULe4/4QMcAsfQ+0r+a8FnwBt7BVBHkIkJHjKQ0sg==",
-            debugLogging: true,
-          },
+          installerDebugLogging: true,
         },
       },
     }))

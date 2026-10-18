@@ -36,10 +36,23 @@ export interface PublishConfiguration {
   readonly updaterCacheDirName?: string | null
 
   /**
+   * Ed25519 public key(s) (PEM or base64 SPKI) used by electron-updater to verify the signed update
+   * manifest before downloading — the install's trust list. A manifest is accepted when any listed key
+   * validates one of its signatures. Embedded into `app-update.yml` at build time when update manifest
+   * signing is enabled: a single string for one key, an array for several. Managed by electron-builder —
+   * populated from `updateManifest.publicKey` or derived from the configured signing key(s); setting it
+   * manually in the `publish` configuration is rejected as a configuration error.
+   * @private
+   */
+  readonly updateManifestPublicKey?: string | Array<string> | null
+
+  /**
    * Whether to publish auto update info files.
    *
    * Auto update relies only on the first provider in the list (you can specify several publishers).
    * Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+   * A provider with `false` never becomes the feed embedded in `app-update.yml` while a later provider receives the metadata:
+   * the first provider that does is embedded instead.
    *
    * @default true
    */
@@ -284,8 +297,8 @@ export interface KeygenOptions extends PublishConfiguration {
  * https://bitbucket.org/
  * Define `BITBUCKET_TOKEN` environment variable.
  *
- * Bitbucket Cloud is [retiring app passwords](https://www.atlassian.com/blog/bitbucket/bitbucket-cloud-transitions-to-api-tokens) in favor of API tokens and access tokens. Authentication is selected by whether a `username` is provided:
- * - With `username` — the token is sent via HTTP Basic auth. Use a Bitbucket username + [app password](https://bitbucket.org/account/settings/app-passwords), or an Atlassian account email + [API token](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/).
+ * Bitbucket Cloud is [retiring app passwords](https://www.atlassian.com/blog/bitbucket/bitbucket-cloud-transitions-to-api-tokens-enhancing-security-with-app-password-deprecation) in favor of API tokens and access tokens. Authentication is selected by whether a `username` is provided:
+ * - With `username` — the token is sent via HTTP Basic auth. Use a Bitbucket username + [app password](https://bitbucket.org/account/settings/app-passwords/), or an Atlassian account email + [API token](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/).
  * - Without `username` — the token is sent as a repository/project/workspace [access token](https://support.atlassian.com/bitbucket-cloud/docs/using-access-tokens/) via Bearer auth.
  *
  * For the auto-updater on a private repository, pass the matching header to `autoUpdater.addAuthHeader(...)`:
@@ -308,7 +321,7 @@ export interface BitbucketOptions extends PublishConfiguration {
   readonly owner: string
 
   /**
-   * The token to support auto-update from private bitbucket repositories. Depending on `username`, this is a Bitbucket [app password](https://bitbucket.org/account/settings/app-passwords), an Atlassian [API token](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/), or a repository/project/workspace [access token](https://support.atlassian.com/bitbucket-cloud/docs/using-access-tokens/).
+   * The token to support auto-update from private bitbucket repositories. Depending on `username`, this is a Bitbucket [app password](https://bitbucket.org/account/settings/app-passwords/), an Atlassian [API token](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/), or a repository/project/workspace [access token](https://support.atlassian.com/bitbucket-cloud/docs/using-access-tokens/).
    */
   readonly token?: string | null
 
