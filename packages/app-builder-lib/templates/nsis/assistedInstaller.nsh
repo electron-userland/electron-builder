@@ -11,7 +11,23 @@
   !endif
 
   !ifmacrodef licensePage
-    !insertmacro skipPageIfUpdated
+    # choosing "for all users" without admin rights relaunches the installer elevated (UAC inner instance) and its pages start over,
+    # the license was already accepted in the outer instance, so skip it on the way in (Back still reaches it, otherwise Back would close the installer)
+    Var isLicensePageSkippedInInnerInstance
+
+    Function licensePagePre
+      ${if} ${isUpdated}
+        Abort
+      ${endif}
+
+      ${if} ${UAC_IsInnerInstance}
+      ${andIf} $isLicensePageSkippedInInnerInstance != "1"
+        StrCpy $isLicensePageSkippedInInnerInstance "1"
+        Abort
+      ${endif}
+    FunctionEnd
+
+    !define MUI_PAGE_CUSTOMFUNCTION_PRE licensePagePre
     !insertmacro licensePage
   !endif
 
