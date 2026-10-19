@@ -637,7 +637,7 @@ describe("archive() storedPaths", { sequential: true }, () => {
 // independent 4 MB blocks with 4+, so the package bytes (and every differential update built on
 // them) depend on the build host's CPU count.
 describe("archive() LZMA2 block size", () => {
-  async function pack7z(src: string, outFile: string, options: ArchiveOptions, threads: number): Promise<Buffer> {
+  async function pack7z(src: string, outFile: string, options: archiveModule.ArchiveOptions, threads: number): Promise<Buffer> {
     const { getPath7za } = await import("app-builder-lib/src/toolsets/7zip")
     const { execFile } = await import("child_process")
     const { promisify } = await import("util")
@@ -663,7 +663,7 @@ describe("archive() LZMA2 block size", () => {
     const pinned = configureDifferentialAwareArchiveOptions({
       installTimeDecodable: true,
     })
-    const unpinned: ArchiveOptions = { ...pinned, blockSize: undefined }
+    const unpinned: archiveModule.ArchiveOptions = { ...pinned, blockSize: undefined }
     const pinned1 = await pack7z(src, path.join(tmpDirPath, "pinned-1.7z"), pinned, 1)
     const pinned4 = await pack7z(src, path.join(tmpDirPath, "pinned-4.7z"), pinned, 4)
     const unpinned4 = await pack7z(src, path.join(tmpDirPath, "unpinned-4.7z"), unpinned, 4)
