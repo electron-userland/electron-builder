@@ -1,5 +1,11 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`a files entry naming one pdb file ships only that pdb file 1`] = `
+{
+  "linux": [],
+}
+`;
+
 exports[`default-excluded extension stays excluded without a re-include glob 1`] = `
 {
   "linux": [],
@@ -51,6 +57,18 @@ exports[`files.from asar 1`] = `
 `;
 
 exports[`map resources 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`pdb files are excluded by default 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`pdb files are kept with fileOptions.excludedExts ["default", "!pdb"] 1`] = `
 {
   "linux": [],
 }

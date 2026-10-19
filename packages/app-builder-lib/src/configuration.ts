@@ -434,16 +434,6 @@ export interface CommonConfiguration {
   readonly forceCodeSigning?: boolean
 
   /**
-   * Whether to include `.pdb` (Program Database) symbol files in the output.
-   *
-   * PDB files enable Windows crash-dump analysis but significantly increase artifact size. Enable
-   * for internal builds where you want symbol information; disable for public distribution.
-   *
-   * @default false
-   */
-  readonly includePdb?: boolean
-
-  /**
    * Whether to remove the `scripts` field from bundled `package.json` files.
    *
    * Lifecycle scripts (`preinstall`, `postinstall`, etc.) have no meaning inside a packaged

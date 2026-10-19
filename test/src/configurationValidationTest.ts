@@ -88,6 +88,34 @@ test.ifNotWindows("null string as null", async ({ expect }) => {
   expect((config.mac!.sign as ElectronSignOptions).hardenedRuntime).toBe(false)
 })
 
+test("`-c.fileOptions.excludedExts` takes a single extension or null from the command line", async ({ expect }) => {
+  const yargs = configureBuildCommand(createYargs())
+  const options = normalizeOptions(
+    yargs.parse(["-c.fileOptions.excludedExts=default", "-c.win.fileOptions.excludedExts=null", "-c.mas.fileOptions.excludedExts=null"]) as CliOptions
+  )
+  const config = options.config as Configuration
+  // "null" would otherwise be read as an extension, which turns off every default exclusion
+  expect(config.fileOptions!.excludedExts).toBe("default")
+  expect(config.win!.fileOptions!.excludedExts).toBeNull()
+  expect(config.mas!.fileOptions!.excludedExts).toBeNull()
+  await validateConfiguration(config, new DebugLogger())
+})
+
+test("repeated `-c.fileOptions.excludedExts` flags form one list also next to a `-c <config file>`, in either order", ({ expect }) => {
+  const parse = (args: Array<string>) => normalizeOptions(configureBuildCommand(createYargs()).parse(args) as CliOptions).config as Configuration
+  const flags = ["-c.fileOptions.excludedExts=default", "-c.fileOptions.excludedExts=!pdb", "-c.win.fileOptions.excludedExts=default", "-c.win.fileOptions.excludedExts=!obj"]
+  for (const args of [[...flags], ["-c", "build.yml", ...flags], [...flags, "-c", "build.yml"]]) {
+    const config = parse(args)
+    expect(config.fileOptions!.excludedExts).toEqual(["default", "!pdb"])
+    expect(config.win!.fileOptions!.excludedExts).toEqual(["default", "!obj"])
+  }
+  expect(parse(["-c", "build.yml", ...flags]).extends).toBe("build.yml")
+  // a single flag next to a config file stays a single value, so "null" is still null
+  expect(parse(["-c", "build.yml", "-c.fileOptions.excludedExts=null"]).fileOptions!.excludedExts).toBeNull()
+  // a later flag that makes fileOptions a scalar is left for validateConfiguration to report, not a crash
+  expect(() => parse(["-c", "build.yml", ...flags, "-c.fileOptions=null"])).not.toThrow()
+})
+
 test("`-c.updateManifest=false` is coerced to a boolean and passes schema validation", async ({ expect }) => {
   const yargs = configureBuildCommand(createYargs())
   const options = normalizeOptions(yargs.parse(["-c.updateManifest=false", "-c.linux.updateManifest=false"]) as CliOptions)

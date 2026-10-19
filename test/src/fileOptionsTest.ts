@@ -9,6 +9,7 @@ import {
   getNodeModuleFileMatcher,
   validateConfiguration,
 } from "app-builder-lib/internal"
+import { MacPackager } from "app-builder-lib"
 import { DebugLogger, InvalidConfigurationError, log, serializeToYaml } from "builder-util"
 import { deepAssign } from "builder-util-runtime"
 import { Configuration } from "electron-builder"
@@ -76,6 +77,14 @@ describe("flat files / extraResources / extraFiles are normalized into fileOptio
     const result = merge({ fileOptions: { files: ["dist/**"], extraFiles: ["x"] }, mac: { fileOptions: { extraResources: ["m"] } } })
     expect(result.fileOptions).toEqual({ files: [{ filter: ["dist/**"] }], extraFiles: [{ filter: ["x"] }] })
     expect(result.mac).toEqual({ fileOptions: { extraResources: ["m"] } })
+    expect(warnings()).toEqual([])
+  })
+
+  test("fileOptions.excludedExts is kept as is at the root and per platform", ({ expect }) => {
+    const result = merge({ fileOptions: { excludedExts: ["default", "!pdb"] }, linux: { fileOptions: { excludedExts: ["map"] } }, win: { fileOptions: { excludedExts: [] } } })
+    expect(result.fileOptions?.excludedExts).toEqual(["default", "!pdb"])
+    expect(result.linux?.fileOptions?.excludedExts).toEqual(["map"])
+    expect(result.win?.fileOptions?.excludedExts).toEqual([])
     expect(warnings()).toEqual([])
   })
 
@@ -185,6 +194,21 @@ describe("schema", () => {
 
   test("rejects an unknown key inside fileOptions", async ({ expect }) => {
     await expect(validateConfiguration({ fileOptions: { asarUnpack: ["x"] } } as Configuration, new DebugLogger(false))).rejects.toThrow(/asarUnpack/)
+  })
+
+  // e.g. `-c.fileOptions.excludedExts=default` on the command line
+  test("accepts a single string for fileOptions.excludedExts at the root and per platform", async ({ expect }) => {
+    const config: Configuration = { fileOptions: { excludedExts: "default" }, win: { fileOptions: { excludedExts: ".pdb" } }, mac: { fileOptions: { excludedExts: "map" } } }
+    await expect(validateConfiguration(config, new DebugLogger(false))).resolves.toBeUndefined()
+  })
+
+  // a number or boolean is not rejected: ajv's coerceTypes turns it into a string
+  test.for<[string, unknown]>([
+    ["an object", { default: true }],
+    ["a list with an object", ["default", { ext: "map" }]],
+  ])("rejects %s for fileOptions.excludedExts", async ([, excludedExts], { expect }) => {
+    await expect(validateConfiguration({ fileOptions: { excludedExts } } as Configuration, new DebugLogger(false))).rejects.toThrow(/excludedExts/)
+    await expect(validateConfiguration({ linux: { fileOptions: { excludedExts } } } as Configuration, new DebugLogger(false))).rejects.toThrow(/excludedExts/)
   })
 })
 
@@ -362,5 +386,78 @@ describe("packaging readers see the nested values", () => {
     const matcher = getNodeModuleFileMatcher(projectDir, outDir, noMacro, config.linux ?? {}, packager)
     expect(matcher.patterns).toContain("!root-secret/**")
     expect(matcher.patterns).toContain("!linux-secret/**")
+  })
+})
+
+describe("fileOptions.excludedExts: a later layer replaces an earlier one", () => {
+  test("an extends child replaces its parent's list, at the root and per platform", ({ expect }) => {
+    const merged = merge(
+      { fileOptions: { excludedExts: ["default", "!pdb"] }, linux: { fileOptions: { excludedExts: ["map"] } }, win: { fileOptions: { excludedExts: ["map"] } } },
+      { fileOptions: { excludedExts: ["default"] }, linux: { fileOptions: { excludedExts: [] } } }
+    )
+    expect(merged.fileOptions?.excludedExts).toEqual(["default"])
+    expect(merged.linux?.fileOptions?.excludedExts).toEqual([])
+    expect(merged.win?.fileOptions?.excludedExts).toEqual(["map"])
+  })
+
+  test("a child that does not set it, or sets it to null, keeps the parent's list", ({ expect }) => {
+    expect(merge({ fileOptions: { excludedExts: ["map"] } }, { fileOptions: { files: ["dist/**"] } }).fileOptions?.excludedExts).toEqual(["map"])
+    expect(merge({ fileOptions: { excludedExts: ["map"] } }, { fileOptions: { excludedExts: null } }).fileOptions?.excludedExts).toEqual(["map"])
+  })
+
+  test("the configs it is given are untouched", ({ expect }) => {
+    const parent = { fileOptions: { excludedExts: ["default", "!pdb"] } }
+    merge(parent, { fileOptions: { excludedExts: ["map"] } })
+    expect(parent).toEqual({ fileOptions: { excludedExts: ["default", "!pdb"] } })
+  })
+
+  test("a programmatic (or -c) configuration replaces the config file's list", async ({ expect, tmpDir }) => {
+    const projectDir = await tmpDir.getTempDir({ prefix: "excluded-exts" })
+    await mkdir(projectDir, { recursive: true })
+    await writeFile(path.join(projectDir, "package.json"), JSON.stringify({ name: "app", version: "1.0.0" }))
+    await writeFile(
+      path.join(projectDir, "electron-builder.json"),
+      JSON.stringify({ fileOptions: { excludedExts: ["default", "!pdb"] }, mac: { fileOptions: { excludedExts: ["map"] } } })
+    )
+
+    const config = await getConfig(projectDir, null, { fileOptions: { excludedExts: ["default"] }, mac: { fileOptions: { excludedExts: null } } })
+    expect(config.fileOptions?.excludedExts).toEqual(["default"])
+    expect(config.mac?.fileOptions?.excludedExts).toEqual(["map"])
+  })
+
+  describe("mac → mas → masDev", () => {
+    function platformConfig(type: "mas" | "mas-dev", mac: Record<string, any>, mas?: Record<string, any> | null, masDev?: Record<string, any> | null): Record<string, any> {
+      const packager = { platformSpecificBuildOptions: mac, config: { mas, masDev } }
+      return (MacPackager.prototype.getPlatformConfig as (this: unknown, type: string) => { config: Record<string, any> }).call(packager, type).config
+    }
+
+    test("mas replaces mac's list, and masDev replaces mas's", ({ expect }) => {
+      const mac = { fileOptions: { excludedExts: ["default", "!pdb"], files: ["a/**"] } }
+      const mas = { fileOptions: { excludedExts: ["default"] } }
+      const masDev = { fileOptions: { excludedExts: ["map"] } }
+      expect(platformConfig("mas", mac, mas).fileOptions).toEqual({ excludedExts: ["default"], files: ["a/**"] })
+      expect(platformConfig("mas-dev", mac, mas, masDev).fileOptions.excludedExts).toEqual(["map"])
+    })
+
+    test("a layer that does not set it, or sets it to null, keeps the previous layer's list", ({ expect }) => {
+      const mac = { fileOptions: { excludedExts: ["map"] } }
+      expect(platformConfig("mas", mac, {}).fileOptions.excludedExts).toEqual(["map"])
+      expect(platformConfig("mas", mac, { fileOptions: { excludedExts: null } }).fileOptions.excludedExts).toEqual(["map"])
+      expect(platformConfig("mas-dev", mac, null, { fileOptions: { extraFiles: ["x"] } }).fileOptions.excludedExts).toEqual(["map"])
+    })
+
+    test("merging the mas configuration does not change the fileOptions of the mac or mas one", ({ expect }) => {
+      const mac = { fileOptions: { excludedExts: ["default"] } }
+      const mas = { fileOptions: { excludedExts: ["default", "!pdb"], extraFiles: ["mas-f"] } }
+      const masDev = { fileOptions: { extraFiles: ["dev-f"] } }
+      platformConfig("mas-dev", mac, mas, masDev)
+      expect(mac).toEqual({ fileOptions: { excludedExts: ["default"] } })
+      expect(mas).toEqual({ fileOptions: { excludedExts: ["default", "!pdb"], extraFiles: ["mas-f"] } })
+
+      // also when mac has no fileOptions object to copy
+      const masOnly = { fileOptions: { excludedExts: ["map"] } }
+      platformConfig("mas-dev", { fileOptions: null }, masOnly, masDev)
+      expect(masOnly).toEqual({ fileOptions: { excludedExts: ["map"] } })
+    })
   })
 })

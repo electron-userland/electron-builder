@@ -35,6 +35,7 @@ import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackag
 import { ArchiveTarget } from "./targets/ArchiveTarget.js"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/mac/pkg.js"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory.js"
+import { isPlainObject, replaceMergedExcludedExts } from "./util/config/fileOptions.js"
 import { isMacOsHighSierra } from "./util/mac/macosVersion.js"
 import { buildSingleArchFilesPattern, collectIdenticalSingleArchMachOFiles, collectSingleArchPackageNames } from "./util/archCompatibility.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
@@ -46,6 +47,17 @@ export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacP
 
 function isElectronSignOptions(sign: MacConfiguration["sign"]): sign is ElectronSignOptions {
   return typeof sign === "object" && sign !== null
+}
+
+/**
+ * Merges the mac → mas (→ masDev) cascade. `deepAssign` merges a later layer into a nested object it took from an earlier one, so each
+ * layer's `fileOptions` is copied first: merging the mas configuration must not change the `fileOptions` of the mac one. A later layer's
+ * `fileOptions.excludedExts` replaces an earlier one (see replaceMergedExcludedExts).
+ */
+function mergeMasConfig(...layers: Array<MacConfiguration | MasConfiguration | Nullish>): MasConfiguration {
+  const config: MasConfiguration = deepAssign({}, ...layers.map(it => (it != null && isPlainObject(it.fileOptions) ? { ...it, fileOptions: { ...it.fileOptions } } : it)))
+  replaceMergedExcludedExts(config, layers)
+  return config
 }
 
 interface PlatformConfig<C extends MacConfiguration | MasConfiguration = MacConfiguration | MasConfiguration> {
@@ -112,14 +124,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     switch (platformType) {
       case "mas":
-        config = deepAssign({}, this.platformSpecificBuildOptions, this.config.mas)
+        config = mergeMasConfig(this.platformSpecificBuildOptions, this.config.mas)
         platformName = "mas"
         break
 
       case "mas-dev":
         // `mas-dev` cascades mac → mas → masDev. The development/distribution distinction is no longer
         // carried as a config field; it is derived from `platformType` wherever signing happens.
-        config = deepAssign({}, this.platformSpecificBuildOptions, this.config.mas, this.config.masDev)
+        config = mergeMasConfig(this.platformSpecificBuildOptions, this.config.mas, this.config.masDev)
         platformName = "mas"
         break
 

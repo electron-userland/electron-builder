@@ -1,4 +1,5 @@
 import { Arch, archFromString, copyDir, InvalidConfigurationError, log, prepareFixedNameWrite, removeNullish, toLinuxArchString } from "builder-util"
+import { expandDefaultKeyword } from "builder-util/internal"
 
 import { deepAssign, isValidKey, Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
@@ -516,14 +517,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
    * Expand "default" keyword in arrays of anything
    */
   private expandDefaultsInArray<T>(items: T[] | Nullish, defaults: T[]): T[] | undefined {
-    const result: Array<T> = []
-    for (const item of items ?? []) {
-      if (typeof item === "string" && item === "default") {
-        result.push(...defaults)
-      } else {
-        result.push(item)
-      }
-    }
+    const result = expandDefaultKeyword(items ?? [], defaults)
     return result.length > 0 ? result : undefined
   }
 }
