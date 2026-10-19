@@ -32,7 +32,7 @@ The deploy also tags the images of `LATEST_IMAGE_NODE_MAJOR_VERSION` of [deploy-
 
 The Node.js versions are the matrix of [docker-build.yml](../.github/workflows/docker-build.yml), as full versions. The matrix of deploy-docker.yml lists the same major versions.
 
-* To update a version, e.g. 22.22.2 to 22.22.3, change it in docker-build.yml.
+* To update a version, e.g. 22.23.3 to 22.23.4, change it in docker-build.yml.
 * To add or drop a version, change both matrices. A major version that only docker-build.yml lists is built and not pushed. One that only deploy-docker.yml lists has no images artifact, so the deploy fails.
 * `LATEST_IMAGE_NODE_MAJOR_VERSION` of deploy-docker.yml is the version of `latest`, `wine`, `wine-mono` and `wine-chrome`. It has to be in the matrix of deploy-docker.yml, or the deploy does not update these tags.
 * `TEST_IMAGE_NODE_MAJOR_VERSION` of [test.yaml](../.github/workflows/test.yaml) (22) is the version the tests run in. It has to be in the matrices too, and the default image of [run-tests.sh](run-tests.sh) (`22-wine-mono`) has to be changed with it.
@@ -44,12 +44,12 @@ Each of these changes needs a changeset for `docker` (see [Versioning and deploy
 From the repository root, with a full Node.js version of the matrix, without `v`:
 
 ```sh
-pnpm docker-images 22.22.2
+pnpm docker-images 22.23.3
 ```
 
 This runs [build.sh](build.sh), which builds the five images for that Node.js version, then lists all local `electronuserland/builder` images.
 
-* The build contexts (`docker/base`, …) are relative to the current directory, so run `bash docker/build.sh 22.22.2` from the repository root. `pnpm docker-images` runs it there. In `docker/`, which is a workspace package of its own, use `pnpm -w docker-images 22.22.2`.
+* The build contexts (`docker/base`, …) are relative to the current directory, so run `bash docker/build.sh 22.23.3` from the repository root. `pnpm docker-images` runs it there. In `docker/`, which is a workspace package of its own, use `pnpm -w docker-images 22.23.3`.
 * Without a version, `base` is built, then the next image fails with `invalid reference format`.
 * Docker 23.0 or newer (Buildx 0.10 or newer) is needed for `--provenance=false`. The comment in build.sh explains why the images are built without the provenance attestation.
 * build.sh always builds the five images. To rebuild one, run its `docker build` command of build.sh with the tag of its parent in `IMAGE_VERSION`:
@@ -73,7 +73,7 @@ TEST_FILES=snapTest pnpm test:linux
 * `CI` is passed as it is set on the host, so a local run is not a CI run, as on the host: vitest writes a missing snapshot instead of failing (a changed one still fails), and the smart reporter prints a line per test (`-e SMART_REPORTER_VERBOSE=false` in `ADDITIONAL_DOCKER_ARGS` turns that off).
 * run-tests.sh mounts the current directory at `/project`, so run it from the repository root. `pnpm test:linux` does that. In the container, [test-in-docker.sh](test-in-docker.sh) installs corepack and bun, then runs `pnpm install --force`, `pnpm compile` and `pnpm ci:test`. pnpm is the version of `packageManager` in the root `package.json`, via corepack, not the pnpm 10.18.0 of the image.
 * The image is pulled, with 3 attempts, only if it is not present locally. So a locally built image of that tag is used as is, and an outdated one is not updated: run `docker pull electronuserland/builder:22-wine-mono` to update it.
-* To test a change of an image, build the images with `pnpm docker-images 22.22.2`, then run the tests. build.sh gives the local images the published tags, so run-tests.sh uses the local `22-wine-mono`.
+* To test a change of an image, build the images with `pnpm docker-images 22.23.3`, then run the tests. build.sh gives the local images the published tags, so run-tests.sh uses the local `22-wine-mono`.
 * To work in an image, start a shell in it with `docker run --rm -it electronuserland/builder:22-wine-mono`. It starts `bash` in `/project`. To mount the repository as the tests do, add `-v "$PWD:/project" -v "$PWD/node-modules-docker:/project/node_modules"`.
 
 | Variable | Default | |
