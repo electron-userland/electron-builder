@@ -103,7 +103,8 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     response.on("error", reject)
 
     // other errors (auth, missing file, server failure) are not about ranges: fail as before, without a range-by-range retry
-    if (response.statusCode! >= 400 && !MULTIPLE_RANGES_REJECTED_STATUS_CODES.has(response.statusCode!)) {
+    const { statusCode } = response
+    if (typeof statusCode === "number" && statusCode >= 400 && !MULTIPLE_RANGES_REJECTED_STATUS_CODES.has(statusCode)) {
       response.destroy()
       reject(createHttpError(response))
       return
@@ -112,11 +113,11 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     // Hosts that serve only one range per request answer a multi-range request with an error (GitHub release assets: 501,
     // GCS: 400), the whole file (S3: 200) or a single coalesced part. Stop reading and let the caller retry range by range.
     const contentType = safeGetHeader(response, "content-type")
-    const m = response.statusCode === 206 ? /^multipart\/.+?\s*;\s*boundary=(?:"([^"]+)"|([^\s";]+))\s*$/i.exec(contentType) : null
+    const m = statusCode === 206 ? /^multipart\/.+?\s*;\s*boundary=(?:"([^"]+)"|([^\s";]+))\s*$/i.exec(contentType) : null
     if (m == null) {
       response.destroy()
       request.abort()
-      reject(newError(`Server does not support multiple ranges in one request (status ${response.statusCode}, Content-Type "${contentType}")`, ERR_MULTIPLE_RANGES_NOT_SUPPORTED))
+      reject(newError(`Server does not support multiple ranges in one request (status ${statusCode}, Content-Type "${contentType}")`, ERR_MULTIPLE_RANGES_NOT_SUPPORTED))
       return
     }
 
@@ -173,18 +174,19 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
  */
 export function checkIsPartialContent(response: IncomingMessage, start: number, endInclusive: number, reject: (error: Error) => void): boolean {
   // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
-  if (response.statusCode! >= 400) {
+  const { statusCode } = response
+  if (typeof statusCode === "number" && statusCode >= 400) {
     response.destroy()
     reject(createHttpError(response))
     return false
   }
 
   const contentRange = safeGetHeader(response, "content-range")
-  if (response.statusCode !== 206 || contentRange == null || !contentRange.startsWith(`bytes ${start}-${endInclusive}/`)) {
+  if (statusCode !== 206 || contentRange == null || !contentRange.startsWith(`bytes ${start}-${endInclusive}/`)) {
     response.destroy()
     reject(
       newError(
-        `Server did not return the requested range bytes=${start}-${endInclusive} (status ${response.statusCode}, Content-Range "${contentRange ?? ""}")`,
+        `Server did not return the requested range bytes=${start}-${endInclusive} (status ${statusCode}, Content-Range "${contentRange ?? ""}")`,
         "ERR_UPDATER_RANGE_NOT_SUPPORTED"
       )
     )

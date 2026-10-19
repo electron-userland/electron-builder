@@ -119,7 +119,7 @@ describe("differential download on hosts with limited range support", { concurre
   }
 
   test("a host that serves multipart/byteranges takes one request", async ({ tmpDir }) => {
-    const { newFile } = await download(await tmpDir.createTempDir(), await startHost("multipart"), true)
+    const { newFile } = await download(await tmpDir.createTempDir({ prefix: "single-range" }), await startHost("multipart"), true)
     expect(readFileSync(newFile).equals(newContent)).toBe(true)
     expect(requests).toHaveLength(1)
   })
@@ -130,7 +130,7 @@ describe("differential download on hosts with limited range support", { concurre
     ["multi-200", "200 with the whole file (S3)"],
   ] as const) {
     test(`a host that answers multi-range requests with ${label} is retried with one range per request`, async ({ tmpDir }) => {
-      const { newFile, warnings } = await download(await tmpDir.createTempDir(), await startHost(behaviour), true)
+      const { newFile, warnings } = await download(await tmpDir.createTempDir({ prefix: "single-range" }), await startHost(behaviour), true)
       expect(readFileSync(newFile).equals(newContent)).toBe(true)
       expect(requests).toEqual([`bytes=${BLOCK}-${2 * BLOCK - 1}, ${3 * BLOCK}-${4 * BLOCK - 1}`, `bytes=${BLOCK}-${2 * BLOCK - 1}`, `bytes=${3 * BLOCK}-${4 * BLOCK - 1}`])
       expect(warnings.some(it => it.includes("retrying with one range per request"))).toBe(true)
@@ -138,26 +138,26 @@ describe("differential download on hosts with limited range support", { concurre
   }
 
   test("an error that is not about ranges (403) is not retried range by range", async ({ tmpDir }) => {
-    const promise = download(await tmpDir.createTempDir(), await startHost("multi-403"), true)
+    const promise = download(await tmpDir.createTempDir({ prefix: "single-range" }), await startHost("multi-403"), true)
     await expect(promise).rejects.toMatchObject({ statusCode: 403 })
     expect(requests).toHaveLength(1)
   })
 
   test("a host that ignores ranges fails on the first single-range request instead of streaming the file per range", async ({ tmpDir }) => {
-    const promise = download(await tmpDir.createTempDir(), await startHost("ignores-ranges"), true)
+    const promise = download(await tmpDir.createTempDir({ prefix: "single-range" }), await startHost("ignores-ranges"), true)
     await expect(promise).rejects.toMatchObject({ code: "ERR_UPDATER_RANGE_NOT_SUPPORTED" })
     // the multi-range attempt, then one single-range attempt
     expect(requests).toHaveLength(2)
   })
 
   test("single-range downloads reject a 200 answer even when it carries Accept-Ranges", async ({ tmpDir }) => {
-    const promise = download(await tmpDir.createTempDir(), await startHost("ignores-ranges"), false)
+    const promise = download(await tmpDir.createTempDir({ prefix: "single-range" }), await startHost("ignores-ranges"), false)
     await expect(promise).rejects.toMatchObject({ code: "ERR_UPDATER_RANGE_NOT_SUPPORTED" })
     expect(requests).toHaveLength(1)
   })
 
   test("single-range downloads reject a 206 for a different range", async ({ tmpDir }) => {
-    const promise = download(await tmpDir.createTempDir(), await startHost("wrong-range"), false)
+    const promise = download(await tmpDir.createTempDir({ prefix: "single-range" }), await startHost("wrong-range"), false)
     await expect(promise).rejects.toMatchObject({ code: "ERR_UPDATER_RANGE_NOT_SUPPORTED" })
     expect(requests).toHaveLength(1)
   })
