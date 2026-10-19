@@ -6,13 +6,6 @@ on:
       - master
       - release/v*
   pull_request:
-  workflow_call:
-    inputs:
-      rebuild-docker-images-call:
-        description: "Force rebuild of Docker images?"
-        required: false
-        type: boolean
-        default: false
   workflow_dispatch:
     inputs:
       rebuild-docker-images:
@@ -43,7 +36,7 @@ env:
 
 jobs:
   check-if-docker-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       force-docker-build: ${{ steps.changes.outputs.docker == 'true' || steps.changes.outputs.workflow == 'true' }}
@@ -69,8 +62,7 @@ jobs:
     if: |
       always() &&
       (needs.check-if-docker-build.outputs.force-docker-build == 'true' ||
-      inputs.rebuild-docker-images == 'true' || inputs.rebuild-docker-images == true ||
-      inputs.rebuild-docker-images-call == 'true' || inputs.rebuild-docker-images-call == true)
+      inputs.rebuild-docker-images == 'true' || inputs.rebuild-docker-images == true)
     uses: ./.github/workflows/docker-build.yml
 
   # -------------------------
@@ -78,7 +70,7 @@ jobs:
   # -------------------------
 
   validate-and-shard:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     outputs:
       linux: ${{ steps.plan.outputs.linux }}
@@ -148,7 +140,7 @@ jobs:
         shard: ${{ fromJson(needs.validate-and-shard.outputs.linux) }}
         include:
           - platform: linux
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             cache-path: ~/.cache/electron
             cache-key: v-39.8.10-linux-electron
     runs-on: ${{ matrix.runner }}
@@ -314,7 +306,7 @@ jobs:
       always() &&
       needs.check-if-docker-build.result == 'success' &&
       (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -463,7 +455,7 @@ jobs:
   # installs the bundle and starts the app with `flatpak run`, which needs bubblewrap again, plus an X display.
   # The flatpak target installs missing refs with `flatpak install --user` (no explicit remote), so
   # the runtimes are pre-installed into the same user installation from a user-level flathub remote.
-  # It runs with the stock packages of two runners: ubuntu-latest, and ubuntu-22.04, which has the oldest tools of any current
+  # It runs with the stock packages of two runners: ubuntu-24.04, and ubuntu-22.04, which has the oldest tools of any current
   # distribution release: flatpak-builder 1.2.2, the target's minimum, and flatpak 1.12.7 (the minimum is 1.12.4). The ubuntu-22.04
   # image is deprecated: GitHub's brownouts in March and April 2027 fail that leg, and the image is removed on 2027-04-17
   # (actions/runner-images#14254), so the leg has to move, for example into a 22.04 container, before then.
@@ -474,7 +466,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-latest, ubuntu-22.04]
+        runner: [ubuntu-24.04, ubuntu-22.04]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -558,7 +550,7 @@ jobs:
 
   test-e2e:
     name: Test e2e Auto Updater Linux
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -627,7 +619,7 @@ jobs:
   merge-smart-cache:
     needs: [test-linux, test-windows, test-macos, test-e2e, test-updater, test-snap, test-flatpak]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
