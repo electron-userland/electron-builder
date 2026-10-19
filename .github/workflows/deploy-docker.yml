@@ -23,14 +23,12 @@ env:
   LATEST_IMAGE_NODE_MAJOR_VERSION: 24
 
 jobs:
-  run-docker-build-and-test:
-    uses: ./.github/workflows/test.yaml
-    with:
-      rebuild-docker-images-call: true
+  run-docker-build:
+    uses: ./.github/workflows/docker-build.yml
 
   deploy:
     name: Build and Push Docker
-    needs: run-docker-build-and-test
+    needs: run-docker-build
     runs-on: ubuntu-latest
     # DOCKERHUB_USERNAME and DOCKERHUB_TOKEN; the environment allows master, release/* and changeset-release/* only, so
     # a manual run (workflow_dispatch) has to be on one of them

@@ -6,13 +6,6 @@ on:
       - master
       - release/v*
   pull_request:
-  workflow_call:
-    inputs:
-      rebuild-docker-images-call:
-        description: "Force rebuild of Docker images?"
-        required: false
-        type: boolean
-        default: false
   workflow_dispatch:
     inputs:
       rebuild-docker-images:
@@ -69,8 +62,7 @@ jobs:
     if: |
       always() &&
       (needs.check-if-docker-build.outputs.force-docker-build == 'true' ||
-      inputs.rebuild-docker-images == 'true' || inputs.rebuild-docker-images == true ||
-      inputs.rebuild-docker-images-call == 'true' || inputs.rebuild-docker-images-call == true)
+      inputs.rebuild-docker-images == 'true' || inputs.rebuild-docker-images == true)
     uses: ./.github/workflows/docker-build.yml
 
   # -------------------------

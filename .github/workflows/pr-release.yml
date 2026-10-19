@@ -10,7 +10,7 @@ permissions: {}
 
 jobs:
   pr-release:
-    # on the job, not the workflow: a docker deploy (the deploy-docker job) takes hours and must not hold up the next release
+    # on the job, not the workflow: a docker deploy (the deploy-docker job) takes a while and must not hold up the next release
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: false
