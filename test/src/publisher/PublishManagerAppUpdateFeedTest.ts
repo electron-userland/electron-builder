@@ -27,7 +27,10 @@ afterEach(() => {
 const signingKey = generateUpdateSigningKeypair()
 const trustedKey = derivePublicKeyPem(parsePrivateKey(signingKey.privateKeyPem))
 
-const s3 = { provider: "s3", bucket: "nsis-updates" }
+// the feed part of the S3 config, as embedded in app-update.yml; publishing also needs an explicit credential source,
+// which is build-time only and never embedded
+const s3Feed = { provider: "s3", bucket: "nsis-updates" }
+const s3 = { ...s3Feed, awsCredentials: { source: "env" } }
 const generic = { provider: "generic", url: "https://example.com/updates" }
 const githubRepository = { type: "github", user: "acme", project: "app", source: "package.json" }
 
@@ -97,6 +100,7 @@ test("nsis.publish alone (no GitHub repository): app-update.yml carries the inst
   const appUpdate = await afterPackAppUpdate(tmpDir, packager, [target("nsis", { publish: s3 })])
   // before, nothing was written: installs had no feed and, with setFeedURL, no updateManifestPublicKey
   expect(appUpdate).toMatchObject({ provider: "s3", bucket: "nsis-updates", updaterCacheDirName: "test-app" })
+  expect(appUpdate).not.toHaveProperty("awsCredentials")
   expect(appUpdate.updateManifestPublicKey).toBe(trustedKey)
   expect(packager.requireUpdateSigningKeys).toHaveBeenCalledWith(true)
 })
@@ -190,9 +194,9 @@ test("a publishing build fails on conflicting feeds at build start, before anyth
 })
 
 test("targets of one pack with the same feed (in any key order) are fine; later providers may differ", async ({ expect, tmpDir }) => {
-  const targets = [target("nsis", { publish: [{ bucket: "nsis-updates", provider: "s3" }, "github"] }), target("nsis-web", { publish: s3 })]
+  const targets = [target("nsis", { publish: [{ awsCredentials: { source: "env" }, bucket: "nsis-updates", provider: "s3" }, "github"] }), target("nsis-web", { publish: s3 })]
   const appUpdate = await afterPackAppUpdate(tmpDir, makePackager({ repositoryInfo: githubRepository }), targets)
-  expect(appUpdate).toMatchObject(s3)
+  expect(appUpdate).toMatchObject(s3Feed)
 })
 
 test("the same feed with different upload-only options is fine", async ({ expect, tmpDir }) => {
@@ -204,7 +208,15 @@ test("the same feed with different upload-only options is fine", async ({ expect
   expect(appUpdate.updateManifestPublicKey).toBe(trustedKey)
 
   const s3Upload = { publish: { ...s3, acl: "private", storageClass: "STANDARD_IA", encryption: "AES256", channel: null } }
-  expect(await afterPackAppUpdate(tmpDir, makePackager({ platformPublish: s3 }), [target("nsis", s3Upload), target("nsis-web")])).toMatchObject(s3)
+  expect(await afterPackAppUpdate(tmpDir, makePackager({ platformPublish: s3 }), [target("nsis", s3Upload), target("nsis-web")])).toMatchObject(s3Feed)
+})
+
+test("the same S3 feed with a different credential source is fine (awsCredentials is build-time only)", async ({ expect, tmpDir }) => {
+  const viaProfile = { ...s3Feed, awsCredentials: { source: "profile", profile: "release" } }
+  const packager = makePackager({ platformPublish: s3 })
+  const appUpdate = await afterPackAppUpdate(tmpDir, packager, [target("nsis", { publish: viaProfile }), target("nsis-web")])
+  expect(appUpdate).toMatchObject(s3Feed)
+  expect(appUpdate).not.toHaveProperty("awsCredentials")
 })
 
 test("a different url, bucket, path or channel is a different feed", async ({ expect, tmpDir }) => {
@@ -253,7 +265,7 @@ test("with publishAutoUpdate: false on every provider the first one is still emb
     ],
   })
   const appUpdate = await afterPackAppUpdate(tmpDir, packager, [target("nsis")])
-  expect(appUpdate).toMatchObject(s3)
+  expect(appUpdate).toMatchObject(s3Feed)
   expect(packager.requireUpdateSigningKeys).not.toHaveBeenCalled()
 })
 
@@ -265,7 +277,7 @@ test("a non-manifest target does not take part in the rule", async ({ expect, tm
 
 test("dmg and zip must agree on macOS", async ({ expect, tmpDir }) => {
   const packager = makePackager({ platform: Platform.MAC, platformPublish: generic })
-  expect(await afterPackAppUpdate(tmpDir, packager, [target("dmg", { publish: s3 }), target("zip", { publish: s3 })])).toMatchObject(s3)
+  expect(await afterPackAppUpdate(tmpDir, packager, [target("dmg", { publish: s3 }), target("zip", { publish: s3 })])).toMatchObject(s3Feed)
   await expect(afterPackAppUpdate(tmpDir, packager, [target("dmg", { publish: s3 }), target("zip")])).rejects.toThrow(/different auto-update feeds \(dmg -> s3, zip -> generic/)
 })
 
@@ -282,15 +294,15 @@ test("Linux: a deb that opts out does not overwrite the AppImage's feed", async 
   // both targets rewrite the shared app-update.yml; each must write the pack's feed, or they would race
   const packager = makePackager({ platform: Platform.LINUX, platformPublish: generic })
   const targets = [target("appimage", { publish: s3 }), target("deb", { publish: null })]
-  expect(await afterPackAppUpdate(tmpDir, packager, targets)).toMatchObject(s3)
+  expect(await afterPackAppUpdate(tmpDir, packager, targets)).toMatchObject(s3Feed)
   for (const self of targets) {
-    expect(await getPackAppUpdatePublishConfiguration(packager as any, targets as any, Arch.x64, false), self.name).toMatchObject(s3)
+    expect(await getPackAppUpdatePublishConfiguration(packager as any, targets as any, Arch.x64, false), self.name).toMatchObject(s3Feed)
   }
 })
 
 test("getAppUpdatePublishConfiguration honors the target-specific options it is given", async ({ expect }) => {
   const packager = makePackager({ platform: Platform.LINUX, platformPublish: generic }) as any
-  expect(await getAppUpdatePublishConfiguration(packager, { publish: s3 } as any, Arch.x64, false)).toMatchObject(s3)
+  expect(await getAppUpdatePublishConfiguration(packager, { publish: s3 } as any, Arch.x64, false)).toMatchObject(s3Feed)
   expect(await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)).toMatchObject(generic)
   // a target that emits no manifest falls back to the platform feed
   expect(await getAppUpdatePublishConfiguration(packager, { publish: null } as any, Arch.x64, false)).toMatchObject(generic)
