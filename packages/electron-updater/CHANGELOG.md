@@ -1,5 +1,30 @@
 ## 4.3.0
 
+## 7.0.0-alpha.10
+### Patch Changes
+
+- Fix: reject missing and path-valued cached update file names _[`#10115`](https://github.com/electron-userland/electron-builder/pull/10115) [`4ca053b`](https://github.com/electron-userland/electron-builder/commit/4ca053bb8a84735b4d807239c6cbebe59ebe4365)_
+- Fix(docs): repair broken links and anchors across the docs site and JSDoc, and export the `SnapOptions24`, `SnapOptionsLegacy`, `SnapOptionsCustom` and `RemoteBuildOptions` types from `app-builder-lib` so their API reference pages are generated _[`#10305`](https://github.com/electron-userland/electron-builder/pull/10305) [`2fdbcae`](https://github.com/electron-userland/electron-builder/commit/2fdbcae5b136c486d3afa3e564d032b5a79dae05)_
+- Fix(updater): make GitHubProvider pick the highest eligible release for alpha/beta channel clients instead of the first feed entry, so a stable hotfix published after a pre-release no longer hides that newer pre-release (or offers a downgrade) (#10287) _[`#10289`](https://github.com/electron-userland/electron-builder/pull/10289) [`a1ad1a5`](https://github.com/electron-userland/electron-builder/commit/a1ad1a5c2f1147d7e9242c0f3067464cad76e026)_
+- Refactor: once-only build and updater warnings use `log.once` / `log.limit` (and the updater's per-instance counter) instead of hand-rolled flags and sets; a concurrently resolved NSIS ProgID notice can no longer print twice _[`#10303`](https://github.com/electron-userland/electron-builder/pull/10303) [`6fe881e`](https://github.com/electron-userland/electron-builder/commit/6fe881ea4db4a92c8fbac7d435607d0ccebe2775)_
+- Feat(builder-util): `log.limit({ key, max, scope })` / `log.once(key, scope)` emit a keyed message at most N times (per process, or per scope object), replacing hand-rolled "already warned" flags; electron-updater counts once-per-updater warnings internally without changing the injectable `Logger` interface. Both share one limiter (`wrap()` on any `{ info, warn, error, debug? }` logger, including `console`), and its `LogLevel`, `LogLimitOptions`, `LoggerLike` and `LimitedLogger` types are now exported from builder-util-runtime (builder-util re-exports them) _[`#10302`](https://github.com/electron-userland/electron-builder/pull/10302) [`5cbbc8d`](https://github.com/electron-userland/electron-builder/commit/5cbbc8de8e0fb585cfa97e80644e8a29ab7d8ff4)_
+- Fix: handle a deferred native macOS update download only once _[`#10116`](https://github.com/electron-userland/electron-builder/pull/10116) [`10c4b54`](https://github.com/electron-userland/electron-builder/commit/10c4b5433dce8c325adabe3630b244919d5bc0a2)_
+- Fix: handle multipart headers split across download chunks _[`#10117`](https://github.com/electron-userland/electron-builder/pull/10117) [`dde668d`](https://github.com/electron-userland/electron-builder/commit/dde668d148c5d88b8369b447f2e791c724b8743c)_
+- Docs: document `files[].isAdminRightsRequired` as an intentionally unsigned launch hint in signed update manifests. It only selects how the hash-verified installer is launched (directly or via `elevate.exe`), so publishers can correct it in `latest.yml` without re-signing. _[`#10318`](https://github.com/electron-userland/electron-builder/pull/10318) [`434f6e9`](https://github.com/electron-userland/electron-builder/commit/434f6e98b017c14176be9aaf06891f09624c88fc)_
+- Fix: validate the initial update channel and allow resetting a configured channel to the default _[`#10112`](https://github.com/electron-userland/electron-builder/pull/10112) [`1e167b8`](https://github.com/electron-userland/electron-builder/commit/1e167b8cc73ccd7d10fcd3e2b1bf8e85befb5b06)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`68aa2ff`](https://github.com/electron-userland/electron-builder/commit/68aa2ff1d5bc713819cd98bfb34c890fbe03a93a) [`2fdbcae`](https://github.com/electron-userland/electron-builder/commit/2fdbcae5b136c486d3afa3e564d032b5a79dae05) [`5cbbc8d`](https://github.com/electron-userland/electron-builder/commit/5cbbc8de8e0fb585cfa97e80644e8a29ab7d8ff4) [`8f55928`](https://github.com/electron-userland/electron-builder/commit/8f5592839b6b2752754c19b8b7190ec86f55ef94) [`434f6e9`](https://github.com/electron-userland/electron-builder/commit/434f6e98b017c14176be9aaf06891f09624c88fc)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.10`
+
+</details>
+
 ## 7.0.0-alpha.9
 
 ### Major Changes

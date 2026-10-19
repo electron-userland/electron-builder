@@ -1,5 +1,29 @@
 # builder-util-runtime
 
+## 10.0.0-alpha.10
+### Minor Changes
+
+- Feat(builder-util): `log.limit({ key, max, scope })` / `log.once(key, scope)` emit a keyed message at most N times (per process, or per scope object), replacing hand-rolled "already warned" flags; electron-updater counts once-per-updater warnings internally without changing the injectable `Logger` interface. Both share one limiter (`wrap()` on any `{ info, warn, error, debug? }` logger, including `console`), and its `LogLevel`, `LogLimitOptions`, `LoggerLike` and `LimitedLogger` types are now exported from builder-util-runtime (builder-util re-exports them) _[`#10302`](https://github.com/electron-userland/electron-builder/pull/10302) [`5cbbc8d`](https://github.com/electron-userland/electron-builder/commit/5cbbc8de8e0fb585cfa97e80644e8a29ab7d8ff4)_
+
+### Patch Changes
+
+- Fix: stop retry backoff immediately when cancelled _[`#10126`](https://github.com/electron-userland/electron-builder/pull/10126) [`68aa2ff`](https://github.com/electron-userland/electron-builder/commit/68aa2ff1d5bc713819cd98bfb34c890fbe03a93a)_
+- Fix(docs): repair broken links and anchors across the docs site and JSDoc, and export the `SnapOptions24`, `SnapOptionsLegacy`, `SnapOptionsCustom` and `RemoteBuildOptions` types from `app-builder-lib` so their API reference pages are generated _[`#10305`](https://github.com/electron-userland/electron-builder/pull/10305) [`2fdbcae`](https://github.com/electron-userland/electron-builder/commit/2fdbcae5b136c486d3afa3e564d032b5a79dae05)_
+- Feat!: nest `files`, `extraResources` and `extraFiles` under `fileOptions` _[`#10319`](https://github.com/electron-userland/electron-builder/pull/10319) [`8f55928`](https://github.com/electron-userland/electron-builder/commit/8f5592839b6b2752754c19b8b7190ec86f55ef94)_
+
+  The three file-copy lists live in a `fileOptions?: FilesBuildOptions | null` property at the configuration root and in every platform section (`mac`, `mas`, `masDev`, `win`, `linux`), the same way `directories` groups the build directories: `fileOptions.files`, `mac.fileOptions.extraResources`, and so on. `PlatformSpecificBuildOptions` does not extend `FilesBuildOptions`, and the TypeScript types and the JSON schema only have `fileOptions`.
+
+  Flat `files` / `extraResources` / `extraFiles` keys in a config file, an `extends` parent, a `-c.files=…` override or the `config` object passed to `build()` are applied as their `fileOptions` counterparts before the configuration is validated, logging one warning per process that names the keys found and where they belong. When a flat key and its `fileOptions` counterpart are set on the same object, `fileOptions` wins and the build warns about the conflict. A CLI override or a parent config's flat key is merged with `fileOptions`. A `fileOptions` that is not an object (for example a list of globs written directly under it) fails the build with a message showing the nested form.
+
+  Code that reads `files`, `extraResources` or `extraFiles` from the loaded configuration (for example a hook reading `context.packager.config.files`, or `buildResult.configuration.extraResources`) gets the `fileOptions` value, with a warning per key: the loaded configuration and its platform sections forward these reads through non-enumerable properties, which stay out of the effective config, `JSON.stringify` and `Object.keys`. Assigning them throws a configuration error naming the `fileOptions` property to set instead.
+
+  `deepAssign` (builder-util-runtime) copies only enumerable own properties, so the forwarding properties are never copied into merged options.
+
+  `electron-builder migrate-schema` (static and JS/TS configs) moves flat keys under `fileOptions` at the root and per platform. A flat key also set under `fileOptions` is removed with a warning, since the build ignores it.
+
+  See https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions
+- Docs: document `files[].isAdminRightsRequired` as an intentionally unsigned launch hint in signed update manifests. It only selects how the hash-verified installer is launched (directly or via `elevate.exe`), so publishers can correct it in `latest.yml` without re-signing. _[`#10318`](https://github.com/electron-userland/electron-builder/pull/10318) [`434f6e9`](https://github.com/electron-userland/electron-builder/commit/434f6e98b017c14176be9aaf06891f09624c88fc)_
+
 ## 10.0.0-alpha.9
 
 ### Minor Changes
