@@ -650,7 +650,7 @@ describe("archive() LZMA2 block size", () => {
   }
 
   test("differential-aware 7z output is identical at 1 and 4 threads, and matches today's 4-thread bytes", async ({ expect, tmpDir }) => {
-    const tmpDirPath = await tmpDir.createTempDir()
+    const tmpDirPath = await tmpDir.createTempDir({ prefix: "lzma2-block" })
     // ~10 MB of compressible, deterministic text: more than two 4 MB blocks
     const words = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf", "hotel", "india", "juliet", "kilo", "lima"]
     let seed = 1

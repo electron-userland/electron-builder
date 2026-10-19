@@ -190,14 +190,15 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
     }
   }
 
+  const { blockSize } = options
   const is7z = format === "7z" || format.endsWith(".7z")
   // -mx=0 with an explicit -m0=LZMA2 would compress instead of store, so the block size is only pinned when compressing
-  const pinBlockSize = is7z && options.blockSize != null && !storeOnly && compressionLevel !== "0" && (options.method == null || options.method === "DEFAULT")
+  const pinBlockSize = is7z && typeof blockSize === "number" && !storeOnly && compressionLevel !== "0" && (options.method == null || options.method === "DEFAULT")
   if (pinBlockSize) {
-    if (!Number.isInteger(options.blockSize) || options.blockSize! <= 0) {
-      throw new Error(`blockSize must be a positive integer (MB), got ${options.blockSize}`)
+    if (!Number.isInteger(blockSize) || blockSize <= 0) {
+      throw new Error(`blockSize must be a positive integer (MB), got ${blockSize}`)
     }
-    args.push(`-m0=LZMA2${options.dictSize != null ? `:d=${options.dictSize}m` : ""}:c=${options.blockSize}m`)
+    args.push(`-m0=LZMA2${options.dictSize != null ? `:d=${options.dictSize}m` : ""}:c=${blockSize}m`)
   } else if (options.dictSize != null) {
     args.push(`-md=${options.dictSize}m`)
   }
