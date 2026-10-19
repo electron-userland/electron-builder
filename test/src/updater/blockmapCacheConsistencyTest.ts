@@ -142,6 +142,7 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
   let updater: AppImageUpdater
   let requestedUrls: Array<string>
   let plannedOldBlockMap: any
+  let infoMessages: Array<string>
 
   const blockMap = (sizes: Array<number>, tag: string) => ({ version: "2" as const, files: [{ name: "file", offset: 0, checksums: sizes.map((_, i) => `${tag}-${i}`), sizes }] })
   const serverOldBlockMap = blockMap([600, 400], "server-1.0.0")
@@ -149,9 +150,10 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
   const tmpDir = new TmpDir("blockmap-installer-pairing")
 
   beforeEach(async () => {
-    cacheDir = await tmpDir.getTempDir({ prefix: "cache" })
+    cacheDir = await tmpDir.getTempDir({ prefix: "blockmap-pairing" })
     updater = new AppImageUpdater(null, stubApp)
-    updater.logger = null
+    infoMessages = []
+    updater.logger = { info: (message: string) => infoMessages.push(message), warn: () => {}, error: () => {} }
     ;(updater as any).downloadedUpdateHelper = new DownloadedUpdateHelper(cacheDir)
     requestedUrls = []
     plannedOldBlockMap = null
@@ -174,6 +176,8 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
     vi.restoreAllMocks()
     await tmpDir.cleanup()
   })
+
+  const ignoredMessage = `Cached blockmap does not describe the cached "${OLD_INSTALLER_FILE_NAME}" (malformed, or its blocks do not end at the file size): ignoring it`
 
   function differentialDownloadInstaller(): Promise<boolean> {
     const provider = { getBlockMapFiles: () => Promise.resolve([new URL(OLD_BLOCKMAP_URL), new URL(NEW_BLOCKMAP_URL)]), isUseMultipleRangeRequest: true } as any
@@ -201,6 +205,18 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
 
     expect(requestedUrls).toContain(OLD_BLOCKMAP_URL)
     expect(plannedOldBlockMap).toEqual(serverOldBlockMap)
+    expect(infoMessages).toContain(ignoredMessage)
+  })
+
+  test("a malformed cached blockmap is ignored and the installed release's blockmap is fetched from the server", async () => {
+    // well-formed JSON, wrong shape: reading `files` used to throw a TypeError, which ended in a full download
+    await outputFile(path.join(cacheDir, "current.blockmap"), gzipSync(JSON.stringify({ version: "2" })))
+
+    expect(await differentialDownloadInstaller()).toBe(false)
+
+    expect(requestedUrls).toContain(OLD_BLOCKMAP_URL)
+    expect(plannedOldBlockMap).toEqual(serverOldBlockMap)
+    expect(infoMessages).toContain(ignoredMessage)
   })
 
   test("a cached blockmap that matches the cached installer is used without downloading the old blockmap", async () => {
@@ -211,6 +227,7 @@ describe("differentialDownloadInstaller cached blockmap / installer pairing", { 
 
     expect(requestedUrls).not.toContain(OLD_BLOCKMAP_URL)
     expect(plannedOldBlockMap).toEqual(cached)
+    expect(infoMessages).not.toContain(ignoredMessage)
   })
 })
 
@@ -219,7 +236,7 @@ describe("isBlockMapOfFile", () => {
   afterEach(() => tmpDir.cleanup())
 
   test("compares where the blocks end with the file size", async () => {
-    const file = path.join(await tmpDir.getTempDir(), "installer.exe")
+    const file = path.join(await tmpDir.getTempDir({ prefix: "blockmap-of-file" }), "installer.exe")
     await outputFile(file, Buffer.alloc(1000))
     const map = (sizes: Array<number>, offset = 0) => ({ version: "2" as const, files: [{ name: "file", offset, checksums: sizes.map(String), sizes }] })
 
@@ -229,8 +246,30 @@ describe("isBlockMapOfFile", () => {
     expect(await isBlockMapOfFile(map([500], 500), file)).toBe(true)
   })
 
+  test("rejects a malformed blockmap, even when the file is missing", async () => {
+    const file = path.join(await tmpDir.getTempDir({ prefix: "blockmap-of-file" }), "installer.exe")
+    await outputFile(file, Buffer.alloc(1000))
+    const missing = path.join(path.dirname(file), "missing.exe")
+    const malformed: Array<unknown> = [
+      null,
+      "blockmap",
+      {},
+      { files: "file" },
+      { files: [null] },
+      { files: [{ offset: "0", checksums: ["a"], sizes: [1000] }] },
+      { files: [{ offset: 0, checksums: ["a"], sizes: ["1000"] }] },
+      { files: [{ offset: 0, checksums: ["a"], sizes: [-1, 1001] }] },
+      { files: [{ offset: 0, checksums: ["a", "b"], sizes: [1000] }] },
+      { files: [{ offset: 0, sizes: [1000] }] },
+    ]
+    for (const blockMap of malformed) {
+      expect(await isBlockMapOfFile(blockMap, file), JSON.stringify(blockMap)).toBe(false)
+      expect(await isBlockMapOfFile(blockMap, missing), JSON.stringify(blockMap)).toBe(false)
+    }
+  })
+
   test("does not reject when the file is missing", async () => {
-    const missing = path.join(await tmpDir.getTempDir(), "missing.exe")
+    const missing = path.join(await tmpDir.getTempDir({ prefix: "blockmap-of-file" }), "missing.exe")
     expect(await isBlockMapOfFile({ version: "2", files: [{ name: "file", offset: 0, checksums: ["a"], sizes: [1] }] }, missing)).toBe(true)
   })
 })
