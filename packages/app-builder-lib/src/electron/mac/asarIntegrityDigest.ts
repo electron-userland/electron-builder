@@ -1,4 +1,4 @@
-import { exec, InvalidConfigurationError, log } from "builder-util"
+import { exec, InvalidConfigurationError, log, sanitizeDirPath } from "builder-util"
 import { createHash } from "crypto"
 import { FileHandle, open } from "fs/promises"
 import * as path from "path"
@@ -83,15 +83,17 @@ export async function writeAsarIntegrityDigest(binaryPath: string, digest: Buffe
  * @internal
  */
 export async function embedAsarIntegrityDigest(appPath: string, frameworkName: string): Promise<void> {
-  const infoPlistPath = path.join(appPath, "Contents", "Info.plist")
+  const safeAppPath = sanitizeDirPath(appPath)
+  const safeFrameworkName = sanitizeDirPath(frameworkName)
+  const infoPlistPath = path.join(safeAppPath, "Contents", "Info.plist")
   const integrity = await readAsarIntegrity(infoPlistPath)
   if (integrity == null || Object.keys(integrity).length === 0) {
     log.warn({ file: log.filePath(infoPlistPath), reason: "Info.plist has no ElectronAsarIntegrity entries" }, "skipped ASAR integrity digest")
     return
   }
 
-  const frameworkPath = path.join(appPath, "Contents", "Frameworks", `${frameworkName}.framework`)
-  const binaryPath = path.join(frameworkPath, frameworkName)
+  const frameworkPath = sanitizeDirPath(path.join(safeAppPath, "Contents", "Frameworks", `${safeFrameworkName}.framework`))
+  const binaryPath = path.join(frameworkPath, safeFrameworkName)
   if ((await writeAsarIntegrityDigest(binaryPath, computeAsarIntegrityDigest(integrity))) === 0) {
     log.warn({ file: log.filePath(binaryPath), reason: "the binary has no ASAR integrity digest slot" }, "skipped ASAR integrity digest")
     return
