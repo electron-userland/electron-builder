@@ -166,7 +166,9 @@ If your project uses `"type": "module"` or ESM imports, no changes are needed. I
 
 ### `electron-forge-maker-*` plugins {#electron-forge-maker-plugins}
 
-The four Forge maker plugins (`electron-forge-maker-appimage`, `electron-forge-maker-nsis`, `electron-forge-maker-nsis-web`, `electron-forge-maker-snap`) are now native ES modules. The public API is identical — Electron Forge loads them via dynamic `import()` internally, so no config changes are required.
+The four Forge maker plugins (`electron-forge-maker-appimage`, `electron-forge-maker-nsis`, `electron-forge-maker-nsis-web`, `electron-forge-maker-snap`) are now native ES modules. Electron Forge loads them via dynamic `import()` internally, so no config changes are required.
+
+Their default export is now a maker class that Electron Forge 6 and later can load (`{ name: "electron-forge-maker-nsis", config }`) or that you can instantiate (`new MakerNsis(config)`, also a named export); the `config` is the target's options. Calling the default export as an Electron Forge 5 maker function still works. See [Electron Forge Integration](../features/electron-forge.md).
 
 ---
 
