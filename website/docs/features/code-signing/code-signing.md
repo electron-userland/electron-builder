@@ -102,8 +102,8 @@ Most CI systems inject certificates as base64-encoded environment variables:
 base64 -i your-certificate.p12 -o /tmp/cert_encoded.txt
 cat /tmp/cert_encoded.txt   # copy this value into your CI secret
 
-# Linux
-base64 your-certificate.p12 > /tmp/cert_encoded.txt
+# Linux (-w0: one line, which masked CI variables require)
+base64 -w0 your-certificate.p12 > /tmp/cert_encoded.txt
 cat /tmp/cert_encoded.txt
 ```
 
@@ -113,6 +113,8 @@ Then set `CSC_LINK` to the base64 string (no file URL needed):
 CSC_LINK=<the-base64-string>
 CSC_KEY_PASSWORD=your-password
 ```
+
+The value must be **standard base64** — `A-Z`, `a-z`, `0-9`, `+` and `/` with `=` padding. Line breaks in it are ignored, but surrounding quotes, URL-safe `-`/`_` characters and any other stray character fail the build with an error that does not print the value. In `cmd.exe`, write `set "CSC_LINK=…"`: `set CSC_LINK="…"` keeps the quotes in the value. The same applies to `WIN_CSC_LINK`, `CSC_INSTALLER_LINK`, `SNAP_CSC_LINK` and the `cscLink` options.
 
 :::warning[Windows environment variable length limit]
 Windows cannot handle environment variable values longer than 8192 characters. If your base64-encoded certificate exceeds this limit, re-export it **without** including intermediate certificates in the chain (uncheck "Include all certificates in the certification path" in the Certificate Manager wizard).
