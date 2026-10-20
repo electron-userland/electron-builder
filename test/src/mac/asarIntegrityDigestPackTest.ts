@@ -7,6 +7,7 @@ import { createHash } from "crypto"
 import { Arch, Configuration, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
+import { ExpectStatic } from "vitest"
 import { app, PackedContext } from "../helpers/packTester"
 import { ASAR_INTEGRITY_DIGEST_ELECTRON_VERSION } from "../helpers/testConfig"
 
@@ -36,7 +37,7 @@ async function writeMainScript(projectDir: string): Promise<void> {
 async function setIntegrityEntry(contents: string, hash: string): Promise<void> {
   const infoPlist = path.join(contents, "Info.plist")
   const plist = await parsePlistFile<PlistObject>(infoPlist)
-  ;(plist.ElectronAsarIntegrity as PlistObject)[UNOPENED_ASAR] = { algorithm: "SHA256", hash }
+  plist.ElectronAsarIntegrity = { ...(plist.ElectronAsarIntegrity as PlistObject), [UNOPENED_ASAR]: { algorithm: "SHA256", hash } }
   await savePlistFile(infoPlist, plist)
 }
 
@@ -75,29 +76,39 @@ function launch(context: PackedContext, contents: string): Promise<{ code: numbe
   })
 }
 
+// Every slice holds the digest of the final Info.plist, the app starts, and Electron refuses to start it once an entry is changed.
+async function expectDigestEnforced(expect: ExpectStatic, context: PackedContext, contents: string, slices: number): Promise<void> {
+  const slot = { used: 1, version: 1, digest: await expectedDigest(contents) }
+  expect(await readSlots(contents)).toEqual(Array(slices).fill(slot))
+  // the fuse flip signed the whole app again after the digest was written
+  await exec("/usr/bin/codesign", ["--verify", "--deep", "--strict", path.dirname(contents)])
+
+  expect(await launch(context, contents)).toMatchObject({ code: 0, stdout: expect.stringContaining(STARTED) })
+
+  await tamper(contents)
+  const tampered = await launch(context, contents)
+  expect(tampered.code).not.toBe(0)
+  expect(tampered.stdout).not.toContain(STARTED)
+  expect(tampered.stderr).toContain("Failed to get integrity for validatable asar archive")
+}
+
 describe.ifMac("ASAR integrity digest", { concurrent: false }, () => {
   test("is embedded into the Electron Framework and enforced by Electron", ({ expect }) =>
     app(
       expect,
       { targets: Platform.MAC.createTarget(DIR_TARGET, arch), config },
-      {
-        projectDirCreated: writeMainScript,
-        packed: async context => {
-          const contents = context.getContent(Platform.MAC, arch)
-          expect(await readSlots(contents)).toEqual([{ used: 1, version: 1, digest: await expectedDigest(contents) }])
-          // the fuse flip signed the whole app again after the digest was written
-          await exec("/usr/bin/codesign", ["--verify", "--deep", "--strict", path.dirname(contents)])
-
-          expect(await launch(context, contents)).toMatchObject({ code: 0, stdout: expect.stringContaining(STARTED) })
-
-          await tamper(contents)
-          const tampered = await launch(context, contents)
-          expect(tampered.code).not.toBe(0)
-          expect(tampered.stdout).not.toContain(STARTED)
-          expect(tampered.stderr).toContain("Failed to get integrity for validatable asar archive")
-        },
-      }
+      { projectDirCreated: writeMainScript, packed: context => expectDigestEnforced(expect, context, context.getContent(Platform.MAC, arch), 1) }
     ))
+
+  // the slices get no digest, the merged app gets one in both: covers the call after @electron/universal merged them.
+  // Packs an x64 slice too, so it runs on CI only and local runs stay on the host arch.
+  test.ifEnv("CI")("is embedded into both slices of a universal app", ({ expect }) =>
+    app(
+      expect,
+      { targets: Platform.MAC.createTarget(DIR_TARGET, Arch.universal), config },
+      { projectDirCreated: writeMainScript, packed: context => expectDigestEnforced(expect, context, context.getContent(Platform.MAC, Arch.universal), 2) }
+    )
+  )
 
   // nothing signs the app afterwards: Apple Silicon would kill it on launch if the patched framework were not signed again
   test("leaves an unsigned app launchable", ({ expect }) =>
