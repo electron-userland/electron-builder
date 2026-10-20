@@ -230,6 +230,11 @@ const config: Config = {
             },
             {
               type: "doc",
+              docId: "tutorials/flatpak-in-ci-and-containers",
+              label: "Flatpak in CI and Containers",
+            },
+            {
+              type: "doc",
               docId: "tutorials/offline-air-gapped-builds",
               label: "Offline / Air-Gapped Builds",
             },

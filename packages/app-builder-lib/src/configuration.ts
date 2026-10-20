@@ -434,16 +434,6 @@ export interface CommonConfiguration {
   readonly forceCodeSigning?: boolean
 
   /**
-   * Whether to include `.pdb` (Program Database) symbol files in the output.
-   *
-   * PDB files enable Windows crash-dump analysis but significantly increase artifact size. Enable
-   * for internal builds where you want symbol information; disable for public distribution.
-   *
-   * @default false
-   */
-  readonly includePdb?: boolean
-
-  /**
    * Whether to remove the `scripts` field from bundled `package.json` files.
    *
    * Lifecycle scripts (`preinstall`, `postinstall`, etc.) have no meaning inside a packaged
@@ -1093,9 +1083,9 @@ export interface MetadataDirectories {
    * custom NSIS scripts, etc.) that electron-builder reads during packaging.
    *
    * **Build resources are not copied into the packaged app.** If you need runtime access to a
-   * file (e.g. a tray icon), include it explicitly via the `files` option:
+   * file (e.g. a tray icon), include it explicitly via the `fileOptions.files` option:
    * ```json
-   * { "files": ["**\/*", "build/icon.*"] }
+   * { "fileOptions": { "files": ["**\/*", "build/icon.*"] } }
    * ```
    *
    * @default "build"

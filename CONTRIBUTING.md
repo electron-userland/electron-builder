@@ -145,6 +145,7 @@ fix: allow parentheses in AppImage executable, product, and license file names. 
 > - Several packages are **linked** (see `.changeset/config.json`), so they are versioned together. Only select the packages you actually modified — changesets handles the rest.
 > - Changes that ship nothing to users — repo tooling, CI config, tests, `website/docs`, this `CONTRIBUTING.md` file — don't need a changeset. Note that readmes and TSDoc comments **inside** `packages/*` are published, so those do.
 > - Don't add an *empty* changeset (a file with no package block) to record such a change. `changeset version` consumes and deletes every changeset file during the release run, so an empty one is churn that produces nothing.
+> - The Docker images are the private package `docker` (`docker/`), versioned on its own: a change of an image, including a change of the Node.js versions in `docker-build.yml` and `deploy-docker.yml`, needs a changeset for `docker`, although nothing is published to npm. See [docker/readme.md](docker/readme.md#versioning-and-deploy).
 > - Never edit `package.json` versions or `CHANGELOG.md` by hand. Release automation owns both.
 
 ### 7. Open the PR

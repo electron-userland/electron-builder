@@ -1,8 +1,8 @@
 import { Platform } from "electron-builder"
 import { app } from "../helpers/packTester.js"
-import * as which from "which"
+import { canRunFlatpak } from "../updater/blackboxInstallLinux.js"
 
-describe.heavy.ifEnv(which.sync("flatpak", { nothrow: true }) != null)("Linux Flatpak Test", () => {
+describe.heavy.ifEnv(canRunFlatpak())("Linux Flatpak Test", () => {
   test("flatpak", ({ expect }) =>
     app(expect, {
       targets: Platform.LINUX.createTarget("flatpak"),
@@ -57,8 +57,8 @@ describe.heavy.ifEnv(which.sync("flatpak", { nothrow: true }) != null)("Linux Fl
       targets: Platform.LINUX.createTarget("flatpak"),
       config: {
         flatpak: {
-          runtimeVersion: "19.08",
-          baseVersion: "19.08",
+          runtimeVersion: "25.08",
+          baseVersion: "25.08",
         },
       },
     }))
@@ -66,7 +66,7 @@ describe.heavy.ifEnv(which.sync("flatpak", { nothrow: true }) != null)("Linux Fl
   // Regression test: `linux.files` (a string[] of glob patterns, used by most
   // real-world Linux configs) used to get merged into FlatpakOptions.files
   // (a [string, string][] of copy tuples) by getOptionsForTarget's deepAssign,
-  // which concatenates arrays instead of replacing them. flatpak-bundler then
+  // which concatenates arrays instead of replacing them. The copy step then
   // destructured each glob string as [src, dest], producing a bogus path and
   // crashing the build with ENOENT.
   test("linux.files does not corrupt the flatpak files option", ({ expect }) =>
@@ -74,7 +74,7 @@ describe.heavy.ifEnv(which.sync("flatpak", { nothrow: true }) != null)("Linux Fl
       targets: Platform.LINUX.createTarget("flatpak"),
       config: {
         linux: {
-          files: ["**/*", "!**/*.ts"],
+          fileOptions: { files: ["**/*", "!**/*.ts"] },
         },
       },
     }))
@@ -87,7 +87,7 @@ describe.heavy.ifEnv(which.sync("flatpak", { nothrow: true }) != null)("Linux Fl
       targets: Platform.LINUX.createTarget("flatpak"),
       config: {
         linux: {
-          files: "**/*",
+          fileOptions: { files: "**/*" },
         },
       },
     }))
@@ -97,7 +97,7 @@ describe.heavy.ifEnv(which.sync("flatpak", { nothrow: true }) != null)("Linux Fl
       targets: Platform.LINUX.createTarget("flatpak"),
       config: {
         linux: {
-          files: { from: ".", filter: ["**/*"] },
+          fileOptions: { files: { from: ".", filter: ["**/*"] } },
         },
       },
     }))

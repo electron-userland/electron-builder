@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "27.0.0-alpha.10",
+  "version": "27.0.0-alpha.11",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
@@ -67,7 +67,6 @@
     "@electron/osx-sign": "^2.7.0",
     "@electron/rebuild": "^4.2.1",
     "@electron/universal": "^3.0.6",
-    "@malept/flatpak-bundler": "^0.4.0",
     "@noble/hashes": "^2.2.0",
     "@peculiar/webcrypto": "^1.7.1",
     "@types/fs-extra": "9.0.13",

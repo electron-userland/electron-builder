@@ -51,13 +51,15 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [All packages are native ESM](#native-esm-output) | — | None — `require()` still works on Node >=22.12 |
 | [`electron-forge-maker-*` are now ESM](#electron-forge-maker-plugins) | — | None — same API, same export shape |
 | [`electronCompile` removed](#electroncompile) | ✓ | Remove from config; migrate off `electron-compile` |
-| [`disableDefaultIgnoredFiles` removed](#disabledefaultignoredfiles) | ✓ | Removed automatically; re-include specific files via a `files` glob (e.g. `**/*.obj`) |
+| [`disableDefaultIgnoredFiles` removed](#disabledefaultignoredfiles) | ✓ | Removed automatically; re-include specific files via a `fileOptions.files` glob (e.g. `**/*.obj`) |
 | [`framework` / `nodeVersion` / `launchUiVersion` removed](#framework-nodeversion-launchuiversion) | ✓ | Removed automatically (Electron is the only framework) |
 | [ProtonFramework & LibUiFramework removed](#removed-exports) | — | Migrate to an Electron-based build setup |
 | [`appImage.systemIntegration` removed](#appimagesystemintegration) | ✓ | Removed automatically |
 | [`npmSkipBuildFromSource` removed](#npmskipbuildfromsource) | ✓ | Replaced by `nativeModules.buildDependenciesFromSource` |
 | [Native-module options grouped under `nativeModules`](#native-module-options-nativemodules) | ✓ | `nativeRebuilder` → `rebuildMode`; the `"legacy"` rebuilder is removed (dropped with a warning) |
 | [ASAR options consolidated under `asar`](#asar-options-asar) | ✓ | `asarUnpack` → `asar.unpack`, etc., including platform-level `mac.asarUnpack` → `mac.asar.unpack` (`asar: true` is still valid, just redundant) |
+| [`files` / `extraResources` / `extraFiles` nested under `fileOptions`](#file-options-fileoptions) | ✓ | `files` → `fileOptions.files`, etc., at the root and per platform (`mac.extraResources` → `mac.fileOptions.extraResources`) |
+| [`includePdb` replaced by `fileOptions.excludedExts`](#includepdb-fileoptionsexcludedexts) | ✓ | `.pdb` files are now excluded by default; `includePdb: true` → `fileOptions.excludedExts: ["default", "!pdb"]`, `includePdb: false` → `["default"]` (the v27 default, written out so that it keeps overriding an `includePdb: true` of another config layer) |
 | [`asar.ordering` is now applied](#asar-ordering-is-now-applied) | — | v26 ignored the option; v27 packs the listed files first and fails when the file is missing. Remove the option to keep the dependencies-first layout |
 | [macOS signing consolidated under `mac.sign`](#macos-signing-macsign) | ✓ | `identity`/`entitlements`/`hardenedRuntime`/… → `mac.sign.*`; `signIgnore` → `sign.ignore` |
 | [`mac.universal` options consolidated](#macuniversal) | ✓ | `mergeASARs`/`singleArchFiles`/`x64ArchFiles` → `mac.universal.*` |
@@ -86,12 +88,15 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Azure Trusted Signing `/dlib` is the default](#azure-trusted-signing-signtool-dlib-is-the-default) | — | Pin `winCodeSign` below `1.3.0` only to force the legacy PowerShell path |
 | [New: `win.target: "msix"` (beta)](#new-msix-target-beta) | — | Optional, additive — the default `winCodeSign` works (only the legacy `0.0.0` bundle is rejected) |
 | [`PlatformPackager.info` & `platformSpecificBuildOptions` now `protected`](#programmatic-plugin-author-api-changes) | — | Plugin authors: hard break — `.info` no longer compiles externally; use the new pass-through getters |
-| [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | — | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command |
+| [Linux `.desktop` `Exec` now runs a generated `*-launcher` script](#linux-launcher-entrypoint) | — | Update custom `.desktop`/AppArmor/MIME tooling that hard-codes the `Exec` command (the flatpak target is not affected) |
+| [Snap core24: no `allow-sandbox` by default](#snap-core24-no-allow-sandbox-by-default) | — | None for most apps — default core24 snaps now launch with `--no-sandbox` and pass Snap Store review; vetted publishers can request `allow-sandbox` explicitly |
+| [Snap core24: `"default"` in `plugs` merges the full default set](#snap-core24-default-in-plugs-merges-the-full-default-set) | — | `["default", …]` now also adds `browser-support` (and, without the `gnome` extension, the content-snap plugs); list plugs without `"default"` to replace the defaults |
 | [`node_modules` arch/os-filtered on every build](#node_modules-are-now-archos-filtered-on-every-build) | — | Awareness — packages whose `cpu`/`os` mismatch the target are now excluded |
 | [`arch: "all"` now expands to x64 + arm64; 32-bit fails fast on Electron 44+](#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44) | — | `arch: "all"` drops `ia32` — request `ia32` explicitly; ia32/armv7l require `electronVersion` <= 43.x |
 | [macOS `productName`/`executableName` validated, not silently sanitized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | A name needing filename sanitization now throws — pick a name that needs none |
 | [macOS default entitlements tightened](#macos-default-entitlements-tightened) | — | The bundled default now grants only `allow-jit`; add `allow-unsigned-executable-memory` / `disable-library-validation` back in `build/entitlements.mac.plist` (and `.inherit.plist`) only if your app needs them |
 | [Bitbucket Cloud publishing: token without username → Bearer auth](#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth) | — | Set `BITBUCKET_USERNAME` if your token is an app password / API token |
+| [S3 publishing requires an explicit `awsCredentials.source`](#s3-publishing-requires-an-explicit-awscredentialssource) | — | Add `awsCredentials: { source: "env" }` (for `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`), `{ source: "profile", profile: "<name>" }` (for `AWS_PROFILE` / `~/.aws` / SSO) or `{ source: "sso-role-chain", profile: "<name>" }` (for a role assumed from an SSO `source_profile`) |
 | [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); tune the set via `ignoredProductionDependencies`. If you set `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` (removed) to bundle `electron-builder`, override the list instead; `electron-prebuilt`/`electron-rebuild` no longer error and now ship if declared — remove them from `dependencies` |
 | [`allowMissingDependencies` now fails the build](#allowmissingdependencies-now-fails-the-build) | — | A missing production dependency is a hard error; set `allowMissingDependencies: true` to restore v26 warn-only behavior |
 | [Native binaries are verified against the target](#native-binaries-are-verified-against-the-target) | — | A `.node` addon built for another platform/arch now fails the build; set `nativeModules.verifyNativeBinaries: "warn"` (or `false`) to package anyway |
@@ -101,6 +106,12 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [macOS names are no longer NFD-normalized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | Update tooling that matches the normalized on-disk bundle filename |
 | [Linux `executableArgs` field codes are now literal](#linux-launcher-entrypoint) | — | Remove `%F`/`%U` from `executableArgs`; use `linux.desktop.entry.Exec` |
 | [`http-parser` dropped from default pacman `depends`](#pacman-default-dependencies-changed) | — | Add it back with `"depends": ["default", "http-parser"]` only if your app really needs it |
+| [Flatpak target requires `flatpak` >= 1.12.4 and `flatpak-builder` >= 1.2.2](#flatpak-tooling-requirements) | — | Only for tools older than the stock packages of Ubuntu 22.04 and Debian 12: update them (the `electronuserland/builder` images with a date tag newer than `-05.26` include them, those up to `-05.26` none); replace `DEBUG=@malept/flatpak-bundler` with `DEBUG=electron-builder` |
+| [Flatpak `runtimeVersion` / `baseVersion` default to `26.08`](#flatpak-tooling-requirements) | — | A build that sets neither is built for the `26.08` runtime and installs the three `26.08` refs (about 3.2 GB) on the build machine if they are missing — install them in images and on offline machines that held the `20.08` ones. Set both to `"20.08"` to keep the previous, end-of-life runtime |
+| [Flatpak `useWaylandFlags` no longer adds `--enable-features=UseOzonePlatform` for Electron 16 to 37](#flatpak-wayland-flags) | — | Only with `flatpak.useWaylandFlags`: add the flag to `flatpak.executableArgs` if the app needs it |
+| [Flatpak `files` and `symlinks` must stay inside the app](#flatpak-tooling-requirements) | — | A `flatpak.files` destination or `flatpak.symlinks` link that leaves the app prefix with `..`, or a directory in `flatpak.files` copied onto a symlink to a directory, now fails the build |
+| [Flatpak default permissions no longer include the home directory](#flatpak-default-permissions) | — | Only without `flatpak.finishArgs`: the app gets the Downloads folder (`--filesystem=xdg-download`) instead of read/write access to the whole home directory; its data under `~/.var/app` is unaffected. If it opens other paths on its own (recent files, `~/Documents`, dotfiles, `~/.pki/nssdb` certificates), set `finishArgs` to the v26 list or add narrower grants such as `--filesystem=xdg-documents` |
+| [Flatpak default permissions leave out the notifications talk-name](#flatpak-default-permissions) | — | Only without `flatpak.finishArgs`, and unless the base is `org.electronjs.Electron2.BaseApp` before `23.08` (the default is `26.08`; any other `base` gets no talk-name either): notifications go through the notification portal. Where the desktop has no portal backend for notifications (e.g. sway with only `xdg-desktop-portal-wlr`) they no longer appear — add `--talk-name=org.freedesktop.Notifications` to `finishArgs`, or users run `flatpak override --user --talk-name=org.freedesktop.Notifications <id>` |
 | [New: Cloudflare R2 publish provider](#new-cloudflare-r2-publish-provider-additive) | — | None — additive; needs `accountId` and an `https` `publicUrl` |
 | [New command: `migrate-schema`](#new-command-migrate-schema) | — | None — run it to apply every **Auto ✓** change above |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
@@ -191,21 +202,23 @@ These three fields are removed. Only Electron is supported as a target framework
 
 ### `disableDefaultIgnoredFiles`
 
-The `disableDefaultIgnoredFiles` option has been **removed**. To include a file that is excluded by default (for example a Wavefront `.obj` 3D model, or any other default-excluded extension/name), add an explicit `files` glob that targets it — an explicit include now overrides the matching default exclusion:
+The `disableDefaultIgnoredFiles` option has been **removed**. To include a file that is excluded by default (for example a Wavefront `.obj` 3D model, or any other default-excluded extension/name), add an explicit `fileOptions.files` glob that targets it — an explicit include now overrides the matching default exclusion:
 
 ```json5
 {
   "build": {
     "disableDefaultIgnoredFiles": true,  // ← delete this line
-    "files": [
-      "**/*",
-      "**/*.obj"  // ← add a glob for the default-excluded files you want to keep
-    ]
+    "fileOptions": {
+      "files": [
+        "**/*",
+        "**/*.obj"  // ← add a glob for the default-excluded files you want to keep
+      ]
+    }
   }
 }
 ```
 
-Broad patterns such as `**/*` still honor the defaults; only a pattern that names the extension or directory concretely opts it back in.
+Broad patterns such as `**/*` still honor the defaults. A pattern that names an excluded extension includes only the files it matches: `**/*.obj` includes every `.obj` file outside `node_modules` and the build resources and output directories, `models/teapot.obj` only that file. A pattern with a default-excluded name as a path segment (e.g. `**/.github/**`) opts that name back in.
 
 ### `appImage.systemIntegration`
 
@@ -450,7 +463,7 @@ When `asar: false`, the root-level sub-options have no effect and the migrator r
 
 ### `asar.ordering` is now applied {#asar-ordering-is-now-applied}
 
-`asar.ordering` was documented and validated in v26 but never read: the archive was always packed dependencies first, app files last. v27 honors it: directories keep their positions, the files listed in the ordering file are packed first in the order of the file, and everything else follows in its original order.
+`asar.ordering` was documented and validated in v26 but never read: the archive was always packed dependencies first, app files last. v27 honors it: the files listed in the ordering file are packed first in the order of the file, ahead of the default dependencies-first layout, and everything else follows in its original order. Builds that apply an ordering file log a one-time warning pointing here.
 
 Two consequences for projects that already set the option:
 
@@ -633,6 +646,81 @@ The top-level `snap` configuration key is removed. Use `snapcraft` with an expli
 
 Supported `base` values: `"core18"`, `"core20"`, `"core22"`, `"core24"`, and `"custom"`. `migrate-schema` performs this restructuring; when the old config has no `base`, it assumes `"core20"` and warns so you can confirm. A `base: "custom"` config (inline/path `snapcraft.yaml`) is moved verbatim. The `SnapOptions` export is also removed — see [Removed exports](#removed-exports).
 
+### `files` / `extraResources` / `extraFiles` → `fileOptions` {#file-options-fileoptions}
+
+The three options that choose which files are copied into the app are grouped under a `fileOptions` object, the same way `directories` groups the input and output directories. This applies at the configuration root and in every platform section (`mac`, `mas`, `masDev`, `win`, `linux`). `PlatformSpecificBuildOptions` has a `fileOptions?: FilesBuildOptions | null` property for them and does not extend `FilesBuildOptions`.
+
+| Key | Location under `fileOptions` |
+|---|---|
+| `files` | `fileOptions.files` |
+| `extraResources` | `fileOptions.extraResources` |
+| `extraFiles` | `fileOptions.extraFiles` |
+| `<platform>.files` / `.extraResources` / `.extraFiles` | `<platform>.fileOptions.files` / `.extraResources` / `.extraFiles` |
+
+```json5
+{
+  "fileOptions": { "files": ["dist/**/*", "package.json"], "extraResources": [{ "from": "assets/bin", "to": "bin" }] },
+  "mac": { "fileOptions": { "extraFiles": ["mac-only/**"] } }
+}
+```
+
+Run `electron-builder migrate-schema` to move `files`, `extraResources` and `extraFiles` keys into `fileOptions`, at the root and per platform:
+
+```bash
+npx electron-builder migrate-schema
+```
+
+The values are glob strings and `FileSet` objects. A platform's lists are added to the root ones, and a `files` list from an `extends` parent is merged with the child's.
+
+**Keys set outside `fileOptions`.** The `Configuration` types and the JSON schema only have `fileOptions`, so a typed (TypeScript) config that sets `files`, `extraResources` or `extraFiles` directly on the configuration or a platform section does not compile. At runtime, such flat keys (from a config file, an `extends` parent, `-c.files=…` on the command line, or the `config` object passed to `build()`) are applied as their `fileOptions` counterparts before the configuration is validated, and the build logs one warning naming the keys found and where they belong.
+
+**If a flat key and its `fileOptions` counterpart are both set on the same object**, `fileOptions` wins: the flat key is ignored and the build warns about the conflict. `migrate-schema` removes such a flat key with a warning, so move any patterns you still need into `fileOptions` yourself. A flat key from another source is merged rather than ignored: a CLI override such as `-c.files=…` is added to the config file's `fileOptions.files`, and a parent config's flat keys are merged with the child's `fileOptions`.
+
+`fileOptions` must be an object. A list written directly under it (`"fileOptions": ["dist/**"]`) fails the build with a message showing the nested form.
+
+`flatpak.files` (a list of `[source, destination]` pairs) is a separate Flatpak option and is not affected.
+
+**Code that reads `files`, `extraResources` or `extraFiles` from the loaded configuration** (a hook reading `context.packager.config.files` or `context.packager.platformOptions.extraResources`, a `build()` caller reading `buildResult.configuration.extraFiles`) gets the `fileOptions` value: the loaded configuration and its platform sections forward these reads to `fileOptions`, logging one warning per key. These forwarding properties are not enumerable, so they never appear in the effective configuration (`builder-effective-config.yaml`), in `JSON.stringify` output or in `Object.keys`. Assigning one of them (for example `context.packager.config.files = […]` in a hook) throws a configuration error naming the `fileOptions` property to set instead. Read and write `fileOptions.files` / `fileOptions.extraResources` / `fileOptions.extraFiles` directly.
+
+### `includePdb` → `fileOptions.excludedExts` {#includepdb-fileoptionsexcludedexts}
+
+The root-level `includePdb` boolean is **removed**. v26 excluded a fixed list of file extensions from the packaged app, and `.pdb` (Program Database) symbol files were the only ones with a switch: they were excluded unless `includePdb` was `true`. In v27 `pdb` is one of the extensions excluded by default, and the boolean for one extension is replaced by a list for all of them: `fileOptions.excludedExts`, set at the configuration root or per platform (`mac`, `mas`, `masDev`, `win`, `linux`).
+
+- `"default"` expands to the built-in list: `iml`, `hprof`, `orig`, `pyc`, `pyo`, `rbc`, `swp`, `csproj`, `sln`, `slnx`, `suo`, `xproj`, `cc`, `d.ts`, `mk`, `a`, `o`, `obj`, `forge-meta`, `pdb`.
+- Any other entry adds that extension, e.g. `"map"`. Write it without a dot or glob (a leading `.` is ignored); an entry that is not a file extension fails the build.
+- An entry starting with `!` removes that extension from the others listed, wherever it appears in the list: `["default", "!pdb"]` is every default except `pdb`. `"!default"` is rejected. A list of removals only, such as `["!pdb"]`, is rejected too: a list without `"default"` replaces the defaults, so it would exclude no extension at all. Write `["default", "!pdb"]`. A `"!ext"` in a list that does not otherwise list that extension (e.g. `["map", "!pdb"]`) has no effect and logs a warning.
+- The list **replaces** the defaults rather than being merged with them: list `"default"` to extend them. `["map"]` excludes only `.map` files, `[]` excludes no extension, and `null` (or omitting the option) is `["default"]`.
+- An invalid list (an entry that is not a file extension, `"!default"`, or removals only) fails the build when the configuration is validated, before anything is packed. This applies at the root and in every platform section, whichever targets the build packs: a typo in `masDev.fileOptions.excludedExts` also fails a Windows build. The error names the option, e.g. `masDev.fileOptions.excludedExts`.
+- A single entry may be written as a string: `"excludedExts": "default"` is `["default"]`. This is how to set it on the command line: `-c.fileOptions.excludedExts=default`. For several entries, repeat the flag, e.g. `-c.fileOptions.excludedExts=default -c.fileOptions.excludedExts=!pdb` for `["default", "!pdb"]` (in an interactive bash or zsh, write the second one as `'-c.fileOptions.excludedExts=!pdb'`, single-quoted, so that `!pdb` is not expanded).
+- A later list **replaces** an earlier one rather than being added to it (unlike the `files` lists), so a later list can drop an earlier `"!pdb"`. For the root and for each platform section, the last layer that sets the list wins: the `extends` parents in order (a parent after its own parents), then the configuration file, then the programmatic or `-c` configuration. For the `mas` and `mas-dev` targets, a `mas` list then replaces the `mac` one, and a `masDev` list (for `mas-dev`) replaces both. A platform's list then replaces the root one, whichever layer set either: a parent's `win.fileOptions.excludedExts` replaces the child's root list in Windows builds. A `null` value keeps the earlier list.
+- The extensions are excluded from the app files and from the copied `node_modules`. A `fileOptions.files` pattern that names an excluded extension includes only the app files it matches: `**/*.pdb` every `.pdb` file outside `node_modules` and the build resources and output directories, `native/addon.pdb` only that file, as described under [`disableDefaultIgnoredFiles`](#disabledefaultignoredfiles).
+- A `fileOptions.files` pattern that names `.pdb` files (e.g. `native/*.pdb` or `**/*.{node,pdb}`) now includes the `.pdb` files it matches, also in a configuration that extends this one. In v26, `.pdb` files were excluded whatever `files` said unless `includePdb` was `true`. `migrate-schema` reports such patterns (as an advisory). To keep the `.pdb` files out, remove the pattern or add a negation after it, such as `!native/*.pdb`.
+
+```json5
+// Before (v26)
+{ "build": { "includePdb": true } }
+// After (v27) — the default extensions except pdb
+{ "build": { "fileOptions": { "excludedExts": ["default", "!pdb"] } } }
+
+// Before (v26) — the default, which also overrode an includePdb: true of another config layer (e.g. an extends parent)
+{ "build": { "extends": "./base.json", "includePdb": false } }
+// After (v27) — the default list, written out so that it keeps replacing that layer's ["default", "!pdb"]
+{ "build": { "extends": "./base.json", "fileOptions": { "excludedExts": ["default"] } } }
+```
+
+```json5
+{
+  "fileOptions": { "excludedExts": ["default", "map"] },              // the defaults plus .map files
+  "win": { "fileOptions": { "excludedExts": ["default", "!pdb"] } }   // Windows keeps .pdb files — and .map files, since this list replaces the root one
+}
+```
+
+:::warning[Shipping symbol files]
+`.pdb` files contain symbol names and the source paths of the build machine. Keep them (`["default", "!pdb"]`) only in internal builds or builds for a symbol server, or upload them to a symbol server instead of shipping them.
+:::
+
+`migrate-schema` rewrites `includePdb` in static and JS/TS configs, reading the value as v26 did: v26 accepted `"true"` and `1` as `true`, and `"false"`, `0` and `null` as `false`. `true` becomes `"fileOptions": { "excludedExts": ["default", "!pdb"] }`. `false` becomes `"fileOptions": { "excludedExts": ["default"] }`, with or without `extends`: this is the v27 default, written out because in v26 an explicit `false` overrode an `includePdb: true` of another config layer (an `extends` parent, an earlier entry of an `extends` list, or the config file a programmatic or `-c` configuration is layered on), which a single file does not show; the written-out list keeps replacing that layer's `["default", "!pdb"]`. You can remove it when no other config layer keeps `.pdb` files. Next to an existing root `fileOptions.excludedExts`, which already replaces the other layers' lists, `false` is just removed. For `true`, when a platform section already sets its own `fileOptions.excludedExts` that excludes `.pdb` files (it lists `"default"` or `"pdb"`), `"!pdb"` is appended to that list too, because it replaces the root one; an existing root list gets `"!pdb"` the same way. A list that does not exclude `.pdb` files is left as it is, and so, in a JS/TS config, is a root list with an element the codemod cannot read (e.g. `[...base]`), which is reported. A value v26 rejected (e.g. `"yes"` or `2`) is left in place with a warning. In a JS/TS config, an `includePdb` whose value is not a literal (e.g. `includePdb: process.env.CI === "true"`) is left in place with a warning — rewrite it by hand — and for `includePdb: true`, a platform section the codemod cannot read (e.g. `win: sharedWin`) gets a warning: add `"!pdb"` to its `fileOptions.excludedExts` by hand if that list excludes `.pdb` files. A config that still sets `includePdb` fails the build with a message naming `fileOptions.excludedExts`, and so does an `includePdb` passed programmatically or with `-c`, which `migrate-schema` does not see: remove it, or, where an `includePdb: false` overrides an `includePdb: true` of the configuration file or an `extends` parent, set `"fileOptions": { "excludedExts": ["default"] }` in its place (on the command line, `-c.fileOptions.excludedExts=default`).
+
 ---
 
 ## CLI changes
@@ -656,11 +744,11 @@ These flags are removed (they have thrown since v22).
 
 v27 adds `electron-builder migrate-schema`, which rewrites your config to v27 form in place and auto-migrates **static** (`json`/`json5`/`yaml`/package.json) **and programmatic** (`.js`/`.ts`/`.cjs`/`.mjs`) configs. TOML configs are parsed and the required changes printed, but not written. See the [walkthrough](./v26-to-v27#step-1-run-the-automated-migrator) for flags and the before/after of every rewrite.
 
-**It rewrites** every entry marked **Auto ✓** on this page: removed keys (`electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, `disableDefaultIgnoredFiles`, `appImage.systemIntegration`, `linux.syncDesktopName`, `mac.gatekeeperAssess`), the `nativeModules`, `asar` (root and platform-level), `mac.sign`, `mac.universal`, `win.sign`, `electronGet`, and `snapcraft` restructurings, GitHub `vPrefixedTagName` → `tagNamePrefix`, `helper-bundle-id`, `squirrelWindows.noMsi`, root-level `directories` in `package.json`, and `toolsets.*` values v27 rejects (`null`, the retired `appimage: "1.0.2"`). Values with no v27 equivalent (for example `nativeRebuilder: "legacy"` or `electronDownload.strictSSL`) are dropped with a warning.
+**It rewrites** every entry marked **Auto ✓** on this page: removed keys (`electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, `disableDefaultIgnoredFiles`, `appImage.systemIntegration`, `linux.syncDesktopName`, `mac.gatekeeperAssess`), the `nativeModules`, `asar` (root and platform-level), `fileOptions` (root and platform-level), `mac.sign`, `mac.universal`, `win.sign`, `electronGet`, and `snapcraft` restructurings, GitHub `vPrefixedTagName` → `tagNamePrefix`, `includePdb` → `fileOptions.excludedExts`, `helper-bundle-id`, `squirrelWindows.noMsi`, root-level `directories` in `package.json`, and `toolsets.*` values v27 rejects (`null`, the retired `appimage: "1.0.2"`). Values with no v27 equivalent (for example `nativeRebuilder: "legacy"` or `electronDownload.strictSSL`) are dropped with a warning.
 
-**It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom NSIS bundle in `customNsisBinary` / `customNsisResources` ([→ `toolsets.nsis`](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis); it does move `customNsisBinary.debugLogging` → `installerDebugLogging`), a custom `mac.sign` signer combined with sibling signing options, and (in JS/TS configs) platform-level `asarUnpack` next to root-level ASAR options.
+**It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom NSIS bundle in `customNsisBinary` / `customNsisResources` ([→ `toolsets.nsis`](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis); it does move `customNsisBinary.debugLogging` → `installerDebugLogging`), a custom `mac.sign` signer combined with sibling signing options, an `includePdb` value v26 rejected, and, in JS/TS configs, platform-level `asarUnpack` next to root-level ASAR options, an `includePdb` whose value is not a literal, or, for `includePdb: true`, a platform section the codemod cannot read or a root `fileOptions.excludedExts` with an element it cannot read (a spread, an identifier, a call; readable platform lists still get `"!pdb"`).
 
-**It prints an advisory** (without changing the config) for runtime defaults and behavior changes you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)), `nsis.perMachine` or `nsisWeb.perMachine` set to `true` ([per-machine NSIS updates](#nsis-per-machine-builds-set-isadminrightsrequired)), a custom `win.sign.sign` hook without `win.sign.publisherName`, unless `win.verifyUpdateCodeSignature` is `false` ([publisher name](#windows-publishername-is-validated-against-the-signing-certificate)), a `generic` publish configuration whose `url` has a query string ([update credentials](#update-credentials-stay-on-the-feeds-origin)), and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
+**It prints an advisory** (without changing the config) for runtime defaults and behavior changes you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)), `nsis.perMachine` or `nsisWeb.perMachine` set to `true` ([per-machine NSIS updates](#nsis-per-machine-builds-set-isadminrightsrequired)), a custom `win.sign.sign` hook without `win.sign.publisherName`, unless `win.verifyUpdateCodeSignature` is `false` ([publisher name](#windows-publishername-is-validated-against-the-signing-certificate)), a `generic` publish configuration whose `url` has a query string ([update credentials](#update-credentials-stay-on-the-feeds-origin)), a `fileOptions.files` pattern that names `.pdb` files ([`includePdb` → `fileOptions.excludedExts`](#includepdb-fileoptionsexcludedexts)), and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
 
 **It does not touch** anything outside the config: CLI flags, environment variables, custom NSIS scripts, Linux maintainer scripts, app code using the electron-updater API, or plugins using `PlatformPackager`. Every other row marked **—** in the [table above](#breaking-changes-at-a-glance) is a manual step.
 
@@ -676,6 +764,55 @@ The Bitbucket publisher now selects its authentication scheme by whether a usern
 - **No username** → the token is sent as `Authorization: Bearer <token>` (a repository / project / workspace **access token**). This is the new behavior; previously a token was always sent as Basic auth using the repository owner as the username.
 
 **Action is required only if** your CI sets `BITBUCKET_TOKEN` (or `bitbucket.token`) to an **app password / API token without a username** — those requests now go out as Bearer and will fail authentication. Set `BITBUCKET_USERNAME` (or `bitbucket.username`) so Basic auth is used. Genuine access tokens need no username.
+
+### S3 publishing requires an explicit `awsCredentials.source`
+
+The `s3` publisher no longer picks up AWS credentials from ambient sources, and there is no default source. To publish, set the new `awsCredentials` publish option; only the source it names is consulted:
+
+- **`source: "env"`** reads only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and the optional `AWS_SESSION_TOKEN`, or the variable names you give in `awsCredentials.env`.
+- **`source: "profile"`** reads the named `profile` (required) from the shared config and credentials files (`~/.aws/config` and `~/.aws/credentials`, or `configFile` / `credentialsFile`). Static keys, IAM Identity Center (SSO) sessions from `aws sso login`, `credential_process` and assume-role profiles are supported.
+- **`source: "sso-role-chain"`** is for an assume-role `profile` (`role_arn` + `source_profile`) whose chain starts at an IAM Identity Center (SSO) profile. electron-builder walks the chain itself in the same files (up to 5 assume-role hops, cycles rejected), resolves the SSO profile, then calls STS `AssumeRole` for each hop with the previous hop's credentials.
+
+What changed compared with v26:
+
+- Publishing to `s3` without `awsCredentials.source` **fails** with an `InvalidConfigurationError` that names both sources. Builds that don't publish (e.g. `--publish never`) don't need it.
+- `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE` and `AWS_SHARED_CREDENTIALS_FILE` are **no longer read**, and `~/.aws/credentials` is no longer used as an implicit fallback.
+- When the configured source has no credentials, publishing **fails** with a clear error. Before, the request was signed with whatever aws4 found in the environment (including the undocumented `AWS_ACCESS_KEY` / `AWS_SECRET_KEY`), or with `Credential=undefined`.
+- For a bucket name with dots and no `region`, the region is now looked up **only when publishing**. Builds that don't publish log a warning and leave `region` unset, so set `region` explicitly for dotted bucket names.
+- With `source: "profile"`, an assume-role profile whose `source_profile` chain starts at an SSO profile is rejected, because the AWS SDK would resolve that SSO profile without the configured files. Use `source: "sso-role-chain"` for it (see below).
+- With `source: "profile"`, a profile that sets `credential_source` (`Environment`, `Ec2InstanceMetadata`, `EcsContainer`) or web identity (`web_identity_token_file`), itself or anywhere in its `source_profile` chain, is rejected with an `InvalidConfigurationError`: they read ambient credentials, or an AWS SDK STS client that takes its region and endpoint from `AWS_REGION` / `AWS_ENDPOINT_URL_STS` / `AWS_CONFIG_FILE`. In CI with OIDC, export the temporary keys first and use `source: "env"`.
+- `awsCredentials` is build-time only and is never written to `app-update.yml`. electron-updater is unaffected: it downloads S3 updates without credentials.
+- DigitalOcean Spaces (`DO_KEY_ID` / `DO_SECRET_KEY`) and Cloudflare R2 (`CF_R2_*`) are unchanged.
+
+**Action is required for every S3 publish configuration.** If CI exports `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (for example `aws-actions/configure-aws-credentials`), choose the env source:
+
+```json
+"publish": {
+  "provider": "s3",
+  "bucket": "my-bucket",
+  "awsCredentials": { "source": "env" }
+}
+```
+
+If you relied on `AWS_PROFILE`, `~/.aws/credentials`, `~/.aws/config` + `AWS_SDK_LOAD_CONFIG=1`, or an SSO login, name the profile:
+
+```json
+"awsCredentials": { "source": "profile", "profile": "release" }
+```
+
+If your publishing role is assumed from an SSO login through `source_profile` (for example `aws sso login --profile login` plus a `deploy` profile with `role_arn` and `source_profile = login`), opt in to the role chain:
+
+```json
+"awsCredentials": { "source": "sso-role-chain", "profile": "deploy" }
+```
+
+Each hop honours `role_session_name`, `external_id` and `duration_seconds`. STS is called in the named profile's `region` (default `us-east-1`) with its `sts_regional_endpoints`; `AWS_REGION`, `AWS_PROFILE`, `AWS_CONFIG_FILE` and `AWS_ENDPOINT_URL*` are not read. `credential_source`, `mfa_serial`, `web_identity_token_file` and `credential_process` are rejected in the chain. A chain that starts at static keys or a `credential_process` keeps working with `source: "profile"`.
+
+To keep publish-only keys apart from other `AWS_*` variables in the same job, point `awsCredentials.env` at different names:
+
+```json
+"awsCredentials": { "source": "env", "env": { "accessKeyId": "RELEASE_S3_KEY_ID", "secretAccessKey": "RELEASE_S3_SECRET" } }
+```
 
 ### New: Cloudflare R2 publish provider (additive)
 
@@ -832,18 +969,116 @@ The guard around the `customInstallMode` macro in `multiUserUi.nsh` previously c
 
 ### Linux launcher entrypoint
 
-Every Linux target (deb/rpm, AppImage, snap, flatpak) now launches through a generated `<executableName>-launcher` shell script rather than invoking the executable directly. Two things change in the built artifact:
+Every Linux target except flatpak (deb/rpm, AppImage, snap) now launches through a generated `<executableName>-launcher` shell script rather than invoking the executable directly. Two things change in the built artifact:
 
 - The package ships a **new file** — `<executableName>-launcher` (e.g. `/opt/<app>/MyApp-launcher`).
 - The generated `.desktop` **`Exec` key points at the launcher** instead of the executable (e.g. `Exec=/opt/MyApp/MyApp-launcher %U`), and `executableArgs` / `forceX11` flags are injected into the launcher rather than inlined into `Exec`.
 
 This makes `executableArgs` apply consistently across all Linux targets and keeps the `.desktop` `Exec` a plain command.
 
+The flatpak target keeps the entrypoint it had in v26: its own `/app/bin/electron-wrapper` script (which runs the app through `zypak-wrapper`), with `Exec=electron-wrapper %U` in the `.desktop` file and no `*-launcher` file. `executableArgs` are injected into that script, and in v27 they are single-quoted there as in the other launchers.
+
 **Action is required only if** you ship a custom `.desktop` override, an AppArmor/snap profile, a MIME handler, or external tooling that hard-codes the `Exec` command or assumes the executable itself is the launch target. Point those at the `*-launcher` script (or the executable, as appropriate).
 
 **Desktop-entry field codes in `executableArgs` are now literal.** v26 passed an argument like `%F` into the `.desktop` `Exec` key unquoted (and skipped appending `%U`). In v27 `executableArgs` are injected into the launcher script and quoted, so `%F` reaches your app as the literal string `"%F"` instead of the file list. If you relied on a field code to receive opened files, remove it from `executableArgs` and set `linux.desktop.entry.Exec` instead. electron-builder warns when it sees one.
 
-**AppImage `--no-sandbox` default changed.** The default `--no-sandbox` launch argument is now injected **only for the legacy FUSE2 runtime** (`toolsets.appimage: "0.0.0"`). With the default static FUSE3 runtime (unset / `"latest"` → `1.1.0`), `--no-sandbox` is no longer added automatically — `AppRun` adds it on its own only when user namespaces are unavailable. If you need the Chromium sandbox disabled unconditionally, set `executableArgs: ["--no-sandbox"]` explicitly.
+**AppImage `--no-sandbox` default changed.** The default `--no-sandbox` launch argument is now injected **only for the legacy FUSE2 runtime** (`toolsets.appimage: "0.0.0"`). With the default static FUSE3 runtime (unset / `"latest"` → `1.1.0`), `--no-sandbox` is no longer added automatically — `AppRun` adds it on its own only when user namespaces are unavailable. If you need the Chromium sandbox disabled unconditionally, set `appImage.executableArgs: ["--no-sandbox"]` explicitly: in `linux.executableArgs` it would reach the other Linux targets too, the [flatpak](../flatpak.md#executable-args) included.
+
+### Flatpak: native build, minimum tool versions, `26.08` runtime by default {#flatpak-tooling-requirements}
+
+The flatpak target no longer depends on `@malept/flatpak-bundler`: electron-builder now drives `flatpak` and `flatpak-builder` itself. It also has a newer default runtime. Six things change:
+
+- **`flatpak` 1.12.4+ and `flatpak-builder` 1.2.2+ are required.** Both versions are checked before the target installs a runtime or runs `flatpak-builder`, and an older tool fails the build with a message naming the required version, e.g. `flatpak-builder 1.0.12 is not supported - version 1.2.2 or newer is required to build the flatpak target`. v26 checked no version. The stock packages of Ubuntu 22.04 (Flatpak 1.12.7, `flatpak-builder` 1.2.2), Debian 12 (1.14.10, 1.2.3), RHEL 8 and 9 (1.12.9, 1.2.3) and newer releases are new enough; those of older releases, such as Ubuntu 20.04 (now only covered by Ubuntu Pro) and Debian 11, are not. With `flatpak-builder` older than 1.4, AppStream metadata in the app cannot be composed with the current SDKs, and with one older than 1.4.4 a build with `flatpak.modules` warns — see [Build Requirements](../flatpak#build-requirements). The `electronuserland/builder` Docker images with a date tag newer than `-05.26`, the first ones published after this release, include both tools from the Flatpak team's PPA; those with the date tag `-05.26` or an older one include neither — see [Flatpak in the Docker Images](../features/multi-platform-build#flatpak-in-the-docker-images).
+- **`flatpak.runtimeVersion` and `flatpak.baseVersion` default to `26.08`.** They defaulted to `20.08`, which Flathub reports as end-of-life (no longer receiving fixes and security updates). A build that sets neither option now produces a bundle for the `26.08` freedesktop runtime, built on the `26.08` Electron base app; a build that sets only one of them gets the new default for the other. The build machine needs the three `26.08` refs (runtime, SDK and base app): whichever is missing is installed at the start of the build — about 3.2 GB in the user installation for all three, measured on aarch64 — and where no remote of the user installation can supply them, for example offline, the build fails with `No remote refs found`. Installed `20.08` refs are no longer used; electron-builder does not remove them. Installing the `26.08` refs and building against them works with the stock tools of Ubuntu 24.04 (Flatpak 1.14.6, `flatpak-builder` 1.4.2). A build that leaves either option unset warns once, naming this change. To keep the previous runtime, set both options to `"20.08"` (quoted in YAML). Setting both, to either version, also keeps the build on that version when a later release changes the default — see [Choosing Versions](../flatpak#choosing-versions).
+- **`DEBUG=@malept/flatpak-bundler` no longer has any effect.** A flatpak build warns once when `DEBUG` still names it. A failed `flatpak` / `flatpak-builder` command now prints that tool's own output as part of the build error, and `DEBUG=electron-builder` logs every command that is run.
+- **The scratch directory is removed when the build finishes.** v26 left a `flatpak-bundler-*` directory (a full copy of the app plus an OSTree repository) in the system temp directory after every build. The stage directory `<outDir>/__flatpak-<arch>`, which v26 left behind when a build failed, is now removed in that case too (unless `DEBUG=electron-builder` is set).
+- **`flatpak.files` destinations and `flatpak.symlinks` links must stay inside the app prefix.** v26 joined them to the build directory as given, so a path that climbed out with `..` wrote outside the app, for example over the app's `metadata` file. v27 fails the build with `flatpak.files destination "<path>" is outside the app prefix` (or `flatpak.symlinks link`) before anything is installed. A destination or link that leads out of the prefix through a symlink placed there by the base app, a module or an earlier `files` pair fails the build too, with `... resolves outside the app prefix (/app in the sandbox) through a symlink`, when it is about to be written. Paths are relative to `/app` in the sandbox, as before.
+- **A directory in `flatpak.files` can no longer be copied onto a symlink to a directory.** v26 copied through such a link, into the directory it points to; v27 fails the build with `Cannot overwrite non-directory with directory` (`ERR_FS_CP_DIR_TO_NON_DIR`). No `org.electronjs.Electron2.BaseApp` branch from 20.08 to 26.08 contains such a link, so this only matters when another base app, a module or an earlier `files` pair creates one — use the directory the link points to as the destination. Symlinks inside a copied directory are now kept as they are, including ones that do not resolve on the build machine, which failed the build in v26.
+
+As in v26, every build updates the runtime, SDK and base app that are already installed and installs whichever is missing into the user installation (`flatpak install --user`, which only searches the remotes of the user installation). The commands differ in details: `flatpak install` and `flatpak update` run with `--noninteractive` instead of `--assumeyes`; an install that fails with `No remote refs found` logs a hint with the `flatpak remote-add --user` command to run; and the `flatpak` commands no longer see environment variables whose names look like credentials (`*TOKEN*`, `*KEY*`, `*SECRET*`, `*PASS*`, …). `flatpak-builder` still receives the whole environment when the manifest has `modules`, whose sources may need those variables to download, and the filtered one otherwise.
+
+New in v27: `flatpak.additionalArgs` passes extra arguments to the underlying tools (`flatpakBuilder`, `buildExport` and `buildBundle`, for `flatpak-builder`, `flatpak build-export` and `flatpak build-bundle`), which is what makes [building in unprivileged containers](../flatpak#building-in-unprivileged-containers) possible. electron-builder never adds such arguments on its own; when a build fails for lack of FUSE or user namespaces it logs a hint naming the option to set. [Building Flatpak Bundles in CI and Containers](../tutorials/flatpak-in-ci-and-containers) covers the image and the build command for such a container.
+
+### Flatpak: narrower default permissions {#flatpak-default-permissions}
+
+A build that does not set `flatpak.finishArgs` gets electron-builder's default permissions. Two of them change:
+
+- the app gets the Downloads folder (`--filesystem=xdg-download`) instead of the whole home directory (`--filesystem=home`);
+- `--talk-name=org.freedesktop.Notifications` is in the list only for the Electron base app before `23.08`.
+
+A build that sets `finishArgs` is not affected: its list is used as given, as before. The build does not fail either way: the changes show on the users' machines once they update the app. A build that uses the default list warns once, with a link to this section.
+
+**To keep the v26 permissions,** set `finishArgs` to the complete v26 default list:
+
+```yaml
+flatpak:
+  finishArgs:
+    - "--socket=wayland"
+    - "--socket=x11"
+    - "--share=ipc"
+    - "--device=dri"
+    - "--socket=pulseaudio"
+    - "--filesystem=home"
+    - "--share=network"
+    - "--talk-name=org.freedesktop.Notifications"
+```
+
+#### No home directory access
+
+**Why.** `--filesystem=home` gives the app read/write access to everything in the home directory, dotfiles included, except other apps' data under `~/.var/app` and the flatpak installation in `~/.local/share/flatpak`. Code that runs in the app, such as a compromised dependency or a script injected into a window with `nodeIntegration`, could write `~/.config/autostart/*.desktop`, `~/.bashrc`, `~/.profile` or a unit in `~/.config/systemd/user`, which the desktop or the shell then runs outside the sandbox at the next login. It could also read `~/.ssh` and `~/.gnupg`.
+
+**What keeps working:**
+
+- **App data.** Inside the sandbox `XDG_CONFIG_HOME`, `XDG_DATA_HOME` and `XDG_CACHE_HOME` always point into `~/.var/app/<id>`, with or without home access, so `app.getPath("userData")` and the data that existing installs keep there do not move.
+- **Files the user picks.** File dialogs go through the file chooser portal (Electron 14 and later), which gives the app access to the chosen files.
+- **Files opened from the desktop.** The desktop entry runs `electron-wrapper %U`, and flatpak forwards those files to the app through the document portal.
+
+**What breaks.** Without home access the app can no longer reach:
+
+- absolute paths outside Downloads that it did not get from a dialog, such as recent-file lists, project folders and paths stored in its settings or typed by the user;
+- default save locations such as `~/Documents`: `app.getPath("documents")`, `"desktop"`, `"pictures"`, `"music"` and `"videos"` return folders the app cannot reach;
+- other apps' configuration and dotfiles, such as `~/.gitconfig` or `~/.ssh`, and its own data in a hard-coded `~/.myapp` instead of `app.getPath()`: that is no longer found, and what the app writes there is not kept;
+- files passed on a terminal command line (`flatpak run <id> ~/notes.txt`): flatpak forwards only the files of a launch from the desktop entry;
+- the user's certificate database in `~/.pki/nssdb`: corporate CA certificates, which TLS-inspecting proxies need, and client certificates are no longer used. Grant `--filesystem=~/.pki/nssdb:ro`, or `--filesystem=~/.pki/nssdb` if the app imports certificates.
+
+**To grant less than the whole home directory,** start from the v27 default list in the [option reference](../flatpak#configuration), since `finishArgs` replaces it, and add what the app needs:
+
+- `--filesystem=xdg-documents`, `xdg-download`, `xdg-desktop`, `xdg-pictures`, `xdg-music` or `xdg-videos`: one of the user's folders, without the dotfiles around it;
+- `--persist=.myapp`: keeps a hard-coded `~/.myapp` between runs, stored in `~/.var/app/<id>/.myapp`. Data that an earlier version left in the real `~/.myapp` is not moved there; grant `--filesystem=~/.myapp` to keep using it;
+- `:ro` after a filesystem grant, for example `--filesystem=xdg-documents:ro`, for read-only access.
+
+#### No notifications talk-name on current base apps
+
+Electron shows notifications through libnotify. From version 0.8, libnotify sends them through the notification portal when it runs in a sandbox, and talks to the notification daemon (`org.freedesktop.Notifications`) directly only when no portal answers. The Electron base app ships libnotify 0.8 or later since `23.08`, so the default list has the talk-name only when `base` is `org.electronjs.Electron2.BaseApp` (the default) and `baseVersion` is older than `23.08`. With the default `26.08`, and with any other `base`, it is left out. Without it the app can no longer show notifications under another app's name and icon, or replace and close other apps' notifications: the portal attributes them to the app's ID.
+
+**Who is affected:** users whose desktop has no xdg-desktop-portal backend that implements notifications, for example sway with only `xdg-desktop-portal-wlr`. The app's notifications no longer appear there. To bring them back:
+
+- add `--talk-name=org.freedesktop.Notifications` to `finishArgs`, or
+- the user runs `flatpak override --user --talk-name=org.freedesktop.Notifications <id>`.
+
+### Flatpak: `useWaylandFlags` no longer adds `--enable-features=UseOzonePlatform` from Electron 16 {#flatpak-wayland-flags}
+
+With `flatpak.useWaylandFlags`, v26 added `--enable-features=UseOzonePlatform --ozone-platform=wayland` in a Wayland session whatever the Electron version. v27 adds only `--ozone-platform=wayland` for Electron 16 to 37, where Ozone is on by default, and nothing from Electron 38, which picks Wayland by itself. The second `--enable-features` that v26 added could replace one in `executableArgs`, such as `--enable-features=WaylandWindowDecorations`, because Chromium keeps the last value of a repeated switch. Electron 12 to 15 and an unknown version still get both flags. A build with Electron 16 to 37 warns once about the change.
+
+**Action is required only if** the app relied on the `UseOzonePlatform` feature being passed: add `--enable-features=UseOzonePlatform` to `flatpak.executableArgs`. See [Wayland Support](../flatpak.md#wayland-support).
+
+### Snap core24: no `allow-sandbox` by default {#snap-core24-no-allow-sandbox-by-default}
+
+When `snapcraft.core24.plugs` is unset, core24 snaps now request the plain `browser-support` interface. electron-builder 26 requested `browser-support` with `allow-sandbox: true`, but the Snap Store reserves that attribute for vetted publishers (browsers), so store review rejected those uploads. Without `allow-sandbox` the app is launched with `--no-sandbox` and the setuid `chrome-sandbox` helper is left out of the snap — the same as the legacy bases (core18/core20/core22) — and the snap confinement isolates the app instead of Chromium's own sandbox. The build logs a one-time warning about the change.
+
+**No action is required for most apps.** If your publisher has been granted `allow-sandbox`, request it explicitly to keep Chromium's sandbox:
+
+```json
+{ "snapcraft": { "base": "core24", "core24": { "plugs": ["default", { "browser-support": { "allow-sandbox": true } }] } } }
+```
+
+electron-builder warns whenever a configuration (on any base) requests `allow-sandbox`, because store review rejects it for everyone else.
+
+### Snap core24: `"default"` in `plugs` merges the full default set {#snap-core24-default-in-plugs-merges-the-full-default-set}
+
+`"default"` in `snapcraft.core24.plugs` used to expand to the app-level plug list only (`desktop`, `desktop-legacy`, `home`, `x11`, `wayland`, `unity7`, `network`, `gsettings`, `audio-playback`, `pulseaudio`, `opengl`), so `["default", "camera"]` silently dropped `browser-support` and, without the `gnome` extension, the content-snap plugs that the default `layout` relies on. It now expands to the full default set — the app-level list plus everything electron-builder declares when `plugs` is unset for that build (`browser-support`, and for strict builds without the `gnome` extension or destructive mode, `gtk-3-themes`, `icon-themes`, `sound-themes`, `gnome-46-2404` and `gpu-2404`) — and your other entries are added to it, deduplicated by plug name. A descriptor object named like a default plug overrides that plug's attributes, and a `null` descriptor removes a default content-snap plug (for example `{ "sound-themes": null }`) or resets `browser-support` to the snapd defaults. The build logs a one-time warning listing the plugs the expansion adds.
+
+**Action is required only if** you relied on `"default"` leaving those plugs out. A `plugs` list without `"default"` still replaces the defaults entirely.
 
 ### `node_modules` are now arch/os-filtered on every build
 
@@ -1303,6 +1538,10 @@ In v26, ~15 signing options were scattered across the root of `MacConfiguration`
 ### Why rename `electronDownload` to `electronGet`?
 
 v27 upgrades to `@electron/get` v5, which downloads via `fetch` (replacing the `got`-based path) and exposes a `mirrorOptions` object rather than the old flat `mirror`/`customDir` fields. Renaming the config key to `electronGet` and typing it directly as the library's own options removes electron-builder's hand-maintained translation layer — what you set is what `@electron/get` receives. A few legacy fields (`customDir`, `customFilename`, `strictSSL`) have no v5 equivalent; `migrate-schema` drops them with a warning. `cache` is not gone — it moved out of the config surface and is set with the `ELECTRON_BUILDER_CACHE` environment variable instead.
+
+### Why nest `files`, `extraResources` and `extraFiles` under `fileOptions`?
+
+A `fileOptions` property, like `directories`, keeps the three file-copy lists together instead of at the root of every configuration level next to dozens of unrelated options, gives them one place in the docs and in IntelliSense, and leaves room for more file-copy options without adding them to every configuration level. Because almost every configuration sets `files`, flat keys are applied with a warning rather than rejected, unlike the other restructurings on this page, and reads of them from the loaded configuration are forwarded.
 
 ### Why consolidate ASAR options under `asar`?
 

@@ -8,6 +8,7 @@ import {
   isEmptyOrSpaces,
   isPullRequest,
   log,
+  prepareFixedNameWrite,
   safeStringifyJson,
   serializeToYaml,
 } from "builder-util"
@@ -205,7 +206,7 @@ export class PublishManager implements PublishContext {
       }
       const publishConfig = await createAppUpdateConfiguration(packager, publishConfigs, this.isPublish, false)
       if (publishConfig != null) {
-        await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig)
+        await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig, event.appOutDir)
       }
     })
 
@@ -486,15 +487,17 @@ function reportConflictingAppUpdateFeeds(
 }
 
 // Options that only the publisher reads (the upload itself), never electron-updater, so they cannot make two otherwise
-// identical first providers different feeds. Everything else is compared - including fields of custom providers and
-// options such as `requestHeaders`, `token` or `private` that change how or whether the updater can read the feed.
+// identical first providers different feeds. Build-time-only options (credential sources, see
+// BUILD_TIME_ONLY_PUBLISH_OPTIONS) are never embedded and are left out as well. Everything else is compared - including
+// fields of custom providers and options such as `requestHeaders`, `token` or `private` that change how or whether the
+// updater can read the feed.
 const PUBLISH_ONLY_OPTIONS = new Set(["publishAutoUpdate", "timeout"])
 const S3_PUBLISH_ONLY_OPTIONS = new Set(["acl", "storageClass", "encryption"])
 
 /**
  * What makes two first providers the same app-update.yml feed: the provider and every option that decides where, or
- * how, electron-updater reads the manifest (url, bucket, region, path, owner, repo, channel, ...). Publish-only options
- * and unset (nullish) values are left out, and key order does not matter - so `publishAutoUpdate: true` against an
+ * how, electron-updater reads the manifest (url, bucket, region, path, owner, repo, channel, ...). Publish-only and
+ * build-time-only options and unset (nullish) values are left out, and key order does not matter - so `publishAutoUpdate: true` against an
  * absent flag is the same feed, a different url or bucket is not.
  */
 function appUpdateFeedIdentity(config: PublishConfiguration | Nullish): string {
@@ -503,7 +506,9 @@ function appUpdateFeedIdentity(config: PublishConfiguration | Nullish): string {
   }
   const isS3Like = config.provider === "s3" || config.provider === "spaces" || config.provider === "r2"
   const identity = Object.fromEntries(
-    Object.entries(config).filter(([key, value]) => value != null && !PUBLISH_ONLY_OPTIONS.has(key) && !(isS3Like && S3_PUBLISH_ONLY_OPTIONS.has(key)))
+    Object.entries(stripBuildTimeOnlyPublishOptions(config)).filter(
+      ([key, value]) => value != null && !PUBLISH_ONLY_OPTIONS.has(key) && !(isS3Like && S3_PUBLISH_ONLY_OPTIONS.has(key))
+    )
   )
   // key order does not make two configs different feeds
   return JSON.stringify(identity, (_key, value) =>
@@ -537,7 +542,7 @@ async function createAppUpdateConfiguration(
   }
 
   const publishConfig = {
-    ...publishConfigs[0],
+    ...stripBuildTimeOnlyPublishOptions(publishConfigs[0]),
     updaterCacheDirName: packager.appInfo.updaterCacheDirName,
   }
   warnAboutGenericFeedQuery(publishConfig)
@@ -612,8 +617,26 @@ function normalizeExplicitPublicKeys(value: string | Array<string> | null | unde
   return keys
 }
 
-export async function writeAppUpdateYaml(resourcesDir: string, publishConfig: PublishConfiguration): Promise<void> {
-  await outputFile(path.join(resourcesDir, "app-update.yml"), serializeToYaml(publishConfig))
+// Publish options that only configure the build machine (credential sources, local file paths). They must never be
+// embedded in app-update.yml, which ships inside every installed app.
+const BUILD_TIME_ONLY_PUBLISH_OPTIONS = ["awsCredentials"] as const
+
+export function stripBuildTimeOnlyPublishOptions<T extends PublishConfiguration>(publishConfig: T): T {
+  const result = { ...publishConfig } as Record<string, unknown>
+  for (const key of BUILD_TIME_ONLY_PUBLISH_OPTIONS) {
+    delete result[key]
+  }
+  return result as T
+}
+
+/**
+ * Writes `app-update.yml` into the resources directory. Untrusted files (extraResources, the app directory) were copied there before,
+ * so the write is confined to `containmentRoot` by real path and replaces, rather than follows, a symlink already at the file name.
+ */
+export async function writeAppUpdateYaml(resourcesDir: string, publishConfig: PublishConfiguration, containmentRoot: string = resourcesDir): Promise<void> {
+  const file = path.join(resourcesDir, "app-update.yml")
+  await prepareFixedNameWrite(containmentRoot, file, "auto-update configuration")
+  await outputFile(file, serializeToYaml(stripBuildTimeOnlyPublishOptions(publishConfig)))
 }
 
 export async function getPublishConfigsForUpdateInfo(

@@ -1,7 +1,11 @@
 import { createRequire } from "node:module"
 import {
+  ALL_PLATFORM_KEYS,
   AZURE_KNOWN_FIELDS,
+  collectExplicitReincludes,
+  DEFAULT_EXCLUDED_EXTENSIONS,
   ELECTRON_DOWNLOAD_DROPPED,
+  FILE_OPTION_KEYS,
   formatLegacyOptionMessage,
   MAC_SIGN_FIELDS,
   MAC_SIGN_REMOVED_FIELDS,
@@ -10,6 +14,7 @@ import {
   RESOLVED_LEGACY_CONFIG_OPTIONS,
 } from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
+import { resolveDefaultKeywordList } from "builder-util/internal"
 import { promises as fs } from "fs"
 import * as path from "path"
 import type { Argv } from "yargs"
@@ -197,7 +202,7 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
       delete obj.disableDefaultIgnoredFiles
       changes.push({
         key: "disableDefaultIgnoredFiles",
-        description: "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `files` glob, e.g. `**/*.obj`)",
+        description: "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `fileOptions.files` glob, e.g. `**/*.obj`)",
       })
     }
   }
@@ -520,6 +525,22 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
     migrateToolsets(c.toolsets, changes)
   }
 
+  // Kept keys are reported only after `modified` is computed: a key that is merely kept must not re-serialize the file
+  // (dropping YAML/JSON5 comments) when nothing else changed. The build then fails with the same targeted message.
+  const keptKeyWarnings: string[] = []
+
+  // ── 16. files / extraResources / extraFiles → fileOptions (root + platform configs) ──
+  migrateFileOptions(c, "", changes, warnings, keptKeyWarnings)
+  for (const platform of ALL_PLATFORM_KEYS) {
+    if (isPlainObject(c[platform])) {
+      migrateFileOptions(c[platform], `${platform}.`, changes, warnings, keptKeyWarnings)
+    }
+  }
+
+  // ── 16b. includePdb → fileOptions.excludedExts (root only) ─────────────────
+  // After step 16, so the excluded extensions join the fileOptions the flat keys moved into.
+  migrateIncludePdb(c, changes, keptKeyWarnings)
+
   // Advisories (not config changes): v27 runtime defaults and behavior changes that a config rewrite cannot address.
   if (detectTarget(c, "win", ["nsis-web"])) {
     advisories.push(NSIS_WEB_ADVISORY)
@@ -536,16 +557,246 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   if (detectGenericFeedQuery(c)) {
     advisories.push(FEED_QUERY_ADVISORY)
   }
+  const pdbPatterns = pdbFilesPatterns(c)
+  if (pdbPatterns.length > 0) {
+    advisories.push(pdbFilesPatternsAdvisory(pdbPatterns))
+  }
 
   // ── nsis/nsisWeb/portable customNsisBinary / customNsisResources removed ──
-  // Kept keys are reported only after `modified` is computed: a key that is merely kept must not re-serialize the file
-  // (dropping YAML/JSON5 comments) when nothing else changed. The build then fails with the same targeted message.
-  const keptKeyWarnings: string[] = []
   migrateCustomNsis(c, changes, warnings, keptKeyWarnings)
   const modified = changes.length > 0 || warnings.length > 0
   warnings.push(...keptKeyWarnings)
 
   return { migrated: c, changes, warnings, advisories, modified }
+}
+
+/**
+ * Moves the flat `files` / `extraResources` / `extraFiles` keys of `holder` (the root or a platform config) into its
+ * `fileOptions`. A key also set in `fileOptions` is dropped: the build ignores the flat key then, so dropping it keeps
+ * the build output unchanged.
+ */
+function migrateFileOptions(holder: Record<string, any>, prefix: string, changes: MigrationChange[], warnings: string[], keptKeyWarnings: string[]): void {
+  const present = FILE_OPTION_KEYS.filter(key => key in holder)
+  if (present.length === 0) {
+    return
+  }
+  const existing = holder.fileOptions
+  if (existing != null && !isPlainObject(existing)) {
+    keptKeyWarnings.push(
+      `${prefix}fileOptions is not an object; move ${present.map(key => prefix + key).join(", ")} into it manually (e.g. ${prefix}fileOptions: { files: [...] }).`
+    )
+    return
+  }
+
+  const fileOptions: Record<string, any> = { ...existing }
+  for (const key of present) {
+    const conflict = key in fileOptions
+    if (conflict) {
+      warnings.push(fileOptionsConflictWarning(prefix, key))
+    } else {
+      fileOptions[key] = holder[key]
+    }
+    changes.push(fileOptionsChange(prefix, key, conflict))
+    delete holder[key]
+  }
+  holder.fileOptions = fileOptions
+}
+
+/** The change a flat `files` / `extraResources` / `extraFiles` key makes; shared with the JS/TS codemod. */
+export function fileOptionsChange(prefix: string, key: string, conflict: boolean): MigrationChange {
+  const nested = `${prefix}fileOptions.${key}`
+  return { key: prefix + key, description: conflict ? `removed ${prefix}${key} (${nested} is also set and takes precedence)` : `moved ${prefix}${key} → ${nested}` }
+}
+
+/** Warning for a flat key removed because its `fileOptions` counterpart is also set; shared with the JS/TS codemod. */
+export function fileOptionsConflictWarning(prefix: string, key: string): string {
+  const flat = prefix + key
+  const nested = `${prefix}fileOptions.${key}`
+  return `${flat} and ${nested} are both set; the build uses ${nested} and ignores ${flat}, so ${flat} was removed. Move any patterns you still need into ${nested}.`
+}
+
+/** Descriptions of the change the root `includePdb` makes; shared with the JS/TS codemod. */
+export const INCLUDE_PDB_CHANGES = {
+  removed: "removed includePdb (.pdb files are excluded by default in v27)",
+  created: 'moved includePdb: true → fileOptions.excludedExts: ["default", "!pdb"]',
+  appended: 'moved includePdb: true → "!pdb" in fileOptions.excludedExts',
+  unneeded: "removed includePdb (fileOptions.excludedExts already keeps .pdb files)",
+  overridesParent:
+    'moved includePdb: false → fileOptions.excludedExts: ["default"] (the v27 default, written out so that it keeps overriding an includePdb: true from another config layer, e.g. an extends parent)',
+  listKeepsPdb: "removed includePdb (fileOptions.excludedExts is set and takes precedence; it keeps .pdb files)",
+} as const
+
+/**
+ * True when a `files` pattern names `.pdb` files: it is not negated, and the longest excluded extension of its (brace-expanded) basename is
+ * "pdb", e.g. `native/*.pdb` or `**\/*.{node,pdb}`. Shared with the JS/TS codemod.
+ */
+export function namesPdbFiles(pattern: string): boolean {
+  return collectExplicitReincludes([pattern]).extensions.has("pdb")
+}
+
+/**
+ * Advisory for the `files` patterns that name `.pdb` files (see {@link namesPdbFiles}), each with the key that sets it (`fileOptions.files`,
+ * `win.fileOptions.files`, …): v26 excluded `.pdb` files whatever `files` said unless `includePdb` was true, while in v27 such a pattern
+ * includes the `.pdb` files it matches, also for a config layer that extends this one (e.g. one migrated from `includePdb: false`). Shared
+ * with the JS/TS codemod.
+ */
+export function pdbFilesPatternsAdvisory(patterns: ReadonlyArray<{ readonly key: string; readonly pattern: string }>): string {
+  const listed = patterns.map(it => `${it.key} ${JSON.stringify(it.pattern)}`).join(", ")
+  return (
+    `files patterns that name .pdb files detected: ${listed}. In v27 such a pattern ships the .pdb files it matches (v26 excluded .pdb files whatever files said, ` +
+    'unless includePdb was true), also in configs that extend this one. To keep them out, remove the pattern, or add a negation after it, such as "!native/*.pdb". ' +
+    "See https://www.electron.build/docs/migration/v27-breaking-changes#includepdb-fileoptionsexcludedexts"
+  )
+}
+
+/** Whether a FileSet `from` is the app directory (".", "./", "" and the like), which the build resolves against it; shared with the JS/TS codemod. */
+export function isAppDirFrom(from: string): boolean {
+  return path.posix.normalize(from.replace(/\\/g, "/")).replace(/\/+$/, "") === "."
+}
+
+/** The patterns of a `files` value (a pattern, a FileSet or a list of them) that apply to the app directory: the strings, and the `filter` of a FileSet without `from` or with a `from` that is the app directory. */
+function appFilesPatterns(files: unknown): string[] {
+  const entries = Array.isArray(files) ? files : files == null ? [] : [files]
+  return entries.flatMap(entry => {
+    if (typeof entry === "string") {
+      return [entry]
+    }
+    if (!isPlainObject(entry) || (entry.from != null && !(typeof entry.from === "string" && isAppDirFrom(entry.from)))) {
+      return []
+    }
+    const filter = typeof entry.filter === "string" ? [entry.filter] : Array.isArray(entry.filter) ? entry.filter : []
+    return filter.filter((it: unknown): it is string => typeof it === "string")
+  })
+}
+
+/** The root and platform `fileOptions.files` patterns of a migrated config that name `.pdb` files (see {@link pdbFilesPatternsAdvisory}). */
+function pdbFilesPatterns(c: Record<string, any>): Array<{ key: string; pattern: string }> {
+  const result: Array<{ key: string; pattern: string }> = []
+  const holders: Array<[string, unknown]> = [["", c], ...ALL_PLATFORM_KEYS.map((platform): [string, unknown] => [`${platform}.`, c[platform]])]
+  for (const [prefix, holder] of holders) {
+    if (isPlainObject(holder) && isPlainObject(holder.fileOptions)) {
+      for (const pattern of appFilesPatterns(holder.fileOptions.files).filter(namesPdbFiles)) {
+        result.push({ key: `${prefix}fileOptions.files`, pattern })
+      }
+    }
+  }
+  return result
+}
+
+/** Warning for an `includePdb` that v26 rejected, which is left in place; shared with the JS/TS codemod. */
+export const INCLUDE_PDB_NOT_BOOLEAN =
+  'includePdb is not a boolean (v26 accepted true / false, "true" / "false", 1 / 0 and null), so it was left in place. In v27, .pdb files are excluded by default: remove includePdb, or set fileOptions.excludedExts: ["default", "!pdb"] to keep them.'
+
+/**
+ * The boolean v26 built with for an `includePdb` value: it validated the config with ajv `coerceTypes: true`, which turns "true" / 1 into
+ * true and "false" / 0 / null into false, and rejects any other value (undefined here). Shared with the JS/TS codemod.
+ */
+export function v26IncludePdb(value: unknown): boolean | undefined {
+  if (value === true || value === "true" || value === 1) {
+    return true
+  }
+  if (value === false || value === "false" || value === 0 || value === null) {
+    return false
+  }
+  return undefined
+}
+
+/** The manual step for an `includePdb` whose root `fileOptions.excludedExts` cannot be migrated; shared with the JS/TS codemod. */
+export function includePdbManualStep(keepPdb: boolean): string {
+  return keepPdb
+    ? 'replace includePdb: true with fileOptions.excludedExts: ["default", "!pdb"] manually.'
+    : 'replace includePdb: false with fileOptions.excludedExts: ["default"] manually (written out, it keeps overriding an includePdb: true from another config layer).'
+}
+
+/** The change that adds "!pdb" to a platform-level `excludedExts` for `includePdb: true`; shared with the JS/TS codemod. */
+export function platformExcludedExtsPdbChange(platform: string): MigrationChange {
+  const key = `${platform}.fileOptions.excludedExts`
+  return { key, description: `added "!pdb" to ${key} (includePdb: true; a platform-level excludedExts replaces the root one)` }
+}
+
+/**
+ * True when an `excludedExts` list excludes `.pdb` files, resolved as the build does: it lists "default" or "pdb", and not "!pdb". A list without
+ * "default" replaces the default extensions, so it keeps `.pdb` files, and a "!pdb" added to it would only make the build warn that the entry has
+ * no effect. Unlike the build, an invalid entry is not rejected: the list is migrated as it is. Shared with the JS/TS codemod.
+ */
+export function excludesPdb(entries: ReadonlyArray<string>): boolean {
+  const normalized = entries.map(it => (it.startsWith("!") ? `!${it.substring(1).replace(/^\./, "")}` : it.replace(/^\./, "")))
+  return resolveDefaultKeywordList(normalized, DEFAULT_EXCLUDED_EXTENSIONS).result.includes("pdb")
+}
+
+/**
+ * `includePdb: true` keeps `.pdb` files: it becomes `fileOptions.excludedExts: ["default", "!pdb"]` ("!pdb" is added to an existing root
+ * list instead), and "!pdb" is added to each platform-level `fileOptions.excludedExts` too, since that list replaces the root one. A `false`
+ * becomes `fileOptions.excludedExts: ["default"]`: the v27 default, written out because in v26 it overrode an `includePdb: true` of another
+ * config layer (an `extends` parent, also an earlier entry of an `extends` list, or the config file for a programmatic `build({ config })`),
+ * which no single file shows, and the list replaces such a layer's in the same way (an existing root list already does). Values are read as
+ * v26 coerced them; one v26 rejected is left in place. A single-string `excludedExts` is a one-entry list, which becomes an array when
+ * "!pdb" is added to it.
+ */
+function migrateIncludePdb(c: Record<string, any>, changes: MigrationChange[], keptKeyWarnings: string[]): void {
+  if (!("includePdb" in c)) {
+    return
+  }
+  const includePdb = v26IncludePdb(c.includePdb)
+  if (includePdb == null) {
+    keptKeyWarnings.push(INCLUDE_PDB_NOT_BOOLEAN)
+    return
+  }
+  const fileOptions = c.fileOptions
+  const list = isPlainObject(fileOptions) ? fileOptions.excludedExts : null
+  if ((fileOptions != null && !isPlainObject(fileOptions)) || (list != null && !Array.isArray(list) && typeof list !== "string")) {
+    const problem = isPlainObject(fileOptions) ? "fileOptions.excludedExts is not a string or an array" : "fileOptions is not an object"
+    keptKeyWarnings.push(`${problem}; ${includePdbManualStep(includePdb)}`)
+    // a platform list replaces the root one, so it gets "!pdb" whatever the root list is
+    if (includePdb) {
+      appendPdbToPlatformLists(c, changes)
+    }
+    return
+  }
+
+  delete c.includePdb
+  if (!includePdb) {
+    if (list == null) {
+      c.fileOptions = { ...fileOptions, excludedExts: ["default"] }
+      changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.overridesParent })
+    } else {
+      // the root list already replaces another layer's
+      changes.push({ key: "includePdb", description: excludesPdb(excludedExtsEntries(list)) ? INCLUDE_PDB_CHANGES.removed : INCLUDE_PDB_CHANGES.listKeepsPdb })
+    }
+    return
+  }
+  if (list == null) {
+    c.fileOptions = { ...fileOptions, excludedExts: ["default", "!pdb"] }
+    changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.created })
+  } else if (excludesPdb(excludedExtsEntries(list))) {
+    fileOptions.excludedExts = withPdbRemoval(list)
+    changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.appended })
+  } else {
+    changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.unneeded })
+  }
+  appendPdbToPlatformLists(c, changes)
+}
+
+/** For `includePdb: true`: adds "!pdb" to each platform-level `fileOptions.excludedExts` that excludes `.pdb` files, since it replaces the root list. */
+function appendPdbToPlatformLists(c: Record<string, any>, changes: MigrationChange[]): void {
+  for (const platform of ALL_PLATFORM_KEYS) {
+    const platformFileOptions = c[platform]?.fileOptions
+    const platformList = platformFileOptions?.excludedExts
+    if ((Array.isArray(platformList) || typeof platformList === "string") && excludesPdb(excludedExtsEntries(platformList))) {
+      platformFileOptions.excludedExts = withPdbRemoval(platformList)
+      changes.push(platformExcludedExtsPdbChange(platform))
+    }
+  }
+}
+
+/** The string entries of an `excludedExts` list; a single string is a one-entry list. */
+function excludedExtsEntries(list: string | Array<unknown>): string[] {
+  return (typeof list === "string" ? [list] : list).filter((it: unknown): it is string => typeof it === "string")
+}
+
+/** An `excludedExts` list with "!pdb" appended; a single string becomes a list. */
+function withPdbRemoval(list: string | Array<unknown>): Array<unknown> {
+  return [...(typeof list === "string" ? [list] : list), "!pdb"]
 }
 
 /** The build-time guard's message for a removed key (`nsis.customNsisBinary`), reused for the keys migrate-schema leaves in place. */
@@ -1288,6 +1539,8 @@ function printManualSteps() {
     "• Rename electronDownload → electronGet (mirror → mirrorOptions.mirror; isVerifyChecksum:false → unsafelyDisableChecksums:true; drop cache/customDir/customFilename/strictSSL/platform/arch/version/force)",
     '• Remove toolsets.* entries set to null (unset resolves to "latest"); replace toolsets.appimage "1.0.2" with "1.0.3"',
     "• Move root-level package.json directories → build.directories",
+    "• Move files / extraResources / extraFiles → fileOptions.files / fileOptions.extraResources / fileOptions.extraFiles, at the root and in mac/mas/masDev/win/linux",
+    '• Replace includePdb: true with fileOptions.excludedExts: ["default", "!pdb"] (and add "!pdb" to a mac/mas/masDev/win/linux fileOptions.excludedExts that lists "default"); replace includePdb: false with fileOptions.excludedExts: ["default"]',
     "",
     "• For programmatic configs (JS/TS/MJS/CJS), apply the above changes manually to your config object",
     "• For additional guidance, check the migration walkthrough: https://www.electron.build/docs/migration/v26-to-v27",

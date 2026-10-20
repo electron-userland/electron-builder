@@ -36,6 +36,8 @@ export {
   KeygenOptions,
   PublishConfiguration,
   PublishProvider,
+  S3AwsCredentialsEnvNames,
+  S3AwsCredentialsOptions,
   S3Options,
   SnapStoreOptions,
   R2Options,

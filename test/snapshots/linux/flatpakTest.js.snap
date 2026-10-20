@@ -1,0 +1,199 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`flatpak > --no-sandbox from flatpak.executableArgs is reported with that source 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > --no-sandbox from linux.executableArgs is reported once per build and kept 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > DEBUG=@malept/flatpak-bundler is reported once per process 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > DEBUG=@malept/flatpak-bundler is reported once per process 2`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > a DEBUG without @malept/flatpak-bundler is not reported 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > a derived flatpak id and a desktopName that is not it are reported in one warning 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > a desktopName that is not the flatpak id is reported 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > a flatpak id derived from the package name is reported once per build 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > a runtimeVersion without a baseVersion is reported 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > additional arguments for one of the flatpak tools 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > additional arguments for the flatpak tools 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > an appId with a desktopName that is the flatpak id is not reported 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > an empty flatpak.executableArgs keeps --no-sandbox from linux.executableArgs 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > custom manifest options, files and symlinks 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > default finishArgs have no notifications talk-name for a custom base app 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > default finishArgs have no notifications talk-name for base app 23.08 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > default finishArgs have the notifications talk-name for a base app before 23.08 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > default options 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > finishArgs that are set are not reported 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > finishArgs that are set get no notifications talk-name 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > flatpak.executableArgs set to null leaves linux.executableArgs out of the flatpak 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > installOrUpdateRefs "all" hands ["runtime","sdk","base"] to the build 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > installOrUpdateRefs ["sdk","base"] hands ["sdk","base"] to the build 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > installOrUpdateRefs [] hands [] to the build 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > installOrUpdateRefs null hands ["runtime","sdk","base"] to the build 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > no MIME type file is written without a custom MIME type 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > runtimeVersion and baseVersion that are both set are not reported 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > the custom MIME types of fileAssociations are declared in share/mime/packages 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > the default finishArgs are reported once per build as a warning 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > the default runtimeVersion and baseVersion are reported once per build 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > the scratch directory is removed after the bundle step of a build that succeeds 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > useWaylandFlags adds no flags on Electron 38 or later and says so once per build 1`] = `
+{
+  "linux": [],
+}
+`;
+
+exports[`flatpak > useWaylandFlags on Electron 16 to 37 reports once per build that it no longer adds UseOzonePlatform 1`] = `
+{
+  "linux": [],
+}
+`;

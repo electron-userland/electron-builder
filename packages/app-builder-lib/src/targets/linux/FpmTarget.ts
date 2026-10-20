@@ -1,4 +1,18 @@
-import { Arch, asArray, exec, getArchSuffix, InvalidConfigurationError, log, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
+import {
+  Arch,
+  asArray,
+  exec,
+  getArchSuffix,
+  InvalidConfigurationError,
+  log,
+  prepareFixedNameWrite,
+  stripSensitiveEnvVars,
+  TmpDir,
+  toLinuxArchString,
+  unlinkIfExists,
+  use,
+} from "builder-util"
+import { expandDefaultKeyword } from "builder-util/internal"
 import { Nullish } from "builder-util-runtime"
 
 import { objectToArgs } from "builder-util-runtime"
@@ -180,16 +194,20 @@ export default class FpmTarget extends Target {
       : null
     if (publishConfig != null) {
       log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}`)
-      await writeAppUpdateYaml(resourceDir, publishConfig)
+      await writeAppUpdateYaml(resourceDir, publishConfig, linuxDistType)
       // Extra file needed for auto-updater to detect installation method
-      await outputFile(path.join(resourceDir, "package-type"), target)
+      const packageTypeFile = path.join(resourceDir, "package-type")
+      await prepareFixedNameWrite(linuxDistType, packageTypeFile, "package type file")
+      await outputFile(packageTypeFile, target)
     }
 
     const scripts = await this.scriptFiles
 
     // Install AppArmor support for ubuntu 24+
     // https://github.com/electron-userland/electron-builder/issues/8635
-    await copyFile(scripts.appArmor, path.join(resourceDir, "apparmor-profile"))
+    const appArmorFile = path.join(resourceDir, "apparmor-profile")
+    await prepareFixedNameWrite(linuxDistType, appArmorFile, "AppArmor profile")
+    await copyFile(scripts.appArmor, appArmorFile)
 
     const appInfo = packager.appInfo
     const options = this.options
@@ -425,15 +443,7 @@ export default class FpmTarget extends Target {
    * The result is deduplicated while preserving order.
    */
   private expandDependsDefaults(depends: string[], target: string): string[] {
-    const result: string[] = []
-    for (const item of depends) {
-      if (item === "default") {
-        result.push(...this.getDefaultDepends(target))
-      } else {
-        result.push(item)
-      }
-    }
-    return Array.from(new Set(result))
+    return Array.from(new Set(expandDefaultKeyword(depends, this.getDefaultDepends(target))))
   }
 
   private getDefaultDepends(target: string): string[] {
