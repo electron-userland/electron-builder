@@ -98,6 +98,8 @@ export async function embedAsarIntegrityDigest(appPath: string, frameworkName: s
   }
 
   // --deep: Electron's x64 builds ship the framework's nested code unsigned, and codesign refuses to seal a bundle around unsigned code
+  // Copied/verified from electron/packager:
+  // https://github.com/electron/packager/blob/8c5cc941018b1d890c7152734972c44b9b98f268/src/mac.ts#L704-L733
   await exec("/usr/bin/codesign", ["--sign", "-", "--force", "--deep", "--preserve-metadata=entitlements,requirements,flags,runtime", frameworkPath])
   log.info({ file: log.filePath(frameworkPath) }, "embedded ASAR integrity digest")
 }
