@@ -313,6 +313,16 @@ describe("BaseS3Publisher.upload — key construction and S3 request", { concurr
     expect(vi.mocked(https.request)).not.toHaveBeenCalled()
   })
 
+  // "minio.local" (no scheme, no colon) cannot be parsed as a URL at all
+  it("rejects an unparseable custom endpoint as a configuration error", async () => {
+    const error = await makeS3Publisher({ endpoint: "minio.local" })
+      .upload(makeTask(testFile))
+      .catch(e => e)
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain(`Invalid S3 endpoint "minio.local"`)
+    expect(vi.mocked(https.request)).not.toHaveBeenCalled()
+  })
+
   it("sets x-amz-acl header when ACL is public-read", async () => {
     const { capturedOpts } = mockSuccessfulUpload()
     await makeS3Publisher({ acl: "public-read" }).upload(makeTask(testFile))

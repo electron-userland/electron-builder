@@ -40,7 +40,12 @@ function resolveS3Request(params: S3RequestTarget): { host: string; hostname: st
   let isHttp = false
 
   if (params.endpoint != null) {
-    const u = new URL(params.endpoint)
+    let u: URL
+    try {
+      u = new URL(params.endpoint)
+    } catch {
+      throw new InvalidConfigurationError(`Invalid S3 endpoint "${params.endpoint}": use an http:// or https:// URL`)
+    }
     if (u.protocol !== "http:" && u.protocol !== "https:") {
       throw new InvalidConfigurationError(`Unsupported S3 endpoint protocol "${u.protocol}" in "${params.endpoint}": use an http:// or https:// URL`)
     }
