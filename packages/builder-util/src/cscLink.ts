@@ -32,7 +32,8 @@ export function decodeCscLinkBase64(link: string): Buffer | null {
           "only A-Z, a-z, 0-9, `+` and `/` with `=` padding are allowed, and line breaks are ignored. Check for surrounding quotes " +
           '(in cmd.exe, write `set "CSC_LINK=…"`, not `set CSC_LINK="…"`), stray characters, URL-safe base64 (`-` and `_`) or a truncated value, ' +
           "and re-encode the file on one line: `base64 < certificate.p12 | tr -d '\\n'` (macOS, Linux) or " +
-          "`[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path certificate.p12)))` (PowerShell)."
+          "`[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path certificate.p12)))` (PowerShell). " +
+          "See https://www.electron.build/docs/features/code-signing#base64-certificate-values"
       )
     }
     return decoded

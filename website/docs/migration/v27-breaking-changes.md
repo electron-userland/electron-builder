@@ -120,7 +120,6 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [NSIS: per-machine builds set `isAdminRightsRequired` in the update info](#nsis-per-machine-builds-set-isadminrightsrequired) | — | None for most apps. Their updates are started with `elevate.exe`; with `autoInstallEvent: "onNextLaunch"`, per-machine apps call `installPendingUpdateIfAvailable()` to install a pending update |
 | [Update credentials are only sent to the feed's origin (electron-updater)](#update-credentials-stay-on-the-feeds-origin) | — | Only if `latest*.yml` points downloads at another origin (another host, or another port or scheme) that needs your `requestHeaders` / `addAuthHeader` credentials or a token in the feed URL's query: serve the files from the feed origin or use pre-signed URLs. A custom provider used with credential headers must override `Provider.feedBaseUrl` (else `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`) |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | — | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
-| [Base64 certificate values are decoded strictly](#base64-certificate-values-are-decoded-strictly) | — | Only if a base64 `CSC_LINK` / `WIN_CSC_LINK` / `CSC_INSTALLER_LINK` / `SNAP_CSC_LINK` / `cscLink` value carries quotes, URL-safe `-`/`_` or other stray characters: re-encode it as standard base64 and store it without quotes |
 | [Signed update manifests are required](#signed-update-manifests-are-required) | — | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY` to the base64-encoded PEM file, or set `updateManifest: false` to keep publishing unsigned manifests |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | — | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
 | [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | — | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
@@ -925,12 +924,6 @@ Azure Trusted Signing (`win.sign: { type: "azure" }`) uses the faster `signtool 
 ```
 
 The signer resolves the path from the `winCodeSign` value: unset / `null` / `"latest"` and any explicit version `>= 1.3.0` use `signtool /dlib`; a version below `1.3.0` (no `dlib` in the bundle) uses PowerShell. A `ToolsetCustom` object uses `dlib` from your supplied bundle.
-
-### Base64 certificate values are decoded strictly
-
-A `CSC_LINK`, `WIN_CSC_LINK`, `CSC_INSTALLER_LINK` or `SNAP_CSC_LINK` value — or a `cscLink` / `cscInstallerLink` option — that electron-builder reads as base64 (it has a `data:…;base64,` prefix, is longer than 2048 characters, or ends with `=`) must now be valid standard base64: `A-Z`, `a-z`, `0-9`, `+` and `/` with `=` padding, line breaks ignored. v26 decoded such a value leniently — it skipped any other character and stopped at the first `=` — so a value with surrounding quotes, URL-safe `-`/`_` characters or a trailing comment decoded by accident, and a damaged one decoded to a corrupt certificate that failed later in `security` or `signtool`. Such a value now fails the build with an `InvalidConfigurationError` that does not print it.
-
-Re-encode the file on one line — `base64 < certificate.p12 | tr -d '\n'`, or `[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path certificate.p12)))` in PowerShell — and store it without quotes. In `cmd.exe`, write `set "CSC_LINK=…"`: `set CSC_LINK="…"` keeps the quotes in the value. Paths, `file://` and `https://` values are unchanged.
 
 ---
 

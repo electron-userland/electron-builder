@@ -114,11 +114,29 @@ CSC_LINK=<the-base64-string>
 CSC_KEY_PASSWORD=your-password
 ```
 
-The value must be **standard base64** — `A-Z`, `a-z`, `0-9`, `+` and `/` with `=` padding. Line breaks in it are ignored, but surrounding quotes, URL-safe `-`/`_` characters and any other stray character fail the build with an error that does not print the value. In `cmd.exe`, write `set "CSC_LINK=…"`: `set CSC_LINK="…"` keeps the quotes in the value. The same applies to `WIN_CSC_LINK`, `CSC_INSTALLER_LINK`, `SNAP_CSC_LINK` and the `cscLink` options.
+The value must be standard base64; see [Base64 certificate values](#base64-certificate-values).
 
 :::warning[Windows environment variable length limit]
 Windows cannot handle environment variable values longer than 8192 characters. If your base64-encoded certificate exceeds this limit, re-export it **without** including intermediate certificates in the chain (uncheck "Include all certificates in the certification path" in the Certificate Manager wizard).
 :::
+
+### Base64 certificate values {#base64-certificate-values}
+
+A `CSC_LINK`, `WIN_CSC_LINK`, `CSC_INSTALLER_LINK` or `SNAP_CSC_LINK` value — or a `cscLink` / `cscInstallerLink` option — is read as base64 when it has a `data:…;base64,` prefix, is longer than 2048 characters, or ends with `=`; any other value is a path, `file://` or `https://` link. A base64 value must be **standard base64**: `A-Z`, `a-z`, `0-9`, `+` and `/` with `=` padding. Line breaks in it are ignored. Surrounding quotes, URL-safe `-`/`_` characters, any other stray character or a truncated value fail the build with an `InvalidConfigurationError` that does not print the value.
+
+Encode the certificate file on one line and store the output without quotes:
+
+```bash
+base64 -w0 your-certificate.p12                # Linux (GNU coreutils)
+base64 -i your-certificate.p12                 # macOS
+openssl base64 -A -in your-certificate.p12     # anywhere OpenSSL is installed
+```
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path your-certificate.p12)))
+```
+
+In `cmd.exe`, write `set "CSC_LINK=…"`: `set CSC_LINK="…"` keeps the quotes in the value.
 
 ## GitHub Actions Setup
 
