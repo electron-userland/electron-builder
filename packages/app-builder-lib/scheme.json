@@ -9139,7 +9139,7 @@
             }
           ],
           "default": "['sha1', 'sha256']",
-          "description": "The digest (hash) algorithms to sign with, applied via signtool's `/fd` flag (or\nosslsigncode's `-h`). One signing pass runs per entry, in order; listing more than one\n**dual-signs** the file, with each additional signature appended as a nested signature\n(signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on\nlegacy (pre-SHA-2) Windows as well as modern Windows.\n\nSome targets override this: `.msi` cannot be dual-signed (a single hash is used) and AppX/MSIX\nis always `sha256` only."
+          "description": "The digest (hash) algorithms to sign with, applied via signtool's `/fd` flag (or\nosslsigncode's `-h`). One signing pass runs per entry, in order; listing more than one\n**dual-signs** the file, with each additional signature appended as a nested signature\n(signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on\nlegacy (pre-SHA-2) Windows as well as modern Windows.\n\nSome targets override this: `.msi` cannot be dual-signed, so it is signed once, with `sha256`\nunless `sha1` is the only algorithm listed, and AppX/MSIX is always `sha256` only."
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9244,7 +9244,7 @@
             }
           ],
           "default": "['sha1', 'sha256']",
-          "description": "The digest (hash) algorithms to sign with, applied via signtool's `/fd` flag (or\nosslsigncode's `-h`). One signing pass runs per entry, in order; listing more than one\n**dual-signs** the file, with each additional signature appended as a nested signature\n(signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on\nlegacy (pre-SHA-2) Windows as well as modern Windows.\n\nSome targets override this: `.msi` cannot be dual-signed (a single hash is used) and AppX/MSIX\nis always `sha256` only."
+          "description": "The digest (hash) algorithms to sign with, applied via signtool's `/fd` flag (or\nosslsigncode's `-h`). One signing pass runs per entry, in order; listing more than one\n**dual-signs** the file, with each additional signature appended as a nested signature\n(signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on\nlegacy (pre-SHA-2) Windows as well as modern Windows.\n\nSome targets override this: `.msi` cannot be dual-signed, so it is signed once, with `sha256`\nunless `sha1` is the only algorithm listed, and AppX/MSIX is always `sha256` only."
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9362,7 +9362,7 @@
             }
           ],
           "default": "['sha1', 'sha256']",
-          "description": "The digest (hash) algorithms to sign with, applied via signtool's `/fd` flag (or\nosslsigncode's `-h`). One signing pass runs per entry, in order; listing more than one\n**dual-signs** the file, with each additional signature appended as a nested signature\n(signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on\nlegacy (pre-SHA-2) Windows as well as modern Windows.\n\nSome targets override this: `.msi` cannot be dual-signed (a single hash is used) and AppX/MSIX\nis always `sha256` only."
+          "description": "The digest (hash) algorithms to sign with, applied via signtool's `/fd` flag (or\nosslsigncode's `-h`). One signing pass runs per entry, in order; listing more than one\n**dual-signs** the file, with each additional signature appended as a nested signature\n(signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on\nlegacy (pre-SHA-2) Windows as well as modern Windows.\n\nSome targets override this: `.msi` cannot be dual-signed, so it is signed once, with `sha256`\nunless `sha1` is the only algorithm listed, and AppX/MSIX is always `sha256` only."
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",

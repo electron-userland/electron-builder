@@ -323,17 +323,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
 
   async signFile(options: WindowsSignOptions): Promise<SignFileResult> {
     const signing = getSigntoolFamilyConfig(options.options)
-    let hashes = signing?.signingHashAlgorithms
-    // msi does not support dual-signing
-    if (options.path.endsWith(".msi")) {
-      hashes = [hashes != null && !hashes.includes("sha1") ? "sha256" : "sha1"]
-    } else if (options.path.endsWith(".appx") || options.path.endsWith(".msix") || options.path.endsWith(".msixbundle")) {
-      hashes = ["sha256"]
-    } else if (hashes == null) {
-      hashes = ["sha1", "sha256"]
-    } else {
-      hashes = Array.isArray(hashes) ? hashes : [hashes]
-    }
+    const hashes = resolveSigningHashAlgorithms(options.path, signing?.signingHashAlgorithms)
 
     const name = this.packager.appInfo.productName
     const site = await this.packager.appInfo.computePackageUrl()
@@ -638,4 +628,22 @@ export class SigntoolSignManager extends SigntoolBaseSignManager {
 
     return args
   }
+}
+
+/**
+ * The hash algorithms to sign `filePath` with, one signing pass each.
+ *
+ * - `.msi` holds a single signature, so it is signed once: with `sha256` unless `sha1` is the only algorithm requested.
+ * - `.appx`, `.msix` and `.msixbundle` are always `sha256`.
+ * - Everything else uses the configured list, defaulting to dual signing with `sha1` then `sha256`.
+ */
+export function resolveSigningHashAlgorithms(filePath: string, configured: Array<"sha1" | "sha256"> | "sha1" | "sha256" | null | undefined): Array<"sha1" | "sha256"> {
+  const requested = configured == null ? null : asArray(configured)
+  if (filePath.endsWith(".msi")) {
+    return [requested != null && requested.length > 0 && !requested.includes("sha256") ? "sha1" : "sha256"]
+  }
+  if (filePath.endsWith(".appx") || filePath.endsWith(".msix") || filePath.endsWith(".msixbundle")) {
+    return ["sha256"]
+  }
+  return requested ?? ["sha1", "sha256"]
 }
