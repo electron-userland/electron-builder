@@ -1,5 +1,8 @@
+import { exec, log } from "builder-util"
 import { createHash } from "crypto"
 import { FileHandle, open } from "fs/promises"
+import * as path from "path"
+import { parsePlistFile, PlistObject } from "../../util/mac/plist.js"
 
 /**
  * Marks the slot Electron (>= 41) reserves in the `Electron Framework` binary for the digest of the
@@ -8,6 +11,9 @@ import { FileHandle, open } from "fs/promises"
  * @see https://github.com/electron/electron/blob/main/shell/common/asar/integrity_digest.mm
  */
 export const ASAR_INTEGRITY_DIGEST_SENTINEL = "AGbevlPCksUGKNL8TSn7wGmJEuJsXb2A"
+
+/** electron/electron#48587, first released in 41.0.0-alpha.1 and not backported. */
+export const FIRST_ELECTRON_MAJOR_WITH_ASAR_INTEGRITY_DIGEST = 41
 
 const DIGEST_VERSION = 1
 const DIGEST_LENGTH = 32
@@ -71,6 +77,33 @@ export async function writeAsarIntegrityDigest(binaryPath: string, digest: Buffe
   } finally {
     await handle.close()
   }
+}
+
+/**
+ * Embeds the digest of the app's `ElectronAsarIntegrity` Info.plist entries into its Electron Framework, then signs the
+ * framework again, ad hoc: the write invalidates its signature (Electron's arm64 builds ship linker-signed), and Apple
+ * Silicon refuses to load a binary whose signature is invalid. Code signing the app afterwards replaces the ad-hoc
+ * signature. macOS only (codesign).
+ * @internal
+ */
+export async function embedAsarIntegrityDigest(appPath: string, frameworkName: string): Promise<void> {
+  const infoPlistPath = path.join(appPath, "Contents", "Info.plist")
+  const integrity = (await parsePlistFile<PlistObject>(infoPlistPath)).ElectronAsarIntegrity as AsarIntegrityEntries | undefined
+  if (integrity == null || Object.keys(integrity).length === 0) {
+    log.warn({ file: log.filePath(infoPlistPath), reason: "Info.plist has no ElectronAsarIntegrity entries" }, "skipped ASAR integrity digest")
+    return
+  }
+
+  const frameworkPath = path.join(appPath, "Contents", "Frameworks", `${frameworkName}.framework`)
+  const binaryPath = path.join(frameworkPath, frameworkName)
+  if ((await writeAsarIntegrityDigest(binaryPath, computeAsarIntegrityDigest(integrity))) === 0) {
+    log.warn({ file: log.filePath(binaryPath), reason: "the binary has no ASAR integrity digest slot" }, "skipped ASAR integrity digest")
+    return
+  }
+
+  // --deep: Electron's x64 builds ship the framework's nested code unsigned, and codesign refuses to seal a bundle around unsigned code
+  await exec("codesign", ["--sign", "-", "--force", "--deep", "--preserve-metadata=entitlements,requirements,flags,runtime", frameworkPath])
+  log.info({ file: log.filePath(frameworkPath) }, "embedded ASAR integrity digest")
 }
 
 async function findSentinels(handle: FileHandle, size: number, sentinel: Buffer): Promise<Array<number>> {

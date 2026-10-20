@@ -88,6 +88,16 @@ test.ifNotWindows("null string as null", async ({ expect }) => {
   expect((config.mac!.sign as ElectronSignOptions).hardenedRuntime).toBe(false)
 })
 
+test("`-c.mac.asarIntegrityDigest=false` turns the ASAR integrity digest off from the command line", async ({ expect }) => {
+  const yargs = configureBuildCommand(createYargs())
+  const options = normalizeOptions(yargs.parse(["-c.mac.asarIntegrityDigest=false", "-c.mas.asarIntegrityDigest=false"]) as CliOptions)
+  const config = options.config as Configuration
+  await validateConfiguration(config, new DebugLogger())
+  // the opt-out is checked with `=== false`, so the value must arrive as a boolean
+  expect(config.mac!.asarIntegrityDigest).toBe(false)
+  expect(config.mas!.asarIntegrityDigest).toBe(false)
+})
+
 test("`-c.fileOptions.excludedExts` takes a single extension or null from the command line", async ({ expect }) => {
   const yargs = configureBuildCommand(createYargs())
   const options = normalizeOptions(

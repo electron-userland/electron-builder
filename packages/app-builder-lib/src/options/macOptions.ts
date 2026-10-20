@@ -232,6 +232,21 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * For security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)
    */
   readonly notarize?: boolean
+
+  /**
+   * Whether to embed the [ASAR integrity](https://www.electronjs.org/docs/latest/tutorial/asar-integrity) digest into the Electron Framework binary.
+   *
+   * The digest covers the `ElectronAsarIntegrity` entries of `Info.plist`, so with the `enableEmbeddedAsarIntegrityValidation` fuse (see `electronFuses`) the app refuses to launch if those entries are changed, for example to match a modified `app.asar`. Embedding the digest modifies the Electron Framework, which is then signed again ad hoc; code signing the app replaces that signature.
+   *
+   * Applies only when:
+   * - Electron is 41 or later
+   * - the build runs on macOS (`codesign` signs the modified framework again)
+   * - `asar` is enabled and `asar.disableIntegrity` is not `true`
+   *
+   * Set to `false` if you change `app.asar` or `Info.plist` after the `afterPack` hook, sign the app yourself in `afterPack`, or merge separately built `x64` and `arm64` apps with `@electron/universal` yourself (build the `universal` arch instead).
+   * @default true
+   */
+  readonly asarIntegrityDigest?: boolean
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
