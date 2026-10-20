@@ -79,24 +79,25 @@ export async function writeAsarIntegrityDigest(binaryPath: string, digest: Buffe
  * Embeds the digest of the app's `ElectronAsarIntegrity` Info.plist entries into its Electron Framework, then signs the
  * framework again, ad hoc: the write invalidates its signature (Electron's arm64 builds ship linker-signed), and Apple
  * Silicon refuses to load a binary whose signature is invalid. Code signing the app afterwards replaces the ad-hoc
- * signature. macOS only (codesign).
+ * signature. macOS only (codesign). Returns whether the digest was embedded.
  * @internal
  */
-export async function embedAsarIntegrityDigest(appPath: string, frameworkName: string): Promise<void> {
+export async function embedAsarIntegrityDigest(appPath: string, frameworkName: string): Promise<boolean> {
   const safeAppPath = sanitizeDirPath(appPath)
-  const safeFrameworkName = sanitizeDirPath(frameworkName)
   const infoPlistPath = path.join(safeAppPath, "Contents", "Info.plist")
   const integrity = await readAsarIntegrity(infoPlistPath)
   if (integrity == null || Object.keys(integrity).length === 0) {
     log.warn({ file: log.filePath(infoPlistPath), reason: "Info.plist has no ElectronAsarIntegrity entries" }, "skipped ASAR integrity digest")
-    return
+    return false
   }
 
-  const frameworkPath = sanitizeDirPath(path.join(safeAppPath, "Contents", "Frameworks", `${safeFrameworkName}.framework`))
-  const binaryPath = path.join(frameworkPath, safeFrameworkName)
+  // frameworkName is a file name, not a path: resolving it on its own would root it at the cwd. Containment keeps both paths inside the app
+  const frameworksDir = path.join(safeAppPath, "Contents", "Frameworks")
+  const frameworkPath = sanitizeDirPath(path.join(frameworksDir, `${frameworkName}.framework`), frameworksDir)
+  const binaryPath = sanitizeDirPath(path.join(frameworkPath, frameworkName), frameworkPath)
   if ((await writeAsarIntegrityDigest(binaryPath, computeAsarIntegrityDigest(integrity))) === 0) {
     log.warn({ file: log.filePath(binaryPath), reason: "the binary has no ASAR integrity digest slot" }, "skipped ASAR integrity digest")
-    return
+    return false
   }
 
   // --deep: Electron's x64 builds ship the framework's nested code unsigned, and codesign refuses to seal a bundle around unsigned code
@@ -104,6 +105,7 @@ export async function embedAsarIntegrityDigest(appPath: string, frameworkName: s
   // https://github.com/electron/packager/blob/8c5cc941018b1d890c7152734972c44b9b98f268/src/mac.ts#L704-L733
   await exec("/usr/bin/codesign", ["--sign", "-", "--force", "--deep", "--preserve-metadata=entitlements,requirements,flags,runtime", frameworkPath])
   log.info({ file: log.filePath(frameworkPath) }, "embedded ASAR integrity digest")
+  return true
 }
 
 // parsePlistFile reads the XML format electron-builder writes; an afterPack hook that edits Info.plist with `defaults write` leaves it binary

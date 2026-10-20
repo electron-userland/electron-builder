@@ -7,7 +7,7 @@ vi.mock("builder-util", async () => {
 })
 
 import { MacPackager } from "app-builder-lib"
-import { ASAR_INTEGRITY_DIGEST_SENTINEL } from "app-builder-lib/src/electron/mac/asarIntegrityDigest"
+import { ASAR_INTEGRITY_DIGEST_SENTINEL, embedAsarIntegrityDigest } from "app-builder-lib/src/electron/mac/asarIntegrityDigest"
 import { AsarOptions } from "app-builder-lib/src/options/PlatformSpecificBuildOptions"
 import { PlistObject, savePlistFile } from "app-builder-lib/src/util/mac/plist"
 import { exec, InvalidConfigurationError, log } from "builder-util"
@@ -63,16 +63,22 @@ interface DigestOptions {
   distMacOsAppName?: string
   platformSpecificBuildOptions?: object
   asarOptions?: AsarOptions | null
+  hasUserAfterPack?: boolean
 }
 
 // `doAddAsarIntegrityDigest` is protected and only reads the Electron version and the app and framework names, so a hand-rolled `this` is enough
 function addDigest(
   appOutDir: string,
-  { version = "42.4.0", distMacOsAppName = "Electron.app", platformSpecificBuildOptions = {}, asarOptions = {} }: DigestOptions = {}
+  { version = "42.4.0", distMacOsAppName = "Electron.app", platformSpecificBuildOptions = {}, asarOptions = {}, hasUserAfterPack = false }: DigestOptions = {}
 ): Promise<void> {
-  const self = { info: { framework: { version, distMacOsAppName } }, appInfo: { productFilename: "Test" } }
+  const self = {
+    info: { framework: { version, distMacOsAppName }, filterPackagerEventListeners: () => (hasUserAfterPack ? [() => undefined] : []) },
+    appInfo: { productFilename: "Test" },
+  }
   return (MacPackager.prototype as any).doAddAsarIntegrityDigest.call(self, { appOutDir }, platformSpecificBuildOptions, asarOptions)
 }
+
+const AFTER_PACK_WARNING_KEY = "asar-integrity-digest-after-afterpack"
 
 const resign = (frameworkPath: string) => ["/usr/bin/codesign", ["--sign", "-", "--force", "--deep", "--preserve-metadata=entitlements,requirements,flags,runtime", frameworkPath]]
 
@@ -84,6 +90,7 @@ function setPlatform(platform: string) {
 describe("MacPackager.doAddAsarIntegrityDigest", () => {
   beforeEach(() => {
     vi.mocked(exec).mockClear()
+    log.resetLimits(AFTER_PACK_WARNING_KEY)
     setPlatform("darwin")
   })
 
@@ -173,5 +180,32 @@ describe("MacPackager.doAddAsarIntegrityDigest", () => {
 
     expect(exec).not.toHaveBeenCalled()
     expect(warn).toHaveBeenCalledWith(expect.objectContaining({ reason: "the binary has no ASAR integrity digest slot" }), "skipped ASAR integrity digest")
+  })
+
+  test("rejects a framework name that leaves the Frameworks directory", async ({ expect, tmpDir }) => {
+    const app = await createApp(tmpDir)
+    await expect(embedAsarIntegrityDigest(path.join(app.appOutDir, "Test.app"), "../../Evil")).rejects.toBeInstanceOf(InvalidConfigurationError)
+    expect((await readSlot(app.binaryPath)).used).toBe(0)
+    expect(exec).not.toHaveBeenCalled()
+  })
+
+  test("warns once, with the migration link, when a user afterPack hook is configured", async ({ expect, tmpDir }) => {
+    const warn = vi.spyOn(log, "warn")
+    await addDigest((await createApp(tmpDir)).appOutDir, { hasUserAfterPack: true })
+    await addDigest((await createApp(tmpDir)).appOutDir, { hasUserAfterPack: true })
+
+    const announcements = warn.mock.calls.filter(([, message]) => message?.includes("#macos-asar-integrity-digest"))
+    expect(announcements).toHaveLength(1)
+    expect(announcements[0][1]).toContain("electron-builder v27 embeds the ASAR integrity digest into the Electron Framework after the afterPack hook")
+    expect(announcements[0][1]).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#macos-asar-integrity-digest")
+    expect(announcements[0][0]).toEqual({ solution: expect.stringContaining("mac.asarIntegrityDigest to false") })
+  })
+
+  test("does not warn about afterPack without a user afterPack hook, or when nothing was embedded", async ({ expect, tmpDir }) => {
+    const warn = vi.spyOn(log, "warn")
+    await addDigest((await createApp(tmpDir)).appOutDir)
+    await addDigest((await createApp(tmpDir, { withSlot: false })).appOutDir, { hasUserAfterPack: true })
+
+    expect(warn.mock.calls.filter(([, message]) => message?.includes("#macos-asar-integrity-digest"))).toEqual([])
   })
 })

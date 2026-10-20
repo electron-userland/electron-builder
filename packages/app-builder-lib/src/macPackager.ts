@@ -348,7 +348,18 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       return
     }
     const frameworkName = `${path.basename(this.info.framework.distMacOsAppName, ".app")} Framework`
-    await embedAsarIntegrityDigest(path.join(packContext.appOutDir, `${this.appInfo.productFilename}.app`), frameworkName)
+    const embedded = await embedAsarIntegrityDigest(path.join(packContext.appOutDir, `${this.appInfo.productFilename}.app`), frameworkName)
+    // an afterPack hook that signs the app or changes it in ways the digest must not cover is where this change bites
+    if (embedded && this.info.filterPackagerEventListeners("afterPack", "user").length > 0) {
+      log
+        .once("asar-integrity-digest-after-afterpack")
+        .warn(
+          { solution: "set mac.asarIntegrityDigest to false if your afterPack hook signs the app" },
+          "electron-builder v27 embeds the ASAR integrity digest into the Electron Framework after the afterPack hook and signs the framework again ad hoc, replacing a signature applied in afterPack. " +
+            "Changing app.asar or Info.plist after afterPack now fails the app at launch when the enableEmbeddedAsarIntegrityValidation fuse is on. " +
+            "See https://www.electron.build/docs/migration/v27-breaking-changes#macos-asar-integrity-digest"
+        )
+    }
   }
 
   /**
