@@ -12,6 +12,15 @@ inputs:
     required: false
     type: boolean
     default: false
+  smart-cache-source:
+    description: "Exact smart cache snapshot the shard planner used ('<artifact-name>@<run-id>' or 'none'). Shard jobs must pass it so their in-job plan matches the matrix; leave empty to resolve the latest cache for the ref."
+    required: false
+    default: ""
+
+outputs:
+  smart-cache-source:
+    description: "The smart cache snapshot that was restored ('<artifact-name>@<run-id>' or 'none')"
+    value: ${{ steps.fetch-smart-cache.outputs.source }}
 
 runs:
   using: 'composite'
@@ -53,10 +62,12 @@ runs:
       shell: bash
 
     - name: Restore Vitest Smart Cache
+      id: fetch-smart-cache
       run: pnpm ci:test:fetch-cache
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
+        VITEST_SMART_CACHE_SOURCE: ${{ inputs.smart-cache-source }}
 
     - name: Set up Vitest smart cache reset flag
       run: echo "RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}" >> $GITHUB_ENV

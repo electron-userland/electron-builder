@@ -10,17 +10,31 @@
  *
  * After fetching, run:
  *   pnpm ci:test:count
+ *
+ * CI usage:
+ *   - VITEST_CACHE_REF (set by the pretest action) selects the ref, e.g. "PR-123" or "release-v26".
+ *   - The shard planner (validate-and-shard) writes the exact source it restored to $GITHUB_OUTPUT as
+ *     `source=<artifact-name>@<run-id>` (or `source=none`).
+ *   - Shard jobs receive that value as VITEST_SMART_CACHE_SOURCE and restore exactly the same snapshot,
+ *     so their in-job shard plan is identical to the matrix the planner produced. Resolving "the latest
+ *     artifact" independently in every job is not deterministic: the artifact can be replaced mid-run.
  */
 
-import { execSync, spawnSync } from "child_process"
+import { spawnSync } from "child_process"
 import * as fs from "fs"
 import * as path from "path"
 import { CACHE_FILE } from "./smart-config"
 
 const REPO = "electron-userland/electron-builder"
 
-function run(cmd: string): string {
-  return execSync(cmd, { encoding: "utf8" }).trim()
+// Runs a command without a shell so behavior is identical on Windows (cmd.exe has no /dev/null and
+// `echo ""` prints the quotes literally, which previously produced the bogus ref `PR-""`).
+function run(cmd: string, args: string[]): string | null {
+  const result = spawnSync(cmd, args, { encoding: "utf8" })
+  if (result.status !== 0) {
+    return null
+  }
+  return result.stdout.trim()
 }
 
 function ghJson(endpoint: string): any {
@@ -41,14 +55,26 @@ function sanitizeRef(ref: string): string {
 }
 
 function detectRef(): string {
-  // Check for open PR for the current branch
-  try {
-    const branch = run("git rev-parse --abbrev-ref HEAD")
-    const pr = run(`gh pr view --json number -q .number 2>/dev/null || echo ""`)
-    if (pr) return `PR-${pr}`
-    return branch
-  } catch {
-    return "master"
+  // CI computes the ref once (PR number or sanitized branch name) and passes it in. Prefer it so every
+  // job on every OS looks up the same artifact.
+  const envRef = process.env.VITEST_CACHE_REF?.trim()
+  if (envRef) {
+    return envRef
+  }
+
+  // Local usage: check for an open PR for the current branch
+  const pr = run("gh", ["pr", "view", "--json", "number", "-q", ".number"])
+  if (pr && /^\d+$/.test(pr)) {
+    return `PR-${pr}`
+  }
+  const branch = run("git", ["rev-parse", "--abbrev-ref", "HEAD"])
+  return branch && branch !== "HEAD" ? branch : "master"
+}
+
+function setGithubOutput(key: string, value: string) {
+  const outputFile = process.env.GITHUB_OUTPUT
+  if (outputFile) {
+    fs.appendFileSync(outputFile, `${key}=${value}\n`)
   }
 }
 
@@ -88,7 +114,36 @@ function summarize(dest: string) {
   console.log()
 }
 
+// Restores exactly the snapshot the shard planner used (`<artifact-name>@<run-id>` or `none`).
+// Fails hard instead of falling back: a different cache yields a different shard plan, which either
+// errors with "Shard index N is out of range" or silently skips/duplicates test files.
+function restorePinnedSource(source: string, dest: string) {
+  if (source === "none") {
+    console.log("Shard planner used no smart cache; not restoring one so the shard plan matches.")
+    fs.rmSync(dest, { force: true })
+    return
+  }
+  const at = source.lastIndexOf("@")
+  const name = source.slice(0, at)
+  const runId = Number(source.slice(at + 1))
+  if (at <= 0 || !Number.isInteger(runId) || runId <= 0) {
+    throw new Error(`Invalid VITEST_SMART_CACHE_SOURCE "${source}" (expected "<artifact-name>@<run-id>" or "none")`)
+  }
+  console.log(`Restoring smart cache pinned by the shard planner: ${name} from run ${runId}`)
+  if (!downloadArtifact(runId, name, dest)) {
+    throw new Error(`Failed to download pinned smart cache ${name} from run ${runId}`)
+  }
+  console.log(`✓ Restored ${name} → ${dest}`)
+  summarize(dest)
+}
+
 function main() {
+  const pinned = process.env.VITEST_SMART_CACHE_SOURCE?.trim()
+  if (pinned) {
+    restorePinnedSource(pinned, CACHE_FILE)
+    return
+  }
+
   const args = process.argv.slice(2)
   let ref: string | null = null
   for (let i = 0; i < args.length; i++) {
@@ -112,12 +167,14 @@ function main() {
     if (downloadArtifact(runId, name, dest)) {
       console.log(`✓ Restored ${name} → ${dest}`)
       summarize(dest)
+      setGithubOutput("source", `${name}@${runId}`)
       console.log(`Run 'pnpm ci:test:count' to preview the shard plan with timing data.`)
       return
     }
     console.log(`  Download failed.`)
   }
 
+  setGithubOutput("source", "none")
   console.log("No smart cache artifact found. Run 'pnpm ci:test:count' to see the default plan.")
 }
 
