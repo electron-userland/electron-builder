@@ -732,17 +732,23 @@ test("app-update.yml: a single explicit publicKey string holding two PEM blocks 
   expect(publishConfig?.updateManifestPublicKey).toEqual([a.publicKeyPem, b.publicKeyPem])
 })
 
-test("app-update.yml warns when none of the signing keys is in the explicit trust list (old-style bridge release)", async ({ expect }) => {
+test("app-update.yml: a signing key outside the explicit trust list warns, and fails a publishing build unless allowed", async ({ expect }) => {
   const oldKey = generateUpdateSigningKeypair()
   const newKey = generateUpdateSigningKeypair()
+  log.resetLimits("update-manifest-signing-key-outside-trust-list")
   const warn = vi.spyOn(log, "warn")
   try {
     const packager = makeAppUpdateConfigPackager([parsePrivateKey(oldKey.privateKeyPem)], { publicKey: newKey.publicKeyPem })
     const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
-    // still a warning, not an error: the release is built, but cannot verify its own manifests
+    // a warning, not an error, without a publish policy: the release is built, but cannot verify its own manifests
     expect(publishConfig?.updateManifestPublicKey).toBe(newKey.publicKeyPem)
     // oxlint-disable-next-line typescript/no-base-to-string -- substring check over log.warn args; an object fallback stringifying to "[object Object]" simply does not match
     expect(warn.mock.calls.some(c => String(c[1] ?? c[0]).includes("none of the update-manifest signing keys"))).toBe(true)
+
+    // publishing it fails, unless the cutover is explicitly allowed
+    await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, true)).rejects.toThrow(InvalidConfigurationError)
+    const allowed = makeAppUpdateConfigPackager([parsePrivateKey(oldKey.privateKeyPem)], { publicKey: newKey.publicKeyPem, allowSigningKeyOutsideTrustList: true })
+    expect((await getAppUpdatePublishConfiguration(allowed, null, Arch.x64, true))?.updateManifestPublicKey).toBe(newKey.publicKeyPem)
   } finally {
     warn.mockRestore()
   }

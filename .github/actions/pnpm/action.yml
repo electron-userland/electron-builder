@@ -46,4 +46,4 @@ runs:
 
 ## Usage
 # - name: corepack and install dependencies
-#   uses: ./.github/actions/pnpm
+#   uses: $/.github/actions/pnpm

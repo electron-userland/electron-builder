@@ -1,7 +1,7 @@
 import { Arch, LinuxPackager, Packager, Platform, PlatformPackager, Target } from "app-builder-lib"
 import { PublishManager } from "app-builder-lib/src/publish/PublishManager"
-import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, parsePrivateKey } from "builder-util"
-import { CancellationToken } from "builder-util-runtime"
+import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, log, parsePrivateKey } from "builder-util"
+import { CancellationToken, computeUpdateManifestKeyId } from "builder-util-runtime"
 import { outputFile, outputJson, readFile } from "fs-extra"
 import * as path from "path"
 import { afterEach, beforeEach, vi } from "vitest"
@@ -379,4 +379,101 @@ test("a manifest signed under a target-level publish ships with app-update.yml c
   const appUpdate = await readFile(path.join(appOutDir, "resources", "app-update.yml"), "utf8")
   expect(appUpdate).toContain("https://example.com/nsis")
   expect(appUpdate).not.toContain("updateManifestPublicKey")
+})
+
+// ── signing key outside an explicit updateManifest.publicKey trust list ──────────────────────────────────────
+
+const outsideTrustListWarning = "none of the update-manifest signing keys is in updateManifest.publicKey"
+
+function makeTrustListPackager(signingKeyPem: string, updateManifest: any) {
+  const keys = [parsePrivateKey(signingKeyPem)]
+  return {
+    ...makePlatformPackager({ provider: "generic", url: "https://example.com/updates" }, () => Promise.resolve(keys)),
+    updateManifestOptions: updateManifest,
+    updateSigningKeys: { value: Promise.resolve(keys) },
+    getResourcesDir: (dir: string) => path.join(dir, "resources"),
+  }
+}
+
+function spyOutsideTrustListWarnings() {
+  log.resetLimits("update-manifest-signing-key-outside-trust-list")
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  // oxlint-disable-next-line typescript/no-base-to-string -- substring check over log.warn args; an object fallback stringifying to "[object Object]" simply does not match
+  return { warn, count: () => warn.mock.calls.filter(c => String(c[1] ?? c[0]).includes(outsideTrustListWarning)).length }
+}
+
+test("build-start preflight: a publishing build signed by a key outside updateManifest.publicKey fails before anything is packed", async ({ expect }) => {
+  const { targetsCreated, scheduleUpload } = createManager()
+  const signing = generateUpdateSigningKeypair()
+  const trusted = generateUpdateSigningKeypair()
+  const packager = makeTrustListPackager(signing.privateKeyPem, { publicKey: trusted.publicKeyPem })
+
+  const error = await targetsCreated([{ packager, arch: Arch.x64, targets: [makeTarget("nsis", true)] }]).then(
+    () => null,
+    (e: Error) => e
+  )
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  const message = error?.message ?? ""
+  // names both sides by key id, says how to proceed, and links the migration note
+  expect(message).toContain(computeUpdateManifestKeyId(signing.publicKeyPem))
+  expect(message).toContain(computeUpdateManifestKeyId(trusted.publicKeyPem))
+  expect(message).toContain("updateManifest.allowSigningKeyOutsideTrustList: true")
+  expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#signing-key-must-be-in-updatemanifestpublickey")
+  // never key material
+  expect(message).not.toContain("-----BEGIN")
+  for (const pem of [signing.privateKeyPem, signing.publicKeyPem, trusted.publicKeyPem]) {
+    expect(message).not.toContain(pem.split("\n")[1])
+  }
+  expect(scheduleUpload).not.toHaveBeenCalled()
+})
+
+test("allowSigningKeyOutsideTrustList: a deliberate cutover release publishes and warns once", async ({ expect, tmpDir }) => {
+  const { warn, count } = spyOutsideTrustListWarnings()
+  try {
+    const { targetsCreated, afterPack } = createManager()
+    const trusted = generateUpdateSigningKeypair()
+    const packager = makeTrustListPackager(generateUpdateSigningKeypair().privateKeyPem, { publicKey: trusted.publicKeyPem, allowSigningKeyOutsideTrustList: true })
+
+    await targetsCreated([{ packager, arch: Arch.x64, targets: [makeTarget("nsis", true)] }])
+    const appOutDir = await tmpDir.getTempDir({ prefix: "win-unpacked" })
+    await afterPack(makeWinPackEvent(packager, appOutDir, null))
+    // the app embeds only the listed key
+    const appUpdate = await readFile(path.join(appOutDir, "resources", "app-update.yml"), "utf8")
+    expect(appUpdate).toContain(trusted.publicKeyPem.split("\n")[1])
+    expect(count()).toBe(1)
+  } finally {
+    warn.mockRestore()
+  }
+})
+
+test("a build without a publish policy only warns about a signing key outside updateManifest.publicKey", async ({ expect, tmpDir }) => {
+  const { warn, count } = spyOutsideTrustListWarnings()
+  try {
+    const packager = makeTrustListPackager(generateUpdateSigningKeypair().privateKeyPem, { publicKey: generateUpdateSigningKeypair().publicKeyPem })
+    await createManager("never").afterPack(makeWinPackEvent(packager, await tmpDir.getTempDir({ prefix: "win-unpacked" }), null))
+    expect(count()).toBe(1)
+  } finally {
+    warn.mockRestore()
+  }
+})
+
+test("a signing key in updateManifest.publicKey, or no publicKey at all, neither fails nor warns", async ({ expect, tmpDir }) => {
+  const { warn, count } = spyOutsideTrustListWarnings()
+  try {
+    const current = generateUpdateSigningKeypair()
+    const next = generateUpdateSigningKeypair()
+    const listed = makeTrustListPackager(current.privateKeyPem, { publicKey: [next.publicKeyPem, current.publicKeyPem] })
+    // publicKey unset: the trust list is derived from the signing key, as before
+    const derived = makeTrustListPackager(current.privateKeyPem, { signingKey: current.privateKeyPem })
+    const { targetsCreated, afterPack } = createManager()
+    for (const packager of [listed, derived]) {
+      await targetsCreated([{ packager, arch: Arch.x64, targets: [makeTarget("nsis", true)] }])
+      const appOutDir = await tmpDir.getTempDir({ prefix: "win-unpacked" })
+      await afterPack(makeWinPackEvent(packager, appOutDir, null))
+      expect(await readFile(path.join(appOutDir, "resources", "app-update.yml"), "utf8")).toContain(current.publicKeyPem.split("\n")[1])
+    }
+    expect(count()).toBe(0)
+  } finally {
+    warn.mockRestore()
+  }
 })
