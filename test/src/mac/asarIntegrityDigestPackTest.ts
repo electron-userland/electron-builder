@@ -43,7 +43,7 @@ async function setIntegrityEntry(contents: string, hash: string): Promise<void> 
 // What an attacker who can write to the app does: change an ElectronAsarIntegrity entry and sign the app again, ad hoc.
 async function tamper(contents: string): Promise<void> {
   await setIntegrityEntry(contents, "1".repeat(64))
-  await exec("codesign", ["--sign", "-", "--force", "--deep", path.dirname(contents)])
+  await exec("/usr/bin/codesign", ["--sign", "-", "--force", "--deep", path.dirname(contents)])
 }
 
 async function readSlots(contents: string) {
@@ -86,7 +86,7 @@ describe.ifMac("ASAR integrity digest", { concurrent: false }, () => {
           const contents = context.getContent(Platform.MAC, arch)
           expect(await readSlots(contents)).toEqual([{ used: 1, version: 1, digest: await expectedDigest(contents) }])
           // the fuse flip signed the whole app again after the digest was written
-          await exec("codesign", ["--verify", "--deep", "--strict", path.dirname(contents)])
+          await exec("/usr/bin/codesign", ["--verify", "--deep", "--strict", path.dirname(contents)])
 
           expect(await launch(context, contents)).toMatchObject({ code: 0, stdout: expect.stringContaining(STARTED) })
 
@@ -109,7 +109,7 @@ describe.ifMac("ASAR integrity digest", { concurrent: false }, () => {
         packed: async context => {
           const contents = context.getContent(Platform.MAC, arch)
           expect(await readSlots(contents)).toEqual([{ used: 1, version: 1, digest: await expectedDigest(contents) }])
-          await exec("codesign", ["--verify", "--strict", path.join(contents, "Frameworks", "Electron Framework.framework")])
+          await exec("/usr/bin/codesign", ["--verify", "--strict", path.join(contents, "Frameworks", "Electron Framework.framework")])
           expect(await launch(context, contents)).toMatchObject({ code: 0, stdout: expect.stringContaining(STARTED) })
         },
       }

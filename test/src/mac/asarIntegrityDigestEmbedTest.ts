@@ -74,7 +74,7 @@ function addDigest(
   return (MacPackager.prototype as any).doAddAsarIntegrityDigest.call(self, { appOutDir }, platformSpecificBuildOptions, asarOptions)
 }
 
-const resign = (frameworkPath: string) => ["codesign", ["--sign", "-", "--force", "--deep", "--preserve-metadata=entitlements,requirements,flags,runtime", frameworkPath]]
+const resign = (frameworkPath: string) => ["/usr/bin/codesign", ["--sign", "-", "--force", "--deep", "--preserve-metadata=entitlements,requirements,flags,runtime", frameworkPath]]
 
 const originalPlatform = process.platform
 function setPlatform(platform: string) {
@@ -143,7 +143,7 @@ describe("MacPackager.doAddAsarIntegrityDigest", () => {
   test.ifMac("reads an Info.plist in the binary format", async ({ expect, tmpDir }) => {
     const { exec: realExec } = await vi.importActual<typeof import("builder-util")>("builder-util")
     const app = await createApp(tmpDir)
-    await realExec("plutil", ["-convert", "binary1", path.join(app.appOutDir, "Test.app", "Contents", "Info.plist")])
+    await realExec("/usr/bin/plutil", ["-convert", "binary1", path.join(app.appOutDir, "Test.app", "Contents", "Info.plist")])
     // plutil converts it back for real, codesign stays mocked
     vi.mocked(exec).mockImplementationOnce(realExec)
     await addDigest(app.appOutDir)

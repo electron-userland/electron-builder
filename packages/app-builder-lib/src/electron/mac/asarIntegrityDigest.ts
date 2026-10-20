@@ -103,14 +103,14 @@ export async function embedAsarIntegrityDigest(appPath: string, frameworkName: s
   }
 
   // --deep: Electron's x64 builds ship the framework's nested code unsigned, and codesign refuses to seal a bundle around unsigned code
-  await exec("codesign", ["--sign", "-", "--force", "--deep", "--preserve-metadata=entitlements,requirements,flags,runtime", frameworkPath])
+  await exec("/usr/bin/codesign", ["--sign", "-", "--force", "--deep", "--preserve-metadata=entitlements,requirements,flags,runtime", frameworkPath])
   log.info({ file: log.filePath(frameworkPath) }, "embedded ASAR integrity digest")
 }
 
 // electron-builder writes Info.plist as XML, but an afterPack hook that edits it with `defaults write` leaves it in the binary format, which only plutil reads
 async function readAsarIntegrity(infoPlistPath: string): Promise<AsarIntegrityEntries | undefined> {
   const data = await readFile(infoPlistPath)
-  const xml = data.subarray(0, 6).toString() === "bplist" ? await exec("plutil", ["-convert", "xml1", "-o", "-", infoPlistPath], undefined, false) : data.toString()
+  const xml = data.subarray(0, 6).toString() === "bplist" ? await exec("/usr/bin/plutil", ["-convert", "xml1", "-o", "-", infoPlistPath], undefined, false) : data.toString()
   return (plist.parse(xml) as PlistObject).ElectronAsarIntegrity as AsarIntegrityEntries | undefined
 }
 
