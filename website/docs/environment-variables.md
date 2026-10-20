@@ -56,7 +56,7 @@ For notarizing macOS apps distributed outside the Mac App Store. Provide **one**
 | `APPLE_ID` | Apple ID email (Apple-ID auth). |
 | `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password for that Apple ID. |
 | `APPLE_TEAM_ID` | Apple Developer Team ID. |
-| `APPLE_API_KEY` | Path to the App Store Connect API key (`.p8`). |
+| `APPLE_API_KEY` | Path to the App Store Connect API key (`.p8`), or the file's contents base64-encoded on one line so CI systems can mask it (`base64 < AuthKey_KEYID.p8 \| tr -d '\n'`). |
 | `APPLE_API_KEY_ID` | Key ID for the App Store Connect API key. |
 | `APPLE_API_ISSUER` | Issuer ID for the App Store Connect API key. |
 | `APPLE_KEYCHAIN` | Keychain to search for a stored notarization profile. |
