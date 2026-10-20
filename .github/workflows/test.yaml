@@ -76,12 +76,16 @@ jobs:
       linux: ${{ steps.plan.outputs.linux }}
       windows: ${{ steps.plan.outputs.windows }}
       macos: ${{ steps.plan.outputs.macos }}
+      # Exact smart cache snapshot used for the plan; shard jobs restore the same one so their
+      # in-job plan matches the matrix (resolving "latest" per job can pick a different cache).
+      smart-cache-source: ${{ steps.pretest.outputs.smart-cache-source }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: Setup Tests
+        id: pretest
         uses: $/.github/actions/pretest
         with:
           cache-key: v-39.8.10-linux-electron
@@ -161,6 +165,7 @@ jobs:
           cache-key: ${{ matrix.cache-key }}
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
+          smart-cache-source: ${{ needs.validate-and-shard.outputs.smart-cache-source }}
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
@@ -187,7 +192,7 @@ jobs:
           echo $TEST_RUNNER_IMAGE_TAG
           pnpm test:linux
         env:
-          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
+          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_EXPECTED_SHARD_COUNT=${{ strategy.job-total }} -e VITEST_SMART_CACHE_SOURCE=${{ needs.validate-and-shard.outputs.smart-cache-source }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
       - name: Upload test artifacts
@@ -222,6 +227,7 @@ jobs:
           cache-path: ${{ matrix.cache-path }}
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
+          smart-cache-source: ${{ needs.validate-and-shard.outputs.smart-cache-source }}
 
       - name: Pre-initialize NuGet IsolatedStorage
         shell: pwsh
@@ -237,6 +243,8 @@ jobs:
         env:
           CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
           VITEST_SHARD_INDEX: ${{ matrix.shard }}
+          VITEST_EXPECTED_SHARD_COUNT: ${{ strategy.job-total }}
+          VITEST_SMART_CACHE_SOURCE: ${{ needs.validate-and-shard.outputs.smart-cache-source }}
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}\test\vitest-scripts\vitest-config\_vitest-smart-cache.json
 
       - name: Upload test artifacts
@@ -271,6 +279,7 @@ jobs:
           cache-key: ${{ matrix.cache-key }}
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
+          smart-cache-source: ${{ needs.validate-and-shard.outputs.smart-cache-source }}
 
       - name: Silence the damn GH runner warnings (temporary until GH updates their runners to a newer macOS base toolset bundle)
         run: |
@@ -286,6 +295,8 @@ jobs:
         run: pnpm ci:test
         env:
           VITEST_SHARD_INDEX: ${{ matrix.shard }}
+          VITEST_EXPECTED_SHARD_COUNT: ${{ strategy.job-total }}
+          VITEST_SMART_CACHE_SOURCE: ${{ needs.validate-and-shard.outputs.smart-cache-source }}
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
 
       - name: Upload test artifacts
