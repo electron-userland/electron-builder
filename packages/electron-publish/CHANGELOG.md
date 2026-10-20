@@ -1,5 +1,11 @@
 # electron-publish
 
+## 26.18.0
+
+### Patch Changes
+
+- Fix: encode GitLab publisher package path segments _[`#10299`](https://github.com/electron-userland/electron-builder/pull/10299) [`29d997b`](https://github.com/electron-userland/electron-builder/commit/29d997b821886984f46189b42c12f2caa7c1796e) [@claude](https://github.com/apps/claude)_
+
 ## 26.16.0
 
 ### Patch Changes

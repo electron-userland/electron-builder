@@ -1,5 +1,41 @@
 # app-builder-lib
 
+## 26.18.0
+
+### Minor Changes
+
+- Feat(blockmap): chunk the stored `resources/app.asar` region with finer content-defined blocks (4/8/16 KiB) than the rest of the artifact (v26 backport of #10235). With `nsis.differentialPackage: "store-asar"`, the asar sits uncompressed in the package and in the signed installer, so its byte range is now chunked on its own parameters instead of the 8/16/32 KiB default used everywhere else — a one-line app-code change costs 5–17% fewer bytes on the wire (measured on a ~32 MB asar). The blockmap format is unchanged and every shipped electron-updater reads it exactly as before; when the asar bytes cannot be located in the package the build logs a warning and falls back to default chunking rather than failing. _[`#10309`](https://github.com/electron-userland/electron-builder/pull/10309) [`206d35d`](https://github.com/electron-userland/electron-builder/commit/206d35dc31bc1e55b39e7b13003c0e384fcae926) [@imlucas](https://github.com/imlucas)_
+
+  Note for apps already shipping `"store-asar"` (available in v26 since #10201): the block boundaries inside the asar region change once. The first differential update from an installer built without this change to one built with it re-downloads close to the whole asar; updates between installers built with it get the smaller deltas.
+
+### Patch Changes
+
+- Fix: bump @electron/rebuild to 4.2.1 so cross-platform builds from one node*modules no longer reuse a native module built for another platform (#10031) *[`#10315`](https://github.com/electron-userland/electron-builder/pull/10315) [`3dc7c90`](https://github.com/electron-userland/electron-builder/commit/3dc7c902a7cd43eed547808b6a610971b9cd65da) [@claude](https://github.com/apps/claude)\_
+- Fix(forge): make the electron-forge-maker-\* packages loadable by Electron Forge 6+ (`MakerBase`-compatible maker class as the module export and `default`, also exported by name, with the maker `config` applied as the target's options); calling the default export as an Electron Forge 5 maker function still works _[`#10352`](https://github.com/electron-userland/electron-builder/pull/10352) [`e703212`](https://github.com/electron-userland/electron-builder/commit/e703212e1a5325be9edbedc71015f130a7d42edc) [@claude](https://github.com/apps/claude)_
+- Fix: contain mapped app file destinations _[`#10330`](https://github.com/electron-userland/electron-builder/pull/10330) [`84f7b46`](https://github.com/electron-userland/electron-builder/commit/84f7b463ef71e390dd8d6ca20ef0dbb18d1e8932) [@claude](https://github.com/apps/claude)_
+- Fix: import blake2b from `@noble/hashes/blake2.js`, which both @noble/hashes 1.x and 2.x export, so projects that override @noble/hashes to 2.x can load electron-builder again (blockmap checksums are unchanged) _[`#10292`](https://github.com/electron-userland/electron-builder/pull/10292) [`6202a27`](https://github.com/electron-userland/electron-builder/commit/6202a271c2373eb5721acf2416098cd1dff73f83) [@mmaietta](https://github.com/mmaietta)_
+- Fix(nsis): warn when `differentialPackage: "store-asar"` finds no `resources/app.asar` (e.g. `asar: false`) instead of silently compressing the package normally _[`#10249`](https://github.com/electron-userland/electron-builder/pull/10249) [`fcd6897`](https://github.com/electron-userland/electron-builder/commit/fcd6897810846ee8dc367f0abacf34e4eb5a10fb) [@claude](https://github.com/apps/claude)_
+- Fix(nsis): keep installer extraction in sync with the payload format when `useZip` is set (ignored with a warning for differential-aware builds and for `nsis-web`, which always use 7z), and only share an app package between targets (e.g. nsis + portable) whose packaging settings match _[`#10252`](https://github.com/electron-userland/electron-builder/pull/10252) [`160c3b4`](https://github.com/electron-userland/electron-builder/commit/160c3b405ff1e193eadd4d6d76049e23ce334ebd) [@claude](https://github.com/apps/claude)_
+- Fix(pnpm): collect packages that pnpm 10.29.3+ `pnpm list` only prints as deduped stubs, so they and their dependencies are no longer missing from app.asar (#10253) _[`#10323`](https://github.com/electron-userland/electron-builder/pull/10323) [`1928adf`](https://github.com/electron-userland/electron-builder/commit/1928adfcceca4414656f6acd65ee1c66c38545ad) [@mmaietta](https://github.com/mmaietta)_
+- Fix(pnpm-collector): read the app's own package.json from its directory so an app named like one of its dependencies no longer loses production dependencies from the asar _[`#10282`](https://github.com/electron-userland/electron-builder/pull/10282) [`c60987c`](https://github.com/electron-userland/electron-builder/commit/c60987c538598118d89ea9cede383a06dc2743b8) [@claude](https://github.com/apps/claude)_
+- Fix(snap): core24 no longer requests `browser-support` with `allow-sandbox` by default (the Snap Store rejects it for non-vetted publishers); default core24 snaps now launch with `--no-sandbox` and omit `chrome-sandbox`, and an explicitly configured `allow-sandbox` in `snapcraft.core24.plugs` logs a store-review warning (v26 backport of #10294) _[`#10331`](https://github.com/electron-userland/electron-builder/pull/10331) [`a92517a`](https://github.com/electron-userland/electron-builder/commit/a92517ae572ee0e17496680a533e836f7772852d) [@claude](https://github.com/apps/claude)_
+- Fix(snap): stop deleting `chrome-sandbox` from the shared `linux-unpacked` dir when building a core18/core20/core22 template snap. The delete raced the other Linux targets, so a deb, rpm or AppImage built in the same run could ship without `chrome-sandbox` (no SUID sandbox fallback), and AppImage could fail with `ENOENT`. The snap still omits `chrome-sandbox`; the `mksquashfs` input list already filters it out. _[`#10333`](https://github.com/electron-userland/electron-builder/pull/10333) [`a1e9db8`](https://github.com/electron-userland/electron-builder/commit/a1e9db847832c4edf5279903c6958a5f984da83c) [@yokomohoyo](https://github.com/yokomohoyo)_
+- Fix: enforce workspace path boundaries for asar _[`#10314`](https://github.com/electron-userland/electron-builder/pull/10314) [`4123c27`](https://github.com/electron-userland/electron-builder/commit/4123c2792ac8f43820266cbfab724be852f0fa42) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 3 dependencies</summary>
+
+<small>
+
+[`29d997b`](https://github.com/electron-userland/electron-builder/commit/29d997b821886984f46189b42c12f2caa7c1796e) [`a10d12b`](https://github.com/electron-userland/electron-builder/commit/a10d12b16a0d92828bdca05818ff08233a6162e2)
+
+</small>
+
+- `electron-publish@26.18.0`
+- `electron-builder-squirrel-windows@26.18.0`
+- `dmg-builder@26.18.0`
+
+</details>
+
 ## 26.17.0
 
 ### Minor Changes

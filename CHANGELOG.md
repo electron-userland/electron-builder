@@ -1,3 +1,30 @@
+# [26.18.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.17.0...electron-builder@26.18.0) (2026-10-20)
+
+
+### Bug Fixes
+
+* **app-builder-lib:** bump @electron/rebuild to 4.2.1 (v26 backport of [#10308](https://github.com/electron-userland/electron-builder/issues/10308)) ([#10315](https://github.com/electron-userland/electron-builder/issues/10315)) ([3dc7c90](https://github.com/electron-userland/electron-builder/commit/3dc7c902a7cd43eed547808b6a610971b9cd65da))
+* contain mapped app file destinations (v26 backport of [#10137](https://github.com/electron-userland/electron-builder/issues/10137)) ([#10330](https://github.com/electron-userland/electron-builder/issues/10330)) ([84f7b46](https://github.com/electron-userland/electron-builder/commit/84f7b463ef71e390dd8d6ca20ef0dbb18d1e8932))
+* encode GitLab package path segments (v26 backport of [#10140](https://github.com/electron-userland/electron-builder/issues/10140)) ([#10299](https://github.com/electron-userland/electron-builder/issues/10299)) ([29d997b](https://github.com/electron-userland/electron-builder/commit/29d997b821886984f46189b42c12f2caa7c1796e))
+* enforce workspace path boundaries for asar (v26 backport of [#10135](https://github.com/electron-userland/electron-builder/issues/10135)) ([#10314](https://github.com/electron-userland/electron-builder/issues/10314)) ([4123c27](https://github.com/electron-userland/electron-builder/commit/4123c2792ac8f43820266cbfab724be852f0fa42))
+* escape Squirrel project URLs in nuspec XML (v26 backport of [#10141](https://github.com/electron-userland/electron-builder/issues/10141)) ([#10301](https://github.com/electron-userland/electron-builder/issues/10301)) ([a10d12b](https://github.com/electron-userland/electron-builder/commit/a10d12b16a0d92828bdca05818ff08233a6162e2))
+* **forge:** make electron-builder makers loadable by current Electron Forge (v26 backport) ([#10352](https://github.com/electron-userland/electron-builder/issues/10352)) ([e703212](https://github.com/electron-userland/electron-builder/commit/e703212e1a5325be9edbedc71015f130a7d42edc))
+* import blake2b from `@noble/hashes/blake2.js` ([#10292](https://github.com/electron-userland/electron-builder/issues/10292)) ([6202a27](https://github.com/electron-userland/electron-builder/commit/6202a271c2373eb5721acf2416098cd1dff73f83))
+* **nsis:** keep installer extraction in sync with the payload format when `useZip` is set (v26 backport of [#10248](https://github.com/electron-userland/electron-builder/issues/10248)) ([#10252](https://github.com/electron-userland/electron-builder/issues/10252)) ([160c3b4](https://github.com/electron-userland/electron-builder/commit/160c3b405ff1e193eadd4d6d76049e23ce334ebd))
+* **nsis:** warn when differentialPackage "store-asar" finds no app.asar (v26 backport of [#10246](https://github.com/electron-userland/electron-builder/issues/10246)) ([#10249](https://github.com/electron-userland/electron-builder/issues/10249)) ([fcd6897](https://github.com/electron-userland/electron-builder/commit/fcd6897810846ee8dc367f0abacf34e4eb5a10fb))
+* **pnpm:** collect packages that `pnpm list` only prints as deduped stubs ([#10323](https://github.com/electron-userland/electron-builder/issues/10323)) ([1928adf](https://github.com/electron-userland/electron-builder/commit/1928adfcceca4414656f6acd65ee1c66c38545ad))
+* **pnpm:** read the app's own package.json when its name matches a dependency (v26 backport of [#10278](https://github.com/electron-userland/electron-builder/issues/10278)) ([#10282](https://github.com/electron-userland/electron-builder/issues/10282)) ([c60987c](https://github.com/electron-userland/electron-builder/commit/c60987c538598118d89ea9cede383a06dc2743b8))
+* **snap:** don't delete chrome-sandbox from the shared linux-unpacked dir in template builds (v26 backport of [#10327](https://github.com/electron-userland/electron-builder/issues/10327)) ([#10333](https://github.com/electron-userland/electron-builder/issues/10333)) ([a1e9db8](https://github.com/electron-userland/electron-builder/commit/a1e9db847832c4edf5279903c6958a5f984da83c))
+* **snap:** don't request allow-sandbox by default for core24 (v26 backport of [#10294](https://github.com/electron-userland/electron-builder/issues/10294)) ([#10331](https://github.com/electron-userland/electron-builder/issues/10331)) ([a92517a](https://github.com/electron-userland/electron-builder/commit/a92517ae572ee0e17496680a533e836f7772852d))
+* **updater:** validate cached update filenames (v26 backport of [#10115](https://github.com/electron-userland/electron-builder/issues/10115)) ([#10300](https://github.com/electron-userland/electron-builder/issues/10300)) ([e5e3b41](https://github.com/electron-userland/electron-builder/commit/e5e3b4143484b68cd2a08c2c0a5eda7f5465c4cf))
+
+
+### Features
+
+* **blockmap:** finer content-defined blocks for the stored app.asar region (v26 backport of [#10235](https://github.com/electron-userland/electron-builder/issues/10235)) ([#10309](https://github.com/electron-userland/electron-builder/issues/10309)) ([206d35d](https://github.com/electron-userland/electron-builder/commit/206d35dc31bc1e55b39e7b13003c0e384fcae926))
+
+
+
 # [26.17.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.16.1...electron-builder@26.17.0) (2026-09-25)
 
 

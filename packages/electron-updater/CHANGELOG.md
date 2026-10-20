@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.8.11
+
+### Patch Changes
+
+- Fix: reject missing and path-valued cached update file names _[`#10300`](https://github.com/electron-userland/electron-builder/pull/10300) [`e5e3b41`](https://github.com/electron-userland/electron-builder/commit/e5e3b4143484b68cd2a08c2c0a5eda7f5465c4cf) [@claude](https://github.com/apps/claude)_
+
 ## 6.8.10
 
 ### Patch Changes
