@@ -110,6 +110,8 @@
     "@babel/plugin-syntax-import-meta": "7.10.4",
     "@babel/preset-env": "7.24.8",
     "@babel/preset-react": "7.24.7",
+    "@electron-forge/maker-base": "8.0.1",
+    "@electron-forge/shared-types": "8.0.1",
     "@types/debug": "4.1.7",
     "@types/ejs": "3.1.0",
     "@types/hosted-git-info": "3.0.2",

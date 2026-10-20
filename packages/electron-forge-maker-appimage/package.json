@@ -2,6 +2,7 @@
   "name": "electron-forge-maker-appimage",
   "version": "26.17.0",
   "main": "main.js",
+  "types": "main.d.ts",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": {
@@ -12,7 +13,8 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
-    "*.js"
+    "*.js",
+    "*.d.ts"
   ],
   "dependencies": {
     "app-builder-lib": "workspace:*"
