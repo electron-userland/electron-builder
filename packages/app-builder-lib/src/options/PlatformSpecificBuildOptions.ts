@@ -439,8 +439,20 @@ export interface UpdateManifestSigningOptions {
    * without a publish policy, where the requirement only warns and the unsigned manifest is written locally, or
    * keeps publishing with `publishAutoUpdate: false` on every publish provider - electron-builder then uploads the
    * artifacts and embeds this key, but writes no `latest*.yml`, so the external step has to produce it too.
+   *
+   * When set, it must contain at least one of the signing keys: a publishing build signed only by keys outside this
+   * list fails, since its installs would reject manifests signed with them. See `allowSigningKeyOutsideTrustList`.
    */
   readonly publicKey?: string | Array<string> | null
+
+  /**
+   * Allows a publishing build to sign its manifests only with keys that are not in `publicKey` - a deliberate
+   * cutover release that is verified by installs with the old key, but hands them over to the keys listed in
+   * `publicKey`. Every later release must then be signed by a listed key. Without it such a build fails; a build
+   * without a publish policy only warns. Has no effect when `publicKey` is not set.
+   * @default false
+   */
+  readonly allowSigningKeyOutsideTrustList?: boolean | null
 }
 
 export interface ReleaseInfo {

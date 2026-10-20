@@ -29,6 +29,7 @@ import {
   PublishProvider,
   SnapStoreOptions,
 } from "builder-util-runtime"
+import type { KeyObject } from "crypto"
 import _debug from "debug"
 import {
   BitbucketPublisher,
@@ -243,7 +244,11 @@ export class PublishManager implements PublishContext {
       }
       const { emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, targets, arch, true)
       if (emitsManifest && !this.cancellationToken.cancelled) {
-        await packager.requireUpdateSigningKeys(true)
+        const signingKeys = await packager.requireUpdateSigningKeys(true)
+        const updateManifestConfig = packager.updateManifestOptions
+        if (updateManifestConfig !== false) {
+          checkSigningKeysTrusted(packager, signingKeys, normalizeExplicitPublicKeys(updateManifestConfig?.publicKey), true)
+        }
       }
     }
   }
@@ -581,18 +586,51 @@ async function createAppUpdateConfiguration(
   if (trustedKeys.length > 0) {
     publishConfig.updateManifestPublicKey = trustedKeys.length === 1 ? trustedKeys[0] : trustedKeys
   }
-  if (signingKeys.length > 0 && explicitKeys.length > 0) {
-    const trustedIds = new Set(trustedKeys.map(computeUpdateManifestKeyId))
-    if (!signingKeys.some(key => trustedIds.has(computeUpdateManifestKeyId(key)))) {
-      log.warn(
-        { platform: packager.platform.name, trustedKeys: trustedKeys.length },
-        "none of the update-manifest signing keys is in updateManifest.publicKey: installs of this release will not be able to verify manifests signed with the current key(s). " +
-          "Intended only for a deliberate bridge release; otherwise add the current public key to updateManifest.publicKey."
-      )
-    }
-  }
+  checkSigningKeysTrusted(packager, signingKeys, explicitKeys, isPublish && requireSigning)
   return publishConfig
 }
+
+/**
+ * An explicit `updateManifest.publicKey` list that holds none of the signing keys ships an app that rejects manifests
+ * signed with those keys, so every later release has to be signed by a listed key. That is a mistake unless it is a
+ * deliberate cutover release: with `fail` (a publishing build whose manifest is signed) it is an error unless
+ * `updateManifest.allowSigningKeyOutsideTrustList` is set; otherwise it only warns, once per process. Only key ids are
+ * ever reported, never key material.
+ */
+function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: ReadonlyArray<KeyObject>, explicitKeys: ReadonlyArray<string>, fail: boolean): void {
+  if (signingKeys.length === 0 || explicitKeys.length === 0) {
+    return
+  }
+  const trustedIds = explicitKeys.map(computeUpdateManifestKeyId)
+  const signingIds = signingKeys.map(computeUpdateManifestKeyId)
+  if (signingIds.some(id => trustedIds.includes(id))) {
+    return
+  }
+
+  const updateManifestConfig = packager.updateManifestOptions
+  const allowed = updateManifestConfig !== false && updateManifestConfig?.allowSigningKeyOutsideTrustList === true
+  if (fail && !allowed) {
+    throw new InvalidConfigurationError(
+      `none of the update-manifest signing keys (key id(s) ${signingIds.join(", ")}) is in updateManifest.publicKey (key id(s) ${trustedIds.join(", ")}) for ${packager.platform.name}. ` +
+        "The app built here embeds only the listed keys, so its installs will reject manifests signed with the signing key(s) above: every later release would have to be signed by a key in updateManifest.publicKey. " +
+        "Add the signing key's public key to updateManifest.publicKey, or sign with a key that is listed. " +
+        "For a deliberate cutover release that hands installs over to a listed key, set updateManifest.allowSigningKeyOutsideTrustList: true. " +
+        `See ${SIGNING_KEY_OUTSIDE_TRUST_LIST_DOCS}`
+    )
+  }
+  log
+    .once("update-manifest-signing-key-outside-trust-list")
+    .warn(
+      { platform: packager.platform.name, signingKeyIds: signingIds, trustedKeyIds: trustedIds },
+      "none of the update-manifest signing keys is in updateManifest.publicKey: installs of this release will not be able to verify manifests signed with the current key(s). " +
+        (allowed
+          ? "Allowed by updateManifest.allowSigningKeyOutsideTrustList for a deliberate cutover release; every later release must be signed by a key in updateManifest.publicKey."
+          : "Publishing a manifest signed with these keys fails: add the current public key to updateManifest.publicKey, or set updateManifest.allowSigningKeyOutsideTrustList: true for a deliberate cutover release. " +
+            `See ${SIGNING_KEY_OUTSIDE_TRUST_LIST_DOCS}`)
+    )
+}
+
+const SIGNING_KEY_OUTSIDE_TRUST_LIST_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#signing-key-must-be-in-updatemanifestpublickey"
 
 /**
  * Normalizes the configured `updateManifest.publicKey` (string, multi-PEM string, or array) into distinct,

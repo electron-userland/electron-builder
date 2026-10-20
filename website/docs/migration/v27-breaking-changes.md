@@ -121,6 +121,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Update credentials are only sent to the feed's origin (electron-updater)](#update-credentials-stay-on-the-feeds-origin) | — | Only if `latest*.yml` points downloads at another origin (another host, or another port or scheme) that needs your `requestHeaders` / `addAuthHeader` credentials or a token in the feed URL's query: serve the files from the feed origin or use pre-signed URLs. A custom provider used with credential headers must override `Provider.feedBaseUrl` (else `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`) |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | — | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
 | [Signed update manifests are required](#signed-update-manifests-are-required) | — | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY`, or set `updateManifest: false` to keep publishing unsigned manifests |
+| [Signing key must be in `updateManifest.publicKey`](#signing-key-must-be-in-updatemanifestpublickey) | — | Only if you set `updateManifest.publicKey`: list a key the build signs with, or set `updateManifest.allowSigningKeyOutsideTrustList: true` for a deliberate cutover release |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | — | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
 | [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | — | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
 | [`quitAndInstall` takes an options object (electron-updater)](#quitandinstall-takes-an-options-object) | — | Replace positional args: `quitAndInstall(true, false)` → `quitAndInstall({ isSilent: true, isForceRunAfter: false })` |
@@ -1340,6 +1341,23 @@ Once a release embeds a public key, its installs are **fail-closed**: an unsigne
 Note that installs already in the field are unaffected but also unprotected: they carry whatever `app-update.yml` they shipped with, so those built before you adopted signing keep accepting unsigned manifests. Full protection begins with the installs built after the public key was embedded.
 
 See [Signed Update Manifests](../features/signed-update-manifests.md) and [Key Rotation](../features/key-rotation.md).
+
+### Signing key must be in `updateManifest.publicKey` {#signing-key-must-be-in-updatemanifestpublickey}
+
+When `updateManifest.publicKey` is set explicitly, it is the whole trust list embedded in `app-update.yml`. If none of the keys the build signs `latest*.yml` with is in that list, installs of the release reject manifests signed with the current key(s), and every later release has to be signed by a listed key. Earlier v27 pre-releases only warned about this; a **publishing** build now fails at build start, before anything is packed or uploaded, with an `InvalidConfigurationError` that names the key ids of the signing keys and of the listed keys (never key material). A build without a publish policy still only warns.
+
+**Action:**
+
+- **Unintended mismatch** (a stale `publicKey`, or a CI secret that was regenerated): add the signing key's public key to `updateManifest.publicKey` (`electron-builder create-update-key` prints it with its key id), or sign with a key that is listed.
+- **Deliberate cutover release** (signed with the old key, which the installs in the field trust, while embedding only the new key): set `allowSigningKeyOutsideTrustList: true` for that release. The build then publishes and logs a warning. Remove it again once you sign with the new key.
+
+```yaml
+updateManifest:
+  publicKey: "-----BEGIN PUBLIC KEY-----\n…" # the NEW key only
+  allowSigningKeyOutsideTrustList: true     # this release is still signed with the OLD key
+```
+
+When `publicKey` is not set, the trust list is derived from the signing keys and nothing changes. See [Key Rotation](../features/key-rotation.md#cutover-without-dual-signing).
 
 ### `app-update.yml` feed follows the update-writing targets
 

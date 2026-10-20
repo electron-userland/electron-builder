@@ -68,7 +68,11 @@ updateManifest:
   signingKeyFile: null
   # Public key(s) (PEM or base64 SPKI) embedded into app-update.yml as the updater's trust list.
   # Optional — derived automatically from the private key(s) when omitted. String or array.
+  # When set, it must include a signing key, or a publishing build fails (see below).
   publicKey: null
+  # Lets a publishing build sign only with keys that are not in publicKey: a deliberate cutover
+  # release. Only warns then. Ignored when publicKey is not set.
+  allowSigningKeyOutsideTrustList: false
 ```
 
 The whole option may instead be set to `false`, the only opt-out:
@@ -89,7 +93,7 @@ A relative `signingKeyFile` path resolves against the project directory (where t
 
 Every key must be a distinct Ed25519 key; duplicates and other key types fail the build. When several keys are configured, **each manifest is signed by all of them** and the trust list embeds all of their public keys — this is the dual-signing used during [key rotation](#key-rotation).
 
-An explicit `publicKey` takes precedence over derivation and is embedded as-is. Use it to trust keys you do not (yet) sign with — for example the *next* key ahead of a rotation. If none of the keys the build signs with is in an explicit `publicKey` list, electron-builder logs a warning: installs of that release could not verify its own manifests, which is only ever intended for a deliberate bridge release.
+An explicit `publicKey` takes precedence over derivation and is embedded as-is. Use it to trust keys you do not (yet) sign with — for example the *next* key ahead of a rotation. It must also list at least one of the keys the build signs with: otherwise installs of that release reject manifests signed with the current key(s), and every later release has to be signed by a listed key. A publishing build in that state fails at build start with an `InvalidConfigurationError` naming the key ids on both sides (a build without a publish policy only warns). For a deliberate cutover release — signed with the old key, which the installs in the field trust, but embedding only the new one — set `allowSigningKeyOutsideTrustList: true`; the build then publishes and logs a warning. When `publicKey` is not set the trust list is derived from the signing keys, so this check does not apply.
 
 A `publicKey` on its own does **not** satisfy the signing requirement — electron-builder still has no key to sign with, so a publishing build fails. An HSM/KMS-style signer that signs `latest*.yml` in a later step of its own therefore either builds without a publish policy, where the requirement only warns and the unsigned manifest is written locally for it to sign, or keeps publishing with `publishAutoUpdate: false` on every publish provider — electron-builder then uploads the artifacts and embeds the `publicKey`, but writes no `latest*.yml`, so the external step has to generate the manifest too. See [Key storage](./key-rotation.md#key-storage).
 
