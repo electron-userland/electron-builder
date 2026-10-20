@@ -139,6 +139,19 @@ describe("MacPackager.doAddAsarIntegrityDigest", () => {
     expect(warn).toHaveBeenCalledWith(expect.objectContaining({ reason: expect.stringContaining("supported only on macOS") }), "skipped ASAR integrity digest")
   })
 
+  // `defaults write` in an afterPack hook leaves Info.plist in the binary format
+  test.ifMac("reads an Info.plist in the binary format", async ({ expect, tmpDir }) => {
+    const { exec: realExec } = await vi.importActual<typeof import("builder-util")>("builder-util")
+    const app = await createApp(tmpDir)
+    await realExec("plutil", ["-convert", "binary1", path.join(app.appOutDir, "Test.app", "Contents", "Info.plist")])
+    // plutil converts it back for real, codesign stays mocked
+    vi.mocked(exec).mockImplementationOnce(realExec)
+    await addDigest(app.appOutDir)
+
+    expect(await readSlot(app.binaryPath)).toEqual({ used: 1, version: 1, digest: DIGEST })
+    expect(vi.mocked(exec).mock.calls[1]).toEqual(resign(app.frameworkPath))
+  })
+
   test("skips with a warning when Info.plist has no ElectronAsarIntegrity entries", async ({ expect, tmpDir }) => {
     const warn = vi.spyOn(log, "warn")
     const app = await createApp(tmpDir, { infoPlist: { CFBundleName: "Test" } })

@@ -1,8 +1,9 @@
 import { exec, log } from "builder-util"
 import { createHash } from "crypto"
-import { FileHandle, open } from "fs/promises"
+import { FileHandle, open, readFile } from "fs/promises"
 import * as path from "path"
-import { parsePlistFile, PlistObject } from "../../util/mac/plist.js"
+import plist from "plist"
+import { PlistObject } from "../../util/mac/plist.js"
 
 /**
  * Marks the slot Electron (>= 41) reserves in the `Electron Framework` binary for the digest of the
@@ -88,7 +89,7 @@ export async function writeAsarIntegrityDigest(binaryPath: string, digest: Buffe
  */
 export async function embedAsarIntegrityDigest(appPath: string, frameworkName: string): Promise<void> {
   const infoPlistPath = path.join(appPath, "Contents", "Info.plist")
-  const integrity = (await parsePlistFile<PlistObject>(infoPlistPath)).ElectronAsarIntegrity as AsarIntegrityEntries | undefined
+  const integrity = await readAsarIntegrity(infoPlistPath)
   if (integrity == null || Object.keys(integrity).length === 0) {
     log.warn({ file: log.filePath(infoPlistPath), reason: "Info.plist has no ElectronAsarIntegrity entries" }, "skipped ASAR integrity digest")
     return
@@ -104,6 +105,13 @@ export async function embedAsarIntegrityDigest(appPath: string, frameworkName: s
   // --deep: Electron's x64 builds ship the framework's nested code unsigned, and codesign refuses to seal a bundle around unsigned code
   await exec("codesign", ["--sign", "-", "--force", "--deep", "--preserve-metadata=entitlements,requirements,flags,runtime", frameworkPath])
   log.info({ file: log.filePath(frameworkPath) }, "embedded ASAR integrity digest")
+}
+
+// electron-builder writes Info.plist as XML, but an afterPack hook that edits it with `defaults write` leaves it in the binary format, which only plutil reads
+async function readAsarIntegrity(infoPlistPath: string): Promise<AsarIntegrityEntries | undefined> {
+  const data = await readFile(infoPlistPath)
+  const xml = data.subarray(0, 6).toString() === "bplist" ? await exec("plutil", ["-convert", "xml1", "-o", "-", infoPlistPath], undefined, false) : data.toString()
+  return (plist.parse(xml) as PlistObject).ElectronAsarIntegrity as AsarIntegrityEntries | undefined
 }
 
 async function findSentinels(handle: FileHandle, size: number, sentinel: Buffer): Promise<Array<number>> {
