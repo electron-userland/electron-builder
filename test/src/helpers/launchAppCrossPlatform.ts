@@ -39,8 +39,10 @@ export function getParallelsHostIP(): string | undefined {
   return undefined
 }
 
-export function createLocalServer(root: string, bindAddress = "127.0.0.1"): Promise<{ server: http.Server; port: number }> {
+/** `onRequest` receives the URL of every request (e.g. to assert which files an installer downloaded). */
+export function createLocalServer(root: string, bindAddress = "127.0.0.1", onRequest?: (url: string) => void): Promise<{ server: http.Server; port: number }> {
   const server = http.createServer((req, res) => {
+    onRequest?.(req.url!)
     const pathname = decodeURIComponent(new URL(req.url!, "http://localhost").pathname).replace(/^\/+/, "")
     const filePath = path.resolve(root, pathname)
     if (!filePath.startsWith(path.resolve(root) + path.sep) && filePath !== path.resolve(root)) {

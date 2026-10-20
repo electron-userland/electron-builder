@@ -13,7 +13,7 @@ permissions:
 jobs:
   deploy:
     name: 'Deploy PR'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Only run on the main repository, not on forks
     if: github.repository == 'electron-userland/electron-builder'
 

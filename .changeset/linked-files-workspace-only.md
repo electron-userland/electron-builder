@@ -1,0 +1,5 @@
+---
+"app-builder-lib": major
+---
+
+fix: confine linked files to the workspace and package-manager store by real path; opt in to external links with `fileOptions.allowExternalLinks`. A file of the app (packed into `app.asar` or copied with `asar: false`) that is a symlink, or is reached through one, is packaged only when its real path is inside the workspace root, the project or app directory, or the package-manager store (pnpm `storeDir`/`virtualStoreDir` from `node_modules/.modules.yaml`). Any other one, such as an `npm link` or a `file:` dependency outside the workspace, fails with `InvalidConfigurationError` (code `ERR_ELECTRON_BUILDER_FILE_OUTSIDE_WORKSPACE`), which names the file, its real path and the `fileOptions.allowExternalLinks` entry that allows it (`true`, or a list of directories, relative to the project directory or absolute, that linked files may resolve into; at the top level or per platform; default `false`, with a one-time warning when it allows a link). See https://www.electron.build/docs/contents#linked-files-must-resolve-inside-the-workspace

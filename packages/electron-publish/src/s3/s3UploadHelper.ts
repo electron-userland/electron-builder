@@ -5,7 +5,7 @@ import * as http from "http"
 import * as https from "https"
 import mime from "mime"
 import * as path from "path"
-import type { AwsCredentials } from "./awsCredentials.js"
+import { AwsCredentials, requireAwsCredentials } from "./awsCredentials.js"
 
 export interface S3PutObjectParams {
   bucket: string
@@ -18,7 +18,7 @@ export interface S3PutObjectParams {
   acl?: string
   storageClass?: string
   serverSideEncryption?: string
-  credentials?: AwsCredentials
+  credentials: AwsCredentials
 }
 
 interface S3RequestTarget {
@@ -29,30 +29,39 @@ interface S3RequestTarget {
   forcePathStyle?: boolean
 }
 
-function resolveS3Request(params: S3RequestTarget): { hostname: string; urlPath: string; isHttp: boolean } {
+function resolveS3Request(params: S3RequestTarget): { host: string; hostname: string; port: number | undefined; urlPath: string; isHttp: boolean } {
   const region = params.region
 
+  let host: string
   let hostname: string
+  let port: number | undefined
   let rawPath: string
   let isHttp = false
 
   if (params.endpoint != null) {
     const u = new URL(params.endpoint)
+    if (u.protocol !== "http:" && u.protocol !== "https:") {
+      throw new Error(`Unsupported S3 endpoint protocol: ${u.protocol}`)
+    }
     isHttp = u.protocol === "http:"
-    hostname = u.port ? `${u.hostname}:${u.port}` : u.hostname
+    host = u.host
+    hostname = u.hostname.startsWith("[") ? u.hostname.slice(1, -1) : u.hostname
+    port = u.port ? Number(u.port) : undefined
     // path-style for custom endpoints (handles buckets whose names contain dots)
     rawPath = `/${params.bucket}/${params.key}`
   } else if (params.forcePathStyle) {
     hostname = `s3.${region}.amazonaws.com`
+    host = hostname
     rawPath = `/${params.bucket}/${params.key}`
   } else {
     hostname = `${params.bucket}.s3.${region}.amazonaws.com`
+    host = hostname
     rawPath = `/${params.key}`
   }
 
   // URL-encode each path segment individually so forward-slashes in keys are preserved
   const urlPath = "/" + rawPath.slice(1).split("/").map(encodeURIComponent).join("/")
-  return { hostname, urlPath, isHttp }
+  return { host, hostname, port, urlPath, isHttp }
 }
 
 /**
@@ -62,9 +71,10 @@ function resolveS3Request(params: S3RequestTarget): { hostname: string; urlPath:
  * Mirrors the behaviour of the `publish-s3` app-builder subcommand.
  */
 export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientRequest; done: Promise<void> } {
+  const credentials = requireAwsCredentials(params.credentials, "S3 PutObject")
   const stat = fs.statSync(params.file)
   const region = params.region
-  const { hostname, urlPath, isHttp } = resolveS3Request(params)
+  const { host, hostname, port, urlPath, isHttp } = resolveS3Request(params)
 
   const headers: Record<string, string> = {
     "Content-Type": params.contentType,
@@ -88,31 +98,44 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
       service: "s3",
       region,
       method: "PUT",
-      host: hostname,
+      host,
       path: urlPath,
       headers,
     },
-    params.credentials
+    credentials
   )
 
   const transport = isHttp ? http : https
 
   let resolvePromise!: () => void
   let rejectPromise!: (err: Error) => void
+  let settled = false
   const done = new Promise<void>((res, rej) => {
-    resolvePromise = res
-    rejectPromise = rej
+    resolvePromise = () => {
+      if (!settled) {
+        settled = true
+        res()
+      }
+    }
+    rejectPromise = error => {
+      if (!settled) {
+        settled = true
+        rej(error)
+      }
+    }
   })
 
   const req = transport.request(
     {
-      hostname: hostname.split(":")[0],
-      port: hostname.includes(":") ? Number(hostname.split(":")[1]) : undefined,
+      hostname,
+      port,
       path: urlPath,
       method: "PUT",
       headers: signed.headers,
     },
     res => {
+      res.on("aborted", () => rejectPromise(new Error("S3 PutObject response aborted")))
+      res.on("error", rejectPromise)
       if (res.statusCode === 200) {
         res.resume()
         res.on("end", resolvePromise)
@@ -133,7 +156,10 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
 
   req.on("error", rejectPromise)
   const fileStream = fs.createReadStream(params.file)
-  fileStream.on("error", rejectPromise)
+  fileStream.on("error", error => {
+    req.destroy(error)
+    rejectPromise(error)
+  })
   req.on("close", () => fileStream.destroy())
   fileStream.pipe(req)
 
@@ -141,7 +167,7 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
 }
 
 export interface S3DeleteObjectParams extends S3RequestTarget {
-  credentials?: AwsCredentials
+  credentials: AwsCredentials
 }
 
 /**
@@ -149,20 +175,21 @@ export interface S3DeleteObjectParams extends S3RequestTarget {
  * Primarily used by credential-gated live tests to clean up uploaded artifacts.
  */
 export function deleteS3Object(params: S3DeleteObjectParams): Promise<void> {
-  const { hostname, urlPath, isHttp } = resolveS3Request(params)
+  const credentials = requireAwsCredentials(params.credentials, "S3 DeleteObject")
+  const { host, hostname, port, urlPath, isHttp } = resolveS3Request(params)
 
   const signed = sign(
     {
       service: "s3",
       region: params.region,
       method: "DELETE",
-      host: hostname,
+      host,
       path: urlPath,
       headers: {
         "x-amz-content-sha256": "UNSIGNED-PAYLOAD",
       },
     },
-    params.credentials
+    credentials
   )
 
   const transport = isHttp ? http : https
@@ -170,8 +197,8 @@ export function deleteS3Object(params: S3DeleteObjectParams): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const req = transport.request(
       {
-        hostname: hostname.split(":")[0],
-        port: hostname.includes(":") ? Number(hostname.split(":")[1]) : undefined,
+        hostname,
+        port,
         path: urlPath,
         method: "DELETE",
         headers: signed.headers,

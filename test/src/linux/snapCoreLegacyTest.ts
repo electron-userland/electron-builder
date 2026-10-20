@@ -1,10 +1,11 @@
 import { describe } from "vitest"
-import { buildCommandShContent, shellQuote } from "app-builder-lib/src/targets/linux/snap/coreLegacy"
+import { assertTemplateSnapCompressionSupported, buildCommandShContent, shellQuote } from "app-builder-lib/src/targets/linux/snap/coreLegacy"
+import { InvalidConfigurationError } from "builder-util"
 
 // Pure unit tests for module-level helpers exported from coreLegacy.ts.
 // Full snap build flows are exercised by snapTest.ts.
 
-describe("snapCoreLegacy helpers", { sequential: true }, () => {
+describe("snapCoreLegacy helpers", { concurrent: false }, () => {
   describe("buildCommandShContent", () => {
     test("template build: desktop scripts sourced from $SNAP root", ({ expect }) => {
       const content = buildCommandShContent({ isTemplate: true, executableName: "myapp", extraAppArgs: [] })
@@ -112,6 +113,32 @@ describe("snapCoreLegacy helpers", { sequential: true }, () => {
     test("flag=value with embedded single quote escapes correctly", ({ expect }) => {
       // Input: --title=app's → single-quote in value is escaped as '\''
       expect(shellQuote("--title=app's")).toBe("'--title=app'\\''s'")
+    })
+  })
+
+  describe("assertTemplateSnapCompressionSupported", () => {
+    test('lzo with toolsets.appimage "0.0.0" throws InvalidConfigurationError naming the fix', ({ expect }) => {
+      const call = () => assertTemplateSnapCompressionSupported("0.0.0", "lzo")
+      expect(call).toThrow(InvalidConfigurationError)
+      expect(call).toThrow(/toolsets\.appimage "0\.0\.0"/)
+      expect(call).toThrow(/Set toolsets\.appimage to "latest"/)
+    })
+
+    test('xz with toolsets.appimage "0.0.0" is accepted', ({ expect }) => {
+      expect(() => assertTemplateSnapCompressionSupported("0.0.0", "xz")).not.toThrow()
+    })
+
+    test.for([
+      ["unset", undefined],
+      ["latest", "latest"],
+      ["1.0.3", "1.0.3"],
+      ["1.1.0", "1.1.0"],
+    ] as const)("lzo with toolsets.appimage %s is accepted", ([_label, toolset], { expect }) => {
+      expect(() => assertTemplateSnapCompressionSupported(toolset, "lzo")).not.toThrow()
+    })
+
+    test("lzo with a custom toolsets.appimage bundle is accepted", ({ expect }) => {
+      expect(() => assertTemplateSnapCompressionSupported({ url: "file:///custom/appimage", checksum: "abc" }, "lzo")).not.toThrow()
     })
   })
 })

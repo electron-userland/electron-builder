@@ -1,6 +1,6 @@
 import { build as _build, Configuration, DIR_TARGET, Packager, PackagerOptions, Platform } from "app-builder-lib"
 import { addTargetsForPlatform } from "app-builder-lib/internal"
-import { Arch, archFromString } from "builder-util"
+import { Arch, archFromString, log } from "builder-util"
 import { deepAssign } from "builder-util-runtime"
 import chalk from "chalk"
 import type { PublishOptions } from "electron-publish"
@@ -118,11 +118,27 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   // https://github.com/electron-userland/electron-builder/issues/2016
   if (Array.isArray(config)) {
     const newConfig: Configuration = {}
+    // a repeated `-c.fileOptions.excludedExts=…` flag (one entry each) is one item per flag here, which deepAssign would let the last
+    // one overwrite: join them into one list, as yargs does when no config file is given
+    const excludedExts = new Map<string, Array<string>>()
     for (const configItem of config) {
       if (typeof configItem === "object") {
+        for (const section of EXCLUDED_EXTS_SECTIONS) {
+          const value = (section === "" ? configItem : configItem?.[section])?.fileOptions?.excludedExts
+          if (value != null) {
+            excludedExts.set(section, [...(excludedExts.get(section) ?? []), ...(Array.isArray(value) ? value : [value])])
+          }
+        }
         deepAssign(newConfig, configItem)
       } else if (typeof configItem === "string") {
         newConfig.extends = configItem
+      }
+    }
+    for (const [section, values] of excludedExts) {
+      const fileOptions = (section === "" ? newConfig : (newConfig as any)[section])?.fileOptions
+      // a fileOptions that is not an object is left for validateConfiguration to report
+      if (values.length > 1 && fileOptions != null && typeof fileOptions === "object" && !Array.isArray(fileOptions)) {
+        fileOptions.excludedExts = values
       }
     }
 
@@ -144,6 +160,26 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       coerceValue(config.mac, "universal")
     }
 
+    // `-c.updateManifest=false` is the signing opt-out and arrives as the string "false"; ajv does not write a
+    // coerced value back out of an `anyOf` branch, so without this the opt-out is silently ignored and the build
+    // fails demanding a signing key. coerceValue recurses into objects, so `-c.updateManifest.signingKeyFile=...`
+    // still works. (`mas` / `masDev` are omitted on purpose - PlatformPackager never reads updateManifest there.)
+    coerceValue(config, "updateManifest")
+    for (const platform of ["mac", "win", "linux"]) {
+      const platformConfig = config[platform]
+      if (platformConfig != null && typeof platformConfig === "object") {
+        coerceValue(platformConfig, "updateManifest")
+      }
+    }
+
+    // `-c.fileOptions.excludedExts=null` arrives as the string "null", which a single-string excludedExts would read as an extension
+    for (const section of EXCLUDED_EXTS_SECTIONS) {
+      const fileOptions = (section === "" ? config : config[section])?.fileOptions
+      if (fileOptions != null && typeof fileOptions === "object" && fileOptions.excludedExts === "null") {
+        fileOptions.excludedExts = null
+      }
+    }
+
     // fix Boolean type by coerceTypes
     if (config.nsis != null) {
       coerceTypes(config.nsis)
@@ -160,6 +196,9 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
 
   return result as BuildOptions
 }
+
+// the configuration root ("") and the platform sections that hold `fileOptions`
+const EXCLUDED_EXTS_SECTIONS = ["", "mac", "mas", "masDev", "win", "linux"]
 
 function coerceValue(host: any, key: string): void {
   const value = host[key]
@@ -184,8 +223,30 @@ export function coerceTypes(host: any): any {
   return host
 }
 
+/**
+ * `arch: "all"` dropped ia32 in v27. The build stays green and simply produces no 32-bit artifact
+ * (plus an unexpected arm64 one), so the only evidence is a missing file in dist — nothing ties that
+ * back to the upgrade.
+ */
+function warnAboutArchAllExpansion(platforms: Array<Platform>): void {
+  if (!platforms.some(platform => platform !== Platform.MAC)) {
+    return
+  }
+  // once per process — createTargets is called per invocation, not per platform
+  log
+    .once("arch-all-expansion")
+    .warn(
+      { expandsTo: "x64, arm64", previously: "x64, ia32", solution: "request ia32 explicitly (--ia32 / Arch.ia32) with electronVersion <= 43.x if you still ship 32-bit builds" },
+      'arch "all" no longer includes ia32. Electron 44 removed Windows ia32 builds and Linux ia32 zips ended at Electron 19, so the old expansion produced broken builds on current Electron. ' +
+        "See https://www.electron.build/docs/migration/v27-breaking-changes#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44"
+    )
+}
+
 export function createTargets(platforms: Array<Platform>, type?: string | null, arch?: string | null): Map<Platform, Map<Arch, Array<string>>> {
   const targets = new Map<Platform, Map<Arch, Array<string>>>()
+  if (arch === "all") {
+    warnAboutArchAllExpansion(platforms)
+  }
   for (const platform of platforms) {
     const archs =
       // BREAKING: since Electron 44 removed Windows ia32 and Linux armv7l builds (and linux-ia32 zips ended at Electron 19),

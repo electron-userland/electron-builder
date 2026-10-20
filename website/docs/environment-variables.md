@@ -112,12 +112,15 @@ If `BITBUCKET_TOKEN` holds an app password or API token, you **must** also set `
 
 ### Amazon S3
 
+Read only when the S3 publish configuration sets `awsCredentials: { source: "env" }` (there is no default source). You can change the variable names with `awsCredentials.env`.
+
 | Variable | Description |
 |---|---|
 | `AWS_ACCESS_KEY_ID` | AWS access key ID. |
 | `AWS_SECRET_ACCESS_KEY` | AWS secret access key. |
 | `AWS_SESSION_TOKEN` | Optional session token for temporary credentials. |
-| `AWS_PROFILE` | Named profile in `~/.aws/credentials` to use when the keys above are not set (default: `default`). |
+
+Since v27, `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE` and `AWS_SHARED_CREDENTIALS_FILE` are **not** read, and publishing without `awsCredentials.source` fails. To use a named profile from the shared config/credentials files (including IAM Identity Center / SSO), set `awsCredentials: { source: "profile", profile: "<name>" }` in the [S3 publish options](./publish.md#s3); for a role assumed from an SSO profile via `source_profile`, set `{ source: "sso-role-chain", profile: "<name>" }`. The SSO and STS calls made for either source do not read `AWS_REGION`, `AWS_DEFAULT_REGION` or `AWS_ENDPOINT_URL*`.
 
 ### DigitalOcean Spaces
 
@@ -184,6 +187,8 @@ DEBUG=electron-builder electron-builder --linux snap
 
 Namespaced channels are also available — e.g. `DEBUG=electron-builder:7z` for archive operations, or `DEBUG=electron-builder*` for everything.
 
+The flatpak target no longer has a namespace of its own: `DEBUG=@malept/flatpak-bundler`, which v26 needed to show the output of `flatpak` and `flatpak-builder`, has no effect in v27. `DEBUG=electron-builder` logs every command the target runs, and a failed command prints its output without any `DEBUG` setting.
+
 ---
 
 ## Removed in v27
@@ -201,7 +206,7 @@ The environment variables that pointed electron-builder at custom build-tool bun
 
 | Removed variable | What it controlled |
 |---|---|
-| `USE_SYSTEM_WINE` | Forced host-installed Wine instead of the bundle. |
+| `USE_SYSTEM_WINE` | Forced host-installed Wine instead of the bundle. Replaced by `toolsets.wine: "system"`. |
 | `USE_SYSTEM_SIGNCODE` | Forced host `signtool`/`signcode`. |
 | `USE_SYSTEM_OSSLSIGNCODE` | Forced host `osslsigncode`. |
 | `USE_SYSTEM_FPM` | Forced host-installed `fpm`. |
@@ -213,5 +218,5 @@ The environment variables that pointed electron-builder at custom build-tool bun
 | `CUSTOM_NSIS_RESOURCES` | Alternate NSIS resources bundle. |
 | `ELECTRON_BUILDER_WINE_TOOLSET_DIR` | Wine bundle directory. |
 
-The three signing `USE_SYSTEM_*` variables have **no env-var replacement** — configure signing through [`win.sign`](./migration/v27-breaking-changes.md#windows-signing-winsign) and the `winCodeSign` toolset. For the full replacement mechanics (archive formats, checksums, `file://` directories), see [Toolset env-var overrides removed](./migration/v27-breaking-changes.md#toolset-env-var-overrides-removed).
+The two signing `USE_SYSTEM_*` variables (`USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSSLSIGNCODE`) have **no env-var replacement** — configure signing through [`win.sign`](./migration/v27-breaking-changes.md#windows-signing-winsign) and the `winCodeSign` toolset. For the full replacement mechanics (archive formats, checksums, `file://` directories), see [Toolset env-var overrides removed](./migration/v27-breaking-changes.md#toolset-env-var-overrides-removed).
 

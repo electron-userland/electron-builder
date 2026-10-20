@@ -152,14 +152,14 @@ export async function readAsarHeader(archive: string): Promise<ReadAsarHeader> {
   let headerBuf
   try {
     const sizeBuf = Buffer.allocUnsafe(8)
-    if ((await fsExtra.read(fd, sizeBuf, 0, 8, null as any)).bytesRead !== 8) {
+    if ((await fsExtra.read(fd, sizeBuf, 0, 8, null)).bytesRead !== 8) {
       throw new Error("Unable to read header size")
     }
 
     const sizePickle = chromiumPickleJs.createFromBuffer(sizeBuf)
     size = sizePickle.createIterator().readUInt32()
     headerBuf = Buffer.allocUnsafe(size)
-    if ((await fsExtra.read(fd, headerBuf, 0, size, null as any)).bytesRead !== size) {
+    if ((await fsExtra.read(fd, headerBuf, 0, size, null)).bytesRead !== size) {
       throw new Error("Unable to read header")
     }
   } finally {

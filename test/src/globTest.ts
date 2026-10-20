@@ -129,7 +129,7 @@ test.skip("outside link", ({ expect }) =>
     },
     error => {
       expect(error).toBeInstanceOf(Error)
-      expect(error.message).toContain("outside the package to a system or unsafe path")
+      expect(error.message).toContain("outside the package: electron-builder only packages files whose real path is inside the workspace root")
     }
   ))
 test.ifNotWindows("symlinks everywhere with static framework", ({ expect }) =>
@@ -139,7 +139,7 @@ test.ifNotWindows("symlinks everywhere with static framework", ({ expect }) =>
     {
       targets: linuxDirTarget,
       config: {
-        files: ["!hello-world"],
+        fileOptions: { files: ["!hello-world"] },
       },
     },
     {
@@ -171,6 +171,7 @@ test.ifNotWindows("failed peer dep", ({ expect }) => {
       targets: linuxDirTarget,
     },
     {
+      storeDepsLockfileSnapshot: true,
       packageManager: PM.YARN,
       projectDirCreated: async projectDir => {
         return Promise.all([
@@ -200,7 +201,7 @@ test.ifNotWindows("ignore node_modules", ({ expect }) => {
       targets: linuxDirTarget,
       config: {
         asar: false,
-        files: ["!node_modules/**/*"],
+        fileOptions: { files: ["!node_modules/**/*"] },
       },
     },
     {

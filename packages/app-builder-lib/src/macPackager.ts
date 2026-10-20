@@ -35,6 +35,7 @@ import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackag
 import { ArchiveTarget } from "./targets/ArchiveTarget.js"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/mac/pkg.js"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory.js"
+import { isPlainObject, replaceMergedExcludedExts } from "./util/config/fileOptions.js"
 import { isMacOsHighSierra } from "./util/mac/macosVersion.js"
 import { buildSingleArchFilesPattern, collectIdenticalSingleArchMachOFiles, collectSingleArchPackageNames } from "./util/archCompatibility.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
@@ -46,6 +47,17 @@ export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacP
 
 function isElectronSignOptions(sign: MacConfiguration["sign"]): sign is ElectronSignOptions {
   return typeof sign === "object" && sign !== null
+}
+
+/**
+ * Merges the mac → mas (→ masDev) cascade. `deepAssign` merges a later layer into a nested object it took from an earlier one, so each
+ * layer's `fileOptions` is copied first: merging the mas configuration must not change the `fileOptions` of the mac one. A later layer's
+ * `fileOptions.excludedExts` replaces an earlier one (see replaceMergedExcludedExts).
+ */
+function mergeMasConfig(...layers: Array<MacConfiguration | MasConfiguration | Nullish>): MasConfiguration {
+  const config: MasConfiguration = deepAssign({}, ...layers.map(it => (it != null && isPlainObject(it.fileOptions) ? { ...it, fileOptions: { ...it.fileOptions } } : it)))
+  replaceMergedExcludedExts(config, layers)
+  return config
 }
 
 interface PlatformConfig<C extends MacConfiguration | MasConfiguration = MacConfiguration | MasConfiguration> {
@@ -112,14 +124,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     switch (platformType) {
       case "mas":
-        config = deepAssign({}, this.platformSpecificBuildOptions, this.config.mas)
+        config = mergeMasConfig(this.platformSpecificBuildOptions, this.config.mas)
         platformName = "mas"
         break
 
       case "mas-dev":
         // `mas-dev` cascades mac → mas → masDev. The development/distribution distinction is no longer
         // carried as a config field; it is derived from `platformType` wherever signing happens.
-        config = deepAssign({}, this.platformSpecificBuildOptions, this.config.mas, this.config.masDev)
+        config = mergeMasConfig(this.platformSpecificBuildOptions, this.config.mas, this.config.masDev)
         platformName = "mas"
         break
 
@@ -405,6 +417,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
       }
 
+      // test-only early exit (see PackagerOptions.afterPackTestHook); a no-op unless the option is set
+      if (await this.info.shouldSkipTargetsAfterPack(packContext)) {
+        continue
+      }
+
       // A development-signed build (mas-dev, or an explicit sign.type "development" — see
       // MacTargetHelper.shouldCreateMasInstaller) produces no installer
       const masSignConfig = platformConfig.config.sign
@@ -429,6 +446,20 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         platformSpecificBuildOptions: platformConfig.config,
         targets,
       })
+    }
+
+    // test-only early exit (see PackagerOptions.afterPackTestHook); a no-op unless the option is set
+    if (
+      await this.info.shouldSkipTargetsAfterPack({
+        appOutDir: path.dirname(appPath),
+        outDir,
+        arch,
+        targets,
+        packager: this,
+        electronPlatformName: this.platform.nodeName,
+      })
+    ) {
+      return
     }
 
     this.packageInDistributableFormat(appPath, arch, targets, taskManager)
@@ -486,8 +517,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
     }
 
-    const signOptions = await this.helper.buildSignOptions(appPath, identity, signOpts, keychainFile, arch, targetPlatform)
+    const signOptions = await this.helper.buildSignOptions(appPath, identity, signOpts, keychainFile, arch, targetPlatform, hasCustomSign)
     await this.doSign(signOptions, config, identity)
+
+    // now that everything is signed, flag binaries that still carry a foreign (or missing) signature and would
+    // fail library validation at launch — the case the old blanket entitlements default used to mask
+    if (!hasCustomSign) {
+      await this.helper.warnAboutForeignSignedBinaries(appPath, identity, targetPlatform, signOpts)
+    }
 
     // Handle notarization for non-MAS builds
     if (!isMas) {
@@ -517,7 +554,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       customSign ? "executing custom sign" : "signing"
     )
 
-    return customSign ? Promise.resolve(customSign(opts, this)) : sign({ ...opts, identity: identity ? identity.name : undefined })
+    // `opts.identity` is resolved once, in MacTargetHelper.resolveSignIdentity — never re-derive it here, or a
+    // custom signer and @electron/osx-sign end up signing with different forms of the same certificate
+    return customSign ? Promise.resolve(customSign(opts, this)) : sign(opts)
   }
 
   //noinspection JSMethodCanBeStatic

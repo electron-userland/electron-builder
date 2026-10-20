@@ -78,6 +78,8 @@ const sidebars: SidebarsConfig = {
     { type: "doc", id: "features/hooks", label: "Hooks" },
     { type: "doc", id: "features/icons-and-images", label: "Icons & Images" },
     { type: "doc", id: "features/auto-update", label: "Auto Update" },
+    { type: "doc", id: "features/signed-update-manifests", label: "Signed Update Manifests" },
+    { type: "doc", id: "features/key-rotation", label: "Key Rotation" },
     { type: "doc", id: "features/security", label: "Security & Hardening" },
     {
       type: "category",
@@ -103,6 +105,7 @@ const sidebars: SidebarsConfig = {
   tutorialsSidebar: [
     { type: "doc", id: "tutorials/adding-electron-fuses", label: "Adding Electron Fuses" },
     { type: "doc", id: "tutorials/code-signing-windows-apps-on-unix", label: "Code Signing Windows Apps on Unix" },
+    { type: "doc", id: "tutorials/flatpak-in-ci-and-containers", label: "Flatpak in CI and Containers" },
     { type: "doc", id: "tutorials/loading-app-dependencies-manually", label: "Loading App Dependencies Manually" },
     { type: "doc", id: "tutorials/macos-kernel-extensions", label: "macOS Kernel Extensions" },
     { type: "doc", id: "tutorials/offline-air-gapped-builds", label: "Offline / Air-Gapped Builds" },

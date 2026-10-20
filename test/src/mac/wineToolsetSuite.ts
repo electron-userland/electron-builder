@@ -6,7 +6,9 @@ import * as path from "path"
 export function registerWineToolsetTests(toolsets: ToolsetConfig): void {
   const { wine } = toolsets
 
+  // oxlint-disable-next-line typescript/no-base-to-string -- test title only; callers pass version strings, never a custom toolset object
   describe.ifEnv(process.platform !== "win32")(`getWineToolset [wine=${wine}]`, () => {
+    // oxlint-disable-next-line typescript/no-base-to-string -- test title only; callers pass version strings, never a custom toolset object
     test(`getWineToolset resolves path [wine=${wine}]`, async ({ expect }) => {
       const result = await getWineToolset(wine, "")
       expect(result.execPath).toBeTruthy()
@@ -14,7 +16,7 @@ export function registerWineToolsetTests(toolsets: ToolsetConfig): void {
         // Linux ships no portable bundle for string/null configs — falls back to the host wine binary.
         expect(result.execPath).toBe("wine")
       } else {
-        // macOS downloads a bundle (legacy 4.0.1 for null/0.0.0, or wine@1.0.1) → absolute path.
+        // macOS downloads a bundle for the explicit versions (legacy 4.0.1 for 0.0.0, or wine@1.0.1) → absolute path.
         expect(path.isAbsolute(result.execPath)).toBe(true)
         expect(await exists(result.execPath)).toBe(true)
       }
@@ -23,6 +25,7 @@ export function registerWineToolsetTests(toolsets: ToolsetConfig): void {
     // Bundle env vars (WINEPREFIX / DYLD_FALLBACK_LIBRARY_PATH) are only set on the macOS bundle path;
     // the Linux host-wine fallback returns just the default env.
     if (process.platform !== "linux") {
+      // oxlint-disable-next-line typescript/no-base-to-string -- test title only; callers pass version strings, never a custom toolset object
       test(`wine=${wine} bundle sets env vars`, async ({ expect }) => {
         const result = await getWineToolset(wine, "")
         const env = result.env

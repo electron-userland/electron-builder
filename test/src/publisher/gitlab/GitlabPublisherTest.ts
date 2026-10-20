@@ -1,4 +1,4 @@
-import { CancellationToken, GitlabOptions } from "builder-util-runtime"
+import { CancellationToken } from "builder-util-runtime"
 import { GitlabPublisher, PublishContext } from "electron-publish"
 import { beforeEach, describe, test, vi } from "vitest"
 import { GitlabTestFixtures } from "./GitlabTestFixtures.js"
@@ -40,7 +40,7 @@ describe("GitLab Publisher - Unit Tests", () => {
               {
                 provider: "gitlab",
                 projectId: GitlabTestFixtures.PROJECTS.valid,
-              } as GitlabOptions,
+              },
               GitlabTestFixtures.VERSIONS.valid
             )
           }).toThrow(GitlabTestFixtures.ERROR_PATTERNS.missingToken)

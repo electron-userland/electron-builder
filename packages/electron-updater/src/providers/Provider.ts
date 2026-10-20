@@ -68,6 +68,16 @@ export abstract class Provider<T extends UpdateInfo> {
     return null
   }
 
+  /**
+   * Base URL of the update feed: the credential-bearing request headers (the ones stripped on a cross-origin redirect) are only sent to
+   * download URLs on its origin. `null` sends the request headers to every download URL.
+   * The default, `undefined`, means not declared: a download with credential headers (from `requestHeaders` / `addAuthHeader`) then fails
+   * with `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`, so a custom provider used with credentials must override this getter.
+   */
+  get feedBaseUrl(): URL | null | undefined {
+    return undefined
+  }
+
   setRequestHeaders(value: OutgoingHttpHeaders | null): void {
     this.requestHeaders = value
   }
@@ -153,6 +163,12 @@ export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
   }
 }
 
+// An absolute blockMapUrl (e.g. a separately pre-signed URL) is used as-is: a provider's path transformer (such as GitHub's release
+// download path) only applies to a relative one, which resolves against the feed like `url`.
+function resolveBlockMapUrl(blockMapUrl: string, baseUrl: URL, pathTransformer: (p: string) => string): URL {
+  return newUrlFromBase(/^[a-z][a-z\d+.-]*:/i.test(blockMapUrl) ? blockMapUrl : pathTransformer(blockMapUrl), baseUrl)
+}
+
 export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransformer: (p: string) => string = (p: string): string => p): Array<ResolvedUpdateFileInfo> {
   const files = getFileList(updateInfo)
   const result: Array<ResolvedUpdateFileInfo> = files.map(fileInfo => {
@@ -162,6 +178,7 @@ export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransform
     return {
       url: newUrlFromBase(pathTransformer(fileInfo.url), baseUrl),
       info: fileInfo,
+      ...(fileInfo.blockMapUrl == null ? {} : { blockMapUrl: resolveBlockMapUrl(fileInfo.blockMapUrl, baseUrl, pathTransformer) }),
     }
   })
 
