@@ -35,6 +35,8 @@ permissions:
 
 env:
   TEST_IMAGE_NODE_MAJOR_VERSION: 22
+  # Pinned: the shared mutable electronuserland/builder:22-wine-mono tag drifted when master added flatpak in #10334 (22-wine-mono-05.26).
+  TEST_RUNNER_IMAGE_PINNED: electronuserland/builder@sha256:3349c5f878e55704ec85f44f7ee680fce1cf8d360e05e70807c06a1160239b0c
 
 jobs:
   check-if-docker-build:
@@ -185,7 +187,8 @@ jobs:
           pnpm test-linux
         env:
           ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_EXPECTED_SHARD_COUNT=${{ strategy.job-total }} -e VITEST_SMART_CACHE_SOURCE=${{ needs.validate-and-shard.outputs.smart-cache-source }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
-          TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
+          # the image built and loaded in this run when docker/ changed, else the pinned release image
+          TEST_RUNNER_IMAGE_TAG: ${{ needs.run-docker-build.result == 'success' && format('electronuserland/builder:{0}-wine-mono', env.TEST_IMAGE_NODE_MAJOR_VERSION) || env.TEST_RUNNER_IMAGE_PINNED }}
 
       - name: Upload smart cache artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -361,7 +364,8 @@ jobs:
           pnpm test-linux
         env:
           TEST_FILES: nsisUpdaterTest,PublishManagerTest,differentialUpdateTest,GitlabPublisherTest,GitlabPublisher.integration.test
-          TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
+          # the image built and loaded in this run when docker/ changed, else the pinned release image
+          TEST_RUNNER_IMAGE_TAG: ${{ needs.run-docker-build.result == 'success' && format('electronuserland/builder:{0}-wine-mono', env.TEST_IMAGE_NODE_MAJOR_VERSION) || env.TEST_RUNNER_IMAGE_PINNED }}
           ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }}"
 
       - name: Upload smart cache artifact
