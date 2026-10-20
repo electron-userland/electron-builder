@@ -63,7 +63,7 @@ jobs:
       always() &&
       (needs.check-if-docker-build.outputs.force-docker-build == 'true' ||
       inputs.rebuild-docker-images == 'true' || inputs.rebuild-docker-images == true)
-    uses: ./.github/workflows/docker-build.yml
+    uses: $/.github/workflows/docker-build.yml
 
   # -------------------------
   # Linting + Shard Planning (unified job outputting map for all platforms)
@@ -82,7 +82,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-key: v-39.8.10-linux-electron
           cache-path: ~/.cache/electron
@@ -152,10 +152,10 @@ jobs:
           persist-credentials: false
 
       - name: Cleanup runner
-        uses: ./.github/actions/cleanup-runner
+        uses: $/.github/actions/cleanup-runner
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-path: ${{ matrix.cache-path }}
           cache-key: ${{ matrix.cache-key }}
@@ -192,7 +192,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: ${{ matrix.platform }}-${{ matrix.shard }}
 
@@ -216,7 +216,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-key: ${{ matrix.cache-key }}
           cache-path: ${{ matrix.cache-path }}
@@ -241,7 +241,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: ${{ matrix.platform }}-${{ matrix.shard }}
 
@@ -265,7 +265,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-path: ${{ matrix.cache-path }}
           cache-key: ${{ matrix.cache-key }}
@@ -290,7 +290,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: ${{ matrix.platform }}-${{ matrix.shard }}
 
@@ -314,10 +314,10 @@ jobs:
           persist-credentials: false
 
       - name: Cleanup runner
-        uses: ./.github/actions/cleanup-runner
+        uses: $/.github/actions/cleanup-runner
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
           cache-key: v-39.8.10-update-electron
@@ -377,7 +377,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: updater
 
@@ -395,7 +395,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
           cache-key: v-39.8.10-native-electron
@@ -442,7 +442,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: snap-${{ matrix.core }}
 
@@ -473,7 +473,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
           cache-key: v-39.8.10-native-electron
@@ -544,7 +544,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: flatpak-${{ matrix.runner }}
 
@@ -587,7 +587,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
           cache-key: v-39.8.10-linux-e2e-electron
@@ -608,7 +608,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: e2e-${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || matrix.test_config.stem }}
 
@@ -626,7 +626,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/pnpm
+      - uses: $/.github/actions/pnpm
 
       - name: Download all smart cache artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1

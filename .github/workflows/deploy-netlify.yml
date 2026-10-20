@@ -32,7 +32,7 @@ jobs:
           persist-credentials: false
 
       - name: Install deps and audit
-        uses: ./.github/actions/pnpm
+        uses: $/.github/actions/pnpm
 
       - name: Build composed multi-version docusaurus site
         # One self-contained docker build: the container builds the current

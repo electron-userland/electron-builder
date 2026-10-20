@@ -20,7 +20,7 @@ runs:
   using: 'composite'
   steps:
     - name: Setup PNPM and install dependencies
-      uses: ./.github/actions/pnpm
+      uses: $/.github/actions/pnpm
 
     - name: Compile
       run: pnpm compile
@@ -101,7 +101,7 @@ runs:
 
 ## Usage
 # - name: Setup Tests
-#   uses: ./.github/actions/pretest
+#   uses: $/.github/actions/pretest
 #   with:
 #     cache-path: ~/Library/Caches/electron
 #     cache-key: v-39.8.10-macos-electron
