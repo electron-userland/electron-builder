@@ -1,3 +1,5 @@
+import type { MakerBase, MakerOptions } from "@electron-forge/maker-base"
+import type { ForgeConfig, ForgePlatform as ForgeOwnPlatform } from "@electron-forge/shared-types"
 import * as path from "path"
 import type { Configuration } from "./configuration.js"
 import { build } from "./index.js"
@@ -174,3 +176,31 @@ export function withLegacyForgeCall<T extends ForgeMakerClass>(MakerClass: T): T
     },
   })
 }
+
+// Compile-time check against the Electron Forge devDependencies (type-only, stripped from the published declarations):
+// a renovate bump of @electron-forge/* fails `pnpm compile` if Forge's maker contract drifts from ours.
+type Expect<T extends true> = T
+type IsAssignable<From, To> = [From] extends [To] ? true : false
+/** The MakerBase members Forge's `make` uses (packages/api/core/src/api/make.ts). */
+type ForgeUsedMakerMembers =
+  | "name"
+  | "defaultPlatforms"
+  | "requiredExternalBinaries"
+  | "__isElectronForgeMaker"
+  | "platforms"
+  | "prepareConfig"
+  | "isSupportedOnCurrentPlatform"
+  | "externalBinariesExist"
+  | "ensureExternalBinariesExist"
+  | "make"
+type ForgeUsedMaker = Pick<MakerBase<object>, ForgeUsedMakerMembers>
+
+/** @internal */
+export type ForgeMakerCompatibility = [
+  Expect<IsAssignable<ElectronBuilderForgeMaker, ForgeUsedMaker>>,
+  Expect<IsAssignable<ReturnType<ElectronBuilderForgeMaker["clone"]>, ForgeUsedMaker>>,
+  Expect<IsAssignable<ElectronBuilderForgeMaker, NonNullable<ForgeConfig["makers"]>[number]>>,
+  Expect<IsAssignable<MakerOptions, ForgeMakerOptions>>,
+  Expect<IsAssignable<ForgePlatform, ForgeOwnPlatform>>,
+  Expect<IsAssignable<ForgeOwnPlatform, ForgePlatform>>,
+]
