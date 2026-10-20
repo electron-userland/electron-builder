@@ -2,8 +2,8 @@ import { BlockMapDataHolder, createHttpError, DigestTransform, HttpExecutor, con
 import { BlockMap } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import { createWriteStream } from "fs"
-import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { ProgressInfo, CancellationToken } from "builder-util-runtime"
+import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
+import { ProgressInfo, CancellationError, CancellationToken } from "builder-util-runtime"
 import { Logger } from "../types.js"
 import { copyData } from "./DataSplitter.js"
 import { URL } from "url"
@@ -25,10 +25,33 @@ export interface DifferentialDownloaderOptions {
   onProgress?: (progress: ProgressInfo) => void
 }
 
+/**
+ * A differential download that failed because the user cancelled it must surface as a cancellation, not fall back to a
+ * full download: rethrows a {@link CancellationError}, or throws one when the token was cancelled and the failure is a
+ * side effect of that (e.g. an aborted request). Returns normally for any other failure.
+ * @internal
+ */
+export function throwIfCancelled(error: unknown, cancellationToken: CancellationToken): void {
+  if (error instanceof CancellationError) {
+    throw error
+  }
+  if (cancellationToken.cancelled) {
+    throw new CancellationError()
+  }
+}
+
+// the part of a Node.js or Electron `ClientRequest` used to abort it on cancellation
+interface AbortableRequest {
+  abort(): void
+}
+
 export abstract class DifferentialDownloader {
   fileMetadataBuffer: Buffer | null = null
 
   readonly logger: Logger
+
+  // range requests that have not closed yet, aborted when the download is cancelled
+  private readonly requestsInFlight = new Set<AbortableRequest>()
 
   // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
   constructor(
@@ -50,6 +73,35 @@ export abstract class DifferentialDownloader {
     // user-agent, cache-control and other common options
     configureRequestOptions(result)
     return result
+  }
+
+  /**
+   * Creates a request for a part of the new file, tracked so that a cancellation aborts it even when no data flows.
+   * @internal
+   */
+  createRangeRequest(requestOptions: RequestOptions, callback: (response: IncomingMessage) => void): any {
+    const request = this.httpExecutor.createRequest(requestOptions, callback)
+    this.requestsInFlight.add(request)
+    request.on("close", () => {
+      this.requestsInFlight.delete(request)
+    })
+    return request
+  }
+
+  private abortRequestsInFlight(): void {
+    const requests = Array.from(this.requestsInFlight)
+    this.requestsInFlight.clear()
+    for (const request of requests) {
+      try {
+        request.abort()
+      } catch (e: unknown) {
+        try {
+          this.logger.warn(`Cannot abort request: ${e}`)
+        } catch (_ignored) {
+          // runs inside CancellationToken.cancel(): a throwing logger must not escape to its caller
+        }
+      }
+    }
   }
 
   protected doDownload(oldBlockMap: BlockMap, newBlockMap: BlockMap): Promise<any> {
@@ -121,12 +173,20 @@ export abstract class DifferentialDownloader {
   }
 
   private async doDownloadFile(tasks: Array<Operation>, fdList: Array<OpenedFile>): Promise<any> {
+    const cancellationToken = this.options.cancellationToken
+    if (cancellationToken.cancelled) {
+      throw new CancellationError()
+    }
     const oldFileFd = await fsExtra.open(this.options.oldFile, "r")
     fdList.push({ descriptor: oldFileFd, path: this.options.oldFile })
     const newFileFd = await fsExtra.open(this.options.newFile, "w")
     fdList.push({ descriptor: newFileFd, path: this.options.newFile })
     const fileOut = createWriteStream(this.options.newFile, { fd: newFileFd })
-    await new Promise((resolve, reject) => {
+    // A cancellation is otherwise only noticed by the progress transform when data flows, so a stalled range request would
+    // never settle: createPromise rejects with a CancellationError on cancel (and unsubscribes once settled), and the
+    // requests in flight are aborted. `downloadFile` closes the files either way.
+    await cancellationToken.createPromise<void>((resolve, reject, onCancel) => {
+      onCancel(() => this.abortRequestsInFlight())
       const streams: Array<any> = []
 
       // Create our download info transformer if we have one
@@ -168,7 +228,7 @@ export abstract class DifferentialDownloader {
             return
           }
 
-          resolve(undefined)
+          resolve()
         })
       })
 
@@ -201,6 +261,11 @@ export abstract class DifferentialDownloader {
       ;(requestOptions as any).redirect = "manual"
 
       w = (index: number): void => {
+        // the next part may be scheduled (copy, throttling timer) after a cancel already settled the download
+        if (cancellationToken.cancelled) {
+          reject(new CancellationError())
+          return
+        }
         if (index >= tasks.length) {
           if (this.fileMetadataBuffer != null) {
             firstStream.write(this.fileMetadataBuffer)
@@ -230,13 +295,13 @@ export abstract class DifferentialDownloader {
           downloadInfoTransform.beginRangeDownload()
         }
 
-        const request = this.httpExecutor.createRequest(requestOptions, response => {
+        const request = this.createRangeRequest(requestOptions, response => {
           response.on("error", reject)
           response.on("aborted", () => {
             reject(new Error("response has been aborted by the server"))
           })
           // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
-          if (response.statusCode >= 400) {
+          if (response.statusCode != null && response.statusCode >= 400) {
             reject(createHttpError(response))
           }
 
@@ -288,8 +353,9 @@ export abstract class DifferentialDownloader {
   }
 
   private request(requestOptions: RequestOptions, dataHandler: (chunk: Buffer) => void): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const request = this.httpExecutor.createRequest(requestOptions, response => {
+    return this.options.cancellationToken.createPromise<void>((resolve, reject, onCancel) => {
+      onCancel(() => this.abortRequestsInFlight())
+      const request = this.createRangeRequest(requestOptions, response => {
         if (!checkIsRangesSupported(response, reject)) {
           return
         }

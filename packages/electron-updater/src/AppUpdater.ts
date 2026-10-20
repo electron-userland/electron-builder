@@ -39,7 +39,7 @@ import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
-import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
+import { DifferentialDownloaderOptions, throwIfCancelled } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
 import {
   AutoInstallEvent,
@@ -334,6 +334,25 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   protected limitedLogger(key: string, max = 1): LimitedLogger<Logger> {
     return this.logLimiter.wrap(() => this._logger, { key, max })
+  }
+
+  /**
+   * Emits `download-progress`. It runs inside download streams and response handlers, where an exception from an app's
+   * listener would escape as an uncaught exception or break the download, so a throwing listener is logged and ignored.
+   * @internal
+   */
+  protected emitDownloadProgress(info: ProgressInfo): void {
+    try {
+      this.emit(DOWNLOAD_PROGRESS, info)
+    } catch (e: unknown) {
+      try {
+        this.limitedLogger("download-progress-listener-error").error(
+          `A "${DOWNLOAD_PROGRESS}" listener threw, the download continues (further errors from it are not logged): ${e instanceof Error ? (e.stack ?? e.message) : String(e)}`
+        )
+      } catch (_ignored) {
+        // a throwing logger must not break the download either
+      }
+    }
   }
 
   // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
@@ -1062,7 +1081,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-      downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+      downloadOptions.onProgress = it => this.emitDownloadProgress(it)
     }
 
     const updateInfo = taskOptions.downloadUpdateOptions.updateInfoAndProvider.info
@@ -1246,7 +1265,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       }
 
       if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-        downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+        downloadOptions.onProgress = it => this.emitDownloadProgress(it)
       }
 
       const saveBlockMapToCacheDir = async (blockMapData: BlockMap, cacheDir: string) => {
@@ -1289,6 +1308,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
       return false
     } catch (e: any) {
+      // a user cancellation is not a differential failure: no fallback to a full download
+      throwIfCancelled(e, downloadUpdateOptions.cancellationToken)
       if (e.code === "ERR_CHECKSUM_MISMATCH") {
         this._logger.warn(
           `sha512 checksum mismatch after differential download (old blockmap ${

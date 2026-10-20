@@ -1,3 +1,4 @@
+import { CancellationToken } from "builder-util-runtime"
 import { DataSplitter, PartListDataTask } from "electron-updater/src/differentialDownloader/DataSplitter"
 import { Operation, OperationKind } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
 import { executeTasksUsingMultipleRangeRequests } from "electron-updater/src/differentialDownloader/multipleRangeDownloader"
@@ -205,8 +206,9 @@ describe("differential multipart download", () => {
 
       const differentialDownloader: any = {
         fileMetadataBuffer: null,
-        options: { onProgress: undefined },
+        options: { onProgress: undefined, cancellationToken: new CancellationToken() },
         createRequestOptions: (): RequestOptions => ({ hostname: "127.0.0.1", port, path: "/new.bin", method: "GET", headers: {} }),
+        createRangeRequest: (options: RequestOptions, callback: (response: IncomingMessage) => void) => httpRequest(options, callback),
         httpExecutor: {
           createRequest: (options: RequestOptions, callback: (response: IncomingMessage) => void) => httpRequest(options, callback),
           addErrorAndTimeoutHandlers: (request: any, reject: (error: Error) => void) => request.on("error", reject),

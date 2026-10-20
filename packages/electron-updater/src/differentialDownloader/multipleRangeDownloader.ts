@@ -1,4 +1,4 @@
-import { createHttpError, safeGetHeader } from "builder-util-runtime"
+import { CancellationError, createHttpError, safeGetHeader } from "builder-util-runtime"
 import { IncomingMessage } from "http"
 import { Writable } from "stream"
 import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter.js"
@@ -13,6 +13,11 @@ export function executeTasksUsingMultipleRangeRequests(
   reject: (error: Error) => void
 ): (taskOffset: number) => void {
   const w = (taskOffset: number): void => {
+    // the next batch may start after a cancel already settled the download
+    if (differentialDownloader.options.cancellationToken.cancelled) {
+      reject(new CancellationError())
+      return
+    }
     if (taskOffset >= tasks.length) {
       if (differentialDownloader.fileMetadataBuffer != null) {
         out.write(differentialDownloader.fileMetadataBuffer)
@@ -58,6 +63,10 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
   if (partCount <= 1) {
     // the only remote range - copy
     const w = (index: number): void => {
+      if (differentialDownloader.options.cancellationToken.cancelled) {
+        reject(new CancellationError())
+        return
+      }
       if (index >= options.end) {
         resolve()
         return
@@ -70,7 +79,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       } else {
         const requestOptions = differentialDownloader.createRequestOptions()
         requestOptions.headers!.Range = `bytes=${task.start}-${task.end - 1}`
-        const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
+        const request = differentialDownloader.createRangeRequest(requestOptions, response => {
           response.on("error", reject)
 
           if (!checkIsRangesSupported(response, reject)) {
@@ -93,7 +102,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
 
   const requestOptions = differentialDownloader.createRequestOptions()
   requestOptions.headers!.Range = ranges.substring(0, ranges.length - 2)
-  const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
+  const request = differentialDownloader.createRangeRequest(requestOptions, response => {
     response.on("error", reject)
 
     if (!checkIsRangesSupported(response, reject)) {
