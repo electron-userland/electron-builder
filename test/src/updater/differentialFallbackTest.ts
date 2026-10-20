@@ -65,6 +65,7 @@ const NEW_VERSION = "1.1.0"
 const INSTALLER = `/TestApp-Setup-${NEW_VERSION}.exe`
 const NEW_BLOCKMAP_PATH = `${INSTALLER}.blockmap`
 const OLD_BLOCKMAP_PATH = `/TestApp-Setup-${OLD_VERSION}.exe.blockmap`
+const UPDATE_INFO_PATHS = new Set(["/latest.yml", "/latest-mac.yml", "/latest-linux.yml"])
 
 type Req = { path: string; range: string | null }
 // returns true when it handled the request
@@ -111,7 +112,8 @@ describe("every differential download failure falls back to a verified full down
       if (override(req, res, ranges) === true) {
         return
       }
-      if (pathname === "/latest.yml" || pathname === "/latest-linux.yml") {
+      // the provider asks for the channel file of the host platform (latest.yml, latest-mac.yml or latest-linux.yml)
+      if (UPDATE_INFO_PATHS.has(pathname)) {
         res.end(serializeToYaml({ version: NEW_VERSION, files: [{ url: INSTALLER.slice(1), sha512: sha512(NEW), size: NEW.length }], releaseDate: "2024-01-01T00:00:00.000Z" }))
       } else if (pathname === NEW_BLOCKMAP_PATH) {
         res.end(NEW_BLOCKMAP)
