@@ -10,7 +10,15 @@ electron-builder ships four [Electron Forge](https://www.electronforge.io/) make
 
 ## How it works
 
-Each maker is a thin wrapper around `buildForge()` from `app-builder-lib`. When Electron Forge calls `make`, the maker delegates to electron-builder's full packaging pipeline for that target, then returns the paths to the produced artifacts. All electron-builder configuration options for the target are available via the maker's `config` key.
+Each maker is an Electron Forge maker class (compatible with Forge 6 and later's `MakerBase`) built on `ElectronBuilderForgeMaker` from `app-builder-lib`. When Electron Forge calls `make`, the maker runs electron-builder for that target on the app Forge packaged (`prepackaged`), writes the artifacts to Forge's `make` directory, and returns their paths. The maker's `config` is the options object for that target (for example `nsis` or `appImage`); everything else comes from your electron-builder configuration (`package.json` `build` field or `electron-builder.yml`) as usual. The executable name is taken from Forge (`packagerConfig.executableName`, else the app name) so it matches the packaged binary.
+
+A maker can be added as an instance, as in the examples below, or by package name:
+
+```js title="forge.config.js"
+module.exports = {
+  makers: [{ name: "electron-forge-maker-nsis", config: { oneClick: false } }],
+}
+```
 
 ## Available makers
 
@@ -104,9 +112,9 @@ const { MakerSnap } = require("electron-forge-maker-snap")
 module.exports = {
   makers: [
     new MakerSnap({
-      // SnapOptions — see /docs/snap for the full reference
-      confinement: "strict",
-      grade: "stable",
+      // SnapcraftOptions — see /docs/snap for the full reference
+      base: "core24",
+      core24: { confinement: "strict", grade: "stable" },
     }),
   ],
 }

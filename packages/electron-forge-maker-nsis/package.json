@@ -3,8 +3,10 @@
   "version": "27.0.0-alpha.11",
   "type": "module",
   "main": "main.js",
+  "types": "main.d.ts",
   "exports": {
     ".": {
+      "types": "./main.d.ts",
       "import": "./main.js",
       "require": "./main.js"
     }
@@ -22,7 +24,8 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
-    "*.js"
+    "*.js",
+    "*.d.ts"
   ],
   "dependencies": {
     "app-builder-lib": "workspace:*"
