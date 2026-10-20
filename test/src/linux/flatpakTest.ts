@@ -5,7 +5,7 @@ import { Arch, Platform } from "electron-builder"
 import { existsSync } from "fs"
 import { readFile } from "fs/promises"
 import * as path from "path"
-import { downloadArtifact } from "@electron/get"
+import { downloadElectronArtifactZip } from "app-builder-lib/src/util/electronGet"
 import { TmpDir } from "temp-file"
 import { vi } from "vitest"
 import type { ExpectStatic } from "vitest"
@@ -267,7 +267,7 @@ describe.heavy.ifNotWindows("flatpak", { concurrent: false, timeout: EXTENDED_TI
       expect,
       {
         electronVersion: "37.0.0",
-        electronDist: ({ platformName, arch }) => downloadArtifact({ artifactName: "electron", platform: platformName, arch, version: ELECTRON_VERSION }),
+        electronDist: ({ platformName, arch }) => downloadElectronArtifactZip({ artifactName: "electron", platformName, arch, version: ELECTRON_VERSION }),
         flatpak: { useWaylandFlags: true },
       },
       Platform.LINUX.createTarget("flatpak", Arch.x64, Arch.arm64)
