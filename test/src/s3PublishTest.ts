@@ -13,7 +13,7 @@ vi.mock("electron-publish/src/s3/awsCredentials", async importOriginal => ({
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import * as https from "https"
-import { Arch } from "builder-util"
+import { Arch, InvalidConfigurationError } from "builder-util"
 import { CancellationToken, S3Options, SpacesOptions } from "builder-util-runtime"
 import { PublishContext, UploadTask } from "electron-publish"
 import { resolveS3Credentials } from "electron-publish/src/s3/awsCredentials"
@@ -286,6 +286,14 @@ describe("BaseS3Publisher.upload — key construction and S3 request", { concurr
     expect(capturedOpts()?.hostname).toBe("minio.example.com")
   })
 
+  it("splits the port from a custom endpoint hostname", async () => {
+    const { capturedOpts } = mockSuccessfulUpload()
+    await makeS3Publisher({ endpoint: "https://minio.local:9000" }).upload(makeTask(testFile))
+    expect(capturedOpts()?.hostname).toBe("minio.local")
+    expect(capturedOpts()?.port).toBe(9000)
+    expect(capturedOpts()?.headers?.Host).toBe("minio.local:9000")
+  })
+
   it("preserves IPv6 custom endpoint hosts and ports", async () => {
     const { capturedOpts } = mockSuccessfulUpload()
     const publisher = makeS3Publisher({ endpoint: "https://[::1]:9000" })
@@ -295,8 +303,23 @@ describe("BaseS3Publisher.upload — key construction and S3 request", { concurr
     expect(capturedOpts()?.headers?.Host).toBe("[::1]:9000")
   })
 
-  it("rejects custom endpoint protocols other than HTTP and HTTPS", async ({ expect }) => {
-    await expect(makeS3Publisher({ endpoint: "ftp://minio.example.com" }).upload(makeTask(testFile))).rejects.toThrow("Unsupported S3 endpoint protocol: ftp:")
+  // "localhost:9000" (no scheme) parses with protocol "localhost:" and an empty host
+  it.each(["ftp://minio.example.com", "localhost:9000"])("rejects non-HTTP(S) custom endpoint %s as a configuration error", async endpoint => {
+    const error = await makeS3Publisher({ endpoint })
+      .upload(makeTask(testFile))
+      .catch(e => e)
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain(`Unsupported S3 endpoint protocol "${new URL(endpoint).protocol}" in "${endpoint}"`)
+    expect(vi.mocked(https.request)).not.toHaveBeenCalled()
+  })
+
+  // "minio.local" (no scheme, no colon) cannot be parsed as a URL at all
+  it("rejects an unparseable custom endpoint as a configuration error", async () => {
+    const error = await makeS3Publisher({ endpoint: "minio.local" })
+      .upload(makeTask(testFile))
+      .catch(e => e)
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain(`Invalid S3 endpoint "minio.local"`)
     expect(vi.mocked(https.request)).not.toHaveBeenCalled()
   })
 
@@ -425,14 +448,35 @@ describe("BaseS3Publisher.upload — key construction and S3 request", { concurr
       setImmediate(() => {
         const res = new EventEmitter() as any
         res.statusCode = 200
+        // Connection dropped before the message completed: "close" without "end"
+        res.complete = false
         res.resume = vi.fn()
         ;(callback as (response: unknown) => void)(res)
-        setImmediate(() => res.emit("aborted"))
+        setImmediate(() => res.emit("close"))
       })
       return req
     })
 
-    await expect(makeS3Publisher().upload(makeTask(testFile))).rejects.toThrow("response aborted")
+    await expect(makeS3Publisher().upload(makeTask(testFile))).rejects.toThrow("S3 PutObject response aborted (HTTP 200)")
+  })
+
+  it("destroys the request when the source file cannot be read", async () => {
+    const destroy = vi.fn()
+    vi.mocked(https.request).mockImplementationOnce((_opts: unknown, _cb: unknown) => {
+      const req = new EventEmitter() as ReturnType<typeof https.request>
+      ;(req as any).end = vi.fn()
+      ;(req as any).destroy = destroy
+      ;(req as any).write = vi.fn()
+      // Never call the response callback — only the file stream error can settle the upload
+      return req
+    })
+
+    // A directory passes the statSync size check, then fails once the stream reads it
+    const error = await makeS3Publisher()
+      .upload(makeTask(tmpDir))
+      .catch(e => e)
+    expect(error).toBeInstanceOf(Error)
+    expect(destroy).toHaveBeenCalledWith(error)
   })
 })
 
