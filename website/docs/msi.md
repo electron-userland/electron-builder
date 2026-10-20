@@ -59,6 +59,12 @@ msi:
 
 For enterprise deployment via Group Policy, `perMachine: true` is typically required.
 
+:::warning[Deploying with Intune, Configuration Manager or another MDM]
+With the default `perMachine: false`, the MSI sets `ALLUSERS=2` and `MSIINSTALLPERUSER=1`, which Windows Installer treats as a per-user installation. Management tools that install in the device (SYSTEM) context therefore install the app into the SYSTEM account's own profile, where no signed-in user can find it. Set `perMachine: true` for those deployments, so the app installs into Program Files for every user.
+
+`runAfterFinish` only launches the app when the installer shows UI. A silent install (`msiexec /qn`) does not start it.
+:::
+
 ## Desktop and Start Menu Shortcuts
 
 Shortcut creation is controlled via the inherited `CommonWindowsInstallerConfiguration` options:
