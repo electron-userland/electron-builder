@@ -1,3 +1,4 @@
+import { HeaderHash } from "app-builder-lib/src/asar/integrity"
 import { ASAR_INTEGRITY_DIGEST_SENTINEL, computeAsarIntegrityDigest, writeAsarIntegrityDigest } from "app-builder-lib/src/electron/mac/asarIntegrityDigest"
 import { createHash } from "crypto"
 import * as fs from "fs/promises"
@@ -28,8 +29,8 @@ function expectSlotWritten(expect: any, binary: Buffer, sentinelOffset: number, 
 // Checked against Electron 41.3.0 with the integrity fuse on: the app launches with these digests, and exits with
 // "Failed to get integrity for validatable asar archive" with the digest of the same entries in localeCompare order.
 describe("computeAsarIntegrityDigest", () => {
-  const appAsar = { algorithm: "SHA256", hash: "697f2a6b9d6432470fe072c343c1714768b5fc304bd6f5fa7a4810821785f854" }
-  const zetaAsar = { algorithm: "SHA256", hash: "0".repeat(64) }
+  const appAsar: HeaderHash = { algorithm: "SHA256", hash: "697f2a6b9d6432470fe072c343c1714768b5fc304bd6f5fa7a4810821785f854" }
+  const zetaAsar: HeaderHash = { algorithm: "SHA256", hash: "0".repeat(64) }
 
   test("hashes key, algorithm and hash of each entry", ({ expect }) => {
     const digest = computeAsarIntegrityDigest({ "Resources/app.asar": appAsar })

@@ -10,7 +10,7 @@ import { MacPackager } from "app-builder-lib"
 import { ASAR_INTEGRITY_DIGEST_SENTINEL } from "app-builder-lib/src/electron/mac/asarIntegrityDigest"
 import { AsarOptions } from "app-builder-lib/src/options/PlatformSpecificBuildOptions"
 import { PlistObject, savePlistFile } from "app-builder-lib/src/util/mac/plist"
-import { exec, log } from "builder-util"
+import { exec, InvalidConfigurationError, log } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 
@@ -139,17 +139,21 @@ describe("MacPackager.doAddAsarIntegrityDigest", () => {
     expect(warn).toHaveBeenCalledWith(expect.objectContaining({ reason: expect.stringContaining("supported only on macOS") }), "skipped ASAR integrity digest")
   })
 
-  // `defaults write` in an afterPack hook leaves Info.plist in the binary format
-  test.ifMac("reads an Info.plist in the binary format", async ({ expect, tmpDir }) => {
-    const { exec: realExec } = await vi.importActual<typeof import("builder-util")>("builder-util")
+  // `defaults write` in an afterPack hook leaves Info.plist in the binary format, which is not read
+  test("fails with an actionable error when Info.plist is not XML", async ({ expect, tmpDir }) => {
     const app = await createApp(tmpDir)
-    await realExec("/usr/bin/plutil", ["-convert", "binary1", path.join(app.appOutDir, "Test.app", "Contents", "Info.plist")])
-    // plutil converts it back for real, codesign stays mocked
-    vi.mocked(exec).mockImplementationOnce(realExec)
-    await addDigest(app.appOutDir)
+    const infoPlist = path.join(app.appOutDir, "Test.app", "Contents", "Info.plist")
+    await fs.writeFile(infoPlist, Buffer.concat([Buffer.from("bplist00"), Buffer.from([0xd1, 0x01, 0x02])]))
 
-    expect(await readSlot(app.binaryPath)).toEqual({ used: 1, version: 1, digest: DIGEST })
-    expect(vi.mocked(exec).mock.calls[1]).toEqual(resign(app.frameworkPath))
+    const error = await addDigest(app.appOutDir).then(
+      () => null,
+      (e: Error) => e
+    )
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error?.message).toContain(infoPlist)
+    expect(error?.message).toContain("set mac.asarIntegrityDigest to false")
+    expect((await readSlot(app.binaryPath)).used).toBe(0)
+    expect(exec).not.toHaveBeenCalled()
   })
 
   test("skips with a warning when Info.plist has no ElectronAsarIntegrity entries", async ({ expect, tmpDir }) => {

@@ -1,4 +1,4 @@
-import { parsePlistFile, PlistObject } from "app-builder-lib/internal"
+import { AsarIntegrity, parsePlistFile, PlistObject } from "app-builder-lib/internal"
 import { ASAR_INTEGRITY_DIGEST_SENTINEL } from "app-builder-lib/src/electron/mac/asarIntegrityDigest"
 import { savePlistFile } from "app-builder-lib/src/util/mac/plist"
 import { exec } from "builder-util"
@@ -36,8 +36,8 @@ async function writeMainScript(projectDir: string): Promise<void> {
 
 async function setIntegrityEntry(contents: string, hash: string): Promise<void> {
   const infoPlist = path.join(contents, "Info.plist")
-  const plist = await parsePlistFile<PlistObject>(infoPlist)
-  plist.ElectronAsarIntegrity = { ...(plist.ElectronAsarIntegrity as PlistObject), [UNOPENED_ASAR]: { algorithm: "SHA256", hash } }
+  const plist = await parsePlistFile<PlistObject & { ElectronAsarIntegrity?: PlistObject }>(infoPlist)
+  plist.ElectronAsarIntegrity = { ...plist.ElectronAsarIntegrity, [UNOPENED_ASAR]: { algorithm: "SHA256", hash } }
   await savePlistFile(infoPlist, plist)
 }
 
@@ -59,7 +59,7 @@ async function readSlots(contents: string) {
 
 // SHA-256 over the key, algorithm and hash of every Info.plist entry, keys in UTF-16 code unit order (Electron's NSLiteralSearch)
 async function expectedDigest(contents: string): Promise<string> {
-  const integrity = (await parsePlistFile<PlistObject>(path.join(contents, "Info.plist"))).ElectronAsarIntegrity as Record<string, { algorithm: string; hash: string }>
+  const { ElectronAsarIntegrity: integrity } = await parsePlistFile<{ ElectronAsarIntegrity: AsarIntegrity }>(path.join(contents, "Info.plist"))
   const hash = createHash("sha256")
   for (const key of Object.keys(integrity).sort()) {
     hash.update(key + integrity[key].algorithm + integrity[key].hash)

@@ -1,9 +1,9 @@
-import { exec, log } from "builder-util"
+import { exec, InvalidConfigurationError, log } from "builder-util"
 import { createHash } from "crypto"
-import { FileHandle, open, readFile } from "fs/promises"
+import { FileHandle, open } from "fs/promises"
 import * as path from "path"
-import plist from "plist"
-import { PlistObject } from "../../util/mac/plist.js"
+import { AsarIntegrity } from "../../asar/integrity.js"
+import { parsePlistFile } from "../../util/mac/plist.js"
 
 /**
  * Marks the slot Electron (>= 41) reserves in the `Electron Framework` binary for the digest of the
@@ -22,17 +22,12 @@ const DIGEST_LENGTH = 32
 const SLOT_LENGTH = 2 + DIGEST_LENGTH
 const SCAN_CHUNK_SIZE = 4 * 1024 * 1024
 
-/** The `ElectronAsarIntegrity` Info.plist dictionary: relative asar path → header hash. */
-export interface AsarIntegrityEntries {
-  [relativePath: string]: { algorithm: string; hash: string }
-}
-
 /**
  * Computes the version 1 digest Electron validates the `ElectronAsarIntegrity` dictionary against: SHA-256 over the
  * UTF-8 key, algorithm and hash of every entry, in key order.
  * @internal
  */
-export function computeAsarIntegrityDigest(integrity: AsarIntegrityEntries): Buffer {
+export function computeAsarIntegrityDigest(integrity: AsarIntegrity): Buffer {
   const hash = createHash("sha256")
   // Electron sorts the keys with NSLiteralSearch (UTF-16 code unit order), which is what the default sort() does; localeCompare would not match
   for (const key of Object.keys(integrity).sort()) {
@@ -107,11 +102,15 @@ export async function embedAsarIntegrityDigest(appPath: string, frameworkName: s
   log.info({ file: log.filePath(frameworkPath) }, "embedded ASAR integrity digest")
 }
 
-// electron-builder writes Info.plist as XML, but an afterPack hook that edits it with `defaults write` leaves it in the binary format, which only plutil reads
-async function readAsarIntegrity(infoPlistPath: string): Promise<AsarIntegrityEntries | undefined> {
-  const data = await readFile(infoPlistPath)
-  const xml = data.subarray(0, 6).toString() === "bplist" ? await exec("/usr/bin/plutil", ["-convert", "xml1", "-o", "-", infoPlistPath], undefined, false) : data.toString()
-  return (plist.parse(xml) as PlistObject).ElectronAsarIntegrity as AsarIntegrityEntries | undefined
+// parsePlistFile reads the XML format electron-builder writes; an afterPack hook that edits Info.plist with `defaults write` leaves it binary
+async function readAsarIntegrity(infoPlistPath: string): Promise<AsarIntegrity | undefined> {
+  try {
+    return (await parsePlistFile<{ ElectronAsarIntegrity?: AsarIntegrity }>(infoPlistPath)).ElectronAsarIntegrity
+  } catch (e: any) {
+    throw new InvalidConfigurationError(
+      `Cannot read ${infoPlistPath} to embed the ASAR integrity digest: ${e.message}. Keep Info.plist in the XML format electron-builder writes (\`defaults write\` converts it to binary, PlistBuddy and \`plutil -replace\` keep it XML), or set mac.asarIntegrityDigest to false`
+    )
+  }
 }
 
 async function findSentinels(handle: FileHandle, size: number, sentinel: Buffer): Promise<Array<number>> {
