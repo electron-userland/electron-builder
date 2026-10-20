@@ -1,5 +1,23 @@
 # electron-forge-maker-appimage
 
+## 26.18.0
+
+### Patch Changes
+
+- Fix(forge): make the electron-forge-maker-\* packages loadable by Electron Forge 6+ (`MakerBase`-compatible maker class as the module export and `default`, also exported by name, with the maker `config` applied as the target's options); calling the default export as an Electron Forge 5 maker function still works _[`#10352`](https://github.com/electron-userland/electron-builder/pull/10352) [`e703212`](https://github.com/electron-userland/electron-builder/commit/e703212e1a5325be9edbedc71015f130a7d42edc) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`206d35d`](https://github.com/electron-userland/electron-builder/commit/206d35dc31bc1e55b39e7b13003c0e384fcae926) [`3dc7c90`](https://github.com/electron-userland/electron-builder/commit/3dc7c902a7cd43eed547808b6a610971b9cd65da) [`e703212`](https://github.com/electron-userland/electron-builder/commit/e703212e1a5325be9edbedc71015f130a7d42edc) [`84f7b46`](https://github.com/electron-userland/electron-builder/commit/84f7b463ef71e390dd8d6ca20ef0dbb18d1e8932) [`6202a27`](https://github.com/electron-userland/electron-builder/commit/6202a271c2373eb5721acf2416098cd1dff73f83) [`fcd6897`](https://github.com/electron-userland/electron-builder/commit/fcd6897810846ee8dc367f0abacf34e4eb5a10fb) [`160c3b4`](https://github.com/electron-userland/electron-builder/commit/160c3b405ff1e193eadd4d6d76049e23ce334ebd) [`1928adf`](https://github.com/electron-userland/electron-builder/commit/1928adfcceca4414656f6acd65ee1c66c38545ad) [`c60987c`](https://github.com/electron-userland/electron-builder/commit/c60987c538598118d89ea9cede383a06dc2743b8) [`a92517a`](https://github.com/electron-userland/electron-builder/commit/a92517ae572ee0e17496680a533e836f7772852d) [`a1e9db8`](https://github.com/electron-userland/electron-builder/commit/a1e9db847832c4edf5279903c6958a5f984da83c) [`4123c27`](https://github.com/electron-userland/electron-builder/commit/4123c2792ac8f43820266cbfab724be852f0fa42)
+
+</small>
+
+- `app-builder-lib@26.18.0`
+
+</details>
+
 ## 26.17.0
 
 ### Patch Changes
