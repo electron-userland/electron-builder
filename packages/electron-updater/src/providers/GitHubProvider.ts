@@ -231,6 +231,10 @@ function isEligibleForChannel(releaseChannel: string | null, currentChannel: str
   if (releaseChannel === currentChannel) {
     return true
   }
+  // "latest" is the stable channel: only stable releases are eligible (see release-using-channels docs)
+  if (currentChannel === "latest") {
+    return releaseChannel === null
+  }
   if (!PROMOTABLE_CHANNELS.includes(currentChannel)) {
     return false
   }
