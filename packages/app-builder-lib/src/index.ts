@@ -74,7 +74,7 @@ export {
   WindowsSignToolManager,
 } from "./codeSign/windowsSignToolManager"
 export { ToolInfo } from "./util/bundledTool"
-export { ForgeOptions, buildForge } from "./forge-maker"
+export { ElectronBuilderForgeMaker, ForgeMakerConfig, ForgeMakerOptions, ForgeMakerTarget, ForgeOptions, ForgePlatform, buildForge, withLegacyForgeCall } from "./forge-maker"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework"
 export { LinuxPackager } from "./linuxPackager"
 export { CustomMacSign, CustomMacSignOptions, MacPackager } from "./macPackager"
