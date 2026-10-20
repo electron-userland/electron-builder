@@ -92,9 +92,9 @@ export interface AsarOptions {
    * Whether to skip computing the ASAR integrity hash.
    *
    * Normally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron
-   * can verify it at startup (when the `embeddedAsarIntegrityValidation` fuse is enabled). Set to
+   * can verify it at startup (when the `enableEmbeddedAsarIntegrityValidation` fuse is enabled). Set to
    * `true` only for custom Electron forks with encrypted ASAR support where the header is not
-   * readable by standard tools.
+   * readable by standard tools. It also skips the macOS ASAR integrity digest (`mac.asarIntegrityDigest`).
    *
    * @default false
    */

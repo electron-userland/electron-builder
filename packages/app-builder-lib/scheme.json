@@ -426,7 +426,7 @@
         },
         "disableIntegrity": {
           "default": false,
-          "description": "Whether to skip computing the ASAR integrity hash.\n\nNormally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron\ncan verify it at startup (when the `embeddedAsarIntegrityValidation` fuse is enabled). Set to\n`true` only for custom Electron forks with encrypted ASAR support where the header is not\nreadable by standard tools.",
+          "description": "Whether to skip computing the ASAR integrity hash.\n\nNormally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron\ncan verify it at startup (when the `enableEmbeddedAsarIntegrityValidation` fuse is enabled). Set to\n`true` only for custom Electron forks with encrypted ASAR support where the header is not\nreadable by standard tools. It also skips the macOS ASAR integrity digest (`mac.asarIntegrityDigest`).",
           "type": "boolean"
         },
         "disableSanityCheck": {
@@ -1862,7 +1862,7 @@
           "type": "boolean"
         },
         "enableEmbeddedAsarIntegrityValidation": {
-          "description": "Enables ASAR integrity validation — Electron verifies the embedded SHA-256 hash of\n`app.asar` before loading it.\n\nPlatform support:\n- macOS: Electron ≥ 16.0.0\n- Windows: Electron ≥ 30.0.0\n\nFor this fuse to be meaningful, `asar.disableIntegrity` must **not** be\n`true` (otherwise the hash is not embedded).",
+          "description": "Enables ASAR integrity validation — Electron verifies the embedded SHA-256 hash of\n`app.asar` before loading it.\n\nPlatform support:\n- macOS: Electron ≥ 16.0.0\n- Windows: Electron ≥ 30.0.0\n\nFor this fuse to be meaningful, `asar.disableIntegrity` must **not** be\n`true` (otherwise the hash is not embedded).\n\nOn macOS with Electron ≥ 41, electron-builder also embeds a digest of the `Info.plist` hashes\ninto the Electron Framework (see `mac.asarIntegrityDigest`), so they cannot be changed to match\na modified `app.asar` either.",
           "type": "boolean"
         },
         "enableNodeCliInspectArguments": {
