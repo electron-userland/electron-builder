@@ -95,6 +95,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`arch: "all"` now expands to x64 + arm64; 32-bit fails fast on Electron 44+](#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44) | — | `arch: "all"` drops `ia32` — request `ia32` explicitly; ia32/armv7l require `electronVersion` <= 43.x |
 | [macOS `productName`/`executableName` validated, not silently sanitized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | A name needing filename sanitization now throws — pick a name that needs none |
 | [macOS default entitlements tightened](#macos-default-entitlements-tightened) | — | The bundled default now grants only `allow-jit`; add `allow-unsigned-executable-memory` / `disable-library-validation` back in `build/entitlements.mac.plist` (and `.inherit.plist`) only if your app needs them |
+| [macOS: the ASAR integrity digest is embedded](#macos-asar-integrity-digest) | — | With Electron 41+, the Electron Framework is patched and signed again ad hoc after `afterPack`; set `mac.asarIntegrityDigest: false` if you sign the app yourself in `afterPack`, change `app.asar` / `Info.plist` after it, or merge separately built x64 and arm64 apps with `@electron/universal` yourself |
 | [Bitbucket Cloud publishing: token without username → Bearer auth](#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth) | — | Set `BITBUCKET_USERNAME` if your token is an app password / API token |
 | [S3 publishing requires an explicit `awsCredentials.source`](#s3-publishing-requires-an-explicit-awscredentialssource) | — | Add `awsCredentials: { source: "env" }` (for `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`), `{ source: "profile", profile: "<name>" }` (for `AWS_PROFILE` / `~/.aws` / SSO) or `{ source: "sso-role-chain", profile: "<name>" }` (for a role assumed from an SSO `source_profile`) |
 | [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); tune the set via `ignoredProductionDependencies`. If you set `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` (removed) to bundle `electron-builder`, override the list instead; `electron-prebuilt`/`electron-rebuild` no longer error and now ship if declared — remove them from `dependencies` |
@@ -1109,6 +1110,16 @@ electron-builder now **rejects** a macOS `productName` or `executableName` that 
 **Action is required only if** a build starts failing with an "is not a valid macOS app bundle name" error — choose a `productName`/`executableName` that needs no sanitization (avoid path separators, control characters, and other characters stripped by filename sanitization).
 
 **Names are also no longer NFD-normalized.** The `.app` bundle, the helper bundles, and `CFBundleName` now use the product name exactly as configured. For any name containing accented characters this changes the **bytes** of the on-disk filename, which is what external notarization and upload tooling matches on — update anything that hard-codes the normalized form. Relatedly, archive creation falls back from 7z to zip for NFD-normalized filenames.
+
+### macOS: the ASAR integrity digest is embedded {#macos-asar-integrity-digest}
+
+With Electron 41 and later, electron-builder writes a digest of the `ElectronAsarIntegrity` hashes in `Info.plist` into the Electron Framework binary and signs the framework again ad hoc; signing the app afterwards replaces that signature. With the `enableEmbeddedAsarIntegrityValidation` fuse, Electron then refuses to start an app whose `Info.plist` hashes no longer match the digest, so `app.asar` can't be swapped together with its `Info.plist` hash. The digest is computed from `Info.plist` as `afterPack` left it, right before the fuses are flipped and the app is signed. It is skipped on non-macOS hosts (with a warning), with `asar: false` or `asar.disableIntegrity: true`, and for `--prepackaged` apps.
+
+```json5
+{ "build": { "mac": { "asarIntegrityDigest": false } } }  // leave the Electron Framework as Electron ships it
+```
+
+**Action is required only if** you sign the app yourself in `afterPack` (the framework is signed again after your hook), change `app.asar` or `Info.plist` after `afterPack`, or build `x64` and `arm64` separately and merge them with `@electron/universal` yourself (each framework now has its own `_CodeSignature`, which the merge rejects; build the `universal` arch instead). In those cases set `mac.asarIntegrityDigest: false`.
 
 ### Redundant production `dependencies` are excluded, not rejected
 
