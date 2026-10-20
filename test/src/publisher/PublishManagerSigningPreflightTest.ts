@@ -189,6 +189,41 @@ test("a target without update info built before the manifest-producing one is no
   expect(scheduleUpload).not.toHaveBeenCalled()
 })
 
+test("an ELECTRON_BUILDER_UPDATE_SIGN_KEY still holding a raw PEM fails the publishing build at start, before anything is uploaded", async ({ expect, tmpDir }) => {
+  const { privateKeyPem } = generateUpdateSigningKeypair()
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", privateKeyPem)
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", "")
+  const projectDir = await tmpDir.getTempDir({ prefix: "project" })
+  await outputJson(path.join(projectDir, "package.json"), { name: "preflight-app", version: "1.0.0", description: "test", author: "Foo Bar <foo@example.com>" })
+  const prepackaged = await tmpDir.getTempDir({ prefix: "prepackaged" })
+  await outputFile(path.join(prepackaged, "resources", "app.asar"), "")
+
+  const packager = new Packager({
+    projectDir,
+    prepackaged,
+    targets: Platform.LINUX.createTarget(["tar.gz", "appimage"], Arch.x64),
+    config: {
+      electronVersion: "38.0.0",
+      publish: { provider: "generic", url: "https://example.com/updates" },
+      directories: { output: path.join(projectDir, "dist") },
+    },
+    platformPackagerFactory: info => new FakeLinuxPackager(info),
+  })
+  const manager = new PublishManager(packager, { publish: "always" })
+  const scheduleUpload = vi.spyOn(manager, "scheduleUpload").mockResolvedValue()
+
+  const error = await packager
+    .build()
+    .then(() => manager.awaitTasks())
+    .then(
+      () => null,
+      (e: Error) => e
+    )
+  expect(error?.message).toMatch(/ELECTRON_BUILDER_UPDATE_SIGN_KEY holds PEM text, but it must be the PEM file base64-encoded/)
+  expect(error?.message).not.toContain(privateKeyPem.split("\n")[1])
+  expect(scheduleUpload).not.toHaveBeenCalled()
+})
+
 test("afterPack enforces signing only when a target of the pack emits update info (snap-only still gets app-update.yml)", async ({ expect, tmpDir }) => {
   const { afterPack } = createManager()
   const appOutDir = await tmpDir.getTempDir({ prefix: "linux-unpacked" })

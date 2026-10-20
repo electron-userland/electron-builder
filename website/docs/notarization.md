@@ -63,12 +63,19 @@ API keys don't expire and don't require two-factor authentication, making them i
 Then set the following environment variables:
 
 ```bash
-# base64-encode the .p8 file for use as a CI secret
-APPLE_API_KEY=<base64-encoded-p8-content>
+APPLE_API_KEY=/path/to/AuthKey_KEYID.p8   # the .p8 file's path, or its contents base64-encoded (see below)
 APPLE_API_KEY_ID=KEYID
 APPLE_API_ISSUER=your-issuer-id
-APPLE_TEAM_ID=ABCDE12345
 ```
+
+`APPLE_API_KEY` is either the path of the `.p8` file, which is passed to `notarytool` as is, or — so that a masked CI variable can hold it — the file's contents **base64-encoded on one line**:
+
+| Platform | Command |
+| --- | --- |
+| macOS, Linux | `base64 < AuthKey_KEYID.p8 \| tr -d '\n'` |
+| PowerShell | `[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path AuthKey_KEYID.p8)))` |
+
+electron-builder writes a base64 value to a new temporary file (mode `0600`) for each notarization and deletes it as soon as `notarytool` is done. The key text itself (`-----BEGIN PRIVATE KEY-----…`) and a damaged base64 value (surrounding quotes, URL-safe characters, cut off) fail the build before notarization, without printing the key. `APPLE_TEAM_ID` is not used with an API key. A custom `afterSign` hook that calls `@electron/notarize` itself still has to pass a path.
 
 ### Authentication — Option C: Keychain Profile (stored credentials)
 
@@ -183,6 +190,9 @@ codesign --verify --deep --strict --verbose=2 dist/mac/MyApp.app
 ```
 
 ## Troubleshooting
+
+**"The value '…' is invalid for `'--key <key>'`: The file couldn't be opened because it doesn't exist."**
+: `APPLE_API_KEY` names a file that does not exist — a relative path resolves against the directory electron-builder runs in. To provide the key's contents instead of a path, base64-encode the `.p8` file (see Option B above).
 
 **"The software certificate used to sign this application is not trusted on this machine"**
 : Your Developer ID certificate is not in the system keychain or hasn't been trusted. Verify `CSC_LINK` points to a valid Developer ID certificate — electron-builder imports and configures the certificate automatically.

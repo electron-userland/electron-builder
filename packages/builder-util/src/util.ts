@@ -35,7 +35,7 @@ export * from "./fs.js"
 export * from "./pathContainment.js"
 
 export { generateKsuid } from "./ksuid.js"
-export { loadCscLink, decodeCscLinkBase64, resolveCscLinkPath } from "./cscLink.js"
+export { loadCscLink, decodeCscLinkBase64, decodeStrictBase64, resolveCscLinkPath } from "./cscLink.js"
 export {
   signUpdateManifest,
   createUpdateManifestSignatures,
