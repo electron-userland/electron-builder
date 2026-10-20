@@ -24,7 +24,7 @@ jobs:
           persist-credentials: false
 
       - name: Install deps and audit
-        uses: ./.github/actions/pnpm
+        uses: $/.github/actions/pnpm
 
       - name: Build docusaurus site
         run: pnpm docs:all
