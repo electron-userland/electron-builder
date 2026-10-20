@@ -136,6 +136,14 @@ describe("ElectronBuilderForgeMaker", () => {
     expect(maker.getBuildOptions({ dir: "/forge/out/app-linux-x64", makeDir: "/forge/out/make", targetArch: "x64" }).config).toEqual({ directories: { output: "/forge/out/make" } })
   })
 
+  test("accepts platforms typed as Forge 7's string-based ForgePlatform", ({ expect }) => {
+    const platforms: string[] = ["win32", "freebsd"]
+    expectTypeOf<ConstructorParameters<typeof MakerNsis>[1]>().toExtend<ReadonlyArray<string> | null | undefined>()
+    expectTypeOf(platforms).toExtend<NonNullable<ConstructorParameters<typeof MakerNsis>[1]>>()
+    expect(new MakerNsis({}, platforms).platforms).toEqual(["win32"])
+    expect(new MakerNsis({}, platforms).clone().platforms).toEqual(["win32"])
+  })
+
   test("resolves a config fetcher per arch and keeps it across clones", async ({ expect }) => {
     const fetcher = vi.fn((arch: string) => Promise.resolve({ oneClick: arch === "x64" }))
     const maker = new MakerNsis(fetcher, ["win32", "linux"])

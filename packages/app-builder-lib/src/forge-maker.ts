@@ -58,6 +58,12 @@ export function buildForge(forgeOptions: ForgeOptions, options: PackagerOptions)
   })
 }
 
+const FORGE_PLATFORMS: ReadonlyArray<string> = ["darwin", "mas", "win32", "linux"] satisfies ReadonlyArray<ForgePlatform>
+
+function isForgePlatform(platform: string): platform is ForgePlatform {
+  return FORGE_PLATFORMS.includes(platform)
+}
+
 function isConfigFetcher<C>(config: ForgeMakerConfig<C> | undefined): config is (targetArch: string) => C | Promise<C> {
   return typeof config === "function"
 }
@@ -81,7 +87,8 @@ export abstract class ElectronBuilderForgeMaker<C extends object = object> {
 
   constructor(
     private readonly configOrConfigFetcher?: ForgeMakerConfig<C>,
-    protected readonly platformsToMakeOn?: ForgePlatform[] | null
+    // Forge 7 types platforms as `string`; Forge 8 narrows them to `ForgePlatform`
+    protected readonly platformsToMakeOn?: ReadonlyArray<string> | null
   ) {}
 
   /** Forge identifies maker instances in `makers` by this flag. */
@@ -90,7 +97,7 @@ export abstract class ElectronBuilderForgeMaker<C extends object = object> {
   }
 
   get platforms(): ForgePlatform[] {
-    return this.platformsToMakeOn ?? this.defaultPlatforms
+    return this.platformsToMakeOn == null ? this.defaultPlatforms : this.platformsToMakeOn.filter(isForgePlatform)
   }
 
   async prepareConfig(targetArch: string): Promise<void> {
