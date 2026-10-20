@@ -10,6 +10,8 @@ import {
   UpdateManifestSignature,
   validateSignedManifestShape,
 } from "builder-util-runtime"
+import { decodeStrictBase64 } from "./cscLink.js"
+import { InvalidConfigurationError } from "./util.js"
 
 /**
  * Build-time counterpart to `verifyManifestSignature`. Lives in builder-util (never bundled into a
@@ -73,16 +75,56 @@ function toList(value: string | Array<string> | null | undefined): Array<string>
   return (Array.isArray(value) ? value : [value]).filter(it => typeof it === "string" && it.trim().length > 0)
 }
 
+/** How to produce `ELECTRON_BUILDER_UPDATE_SIGN_KEY`; ends each of its format errors, which never include the value. */
+const SIGN_KEY_ENV_HINT =
+  "Encode the PEM file on one line: `base64 < update-private-key.pem | tr -d '\\n'` (macOS, Linux), `openssl base64 -A -in update-private-key.pem`, " +
+  "or `[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path update-private-key.pem)))` (PowerShell). For several keys, concatenate the PEM " +
+  "files and encode them once: `cat old.pem new.pem | base64 | tr -d '\\n'`. To pass the path of a PEM file instead, use ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE. " +
+  "See https://www.electron.build/docs/features/signed-update-manifests#ci-secrets"
+
+/**
+ * Decodes `ELECTRON_BUILDER_UPDATE_SIGN_KEY`: the private key PEM file — one or more concatenated `-----BEGIN PRIVATE KEY-----`
+ * blocks — base64-encoded, so the CI secret is a single line that CI systems can mask. Returns the PEM blocks in order.
+ */
+function decodeSigningKeyEnv(value: string): Array<string> {
+  if (value.includes("-----BEGIN")) {
+    throw new InvalidConfigurationError(
+      `ELECTRON_BUILDER_UPDATE_SIGN_KEY holds PEM text, but it must be the PEM file base64-encoded (the value is not shown). ${SIGN_KEY_ENV_HINT}`
+    )
+  }
+  const decoded = decodeStrictBase64(value)
+  if (decoded == null) {
+    throw new InvalidConfigurationError(
+      "ELECTRON_BUILDER_UPDATE_SIGN_KEY is not valid standard base64 (the value is not shown): only A-Z, a-z, 0-9, `+` and `/` with `=` padding are allowed, " +
+        "and line breaks are ignored. Check for surrounding quotes, URL-safe `-` or `_` characters, a truncated value, or separately encoded keys joined " +
+        `together. ${SIGN_KEY_ENV_HINT}`
+    )
+  }
+  const text = decoded.toString("utf8")
+  const pems = splitPemBlocks(text)
+  // a value cut short on a 4-character boundary still decodes, and splitPemBlocks drops an incomplete trailing block, so the
+  // text must end with a complete block, or a truncated rotation bundle would silently sign without its last key
+  if (!text.includes("-----BEGIN") || !text.trimEnd().endsWith(pems[pems.length - 1])) {
+    throw new InvalidConfigurationError(
+      "ELECTRON_BUILDER_UPDATE_SIGN_KEY does not decode to complete PEM private keys (the value is not shown): base64-encode the whole PEM file exactly once, " +
+        "including its -----BEGIN and -----END lines (not only the key body between them, not an already encoded value, and not a file path), and check that " +
+        `the value was not cut off. ${SIGN_KEY_ENV_HINT}`
+    )
+  }
+  return pems
+}
+
 /**
  * Resolves the Ed25519 signing private key(s) (PEM) from, in precedence order:
  *   1. explicit `signingKey` config value (PEM literal, or an array of them)
  *   2. `signingKeyFile` config value (path to a PEM file, or an array of paths; relative paths are resolved
  *      against `baseDir` — the project directory — when given, like every other path in the build configuration)
- *   3. `ELECTRON_BUILDER_UPDATE_SIGN_KEY` env (PEM literal — preferred for CI secrets)
+ *   3. `ELECTRON_BUILDER_UPDATE_SIGN_KEY` env (the PEM file base64-encoded, one line that CI systems can mask —
+ *      preferred for CI secrets; any value that is not the base64 of complete PEM keys is an InvalidConfigurationError)
  *   4. `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` env (path to a PEM file; several paths may be joined with
  *      `path.delimiter`, i.e. `:` on POSIX and `;` on Windows)
- * The first source that is set wins, but that source may yield several keys: a PEM value (config, env, or
- * file contents) may contain several concatenated `-----BEGIN PRIVATE KEY-----` blocks, and the array/list
+ * The first source that is set wins, but that source may yield several keys: a PEM value (config, file contents,
+ * or the decoded env value) may contain several concatenated `-----BEGIN PRIVATE KEY-----` blocks, and the array/list
  * forms hold one key each. Every key is validated (Ed25519, no duplicates) and returned in configured order —
  * the first key is the one written to the legacy single `signature` field.
  * Returns an empty array when nothing is set, meaning manifest signing is disabled.
@@ -104,7 +146,8 @@ export function loadUpdateSigningKeys(config?: UpdateSigningKeySources | null, b
     pems = configFiles.flatMap(file => splitPemBlocks(readFileSync(baseDir == null ? file : path.resolve(baseDir, file), "utf8")))
   } else if (envKey != null && envKey.trim().length > 0) {
     source = "ELECTRON_BUILDER_UPDATE_SIGN_KEY"
-    pems = splitPemBlocks(envKey)
+    // decoded only here, after both config sources were passed over, so a stale value never breaks a build keyed from the config
+    pems = decodeSigningKeyEnv(envKey)
   } else if (envFile != null && envFile.trim().length > 0) {
     source = "ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE"
     pems = envFile
@@ -125,12 +168,14 @@ function validateSigningKeys(pems: Array<string>, source: string): Array<string>
     try {
       key = parsePrivateKey(pem)
     } catch (e: any) {
-      throw new Error(`Update manifest signing key #${index + 1} from ${source} is not a valid Ed25519 private key (PEM, PKCS#8): ${e.message || e}`)
+      throw new InvalidConfigurationError(`Update manifest signing key #${index + 1} from ${source} is not a valid Ed25519 private key (PEM, PKCS#8): ${e.message || e}`)
     }
     const keyId = computeUpdateManifestKeyId(key)
     const previous = seen.get(keyId)
     if (previous != null) {
-      throw new Error(`Update manifest signing key #${index + 1} from ${source} duplicates key #${previous + 1} (key id ${keyId}). Each signing key must be listed once.`)
+      throw new InvalidConfigurationError(
+        `Update manifest signing key #${index + 1} from ${source} duplicates key #${previous + 1} (key id ${keyId}). Each signing key must be listed once.`
+      )
     }
     seen.set(keyId, index)
   })

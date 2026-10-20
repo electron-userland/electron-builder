@@ -363,8 +363,8 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    *
    * **Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key
    * resolves. Generate one once with `electron-builder create-update-key`, then supply it via
-   * `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via
-   * `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and
+   * `ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),
+   * preferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and
    * resolves the key from the environment; `null` is not an opt-out.
    *
    * Set to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then
@@ -418,7 +418,7 @@ export interface UpdateManifestSigningOptions {
    * contain several concatenated keys, or pass an array with one key each; the manifest is signed by every key
    * (dual-signing for [key rotation](https://www.electron.build/features/key-rotation)) and the first key also
    * fills the legacy single `signature` field.
-   * Secret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable in CI over committing this to config.
+   * Secret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable (the PEM file, base64-encoded) in CI over committing this to config.
    */
   readonly signingKey?: string | Array<string> | null
 

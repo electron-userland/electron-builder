@@ -62,6 +62,15 @@ For notarizing macOS apps distributed outside the Mac App Store. Provide **one**
 | `APPLE_KEYCHAIN` | Keychain to search for a stored notarization profile. |
 | `APPLE_KEYCHAIN_PROFILE` | Name of a `notarytool` keychain profile to use. |
 
+## Update-manifest signing
+
+The Ed25519 private key that signs `latest*.yml`, required on publishing builds unless `updateManifest: false`. `updateManifest.signingKey` / `signingKeyFile` in the configuration take precedence, and `updateManifest: false` ignores both variables. Full setup is in [Signed Update Manifests](./features/signed-update-manifests.md#ci-secrets).
+
+| Variable | Description |
+|---|---|
+| `ELECTRON_BUILDER_UPDATE_SIGN_KEY` | The private key PEM file from `electron-builder create-update-key`, **base64-encoded** on one line so CI systems can mask it (`base64 < update-private-key.pem \| tr -d '\n'`). For several keys (rotation), concatenate the PEM files and encode them once. A raw PEM, or anything that is not the base64 of complete PEM keys, fails the build. |
+| `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` | Path to the private key PEM file, used when `ELECTRON_BUILDER_UPDATE_SIGN_KEY` is unset. Several paths are joined with the OS path delimiter (`:` on Linux/macOS, `;` on Windows); relative paths resolve against the current working directory. |
+
 ---
 
 ## Publishing

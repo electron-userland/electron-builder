@@ -33,7 +33,7 @@ electron-builder signs `latest*.yml` with one or more Ed25519 private keys and e
 
 1. **An install trusts a LIST of keys.** `updateManifestPublicKey` in `app-update.yml` is either a single public key or a list of them. A manifest is accepted when *any* listed key validates *any* signature it carries. Verification is fail-closed as soon as at least one key is configured — and since v27 configures one by default, treat fail-closed as the normal state. electron-updater never fetches replacement keys from the update server.
 2. **A manifest may carry several signatures.** Every configured signing key signs each `latest*.yml`; the result is written as a `signatures` list (one `{ keyId, signature }` entry per key) plus the legacy single `signature` field holding the first key's signature. `keyId` is the hex SHA-256 of the public key's SPKI DER encoding (printed by `create-update-key`), so you can see at a glance which keys signed a release.
-3. **The private keys are resolved from, in order:** `updateManifest.signingKey` → `updateManifest.signingKeyFile` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. The first source that is set wins, but that source may hold several keys: config values accept an array, a PEM value may contain several concatenated `-----BEGIN PRIVATE KEY-----` blocks, and `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` accepts several paths joined with the OS path delimiter (`:` on Linux/macOS, `;` on Windows). Relative `signingKeyFile` paths resolve against the project directory; relative `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` paths against the current working directory. Setting `updateManifest` to `false` disables signing outright and short-circuits this whole ladder, environment variables included.
+3. **The private keys are resolved from, in order:** `updateManifest.signingKey` → `updateManifest.signingKeyFile` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY` → `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. The first source that is set wins, but that source may hold several keys: config values accept an array, a PEM value may contain several concatenated `-----BEGIN PRIVATE KEY-----` blocks (`ELECTRON_BUILDER_UPDATE_SIGN_KEY` holds such a bundle base64-encoded, see [Providing the key in CI](./signed-update-manifests.md#ci-secrets)), and `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` accepts several paths joined with the OS path delimiter (`:` on Linux/macOS, `;` on Windows). Relative `signingKeyFile` paths resolve against the project directory; relative `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` paths against the current working directory. Setting `updateManifest` to `false` disables signing outright and short-circuits this whole ladder, environment variables included.
 4. **The embedded trust list is either explicit or derived.** If `updateManifest.publicKey` is set (string or array) it is embedded as-is; otherwise the public half of *every* signing key is derived and embedded. This lets you trust a key before you sign with it.
 
 :::note[Platform blocks replace, they don't merge]
@@ -70,7 +70,7 @@ Every install in the field then already trusts a successor. If the current key l
 npx electron-builder create-update-key --out ./update-private-key.new.pem
 ```
 
-The private key is written with mode `0600`; the public key and its key id are printed to stdout. Store the private key as a **new** CI secret alongside the old one. Do not replace the old secret yet.
+The private key is written with mode `0600`; the public key and its key id are printed to stdout. Store the private key as a **new** CI secret alongside the old one — as a file, or base64-encoded (`base64 < update-private-key.new.pem | tr -d '\n'`) for a CI variable. Do not replace the old secret yet.
 
 **2. Ship the bridge release: sign with BOTH keys, trust BOTH keys.** Provide both private keys to the build. The trust list is derived automatically, so no `publicKey` config is needed:
 
@@ -78,9 +78,11 @@ The private key is written with mode `0600`; the public key and its key id are p
 # two files, joined with the OS path delimiter (":" on Linux/macOS, ";" on Windows)
 ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=/run/secrets/update-key.old.pem:/run/secrets/update-key.new.pem electron-builder --publish always
 
-# or both PEMs concatenated in one variable
-ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(cat update-key.old.pem update-key.new.pem)" electron-builder --publish always
+# or both PEMs concatenated, then base64-encoded once, in one variable
+ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(cat update-key.old.pem update-key.new.pem | base64 | tr -d '\n')" electron-builder --publish always
 ```
+
+In CI, store that base64 output as the secret: one single-line value holding both keys, which masked CI variables accept. Encode the concatenated files once; joining two separately encoded keys is rejected (see [Providing the key in CI](./signed-update-manifests.md#ci-secrets)).
 
 Put the **old** key first: its signature also fills the legacy `signature` field, which is what installs built before trust lists existed verify. The resulting `latest*.yml` carries two entries in `signatures`; installs in the field verify it with the old key, and after updating trust `[old, new]`. Nothing else about the release needs to change.
 
@@ -107,7 +109,7 @@ An attacker holding a private key that installs still trust can produce a `lates
 
 ### Key storage
 
-- **Never commit private keys.** `updateManifest.signingKey` exists for completeness; in practice use `ELECTRON_BUILDER_UPDATE_SIGN_KEY` (PEM contents) or `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (paths to mounted secret files) from your CI secret store.
+- **Never commit private keys.** `updateManifest.signingKey` exists for completeness; in practice use `ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file base64-encoded on one line, which CI systems can mask) or `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (paths to mounted secret files) from your CI secret store.
 - Prefer the `_FILE` variant where your CI can mount secrets as files; it keeps the keys out of process listings and environment dumps.
 - If a private key lives in an HSM or KMS that signs on your behalf, electron-builder cannot call it directly. Sign `latest*.yml` in a post-publish step of your own (append an entry to `signatures` with the matching `keyId`, or set `signature`, over the payload from `canonicalizeForSigning` in `builder-util-runtime`), and list the public key in `updateManifest.publicKey` so it is embedded. electron-builder warns at build time when none of the keys it signs with is in an explicit `publicKey` list, since such a release cannot verify its own manifests.
 
