@@ -1,5 +1,5 @@
 import { loadCache } from "./cache"
-import { DEFAULT_FILE_MS, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform, TEST_ROOT } from "./smart-config"
+import { DEFAULT_FILE_MS, getTestFilesOverride, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform, TEST_ROOT } from "./smart-config"
 
 export interface WeightedFile {
   filename: string
@@ -32,7 +32,8 @@ export function buildWeightedFiles(files: string[], targetPlatform: TargetPlatfo
  * Compute optimal shard count based on total platform-specific duration
  */
 export function computeShardCount(files: WeightedFile[]): number {
-  if (!process.env.CI || process.env.TEST_FILES || process.env.VITEST_SHARD_COUNT) {
+  // a scoped run (real TEST_FILES override) or an explicit count is never smart-sharded; a blank TEST_FILES is neither
+  if (!process.env.CI || getTestFilesOverride() != null || process.env.VITEST_SHARD_COUNT) {
     return Math.max(1, parseInt(process.env.VITEST_SHARD_COUNT || "1", 10))
   }
 

@@ -1,6 +1,6 @@
 import * as fs from "fs"
 import * as path from "path"
-import { IS_LINUX, IS_MAC, IS_WIN, PLATFORM, SupportedPlatforms, TargetPlatform, TEST_ROOT, skipPerOSTests, skippedTests } from "./smart-config"
+import { getTestFilesOverride, IS_LINUX, IS_MAC, IS_WIN, PLATFORM, SupportedPlatforms, TargetPlatform, TEST_ROOT, skipPerOSTests, skippedTests } from "./smart-config"
 
 export function platformAllowed(file: string, platform: TargetPlatform = "current"): boolean {
   if (platform === "current") {
@@ -30,7 +30,8 @@ export function platformAllowed(file: string, platform: TargetPlatform = "curren
   return true
 }
 
-const testOverride = process.env.TEST_FILES?.trim()?.split(",")
+// blank / unset TEST_FILES is "no override" (see getTestFilesOverride) — never a match-everything `[""]`
+const testOverride = getTestFilesOverride()
 
 function collectTests(dir: string, platform: TargetPlatform = "current", out: string[] = []): string[] {
   if (!fs.existsSync(dir)) {

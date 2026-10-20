@@ -6,6 +6,20 @@ export type SupportedPlatforms = Exclude<TargetPlatform, "current">
 export const TEST_ROOT = "test/src"
 export const TEST_FILES_PATTERN = process.env.TEST_FILES?.trim() || "*Test,*test"
 
+/**
+ * The TEST_FILES override tokens, or undefined when there is no override. A blank or unset TEST_FILES
+ * (docker/run-tests.sh always passes `-e TEST_FILES="${TEST_FILES:-}"`) is "no override" — never a
+ * match-everything `[""]`, which would make in-docker discovery disagree with the shard planner.
+ * (v26 port of the getTestFilesOverride fix from #10204.)
+ */
+export function getTestFilesOverride(): string[] | undefined {
+  const tokens = (process.env.TEST_FILES ?? "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean)
+  return tokens.length > 0 ? tokens : undefined
+}
+
 export const CACHE_FILE = process.env.VITEST_SMART_CACHE_FILE || path.resolve(__dirname, "_vitest-smart-cache.json")
 
 export const DEFAULT_FILE_MS = 2 * 60 * 1000
