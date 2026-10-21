@@ -6,7 +6,7 @@ import type { Base, Bump, ChangelogData, Entry, Release, Section } from "../src/
 
 // The /changelog page (src/components/Changelog): the releases of the root CHANGELOG.md in the format
 // scripts/aggregate-changesets.mjs writes, from the newest down to the first conventional-changelog release (the
-// history before v26, which the page links on GitHub instead). The format is parsed strictly: a line that doesn't fit
+// history before v24, which the page links on GitHub instead). The format is parsed strictly: a line that doesn't fit
 // fails the build instead of dropping a release or an entry from the page.
 
 // "# [27.0.0](<repo>/compare/electron-builder@26.15.3...electron-builder@27.0.0) (2026-10-16)",
