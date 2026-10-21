@@ -11,7 +11,7 @@ import { randomUUID } from "crypto"
 import { ExpectStatic, TestContext } from "vitest"
 import { createLocalServer, getParallelsHostIP, launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
 import { assertPack, expectedWindowsPublisherName, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext } from "../helpers/packTester"
-import { ASAR_INTEGRITY_DIGEST_ELECTRON_VERSION, ELECTRON_VERSION, PACMAN_TEST_DEPENDS } from "../helpers/testConfig"
+import { ELECTRON_VERSION, PACMAN_TEST_DEPENDS } from "../helpers/testConfig"
 import { NEW_VERSION_NUMBER, OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import {
   cleanupWindowsNative,
@@ -65,10 +65,9 @@ export async function doBuild(
   versions: Array<string | VersionBuild> = [OLD_VERSION_NUMBER, NEW_VERSION_NUMBER]
 ) {
   const currentPlatform = isWindows ? Platform.WINDOWS : Platform.current()
-  // mac builds use an Electron with the ASAR integrity digest slot, so the digest mac.asarIntegrityDigest embeds by default is
+  // ELECTRON_VERSION has the ASAR integrity digest slot, so on mac the digest mac.asarIntegrityDigest embeds by default is
   // enforced (enableEmbeddedAsarIntegrityValidation fuse below) on every launch of the installed and the updated app
   const isMacBuild = currentPlatform === Platform.MAC
-  const electronVersion = isMacBuild ? ASAR_INTEGRITY_DIGEST_ELECTRON_VERSION : ELECTRON_VERSION
   async function buildApp({
     version,
     target,
@@ -93,7 +92,7 @@ export async function doBuild(
         config: Object.assign(
           deepAssign<Configuration>(
             {
-              electronVersion,
+              electronVersion: ELECTRON_VERSION,
               nativeModules: { npmRebuild: true },
               productName: "TestApp",
               executableName: "TestApp",
@@ -161,7 +160,7 @@ export async function doBuild(
             projectDir,
             data => {
               data.devDependencies = {
-                electron: electronVersion,
+                electron: ELECTRON_VERSION,
                 "node-addon-api": "^8",
               }
               const electronUpdaterPath = (pkg: string) => path.resolve(__dirname, "../../../packages", pkg)

@@ -12,7 +12,7 @@ const packageConfig = (data: any) => {
   data.dependencies = {
     ...data.debpendencies,
     debug: "4.4.3",
-    "better-sqlite3-multiple-ciphers": "12.9.0",
+    "better-sqlite3-multiple-ciphers": "12.11.1",
   }
   data.devDependencies = {
     electron: ELECTRON_VERSION,
