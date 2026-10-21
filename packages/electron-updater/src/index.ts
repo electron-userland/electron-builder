@@ -2,6 +2,8 @@ import fsExtra from "fs-extra"
 import { createRequire } from "node:module"
 import * as path from "path"
 import { AppUpdater } from "./AppUpdater.js"
+import { isMsixInstall } from "./MsixUpdater.js"
+import { readPackageType } from "./util.js"
 
 const require = createRequire(import.meta.url)
 
@@ -11,6 +13,7 @@ export { AppImageUpdater } from "./AppImageUpdater.js"
 export { BaseUpdater } from "./BaseUpdater.js"
 export { DebUpdater } from "./DebUpdater.js"
 export { MacUpdater } from "./MacUpdater.js"
+export { MsixUpdater } from "./MsixUpdater.js"
 export { NsisUpdater } from "./NsisUpdater.js"
 export { PacmanUpdater } from "./PacmanUpdater.js"
 export { BitbucketProvider } from "./providers/BitbucketProvider.js"
@@ -30,7 +33,8 @@ export * from "./types.js"
 function doLoadAutoUpdater(): AppUpdater {
   let updater: any
   if (process.platform === "win32") {
-    updater = new (require("./NsisUpdater.js").NsisUpdater)()
+    // MsixUpdater for apps with package identity (AppX/MSIX) and MSIX packages built with msix.electronUpdaterAware, unless an NSIS installer marked the install
+    updater = isMsixInstall(readPackageType(), process.windowsStore === true) ? new (require("./MsixUpdater.js").MsixUpdater)() : new (require("./NsisUpdater.js").NsisUpdater)()
   } else if (process.platform === "darwin") {
     updater = new (require("./MacUpdater.js").MacUpdater)()
   } else {
