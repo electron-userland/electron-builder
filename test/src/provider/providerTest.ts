@@ -121,6 +121,27 @@ test("getCustomChannelName - linux appends -linux suffix (x64)", ({ expect }) =>
   }
 })
 
+// MsixUpdater sets isMsix: an MSIX install reads <channel>-msix.yml
+function makeMsixProvider(platform: ProviderRuntimeOptions["platform"] = "win32"): TestProvider {
+  return new TestProvider({ isUseMultipleRangeRequest: true, platform, isMsix: true, executor: httpExecutor as any })
+}
+
+test("getDefaultChannelName - isMsix returns latest-msix", ({ expect }) => {
+  const provider = makeMsixProvider()
+  expect(provider.callGetDefaultChannelName()).toBe("latest-msix")
+})
+
+test("getCustomChannelName - isMsix appends -msix suffix", ({ expect }) => {
+  const provider = makeMsixProvider()
+  expect(provider.callGetCustomChannelName("beta")).toBe("beta-msix")
+})
+
+test.for<ProviderRuntimeOptions["platform"]>(["darwin", "linux"])("getDefaultChannelName / getCustomChannelName - isMsix wins over the %s suffix", (platform, { expect }) => {
+  const provider = makeMsixProvider(platform)
+  expect(provider.callGetDefaultChannelName()).toBe("latest-msix")
+  expect(provider.callGetCustomChannelName("beta")).toBe("beta-msix")
+})
+
 test("httpRequest - delegates to executor.request with correct options", async ({ expect }) => {
   const provider = makeProvider()
   requestSpy.mockResolvedValueOnce("ok")

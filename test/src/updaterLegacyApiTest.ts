@@ -52,7 +52,7 @@ describe("autoInstallOnAppQuit shim", () => {
 })
 
 describe("AppUpdater source contract", () => {
-  // The shims live on AppUpdater/BaseUpdater/MacUpdater; assert they are wired rather than
+  // The shims live on AppUpdater/BaseUpdater/MacUpdater/MsixUpdater; assert they are wired rather than
   // constructing a real updater, which needs a live Electron app object.
   const read = async (file: string) => {
     const { promises: fs } = await import("fs")
@@ -73,7 +73,7 @@ describe("AppUpdater source contract", () => {
     expect(source).toContain("quitandinstall-takes-an-options-object")
   })
 
-  test.each(["BaseUpdater.ts", "MacUpdater.ts"])("%s routes quitAndInstall through the normalizer", async file => {
+  test.each(["BaseUpdater.ts", "MacUpdater.ts", "MsixUpdater.ts"])("%s routes quitAndInstall through the normalizer", async file => {
     const source = await read(file)
     expect(source).toMatch(/quitAndInstall\(options: QuitAndInstallOptions \| boolean = \{\}, legacyIsForceRunAfter\?: boolean\)/)
     expect(source).toContain("this.normalizeQuitAndInstallOptions(options, legacyIsForceRunAfter)")
