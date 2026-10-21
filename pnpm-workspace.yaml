@@ -72,4 +72,5 @@ overrides:
   image-size: '>=2.0.3 <3' # GHSA-w3rx-r6r6-pgpr, GHSA-5p2g-fcmc-qvqq (high)
   svgo: '>=3.3.5 <4' # GHSA-w27v-7q3p-w38r, GHSA-2p49-hgcm-8545 (high)
   http-cache-semantics: '>=4.3.0 <5' # GHSA-ch52-4w7c-c8xp (high): no upstream patch; 4.3.0 is outside the advisory range but keeps the disputed max-stale behaviour
+  tinypool: '>=2.1.2 <3' # GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr (critical); no 1.x fix, forces @docusaurus/core 3.x (^1.0.2) onto 2.x
 packageImportMethod: copy
