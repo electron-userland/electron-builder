@@ -836,6 +836,20 @@ describe("publisherNameMatchesCertificate", () => {
   test("no configured name matching fails even with multiple names", () => {
     expect(publisherNameMatchesCertificate(["Old Corp Name", "Other Corp"], acmeCertInfo)).toBe(false)
   })
+
+  test("matches against the subject as Windows reports it (S for the state), like electron-updater, when known", () => {
+    const certInfo = {
+      commonName: "Acme Corp",
+      bloodyMicrosoftSubjectDn: "CN=Acme Corp,O=Acme Corporation,ST=California,C=US",
+      windowsSubjectDn: "C=US, S=California, O=Acme Corporation, CN=Acme Corp",
+    }
+    expect(publisherNameMatchesCertificate(["CN=Acme Corp, S=California"], certInfo)).toBe(true)
+    expect(publisherNameMatchesCertificate(["CN=Acme Corp, ST=California"], certInfo)).toBe(false)
+  })
+
+  test("an empty publisherName never matches a certificate without a CN (as in electron-updater)", () => {
+    expect(publisherNameMatchesCertificate([""], { commonName: "", bloodyMicrosoftSubjectDn: "O=Acme Corporation" })).toBe(false)
+  })
 })
 
 describe("validateExplicitPublisherName", () => {

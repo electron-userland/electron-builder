@@ -1,5 +1,5 @@
 import { asArray, InvalidConfigurationError, log, retry } from "builder-util"
-import { MemoLazy, parseDn } from "builder-util-runtime"
+import { matchPublisherName, MemoLazy, parseDn } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -56,6 +56,11 @@ export interface CustomWindowsSignTaskConfiguration extends WindowsSignTaskConfi
 export interface CertificateInfo {
   readonly commonName: string
   readonly bloodyMicrosoftSubjectDn: string
+  /**
+   * The subject in the format Windows reports it (`X509Certificate2.Subject`), which electron-updater matches
+   * publisherName against. Unset when `bloodyMicrosoftSubjectDn` already is in that format (certificate store).
+   */
+  readonly windowsSubjectDn?: string
 }
 
 export interface CertificateFromStoreInfo {
@@ -81,22 +86,15 @@ export function getSigntoolFamilyConfig(config: WindowsConfiguration): WindowsSi
 }
 
 /**
- * Matches configured publisher names against a certificate subject using the same semantics as
- * electron-updater's update signature verifier (windowsExecutableCodeSignatureVerifier): a name that
- * parses as a Distinguished Name (DN) must match every RDN it specifies against the certificate
- * subject (extra subject RDNs are ignored); otherwise it is compared strictly against the
- * certificate's Common Name (CN). Passes when ANY configured name matches — multiple names are
- * supported for certificate rotation.
+ * Matches configured publisher names against a certificate subject with the rules electron-updater's update
+ * signature verifier applies ({@link matchPublisherName}, shared with it): a name that parses as a Distinguished Name
+ * (DN) must match every RDN it specifies against the certificate subject (extra subject RDNs are ignored); otherwise
+ * it is compared strictly against the subject's Common Name (CN). Passes when ANY configured name matches — multiple
+ * names are supported for certificate rotation. The subject is taken in the format Windows reports it (as the
+ * updater sees it) when known.
  */
 export function publisherNameMatchesCertificate(publisherNames: Array<string>, certInfo: CertificateInfo): boolean {
-  const subject = parseDn(certInfo.bloodyMicrosoftSubjectDn)
-  return publisherNames.some(name => {
-    const dn = parseDn(name)
-    if (dn.size) {
-      return Array.from(dn.keys()).every(key => dn.get(key) === subject.get(key))
-    }
-    return name === certInfo.commonName
-  })
+  return matchPublisherName(publisherNames, certInfo.windowsSubjectDn ?? certInfo.bloodyMicrosoftSubjectDn) != null
 }
 
 export abstract class SigntoolBaseSignManager implements SignManager {
@@ -157,6 +155,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
         return {
           // empty for a subject without a CN, like readCertInfo, so computedPublisherName requires an explicit publisherName
           commonName: parseDn(bloodyMicrosoftSubjectDn).get("CN") ?? "",
+          // read from the Windows certificate store, so already in the format Windows reports (windowsSubjectDn falls back to it)
           bloodyMicrosoftSubjectDn,
         }
       }
@@ -224,7 +223,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
         `The configured publisherName does not match the subject of the code signing certificate. ` +
           `This usually means the build is signing with the wrong certificate (for example, a code signing certificate for another platform or team leaked into WIN_CSC_LINK/CSC_LINK in CI) — electron-updater would reject every update signed with it.\n` +
           `  Configured publisherName: ${publisherNames.join(" | ")}\n` +
-          `  Certificate subject: ${certInfo.bloodyMicrosoftSubjectDn}\n` +
+          `  Certificate subject: ${certInfo.windowsSubjectDn ?? certInfo.bloodyMicrosoftSubjectDn}\n` +
           `Fix win.sign.publisherName (or sign with the intended certificate). To opt out of update signature verification entirely, set publisherName to null.`
       )
     }

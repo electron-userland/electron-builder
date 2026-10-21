@@ -142,6 +142,8 @@ describe("readCertInfo — happy path", () => {
     expect(result.commonName).toBe("Test Publisher")
     // DN uses shortName=value pairs joined by commas, no spaces — must match binary format exactly
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=Test Publisher,O=Test Org,L=San Francisco,ST=California,C=US")
+    // the subject as Windows (and so electron-updater) reports it: reverse encoding order, S for the state
+    expect(result.windowsSubjectDn).toBe("C=US, S=California, L=San Francisco, O=Test Org, CN=Test Publisher")
   })
 
   it("handles a certificate with CN only", async () => {
@@ -189,6 +191,7 @@ describe("readCertInfo — special characters in DN values", () => {
     expect(jsResult.commonName).toBe("Publisher, Inc. + Partners")
     // , and + in the CN value must cause the whole value to be wrapped in quotes
     expect(jsResult.bloodyMicrosoftSubjectDn).toBe(`CN="Publisher, Inc. + Partners",C=US`)
+    expect(jsResult.windowsSubjectDn).toBe(`C=US, CN="Publisher, Inc. + Partners"`)
   })
 })
 

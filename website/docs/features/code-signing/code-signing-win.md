@@ -45,6 +45,14 @@ All Windows code signing is configured under a single `win.sign` key using a dis
 
 Combining `win.sign: false` with `forceCodeSigning: true` is a configuration error and fails the build.
 
+### Publisher name and update verification
+
+When your app uses electron-updater, the resolved `publisherName` (your explicit `win.sign.publisherName`, or the certificate's Common Name) is written into `app-update.yml`, and electron-updater refuses to install a downloaded NSIS update whose Authenticode signer does not match it. To catch a wrong `publisherName` before you ship, electron-builder checks the signed installer itself at build time — the `nsis` installer, or the `nsis-web` stub — with the same matching rules electron-updater applies, and fails the build if the signer does not match. Because it inspects the signed output, this also covers signing routes where the certificate is not known up front: a custom `sign` hook, Azure Trusted Signing and PKCS#11.
+
+- A DN `publisherName` (e.g. `CN=My Company, O=My Company, L=Berlin, S=Berlin, C=DE`) must match every attribute it lists; attribute names are the ones Windows shows in the certificate subject (for example `S` for the state or province, not `ST`). A plain name is compared with the certificate's Common Name only, which electron-updater accepts with a warning.
+- The signer is read with `Get-AuthenticodeSignature` on Windows (a signature it cannot read fails the build) and from the installer's embedded signature on macOS/Linux (a signature that cannot be parsed there is only warned about).
+- The check runs only when the installer was signed by electron-builder (or your `sign` hook), `win.verifyUpdateCodeSignature` is enabled and `app-update.yml` carries a `publisherName`. Set `win.verifyUpdateCodeSignature: false` only if your updates are not Authenticode-signed. Signing that happens after electron-builder finishes is not checked.
+
 ---
 
 ## Signtool Signing (`type: "signtool"`)

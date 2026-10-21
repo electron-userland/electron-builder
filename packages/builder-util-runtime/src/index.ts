@@ -45,6 +45,7 @@ export {
   GitlabReleaseInfo,
   GitlabReleaseAsset,
 } from "./publishOptions.js"
+export { matchPublisherName, PublisherNameMatch, PublisherNameMatchKind } from "./publisherName.js"
 export { retry, sleep } from "./retry.js"
 export { parseDn } from "./rfc2253Parser.js"
 export { BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo, UpdateFileInfo, UpdateInfo, UpdateManifestSignature, WindowsUpdateInfo } from "./updateInfo.js"

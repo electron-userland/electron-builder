@@ -1,4 +1,4 @@
-import { parseDn } from "builder-util-runtime"
+import { matchPublisherName } from "builder-util-runtime"
 import { execFile, execFileSync, ExecFileOptions } from "child_process"
 import * as os from "os"
 import type { VerifyUpdateFileResult } from "./types.js"
@@ -68,23 +68,22 @@ function checkLiteralPath(data: any, unescapedTempUpdateFile: string, logger: Lo
   }
 }
 
-// Returns true if any entry in publisherNames matches the signing certificate subject.
+// Returns true if any entry in publisherNames matches the signing certificate subject. The matching rules are
+// shared with electron-builder (matchPublisherName), which applies them to the signed installer at build time.
 function matchPublisher(data: any, publisherNames: string[], logger: Logger): boolean {
-  const subject = parseDn(data.SignerCertificate.Subject)
-  for (const name of publisherNames) {
-    const dn = parseDn(name)
-    if (dn.size) {
-      // if we have a full DN, compare all values
-      const allKeys = Array.from(dn.keys())
-      if (allKeys.every(key => dn.get(key) === subject.get(key))) {
-        return true
-      }
-    } else if (name === subject.get("CN")!) {
-      logger.warn(`Signature validated using only CN ${name}. Please add your full Distinguished Name (DN) to publisherNames configuration`)
-      return true
-    }
+  const signerCertificate: unknown = data.SignerCertificate
+  const subject = signerCertificate != null && typeof signerCertificate === "object" && "Subject" in signerCertificate ? signerCertificate.Subject : null
+  if (typeof subject !== "string") {
+    return false
   }
-  return false
+  const match = matchPublisherName(publisherNames, subject)
+  if (match == null) {
+    return false
+  }
+  if (match.kind === "cn") {
+    logger.warn(`Signature validated using only CN ${match.publisherName}. Please add your full Distinguished Name (DN) to publisherNames configuration`)
+  }
+  return true
 }
 
 // Parses Get-AuthenticodeSignature JSON, checks the LiteralPath guard, and
