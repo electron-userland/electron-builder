@@ -10,6 +10,7 @@ import MsixTarget from "app-builder-lib/src/targets/win/MsixTarget"
 import { getAtsBundleDir, getDotnetRuntimeDir, getWindowsKitsBundle } from "app-builder-lib/src/toolsets/winCodeSign"
 import type { WinPackager } from "app-builder-lib/src/winPackager"
 import { exec, InvalidConfigurationError } from "builder-util"
+import { matchPublisherName, parseDn } from "builder-util-runtime"
 import { writeFile } from "fs/promises"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
@@ -1089,21 +1090,36 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
     await expectMissingPublisherNameError(manager)
   })
 
-  // electron-updater 7 matches a DN against the signer subject in the format Windows reports it: the derived name is that full subject
-  test("derives the full certificate subject in the Windows format", async () => {
+  // electron-updater 7 matches a DN against the signer subject in the format Windows reports it. The derived name pins only the CN
+  // (`CN=<common name>`, quoted as Windows quotes it), so a renewed certificate that keeps the CN keeps updates working.
+  test("derives CN=<common name> of the certificate, not its full subject", async () => {
     const manager: any = makePublisherNameManager(undefined)
     manager.cscInfo = { value: Promise.resolve({ file: "env-cert.pfx", password: null }) }
+    const windowsSubjectDn = 'CN=Acme Corp, O="Acme, Inc.", L=San Francisco, S=California, C=US'
     manager.lazyCertInfo = {
       value: Promise.resolve({
         commonName: "Acme Corp",
         bloodyMicrosoftSubjectDn: "CN=Acme Corp,O=Acme\\, Inc.,L=San Francisco,ST=California,C=US",
-        windowsSubjectDn: 'CN=Acme Corp, O="Acme, Inc.", L=San Francisco, S=California, C=US',
+        windowsSubjectDn,
       }),
     }
-    await expect(manager.computedPublisherName.value).resolves.toEqual(['CN=Acme Corp, O="Acme, Inc.", L=San Francisco, S=California, C=US'])
+    await expect(manager.computedPublisherName.value).resolves.toEqual(["CN=Acme Corp"])
+    expect(matchPublisherName({ SignerCertificate: { Subject: windowsSubjectDn } }, ["CN=Acme Corp"])).toBe(true)
   })
 
-  test("derives the publisherName from a real HSM certificateFile, quoting a value with a comma (Windows format)", async ({ tmpDir }) => {
+  test("the derived CN still matches a renewed certificate whose other subject attributes changed", async () => {
+    const manager: any = makePublisherNameManager(undefined)
+    manager.cscInfo = { value: Promise.resolve({ file: "env-cert.pfx", password: null }) }
+    manager.lazyCertInfo = {
+      value: Promise.resolve({ commonName: "Acme Corp", bloodyMicrosoftSubjectDn: "CN=Acme Corp,O=Acme,C=US", windowsSubjectDn: "C=US, O=Acme, CN=Acme Corp" }),
+    }
+    const derived = await manager.computedPublisherName.value
+    expect(matchPublisherName({ SignerCertificate: { Subject: "C=DE, L=Berlin, O=Acme GmbH, CN=Acme Corp" } }, derived)).toBe(true)
+    // a different CN is a rotation: it still does not match
+    expect(matchPublisherName({ SignerCertificate: { Subject: "C=US, O=Acme, CN=Acme Corporation" } }, derived)).toBe(false)
+  })
+
+  test("derives a quoted CN from a real HSM certificateFile whose CN needs quoting (Windows format)", async ({ tmpDir }) => {
     const dir = await tmpDir.createTempDir()
     const certificateFile = path.join(dir, "chain.crt")
     await exec("openssl", [
@@ -1119,49 +1135,70 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
       "-days",
       "1",
       "-subj",
-      "/CN=Acme Corp/O=Acme, Inc./ST=California/C=US",
+      // `\+`: an unescaped `+` separates a multi-valued RDN in openssl -subj
+      "/CN=Acme, Inc. \\+ Partners/O=Acme Org/ST=California/C=US",
     ])
     const manager = makePublisherNameManager({ ...hsmSign, certificateFile })
-    await expect(manager.lazyCertInfo.value).resolves.toMatchObject({ windowsSubjectDn: 'C=US, S=California, O="Acme, Inc.", CN=Acme Corp' })
-    await expect(manager.computedPublisherName.value).resolves.toEqual(['C=US, S=California, O="Acme, Inc.", CN=Acme Corp'])
+    const windowsSubjectDn = 'C=US, S=California, O=Acme Org, CN="Acme, Inc. + Partners"'
+    await expect(manager.lazyCertInfo.value).resolves.toMatchObject({ commonName: "Acme, Inc. + Partners", windowsSubjectDn })
+    await expect(manager.computedPublisherName.value).resolves.toEqual(['CN="Acme, Inc. + Partners"'])
+    expect(matchPublisherName({ SignerCertificate: { Subject: windowsSubjectDn } }, ['CN="Acme, Inc. + Partners"'])).toBe(true)
   })
 
-  test("derives the certificate-store subject as is", async () => {
+  test("derives CN=<common name> of a certificate-store subject", async () => {
     const manager: any = makePublisherNameManager({ type: "signtool", certificateSubjectName: "Acme Corp" })
     manager.cscInfo = { value: Promise.resolve({ thumbprint: "AB12", subject: "CN=Acme Corp, O=Acme Corporation, L=Berlin", store: "My", isLocalMachineStore: false }) }
-    await expect(manager.computedPublisherName.value).resolves.toEqual(["CN=Acme Corp, O=Acme Corporation, L=Berlin"])
+    await expect(manager.computedPublisherName.value).resolves.toEqual(["CN=Acme Corp"])
   })
 
-  test("a certificate without an O (or with the CN only) derives its subject: no O is required", async () => {
+  test("derives a quoted CN of a certificate-store subject whose CN needs quoting", async () => {
+    const subject = 'CN="Acme ""Labs"", Inc.", O=Acme Corporation, C=US'
+    const manager: any = makePublisherNameManager({ type: "signtool", certificateSubjectName: "Acme" })
+    manager.cscInfo = { value: Promise.resolve({ thumbprint: "AB12", subject, store: "My", isLocalMachineStore: false }) }
+    const [derived] = await manager.computedPublisherName.value
+    expect(derived).toMatch(/^CN="/)
+    expect(parseDn(derived).get("CN")).toBe(parseDn(subject).get("CN"))
+    expect(matchPublisherName({ SignerCertificate: { Subject: subject } }, [derived])).toBe(true)
+  })
+
+  test("a certificate without an O (or with the CN only) derives CN=<common name>: no O is required", async () => {
     for (const windowsSubjectDn of ["CN=Acme Corp, C=US", "CN=Acme Corp"]) {
       const manager: any = makePublisherNameManager(undefined)
       manager.cscInfo = { value: Promise.resolve({ file: "env-cert.pfx", password: null }) }
       manager.lazyCertInfo = { value: Promise.resolve({ commonName: "Acme Corp", bloodyMicrosoftSubjectDn: "CN=Acme Corp", windowsSubjectDn }) }
-      await expect(manager.computedPublisherName.value).resolves.toEqual([windowsSubjectDn])
+      await expect(manager.computedPublisherName.value).resolves.toEqual(["CN=Acme Corp"])
     }
   })
 
-  test("a certificate whose subject is not a distinguished name throws, telling to set publisherName explicitly or null", async () => {
-    const manager: any = makePublisherNameManager(undefined)
-    manager.cscInfo = { value: Promise.resolve({ file: "env-cert.pfx", password: null }) }
-    manager.lazyCertInfo = { value: Promise.resolve({ commonName: "Acme Corp", bloodyMicrosoftSubjectDn: "CN=Acme Corp", windowsSubjectDn: "" }) }
-    const error = await manager.computedPublisherName.value.then(
-      () => null,
-      (e: Error) => e
-    )
+  test("derivePublisherName returns CN=<common name>, quoted as Windows quotes the subject, and throws for an empty one", () => {
+    expect(derivePublisherName("Acme Corp")).toBe("CN=Acme Corp")
+    for (const [commonName, expected] of [
+      ["Acme, Inc.", 'CN="Acme, Inc."'],
+      ["Acme + Partners", 'CN="Acme + Partners"'],
+      ['Acme "Labs"', 'CN="Acme ""Labs"""'],
+      ["A=B", 'CN="A=B"'],
+      ["Acme; Ltd", 'CN="Acme; Ltd"'],
+      [" Acme ", 'CN=" Acme "'],
+    ]) {
+      const derived = derivePublisherName(commonName)
+      expect(derived).toBe(expected)
+      // the Windows-reported subject quotes the CN the same way, so the derived name parses to the same CN and matches it
+      const windowsSubject = `C=US, O=Acme Org, ${expected}`
+      expect(parseDn(derived).get("CN")).toBe(parseDn(windowsSubject).get("CN"))
+      expect(matchPublisherName({ SignerCertificate: { Subject: windowsSubject } }, [derived])).toBe(true)
+    }
+    const error = (() => {
+      try {
+        derivePublisherName("")
+        return null
+      } catch (e: any) {
+        return e
+      }
+    })()
     expect(error).toBeInstanceOf(InvalidConfigurationError)
-    expect(error.message).toContain('its subject ("") is not a distinguished name')
     expect(error.message).toContain("Set win.sign.publisherName explicitly")
     expect(error.message).toContain("set it to null")
     expect(error.message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name")
-  })
-
-  test("derivePublisherName returns a DN subject verbatim and throws for one that is not a DN", () => {
-    expect(derivePublisherName("C=US, O=Acme Corporation, CN=Acme Corp")).toBe("C=US, O=Acme Corporation, CN=Acme Corp")
-    expect(derivePublisherName('CN="Acme, Inc."')).toBe('CN="Acme, Inc."')
-    for (const subject of ["", "   ", "Acme Corp"]) {
-      expect(() => derivePublisherName(subject)).toThrow(InvalidConfigurationError)
-    }
   })
 
   test("an explicit bare publisherName throws even for a custom sign hook", async () => {
@@ -1253,6 +1290,8 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
         }),
       }
       await expect(manager.computePublisherName(target, null)).resolves.toBe("C=US, S=California, O=EB Test Org, CN=EB Test Code Signing")
+      // the AppX/MSIX Publisher must equal the full subject, unlike the CN-only publisherName derived for app-update.yml
+      await expect(manager.computedPublisherName.value).resolves.toEqual(["CN=EB Test Code Signing"])
       // an explicitly configured publisher wins
       await expect(manager.computePublisherName(target, "CN=Acme Corp, O=Acme")).resolves.toBe("CN=Acme Corp, O=Acme")
     }
@@ -1262,5 +1301,6 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
     const manager: any = makePublisherNameManager({ type: "signtool", certificateSubjectName: "Acme Corp" })
     manager.cscInfo = { value: Promise.resolve({ thumbprint: "AB12", subject: "CN=Acme Corp, O=Acme Corporation, C=US", store: "My", isLocalMachineStore: false }) }
     await expect(manager.computePublisherName(Object.create(AppXTarget.prototype), null)).resolves.toBe("CN=Acme Corp, O=Acme Corporation, C=US")
+    await expect(manager.computedPublisherName.value).resolves.toEqual(["CN=Acme Corp"])
   })
 })

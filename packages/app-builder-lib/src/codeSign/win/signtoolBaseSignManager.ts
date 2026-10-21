@@ -138,8 +138,9 @@ export abstract class SigntoolBaseSignManager implements SignManager {
 
     const certInfo = await this.lazyCertInfo.value
     if (certInfo?.commonName) {
-      // the certificate's full subject DN, in the format Windows reports the signer subject (which electron-updater 7 matches against)
-      return [derivePublisherName(certificateWindowsSubjectDn(certInfo))]
+      // `CN=<common name>`, quoted as Windows reports the signer subject (which electron-updater 7 matches against): pinning only the CN
+      // keeps updates working across a certificate renewal that changes other subject attributes. A stricter pin is an explicit publisherName.
+      return [derivePublisherName(certInfo.commonName)]
     }
     // Signed with a certificate without a CN (or whose subject cannot be read): electron-updater verifies downloaded updates against the
     // publisherName in app-update.yml, so the build needs one.

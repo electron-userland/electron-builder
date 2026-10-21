@@ -1,5 +1,6 @@
 import { InvalidConfigurationError } from "builder-util"
 import { isValidPublisherNameDn } from "builder-util-runtime"
+import { quoteWindowsDnValue } from "./authenticodeSignature.js"
 
 export const PUBLISHER_NAME_DN_DOCS_URL = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
 
@@ -40,17 +41,20 @@ export function validatePublisherNameFormat(publisherName: string | ReadonlyArra
 }
 
 /**
- * The publisher name written to `app-update.yml` when none is configured: the full subject of the signing certificate,
- * in the format Windows reports it (`X509Certificate2.Subject`, which electron-updater matches against). Throws an
- * {@link InvalidConfigurationError} when the subject is not a distinguished name (e.g. it is empty).
+ * The publisher name written to `app-update.yml` when none is configured: `CN=<common name>` of the signing certificate,
+ * with the value quoted the way Windows quotes it in the subject it reports (`X509Certificate2.Subject`, which electron-updater
+ * matches against), so a common name containing e.g. `,`, `+` or `"` matches the signer's CN. Only the CN is pinned, so a
+ * renewed certificate whose other subject attributes change still matches; a stricter pin is an explicit publisherName.
+ * Throws an {@link InvalidConfigurationError} when the certificate has no common name (empty).
  */
-export function derivePublisherName(windowsSubjectDn: string): string {
-  if (!isValidPublisherNameDn(windowsSubjectDn)) {
+export function derivePublisherName(commonName: string): string {
+  const publisherName = `CN=${quoteWindowsDnValue(commonName)}`
+  if (commonName.length === 0 || !isValidPublisherNameDn(publisherName)) {
     throw new InvalidConfigurationError(
-      `Cannot derive publisherName from the code signing certificate: its subject (${JSON.stringify(windowsSubjectDn)}) is not a distinguished name. ` +
-        `Set win.sign.publisherName explicitly to the subject of the certificate that signs your updates, ` +
+      `Cannot derive publisherName from the code signing certificate: its Common Name (${JSON.stringify(commonName)}) cannot form a distinguished name. ` +
+        `Set win.sign.publisherName explicitly to the subject of the certificate that signs your updates (or the attributes of it to compare), ` +
         `or set it to null (or win.verifyUpdateCodeSignature: false) to opt out of update signature verification. See ${PUBLISHER_NAME_DN_DOCS_URL}`
     )
   }
-  return windowsSubjectDn
+  return publisherName
 }

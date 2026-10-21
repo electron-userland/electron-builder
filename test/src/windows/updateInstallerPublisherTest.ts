@@ -4,6 +4,7 @@ import {
   readAuthenticodeSignerWithPowerShell,
   readEmbeddedAuthenticodeSigner,
 } from "app-builder-lib/src/codeSign/win/authenticodeSignature"
+import { derivePublisherName } from "app-builder-lib/src/codeSign/win/publisherName"
 import { verifyUpdateInstallerPublisher } from "app-builder-lib/src/codeSign/win/verifyUpdatePublisher"
 import type { SigningResult } from "app-builder-lib/src/codeSign/signResult"
 import { InvalidConfigurationError, log } from "builder-util"
@@ -268,6 +269,25 @@ describe("readEmbeddedAuthenticodeSigner", () => {
   test("quotes values with special characters, doubling embedded quotes", async ({ expect, tmpDir }) => {
     const file = await signedPe(tmpDir, '/C=US/O=Acme\\, Inc./OU=say "hi"/CN=A\\+B')
     await expect(readEmbeddedAuthenticodeSigner(file)).resolves.toMatchObject({ subject: 'CN="A+B", OU="say ""hi""", O="Acme, Inc.", C=US' })
+  })
+
+  // electron-builder derives `CN=<common name>` without a configured publisherName: it must match the signer subject the updater reads,
+  // also when the CN needs quoting, and keep matching a renewed certificate with the same CN and other attributes changed
+  test("the derived CN=<common name> of a CN that needs quoting passes the installer check, also after a renewal", async ({ expect, tmpDir }) => {
+    const derived = derivePublisherName('Acme, Inc. + "Partners"')
+    expect(derived).toBe('CN="Acme, Inc. + ""Partners"""')
+    const appOutDir = await createAppOutDir(tmpDir, [derived])
+    for (const subject of ['/C=US/O=Acme Corporation/CN=Acme\\, Inc. \\+ "Partners"', '/C=DE/L=Berlin/O=Acme GmbH/CN=Acme\\, Inc. \\+ "Partners"']) {
+      const file = await signedPe(tmpDir, subject)
+      const signer = await readEmbeddedAuthenticodeSigner(file)
+      expect(signer).toMatchObject({ type: "signed", subject: expect.stringMatching(/^CN="Acme, Inc\. \+ ""Partners""", /) })
+      await expect(verifyUpdateInstallerPublisher(stubPackager(), file, "signed", [appOutDir], { readSigner: readEmbeddedAuthenticodeSigner })).resolves.toBeUndefined()
+    }
+    // a renewal that changes the CN is a rotation: the derived name does not match it
+    const renamed = await signedPe(tmpDir, "/C=US/O=Acme Corporation/CN=Acme Partners")
+    await expect(verifyUpdateInstallerPublisher(stubPackager(), renamed, "signed", [appOutDir], { readSigner: readEmbeddedAuthenticodeSigner })).rejects.toThrow(
+      InvalidConfigurationError
+    )
   })
 
   test("writes e-mail as E and unknown attributes as OID.<oid>, like EV certificate subjects", async ({ expect, tmpDir }) => {

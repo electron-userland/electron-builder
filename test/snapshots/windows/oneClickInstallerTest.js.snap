@@ -14,7 +14,7 @@ exports[`one-click 2`] = `
 }
 `;
 
-exports[`one-click signed without publisherName: app-update.yml has the certificate's subject 1`] = `
+exports[`one-click signed without publisherName: app-update.yml has the certificate's CN 1`] = `
 {
   "win": [],
 }

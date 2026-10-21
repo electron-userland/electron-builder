@@ -131,7 +131,10 @@ interface WindowsSigningSharedOptions {
    *   subject, so electron-builder derives it from this value (or the certificate) to keep them
    *   in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.
    *
-   * Defaults to the full subject of your code signing certificate, in the format Windows reports it.
+   * Defaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the
+   * same common name keeps updates working even when its other subject attributes change. For a stricter
+   * pin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,
+   * signed with the old certificate, that lists both DNs).
    * **Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a
    * custom [sign](#sign) hook, even if a certificate is configured, and for a certificate without a
    * CN — otherwise the build fails. Set to `null` to opt out.

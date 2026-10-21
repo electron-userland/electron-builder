@@ -77,7 +77,7 @@ export const WIN_PUBLISHER_NAME_DN_ADVISORY =
   "win.sign.publisherName that is not a distinguished name detected. In v27, every publisherName entry must be in distinguished name (DN) " +
   'format, e.g. "CN=My Company, O=My Company, C=US": electron-updater 7 never matches a bare name, so the build fails with InvalidConfigurationError. ' +
   "Set win.sign.publisherName to the certificate subject (on Windows, (Get-AuthenticodeSignature <signed .exe>).SignerCertificate.Subject prints it), " +
-  "or (unless a custom win.sign.sign hook signs) remove it to derive the full subject from the signing certificate. " +
+  "or (unless a custom win.sign.sign hook signs) remove it to derive CN=<common name> from the signing certificate. " +
   "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
 
 /** True when `publisherName` (a string or a list) has an entry that is not a distinguished name. */
