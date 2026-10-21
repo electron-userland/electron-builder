@@ -1,5 +1,7 @@
 // if baseUrl path doesn't ends with /, this path will be not prepended to passed pathname for new URL(input, base)
 import { HttpExecutor } from "builder-util-runtime"
+import fsExtra from "fs-extra"
+import * as path from "path"
 import { URL } from "url"
 
 /** @internal */
@@ -32,4 +34,16 @@ export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToA
 
 export function getChannelFilename(channel: string): string {
   return `${channel}.yml`
+}
+
+/**
+ * The install type recorded in `resources/package-type` by the installer or package (e.g. `nsis`, `nsis-web`, `deb`, `msix`), or `null`
+ * without one (or outside a packaged app). Never throws.
+ */
+export function readPackageType(): string | null {
+  try {
+    return process.resourcesPath ? fsExtra.readFileSync(path.join(process.resourcesPath, "package-type"), "utf8").trim() : null
+  } catch (_ignored) {
+    return null
+  }
 }

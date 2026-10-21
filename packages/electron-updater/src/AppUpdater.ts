@@ -34,7 +34,7 @@ import { ElectronAppAdapter } from "./ElectronAppAdapter.js"
 import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor.js"
 import { GenericProvider } from "./providers/GenericProvider.js"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory.js"
-import { Provider, ProviderPlatform } from "./providers/Provider.js"
+import { Provider, ProviderPlatform, ProviderRuntimeOptions } from "./providers/Provider.js"
 import type { TypedEmitter } from "tiny-typed-emitter"
 type Session = Electron.Session
 import type { AuthInfo } from "electron"
@@ -447,6 +447,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   protected updateInfoAndProvider: UpdateInfoAndProvider | null = null
 
+  // the update manifests whose signature verifyManifestSignature verified with a trusted key
+  private readonly verifiedManifests = new WeakSet<UpdateInfo>()
+
   /** @internal */
   readonly httpExecutor: ElectronHttpExecutor
 
@@ -742,9 +745,15 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     this._logger.debug?.(`Update manifest for version ${info.version} verified with trusted key ${result.keyId}`)
     this._logger.info(`Update manifest signature verified for version ${info.version}`)
+    this.verifiedManifests.add(info)
   }
 
-  private createProviderRuntimeOptions() {
+  /** Whether a trusted key verified the signature of this update manifest, in the update check that returned it. */
+  protected isManifestVerified(info: UpdateInfo): boolean {
+    return this.verifiedManifests.has(info)
+  }
+
+  protected createProviderRuntimeOptions(): ProviderRuntimeOptions {
     return {
       isUseMultipleRangeRequest: true,
       platform: this._testOnlyOptions == null ? (process.platform as ProviderPlatform) : this._testOnlyOptions.platform,

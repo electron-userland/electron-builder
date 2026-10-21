@@ -14,6 +14,9 @@ export interface ProviderRuntimeOptions {
   platform: ProviderPlatform
 
   executor: ElectronHttpExecutor
+
+  /** Set by MsixUpdater: an MSIX install reads `<channel>-msix.yml` (e.g. `latest-msix.yml`), not the `latest.yml` of NSIS installs. */
+  isMsix?: boolean
 }
 
 // Shared by the GitHub/GitLab/PrivateGitHub providers when a release channel file (e.g. latest.yml) 404s.
@@ -46,6 +49,9 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   private getChannelFilePrefix(): string {
+    if (this.runtimeOptions.isMsix === true) {
+      return "-msix"
+    }
     if (this.runtimeOptions.platform === "linux") {
       const arch = process.env["TEST_UPDATER_ARCH"] || process.arch
       const archSuffix = arch === "x64" ? "" : `-${arch}`
