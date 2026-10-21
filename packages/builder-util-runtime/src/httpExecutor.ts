@@ -661,6 +661,24 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage)
     lastStream = lastStream.pipe(stream)
   }
 
+  // .pipe() does not pass a failure of its source on: a response that errors or is aborted before its end (lost connection,
+  // a request timeout, Electron's request.abort() destroying it) would leave the transforms and fileOut, and with it the
+  // destination's file descriptor, open for the life of the process. The error itself is reported by whoever ended it.
+  let isResponseEnded = false
+  response.on("end", () => {
+    isResponseEnded = true
+  })
+  const destroyStreams = () => {
+    if (!isResponseEnded) {
+      for (const stream of streams) {
+        stream.destroy()
+      }
+    }
+  }
+  response.on("error", destroyStreams)
+  response.on("aborted", destroyStreams)
+  response.on("close", destroyStreams)
+
   fileOut.on("finish", () => {
     ;(fileOut.close as any)(options.callback)
   })

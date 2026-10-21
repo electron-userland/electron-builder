@@ -346,7 +346,7 @@ export class NsisUpdater extends BaseUpdater {
 
       await new FileWithEmbeddedBlockMapDifferentialDownloader(packageInfo, this.httpExecutor, downloadOptions).download()
     } catch (e: any) {
-      this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+      this.logDifferentialDownloadFallback(e)
       // during test (developer machine mac or linux) we must throw error
       return process.platform === "win32"
     }

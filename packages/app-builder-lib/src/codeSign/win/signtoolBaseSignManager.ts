@@ -105,6 +105,11 @@ export abstract class SigntoolBaseSignManager implements SignManager {
   }
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
+    // `win.sign: false` signs nothing, so a certificate in CSC_LINK / WIN_CSC_LINK must not leak its subject into app-update.yml.
+    if (isWindowsSigningDisabled(this.platformSpecificBuildOptions)) {
+      return null
+    }
+
     const signing = getSigntoolFamilyConfig(this.platformSpecificBuildOptions)
     const publisherName = signing?.publisherName
     if (publisherName === null) {
