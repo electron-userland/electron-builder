@@ -348,12 +348,12 @@ describe("docs changelog", () => {
       expect(html.filter(h => h.replace(written, "").includes("<"))).toEqual([])
     })
 
-    test("reads the releases since 26.0.0-alpha.0, each following an older one or the base 25.1.8", ({ expect }) => {
-      expect(builder()[builder().length - 1].id).toBe("26.0.0-alpha.0")
-      expect(real.bases).toEqual([{ version: "25.1.8", tag: "electron-builder@25.1.8" }])
+    test("reads the releases since 24.0.0, each following an older one or the base 23.6.0", ({ expect }) => {
+      expect(builder()[builder().length - 1].id).toBe("24.0.0")
+      expect(real.bases).toEqual([{ version: "23.6.0", tag: "v23.6.0" }])
       for (const release of builder()) {
         const parent = index(release.parent)
-        expect([release.id, release.parent, parent === -1 ? release.parent === "25.1.8" : parent > index(release.id)]).toEqual([release.id, release.parent, true])
+        expect([release.id, release.parent, parent === -1 ? release.parent === "23.6.0" : parent > index(release.id)]).toEqual([release.id, release.parent, true])
       }
     })
 
@@ -375,8 +375,10 @@ describe("docs changelog", () => {
       // only the 27 alphas: 26.15.4 .. 26.17.0 were released from release/v26 in parallel
       expect(counts("26.15.3", "27.0.0-alpha.11")).toEqual([41, 38, 151])
       expect(keys("26.17.0", "27.0.0-alpha.11")).toEqual(keys("26.15.3", "27.0.0-alpha.11"))
-      // 26.0.0 lists the changesets of its alphas again
-      expect(counts("25.1.8", "26.0.0")).toEqual([5, 11, 38])
+      // 26.0.0 follows 25.1.8 and lists the changesets of its alphas again
+      expect(counts("25.1.6", "26.0.0")).toEqual([5, 11, 44])
+      // across all of v25
+      expect(counts("24.13.3", "26.0.0")).toEqual([5, 24, 125])
       expect(counts("26.0.0-alpha.5", "26.0.0")).toEqual([3, 6, 20])
       expect(counts("26.0.0-alpha.11", "26.0.0")).toEqual([0, 0, 0])
       expect(counts("27.0.0-alpha.11", "26.15.3")).toEqual([0, 0, 0])
