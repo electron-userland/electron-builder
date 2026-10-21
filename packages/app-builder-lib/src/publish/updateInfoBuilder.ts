@@ -5,7 +5,7 @@ import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
-import { Platform } from "../core.js"
+import { Platform, type Target } from "../core.js"
 import { ReleaseInfo } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
 import { ArtifactCreated } from "../packagerApi.js"
@@ -88,8 +88,9 @@ function warnAboutSuffixedChannelExpansion(currentChannel: string, suffix: strin
   return channels
 }
 
-function getUpdateInfoFileName(channel: string, packager: PlatformPackager<any>, arch: Arch | null): string {
-  const osSuffix = packager.platform === Platform.WINDOWS ? "" : `-${packager.platform.buildConfigurationKey}`
+function getUpdateInfoFileName(channel: string, packager: PlatformPackager<any>, arch: Arch | null, target: Target | null): string {
+  // MsixUpdater reads <channel>-msix.yml, which lists only the .msixbundle; NSIS installs keep reading <channel>.yml
+  const osSuffix = target?.name === "msix" ? "-msix" : packager.platform === Platform.WINDOWS ? "" : `-${packager.platform.buildConfigurationKey}`
   return `${channel}${osSuffix}${getArchPrefixForUpdateFile(arch, packager)}.yml`
 }
 
@@ -172,7 +173,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
         await writeOldMacInfo(publishConfiguration, outDir, dir, channel, createdFiles, version, packager)
       }
 
-      const updateInfoFile = path.join(dir, getUpdateInfoFileName(channel, packager, event.arch))
+      const updateInfoFile = path.join(dir, getUpdateInfoFileName(channel, packager, event.arch, event.target))
       if (createdFiles.has(updateInfoFile)) {
         continue
       }
