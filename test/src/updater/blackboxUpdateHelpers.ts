@@ -61,7 +61,9 @@ export async function doBuild(
   tmpDir: TmpDir,
   isWindows: boolean,
   extraConfiguration?: Configuration | null,
-  versions: Array<string | VersionBuild> = [OLD_VERSION_NUMBER, NEW_VERSION_NUMBER]
+  versions: Array<string | VersionBuild> = [OLD_VERSION_NUMBER, NEW_VERSION_NUMBER],
+  /** runs after the test app's package.json is prepared, e.g. to add build resources to the project */
+  projectDirCreated?: (projectDir: string) => Promise<void>
 ) {
   const currentPlatform = isWindows ? Platform.WINDOWS : Platform.current()
   async function buildApp({
@@ -173,6 +175,7 @@ export async function doBuild(
             },
             true
           )
+          await projectDirCreated?.(projectDir)
         },
       }
     )

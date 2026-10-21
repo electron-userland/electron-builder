@@ -44,8 +44,23 @@ async function init() {
   await isReady()
 }
 
+// MSIX e2e: the package family name Electron's MSIX autoUpdater reports (electron.autoUpdater is touched only with package identity)
+function getPackageFamilyName() {
+  if (process.windowsStore !== true) {
+    return null
+  }
+  try {
+    return electron.autoUpdater.getPackageInfo().familyName
+  } catch (error) {
+    return `error: ${error.message}`
+  }
+}
+
 async function isReady() {
   console.log(`APP_VERSION: ${app.getVersion()}`)
+  if (process.platform === "win32") {
+    console.log(`MSIX_IDENTITY: ${JSON.stringify({ windowsStore: process.windowsStore === true, packageFamilyName: getPackageFamilyName() })}`)
+  }
 
   if (!shouldTestAutoUpdater) {
     // Probe mode: version already printed; quit without creating any windows
@@ -120,9 +135,10 @@ async function isReady() {
     })
     autoUpdater.on("update-downloaded", () => {
       console.log("Update downloaded, starting quitAndInstall")
-      // isForceRunAfter must be false, do not auto-restart app as the unit tests will lose stdout piping/access.
+      // isForceRunAfter must be false for the NSIS tests, do not auto-restart app as the unit tests will lose stdout piping/access.
+      // The MSIX e2e sets it (AUTO_UPDATER_TEST_AUTO_RUN_AFTER_INSTALL) to take MsixUpdater's native install path instead of deferring the install to the next launch.
       // waitUntilNextLaunch queues the pending install and quits instead of running the installer.
-      autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: false, waitUntilNextLaunch: isNextLaunchQueueMode })
+      autoUpdater.quitAndInstall({ isSilent: true, isForceRunAfter: process.env.AUTO_UPDATER_TEST_AUTO_RUN_AFTER_INSTALL === "true", waitUntilNextLaunch: isNextLaunchQueueMode })
     })
     autoUpdater.on("update-not-available", () => {
       console.log("Update not available")

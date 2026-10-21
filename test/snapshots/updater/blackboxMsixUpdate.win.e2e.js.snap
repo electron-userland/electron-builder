@@ -1,0 +1,83 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`msix auto-update > installed msixbundle updates itself with MsixUpdater 1`] = `
+{
+  "win": [
+    {
+      "file": "latest-msix.yml",
+      "fileContent": {
+        "files": [
+          {
+            "packageFamilyName": "TestAppMsixUpdate_by1eqepggsspe",
+            "packageVersion": "1.0.0.0",
+            "sha512": "@sha512",
+            "url": "TestApp.msixbundle",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "signature": "@signature",
+        "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+        ],
+        "version": "1.0.0",
+      },
+    },
+    {
+      "file": "TestApp.msixbundle",
+      "updateInfo": {
+        "packageFamilyName": "TestAppMsixUpdate_by1eqepggsspe",
+        "packageVersion": "1.0.0.0",
+        "sha512": "@sha512",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp.msix",
+    },
+  ],
+}
+`;
+
+exports[`msix auto-update > installed msixbundle updates itself with MsixUpdater 2`] = `
+{
+  "win": [
+    {
+      "file": "latest-msix.yml",
+      "fileContent": {
+        "files": [
+          {
+            "packageFamilyName": "TestAppMsixUpdate_by1eqepggsspe",
+            "packageVersion": "1.0.1.0",
+            "sha512": "@sha512",
+            "url": "TestApp.msixbundle",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "signature": "@signature",
+        "signatures": [
+          {
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+        ],
+        "version": "1.0.1",
+      },
+    },
+    {
+      "file": "TestApp.msixbundle",
+      "updateInfo": {
+        "packageFamilyName": "TestAppMsixUpdate_by1eqepggsspe",
+        "packageVersion": "1.0.1.0",
+        "sha512": "@sha512",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp.msix",
+    },
+  ],
+}
+`;
