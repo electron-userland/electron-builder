@@ -41,9 +41,17 @@ All Windows code signing is configured under a single `win.sign` key using a dis
 | `{ type: "hsm", ... }` | Hardware Security Module / FIPS token via a Windows CSP — **Beta** | Windows only |
 | `{ type: "pkcs11", ... }` | PKCS#11 hardware token via `osslsigncode` — **Beta** | macOS/Linux |
 | `{ type: "azure", ... }` | Azure Trusted Signing cloud service — **Beta** | all (`signtool /dlib`, Wine on macOS/Linux) |
-| `false` or `null` | Disable signing (resedit resource editing still runs) | all |
+| `false` or `null` | Disable signing (resedit resource editing still runs). No certificate is read, not even from `WIN_CSC_LINK` / `CSC_LINK`, and no `publisherName` is written to `app-update.yml`. If you sign the build outside electron-builder, use `{ type: "signtool", publisherName: [...] }` (or a custom `sign` hook with `publisherName`) instead, so `app-update.yml` carries the publisher electron-updater verifies updates against | all |
 
 Combining `win.sign: false` with `forceCodeSigning: true` is a configuration error and fails the build.
+
+### Publisher name and update verification
+
+When your app uses electron-updater, the resolved `publisherName` (your explicit `win.sign.publisherName`, or the certificate's Common Name) is written into `app-update.yml`, and electron-updater refuses to install a downloaded NSIS update whose Authenticode signer does not match it. To catch a wrong `publisherName` before you ship, electron-builder checks the signed installer itself at build time — the `nsis` installer, or the `nsis-web` stub — with the same matching rules electron-updater applies, and fails the build if the signer does not match. Because it inspects the signed output, this also covers signing routes where the certificate is not known up front: a custom `sign` hook, Azure Trusted Signing and PKCS#11.
+
+- A DN `publisherName` (e.g. `CN=My Company, O=My Company, L=Berlin, S=Berlin, C=DE`) must match every attribute it lists; attribute names are the ones Windows shows in the certificate subject (for example `S` for the state or province, not `ST`). A plain name is compared with the certificate's Common Name only, which electron-updater accepts with a warning.
+- The signer is read with `Get-AuthenticodeSignature` on Windows (a signature it cannot read fails the build) and from the installer's embedded signature on macOS/Linux (a signature that cannot be parsed there is only warned about).
+- The check runs only when the installer was signed by electron-builder (or your `sign` hook), `win.verifyUpdateCodeSignature` is enabled and `app-update.yml` carries a `publisherName`. Set `win.verifyUpdateCodeSignature: false` only if your updates are not Authenticode-signed. Signing that happens after electron-builder finishes is not checked.
 
 ---
 
@@ -108,14 +116,14 @@ HSM signing is available in v27 as a **beta** feature. The configuration interfa
 
 Signs using a Hardware Security Module (HSM), FIPS-compliant token, or smart card via `signtool.exe`'s `/csp` (cryptographic service provider) and `/kc` (key container) flags. The private key never leaves the hardware; only the public certificate chain needs to be accessible to electron-builder.
 
-**Platform:** Windows only. For macOS/Linux CI without a Windows VM, use [`type: "pkcs11"`](#pkcs11-signing-typepkcs11-beta) instead.
+**Platform:** Windows only. For macOS/Linux CI without a Windows VM, use [`type: "pkcs11"`](#pkcs11-signing-type-pkcs11-beta) instead.
 
 **Requirement:** a modern `winCodeSign` toolset, which is the default — you do not need to pin a version. Only an explicit legacy pin (`toolsets.winCodeSign: "0.0.0"`) is unsupported, because it predates the required signtool version.
 
 ### Setup
 
 1. Install the CSP driver for your HSM/token on the build machine. Examples:
-   - Google Cloud KMS: the [Cloud KMS Windows CNG Provider](https://cloud.google.com/kms/docs/reference/code-signing).
+   - Google Cloud KMS: the [Cloud KMS Windows CNG Provider](https://cloud.google.com/kms/docs/reference/cng-provider).
    - Smart card / FIPS token: `"Microsoft Base Smart Card Crypto Provider"` (built into Windows).
 2. Obtain the certificate chain file (`.crt`, `.cer`, or `.pfx` — public key only).
 3. Configure electron-builder:
@@ -163,7 +171,7 @@ PKCS#11 signing is available in v27 as a **beta** feature. The configuration int
 
 Signs using a PKCS#11 hardware token via `osslsigncode`. Unlike HSM signing, this works on macOS and Linux without a Windows VM, making it suitable for cloud CI environments where a physical token is accessible via network HSM or PKCS#11-over-network software.
 
-**Platform:** macOS and Linux only (uses `osslsigncode`). On Windows, use [`type: "hsm"`](#hsm-signing-typehsm-beta) instead.
+**Platform:** macOS and Linux only (uses `osslsigncode`). On Windows, use [`type: "hsm"`](#hsm-signing-type-hsm-beta) instead.
 
 ### Setup
 

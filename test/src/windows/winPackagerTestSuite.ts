@@ -58,10 +58,12 @@ export function registerWinPackagerTests(toolsets: ToolsetConfig): void {
       {
         targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64, Arch.arm64),
         config: {
-          extraResources: [
-            { from: "build", to: "./", filter: "*.asar" },
-            { from: "build/subdir", to: "./subdir", filter: "*.asar" },
-          ],
+          fileOptions: {
+            extraResources: [
+              { from: "build", to: "./", filter: "*.asar" },
+              { from: "build/subdir", to: "./subdir", filter: "*.asar" },
+            ],
+          },
           toolsets,
           electronLanguages: "en",
           downloadAlternateFFmpeg: true,

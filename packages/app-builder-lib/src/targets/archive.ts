@@ -1,4 +1,4 @@
-import { debug7z, exec, exists, log, statOrNull, unlinkIfExists } from "builder-util"
+import { assertNoSymlinkLeaves, debug7z, exec, exists, ExternalLinkPolicy, log, statOrNull, unlinkIfExists } from "builder-util"
 import * as path from "path"
 import { create } from "tar"
 import type { TarOptionsWithAliasesAsync } from "tar"
@@ -87,6 +87,14 @@ export interface ArchiveOptions {
   isArchiveHeaderCompressed?: boolean
 
   dictSize?: number
+
+  /**
+   * 7z only: LZMA2 block size in MB. Without it, 7-Zip splits LZMA2 into independent blocks only when it compresses with
+   * several block threads, so the archive bytes depend on the build host's CPU count. A fixed size makes them identical
+   * on any host. Ignored when storing, and when `method` names another codec.
+   */
+  blockSize?: number
+
   excluded?: Array<string> | null
 
   // DEFAULT allows to disable custom logic and do not pass method switch at all
@@ -100,6 +108,12 @@ export interface ArchiveOptions {
    * @default false
    */
   preserveSymlinks?: boolean
+
+  /**
+   * The `fileOptions.allowExternalLinks` build option. When symlinks are dereferenced (`preserveSymlinks` false, 7za), a symlink that leads outside
+   * the archived directory fails the archive unless it allows it.
+   */
+  externalLinks?: ExternalLinkPolicy | null
 
   /**
    * Paths, relative to the archived directory, to append as uncompressed (`Copy`) members instead of
@@ -176,7 +190,16 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
     }
   }
 
-  if (options.dictSize != null) {
+  const { blockSize } = options
+  const is7z = format === "7z" || format.endsWith(".7z")
+  // -mx=0 with an explicit -m0=LZMA2 would compress instead of store, so the block size is only pinned when compressing
+  const pinBlockSize = is7z && typeof blockSize === "number" && !storeOnly && compressionLevel !== "0" && (options.method == null || options.method === "DEFAULT")
+  if (pinBlockSize) {
+    if (!Number.isInteger(blockSize) || blockSize <= 0) {
+      throw new Error(`blockSize must be a positive integer (MB), got ${blockSize}`)
+    }
+    args.push(`-m0=LZMA2${options.dictSize != null ? `:d=${options.dictSize}m` : ""}:c=${blockSize}m`)
+  } else if (options.dictSize != null) {
     args.push(`-md=${options.dictSize}m`)
   }
 
@@ -185,7 +208,7 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
     args.push("-mtc=off")
   }
 
-  if (format === "7z" || format.endsWith(".7z")) {
+  if (is7z) {
     if (options.solid === false) {
       args.push("-ms=off")
     }
@@ -265,6 +288,10 @@ export async function archive(format: string, outFile: string, dirToArchive: str
   }
 
   if (use7z) {
+    if (!options.preserveSymlinks) {
+      // 7za stores what a symlink points to: one that leaves the archived directory would package files from elsewhere
+      await assertNoSymlinkLeaves(dirToArchive, `the ${format} archive "${path.basename(outFile)}"`, options.externalLinks)
+    }
     const args = compute7zCompressArgs(format, options)
     // Modern 7-Zip (24.09) dereferences symlinks by default; the 7-Zip 16.02 bundled before
     // 26.15 stored them as links. Without -snl, a macOS .framework `Versions/Current` extracts

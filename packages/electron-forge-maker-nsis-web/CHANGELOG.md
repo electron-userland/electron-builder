@@ -1,5 +1,37 @@
 # electron-forge-maker-nsis-web
 
+## 27.0.0-alpha.11
+### Patch Changes
+
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`86298ab`](https://github.com/electron-userland/electron-builder/commit/86298abd9857f56e7124d59e4c5373333d05ceda) [`a4ff5db`](https://github.com/electron-userland/electron-builder/commit/a4ff5db6261c8370d6041fd597437443ca5d3bb8) [`866bb00`](https://github.com/electron-userland/electron-builder/commit/866bb0082c6561be357c6d9df4de6bd66e524607) [`8eff005`](https://github.com/electron-userland/electron-builder/commit/8eff005219db1d17363add3ef4902e5b14798241) [`a49daae`](https://github.com/electron-userland/electron-builder/commit/a49daae0ad0a2ca8a53e07aa031c5d00fde8bbb5) [`067913d`](https://github.com/electron-userland/electron-builder/commit/067913dcd586dc9c016206f28326e186de8d9d85) [`2fdbcae`](https://github.com/electron-userland/electron-builder/commit/2fdbcae5b136c486d3afa3e564d032b5a79dae05) [`d2af5d1`](https://github.com/electron-userland/electron-builder/commit/d2af5d1b07bc9d1e00e4b65a3d6a9da471ea6ea9) [`3f1d50b`](https://github.com/electron-userland/electron-builder/commit/3f1d50b49d96a48d38ad9008009782d4bcabd91a) [`3f1d50b`](https://github.com/electron-userland/electron-builder/commit/3f1d50b49d96a48d38ad9008009782d4bcabd91a) [`0dffd5b`](https://github.com/electron-userland/electron-builder/commit/0dffd5b787df50d8796817b42d1f542f831f0d6b) [`bb6b24c`](https://github.com/electron-userland/electron-builder/commit/bb6b24c25e96e00a87ec183b5369b553880bea18) [`08e8044`](https://github.com/electron-userland/electron-builder/commit/08e80443d3470f2d6bf5a0075e54f4e906079c9b) [`3f1d50b`](https://github.com/electron-userland/electron-builder/commit/3f1d50b49d96a48d38ad9008009782d4bcabd91a) [`6fe881e`](https://github.com/electron-userland/electron-builder/commit/6fe881ea4db4a92c8fbac7d435607d0ccebe2775) [`5cbbc8d`](https://github.com/electron-userland/electron-builder/commit/5cbbc8de8e0fb585cfa97e80644e8a29ab7d8ff4) [`8f55928`](https://github.com/electron-userland/electron-builder/commit/8f5592839b6b2752754c19b8b7190ec86f55ef94) [`7e42d2f`](https://github.com/electron-userland/electron-builder/commit/7e42d2f526fb4fc03c4ccfcc3e7d37290c44b632) [`0df65dc`](https://github.com/electron-userland/electron-builder/commit/0df65dc90671b6d97ed89303ca6874a2938b8c35) [`38fe001`](https://github.com/electron-userland/electron-builder/commit/38fe001fabb97129dafa3e96ac08c0376b35465f) [`e7d9cad`](https://github.com/electron-userland/electron-builder/commit/e7d9cad9e4d49cbcffd2bcea204260728b23f3ea) [`80c9c3f`](https://github.com/electron-userland/electron-builder/commit/80c9c3fdf4a332a00df2f2a4ad75428a24136c93) [`efec238`](https://github.com/electron-userland/electron-builder/commit/efec2385c8c768587e565cab20013fc8dca0c33a) [`efec238`](https://github.com/electron-userland/electron-builder/commit/efec2385c8c768587e565cab20013fc8dca0c33a) [`798adc4`](https://github.com/electron-userland/electron-builder/commit/798adc41f80469bd036cc1b0c566e0489fbc83d7) [`86298ab`](https://github.com/electron-userland/electron-builder/commit/86298abd9857f56e7124d59e4c5373333d05ceda) [`08e8044`](https://github.com/electron-userland/electron-builder/commit/08e80443d3470f2d6bf5a0075e54f4e906079c9b) [`ed43b10`](https://github.com/electron-userland/electron-builder/commit/ed43b10045454c01b6ce87633cf8f0d517aa07df) [`d2c979b`](https://github.com/electron-userland/electron-builder/commit/d2c979b19f222f4c296c96acd0d2f3917acbf536)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.11`
+
+</details>
+
+## 27.0.0-alpha.10
+
+### Patch Changes
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`e75e896`](https://github.com/electron-userland/electron-builder/commit/e75e896b93e28b1dd21a704a2f48439e09c05a10) [`2b3417b`](https://github.com/electron-userland/electron-builder/commit/2b3417bd76bcfeb539a835205e1507eb554a7b86) [`79f0062`](https://github.com/electron-userland/electron-builder/commit/79f0062e2746fcb20cd116149795ac07ce8f1b65) [`f63691e`](https://github.com/electron-userland/electron-builder/commit/f63691e78c396fb83606e520dada1687ab3ef2ae) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`02bf5b0`](https://github.com/electron-userland/electron-builder/commit/02bf5b09790e4ff36b7b639437ef765a7d185e73) [`bd7786f`](https://github.com/electron-userland/electron-builder/commit/bd7786f24b3b9eeb026931a2c0af9aad928afe7a) [`56d2d74`](https://github.com/electron-userland/electron-builder/commit/56d2d746123efa1edd4caa6871fadfedec261438) [`ec9135d`](https://github.com/electron-userland/electron-builder/commit/ec9135d0626879479ffa4235006f06b14375cc43) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`1b0225e`](https://github.com/electron-userland/electron-builder/commit/1b0225e22436c578533ad280b64eab7c41947a48) [`ba65cf6`](https://github.com/electron-userland/electron-builder/commit/ba65cf6db5648581677d77bfe4a06403f0a6f2cd) [`6312a4d`](https://github.com/electron-userland/electron-builder/commit/6312a4d47d8fc20371ba3be8f6063ac1b581dd77) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`581e6f5`](https://github.com/electron-userland/electron-builder/commit/581e6f55cd1e11dca7ea7743e18c7c72f687698d) [`a5eff4b`](https://github.com/electron-userland/electron-builder/commit/a5eff4b2179b949f72f791e7ff2406a30f077795) [`a578e53`](https://github.com/electron-userland/electron-builder/commit/a578e53441ede7f6fb3e9d69292dc135ef37ed17) [`ecde932`](https://github.com/electron-userland/electron-builder/commit/ecde93298dbf7ba0063d4733584aa07910e8d718) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`0966275`](https://github.com/electron-userland/electron-builder/commit/0966275eda68f3f27e6e179ad2d2c7645790a2e2) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`c8ca1ac`](https://github.com/electron-userland/electron-builder/commit/c8ca1ac573f2160cf1c15a9e8c028b60960a94df) [`5f2f906`](https://github.com/electron-userland/electron-builder/commit/5f2f9065a6bd28842cbef786f41753641ad747ee)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.10`
+
+</details>
+
 ## 27.0.0-alpha.9
 
 ### Patch Changes

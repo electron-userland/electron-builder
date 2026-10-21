@@ -1,20 +1,35 @@
 import { createRequire } from "node:module"
+import { ALL_PLATFORM_KEYS, FILE_OPTION_KEYS, NSIS_CONFIG_KEYS } from "app-builder-lib/internal"
 import * as path from "path"
 import {
   ASAR_PLATFORM_KEYS,
   AZURE_KNOWN_FIELDS,
   ELECTRON_DOWNLOAD_DROPPED,
+  excludesPdb,
+  FEED_QUERY_ADVISORY,
+  fileOptionsChange,
+  fileOptionsConflictWarning,
+  INCLUDE_PDB_CHANGES,
+  INCLUDE_PDB_NOT_BOOLEAN,
+  includePdbManualStep,
+  isAppDirFrom,
   isLegacyElectronDownloadKey,
+  legacyKeyMessage,
   MAC_ENTITLEMENTS_ADVISORY,
   MAC_NULL_MEANS_UNSET_FIELDS,
   MAC_SIGN_FIELDS,
   MAC_SIGN_REMOVED_FIELDS,
   MAC_UNIVERSAL_FIELDS,
+  namesPdbFiles,
   normalizeTargetName,
   NSIS_PER_MACHINE_UPDATE_ADVISORY,
   NSIS_WEB_ADVISORY,
+  pdbFilesPatternsAdvisory,
+  platformExcludedExtsPdbChange,
+  PORTABLE_DEBUG_LOGGING_DROPPED,
   SNAP_BASES,
   SNAP_CORE24_UNSUPPORTED,
+  v26IncludePdb,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
 } from "./migrate-schema.js"
 import type { MigrationChange } from "./migrate-schema.js"
@@ -339,7 +354,7 @@ class ConfigCodemod {
     this.indentUnit = this.detectIndentUnit(root)
     this.ruleRemoveKeys(root, ["electronCompile"], "removed electronCompile (unsupported since v27; migrate to electron-vite, esbuild, or webpack)")
     this.ruleRemoveKeys(root, ["framework", "nodeVersion", "launchUiVersion"], key => `removed ${key} (Electron is the only supported framework in v27)`)
-    const disableDefaultIgnoredFilesDesc = "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `files` glob, e.g. `**/*.obj`)"
+    const disableDefaultIgnoredFilesDesc = "removed disableDefaultIgnoredFiles (in v27, include a default-excluded file via an explicit `fileOptions.files` glob, e.g. `**/*.obj`)"
     this.ruleRemoveKeys(root, ["disableDefaultIgnoredFiles"], disableDefaultIgnoredFilesDesc)
     // mas/masDev are MacConfiguration-derived, so they accept the (now-removed) key too.
     for (const platform of ["mac", "mas", "masDev", "win", "linux"]) {
@@ -372,6 +387,7 @@ class ConfigCodemod {
     this.ruleSnap(root)
     this.ruleHelperBundleId(root)
     this.ruleSquirrelNoMsi(root)
+    this.ruleCustomNsis(root)
     this.ruleWinSign(root)
     for (const platform of ["mac", "mas", "masDev"]) {
       const p = this.getObjectProp(root, platform)
@@ -382,10 +398,20 @@ class ConfigCodemod {
     }
     this.ruleElectronDownload(root)
     this.ruleToolsets(root)
+    // ruleFileOptions adds the excludedExts entry ruleIncludePdb returns to the root fileOptions it may create for the flat keys.
+    this.ruleFileOptions(root, "", this.ruleIncludePdb(root))
+    for (const platform of ALL_PLATFORM_KEYS) {
+      const p = this.getObjectProp(root, platform)
+      if (p != null) {
+        this.ruleFileOptions(p, `${platform}.`)
+      }
+    }
     this.ruleNsisWebAdvisory(root)
     this.ruleMacEntitlementsAdvisory(root)
     this.ruleNsisPerMachineAdvisory(root)
     this.ruleWinSignHookPublisherNameAdvisory(root)
+    this.ruleFeedQueryAdvisory(root)
+    this.rulePdbFilesPatternsAdvisory(root)
   }
 
   // ── Rules ───────────────────────────────────────────────────────────────
@@ -470,6 +496,97 @@ class ConfigCodemod {
       return
     }
     this.advisories.push(WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY)
+  }
+
+  // Advisory only. Mirrors migrateConfig, which walks the publish of the root and of each top-level section of the migrated config:
+  // a v26 `snap` moves under snapcraft.<base> (not walked) unless its base is "custom", when its keys replace snapcraft's.
+  private ruleFeedQueryAdvisory(root: any): void {
+    const ts = this.ts
+    const snap = this.objectLiteral(this.propValue(root, "snap"))
+    const snapBase = this.propValue(snap, "base")
+    const snapIsCustom = snapBase !== undefined && ts.isStringLiteral(snapBase) && snapBase.text === "custom"
+    // A base the AST cannot read may be "custom" too, so snapcraft.publish is not read when the snap may replace it.
+    const snapReplacesPublish = (snapIsCustom || (snapBase !== undefined && !this.isLiteral(snapBase))) && this.propValue(snap, "publish") !== undefined
+    const sections: any[] = [root]
+    for (const prop of root.properties) {
+      const name = this.propName(prop)
+      const section = name == null || name === "snap" ? null : this.objectLiteral(this.propValue(root, name))
+      if (section != null && !(name === "snapcraft" && snapReplacesPublish)) {
+        sections.push(section)
+      }
+    }
+    if (snapIsCustom) {
+      sections.push(snap)
+    }
+    // A non-literal url is not read, but a template's static text is: a "?" there is in every url the template produces.
+    const urlHasQuery = (url: any): boolean =>
+      url !== undefined &&
+      (ts.isStringLiteralLike(url)
+        ? url.text.includes("?")
+        : ts.isTemplateExpression(url) && [url.head, ...url.templateSpans.map((s: any) => s.literal)].some((part: any) => part.text.includes("?")))
+    const isGenericWithQuery = (entry: any): boolean => {
+      const obj = this.objectLiteral(this.unwrap(entry))
+      const provider = this.propValue(obj, "provider")
+      return provider !== undefined && ts.isStringLiteralLike(provider) && provider.text === "generic" && urlHasQuery(this.propValue(obj, "url"))
+    }
+    for (const section of sections) {
+      const publish = this.propValue(section, "publish")
+      const entries = publish === undefined ? [] : ts.isArrayLiteralExpression(publish) ? publish.elements : [publish]
+      if (entries.some(isGenericWithQuery)) {
+        this.advisories.push(FEED_QUERY_ADVISORY)
+        return
+      }
+    }
+  }
+
+  // Advisory only. Mirrors migrateConfig, which reads the root and platform `fileOptions.files` after the flat keys moved into them: the
+  // `fileOptions.files` of an object literal, else the flat `files` that ruleFileOptions moves there (a `fileOptions` the AST cannot read is skipped).
+  private rulePdbFilesPatternsAdvisory(root: any): void {
+    const ts = this.ts
+    const patterns: Array<{ key: string; pattern: string }> = []
+    const holders: Array<[string, any]> = [["", root], ...ALL_PLATFORM_KEYS.map((platform): [string, any] => [`${platform}.`, this.objectLiteral(this.propValue(root, platform))])]
+    for (const [prefix, holder] of holders) {
+      const fileOptions = this.propValue(holder, "fileOptions")
+      if (holder == null || (fileOptions !== undefined && fileOptions.kind !== ts.SyntaxKind.NullKeyword && !ts.isObjectLiteralExpression(fileOptions))) {
+        continue
+      }
+      const nested = this.objectLiteral(fileOptions) != null && this.getProp(fileOptions, "files") != null
+      const files = nested ? this.propValue(fileOptions, "files") : this.propValue(holder, "files")
+      for (const pattern of this.appFilesPatterns(files).filter(namesPdbFiles)) {
+        patterns.push({ key: `${prefix}fileOptions.files`, pattern })
+      }
+    }
+    if (patterns.length > 0) {
+      this.advisories.push(pdbFilesPatternsAdvisory(patterns))
+    }
+  }
+
+  /**
+   * Mirrors migrateConfig's `appFilesPatterns`: the string literals of a `files` value (a pattern, a FileSet or a list of them) that apply to
+   * the app directory, from the strings and the `filter` of a FileSet without `from` or with from "."; what the AST cannot read is skipped.
+   */
+  private appFilesPatterns(files: any): string[] {
+    const ts = this.ts
+    const elements = (node: any): any[] => (node === undefined ? [] : ts.isArrayLiteralExpression(node) ? node.elements.map((el: any) => this.unwrap(el)) : [node])
+    const result: string[] = []
+    for (const entry of elements(files)) {
+      if (ts.isStringLiteralLike(entry)) {
+        result.push(entry.text)
+        continue
+      }
+      if (!ts.isObjectLiteralExpression(entry)) {
+        continue
+      }
+      const from = this.propValue(entry, "from")
+      if (from === undefined || from.kind === ts.SyntaxKind.NullKeyword || (ts.isStringLiteralLike(from) && isAppDirFrom(from.text))) {
+        result.push(
+          ...elements(this.propValue(entry, "filter"))
+            .filter((it: any) => ts.isStringLiteralLike(it))
+            .map((it: any) => it.text)
+        )
+      }
+    }
+    return result
   }
 
   private ruleToolsets(root: any): void {
@@ -982,6 +1099,67 @@ class ConfigCodemod {
     this.changes.push({ key: "squirrelWindows.noMsi", description: "replaced squirrelWindows.noMsi → squirrelWindows.msi (inverted boolean)" })
   }
 
+  // Mirrors migrateConfig's migrateCustomNsis: customNsisBinary.debugLogging → <section>.installerDebugLogging (dropped for portable),
+  // an emptied or null customNsisBinary / customNsisResources is removed, and a custom bundle is kept and reported, never converted
+  // to toolsets.nsis (the bundle layout differs: it must carry the NSIS plugins).
+  private ruleCustomNsis(root: any): void {
+    const ts = this.ts
+    const isNullLiteral = (prop: any) => ts.isPropertyAssignment(prop) && this.unwrap(prop.initializer).kind === ts.SyntaxKind.NullKeyword
+    for (const section of NSIS_CONFIG_KEYS) {
+      const options = this.getObjectProp(root, section)
+      if (options == null) {
+        continue
+      }
+      const binaryPath = `${section}.customNsisBinary`
+      const binaryProp = this.getProp(options, "customNsisBinary")
+      const binary = this.getObjectProp(options, "customNsisBinary")
+      if (binaryProp != null && isNullLiteral(binaryProp)) {
+        this.removeProp(binaryProp)
+        this.changes.push({ key: binaryPath, description: `removed ${binaryPath}: null (the key was removed in v27)` })
+      } else if (binary != null) {
+        const found = this.getProp(binary, "debugLogging")
+        // A method / accessor named debugLogging is not read; it stays and keeps the key.
+        const debugProp = found != null && (ts.isPropertyAssignment(found) || ts.isShorthandPropertyAssignment(found)) ? found : null
+        // A shorthand, spread, method or computed key may hold a custom bundle, so only `name: null` counts as unset.
+        const keepsBundle = binary.properties.some((p: any) => p !== debugProp && !isNullLiteral(p))
+        if (debugProp != null) {
+          const valueText = ts.isShorthandPropertyAssignment(debugProp) ? debugProp.name.text : this.valueText(debugProp.initializer, this.propIndentFor(options))
+          if (section === "portable") {
+            if (!isNullLiteral(debugProp)) {
+              this.warnings.push(PORTABLE_DEBUG_LOGGING_DROPPED)
+            }
+            this.changes.push({ key: `${binaryPath}.debugLogging`, description: `removed ${binaryPath}.debugLogging (no effect on portable targets)` })
+          } else if (!isNullLiteral(debugProp) && this.getProp(options, "installerDebugLogging") == null) {
+            this.insertIntoObject(options, [`installerDebugLogging: ${valueText}`])
+            this.changes.push({ key: `${binaryPath}.debugLogging`, description: `moved ${binaryPath}.debugLogging → ${section}.installerDebugLogging` })
+          } else {
+            this.changes.push({ key: `${binaryPath}.debugLogging`, description: `removed ${binaryPath}.debugLogging` })
+          }
+          if (keepsBundle) {
+            this.removeProp(debugProp)
+          }
+        }
+        if (keepsBundle) {
+          this.warnings.push(legacyKeyMessage(binaryPath))
+        } else {
+          this.removeProp(binaryProp)
+          this.changes.push({ key: binaryPath, description: `removed ${binaryPath} (no custom bundle was set)` })
+        }
+      } else if (binaryProp != null) {
+        this.warnings.push(legacyKeyMessage(binaryPath))
+      }
+
+      const resourcesPath = `${section}.customNsisResources`
+      const resourcesProp = this.getProp(options, "customNsisResources")
+      if (resourcesProp != null && isNullLiteral(resourcesProp)) {
+        this.removeProp(resourcesProp)
+        this.changes.push({ key: resourcesPath, description: `removed ${resourcesPath}: null (the key was removed in v27)` })
+      } else if (resourcesProp != null) {
+        this.warnings.push(legacyKeyMessage(resourcesPath))
+      }
+    }
+  }
+
   private ruleWinSign(root: any): void {
     const ts = this.ts
     const win = this.getObjectProp(root, "win")
@@ -1237,6 +1415,209 @@ class ConfigCodemod {
     if (!ok) {
       this.warnings.push(`${name}.universal already exists but is not an object literal; move ${present.join(", ")} into it manually.`)
     }
+  }
+
+  /**
+   * Mirrors migrateConfig's `migrateFileOptions`: flat `files` / `extraResources` / `extraFiles` → `fileOptions`. `extraEntries` (from
+   * ruleIncludePdb, which returns none for a `fileOptions` that is not an object literal) go into the same `fileOptions`.
+   */
+  private ruleFileOptions(holder: any, prefix: string, extraEntries: string[] = []): void {
+    const present = FILE_OPTION_KEYS.filter(key => this.getProp(holder, key) != null)
+    if (present.length === 0 && extraEntries.length === 0) {
+      return
+    }
+    const fileOptionsProp = this.getProp(holder, "fileOptions")
+    const existing = this.getObjectProp(holder, "fileOptions")
+    const isNull = fileOptionsProp != null && existing == null && this.propValue(holder, "fileOptions")?.kind === this.ts.SyntaxKind.NullKeyword
+    if (fileOptionsProp != null && existing == null && !isNull) {
+      this.warnings.push(`${prefix}fileOptions is not an object literal; move ${present.map(key => prefix + key).join(", ")} into it manually.`)
+      return
+    }
+
+    const sources: { prop: any }[] = []
+    for (const key of present) {
+      const prop = this.getProp(holder, key)
+      const conflict = existing != null && this.getProp(existing, key) != null
+      if (conflict) {
+        this.removeProp(prop)
+        this.warnings.push(fileOptionsConflictWarning(prefix, key))
+      } else {
+        sources.push({ prop })
+      }
+      this.changes.push(fileOptionsChange(prefix, key, conflict))
+    }
+    if (sources.length > 0 || extraEntries.length > 0) {
+      if (isNull) {
+        // replaced by the object moveInto creates
+        this.removeProp(fileOptionsProp)
+      }
+      this.moveInto(holder, "fileOptions", sources, extraEntries, /* treatNullAsAbsent */ true)
+    }
+  }
+
+  /**
+   * Mirrors migrateConfig's `migrateIncludePdb`: `includePdb: true` → `fileOptions.excludedExts: ["default", "!pdb"]` ("!pdb" is added to an
+   * existing root list instead, and to each platform-level list, which replaces the root one); `false` → `fileOptions.excludedExts: ["default"]`
+   * (unless a root list is set), so that it keeps overriding an `includePdb: true` of another config layer; `undefined` is removed. Literals are read as v26 coerced them. A
+   * value the AST cannot read, or one v26 rejected, is left in place with a warning. A string-literal `excludedExts` is a one-entry list, which
+   * becomes an array literal when "!pdb" is added to it. Returns the `excludedExts` entry for ruleFileOptions to add to the root `fileOptions`.
+   */
+  private ruleIncludePdb(root: any): string[] {
+    const ts = this.ts
+    const prop = this.getProp(root, "includePdb")
+    if (prop == null) {
+      return []
+    }
+    const value = ts.isPropertyAssignment(prop) ? this.unwrap(prop.initializer) : null
+    if (value == null || !(this.isLiteral(value) || (ts.isIdentifier(value) && value.text === "undefined"))) {
+      this.warnings.push(
+        "includePdb is not a literal true or false, so it was left in place. In v27, .pdb files are excluded by default: remove includePdb, " +
+          'and where it is true set fileOptions.excludedExts: ["default", "!pdb"] instead (e.g. excludedExts: <condition> ? ["default", "!pdb"] : ["default"]).'
+      )
+      return []
+    }
+    const includePdb = v26IncludePdb(this.scalarLiteral(value))
+    if (includePdb == null && !ts.isIdentifier(value)) {
+      this.warnings.push(INCLUDE_PDB_NOT_BOOLEAN)
+      return []
+    }
+    // `undefined` never overrode another layer's value in v26
+    if (includePdb == null) {
+      this.removeProp(prop)
+      this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.removed })
+      return []
+    }
+
+    const fileOptionsProp = this.getProp(root, "fileOptions")
+    const fileOptions = this.getObjectProp(root, "fileOptions")
+    if (fileOptionsProp != null && fileOptions == null && this.propValue(root, "fileOptions")?.kind !== ts.SyntaxKind.NullKeyword) {
+      this.warnings.push(`fileOptions is not an object literal; ${includePdbManualStep(includePdb)}`)
+      // a platform list replaces the root one, so it gets "!pdb" whatever the root list is
+      if (includePdb) {
+        this.appendPdbToPlatformLists(root)
+      }
+      return []
+    }
+    const listProp = fileOptions == null ? null : this.getProp(fileOptions, "excludedExts")
+    const list = this.propValue(fileOptions, "excludedExts")
+    if (list !== undefined && list.kind !== ts.SyntaxKind.NullKeyword && !this.isExcludedExtsLiteral(list)) {
+      this.warnings.push(
+        includePdb
+          ? 'fileOptions.excludedExts is not a string or array literal (or a spread may set it); add "!pdb" to it and remove includePdb: true manually.'
+          : 'fileOptions.excludedExts is not a string or array literal (or a spread may set it); remove includePdb: false manually, and set excludedExts: ["default"] where it is unset (written out, it keeps overriding an includePdb: true from another config layer).'
+      )
+      if (includePdb) {
+        this.appendPdbToPlatformLists(root)
+      }
+      return []
+    }
+
+    // "!pdb" appended to a list whose elements cannot be read could leave only removals (e.g. an empty spread), which the build rejects
+    if (includePdb && list !== undefined && list.kind !== ts.SyntaxKind.NullKeyword && this.listExcludesPdb(list) == null) {
+      this.warnings.push(
+        'fileOptions.excludedExts has elements that cannot be read (a spread, an identifier, …); if it excludes .pdb files, add "!pdb" to it, and remove includePdb: true manually.'
+      )
+      this.appendPdbToPlatformLists(root)
+      return []
+    }
+
+    this.removeProp(prop)
+    const replacement = includePdb ? '["default", "!pdb"]' : '["default"]'
+    const created = includePdb ? INCLUDE_PDB_CHANGES.created : INCLUDE_PDB_CHANGES.overridesParent
+    let entries: string[] = []
+    if (list === undefined && listProp == null) {
+      entries = [`excludedExts: ${replacement}`]
+      this.changes.push({ key: "includePdb", description: created })
+    } else if (list === undefined || list.kind === ts.SyntaxKind.NullKeyword) {
+      // `excludedExts: null` / `undefined`
+      this.replaceValue(listProp.initializer, replacement)
+      this.changes.push({ key: "includePdb", description: created })
+    } else if (!includePdb) {
+      // the root list already replaces the parent's
+      this.changes.push({ key: "includePdb", description: this.listExcludesPdb(list) === false ? INCLUDE_PDB_CHANGES.listKeepsPdb : INCLUDE_PDB_CHANGES.removed })
+    } else if (this.listExcludesPdb(list)) {
+      this.appendPdbRemoval(list)
+      this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.appended })
+    } else {
+      this.changes.push({ key: "includePdb", description: INCLUDE_PDB_CHANGES.unneeded })
+    }
+    if (!includePdb) {
+      return entries
+    }
+
+    this.appendPdbToPlatformLists(root)
+    return entries
+  }
+
+  /** For `includePdb: true`: adds "!pdb" to each platform-level `fileOptions.excludedExts` that excludes `.pdb` files, since it replaces the root list. */
+  private appendPdbToPlatformLists(root: any): void {
+    const ts = this.ts
+    for (const platform of ALL_PLATFORM_KEYS) {
+      const platformValue = this.propValue(root, platform)
+      if (platformValue !== undefined && platformValue.kind !== ts.SyntaxKind.NullKeyword && !ts.isObjectLiteralExpression(platformValue)) {
+        this.warnings.push(`${platform} cannot be read; if its fileOptions.excludedExts excludes .pdb files, add "!pdb" to it manually (includePdb: true).`)
+        continue
+      }
+      const platformFileOptions = this.propValue(this.objectLiteral(platformValue), "fileOptions")
+      // A fileOptions the AST cannot read may set excludedExts.
+      const platformList =
+        platformFileOptions === undefined || this.isLiteral(platformFileOptions) ? this.propValue(this.objectLiteral(platformFileOptions), "excludedExts") : platformFileOptions
+      if (platformList === undefined || platformList.kind === ts.SyntaxKind.NullKeyword) {
+        continue
+      }
+      const excludesPdb = this.isExcludedExtsLiteral(platformList) ? this.listExcludesPdb(platformList) : null
+      if (excludesPdb == null) {
+        this.warnings.push(`${platform}.fileOptions.excludedExts cannot be read; if it excludes .pdb files, add "!pdb" to it manually (includePdb: true).`)
+      } else if (excludesPdb) {
+        this.appendPdbRemoval(platformList)
+        this.changes.push(platformExcludedExtsPdbChange(platform))
+      }
+    }
+  }
+
+  /** True for an `excludedExts` value ruleIncludePdb can read and edit: an array literal, or a string literal (a one-entry list). */
+  private isExcludedExtsLiteral(list: any): boolean {
+    return this.ts.isArrayLiteralExpression(list) || this.ts.isStringLiteralLike(list)
+  }
+
+  /** `excludesPdb` for an array or string literal, or null when an array element cannot be read (an identifier, a spread, …). */
+  private listExcludesPdb(list: any): boolean | null {
+    const ts = this.ts
+    if (ts.isStringLiteralLike(list)) {
+      return excludesPdb([list.text])
+    }
+    const elements = list.elements.map((el: any) => this.unwrap(el))
+    // a non-string literal is skipped, as migrateConfig does; a spread, an identifier or a call could hold anything
+    if (elements.some((el: any) => !this.isLiteral(el))) {
+      return null
+    }
+    return excludesPdb(elements.filter((el: any) => ts.isStringLiteralLike(el)).map((el: any) => el.text))
+  }
+
+  /** Adds "!pdb" to an array literal, or turns a string literal into an array literal of it (its text kept) and "!pdb". */
+  private appendPdbRemoval(list: any): void {
+    if (this.ts.isStringLiteralLike(list)) {
+      this.replaceValue(list, `[${this.text.slice(this.start(list), list.end)}, "!pdb"]`)
+    } else {
+      this.appendToArray(list, '"!pdb"')
+    }
+  }
+
+  /** Appends `elementText` to a non-empty array literal, on a line of its own when the closing bracket is on one. */
+  private appendToArray(list: any, elementText: string): void {
+    const last = list.elements[list.elements.length - 1]
+    const closePos = list.end - 1
+    const lineStart = this.text.lastIndexOf("\n", closePos - 1) + 1
+    if (lineStart <= last.end || this.text.slice(lineStart, closePos).trim() !== "") {
+      this.insertEdit(last.end, `, ${elementText}`)
+      return
+    }
+    // Before the line of the closing bracket, so a comment after the last element stays on its line.
+    const trailingComma = list.elements.hasTrailingComma === true
+    if (!trailingComma) {
+      this.insertEdit(last.end, ",")
+    }
+    this.insertEdit(lineStart, `${this.lineIndentAt(this.start(last))}${elementText}${trailingComma ? "," : ""}\n`)
   }
 
   private ruleElectronDownload(root: any): void {
@@ -1526,6 +1907,24 @@ class ConfigCodemod {
     }
     const value = ts.isPropertyAssignment(prop) ? this.unwrap(prop.initializer) : prop
     return ts.isIdentifier(value) && value.text === "undefined" ? undefined : value
+  }
+
+  /** The value of a string, number, boolean or null literal; undefined for any other node. */
+  private scalarLiteral(node: any): unknown {
+    const ts = this.ts
+    if (ts.isStringLiteralLike(node)) {
+      return node.text
+    }
+    if (ts.isNumericLiteral(node)) {
+      return Number(node.text)
+    }
+    if (node.kind === ts.SyntaxKind.TrueKeyword) {
+      return true
+    }
+    if (node.kind === ts.SyntaxKind.FalseKeyword) {
+      return false
+    }
+    return node.kind === ts.SyntaxKind.NullKeyword ? null : undefined
   }
 
   /** `node` when it is an object literal, else null. */

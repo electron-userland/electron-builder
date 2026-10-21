@@ -1,13 +1,16 @@
 import { ToolsetConfig } from "app-builder-lib"
 import { ParallelsVmManager } from "app-builder-lib/internal"
-import { copyFileSync, unlinkSync } from "fs"
+import { copyFileSync, existsSync, unlinkSync } from "fs"
+import { remove } from "fs-extra"
 import { tmpdir } from "os"
 import { Arch } from "electron-builder"
-import { spawn as nodeSpawn } from "child_process"
+import { spawn as nodeSpawn, spawnSync } from "child_process"
 import * as path from "path"
 import { TestContext } from "vitest"
 import { deepAssign, TmpDir } from "builder-util"
 import { latestToolsetVersion, NSIS_VERSIONS, WIN_CODE_SIGN_VERSIONS, WINE_VERSIONS } from "../../vitest-scripts/runtime-tests/generate-toolset-versions"
+import { getFixtureDir } from "../helpers/packTester"
+import { OLD_VERSION_NUMBER } from "../helpers/updaterTestUtil"
 import {
   ApplicationUpdatePaths,
   doBuild,
@@ -19,7 +22,7 @@ import {
   runTest,
   windowsVmPromise,
 } from "./blackboxUpdateHelpers"
-import { installWindowsVm } from "./blackboxInstallWindows"
+import { installWindowsNative, installWindowsVm } from "./blackboxInstallWindows"
 import { readUpdateManifest } from "./signedManifestTestUtil"
 
 /**
@@ -29,11 +32,12 @@ import { readUpdateManifest } from "./signedManifestTestUtil"
  * toolset combination.
  */
 export function isLatestToolset(toolsets: Required<Pick<ToolsetConfig, "winCodeSign" | "nsis" | "wine">>): boolean {
-  return (
-    toolsets.winCodeSign === latestToolsetVersion(WIN_CODE_SIGN_VERSIONS) &&
-    toolsets.nsis === latestToolsetVersion(NSIS_VERSIONS) &&
-    toolsets.wine === latestToolsetVersion(WINE_VERSIONS)
-  )
+  return isLatestToolsetExceptNsis(toolsets) && toolsets.nsis === latestToolsetVersion(NSIS_VERSIONS)
+}
+
+/** Like isLatestToolset, but true once per NSIS version: for tests of the makensis output, which the other toolsets take no part in. */
+function isLatestToolsetExceptNsis(toolsets: Required<Pick<ToolsetConfig, "winCodeSign" | "wine">>): boolean {
+  return toolsets.winCodeSign === latestToolsetVersion(WIN_CODE_SIGN_VERSIONS) && toolsets.wine === latestToolsetVersion(WINE_VERSIONS)
 }
 
 // Spawn a process whose IMAGE NAME contains `appExeName` (e.g. "TestApp-helper.exe" when
@@ -152,6 +156,37 @@ export function registerBlackboxWinTests(toolsets: Required<Pick<ToolsetConfig, 
         context.skip()
       }
       await runInstallOnNextLaunchTest(context, "nsis", "", Arch.x64, toolsets, "automatic")
+    })
+
+    // Regression test for https://github.com/electron-userland/electron-builder/issues/10258: with an uninstaller icon that
+    // differs from the installer icon, makensis patches that icon into the uninstaller's exehead. The uninstaller that
+    // electron-builder extracts from the installer must carry the patch, or it fails its own integrity check ("Installer
+    // integrity check has failed") instead of uninstalling. The test app's own build/icon.ico is the installer icon (and, by
+    // default, also the uninstaller icon), so the other tests here never have differing icons.
+    test.ifEnv(isLatestToolsetExceptNsis(toolsets))("nsis - uninstaller icon differs from installer icon", optionsForFlakyE2E, async (context: TestContext) => {
+      if (process.platform !== "win32") {
+        context.skip()
+      }
+      const { expect, tmpDir } = context
+      const outDirs: ApplicationUpdatePaths[] = []
+      const buildConfig = deepAssign({ toolsets }, { nsis: { uninstallerIcon: path.join(getFixtureDir(), "headerIcon.ico") } })
+      await doBuild(expect, outDirs, "nsis", Arch.x64, tmpDir, /* isWindows */ true, buildConfig, [OLD_VERSION_NUMBER])
+
+      const appPath = await installWindowsNative(outDirs[0].dir, false)
+      const installDir = path.dirname(appPath)
+      try {
+        expect(existsSync(appPath)).toBe(true)
+        // `_?=` runs the uninstaller in place (as the installer does when updating) instead of from a temp copy, so its exit code
+        // is the one of the whole uninstall. The running uninstaller cannot delete itself, everything else in the directory goes.
+        // The timeout turns an error message box that nobody can dismiss into a failure (result.error) instead of a hang.
+        const result = spawnSync(path.join(installDir, "Uninstall TestApp.exe"), ["/S", `_?=${installDir}`], { stdio: "inherit", timeout: 120 * 1000 })
+        expect(result.error).toBeUndefined()
+        expect(result.status).toBe(0)
+        expect(existsSync(appPath)).toBe(false)
+      } finally {
+        // the uninstaller is left in place (and all of the app, if it failed), so the next install does not try to run it
+        await remove(installDir).catch(() => undefined)
+      }
     })
 
     // Ed25519-signed latest.yml (runtime-generated key): the installed app verifies the manifest before updating.

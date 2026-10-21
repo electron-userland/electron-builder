@@ -76,6 +76,20 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     return request
   }
 
+  /**
+   * Electron's `net` requests never emit `socket`, so the timeout armed by the base class (a socket timeout) never starts and a
+   * stalled request would wait forever. An idle timer replaces it: restarted by every sign of progress (the response, a redirect,
+   * a body chunk), it aborts the request with "Request timed out" after `timeout` ms without any, until the response ends or
+   * the request fails or is aborted.
+   */
+  addErrorAndTimeoutHandlers(request: any, reject: (error: Error) => void, timeout = 60 * 1000): void {
+    super.addErrorAndTimeoutHandlers(request, reject, timeout)
+    // like socket.setTimeout, 0 (or no number) disables the timeout
+    if (typeof timeout === "number" && Number.isFinite(timeout) && timeout > 0) {
+      addIdleTimeout(request, reject, timeout)
+    }
+  }
+
   protected addRedirectHandlers(
     request: ClientRequest,
     options: RequestOptions,
@@ -95,4 +109,44 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       }
     })
   }
+}
+
+function addIdleTimeout(request: ClientRequest, reject: (error: Error) => void, timeout: number): void {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  let isDone = false
+  const stop = (): void => {
+    isDone = true
+    if (timer != null) {
+      clearTimeout(timer)
+      timer = null
+    }
+  }
+  const restart = (): void => {
+    if (isDone) {
+      return
+    }
+    if (timer != null) {
+      clearTimeout(timer)
+    }
+    timer = setTimeout(() => {
+      timer = null
+      isDone = true
+      request.abort()
+      reject(new Error("Request timed out"))
+    }, timeout)
+  }
+
+  request.on("response", response => {
+    restart()
+    // added after the response handler, which pipes or reads the body synchronously, so this does not change how the body flows
+    response.on("data", restart)
+    response.on("end", stop)
+    response.on("error", stop)
+    response.on("aborted", stop)
+  })
+  request.on("redirect", restart)
+  request.on("abort", stop)
+  request.on("error", stop)
+  // not "close": with autoDestroy, Electron emits it as soon as the request body is sent, long before the response
+  restart()
 }

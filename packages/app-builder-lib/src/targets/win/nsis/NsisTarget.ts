@@ -23,12 +23,18 @@ import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../../opt
 import { FileAssociation } from "../../../options/FileAssociation.js"
 import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "../../../platformPackager.js"
 import { hashFile } from "../../../util/hash.js"
-import { isMacOsCatalina } from "../../../util/mac/macosVersion.js"
 import { time } from "../../../util/timer.js"
-import { WineVmManager } from "../../../vm/WineVm.js"
 import { WinPackager } from "../../../winPackager.js"
+import { verifyUpdateInstallerPublisher } from "../../../codeSign/win/verifyUpdatePublisher.js"
 import { archive, ArchiveOptions } from "../../archive.js"
-import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../../differentialUpdateInfoBuilder.js"
+import {
+  appendBlockmap,
+  configureDifferentialAwareArchiveOptions,
+  createBlockmap,
+  createNsisWebDifferentialUpdateInfo,
+  locateStoredMemberRegions,
+  toBlockMapOptions,
+} from "../../differentialUpdateInfoBuilder.js"
 import { getWindowsInstallationAppPackageName, getWindowsInstallationDirName } from "../../targetUtil.js"
 import { Commands } from "./Commands.js"
 import { Defines } from "./Defines.js"
@@ -37,7 +43,7 @@ import { computeLicensePage } from "./nsisLicense.js"
 import { NsisOptions, PortableOptions } from "./nsisOptions.js"
 import { NsisScriptGenerator, nsisEscapeString } from "./nsisScriptGenerator.js"
 import { ELECTRON_BUILDER_NS_UUID, ProgIdMaker } from "./progId.js"
-import { getMakeNsisPath, getNsisPluginsPath } from "../../../toolsets/nsis.js"
+import { assertInstallerDebugLoggingSupported, getMakeNsisPath, getNsisPluginsPath } from "../../../toolsets/nsis.js"
 import { AppPackageHelper, CopyElevateHelper, nsisTemplatesDir, UninstallerReader } from "./nsisUtil.js"
 import { checkMakensisOutput, verifyInstallerSize } from "./nsisValidation.js"
 import _fsExtra from "fs-extra"
@@ -45,7 +51,41 @@ const { readFile, stat, unlink } = _fsExtra
 
 const debug = _debug("electron-builder:nsis")
 
+/** The member `differentialPackage: "store-asar"` keeps uncompressed in the app package, relative to the unpacked app dir. */
+export const STORED_ASAR_PATH = "resources/app.asar"
+
+/**
+ * The `archive()` options `buildAppPackage` packages the unpacked app with, before the differential-aware
+ * adjustments of `configureDifferentialAwareArchiveOptions`. Exported so the benchmark
+ * (`test/src/differentialOneLineBenchTest.ts`) packages exactly like a real build instead of copying these.
+ */
+export function createAppPackageArchiveOptions(compression: ArchiveOptions["compression"], excluded: Array<string> | null, storedPaths: Array<string> | null): ArchiveOptions {
+  return {
+    withoutDir: true,
+    compression,
+    // The install-time Nsis7z extractor only decodes plain LZMA2/Copy and single-stream BCJ — not
+    // the CPU branch converters modern 7za applies to executables (BCJ2 on x86/x64, ARM64 on
+    // arm64), which it silently skips, dropping the main exe and every native binary from the
+    // install. Pin the payload to a filter it can decode. See #9983.
+    installTimeDecodable: true,
+    excluded,
+    storedPaths,
+  }
+}
+
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
+
+/**
+ * Whether a packed app can use the copy of the installer that the NSIS installer keeps in the updater cache
+ * (`APP_INSTALLER_STORE_FILE`). Only electron-updater reads it, as the base for a differential download, and
+ * electron-updater finds that cache through the `app-update.yml` written into the app's resources when
+ * publishing is configured. Without that file nothing reads the copy, so the installer does not write it
+ * (and the uninstaller does not leave it behind, #9505).
+ */
+export async function hasUpdaterConfig(packager: Pick<WinPackager, "getResourcesDir">, archs: Map<Arch, string>): Promise<boolean> {
+  const found = await Promise.all(Array.from(archs.values(), appOutDir => statOrNull(path.join(packager.getResourcesDir(appOutDir), "app-update.yml"))))
+  return found.some(it => it != null)
+}
 
 export class NsisTarget extends Target {
   readonly options: NsisOptions
@@ -74,6 +114,11 @@ export class NsisTarget extends Target {
 
     if (targetName !== "nsis") {
       deepAssign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
+    }
+
+    // Fails before packaging rather than when makensis rejects LogSet. Portable has no such option (its template never logs).
+    if (this.options.installerDebugLogging === true) {
+      assertInstallerDebugLoggingSupported(this.packager.config.toolsets?.nsis, this.name)
     }
 
     const deps = packager.metadata.dependencies
@@ -145,8 +190,17 @@ export class NsisTarget extends Target {
     return result == null ? null : asArray(result).map(it => (it.startsWith(".") ? it : `.${it}`))
   }
 
-  /** @private */
-  async buildAppPackage(appOutDir: string, arch: Arch, elevateHelper?: CopyElevateHelper | null, fileNameSuffix = ""): Promise<PackageFileInfo> {
+  /**
+   * @private
+   * @returns the package file info plus the absolute source paths of the members stored verbatim in it
+   *   (`storedMemberFiles`, empty unless `differentialPackage` is `"store-asar"`).
+   */
+  async buildAppPackage(
+    appOutDir: string,
+    arch: Arch,
+    elevateHelper?: CopyElevateHelper | null,
+    fileNameSuffix = ""
+  ): Promise<{ fileInfo: PackageFileInfo; storedMemberFiles: Array<string> }> {
     const packager = this.packager
 
     const isBuildDifferentialAware = this.isBuildDifferentialAware
@@ -157,20 +211,26 @@ export class NsisTarget extends Target {
     if (isStoreAsar) {
       await this.warnIfStoreAsarHasNoAsar(appOutDir)
     }
-    const archiveOptions: ArchiveOptions = {
-      withoutDir: true,
-      compression: packager.compression,
-      // The install-time Nsis7z extractor only decodes plain LZMA2/Copy and single-stream BCJ — not
-      // the CPU branch converters modern 7za applies to executables (BCJ2 on x86/x64, ARM64 on
-      // arm64), which it silently skips, dropping the main exe and every native binary from the
-      // install. Pin the payload to a filter it can decode. See #9983.
-      installTimeDecodable: true,
-      excluded: preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`),
-      // Opt-in via differentialPackage: "store-asar" — keep the asar a byte-stable Copy member so a
-      // differential update pays only for its changed blocks instead of re-downloading the whole
-      // recompressed asar (see nsisOptions docs).
-      storedPaths: isStoreAsar ? ["resources/app.asar"] : null,
+    // Opt-in via differentialPackage: "store-asar" — keep the asar a byte-stable Copy member so a
+    // differential update pays only for its changed blocks instead of re-downloading the whole
+    // recompressed asar (see nsisOptions docs). The blockmap chunks these verbatim bytes finer.
+    const storedPaths = isStoreAsar ? [STORED_ASAR_PATH] : null
+    // archive() skips a stored path that does not exist (e.g. `asar: false`, warned about above), so
+    // only the members that really end up in the package are located in it for the block map.
+    const storedMemberFiles: Array<string> = []
+    for (const storedPath of storedPaths ?? []) {
+      const memberFile = path.join(appOutDir, storedPath)
+      if (await exists(memberFile)) {
+        storedMemberFiles.push(memberFile)
+      }
     }
+    const archiveOptions = createAppPackageArchiveOptions(
+      packager.compression,
+      preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`),
+      storedPaths
+    )
+    // 7za stores what a symlink points to: one that leaves the app fails the package unless fileOptions.allowExternalLinks allows it
+    archiveOptions.externalLinks = await packager.getExternalLinkPolicy()
 
     const timer = time(`nsis package, ${Arch[arch]}`)
     await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)
@@ -186,13 +246,17 @@ export class NsisTarget extends Target {
     }
 
     if (isBuildDifferentialAware && this.isWebInstaller) {
-      const data = await appendBlockmap(archiveFile)
+      const regions = await locateStoredMemberRegions(archiveFile, storedMemberFiles)
+      const data = await appendBlockmap(archiveFile, toBlockMapOptions(regions))
       return {
-        ...data,
-        path: archiveFile,
+        fileInfo: {
+          ...data,
+          path: archiveFile,
+        },
+        storedMemberFiles,
       }
     } else {
-      return await createPackageFileInfo(archiveFile)
+      return { fileInfo: await createPackageFileInfo(archiveFile), storedMemberFiles }
     }
   }
 
@@ -209,12 +273,12 @@ export class NsisTarget extends Target {
       return
     }
     this.storeAsarChecked = true
-    const asarFile = path.join(appOutDir, "resources", "app.asar")
+    const asarFile = path.join(appOutDir, STORED_ASAR_PATH)
     if (await exists(asarFile)) {
       return
     }
     log.warn(
-      { reason: "resources/app.asar not found (e.g. asar is disabled)", file: log.filePath(asarFile) },
+      { reason: `${STORED_ASAR_PATH} not found (e.g. asar is disabled)`, file: log.filePath(asarFile) },
       'differentialPackage "store-asar" has no effect, the app package is compressed normally'
     )
   }
@@ -311,7 +375,7 @@ export class NsisTarget extends Target {
 
       APP_PACKAGE_NAME: getWindowsInstallationAppPackageName(appInfo.name),
     }
-    if (options.customNsisBinary?.debugLogging) {
+    if (options.installerDebugLogging === true) {
       defines.ENABLE_LOGGING_ELECTRON_BUILDER = null
     }
     if (uninstallAppKey !== this.appGuid) {
@@ -342,9 +406,23 @@ export class NsisTarget extends Target {
       }
     }
 
-    const { packageFiles, estimatedSize } = await this.resolveArchPackageFiles(archs, defines, packager)
+    const { packageFiles, estimatedSize, storedMemberFiles } = await this.resolveArchPackageFiles(archs, defines, packager)
 
     this.configureDefinesForAllTypeOfInstaller(defines)
+    // the web installer has no copy of itself to keep, and the portable template never writes one
+    if (!this.isWebInstaller && !isPortable) {
+      if (await hasUpdaterConfig(packager, archs)) {
+        defines.KEEP_INSTALLER_FOR_UPDATER = null
+      } else {
+        // logged once per target, not once per installer (per-arch installers share the packed apps' publish setup)
+        log
+          .once("nsis-updater-config-missing", this)
+          .info(
+            { reason: "resources/app-update.yml not found (no publish configuration)" },
+            "installer copy for electron-updater's differential download cache is skipped, so an app that sets updateConfigPath elsewhere will download updates in full"
+          )
+      }
+    }
     if (isPortable) {
       const { unpackDirName, requestExecutionLevel, splashImage } = options as PortableOptions
       defines.REQUEST_EXECUTION_LEVEL = requestExecutionLevel || "user"
@@ -412,14 +490,22 @@ export class NsisTarget extends Target {
       // Skip size verification for portable (NSIS recompresses the archive, installer < archive is normal)
       // and for custom scripts (may not embed archives).
       await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(rawScript, true, archs)), { skipSizeVerification: isPortable || isCustomScript })
-      await Promise.all<any>([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
+      const [signResult] = await Promise.all([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
+      // electron-updater verifies the Authenticode signature of this installer (the nsis installer / the nsis-web stub)
+      // against the publisherName in app-update.yml; the portable executable is never installed as an update
+      if (!isPortable) {
+        await verifyUpdateInstallerPublisher(packager, installerPath, signResult, archs.values())
+      }
 
       const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
       let updateInfo: any
       if (this.isWebInstaller) {
         updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
       } else if (this.isBuildDifferentialAware) {
-        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch)
+        // Every arch package is embedded verbatim in the installer (SetCompress off), so the stored
+        // members of all of them sit verbatim in the signed installer too; locate them there.
+        const regions = await locateStoredMemberRegions(installerPath, storedMemberFiles)
+        updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName, primaryArch, toBlockMapOptions(regions))
       }
 
       // a per-machine build always packs elevate.exe (see CopyElevateHelper), unless the framework has no elevate helper
@@ -445,8 +531,10 @@ export class NsisTarget extends Target {
     archs: Map<Arch, string>,
     defines: Defines,
     packager: WinPackager
-  ): Promise<{ packageFiles: { [arch: string]: PackageFileInfo }; estimatedSize: number }> {
+  ): Promise<{ packageFiles: { [arch: string]: PackageFileInfo }; estimatedSize: number; storedMemberFiles: Array<string> }> {
     const packageFiles: { [arch: string]: PackageFileInfo } = {}
+    // stored (Copy) members of every arch package, to be located in the installer for its block map
+    const storedMemberFiles: Array<string> = []
     let estimatedSize = 0
     const options = this.options
 
@@ -460,7 +548,8 @@ export class NsisTarget extends Target {
     } else {
       await Promise.all(
         Array.from(archs.keys()).map(async arch => {
-          const { fileInfo, unpackedSize } = await this.packageHelper.packArch(arch, this)
+          const { fileInfo, unpackedSize, storedMemberFiles: archStoredMemberFiles } = await this.packageHelper.packArch(arch, this)
+          storedMemberFiles.push(...archStoredMemberFiles)
           const file = fileInfo.path
           const defineKey = arch === Arch.x64 ? "APP_64" : arch === Arch.arm64 ? "APP_ARM64" : "APP_32"
           defines[defineKey] = file
@@ -485,7 +574,7 @@ export class NsisTarget extends Target {
       )
     }
 
-    return { packageFiles, estimatedSize }
+    return { packageFiles, estimatedSize, storedMemberFiles }
   }
 
   protected generateGitHubInstallerName(primaryArch: Arch | null, defaultArch: string | undefined): string {
@@ -528,26 +617,13 @@ export class NsisTarget extends Target {
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
     await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(script, false, archs)))
 
-    // http://forums.winamp.com/showthread.php?p=3078545
-    // TODO: remove workaround when arm64 macOS has native wine support
-    if (isMacOsCatalina()) {
-      try {
-        await UninstallerReader.exec(installerPath, uninstallerPath)
-      } catch (error: any) {
-        log.warn(`packager.vm is used: ${error.message}`)
-
-        const vm = await packager.vm.value
-        await vm.exec(installerPath, [])
-        // Parallels VM can exit after command execution, but NSIS continue to be running
-        let i = 0
-        while (!(await exists(uninstallerPath)) && i++ < 100) {
-          // noinspection JSUnusedLocalSymbols
-          await sleep(300)
-        }
-      }
-    } else {
-      const wineVm = new WineVmManager(packager.config.toolsets?.wine, packager.buildResourcesDir)
-      await wineVm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
+    // The uninstaller is extracted from the installer in JS, emulating what NSIS `WriteUninstaller` does, and verified with the NSIS CRC check.
+    // Running the installer (natively, via wine or in a VM) is only a fallback, e.g. for solid compression or `!uninstfinalize`.
+    try {
+      await UninstallerReader.exec(installerPath, uninstallerPath)
+    } catch (error: any) {
+      log.warn({ reason: error.message }, "cannot extract uninstaller from installer, running installer to write it instead")
+      await this.runInstallerToWriteUninstaller(installerPath, uninstallerPath)
     }
     await packager.signIf(uninstallerPath)
 
@@ -555,6 +631,18 @@ export class NsisTarget extends Target {
     // platform-specific path, not wine
     defines.UNINSTALLER_OUT_FILE = uninstallerPath
     return { script, isCustomScript: false }
+  }
+
+  private async runInstallerToWriteUninstaller(installerPath: string, uninstallerPath: string): Promise<void> {
+    const vm = await this.packager.execVm.value
+    // explicit timeout (2 minutes, as WineVmManager defaults to), so a stuck installer fails the build instead of hanging it on any host
+    await vm.exec(installerPath, [], { env: { __COMPAT_LAYER: "RunAsInvoker" }, timeout: 120 * 1000 })
+    // Parallels VM can exit after command execution, but NSIS continue to be running
+    let i = 0
+    while (!(await exists(uninstallerPath)) && i++ < 100) {
+      // noinspection JSUnusedLocalSymbols
+      await sleep(300)
+    }
   }
 
   private computeVersionKey(short = false) {
@@ -863,7 +951,9 @@ export class NsisTarget extends Target {
    * Only warns when a custom script is actually supplied; the generated ProgID is invisible otherwise.
    */
   private async warnAboutProgIdFormatChange(fileAssociations: Array<FileAssociation>, progIdMaker: ProgIdMaker): Promise<void> {
-    if (this.progIdWarningEmitted) {
+    // checked first: resolving the custom script is not free, and computeFinalScript runs for every installer script
+    const limited = log.once("nsis-progid-format-change", this)
+    if (limited.isExhausted) {
       return
     }
     const packager = this.packager
@@ -871,7 +961,6 @@ export class NsisTarget extends Target {
     if (!hasCustomScript) {
       return
     }
-    this.progIdWarningEmitted = true
     const examples = fileAssociations
       .slice(0, 3)
       .map(item => {
@@ -879,15 +968,13 @@ export class NsisTarget extends Target {
         return `${item.name || ext} -> ${progIdMaker.progId(item.name || ext)}`
       })
       .join(", ")
-    log.warn(
+    limited.warn(
       { progIds: examples, solution: "update any registry keys, shell verbs, or external tooling that references the old ProgID" },
       "NSIS file associations now register a generated ProgID instead of the association name or extension. " +
         "You ship a custom NSIS script (nsis.include / nsis.script), which may reference the old value. " +
         "See https://www.electron.build/docs/migration/v27-breaking-changes#nsis-file-association-progid-format-changed"
     )
   }
-
-  private progIdWarningEmitted = false
 
   private async computeFinalScript(originalScript: string, isInstaller: boolean, archs: Map<Arch, string>): Promise<string> {
     const packager = this.packager

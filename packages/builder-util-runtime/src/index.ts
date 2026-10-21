@@ -1,3 +1,4 @@
+export { escapePowerShellSingleQuotes, matchPublisherName, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "./authenticodeSignature.js"
 export { BlockMap } from "./blockMapApi.js"
 export { CancellationError, CancellationToken } from "./CancellationToken.js"
 export { newError } from "./error.js"
@@ -18,6 +19,7 @@ export {
   safeGetHeader,
   safeStringifyJson,
 } from "./httpExecutor.js"
+export type { LimitedLogger, LoggerLike, LogLevel, LogLimitOptions } from "./logLimiter.js"
 export { MemoLazy } from "./MemoLazy.js"
 export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform.js"
 export {
@@ -35,6 +37,8 @@ export {
   KeygenOptions,
   PublishConfiguration,
   PublishProvider,
+  S3AwsCredentialsEnvNames,
+  S3AwsCredentialsOptions,
   S3Options,
   SnapStoreOptions,
   R2Options,

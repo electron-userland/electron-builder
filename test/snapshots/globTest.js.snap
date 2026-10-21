@@ -10146,7 +10146,7 @@ exports[`unpackDir 2`] = `
           "unpacked": true,
         },
         "must-be-not-unpacked": {
-          "offset": 10,
+          "offset": 0,
           "size": 10,
         },
       },
@@ -10262,7 +10262,7 @@ exports[`unpackDir one 2`] = `
           "unpacked": true,
         },
         "must-be-not-unpacked": {
-          "offset": 120,
+          "offset": 110,
           "size": 10,
         },
       },

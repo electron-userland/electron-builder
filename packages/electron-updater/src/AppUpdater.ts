@@ -1,4 +1,5 @@
 import { createRequire } from "node:module"
+import { LogLimiter } from "builder-util-runtime/internal"
 import {
   AllPublishOptions,
   asArray,
@@ -9,12 +10,14 @@ import {
   UUID,
   DownloadOptions,
   CancellationError,
+  HttpExecutor,
   ProgressInfo,
   BlockMap,
   retry,
   collectManifestSignatures,
   normalizePublicKeyList,
   verifyManifestSignatures,
+  type LimitedLogger,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
@@ -38,6 +41,7 @@ import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
+import { nonThrowingLogger } from "./util.js"
 import {
   AutoInstallEvent,
   DOWNLOAD_PROGRESS,
@@ -279,7 +283,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * `allowDowngrade` will be automatically set to `true`. If this behavior is not suitable for you, simple set `allowDowngrade` explicitly after.
    */
   set channel(value: string | null) {
-    if (this._channel != null) {
+    if (value != null) {
       // noinspection SuspiciousTypeOfGuard
       if (typeof value !== "string") {
         throw newError(`Channel must be a string, but got: ${value}`, "ERR_UPDATER_INVALID_CHANNEL")
@@ -304,8 +308,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   updateManifestPublicKey: string | Array<string> | null = null
 
-  private manifestVerificationWarned = false
-
   /**
    *  The request headers.
    */
@@ -321,6 +323,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   protected _logger: Logger = console
+
+  // per updater instance, so several updaters (and tests) keep their own counts
+  private readonly logLimiter = new LogLimiter()
+
+  /**
+   * The current logger (`this.logger`, whichever one is set at call time), emitting at most `max` times per `key`
+   * for this updater instance. The counting stays here: a logger supplied through `autoUpdater.logger` is called
+   * exactly as before and does not need to support anything beyond {@link Logger}.
+   * @internal
+   */
+  protected limitedLogger(key: string, max = 1): LimitedLogger<Logger> {
+    return this.logLimiter.wrap(() => this._logger, { key, max })
+  }
 
   // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
   get netSession(): Session {
@@ -474,7 +489,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * Configure update provider. If value is `string`, [GenericServerOptions](https://www.electron.build/publish#genericserveroptions) will be set with value as `url`.
+   * Configure update provider. If value is `string`, [GenericServerOptions](https://www.electron.build/publish#byo-generic-create-your-own) will be set with value as `url`.
    * @param options If you want to override configuration in the `app-update.yml`.
    */
   setFeedURL(options: PublishConfiguration | AllPublishOptions | string) {
@@ -699,10 +714,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     if (trustedKeys.length === 0) {
-      if (!this.manifestVerificationWarned) {
-        this.manifestVerificationWarned = true
-        this._logger.warn("update manifest signature verification is disabled. Configure updateManifestPublicKey (and sign manifests at build time) to enable it.")
-      }
+      this.limitedLogger("manifest-verification-disabled").warn(
+        "update manifest signature verification is disabled. Configure updateManifestPublicKey (and sign manifests at build time) to enable it."
+      )
       return
     }
 
@@ -716,8 +730,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       // `files` list or control characters in a signed field) — those are rejected before any key is tried.
       const cause =
         result.reason == null ? `none of the ${trustedKeys.length} trusted key(s) validates any of its signatures` : `the signed manifest is malformed (${result.reason})`
+      // download URLs written into latest*.yml after signing (e.g. pre-signed URLs) are the likely cause, rather than tampering
+      const blockMapUrlHint = (info.files ?? []).some(it => it?.blockMapUrl != null)
+        ? " files[].blockMapUrl is covered by the signature, like files[].url, so it has to be in latest*.yml before the manifest is signed: " +
+          "https://www.electron.build/docs/features/signed-update-manifests#what-is-signed"
+        : ""
       throw newError(
-        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.`,
+        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}`,
         "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID"
       )
     }
@@ -812,9 +831,17 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return e
     }
 
+    const requestHeaders = this.computeRequestHeaders(updateInfoAndProvider.provider)
+    try {
+      // fail before any download rather than in the middle of one
+      AppUpdater.checkFeedBaseUrlDeclared(updateInfoAndProvider.provider, requestHeaders)
+    } catch (e: any) {
+      return Promise.reject(errorHandler(e))
+    }
+
     this.downloadPromise = this.doDownloadUpdate({
       updateInfoAndProvider,
-      requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
+      requestHeaders,
       cancellationToken,
       disableWebInstaller: this.disableWebInstaller,
       disableDifferentialDownload: this.disableDifferentialDownload,
@@ -896,6 +923,64 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     return this.computeFinalHeaders({ accept: "*/*" })
   }
 
+  /**
+   * Headers for a download from `url`: when the provider has a `feedBaseUrl`, the credential-bearing ones are dropped if `url` is on
+   * another origin than `originUrl` (the feed by default). `null` keeps them for every URL.
+   */
+  protected downloadRequestHeaders(url: URL, downloadUpdateOptions: DownloadUpdateOptions, originUrl?: URL): OutgoingHttpHeaders {
+    const provider = downloadUpdateOptions.updateInfoAndProvider.provider
+    const headers = downloadUpdateOptions.requestHeaders
+    AppUpdater.checkFeedBaseUrlDeclared(provider, headers)
+    const feedBaseUrl = provider.feedBaseUrl
+    if (feedBaseUrl == null) {
+      return headers
+    }
+    const credentialOrigin = originUrl ?? feedBaseUrl
+    if (HttpExecutor.isCrossOrigin(credentialOrigin, url)) {
+      this.announceCrossOriginDownload(url, credentialOrigin, headers, originUrl == null ? feedBaseUrl : null)
+    }
+    return HttpExecutor.removeCrossOriginSensitiveHeaders(headers, credentialOrigin, url)
+  }
+
+  // Only names are logged (header names, query parameter names, origins), never values.
+  private announceCrossOriginDownload(url: URL, credentialOrigin: URL, headers: OutgoingHttpHeaders, feedBaseUrl: URL | null): void {
+    const docs = "https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+    const names = HttpExecutor.sensitiveHeaderNames(headers)
+    // v27 behaviour changes a plain-JavaScript app would otherwise not notice: each is announced once per updater
+    if (names.length !== 0) {
+      this.limitedLogger("cross-origin-headers").warn(
+        `electron-updater 7 (electron-builder v27) sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (${credentialOrigin.origin}): ` +
+          `${names.join(", ")} not sent to ${url.origin}, which is another origin. ` +
+          `If that server needs them, serve the update files from the feed origin or use pre-signed URLs. ${docs}`
+      )
+    }
+    const feedQueryNames = feedBaseUrl == null ? [] : [...new Set(feedBaseUrl.searchParams.keys())]
+    if (feedQueryNames.length !== 0) {
+      this.limitedLogger("cross-origin-feed-query").warn(
+        `electron-updater 7 (electron-builder v27) adds the feed URL's query string (${feedQueryNames.join(", ")}) only to URLs on the update feed's origin (${feedBaseUrl!.origin}): ` +
+          `not added to the download from ${url.origin}, which keeps its own query string. ` +
+          `If that server needs it, serve the update files from the feed origin or use pre-signed URLs. ${docs}`
+      )
+    }
+  }
+
+  // Credential headers are only sent where the provider says (Provider.feedBaseUrl); a provider that does not say is a configuration error.
+  private static checkFeedBaseUrlDeclared(provider: Provider<any>, headers: OutgoingHttpHeaders): void {
+    if (provider.feedBaseUrl !== undefined) {
+      return
+    }
+    const names = HttpExecutor.sensitiveHeaderNames(headers)
+    if (names.length !== 0) {
+      throw newError(
+        `The custom update provider ${provider.constructor.name} does not declare feedBaseUrl, but its downloads would send the credential headers ${names.join(", ")} ` +
+          `(from requestHeaders, addAuthHeader or fileExtraDownloadHeaders). Override Provider.feedBaseUrl to return the feed URL ` +
+          `(the headers are then only sent to its origin), or null to send the request headers to every origin. ` +
+          `https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin`,
+        "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED"
+      )
+    }
+  }
+
   private async getOrCreateStagingUserId(): Promise<string> {
     const file = path.join(this.app.userDataPath, ".updaterId")
     try {
@@ -971,7 +1056,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       )
     }
     const downloadOptions: DownloadOptions = {
-      headers: taskOptions.downloadUpdateOptions.requestHeaders,
+      headers: this.downloadRequestHeaders(fileInfo.url, taskOptions.downloadUpdateOptions),
       cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
       sha2: (fileInfo.info as any).sha2,
       sha512: fileInfo.info.sha512,
@@ -1107,6 +1192,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     log.info(`New version ${version} has been downloaded to ${updateFile}`)
     return await done(true)
   }
+  /**
+   * Logs why a differential download failed, before the full download it falls back to. Never throws: neither a throwing
+   * logger nor an error that cannot be formatted may stop the fallback.
+   * @internal
+   */
+  protected logDifferentialDownloadFallback(error: unknown): void {
+    try {
+      this._logger.error(`Cannot download differentially, fallback to full download: ${error instanceof Error ? error.stack || String(error) : String(error)}`)
+    } catch (_ignored) {
+      // a throwing logger must not stop the fallback
+    }
+  }
+
   protected async differentialDownloadInstaller(
     fileInfo: ResolvedUpdateFileInfo,
     downloadUpdateOptions: DownloadUpdateOptions,
@@ -1120,17 +1218,23 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return true
       }
       const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-      const blockmapFileUrls = await provider.getBlockMapFiles(
-        fileInfo.url,
-        this.app.version,
-        downloadUpdateOptions.updateInfoAndProvider.info.version,
-        this.previousBlockmapBaseUrlOverride
-      )
-      this._logger.info(`Download block maps (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
+      const override = this.previousBlockmapBaseUrlOverride
+      const getBlockMapFiles = () => provider.getBlockMapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version, override)
+      let oldBlockMapUrl: URL | null
+      let newBlockMapUrl: URL
+      if (fileInfo.blockMapUrl == null) {
+        ;[oldBlockMapUrl, newBlockMapUrl] = await getBlockMapFiles()
+      } else {
+        // The update manifest names the new blockmap (e.g. separately pre-signed), so a URL derived from the new file's URL is not
+        // valid for the old one: the old blockmap comes from the cache, else from previousBlockmapBaseUrlOverride.
+        newBlockMapUrl = fileInfo.blockMapUrl
+        oldBlockMapUrl = override ? (await getBlockMapFiles())[0] : null
+      }
+      this._logger.info(`Download block maps (old: "${oldBlockMapUrl ?? "cache only"}", new: ${newBlockMapUrl})`)
 
-      const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
+      const downloadBlockMap = async (url: URL, originUrl?: URL): Promise<BlockMap> => {
         const data = await this.httpExecutor.downloadToBuffer(url, {
-          headers: downloadUpdateOptions.requestHeaders,
+          headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
           cancellationToken: downloadUpdateOptions.cancellationToken,
         })
 
@@ -1151,7 +1255,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         logger: this._logger,
         newFile: installerPath,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
-        requestHeaders: downloadUpdateOptions.requestHeaders,
+        requestHeaders: this.downloadRequestHeaders(fileInfo.url, downloadUpdateOptions),
         cancellationToken: downloadUpdateOptions.cancellationToken,
       }
 
@@ -1176,28 +1280,45 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return null
       }
 
-      const newBlockMapData = await downloadBlockMap(blockmapFileUrls[1])
+      const newBlockMapData = await downloadBlockMap(newBlockMapUrl)
       await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
 
       // get old blockmap from cache dir first, if not found, download it
       let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
+      if (oldBlockMapData != null && !(await isBlockMapOfFile(oldBlockMapData, downloadOptions.oldFile))) {
+        // The cached blockmap is replaced when a download finishes, but NSIS replaces the cached installer only when the update is
+        // installed. A release that arrives before the previous one is installed therefore finds the pending release's blockmap next
+        // to the running release's installer; planning against it downloads every differential byte and then fails the sha512 check.
+        // expected, and fixed by the steps below: the installed version's blockmap is fetched, or (blockMapUrl set, no override) the update is downloaded in full
+        this._logger.info(`Cached blockmap does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): ignoring it`)
+        oldBlockMapData = null
+      }
       isOldBlockMapFromCache = oldBlockMapData != null
       if (oldBlockMapData == null) {
-        this._logger.info(`No cached blockmap for the old installer, downloading it from "${blockmapFileUrls[0]}"`)
-        oldBlockMapData = await downloadBlockMap(blockmapFileUrls[0])
+        if (oldBlockMapUrl == null) {
+          // the full download caches the new blockmap downloaded above, so the next update can be differential
+          this._logger.info(
+            "No cached blockmap for the old installer, and the update manifest sets blockMapUrl, so the old blockmap URL cannot be derived " +
+              "(set previousBlockmapBaseUrlOverride to download it): downloading the full update"
+          )
+          return true
+        }
+        this._logger.info(`No cached blockmap for the old installer, downloading it from "${oldBlockMapUrl}"`)
+        // the old blockmap comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
+        oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, override ? new URL(override) : undefined)
       }
 
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
       return false
     } catch (e: any) {
-      if (e.code === "ERR_CHECKSUM_MISMATCH") {
-        this._logger.warn(
+      if (e?.code === "ERR_CHECKSUM_MISMATCH") {
+        nonThrowingLogger(this._logger).warn(
           `sha512 checksum mismatch after differential download (old blockmap ${
             isOldBlockMapFromCache ? "was read from the local cache" : "was downloaded from the server"
           }): cached "${oldInstallerFileName}" is likely out of sync with the old blockmap, e.g. because one of them was replaced or evicted independently of the other`
         )
       }
-      this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+      this.logDifferentialDownloadFallback(e)
       if (this._testOnlyOptions != null) {
         // test mode
         throw e
@@ -1205,6 +1326,51 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return true
     }
   }
+}
+
+/**
+ * Whether `blockMap` (parsed from the cache, so unchecked) is a well-formed blockmap whose blocks end exactly at `file`'s size.
+ * A malformed map is rejected, so a corrupt cache file is replaced like a stale one. A missing file is not rejected here (the
+ * differential download reports it). Releases almost always differ in size, so this catches a blockmap of another release.
+ * @internal
+ */
+export async function isBlockMapOfFile(blockMap: unknown, file: string): Promise<boolean> {
+  const end = getBlockMapEnd(blockMap)
+  if (end == null) {
+    return false
+  }
+  const stat = await fsExtra.stat(file).catch(() => null)
+  return stat == null || end === stat.size
+}
+
+/** Where the blocks of `blockMap` end, or null if it is not a well-formed blockmap. */
+function getBlockMapEnd(blockMap: unknown): number | null {
+  if (blockMap == null || typeof blockMap !== "object") {
+    return null
+  }
+  const { files } = blockMap as { files?: unknown }
+  if (!Array.isArray(files)) {
+    return null
+  }
+  let end = 0
+  for (const blockMapFile of files) {
+    if (blockMapFile == null || typeof blockMapFile !== "object") {
+      return null
+    }
+    const { offset, sizes, checksums } = blockMapFile as { offset?: unknown; sizes?: unknown; checksums?: unknown }
+    if (typeof offset !== "number" || !Number.isFinite(offset) || offset < 0 || !Array.isArray(sizes) || !Array.isArray(checksums) || checksums.length !== sizes.length) {
+      return null
+    }
+    let fileEnd = offset
+    for (const size of sizes) {
+      if (typeof size !== "number" || !Number.isFinite(size) || size < 0) {
+        return null
+      }
+      fileEnd += size
+    }
+    end = Math.max(end, fileEnd)
+  }
+  return end
 }
 
 /** @internal */

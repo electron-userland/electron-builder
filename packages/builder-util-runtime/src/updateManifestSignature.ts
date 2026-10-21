@@ -37,7 +37,8 @@ function encodeField(value: unknown): string {
  *   - `stagingPercentage`     — prevents tampering with staged-rollout gating
  *   - `minimumSystemVersion`  — prevents bypassing or forging the OS-version gate (its absence is signed too,
  *                               so one cannot be added after the fact)
- *   - each file's `url`, `sha512`, `size` — the artifact identity + integrity hash the updater enforces
+ *   - each file's `url`, `sha512`, `size` — the artifact identity + integrity hash the updater enforces — and its
+ *     `blockMapUrl` when present (an extra field on the file record only then, so other manifests are unaffected)
  *   - each NSIS web-installer package's arch key and `path`, `sha512`, `size`, `blockMapSize`, `isAdminRightsRequired`
  *     (`WindowsUpdateInfo.packages`, keyed by arch) — the payload the web installer downloads and verifies
  *
@@ -48,6 +49,13 @@ function encodeField(value: unknown): string {
  * signed manifest without a non-empty `files` list (see {@link validateSignedManifestShape}), so the updater
  * never falls back to those legacy fields for a verified manifest.
  *
+ * `files[].isAdminRightsRequired` is intentionally NOT signed. It is only a launch hint (spawn the installer
+ * directly vs. through `elevate.exe`); the installer itself is pinned by the signed `url`/`sha512`/`size`, so
+ * tampering with the flag cannot change what gets installed — the worst case is an unexpected UAC prompt or an
+ * unnecessary `elevate.exe` launch. Leaving it unsigned lets a publisher correct a misconfigured value in
+ * `latest.yml` without re-signing. The `isAdminRightsRequired` column of the `package:` records below is part of
+ * the `EBUM1` wire format for historic reasons; electron-updater does not read it from `packages`.
+ *
  * Wire format (`EBUM1`): one record per line, `label:` followed by tab-separated fields, e.g.
  *
  *     EBUM1
@@ -55,6 +63,7 @@ function encodeField(value: unknown): string {
  *     staging:25
  *     minimumSystemVersion:"10.0.19041"
  *     file:"App-1.2.3.exe"<TAB>"<sha512>"<TAB>8123456
+ *     file:"App-1.2.4.exe"<TAB>"<sha512>"<TAB>8123456<TAB>"https://cdn.example.com/App-1.2.4.exe.blockmap?sig=…"   (with a blockMapUrl)
  *     package:"x64"<TAB>"App-1.2.3-x64.nsis.7z"<TAB>"<sha512>"<TAB>5000<TAB>120<TAB>1
  *
  * Every value goes through {@link encodeField} (JSON-quoted strings, bare numbers, empty for absent), which is
@@ -77,7 +86,11 @@ export function canonicalizeForSigning(info: UpdateInfo): string {
     `minimumSystemVersion:${encodeField(info.minimumSystemVersion)}`,
   ]
 
-  const files = (info.files ?? []).map(f => `file:${encodeField(f?.url)}\t${encodeField(f?.sha512)}\t${encodeField(f?.size)}`)
+  const files = (info.files ?? []).map(f => {
+    const record = `file:${encodeField(f?.url)}\t${encodeField(f?.sha512)}\t${encodeField(f?.size)}`
+    // only emitted when present, so manifests without a blockMapUrl canonicalize exactly as before
+    return f?.blockMapUrl == null ? record : `${record}\t${encodeField(f.blockMapUrl)}`
+  })
   // Sort so file ordering in the manifest cannot change the signed payload.
   files.sort()
   lines.push(...files)
@@ -122,7 +135,7 @@ function isNonEmptyString(value: unknown): value is string {
  * so that a manifest the updater would reject is never signed in the first place:
  *   - `version` is a non-empty string
  *   - `files` is a non-empty array whose entries have a non-empty string `url` and `sha512` (and a numeric
- *     `size` when present) — a signed manifest must describe its own files, so the updater never consults the
+ *     `size` and a non-empty string `blockMapUrl` when present) — a signed manifest must describe its own files, so the updater never consults the
  *     unsigned legacy top-level `path`/`sha512` for it
  *   - `stagingPercentage` is a number when present, `minimumSystemVersion` a string when present
  *   - every `packages` entry (NSIS web installer) has a non-empty string `path` and `sha512`, numeric
@@ -161,6 +174,12 @@ export function validateSignedManifestShape(info: UpdateInfo): string | null {
       return `files[${i}].size must be a number`
     }
     strings.push([`files[${i}].url`, file.url], [`files[${i}].sha512`, file.sha512])
+    if (file.blockMapUrl != null) {
+      if (!isNonEmptyString(file.blockMapUrl)) {
+        return `files[${i}].blockMapUrl must be a non-empty string`
+      }
+      strings.push([`files[${i}].blockMapUrl`, file.blockMapUrl])
+    }
   }
 
   const packages = (info as WindowsUpdateInfo).packages

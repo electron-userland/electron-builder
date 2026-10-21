@@ -1,4 +1,4 @@
-import { exec, exists, log } from "builder-util"
+import { assertNoSymlinkLeaves, exec, exists, ExternalLinkPolicy, log, prepareFixedNameWrite } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 
@@ -57,6 +57,8 @@ export interface InstallerOptions {
   setupMsi?: string | null
   fixUpPaths?: boolean
   createTempDir: (options: { prefix: string }) => Promise<string>
+  /** The `fileOptions.allowExternalLinks` build option: NuGet stores what a symlink points to, so a symlink that leaves the app fails unless it allows it. */
+  externalLinks?: ExternalLinkPolicy | null
 }
 
 export async function createWindowsInstaller(options: InstallerOptions): Promise<void> {
@@ -76,6 +78,7 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
     setupMsi,
     fixUpPaths = false,
     createTempDir,
+    externalLinks,
   } = options
 
   const useMono = process.platform !== "win32"
@@ -84,7 +87,10 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
   }
 
   // Squirrel.exe must live in the app directory so the nuspec can reference it
-  await fs.copyFile(path.join(vendorDirectory, "Squirrel.exe"), path.join(appDirectory, "Squirrel.exe"))
+  // into the app output directory, which untrusted files were copied into: replace, never follow, a symlink at the name
+  const squirrelExe = path.join(appDirectory, "Squirrel.exe")
+  await prepareFixedNameWrite(appDirectory, squirrelExe, "Squirrel.exe")
+  await fs.copyFile(path.join(vendorDirectory, "Squirrel.exe"), squirrelExe)
 
   const nugetVersion = convertVersion(version)
   const authors = options.authors || ""
@@ -116,6 +122,8 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
   await fs.writeFile(nuspecPath, nuspecContent)
 
   const nugetExe = path.join(vendorDirectory, "nuget.exe")
+  // NuGet stores what a symlink points to: one that leaves the app would package files from elsewhere on the build machine
+  await assertNoSymlinkLeaves(appDirectory, "the Squirrel.Windows NuGet package", externalLinks)
   const nugetArgs = ["pack", nuspecPath, "-BasePath", appDirectory, "-OutputDirectory", nugetOutput, "-NoDefaultExcludes"]
   await (useMono ? exec("mono", [nugetExe, ...nugetArgs]) : exec(nugetExe, nugetArgs))
 

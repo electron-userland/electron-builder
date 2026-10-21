@@ -19,6 +19,7 @@ export {
   MetadataDirectories,
   PackContext,
   ToolsetConfig,
+  ToolsetCustom,
 } from "./configuration.js"
 export {
   BeforeBuildContext,
@@ -40,6 +41,7 @@ export {
   AppImageOptions,
   CommonLinuxOptions,
   DebOptions,
+  FlatpakAdditionalArgs,
   FlatpakOptions,
   LinuxConfiguration,
   LinuxDesktopFile,
@@ -54,7 +56,7 @@ export { MsiWrappedOptions } from "./options/MsiWrappedOptions.js"
 export { MsixOptions, MsixWindowsService } from "./options/MsixOptions.js"
 export { BackgroundAlignment, BackgroundScaling, PkgBackgroundOptions, PkgOptions } from "./options/pkgOptions.js"
 export { AsarOptions, FileSet, FilesBuildOptions, PlatformSpecificBuildOptions, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions.js"
-export { PlugDescriptor, SlotDescriptor, SnapcraftOptions } from "./options/SnapOptions.js"
+export { PlugDescriptor, RemoteBuildOptions, SlotDescriptor, SnapcraftOptions, SnapOptions24, SnapOptionsCustom, SnapOptionsLegacy } from "./options/SnapOptions.js"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions.js"
 export {
   WindowsAzureSigningConfig,
@@ -68,7 +70,7 @@ export {
 export { BuildResult, Packager } from "./packager.js"
 export { ElectronGetOptions } from "./util/electronGet.js"
 export { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
-export { CommonNsisOptions, CustomNsisBinary, NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis/nsisOptions.js"
+export { CommonNsisOptions, NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis/nsisOptions.js"
 export { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
@@ -86,7 +88,7 @@ export { HsmSignManager } from "./codeSign/win/hsmSignManager.js"
 export { Pkcs11SignManager } from "./codeSign/win/pkcs11SignManager.js"
 export { SigntoolSignManager } from "./codeSign/win/signtoolBaseSignManager.js"
 export { ToolInfo } from "./util/bundledTool.js"
-export { ForgeOptions, buildForge } from "./forge-maker.js"
+export { ElectronBuilderForgeMaker, ForgeMakerConfig, ForgeMakerOptions, ForgeMakerTarget, ForgeOptions, ForgePlatform, buildForge, withLegacyForgeCall } from "./forge-maker.js"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework.js"
 export { LinuxPackager } from "./linuxPackager.js"
 export { CustomMacSign, CustomMacSignOptions, MacPackager } from "./macPackager.js"

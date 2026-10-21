@@ -45,6 +45,29 @@ it("preserves fractional staged rollout percentages", async () => {
   await expect((updater as any).isStagingMatch({ stagingPercentage: 0.5 })).resolves.toBe(true)
 })
 
+describe("AppUpdater channel validation", () => {
+  let updater: DebUpdater
+
+  beforeEach(() => {
+    updater = new DebUpdater(null, stubApp)
+  })
+
+  it("rejects an empty initial channel", () => {
+    expect(() => (updater.channel = "")).toThrow(/Channel must be not an empty string/)
+  })
+
+  it("rejects a non-string initial channel", () => {
+    expect(() => (updater.channel = 1 as any)).toThrow(/Channel must be a string/)
+  })
+
+  it("allows a configured channel to be reset", () => {
+    updater.channel = "beta"
+    updater.channel = null
+
+    expect(updater.channel).toBeNull()
+  })
+})
+
 // ─── BaseUpdater.sanitizeEnvPath — PATH sanitization ─────────────────────────
 // Tests the extracted helper directly (vi.spyOn on ESM module exports is not
 // possible; testing the pure function avoids that limitation entirely).
@@ -174,8 +197,8 @@ function setupAppImageDownload({ cacheDir, verifyUpdateFile, cancellationToken =
     downloadUpdateOptions: {
       updateInfoAndProvider: {
         info: { version: "2.0.0", files: [], path: "", sha512: "", releaseDate: "" },
-        // @ts-expect-error the provider does not come into play, so we can have it null
-        provider: null,
+        // @ts-expect-error the provider only supplies the feed origin for the download headers, so a stub without one is enough
+        provider: { feedBaseUrl: null },
       },
       requestHeaders: {},
       cancellationToken,

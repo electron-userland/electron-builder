@@ -1,11 +1,13 @@
 import type { FuseConfig, FuseV1Config } from "@electron/fuses"
 import { dynamicImport } from "./util/dynamicImport.js"
+import { CONTENT_ALIGNMENT_WARN_THRESHOLD, validateContentAlignment } from "./asar/asarAlign.js"
 import {
   Arch,
   asArray,
   AsyncTaskManager,
   DebugLogger,
   defaultArchFromString,
+  ExternalLinkPolicy,
   FileTransformer,
   getArchSuffix,
   getArtifactArchName,
@@ -59,6 +61,7 @@ import type {
 import type { PlatformType } from "./targets/mac/MacTargetHelper.js"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, transformFiles } from "./util/appFileCopier.js"
 import { verifyNativeBinaries } from "./util/nativeBinaryVerifier.js"
+import { getTrustedSourceRoots, resolveAllowExternalLinks } from "./util/trustedSourceRoots.js"
 import { convertIcon, IconFormat, IconInfo } from "./util/iconConverter.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { AssetCatalogResult, generateAssetCatalogForIcon } from "./util/mac/macosIconComposer.js"
@@ -115,6 +118,20 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return deepAssign({}, this.platformSpecificBuildOptions, (this.config as any)[key] ?? {}) as T
   }
 
+  private externalLinkPolicy: Promise<ExternalLinkPolicy> | null = null
+
+  /**
+   * The resolved `fileOptions.allowExternalLinks` option: the platform-level value (`config.mac.fileOptions.allowExternalLinks`, ...) or the
+   * root one (see {@link resolveAllowExternalLinks}). Computed once; a listed path that does not exist fails the build.
+   */
+  getExternalLinkPolicy(): Promise<ExternalLinkPolicy> {
+    if (this.externalLinkPolicy == null) {
+      const { value, optionPath } = resolveAllowExternalLinks(this.config, this.platformSpecificBuildOptions, this.platform.buildConfigurationKey)
+      this.externalLinkPolicy = ExternalLinkPolicy.create(value, this.projectDir, optionPath)
+    }
+    return this.externalLinkPolicy
+  }
+
   get resourceList(): Promise<Array<string>> {
     return this._resourceList.value
   }
@@ -166,8 +183,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   )
 
-  private updateManifestSigningWarned = false
-
   /**
    * Resolves the signing keys for a build step that will emit auto-update metadata, enforcing that manifests are
    * signed: an unsigned `latest*.yml` lets anyone who can write to the update feed point every install at an
@@ -189,16 +204,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (!optedOut && required) {
       throw new InvalidConfigurationError(
         `auto-update manifests must be signed, but no Ed25519 signing key was found for ${this.platform.name}. ` +
-          "Generate one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (PEM contents) " +
+          "Generate one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file) " +
           "or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey / " +
           "updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out explicitly with " +
           "`updateManifest: false`. See https://www.electron.build/features/signed-update-manifests"
       )
     }
 
-    if (!this.updateManifestSigningWarned) {
-      this.updateManifestSigningWarned = true
-      log.warn(
+    log
+      .once("unsigned-update-manifest", this)
+      .warn(
         { platform: this.platform.name, reason: optedOut ? "updateManifest is set to false" : "no Ed25519 signing key is configured" },
         "auto-update manifests will be unsigned: anyone who can overwrite latest*.yml on your update server can point installs at an arbitrary payload. " +
           (optedOut
@@ -207,7 +222,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           "Note that installs which already embed a public key reject unsigned manifests (ERR_UPDATER_MANIFEST_NOT_SIGNED). " +
           "See https://www.electron.build/features/signed-update-manifests"
       )
-    }
     return keys
   }
 
@@ -561,8 +575,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const transformerForExtraFiles = this.createTransformerForExtraFiles(packContext)
-    await copyFiles(extraResourceMatchers, transformerForExtraFiles)
-    await copyFiles(extraFileMatchers, transformerForExtraFiles)
+    // confined, by real path, to the app output directory (or the output directory, for a "to" that leaves it); a copied symlink may lead into the workspace or the package-manager store
+    const extraFilesContainment = { roots: [appOutDir, outDir], allowedSymlinkRoots: await getTrustedSourceRoots(this), externalLinks: await this.getExternalLinkPolicy() }
+    await copyFiles(extraResourceMatchers, transformerForExtraFiles, undefined, extraFilesContainment)
+    await copyFiles(extraFileMatchers, transformerForExtraFiles, undefined, extraFilesContainment)
 
     if (this.info.cancellationToken.cancelled) {
       return
@@ -584,12 +600,20 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       mode: this.config.nativeModules?.verifyNativeBinaries,
     })
 
+    if (!options?.disableAsarIntegrity) {
+      await this.doAddAsarIntegrityDigest(packContext, platformSpecificBuildOptions, asarOptions)
+    }
     if (!options?.disableFuses) {
       await this.doAddElectronFuses(packContext)
     }
     if (options?.sign ?? true) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, platformType, arch, platformSpecificBuildOptions, targets)
     }
+  }
+
+  // macOS only (see MacPackager). It writes into the binary the fuses patch too, so it runs before them and, like them, before signing.
+  protected async doAddAsarIntegrityDigest(_packContext: AfterPackContext, _platformSpecificBuildOptions: DC, _asarOptions: AsarOptions | null): Promise<void> {
+    // only Electron's macOS framework has an ASAR integrity digest slot
   }
 
   // the fuses MUST be flipped right before signing
@@ -728,7 +752,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return computeFileSets(matchers, this.info.isPrepackedAppAsar ? null : transformer, this).then(async result => {
         if (!this.info.isPrepackedAppAsar && !this.info.areNodeModulesHandledExternally) {
           const moduleFileMatcher = getNodeModuleFileMatcher(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this.info)
-          result = result.concat(await computeNodeModuleFileSets(this, moduleFileMatcher, packContext.arch, !disableArchFilter))
+          result = result.concat(await computeNodeModuleFileSets(this, platformSpecificBuildOptions, moduleFileMatcher, packContext.arch, !disableArchFilter))
         }
         return result.filter(it => it.files.length > 0)
       })
@@ -737,7 +761,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (this.info.isPrepackedAppAsar) {
       taskManager.add(async () => {
         const fileSets = await _computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)])
-        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, transformer)))
+        const copyOptions = { containmentRoot: resourcePath, trustedSourceRoots: await getTrustedSourceRoots(this), externalLinks: await this.getExternalLinkPolicy() }
+        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, transformer, copyOptions)))
         await taskManager.awaitTasks()
       })
     } else if (asarOptions == null) {
@@ -756,7 +781,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
       taskManager.add(async () => {
         const fileSets = await _computeFileSets(mainMatchers)
-        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, combinedTransformer)))
+        const copyOptions = { containmentRoot: resourcePath, trustedSourceRoots: await getTrustedSourceRoots(this), externalLinks: await this.getExternalLinkPolicy() }
+        fileSets.forEach(it => taskManager.addTask(copyAppFiles(it, this.info, combinedTransformer, copyOptions)))
         await taskManager.awaitTasks()
       })
     } else {
@@ -797,7 +823,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return Promise.resolve(null)
   }
 
-  private async computeAsarOptions(customBuildOptions: DC): Promise<AsarOptions | null> {
+  protected async computeAsarOptions(customBuildOptions: DC): Promise<AsarOptions | null> {
     if (!isElectronBased(this.info.framework)) {
       return null
     }
@@ -822,7 +848,19 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return {}
     }
 
-    return deepAssign({}, result)
+    const asarOptions: AsarOptions = deepAssign({}, result)
+    const alignment = asarOptions.contentAlignment
+    if (alignment != null && alignment !== 0) {
+      // fail before anything is packed, not after @electron/asar has written the archive
+      validateContentAlignment(alignment)
+      if (alignment > CONTENT_ALIGNMENT_WARN_THRESHOLD) {
+        log.warn(
+          { contentAlignment: alignment, threshold: CONTENT_ALIGNMENT_WARN_THRESHOLD },
+          "asar.contentAlignment pads every packed file up to the next boundary; such a large alignment makes app.asar much bigger"
+        )
+      }
+    }
+    return asarOptions
   }
 
   public getElectronSrcDir(dist: string): string {

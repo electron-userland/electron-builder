@@ -37,6 +37,32 @@ function desktopStringEscape(value: string): string {
 }
 
 /**
+ * One `key=value` line of a .desktop file. Values from the configuration are written as given, so that escape sequences
+ * such as `\;` in a list keep working; a raw line break inside a value, which would end the value and start a new key or
+ * group, is rejected instead. Line breaks at the end of a value, as in a YAML block scalar, only add blank lines, so they are
+ * dropped. A key is rejected when GLib, which most desktops read the file with, would not read it back (g_key_file_is_key_name):
+ * empty, with `=` or a line break, or with brackets other than a trailing locale of letters, digits, `-`, `_`, `.` and `@`,
+ * such as `Name[de]`. Keys the specification does not allow but parsers accept, such as `X_Foo`, are kept.
+ *
+ * @see https://specifications.freedesktop.org/desktop-entry/latest/basic-format.html
+ */
+function desktopEntryLine(group: string, key: string, value: unknown): string {
+  // leading and trailing blanks are trimmed when the file is read, but not a blank before the locale
+  if (!/^[ \t]*[^=[\]\s](?:[^=[\]\r\n]*[^=[\]\s])?(?:\[[\p{L}\p{Nd}_.@-]+\])?[ \t]*$/u.test(key)) {
+    throw new InvalidConfigurationError(
+      `Invalid key ${JSON.stringify(key)} in the ${group} group of the .desktop file — a key must not be empty or contain "=" or a line break, and brackets are only allowed around a trailing locale of letters, digits, "-", "_", "." and "@", right after the key, such as Name[de] or Name[sr@latin].`
+    )
+  }
+  const text = String(value).replace(/[\r\n]+$/, "")
+  if (/[\r\n]/.test(text)) {
+    throw new InvalidConfigurationError(
+      `The value of ${key} in the ${group} group of the .desktop file contains a line break — a value must be on one line (write a newline in a string value as \\n).`
+    )
+  }
+  return `\n${key}=${text}`
+}
+
+/**
  * Quote a command / path token for the freedesktop Exec key.
  *
  * Every Linux target launches through a launcher entrypoint, so the Exec key only ever holds a
@@ -208,29 +234,23 @@ export class LinuxTargetHelper {
     return file
   }
 
-  // Emit the "desktopName not set" warning at most once per build, even though both
-  // getDesktopFileName() and computeDesktopEntry() resolve the desktop name.
-  private desktopNameWarningEmitted = false
-
   // https://github.com/electron-userland/electron-builder/issues/9103
   // Electron derives app_id / WM_CLASS from desktopName in package.json; the installed
   // .desktop filename and StartupWMClass must match it for window association to work.
   // https://github.com/electron/electron/blob/9a7b73b5334f1d72c08e2d5e94106706ed751186/lib/browser/init.ts#L128-L133
   // Returns the validated base name (desktopName minus the .desktop suffix), or null when
   // desktopName is unset — callers apply their own fallback (filename vs WM_CLASS).
-  private resolveDesktopName(): string | null {
+  resolveDesktopName(): string | null {
     const trimmedDesktopName = this.packager.metadata.desktopName?.trim()
     if (isEmptyOrSpaces(trimmedDesktopName)) {
-      if (!this.desktopNameWarningEmitted) {
-        this.desktopNameWarningEmitted = true
-        log.warn(
-          {
-            reason: "desktopName is not set in package.json",
-            docs: "https://www.electron.build/docs/linux/#window-association-desktopname",
-          },
-          'Electron derives the app_id / WM_CLASS used for Linux window association from desktopName. Without it, desktop environments may not link the running window to its launcher entry (taskbar grouping, dock icon, etc.). Set desktopName to a reverse-DNS identifier in package.json, e.g. "com.myapp.MyApp".'
-        )
-      }
+      // at most once per build, even though both getDesktopFileName() and computeDesktopEntry() resolve the desktop name
+      log.once("desktop-name-not-set", this).warn(
+        {
+          reason: "desktopName is not set in package.json",
+          docs: "https://www.electron.build/docs/linux/#window-association-desktopname",
+        },
+        'Electron derives the app_id / WM_CLASS used for Linux window association from desktopName. Without it, desktop environments may not link the running window to its launcher entry (taskbar grouping, dock icon, etc.). Set desktopName to a reverse-DNS identifier in package.json, e.g. "com.myapp.MyApp".'
+      )
       return null
     }
     const basename = trimmedDesktopName.replace(/\.desktop$/, "")
@@ -242,9 +262,6 @@ export class LinuxTargetHelper {
     return basename
   }
 
-  // Emitted at most once per build — getDesktopFileName is called per target.
-  private desktopFilenameChangeWarningEmitted = false
-
   getDesktopFileName(fallback: string = this.packager.executableName): string {
     const resolved = this.resolveDesktopName()
     if (resolved == null) {
@@ -254,19 +271,24 @@ export class LinuxTargetHelper {
     // its default was off — so any project that set desktopName without opting in now installs a
     // differently-named .desktop file. On upgrade the old entry stays behind until the previous
     // package is removed, which shows up as a duplicate or stale launcher rather than a build error.
-    if (resolved !== fallback && !this.desktopFilenameChangeWarningEmitted) {
-      this.desktopFilenameChangeWarningEmitted = true
-      log.warn(
-        { desktopName: resolved, previousFileName: `${fallback}.desktop`, fileName: `${resolved}.desktop` },
-        "the installed .desktop filename is now always derived from `desktopName` (electron-builder v26 only did this with `linux.syncDesktopName: true`, which defaulted to off). " +
-          "Update any packaging, AppArmor, or MIME tooling that referenced the old filename. " +
-          "See https://www.electron.build/docs/migration/v27-breaking-changes#linuxsyncdesktopname-always-synced"
-      )
+    if (resolved !== fallback) {
+      // at most once per build — getDesktopFileName is called per target
+      log
+        .once("desktop-filename-change", this)
+        .warn(
+          { desktopName: resolved, previousFileName: `${fallback}.desktop`, fileName: `${resolved}.desktop` },
+          "the installed .desktop filename is now always derived from `desktopName` (electron-builder v26 only did this with `linux.syncDesktopName: true`, which defaulted to off). " +
+            "Update any packaging, AppArmor, or MIME tooling that referenced the old filename. " +
+            "See https://www.electron.build/docs/migration/v27-breaking-changes#linuxsyncdesktopname-always-synced"
+        )
     }
     return resolved
   }
 
-  computeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, extra?: Record<string, string>): Promise<string> {
+  // async, so that a configuration error rejects the promise instead of throwing at the call, where the AppImage target
+  // builds the list of its concurrent steps
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async computeDesktopEntry(targetSpecificOptions: CommonLinuxOptions, exec?: string, extra?: Record<string, string>): Promise<string> {
     if (exec != null && exec.length === 0) {
       throw new Error("Specified exec is empty")
     }
@@ -360,7 +382,7 @@ export class LinuxTargetHelper {
 
     let data = `[Desktop Entry]`
     for (const name of Object.keys(desktopMeta)) {
-      data += `\n${name}=${desktopMeta[name]}`
+      data += desktopEntryLine("[Desktop Entry]", name, desktopMeta[name])
     }
     data += "\n"
     const desktopActions = targetSpecificOptions.desktop?.desktopActions ?? {}
@@ -368,13 +390,19 @@ export class LinuxTargetHelper {
       if (!Object.keys(config ?? {}).length) {
         continue
       }
-      data += `\n[Desktop Action ${actionName}]`
+      // the name ends up in a group header, which may not contain brackets or control characters
+      // eslint-disable-next-line no-control-regex
+      if (/[[\]\x00-\x1f\x7f]/.test(actionName)) {
+        throw new InvalidConfigurationError(`Invalid desktop action name ${JSON.stringify(actionName)} — it must not contain "[", "]" or control characters.`)
+      }
+      const group = `[Desktop Action ${actionName}]`
+      data += `\n${group}`
       for (const [key, value] of Object.entries(config ?? {})) {
-        data += `\n${key}=${value}`
+        data += desktopEntryLine(group, key, value)
       }
       data += "\n"
     }
-    return Promise.resolve(data)
+    return data
   }
 }
 

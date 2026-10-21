@@ -64,9 +64,6 @@ function computeChannelNames(packager: PlatformPackager<any>, publishConfig: Pub
   }
 }
 
-/** Emitted once per suffixed channel — computeChannelNames runs per artifact. */
-const suffixedChannelWarnings = new Set<string>()
-
 /**
  * v26 only expanded a channel to its lower channels when the name was exactly alpha/beta/latest, so a
  * suffixed channel (the per-arch `${channel}-${arch}` pattern) published a single file. v27 reads the
@@ -74,11 +71,11 @@ const suffixedChannelWarnings = new Set<string>()
  * overwrites `beta-x64.yml` in the same bucket — changing what live beta-x64 users are offered.
  */
 function warnAboutSuffixedChannelExpansion(currentChannel: string, suffix: string, channels: Array<string>): Array<string> {
-  if (suffix.length === 0 || suffixedChannelWarnings.has(currentChannel)) {
+  if (suffix.length === 0) {
     return channels
   }
-  suffixedChannelWarnings.add(currentChannel)
-  log.warn(
+  // once per suffixed channel — computeChannelNames runs per artifact
+  log.once(`suffixed-channel-expansion:${currentChannel}`).warn(
     {
       channel: currentChannel,
       writes: channels.map(it => `${it}.yml`).join(", "),
@@ -347,24 +344,23 @@ async function writeOldMacInfo(
   }
 }
 
-/** Emitted once per process — createUpdateInfoTasks runs per artifact. */
-let legacyCompatibilityWarningEmitted = false
-
 /**
  * The default `electronUpdaterCompatibility` moved to ">=2.16", which is what stops the deprecated
  * top-level path/sha512 descriptor from being written. A range pinned below that keeps emitting it —
  * along with the SHA-256 `sha2` checksum on Windows, which v28 will reject outright. Nothing said so.
  */
 function warnAboutLegacyUpdaterCompatibility(electronUpdaterCompatibility: string, needsLegacyPathSha512: boolean): void {
-  if (!needsLegacyPathSha512 || legacyCompatibilityWarningEmitted) {
+  if (!needsLegacyPathSha512) {
     return
   }
-  legacyCompatibilityWarningEmitted = true
-  log.warn(
-    { electronUpdaterCompatibility, solution: 'drop the pin (the default is ">=2.16") unless you still ship apps embedding electron-updater 1.x-2.15' },
-    "electronUpdaterCompatibility includes electron-updater versions below 2.16.0, so the deprecated top-level path/sha512 descriptor is still written to latest*.yml " +
-      "(and, on Windows, the legacy SHA-256 sha2 checksum). Metadata validated only by sha2 is deprecated and v28 will reject it. " +
-      "Every electron-updater since 2.16.0 reads files[] and ignores these fields. " +
-      "See https://www.electron.build/docs/migration/v27-breaking-changes#latestyml-drops-legacy-top-level-pathsha512"
-  )
+  // once per process — createUpdateInfoTasks runs per artifact
+  log
+    .once("legacy-updater-compatibility")
+    .warn(
+      { electronUpdaterCompatibility, solution: 'drop the pin (the default is ">=2.16") unless you still ship apps embedding electron-updater 1.x-2.15' },
+      "electronUpdaterCompatibility includes electron-updater versions below 2.16.0, so the deprecated top-level path/sha512 descriptor is still written to latest*.yml " +
+        "(and, on Windows, the legacy SHA-256 sha2 checksum). Metadata validated only by sha2 is deprecated and v28 will reject it. " +
+        "Every electron-updater since 2.16.0 reads files[] and ignores these fields. " +
+        "See https://www.electron.build/docs/migration/v27-breaking-changes#latestyml-drops-legacy-top-level-pathsha512"
+    )
 }

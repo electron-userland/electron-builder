@@ -64,7 +64,7 @@ export class AppImageUpdater extends BaseUpdater {
         logger: this._logger,
         newFile: updateFile,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
-        requestHeaders: downloadUpdateOptions.requestHeaders,
+        requestHeaders: this.downloadRequestHeaders(fileInfo.url, downloadUpdateOptions),
         cancellationToken: downloadUpdateOptions.cancellationToken,
       }
 
@@ -75,7 +75,7 @@ export class AppImageUpdater extends BaseUpdater {
       await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download()
       return false
     } catch (e: any) {
-      this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+      this.logDifferentialDownloadFallback(e)
       // during test (developer machine mac) we must throw error
       return process.platform === "linux"
     }

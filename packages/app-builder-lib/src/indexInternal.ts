@@ -17,6 +17,7 @@ export {
   getFileMatchers,
   GetFileMatchersOptions,
   getMainFileMatchers,
+  getNodeModuleFileMatcher,
   getReincludedDefaultExclusions,
   resolveFileSetDestination,
 } from "./fileMatcher.js"
@@ -40,7 +41,7 @@ export { createBlockmap } from "./targets/differentialUpdateInfoBuilder.js"
 export { validateCriticalPathString } from "./targets/linux/appimage/appImageUtil.js"
 export { copyMimeTypes } from "./targets/linux/appimage/appLauncher.js"
 export { MacTargetHelper, isLoadableMachOFileType, isMachOFile, MachOFileType, parseSigningTeamId, readMachOFileType, type PlatformType } from "./targets/mac/MacTargetHelper.js"
-export { assertSafeHelperName, getAvailableHelperSuffixes, type AvailableHelpers } from "./electron/mac/electronMacUtils.js"
+export { assertSafeHelperName, configureLocalhostAts, getAvailableHelperSuffixes, type AvailableHelpers } from "./electron/mac/electronMacUtils.js"
 export { addTargetsForPlatform, computeArchToTargetNamesMap } from "./targets/targetFactory.js"
 export type { Defines } from "./targets/win/nsis/Defines.js"
 export { nsisEscapeString, NsisScriptGenerator } from "./targets/win/nsis/nsisScriptGenerator.js"
@@ -59,16 +60,20 @@ export {
   AZURE_KNOWN_FIELDS,
   BREAKING_CHANGES_URL,
   ELECTRON_DOWNLOAD_DROPPED,
+  FILE_OPTION_KEYS,
+  FILE_OPTIONS_ANCHOR,
   LEGACY_CONFIG_OPTIONS,
   MAC_PLATFORM_KEYS,
   MAC_SIGN_FIELDS,
   MAC_SIGN_REMOVED_FIELDS,
   MAC_UNIVERSAL_FIELDS,
+  NSIS_CONFIG_KEYS,
   RESOLVED_LEGACY_CONFIG_OPTIONS,
   formatLegacyOptionMessage,
 } from "./util/config/legacyOptions.js"
 export type { LegacyConfigOption, ResolvedLegacyConfigOption } from "./util/config/legacyOptions.js"
 export { checkLegacyConfiguration } from "./util/config/legacyConfigGuard.js"
+export { normalizeFileOptions } from "./util/config/fileOptions.js"
 export { assertNoRemovedEnvVars, checkRemovedEnvVars, resetRemovedEnvVarsCheck } from "./util/flags.js"
 export { validateSchema } from "./util/config/schemaValidator.js"
 export {

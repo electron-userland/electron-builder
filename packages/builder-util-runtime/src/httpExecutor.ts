@@ -9,6 +9,7 @@ import { URL } from "url"
 import { Nullish } from "./index.js"
 import { CancellationToken } from "./CancellationToken.js"
 import { newError } from "./error.js"
+import { deepAssign } from "./objects.js"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform.js"
 
 const debug = _debug("electron-builder")
@@ -221,7 +222,7 @@ Please double check that your authentication token is correct. Due to security r
     const shouldRedirect = code >= 300 && code < 400
     const redirectUrl = safeGetHeader(response, "location")
     if (shouldRedirect && redirectUrl != null) {
-      if (redirectCount > this.maxRedirects) {
+      if (redirectCount >= this.maxRedirects) {
         reject(this.createMaxRedirectError())
         return
       }
@@ -394,6 +395,31 @@ Please double check that your authentication token is correct. Due to security r
     return newOptions
   }
 
+  /**
+   * `headers` without the credential-bearing ones stripped on cross-origin redirects (see {@link addSensitiveRedirectHeader})
+   * when `targetUrl` is on another origin than `originUrl` (same rule as a redirect), else `headers` itself. Never mutates `headers`.
+   */
+  static removeCrossOriginSensitiveHeaders(headers: OutgoingHttpHeaders, originUrl: URL, targetUrl: URL): OutgoingHttpHeaders {
+    if (!HttpExecutor.isCrossOriginRedirect(originUrl, targetUrl)) {
+      return headers
+    }
+    if (debug.enabled) {
+      debug(`Cross-origin request (${originUrl.host} → ${targetUrl.host}): stripping sensitive headers`)
+    }
+    const result = deepAssign<OutgoingHttpHeaders>({}, headers)
+    for (const key of Object.keys(result)) {
+      if (SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key))) {
+        delete result[key]
+      }
+    }
+    return result
+  }
+
+  /** The names in `headers` of the credential-bearing headers stripped on cross-origin redirects (see {@link addSensitiveRedirectHeader}). */
+  static sensitiveHeaderNames(headers: OutgoingHttpHeaders): Array<string> {
+    return Object.keys(headers).filter(key => headers[key] != null && SENSITIVE_REDIRECT_HEADERS.has(normalizeName(key)))
+  }
+
   private static reconstructOriginalUrl(options: RequestOptions): URL {
     const protocol = options.protocol || "https:"
     if (!options.hostname) {
@@ -403,6 +429,14 @@ Please double check that your authentication token is correct. Due to security r
     const port = options.port ? `:${options.port}` : ""
     const path = options.path || "/"
     return new URL(`${protocol}//${hostname}${port}${path}`)
+  }
+
+  /**
+   * Whether `targetUrl` is on another origin than `originUrl` for the purpose of sending credentials: another host, port or
+   * scheme, except an `http` → `https` upgrade of the same host on the default ports.
+   */
+  static isCrossOrigin(originUrl: URL, targetUrl: URL): boolean {
+    return HttpExecutor.isCrossOriginRedirect(originUrl, targetUrl)
   }
 
   private static isCrossOriginRedirect(originalUrl: URL, redirectUrl: URL): boolean {
@@ -626,6 +660,24 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage)
     })
     lastStream = lastStream.pipe(stream)
   }
+
+  // .pipe() does not pass a failure of its source on: a response that errors or is aborted before its end (lost connection,
+  // a request timeout, Electron's request.abort() destroying it) would leave the transforms and fileOut, and with it the
+  // destination's file descriptor, open for the life of the process. The error itself is reported by whoever ended it.
+  let isResponseEnded = false
+  response.on("end", () => {
+    isResponseEnded = true
+  })
+  const destroyStreams = () => {
+    if (!isResponseEnded) {
+      for (const stream of streams) {
+        stream.destroy()
+      }
+    }
+  }
+  response.on("error", destroyStreams)
+  response.on("aborted", destroyStreams)
+  response.on("close", destroyStreams)
 
   fileOut.on("finish", () => {
     ;(fileOut.close as any)(options.callback)

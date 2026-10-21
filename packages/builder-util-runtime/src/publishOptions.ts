@@ -297,8 +297,8 @@ export interface KeygenOptions extends PublishConfiguration {
  * https://bitbucket.org/
  * Define `BITBUCKET_TOKEN` environment variable.
  *
- * Bitbucket Cloud is [retiring app passwords](https://www.atlassian.com/blog/bitbucket/bitbucket-cloud-transitions-to-api-tokens) in favor of API tokens and access tokens. Authentication is selected by whether a `username` is provided:
- * - With `username` — the token is sent via HTTP Basic auth. Use a Bitbucket username + [app password](https://bitbucket.org/account/settings/app-passwords), or an Atlassian account email + [API token](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/).
+ * Bitbucket Cloud is [retiring app passwords](https://www.atlassian.com/blog/bitbucket/bitbucket-cloud-transitions-to-api-tokens-enhancing-security-with-app-password-deprecation) in favor of API tokens and access tokens. Authentication is selected by whether a `username` is provided:
+ * - With `username` — the token is sent via HTTP Basic auth. Use a Bitbucket username + [app password](https://bitbucket.org/account/settings/app-passwords/), or an Atlassian account email + [API token](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/).
  * - Without `username` — the token is sent as a repository/project/workspace [access token](https://support.atlassian.com/bitbucket-cloud/docs/using-access-tokens/) via Bearer auth.
  *
  * For the auto-updater on a private repository, pass the matching header to `autoUpdater.addAuthHeader(...)`:
@@ -321,7 +321,7 @@ export interface BitbucketOptions extends PublishConfiguration {
   readonly owner: string
 
   /**
-   * The token to support auto-update from private bitbucket repositories. Depending on `username`, this is a Bitbucket [app password](https://bitbucket.org/account/settings/app-passwords), an Atlassian [API token](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/), or a repository/project/workspace [access token](https://support.atlassian.com/bitbucket-cloud/docs/using-access-tokens/).
+   * The token to support auto-update from private bitbucket repositories. Depending on `username`, this is a Bitbucket [app password](https://bitbucket.org/account/settings/app-passwords/), an Atlassian [API token](https://support.atlassian.com/bitbucket-cloud/docs/using-api-tokens/), or a repository/project/workspace [access token](https://support.atlassian.com/bitbucket-cloud/docs/using-access-tokens/).
    */
   readonly token?: string | null
 
@@ -386,10 +386,15 @@ export interface BaseS3Options extends PublishConfiguration {
 
 /**
  * [Amazon S3](https://aws.amazon.com/s3/) options.
- * AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
- * To set credentials define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html) directly,
- * or use [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html) file,
- * or use [~/.aws/config](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html) file. For the last method to work you will also need to define `AWS_SDK_LOAD_CONFIG=1` environment variable.
+ * AWS credentials are required, please see [getting your credentials](https://docs.aws.amazon.com/sdkref/latest/guide/access.html).
+ * Publishing requires choosing where they come from with [awsCredentials](#awsCredentials) `source` (there is no default):
+ * - `source: "env"` reads only the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and optional `AWS_SESSION_TOKEN` environment variables (or custom names);
+ * - `source: "profile"` reads the named `profile` from the [shared config and credentials files](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)
+ *   (static keys, IAM Identity Center / SSO, `credential_process`, assume-role with `source_profile`; `credential_source` and web identity are rejected).
+ * - `source: "sso-role-chain"` reads the named assume-role `profile` from the same files and resolves its `source_profile` chain, which must start at an
+ *   IAM Identity Center (SSO) profile, with the configured files only.
+ *
+ * No credentials are read implicitly: `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE`, `AWS_SHARED_CREDENTIALS_FILE` and the `~/.aws` files are never consulted on their own.
  *
  * Example configuration:
  *
@@ -398,7 +403,8 @@ export interface BaseS3Options extends PublishConfiguration {
   "build":
     "publish": {
       "provider": "s3",
-      "bucket": "bucket-name"
+      "bucket": "bucket-name",
+      "awsCredentials": { "source": "env" }
     }
   }
 }
@@ -458,6 +464,86 @@ export interface S3Options extends BaseS3Options {
    * [Path-style Access](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html#path-style-access)
    */
   readonly forcePathStyle?: boolean
+
+  /**
+   * Where the AWS credentials used for publishing come from. Required to publish (there is no default source);
+   * builds that don't publish don't need it. Build-time only: never written to `app-update.yml`.
+   *
+   * Example using an IAM Identity Center (SSO) profile:
+   *
+   * ```json
+   * "awsCredentials": { "source": "profile", "profile": "release" }
+   * ```
+   *
+   * Example assuming a role (`role_arn` + `source_profile`) on top of an SSO profile:
+   *
+   * ```json
+   * "awsCredentials": { "source": "sso-role-chain", "profile": "deploy", "configFile": "~/.aws/config" }
+   * ```
+   */
+  readonly awsCredentials?: S3AwsCredentialsOptions | null
+}
+
+/**
+ * How the S3 publisher obtains AWS credentials. Only the sources named here are consulted.
+ */
+export interface S3AwsCredentialsOptions {
+  /**
+   * The credential source (required, no default):
+   * - `env`: read only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` (or the variable names given in `env`).
+   * - `profile`: read the named `profile` from the shared config/credentials files. Static keys, IAM Identity Center (SSO), `credential_process` and assume-role profiles are supported.
+   *   An assume-role profile whose `source_profile` chain starts at an SSO profile is rejected; use `sso-role-chain` for it.
+   *   `credential_source` and web identity (`web_identity_token_file`) anywhere in the chain are rejected: they read ambient credentials or settings.
+   * - `sso-role-chain`: `profile` names an assume-role profile (`role_arn` + `source_profile`). Its `source_profile` chain (up to 5 assume-role hops, no cycles)
+   *   must end at an IAM Identity Center (SSO) profile. electron-builder resolves that SSO profile from the configured files, then calls STS AssumeRole for each hop
+   *   with the previous hop's credentials. `role_session_name`, `external_id` and `duration_seconds` are honoured per hop; STS uses the named profile's `region`
+   *   (else `us-east-1`) and `sts_regional_endpoints`. `AWS_REGION` and other `AWS_*` variables are not read. `credential_source`, `mfa_serial`, `web_identity_token_file`
+   *   and `credential_process` are rejected in the chain.
+   */
+  readonly source: "env" | "profile" | "sso-role-chain"
+
+  /**
+   * The profile name for `source: "profile"` or `source: "sso-role-chain"` (required for those sources; `AWS_PROFILE` is not used as a fallback).
+   * Use `default` to select the `[default]` profile.
+   */
+  readonly profile?: string | null
+
+  /**
+   * The shared credentials file for `source: "profile"` or `source: "sso-role-chain"`. `AWS_SHARED_CREDENTIALS_FILE` is not consulted.
+   * @default ~/.aws/credentials
+   */
+  readonly credentialsFile?: string | null
+
+  /**
+   * The shared config file for `source: "profile"` or `source: "sso-role-chain"`. `AWS_CONFIG_FILE` is not consulted.
+   * @default ~/.aws/config
+   */
+  readonly configFile?: string | null
+
+  /**
+   * Custom environment variable names for `source: "env"`, e.g. to keep publish-only keys separate from ambient `AWS_*` variables.
+   */
+  readonly env?: S3AwsCredentialsEnvNames | null
+}
+
+/**
+ * Environment variable names holding the S3 publishing credentials.
+ */
+export interface S3AwsCredentialsEnvNames {
+  /**
+   * The environment variable holding the access key ID.
+   */
+  readonly accessKeyId: string
+
+  /**
+   * The environment variable holding the secret access key.
+   */
+  readonly secretAccessKey: string
+
+  /**
+   * The environment variable holding the session token, if any.
+   */
+  readonly sessionToken?: string | null
 }
 
 /**

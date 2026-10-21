@@ -64,6 +64,7 @@ exports[`macPackager > extraFiles are placed in product app bundle Contents, not
   "Frameworks/Electron Framework.framework/Resources",
   "Frameworks/Electron Framework.framework/Versions/Current",
   "Frameworks/Electron Framework.framework/Versions/A/Electron Framework",
+  "Frameworks/Electron Framework.framework/Versions/A/_CodeSignature/CodeResources",
   "Frameworks/Electron Framework.framework/Versions/A/Resources/Info.plist",
   "Frameworks/Electron Framework.framework/Versions/A/Resources/MainMenu.nib",
   "Frameworks/Electron Framework.framework/Versions/A/Resources/chrome_100_percent.pak",
