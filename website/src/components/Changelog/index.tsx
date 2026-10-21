@@ -206,7 +206,7 @@ export default function Changelog({ changelog }: { changelog: ChangelogData }): 
         <div className={styles.picker} data-pagefind-ignore="">
           <label>
             From{" "}
-            <select value={fromVersion ?? ""} onChange={event => setRange(event.target.value || undefined, toVersion ?? builder[0].id)}>
+            <select className={styles.select} value={fromVersion ?? ""} onChange={event => setRange(event.target.value || undefined, toVersion ?? builder[0].id)}>
               <option value="">Select a version</option>
               {versionOptions}
               {changelog.bases.map(base => (
@@ -218,14 +218,14 @@ export default function Changelog({ changelog }: { changelog: ChangelogData }): 
           </label>
           <label>
             To{" "}
-            <select value={toVersion ?? ""} onChange={event => setRange(fromVersion, event.target.value || undefined)}>
+            <select className={styles.select} value={toVersion ?? ""} onChange={event => setRange(fromVersion, event.target.value || undefined)}>
               <option value="">Select a version</option>
               {versionOptions}
             </select>
           </label>
           {comparing && (
             <>
-              <button type="button" className="button button--secondary button--sm" disabled={!isRelease(fromVersion)} onClick={() => setRange(toVersion, fromVersion)}>
+              <button type="button" className={styles.action} disabled={!isRelease(fromVersion)} onClick={() => setRange(toVersion, fromVersion)}>
                 Swap
               </button>
               <Link to="/changelog">All releases</Link>
