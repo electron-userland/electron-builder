@@ -184,6 +184,52 @@ describe("compute7zCompressArgs", { concurrent: false }, () => {
     expect(compute7zCompressArgs("7z", { dictSize: 64 })).toContain("-md=64m")
   })
 
+  test("blockSize pins the LZMA2 block size in place of -md", ({ expect }) => {
+    const args = compute7zCompressArgs("7z", { dictSize: 1, blockSize: 4 })
+    expect(args).toContain("-m0=LZMA2:d=1m:c=4m")
+    expect(args.some((a: string) => a.startsWith("-md="))).toBe(false)
+  })
+
+  test("blockSize without dictSize leaves the dictionary at the level default", ({ expect }) => {
+    expect(compute7zCompressArgs("7z", { blockSize: 4 })).toContain("-m0=LZMA2:c=4m")
+  })
+
+  test("blockSize is ignored when storing (an explicit LZMA2 method would compress)", ({ expect }) => {
+    const args = compute7zCompressArgs("7z", {
+      compression: "store",
+      dictSize: 1,
+      blockSize: 4,
+    })
+    expect(args.some((a: string) => a.startsWith("-m0="))).toBe(false)
+    expect(args).toContain("-mx=0")
+  })
+
+  test("blockSize is ignored at ELECTRON_BUILDER_COMPRESSION_LEVEL=0", ({ expect }) => {
+    vi.stubEnv("ELECTRON_BUILDER_COMPRESSION_LEVEL", "0")
+    const args = compute7zCompressArgs("7z", { dictSize: 1, blockSize: 4 })
+    expect(args.some((a: string) => a.startsWith("-m0="))).toBe(false)
+    expect(args).toContain("-md=1m")
+  })
+
+  test("blockSize is ignored for non-7z formats and for another method", ({ expect }) => {
+    expect(compute7zCompressArgs("zip", { blockSize: 4 }).some((a: string) => a.startsWith("-m0="))).toBe(false)
+    const lzma = compute7zCompressArgs("7z", { blockSize: 4, method: "LZMA" })
+    expect(lzma.some((a: string) => a.startsWith("-m0="))).toBe(false)
+    expect(lzma).toContain("-mm=LZMA")
+  })
+
+  test("invalid blockSize throws", ({ expect }) => {
+    expect(() => compute7zCompressArgs("7z", { blockSize: 0 })).toThrow("blockSize must be a positive integer")
+    expect(() => compute7zCompressArgs("7z", { blockSize: 1.5 })).toThrow("blockSize must be a positive integer")
+  })
+
+  test("differential-aware archives pin a 4 MB LZMA2 block and keep the BCJ filter", ({ expect }) => {
+    const args = compute7zCompressArgs("7z", configureDifferentialAwareArchiveOptions({ installTimeDecodable: true }))
+    expect(args).toContain("-m0=LZMA2:d=1m:c=4m")
+    expect(args).toContain("-mf=BCJ")
+    expect(args).toContain("-ms=off")
+  })
+
   test("method=LZMA adds -mm=LZMA", ({ expect }) => {
     expect(compute7zCompressArgs("7z", { method: "LZMA" })).toContain("-mm=LZMA")
   })
@@ -587,5 +633,49 @@ describe("archive() storedPaths", { concurrent: false }, () => {
     await archive("7z", outFile, dir, { withoutDir: true, storedPaths: ["resources/app.asar"] })
 
     expect((await listArchiveEntryMethods(outFile)).get("resources/app.asar")).toBe("Copy")
+  })
+})
+
+// Without a pinned block size, 7-Zip writes LZMA2 as one solid stream below 4 block threads and as
+// independent 4 MB blocks with 4+, so the package bytes (and every differential update built on
+// them) depend on the build host's CPU count.
+describe("archive() LZMA2 block size", () => {
+  async function pack7z(src: string, outFile: string, options: ArchiveOptions, threads: number): Promise<Buffer> {
+    const { getPath7za } = await import("app-builder-lib/src/toolsets/7zip")
+    const { execFile } = await import("child_process")
+    const { promisify } = await import("util")
+    const args = compute7zCompressArgs("7z", options)
+    await promisify(execFile)(await getPath7za(), [...args, `-mmt=${threads}`, outFile, "."], { cwd: src })
+    return fs.readFile(outFile)
+  }
+
+  test("differential-aware 7z output is identical at 1 and 4 threads, and matches today's 4-thread bytes", async ({ expect, tmpDir }) => {
+    const tmpDirPath = await tmpDir.createTempDir({ prefix: "lzma2-block" })
+    // ~10 MB of compressible, deterministic text: more than two 4 MB blocks
+    const words = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf", "hotel", "india", "juliet", "kilo", "lima"]
+    let seed = 1
+    const parts: Array<string> = []
+    for (let size = 0; size < 10 * 1024 * 1024;) {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff
+      const word = `${words[seed % words.length]}${seed % 997} `
+      parts.push(word)
+      size += word.length
+    }
+    const src = await makeSrcDir(tmpDirPath, { "data.txt": parts.join("") })
+
+    const pinned = configureDifferentialAwareArchiveOptions({
+      installTimeDecodable: true,
+    })
+    const unpinned: ArchiveOptions = { ...pinned, blockSize: undefined }
+    const pinned1 = await pack7z(src, path.join(tmpDirPath, "pinned-1.7z"), pinned, 1)
+    const pinned4 = await pack7z(src, path.join(tmpDirPath, "pinned-4.7z"), pinned, 4)
+    const unpinned4 = await pack7z(src, path.join(tmpDirPath, "unpinned-4.7z"), unpinned, 4)
+    const unpinned1 = await pack7z(src, path.join(tmpDirPath, "unpinned-1.7z"), unpinned, 1)
+
+    // control: without the pin, one thread writes a different (solid) stream
+    expect(unpinned1.equals(unpinned4)).toBe(false)
+    expect(pinned1.equals(pinned4)).toBe(true)
+    // the pin chooses the split 7-Zip already makes with 4+ threads, so those hosts see no change
+    expect(pinned4.equals(unpinned4)).toBe(true)
   })
 })
