@@ -975,6 +975,12 @@ test.for([
     feed: ["v1.1.0-beta.1", "v1.0.0"],
     expectedTag: "v1.0.0",
   },
+  {
+    name: 'stable current ignores a higher "-latest.N" pre-release',
+    version: "1.0.0",
+    feed: ["v2.0.0-latest.1", "v1.2.0"],
+    expectedTag: "v1.2.0",
+  },
 ])('allowPrerelease=true with explicit channel = "latest" - $name', async ({ version, feed, expectedTag }, { expect }) => {
   const requestSpy = createMockRequest()
   const updater = await createPublicUpdater(requestSpy, version)
