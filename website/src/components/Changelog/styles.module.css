@@ -1,0 +1,39 @@
+.release {
+  margin-top: 2.5rem;
+}
+
+.date {
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.8em;
+  font-weight: var(--ifm-font-weight-normal);
+}
+
+.entries {
+  padding-left: 1.25rem;
+}
+
+/* summaries can be long and contain bare URLs */
+.entry {
+  margin-bottom: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin-top: 0.25rem;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.875rem;
+}
+
+.details {
+  margin-top: 0.25rem;
+}
+
+.details > summary {
+  cursor: pointer;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.875rem;
+}
