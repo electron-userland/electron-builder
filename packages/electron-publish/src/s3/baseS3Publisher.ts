@@ -11,7 +11,7 @@ export interface S3UploadConfig {
   region: string
   endpoint?: string
   forcePathStyle?: boolean
-  credentials?: AwsCredentials
+  credentials: AwsCredentials
 }
 
 export interface S3UploadExtraParams {
@@ -30,7 +30,8 @@ export abstract class BaseS3Publisher extends Publisher {
 
   protected abstract getBucketName(): string
 
-  public abstract getS3UploadConfig(): S3UploadConfig
+  /** The upload target and credentials. May resolve asynchronously (e.g. S3 credentials from a shared config profile). */
+  public abstract getS3UploadConfig(): S3UploadConfig | Promise<S3UploadConfig>
 
   public getUploadExtraParams(): S3UploadExtraParams {
     return {
@@ -53,28 +54,34 @@ export abstract class BaseS3Publisher extends Publisher {
 
     this.createProgressBar(fileName, -1)
 
-    const config = this.getS3UploadConfig()
-    const extraParams = this.getUploadExtraParams()
-
     return await cancellationToken.createPromise((resolve, reject, onCancel) => {
-      const { req, done } = startS3PutObject({
-        bucket: this.getBucketName(),
-        key,
-        file: task.file,
-        contentType: getS3ContentType(task.file),
-        ...config,
-        ...extraParams,
-      })
-
-      onCancel(() => req.destroy())
-
-      done
-        .then(() => {
-          try {
-            log.debug({ provider: this.providerName, file: fileName, bucket: this.getBucketName() }, "uploaded")
-          } finally {
-            resolve(undefined)
+      const extraParams = this.getUploadExtraParams()
+      Promise.resolve()
+        .then(() => this.getS3UploadConfig())
+        .then(config => {
+          if (cancellationToken.cancelled) {
+            return
           }
+          const { req, done } = startS3PutObject({
+            bucket: this.getBucketName(),
+            key,
+            file: task.file,
+            contentType: getS3ContentType(task.file),
+            ...config,
+            ...extraParams,
+          })
+
+          onCancel(() => req.destroy())
+
+          done
+            .then(() => {
+              try {
+                log.debug({ provider: this.providerName, file: fileName, bucket: this.getBucketName() }, "uploaded")
+              } finally {
+                resolve(undefined)
+              }
+            })
+            .catch(reject)
         })
         .catch(reject)
     })

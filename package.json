@@ -33,7 +33,6 @@
     "ci:version": "pnpm i && changeset version && node scripts/update-package-version-export.js && pnpm changelog && pnpm compile && pnpm generate:all && git add .",
     "ci:publish": "pnpm i && pnpm compile && pnpm publish -r --tag ${NPM_DIST_TAG:-next} --publish-branch ${GITHUB_REF_NAME:-master} < /dev/null && changeset tag",
     "docker-images": "bash docker/build.sh",
-    "docker-push": "bash docker/push.sh",
     "changelog": "node scripts/aggregate-changesets.mjs --mode after-version --insert CHANGELOG.md && git add CHANGELOG.md",
     "generate:changeset": "pnpm changeset",
     "generate:schema": "typescript-json-schema packages/app-builder-lib/tsconfig-scheme.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",

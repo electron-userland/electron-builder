@@ -1,8 +1,9 @@
 import { notarize, type NotarizeOptions, type NotaryToolKeychainCredentials } from "@electron/notarize"
 import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign"
-import { Arch, InvalidConfigurationError, log, MAX_FILE_REQUESTS, spawnAndWriteWithOutput, statOrNull, walk } from "builder-util"
+import { Arch, decodeStrictBase64, InvalidConfigurationError, log, MAX_FILE_REQUESTS, spawnAndWriteWithOutput, statOrNull, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { open, type FileHandle } from "fs/promises"
+import { createPrivateKey } from "crypto"
+import { open, rm, writeFile, type FileHandle } from "fs/promises"
 import * as path from "path"
 import { CertType, findIdentity, Identity, reportError } from "../../codeSign/mac/macCodeSign.js"
 import { SigningResult } from "../../codeSign/signResult.js"
@@ -17,6 +18,12 @@ export type PlatformType = MasPlatformType | "mac"
 
 const DISABLE_LIBRARY_VALIDATION = "com.apple.security.cs.disable-library-validation"
 const APP_SANDBOX = "com.apple.security.app-sandbox"
+
+/** How to produce a base64 `APPLE_API_KEY`; ends each of its format errors, which never include the value. */
+const APPLE_API_KEY_HINT =
+  "Set APPLE_API_KEY to the path of the AuthKey_<KEY_ID>.p8 file, or to the file's contents base64-encoded on one line: `base64 < AuthKey_<KEY_ID>.p8 | tr -d '\\n'` " +
+  "(macOS, Linux) or `[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path AuthKey_<KEY_ID>.p8)))` (PowerShell). " +
+  "See https://www.electron.build/docs/features/code-signing/notarization"
 
 export class MacTargetHelper {
   constructor(private packager: MacPackager) {}
@@ -653,8 +660,49 @@ export class MacTargetHelper {
       log.warn({ reason: "`notarize` options were unable to be generated" }, "skipped macOS notarization")
       return
     }
-    await notarize(options)
+    const apiKey = "appleApiKey" in options ? MacTargetHelper.decodeAppleApiKey(options.appleApiKey) : null
+    if (apiKey == null) {
+      await notarize(options)
+    } else {
+      // notarytool only reads the API key from a file: a fresh 0600 file in the build's temp dir, deleted as soon as notarytool is done
+      const keyFile = await this.packager.tempDirManager.getTempFile({ prefix: "notarize-api-key", suffix: ".p8" })
+      try {
+        await writeFile(keyFile, apiKey, { mode: 0o600, flag: "wx" })
+        await notarize({ ...options, appleApiKey: keyFile })
+      } finally {
+        await rm(keyFile, { force: true }).catch((e: any) => log.warn({ error: e.message }, "cannot delete the temporary App Store Connect API key file"))
+      }
+    }
     log.info(null, "notarization successful")
+  }
+
+  /**
+   * `APPLE_API_KEY` is the path of the App Store Connect API key file (`AuthKey_<KEY_ID>.p8`), passed to notarytool as is, or the file's
+   * contents base64-encoded, so that a masked CI variable can hold it. Returns the decoded key, or null for a path. No path contains a
+   * `-----BEGIN` line or decodes to one, so a path is never mistaken for a key.
+   */
+  static decodeAppleApiKey(value: string): Buffer | null {
+    if (value.includes("-----BEGIN")) {
+      throw new InvalidConfigurationError(`APPLE_API_KEY holds PEM text, but it must be a path or base64-encoded (the value is not shown). ${APPLE_API_KEY_HINT}`)
+    }
+    const decoded = decodeStrictBase64(value)
+    if (decoded != null && decoded.toString("utf8").includes("-----BEGIN")) {
+      try {
+        createPrivateKey({ key: decoded, format: "pem" })
+      } catch (e: any) {
+        throw new InvalidConfigurationError(
+          `APPLE_API_KEY decodes to PEM text that is not a valid private key (the value is not shown): ${e.message}. Check that it is the whole AuthKey_<KEY_ID>.p8 file and was not cut off. ${APPLE_API_KEY_HINT}`
+        )
+      }
+      return decoded
+    }
+    // "LS0tLS1CRUdJTi" is the base64 of "-----BEGIN": a damaged encoded key, which notarytool would print in its error if it were passed on as a path
+    if (value.includes("LS0tLS1CRUdJTi")) {
+      throw new InvalidConfigurationError(
+        `APPLE_API_KEY looks like a base64-encoded key but is not valid standard base64 (the value is not shown): check for surrounding quotes, URL-safe \`-\` or \`_\` characters, or a truncated value. ${APPLE_API_KEY_HINT}`
+      )
+    }
+    return null
   }
 }
 

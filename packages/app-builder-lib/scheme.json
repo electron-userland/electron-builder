@@ -426,7 +426,7 @@
         },
         "disableIntegrity": {
           "default": false,
-          "description": "Whether to skip computing the ASAR integrity hash.\n\nNormally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron\ncan verify it at startup (when the `embeddedAsarIntegrityValidation` fuse is enabled). Set to\n`true` only for custom Electron forks with encrypted ASAR support where the header is not\nreadable by standard tools.",
+          "description": "Whether to skip computing the ASAR integrity hash.\n\nNormally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron\ncan verify it at startup (when the `enableEmbeddedAsarIntegrityValidation` fuse is enabled). Set to\n`true` only for custom Electron forks with encrypted ASAR support where the header is not\nreadable by standard tools. It also skips the macOS ASAR integrity digest (`mac.asarIntegrityDigest`).",
           "type": "boolean"
         },
         "disableSanityCheck": {
@@ -1446,7 +1446,7 @@
     },
     "FilesBuildOptions": {
       "additionalProperties": false,
-      "description": "Which files are copied into the packaged app, and which symlinks among them may lead outside it, set under `fileOptions` at the\nconfiguration root or per platform (e.g. `mac.fileOptions`). A platform's lists are added to the root ones; a platform's\n`allowExternalLinks` replaces the root one.\nSee [file options](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).",
+      "description": "Which files are copied into the packaged app, which file extensions are excluded from it, and which symlinks among them may lead outside it,\nset under `fileOptions` at the configuration root or per platform (e.g. `mac.fileOptions`). A platform's file lists are added to the root\nones; a platform's `excludedExts` and `allowExternalLinks` replace the root ones.\nSee [file options](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).",
       "properties": {
         "allowExternalLinks": {
           "anyOf": [
@@ -1465,6 +1465,26 @@
           ],
           "default": false,
           "description": "Whether symlinks among the packaged files may lead outside the app, the workspace and the package-manager store.\n\nOnly the build configuration is trusted, not the files it packages: by default (`false`) electron-builder refuses\n- a file of the app (`app.asar` or `asar: false`) that is a symlink, or is reached through one, whose real path is outside the workspace\n  root, the project and app directories and the package-manager store (`npm link`, a `file:../lib` dependency outside the repository,\n  a symlink into the home or temp directory),\n- a copied symlink that resolves outside the app: one in `extraResources` / `extraFiles` (other than into the workspace or the store),\n  one kept by an `asar: false` copy, and any symlink leaving the app in a target that stores what symlinks point to (Windows `zip` / `7z`,\n  the NSIS app package, AppX/MSIX, Squirrel.Windows).\n\nWithout these checks, a symlink planted in a dependency or a copied directory could package files from elsewhere on the build machine (SSH keys,\ncredentials) into the artifact, which is why this is off by default.\n\n- `true` allows any such symlink.\n- A list of paths, relative to the project directory or absolute, allows a symlink only when the real path of what it points to is\n  inside the real path of one of them (e.g. `[\"../shared-lib\"]`). A listed path that does not exist fails the build.\n\nAn allowed symlink is packaged: what it points to is copied (or stored by the archive), and a copied symlink is kept\nas it is. A warning is logged once when this allows a symlink.\n\nSet it under `fileOptions`, at the configuration root or per platform; a platform's value (`false` included) replaces the root one\nrather than being added to it:\n```json\n{ \"fileOptions\": { \"allowExternalLinks\": [\"../shared-lib\"] }, \"linux\": { \"fileOptions\": { \"allowExternalLinks\": true } } }\n```\n\nThis does not allow writing through a symlink: a copy or a file written by electron-builder whose destination leads outside the\noutput directory through a symlink is always refused, and a symlink at such a file name is replaced, never followed.\nSee [Symbolic links](https://www.electron.build/docs/contents#symbolic-links)."
+        },
+        "excludedExts": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "default": [
+            "default"
+          ],
+          "description": "File extensions (without the leading dot) excluded from the packaged app files and the copied `node_modules`.\n\n- `\"default\"` expands to the built-in list of excluded extensions (see the table below).\n- Any other entry adds that extension, e.g. `\"map\"`.\n- An entry starting with `!` removes that extension from the others listed, e.g. `[\"default\", \"!pdb\"]` to keep `.pdb` (Program Database)\n  symbol files for Windows crash-dump analysis. `.pdb` files contain symbol names and the source paths of the build machine:\n  keep them only in internal builds or builds for a symbol server, or upload them to a symbol server instead of shipping them.\n  A list of removals only, such as `[\"!pdb\"]`, is rejected because it would exclude no extension at all: write `[\"default\", \"!pdb\"]`. A `\"!ext\"` in a list that does not otherwise list that extension (e.g. `[\"map\", \"!pdb\"]`) has no effect and logs a warning.\n\nThe built-in list (`\"default\"`):\n\n| Extension | Typically used for |\n| --- | --- |\n| `.iml` | IntelliJ IDEA / WebStorm module file |\n| `.hprof` | Java heap dump |\n| `.orig` | Original copy of a file, left behind by merge tools and `patch` |\n| `.pyc` | Compiled Python bytecode |\n| `.pyo` | Optimized compiled Python bytecode (Python 2) |\n| `.rbc` | Compiled Ruby bytecode (Rubinius) |\n| `.swp` | Vim swap file |\n| `.csproj` | C# (MSBuild) project file |\n| `.sln` | Visual Studio solution file |\n| `.slnx` | Visual Studio XML solution file |\n| `.suo` | Visual Studio solution user options |\n| `.xproj` | .NET Core project file (Visual Studio 2015) |\n| `.cc` | C++ source file, e.g. of a native module |\n| `.d.ts` | TypeScript declaration file |\n| `.mk` | Makefile fragment generated by node-gyp |\n| `.a` | Static library archive from a native build |\n| `.o` | Object file from a native build |\n| `.obj` | Object file from an MSVC native build; also used for Wavefront 3D models, which a `files` pattern can re-include |\n| `.forge-meta` | Metadata `@electron/rebuild` writes next to a rebuilt native module |\n| `.pdb` | Program Database: Windows debug symbols, with symbol names and the build machine's source paths |\n\nThe list replaces the defaults: list `\"default\"` to extend them rather than replace them. `null` (or omitting it) is `[\"default\"]`,\nand an empty array `[]` excludes no extension.\n\nAn invalid list (an entry that is not a file extension, `\"!default\"`, or removals only) fails the build when the configuration is validated, at the root and in every platform section, before anything is packed.\n\n```json\n{ \"fileOptions\": { \"excludedExts\": [\"default\", \"!pdb\", \"map\"] } }\n```\n\nSet it under `fileOptions`, at the configuration root or per platform. Unlike the other lists, a later list replaces an earlier one rather\nthan being merged with it. For the root and for each platform section, the last layer that sets the list wins: the `extends` parents in\norder, then the configuration file, then the programmatic or `-c` configuration. For the `mas` and `mas-dev` targets, a `mas` list then\nreplaces the `mac` one, and a `masDev` list (for `mas-dev`) replaces both. A platform's list then replaces the root one, whichever layer\nset either. A `null` value keeps the earlier list.\n\nA `files` pattern that names an excluded extension includes only the app files it matches: `**\\/*.obj` every `.obj` file outside\n`node_modules` and the build resources and output directories, `models/teapot.obj` only that file.\n\nA single entry may be given as a string, e.g. on the command line: `-c.fileOptions.excludedExts=default`. For several entries, repeat the flag:\n`-c.fileOptions.excludedExts=default -c.fileOptions.excludedExts=!pdb` (in an interactive bash or zsh, write the second one as `'-c.fileOptions.excludedExts=!pdb'`, single-quoted, so that `!pdb` is not expanded)."
         },
         "extraFiles": {
           "anyOf": [
@@ -1842,7 +1862,7 @@
           "type": "boolean"
         },
         "enableEmbeddedAsarIntegrityValidation": {
-          "description": "Enables ASAR integrity validation — Electron verifies the embedded SHA-256 hash of\n`app.asar` before loading it.\n\nPlatform support:\n- macOS: Electron ≥ 16.0.0\n- Windows: Electron ≥ 30.0.0\n\nFor this fuse to be meaningful, `asar.disableIntegrity` must **not** be\n`true` (otherwise the hash is not embedded).",
+          "description": "Enables ASAR integrity validation — Electron verifies the embedded SHA-256 hash of\n`app.asar` before loading it.\n\nPlatform support:\n- macOS: Electron ≥ 16.0.0\n- Windows: Electron ≥ 30.0.0\n\nFor this fuse to be meaningful, `asar.disableIntegrity` must **not** be\n`true` (otherwise the hash is not embedded).\n\nOn macOS with Electron ≥ 41, electron-builder also embeds a digest of the `Info.plist` hashes\ninto the Electron Framework (see `mac.asarIntegrityDigest`), so they cannot be changed to match\na modified `app.asar` either.",
           "type": "boolean"
         },
         "enableNodeCliInspectArguments": {
@@ -2505,7 +2525,7 @@
               "type": "null"
             }
           ],
-          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
+          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), which file extensions to exclude\nfrom it (`excludedExts`), and whether symlinks among them may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's file lists are added to the root ones,\nand a platform's `excludedExts` and `allowExternalLinks` replace the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -2660,7 +2680,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         },
         "vendor": {
           "description": "The vendor. Defaults to [author](https://www.electron.build/configuration#author).",
@@ -2952,6 +2972,11 @@
           "default": true,
           "description": "Whether to package the application's source code into an archive, using [Electron's archive format](https://www.electronjs.org/docs/latest/tutorial/asar-archives).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
         },
+        "asarIntegrityDigest": {
+          "default": true,
+          "description": "Whether to embed the [ASAR integrity](https://www.electronjs.org/docs/latest/tutorial/asar-integrity) digest into the Electron Framework binary.\n\nThe digest covers the `ElectronAsarIntegrity` entries of `Info.plist`, so with the `enableEmbeddedAsarIntegrityValidation` fuse (see `electronFuses`) the app refuses to launch if those entries are changed, for example to match a modified `app.asar`. Embedding the digest modifies the Electron Framework, which is then signed again ad hoc; code signing the app replaces that signature.\n\nApplies only when:\n- Electron is 41 or later\n- the build runs on macOS (`codesign` signs the modified framework again)\n- `asar` is enabled and `asar.disableIntegrity` is not `true`\n\nSet to `false` if you change `app.asar` or `Info.plist` after the `afterPack` hook, sign the app yourself in `afterPack`, or merge separately built `x64` and `arm64` apps with `@electron/universal` yourself (build the `universal` arch instead).",
+          "type": "boolean"
+        },
         "bundleShortVersion": {
           "description": "The `CFBundleShortVersionString`. Do not use it unless you need to.",
           "type": [
@@ -3099,7 +3124,7 @@
               "type": "null"
             }
           ],
-          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
+          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), which file extensions to exclude\nfrom it (`excludedExts`), and whether symlinks among them may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's file lists are added to the root ones,\nand a platform's `excludedExts` and `allowExternalLinks` replace the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -3175,7 +3200,7 @@
           ]
         },
         "notarize": {
-          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
           "type": "boolean"
         },
         "protocols": {
@@ -3339,7 +3364,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         }
       },
       "type": "object"
@@ -3377,6 +3402,11 @@
           "default": true,
           "description": "Whether to package the application's source code into an archive, using [Electron's archive format](https://www.electronjs.org/docs/latest/tutorial/asar-archives).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
         },
+        "asarIntegrityDigest": {
+          "default": true,
+          "description": "Whether to embed the [ASAR integrity](https://www.electronjs.org/docs/latest/tutorial/asar-integrity) digest into the Electron Framework binary.\n\nThe digest covers the `ElectronAsarIntegrity` entries of `Info.plist`, so with the `enableEmbeddedAsarIntegrityValidation` fuse (see `electronFuses`) the app refuses to launch if those entries are changed, for example to match a modified `app.asar`. Embedding the digest modifies the Electron Framework, which is then signed again ad hoc; code signing the app replaces that signature.\n\nApplies only when:\n- Electron is 41 or later\n- the build runs on macOS (`codesign` signs the modified framework again)\n- `asar` is enabled and `asar.disableIntegrity` is not `true`\n\nSet to `false` if you change `app.asar` or `Info.plist` after the `afterPack` hook, sign the app yourself in `afterPack`, or merge separately built `x64` and `arm64` apps with `@electron/universal` yourself (build the `universal` arch instead).",
+          "type": "boolean"
+        },
         "bundleShortVersion": {
           "description": "The `CFBundleShortVersionString`. Do not use it unless you need to.",
           "type": [
@@ -3524,7 +3554,7 @@
               "type": "null"
             }
           ],
-          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
+          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), which file extensions to exclude\nfrom it (`excludedExts`), and whether symlinks among them may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's file lists are added to the root ones,\nand a platform's `excludedExts` and `allowExternalLinks` replace the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -3600,7 +3630,7 @@
           ]
         },
         "notarize": {
-          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
           "type": "boolean"
         },
         "protocols": {
@@ -3764,7 +3794,7 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         }
       },
       "type": "object"
@@ -6658,9 +6688,88 @@
       },
       "type": "object"
     },
+    "S3AwsCredentialsEnvNames": {
+      "additionalProperties": false,
+      "description": "Environment variable names holding the S3 publishing credentials.",
+      "properties": {
+        "accessKeyId": {
+          "description": "The environment variable holding the access key ID.",
+          "type": "string"
+        },
+        "secretAccessKey": {
+          "description": "The environment variable holding the secret access key.",
+          "type": "string"
+        },
+        "sessionToken": {
+          "description": "The environment variable holding the session token, if any.",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "accessKeyId",
+        "secretAccessKey"
+      ],
+      "type": "object"
+    },
+    "S3AwsCredentialsOptions": {
+      "additionalProperties": false,
+      "description": "How the S3 publisher obtains AWS credentials. Only the sources named here are consulted.",
+      "properties": {
+        "configFile": {
+          "default": "~/.aws/config",
+          "description": "The shared config file for `source: \"profile\"` or `source: \"sso-role-chain\"`. `AWS_CONFIG_FILE` is not consulted.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "credentialsFile": {
+          "default": "~/.aws/credentials",
+          "description": "The shared credentials file for `source: \"profile\"` or `source: \"sso-role-chain\"`. `AWS_SHARED_CREDENTIALS_FILE` is not consulted.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "env": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/S3AwsCredentialsEnvNames"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Custom environment variable names for `source: \"env\"`, e.g. to keep publish-only keys separate from ambient `AWS_*` variables."
+        },
+        "profile": {
+          "description": "The profile name for `source: \"profile\"` or `source: \"sso-role-chain\"` (required for those sources; `AWS_PROFILE` is not used as a fallback).\nUse `default` to select the `[default]` profile.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "source": {
+          "description": "The credential source (required, no default):\n- `env`: read only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` (or the variable names given in `env`).\n- `profile`: read the named `profile` from the shared config/credentials files. Static keys, IAM Identity Center (SSO), `credential_process` and assume-role profiles are supported.\n  An assume-role profile whose `source_profile` chain starts at an SSO profile is rejected; use `sso-role-chain` for it.\n  `credential_source` and web identity (`web_identity_token_file`) anywhere in the chain are rejected: they read ambient credentials or settings.\n- `sso-role-chain`: `profile` names an assume-role profile (`role_arn` + `source_profile`). Its `source_profile` chain (up to 5 assume-role hops, no cycles)\n  must end at an IAM Identity Center (SSO) profile. electron-builder resolves that SSO profile from the configured files, then calls STS AssumeRole for each hop\n  with the previous hop's credentials. `role_session_name`, `external_id` and `duration_seconds` are honoured per hop; STS uses the named profile's `region`\n  (else `us-east-1`) and `sts_regional_endpoints`. `AWS_REGION` and other `AWS_*` variables are not read. `credential_source`, `mfa_serial`, `web_identity_token_file`\n  and `credential_process` are rejected in the chain.",
+          "enum": [
+            "env",
+            "profile",
+            "sso-role-chain"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "type": "object"
+    },
     "S3Options": {
       "additionalProperties": false,
-      "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).\nTo set credentials define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html) directly,\nor use [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html) file,\nor use [~/.aws/config](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html) file. For the last method to work you will also need to define `AWS_SDK_LOAD_CONFIG=1` environment variable.\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\"\n }\n}\n}\n```",
+      "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](https://docs.aws.amazon.com/sdkref/latest/guide/access.html).\nPublishing requires choosing where they come from with [awsCredentials](#awsCredentials) `source` (there is no default):\n- `source: \"env\"` reads only the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and optional `AWS_SESSION_TOKEN` environment variables (or custom names);\n- `source: \"profile\"` reads the named `profile` from the [shared config and credentials files](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)\n  (static keys, IAM Identity Center / SSO, `credential_process`, assume-role with `source_profile`; `credential_source` and web identity are rejected).\n- `source: \"sso-role-chain\"` reads the named assume-role `profile` from the same files and resolves its `source_profile` chain, which must start at an\n  IAM Identity Center (SSO) profile, with the configured files only.\n\nNo credentials are read implicitly: `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE`, `AWS_SHARED_CREDENTIALS_FILE` and the `~/.aws` files are never consulted on their own.\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\",\n   \"awsCredentials\": { \"source\": \"env\" }\n }\n}\n}\n```",
       "properties": {
         "accelerate": {
           "description": "If set to true, this will enable the s3 accelerated endpoint\nThese endpoints have a particular format of:\n ${bucketname}.s3-accelerate.amazonaws.com",
@@ -6681,6 +6790,17 @@
           ],
           "default": "public-read",
           "description": "The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).\n\nPlease see [required permissions for the S3 provider](https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128)."
+        },
+        "awsCredentials": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/S3AwsCredentialsOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Where the AWS credentials used for publishing come from. Required to publish (there is no default source);\nbuilds that don't publish don't need it. Build-time only: never written to `app-update.yml`.\n\nExample using an IAM Identity Center (SSO) profile:\n\n```json\n\"awsCredentials\": { \"source\": \"profile\", \"profile\": \"release\" }\n```\n\nExample assuming a role (`role_arn` + `source_profile`) on top of an SSO profile:\n\n```json\n\"awsCredentials\": { \"source\": \"sso-role-chain\", \"profile\": \"deploy\", \"configFile\": \"~/.aws/config\" }\n```"
         },
         "bucket": {
           "description": "The bucket name.",
@@ -8506,6 +8626,14 @@
     "UpdateManifestSigningOptions": {
       "additionalProperties": false,
       "properties": {
+        "allowSigningKeyOutsideTrustList": {
+          "default": false,
+          "description": "Allows a publishing build to sign its manifests only with keys that are not in `publicKey` - a deliberate\ncutover release that is verified by installs with the old key, but hands them over to the keys listed in\n`publicKey`. Every later release must then be signed by a listed key. Without it such a build fails; a build\nwithout a publish policy only warns. Has no effect when `publicKey` is not set.",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
         "publicKey": {
           "anyOf": [
             {
@@ -8521,7 +8649,7 @@
               ]
             }
           ],
-          "description": "The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.\nThe updater accepts a manifest when any listed key validates one of its signatures. Optional — when\nomitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust\nadditional keys ahead of a rotation (for example `[current, next]`).\n\nA `publicKey` on its own does not satisfy the signing requirement — electron-builder still has no key to\nsign with. An external signer (HSM/KMS) that signs `latest*.yml` in a later step therefore either builds\nwithout a publish policy, where the requirement only warns and the unsigned manifest is written locally, or\nkeeps publishing with `publishAutoUpdate: false` on every publish provider - electron-builder then uploads the\nartifacts and embeds this key, but writes no `latest*.yml`, so the external step has to produce it too."
+          "description": "The Ed25519 public key(s) (PEM or base64 SPKI) embedded into `app-update.yml` as the updater's trust list.\nThe updater accepts a manifest when any listed key validates one of its signatures. Optional — when\nomitted the public key of every configured signing key is derived and embedded. Set it explicitly to trust\nadditional keys ahead of a rotation (for example `[current, next]`).\n\nA `publicKey` on its own does not satisfy the signing requirement — electron-builder still has no key to\nsign with. An external signer (HSM/KMS) that signs `latest*.yml` in a later step therefore either builds\nwithout a publish policy, where the requirement only warns and the unsigned manifest is written locally, or\nkeeps publishing with `publishAutoUpdate: false` on every publish provider - electron-builder then uploads the\nartifacts and embeds this key, but writes no `latest*.yml`, so the external step has to produce it too.\n\nWhen set, it must contain at least one of the signing keys: a publishing build signed only by keys outside this\nlist fails, since its installs would reject manifests signed with them. See `allowSigningKeyOutsideTrustList`."
         },
         "signingKey": {
           "anyOf": [
@@ -8538,7 +8666,7 @@
               ]
             }
           ],
-          "description": "Ed25519 private key(s) in PEM (PKCS#8) format used to sign the update manifest. A single PEM string may\ncontain several concatenated keys, or pass an array with one key each; the manifest is signed by every key\n(dual-signing for [key rotation](https://www.electron.build/features/key-rotation)) and the first key also\nfills the legacy single `signature` field.\nSecret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable in CI over committing this to config."
+          "description": "Ed25519 private key(s) in PEM (PKCS#8) format used to sign the update manifest. A single PEM string may\ncontain several concatenated keys, or pass an array with one key each; the manifest is signed by every key\n(dual-signing for [key rotation](https://www.electron.build/features/key-rotation)) and the first key also\nfills the legacy single `signature` field.\nSecret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable (the PEM file, base64-encoded) in CI over committing this to config."
         },
         "signingKeyFile": {
           "anyOf": [
@@ -8736,7 +8864,7 @@
               "type": "null"
             }
           ],
-          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
+          "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), which file extensions to exclude\nfrom it (`excludedExts`), and whether symlinks among them may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's file lists are added to the root ones,\nand a platform's `excludedExts` and `allowExternalLinks` replace the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
         },
         "forceCodeSigning": {
           "default": false,
@@ -8924,11 +9052,11 @@
               "type": "null"
             }
           ],
-          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+          "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
         },
         "verifyUpdateCodeSignature": {
           "default": true,
-          "description": "Whether the NSIS auto-updater should verify the Authenticode signature of a downloaded update\nbefore installing it. This is a **runtime** check performed by your app via electron-updater,\nnot a build-time check.\n\nWhen enabled (the default), the resolved [publisher name](#publisherName) is embedded into\n`app-update.yml` at build time. At update time electron-updater inspects the certificate that\nsigned the downloaded installer and compares its subject (Distinguished Name / Common Name)\nagainst that publisher name, refusing to install on a mismatch. This prevents a tampered or\nmaliciously substituted update from being installed.\n\nSet to `false` to skip verification — in which case the publisher name is **not** embedded.\nDisable this only if your updates are not Authenticode-signed.",
+          "description": "Whether the NSIS auto-updater should verify the Authenticode signature of a downloaded update\nbefore installing it. The verification itself runs in your app, via electron-updater.\n\nWhen enabled (the default), the resolved [publisher name](#publisherName) is embedded into\n`app-update.yml` at build time. At update time electron-updater inspects the certificate that\nsigned the downloaded installer and compares its subject (Distinguished Name / Common Name)\nagainst that publisher name, refusing to install on a mismatch. This prevents a tampered or\nmaliciously substituted update from being installed.\n\nWhile enabled, electron-builder also checks at build time that the signed NSIS installer (or\nnsis-web stub) is signed by a certificate matching that publisher name, using the same matching\nrules, and fails the build otherwise.\n\nSet to `false` to skip verification — in which case the publisher name is **not** embedded.\nDisable this only if your updates are not Authenticode-signed.",
           "type": "boolean"
         }
       },
@@ -9709,7 +9837,7 @@
           "type": "null"
         }
       ],
-      "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among\nthem may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,\nand a platform's `allowExternalLinks` replaces the root one.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
+      "description": "Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), which file extensions to exclude\nfrom it (`excludedExts`), and whether symlinks among them may lead outside the app and the workspace (`allowExternalLinks`).\nSet at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's file lists are added to the root ones,\nand a platform's `excludedExts` and `allowExternalLinks` replace the root ones.\n\n```json\n{\n  \"fileOptions\": {\n    \"files\": [\"dist/**\\/*\", \"package.json\"],\n    \"extraResources\": [{ \"from\": \"assets/bin\", \"to\": \"bin\" }]\n  }\n}\n```\n\n`files`, `extraResources` and `extraFiles` set directly on the configuration or a platform section are moved here\nwhen the configuration is loaded, with a warning. Run `electron-builder migrate-schema` to update the configuration."
     },
     "flatpak": {
       "anyOf": [
@@ -9766,11 +9894,6 @@
         "electron-builder"
       ],
       "description": "Names of production dependencies that are excluded from the copied `node_modules`, even if they\nare declared in the `dependencies` section of `package.json`.\n\nelectron-builder copies the resolved production dependency tree into the app. Some packages —\nnotably `electron` — are already provided another way (the Electron runtime is embedded\nseparately), so copying them would just duplicate what is already there. Such packages are\nexcluded from the copy rather than rejected: they remain valid production dependencies for\ntooling purposes (e.g. SBOM, license, and vulnerability tracking) without being shipped twice.\n\nOnly dependencies **declared by the app itself** are eligible: a listed name and the transitive\ndependencies required *only* by it are dropped, while anything also required by another (kept)\nproduction dependency stays bundled. A matching name that appears solely as a transitive\ndependency of a kept package is never excluded. Note that a kept package which `require()`s an\nexcluded name at runtime *without declaring it* (relying on hoisting) will fail with\n`MODULE_NOT_FOUND` — declare such a dependency properly or remove the name from this list.\n\nMatching is by the dependency name as declared in `package.json`: an npm alias\n(`\"custom-electron\": \"npm:electron@^30.0.0\"`) is matched by its alias key (`custom-electron`),\nnever by the underlying package name.\n\nOverriding this option **replaces** the default list, so include `electron` and `electron-builder`\nunless you intend to ship them. The most common reason to override is to *add* a dependency that a\nbundler (Vite, webpack, esbuild, …) already inlines into your app code: keep it in `dependencies`\nso SBOM/license tooling still sees it, and list it here so a duplicate copy is not packaged — e.g.\n`[\"electron\", \"electron-builder\", \"react\", \"react-dom\"]`. Removing a default name keeps that\npackage in the copied `node_modules`. Setting the option to `null` (or omitting it) applies the\ndefault list; to disable exclusion entirely, set it to an empty array `[]`. Each excluded package\nis logged once during packaging."
-    },
-    "includePdb": {
-      "default": false,
-      "description": "Whether to include `.pdb` (Program Database) symbol files in the output.\n\nPDB files enable Windows crash-dump analysis but significantly increase artifact size. Enable\nfor internal builds where you want symbol information; disable for public distribution.",
-      "type": "boolean"
     },
     "linux": {
       "anyOf": [
@@ -10136,7 +10259,7 @@
           "type": "null"
         }
       ],
-      "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via\n`signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
+      "description": "Ed25519 signing of the auto-update manifest (`latest*.yml`). Each manifest is signed and its public key is\nembedded into `app-update.yml`, so electron-updater verifies the signature before downloading an update.\n\n**Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key\nresolves. Generate one once with `electron-builder create-update-key`, then supply it via\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),\npreferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and\nresolves the key from the environment; `null` is not an opt-out.\n\nSet to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then\nlogs a warning. `false` also short-circuits the environment variables, so a leftover\n`ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing by accident.\n\nThe requirement is only enforced when a publish policy is in effect (`--publish`); a build without one\nwarns instead, so local builds and pipelines that sign the manifest in a later step of their own are\nunaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is\nemitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,\nmas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed\nor uploaded.\n\nSee [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests)."
     },
     "win": {
       "anyOf": [

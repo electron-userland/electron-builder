@@ -1,0 +1,175 @@
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.picker label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  font-weight: var(--ifm-font-weight-semibold);
+}
+
+/* the version selects and the Swap button, in the site's colors instead of the browser's default controls */
+.select,
+.action {
+  height: 2.5rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: var(--ifm-global-radius);
+  background-color: var(--ifm-background-surface-color);
+  color: var(--ifm-font-color-base);
+  font: inherit;
+  font-weight: var(--ifm-font-weight-normal);
+  cursor: pointer;
+  transition: border-color var(--ifm-transition-fast);
+}
+
+/* the arrow is two gradients in the text color, so it follows the color mode */
+.select {
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 2.25rem 0 0.75rem;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.25rem) 50%,
+    calc(100% - 0.9375rem) 50%;
+  background-size: 0.3125rem 0.3125rem;
+  background-repeat: no-repeat;
+}
+
+.action {
+  padding: 0 1rem;
+}
+
+.select:hover,
+.action:hover:enabled {
+  border-color: var(--ifm-color-emphasis-500);
+}
+
+.select:focus-visible,
+.action:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+
+.action:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* also renders the browser's list of options dark */
+:global([data-theme="dark"]) .select {
+  color-scheme: dark;
+}
+
+/* kept in the page while empty: a live region that appears together with its text is not announced reliably */
+.summary:empty {
+  margin: 0;
+}
+
+.release {
+  margin-top: 2.5rem;
+}
+
+/* text is 1rem, metadata 0.875rem; under the 1.5rem release headings the package and bump headings stay small */
+.section {
+  margin-top: 1.25rem;
+  font-size: 1rem;
+}
+
+.group {
+  margin: 1rem 0 0.5rem;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.entries {
+  padding-left: 1.25rem;
+}
+
+/* summaries can be long and contain bare URLs */
+.entry {
+  margin-bottom: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin-top: 0.25rem;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.875rem;
+}
+
+.label {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: var(--ifm-global-radius);
+  padding: 0 0.4rem;
+}
+
+.details {
+  margin-top: 0.25rem;
+}
+
+.details > summary {
+  cursor: pointer;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.875rem;
+}
+
+.bucket {
+  margin-top: 2rem;
+  padding-left: 1rem;
+  border-left: 4px solid var(--pill-fg);
+}
+
+.pill {
+  display: inline-block;
+  border-radius: var(--ifm-global-radius);
+  padding: 0 0.5rem;
+  background: var(--pill-bg);
+  color: var(--pill-fg);
+  font-weight: var(--ifm-font-weight-semibold);
+}
+
+/* the count next to a bucket heading is metadata */
+.bucket h2 .pill {
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+/* bump colors that don't read as severities (red, yellow, green): violet, the site's blue and gray; text on them is
+   7.7:1 or more in both color modes */
+.major {
+  --pill-bg: #ede7f6;
+  --pill-fg: #4527a0;
+}
+
+:global([data-theme="dark"]) .major {
+  --pill-bg: #2e2550;
+  --pill-fg: #d1c4e9;
+}
+
+.minor {
+  --pill-bg: var(--ifm-color-primary-contrast-background);
+  --pill-fg: var(--ifm-color-primary-contrast-foreground);
+}
+
+.patch {
+  --pill-bg: var(--ifm-color-emphasis-200);
+  --pill-fg: var(--ifm-color-emphasis-800);
+}
+
+.updated {
+  --pill-bg: var(--ifm-color-warning-contrast-background);
+  --pill-fg: var(--ifm-color-warning-contrast-foreground);
+}

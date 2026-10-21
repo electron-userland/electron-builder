@@ -307,6 +307,11 @@ function stubSigningEnv(env: { ELECTRON_BUILDER_UPDATE_SIGN_KEY?: string; ELECTR
   vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", env.ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE)
 }
 
+// the ELECTRON_BUILDER_UPDATE_SIGN_KEY value `cat a.pem b.pem | base64 | tr -d '\n'` gives for key files written by create-update-key
+function encodeSigningKeys(...privateKeyPems: Array<string>): string {
+  return Buffer.from(privateKeyPems.map(pem => `${pem}\n`).join("")).toString("base64")
+}
+
 afterEach(() => {
   vi.unstubAllEnvs()
 })
@@ -351,7 +356,7 @@ test("updateSigningKeys prefers platform-specific updateManifest over the root c
 
 test("updateSigningKeys falls back to ELECTRON_BUILDER_UPDATE_SIGN_KEY when no updateManifest config block exists", async ({ expect }) => {
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
-  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: privateKeyPem })
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: encodeSigningKeys(privateKeyPem) })
   expect(publicKeysOf(await new TestPackager({}).updateSigningKeys.value)).toEqual([publicKeyPem])
 })
 
@@ -396,13 +401,16 @@ test("updateSigningKeys stays empty and does not throw when nothing is configure
 
 test("updateManifest: false short-circuits the env-var ladder", async ({ expect }) => {
   // security-critical: a leftover CI secret must not re-enable signing (and re-embed a public key)
-  // behind the back of an explicit opt-out
+  // behind the back of an explicit opt-out - and as the value is never read, a stale one in the
+  // pre-base64 format (a raw PEM) does not fail the build either
   const { privateKeyPem } = generateUpdateSigningKeypair()
-  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: privateKeyPem })
-  const packager = new TestPackager({ updateManifest: false })
-  expect(packager.updateManifestOptions).toBe(false)
-  expect(await packager.updateSigningKeys.value).toEqual([])
-  expect(await packager.requireUpdateSigningKeys(true)).toEqual([])
+  for (const leftover of [encodeSigningKeys(privateKeyPem), privateKeyPem]) {
+    stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: leftover })
+    const packager = new TestPackager({ updateManifest: false })
+    expect(packager.updateManifestOptions).toBe(false)
+    expect(await packager.updateSigningKeys.value).toEqual([])
+    expect(await packager.requireUpdateSigningKeys(true)).toEqual([])
+  }
 })
 
 test("requireUpdateSigningKeys throws when publishing and no key resolves", async ({ expect }) => {
@@ -414,7 +422,7 @@ test("requireUpdateSigningKeys throws when publishing and no key resolves", asyn
   expect(error).toBeInstanceOf(InvalidConfigurationError)
   // the message has to name both the fix and the opt-out, or the user has nowhere to go
   expect(error!.message).toContain("electron-builder create-update-key")
-  expect(error!.message).toContain("ELECTRON_BUILDER_UPDATE_SIGN_KEY")
+  expect(error!.message).toContain("ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file)")
   expect(error!.message).toContain("`updateManifest: false`")
 })
 
@@ -451,7 +459,7 @@ test("requireUpdateSigningKeys warns once per packager for updateManifest: false
 
 test("an environment-variable key satisfies the requirement with no updateManifest config block", async ({ expect }) => {
   const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
-  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: privateKeyPem })
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: encodeSigningKeys(privateKeyPem) })
   const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
   try {
     expect(publicKeysOf(await new TestPackager({}).requireUpdateSigningKeys(true))).toEqual([publicKeyPem])
@@ -507,11 +515,18 @@ test("loadUpdateSigningKeys: array config yields every key in order", async ({ e
   expect(publicKeysOf(keys)).toEqual([a.publicKeyPem, b.publicKeyPem])
 })
 
-test("loadUpdateSigningKeys: ELECTRON_BUILDER_UPDATE_SIGN_KEY may hold several concatenated PEM blocks", async ({ expect }) => {
+test("loadUpdateSigningKeys: ELECTRON_BUILDER_UPDATE_SIGN_KEY holds the base64 of several concatenated PEM blocks, in order, wrapped or not", async ({ expect }) => {
   const a = generateUpdateSigningKeypair()
   const b = generateUpdateSigningKeypair()
-  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: `${a.privateKeyPem}\n${b.privateKeyPem}\n` })
-  expect(loadUpdateSigningKeys().map(derivePublicKeyPem)).toEqual([a.publicKeyPem, b.publicKeyPem])
+  const c = generateUpdateSigningKeypair()
+  // three keys encode with no `=` padding, the bundle decodeCscLinkBase64's heuristic would mistake for a path
+  const encoded = encodeSigningKeys(a.privateKeyPem, b.privateKeyPem, c.privateKeyPem)
+  expect(encoded.endsWith("=")).toBe(false)
+  // one line, or wrapped at 76 columns (GNU base64 without -w0) with CRLF line breaks and a trailing newline
+  for (const value of [encoded, `${encoded.match(/.{1,76}/g)!.join("\r\n")}\n`]) {
+    stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: value })
+    expect(loadUpdateSigningKeys().map(derivePublicKeyPem)).toEqual([a.publicKeyPem, b.publicKeyPem, c.publicKeyPem])
+  }
 })
 
 test("loadUpdateSigningKeys: ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE may hold several paths joined with path.delimiter", async ({ expect }) => {
@@ -534,7 +549,7 @@ test("loadUpdateSigningKeys: the first configured SOURCE wins even when a later 
   const a = generateUpdateSigningKeypair()
   const b = generateUpdateSigningKeypair()
   const c = generateUpdateSigningKeypair()
-  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: `${b.privateKeyPem}\n${c.privateKeyPem}` })
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: encodeSigningKeys(b.privateKeyPem, c.privateKeyPem) })
   expect(loadUpdateSigningKeys({ signingKey: a.privateKeyPem }).map(derivePublicKeyPem)).toEqual([a.publicKeyPem])
 })
 
@@ -542,9 +557,113 @@ test("loadUpdateSigningKeys rejects duplicate keys and non-Ed25519 keys with a c
   const a = generateUpdateSigningKeypair()
   stubSigningEnv({})
   expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, a.privateKeyPem] })).toThrow(/duplicates key #1/)
+  expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, a.privateKeyPem] })).toThrow(InvalidConfigurationError)
   const rsa = generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey.export({ type: "pkcs8", format: "pem" }).toString()
   expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, rsa] })).toThrow(/key #2 from updateManifest\.signingKey is not a valid Ed25519/)
+  expect(() => loadUpdateSigningKeys({ signingKey: [a.privateKeyPem, rsa] })).toThrow(InvalidConfigurationError)
   expect(() => loadUpdateSigningKeys({ signingKey: "garbage" })).toThrow(/not a valid Ed25519/)
+  // the same checks run on the decoded environment variable
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: encodeSigningKeys(a.privateKeyPem, a.privateKeyPem) })
+  expect(() => loadUpdateSigningKeys()).toThrow(/key #2 from ELECTRON_BUILDER_UPDATE_SIGN_KEY duplicates key #1/)
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: encodeSigningKeys(rsa.trim()) })
+  expect(() => loadUpdateSigningKeys()).toThrow(/key #1 from ELECTRON_BUILDER_UPDATE_SIGN_KEY is not a valid Ed25519/)
+})
+
+// ── ELECTRON_BUILDER_UPDATE_SIGN_KEY format: the PEM file base64-encoded, so CI systems can mask it ──────────
+
+function loadSigningKeysError(): Error | null {
+  try {
+    loadUpdateSigningKeys()
+    return null
+  } catch (e: any) {
+    return e
+  }
+}
+
+test("ELECTRON_BUILDER_UPDATE_SIGN_KEY holding a raw PEM fails with an InvalidConfigurationError that does not show the key, also without a publish policy", async ({ expect }) => {
+  const { privateKeyPem } = generateUpdateSigningKeypair()
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: privateKeyPem })
+  const error = loadSigningKeysError()
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toContain("holds PEM text, but it must be the PEM file base64-encoded")
+  expect(error!.message).toContain("base64 < update-private-key.pem | tr -d '\\n'")
+  expect(error!.message).toContain("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE")
+  expect(error!.message).not.toContain(privateKeyPem.split("\n")[1])
+  // a key that is set but broken is a configuration error whether or not the build publishes
+  await expect(new TestPackager({}).requireUpdateSigningKeys(false)).rejects.toBeInstanceOf(InvalidConfigurationError)
+})
+
+test("ELECTRON_BUILDER_UPDATE_SIGN_KEY rejects any value that is not the base64 of complete PEM private keys, without showing it", async ({ expect }) => {
+  const a = generateUpdateSigningKeypair()
+  const b = generateUpdateSigningKeypair()
+  const encoded = encodeSigningKeys(a.privateKeyPem)
+  const pemBody = a.privateKeyPem.split("\n")[1]
+  const rejected: Array<[string, string, RegExp]> = [
+    ["quoted", `"${encoded}"`, /is not valid standard base64/],
+    ["URL-safe, unpadded", Buffer.from(`${a.privateKeyPem}\n`).toString("base64url"), /is not valid standard base64/],
+    ["missing its last character", encoded.slice(0, -1), /is not valid standard base64/],
+    // Buffer.from would stop at the first `=` and silently sign with the first key only
+    ["separately encoded keys joined together", encoded + encodeSigningKeys(b.privateKeyPem), /is not valid standard base64/],
+    ["a path", "/run/secrets/update-private-key.pem", /is not valid standard base64/],
+    // canonical base64 of something else
+    ["a newline, which used to disable signing", "Cg==", /does not decode to complete PEM private keys/],
+    ["the base64 of a path", Buffer.from("/run/secrets/update-private-key.pem").toString("base64"), /does not decode to complete PEM private keys/],
+    ["only the key body", pemBody, /does not decode to complete PEM private keys/],
+    ["encoded twice", Buffer.from(encoded).toString("base64"), /does not decode to complete PEM private keys/],
+    // cut on a 4-character boundary inside the last key: splitPemBlocks alone would drop that key and sign with the first one
+    ["a bundle cut inside its last key", encodeSigningKeys(a.privateKeyPem, b.privateKeyPem).slice(0, 200), /does not decode to complete PEM private keys/],
+    // cut inside the only key: the incomplete block reaches the key parser
+    ["a key cut on a 4-character boundary", encoded.slice(0, -40), /key #1 from ELECTRON_BUILDER_UPDATE_SIGN_KEY is not a valid Ed25519 private key/],
+  ]
+  for (const [name, value, message] of rejected) {
+    stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: value })
+    const error = loadSigningKeysError()
+    expect(error, name).toBeInstanceOf(InvalidConfigurationError)
+    expect(error!.message, name).toMatch(message)
+    expect(error!.message, name).not.toContain(value)
+    expect(error!.message, name).not.toContain(pemBody)
+  }
+})
+
+test("config signingKey and signingKeyFile win over an invalid ELECTRON_BUILDER_UPDATE_SIGN_KEY, which is never decoded", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const a = generateUpdateSigningKeypair()
+    const keyFile = path.join(dir, "update-key.pem")
+    await fsp.writeFile(keyFile, a.privateKeyPem)
+    // a stale export in the pre-base64 format
+    stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: generateUpdateSigningKeypair().privateKeyPem })
+    expect(loadUpdateSigningKeys({ signingKey: a.privateKeyPem }).map(derivePublicKeyPem)).toEqual([a.publicKeyPem])
+    expect(loadUpdateSigningKeys({ signingKeyFile: keyFile }).map(derivePublicKeyPem)).toEqual([a.publicKeyPem])
+    expect(publicKeysOf(await new TestPackager({ updateManifest: { signingKey: a.privateKeyPem } }).requireUpdateSigningKeys(true))).toEqual([a.publicKeyPem])
+  })
+})
+
+test("a valid ELECTRON_BUILDER_UPDATE_SIGN_KEY wins over ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE, an invalid one fails instead of falling back, a blank one falls through", async ({
+  expect,
+}) => {
+  await withTmpDir(async dir => {
+    const a = generateUpdateSigningKeypair()
+    const b = generateUpdateSigningKeypair()
+    const keyFile = path.join(dir, "b.pem")
+    await fsp.writeFile(keyFile, b.privateKeyPem)
+    stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: encodeSigningKeys(a.privateKeyPem), ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: keyFile })
+    expect(loadUpdateSigningKeys().map(derivePublicKeyPem)).toEqual([a.publicKeyPem])
+    stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: a.privateKeyPem, ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: keyFile })
+    expect(() => loadUpdateSigningKeys()).toThrow(InvalidConfigurationError)
+    stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: " \n\t", ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE: keyFile })
+    expect(loadUpdateSigningKeys().map(derivePublicKeyPem)).toEqual([b.publicKeyPem])
+  })
+})
+
+test("a platform-level updateManifest: false ignores an invalid ELECTRON_BUILDER_UPDATE_SIGN_KEY, a platform publicKey block under a root false still reads it", async ({
+  expect,
+}) => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: privateKeyPem })
+  expect(await new TestPackager({ updateManifest: { signingKey: privateKeyPem }, linux: { updateManifest: false } }).requireUpdateSigningKeys(true)).toEqual([])
+  await expect(new TestPackager({ updateManifest: false, linux: { updateManifest: { publicKey: publicKeyPem } } }).requireUpdateSigningKeys(false)).rejects.toBeInstanceOf(
+    InvalidConfigurationError
+  )
 })
 
 // ── A1: app-update.yml public key embedding ──────────────────────────────────
@@ -581,6 +700,15 @@ test("app-update.yml embeds a trust LIST when several signing keys are configure
   expect(publishConfig?.updateManifestPublicKey).toEqual([a.publicKeyPem, b.publicKeyPem])
 })
 
+test("app-update.yml embeds the public keys derived from a base64 ELECTRON_BUILDER_UPDATE_SIGN_KEY bundle, in order", async ({ expect }) => {
+  const a = generateUpdateSigningKeypair()
+  const b = generateUpdateSigningKeypair()
+  stubSigningEnv({ ELECTRON_BUILDER_UPDATE_SIGN_KEY: encodeSigningKeys(a.privateKeyPem, b.privateKeyPem) })
+  const keys = await new TestPackager({}).updateSigningKeys.value
+  const publishConfig = await getAppUpdatePublishConfiguration(makeAppUpdateConfigPackager(keys), null, Arch.x64, false)
+  expect(publishConfig?.updateManifestPublicKey).toEqual([a.publicKeyPem, b.publicKeyPem])
+})
+
 test("app-update.yml: an explicit publicKey LIST wins as-is over derivation, and does not warn when it contains the signing key", async ({ expect }) => {
   const current = generateUpdateSigningKeypair()
   const next = generateUpdateSigningKeypair()
@@ -604,17 +732,23 @@ test("app-update.yml: a single explicit publicKey string holding two PEM blocks 
   expect(publishConfig?.updateManifestPublicKey).toEqual([a.publicKeyPem, b.publicKeyPem])
 })
 
-test("app-update.yml warns when none of the signing keys is in the explicit trust list (old-style bridge release)", async ({ expect }) => {
+test("app-update.yml: a signing key outside the explicit trust list warns, and fails a publishing build unless allowed", async ({ expect }) => {
   const oldKey = generateUpdateSigningKeypair()
   const newKey = generateUpdateSigningKeypair()
+  log.resetLimits("update-manifest-signing-key-outside-trust-list")
   const warn = vi.spyOn(log, "warn")
   try {
     const packager = makeAppUpdateConfigPackager([parsePrivateKey(oldKey.privateKeyPem)], { publicKey: newKey.publicKeyPem })
     const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
-    // still a warning, not an error: the release is built, but cannot verify its own manifests
+    // a warning, not an error, without a publish policy: the release is built, but cannot verify its own manifests
     expect(publishConfig?.updateManifestPublicKey).toBe(newKey.publicKeyPem)
     // oxlint-disable-next-line typescript/no-base-to-string -- substring check over log.warn args; an object fallback stringifying to "[object Object]" simply does not match
     expect(warn.mock.calls.some(c => String(c[1] ?? c[0]).includes("none of the update-manifest signing keys"))).toBe(true)
+
+    // publishing it fails, unless the cutover is explicitly allowed
+    await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, true)).rejects.toThrow(InvalidConfigurationError)
+    const allowed = makeAppUpdateConfigPackager([parsePrivateKey(oldKey.privateKeyPem)], { publicKey: newKey.publicKeyPem, allowSigningKeyOutsideTrustList: true })
+    expect((await getAppUpdatePublishConfiguration(allowed, null, Arch.x64, true))?.updateManifestPublicKey).toBe(newKey.publicKeyPem)
   } finally {
     warn.mockRestore()
   }

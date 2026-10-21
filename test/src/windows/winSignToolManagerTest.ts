@@ -4,6 +4,8 @@ import { publisherNameMatchesCertificate, SigntoolBaseSignManager, SigntoolSignM
 import { WindowsSignTaskConfiguration } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
 import { readCertInfoFromX509 } from "app-builder-lib/src/codeSign/certInfo"
 import { WindowsSignAzureManager } from "app-builder-lib/src/codeSign/win/windowsSignAzureManager"
+import AppXTarget from "app-builder-lib/src/targets/win/AppxTarget"
+import MsixTarget from "app-builder-lib/src/targets/win/MsixTarget"
 import { getAtsBundleDir, getDotnetRuntimeDir, getWindowsKitsBundle } from "app-builder-lib/src/toolsets/winCodeSign"
 import type { WinPackager } from "app-builder-lib/src/winPackager"
 import { InvalidConfigurationError } from "builder-util"
@@ -1059,8 +1061,59 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
   test("win.sign: false with a certificate link resolves null (signing disabled)", async ({ tmpDir }) => {
     const certificateFile = await writeNoCommonNameCertificate(tmpDir)
     const manager = makePublisherNameManager(false, { getCscLink: () => certificateFile })
-    // the certificate link is still resolved, but nothing is signed, so there is no publisher name to require
-    await expect(manager.cscInfo.value).resolves.toEqual({ file: certificateFile, password: null })
+    // nothing is signed, so the certificate link is not resolved and there is no publisher name to require
+    await expect(manager.cscInfo.value).resolves.toBeNull()
     await expect(manager.computedPublisherName.value).resolves.toBeNull()
+  })
+
+  // `win.sign: false` / `null` signs nothing: a certificate in WIN_CSC_LINK / CSC_LINK is never read, so it supplies no
+  // publisherName for app-update.yml, no AppX/MSIX publisher and no build-cache digest.
+  const certificateMustNotBeRead = () => {
+    throw new Error("certificate must not be read when signing is disabled")
+  }
+
+  function makeSigningDisabledManager(disabled: false | null): any {
+    return makePublisherNameManager(disabled, { getCscLink: certificateMustNotBeRead, getCscPassword: certificateMustNotBeRead })
+  }
+
+  test.for([
+    ["false", false],
+    ["null", null],
+  ] as const)("win.sign: %s resolves no certificate from WIN_CSC_LINK / CSC_LINK", async ([, disabled]) => {
+    await expect(makeSigningDisabledManager(disabled).cscInfo.value).resolves.toBeNull()
+  })
+
+  test.for([
+    ["false", false],
+    ["null", null],
+  ] as const)("win.sign: %s derives no publisherName and reads no certificate", async ([, disabled]) => {
+    const manager = makeSigningDisabledManager(disabled)
+    manager.cscInfo = {
+      get value() {
+        return certificateMustNotBeRead()
+      },
+    }
+    manager.lazyCertInfo = {
+      get value() {
+        return certificateMustNotBeRead()
+      },
+    }
+    await expect(manager.computedPublisherName.value).resolves.toBeNull()
+  })
+
+  test.for([
+    ["false", false],
+    ["null", null],
+  ] as const)("win.sign: %s builds an unsigned AppX/MSIX package with the configured publisher or CN=ms", async ([, disabled]) => {
+    for (const target of [Object.create(AppXTarget.prototype), Object.create(MsixTarget.prototype)]) {
+      const manager = makeSigningDisabledManager(disabled)
+      manager.lazyCertInfo = {
+        get value() {
+          return certificateMustNotBeRead()
+        },
+      }
+      await expect(manager.computePublisherName(target, null)).resolves.toBe("CN=ms")
+      await expect(manager.computePublisherName(target, "CN=Acme Corp, O=Acme")).resolves.toBe("CN=Acme Corp, O=Acme")
+    }
   })
 })

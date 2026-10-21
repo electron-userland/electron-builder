@@ -68,7 +68,13 @@ testAndIgnoreApiRate("GitHub upload", async () => {
 })
 
 test.ifEnv(process.env.AWS_ACCESS_KEY_ID != null && process.env.AWS_SECRET_ACCESS_KEY != null)("S3 upload", async () => {
-  const publisher = await createPublisher(publishContext, "0.0.1", { provider: "s3", bucket: "electron-builder-test" } as S3Options, {}, {} as any)
+  const publisher = await createPublisher(
+    publishContext,
+    "0.0.1",
+    { provider: "s3", bucket: "electron-builder-test", awsCredentials: { source: "env" } } as S3Options,
+    {},
+    {} as any
+  )
   await publisher!.upload({ file: iconPath, arch: Arch.x64 })
   // test overwrite
   await publisher!.upload({ file: iconPath, arch: Arch.x64 })

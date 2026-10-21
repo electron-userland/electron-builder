@@ -87,6 +87,14 @@ export interface ArchiveOptions {
   isArchiveHeaderCompressed?: boolean
 
   dictSize?: number
+
+  /**
+   * 7z only: LZMA2 block size in MB. Without it, 7-Zip splits LZMA2 into independent blocks only when it compresses with
+   * several block threads, so the archive bytes depend on the build host's CPU count. A fixed size makes them identical
+   * on any host. Ignored when storing, and when `method` names another codec.
+   */
+  blockSize?: number
+
   excluded?: Array<string> | null
 
   // DEFAULT allows to disable custom logic and do not pass method switch at all
@@ -182,7 +190,16 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
     }
   }
 
-  if (options.dictSize != null) {
+  const { blockSize } = options
+  const is7z = format === "7z" || format.endsWith(".7z")
+  // -mx=0 with an explicit -m0=LZMA2 would compress instead of store, so the block size is only pinned when compressing
+  const pinBlockSize = is7z && typeof blockSize === "number" && !storeOnly && compressionLevel !== "0" && (options.method == null || options.method === "DEFAULT")
+  if (pinBlockSize) {
+    if (!Number.isInteger(blockSize) || blockSize <= 0) {
+      throw new Error(`blockSize must be a positive integer (MB), got ${blockSize}`)
+    }
+    args.push(`-m0=LZMA2${options.dictSize != null ? `:d=${options.dictSize}m` : ""}:c=${blockSize}m`)
+  } else if (options.dictSize != null) {
     args.push(`-md=${options.dictSize}m`)
   }
 
@@ -191,7 +208,7 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
     args.push("-mtc=off")
   }
 
-  if (format === "7z" || format.endsWith(".7z")) {
+  if (is7z) {
     if (options.solid === false) {
       args.push("-ms=off")
     }

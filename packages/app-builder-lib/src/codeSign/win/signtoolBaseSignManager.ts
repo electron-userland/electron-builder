@@ -107,6 +107,11 @@ export abstract class SigntoolBaseSignManager implements SignManager {
   }
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
+    // `win.sign: false` / `null` signs nothing, so no publisherName is derived or written to app-update.yml.
+    if (isWindowsSigningDisabled(this.platformSpecificBuildOptions)) {
+      return null
+    }
+
     const signing = getSigntoolFamilyConfig(this.platformSpecificBuildOptions)
     const publisherName = signing?.publisherName
     if (publisherName === null) {
@@ -132,8 +137,8 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       return [certInfo.commonName]
     }
     // Signed with a certificate without a CN: electron-updater verifies downloaded updates against the publisherName in app-update.yml, so
-    // the build needs one. Not for `win.sign: false`: nothing is signed.
-    if (!isWindowsSigningDisabled(this.platformSpecificBuildOptions) && (await this.cscInfo.value) != null) {
+    // the build needs one.
+    if ((await this.cscInfo.value) != null) {
       throw new InvalidConfigurationError(
         "Windows code signing is configured, but the publisher name cannot be determined at build time (the signing certificate has no Common Name). " +
           "electron-updater verifies the signature of downloaded updates against the publisherName in app-update.yml. " +
@@ -233,6 +238,11 @@ export abstract class SigntoolBaseSignManager implements SignManager {
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
     () => this.platformSpecificBuildOptions,
     platformSpecificBuildOptions => {
+      // `win.sign: false` / `null` signs nothing: no certificate is read (not even from CSC_LINK / WIN_CSC_LINK), so none
+      // supplies an AppX/MSIX publisher, a publisherName for app-update.yml or a build-cache digest.
+      if (isWindowsSigningDisabled(platformSpecificBuildOptions)) {
+        return Promise.resolve(null)
+      }
       const signing = getSigntoolFamilyConfig(platformSpecificBuildOptions)
       // signtool is the implicit default when win.sign is unset, so an absent config still
       // honours the WIN_CSC_LINK/cscLink fallback below (hsm/pkcs11 set signing.type explicitly).

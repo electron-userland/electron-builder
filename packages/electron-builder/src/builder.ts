@@ -118,11 +118,27 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   // https://github.com/electron-userland/electron-builder/issues/2016
   if (Array.isArray(config)) {
     const newConfig: Configuration = {}
+    // a repeated `-c.fileOptions.excludedExts=…` flag (one entry each) is one item per flag here, which deepAssign would let the last
+    // one overwrite: join them into one list, as yargs does when no config file is given
+    const excludedExts = new Map<string, Array<string>>()
     for (const configItem of config) {
       if (typeof configItem === "object") {
+        for (const section of EXCLUDED_EXTS_SECTIONS) {
+          const value = (section === "" ? configItem : configItem?.[section])?.fileOptions?.excludedExts
+          if (value != null) {
+            excludedExts.set(section, [...(excludedExts.get(section) ?? []), ...(Array.isArray(value) ? value : [value])])
+          }
+        }
         deepAssign(newConfig, configItem)
       } else if (typeof configItem === "string") {
         newConfig.extends = configItem
+      }
+    }
+    for (const [section, values] of excludedExts) {
+      const fileOptions = (section === "" ? newConfig : (newConfig as any)[section])?.fileOptions
+      // a fileOptions that is not an object is left for validateConfiguration to report
+      if (values.length > 1 && fileOptions != null && typeof fileOptions === "object" && !Array.isArray(fileOptions)) {
+        fileOptions.excludedExts = values
       }
     }
 
@@ -156,6 +172,14 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       }
     }
 
+    // `-c.fileOptions.excludedExts=null` arrives as the string "null", which a single-string excludedExts would read as an extension
+    for (const section of EXCLUDED_EXTS_SECTIONS) {
+      const fileOptions = (section === "" ? config : config[section])?.fileOptions
+      if (fileOptions != null && typeof fileOptions === "object" && fileOptions.excludedExts === "null") {
+        fileOptions.excludedExts = null
+      }
+    }
+
     // fix Boolean type by coerceTypes
     if (config.nsis != null) {
       coerceTypes(config.nsis)
@@ -172,6 +196,9 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
 
   return result as BuildOptions
 }
+
+// the configuration root ("") and the platform sections that hold `fileOptions`
+const EXCLUDED_EXTS_SECTIONS = ["", "mac", "mas", "masDev", "win", "linux"]
 
 function coerceValue(host: any, key: string): void {
   const value = host[key]

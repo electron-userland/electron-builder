@@ -28,7 +28,8 @@ export async function createUpdateKey(outFile?: string): Promise<{ privateKeyPat
   log.info({ file: privateKeyPath }, "Ed25519 private key written (keep this secret — store it in a CI secret)")
   log.info(
     null,
-    `Provide it at publish time via the ${chalk.bold("ELECTRON_BUILDER_UPDATE_SIGN_KEY")} (PEM literal) or ${chalk.bold("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE")} (path) environment variable.`
+    `Provide it at publish time via the ${chalk.bold("ELECTRON_BUILDER_UPDATE_SIGN_KEY")} environment variable, base64-encoded on one line so CI systems can mask it ` +
+      `(${base64Command(privateKeyPath)}), or via ${chalk.bold("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE")} (path to the PEM file).`
   )
   log.info(null, "The matching public key is embedded into app-update.yml automatically; you do not need to configure it manually.\n")
 
@@ -36,4 +37,11 @@ export async function createUpdateKey(outFile?: string): Promise<{ privateKeyPat
   process.stdout.write(`${chalk.bold("Public key")} (for reference — auto-embedded into app-update.yml):\n${publicKeyPem}\n`)
   process.stdout.write(`${chalk.bold("Key id")} (appears as \`keyId\` in the \`signatures\` list of each signed latest*.yml):\n${keyId}\n`)
   return { privateKeyPath, publicKeyPem, keyId }
+}
+
+/** The command that prints `file` base64-encoded on one line, for this platform's shell (PowerShell on Windows). */
+function base64Command(file: string): string {
+  return process.platform === "win32"
+    ? `[Convert]::ToBase64String([IO.File]::ReadAllBytes('${file.replace(/'/g, "''")}'))`
+    : `base64 < '${file.replace(/'/g, "'\\''")}' | tr -d '\\n'`
 }

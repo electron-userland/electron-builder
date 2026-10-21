@@ -545,7 +545,8 @@ async function main() {
   }
 
   const byName = new Map(workspace.packages.map(p => [p.packageJson.name, p]))
-  const skipped = name => !byName.has(name) || shouldSkipPackage(byName.get(name), { ignore: config.ignore, allowPrivatePackages: config.privatePackages.version })
+  // a private package is never published: one versioned on its own (docker) has only its own CHANGELOG.md
+  const skipped = name => !byName.has(name) || byName.get(name).packageJson.private === true || shouldSkipPackage(byName.get(name), { ignore: config.ignore, allowPrivatePackages: config.privatePackages.version })
   const data =
     opt.mode === "range"
       ? await fromRange(workspace)
@@ -585,7 +586,7 @@ async function main() {
     .map(s => ({ ...s, lead: packages.find(p => s.packages.has(p.name)) }))
     .filter(s => s.lead)
 
-  // a changeset's releases without ignored packages and "none" (P) decide the sections it is listed in
+  // a changeset's releases without ignored or private packages and "none" (P) decide the sections it is listed in
   const changesets = data.changesets
     .map(cs => ({
       changeset: { id: cs.id, summary: cs.summary, releases: cs.releases, commit: cs.commit },

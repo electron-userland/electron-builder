@@ -16,7 +16,7 @@ Several environment variables were **removed in v27** — most notably `CI_BUILD
 
 ## Code signing
 
-Signing credentials are read from the environment so certificates and passwords never have to live in your config. **Never commit them to source control** — inject them via CI secrets. Each value accepts an HTTPS URL, a `file://` path, a local path, or a base64-encoded certificate string.
+Signing credentials are read from the environment so certificates and passwords never have to live in your config. **Never commit them to source control** — inject them via CI secrets. Each value accepts an HTTPS URL, a `file://` path, a local path, or a base64-encoded certificate string — standard base64 without surrounding quotes (line breaks in it are ignored; see [Base64 certificate values](./features/code-signing/code-signing.md#base64-certificate-values)).
 
 ### Shared / macOS
 
@@ -56,11 +56,20 @@ For notarizing macOS apps distributed outside the Mac App Store. Provide **one**
 | `APPLE_ID` | Apple ID email (Apple-ID auth). |
 | `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password for that Apple ID. |
 | `APPLE_TEAM_ID` | Apple Developer Team ID. |
-| `APPLE_API_KEY` | Path to the App Store Connect API key (`.p8`). |
+| `APPLE_API_KEY` | Path to the App Store Connect API key (`.p8`), or the file's contents base64-encoded on one line so CI systems can mask it (`base64 < AuthKey_KEYID.p8 \| tr -d '\n'`). |
 | `APPLE_API_KEY_ID` | Key ID for the App Store Connect API key. |
 | `APPLE_API_ISSUER` | Issuer ID for the App Store Connect API key. |
 | `APPLE_KEYCHAIN` | Keychain to search for a stored notarization profile. |
 | `APPLE_KEYCHAIN_PROFILE` | Name of a `notarytool` keychain profile to use. |
+
+## Update-manifest signing
+
+The Ed25519 private key that signs `latest*.yml`, required on publishing builds unless `updateManifest: false`. `updateManifest.signingKey` / `signingKeyFile` in the configuration take precedence, and `updateManifest: false` ignores both variables. Full setup is in [Signed Update Manifests](./features/signed-update-manifests.md#ci-secrets).
+
+| Variable | Description |
+|---|---|
+| `ELECTRON_BUILDER_UPDATE_SIGN_KEY` | The private key PEM file from `electron-builder create-update-key`, **base64-encoded** on one line so CI systems can mask it (`base64 < update-private-key.pem \| tr -d '\n'`). For several keys (rotation), concatenate the PEM files and encode them once. A raw PEM, or anything that is not the base64 of complete PEM keys, fails the build. |
+| `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` | Path to the private key PEM file, used when `ELECTRON_BUILDER_UPDATE_SIGN_KEY` is unset. Several paths are joined with the OS path delimiter (`:` on Linux/macOS, `;` on Windows); relative paths resolve against the current working directory. |
 
 ---
 
@@ -112,12 +121,15 @@ If `BITBUCKET_TOKEN` holds an app password or API token, you **must** also set `
 
 ### Amazon S3
 
+Read only when the S3 publish configuration sets `awsCredentials: { source: "env" }` (there is no default source). You can change the variable names with `awsCredentials.env`.
+
 | Variable | Description |
 |---|---|
 | `AWS_ACCESS_KEY_ID` | AWS access key ID. |
 | `AWS_SECRET_ACCESS_KEY` | AWS secret access key. |
 | `AWS_SESSION_TOKEN` | Optional session token for temporary credentials. |
-| `AWS_PROFILE` | Named profile in `~/.aws/credentials` to use when the keys above are not set (default: `default`). |
+
+Since v27, `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE` and `AWS_SHARED_CREDENTIALS_FILE` are **not** read, and publishing without `awsCredentials.source` fails. To use a named profile from the shared config/credentials files (including IAM Identity Center / SSO), set `awsCredentials: { source: "profile", profile: "<name>" }` in the [S3 publish options](./publish.md#s3); for a role assumed from an SSO profile via `source_profile`, set `{ source: "sso-role-chain", profile: "<name>" }`. The SSO and STS calls made for either source do not read `AWS_REGION`, `AWS_DEFAULT_REGION` or `AWS_ENDPOINT_URL*`.
 
 ### DigitalOcean Spaces
 

@@ -1,5 +1,39 @@
 # electron-builder
 
+## 27.0.0-alpha.11
+### Patch Changes
+
+- Feat(builder-util): `log.limit({ key, max, scope })` / `log.once(key, scope)` emit a keyed message at most N times (per process, or per scope object), replacing hand-rolled "already warned" flags; electron-updater counts once-per-updater warnings internally without changing the injectable `Logger` interface. Both share one limiter (`wrap()` on any `{ info, warn, error, debug? }` logger, including `console`), and its `LogLevel`, `LogLimitOptions`, `LoggerLike` and `LimitedLogger` types are now exported from builder-util-runtime (builder-util re-exports them) _[`#10302`](https://github.com/electron-userland/electron-builder/pull/10302) [`5cbbc8d`](https://github.com/electron-userland/electron-builder/commit/5cbbc8de8e0fb585cfa97e80644e8a29ab7d8ff4)_
+- Feat!: nest `files`, `extraResources` and `extraFiles` under `fileOptions` _[`#10319`](https://github.com/electron-userland/electron-builder/pull/10319) [`8f55928`](https://github.com/electron-userland/electron-builder/commit/8f5592839b6b2752754c19b8b7190ec86f55ef94)_
+
+  The three file-copy lists live in a `fileOptions?: FilesBuildOptions | null` property at the configuration root and in every platform section (`mac`, `mas`, `masDev`, `win`, `linux`), the same way `directories` groups the build directories: `fileOptions.files`, `mac.fileOptions.extraResources`, and so on. `PlatformSpecificBuildOptions` does not extend `FilesBuildOptions`, and the TypeScript types and the JSON schema only have `fileOptions`.
+
+  Flat `files` / `extraResources` / `extraFiles` keys in a config file, an `extends` parent, a `-c.files=…` override or the `config` object passed to `build()` are applied as their `fileOptions` counterparts before the configuration is validated, logging one warning per process that names the keys found and where they belong. When a flat key and its `fileOptions` counterpart are set on the same object, `fileOptions` wins and the build warns about the conflict. A CLI override or a parent config's flat key is merged with `fileOptions`. A `fileOptions` that is not an object (for example a list of globs written directly under it) fails the build with a message showing the nested form.
+
+  Code that reads `files`, `extraResources` or `extraFiles` from the loaded configuration (for example a hook reading `context.packager.config.files`, or `buildResult.configuration.extraResources`) gets the `fileOptions` value, with a warning per key: the loaded configuration and its platform sections forward these reads through non-enumerable properties, which stay out of the effective config, `JSON.stringify` and `Object.keys`. Assigning them throws a configuration error naming the `fileOptions` property to set instead.
+
+  `deepAssign` (builder-util-runtime) copies only enumerable own properties, so the forwarding properties are never copied into merged options.
+
+  `electron-builder migrate-schema` (static and JS/TS configs) moves flat keys under `fileOptions` at the root and per platform. A flat key also set under `fileOptions` is removed with a warning, since the build ignores it.
+
+  See https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`86298ab`](https://github.com/electron-userland/electron-builder/commit/86298abd9857f56e7124d59e4c5373333d05ceda) [`a4ff5db`](https://github.com/electron-userland/electron-builder/commit/a4ff5db6261c8370d6041fd597437443ca5d3bb8) [`866bb00`](https://github.com/electron-userland/electron-builder/commit/866bb0082c6561be357c6d9df4de6bd66e524607) [`8eff005`](https://github.com/electron-userland/electron-builder/commit/8eff005219db1d17363add3ef4902e5b14798241) [`a49daae`](https://github.com/electron-userland/electron-builder/commit/a49daae0ad0a2ca8a53e07aa031c5d00fde8bbb5) [`067913d`](https://github.com/electron-userland/electron-builder/commit/067913dcd586dc9c016206f28326e186de8d9d85) [`68aa2ff`](https://github.com/electron-userland/electron-builder/commit/68aa2ff1d5bc713819cd98bfb34c890fbe03a93a) [`ea41d9a`](https://github.com/electron-userland/electron-builder/commit/ea41d9af10840fbb56d60ff701e1282a0e16a6fb) [`2fdbcae`](https://github.com/electron-userland/electron-builder/commit/2fdbcae5b136c486d3afa3e564d032b5a79dae05) [`8854be3`](https://github.com/electron-userland/electron-builder/commit/8854be3dda9bc3f51a71ad44b51961b946a8c99e) [`d2af5d1`](https://github.com/electron-userland/electron-builder/commit/d2af5d1b07bc9d1e00e4b65a3d6a9da471ea6ea9) [`3f1d50b`](https://github.com/electron-userland/electron-builder/commit/3f1d50b49d96a48d38ad9008009782d4bcabd91a) [`3f1d50b`](https://github.com/electron-userland/electron-builder/commit/3f1d50b49d96a48d38ad9008009782d4bcabd91a) [`4b6e63f`](https://github.com/electron-userland/electron-builder/commit/4b6e63f3490a50806839fa44fb790612cf5da1a2) [`0dffd5b`](https://github.com/electron-userland/electron-builder/commit/0dffd5b787df50d8796817b42d1f542f831f0d6b) [`bb6b24c`](https://github.com/electron-userland/electron-builder/commit/bb6b24c25e96e00a87ec183b5369b553880bea18) [`08e8044`](https://github.com/electron-userland/electron-builder/commit/08e80443d3470f2d6bf5a0075e54f4e906079c9b) [`3f1d50b`](https://github.com/electron-userland/electron-builder/commit/3f1d50b49d96a48d38ad9008009782d4bcabd91a) [`6fe881e`](https://github.com/electron-userland/electron-builder/commit/6fe881ea4db4a92c8fbac7d435607d0ccebe2775) [`5cbbc8d`](https://github.com/electron-userland/electron-builder/commit/5cbbc8de8e0fb585cfa97e80644e8a29ab7d8ff4) [`8f55928`](https://github.com/electron-userland/electron-builder/commit/8f5592839b6b2752754c19b8b7190ec86f55ef94) [`7e42d2f`](https://github.com/electron-userland/electron-builder/commit/7e42d2f526fb4fc03c4ccfcc3e7d37290c44b632) [`0df65dc`](https://github.com/electron-userland/electron-builder/commit/0df65dc90671b6d97ed89303ca6874a2938b8c35) [`38fe001`](https://github.com/electron-userland/electron-builder/commit/38fe001fabb97129dafa3e96ac08c0376b35465f) [`e7d9cad`](https://github.com/electron-userland/electron-builder/commit/e7d9cad9e4d49cbcffd2bcea204260728b23f3ea) [`80c9c3f`](https://github.com/electron-userland/electron-builder/commit/80c9c3fdf4a332a00df2f2a4ad75428a24136c93) [`efec238`](https://github.com/electron-userland/electron-builder/commit/efec2385c8c768587e565cab20013fc8dca0c33a) [`efec238`](https://github.com/electron-userland/electron-builder/commit/efec2385c8c768587e565cab20013fc8dca0c33a) [`798adc4`](https://github.com/electron-userland/electron-builder/commit/798adc41f80469bd036cc1b0c566e0489fbc83d7) [`86298ab`](https://github.com/electron-userland/electron-builder/commit/86298abd9857f56e7124d59e4c5373333d05ceda) [`08e8044`](https://github.com/electron-userland/electron-builder/commit/08e80443d3470f2d6bf5a0075e54f4e906079c9b) [`434f6e9`](https://github.com/electron-userland/electron-builder/commit/434f6e98b017c14176be9aaf06891f09624c88fc) [`ed43b10`](https://github.com/electron-userland/electron-builder/commit/ed43b10045454c01b6ce87633cf8f0d517aa07df) [`d2c979b`](https://github.com/electron-userland/electron-builder/commit/d2c979b19f222f4c296c96acd0d2f3917acbf536)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.11`
+- `builder-util-runtime@10.0.0-alpha.10`
+- `builder-util@27.0.0-alpha.11`
+- `electron-publish@27.0.0-alpha.11`
+- `dmg-builder@27.0.0-alpha.11`
+
+</details>
+
 ## 27.0.0-alpha.10
 
 ### Patch Changes

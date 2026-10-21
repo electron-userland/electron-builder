@@ -27,14 +27,14 @@ Installs already in the field carry whatever `app-update.yml` they shipped with.
 npx electron-builder create-update-key
 ```
 
-This writes `update-private-key.pem` (mode `0600`) to the current directory (use `--out <path>` to choose the location) and prints the matching public key and its **key id** (the hex SHA-256 of the public key's SPKI DER encoding, which appears as `keyId` next to each signature in the manifest) for reference. Store the private key as a CI secret — it never needs to be committed anywhere.
+This writes `update-private-key.pem` (mode `0600`) to the current directory (use `--out <path>` to choose the location) and prints the matching public key and its **key id** (the hex SHA-256 of the public key's SPKI DER encoding, which appears as `keyId` next to each signature in the manifest) for reference. Store the private key as a CI secret, base64-encoded (see [Providing the key in CI](#ci-secrets)) — it never needs to be committed anywhere.
 
 **2. Provide the private key at build/publish time**, preferably via an environment variable in CI:
 
 ```sh
-# either the PEM content itself…
-ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(cat update-private-key.pem)" electron-builder --publish always
-# …or a path to the key file
+# either the PEM file, base64-encoded on one line (the value you store as the CI secret)…
+ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(base64 < update-private-key.pem | tr -d '\n')" electron-builder --publish always
+# …or a path to the key file (PEM, not encoded)
 ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=/run/secrets/update-private-key.pem electron-builder --publish always
 ```
 
@@ -44,7 +44,7 @@ A publishing build with no resolvable key fails instead — at build start, befo
 
 ```
 auto-update manifests must be signed, but no Ed25519 signing key was found for mac. Generate one with
-`electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (PEM contents)
+`electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file)
 or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey /
 updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out
 explicitly with `updateManifest: false`.
@@ -54,13 +54,49 @@ A build **without** a publish policy only warns, so local builds keep working wh
 
 **3. That's it.** electron-updater picks the public key up from `app-update.yml` and enforces verification from the first update check.
 
+## Providing the key in CI {#ci-secrets}
+
+`ELECTRON_BUILDER_UPDATE_SIGN_KEY` takes the private key file **base64-encoded**, so the secret is a single line of `A-Z`, `a-z`, `0-9`, `+`, `/` and `=`. Masked and hidden CI variables need exactly that — GitLab, for example, refuses to mask a value that spans several lines or contains spaces, and Bitbucket cannot store line breaks at all. Encode the file once and store the output as the secret:
+
+| Platform | Command |
+| --- | --- |
+| macOS, Linux | `base64 < update-private-key.pem \| tr -d '\n'` |
+| Linux (GNU coreutils) | `base64 -w0 update-private-key.pem` |
+| Any OS with OpenSSL | `openssl base64 -A -in update-private-key.pem` |
+| PowerShell | `[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path update-private-key.pem)))` |
+
+To sign with **several keys** (see [Key rotation](#key-rotation)), concatenate the PEM files — old key first — and encode the result **once**. Encoding each file separately and joining the outputs does not work:
+
+```sh
+cat update-key.old.pem update-key.new.pem | base64 | tr -d '\n'
+```
+
+Then expose the secret to the build — in GitHub Actions, for example:
+
+```yaml
+env:
+  ELECTRON_BUILDER_UPDATE_SIGN_KEY: ${{ secrets.ELECTRON_BUILDER_UPDATE_SIGN_KEY }}
+```
+
+On GitLab, add it under **Settings → CI/CD → Variables** as a variable of type *Variable* with the visibility *Masked and hidden*.
+
+The value is checked before anything is signed, and a value that does not pass fails the build with an error that never prints it:
+
+- a raw PEM — the format of the 27.0.0 alphas up to alpha.11;
+- a value that is not standard base64 — surrounding quotes, URL-safe `-`/`_` characters, missing `=` padding, a truncated copy, or separately encoded keys joined together;
+- a value that does not decode to complete PEM private keys — only the key body between the `-----BEGIN`/`-----END` lines, a value encoded twice, or a file path.
+
+Line breaks in the value are ignored, so wrapped `base64` output works too, but GitLab will not mask it — hence the `tr -d '\n'`. Do not use `certutil -encode` on Windows, which adds `-----BEGIN CERTIFICATE-----` lines (use the PowerShell command above), and note that GNU `base64` reads `-i` as `--ignore-garbage`, not as the input file.
+
+To keep the key in a file instead — a Docker or Kubernetes secret, or a file your CI mounts — point `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` at the PEM file; files are not base64-encoded.
+
 ## Configuration reference
 
 Instead of (or in addition to) the environment variables, you can configure signing in the [build configuration](../configuration.md) — at the top level, or per platform (e.g. under `linux` or `win`) to sign only some platforms' manifests:
 
 ```yaml
 updateManifest:
-  # Ed25519 private key(s), PEM (PKCS#8). Secret — prefer ELECTRON_BUILDER_UPDATE_SIGN_KEY in CI.
+  # Ed25519 private key(s), PEM (PKCS#8). Secret — prefer ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded) in CI.
   # A string (which may contain several concatenated PEM blocks) or an array of strings.
   signingKey: null
   # Path(s) to file(s) containing private key(s). Alternative to signingKey. String or array.
@@ -68,7 +104,11 @@ updateManifest:
   signingKeyFile: null
   # Public key(s) (PEM or base64 SPKI) embedded into app-update.yml as the updater's trust list.
   # Optional — derived automatically from the private key(s) when omitted. String or array.
+  # When set, it must include a signing key, or a publishing build fails (see below).
   publicKey: null
+  # Lets a publishing build sign only with keys that are not in publicKey: a deliberate cutover
+  # release. Only warns then. Ignored when publicKey is not set.
+  allowSigningKeyOutsideTrustList: false
 ```
 
 The whole option may instead be set to `false`, the only opt-out:
@@ -81,7 +121,8 @@ Key resolution order is: `signingKey` → `signingKeyFile` → `ELECTRON_BUILDER
 
 | Source | Several keys |
 | --- | --- |
-| `signingKey` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY` | concatenate the PEM blocks (`cat a.pem b.pem`), or use an array in config |
+| `signingKey` | concatenate the PEM blocks (`cat a.pem b.pem`), or use an array in config |
+| `ELECTRON_BUILDER_UPDATE_SIGN_KEY` | base64-encode the concatenated PEM files once: `cat a.pem b.pem \| base64 \| tr -d '\n'` (see [Providing the key in CI](#ci-secrets)) |
 | `signingKeyFile` | an array of paths in config |
 | `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` | join the paths with the OS path delimiter: `a.pem:b.pem` on Linux/macOS, `a.pem;b.pem` on Windows |
 
@@ -89,7 +130,7 @@ A relative `signingKeyFile` path resolves against the project directory (where t
 
 Every key must be a distinct Ed25519 key; duplicates and other key types fail the build. When several keys are configured, **each manifest is signed by all of them** and the trust list embeds all of their public keys — this is the dual-signing used during [key rotation](#key-rotation).
 
-An explicit `publicKey` takes precedence over derivation and is embedded as-is. Use it to trust keys you do not (yet) sign with — for example the *next* key ahead of a rotation. If none of the keys the build signs with is in an explicit `publicKey` list, electron-builder logs a warning: installs of that release could not verify its own manifests, which is only ever intended for a deliberate bridge release.
+An explicit `publicKey` takes precedence over derivation and is embedded as-is. Use it to trust keys you do not (yet) sign with — for example the *next* key ahead of a rotation. It must also list at least one of the keys the build signs with: otherwise installs of that release reject manifests signed with the current key(s), and every later release has to be signed by a listed key. A publishing build in that state fails at build start with an `InvalidConfigurationError` naming the key ids on both sides (a build without a publish policy only warns). For a deliberate cutover release — signed with the old key, which the installs in the field trust, but embedding only the new one — set `allowSigningKeyOutsideTrustList: true`; the build then publishes and logs a warning. When `publicKey` is not set the trust list is derived from the signing keys, so this check does not apply.
 
 A `publicKey` on its own does **not** satisfy the signing requirement — electron-builder still has no key to sign with, so a publishing build fails. An HSM/KMS-style signer that signs `latest*.yml` in a later step of its own therefore either builds without a publish policy, where the requirement only warns and the unsigned manifest is written locally for it to sign, or keeps publishing with `publishAutoUpdate: false` on every publish provider — electron-builder then uploads the artifacts and embeds the `publicKey`, but writes no `latest*.yml`, so the external step has to generate the manifest too. See [Key storage](./key-rotation.md#key-storage).
 
@@ -168,7 +209,7 @@ Verification is enforced by the *installed* app, and since signing is on by defa
 
 An install trusts the **list** of public keys embedded in its `app-update.yml`, and a manifest can carry a signature from **each** of several keys. Rotation therefore needs no flag day:
 
-1. **Bridge release(s):** configure both the **old** and the **new** private key (old first, so it also fills the legacy `signature` field), e.g. `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=old.pem:new.pem`. Manifests are now dual-signed and `app-update.yml` trusts `[old, new]`. Installs in the field verify via the old signature; once updated they trust both keys.
+1. **Bridge release(s):** configure both the **old** and the **new** private key (old first, so it also fills the legacy `signature` field), e.g. `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=old.pem:new.pem`, or `ELECTRON_BUILDER_UPDATE_SIGN_KEY` holding the output of `cat old.pem new.pem | base64 | tr -d '\n'`. Manifests are now dual-signed and `app-update.yml` trusts `[old, new]`. Installs in the field verify via the old signature; once updated they trust both keys.
 2. **Keep dual-signing** for as long as you want installs that predate the first bridge release to be able to update.
 3. **Drop the old key** from the environment. Manifests are signed by the new key only; every install that took a bridge release keeps verifying. Installs that never did stop updating (`ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`) and must be reinstalled or served from a separate feed still signed with the old key.
 

@@ -1,5 +1,5 @@
 import { Arch, assertVersionHasNoVPrefix, Fields, httpExecutor, isEmptyOrSpaces, isEnvTrue, log } from "builder-util"
-import { configureRequestOptions, GithubOptions, HttpError, parseJson, githubTagPrefix } from "builder-util-runtime"
+import { CancellationToken, configureRequestOptions, GithubOptions, HttpError, parseJson, githubTagPrefix } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import mime from "mime"
@@ -202,12 +202,10 @@ export class GitHubPublisher extends HttpPublisher {
         } else if (this.doesErrorMeanAlreadyExists(e)) {
           return this.overwriteArtifact(fileName, release).then(() => this.doUploadFile(attemptNumber + 1, parsedUrl, fileName, dataLength, requestProcessor, release))
         } else {
-          return new Promise((resolve, reject) => {
-            const newAttemptNumber = attemptNumber + 1
-            setTimeout(() => {
-              this.doUploadFile(newAttemptNumber, parsedUrl, fileName, dataLength, requestProcessor, release).then(resolve).catch(reject)
-            }, newAttemptNumber * 2000)
-          })
+          const newAttemptNumber = attemptNumber + 1
+          return cancellableDelay(newAttemptNumber * 2000, this.context.cancellationToken).then(() =>
+            this.doUploadFile(newAttemptNumber, parsedUrl, fileName, dataLength, requestProcessor, release)
+          )
         }
       })
   }
@@ -302,4 +300,12 @@ export function getUploadUrl(uploadUrl: string, fileName: string): UrlWithString
   const url = new URL(templateIndex === -1 ? uploadUrl : uploadUrl.slice(0, templateIndex))
   url.searchParams.set("name", fileName)
   return parseUrl(url.toString())
+}
+
+/** @internal */
+export function cancellableDelay(delay: number, cancellationToken: CancellationToken): Promise<void> {
+  return cancellationToken.createPromise((resolve, _reject, onCancel) => {
+    const timer = setTimeout(resolve, delay)
+    onCancel(() => clearTimeout(timer))
+  })
 }
