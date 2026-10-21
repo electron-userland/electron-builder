@@ -20,6 +20,10 @@ export class BitbucketProvider extends Provider<UpdateInfo> {
     this.baseUrl = newBaseUrl(`https://api.bitbucket.org/2.0/repositories/${owner}/${slug}/downloads`)
   }
 
+  get feedBaseUrl(): URL {
+    return this.baseUrl
+  }
+
   private get channel(): string {
     return this.updater.channel || this.configuration.channel || "latest"
   }

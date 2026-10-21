@@ -1,5 +1,5 @@
 import { Arch, assertVersionHasNoVPrefix, Fields, httpExecutor, isEmptyOrSpaces, isEnvTrue, log } from "builder-util"
-import { configureRequestOptions, GithubOptions, HttpError, parseJson, githubTagPrefix } from "builder-util-runtime"
+import { CancellationToken, configureRequestOptions, GithubOptions, HttpError, parseJson, githubTagPrefix } from "builder-util-runtime"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import mime from "mime"
@@ -164,7 +164,7 @@ export class GitHubPublisher extends HttpPublisher {
       return
     }
 
-    const parsedUrl = parseUrl(`${release.upload_url.substring(0, release.upload_url.indexOf("{"))}?name=${fileName}`)
+    const parsedUrl = getUploadUrl(release.upload_url, fileName)
     return await this.doUploadFile(0, parsedUrl, fileName, dataLength, requestProcessor, release)
   }
 
@@ -202,12 +202,10 @@ export class GitHubPublisher extends HttpPublisher {
         } else if (this.doesErrorMeanAlreadyExists(e)) {
           return this.overwriteArtifact(fileName, release).then(() => this.doUploadFile(attemptNumber + 1, parsedUrl, fileName, dataLength, requestProcessor, release))
         } else {
-          return new Promise((resolve, reject) => {
-            const newAttemptNumber = attemptNumber + 1
-            setTimeout(() => {
-              this.doUploadFile(newAttemptNumber, parsedUrl, fileName, dataLength, requestProcessor, release).then(resolve).catch(reject)
-            }, newAttemptNumber * 2000)
-          })
+          const newAttemptNumber = attemptNumber + 1
+          return cancellableDelay(newAttemptNumber * 2000, this.context.cancellationToken).then(() =>
+            this.doUploadFile(newAttemptNumber, parsedUrl, fileName, dataLength, requestProcessor, release)
+          )
         }
       })
   }
@@ -277,7 +275,7 @@ export class GitHubPublisher extends HttpPublisher {
           {
             protocol: baseUrl.protocol,
             hostname: baseUrl.hostname,
-            port: baseUrl.port as any,
+            port: baseUrl.port,
             path: this.info.host != null && this.info.host !== "github.com" ? `/api/v3${path.startsWith("/") ? path : `/${path}`}` : path,
             headers: { accept: "application/vnd.github.v3+json" },
             timeout: this.info.timeout || undefined,
@@ -294,4 +292,20 @@ export class GitHubPublisher extends HttpPublisher {
   toString() {
     return `Github (owner: ${this.info.owner}, project: ${this.info.repo}, version: ${this.version})`
   }
+}
+
+/** @internal */
+export function getUploadUrl(uploadUrl: string, fileName: string): UrlWithStringQuery {
+  const templateIndex = uploadUrl.indexOf("{")
+  const url = new URL(templateIndex === -1 ? uploadUrl : uploadUrl.slice(0, templateIndex))
+  url.searchParams.set("name", fileName)
+  return parseUrl(url.toString())
+}
+
+/** @internal */
+export function cancellableDelay(delay: number, cancellationToken: CancellationToken): Promise<void> {
+  return cancellationToken.createPromise((resolve, _reject, onCancel) => {
+    const timer = setTimeout(resolve, delay)
+    onCancel(() => clearTimeout(timer))
+  })
 }

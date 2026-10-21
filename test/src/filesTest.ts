@@ -1,5 +1,5 @@
 import { archFromString, copyDir } from "builder-util"
-import { DIR_TARGET, Platform } from "electron-builder"
+import { Configuration, DIR_TARGET, Platform } from "electron-builder"
 import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -14,7 +14,7 @@ test.ifNotWindows("expand not defined env", ({ expect }) =>
     config: {
       asar: false,
       // tslint:disable:no-invalid-template-strings
-      files: ["${env.FOO_NOT_DEFINED}"],
+      fileOptions: { files: ["${env.FOO_NOT_DEFINED}"] },
     },
   })
 )
@@ -29,7 +29,7 @@ test.ifNotWindows("files", ({ expect }) =>
       config: {
         asar: false,
         // tslint:disable:no-invalid-template-strings
-        files: ["**/*", "!ignoreMe${/*}", "${env.__NOT_BAR__}", "dist/electron/**/*"],
+        fileOptions: { files: ["**/*", "!ignoreMe${/*}", "${env.__NOT_BAR__}", "dist/electron/**/*"] },
       },
     },
     {
@@ -57,7 +57,7 @@ test.ifNotWindows("re-include default-excluded extension via files glob", ({ exp
       targets: linuxDirTarget,
       config: {
         asar: false,
-        files: ["**/*", "**/*.obj"],
+        fileOptions: { files: ["**/*", "**/*.obj"] },
       },
     },
     {
@@ -79,7 +79,7 @@ test.ifNotWindows("default-excluded extension stays excluded without a re-includ
       targets: linuxDirTarget,
       config: {
         asar: false,
-        files: ["**/*"],
+        fileOptions: { files: ["**/*"] },
       },
     },
     {
@@ -93,23 +93,100 @@ test.ifNotWindows("default-excluded extension stays excluded without a re-includ
   )
 )
 
+// .pdb symbol files, in the app and in an installed dependency, are excluded by default (pdb is one of the "default"
+// fileOptions.excludedExts) and kept with ["default", "!pdb"], the replacement of `includePdb: true`
+function assertPdbFilesPacked(expect: ExpectStatic, excludedExts: Array<string> | null, isIncluded: boolean) {
+  return app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        asar: false,
+        fileOptions: { excludedExts },
+      },
+    },
+    {
+      projectDirCreated: async projectDir => {
+        await Promise.all([
+          modifyPackageJson(projectDir, data => {
+            data.dependencies = {
+              semver: "6.3.1",
+              ...data.dependencies,
+            }
+          }),
+          fsExtra.outputFile(path.join(projectDir, "assets", "symbols.pdb"), "pdb-data"),
+          fsExtra.outputFile(path.join(projectDir, "assets", "index.js"), "js"),
+        ])
+        return () => fsExtra.outputFile(path.join(projectDir, "node_modules", "semver", "semver.pdb"), "pdb-data")
+      },
+      packed: context => {
+        const appDir = path.join(context.getResources(Platform.LINUX), "app")
+        const pdbFiles = [path.join(appDir, "assets", "symbols.pdb"), path.join(appDir, "node_modules", "semver", "semver.pdb")]
+        return Promise.all([
+          assertThat(expect, path.join(appDir, "assets", "index.js")).isFile(),
+          assertThat(expect, path.join(appDir, "node_modules", "semver", "semver.js")).isFile(),
+          ...pdbFiles.map(file => (isIncluded ? assertThat(expect, file).isFile() : assertThat(expect, file).doesNotExist())),
+        ])
+      },
+    }
+  )
+}
+
+test.ifNotWindows("pdb files are excluded by default", ({ expect }) => assertPdbFilesPacked(expect, null, false))
+
+test.ifNotWindows('pdb files are kept with fileOptions.excludedExts ["default", "!pdb"]', ({ expect }) => assertPdbFilesPacked(expect, ["default", "!pdb"], true))
+
+// a files entry naming one .pdb file re-includes only that file, not every .pdb in the app
+test.ifNotWindows("a files entry naming one pdb file ships only that pdb file", ({ expect }) =>
+  app(
+    expect,
+    {
+      targets: linuxDirTarget,
+      config: {
+        asar: false,
+        fileOptions: { files: ["**/*", "native/addon.pdb"] },
+      },
+    },
+    {
+      projectDirCreated: projectDir =>
+        Promise.all([
+          fsExtra.outputFile(path.join(projectDir, "native", "addon.pdb"), "pdb-data"),
+          fsExtra.outputFile(path.join(projectDir, "native", "other.pdb"), "pdb-data"),
+          fsExtra.outputFile(path.join(projectDir, "assets", "symbols.pdb"), "pdb-data"),
+          fsExtra.outputFile(path.join(projectDir, "assets", "index.js"), "js"),
+        ]),
+      packed: context => {
+        const appDir = path.join(context.getResources(Platform.LINUX), "app")
+        return Promise.all([
+          assertThat(expect, path.join(appDir, "native", "addon.pdb")).isFile(),
+          assertThat(expect, path.join(appDir, "native", "other.pdb")).doesNotExist(),
+          assertThat(expect, path.join(appDir, "assets", "symbols.pdb")).doesNotExist(),
+          assertThat(expect, path.join(appDir, "assets", "index.js")).isFile(),
+        ])
+      },
+    }
+  )
+)
+
 test.ifNotWindows("files.from asar", ({ expect }) =>
   app(
     expect,
     {
       targets: linuxDirTarget,
       config: {
-        files: [
-          {
-            from: ".",
-            to: ".",
-            filter: ["package.json"],
-          },
-          {
-            from: "app/node",
-            to: "app/node",
-          },
-        ],
+        fileOptions: {
+          files: [
+            {
+              from: ".",
+              to: ".",
+              filter: ["package.json"],
+            },
+            {
+              from: "app/node",
+              to: "app/node",
+            },
+          ],
+        },
       },
     },
     {
@@ -131,16 +208,18 @@ test.ifNotWindows("map resources", ({ expect }) =>
       targets: linuxDirTarget,
       config: {
         asar: false,
-        extraResources: [
-          {
-            from: "foo/old",
-            to: "foo/new",
-          },
-          {
-            from: "license.txt",
-            to: ".",
-          },
-        ],
+        fileOptions: {
+          extraResources: [
+            {
+              from: "foo/old",
+              to: "foo/new",
+            },
+            {
+              from: "license.txt",
+              to: ".",
+            },
+          ],
+        },
       },
     },
     {
@@ -158,21 +237,22 @@ test.ifNotWindows("map resources", ({ expect }) =>
   )
 )
 
+// Sets flat keys (not in the `Configuration` type, hence the cast), which are moved into `fileOptions` with a warning.
+// The snapshot is the same as for the nested form ("extraResources - two-package" uses that).
 async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
   const osName = platform.buildConfigurationKey
   await assertPack(
     expect,
     "test-app-one",
     {
-      // to check NuGet package
-      targets: platform.createTarget(platform === Platform.WINDOWS ? "squirrel" : DIR_TARGET),
+      targets: platform.createTarget(DIR_TARGET),
       config: {
         extraResources: ["foo", "bar/hello.txt", "./dir-relative/f.txt", "bar/${arch}.txt", "${os}/${arch}.txt"],
         [osName]: {
           extraResources: ["platformSpecificR"],
           extraFiles: ["platformSpecificF"],
         },
-      },
+      } as Configuration,
     },
     {
       projectDirCreated: async projectDir => {
@@ -203,10 +283,8 @@ async function doExtraResourcesTest(expect: ExpectStatic, platform: Platform) {
   )
 }
 
+// The Windows variant builds a Squirrel.Windows package to check the NuGet payload — see files.e2e.ts.
 test.ifNotWindows("extraResources on Linux", ({ expect }) => doExtraResourcesTest(expect, Platform.LINUX))
-
-// wine arm64 currently throws a native crash when running the test, so we skip on arm64 for now
-test.ifLinux.ifEnv(process.arch !== "arm64")("extraResources on Windows", ({ expect }) => doExtraResourcesTest(expect, Platform.WINDOWS))
 
 test.ifMac("extraResources on macOS", ({ expect }) => doExtraResourcesTest(expect, Platform.MAC))
 
@@ -222,10 +300,14 @@ test.ifNotWindows("extraResources - two-package", ({ expect }) => {
       // to check NuGet package
       targets: platform.createTarget(DIR_TARGET),
       config: {
-        extraResources: ["foo", "bar/hello.txt", "bar/${arch}.txt", "${os}/${arch}.txt", "executable*"],
+        fileOptions: {
+          extraResources: ["foo", "bar/hello.txt", "bar/${arch}.txt", "${os}/${arch}.txt", "executable*"],
+        },
         [osName]: {
-          extraResources: ["platformSpecificR"],
-          extraFiles: ["platformSpecificF"],
+          fileOptions: {
+            extraResources: ["platformSpecificR"],
+            extraFiles: ["platformSpecificF"],
+          },
         },
       },
     },

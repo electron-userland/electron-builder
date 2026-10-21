@@ -1,0 +1,405 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`macPackager > two-package (e2e) 1`] = `
+{
+  "mac": [
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-mac-x64.dmg",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-mac-arm64.dmg",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "universal",
+      "file": "TestApp-1.1.0-mac-universal.dmg",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-mac-x64.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-mac-arm64.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "universal",
+      "file": "TestApp-1.1.0-mac-universal.zip",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-mac-x64.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-mac-x64.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-x64.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-mac-arm64.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-mac-arm64.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-arm64.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "universal",
+      "file": "TestApp-1.1.0-mac-universal.dmg.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "arch": "universal",
+      "file": "TestApp-1.1.0-mac-universal.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-universal.zip.blockmap",
+      "updateInfo": {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    {
+      "file": "latest-mac.yml",
+      "fileContent": {
+        "files": [
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-mac-arm64.dmg",
+          },
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-mac-arm64.zip",
+          },
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-mac-universal.dmg",
+          },
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-mac-universal.zip",
+          },
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-mac-x64.dmg",
+          },
+          {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-mac-x64.zip",
+          },
+        ],
+        "releaseDate": "@releaseDate",
+        "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`macPackager > two-package (e2e) 2`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`macPackager > two-package (e2e) 3`] = `
+[
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "app-update.yml",
+  "app.asar",
+  "bn.lproj",
+  "en.lproj",
+  "en_GB.lproj",
+  "icon.icns",
+]
+`;
+
+exports[`macPackager > two-package (e2e) 4`] = `
+[
+  "Info.plist",
+  "MainMenu.nib",
+  "bn.lproj",
+  "bn_FEMININE.lproj",
+  "bn_MASCULINE.lproj",
+  "bn_NEUTER.lproj",
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "en.lproj",
+  "en_FEMININE.lproj",
+  "en_GB.lproj",
+  "en_GB_FEMININE.lproj",
+  "en_GB_MASCULINE.lproj",
+  "en_GB_NEUTER.lproj",
+  "en_MASCULINE.lproj",
+  "en_NEUTER.lproj",
+  "icudtl.dat",
+  "resources.pak",
+  "v8_context_snapshot.x86_64.bin",
+]
+`;
+
+exports[`macPackager > two-package (e2e) 5`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`macPackager > two-package (e2e) 6`] = `
+[
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "app-update.yml",
+  "app.asar",
+  "bn.lproj",
+  "en.lproj",
+  "en_GB.lproj",
+  "icon.icns",
+]
+`;
+
+exports[`macPackager > two-package (e2e) 7`] = `
+[
+  "Info.plist",
+  "MainMenu.nib",
+  "bn.lproj",
+  "bn_FEMININE.lproj",
+  "bn_MASCULINE.lproj",
+  "bn_NEUTER.lproj",
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "en.lproj",
+  "en_FEMININE.lproj",
+  "en_GB.lproj",
+  "en_GB_FEMININE.lproj",
+  "en_GB_MASCULINE.lproj",
+  "en_GB_NEUTER.lproj",
+  "en_MASCULINE.lproj",
+  "en_NEUTER.lproj",
+  "icudtl.dat",
+  "resources.pak",
+  "v8_context_snapshot.arm64.bin",
+]
+`;
+
+exports[`macPackager > two-package (e2e) 8`] = `
+{
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "ElectronAsarIntegrity": {
+    "Resources/app.asar": {
+      "algorithm": "SHA256",
+      "hash": "hash",
+    },
+  },
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": {
+      "127.0.0.1": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSAudioCaptureUsageDescription": "This app needs access to audio capture",
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrefersDisplaySafeAreaCompatibilityMode": false,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`macPackager > two-package (e2e) 9`] = `
+[
+  "LICENSE.electron.txt",
+  "LICENSES.chromium.html",
+  "app-update.yml",
+  "app.asar",
+  "bn.lproj",
+  "en.lproj",
+  "en_GB.lproj",
+  "icon.icns",
+]
+`;
+
+exports[`macPackager > two-package (e2e) 10`] = `
+[
+  "Info.plist",
+  "MainMenu.nib",
+  "bn.lproj",
+  "bn_FEMININE.lproj",
+  "bn_MASCULINE.lproj",
+  "bn_NEUTER.lproj",
+  "chrome_100_percent.pak",
+  "chrome_200_percent.pak",
+  "en.lproj",
+  "en_FEMININE.lproj",
+  "en_GB.lproj",
+  "en_GB_FEMININE.lproj",
+  "en_GB_MASCULINE.lproj",
+  "en_GB_NEUTER.lproj",
+  "en_MASCULINE.lproj",
+  "en_NEUTER.lproj",
+  "icudtl.dat",
+  "resources.pak",
+  "v8_context_snapshot.arm64.bin",
+  "v8_context_snapshot.x86_64.bin",
+]
+`;

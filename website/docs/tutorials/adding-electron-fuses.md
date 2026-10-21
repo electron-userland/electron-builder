@@ -34,6 +34,10 @@ electronFuses: {
 }
 ```
 
+:::note
+On macOS with Electron 41 and later, `enableEmbeddedAsarIntegrityValidation` also checks the `ElectronAsarIntegrity` hashes in `Info.plist` against the digest electron-builder embeds into the Electron Framework (`mac.asarIntegrityDigest`, on by default), so they can't be changed to match a modified `app.asar`.
+:::
+
 It is also still possible to continue to keep your current logic in the `afterPack` hook, so a convenience method has been exposed in the `PlatformPackager` for easy customization of the flags on your own. It directly accepts an `AfterPackContext` and a `FuseConfig` object of [type](https://github.com/electron/fuses/blob/main/src/config.ts).
 This convenience method was added so that custom FuseConfigs could be provided, allowing usage of `strictlyRequireAllFuses` to monitor your fuses and stay up-to-date with fuses as they're released, and/or force override the version of @electron/fuses in electron-builder if there's an update you'd like to leverage.
 

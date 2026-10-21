@@ -4,7 +4,7 @@ import { buildSnapCommandLauncherScript, shellQuote } from "app-builder-lib/src/
 // Pure unit tests for the snap launcher-script helpers shared by the snap cores.
 // Full snap build flows are exercised by snapcraftTest.ts.
 
-describe.sequential("snapCommand helpers", () => {
+describe("snapCommand helpers", { concurrent: false }, () => {
   describe("buildSnapCommandLauncherScript", () => {
     test("execs the app binary under $SNAP/app with forwarded args", ({ expect }) => {
       const content = buildSnapCommandLauncherScript({ execName: "sep", args: [] })

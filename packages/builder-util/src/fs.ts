@@ -8,7 +8,9 @@ import * as path from "path"
 import statMode from "stat-mode"
 import asyncPool from "tiny-async-pool"
 import { log } from "./log.js"
+import { ERR_PATH_OUTSIDE_ROOT, ExternalLinkPolicy, isPathWithin, resolvePhysicalPath, SYMLINK_CONTAINMENT_DOCS_URL, WriteContainment } from "./pathContainment.js"
 import { orIfFileNotExist, orNullIfFileNotExist } from "./promise.js"
+import { InvalidConfigurationError } from "./util.js"
 
 export const MAX_FILE_REQUESTS = 8
 
@@ -287,39 +289,121 @@ export interface CopyDirOptions {
   filter?: Filter | null
   transformer?: FileTransformer | null
   isUseHardLink?: ((file: string) => boolean) | null
+  /**
+   * Every file, directory and symlink is written inside this directory, checked by its real path when it is written
+   * (see {@link WriteContainment}). Pass the output directory the copy is part of, such as the app output directory, rather than a
+   * directory that copied files may have created. Defaults to `destination`.
+   */
+  containmentRoot?: string | null
+  /**
+   * Besides the containment root, the directories a copied symlink may lead into, such as the workspace root. A symlink that leads
+   * anywhere else fails the copy. A symlink is kept as it is, so one that leads into these roots points outside the output.
+   */
+  allowedSymlinkRoots?: ReadonlyArray<string> | null
+  /**
+   * The `fileOptions.allowExternalLinks` build option: a copied symlink that leads outside the containment root and the allowed roots is kept when it
+   * allows it. It does not allow a write through a symlink.
+   */
+  externalLinks?: ExternalLinkPolicy | null
+}
+
+/**
+ * Checks the symlinks `copyDir` and the app file copier recreate, once all of them exist: each must lead (through the others, also when
+ * the end does not exist) into the containment root or one of `allowedRoots`, or be allowed by the `fileOptions.allowExternalLinks` build option
+ * (`externalLinks`). A symlink that is not is removed and the copy fails.
+ */
+export async function assertCopiedSymlinksContained(
+  containment: WriteContainment,
+  links: ReadonlyArray<Link & { readonly source: string }>,
+  allowedRoots: ReadonlyArray<string>,
+  what: string,
+  externalLinks: ExternalLinkPolicy | null = null
+): Promise<void> {
+  if (links.length === 0) {
+    return
+  }
+  const realRoot = await containment.getRealRoot()
+  const realAllowed = await Promise.all(allowedRoots.map(it => resolvePhysicalPath(it)))
+  for (const it of links) {
+    const resolved = await resolvePhysicalPath(it.file)
+    if (isPathWithin(realRoot, resolved)) {
+      continue
+    }
+    if (realAllowed.some(root => isPathWithin(root, resolved))) {
+      log
+        .once("copied-symlink-outside-output")
+        .warn(
+          { symlink: log.filePath(it.source), target: it.link, resolvesTo: resolved },
+          `a ${what} symlink is kept, but it points outside the packaged app (into the workspace or the package-manager store), where it is ` +
+            `dangling on other machines. Windows archives and installers refuse such a symlink; replace it with ` +
+            `what it points to. See ${SYMLINK_CONTAINMENT_DOCS_URL}`
+        )
+      continue
+    }
+    const policy = externalLinks ?? ExternalLinkPolicy.NONE
+    if (policy.allows(it.source, resolved)) {
+      continue
+    }
+    await unlinkIfExists(it.file)
+    throw new InvalidConfigurationError(
+      `refusing to copy the ${what} symlink "${policy.displayPath(it.source)}" -> "${it.link}": in the output it resolves to "${resolved}", ` +
+        `which is outside "${policy.displayPath(containment.root)}". electron-builder only recreates a symlink that stays inside the output ` +
+        `(or leads into the workspace or the package-manager store): replace the symlink with what it points to, or exclude it with a "!" ` +
+        `pattern. ${await policy.hint([resolved])} See ${SYMLINK_CONTAINMENT_DOCS_URL}`,
+      ERR_PATH_OUTSIDE_ROOT
+    )
+  }
+}
+
+/**
+ * The target to recreate a copied symlink with. An absolute target inside the copied tree (`sourceRoot`) is made relative, so that the
+ * copy points into the copy rather than back at the source on the build machine; any other target is kept as it is.
+ */
+export function rebaseCopiedSymlinkTarget(sourceRoot: string, sourceLink: string, target: string): string {
+  if (!path.isAbsolute(target) || !isPathWithin(path.resolve(sourceRoot), path.resolve(target))) {
+    return target
+  }
+  return path.relative(path.dirname(sourceLink), target) || "."
 }
 
 /**
  * Empty directories is never created.
  * Hard links is used if supported and allowed.
+ *
+ * Writes are checked by their real path (see {@link CopyDirOptions.containmentRoot}): a symlink at a destination is replaced, never
+ * followed, and a symlink is recreated only when it stays inside the containment root, leads into an allowed root or is allowed by
+ * {@link CopyDirOptions.externalLinks}.
  */
 export async function copyDir(src: string, destination: string, options: CopyDirOptions = {}): Promise<any> {
   const fileCopier = new FileCopier(options.isUseHardLink, options.transformer)
 
   log.debug({ src, destination }, `copying${fileCopier.isUseHardLink ? " using hard links" : ""}`)
 
-  const createdSourceDirs = new Set<string>()
-  const links: Array<Link> = []
+  const containment = new WriteContainment(options.containmentRoot ?? destination, "copied file")
+  const links: Array<Link & { source: string }> = []
   const symlinkType = platform() === "win32" ? "junction" : "file"
-  return await walk(src, options.filter, {
-    consume: async (file, stat, parent) => {
+  await walk(src, options.filter, {
+    consume: async (file, stat) => {
       if (!stat.isFile() && !stat.isSymbolicLink()) {
         return
       }
 
-      if (!createdSourceDirs.has(parent)) {
-        await mkdir(parent.replace(src, destination), { recursive: true })
-        createdSourceDirs.add(parent)
-      }
-
       const destFile = file.replace(src, destination)
       if (stat.isFile()) {
+        // creates the directory once, checked by its real path, and removes a symlink planted at the destination
+        await containment.prepareFile(destFile)
         await fileCopier.copy(file, destFile, stat)
       } else {
-        links.push({ file: destFile, link: await readlink(file) })
+        links.push({ file: destFile, link: rebaseCopiedSymlinkTarget(src, file, await readlink(file)), source: file })
       }
     },
-  }).then(() => asyncPool(MAX_FILE_REQUESTS, links, it => symlink(it.link, it.file, symlinkType)))
+  })
+  // after the walk, so that a symlink to a file that is not copied yet works (#998), and checked once all of them exist
+  await asyncPool(MAX_FILE_REQUESTS, links, async it => {
+    await containment.prepareFile(it.file)
+    await symlink(it.link, it.file, symlinkType)
+  })
+  await assertCopiedSymlinksContained(containment, links, options.allowedSymlinkRoots ?? [], "copied", options.externalLinks)
 }
 
 export async function dirSize(dirPath: string): Promise<number> {
@@ -448,7 +532,7 @@ export async function ensureDir(dir: string, maxAttempts = 8, mkdir: (p: string,
  */
 type FileOpener = (file: string, flags: string) => Promise<{ close(): Promise<void> }>
 
-export async function ensureNotBusy(file: string, intervalMs = 2000, maxAttempts = 60, open: FileOpener = fs.open as FileOpener): Promise<void> {
+export async function ensureNotBusy(file: string, intervalMs = 2000, maxAttempts = 60, open: FileOpener = fs.open): Promise<void> {
   for (let attempt = 0, warned = false; attempt < maxAttempts; attempt++) {
     try {
       const handle = await open(file, "r+")

@@ -8,7 +8,7 @@ import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
 import { findFile, Provider } from "./providers/Provider.js"
-import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./types.js"
+import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo, DownloadExecutorResult } from "./types.js"
 
 export class AppImageUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
@@ -33,7 +33,7 @@ export class AppImageUpdater extends BaseUpdater {
   }
 
   /*** @private */
-  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "AppImage", ["rpm", "deb", "pacman"])!
     return this.executeDownload({
@@ -49,9 +49,10 @@ export class AppImageUpdater extends BaseUpdater {
         if (downloadUpdateOptions.disableDifferentialDownload || (await this.downloadDifferential(fileInfo, oldFile, updateFile, provider, downloadUpdateOptions))) {
           await this.httpExecutor.download(fileInfo.url, updateFile, downloadOptions)
         }
-
-        await fsExtra.chmod(updateFile, 0o755)
       },
+      // deferred until after verification: the temporary path is predictable, so marking the AppImage executable
+      // before it is verified would leave an unverified binary runnable for as long as verification takes
+      afterVerification: updateFile => fsExtra.chmod(updateFile, 0o755),
     })
   }
 
@@ -63,7 +64,7 @@ export class AppImageUpdater extends BaseUpdater {
         logger: this._logger,
         newFile: updateFile,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
-        requestHeaders: downloadUpdateOptions.requestHeaders,
+        requestHeaders: this.downloadRequestHeaders(fileInfo.url, downloadUpdateOptions),
         cancellationToken: downloadUpdateOptions.cancellationToken,
       }
 

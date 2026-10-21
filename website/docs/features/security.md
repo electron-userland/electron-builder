@@ -12,7 +12,11 @@ Several security-relevant defaults changed in v27 — auto-update web installers
 
 ## Update security (electron-updater)
 
-- **Web-installer payloads are disabled by default.** `AppUpdater.disableWebInstaller` now defaults to **`true`**. NSIS *web* installers (the small installer that downloads its full payload at install time from a manifest-supplied URL) are no longer loaded unless you opt in, because that payload may not undergo signature verification. v27 ships a one-major grace period: if a web-installer update is received and you never set the flag, the updater logs a warning and still downloads it. Set `autoUpdater.disableWebInstaller = false` only if you intentionally ship a web installer.
+- **Signed update manifests (required by default).** The `latest*.yml` update metadata is Ed25519-signed at publish time and verified by electron-updater — before any download — against a public key embedded in the app. Verification fails closed on unsigned or tampered manifests. Publishing a build that emits update metadata fails unless a signing key resolves; `updateManifest: false` is the only opt-out and warns on every build. Unlike the `sha2`-only metadata grace period below, this one is enforced in **v27**. See [Signed Update Manifests](./signed-update-manifests.md).
+
+- **Web-installer payloads are disabled by default.** `AppUpdater.disableWebInstaller` now defaults to **`true`**. NSIS *web* installers (the small installer that downloads its full payload at install time from a manifest-supplied URL) are no longer loaded unless you opt in, because that payload may not undergo signature verification. A web-installer update is rejected with `ERR_UPDATER_WEB_INSTALLER_DISABLED` — at download (including an update cached by a previous launch), before an install on next launch, and at install time. Installs made by an `nsis-web` installer built with electron-builder v27+ opt in automatically (via the `resources/package-type` marker); set `autoUpdater.disableWebInstaller = false` yourself only for web-installer installs without that marker (built before v27, or with a custom script) or when switching an app from `nsis` to `nsis-web`. Cached web updates are re-verified against the freshly fetched manifest, and the `nsis-web` installer verifies the package electron-updater passes to it against the packages built with it (see [Web Installer](../nsis.md#web-installer)). [Signed update manifests](./signed-update-manifests.md) cover the web package's path, SHA-512 and size, so don't set `updateManifest: false` for `nsis-web` apps.
+
+- **Update credentials stay on the feed's origin.** The credential headers from `requestHeaders` / `addAuthHeader` (headers such as `Authorization`, the same set that is removed on a cross-origin redirect) and the query string of the feed URL are only sent to the update feed's origin. A download on another origin, including the same host on another port or over `http` instead of `https`, is requested without them. See [Auto Update](./auto-update.md#custom-options-instantiating-updater-directly).
 
 - **Linux package signatures.** `AppUpdater.allowUnverifiedLinuxPackages` (default **`true`**) preserves historical behavior, since electron-builder does not sign Linux packages itself. Set it to **`false`** to enforce GPG signature checks when installing `.deb` / `.rpm` auto-updates on package managers that support verification.
 
@@ -20,8 +24,8 @@ Several security-relevant defaults changed in v27 — auto-update web installers
 
 - **Windows update signature verification.** On Windows, downloaded NSIS updates are Authenticode-verified before they are applied. `win.verifyUpdateCodeSignature` (default `true`) embeds your signing `publisherName` into `app-update.yml`, and electron-updater checks each downloaded update against the certificate subject. Supply an array of `publisherName` values when rotating certificates so updates signed by either the old or new certificate still verify.
 
-:::warning[Two of these fail-close in v28]
-v27 is a grace period. In **v28**, an unblocked web-installer update becomes an error (`ERR_UPDATER_WEB_INSTALLER_DISABLED`), and `sha2`-only update metadata is **rejected (fail-closed)**. Confirm your updates use a signed full installer and modern `files[]` metadata before upgrading to v28.
+:::warning[sha2-only metadata is rejected in v28]
+v27 is a grace period for `sha2`-only update metadata. In **v28**, it is **rejected**. Confirm your updates use modern `files[]` metadata before upgrading to v28.
 :::
 
 **See also:** [Auto Update](./auto-update.md) · [Update metadata & compatibility](./auto-update.md#compatibility)
@@ -30,11 +34,17 @@ v27 is a grace period. In **v28**, an unblocked web-installer update becomes an 
 
 Two independent mechanisms protect the code inside your packaged app:
 
-- **ASAR integrity.** When your app is packaged into an `app.asar` archive (the default), electron-builder embeds integrity hashes so Electron can detect a tampered or swapped archive at runtime. It is on by default; `asar.disableIntegrity: true` disables it (not recommended). See the [ASAR options](../migration/v27-breaking-changes.md#asar-options-asar) for the v27 config shape.
+- **ASAR integrity.** When your app is packaged into an `app.asar` archive (the default), electron-builder embeds integrity hashes so Electron can detect a tampered or swapped archive at runtime. It is on by default; `asar.disableIntegrity: true` disables it (not recommended). See the [ASAR options](../migration/v27-breaking-changes.md#asar-options-asar) for the v27 config shape. On macOS the hashes are stored in `Info.plist`, so with Electron 41 and later electron-builder also embeds a digest of them into the Electron Framework binary, which the code signature covers: with the `enableEmbeddedAsarIntegrityValidation` fuse (see below), the hashes can't be changed to match a modified archive either. The digest is embedded by default; `mac.asarIntegrityDigest: false` turns it off.
 
 - **Electron Fuses.** Fuses are "magic bits" flipped at package time — *before* code signing — that disable risky Electron features for the entire app (e.g. `runAsNode`, `enableNodeCliInspectArguments`, `enableNodeOptionsEnvironmentVariable`). Pairing `enableEmbeddedAsarIntegrityValidation` with `onlyLoadAppFromAsar` binds the app to its verified ASAR. Because the bits are flipped before signing, the OS (Gatekeeper / App Locker) is responsible for ensuring they can't be flipped back.
 
 **See also:** [Adding Electron Fuses](../tutorials/adding-electron-fuses.md)
+
+## Files from the build machine
+
+Only the build configuration is trusted, not the files it packages. Files reached through symlinks must resolve inside the workspace or the package-manager store, copies and the files electron-builder writes stay inside the output directory by real path, and Windows archives and installers refuse a symlink that leaves the app. Intended links can be allowed with `fileOptions.allowExternalLinks`; writes through a symlink are always refused.
+
+**See also:** [Symbolic links](../contents.md#symbolic-links)
 
 ## Code signing & notarization
 

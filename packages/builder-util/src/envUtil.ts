@@ -6,9 +6,9 @@ import { isEmptyOrSpaces } from "./stringUtil.js"
  * `$`, backtick, `"`, `\`, and newlines.
  */
 export function validateShellEmbeddable(value: string, fieldName: string): void {
-  if (/[$`"\\\n]/.test(value)) {
+  if (/[$`"\\\r\n]/.test(value)) {
     throw new Error(
-      `${fieldName} contains characters that are not safe in shell scripts: ${JSON.stringify(value)}. ` + `Avoid $, backtick, double-quote, backslash, and newline characters.`
+      `${fieldName} contains characters that are not safe in shell scripts: ${JSON.stringify(value)}. ` + `Avoid $, backtick, double-quote, backslash, and line-break characters.`
     )
   }
 }
@@ -20,7 +20,7 @@ export function resolveEnvShellValue(envVarName: string): string | null {
   }
   const trimmed = rawValue.trim()
   // On Windows, backslash is the native path separator and must not be rejected
-  const shellUnsafeChars = process.platform === "win32" ? /[;&|`$<>"']/ : /[;&|`$<>"'\\]/
+  const shellUnsafeChars = process.platform === "win32" ? /[;&|`$<>"'\r\n]/ : /[;&|`$<>"'\\\r\n]/
   if (shellUnsafeChars.test(trimmed)) {
     throw new Error(`${envVarName} contains shell-unsafe characters: ${trimmed}`)
   }
