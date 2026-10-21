@@ -25,6 +25,7 @@ import { chooseNotNull, computeSafeArtifactNameIfNeeded, normalizeExt } from "..
 import { hashFile } from "../../../util/hash.js"
 import { time } from "../../../util/timer.js"
 import { WinPackager } from "../../../winPackager.js"
+import { verifyUpdateInstallerPublisher } from "../../../codeSign/win/verifyUpdatePublisher.js"
 import { archive, ArchiveOptions } from "../../archive.js"
 import {
   appendBlockmap,
@@ -489,7 +490,12 @@ export class NsisTarget extends Target {
       // Skip size verification for portable (NSIS recompresses the archive, installer < archive is normal)
       // and for custom scripts (may not embed archives).
       await this.executeMakensis(defines, commands, sharedHeader + (await this.computeFinalScript(rawScript, true, archs)), { skipSizeVerification: isPortable || isCustomScript })
-      await Promise.all<any>([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
+      const [signResult] = await Promise.all([packager.signIf(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
+      // electron-updater verifies the Authenticode signature of this installer (the nsis installer / the nsis-web stub)
+      // against the publisherName in app-update.yml; the portable executable is never installed as an update
+      if (!isPortable) {
+        await verifyUpdateInstallerPublisher(packager, installerPath, signResult, archs.values())
+      }
 
       const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName(primaryArch, defaultArch))
       let updateInfo: any
