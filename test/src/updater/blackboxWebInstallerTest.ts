@@ -1,18 +1,15 @@
 import { TmpDir } from "builder-util"
-import { execFileSync, execSync } from "child_process"
+import { hashFile } from "builder-util-runtime"
 import { randomUUID } from "crypto"
-import { Arch, Platform } from "electron-builder"
-import { existsSync, move, outputFile, remove, copy } from "fs-extra"
+import { appendFile, copy, existsSync, outputFile, remove } from "fs-extra"
 import { AddressInfo } from "net"
 import { homedir } from "os"
 import path from "path"
 import { TestContext } from "vitest"
 import { createLocalServer, getParallelsHostIP, sha256File, toVmHomePath } from "../helpers/launchAppCrossPlatform"
-import { assertPack, modifyPackageJson, PackedContext } from "../helpers/packTester"
-import { ELECTRON_VERSION } from "../helpers/testConfig"
+import { readInstalledPackageType, runWindowsInstaller } from "./blackboxInstallWindows"
 import { optionsForFlakyE2E, windowsVmPromise } from "./blackboxUpdateHelpers"
-import { PM } from "app-builder-lib/internal"
-import { spawn } from "builder-util"
+import { appExe, buildWebInstaller, packageFileName, resetNativeInstall, storedPackage, stubName } from "./blackboxWebInstallerHelpers"
 
 // ---------------------------------------------------------------------------
 // Web installer blackbox E2E test
@@ -63,8 +60,9 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
     }
 
     const tmpDir = new TmpDir("web-installer-e2e")
-    let builtDir: string | undefined
     let server: import("http").Server | undefined
+    // URLs the web installer requests from the server
+    const requests: Array<string> = []
 
     try {
       // -----------------------------------------------------------------------
@@ -73,7 +71,7 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
       // must be known upfront.
       // -----------------------------------------------------------------------
       const serverRoot = await tmpDir.getTempDir({ prefix: "pkg-server" })
-      ;({ server } = await createLocalServer(serverRoot, serverBindAddress))
+      ;({ server } = await createLocalServer(serverRoot, serverBindAddress, url => requests.push(url)))
       const port = (server.address() as AddressInfo).port
       if (!Number.isInteger(port) || port < 1024 || port > 65535) {
         throw new Error(`Unsafe port: ${port}`)
@@ -81,73 +79,12 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
 
       // APP_PACKAGE_URL is a complete URL (no arch suffix appended) because we
       // supply appPackageUrl explicitly — this is the code path fixed by #9655.
-      const packageFileName = "testapp-1.0.0-x64.nsis.7z"
       const appPackageUrl = `http://${packageServerHost}:${port}/${encodeURIComponent(packageFileName)}`
 
       // -----------------------------------------------------------------------
       // Step 2: Build the nsis-web installer with the server URL baked in.
       // -----------------------------------------------------------------------
-      await assertPack(
-        expect,
-        "test-app",
-        {
-          targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
-          config: {
-            productName: "TestApp",
-            executableName: "TestApp",
-            appId: "com.test.webinstaller",
-            artifactName: "${productName}-${version}-${arch}.${ext}",
-            extraMetadata: { name: "testapp", version: "1.0.0" },
-            electronLanguages: ["en"],
-            electronFuses: {
-              runAsNode: false,
-              enableCookieEncryption: true,
-              enableNodeOptionsEnvironmentVariable: false,
-              enableNodeCliInspectArguments: false,
-              enableEmbeddedAsarIntegrityValidation: true,
-              onlyLoadAppFromAsar: true,
-              loadBrowserProcessSpecificV8Snapshot: false,
-              grantFileProtocolExtraPrivileges: false,
-            },
-            compression: "store",
-            nsisWeb: {
-              appPackageUrl,
-              artifactName: "TestApp Web Setup.${ext}",
-            },
-            publish: null,
-          },
-        },
-        {
-          packageManager: PM.PNPM,
-          packed: async (ctx: PackedContext) => {
-            builtDir = await tmpDir.getTempDir({ prefix: "built" })
-            await move(ctx.outDir, builtDir)
-          },
-          projectDirCreated: async (projectDir: string, _tmpDir: TmpDir, runtimeEnv: NodeJS.ProcessEnv) => {
-            await modifyPackageJson(
-              projectDir,
-              data => {
-                data.devDependencies = { electron: ELECTRON_VERSION }
-              },
-              true
-            )
-            await modifyPackageJson(
-              projectDir,
-              data => {
-                data.pnpm = {
-                  supportedArchitectures: { os: ["current"], cpu: ["x64"] },
-                }
-              },
-              false
-            )
-            await spawn("pnpm", ["install"], { cwd: projectDir, stdio: "inherit", env: runtimeEnv })
-          },
-        }
-      )
-
-      if (!builtDir) {
-        throw new Error("Build did not produce output directory")
-      }
+      const builtDir = await buildWebInstaller(expect, tmpDir, { nsisWeb: { appPackageUrl }, publish: null })
 
       // -----------------------------------------------------------------------
       // Step 3: Copy the .nsis.7z app package into the HTTP server root so the
@@ -159,34 +96,35 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
       const packageDest = path.join(serverRoot, packageFileName)
       await copy(packageSrc, packageDest)
 
-      const stubName = "TestApp Web Setup.exe"
       const stubPath = path.join(nsisWebDir, stubName)
 
       // -----------------------------------------------------------------------
       // Step 4a — Native Windows: run the stub directly and verify locally.
       // -----------------------------------------------------------------------
       if (isNativeWindows) {
-        try {
-          execSync('taskkill /F /IM "TestApp Web Setup.exe" /T', { stdio: "ignore" })
-          await new Promise(r => setTimeout(r, 1000))
-        } catch {
-          // no lingering process — expected on first run
-        }
+        await resetNativeInstall()
 
-        const localAppData = process.env.LOCALAPPDATA ?? path.join(homedir(), "AppData", "Local")
-        const uninstaller = path.join(localAppData, "Programs", "TestApp", "Uninstall TestApp.exe")
-        if (existsSync(uninstaller)) {
-          console.log("Uninstalling previous TestApp installation")
-          execFileSync(uninstaller, ["/S", "/C", "exit"], { stdio: "inherit" })
-          await new Promise(r => setTimeout(r, 5000))
-        }
+        // An explicit appPackageUrl can serve the package of any build, so the download isn't checked against the package the stub
+        // was built with: serve one that differs from it and still extracts (data after the archive is ignored, like the blockmap
+        // appended to every nsis-web package).
+        await appendFile(packageDest, "\nserved package\n")
+        const servedSha512 = await hashFile(packageDest)
+        expect(servedSha512).not.toBe(await hashFile(packageSrc))
 
-        console.log("Running web installer:", stubPath)
-        execFileSync(stubPath, ["/S"], { stdio: "inherit" })
+        // A copy of the stub without the package next to it, so that it downloads the package from appPackageUrl.
+        const stubCopy = path.join(await tmpDir.getTempDir({ prefix: "stub" }), stubName)
+        await copy(stubPath, stubCopy)
+        console.log("Running web installer:", stubCopy)
+        // asynchronously: the stub downloads from the server of this process
+        const exitCode = await runWindowsInstaller(stubCopy, ["/S"])
         await new Promise(r => setTimeout(r, 3000))
 
-        const installPath = path.join(localAppData, "Programs", "TestApp", "TestApp.exe")
-        expect(existsSync(installPath)).toBe(true)
+        expect(exitCode).toBe(0)
+        expect(new Set(requests)).toEqual(new Set([`/${packageFileName}`]))
+        expect(existsSync(appExe)).toBe(true)
+        expect(await readInstalledPackageType(appExe)).toBe("nsis-web")
+        // the stub stores the package it installed for differential updates
+        expect(await hashFile(storedPackage)).toBe(servedSha512)
         return
       }
 
@@ -249,6 +187,9 @@ describe.heavy("web installer (nsis-web) blackbox", optionsForFlakyE2E, () => {
         await remove(scriptPath).catch(() => {})
       }
     } finally {
+      if (isNativeWindows) {
+        await resetNativeInstall().catch(error => console.warn("Failed to uninstall TestApp", error))
+      }
       server?.close()
       await tmpDir.cleanup().catch(() => {})
     }

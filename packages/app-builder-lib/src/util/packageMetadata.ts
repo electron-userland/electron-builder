@@ -67,6 +67,20 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
     }
   }
 
+  // Root-level `directories` was read by v26 and is ignored by v27. It lives outside the validated
+  // Configuration object, so nothing else catches it: the build silently writes to the default `dist`
+  // instead of the configured output directory, and a release pipeline copies from an empty path.
+  const rootDirectories = (devMetadata ?? metadata)?.directories
+  if (rootDirectories != null) {
+    errors.push(
+      `'directories' at the root of the package.json (${devAppPackageFile}) is no longer read by electron-builder v27 — move it under the 'build' key:\n` +
+        `  { "build": { "directories": ${JSON.stringify(rootDirectories)} } }\n` +
+        "  Left where it is, it is ignored and your build output goes to the default 'dist' directory.\n" +
+        "  Run `electron-builder migrate-schema` to move it automatically.\n" +
+        "  https://www.electron.build/docs/migration/v27-breaking-changes#root-level-directories-in-packagejson"
+    )
+  }
+
   const devDependencies = (metadata as any).devDependencies
   if (devDependencies != null && ("electron-rebuild" in devDependencies || "@electron/rebuild" in devDependencies)) {
     log.info(

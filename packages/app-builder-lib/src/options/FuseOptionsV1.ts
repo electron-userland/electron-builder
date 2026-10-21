@@ -75,6 +75,10 @@ export interface FuseOptionsV1 extends Partial<Record<Uncapitalize<keyof typeof 
    * For this fuse to be meaningful, `asar.disableIntegrity` must **not** be
    * `true` (otherwise the hash is not embedded).
    *
+   * On macOS with Electron ≥ 41, electron-builder also embeds a digest of the `Info.plist` hashes
+   * into the Electron Framework (see `mac.asarIntegrityDigest`), so they cannot be changed to match
+   * a modified `app.asar` either.
+   *
    * @see https://www.electronjs.org/docs/latest/tutorial/asar-integrity
    */
   enableEmbeddedAsarIntegrityValidation?: boolean

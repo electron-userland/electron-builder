@@ -1,3 +1,4 @@
+import { spawn } from "builder-util"
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
 import * as fs from "fs"
 import { readdir } from "fs/promises"
@@ -8,7 +9,7 @@ import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { expectUpdateMetadata } from "./helpers/winHelper"
-import { downloadArtifact } from "@electron/get"
+import { downloadElectronArtifactZip } from "app-builder-lib/src/util/electronGet"
 
 function createBuildResourcesTest(expect: ExpectStatic, packagerOptions: PackagerOptions) {
   return app(
@@ -46,8 +47,9 @@ test.ifNotWindows("custom buildResources and output dirs: mac", ({ expect }) =>
     targets: Platform.MAC.createTarget("dir", Arch.x64),
   })
 )
-test.ifNotMac("custom buildResources and output dirs: win", ({ expect }) => createBuildResourcesTest(expect, { targets: Platform.WINDOWS.createTarget("nsis", Arch.x64) }))
-test.ifLinux("custom buildResources and output dirs: linux", ({ expect }) => createBuildResourcesTest(expect, { targets: Platform.LINUX.createTarget("appimage", Arch.x64) }))
+// `customDist/latest` is the output dir itself (created by doPack for the *-unpacked app dir), so a dir target suffices.
+test.ifNotMac("custom buildResources and output dirs: win", ({ expect }) => createBuildResourcesTest(expect, { targets: Platform.WINDOWS.createTarget("dir", Arch.x64) }))
+test.ifLinux("custom buildResources and output dirs: linux", ({ expect }) => createBuildResourcesTest(expect, { targets: Platform.LINUX.createTarget("dir", Arch.x64) }))
 
 test.ifNotWindows("prepackaged", ({ expect }) =>
   app(
@@ -164,6 +166,9 @@ test.ifWindows("override targets in the config - only arch", ({ expect }) =>
       },
     },
     {
+      // the ia32 app dir name and app-update.yml (channel from the prerelease version) are decided before the nsis
+      // target is built, so stop there; nsis stays configured so app-update.yml is written at all
+      afterPackTestHook: async () => true,
       packed: context => {
         return Promise.all([
           assertThat(expect, path.join(context.projectDir, "dist", "win-unpacked")).doesNotExist(),
@@ -180,12 +185,12 @@ test("do not exclude build entirely (respect files)", ({ expect }) => assertPack
 
 test.ifNotWindows("electronDist as path to local folder with electron builds zipped ", async ({ expect, tmpDir }) => {
   const cacheDir = await tmpDir.createTempDir({ prefix: "electronDistCache" })
-  const file = await downloadArtifact({
+  const file = await downloadElectronArtifactZip({
     artifactName: "electron",
-    platform: Platform.LINUX.nodeName,
+    platformName: Platform.LINUX.nodeName,
     arch: "x64",
     version: ELECTRON_VERSION,
-    cacheRoot: cacheDir,
+    cacheDir,
   })
   await app(
     expect,
@@ -209,12 +214,12 @@ test.ifNotWindows("electronDist as callback function for path to local electron 
         const { platformName, arch, version, packager } = context
 
         const cacheDir = await packager.tempDirManager.createTempDir({ prefix: "electronDistCache" })
-        const zipFile = await downloadArtifact({
+        const zipFile = await downloadElectronArtifactZip({
           artifactName: "electron",
-          platform: platformName,
+          platformName,
           arch,
           version,
-          cacheRoot: cacheDir,
+          cacheDir,
         })
         return zipFile
       },
@@ -232,7 +237,7 @@ test.ifLinux("electronDist as standard path to node_modules electron", ({ expect
       },
     },
     {
-      projectDirCreated: async projectDir => {
+      projectDirCreated: async (projectDir, _tmpDir, testEnv) => {
         await modifyPackageJson(projectDir, data => {
           data.devDependencies = {
             ...data.devDependencies,
@@ -240,6 +245,11 @@ test.ifLinux("electronDist as standard path to node_modules electron", ({ expect
           }
           delete data.build.electronVersion
         })
+        // `node_modules/electron/dist` is produced by electron's postinstall (install.js), which the fixture
+        // install never runs: dependency lifecycle scripts are disabled there, and npm 12 blocks them by
+        // default anyway. That directory is exactly what this test points `electronDist` at, so run that
+        // one script explicitly once node_modules exists.
+        return () => spawn(process.execPath, ["install.js"], { cwd: path.join(projectDir, "node_modules", "electron"), env: testEnv })
       },
       packed: async context => {
         const contents = await readdir(context.getAppPath(Platform.LINUX, Arch.x64))

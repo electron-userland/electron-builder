@@ -45,6 +45,35 @@ export async function installOrRebuild(
   }
 }
 
+/**
+ * Decides whether native dependencies should be compiled from source for the given target platform.
+ *
+ * `nativeModules.buildDependenciesFromSource` can only be honored when the target platform matches the
+ * host: node-gyp cannot cross-compile a native module for another OS. For a cross-platform target we
+ * still rebuild (so the package never ships the host's binary), but allow prebuilt binaries, which
+ * `@electron/rebuild` fetches for the target platform/arch via prebuild-install / node-pre-gyp /
+ * prebuildify. A module with no prebuild for the target still fails loudly inside `@electron/rebuild`.
+ *
+ * @internal
+ */
+export function resolveBuildFromSource(config: Configuration, targetPlatform: NodeJS.Platform, hostPlatform: NodeJS.Platform = process.platform): boolean {
+  if (config.nativeModules?.buildDependenciesFromSource !== true) {
+    return false
+  }
+  if (targetPlatform !== hostPlatform) {
+    log.warn(
+      {
+        platform: targetPlatform,
+        hostPlatform,
+        reason: "native modules cannot be cross-compiled from source for another platform",
+      },
+      "nativeModules.buildDependenciesFromSource ignored for this platform; rebuilding native dependencies with prebuilt binaries for the target instead"
+    )
+    return false
+  }
+  return true
+}
+
 export interface DesktopFrameworkInfo {
   version: string
   useCustomDist: boolean

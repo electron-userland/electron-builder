@@ -28,15 +28,17 @@ import { createElectronFrameworkSupport } from "./electron/ElectronFramework.js"
 import { assertElectronArchSupported } from "./electron/electronArchSupport.js"
 import { Framework, isElectronBased } from "./Framework.js"
 import { Metadata } from "./options/metadata.js"
-import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi.js"
+import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions, PlannedTargets } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { addTargetsForPlatform, computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory.js"
 import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config/config.js"
+import { assertNoRemovedEnvVars } from "./util/flags.js"
 import { expandMacro } from "./util/macroExpander.js"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata.js"
+import { warnOnRemovedEnvVars } from "./util/removedEnvVars.js"
 import { getRepositoryInfo } from "./util/repositoryInfo.js"
 import { resolveFunction } from "./util/resolve.js"
-import { installOrRebuild, nodeGypRebuild } from "./util/installOrRebuild.js"
+import { installOrRebuild, nodeGypRebuild, resolveBuildFromSource } from "./util/installOrRebuild.js"
 import { PACKAGE_VERSION } from "./version.js"
 import { AsyncEventEmitter, HandlerType } from "./util/asyncEventEmitter.js"
 import asyncPool from "tiny-async-pool"
@@ -61,6 +63,30 @@ type PackagerEvents = {
 
   // internal-use only, prefer usage of `artifactBuildCompleted`
   artifactCreated: Hook<ArtifactCreated, void>
+
+  // internal-use only: every target of the build, before the first pack
+  targetsCreated: Hook<ReadonlyArray<PlannedTargets>, void>
+}
+
+/**
+ * `devMetadata` and `extraMetadata` were removed from `PackagerOptions` in v27 (they had thrown since
+ * v22). `build()` rejected them with a bare `Unknown option "…"` that named no replacement, and a
+ * directly constructed Packager ignored them entirely — the key simply sat unread on `options`.
+ */
+function checkRemovedPackagerOptions(options: PackagerOptions): void {
+  const removed: Array<[key: string, replacement: string]> = [
+    ["devMetadata", "config"],
+    ["extraMetadata", "config.extraMetadata"],
+  ]
+  for (const [key, replacement] of removed) {
+    if ((options as any)[key] !== undefined) {
+      throw new InvalidConfigurationError(
+        `\`${key}\` was removed from PackagerOptions in electron-builder v27. Pass \`${replacement}\` instead, ` +
+          `e.g. build({ targets, config: ${key === "devMetadata" ? "{ … }" : "{ extraMetadata: { … } }"} }).\n` +
+          "https://www.electron.build/docs/migration/v27-breaking-changes#devmetadata-extrametadata-programmatic-packageroptions"
+      )
+    }
+  }
 }
 
 export class Packager {
@@ -139,6 +165,27 @@ export class Packager {
     this.buildFinalizeTasks.push(task)
   }
 
+  // Targets whose build was skipped by `afterPackTestHook`. Their `finishBuild()` must not run either:
+  // NsisTarget and MsiWrappedTarget assume `build()` populated per-arch state first.
+  // Target instances are shared across archs (`createTargets` reuses `nameToTarget`), so a target may be
+  // skipped for one arch and built for another — track both and only skip `finishBuild()` when it never built.
+  private readonly targetsSkippedByTestHook = new Set<Target>()
+  private readonly targetsBuiltAfterPack = new Set<Target>()
+
+  /** @internal see PackagerOptions.afterPackTestHook */
+  async shouldSkipTargetsAfterPack(context: AfterPackContext): Promise<boolean> {
+    const hook = this.options.afterPackTestHook
+    const skip = hook != null && (await hook(context))
+    const recordInto = skip ? this.targetsSkippedByTestHook : this.targetsBuiltAfterPack
+    for (const target of context.targets) {
+      recordInto.add(target)
+    }
+    if (skip) {
+      log.debug({ platform: context.packager.platform.name, arch: Arch[context.arch] }, "afterPackTestHook requested early exit; skipping target builds")
+    }
+    return skip
+  }
+
   private _repositoryInfo = new Lazy<SourceRepositoryInfo | null>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
 
   readonly options: PackagerOptions
@@ -186,6 +233,10 @@ export class Packager {
     options: PackagerOptions,
     readonly cancellationToken = new CancellationToken()
   ) {
+    // Checked here rather than only in `checkBuildRequestOptions` so a directly constructed Packager
+    // is covered too — that path reads neither field, so a v26 caller was silently ignored.
+    checkRemovedPackagerOptions(options)
+
     const targets = options.targets || new Map<Platform, Map<Arch, Array<string>>>()
     if (options.targets == null) {
       options.targets = targets
@@ -224,6 +275,8 @@ export class Packager {
     }
 
     log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
+
+    warnOnRemovedEnvVars()
   }
 
   private async addPackagerEventHandlers() {
@@ -243,6 +296,12 @@ export class Packager {
 
   onAfterPack(handler: PackagerEvents["afterPack"]): Packager {
     this.eventEmitter.on("afterPack", handler)
+    return this
+  }
+
+  /** @internal emitted once per build, after every platform's targets are created and before anything is packed */
+  onTargetsCreated(handler: PackagerEvents["targetsCreated"]): Packager {
+    this.eventEmitter.on("targetsCreated", handler)
     return this
   }
 
@@ -354,8 +413,17 @@ export class Packager {
     this._devMetadata = devMetadata
   }
 
+  /** @internal */
+  shouldWriteEffectiveConfig(): boolean {
+    return this.config.writeEffectiveConfig ?? (!isCI && process.stdout.isTTY === true)
+  }
+
   // external caller of this method always uses isTwoPackageJsonProjectLayoutUsed=false and appDir=projectDir, no way (and need) to use another values
   async build(repositoryInfo?: SourceRepositoryInfo): Promise<BuildResult> {
+    // Removed env vars are checked before anything else: nothing validates process.env, so a CI
+    // image still exporting one silently gets a different toolchain than it asked for.
+    assertNoRemovedEnvVars()
+
     await this.validateConfig()
 
     if (repositoryInfo != null) {
@@ -374,7 +442,7 @@ export class Packager {
       })
     )
 
-    if (!isCI && (process.stdout as any).isTTY) {
+    if (this.shouldWriteEffectiveConfig()) {
       const effectiveConfigFile = path.join(commonOutDirWithoutPossibleOsMacro, "builder-effective-config.yaml")
       log.info({ file: log.filePath(effectiveConfigFile) }, "writing effective config")
       await outputFile(effectiveConfigFile, getSafeEffectiveConfig(this.config))
@@ -464,6 +532,10 @@ export class Packager {
     const platformToTarget = new Map<Platform, Map<string, Target>>()
     const createdOutDirs = new Set<string>()
 
+    // Every platform packager and target is created before the first pack, so listeners of `targetsCreated` (the
+    // publish preflight) see the whole build and can fail it before any artifact exists - let alone is uploaded.
+    type ArchPlan = { packager: PlatformPackager<any>; arch: Arch; targets: Array<Target>; outDir: string }
+    const plans: Array<{ packager: PlatformPackager<any>; nameToTarget: Map<string, Target>; archs: Array<ArchPlan> }> = []
     for (const [platform, archToType] of this.options.targets!) {
       if (this.cancellationToken.cancelled) {
         break
@@ -477,18 +549,7 @@ export class Packager {
       const nameToTarget: Map<string, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
 
-      let poolCount = Math.floor(packager.config.concurrency?.jobs || 1)
-      if (poolCount < 1) {
-        log.warn({ concurrency: poolCount }, "concurrency is invalid, overriding with job count: 1")
-        poolCount = 1
-      } else if (poolCount > MAX_FILE_REQUESTS) {
-        log.warn(
-          { concurrency: poolCount, MAX_FILE_REQUESTS },
-          `job concurrency is greater than recommended MAX_FILE_REQUESTS, this may lead to File Descriptor errors (too many files open). Proceed with caution (e.g. this is an experimental feature)`
-        )
-      }
-      const packPromises: Promise<any>[] = []
-
+      const archs: Array<ArchPlan> = []
       for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager, platform)) {
         if (this.cancellationToken.cancelled) {
           break
@@ -502,7 +563,42 @@ export class Packager {
 
         // support os and arch macro in output value
         const outDir = path.resolve(this.projectDir, packager.expandMacro(this.config.directories!.output!, Arch[arch]))
-        const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
+        const targets = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
+        archs.push({ packager, arch, targets, outDir })
+      }
+      plans.push({ packager, nameToTarget, archs })
+    }
+
+    // a cancelled build stops here rather than running the publish preflight on a partial plan
+    if (!this.cancellationToken.cancelled) {
+      await this.eventEmitter.emit(
+        "targetsCreated",
+        plans.flatMap<PlannedTargets>(it => it.archs)
+      )
+    }
+
+    for (const { packager, nameToTarget, archs } of plans) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
+
+      let poolCount = Math.floor(packager.config.concurrency?.jobs || 1)
+      if (poolCount < 1) {
+        log.warn({ concurrency: poolCount }, "concurrency is invalid, overriding with job count: 1")
+        poolCount = 1
+      } else if (poolCount > MAX_FILE_REQUESTS) {
+        log.warn(
+          { concurrency: poolCount, MAX_FILE_REQUESTS },
+          `job concurrency is greater than recommended MAX_FILE_REQUESTS, this may lead to File Descriptor errors (too many files open). Proceed with caution (e.g. this is an experimental feature)`
+        )
+      }
+      const packPromises: Promise<any>[] = []
+
+      for (const { arch, targets: targetList, outDir } of archs) {
+        if (this.cancellationToken.cancelled) {
+          break
+        }
+
         await createOutDirIfNeed(targetList, createdOutDirs)
         const promise = packager.pack(outDir, arch, targetList, taskManager)
         if (poolCount < 2) {
@@ -524,6 +620,9 @@ export class Packager {
       }
 
       for (const target of nameToTarget.values()) {
+        if (this.targetsSkippedByTestHook.has(target) && !this.targetsBuiltAfterPack.has(target)) {
+          continue
+        }
         if (target.isAsyncSupported) {
           taskManager.addTask(target.finishBuild())
         } else {
@@ -608,21 +707,21 @@ export class Packager {
       }
     }
 
-    if (config.nativeModules?.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
-      log.info({ reason: "platform is different and nativeModules.buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
-    } else {
-      await installOrRebuild(
-        config,
-        { appDir: this.appDir, projectDir: this.projectDir, workspaceRoot: await this.getWorkspaceRoot() },
-        {
-          frameworkInfo,
-          platform: platform.nodeName,
-          arch: Arch[arch],
-        },
-        false,
-        this.runtimeEnvironmentVariables
-      )
-    }
+    // Always rebuild for the target, even cross-platform: skipping here would ship whatever binary is
+    // already in node_modules (typically the host's). buildDependenciesFromSource is downgraded to
+    // prebuilt binaries for a cross-platform target, since node-gyp cannot cross-compile.
+    await installOrRebuild(
+      config,
+      { appDir: this.appDir, projectDir: this.projectDir, workspaceRoot: await this.getWorkspaceRoot() },
+      {
+        frameworkInfo,
+        platform: platform.nodeName,
+        arch: Arch[arch],
+        buildFromSource: resolveBuildFromSource(config, platform.nodeName),
+      },
+      false,
+      this.runtimeEnvironmentVariables
+    )
   }
 }
 

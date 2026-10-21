@@ -15,12 +15,21 @@ inputs:
     description: "Collect v8 code coverage during the test run (opt-in; merged into a downloadable report by the merge job)"
     required: false
     default: "false"
+  smart-cache-source:
+    description: "Exact smart cache snapshot the shard planner used ('<artifact-name>@<run-id>' or 'none'). Shard jobs must pass it so their in-job plan matches the matrix; leave empty to resolve the latest cache for the ref."
+    required: false
+    default: ""
+
+outputs:
+  smart-cache-source:
+    description: "The smart cache snapshot that was restored ('<artifact-name>@<run-id>' or 'none'); empty on a reset run"
+    value: ${{ steps.fetch-smart-cache.outputs.source }}
 
 runs:
   using: 'composite'
   steps:
     - name: Setup PNPM and install dependencies
-      uses: ./.github/actions/pnpm
+      uses: $/.github/actions/pnpm
 
     - name: Compile
       run: pnpm compile
@@ -70,12 +79,14 @@ runs:
     # the shard plan show every file as "unknown" and split shards evenly. (Cache file is gitignored,
     # so a fresh checkout has none — nothing is loaded.)
     - name: Restore Vitest Smart Cache
+      id: fetch-smart-cache
       if: inputs.reset-vitest-smart-cache != 'true'
       run: pnpm ci:test:fetch-cache
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
         VITEST_CACHE_REF: ${{ steps.compute-cache-ref.outputs.value }}
+        VITEST_SMART_CACHE_SOURCE: ${{ inputs.smart-cache-source }}
 
     - name: Set up Vitest smart cache reset flag
       run: |
@@ -101,7 +112,7 @@ runs:
 
 ## Usage
 # - name: Setup Tests
-#   uses: ./.github/actions/pretest
+#   uses: $/.github/actions/pretest
 #   with:
 #     cache-path: ~/Library/Caches/electron
-#     cache-key: v-39.8.10-macos-electron
+#     cache-key: v-42.4.0-macos-electron

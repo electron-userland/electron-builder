@@ -1,7 +1,7 @@
 import * as os from "os"
 import * as path from "path"
 
-export const ELECTRON_VERSION = "39.8.10"
+export const ELECTRON_VERSION = "42.4.0"
 
 // Test builds pin an explicit pacman `depends` list so installing the built .pacman inside a
 // vanilla Arch container works regardless of what the library's default depends list contains

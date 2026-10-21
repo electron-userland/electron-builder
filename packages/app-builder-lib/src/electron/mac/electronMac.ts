@@ -1,4 +1,4 @@
-import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError, unlinkIfExists } from "builder-util"
+import { asArray, copyOrLinkFile, getPlatformIconFileName, InvalidConfigurationError } from "builder-util"
 import { rename, utimes } from "fs/promises"
 import * as path from "path"
 import * as fs from "fs"
@@ -9,7 +9,7 @@ import { normalizeExt } from "../../platformPackager.js"
 import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../../util/mac/plist.js"
 import { createBrandingOpts } from "../ElectronFramework.js"
 import { MacTargetHelper, PlatformType } from "../../targets/mac/MacTargetHelper.js"
-import { assertSafeHelperName, getAvailableHelperSuffixes } from "./electronMacUtils.js"
+import { assertSafeHelperName, configureLocalhostAts, getAvailableHelperSuffixes } from "./electronMacUtils.js"
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
@@ -232,11 +232,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     await savePlistFile(helperPlistFilename, helperPlist)
   }
 
-  await Promise.all([
-    doRename(path.join(contentsPath, "MacOS"), electronBranding.productName, appPlist.CFBundleExecutable as string),
-    unlinkIfExists(path.join(appOutDir, "LICENSE")),
-    unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
-  ])
+  await doRename(path.join(contentsPath, "MacOS"), electronBranding.productName, appPlist.CFBundleExecutable as string)
 
   await moveHelpers(
     getAvailableHelperSuffixes({
@@ -263,35 +259,4 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   // https://github.com/electron-userland/electron-builder/issues/840
   const now = Date.now() / 1000
   await utimes(appPath, now, now)
-}
-
-function configureLocalhostAts(appPlist: any) {
-  // https://bencoding.com/2015/07/20/app-transport-security-and-localhost/
-  let ats = appPlist.NSAppTransportSecurity
-  if (ats == null) {
-    ats = {}
-    appPlist.NSAppTransportSecurity = ats
-  }
-
-  ats.NSAllowsLocalNetworking = true
-  // https://github.com/electron-userland/electron-builder/issues/3377#issuecomment-446035814
-  ats.NSAllowsArbitraryLoads = true
-
-  let exceptionDomains = ats.NSExceptionDomains
-  if (exceptionDomains == null) {
-    exceptionDomains = {}
-    ats.NSExceptionDomains = exceptionDomains
-  }
-
-  if (exceptionDomains.localhost == null) {
-    const allowHttp = {
-      NSTemporaryExceptionAllowsInsecureHTTPSLoads: false,
-      NSIncludesSubdomains: false,
-      NSTemporaryExceptionAllowsInsecureHTTPLoads: true,
-      NSTemporaryExceptionMinimumTLSVersion: "1.0",
-      NSTemporaryExceptionRequiresForwardSecrecy: false,
-    }
-    exceptionDomains.localhost = allowHttp
-    exceptionDomains["127.0.0.1"] = allowHttp
-  }
 }

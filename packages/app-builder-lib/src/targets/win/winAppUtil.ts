@@ -1,4 +1,16 @@
-import { Arch, asArray, copyOrLinkFile, ensureNotBusy, escapeForXml, InvalidConfigurationError, log, sanitizeDirPath, walk } from "builder-util"
+import {
+  Arch,
+  asArray,
+  assertNoSymlinkLeaves,
+  copyOrLinkFile,
+  ensureNotBusy,
+  escapeForXml,
+  ExternalLinkPolicy,
+  InvalidConfigurationError,
+  log,
+  sanitizeDirPath,
+  walk,
+} from "builder-util"
 import type { MsixWindowsService } from "../../options/MsixOptions.js"
 import { Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
@@ -134,17 +146,17 @@ export function assertSafeMappingPath(value: string, kind: string): void {
  * Builds the `[Files]` mapping lines for the packaged app payload (`"<vm source>" "app\<rel>"`), shared
  * by the AppX and MSIX targets. Each relative path is validated via {@link assertSafeMappingPath}.
  */
-export async function buildAppFileMappings(vm: VmManager, appOutDir: string): Promise<Array<string>> {
-  return Promise.all(
-    (await walk(appOutDir)).map(file => {
-      let relPath = file.substring(appOutDir.length + 1)
-      if (path.sep !== "\\") {
-        relPath = relPath.replace(/\//g, "\\")
-      }
-      assertSafeMappingPath(relPath, "Packaged file path")
-      return `"${vm.toVmFile(file)}" "app\\${relPath}"`
-    })
-  )
+export async function buildAppFileMappings(vm: VmManager, appOutDir: string, externalLinks: ExternalLinkPolicy | null = null): Promise<Array<string>> {
+  // makeappx stores what a symlink points to: one that leaves the app would package files from elsewhere on the build machine
+  await assertNoSymlinkLeaves(appOutDir, "the AppX/MSIX package", externalLinks)
+  return (await walk(appOutDir)).map(file => {
+    let relPath = file.substring(appOutDir.length + 1)
+    if (path.sep !== "\\") {
+      relPath = relPath.replace(/\//g, "\\")
+    }
+    assertSafeMappingPath(relPath, "Packaged file path")
+    return `"${vm.toVmFile(file)}" "app\\${relPath}"`
+  })
 }
 
 export function validateApplicationId(result: string, contextLabel: string): void {
@@ -440,7 +452,7 @@ export async function buildAppxPackage(
   }
 
   const mappingList: Array<Array<string>> = []
-  mappingList.push(await buildAppFileMappings(vm, appOutDir))
+  mappingList.push(await buildAppFileMappings(vm, appOutDir, await packager.getExternalLinkPolicy()))
 
   const userAssetDir = await packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
   const assetInfo = await computeUserAssets(vm, vendorPath.appxAssets, userAssetDir)

@@ -7,8 +7,8 @@ Code signing proves your application's identity and confirms it hasn't been tamp
 | Platform | Without Signing | With Signing |
 |---|---|---|
 | macOS | Gatekeeper blocks app; user must override in System Preferences | Runs normally; no warning |
-| Windows | SmartScreen warning on first run ("Unknown publisher") | Trusted install; SmartScreen learns from reputation |
-| Windows (EV cert) | N/A | Instant trust, no reputation period needed |
+| Windows | SmartScreen warning on first run ("Unknown publisher") | Publisher name shown; SmartScreen warning until reputation builds |
+| Windows (EV cert) | N/A | Same as OV since 2024 — no instant trust (see [Windows Code Signing](code-signing-win.md)) |
 
 On **macOS 10.15+**, notarization is additionally required for apps distributed outside the Mac App Store. An app that is code-signed but not notarized will be blocked by Gatekeeper unless the user explicitly overrides it.
 
@@ -39,9 +39,9 @@ All Apple certificates require membership in the [Apple Developer Program](https
 
 | Certificate Type | Trust | CI/CD Compatible | Notes |
 |---|---|---|---|
-| Standard OV Certificate | After reputation builds (days-weeks) | Yes (exportable `.pfx`) | Most common choice |
-| EV (Extended Validation) Certificate | Immediate | Yes, via a hardware-token method | Key bound to a hardware dongle/HSM; not exportable to a file |
-| Azure Trusted Signing | Immediate | Yes | Microsoft's cloud signing service; see [code-signing-win.md](code-signing-win.md) |
+| Standard OV Certificate | After reputation builds (weeks) | Yes (exportable `.pfx`) | Most common choice |
+| EV (Extended Validation) Certificate | After reputation builds — same as OV since 2024 | Yes, via a hardware-token method | Key bound to a hardware dongle/HSM; not exportable to a file |
+| Azure Trusted Signing | After reputation builds | Yes | Microsoft's cloud signing service; see [code-signing-win.md](code-signing-win.md). Microsoft: it "does not provide instant SmartScreen trust" ([source](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/code-signing-options)) |
 
 For Windows, purchase from any major CA (DigiCert, Sectigo, SSL.com). See [Get a Code Signing Certificate](https://msdn.microsoft.com/windows/hardware/drivers/dashboard/get-a-code-signing-certificate) (select "Microsoft Authenticode" platform).
 
@@ -102,8 +102,8 @@ Most CI systems inject certificates as base64-encoded environment variables:
 base64 -i your-certificate.p12 -o /tmp/cert_encoded.txt
 cat /tmp/cert_encoded.txt   # copy this value into your CI secret
 
-# Linux
-base64 your-certificate.p12 > /tmp/cert_encoded.txt
+# Linux (-w0: one line, which masked CI variables require)
+base64 -w0 your-certificate.p12 > /tmp/cert_encoded.txt
 cat /tmp/cert_encoded.txt
 ```
 
@@ -114,9 +114,29 @@ CSC_LINK=<the-base64-string>
 CSC_KEY_PASSWORD=your-password
 ```
 
+The value must be standard base64; see [Base64 certificate values](#base64-certificate-values).
+
 :::warning[Windows environment variable length limit]
 Windows cannot handle environment variable values longer than 8192 characters. If your base64-encoded certificate exceeds this limit, re-export it **without** including intermediate certificates in the chain (uncheck "Include all certificates in the certification path" in the Certificate Manager wizard).
 :::
+
+### Base64 certificate values {#base64-certificate-values}
+
+A `CSC_LINK`, `WIN_CSC_LINK`, `CSC_INSTALLER_LINK` or `SNAP_CSC_LINK` value — or a `cscLink` / `cscInstallerLink` option — is read as base64 when it has a `data:…;base64,` prefix, is longer than 2048 characters, or ends with `=`; any other value is a path, `file://` or `https://` link. A base64 value must be **standard base64**: `A-Z`, `a-z`, `0-9`, `+` and `/` with `=` padding. Line breaks in it are ignored. Surrounding quotes, URL-safe `-`/`_` characters, any other stray character or a truncated value fail the build with an `InvalidConfigurationError` that does not print the value.
+
+Encode the certificate file on one line and store the output without quotes:
+
+```bash
+base64 -w0 your-certificate.p12                # Linux (GNU coreutils)
+base64 -i your-certificate.p12                 # macOS
+openssl base64 -A -in your-certificate.p12     # anywhere OpenSSL is installed
+```
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path your-certificate.p12)))
+```
+
+In `cmd.exe`, write `set "CSC_LINK=…"`: `set CSC_LINK="…"` keeps the quotes in the value.
 
 ## GitHub Actions Setup
 
@@ -172,6 +192,7 @@ Without this option, electron-builder proceeds without signing if no credentials
 - **[macOS Code Signing](code-signing-mac.md)** — exporting certificates, keychain setup, disabling signing, ad-hoc signing
 - **[Windows Code Signing](code-signing-win.md)** — OV vs. EV certificates, Azure Trusted Signing setup
 - **[macOS Notarization](notarization.md)** — notarizing apps for macOS 10.15+, Hardened Runtime requirements
+- **[Key Rotation](../key-rotation.md)** — replacing a code-signing certificate or update-manifest key without stranding installs that trust the old one
 
 ## Troubleshooting
 
@@ -188,7 +209,7 @@ Without this option, electron-builder proceeds without signing if no credentials
 : The `publisher` in `appx` config must exactly match the Subject of the certificate. Copy it from the certificate properties.
 
 **SmartScreen warning appears even after signing** (Windows)
-: Normal for standard OV certificates. SmartScreen trust builds over time based on download count. EV certificates skip this reputation period. See [Windows Code Signing](code-signing-win.md).
+: Normal for any certificate. SmartScreen trust builds over time from downloads of the file and of other files signed with the same certificate; since 2024, EV certificates no longer skip this period ([Microsoft](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/distribution-feature-status#smartscreen-reputation-ev-certificates-no-longer-grant-instant-bypass)). See [Windows Code Signing](code-signing-win.md).
 
 **"Command requires admin privileges"** (Windows)
 : Some signing tools require elevated permissions. Run from an elevated prompt or check CI runner permissions.
