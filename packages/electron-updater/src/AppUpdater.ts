@@ -41,6 +41,7 @@ import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
+import { nonThrowingLogger } from "./util.js"
 import {
   AutoInstallEvent,
   DOWNLOAD_PROGRESS,
@@ -1191,6 +1192,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     log.info(`New version ${version} has been downloaded to ${updateFile}`)
     return await done(true)
   }
+  /**
+   * Logs why a differential download failed, before the full download it falls back to. Never throws: neither a throwing
+   * logger nor an error that cannot be formatted may stop the fallback.
+   * @internal
+   */
+  protected logDifferentialDownloadFallback(error: unknown): void {
+    try {
+      this._logger.error(`Cannot download differentially, fallback to full download: ${error instanceof Error ? error.stack || String(error) : String(error)}`)
+    } catch (_ignored) {
+      // a throwing logger must not stop the fallback
+    }
+  }
+
   protected async differentialDownloadInstaller(
     fileInfo: ResolvedUpdateFileInfo,
     downloadUpdateOptions: DownloadUpdateOptions,
@@ -1297,14 +1311,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
       return false
     } catch (e: any) {
-      if (e.code === "ERR_CHECKSUM_MISMATCH") {
-        this._logger.warn(
+      if (e?.code === "ERR_CHECKSUM_MISMATCH") {
+        nonThrowingLogger(this._logger).warn(
           `sha512 checksum mismatch after differential download (old blockmap ${
             isOldBlockMapFromCache ? "was read from the local cache" : "was downloaded from the server"
           }): cached "${oldInstallerFileName}" is likely out of sync with the old blockmap, e.g. because one of them was replaced or evicted independently of the other`
         )
       }
-      this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+      this.logDifferentialDownloadFallback(e)
       if (this._testOnlyOptions != null) {
         // test mode
         throw e
