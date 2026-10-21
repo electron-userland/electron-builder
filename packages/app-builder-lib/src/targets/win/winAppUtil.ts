@@ -12,7 +12,8 @@ import {
   walk,
 } from "builder-util"
 import type { MsixWindowsService } from "../../options/MsixOptions.js"
-import { Nullish } from "builder-util-runtime"
+import { Nullish, parseXml } from "builder-util-runtime"
+import { createHash } from "crypto"
 import _fsExtra from "fs-extra"
 const { emptyDir, readdir, readFile, writeFile } = _fsExtra
 import * as path from "path"
@@ -23,7 +24,7 @@ import { getWindowsKitsBundle } from "../../toolsets/winCodeSign.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { VmManager } from "../../vm/vm.js"
 import type { WinPackager } from "../../winPackager.js"
-import { createStageDir } from "../targetUtil.js"
+import { createStageDir, type StageDir } from "../targetUtil.js"
 import { CAPABILITIES, isValidCapabilityName } from "./AppxCapabilities.js"
 
 export const APPX_ASSETS_DIR_NAME = "appx"
@@ -159,6 +160,19 @@ export async function buildAppFileMappings(vm: VmManager, appOutDir: string, ext
   })
 }
 
+/** Where electron-updater reads the `package-type` marker in an AppX/MSIX package (`process.resourcesPath` is `app\resources`). */
+export const PACKAGE_TYPE_MAPPING_DESTINATION = "app\\resources\\package-type"
+
+/** Whether a `[Files]` line (`"<vm source>" "<destination>"`) maps to `destination`, compared case-insensitively like paths on Windows. */
+export function isMappedTo(line: string, destination: string): boolean {
+  return line.toLowerCase().endsWith(` "${destination.toLowerCase()}"`)
+}
+
+/** Whether a `[Files]` line maps to {@link PACKAGE_TYPE_MAPPING_DESTINATION}. */
+export function isPackageTypeMapping(line: string): boolean {
+  return isMappedTo(line, PACKAGE_TYPE_MAPPING_DESTINATION)
+}
+
 export function validateApplicationId(result: string, contextLabel: string): void {
   const validCharactersRegex = /^([A-Za-z][A-Za-z0-9]*)(\.[A-Za-z][A-Za-z0-9]*)*$/
   if (result.length < 1 || result.length > 64) {
@@ -283,6 +297,28 @@ export function resolvePackageIdentityName(identityName: string | null | undefin
   const result = identityName || appName
   validateIdentityName(result, contextLabel)
   return result
+}
+
+// Crockford's base32 alphabet, lowercase
+const PUBLISHER_ID_ALPHABET = "0123456789abcdefghjkmnpqrstvwxyz"
+
+/**
+ * The package family name Windows derives from a package identity: `<Name>_<PublisherId>`. The PublisherId is the first 64 bits
+ * of the SHA-256 of the UTF-16LE `Publisher`, padded to 65 bits and encoded as 13 Crockford base32 characters.
+ */
+export function computePackageFamilyName(identityName: string, publisher: string): string {
+  const bits = createHash("sha256").update(publisher, "utf16le").digest().readBigUInt64BE(0) << 1n
+  let publisherId = ""
+  for (let shift = 60; shift >= 0; shift -= 5) {
+    publisherId += PUBLISHER_ID_ALPHABET[Number((bits >> BigInt(shift)) & 31n)]
+  }
+  return `${identityName}_${publisherId}`
+}
+
+/** The `<Identity>` of an AppX/MSIX manifest, with its attribute values unescaped. */
+export function getPackageIdentity(manifestXml: string): { name: string; publisher: string; version: string } {
+  const identity = parseXml(manifestXml).element("Identity")
+  return { name: identity.attribute("Name"), publisher: identity.attribute("Publisher"), version: identity.attribute("Version") }
 }
 
 export function buildCapabilitiesXml(capabilityNames: Array<string> | null | undefined): string {
@@ -416,6 +452,16 @@ export interface AppxPackageBuildConfig {
    * the `.msixbundle` / `.msixupload`.
    */
   onBuilt?(ctx: AppxBuildContext): void
+  /**
+   * Optional: adjusts the `[Files]` lines of the app payload before they are written. A file it adds belongs in
+   * `stageDir`, which is removed after makeappx. MSIX uses it for the `package-type` marker electron-updater reads.
+   */
+  mapAppFiles?(mappings: Array<string>, stageDir: StageDir, vm: VmManager): Promise<Array<string>>
+  /**
+   * Optional: receives the manifest that is packed, read back after the `appxManifestCreated` hook, which may rewrite it.
+   * MSIX takes the bundle version and the update-info hints from it.
+   */
+  onManifestFinalized?(content: string): void
 }
 
 /**
@@ -452,7 +498,8 @@ export async function buildAppxPackage(
   }
 
   const mappingList: Array<Array<string>> = []
-  mappingList.push(await buildAppFileMappings(vm, appOutDir, await packager.getExternalLinkPolicy()))
+  const appFileMappings = await buildAppFileMappings(vm, appOutDir, await packager.getExternalLinkPolicy())
+  mappingList.push(config.mapAppFiles == null ? appFileMappings : await config.mapAppFiles(appFileMappings, stageDir, vm))
 
   const userAssetDir = await packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
   const assetInfo = await computeUserAssets(vm, vendorPath.appxAssets, userAssetDir)
@@ -464,6 +511,7 @@ export async function buildAppxPackage(
   await config.writeManifest(manifestFile, arch, publisher, userAssets)
 
   await packager.emitAppxManifestCreated(manifestFile)
+  config.onManifestFinalized?.(await readFile(manifestFile, "utf8"))
   mappingList.push(assetInfo.mappings)
   mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
 
@@ -527,7 +575,8 @@ export async function buildAppxPackage(
       arch,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, config.kind),
       target,
-      isWriteUpdateInfo: options.electronUpdaterAware,
+      // MSIX describes its .msixbundle (MsixTarget.finishBuild), not the per-architecture packages
+      isWriteUpdateInfo: config.kind === "appx" && options.electronUpdaterAware === true,
     })
   })
 }
