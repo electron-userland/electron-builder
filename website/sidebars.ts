@@ -13,6 +13,7 @@ const sidebars: SidebarsConfig = {
         { type: "doc", id: "migration/whats-new-v27", label: "What's New in v27" },
         { type: "doc", id: "migration/v26-to-v27", label: "v26 → v27 Walkthrough" },
         { type: "doc", id: "migration/v27-breaking-changes", label: "v27 Breaking Changes" },
+        { type: "link", label: "Changelog", href: "/changelog" },
       ],
     },
 

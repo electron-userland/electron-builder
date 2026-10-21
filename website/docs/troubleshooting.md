@@ -209,6 +209,9 @@ See [Building in unprivileged containers](flatpak.md#building-in-unprivileged-co
 **PKG installer fails: "The package … is not compatible with this version of macOS"**
 : Check `pkg.minVersion` matches your actual minimum supported macOS version.
 
+**App exits at launch with "Failed to get integrity for validatable asar archive"**
+: With the `enableEmbeddedAsarIntegrityValidation` fuse, Electron looks up the archive in the `ElectronAsarIntegrity` entries of `Info.plist`, and with Electron 41+ first checks those entries against the digest electron-builder embedded into the Electron Framework after the `afterPack` hook. This message means it found no valid entry: `Info.plist` was changed after the digest was embedded, or it has no entry for the archive (as with `asar.disableIntegrity: true`). Change `Info.plist` in `afterPack` at the latest, or set `mac.asarIntegrityDigest: false` if it has to change later. A modified `app.asar` whose hash was not updated fails with "Integrity check failed for asar archive" instead: electron-builder computes the hashes before `afterPack`, so changing `app.asar` in `afterPack` or later also means updating its hash in `Info.plist`.
+
 **"The application cannot be opened" on Apple Silicon**
 : The app may be x64-only but running on an ARM Mac without Rosetta. Either build a universal binary or ensure Rosetta 2 is installed (`softwareupdate --install-rosetta`).
 

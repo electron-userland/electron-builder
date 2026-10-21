@@ -202,6 +202,15 @@ mac:
         CFBundleURLName: "com.mycompany.myapp"
 ```
 
+For every target except `mas` and `mas-dev`, electron-builder adds App Transport Security entries that electron-updater's local update proxy needs: `NSAllowsLocalNetworking` and plain-HTTP exceptions for `localhost` and `127.0.0.1`. It also sets `NSAllowsArbitraryLoads: true`, unless you set that key yourself. To keep it off, set it in `extendInfo`:
+
+```yaml
+mac:
+  extendInfo:
+    NSAppTransportSecurity:
+      NSAllowsArbitraryLoads: false
+```
+
 ## Helper Bundle IDs
 
 Electron spawns several helper processes, each with its own bundle ID. electron-builder sets these automatically based on your `appId`, but you can override them:

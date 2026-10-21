@@ -348,7 +348,7 @@ export class NsisUpdater extends BaseUpdater {
     } catch (e: any) {
       // a user cancellation is not a differential failure: no fallback to a full download
       throwIfCancelled(e, downloadUpdateOptions.cancellationToken)
-      this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+      this.logDifferentialDownloadFallback(e)
       // during test (developer machine mac or linux) we must throw error
       return process.platform === "win32"
     }

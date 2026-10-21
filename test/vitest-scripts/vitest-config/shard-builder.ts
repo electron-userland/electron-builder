@@ -54,6 +54,22 @@ export function computeShardCount(files: WeightedFile[]): number {
 }
 
 /**
+ * The CI matrix is sized by the planner job (smart-shard-count.ts) and every shard job re-plans locally;
+ * both must arrive at the same plan or files are silently skipped or run twice across shards. Returns an
+ * error message when the in-job count differs from the matrix size (VITEST_EXPECTED_SHARD_COUNT), else null.
+ * Callers must fail on a mismatch — never clamp or re-map the shard index.
+ */
+export function shardPlanMismatchError(expectedShardCount: number | null, shardCount: number, cacheSource?: string): string | null {
+  if (expectedShardCount == null || expectedShardCount === shardCount) {
+    return null
+  }
+  return (
+    `Shard plan mismatch: the CI matrix was planned with ${expectedShardCount} shard(s) but this job computed ${shardCount}. ` +
+    `The planner and this job must use the same smart cache (VITEST_SMART_CACHE_SOURCE=${cacheSource || "<unset>"}) and the same test file list.`
+  )
+}
+
+/**
  * Split files into balanced shards based on weight (duration)
  * Uses greedy bin-packing algorithm to balance shard durations
  */

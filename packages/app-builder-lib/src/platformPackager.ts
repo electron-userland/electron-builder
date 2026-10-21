@@ -204,7 +204,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (!optedOut && required) {
       throw new InvalidConfigurationError(
         `auto-update manifests must be signed, but no Ed25519 signing key was found for ${this.platform.name}. ` +
-          "Generate one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (PEM contents) " +
+          "Generate one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file) " +
           "or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey / " +
           "updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out explicitly with " +
           "`updateManifest: false`. See https://www.electron.build/features/signed-update-manifests"
@@ -600,12 +600,20 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       mode: this.config.nativeModules?.verifyNativeBinaries,
     })
 
+    if (!options?.disableAsarIntegrity) {
+      await this.doAddAsarIntegrityDigest(packContext, platformSpecificBuildOptions, asarOptions)
+    }
     if (!options?.disableFuses) {
       await this.doAddElectronFuses(packContext)
     }
     if (options?.sign ?? true) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, platformType, arch, platformSpecificBuildOptions, targets)
     }
+  }
+
+  // macOS only (see MacPackager). It writes into the binary the fuses patch too, so it runs before them and, like them, before signing.
+  protected async doAddAsarIntegrityDigest(_packContext: AfterPackContext, _platformSpecificBuildOptions: DC, _asarOptions: AsarOptions | null): Promise<void> {
+    // only Electron's macOS framework has an ASAR integrity digest slot
   }
 
   // the fuses MUST be flipped right before signing
@@ -815,7 +823,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return Promise.resolve(null)
   }
 
-  private async computeAsarOptions(customBuildOptions: DC): Promise<AsarOptions | null> {
+  protected async computeAsarOptions(customBuildOptions: DC): Promise<AsarOptions | null> {
     if (!isElectronBased(this.info.framework)) {
       return null
     }
