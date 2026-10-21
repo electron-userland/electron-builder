@@ -1,21 +1,32 @@
-import { Arch, asArray, copyOrLinkFile, ensureNotBusy, exec, InvalidConfigurationError, log } from "builder-util"
+import { Arch, asArray, copyOrLinkFile, ensureNotBusy, exec, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { Nullish } from "builder-util-runtime"
+import { MSIX_UPDATER_ELECTRON_VERSION_RANGE } from "builder-util-runtime/internal"
 import { getPath7za } from "../../toolsets/7zip.js"
 import _fsExtra from "fs-extra"
 const { mkdirs, readFile, remove, writeFile } = _fsExtra
 import * as path from "path"
+import * as semver from "semver"
+import type { Configuration } from "../../configuration.js"
 import { MsixOptions } from "../../options/MsixOptions.js"
 import { isLegacyWinCodeSign, isOldWin6 } from "../../toolsets/winCodeSign.js"
 import { Target } from "../../core.js"
+import { hashFile } from "../../util/hash.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import type { VmManager } from "../../vm/vm.js"
 import { WinPackager } from "../../winPackager.js"
+import type { StageDir } from "../targetUtil.js"
 import {
   buildAppxPackage,
   buildCapabilitiesXml,
   buildExtensionsXml,
   buildWindowsServicesXml,
+  computePackageFamilyName,
   defaultTileTag,
+  getPackageIdentity,
+  isMappedTo,
+  isPackageTypeMapping,
   lockScreenTag,
+  PACKAGE_TYPE_MAPPING_DESTINATION,
   resolvePackageApplicationId,
   resolvePackageIdentityName,
   resourceLanguageTag,
@@ -31,6 +42,8 @@ export default class MsixTarget extends Target {
   private readonly builtPackages = new Map<Arch, string>()
   private vendorPathKit: string | null = null
   private vm: VmManager | null = null
+  // the manifest that is packed (after the appxManifestCreated hook): the bundle version and the update-info hints come from it
+  private finalManifest: string | null = null
 
   constructor(
     private readonly packager: WinPackager,
@@ -41,6 +54,15 @@ export default class MsixTarget extends Target {
     if (process.platform !== "darwin" && (process.platform !== "win32" || isOldWin6())) {
       throw new Error("MSIX is supported on Windows 10 or Windows Server 2012 R2 (version number 6.3+) and on macOS via Parallels Desktop")
     }
+
+    // checked here so a misconfiguration fails before the build-start signing preflight and before anything is packed
+    if (this.writesUpdateInfo) {
+      this.checkElectronUpdaterAware()
+    }
+  }
+
+  get writesUpdateInfo(): boolean {
+    return this.options.electronUpdaterAware === true
   }
 
   build(appOutDir: string, arch: Arch): Promise<any> {
@@ -65,7 +87,66 @@ export default class MsixTarget extends Target {
         this.vendorPathKit = vendorPathKit
         this.vm = vm
       },
+      mapAppFiles: (mappings, stageDir, vm) => this.mapAppFiles(mappings, stageDir, vm),
+      onManifestFinalized: content => {
+        this.finalManifest = content
+      },
     })
+  }
+
+  private checkElectronUpdaterAware(): void {
+    if (this.options.createMsixbundle === false) {
+      throw new InvalidConfigurationError(
+        '"msix.electronUpdaterAware" requires the .msixbundle: electron-updater updates MSIX installs from the bundle only, since an app installed from a bundle cannot be updated by a single .msix. Remove "msix.createMsixbundle: false".'
+      )
+    }
+
+    const packager = this.packager
+    // Windows installs any package signed with a trusted certificate, even another app's: MsixUpdater only trusts a bundle pinned by a signed manifest
+    if (packager.updateManifestOptions === false) {
+      throw new InvalidConfigurationError(
+        '"msix.electronUpdaterAware" requires signed update manifests: MsixUpdater refuses an update whose manifest it cannot verify. Remove "updateManifest: false" and configure a signing key (see https://www.electron.build/docs/features/signed-update-manifests).'
+      )
+    }
+    assertMsixUpdaterElectronVersion(packager.config.electronVersion, packager.config, packager.packagerOptions.prepackaged != null)
+
+    // the 4-part package version has no prerelease part: without a numeric build number, 1.2.0-beta.1 and 1.2.0 are both 1.2.0.0
+    const appInfo = packager.appInfo
+    const isSetBuildNumber = this.options.setBuildNumber === true
+    if (semver.prerelease(appInfo.version) != null && (!isSetBuildNumber || appInfo.buildNumber == null || !/^\d+$/.test(appInfo.buildNumber))) {
+      log.once("msix-updater-prerelease-version", this).warn(
+        {
+          version: appInfo.version,
+          packageVersion: appInfo.getVersionInWeirdWindowsForm(isSetBuildNumber),
+          solution: 'set "msix.setBuildNumber": true with an increasing numeric build number, or publish MSIX updates of release versions only',
+        },
+        "the MSIX package version drops the prerelease part, so a prerelease and its release get the same package version, and neither MsixUpdater nor Windows updates a package to the version it already has"
+      )
+    }
+  }
+
+  private async mapAppFiles(mappings: Array<string>, stageDir: StageDir, vm: VmManager): Promise<Array<string>> {
+    // a package-type walked from the app dir (e.g. a prepackaged NSIS install) would select another updater, and makeappx rejects a destination mapped twice
+    const result = mappings.filter(it => !isPackageTypeMapping(it))
+    if (!this.writesUpdateInfo) {
+      return result
+    }
+
+    // electron-updater selects MsixUpdater by this marker; written to the stage dir, not to the app dir other targets read
+    const marker = stageDir.getTempFile("package-type")
+    await writeFile(marker, "msix")
+    result.push(`"${vm.toVmFile(marker)}" "${PACKAGE_TYPE_MAPPING_DESTINATION}"`)
+
+    // afterPack writes it from the publish configuration, but a prepackaged app gets no afterPack
+    if (!mappings.some(it => isMappedTo(it, "app\\resources\\app-update.yml"))) {
+      log
+        .once("msix-updater-no-app-update-yml", this)
+        .warn(
+          { solution: "configure publish and build from the project (not --prepackaged), or add an app-update.yml to the resources of the prepackaged app" },
+          "the MSIX package has no resources\\app-update.yml, so MsixUpdater has no update feed"
+        )
+    }
+    return result
   }
 
   async finishBuild(): Promise<void> {
@@ -77,7 +158,8 @@ export default class MsixTarget extends Target {
     }
 
     let bundlePath: string | undefined
-    if (this.options.createMsixbundle !== false && packagePaths.length > 1) {
+    // electron-updater updates MSIX installs from the .msixbundle only (an app installed from a bundle cannot take a single .msix), so it is built for one architecture too
+    if (this.options.createMsixbundle !== false && (packagePaths.length > 1 || this.writesUpdateInfo)) {
       bundlePath = await this.createMsixBundle(packagePaths)
     }
 
@@ -90,6 +172,8 @@ export default class MsixTarget extends Target {
     const packager = this.packager
     const vm = this.vm!
     const kitPath = this.vendorPathKit!
+    // the packages of a bundle share their identity apart from the architecture
+    const identity = getPackageIdentity(this.finalManifest!)
 
     const bundleName = packager.expandArtifactBeautyNamePattern(this.options, "msixbundle", Arch.x64)
     const bundlePath = path.join(this.outDir, bundleName)
@@ -106,7 +190,8 @@ export default class MsixTarget extends Target {
       await Promise.all(packagePaths.map(p => copyOrLinkFile(p, path.join(stagingDir, path.basename(p)))))
       const makeAppxExe = path.join(kitPath, "makeappx.exe")
       await ensureNotBusy(makeAppxExe)
-      await vm.exec(vm.toVmFile(makeAppxExe), ["bundle", "/o", "/d", vm.toVmFile(stagingDir), "/p", vm.toVmFile(bundlePath)])
+      // /bv: the bundle gets the version of its packages instead of makeappx's date-based default
+      await vm.exec(vm.toVmFile(makeAppxExe), ["bundle", "/o", "/bv", identity.version, "/d", vm.toVmFile(stagingDir), "/p", vm.toVmFile(bundlePath)])
     } finally {
       await remove(stagingDir)
     }
@@ -119,7 +204,16 @@ export default class MsixTarget extends Target {
       arch: null,
       safeArtifactName: packager.computeSafeArtifactName(bundleName, "msixbundle"),
       target: this,
-      isWriteUpdateInfo: false,
+      isWriteUpdateInfo: this.writesUpdateInfo,
+      // unsigned hints (like isAdminRightsRequired) that let MsixUpdater refuse another package family, or a version Windows would not install,
+      // before downloading; the bundle itself is pinned by its sha512, which the manifest signature covers
+      updateInfo: this.writesUpdateInfo
+        ? {
+            sha512: await hashFile(bundlePath),
+            packageFamilyName: computePackageFamilyName(identity.name, identity.publisher),
+            packageVersion: identity.version,
+          }
+        : undefined,
     })
 
     return bundlePath
@@ -278,5 +372,28 @@ export default class MsixTarget extends Target {
     }
 
     return baseExtensions.replace("</Extensions>", `${servicesXml}</Extensions>`)
+  }
+}
+
+/**
+ * Fails a build with `msix.electronUpdaterAware` whose Electron cannot install the update electron-updater downloads (through its
+ * native MSIX autoUpdater). Only warns when the Electron that runs in the package is unknown: an unparseable version, a custom
+ * `electronDist` or a prepackaged app. A mirror serves the declared version, so that is still checked.
+ * @internal exported for tests
+ */
+export function assertMsixUpdaterElectronVersion(electronVersion: string | Nullish, config: Configuration, isPrepackaged: boolean): void {
+  const requirement =
+    "msix.electronUpdaterAware requires an Electron whose MSIX autoUpdater installs the update electron-updater downloads: 39.5.2+ (39.x), 40.2.1+ (40.x), 41.0.0-alpha.6+ or 42+"
+  const electronDist = config.electronDist
+  const isCustomElectronDist = electronDist != null && (typeof electronDist !== "string" || !isEmptyOrSpaces(electronDist))
+  if (electronVersion == null || semver.valid(electronVersion) == null || isCustomElectronDist || isPrepackaged) {
+    const reason = isPrepackaged ? "prepackaged app" : isCustomElectronDist ? "custom electronDist" : "unparseable Electron version"
+    log
+      .once("msix-updater-electron-version", config)
+      .warn({ electronVersion, reason }, `${requirement}. The Electron of this build cannot be checked: MsixUpdater stays inactive on an older one`)
+    return
+  }
+  if (!semver.satisfies(electronVersion, MSIX_UPDATER_ELECTRON_VERSION_RANGE, { includePrerelease: true })) {
+    throw new InvalidConfigurationError(`${requirement}. This build uses Electron ${electronVersion}.`)
   }
 }
