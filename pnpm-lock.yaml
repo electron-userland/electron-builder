@@ -721,6 +721,9 @@ importers:
       clsx:
         specifier: 2.1.1
         version: 2.1.1
+      marked:
+        specifier: 16.4.2
+        version: 16.4.2
       pagefind:
         specifier: 1.5.2
         version: 1.5.2

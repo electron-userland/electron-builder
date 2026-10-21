@@ -106,6 +106,8 @@ const config: Config = {
 
   plugins: [
     "./scripts/docusaurus-plugin-prebuild.ts",
+    // the /changelog page, built from ../CHANGELOG.md
+    "./scripts/docusaurus-plugin-changelog.ts",
     function suppressPagefindWarning() {
       return {
         name: "suppress-pagefind-warning",
@@ -168,6 +170,7 @@ const config: Config = {
           position: "left",
           label: "Docs",
         },
+        { to: "/changelog", label: "Changelog", position: "left" },
         {
           // Version switcher, generated from docs-versions.json. Each entry
           // points at the root of a separate Docusaurus instance, so the links
