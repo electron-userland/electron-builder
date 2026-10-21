@@ -1,5 +1,6 @@
 import { createRequire } from "node:module"
 import { ALL_PLATFORM_KEYS, FILE_OPTION_KEYS, NSIS_CONFIG_KEYS } from "app-builder-lib/internal"
+import { isValidPublisherNameDn } from "builder-util-runtime"
 import * as path from "path"
 import {
   ASAR_PLATFORM_KEYS,
@@ -30,6 +31,7 @@ import {
   SNAP_BASES,
   SNAP_CORE24_UNSUPPORTED,
   v26IncludePdb,
+  WIN_PUBLISHER_NAME_DN_ADVISORY,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
 } from "./migrate-schema.js"
 import type { MigrationChange } from "./migrate-schema.js"
@@ -410,6 +412,7 @@ class ConfigCodemod {
     this.ruleMacEntitlementsAdvisory(root)
     this.ruleNsisPerMachineAdvisory(root)
     this.ruleWinSignHookPublisherNameAdvisory(root)
+    this.ruleWinPublisherNameDnAdvisory(root)
     this.ruleFeedQueryAdvisory(root)
     this.rulePdbFilesPatternsAdvisory(root)
   }
@@ -456,17 +459,16 @@ class ConfigCodemod {
     }
   }
 
-  // Advisory only. Mirrors migrateConfig on the win.sign it produces: win.sign when set, otherwise the v26 win.azureSignOptions
-  // (else win.signtoolOptions) moved into it, unless signExecutable / signAndEditExecutable: false disabled signing.
-  private ruleWinSignHookPublisherNameAdvisory(root: any): void {
+  /**
+   * The win.sign object literal that migrateConfig produces: win.sign when set, otherwise the v26 win.azureSignOptions (else
+   * win.signtoolOptions) moved into it, unless signExecutable / signAndEditExecutable: false disabled signing. Returns its field reader
+   * (a field migrateConfig moves into additionalMetadata reads as undefined), or null when it is not an object literal.
+   */
+  private migratedWinSign(win: any): ((name: string) => any) | null {
     const ts = this.ts
     const isNullish = (v: any) => v === undefined || v.kind === ts.SyntaxKind.NullKeyword
-    // A non-literal flag may be false, so it counts as false (no advisory).
+    // A non-literal flag may be false, so it counts as false.
     const isFalseOrUnread = (v: any) => v !== undefined && (v.kind === ts.SyntaxKind.FalseKeyword || !this.isLiteral(v))
-    const win = this.objectLiteral(this.propValue(root, "win"))
-    if (win == null) {
-      return
-    }
     const winSign = this.propValue(win, "sign")
     let legacy: "azure" | "signtool" | null = null
     let sign: any = null
@@ -477,14 +479,30 @@ class ConfigCodemod {
       legacy = isNullish(azure) ? "signtool" : "azure"
       sign = this.objectLiteral(legacy === "azure" ? azure : this.propValue(win, "signtoolOptions"))
     }
-    // A sign value that is not an object literal may carry publisherName or a certificate (a spread in one counts as a publisherName below).
     if (sign == null) {
-      return
+      return null
     }
     // migrateConfig moves a string-valued azureSignOptions field that is not a known Azure option into additionalMetadata.
-    const field = (name: string) => {
+    return (name: string) => {
       const v = this.propValue(sign, name)
       return legacy === "azure" && v !== undefined && !AZURE_KNOWN_FIELDS.has(name) && (ts.isStringLiteralLike(v) || ts.isTemplateExpression(v)) ? undefined : v
+    }
+  }
+
+  // Advisory only. Mirrors migrateConfig on the win.sign it produces (see migratedWinSign).
+  private ruleWinSignHookPublisherNameAdvisory(root: any): void {
+    const ts = this.ts
+    const isNullish = (v: any) => v === undefined || v.kind === ts.SyntaxKind.NullKeyword
+    // A non-literal flag may be false, so it counts as false (no advisory).
+    const isFalseOrUnread = (v: any) => v !== undefined && (v.kind === ts.SyntaxKind.FalseKeyword || !this.isLiteral(v))
+    const win = this.objectLiteral(this.propValue(root, "win"))
+    if (win == null) {
+      return
+    }
+    // A sign value that is not an object literal may carry publisherName or a certificate (a spread in one counts as a publisherName below).
+    const field = this.migratedWinSign(win)
+    if (field == null) {
+      return
     }
     // Any value but null or a non-string literal counts as a hook: a JS config usually passes a function or an imported module.
     const hook = field("sign")
@@ -496,6 +514,28 @@ class ConfigCodemod {
       return
     }
     this.advisories.push(WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY)
+  }
+
+  // Advisory only. Mirrors migrateConfig on the win.sign it produces (see migratedWinSign): a publisherName (or an entry of a publisherName
+  // array literal) that is a string literal but not a certificate subject DN with CN and O, or another literal (no string at all). A value
+  // the AST cannot read is skipped; publisherName: null is the opt-out.
+  private ruleWinPublisherNameDnAdvisory(root: any): void {
+    const ts = this.ts
+    const win = this.objectLiteral(this.propValue(root, "win"))
+    const field = win == null ? null : this.migratedWinSign(win)
+    const value = field == null ? undefined : field("publisherName")
+    if (value === undefined) {
+      return
+    }
+    const publisherName = this.unwrap(value)
+    if (publisherName.kind === ts.SyntaxKind.NullKeyword) {
+      return
+    }
+    const entries = ts.isArrayLiteralExpression(publisherName) ? publisherName.elements.map((el: any) => this.unwrap(el)) : [publisherName]
+    const isInvalid = (entry: any) => (ts.isStringLiteralLike(entry) ? !isValidPublisherNameDn(entry.text) : this.isLiteral(entry))
+    if (entries.some(isInvalid)) {
+      this.advisories.push(WIN_PUBLISHER_NAME_DN_ADVISORY)
+    }
   }
 
   // Advisory only. Mirrors migrateConfig, which walks the publish of the root and of each top-level section of the migrated config:

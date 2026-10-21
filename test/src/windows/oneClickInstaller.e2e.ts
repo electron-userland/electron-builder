@@ -7,7 +7,7 @@ import fsExtra from "fs-extra"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
 import { app, assertPack, copyTestAsset, EXTENDED_TIMEOUT, modifyPackageJson } from "../helpers/packTester.js"
-import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper.js"
+import { checkHelpers, doTest, EXPLICIT_PUBLISHER_NAMES, expectUpdateMetadata } from "../helpers/winHelper.js"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"], Arch.x64)
 
@@ -38,10 +38,10 @@ test("one-click (e2e)", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
         win: {
           sign: {
             type: "signtool" as const,
-            // An explicit publisherName must now include at least one name matching the signing
-            // certificate (the ephemeral test identity, CN=EB Test Code Signing) — extra names for
-            // certificate rotation still pass through to app-update.yml verbatim.
-            publisherName: ["Foo, Inc", "CN=EB Test Code Signing"],
+            // An explicit publisherName must include at least one name matching the signing certificate (the
+            // ephemeral test identity, WIN_SIGNING_PUBLISHER_NAME), and every entry must be a DN with CN and O —
+            // extra names for certificate rotation still pass through to app-update.yml verbatim.
+            publisherName: [...EXPLICIT_PUBLISHER_NAMES],
           },
         },
         publish: {

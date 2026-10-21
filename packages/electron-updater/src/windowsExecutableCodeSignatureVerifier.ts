@@ -1,9 +1,34 @@
-import { escapePowerShellSingleQuotes, matchPublisherName, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "builder-util-runtime"
+import { escapePowerShellSingleQuotes, isValidPublisherNameDn, matchPublisherName, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "builder-util-runtime"
 import { execFile, execFileSync } from "child_process"
 import * as os from "os"
 import type { VerifyUpdateFileResult } from "./types.js"
 import { Logger } from "./types.js"
 import * as path from "path"
+
+const PUBLISHER_NAME_DN_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
+
+/**
+ * Explains why some publisherName entries can never match the signer of an update, or returns null when every entry is
+ * a certificate subject DN with CN and O. Such entries come from an app-update.yml written by electron-builder before
+ * v27 (which wrote the certificate's Common Name), a dev-app-update.yml or another updateConfigPath file, or a direct call
+ * of verifyUpdateFileAuthenticodeSignature.
+ * Never throws, whatever the entries are.
+ * @internal
+ */
+export function publisherNameDnNote(publisherNames: ReadonlyArray<unknown>): string | null {
+  // typed as an array, but a JavaScript caller of verifyUpdateFileAuthenticodeSignature may pass anything
+  const entries: ReadonlyArray<unknown> = Array.isArray(publisherNames) ? publisherNames : [publisherNames]
+  const invalid = entries.filter(it => !isValidPublisherNameDn(it))
+  if (invalid.length === 0) {
+    return null
+  }
+  const names = invalid.map(it => (typeof it === "string" ? `"${it}"` : `(${typeof it})`)).join(", ")
+  return (
+    `electron-updater 7 (electron-builder v27) matches a publisherName only when it is the full certificate subject distinguished name (DN) including CN and O, ` +
+    `e.g. "CN=My Company, O=My Company, C=US": publisherName ${names} can never match the signer of an update. ` +
+    `Build the app with electron-builder v27, which writes such a DN to app-update.yml, or set the publisherName of dev-app-update.yml (or the updateConfigPath file) to the certificate subject. ${PUBLISHER_NAME_DN_DOCS}`
+  )
+}
 
 // Thrown when the Path reported by Get-AuthenticodeSignature does not match the expected
 // update file path. Signals verifySignature to reject directly, without running the
@@ -37,11 +62,15 @@ function evaluateSignatureResult(stdout: string, publisherNames: string[], unesc
   const data = parseAuthenticodeSignatureOutput(stdout)
   if (data.Status === 0) {
     checkLiteralPath(data, unescapedTempUpdateFile, logger)
-    if (matchPublisherName(data, publisherNames, logger)) {
+    if (matchPublisherName(data, publisherNames)) {
       return { response: "success" }
     }
   }
-  const result = `publisherNames: ${publisherNames.join(" | ")}, raw info: ` + JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2)
+  const note = publisherNameDnNote(publisherNames)
+  const result =
+    `publisherNames: ${publisherNames.join(" | ")}, raw info: ` +
+    JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2) +
+    (note == null ? "" : `\n${note}`)
   logger.warn(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
   return { response: "failure", message: result }
 }

@@ -5,7 +5,15 @@ import { TmpDir } from "temp-file"
 import { createSelfSignedCodeSigningIdentity, SelfSignedIdentity } from "./selfSignedIdentity"
 
 const PUBLISHER = "EB Test Code Signing"
+// electron-updater 7 requires a publisherName with CN and O, so the Windows test identity has an O (and a C, which the derived name keeps)
+const WIN_PUBLISHER_ADDITIONAL_DN_FIELDS = { O: "EB Test Org", C: "US" } as const
 const TEAM_ID = "TEAMID1234"
+
+/**
+ * The publisherName a build signed with the Windows test identity derives (its CN, O and C), and a valid explicit publisherName
+ * matching it.
+ */
+export const WIN_SIGNING_PUBLISHER_NAME = `CN=${PUBLISHER}, O=${WIN_PUBLISHER_ADDITIONAL_DN_FIELDS.O}, C=${WIN_PUBLISHER_ADDITIONAL_DN_FIELDS.C}`
 
 // Single source of the Windows signing identity for tests, resolved once per worker. An ephemeral, untrusted
 // self-signed identity is generated at runtime (no committed cert/secret) and injected into each build's
@@ -15,7 +23,7 @@ export const winSigningCredentialsInfo = new Lazy<SelfSignedIdentity>(async () =
   try {
     // Modern PBES2/AES p12 with an EMPTY password: osslsigncode/signtool reject legacy 3DES bags, and an
     // empty password avoids osslsigncode's no-TTY console-prompt fallback (see SelfSignedIdentityOptions).
-    const identity = await createSelfSignedCodeSigningIdentity(PUBLISHER, tmpDir, { password: "" })
+    const identity = await createSelfSignedCodeSigningIdentity(PUBLISHER, tmpDir, { password: "", additionalDnFields: WIN_PUBLISHER_ADDITIONAL_DN_FIELDS })
     log.info("provisioned ephemeral self-signed Windows identity for code-signing tests")
     return identity
   } finally {

@@ -30,7 +30,8 @@ export class Pkcs11SignManager extends SigntoolBaseSignManager {
       throw new InvalidConfigurationError(
         "PKCS#11 signing requires either `win.sign.publisherName` or `win.sign.certificateFile` to be set. " +
           "Without one of these the publisher name cannot be determined at build time, and auto-updater signature verification will be silently skipped. " +
-          "Set publisherName to the CN from your signing certificate, or provide certificateFile pointing to a certificate chain file (.crt / .cer)."
+          'Set publisherName to the subject of your signing certificate, including its CN and O (e.g. "CN=My Company, O=My Company, C=US"), ' +
+          "or provide certificateFile pointing to a certificate chain file (.crt / .cer)."
       )
     }
   }

@@ -14,6 +14,7 @@ import {
   RESOLVED_LEGACY_CONFIG_OPTIONS,
 } from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
+import { isValidPublisherNameDn } from "builder-util-runtime"
 import { resolveDefaultKeywordList } from "builder-util/internal"
 import { promises as fs } from "fs"
 import * as path from "path"
@@ -69,6 +70,24 @@ export const WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY =
   "because electron-builder cannot tell which certificate the hook signs with (a certificate in the config or from WIN_CSC_LINK / CSC_LINK doesn't supply the publisher name of a hook). " +
   "Set win.sign.publisherName to the subject of the certificate your hook signs with, or win.verifyUpdateCodeSignature: false only if your updates are not Authenticode-signed. " +
   "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-is-validated-against-the-signing-certificate"
+
+// Advisory surfaced when win.sign.publisherName has an entry that is not a certificate subject DN with CN and O (a bare name, or a
+// DN with the CN only). v27 fails such a build, because electron-updater 7 never matches such an entry.
+export const WIN_PUBLISHER_NAME_DN_ADVISORY =
+  "win.sign.publisherName with a bare name or a distinguished name without both CN and O detected. In v27, every publisherName entry must be the subject " +
+  'distinguished name (DN) of the code signing certificate, including at least its CN and O (e.g. "CN=My Company, O=My Company, C=US"): ' +
+  "electron-updater 7 never matches any other entry, so the build fails with InvalidConfigurationError. " +
+  "Set win.sign.publisherName to the certificate subject (on Windows, (Get-AuthenticodeSignature <signed .exe>).SignerCertificate.Subject prints it), " +
+  "or (unless a custom win.sign.sign hook signs) remove it to derive CN, O and C from the signing certificate. " +
+  "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
+
+/** True when `publisherName` (a string or a list) has an entry that is not a certificate subject DN with CN and O. */
+export function hasInvalidPublisherNameDn(publisherName: unknown): boolean {
+  if (publisherName == null) {
+    return false
+  }
+  return (Array.isArray(publisherName) ? publisherName : [publisherName]).some(it => !isValidPublisherNameDn(it))
+}
 
 // Advisory surfaced when a mac/mas/masDev config does not name its own entitlements file. v27 stopped granting
 // allow-unsigned-executable-memory and disable-library-validation in the bundled default, which only fails at runtime.
@@ -136,6 +155,15 @@ function detectSignHookWithoutPublisherName(config: Record<string, any>): boolea
   const sign = isPlainObject(win) ? win.sign : null
   // a function-valued hook cannot occur here: migrateConfig works on a JSON copy of the config
   return isPlainObject(sign) && typeof sign.sign === "string" && sign.publisherName === undefined && win.verifyUpdateCodeSignature !== false
+}
+
+/**
+ * True when win.sign.publisherName has an entry that is not a certificate subject DN with CN and O. Evaluated on the migrated config,
+ * so a v26 `win.signtoolOptions.publisherName` / `win.azureSignOptions.publisherName` counts too.
+ */
+function detectPublisherNameWithoutDn(config: Record<string, any>): boolean {
+  const sign = isPlainObject(config.win) ? config.win.sign : null
+  return isPlainObject(sign) && hasInvalidPublisherNameDn(sign.publisherName)
 }
 
 /**
@@ -553,6 +581,9 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   }
   if (detectSignHookWithoutPublisherName(c)) {
     advisories.push(WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY)
+  }
+  if (detectPublisherNameWithoutDn(c)) {
+    advisories.push(WIN_PUBLISHER_NAME_DN_ADVISORY)
   }
   if (detectGenericFeedQuery(c)) {
     advisories.push(FEED_QUERY_ADVISORY)

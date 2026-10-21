@@ -2,8 +2,8 @@ import { ExecFileOptions } from "child_process"
 import { parseDn } from "./rfc2253Parser.js"
 
 // Windows Authenticode signature helpers shared by electron-updater (verifying a downloaded update at runtime) and
-// electron-builder (checking the signed installer at build time). Moved unchanged from electron-updater's
-// windowsExecutableCodeSignatureVerifier.
+// electron-builder (checking the signed installer at build time), so the two apply the same publisher name rules.
+// Moved from electron-updater's windowsExecutableCodeSignatureVerifier.
 
 export function preparePowerShellExec(command: string, timeout?: number) {
   // $PSHOME is a PS automatic variable pointing to the trusted PS installation directory.
@@ -52,23 +52,57 @@ export function escapePowerShellSingleQuotes(unescapedPath: string): string {
   return unescapedPath.replace(/['\u2018\u2019\u201A\u201B]/g, "$&$&")
 }
 
-// Returns true if any entry in publisherNames matches the signing certificate subject.
-export function matchPublisherName(data: any, publisherNames: string[], logger: { warn(message?: any): void }): boolean {
-  const subject = parseDn(data.SignerCertificate.Subject)
-  for (const name of publisherNames) {
-    const dn = parseDn(name)
-    if (dn.size) {
-      // if we have a full DN, compare all values
-      const allKeys = Array.from(dn.keys())
-      if (allKeys.every(key => dn.get(key) === subject.get(key))) {
-        return true
-      }
-    } else if (name === subject.get("CN")!) {
-      logger.warn(`Signature validated using only CN ${name}. Please add your full Distinguished Name (DN) to publisherNames configuration`)
-      return true
-    }
+/**
+ * The attributes every publisher name must specify since electron-updater 7 (electron-builder v27): a publisher name is
+ * the subject Distinguished Name (DN) of the code signing certificate, including at least its Common Name (CN) and
+ * Organization (O), e.g. `CN=My Company, O=My Company, C=US`.
+ */
+export const PUBLISHER_NAME_REQUIRED_DN_ATTRIBUTES: ReadonlyArray<string> = ["CN", "O"]
+
+/**
+ * Whether a configured publisher name is a Distinguished Name that specifies every attribute of
+ * {@link PUBLISHER_NAME_REQUIRED_DN_ATTRIBUTES} with a non-empty value. Only such a name can match a signer in
+ * {@link matchPublisherName}: a bare name (`My Company`) or a DN with the CN only (`CN=My Company`) never does.
+ * Never throws: a value that is not a string (e.g. read from a hand-edited `app-update.yml`) is not valid.
+ */
+export function isValidPublisherNameDn(name: unknown): boolean {
+  if (typeof name !== "string") {
+    return false
   }
-  return false
+  const dn = parseDn(name)
+  return PUBLISHER_NAME_REQUIRED_DN_ATTRIBUTES.every(key => (dn.get(key) ?? "").length > 0)
+}
+
+/** The part of the parsed `Get-AuthenticodeSignature` output (see {@link parseAuthenticodeSignatureOutput}) that {@link matchPublisherName} reads. */
+export interface AuthenticodeSignerCertificateData {
+  readonly SignerCertificate?: { readonly Subject?: unknown } | null
+}
+
+/**
+ * Returns true if any entry in publisherNames matches the subject of the signing certificate (in the format Windows
+ * reports it, `X509Certificate2.Subject`): an entry matches when it is a valid publisher name DN
+ * ({@link isValidPublisherNameDn}) and every attribute it specifies equals the subject's value for the same key
+ * (attribute order and subject attributes the entry does not specify are ignored). Any other entry never matches.
+ *
+ * Throws a `TypeError` when the signature carries no signer certificate subject.
+ */
+export function matchPublisherName(data: AuthenticodeSignerCertificateData, publisherNames: ReadonlyArray<string>): boolean {
+  const subjectText = data.SignerCertificate?.Subject
+  if (typeof subjectText !== "string") {
+    throw new TypeError("the Authenticode signature has no signer certificate subject")
+  }
+  const subject = parseDn(subjectText)
+  return publisherNames.some(name => {
+    if (!isValidPublisherNameDn(name)) {
+      return false
+    }
+    for (const [key, value] of parseDn(name)) {
+      if (subject.get(key) !== value) {
+        return false
+      }
+    }
+    return true
+  })
 }
 
 export function parseAuthenticodeSignatureOutput(out: string): any {

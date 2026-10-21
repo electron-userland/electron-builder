@@ -11,7 +11,7 @@ import { DOWNLOAD_PROGRESS, DownloadExecutorResult, verificationFailureMessage }
 import type { VerifyUpdateCodeSignature, VerifyUpdateFileAuthenticodeSignature, VerifyUpdateFileResult } from "./types.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import fsExtra from "fs-extra"
-import { verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
+import { publisherNameDnNote, verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
 
 const require = createRequire(import.meta.url)
@@ -74,8 +74,15 @@ export class NsisUpdater extends BaseUpdater {
     }
   }
 
-  private readonly _defaultVerifyUpdateFileAuthenticodeSignature: VerifyUpdateFileAuthenticodeSignature = (publisherNames: Array<string>, unescapedTempUpdateFile: string) =>
-    verifySignature(publisherNames, unescapedTempUpdateFile, this._logger)
+  private readonly _defaultVerifyUpdateFileAuthenticodeSignature: VerifyUpdateFileAuthenticodeSignature = (publisherNames: Array<string>, unescapedTempUpdateFile: string) => {
+    // a v27 behaviour change an app built with an older electron-builder (or configured at runtime) would otherwise only
+    // notice as rejected updates: announced once per updater, and repeated in the failure message
+    const note = publisherNameDnNote(publisherNames)
+    if (note != null) {
+      this.limitedLogger("publisher-name-not-dn").warn(note)
+    }
+    return verifySignature(publisherNames, unescapedTempUpdateFile, this._logger)
+  }
 
   protected _verifyUpdateFileAuthenticodeSignature: VerifyUpdateFileAuthenticodeSignature = this._defaultVerifyUpdateFileAuthenticodeSignature
 

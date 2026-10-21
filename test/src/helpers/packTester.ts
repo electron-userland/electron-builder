@@ -29,7 +29,7 @@ import { Format, NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
 import { getCollectorByPackageManager, PM } from "app-builder-lib/internal"
 import { promisify } from "util"
-import { macSigningCredentialsInfo, winSigningCredentialsInfo } from "./codeSignData"
+import { macSigningCredentialsInfo, WIN_SIGNING_PUBLISHER_NAME, winSigningCredentialsInfo } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
 // @ts-ignore
@@ -1096,11 +1096,11 @@ export async function getWindowsSigningIdentity(): Promise<SelfSignedIdentity> {
 
 /**
  * The `publisherName` a Windows build signed with getWindowsSigningIdentity (`signedWin`) writes to app-update.yml when none is
- * configured: the common name of its certificate. A certificate provided via CSC_LINK / WIN_CSC_LINK has one the tests don't know.
+ * configured: the CN, O and C of its certificate subject. A certificate provided via CSC_LINK / WIN_CSC_LINK has one the tests don't know.
  */
 export async function expectedWindowsPublisherName(expect: ExpectStatic): Promise<Array<unknown>> {
   const { commonName } = await getWindowsSigningIdentity()
-  return commonName === "provided" ? [expect.any(String)] : [commonName]
+  return commonName === "provided" ? [expect.any(String)] : [WIN_SIGNING_PUBLISHER_NAME]
 }
 
 async function signed(packagerOptions: PackagerOptions, platform: "win" | "mac"): Promise<PackagerOptions> {

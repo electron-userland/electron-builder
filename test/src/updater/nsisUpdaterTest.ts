@@ -390,7 +390,7 @@ test.ifNotWindows("valid signature", config, async ({ expect }) => {
     updater.updateConfigPath = await writeUpdateConfig({
       provider: "generic",
       url,
-      publisherName: ["Vladimir Krivosheev"],
+      publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev"],
     })
     await validateDownload(expect, updater)
   } finally {
@@ -405,7 +405,7 @@ test.ifNotWindows("valid signature - multiple publisher DNs", config, async ({ e
     updater.updateConfigPath = await writeUpdateConfig({
       provider: "generic",
       url,
-      publisherName: ["Foo Bar", "CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE", "Bar Foo"],
+      publisherName: ["CN=Foo Bar, O=Foo Bar", "CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE", "CN=Bar Foo, O=Bar Foo"],
     })
     await validateDownload(expect, updater)
   } finally {
@@ -437,7 +437,7 @@ test.ifWindows("invalid signature", config, async ({ expect }) => {
     updater.updateConfigPath = await writeUpdateConfig({
       provider: "generic",
       url,
-      publisherName: ["Foo Bar"],
+      publisherName: ["CN=Foo Bar, O=Foo Bar"],
     })
     const actualEvents = trackEvents(updater)
     await assertThat(

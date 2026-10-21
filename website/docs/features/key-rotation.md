@@ -141,10 +141,10 @@ Two things happen when a Windows certificate changes: the OS and SmartScreen see
 
 ### How the updater checks the certificate
 
-When `win.verifyUpdateCodeSignature` is `true` (the default), electron-builder writes the resolved publisher name into `app-update.yml` as `publisherName`. It is either what you configured in `win.sign.publisherName` (a string or an array) or, when not configured, the Common Name of the signing certificate. When electron-builder cannot read the signing certificate (a custom `sign` hook without a certificate, or a certificate without a CN), the build fails unless `publisherName` is set. At update time the NSIS updater reads that value and runs `Get-AuthenticodeSignature` on the downloaded installer:
+When `win.verifyUpdateCodeSignature` is `true` (the default), electron-builder writes the resolved publisher name into `app-update.yml` as `publisherName`. It is either what you configured in `win.sign.publisherName` (a string or an array of certificate subject DNs, each including `CN` and `O`) or, when not configured, the `CN`, `O` and (when present) `C` of the signing certificate's subject. When electron-builder cannot read the signing certificate (a custom `sign` hook without a certificate, or a certificate without a CN or O), the build fails unless `publisherName` is set. At update time the NSIS updater reads that value and runs `Get-AuthenticodeSignature` on the downloaded installer:
 
 - The installer must carry a **valid** Authenticode signature.
-- The signer's Subject is compared against **each** configured publisher name. A full Distinguished Name (`CN=..., O=..., C=...`) matches when every component you listed equals the certificate's; a bare `CN=` value matches on the Common Name alone (with a warning asking you to configure the full DN).
+- The signer's Subject is compared against **each** configured publisher name. A Distinguished Name with at least `CN` and `O` (`CN=..., O=..., C=...`) matches when every component you listed equals the certificate's; a bare name or a DN without both `CN` and `O` never matches (since electron-updater 7, see [the v27 migration guide](../migration/v27-breaking-changes.md#windows-publishername-must-be-a-distinguished-name)).
 - If **any** entry matches, the update is installed. If none matches, the update is rejected.
 - If `app-update.yml` has no `publisherName` at all, verification is skipped with a deprecation warning (this fail-open behavior becomes fail-closed in v28).
 

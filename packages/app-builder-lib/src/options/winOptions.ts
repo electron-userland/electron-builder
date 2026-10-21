@@ -64,7 +64,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    *
    * When enabled (the default), the resolved [publisher name](#publisherName) is embedded into
    * `app-update.yml` at build time. At update time electron-updater inspects the certificate that
-   * signed the downloaded installer and compares its subject (Distinguished Name / Common Name)
+   * signed the downloaded installer and compares its subject (Distinguished Name)
    * against that publisher name, refusing to install on a mismatch. This prevents a tampered or
    * maliciously substituted update from being installed.
    *
@@ -114,9 +114,14 @@ export type RequestedExecutionLevel = "asInvoker" | "highestAvailable" | "requir
  */
 interface WindowsSigningSharedOptions {
   /**
-   * The publisher name(s) to associate with the signature, written exactly as the subject appears
-   * in your code signing certificate. May be a single string or an array — an array is useful when
-   * rotating certificates, so updates signed by either the old or the new certificate still verify.
+   * The publisher name(s) to associate with the signature: the subject Distinguished Name (DN) of
+   * your code signing certificate, including at least its `CN` and `O` and written with the attribute
+   * names Windows uses (e.g. `CN=My Company, O=My Company, C=US`). Every attribute you list must equal
+   * the certificate's; attributes you leave out are not compared. A bare name (`My Company`) or a DN
+   * with the `CN` only fails the build since v27, because electron-updater 7 never matches it — see
+   * [the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).
+   * May be a single string or an array — an array is useful when rotating certificates, so updates
+   * signed by either the old or the new certificate still verify.
    *
    * This value is not a `signtool` argument; it is consumed in two places:
    * - **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is
@@ -126,10 +131,10 @@ interface WindowsSigningSharedOptions {
    *   subject, so electron-builder derives it from this value (or the certificate) to keep them
    *   in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.
    *
-   * Defaults to the Common Name (CN) extracted from your code signing certificate. **Required**
-   * (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom
-   * [sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —
-   * otherwise the build fails. Set to `null` to opt out.
+   * Defaults to the `CN`, `O` and (when present) `C` of your code signing certificate's subject.
+   * **Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a
+   * custom [sign](#sign) hook, even if a certificate is configured, and for a certificate without a
+   * CN or O — otherwise the build fails. Set to `null` to opt out.
    *
    * @see https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073
    */
@@ -359,10 +364,13 @@ export interface WindowsAzureSigningConfig {
   readonly type: "azure"
 
   /**
-   * The publisher name to associate with the signature, exactly as it appears in the certificate
-   * issued by your Trusted Signing certificate profile. Required. Used for
+   * The publisher name to associate with the signature: the subject Distinguished Name (DN) of the
+   * certificate issued by your Trusted Signing certificate profile, including at least its `CN` and
+   * `O` (e.g. `CN=My Company, O=My Company, C=US`). Required. Used for
    * [update verification](#verifyUpdateCodeSignature) (embedded in `app-update.yml` and checked by
-   * electron-updater) and must match the certificate subject.
+   * electron-updater) and must match the certificate subject. A bare name or a DN with the `CN`
+   * only fails the build since v27 — see
+   * [the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).
    *
    * @see https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073
    */

@@ -9,6 +9,7 @@ import {
   NSIS_WEB_ADVISORY,
   pdbFilesPatternsAdvisory,
   PORTABLE_DEBUG_LOGGING_DROPPED,
+  WIN_PUBLISHER_NAME_DN_ADVISORY,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
 } from "../../packages/electron-builder/src/cli/migrate-schema"
 import { loadTypeScript, migrateProgrammaticSource } from "../../packages/electron-builder/src/cli/migrate-schema-programmatic"
@@ -849,11 +850,11 @@ describe("migrateProgrammaticSource — updater advisories", () => {
     ])("%s emits the advisory", body => expectAdvisories(body, [WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY]))
 
     test.each([
-      `{ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: "CN=Acme" } } }`,
-      `{ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: ["CN=Old", "CN=New"] } } }`,
+      `{ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: "CN=Acme, O=Acme" } } }`,
+      `{ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: ["CN=Old, O=Old", "CN=New, O=New"] } } }`,
       `{ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: null } } }`,
       `{ win: { sign: { type: "signtool", sign: "./sign.js" }, verifyUpdateCodeSignature: false } }`,
-      `{ win: { sign: { type: "signtool", sign: "./sign.js", certificateFile: "c.pfx", publisherName: "CN=Acme" } } }`,
+      `{ win: { sign: { type: "signtool", sign: "./sign.js", certificateFile: "c.pfx", publisherName: "CN=Acme, O=Acme" } } }`,
       `{ win: { sign: { type: "signtool", sign: null } } }`,
       `{ win: { sign: { type: "signtool" } } }`,
       `{ win: { sign: false } }`,
@@ -874,7 +875,7 @@ describe("migrateProgrammaticSource — updater advisories", () => {
     test("a v26 hook is not flagged when signing was disabled, it has a publisherName, or win.sign is already set", () => {
       expectAdvisories(`{ win: { signExecutable: false, signtoolOptions: { sign: "./sign.js" } } }`, [])
       expectAdvisories(`{ win: { signAndEditExecutable: false, signtoolOptions: { sign: "./sign.js" } } }`, [])
-      expectAdvisories(`{ win: { signtoolOptions: { sign: "./sign.js", publisherName: "CN=Acme" } } }`, [])
+      expectAdvisories(`{ win: { signtoolOptions: { sign: "./sign.js", publisherName: "CN=Acme, O=Acme" } } }`, [])
       // a cscLink doesn't suppress it
       expectAdvisories(`{ cscLink: "c.pfx", win: { signtoolOptions: { sign: "./sign.js", type: "hsm" } } }`, [WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
       expectAdvisories(`{ win: { sign: { type: "signtool", certificateFile: "c.pfx" }, signtoolOptions: { sign: "./sign.js" } } }`, [])
@@ -959,6 +960,29 @@ describe("migrateProgrammaticSource — updater advisories", () => {
   })
 })
 
+describe("migrateProgrammaticSource — win.sign.publisherName that is not a CN + O distinguished name", () => {
+  test.each([
+    `{ win: { sign: { type: "signtool", certificateFile: "c.pfx", publisherName: "Acme Corp" } } }`,
+    `{ win: { sign: { type: "signtool", certificateFile: "c.pfx", publisherName: "CN=Acme Corp" } } }`,
+    `{ win: { sign: { type: "signtool", certificateFile: "c.pfx", publisherName: ["CN=Acme Corp, O=Acme Corp", "Old Corp"] } } }`,
+    `{ win: { sign: { type: "signtool", certificateFile: "c.pfx", publisherName: ("Acme Corp" as string) } } }`,
+    '{ win: { sign: { type: "signtool", certificateFile: "c.pfx", publisherName: `CN=Acme Corp` } } }',
+    `{ win: { signtoolOptions: { certificateFile: "c.pfx", publisherName: "CN=Acme" } } }`,
+    `{ win: { azureSignOptions: { endpoint: "https://e/", publisherName: "Acme" } } }`,
+  ])("%s emits the advisory", body => expectAdvisories(body, [WIN_PUBLISHER_NAME_DN_ADVISORY]))
+
+  test.each([
+    `{ win: { sign: { type: "signtool", certificateFile: "c.pfx", publisherName: "CN=Acme Corp, O=Acme Corp, C=US" } } }`,
+    `{ win: { sign: { type: "signtool", certificateFile: "c.pfx", publisherName: null } } }`,
+    `{ win: { sign: { type: "signtool", certificateFile: "c.pfx" } } }`,
+    // a value the AST cannot read is skipped
+    `{ win: { sign: { type: "signtool", certificateFile: "c.pfx", publisherName: process.env.PUBLISHER } } }`,
+    `{ win: { sign: { type: "signtool", certificateFile: "c.pfx", publisherName: [process.env.PUBLISHER] } } }`,
+    `{ win: { signExecutable: false, signtoolOptions: { publisherName: "Acme" } } }`,
+    `{ win: { sign: { type: "signtool", certificateFile: "c.pfx" }, signtoolOptions: { publisherName: "Acme" } } }`,
+  ])("%s emits nothing", body => expectAdvisories(body, []))
+})
+
 describe("migrateProgrammaticSource — advisories match migrateConfig (parity)", () => {
   const hook = { type: "signtool", sign: "./sign.js" }
   const feed = { provider: "generic", url: "https://u.example.com/?token=t" }
@@ -988,9 +1012,16 @@ describe("migrateProgrammaticSource — advisories match migrateConfig (parity)"
     hookNoType: { cscLink: "c.pfx", win: { sign: { sign: "./sign.js" } } },
     hookVerifyTrue: { win: { sign: hook, verifyUpdateCodeSignature: true } },
     hookVerifyFalse: { win: { sign: hook, verifyUpdateCodeSignature: false } },
-    hookPublisherName: { win: { sign: { ...hook, publisherName: "CN=Acme" } } },
+    hookPublisherName: { win: { sign: { ...hook, publisherName: "CN=Acme, O=Acme" } } },
     hookPublisherNameNull: { win: { sign: { ...hook, publisherName: null } } },
-    hookPublisherNameArray: { win: { sign: { ...hook, publisherName: ["CN=Old", "CN=New"] } } },
+    hookPublisherNameArray: { win: { sign: { ...hook, publisherName: ["CN=Old, O=Old", "CN=New, O=New"] } } },
+    publisherNameBare: { win: { sign: { type: "signtool", certificateFile: "c.pfx", publisherName: "Acme" } } },
+    publisherNameCnOnly: { win: { sign: { ...hook, publisherName: "CN=Acme" } } },
+    publisherNameArrayMixed: { win: { sign: { type: "hsm", cryptoServiceProvider: "p", keyContainer: "k", publisherName: ["CN=Acme, O=Acme", "Old"] } } },
+    publisherNameNotString: { win: { sign: { type: "signtool", publisherName: 42 } } },
+    publisherNameV26Azure: { win: { azureSignOptions: { endpoint: "https://e/", publisherName: "CN=Acme" } } },
+    publisherNameV26AzureValid: { win: { azureSignOptions: { endpoint: "https://e/", publisherName: "CN=Acme, O=Acme" } } },
+    publisherNameV26SignExecutableFalse: { win: { signExecutable: false, signtoolOptions: { publisherName: "Acme" } } },
     hookCertificateFile: { win: { sign: { ...hook, certificateFile: "c.pfx" } } },
     hookCertificateFileNull: { win: { sign: { ...hook, certificateFile: null } } },
     hookCertificateSubjectName: { win: { sign: { ...hook, certificateSubjectName: "Acme" } } },
@@ -1004,7 +1035,7 @@ describe("migrateProgrammaticSource — advisories match migrateConfig (parity)"
     signFalse: { win: { sign: false } },
     signNull: { win: { sign: null } },
     v26Signtool: { win: { signtoolOptions: { sign: "./sign.js", signingHashAlgorithms: ["sha256"] } } },
-    v26SigntoolPublisherName: { win: { signtoolOptions: { sign: "./sign.js", publisherName: "CN=Acme" } } },
+    v26SigntoolPublisherName: { win: { signtoolOptions: { sign: "./sign.js", publisherName: "CN=Acme, O=Acme" } } },
     v26SigntoolTypeForced: { cscLink: "c.pfx", win: { signtoolOptions: { sign: "./sign.js", type: "hsm" } } },
     v26SignNull: { win: { sign: null, signtoolOptions: { sign: "./sign.js" } } },
     v26SignExecutableFalse: { win: { signExecutable: false, signtoolOptions: { sign: "./sign.js" } } },
@@ -1017,7 +1048,7 @@ describe("migrateProgrammaticSource — advisories match migrateConfig (parity)"
     v26AzureNull: { win: { azureSignOptions: null, signtoolOptions: { sign: "./sign.js" } } },
     v26SignFalse: { win: { sign: false, signtoolOptions: { sign: "./sign.js" } } },
     v26SignTrue: { win: { sign: true, signtoolOptions: { sign: "./sign.js" } } },
-    v26SignSetIgnoresLegacyPublisherName: { win: { sign: { sign: "./sign.js" }, signtoolOptions: { publisherName: "CN=Acme" } } },
+    v26SignSetIgnoresLegacyPublisherName: { win: { sign: { sign: "./sign.js" }, signtoolOptions: { publisherName: "CN=Acme, O=Acme" } } },
     v26WinCscLink: { win: { signtoolOptions: { sign: "./sign.js" }, cscLink: "c.pfx" } },
     v26SignExecutableNull: { win: { signExecutable: null, signtoolOptions: { sign: "./sign.js" } } },
     v26Undefined: { win: { sign: undefined, signExecutable: undefined, azureSignOptions: undefined, signtoolOptions: { sign: "./sign.js" } } },
@@ -1108,7 +1139,14 @@ describe("migrateProgrammaticSource — advisories match migrateConfig (parity)"
     const results = Object.values(configs).map(config => migrateConfig(config).advisories)
     const pdbFilesAdvisories = results.map(it => it.filter(advisory => advisory.startsWith("files patterns that name .pdb files detected")))
     expect(pdbFilesAdvisories.filter(it => it.length > 0)).toHaveLength(5)
-    for (const advisory of [NSIS_WEB_ADVISORY, MAC_ENTITLEMENTS_ADVISORY, NSIS_PER_MACHINE_UPDATE_ADVISORY, WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, FEED_QUERY_ADVISORY]) {
+    for (const advisory of [
+      NSIS_WEB_ADVISORY,
+      MAC_ENTITLEMENTS_ADVISORY,
+      NSIS_PER_MACHINE_UPDATE_ADVISORY,
+      WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
+      WIN_PUBLISHER_NAME_DN_ADVISORY,
+      FEED_QUERY_ADVISORY,
+    ]) {
       expect(results.some(it => it.includes(advisory))).toBe(true)
       expect(results.some(it => !it.includes(advisory))).toBe(true)
     }

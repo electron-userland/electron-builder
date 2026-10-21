@@ -22,7 +22,7 @@ import { createSelfSignedCodeSigningIdentity } from "./selfSignedIdentity"
 export interface WindowsSignedFixture {
   /** Certificate Subject exactly as PowerShell/.NET reports it (RDN order may differ from the OpenSSL request order). */
   readonly subject: string
-  /** The CN attribute alone, for CN-only publisherNames matching. */
+  /** The CN attribute alone, for building publisher names (with FIXTURE_ADDITIONAL_DN_FIELDS). */
   readonly commonName: string
   /** SHA-1 thumbprint of the certificate installed into LocalMachine\Root — used for cleanup. */
   readonly thumbprint: string

@@ -152,6 +152,19 @@ describe("verifyUpdateInstallerPublisher", () => {
     expect(message).toContain(`Signer certificate subject: ${SUBJECT}`)
     expect(message).toContain("win.sign.publisherName")
     expect(message).toContain("win.verifyUpdateCodeSignature: false")
+    // "Old Corp" is no DN, so the v27 requirement is explained
+    expect(message).toContain("Since electron-builder v27, each publisherName entry must be the subject distinguished name (DN)")
+    expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name")
+  })
+
+  test("a mismatch with only CN + O DNs configured does not explain the DN requirement", async ({ expect, tmpDir }) => {
+    const appOutDir = await createAppOutDir(tmpDir, ["CN=Other Corp, O=Other Corporation"])
+    const error = await verify([appOutDir], signedBy(SUBJECT)).then(
+      () => null,
+      (e: unknown) => e
+    )
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect((error as Error).message).not.toContain("v27-breaking-changes")
   })
 
   test("passes when publisherName matches the full DN", async ({ expect, tmpDir }) => {
@@ -160,25 +173,21 @@ describe("verifyUpdateInstallerPublisher", () => {
     expect(readSigner).toHaveBeenCalledWith(INSTALLER)
   })
 
-  test("passes with a CN-only publisherName and warns, as electron-updater does", async ({ expect, tmpDir }) => {
-    const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
-    try {
-      await expect(verify([await createAppOutDir(tmpDir, "Acme Corp")], signedBy(SUBJECT))).resolves.toBeUndefined()
-      expect(warn).toHaveBeenCalledWith(
-        expect.objectContaining({ subject: SUBJECT }),
-        "Signature validated using only CN Acme Corp. Please add your full Distinguished Name (DN) to publisherNames configuration"
-      )
-    } finally {
-      warn.mockRestore()
-    }
+  test("passes with a partial CN + O DN (attributes it leaves out are not compared)", async ({ expect, tmpDir }) => {
+    await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp, O=Acme Corporation, C=US")], signedBy(SUBJECT))).resolves.toBeUndefined()
+  })
+
+  test("fails with a bare name or a CN-only DN that equals the signer's CN, as electron-updater 7 rejects them", async ({ expect, tmpDir }) => {
+    await expect(verify([await createAppOutDir(tmpDir, "Acme Corp")], signedBy(SUBJECT))).rejects.toThrow(/Since electron-builder v27/)
+    await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp")], signedBy(SUBJECT))).rejects.toThrow(/Since electron-builder v27/)
   })
 
   test("a DN with an OpenSSL-style ST key fails: Windows reports the state as S", async ({ expect, tmpDir }) => {
-    await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp, ST=California")], signedBy(SUBJECT))).rejects.toThrow(InvalidConfigurationError)
+    await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp, O=Acme Corporation, ST=California")], signedBy(SUBJECT))).rejects.toThrow(InvalidConfigurationError)
   })
 
   test("checks a file signed by a custom win.sign.sign hook", async ({ expect, tmpDir }) => {
-    const appOutDir = await createAppOutDir(tmpDir, "CN=Other Corp")
+    const appOutDir = await createAppOutDir(tmpDir, "CN=Other Corp, O=Other Corporation")
     await expect(verify([appOutDir], signedBy(SUBJECT), { signResult: "signed:custom" })).rejects.toThrow(InvalidConfigurationError)
     await expect(verify([await createAppOutDir(tmpDir, SUBJECT)], signedBy(SUBJECT), { signResult: "signed:custom" })).resolves.toBeUndefined()
   })
@@ -207,8 +216,8 @@ describe("verifyUpdateInstallerPublisher", () => {
 
   test("checks the publisherName of every arch's app-update.yml", async ({ expect, tmpDir }) => {
     const matching = await createAppOutDir(tmpDir, SUBJECT)
-    const mismatching = await createAppOutDir(tmpDir, "CN=Other Corp")
-    await expect(verify([matching, mismatching], signedBy(SUBJECT))).rejects.toThrow(/Configured publisherName: CN=Other Corp\n/)
+    const mismatching = await createAppOutDir(tmpDir, "CN=Other Corp, O=Other Corporation")
+    await expect(verify([matching, mismatching], signedBy(SUBJECT))).rejects.toThrow(/Configured publisherName: CN=Other Corp, O=Other Corporation\n/)
   })
 
   test("fails when signing reported success but the file carries no signature", async ({ expect, tmpDir }) => {

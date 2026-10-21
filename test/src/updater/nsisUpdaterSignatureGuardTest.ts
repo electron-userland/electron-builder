@@ -97,6 +97,80 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     expect(logger.warn).not.toHaveBeenCalled()
   })
 
+  // electron-updater 7 matches a publisherName only when it is a certificate subject DN with CN and O. An app-update.yml written by
+  // electron-builder v26 (the certificate's CN), a dev-app-update.yml or a publisherName passed to the verifier may still carry other entries.
+  describe("default verifier: publisherName that is not a certificate subject DN with CN and O", () => {
+    const DN_WARNING = "electron-updater 7 (electron-builder v27)"
+    const DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
+    const dnWarnings = (logger: ReturnType<typeof mockLogger>) => logger.warn.mock.calls.map(call => String(call[0])).filter(message => message.includes(DN_WARNING))
+    // The real verifier runs after the warning: on Windows Get-AuthenticodeSignature fails for the missing file, elsewhere there is no
+    // PowerShell. The outcome is not what these tests are about.
+    const settle = (promise: Promise<unknown>) =>
+      promise.then(
+        () => undefined,
+        () => undefined
+      )
+
+    test("warns once per updater instance, naming the entries, the requirement and the migration guide, without the feed's secrets", { timeout: 120_000 }, async () => {
+      const config = {
+        provider: "generic",
+        url: "https://example.com/updates?token=feed-secret",
+        publisherName: ["My Company", "CN=My Company", "CN=My Company, O=My Company"],
+      } as GenericServerOptions
+      const updater = await createNsisUpdater()
+      updater.updateConfigPath = await writeUpdateConfig(config)
+      const logger = mockLogger()
+      updater.logger = logger
+
+      // @ts-expect-error accessing a private method
+      await settle(updater.verifySignature("/path/to/installer.exe"))
+      // @ts-expect-error accessing a private method
+      await settle(updater.verifySignature("/path/to/installer.exe"))
+
+      const warnings = dnWarnings(logger)
+      expect(warnings).toHaveLength(1)
+      expect(warnings[0]).toContain('publisherName "My Company", "CN=My Company" can never match the signer of an update')
+      expect(warnings[0]).toContain('the full certificate subject distinguished name (DN) including CN and O, e.g. "CN=My Company, O=My Company, C=US"')
+      expect(warnings[0]).toContain("dev-app-update.yml (or the updateConfigPath file)")
+      expect(warnings[0].endsWith(DOCS)).toBe(true)
+      expect(warnings[0]).not.toContain("feed-secret")
+
+      // per instance: another updater announces it again
+      const other = await createNsisUpdater()
+      other.updateConfigPath = await writeUpdateConfig(config)
+      const otherLogger = mockLogger()
+      other.logger = otherLogger
+      // @ts-expect-error accessing a private method
+      await settle(other.verifySignature("/path/to/installer.exe"))
+      expect(dnWarnings(otherLogger)).toHaveLength(1)
+    })
+
+    test("covers a publisherName passed to the default verifier directly (runtime configuration)", { timeout: 120_000 }, async () => {
+      const updater = await createNsisUpdater()
+      const logger = mockLogger()
+      updater.logger = logger
+
+      await settle(updater.verifyUpdateFileAuthenticodeSignature(["Acme Corp"], "/path/to/installer.exe"))
+      await settle(updater.verifyUpdateFileAuthenticodeSignature(["CN=Acme Corp"], "/path/to/installer.exe"))
+
+      const warnings = dnWarnings(logger)
+      expect(warnings).toHaveLength(1)
+      expect(warnings[0]).toContain('publisherName "Acme Corp" can never match')
+    })
+
+    test("does not warn for CN + O DNs, nor for a custom verifier", { timeout: 120_000 }, async () => {
+      const updater = await createNsisUpdater()
+      const logger = mockLogger()
+      updater.logger = logger
+      await settle(updater.verifyUpdateFileAuthenticodeSignature(["CN=Acme Corp, O=Acme Corp, C=US", "CN=Old Corp, O=Old Corp"], "/path/to/installer.exe"))
+      expect(dnWarnings(logger)).toHaveLength(0)
+
+      updater.verifyUpdateFileAuthenticodeSignature = vi.fn(async () => ({ response: "success" as const }))
+      await updater.verifyUpdateFileAuthenticodeSignature(["Acme Corp"], "/path/to/installer.exe")
+      expect(dnWarnings(logger)).toHaveLength(0)
+    })
+  })
+
   describe("legacy verifyUpdateCodeSignature", () => {
     test("setter and getter delegate to verifyUpdateFileAuthenticodeSignature with backwards-compatible interface", async () => {
       const updater = await createNsisUpdater()
