@@ -45,6 +45,19 @@ export interface UpdateFileInfo extends BlockMapDataHolder {
    * electron-builder; covered by the manifest signature when present.
    */
   blockMapUrl?: string
+
+  /**
+   * MSIX only: the package family name (`<Name>_<PublisherId>`) of the `.msixbundle`, recorded at build time. electron-updater refuses an
+   * update of another package family before downloading it. Not covered by the manifest signature (an unsigned hint, like
+   * `isAdminRightsRequired`): the bundle is pinned by the signed `sha512`, and electron-updater only installs an MSIX update from a verified manifest.
+   */
+  readonly packageFamilyName?: string
+
+  /**
+   * MSIX only: the 4-part package version (`Major.Minor.Build.Revision`) of the `.msixbundle`, recorded at build time. electron-updater
+   * refuses one Windows would not install over the running package before downloading it. Unsigned, like `packageFamilyName`.
+   */
+  readonly packageVersion?: string
 }
 
 export interface UpdateInfo {
