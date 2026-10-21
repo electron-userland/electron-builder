@@ -426,7 +426,7 @@
         },
         "disableIntegrity": {
           "default": false,
-          "description": "Whether to skip computing the ASAR integrity hash.\n\nNormally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron\ncan verify it at startup (when the `embeddedAsarIntegrityValidation` fuse is enabled). Set to\n`true` only for custom Electron forks with encrypted ASAR support where the header is not\nreadable by standard tools.",
+          "description": "Whether to skip computing the ASAR integrity hash.\n\nNormally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron\ncan verify it at startup (when the `enableEmbeddedAsarIntegrityValidation` fuse is enabled). Set to\n`true` only for custom Electron forks with encrypted ASAR support where the header is not\nreadable by standard tools. It also skips the macOS ASAR integrity digest (`mac.asarIntegrityDigest`).",
           "type": "boolean"
         },
         "disableSanityCheck": {
@@ -1862,7 +1862,7 @@
           "type": "boolean"
         },
         "enableEmbeddedAsarIntegrityValidation": {
-          "description": "Enables ASAR integrity validation — Electron verifies the embedded SHA-256 hash of\n`app.asar` before loading it.\n\nPlatform support:\n- macOS: Electron ≥ 16.0.0\n- Windows: Electron ≥ 30.0.0\n\nFor this fuse to be meaningful, `asar.disableIntegrity` must **not** be\n`true` (otherwise the hash is not embedded).",
+          "description": "Enables ASAR integrity validation — Electron verifies the embedded SHA-256 hash of\n`app.asar` before loading it.\n\nPlatform support:\n- macOS: Electron ≥ 16.0.0\n- Windows: Electron ≥ 30.0.0\n\nFor this fuse to be meaningful, `asar.disableIntegrity` must **not** be\n`true` (otherwise the hash is not embedded).\n\nOn macOS with Electron ≥ 41, electron-builder also embeds a digest of the `Info.plist` hashes\ninto the Electron Framework (see `mac.asarIntegrityDigest`), so they cannot be changed to match\na modified `app.asar` either.",
           "type": "boolean"
         },
         "enableNodeCliInspectArguments": {
@@ -2972,6 +2972,11 @@
           "default": true,
           "description": "Whether to package the application's source code into an archive, using [Electron's archive format](https://www.electronjs.org/docs/latest/tutorial/asar-archives).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
         },
+        "asarIntegrityDigest": {
+          "default": true,
+          "description": "Whether to embed the [ASAR integrity](https://www.electronjs.org/docs/latest/tutorial/asar-integrity) digest into the Electron Framework binary.\n\nThe digest covers the `ElectronAsarIntegrity` entries of `Info.plist`, so with the `enableEmbeddedAsarIntegrityValidation` fuse (see `electronFuses`) the app refuses to launch if those entries are changed, for example to match a modified `app.asar`. Embedding the digest modifies the Electron Framework, which is then signed again ad hoc; code signing the app replaces that signature.\n\nApplies only when:\n- Electron is 41 or later\n- the build runs on macOS (`codesign` signs the modified framework again)\n- `asar` is enabled and `asar.disableIntegrity` is not `true`\n\nSet to `false` if you change `app.asar` or `Info.plist` after the `afterPack` hook, sign the app yourself in `afterPack`, or merge separately built `x64` and `arm64` apps with `@electron/universal` yourself (build the `universal` arch instead).",
+          "type": "boolean"
+        },
         "bundleShortVersion": {
           "description": "The `CFBundleShortVersionString`. Do not use it unless you need to.",
           "type": [
@@ -3396,6 +3401,11 @@
           ],
           "default": true,
           "description": "Whether to package the application's source code into an archive, using [Electron's archive format](https://www.electronjs.org/docs/latest/tutorial/asar-archives).\n\nNode modules that must be unpacked will be detected automatically. Use {@link AsarOptions.unpack} to specify additional files to unpack."
+        },
+        "asarIntegrityDigest": {
+          "default": true,
+          "description": "Whether to embed the [ASAR integrity](https://www.electronjs.org/docs/latest/tutorial/asar-integrity) digest into the Electron Framework binary.\n\nThe digest covers the `ElectronAsarIntegrity` entries of `Info.plist`, so with the `enableEmbeddedAsarIntegrityValidation` fuse (see `electronFuses`) the app refuses to launch if those entries are changed, for example to match a modified `app.asar`. Embedding the digest modifies the Electron Framework, which is then signed again ad hoc; code signing the app replaces that signature.\n\nApplies only when:\n- Electron is 41 or later\n- the build runs on macOS (`codesign` signs the modified framework again)\n- `asar` is enabled and `asar.disableIntegrity` is not `true`\n\nSet to `false` if you change `app.asar` or `Info.plist` after the `afterPack` hook, sign the app yourself in `afterPack`, or merge separately built `x64` and `arm64` apps with `@electron/universal` yourself (build the `universal` arch instead).",
+          "type": "boolean"
         },
         "bundleShortVersion": {
           "description": "The `CFBundleShortVersionString`. Do not use it unless you need to.",

@@ -3,6 +3,9 @@ import * as path from "path"
 
 export const ELECTRON_VERSION = "39.8.10"
 
+// ELECTRON_VERSION predates the ASAR integrity digest slot (Electron 41+); drop this once ELECTRON_VERSION is 41 or later
+export const ASAR_INTEGRITY_DIGEST_ELECTRON_VERSION = "42.4.0"
+
 // Test builds pin an explicit pacman `depends` list so installing the built .pacman inside a
 // vanilla Arch container works regardless of what the library's default depends list contains
 // (every entry here resolves from the official Arch repositories).
