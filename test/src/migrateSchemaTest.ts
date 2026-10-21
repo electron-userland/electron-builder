@@ -1,12 +1,18 @@
+import { doMergeConfigs } from "app-builder-lib/internal"
+import { Configuration } from "electron-builder"
 import { readFileSync } from "fs"
 import * as path from "path"
 import { describe, expect, test } from "vitest"
 import {
   FEED_QUERY_ADVISORY,
+  INCLUDE_PDB_CHANGES,
+  includePdbManualStep,
   MAC_ENTITLEMENTS_ADVISORY,
   migrateConfig,
   NSIS_PER_MACHINE_UPDATE_ADVISORY,
   NSIS_WEB_ADVISORY,
+  pdbFilesPatternsAdvisory,
+  platformExcludedExtsPdbChange,
   PORTABLE_DEBUG_LOGGING_DROPPED,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
 } from "../../packages/electron-builder/src/cli/migrate-schema"
@@ -112,6 +118,274 @@ describe("migrateConfig — disableDefaultIgnoredFiles", () => {
     expect(result.migrated.win.target).toBe("nsis")
     // root + 5 platforms
     expect(result.changes.filter(c => c.key === "disableDefaultIgnoredFiles")).toHaveLength(6)
+  })
+})
+
+describe("migrateConfig — includePdb", () => {
+  const created = 'moved includePdb: true → fileOptions.excludedExts: ["default", "!pdb"]'
+  const appended = 'moved includePdb: true → "!pdb" in fileOptions.excludedExts'
+  const unneeded = "removed includePdb (fileOptions.excludedExts already keeps .pdb files)"
+  const removed = INCLUDE_PDB_CHANGES.removed
+  const overridesParent = INCLUDE_PDB_CHANGES.overridesParent
+  const listKeepsPdb = INCLUDE_PDB_CHANGES.listKeepsPdb
+  const platformChange = (platform: string) => `added "!pdb" to ${platform}.fileOptions.excludedExts (includePdb: true; a platform-level excludedExts replaces the root one)`
+
+  test('includePdb: true becomes fileOptions.excludedExts: ["default", "!pdb"]', () => {
+    const result = migrateConfig({ appId: "com.a.b", includePdb: true })
+    expect(result.migrated).toEqual({ appId: "com.a.b", fileOptions: { excludedExts: ["default", "!pdb"] } })
+    expect(result.changes).toEqual([{ key: "includePdb", description: created }])
+    expect(result.warnings).toHaveLength(0)
+    expect(result.modified).toBe(true)
+  })
+
+  // v26 validated with ajv `coerceTypes: true`, which reads "false" / 0 / null as false
+  // In v26 it overrode an includePdb: true of another config layer, which a single file does not show, so the v27 default is written out.
+  test.each([false, null, "false", 0])('includePdb: %j becomes fileOptions.excludedExts: ["default"] without touching a platform list', value => {
+    const result = migrateConfig({ appId: "com.a.b", includePdb: value, win: { fileOptions: { excludedExts: ["default"] } } })
+    expect(result.migrated).toEqual({ appId: "com.a.b", fileOptions: { excludedExts: ["default"] }, win: { fileOptions: { excludedExts: ["default"] } } })
+    expect(result.changes).toEqual([{ key: "includePdb", description: overridesParent }])
+    expect(result.warnings).toHaveLength(0)
+    expect(result.modified).toBe(true)
+  })
+
+  // and "true" / 1 as true
+  test.each(["true", 1])("includePdb: %j migrates like true", value => {
+    const result = migrateConfig({ includePdb: value, win: { fileOptions: { excludedExts: ["default"] } } })
+    expect(result.migrated).toEqual({ fileOptions: { excludedExts: ["default", "!pdb"] }, win: { fileOptions: { excludedExts: ["default", "!pdb"] } } })
+    expect(result.changes.map(c => c.description)).toEqual([created, platformChange("win")])
+  })
+
+  // v26 rejected any other value; keeping it makes the build guard report it
+  test.each<unknown>(["yes", "TRUE", 2, [true], { value: true }])("includePdb: %j, which v26 rejected, is kept with a warning", value => {
+    const input = { includePdb: value, extends: "./base.json" }
+    const result = migrateConfig(structuredClone(input))
+    expect(result.migrated).toEqual(input)
+    expect(result.modified).toBe(false)
+    expect(result.changes).toHaveLength(0)
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain('includePdb is not a boolean (v26 accepted true / false, "true" / "false", 1 / 0 and null), so it was left in place.')
+  })
+
+  test.each<[string, unknown, unknown]>([
+    ["a file", false, "./base.json"],
+    ["a list of files", "false", ["./a.json", "./b.json"]],
+    ["a file (null)", null, "./base.json"],
+    ["a preset (0)", 0, "react-cra"],
+    ["nothing (extends: null)", false, null],
+  ])('includePdb: false in a config that extends %s becomes excludedExts: ["default"] as well', (_name, value, parent) => {
+    const result = migrateConfig({ extends: parent, includePdb: value, files: ["dist/**"], win: { fileOptions: { excludedExts: ["default"] } } })
+    expect(result.migrated).toEqual({ extends: parent, fileOptions: { files: ["dist/**"], excludedExts: ["default"] }, win: { fileOptions: { excludedExts: ["default"] } } })
+    expect(result.changes.map(c => c.description)).toEqual(["moved files → fileOptions.files", overridesParent])
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  // v26 merged a later entry of an extends list over an earlier one, so release.json's false beat base.json's true; release.json has no
+  // extends of its own, so only the written-out ["default"] (a later excludedExts replaces an earlier one) keeps that.
+  test('includePdb: false in a config listed after another in an extends list becomes excludedExts: ["default"], which still overrides that one\'s includePdb: true', () => {
+    const base = migrateConfig({ includePdb: true }).migrated
+    const release = migrateConfig({ includePdb: false })
+    expect(release.migrated).toEqual({ fileOptions: { excludedExts: ["default"] } })
+    expect(release.changes).toEqual([{ key: "includePdb", description: overridesParent }])
+    const child = migrateConfig({ extends: ["./base.json", "./release.json"] }).migrated
+    const merge = (...configs: Record<string, any>[]) => doMergeConfigs(configs as Configuration[]).fileOptions?.excludedExts
+    expect(merge(base, release.migrated, child)).toEqual(["default"])
+    // removed instead, the base's list would keep .pdb files
+    expect(merge(base, {}, child)).toEqual(["default", "!pdb"])
+  })
+
+  test.each<[string, string[] | string | null, string[] | string, string]>([
+    ["an existing list is kept, since it already replaces another layer's", ["default", "map"], ["default", "map"], removed],
+    // the list ships .pdb files, which the description says instead of "excluded by default"
+    ["a list without .pdb files is kept", ["map"], ["map"], listKeepsPdb],
+    ["an empty list is kept", [], [], listKeepsPdb],
+    ['a list with "!pdb" is kept', ["default", "!pdb"], ["default", "!pdb"], listKeepsPdb],
+    // a single string is a one-entry list
+    ["a string list is kept", "default", "default", removed],
+    ["a string list without .pdb files is kept", "map", "map", listKeepsPdb],
+    ["a null list is replaced", null, ["default"], overridesParent],
+  ])("includePdb: false next to a root fileOptions.excludedExts: %s", (_name, list, expected, description) => {
+    const result = migrateConfig({ includePdb: false, fileOptions: { excludedExts: list } })
+    expect(result.migrated).toEqual({ fileOptions: { excludedExts: expected } })
+    expect(result.changes).toEqual([{ key: "includePdb", description }])
+  })
+
+  test("includePdb: false is kept with a warning when fileOptions is not an object", () => {
+    const input = { includePdb: false, fileOptions: ["x"] }
+    const result = migrateConfig(structuredClone(input))
+    expect(result.migrated).toEqual(input)
+    expect(result.warnings).toEqual([`fileOptions is not an object; ${includePdbManualStep(false)}`])
+    expect(result.warnings[0]).toContain('replace includePdb: false with fileOptions.excludedExts: ["default"] manually')
+  })
+
+  test("joins the fileOptions the flat keys move into, or an existing (or null) fileOptions", () => {
+    const withFiles = migrateConfig({ includePdb: true, files: ["dist/**"] })
+    expect(withFiles.migrated).toEqual({ fileOptions: { files: ["dist/**"], excludedExts: ["default", "!pdb"] } })
+    expect(withFiles.changes.map(c => c.description)).toEqual(["moved files → fileOptions.files", created])
+    expect(migrateConfig({ includePdb: true, extraFiles: ["e"], fileOptions: { files: ["dist/**"] } }).migrated).toEqual({
+      fileOptions: { files: ["dist/**"], extraFiles: ["e"], excludedExts: ["default", "!pdb"] },
+    })
+    expect(migrateConfig({ includePdb: true, fileOptions: null }).migrated).toEqual({ fileOptions: { excludedExts: ["default", "!pdb"] } })
+  })
+
+  test.each<[string, string[] | string | null, string[] | string, string]>([
+    ['a list with "default" gets "!pdb"', ["default", "map"], ["default", "map", "!pdb"], appended],
+    // a single string is a one-entry list
+    ['a string "default" becomes a list with "!pdb"', "default", ["default", "!pdb"], appended],
+    ['a string "pdb" becomes a list with "!pdb"', "pdb", ["pdb", "!pdb"], appended],
+    ['a string without "default" already keeps .pdb files', "map", "map", unneeded],
+    ['a list with "pdb" gets "!pdb"', ["map", ".pdb"], ["map", ".pdb", "!pdb"], appended],
+    ['"!pdb" is not added twice', ["default", "!pdb"], ["default", "!pdb"], unneeded],
+    // "!pdb" would only make the build warn that it has no effect
+    ['a list without "default" already keeps .pdb files', ["map"], ["map"], unneeded],
+    ["an empty list already keeps .pdb files", [], [], unneeded],
+    ["a null list is replaced", null, ["default", "!pdb"], created],
+  ])("an existing root fileOptions.excludedExts: %s", (_name, list, expected, description) => {
+    const result = migrateConfig({ includePdb: true, fileOptions: { excludedExts: list } })
+    expect(result.migrated).toEqual({ fileOptions: { excludedExts: expected } })
+    expect(result.changes).toEqual([{ key: "includePdb", description }])
+  })
+
+  test('"!pdb" is added to each platform-level excludedExts that excludes .pdb files, since it replaces the root one', () => {
+    const result = migrateConfig({
+      includePdb: true,
+      mac: { fileOptions: { excludedExts: ["default"] } },
+      mas: { fileOptions: { excludedExts: ["map"] } },
+      masDev: { fileOptions: { excludedExts: null } },
+      win: { files: ["w/**"], fileOptions: { excludedExts: ["default", "map"] } },
+      linux: { fileOptions: { excludedExts: ["default", "!pdb"] } },
+    })
+    expect(result.migrated).toEqual({
+      fileOptions: { excludedExts: ["default", "!pdb"] },
+      mac: { fileOptions: { excludedExts: ["default", "!pdb"] } },
+      mas: { fileOptions: { excludedExts: ["map"] } },
+      masDev: { fileOptions: { excludedExts: null } },
+      win: { fileOptions: { files: ["w/**"], excludedExts: ["default", "map", "!pdb"] } },
+      linux: { fileOptions: { excludedExts: ["default", "!pdb"] } },
+    })
+    expect(result.changes.map(c => c.description)).toEqual(["moved win.files → win.fileOptions.files", created, platformChange("mac"), platformChange("win")])
+    expect(result.changes.map(c => c.key).slice(2)).toEqual(["mac.fileOptions.excludedExts", "win.fileOptions.excludedExts"])
+  })
+
+  test('a platform-level string excludedExts that excludes .pdb files becomes a list with "!pdb"', () => {
+    const result = migrateConfig({
+      includePdb: true,
+      win: { fileOptions: { excludedExts: "default" } },
+      linux: { fileOptions: { excludedExts: "map" } },
+      mac: { fileOptions: { excludedExts: "!pdb" } },
+    })
+    expect(result.migrated).toEqual({
+      fileOptions: { excludedExts: ["default", "!pdb"] },
+      win: { fileOptions: { excludedExts: ["default", "!pdb"] } },
+      linux: { fileOptions: { excludedExts: "map" } },
+      mac: { fileOptions: { excludedExts: "!pdb" } },
+    })
+    expect(result.changes.map(c => c.description)).toEqual([created, platformChange("win")])
+    expect(result.warnings).toHaveLength(0)
+  })
+
+  test.each<[string, Record<string, any>]>([
+    ["fileOptions is not an object", { includePdb: true, fileOptions: ["x"] }],
+    ["fileOptions.excludedExts is not a string or an array", { includePdb: true, fileOptions: { excludedExts: { ext: "pdb" } } }],
+  ])("includePdb: true is kept with a warning when %s", (problem, input) => {
+    const result = migrateConfig(structuredClone(input))
+    expect(result.migrated).toEqual(input)
+    expect(result.modified).toBe(false)
+    expect(result.warnings).toEqual([`${problem}; replace includePdb: true with fileOptions.excludedExts: ["default", "!pdb"] manually.`])
+  })
+
+  test('includePdb: true kept next to a root list it cannot migrate still adds "!pdb" to a platform list, which replaces the root one', () => {
+    const input = { includePdb: true, fileOptions: { excludedExts: { ext: "pdb" } }, win: { fileOptions: { excludedExts: ["default"] } } }
+    const result = migrateConfig(structuredClone(input))
+    expect(result.migrated).toEqual({ ...input, win: { fileOptions: { excludedExts: ["default", "!pdb"] } } })
+    expect(result.changes).toEqual([platformExcludedExtsPdbChange("win")])
+    expect(result.warnings).toEqual(['fileOptions.excludedExts is not a string or an array; replace includePdb: true with fileOptions.excludedExts: ["default", "!pdb"] manually.'])
+    expect(migrateConfig(result.migrated).changes).toHaveLength(0)
+  })
+
+  test("a second run makes no changes", () => {
+    const first = migrateConfig({ includePdb: true, files: ["dist/**"], win: { fileOptions: { excludedExts: ["default"] } } })
+    const second = migrateConfig(first.migrated)
+    expect(second.modified).toBe(false)
+    expect(second.changes).toHaveLength(0)
+    expect(second.warnings).toHaveLength(0)
+    expect(second.migrated).toEqual(first.migrated)
+  })
+})
+
+// v26 excluded .pdb files whatever `files` said unless includePdb was true; in v27 a pattern that names them includes the ones it matches,
+// also in a config that extends this one (e.g. a release layer migrated from includePdb: false).
+describe("migrateConfig — files patterns that name .pdb files", () => {
+  test("the advisory names each pattern with the key that sets it", () => {
+    const patterns = [
+      { key: "fileOptions.files", pattern: "native/*.pdb" },
+      { key: "win.fileOptions.files", pattern: "**/*.{node,pdb}" },
+    ]
+    expect(pdbFilesPatternsAdvisory(patterns)).toBe(
+      'files patterns that name .pdb files detected: fileOptions.files "native/*.pdb", win.fileOptions.files "**/*.{node,pdb}". ' +
+        "In v27 such a pattern ships the .pdb files it matches (v26 excluded .pdb files whatever files said, unless includePdb was true), also in configs that extend this one. " +
+        'To keep them out, remove the pattern, or add a negation after it, such as "!native/*.pdb". ' +
+        "See https://www.electron.build/docs/migration/v27-breaking-changes#includepdb-fileoptionsexcludedexts"
+    )
+  })
+
+  test.each<[string, Record<string, any>, Array<{ key: string; pattern: string }>]>([
+    ["a debug base with includePdb: true", { includePdb: true, files: ["**/*", "native/*.pdb"] }, [{ key: "fileOptions.files", pattern: "native/*.pdb" }]],
+    [
+      "a flat files key next to includePdb: false",
+      { extends: "./base.json", includePdb: false, files: ["**/*", "native/*.pdb"] },
+      [{ key: "fileOptions.files", pattern: "native/*.pdb" }],
+    ],
+    ["a brace alternative, without includePdb", { files: ["dist/**/*", "native/*.{node,pdb}"] }, [{ key: "fileOptions.files", pattern: "native/*.{node,pdb}" }]],
+    ["a single string", { files: "**/*.pdb", asarUnpack: "x" }, [{ key: "fileOptions.files", pattern: "**/*.pdb" }]],
+    [
+      "platform keys, and the filter of a FileSet without from or with from '.'",
+      {
+        npmRebuild: false,
+        linux: { files: { filter: "*.pdb" } },
+        mac: { entitlements: "build/e.plist", files: [{ filter: ["**/*.pdb", "!x.pdb"] }, { from: "native", filter: "*.pdb" }] },
+        win: { fileOptions: { files: [{ from: ".", to: "x", filter: "addon.pdb" }, "**/*"] } },
+      },
+      [
+        { key: "mac.fileOptions.files", pattern: "**/*.pdb" },
+        { key: "win.fileOptions.files", pattern: "addon.pdb" },
+        { key: "linux.fileOptions.files", pattern: "*.pdb" },
+      ],
+    ],
+    [
+      "a FileSet whose from is the app directory spelled './', '' or './.'",
+      { files: [{ from: "./", filter: "a.pdb" }], win: { files: [{ from: "", filter: ["b.pdb"] }] }, linux: { files: [{ from: "./.", filter: "c.pdb" }] } },
+      [
+        { key: "fileOptions.files", pattern: "a.pdb" },
+        { key: "win.fileOptions.files", pattern: "b.pdb" },
+        { key: "linux.fileOptions.files", pattern: "c.pdb" },
+      ],
+    ],
+  ])("%s is advised", (_name, input, patterns) => {
+    const result = migrateConfig(input)
+    expect(result.modified).toBe(true)
+    expect(result.advisories).toEqual([pdbFilesPatternsAdvisory(patterns)])
+  })
+
+  test("an advisory alone does not modify a migrated config", () => {
+    const input = { fileOptions: { files: ["**/*", "native/*.pdb"], excludedExts: ["default"] } }
+    const result = migrateConfig(structuredClone(input))
+    expect(result.migrated).toEqual(input)
+    expect(result.modified).toBe(false)
+    expect(result.changes).toHaveLength(0)
+    expect(result.advisories).toEqual([pdbFilesPatternsAdvisory([{ key: "fileOptions.files", pattern: "native/*.pdb" }])])
+  })
+
+  test.each<[string, Record<string, any>]>([
+    ["a negation", { files: ["**/*", "!**/*.pdb", "!native/*.{node,pdb}"] }],
+    ["another extension", { files: ["**/*", "**/*.pdbx", "**/*.d.ts", "native/**"] }],
+    ["a FileSet from another directory", { files: [{ from: "native", filter: ["*.pdb"] }] }],
+    ["extraResources", { fileOptions: { extraResources: ["*.pdb"], extraFiles: [{ from: ".", filter: "*.pdb" }] } }],
+    // the flat key is dropped, since fileOptions.files is also set
+    ["a flat files key next to fileOptions.files", { files: ["native/*.pdb"], fileOptions: { files: ["**/*"] } }],
+    // the flat key is kept with a warning
+    ["a fileOptions that is not an object", { files: ["native/*.pdb"], fileOptions: ["x"] }],
+  ])("%s is not advised", (_name, input) => {
+    expect(migrateConfig(input).advisories).toHaveLength(0)
   })
 })
 
@@ -1149,6 +1423,10 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
     ["snap core24", { snap: { base: "core24", allowNativeWayland: true, useTemplateApp: false, grade: "stable" } }],
     ["file options", { files: ["dist/**"], extraResources: [{ from: "a", to: "b" }], mac: { extraFiles: "x", files: ["!m/**"] }, masDev: { extraResources: null } }],
     ["file options next to fileOptions", { files: ["flat/**"], fileOptions: { files: ["nested/**"], extraFiles: ["e"] }, win: { extraResources: ["r"], fileOptions: null } }],
+    ["includePdb: true", { includePdb: true, files: ["dist/**"], win: { fileOptions: { excludedExts: ["default", "map"] } } }],
+    ["includePdb: false", { includePdb: false, fileOptions: { files: ["dist/**"] } }],
+    ["includePdb: false in a config that extends another", { extends: "./base.json", includePdb: false, files: ["dist/**"] }],
+    ['includePdb: "true"', { includePdb: "true" }],
     [
       "win signing disabled with legacy options",
       { win: { signExecutable: false, azureSignOptions: { endpoint: "https://e/", certificateProfileName: "p", codeSigningAccountName: "a" } } },
@@ -1162,6 +1440,7 @@ describe("migrateConfig — round-trip: migrator output passes v27 schema valida
         nodeVersion: "current",
         launchUiVersion: "0.1.0",
         disableDefaultIgnoredFiles: true,
+        includePdb: true,
         nodeGypRebuild: false,
         npmRebuild: true,
         nativeRebuilder: "parallel",

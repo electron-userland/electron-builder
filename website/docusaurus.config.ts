@@ -106,6 +106,8 @@ const config: Config = {
 
   plugins: [
     "./scripts/docusaurus-plugin-prebuild.ts",
+    // the /changelog page, built from ../CHANGELOG.md
+    "./scripts/docusaurus-plugin-changelog.ts",
     function suppressPagefindWarning() {
       return {
         name: "suppress-pagefind-warning",
@@ -166,106 +168,9 @@ const config: Config = {
           type: "docSidebar",
           sidebarId: "docsSidebar",
           position: "left",
-          label: "Overview",
+          label: "Docs",
         },
-        {
-          type: "dropdown",
-          label: "Platforms",
-          position: "left",
-          items: [
-            { type: "doc", docId: "targets", label: "All Targets" },
-            { type: "doc", docId: "mac", label: "macOS" },
-            { type: "doc", docId: "win", label: "Windows" },
-            { type: "doc", docId: "linux", label: "Linux" },
-          ],
-        },
-        {
-          type: "dropdown",
-          label: "Configuration",
-          position: "left",
-          items: [
-            { type: "doc", docId: "configuration", label: "Overview" },
-            { type: "doc", docId: "contents", label: "App Contents" },
-            { type: "doc", docId: "file-patterns", label: "File Patterns" },
-            { type: "doc", docId: "architecture", label: "Output Architecture" },
-            { type: "doc", docId: "publish", label: "Publishing" },
-          ],
-        },
-        {
-          type: "dropdown",
-          label: "Features",
-          position: "left",
-          items: [
-            { type: "doc", docId: "features/build-lifecycle", label: "Build Lifecycle" },
-            { type: "doc", docId: "features/hooks", label: "Hooks" },
-            { type: "doc", docId: "features/icons-and-images", label: "Icons & Images" },
-            { type: "doc", docId: "features/auto-update", label: "Auto Update" },
-            { type: "doc", docId: "features/code-signing/code-signing", label: "Code Signing" },
-            { type: "doc", docId: "features/multi-platform-build", label: "Multi Platform Build" },
-            { type: "doc", docId: "features/github-actions", label: "GitHub Actions" },
-            { type: "doc", docId: "features/electron-forge", label: "Electron Forge" },
-          ],
-        },
-        {
-          type: "dropdown",
-          label: "Tutorials",
-          position: "left",
-          items: [
-            { type: "doc", docId: "tutorials/adding-electron-fuses", label: "Adding Electron Fuses" },
-            {
-              type: "doc",
-              docId: "tutorials/loading-app-dependencies-manually",
-              label: "Loading App Dependencies Manually",
-            },
-            { type: "doc", docId: "tutorials/two-package-structure", label: "Two Package Structure" },
-            {
-              type: "doc",
-              docId: "tutorials/macos-kernel-extensions",
-              label: "macOS Kernel Extensions",
-            },
-            {
-              type: "doc",
-              docId: "tutorials/code-signing-windows-apps-on-unix",
-              label: "Code Signing Windows Apps on Unix",
-            },
-            {
-              type: "doc",
-              docId: "tutorials/flatpak-in-ci-and-containers",
-              label: "Flatpak in CI and Containers",
-            },
-            {
-              type: "doc",
-              docId: "tutorials/offline-air-gapped-builds",
-              label: "Offline / Air-Gapped Builds",
-            },
-            {
-              type: "doc",
-              docId: "tutorials/release-using-channels",
-              label: "Release Using Channels",
-            },
-            {
-              type: "doc",
-              docId: "tutorials/test-update-on-s3-locally",
-              label: "Test Update on S3 Locally",
-            },
-            { type: "doc", docId: "troubleshooting", label: "Troubleshooting" },
-          ],
-        },
-
-        {
-          type: "doc",
-          docId: "migration/v27-breaking-changes",
-          position: "left",
-          label: "v27 Breaking Changes",
-        },
-
-        {
-          type: "docSidebar",
-          sidebarId: "migrationSidebar",
-          position: "left",
-          label: "Migration",
-        },
-
+        { to: "/changelog", label: "Changelog", position: "left" },
         {
           // Version switcher, generated from docs-versions.json. Each entry
           // points at the root of a separate Docusaurus instance, so the links

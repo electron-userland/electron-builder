@@ -1,9 +1,10 @@
 import { ToolsetConfig } from "app-builder-lib"
-import { getWindowsVm, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
+import { AsarIntegrity, getWindowsVm, parsePlistFile, ParallelsVmManager, PM, VmManager } from "app-builder-lib/internal"
+import { ASAR_INTEGRITY_DIGEST_SENTINEL, computeAsarIntegrityDigest } from "app-builder-lib/src/electron/mac/asarIntegrityDigest"
 import { computeUpdateManifestKeyId, GenericServerOptions, hashFile, Nullish, UpdateInfo, verifyManifestSignatures, WindowsUpdateInfo } from "builder-util-runtime"
 import { archFromString, deepAssign, DebugLogger, generateUpdateSigningKeypair, log, serializeToYaml, TmpDir } from "builder-util"
 import { Arch, Configuration, Platform } from "electron-builder"
-import { copy, emptyDir, existsSync, move, outputFile, readJson, readJsonSync, remove } from "fs-extra"
+import { copy, emptyDir, existsSync, move, outputFile, readFile, readJson, readJsonSync, remove } from "fs-extra"
 import { homedir } from "os"
 import path from "path"
 import { randomUUID } from "crypto"
@@ -64,6 +65,9 @@ export async function doBuild(
   versions: Array<string | VersionBuild> = [OLD_VERSION_NUMBER, NEW_VERSION_NUMBER]
 ) {
   const currentPlatform = isWindows ? Platform.WINDOWS : Platform.current()
+  // ELECTRON_VERSION has the ASAR integrity digest slot, so on mac the digest mac.asarIntegrityDigest embeds by default is
+  // enforced (enableEmbeddedAsarIntegrityValidation fuse below) on every launch of the installed and the updated app
+  const isMacBuild = currentPlatform === Platform.MAC
   async function buildApp({
     version,
     target,
@@ -88,6 +92,7 @@ export async function doBuild(
         config: Object.assign(
           deepAssign<Configuration>(
             {
+              electronVersion: ELECTRON_VERSION,
               nativeModules: { npmRebuild: true },
               productName: "TestApp",
               executableName: "TestApp",
@@ -185,6 +190,9 @@ export async function doBuild(
       arch,
       extraConfig,
       packed: async context => {
+        if (isMacBuild) {
+          await assertAsarIntegrityDigestEmbedded(expect, context.getContent(Platform.MAC, arch), arch)
+        }
         // move dist temporarily out of project dir so each downloader can reference it
         const dir = await tmpDir.getTempDir({ prefix: version })
         await move(context.outDir, dir)
@@ -218,6 +226,23 @@ export async function doBuild(
 async function assertEmbeddedPublisherName(expect: ExpectStatic, distDir: string): Promise<void> {
   const { publisherName } = await readEmbeddedUpdateConfig(distDir)
   expect(publisherName).toEqual(await expectedWindowsPublisherName(expect))
+}
+
+/**
+ * Every slice of the Electron Framework holds the digest of the final `ElectronAsarIntegrity` Info.plist entries (mac.asarIntegrityDigest, on
+ * by default), so the launches of this build run under Electron's digest check and fail if the digest or the signing after it is wrong.
+ */
+async function assertAsarIntegrityDigestEmbedded(expect: ExpectStatic, contents: string, arch: Arch): Promise<void> {
+  const { ElectronAsarIntegrity: integrity } = await parsePlistFile<{ ElectronAsarIntegrity: AsarIntegrity }>(path.join(contents, "Info.plist"))
+  const binary = await readFile(path.join(contents, "Frameworks", "Electron Framework.framework", "Versions", "A", "Electron Framework"))
+  const sentinel = Buffer.from(ASAR_INTEGRITY_DIGEST_SENTINEL)
+  const slots: Array<{ used: number; version: number; digest: string }> = []
+  for (let index = binary.indexOf(sentinel); index !== -1; index = binary.indexOf(sentinel, index + 1)) {
+    const slot = index + sentinel.length
+    slots.push({ used: binary[slot], version: binary[slot + 1], digest: binary.subarray(slot + 2, slot + 34).toString("hex") })
+  }
+  const expected = { used: 1, version: 1, digest: computeAsarIntegrityDigest(integrity).toString("hex") }
+  expect(slots).toEqual(Array(arch === Arch.universal ? 2 : 1).fill(expected))
 }
 
 /** Directory of a build's `latest.yml` and the files it references: nsis-web writes them (web installer, packages) to `<dist>/nsis-web`. */

@@ -59,6 +59,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Native-module options grouped under `nativeModules`](#native-module-options-nativemodules) | ✓ | `nativeRebuilder` → `rebuildMode`; the `"legacy"` rebuilder is removed (dropped with a warning) |
 | [ASAR options consolidated under `asar`](#asar-options-asar) | ✓ | `asarUnpack` → `asar.unpack`, etc., including platform-level `mac.asarUnpack` → `mac.asar.unpack` (`asar: true` is still valid, just redundant) |
 | [`files` / `extraResources` / `extraFiles` nested under `fileOptions`](#file-options-fileoptions) | ✓ | `files` → `fileOptions.files`, etc., at the root and per platform (`mac.extraResources` → `mac.fileOptions.extraResources`) |
+| [`includePdb` replaced by `fileOptions.excludedExts`](#includepdb-fileoptionsexcludedexts) | ✓ | `.pdb` files are now excluded by default; `includePdb: true` → `fileOptions.excludedExts: ["default", "!pdb"]`, `includePdb: false` → `["default"]` (the v27 default, written out so that it keeps overriding an `includePdb: true` of another config layer) |
 | [`asar.ordering` is now applied](#asar-ordering-is-now-applied) | — | v26 ignored the option; v27 packs the listed files first and fails when the file is missing. Remove the option to keep the dependencies-first layout |
 | [macOS signing consolidated under `mac.sign`](#macos-signing-macsign) | ✓ | `identity`/`entitlements`/`hardenedRuntime`/… → `mac.sign.*`; `signIgnore` → `sign.ignore` |
 | [`mac.universal` options consolidated](#macuniversal) | ✓ | `mergeASARs`/`singleArchFiles`/`x64ArchFiles` → `mac.universal.*` |
@@ -94,7 +95,9 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`arch: "all"` now expands to x64 + arm64; 32-bit fails fast on Electron 44+](#arch-all-now-expands-to-x64-and-arm64-32-bit-fails-fast-on-electron-44) | — | `arch: "all"` drops `ia32` — request `ia32` explicitly; ia32/armv7l require `electronVersion` <= 43.x |
 | [macOS `productName`/`executableName` validated, not silently sanitized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | A name needing filename sanitization now throws — pick a name that needs none |
 | [macOS default entitlements tightened](#macos-default-entitlements-tightened) | — | The bundled default now grants only `allow-jit`; add `allow-unsigned-executable-memory` / `disable-library-validation` back in `build/entitlements.mac.plist` (and `.inherit.plist`) only if your app needs them |
+| [macOS: the ASAR integrity digest is embedded](#macos-asar-integrity-digest) | — | With Electron 41+, the Electron Framework is patched and signed again ad hoc after `afterPack`; set `mac.asarIntegrityDigest: false` if you sign the app yourself in `afterPack`, change `app.asar` / `Info.plist` after it, or merge separately built x64 and arm64 apps with `@electron/universal` yourself |
 | [Bitbucket Cloud publishing: token without username → Bearer auth](#bitbucket-cloud-publishing-token-without-username-uses-bearer-auth) | — | Set `BITBUCKET_USERNAME` if your token is an app password / API token |
+| [S3 publishing requires an explicit `awsCredentials.source`](#s3-publishing-requires-an-explicit-awscredentialssource) | — | Add `awsCredentials: { source: "env" }` (for `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`), `{ source: "profile", profile: "<name>" }` (for `AWS_PROFILE` / `~/.aws` / SSO) or `{ source: "sso-role-chain", profile: "<name>" }` (for a role assumed from an SSO `source_profile`) |
 | [Redundant production `dependencies` excluded, not rejected](#redundant-production-dependencies-are-excluded-not-rejected) | — | `electron`/`electron-builder` are excluded from the copied `node_modules` (was a hard error); tune the set via `ignoredProductionDependencies`. If you set `ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY` (removed) to bundle `electron-builder`, override the list instead; `electron-prebuilt`/`electron-rebuild` no longer error and now ship if declared — remove them from `dependencies` |
 | [`allowMissingDependencies` now fails the build](#allowmissingdependencies-now-fails-the-build) | — | A missing production dependency is a hard error; set `allowMissingDependencies: true` to restore v26 warn-only behavior |
 | [Native binaries are verified against the target](#native-binaries-are-verified-against-the-target) | — | A `.node` addon built for another platform/arch now fails the build; set `nativeModules.verifyNativeBinaries: "warn"` (or `false`) to package anyway |
@@ -118,7 +121,8 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [NSIS: per-machine builds set `isAdminRightsRequired` in the update info](#nsis-per-machine-builds-set-isadminrightsrequired) | — | None for most apps. Their updates are started with `elevate.exe`; with `autoInstallEvent: "onNextLaunch"`, per-machine apps call `installPendingUpdateIfAvailable()` to install a pending update |
 | [Update credentials are only sent to the feed's origin (electron-updater)](#update-credentials-stay-on-the-feeds-origin) | — | Only if `latest*.yml` points downloads at another origin (another host, or another port or scheme) that needs your `requestHeaders` / `addAuthHeader` credentials or a token in the feed URL's query: serve the files from the feed origin or use pre-signed URLs. A custom provider used with credential headers must override `Provider.feedBaseUrl` (else `ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED`) |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | — | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
-| [Signed update manifests are required](#signed-update-manifests-are-required) | — | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY`, or set `updateManifest: false` to keep publishing unsigned manifests |
+| [Signed update manifests are required](#signed-update-manifests-are-required) | — | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY` to the base64-encoded PEM file, or set `updateManifest: false` to keep publishing unsigned manifests |
+| [Signing key must be in `updateManifest.publicKey`](#signing-key-must-be-in-updatemanifestpublickey) | — | Only if you set `updateManifest.publicKey`: list a key the build signs with, or set `updateManifest.allowSigningKeyOutsideTrustList: true` for a deliberate cutover release |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | — | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
 | [`latest*.yml` drops legacy top-level `path`/`sha512`](#latestyml-drops-legacy-top-level-pathsha512) | — | None for electron-updater >=2.16 (all modern clients); set `electronUpdaterCompatibility` to a legacy-inclusive range only if you still ship apps embedding electron-updater 1.x–2.15 |
 | [`quitAndInstall` takes an options object (electron-updater)](#quitandinstall-takes-an-options-object) | — | Replace positional args: `quitAndInstall(true, false)` → `quitAndInstall({ isSilent: true, isForceRunAfter: false })` |
@@ -164,7 +168,9 @@ If your project uses `"type": "module"` or ESM imports, no changes are needed. I
 
 ### `electron-forge-maker-*` plugins {#electron-forge-maker-plugins}
 
-The four Forge maker plugins (`electron-forge-maker-appimage`, `electron-forge-maker-nsis`, `electron-forge-maker-nsis-web`, `electron-forge-maker-snap`) are now native ES modules. The public API is identical — Electron Forge loads them via dynamic `import()` internally, so no config changes are required.
+The four Forge maker plugins (`electron-forge-maker-appimage`, `electron-forge-maker-nsis`, `electron-forge-maker-nsis-web`, `electron-forge-maker-snap`) are now native ES modules. Electron Forge loads them via dynamic `import()` internally, so no config changes are required.
+
+Their default export is now a maker class that Electron Forge 6 and later can load (`{ name: "electron-forge-maker-nsis", config }`) or that you can instantiate (`new MakerNsis(config)`, also a named export); the `config` is the target's options. Calling the default export as an Electron Forge 5 maker function still works. See [Electron Forge Integration](../features/electron-forge.md).
 
 ---
 
@@ -216,7 +222,7 @@ The `disableDefaultIgnoredFiles` option has been **removed**. To include a file 
 }
 ```
 
-Broad patterns such as `**/*` still honor the defaults; only a pattern that names the extension or directory concretely opts it back in.
+Broad patterns such as `**/*` still honor the defaults. A pattern that names an excluded extension includes only the files it matches: `**/*.obj` includes every `.obj` file outside `node_modules` and the build resources and output directories, `models/teapot.obj` only that file. A pattern with a default-excluded name as a path segment (e.g. `**/.github/**`) opts that name back in.
 
 ### `appImage.systemIntegration`
 
@@ -680,6 +686,45 @@ The values are glob strings and `FileSet` objects. A platform's lists are added 
 
 **Code that reads `files`, `extraResources` or `extraFiles` from the loaded configuration** (a hook reading `context.packager.config.files` or `context.packager.platformOptions.extraResources`, a `build()` caller reading `buildResult.configuration.extraFiles`) gets the `fileOptions` value: the loaded configuration and its platform sections forward these reads to `fileOptions`, logging one warning per key. These forwarding properties are not enumerable, so they never appear in the effective configuration (`builder-effective-config.yaml`), in `JSON.stringify` output or in `Object.keys`. Assigning one of them (for example `context.packager.config.files = […]` in a hook) throws a configuration error naming the `fileOptions` property to set instead. Read and write `fileOptions.files` / `fileOptions.extraResources` / `fileOptions.extraFiles` directly.
 
+### `includePdb` → `fileOptions.excludedExts` {#includepdb-fileoptionsexcludedexts}
+
+The root-level `includePdb` boolean is **removed**. v26 excluded a fixed list of file extensions from the packaged app, and `.pdb` (Program Database) symbol files were the only ones with a switch: they were excluded unless `includePdb` was `true`. In v27 `pdb` is one of the extensions excluded by default, and the boolean for one extension is replaced by a list for all of them: `fileOptions.excludedExts`, set at the configuration root or per platform (`mac`, `mas`, `masDev`, `win`, `linux`).
+
+- `"default"` expands to the built-in list: `iml`, `hprof`, `orig`, `pyc`, `pyo`, `rbc`, `swp`, `csproj`, `sln`, `slnx`, `suo`, `xproj`, `cc`, `d.ts`, `mk`, `a`, `o`, `obj`, `forge-meta`, `pdb`.
+- Any other entry adds that extension, e.g. `"map"`. Write it without a dot or glob (a leading `.` is ignored); an entry that is not a file extension fails the build.
+- An entry starting with `!` removes that extension from the others listed, wherever it appears in the list: `["default", "!pdb"]` is every default except `pdb`. `"!default"` is rejected. A list of removals only, such as `["!pdb"]`, is rejected too: a list without `"default"` replaces the defaults, so it would exclude no extension at all. Write `["default", "!pdb"]`. A `"!ext"` in a list that does not otherwise list that extension (e.g. `["map", "!pdb"]`) has no effect and logs a warning.
+- The list **replaces** the defaults rather than being merged with them: list `"default"` to extend them. `["map"]` excludes only `.map` files, `[]` excludes no extension, and `null` (or omitting the option) is `["default"]`.
+- An invalid list (an entry that is not a file extension, `"!default"`, or removals only) fails the build when the configuration is validated, before anything is packed. This applies at the root and in every platform section, whichever targets the build packs: a typo in `masDev.fileOptions.excludedExts` also fails a Windows build. The error names the option, e.g. `masDev.fileOptions.excludedExts`.
+- A single entry may be written as a string: `"excludedExts": "default"` is `["default"]`. This is how to set it on the command line: `-c.fileOptions.excludedExts=default`. For several entries, repeat the flag, e.g. `-c.fileOptions.excludedExts=default -c.fileOptions.excludedExts=!pdb` for `["default", "!pdb"]` (in an interactive bash or zsh, write the second one as `'-c.fileOptions.excludedExts=!pdb'`, single-quoted, so that `!pdb` is not expanded).
+- A later list **replaces** an earlier one rather than being added to it (unlike the `files` lists), so a later list can drop an earlier `"!pdb"`. For the root and for each platform section, the last layer that sets the list wins: the `extends` parents in order (a parent after its own parents), then the configuration file, then the programmatic or `-c` configuration. For the `mas` and `mas-dev` targets, a `mas` list then replaces the `mac` one, and a `masDev` list (for `mas-dev`) replaces both. A platform's list then replaces the root one, whichever layer set either: a parent's `win.fileOptions.excludedExts` replaces the child's root list in Windows builds. A `null` value keeps the earlier list.
+- The extensions are excluded from the app files and from the copied `node_modules`. A `fileOptions.files` pattern that names an excluded extension includes only the app files it matches: `**/*.pdb` every `.pdb` file outside `node_modules` and the build resources and output directories, `native/addon.pdb` only that file, as described under [`disableDefaultIgnoredFiles`](#disabledefaultignoredfiles).
+- A `fileOptions.files` pattern that names `.pdb` files (e.g. `native/*.pdb` or `**/*.{node,pdb}`) now includes the `.pdb` files it matches, also in a configuration that extends this one. In v26, `.pdb` files were excluded whatever `files` said unless `includePdb` was `true`. `migrate-schema` reports such patterns (as an advisory). To keep the `.pdb` files out, remove the pattern or add a negation after it, such as `!native/*.pdb`.
+
+```json5
+// Before (v26)
+{ "build": { "includePdb": true } }
+// After (v27) — the default extensions except pdb
+{ "build": { "fileOptions": { "excludedExts": ["default", "!pdb"] } } }
+
+// Before (v26) — the default, which also overrode an includePdb: true of another config layer (e.g. an extends parent)
+{ "build": { "extends": "./base.json", "includePdb": false } }
+// After (v27) — the default list, written out so that it keeps replacing that layer's ["default", "!pdb"]
+{ "build": { "extends": "./base.json", "fileOptions": { "excludedExts": ["default"] } } }
+```
+
+```json5
+{
+  "fileOptions": { "excludedExts": ["default", "map"] },              // the defaults plus .map files
+  "win": { "fileOptions": { "excludedExts": ["default", "!pdb"] } }   // Windows keeps .pdb files — and .map files, since this list replaces the root one
+}
+```
+
+:::warning[Shipping symbol files]
+`.pdb` files contain symbol names and the source paths of the build machine. Keep them (`["default", "!pdb"]`) only in internal builds or builds for a symbol server, or upload them to a symbol server instead of shipping them.
+:::
+
+`migrate-schema` rewrites `includePdb` in static and JS/TS configs, reading the value as v26 did: v26 accepted `"true"` and `1` as `true`, and `"false"`, `0` and `null` as `false`. `true` becomes `"fileOptions": { "excludedExts": ["default", "!pdb"] }`. `false` becomes `"fileOptions": { "excludedExts": ["default"] }`, with or without `extends`: this is the v27 default, written out because in v26 an explicit `false` overrode an `includePdb: true` of another config layer (an `extends` parent, an earlier entry of an `extends` list, or the config file a programmatic or `-c` configuration is layered on), which a single file does not show; the written-out list keeps replacing that layer's `["default", "!pdb"]`. You can remove it when no other config layer keeps `.pdb` files. Next to an existing root `fileOptions.excludedExts`, which already replaces the other layers' lists, `false` is just removed. For `true`, when a platform section already sets its own `fileOptions.excludedExts` that excludes `.pdb` files (it lists `"default"` or `"pdb"`), `"!pdb"` is appended to that list too, because it replaces the root one; an existing root list gets `"!pdb"` the same way. A list that does not exclude `.pdb` files is left as it is, and so, in a JS/TS config, is a root list with an element the codemod cannot read (e.g. `[...base]`), which is reported. A value v26 rejected (e.g. `"yes"` or `2`) is left in place with a warning. In a JS/TS config, an `includePdb` whose value is not a literal (e.g. `includePdb: process.env.CI === "true"`) is left in place with a warning — rewrite it by hand — and for `includePdb: true`, a platform section the codemod cannot read (e.g. `win: sharedWin`) gets a warning: add `"!pdb"` to its `fileOptions.excludedExts` by hand if that list excludes `.pdb` files. A config that still sets `includePdb` fails the build with a message naming `fileOptions.excludedExts`, and so does an `includePdb` passed programmatically or with `-c`, which `migrate-schema` does not see: remove it, or, where an `includePdb: false` overrides an `includePdb: true` of the configuration file or an `extends` parent, set `"fileOptions": { "excludedExts": ["default"] }` in its place (on the command line, `-c.fileOptions.excludedExts=default`).
+
 ---
 
 ## CLI changes
@@ -703,11 +748,11 @@ These flags are removed (they have thrown since v22).
 
 v27 adds `electron-builder migrate-schema`, which rewrites your config to v27 form in place and auto-migrates **static** (`json`/`json5`/`yaml`/package.json) **and programmatic** (`.js`/`.ts`/`.cjs`/`.mjs`) configs. TOML configs are parsed and the required changes printed, but not written. See the [walkthrough](./v26-to-v27#step-1-run-the-automated-migrator) for flags and the before/after of every rewrite.
 
-**It rewrites** every entry marked **Auto ✓** on this page: removed keys (`electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, `disableDefaultIgnoredFiles`, `appImage.systemIntegration`, `linux.syncDesktopName`, `mac.gatekeeperAssess`), the `nativeModules`, `asar` (root and platform-level), `fileOptions` (root and platform-level), `mac.sign`, `mac.universal`, `win.sign`, `electronGet`, and `snapcraft` restructurings, GitHub `vPrefixedTagName` → `tagNamePrefix`, `helper-bundle-id`, `squirrelWindows.noMsi`, root-level `directories` in `package.json`, and `toolsets.*` values v27 rejects (`null`, the retired `appimage: "1.0.2"`). Values with no v27 equivalent (for example `nativeRebuilder: "legacy"` or `electronDownload.strictSSL`) are dropped with a warning.
+**It rewrites** every entry marked **Auto ✓** on this page: removed keys (`electronCompile`, `framework`/`nodeVersion`/`launchUiVersion`, `disableDefaultIgnoredFiles`, `appImage.systemIntegration`, `linux.syncDesktopName`, `mac.gatekeeperAssess`), the `nativeModules`, `asar` (root and platform-level), `fileOptions` (root and platform-level), `mac.sign`, `mac.universal`, `win.sign`, `electronGet`, and `snapcraft` restructurings, GitHub `vPrefixedTagName` → `tagNamePrefix`, `includePdb` → `fileOptions.excludedExts`, `helper-bundle-id`, `squirrelWindows.noMsi`, root-level `directories` in `package.json`, and `toolsets.*` values v27 rejects (`null`, the retired `appimage: "1.0.2"`). Values with no v27 equivalent (for example `nativeRebuilder: "legacy"` or `electronDownload.strictSSL`) are dropped with a warning.
 
-**It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom NSIS bundle in `customNsisBinary` / `customNsisResources` ([→ `toolsets.nsis`](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis); it does move `customNsisBinary.debugLogging` → `installerDebugLogging`), a custom `mac.sign` signer combined with sibling signing options, and (in JS/TS configs) platform-level `asarUnpack` next to root-level ASAR options.
+**It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom NSIS bundle in `customNsisBinary` / `customNsisResources` ([→ `toolsets.nsis`](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis); it does move `customNsisBinary.debugLogging` → `installerDebugLogging`), a custom `mac.sign` signer combined with sibling signing options, an `includePdb` value v26 rejected, and, in JS/TS configs, platform-level `asarUnpack` next to root-level ASAR options, an `includePdb` whose value is not a literal, or, for `includePdb: true`, a platform section the codemod cannot read or a root `fileOptions.excludedExts` with an element it cannot read (a spread, an identifier, a call; readable platform lists still get `"!pdb"`).
 
-**It prints an advisory** (without changing the config) for runtime defaults and behavior changes you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)), `nsis.perMachine` or `nsisWeb.perMachine` set to `true` ([per-machine NSIS updates](#nsis-per-machine-builds-set-isadminrightsrequired)), a custom `win.sign.sign` hook without `win.sign.publisherName`, unless `win.verifyUpdateCodeSignature` is `false` ([publisher name](#windows-publishername-is-validated-against-the-signing-certificate)), a `generic` publish configuration whose `url` has a query string ([update credentials](#update-credentials-stay-on-the-feeds-origin)), and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
+**It prints an advisory** (without changing the config) for runtime defaults and behavior changes you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)), `nsis.perMachine` or `nsisWeb.perMachine` set to `true` ([per-machine NSIS updates](#nsis-per-machine-builds-set-isadminrightsrequired)), a custom `win.sign.sign` hook without `win.sign.publisherName`, unless `win.verifyUpdateCodeSignature` is `false` ([publisher name](#windows-publishername-is-validated-against-the-signing-certificate)), a `generic` publish configuration whose `url` has a query string ([update credentials](#update-credentials-stay-on-the-feeds-origin)), a `fileOptions.files` pattern that names `.pdb` files ([`includePdb` → `fileOptions.excludedExts`](#includepdb-fileoptionsexcludedexts)), and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
 
 **It does not touch** anything outside the config: CLI flags, environment variables, custom NSIS scripts, Linux maintainer scripts, app code using the electron-updater API, or plugins using `PlatformPackager`. Every other row marked **—** in the [table above](#breaking-changes-at-a-glance) is a manual step.
 
@@ -723,6 +768,55 @@ The Bitbucket publisher now selects its authentication scheme by whether a usern
 - **No username** → the token is sent as `Authorization: Bearer <token>` (a repository / project / workspace **access token**). This is the new behavior; previously a token was always sent as Basic auth using the repository owner as the username.
 
 **Action is required only if** your CI sets `BITBUCKET_TOKEN` (or `bitbucket.token`) to an **app password / API token without a username** — those requests now go out as Bearer and will fail authentication. Set `BITBUCKET_USERNAME` (or `bitbucket.username`) so Basic auth is used. Genuine access tokens need no username.
+
+### S3 publishing requires an explicit `awsCredentials.source`
+
+The `s3` publisher no longer picks up AWS credentials from ambient sources, and there is no default source. To publish, set the new `awsCredentials` publish option; only the source it names is consulted:
+
+- **`source: "env"`** reads only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and the optional `AWS_SESSION_TOKEN`, or the variable names you give in `awsCredentials.env`.
+- **`source: "profile"`** reads the named `profile` (required) from the shared config and credentials files (`~/.aws/config` and `~/.aws/credentials`, or `configFile` / `credentialsFile`). Static keys, IAM Identity Center (SSO) sessions from `aws sso login`, `credential_process` and assume-role profiles are supported.
+- **`source: "sso-role-chain"`** is for an assume-role `profile` (`role_arn` + `source_profile`) whose chain starts at an IAM Identity Center (SSO) profile. electron-builder walks the chain itself in the same files (up to 5 assume-role hops, cycles rejected), resolves the SSO profile, then calls STS `AssumeRole` for each hop with the previous hop's credentials.
+
+What changed compared with v26:
+
+- Publishing to `s3` without `awsCredentials.source` **fails** with an `InvalidConfigurationError` that names both sources. Builds that don't publish (e.g. `--publish never`) don't need it.
+- `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE` and `AWS_SHARED_CREDENTIALS_FILE` are **no longer read**, and `~/.aws/credentials` is no longer used as an implicit fallback.
+- When the configured source has no credentials, publishing **fails** with a clear error. Before, the request was signed with whatever aws4 found in the environment (including the undocumented `AWS_ACCESS_KEY` / `AWS_SECRET_KEY`), or with `Credential=undefined`.
+- For a bucket name with dots and no `region`, the region is now looked up **only when publishing**. Builds that don't publish log a warning and leave `region` unset, so set `region` explicitly for dotted bucket names.
+- With `source: "profile"`, an assume-role profile whose `source_profile` chain starts at an SSO profile is rejected, because the AWS SDK would resolve that SSO profile without the configured files. Use `source: "sso-role-chain"` for it (see below).
+- With `source: "profile"`, a profile that sets `credential_source` (`Environment`, `Ec2InstanceMetadata`, `EcsContainer`) or web identity (`web_identity_token_file`), itself or anywhere in its `source_profile` chain, is rejected with an `InvalidConfigurationError`: they read ambient credentials, or an AWS SDK STS client that takes its region and endpoint from `AWS_REGION` / `AWS_ENDPOINT_URL_STS` / `AWS_CONFIG_FILE`. In CI with OIDC, export the temporary keys first and use `source: "env"`.
+- `awsCredentials` is build-time only and is never written to `app-update.yml`. electron-updater is unaffected: it downloads S3 updates without credentials.
+- DigitalOcean Spaces (`DO_KEY_ID` / `DO_SECRET_KEY`) and Cloudflare R2 (`CF_R2_*`) are unchanged.
+
+**Action is required for every S3 publish configuration.** If CI exports `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (for example `aws-actions/configure-aws-credentials`), choose the env source:
+
+```json
+"publish": {
+  "provider": "s3",
+  "bucket": "my-bucket",
+  "awsCredentials": { "source": "env" }
+}
+```
+
+If you relied on `AWS_PROFILE`, `~/.aws/credentials`, `~/.aws/config` + `AWS_SDK_LOAD_CONFIG=1`, or an SSO login, name the profile:
+
+```json
+"awsCredentials": { "source": "profile", "profile": "release" }
+```
+
+If your publishing role is assumed from an SSO login through `source_profile` (for example `aws sso login --profile login` plus a `deploy` profile with `role_arn` and `source_profile = login`), opt in to the role chain:
+
+```json
+"awsCredentials": { "source": "sso-role-chain", "profile": "deploy" }
+```
+
+Each hop honours `role_session_name`, `external_id` and `duration_seconds`. STS is called in the named profile's `region` (default `us-east-1`) with its `sts_regional_endpoints`; `AWS_REGION`, `AWS_PROFILE`, `AWS_CONFIG_FILE` and `AWS_ENDPOINT_URL*` are not read. `credential_source`, `mfa_serial`, `web_identity_token_file` and `credential_process` are rejected in the chain. A chain that starts at static keys or a `credential_process` keeps working with `source: "profile"`.
+
+To keep publish-only keys apart from other `AWS_*` variables in the same job, point `awsCredentials.env` at different names:
+
+```json
+"awsCredentials": { "source": "env", "env": { "accessKeyId": "RELEASE_S3_KEY_ID", "secretAccessKey": "RELEASE_S3_SECRET" } }
+```
 
 ### New: Cloudflare R2 publish provider (additive)
 
@@ -1020,6 +1114,16 @@ electron-builder now **rejects** a macOS `productName` or `executableName` that 
 
 **Names are also no longer NFD-normalized.** The `.app` bundle, the helper bundles, and `CFBundleName` now use the product name exactly as configured. For any name containing accented characters this changes the **bytes** of the on-disk filename, which is what external notarization and upload tooling matches on — update anything that hard-codes the normalized form. Relatedly, archive creation falls back from 7z to zip for NFD-normalized filenames.
 
+### macOS: the ASAR integrity digest is embedded {#macos-asar-integrity-digest}
+
+With Electron 41 and later, electron-builder writes a digest of the `ElectronAsarIntegrity` hashes in `Info.plist` into the Electron Framework binary and signs the framework again ad hoc; signing the app afterwards replaces that signature. With the `enableEmbeddedAsarIntegrityValidation` fuse, Electron then refuses to start an app whose `Info.plist` hashes no longer match the digest, so `app.asar` can't be swapped together with its `Info.plist` hash. The digest is computed from `Info.plist` as `afterPack` left it, right before the fuses are flipped and the app is signed. It is skipped on non-macOS hosts (with a warning), with `asar: false` or `asar.disableIntegrity: true`, and for `--prepackaged` apps.
+
+```json5
+{ "build": { "mac": { "asarIntegrityDigest": false } } }  // leave the Electron Framework as Electron ships it
+```
+
+**Action is required only if** you sign the app yourself in `afterPack` (the framework is signed again after your hook), change `app.asar` or `Info.plist` after `afterPack`, or build `x64` and `arm64` separately and merge them with `@electron/universal` yourself (each framework now has its own `_CodeSignature`, which the merge rejects; build the `universal` arch instead). In those cases set `mac.asarIntegrityDigest: false`.
+
 ### Redundant production `dependencies` are excluded, not rejected
 
 In v26, listing `electron` or `electron-builder` under `dependencies` aborted the build with a hard `InvalidConfigurationError`. In v27 these packages are **excluded from the copied `node_modules`** (logged once) and the build proceeds. They stay valid production dependencies for tooling such as SBOM, license, and vulnerability tracking — electron-builder simply provides them another way (the Electron runtime is embedded separately), so a copy inside `app.asar` would be redundant.
@@ -1222,7 +1326,7 @@ Ed25519 signing of `latest*.yml` is new in v27 and **required by default**. A bu
 
 ```
 auto-update manifests must be signed, but no Ed25519 signing key was found for mac. Generate one with
-`electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (PEM contents)
+`electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file)
 or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey /
 updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out
 explicitly with `updateManifest: false`.
@@ -1233,9 +1337,15 @@ Only a **publishing** build fails. A build without a publish policy warns instea
 **To adopt it** (recommended):
 
 ```bash
-npx electron-builder create-update-key          # once; store the PEM as a CI secret
-ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(cat update-private-key.pem)" electron-builder --publish always
+npx electron-builder create-update-key          # once; store the base64-encoded PEM as a CI secret
+ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(base64 < update-private-key.pem | tr -d '\n')" electron-builder --publish always
 ```
+
+`ELECTRON_BUILDER_UPDATE_SIGN_KEY` holds the PEM file **base64-encoded on one line**, so masked CI variables can hold it; for several keys, concatenate the PEM files and encode them once (`cat old.pem new.pem | base64 | tr -d '\n'`). `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` and `updateManifest.signingKey` / `signingKeyFile` keep taking PEM. See [Providing the key in CI](../features/signed-update-manifests.md#ci-secrets) for the encode command on each OS.
+
+:::note[Changed during the v27 pre-releases]
+27.0.0-alpha.9 to alpha.11 read `ELECTRON_BUILDER_UPDATE_SIGN_KEY` as raw PEM text. A raw PEM — or any value that is not the base64 of complete PEM private keys — now fails the build with an `InvalidConfigurationError` that names the variable and gives the encode command without printing the value. Re-encode the secret, or point `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` at the PEM file. A build script that sets the variable from a PEM string can pass `Buffer.from(pem).toString("base64")`, or set `updateManifest.signingKey` instead.
+:::
 
 **To opt out**, set `updateManifest: false` at the top level or under a platform key. Every build that emits a manifest then logs a warning. `false` also short-circuits the environment variables, so a leftover `ELECTRON_BUILDER_UPDATE_SIGN_KEY` cannot silently re-enable signing. A platform value of `null` is **not** an opt-out — it falls back to the top-level value.
 
@@ -1248,6 +1358,23 @@ Once a release embeds a public key, its installs are **fail-closed**: an unsigne
 Note that installs already in the field are unaffected but also unprotected: they carry whatever `app-update.yml` they shipped with, so those built before you adopted signing keep accepting unsigned manifests. Full protection begins with the installs built after the public key was embedded.
 
 See [Signed Update Manifests](../features/signed-update-manifests.md) and [Key Rotation](../features/key-rotation.md).
+
+### Signing key must be in `updateManifest.publicKey` {#signing-key-must-be-in-updatemanifestpublickey}
+
+When `updateManifest.publicKey` is set explicitly, it is the whole trust list embedded in `app-update.yml`. If none of the keys the build signs `latest*.yml` with is in that list, installs of the release reject manifests signed with the current key(s), and every later release has to be signed by a listed key. Earlier v27 pre-releases only warned about this; a **publishing** build now fails at build start, before anything is packed or uploaded, with an `InvalidConfigurationError` that names the key ids of the signing keys and of the listed keys (never key material). A build without a publish policy still only warns.
+
+**Action:**
+
+- **Unintended mismatch** (a stale `publicKey`, or a CI secret that was regenerated): add the signing key's public key to `updateManifest.publicKey` (`electron-builder create-update-key` prints it with its key id), or sign with a key that is listed.
+- **Deliberate cutover release** (signed with the old key, which the installs in the field trust, while embedding only the new key): set `allowSigningKeyOutsideTrustList: true` for that release. The build then publishes and logs a warning. Remove it again once you sign with the new key.
+
+```yaml
+updateManifest:
+  publicKey: "-----BEGIN PUBLIC KEY-----\n…" # the NEW key only
+  allowSigningKeyOutsideTrustList: true     # this release is still signed with the OLD key
+```
+
+When `publicKey` is not set, the trust list is derived from the signing keys and nothing changes. See [Key Rotation](../features/key-rotation.md#cutover-without-dual-signing).
 
 ### `app-update.yml` feed follows the update-writing targets
 

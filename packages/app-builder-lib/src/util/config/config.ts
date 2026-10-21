@@ -7,11 +7,12 @@ import { deepAssign, Nullish } from "builder-util-runtime"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Configuration } from "../../configuration.js"
+import { DEFAULT_EXCLUDED_EXTENSIONS } from "../../fileMatcher.js"
 import { FileSet, FilesBuildOptions } from "../../options/PlatformSpecificBuildOptions.js"
 import { reactCra } from "../../presets/rectCra.js"
 import { PACKAGE_VERSION } from "../../version.js"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "./load.js"
-import { forwardFlatFileOptionReads, isPlainObject, normalizeFileOptions } from "./fileOptions.js"
+import { forwardFlatFileOptionReads, isPlainObject, normalizeFileOptions, replaceMergedConfigExcludedExts, validateExcludedExtensionsOptions } from "./fileOptions.js"
 import { checkLegacyConfiguration } from "./legacyConfigGuard.js"
 import { validateSchema } from "./schemaValidator.js"
 import _fsExtra from "fs-extra"
@@ -25,7 +26,10 @@ function mergePublish(config: Configuration, configFromOptions: Configuration) {
     delete (configFromOptions as any).publish
   }
 
+  // a copy of the root and platform `fileOptions` from before `deepAssign` merges into them, for replaceMergedConfigExcludedExts
+  const fileConfig = normalizeFileOptions(config)
   deepAssign(config, configFromOptions)
+  replaceMergedConfigExcludedExts(config, [fileConfig, configFromOptions])
 
   if (publish == null) {
     return
@@ -219,10 +223,13 @@ export function doMergeConfigs(inputConfigs: Configuration[]): Configuration {
   // must have higher priority.
   const fileLists = configs.map(config => (config.fileOptions?.files ?? []) as FileSet[]).reverse()
 
+  // copies of the root and platform `fileOptions` from before `deepAssign` merges the later configs into them, for replaceMergedConfigExcludedExts
+  const layers = configs.map(it => normalizeFileOptions(it))
   const result = deepAssign(getDefaultConfig(), ...configs)
   if (result.fileOptions == null || isPlainObject(result.fileOptions)) {
     result.fileOptions = { ...result.fileOptions, files: mergeFileSets(fileLists) }
   }
+  replaceMergedConfigExcludedExts(result, layers)
   forwardFlatFileOptionReads(result)
   return result
 }
@@ -266,6 +273,8 @@ export async function validateConfiguration(config: Configuration, debugLogger: 
 `
     },
   })
+
+  validateExcludedExtensionsOptions(config, DEFAULT_EXCLUDED_EXTENSIONS)
 }
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]

@@ -1,6 +1,7 @@
 import * as fsp from "fs/promises"
 import * as path from "path"
-import { InvalidConfigurationError, log, TmpDir } from "builder-util"
+import { stripVTControlCharacters } from "util"
+import { derivePublicKeyPem, InvalidConfigurationError, loadUpdateSigningKeys, log, TmpDir } from "builder-util"
 import { computeUpdateManifestKeyId } from "builder-util-runtime"
 import { createUpdateKey } from "electron-builder/src/cli/create-update-key"
 import { vi } from "vitest"
@@ -61,6 +62,40 @@ test("create-update-key refuses to overwrite an existing key file", async ({ exp
     expect(await fsp.readFile(outFile, "utf8")).toBe("existing key material\n")
     if (process.platform !== "win32") {
       expect((await fsp.stat(outFile)).mode & 0o777).toBe(0o644)
+    }
+  })
+})
+
+test("create-update-key tells to base64-encode the key file without printing the key, and that base64 loads as the reported key", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const outFile = path.join(dir, "update-private-key.pem")
+    const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true)
+    const info = vi.spyOn(log, "info").mockImplementation(() => undefined)
+    let keyId: string
+    let output: string
+    try {
+      keyId = (await createUpdateKey(outFile)).keyId
+      output = stripVTControlCharacters([...info.mock.calls.map(it => it[1] ?? ""), ...stdout.mock.calls.map(it => String(it[0]))].join("\n"))
+    } finally {
+      stdout.mockRestore()
+      info.mockRestore()
+    }
+
+    const pem = await fsp.readFile(outFile, "utf8")
+    const encoded = Buffer.from(pem).toString("base64")
+    expect(output).toContain("ELECTRON_BUILDER_UPDATE_SIGN_KEY environment variable, base64-encoded on one line")
+    expect(output).toContain(process.platform === "win32" ? `[Convert]::ToBase64String([IO.File]::ReadAllBytes('${outFile}'))` : `base64 < '${outFile}' | tr -d '\\n'`)
+    expect(output).toContain("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE")
+    // the private key is never printed, neither as PEM nor encoded
+    expect(output).not.toContain(pem.split("\n")[1])
+    expect(output).not.toContain(encoded.substring(64, 128))
+
+    vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", encoded)
+    vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", undefined)
+    try {
+      expect(loadUpdateSigningKeys().map(key => computeUpdateManifestKeyId(derivePublicKeyPem(key)))).toEqual([keyId])
+    } finally {
+      vi.unstubAllEnvs()
     }
   })
 })

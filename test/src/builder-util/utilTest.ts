@@ -1,12 +1,24 @@
-import { parseValidEnvVarUrl } from "builder-util/internal"
+import { expandDefaultKeyword, parseValidEnvVarUrl, resolveDefaultKeywordList } from "builder-util/internal"
 import { resolveEnvShellValue, validateShellEmbeddable } from "builder-util/src/envUtil"
-import { removePassword, removePasswordFromArgs, filterSensitiveEnv, spawnAndWrite, spawnAndWriteWithOutput, ExecError } from "builder-util"
+import { removePassword, removePasswordFromArgs, filterSensitiveEnv, spawnAndWrite, spawnAndWriteWithOutput, ExecError, getPlatformIconFileName } from "builder-util"
 import { afterEach, expect, vi } from "vitest"
 
 const testValue = "secretValue"
 const testQuoted = "secret with spaces"
 
 const keys = ["--accessKey", "--secretKey", "-p", "-pass", "-String", "/p", "pass:"]
+
+describe("getPlatformIconFileName", () => {
+  test.each([
+    ["icon", true, "icon.icns"],
+    ["icon.ico", true, "icon.icns"],
+    ["icon.ICO", true, "icon.icns"],
+    ["icon.icns", false, "icon.ico"],
+    ["assets/.ico-cache/icon.png", true, "assets/.ico-cache/icon.png"],
+  ])("maps %s for isMac=%s", (value, isMac, expected) => {
+    expect(getPlatformIconFileName(value, isMac)).toBe(expected)
+  })
+})
 
 keys.forEach(key => {
   describe(`removePassword: ${key}`, () => {
@@ -510,5 +522,71 @@ describe("validateShellEmbeddable", () => {
     ])("rejects %j (contains %s)", value => {
       expect(() => validateShellEmbeddable(value, "test field")).toThrow()
     })
+  })
+})
+
+describe("expandDefaultKeyword", () => {
+  const defaults = ["a", "b"]
+
+  test('expands every "default" entry at its position, into a new array', ({ expect }) => {
+    const list = ["x", "default", "y", "default"]
+    const result = expandDefaultKeyword(list, defaults)
+    expect(result).toEqual(["x", "a", "b", "y", "a", "b"])
+    expect(result).not.toBe(list)
+    expect(expandDefaultKeyword(["default"], defaults)).not.toBe(defaults)
+    expect(list).toEqual(["x", "default", "y", "default"])
+  })
+
+  test('does not deduplicate, and keeps a list without "default" as it is', ({ expect }) => {
+    expect(expandDefaultKeyword(["a", "default"], defaults)).toEqual(["a", "a", "b"])
+    expect(expandDefaultKeyword(["x"], defaults)).toEqual(["x"])
+    expect(expandDefaultKeyword([], defaults)).toEqual([])
+  })
+
+  test("matches the keyword exactly", ({ expect }) => {
+    expect(expandDefaultKeyword(["Default", " default", "!default"], defaults)).toEqual(["Default", " default", "!default"])
+  })
+
+  test("keeps descriptor objects by reference", ({ expect }) => {
+    const descriptor = { default: null }
+    const result = expandDefaultKeyword<string | object>([descriptor, "default"], ["a"])
+    expect(result).toEqual([descriptor, "a"])
+    expect(result[0]).toBe(descriptor)
+  })
+})
+
+describe("resolveDefaultKeywordList", () => {
+  const defaults = ["a", "b", "c"]
+
+  test('"default" expands to the defaults, deduplicated, the first occurrence keeping its position', ({ expect }) => {
+    expect(resolveDefaultKeywordList(["default"], defaults).result).toEqual(["a", "b", "c"])
+    expect(resolveDefaultKeywordList(["b", "default", "b", "default"], defaults).result).toEqual(["b", "a", "c"])
+  })
+
+  test('a list without "default" replaces the defaults', ({ expect }) => {
+    expect(resolveDefaultKeywordList(["x"], defaults).result).toEqual(["x"])
+    expect(resolveDefaultKeywordList([], defaults).result).toEqual([])
+  })
+
+  test('"!x" removes x wherever it is listed', ({ expect }) => {
+    expect(resolveDefaultKeywordList(["default", "!b"], defaults).result).toEqual(["a", "c"])
+    expect(resolveDefaultKeywordList(["!b", "default", "x"], defaults).result).toEqual(["a", "c", "x"])
+    expect(resolveDefaultKeywordList(["x", "!x"], defaults).result).toEqual([])
+  })
+
+  test("reports the removals that removed nothing, once each", ({ expect }) => {
+    expect(resolveDefaultKeywordList(["default", "!b", "!z", "!z"], defaults).unusedRemovals).toEqual(["z"])
+    expect(resolveDefaultKeywordList(["!b"], defaults)).toEqual({ result: [], unusedRemovals: ["b"] })
+  })
+
+  test('does not validate: "!default" removes a literal "default" value, for the caller to reject', ({ expect }) => {
+    expect(resolveDefaultKeywordList(["default", "!default"], defaults)).toEqual({ result: ["a", "b", "c"], unusedRemovals: ["default"] })
+  })
+
+  test("does not change its inputs", ({ expect }) => {
+    const list = ["default", "!a"]
+    resolveDefaultKeywordList(list, defaults)
+    expect(list).toEqual(["default", "!a"])
+    expect(defaults).toEqual(["a", "b", "c"])
   })
 })

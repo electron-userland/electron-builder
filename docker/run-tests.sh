@@ -31,7 +31,7 @@ if ! docker image inspect "$_IMAGE" > /dev/null 2>&1; then
 fi
 
 docker run --rm \
-  -e CI="${CI:-false}" \
+  -e CI="${CI:-}" \
   -e DEBUG="${DEBUG:-}" \
   -e VITEST_SHARD_INDEX="${VITEST_SHARD_INDEX:-}" \
   -e VITEST_SHARD_COUNT="${VITEST_SHARD_COUNT:-}" \

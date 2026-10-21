@@ -1,3 +1,4 @@
+export { escapePowerShellSingleQuotes, matchPublisherName, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "./authenticodeSignature.js"
 export { BlockMap } from "./blockMapApi.js"
 export * from "./blockMapV3.js"
 export { CancellationError, CancellationToken } from "./CancellationToken.js"
@@ -37,6 +38,8 @@ export {
   KeygenOptions,
   PublishConfiguration,
   PublishProvider,
+  S3AwsCredentialsEnvNames,
+  S3AwsCredentialsOptions,
   S3Options,
   SnapStoreOptions,
   R2Options,

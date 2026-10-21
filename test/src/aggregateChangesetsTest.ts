@@ -248,6 +248,36 @@ describe("aggregate-changesets", () => {
     expect(aggregate(dir, "--mode", "range", "--from", "electron-builder@2.0.0-alpha.0", "--to", "electron-builder@2.0.0").stdout).toBe(`${changelog.split("\n\n\n\n")[0]}\n`)
   })
 
+  test("leaves out a private package that is versioned on its own", async ({ expect, tmpDir }) => {
+    const { dir } = await createRepo(tmpDir)
+    // added in pre mode, as docker/ was: not in initialVersions, neither ignored nor linked
+    write(dir, "packages/docker/package.json", `${JSON.stringify({ name: "docker", version: "1.0.0", private: true }, null, 2)}\n`)
+    writeChangeset(dir, "g-private-only", { docker: "minor" }, "feat: private package feature")
+    writeChangeset(dir, "h-private-builder", { docker: "patch", "app-builder-lib": "patch" }, "fix: private package and builder")
+    const sha = commit(dir, "feat: a private package (#2)")
+    const preview = aggregate(dir, "--mode", "next").stdout
+
+    version(dir)
+    expect(rootChangelog(dir)).toBe(`${preview}\n\n\n${LEGACY}`)
+    expect(preview).toContain(`- fix: private package and builder (${sha}) — \`app-builder-lib\`\n`)
+    expect(preview).not.toContain("private package feature")
+    expect(preview).not.toContain("docker")
+    // `changeset version` still versions it, with its own changelog
+    const docker = (file: string) => fs.readFileSync(path.join(dir, "packages/docker", file), "utf8")
+    expect(JSON.parse(docker("package.json")).version).toBe("1.1.0-alpha.0")
+    expect(docker("CHANGELOG.md")).toContain(`- feat: private package feature (${sha})`)
+
+    // a release of the private package alone writes no section
+    commit(dir, "chore(deploy): Release (#3)")
+    writeChangeset(dir, "i-private-only", { docker: "patch" }, "fix: private package fix")
+    commit(dir, "fix: private package fix (#4)")
+    const released = rootChangelog(dir)
+    expect(aggregate(dir, "--mode", "next").stderr).toContain("no released packages found (mode next), nothing written")
+    expect(version(dir).stderr).toContain("no released packages found (mode after-version), nothing written")
+    expect(rootChangelog(dir)).toBe(released)
+    expect(JSON.parse(docker("package.json")).version).toBe("1.1.0-alpha.1")
+  })
+
   test("rewrites a past release in place and keeps its date", async ({ expect, tmpDir }) => {
     const { dir } = await createRepo(tmpDir)
     version(dir)

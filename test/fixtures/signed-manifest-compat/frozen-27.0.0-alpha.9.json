@@ -1,0 +1,67 @@
+{
+  "generatedWith": "builder-util@27.0.0-alpha.9 + builder-util-runtime@10.0.0-alpha.8 (npm), see README.md",
+  "keys": {
+    "old": {
+      "privateKeyFile": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIFAMML/XNgdn0glb97FpCl8DYnEJvepdO96C8dWKQ97N\n-----END PRIVATE KEY-----\n",
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA8Lvrq6bQQg+hriEvy1000pBoHPTYQRMdu93bMGBtYvM=\n-----END PUBLIC KEY-----",
+      "keyId": "604962bb826554ec6c880bfbeb0ca04b22b7d676a103369baaafe2900ba6602c"
+    },
+    "new": {
+      "privateKeyFile": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIHiXCxAeZ0STL65fcAEHGuNa+eJkw65Dd3Kbbz76bpLH\n-----END PRIVATE KEY-----\n",
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAJX/txcKgGCTJCPAryvzLefnNhBZzxBZKQb8azVkopx4=\n-----END PUBLIC KEY-----",
+      "keyId": "8bfdf5383bbdeee7fa9a0482a4f348ce5fab00e94a33169253b5858a5845ea10"
+    }
+  },
+  "unsignedManifests": {
+    "latest.yml": {
+      "version": "1.2.3",
+      "files": [
+        {
+          "url": "App-Setup-1.2.3.exe",
+          "sha512": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==",
+          "size": 81234567
+        },
+        {
+          "url": "App-Setup-1.2.3-arm64.exe",
+          "sha512": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==",
+          "size": 79234567
+        }
+      ],
+      "path": "App-Setup-1.2.3.exe",
+      "sha512": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==",
+      "releaseDate": "2026-10-01T12:00:00.000Z",
+      "stagingPercentage": 25
+    },
+    "latest-mac.yml": {
+      "version": "1.2.3",
+      "files": [
+        {
+          "url": "App-1.2.3-universal-mac.zip",
+          "sha512": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==",
+          "size": 123456789
+        },
+        {
+          "url": "App-1.2.3-universal.dmg",
+          "sha512": "BAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA==",
+          "size": 133456789
+        }
+      ],
+      "path": "App-1.2.3-universal-mac.zip",
+      "sha512": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==",
+      "releaseDate": "2026-10-01T12:00:00.000Z",
+      "minimumSystemVersion": "12.0"
+    }
+  },
+  "signedSingleKey": {
+    "latest.yml": "version: 1.2.3\nfiles:\n  - url: App-Setup-1.2.3.exe\n    sha512: AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==\n    size: 81234567\n  - url: App-Setup-1.2.3-arm64.exe\n    sha512: AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==\n    size: 79234567\npath: App-Setup-1.2.3.exe\nsha512: AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==\nreleaseDate: '2026-10-01T12:00:00.000Z'\nstagingPercentage: 25\nsignature: yQZM4jKkttolLYVrPANYlDnn3JatyYUSobbRbZhY9TOynOmR0ojDVT6wyUnJj7T0dyUSnSDhrVUB0HHSJ4/RAw==\nsignatures:\n  - keyId: 604962bb826554ec6c880bfbeb0ca04b22b7d676a103369baaafe2900ba6602c\n    signature: yQZM4jKkttolLYVrPANYlDnn3JatyYUSobbRbZhY9TOynOmR0ojDVT6wyUnJj7T0dyUSnSDhrVUB0HHSJ4/RAw==\n",
+    "latest-mac.yml": "version: 1.2.3\nfiles:\n  - url: App-1.2.3-universal-mac.zip\n    sha512: AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==\n    size: 123456789\n  - url: App-1.2.3-universal.dmg\n    sha512: BAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA==\n    size: 133456789\npath: App-1.2.3-universal-mac.zip\nsha512: AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==\nreleaseDate: '2026-10-01T12:00:00.000Z'\nminimumSystemVersion: '12.0'\nsignature: 2/BSJj+SoJHG+ysBmmqb+1hy/d1jfVkxAJ2JGO9O8ZNhOpHrIgDjqgrDXHsnmt0zUBPecOLzjxWv1++iv7PzBA==\nsignatures:\n  - keyId: 604962bb826554ec6c880bfbeb0ca04b22b7d676a103369baaafe2900ba6602c\n    signature: 2/BSJj+SoJHG+ysBmmqb+1hy/d1jfVkxAJ2JGO9O8ZNhOpHrIgDjqgrDXHsnmt0zUBPecOLzjxWv1++iv7PzBA==\n"
+  },
+  "signedDualKey": {
+    "latest.yml": "version: 1.2.3\nfiles:\n  - url: App-Setup-1.2.3.exe\n    sha512: AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==\n    size: 81234567\n  - url: App-Setup-1.2.3-arm64.exe\n    sha512: AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==\n    size: 79234567\npath: App-Setup-1.2.3.exe\nsha512: AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==\nreleaseDate: '2026-10-01T12:00:00.000Z'\nstagingPercentage: 25\nsignature: yQZM4jKkttolLYVrPANYlDnn3JatyYUSobbRbZhY9TOynOmR0ojDVT6wyUnJj7T0dyUSnSDhrVUB0HHSJ4/RAw==\nsignatures:\n  - keyId: 604962bb826554ec6c880bfbeb0ca04b22b7d676a103369baaafe2900ba6602c\n    signature: yQZM4jKkttolLYVrPANYlDnn3JatyYUSobbRbZhY9TOynOmR0ojDVT6wyUnJj7T0dyUSnSDhrVUB0HHSJ4/RAw==\n  - keyId: 8bfdf5383bbdeee7fa9a0482a4f348ce5fab00e94a33169253b5858a5845ea10\n    signature: I8GrO7EGruIATcB8cjG9OAT6OMf0hW+iflLoJWGbQdqraw5TfzggdeMWyZnWjh44JrJUbCx9f5XfViOHLil+CQ==\n",
+    "latest-mac.yml": "version: 1.2.3\nfiles:\n  - url: App-1.2.3-universal-mac.zip\n    sha512: AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==\n    size: 123456789\n  - url: App-1.2.3-universal.dmg\n    sha512: BAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA==\n    size: 133456789\npath: App-1.2.3-universal-mac.zip\nsha512: AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==\nreleaseDate: '2026-10-01T12:00:00.000Z'\nminimumSystemVersion: '12.0'\nsignature: 2/BSJj+SoJHG+ysBmmqb+1hy/d1jfVkxAJ2JGO9O8ZNhOpHrIgDjqgrDXHsnmt0zUBPecOLzjxWv1++iv7PzBA==\nsignatures:\n  - keyId: 604962bb826554ec6c880bfbeb0ca04b22b7d676a103369baaafe2900ba6602c\n    signature: 2/BSJj+SoJHG+ysBmmqb+1hy/d1jfVkxAJ2JGO9O8ZNhOpHrIgDjqgrDXHsnmt0zUBPecOLzjxWv1++iv7PzBA==\n  - keyId: 8bfdf5383bbdeee7fa9a0482a4f348ce5fab00e94a33169253b5858a5845ea10\n    signature: qv7nafU/xdSiNE1mb5gqNyabKVQbvLAvq1xlrw+HMePHWIIftcprxIp8L2AwHO2Et40mFmTVQQ9aow2f5H5DDQ==\n"
+  },
+  "appUpdateYml": {
+    "single": "provider: generic\nurl: https://example.com/updates\nupdaterCacheDirName: app-updater\nupdateManifestPublicKey: |-\n  -----BEGIN PUBLIC KEY-----\n  MCowBQYDK2VwAyEA8Lvrq6bQQg+hriEvy1000pBoHPTYQRMdu93bMGBtYvM=\n  -----END PUBLIC KEY-----\n",
+    "dual": "provider: generic\nurl: https://example.com/updates\nupdaterCacheDirName: app-updater\nupdateManifestPublicKey:\n  - |-\n    -----BEGIN PUBLIC KEY-----\n    MCowBQYDK2VwAyEA8Lvrq6bQQg+hriEvy1000pBoHPTYQRMdu93bMGBtYvM=\n    -----END PUBLIC KEY-----\n  - |-\n    -----BEGIN PUBLIC KEY-----\n    MCowBQYDK2VwAyEAJX/txcKgGCTJCPAryvzLefnNhBZzxBZKQb8azVkopx4=\n    -----END PUBLIC KEY-----\n"
+  }
+}
