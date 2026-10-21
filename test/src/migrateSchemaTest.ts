@@ -1004,7 +1004,7 @@ describe("migrateConfig — updater advisories", () => {
     expect(
       advisoriesOf({
         appId: "com.example.app",
-        win: { target: ["nsis", "portable"], sign: { type: "signtool", sign: "./sign.js", certificateFile: "c.pfx", publisherName: "CN=Acme, O=Acme" } },
+        win: { target: ["nsis", "portable"], sign: { type: "signtool", sign: "./sign.js", certificateFile: "c.pfx", publisherName: "CN=Acme" } },
         nsis: { oneClick: false, perMachine: false },
         publish: [
           { provider: "generic", url: "https://updates.example.com/app" },
@@ -1060,16 +1060,16 @@ describe("migrateConfig — updater advisories", () => {
     })
 
     test("no advisory with publisherName (set or null), verifyUpdateCodeSignature: false, or no hook", () => {
-      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: "CN=Acme, O=Acme" } } })).toEqual([])
-      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: ["CN=Old, O=Old", "CN=New, O=New"] } } })).toEqual([])
+      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: "CN=Acme" } } })).toEqual([])
+      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: ["CN=Old", "CN=New"] } } })).toEqual([])
       expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: null } } })).toEqual([])
       expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js" }, verifyUpdateCodeSignature: false } })).toEqual([])
       expect(advisoriesOf({ win: { sign: { type: "signtool" } } })).toEqual([])
       expect(advisoriesOf({ win: { sign: { type: "signtool", sign: null } } })).toEqual([])
       expect(advisoriesOf({ win: { sign: false } })).toEqual([])
-      expect(
-        advisoriesOf({ win: { sign: { type: "azure", endpoint: "https://e/", certificateProfileName: "p", codeSigningAccountName: "a", publisherName: "CN=A, O=A" } } })
-      ).toEqual([])
+      expect(advisoriesOf({ win: { sign: { type: "azure", endpoint: "https://e/", certificateProfileName: "p", codeSigningAccountName: "a", publisherName: "CN=A" } } })).toEqual(
+        []
+      )
     })
 
     test.each<[string, Record<string, any>]>([
@@ -1081,7 +1081,7 @@ describe("migrateConfig — updater advisories", () => {
       ["signtool win.cscLink", { sign: { type: "signtool", sign: "./sign.js" }, cscLink: "c.pfx" }],
     ])("a certificate in the config (%s) doesn't suppress the advisory: a hook always needs publisherName", (_name, win) => {
       expect(advisoriesOf({ win })).toEqual([WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY])
-      expect(advisoriesOf({ win: { ...win, sign: { ...win.sign, publisherName: "CN=Acme, O=Acme" } } })).toEqual([])
+      expect(advisoriesOf({ win: { ...win, sign: { ...win.sign, publisherName: "CN=Acme" } } })).toEqual([])
     })
 
     test("a root cscLink doesn't suppress the advisory either", () => {
@@ -1098,12 +1098,11 @@ describe("migrateConfig — updater advisories", () => {
     })
   })
 
-  describe("win.sign.publisherName that is not a CN + O distinguished name", () => {
+  describe("win.sign.publisherName that is not a distinguished name", () => {
     test.each<[string, unknown]>([
       ["a bare name", "Acme Corp"],
       ["a bare name with a comma", "Acme, Inc"],
-      ["a CN-only DN", "CN=Acme Corp"],
-      ["a DN without CN", "O=Acme Corp, C=US"],
+      ["a DN with an empty value", "CN="],
       ["a list with one invalid entry", ["CN=Acme Corp, O=Acme Corp", "Old Corp"]],
       ["a value that is no string", 42],
     ])("%s emits the advisory without changing the config", (_name, publisherName) => {
@@ -1115,8 +1114,10 @@ describe("migrateConfig — updater advisories", () => {
     })
 
     test.each<[string, unknown]>([
-      ["a CN + O DN", "CN=Acme Corp, O=Acme Corp, C=US"],
-      ["a list of CN + O DNs", ["CN=Old, O=Old Org", "CN=New, O=New Org"]],
+      ["a full DN", "CN=Acme Corp, O=Acme Corp, C=US"],
+      ["a CN-only DN", "CN=Acme Corp"],
+      ["a DN without CN", "O=Acme Corp, C=US"],
+      ["a list of DNs", ["CN=Old, O=Old Org", "CN=New"]],
       ["null (opt-out)", null],
       ["no publisherName", undefined],
     ])("%s emits nothing", (_name, publisherName) => {
@@ -1124,7 +1125,7 @@ describe("migrateConfig — updater advisories", () => {
     })
 
     test("a v26 signtoolOptions / azureSignOptions publisherName migrates into win.sign and then emits the advisory", () => {
-      expect(advisoriesOf({ win: { signtoolOptions: { certificateFile: "c.pfx", publisherName: "CN=Acme" } } })).toEqual([WIN_PUBLISHER_NAME_DN_ADVISORY])
+      expect(advisoriesOf({ win: { signtoolOptions: { certificateFile: "c.pfx", publisherName: "Acme" } } })).toEqual([WIN_PUBLISHER_NAME_DN_ADVISORY])
       expect(advisoriesOf({ win: { azureSignOptions: { endpoint: "https://e/", codeSigningAccountName: "a", certificateProfileName: "p", publisherName: "Acme" } } })).toEqual([
         WIN_PUBLISHER_NAME_DN_ADVISORY,
       ])
@@ -1141,7 +1142,7 @@ describe("migrateConfig — updater advisories", () => {
 
     test("names electron-builder v27, the requirement and the migration guide", () => {
       expect(WIN_PUBLISHER_NAME_DN_ADVISORY).toContain("In v27")
-      expect(WIN_PUBLISHER_NAME_DN_ADVISORY).toContain('including at least its CN and O (e.g. "CN=My Company, O=My Company, C=US")')
+      expect(WIN_PUBLISHER_NAME_DN_ADVISORY).toContain('must be in distinguished name (DN) format, e.g. "CN=My Company, O=My Company, C=US"')
     })
   })
 

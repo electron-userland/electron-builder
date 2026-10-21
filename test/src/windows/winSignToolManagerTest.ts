@@ -1,5 +1,6 @@
 import { HsmSignManager } from "app-builder-lib/src/codeSign/win/hsmSignManager"
 import { Pkcs11SignManager } from "app-builder-lib/src/codeSign/win/pkcs11SignManager"
+import { derivePublisherName } from "app-builder-lib/src/codeSign/win/publisherName"
 import { publisherNameMatchesCertificate, SigntoolBaseSignManager, SigntoolSignManager } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
 import { WindowsSignTaskConfiguration } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
 import { readCertInfoFromX509 } from "app-builder-lib/src/codeSign/certInfo"
@@ -805,10 +806,14 @@ const acmeCertInfo = {
 }
 
 describe("publisherNameMatchesCertificate", () => {
-  test("a bare name or a CN-only DN never matches, not even the certificate CN (electron-updater 7)", () => {
+  test("a bare name never matches, not even the certificate CN (electron-updater 7)", () => {
     expect(publisherNameMatchesCertificate(["Acme Corp"], acmeCertInfo)).toBe(false)
-    expect(publisherNameMatchesCertificate(["CN=Acme Corp"], acmeCertInfo)).toBe(false)
     expect(publisherNameMatchesCertificate(["Evil Corp"], acmeCertInfo)).toBe(false)
+  })
+
+  test("a CN-only DN matches by the CN", () => {
+    expect(publisherNameMatchesCertificate(["CN=Acme Corp"], acmeCertInfo)).toBe(true)
+    expect(publisherNameMatchesCertificate(["CN=Evil Corp"], acmeCertInfo)).toBe(false)
   })
 
   test("DN value comparison is strict (no substring / case-insensitive matching)", () => {
@@ -900,15 +905,20 @@ describe("validateExplicitPublisherName", () => {
     await expect(validate(manager)).resolves.toBeUndefined()
   })
 
-  // electron-updater 7 never matches a bare name or a DN without CN and O: rejected on every signing route, whether or not the
-  // certificate is known, before the certificate is read
+  test("passes when a CN-only DN matches the certificate CN", async () => {
+    const manager = makeValidationManager({ type: "signtool", publisherName: "CN=Acme Corp" }, acmeCertInfo)
+    await expect(validate(manager)).resolves.toBeUndefined()
+  })
+
+  // electron-updater 7 never matches an entry that is not a DN: rejected on every signing route, whether or not the certificate is
+  // known, before the certificate is read
   test.for([
     ["a bare name equal to the certificate CN", { type: "signtool", publisherName: "Acme Corp" }, acmeCertInfo],
-    ["a CN-only DN", { type: "signtool", publisherName: "CN=Acme Corp" }, acmeCertInfo],
+    ["a DN with an empty value", { type: "signtool", publisherName: "CN=Acme Corp, O=" }, acmeCertInfo],
     ["an invalid entry next to a matching one", { type: "signtool", publisherName: ["CN=Acme Corp, O=Acme Corporation", "Old Corp"] }, acmeCertInfo],
     ["a custom sign hook", { type: "signtool", publisherName: "Acme Corp", sign: "./my-sign-hook.js" }, null],
     ["HSM", { type: "hsm", cryptoServiceProvider: "p", keyContainer: "k", publisherName: "Acme Corp" }, null],
-    ["PKCS#11", { type: "pkcs11", pkcs11Module: "m.so", pkcs11KeyUri: "pkcs11:object=k", publisherName: "CN=Acme Corp" }, null],
+    ["PKCS#11", { type: "pkcs11", pkcs11Module: "m.so", pkcs11KeyUri: "pkcs11:object=k", publisherName: "Acme Corp" }, null],
   ] as const)("throws for %s, naming electron-builder v27, the requirement and the migration guide", async ([, sign, certInfo]) => {
     const manager = makeValidationManager(sign, certInfo)
     manager.lazyCertInfo = {
@@ -921,7 +931,7 @@ describe("validateExplicitPublisherName", () => {
       (e: Error) => e
     )
     expect(error).toBeInstanceOf(InvalidConfigurationError)
-    expect(error!.message).toContain("is not a certificate subject distinguished name")
+    expect(error!.message).toContain("is not a distinguished name")
     expect(error!.message).toContain("Since electron-builder v27")
     expect(error!.message).toContain('"CN=My Company, O=My Company, C=US"')
     expect(error!.message).toContain("or to null to opt out")
@@ -1079,8 +1089,8 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
     await expectMissingPublisherNameError(manager)
   })
 
-  // electron-updater 7 matches a certificate subject DN with CN and O, in the format Windows reports the signer subject
-  test("derives CN, O and C from the certificate subject in the Windows format", async () => {
+  // electron-updater 7 matches a DN against the signer subject in the format Windows reports it: the derived name is that full subject
+  test("derives the full certificate subject in the Windows format", async () => {
     const manager: any = makePublisherNameManager(undefined)
     manager.cscInfo = { value: Promise.resolve({ file: "env-cert.pfx", password: null }) }
     manager.lazyCertInfo = {
@@ -1090,7 +1100,7 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
         windowsSubjectDn: 'CN=Acme Corp, O="Acme, Inc.", L=San Francisco, S=California, C=US',
       }),
     }
-    await expect(manager.computedPublisherName.value).resolves.toEqual(['CN=Acme Corp, O="Acme, Inc.", C=US'])
+    await expect(manager.computedPublisherName.value).resolves.toEqual(['CN=Acme Corp, O="Acme, Inc.", L=San Francisco, S=California, C=US'])
   })
 
   test("derives the publisherName from a real HSM certificateFile, quoting a value with a comma (Windows format)", async ({ tmpDir }) => {
@@ -1113,34 +1123,50 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
     ])
     const manager = makePublisherNameManager({ ...hsmSign, certificateFile })
     await expect(manager.lazyCertInfo.value).resolves.toMatchObject({ windowsSubjectDn: 'C=US, S=California, O="Acme, Inc.", CN=Acme Corp' })
-    await expect(manager.computedPublisherName.value).resolves.toEqual(['CN=Acme Corp, O="Acme, Inc.", C=US'])
+    await expect(manager.computedPublisherName.value).resolves.toEqual(['C=US, S=California, O="Acme, Inc.", CN=Acme Corp'])
   })
 
-  test("derives CN and O from a certificate-store subject without a C", async () => {
+  test("derives the certificate-store subject as is", async () => {
     const manager: any = makePublisherNameManager({ type: "signtool", certificateSubjectName: "Acme Corp" })
     manager.cscInfo = { value: Promise.resolve({ thumbprint: "AB12", subject: "CN=Acme Corp, O=Acme Corporation, L=Berlin", store: "My", isLocalMachineStore: false }) }
-    await expect(manager.computedPublisherName.value).resolves.toEqual(["CN=Acme Corp, O=Acme Corporation"])
+    await expect(manager.computedPublisherName.value).resolves.toEqual(["CN=Acme Corp, O=Acme Corporation, L=Berlin"])
   })
 
-  test("a certificate without an O throws, telling to set publisherName explicitly or null", async () => {
+  test("a certificate without an O (or with the CN only) derives its subject: no O is required", async () => {
+    for (const windowsSubjectDn of ["CN=Acme Corp, C=US", "CN=Acme Corp"]) {
+      const manager: any = makePublisherNameManager(undefined)
+      manager.cscInfo = { value: Promise.resolve({ file: "env-cert.pfx", password: null }) }
+      manager.lazyCertInfo = { value: Promise.resolve({ commonName: "Acme Corp", bloodyMicrosoftSubjectDn: "CN=Acme Corp", windowsSubjectDn }) }
+      await expect(manager.computedPublisherName.value).resolves.toEqual([windowsSubjectDn])
+    }
+  })
+
+  test("a certificate whose subject is not a distinguished name throws, telling to set publisherName explicitly or null", async () => {
     const manager: any = makePublisherNameManager(undefined)
     manager.cscInfo = { value: Promise.resolve({ file: "env-cert.pfx", password: null }) }
-    manager.lazyCertInfo = { value: Promise.resolve({ commonName: "Acme Corp", bloodyMicrosoftSubjectDn: "CN=Acme Corp", windowsSubjectDn: "CN=Acme Corp, C=US" }) }
+    manager.lazyCertInfo = { value: Promise.resolve({ commonName: "Acme Corp", bloodyMicrosoftSubjectDn: "CN=Acme Corp", windowsSubjectDn: "" }) }
     const error = await manager.computedPublisherName.value.then(
       () => null,
       (e: Error) => e
     )
     expect(error).toBeInstanceOf(InvalidConfigurationError)
-    expect(error.message).toContain("its subject (CN=Acme Corp, C=US) has no O")
+    expect(error.message).toContain('its subject ("") is not a distinguished name')
     expect(error.message).toContain("Set win.sign.publisherName explicitly")
     expect(error.message).toContain("set it to null")
-    expect(error.message).toContain("Since electron-builder v27")
     expect(error.message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name")
+  })
+
+  test("derivePublisherName returns a DN subject verbatim and throws for one that is not a DN", () => {
+    expect(derivePublisherName("C=US, O=Acme Corporation, CN=Acme Corp")).toBe("C=US, O=Acme Corporation, CN=Acme Corp")
+    expect(derivePublisherName('CN="Acme, Inc."')).toBe('CN="Acme, Inc."')
+    for (const subject of ["", "   ", "Acme Corp"]) {
+      expect(() => derivePublisherName(subject)).toThrow(InvalidConfigurationError)
+    }
   })
 
   test("an explicit bare publisherName throws even for a custom sign hook", async () => {
     const manager = makePublisherNameManager({ type: "signtool", sign: "./customSign.js", publisherName: "My Company" })
-    await expect(manager.computedPublisherName.value).rejects.toThrow(/win\.sign\.publisherName "My Company" is not a certificate subject distinguished name/)
+    await expect(manager.computedPublisherName.value).rejects.toThrow(/win\.sign\.publisherName "My Company" is not a distinguished name/)
   })
 
   test("implicit signtool with a certificate without a Common Name from WIN_CSC_LINK / CSC_LINK throws", async () => {

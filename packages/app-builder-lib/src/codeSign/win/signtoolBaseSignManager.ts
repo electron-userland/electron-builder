@@ -93,8 +93,8 @@ export function certificateWindowsSubjectDn(certInfo: CertificateInfo): string {
 
 /**
  * Matches configured publisher names against a certificate subject with the matcher electron-updater's update
- * signature verifier uses ({@link matchPublisherName}): a name must be a Distinguished Name (DN) with CN and O, and
- * every RDN it specifies must equal the certificate subject's (extra subject RDNs are ignored). Passes when ANY
+ * signature verifier uses ({@link matchPublisherName}): a name must be a Distinguished Name (DN), and every RDN it
+ * specifies must equal the certificate subject's (extra subject RDNs are ignored). Passes when ANY
  * configured name matches — multiple names are supported for certificate rotation. The subject is taken in the format
  * Windows reports it (as the updater sees it).
  */
@@ -131,23 +131,23 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       throw new InvalidConfigurationError(
         "A custom Windows signing hook (`win.sign.sign`) is configured without `win.sign.publisherName`. " +
           "electron-builder cannot tell which certificate the hook signs with, and electron-updater verifies the signature of downloaded updates against the publisherName in app-update.yml. " +
-          'Set `win.sign.publisherName` to the subject of the certificate that your hook signs with, including its CN and O (e.g. "CN=My Company, O=My Company, C=US"), ' +
+          'Set `win.sign.publisherName` to the subject of the certificate that your hook signs with, as a distinguished name (e.g. "CN=My Company, O=My Company, C=US"), ' +
           "or set `win.verifyUpdateCodeSignature: false` (only if your updates are not Authenticode-signed or you don't use electron-updater) to opt out of update signature verification explicitly."
       )
     }
 
     const certInfo = await this.lazyCertInfo.value
-    if (certInfo != null) {
-      // the certificate's CN and O (+ C): what electron-updater 7 requires, in the format Windows reports the signer subject
+    if (certInfo?.commonName) {
+      // the certificate's full subject DN, in the format Windows reports the signer subject (which electron-updater 7 matches against)
       return [derivePublisherName(certificateWindowsSubjectDn(certInfo))]
     }
-    // Signed with a certificate whose subject cannot be read (an .crt/.cer without a CN): electron-updater verifies downloaded updates
-    // against the publisherName in app-update.yml, so the build needs one.
+    // Signed with a certificate without a CN (or whose subject cannot be read): electron-updater verifies downloaded updates against the
+    // publisherName in app-update.yml, so the build needs one.
     if ((await this.cscInfo.value) != null) {
       throw new InvalidConfigurationError(
         "Windows code signing is configured, but the publisher name cannot be determined at build time (the signing certificate has no Common Name). " +
           "electron-updater verifies the signature of downloaded updates against the publisherName in app-update.yml. " +
-          'Set `win.sign.publisherName` to the subject of the certificate that signs your app, including its CN and O (e.g. "CN=My Company, O=My Company, C=US"), ' +
+          'Set `win.sign.publisherName` to the subject of the certificate that signs your app, as a distinguished name (e.g. "CN=My Company, O=My Company, C=US"), ' +
           "or set `win.verifyUpdateCodeSignature: false` (only if your updates are not Authenticode-signed or you don't use electron-updater) to opt out of update signature verification explicitly. " +
           `See ${PUBLISHER_NAME_DN_DOCS_URL}`
       )
@@ -166,7 +166,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       if ("subject" in cscInfo) {
         const bloodyMicrosoftSubjectDn = cscInfo.subject
         return {
-          // empty for a subject without a CN, like readCertInfo (derivePublisherName then requires an explicit publisherName)
+          // empty for a subject without a CN, like readCertInfo, so computedPublisherName requires an explicit publisherName
           commonName: parseDn(bloodyMicrosoftSubjectDn).get("CN") ?? "",
           // read from the Windows certificate store, so already in the format Windows reports (windowsSubjectDn falls back to it)
           bloodyMicrosoftSubjectDn,
@@ -192,8 +192,8 @@ export abstract class SigntoolBaseSignManager implements SignManager {
   private readonly explicitPublisherNameValidation = new Lazy<void>(() => this.validateExplicitPublisherName())
 
   /**
-   * When `publisherName` is explicitly configured, fail the build if an entry is not a certificate subject DN with CN
-   * and O (electron-updater 7 never matches one), whatever the signing route. Then, when the subject of the local code
+   * When `publisherName` is explicitly configured, fail the build if an entry is not a distinguished name
+   * (electron-updater 7 never matches one), whatever the signing route. Then, when the subject of the local code
    * signing certificate is known, fail the build if none of the configured names match the certificate.
    * This catches signing with the wrong certificate at build time — otherwise the mismatch only
    * surfaces at update time, when electron-updater rejects every update signed with that

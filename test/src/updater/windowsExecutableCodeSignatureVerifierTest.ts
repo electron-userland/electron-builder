@@ -114,16 +114,16 @@ function makeSignatureJson(opts: SignatureJsonOpts = {}): string {
 // =============================================================================
 
 describe("publisherNameDnNote", () => {
-  test("is null when every entry is a CN + O DN", () => {
-    expect(publisherNameDnNote(["CN=Acme Corp, O=Acme Corp", "C=US, O=Old Org, CN=Old Corp"])).toBeNull()
+  test("is null when every entry is a DN", () => {
+    expect(publisherNameDnNote(["CN=Acme Corp, O=Acme Corp", "C=US, O=Old Org, CN=Old Corp", "CN=Acme Corp"])).toBeNull()
     expect(publisherNameDnNote([])).toBeNull()
   })
 
   test("names only the entries that can never match, what is required and the migration guide", () => {
-    const note = publisherNameDnNote(["CN=Acme Corp, O=Acme Corp", "Acme Corp", "CN=Acme Corp"])
+    const note = publisherNameDnNote(["CN=Acme Corp, O=Acme Corp", "Acme Corp", "CN=Acme Corp", "CN="])
     expect(note).toBe(
-      'electron-updater 7 (electron-builder v27) matches a publisherName only when it is the full certificate subject distinguished name (DN) including CN and O, e.g. "CN=My Company, O=My Company, C=US": ' +
-        'publisherName "Acme Corp", "CN=Acme Corp" can never match the signer of an update. ' +
+      'electron-updater 7 (electron-builder v27) matches a publisherName only when it is in distinguished name (DN) format, e.g. "CN=My Company, O=My Company, C=US": ' +
+        'publisherName "Acme Corp", "CN=" can never match the signer of an update. ' +
         `Build the app with electron-builder v27, which writes such a DN to app-update.yml, or set the publisherName of dev-app-update.yml (or the updateConfigPath file) to the certificate subject. ${DN_DOCS}`
     )
   })
@@ -297,18 +297,17 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       expect(message.endsWith(DN_DOCS)).toBe(true)
     })
 
-    test("a DN with the CN only fails, and the failure names it", async ({ tmpDir }) => {
+    test("a DN with the CN only matches by the CN, without a warning", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ subject: "CN=Acme Corp, O=Acme Corp, C=US" }))
-      const message = expectVerificationFailure(await verifySignature(["CN=Acme Corp", "CN=Acme Corp, C=US"], defaultFile, logger))
-      expect(message).toContain('publisherName "CN=Acme Corp", "CN=Acme Corp, C=US" can never match')
-      expect(message).toContain(DN_DOCS)
+      expectVerificationSuccess(await verifySignature(["CN=Acme Corp"], defaultFile, logger))
+      expect(logger.warn).not.toHaveBeenCalled()
     })
 
-    test("a failure with only CN + O DNs carries no DN requirement note", async ({ tmpDir }) => {
+    test("a failure with only DNs carries no DN requirement note", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ subject: "CN=Acme Corp, O=Acme Corp, C=US" }))
-      const message = expectVerificationFailure(await verifySignature(["CN=Other Corp, O=Other Corp"], defaultFile, logger))
+      const message = expectVerificationFailure(await verifySignature(["CN=Other Corp, O=Other Corp", "CN=Other Corp"], defaultFile, logger))
       expect(message).not.toContain(DN_DOCS)
     })
 
@@ -377,9 +376,9 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
 
     test("extra keys in cert subject beyond what publisherName specifies do not prevent a match", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
-      mockPsSuccess(makeJson({ subject: "CN=Test, O=Test Org, L=City, S=State, C=US" }))
-      // Publisher spec only specifies CN, O and C — L and S in the cert are beyond the spec, ignored
-      expectVerificationSuccess(await verifySignature(["CN=Test, O=Test Org, C=US"], defaultFile, logger))
+      mockPsSuccess(makeJson({ subject: "CN=Test, O=Test Org, L=City, C=US" }))
+      // Publisher spec only specifies CN and C — L and O in the cert are beyond the spec, ignored
+      expectVerificationSuccess(await verifySignature(["CN=Test, C=US"], defaultFile, logger))
     })
   })
 
@@ -800,7 +799,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
       expectVerificationSuccess(await verifySignature([`CN=${fixture.commonName}, O=EB Test Org, C=US`], exe, logger))
     })
 
-    test("a bare name or a CN-only DN does not match the really-signed executable (electron-updater 7)", { timeout: 120_000 }, async (context: TestContext) => {
+    test("a bare name does not match the really-signed executable, a CN-only DN does (electron-updater 7)", { timeout: 120_000 }, async (context: TestContext) => {
       const { logger } = await setup()
       const fixture = await getWindowsSignedFixture()
       if (fixture == null) {
@@ -808,9 +807,10 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
         return
       }
       const exe = await createSignedExecutable(fixture, await context.tmpDir.createTempDir())
-      const result = expectVerificationFailure(await verifySignature([fixture.commonName, `CN=${fixture.commonName}`], exe, logger))
+      const result = expectVerificationFailure(await verifySignature([fixture.commonName], exe, logger))
       expect(result).toContain("electron-updater 7 (electron-builder v27)")
       expect(result).toContain(DN_DOCS)
+      expectVerificationSuccess(await verifySignature([`CN=${fixture.commonName}`], exe, logger))
     })
 
     test("partial DN (subset of the subject's keys) matches when all provided keys agree", { timeout: 120_000 }, async (context: TestContext) => {

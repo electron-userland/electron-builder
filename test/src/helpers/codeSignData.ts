@@ -5,15 +5,15 @@ import { TmpDir } from "temp-file"
 import { createSelfSignedCodeSigningIdentity, SelfSignedIdentity } from "./selfSignedIdentity"
 
 const PUBLISHER = "EB Test Code Signing"
-// electron-updater 7 requires a publisherName with CN and O, so the Windows test identity has an O (and a C, which the derived name keeps)
+// The Windows test identity has more than a CN, so the tests cover a derived publisherName (the full subject) with several attributes
 const WIN_PUBLISHER_ADDITIONAL_DN_FIELDS = { O: "EB Test Org", C: "US" } as const
 const TEAM_ID = "TEAMID1234"
 
 /**
- * The publisherName a build signed with the Windows test identity derives (its CN, O and C), and a valid explicit publisherName
- * matching it.
+ * The publisherName a build signed with the Windows test identity derives: its full subject in the format Windows reports it (RDNs in
+ * reverse encoding order, separated by `, `). Also a valid explicit publisherName matching it.
  */
-export const WIN_SIGNING_PUBLISHER_NAME = `CN=${PUBLISHER}, O=${WIN_PUBLISHER_ADDITIONAL_DN_FIELDS.O}, C=${WIN_PUBLISHER_ADDITIONAL_DN_FIELDS.C}`
+export const WIN_SIGNING_PUBLISHER_NAME = `C=${WIN_PUBLISHER_ADDITIONAL_DN_FIELDS.C}, O=${WIN_PUBLISHER_ADDITIONAL_DN_FIELDS.O}, CN=${PUBLISHER}`
 
 // Single source of the Windows signing identity for tests, resolved once per worker. An ephemeral, untrusted
 // self-signed identity is generated at runtime (no committed cert/secret) and injected into each build's

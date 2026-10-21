@@ -61,9 +61,14 @@ describe("WindowsSignAzureManager.computedPublisherName", () => {
     expect(result).toEqual(["CN=ACME Corp, O=ACME Corp"])
   })
 
-  test.for(["ACME Corp", "CN=ACME Corp"])("throws synchronously when publisherName %j is not a CN + O DN (electron-builder v27)", (publisherName, { expect }) => {
+  test("accepts a CN-only DN", async ({ expect }) => {
+    const manager = new WindowsSignAzureManager(makePackager({ ...baseAzureOpts, publisherName: "CN=ACME Corp" }))
+    await expect(manager.computedPublisherName.value).resolves.toEqual(["CN=ACME Corp"])
+  })
+
+  test.for(["ACME Corp", "CN="])("throws synchronously when publisherName %j is not a DN (electron-builder v27)", (publisherName, { expect }) => {
     const manager = new WindowsSignAzureManager(makePackager({ ...baseAzureOpts, publisherName }))
-    expect(() => manager.computedPublisherName.value).toThrow(/is not a certificate subject distinguished name\. Since electron-builder v27/)
+    expect(() => manager.computedPublisherName.value).toThrow(/is not a distinguished name\. Since electron-builder v27/)
     expect(() => manager.computedPublisherName.value).toThrow(/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name$/)
   })
 
@@ -94,7 +99,7 @@ describe("WindowsSignAzureManager.signFile", { concurrent: false }, () => {
     manager = new WindowsSignAzureManager(makePackager(baseAzureOpts, makeVm(execSpy)))
   })
 
-  test("rejects a publisherName that is not a CN + O DN before signing anything", async ({ expect }) => {
+  test("rejects a publisherName that is not a DN before signing anything", async ({ expect }) => {
     const bareNameManager = new WindowsSignAzureManager(makePackager({ ...baseAzureOpts, publisherName: "Test Publisher" }, makeVm(execSpy)))
     await expect(bareNameManager.signFile(signOptions)).rejects.toThrow(/Since electron-builder v27/)
     expect(execSpy).not.toHaveBeenCalled()

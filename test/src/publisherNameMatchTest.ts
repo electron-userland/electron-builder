@@ -1,4 +1,4 @@
-import { isValidPublisherNameDn, matchPublisherName, PUBLISHER_NAME_REQUIRED_DN_ATTRIBUTES } from "builder-util-runtime"
+import { isValidPublisherNameDn, matchPublisherName } from "builder-util-runtime"
 
 // The matcher electron-updater verifies downloaded updates with, shared with electron-builder's build-time check of the
 // signed installer. It takes the parsed Get-AuthenticodeSignature output; subjects are in the format Windows reports them.
@@ -13,23 +13,27 @@ function match(publisherNames: Array<string>, subject = SUBJECT): boolean {
 }
 
 describe("isValidPublisherNameDn", () => {
-  test("requires a DN with both CN and O", ({ expect }) => {
-    expect(PUBLISHER_NAME_REQUIRED_DN_ATTRIBUTES).toEqual(["CN", "O"])
+  test("accepts any distinguished name: one or more attribute=value pairs", ({ expect }) => {
+    expect(isValidPublisherNameDn("CN=Acme Corp")).toBe(true)
+    expect(isValidPublisherNameDn("O=Acme Corporation, C=US")).toBe(true)
     expect(isValidPublisherNameDn("CN=Acme Corp, O=Acme Corporation")).toBe(true)
     expect(isValidPublisherNameDn("C=US, O=Acme Corporation, CN=Acme Corp")).toBe(true)
     expect(isValidPublisherNameDn(SUBJECT)).toBe(true)
     expect(isValidPublisherNameDn('CN=Acme Corp, O="Acme, Inc."')).toBe(true)
+    expect(isValidPublisherNameDn("E=dev@example.com, CN=Acme Corp, SERIALNUMBER=12345, OID.2.5.4.15=Private Organization")).toBe(true)
+    // the attribute names are not checked: a lower-case one is DN format, it just never matches a subject as Windows reports it
+    expect(isValidPublisherNameDn("cn=Acme Corp")).toBe(true)
   })
 
-  test("rejects a bare name, a DN with the CN only or the O only, and empty values", ({ expect }) => {
+  test("rejects a bare name, an empty string, and an empty attribute name or value", ({ expect }) => {
     expect(isValidPublisherNameDn("Acme Corp")).toBe(false)
     expect(isValidPublisherNameDn("Acme, Inc")).toBe(false)
-    expect(isValidPublisherNameDn("CN=Acme Corp")).toBe(false)
-    expect(isValidPublisherNameDn("O=Acme Corporation, C=US")).toBe(false)
-    expect(isValidPublisherNameDn("CN=Acme Corp, O=")).toBe(false)
     expect(isValidPublisherNameDn("")).toBe(false)
-    // attribute names are the ones Windows reports, which are upper case
-    expect(isValidPublisherNameDn("cn=Acme Corp, o=Acme Corporation")).toBe(false)
+    expect(isValidPublisherNameDn("   ")).toBe(false)
+    expect(isValidPublisherNameDn("CN=")).toBe(false)
+    expect(isValidPublisherNameDn("CN=Acme Corp, O=")).toBe(false)
+    expect(isValidPublisherNameDn('CN=Acme Corp, O=""')).toBe(false)
+    expect(isValidPublisherNameDn("=Acme Corp")).toBe(false)
   })
 
   test("never throws for a value that is not a string", ({ expect }) => {
@@ -45,15 +49,20 @@ describe("matchPublisherName", () => {
     expect(match(["acme corp"])).toBe(false)
   })
 
-  test("a DN with the CN only never matches", ({ expect }) => {
-    expect(match(["CN=Acme Corp"])).toBe(false)
-    expect(match(["CN=Acme Corp, C=US"])).toBe(false)
+  test("a DN with the CN only matches by the CN", ({ expect }) => {
+    expect(match(["CN=Acme Corp"])).toBe(true)
+    expect(match(["CN=Acme Corp, C=US"])).toBe(true)
+    expect(match(["CN=Other Corp"])).toBe(false)
+    // values and attribute names are compared strictly
+    expect(match(["CN=acme corp"])).toBe(false)
+    expect(match(["cn=Acme Corp"])).toBe(false)
   })
 
-  test("a CN + O DN matches when every configured RDN equals the subject's value, in any order", ({ expect }) => {
+  test("a DN matches when every configured RDN equals the subject's value, in any order", ({ expect }) => {
     expect(match([SUBJECT])).toBe(true)
     expect(match(["C=US, S=California, O=Acme Corporation, CN=Acme Corp"])).toBe(true)
     expect(match(["CN=Acme Corp, O=Acme Corporation"])).toBe(true)
+    expect(match(["O=Acme Corporation, C=US"])).toBe(true)
   })
 
   test("DN with a different value or a key the subject lacks does not match", ({ expect }) => {
@@ -74,14 +83,15 @@ describe("matchPublisherName", () => {
   })
 
   test("passes when any configured name matches (certificate rotation); invalid entries are skipped", ({ expect }) => {
-    expect(match(["Old Corp", "CN=Acme Corp", "CN=Acme Corp, O=Acme Corporation, C=US"])).toBe(true)
-    expect(match(["CN=Old Corp, O=Old Org", "Acme Corp", "CN=Acme Corp"])).toBe(false)
+    expect(match(["Old Corp", "CN=Acme Corp, O=Acme Corporation, C=US"])).toBe(true)
+    expect(match(["CN=Old Corp, O=Old Org", "Acme Corp", "CN=Acme Corp, O="])).toBe(false)
   })
 
-  test("no configured name, or a subject without the O, never matches", ({ expect }) => {
+  test("no configured name never matches; a DN never matches a subject that lacks one of its attributes", ({ expect }) => {
     expect(match([])).toBe(false)
     expect(match([""], "O=Acme Corporation, C=US")).toBe(false)
     expect(match(["CN=Acme Corp, O=Acme Corporation"], "CN=Acme Corp, C=US")).toBe(false)
+    expect(match(["CN=Acme Corp"], "O=Acme Corporation, C=US")).toBe(false)
   })
 
   test("an entry that is not a string never matches and does not throw", ({ expect }) => {

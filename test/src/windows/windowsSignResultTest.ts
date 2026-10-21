@@ -132,7 +132,7 @@ describe("SigntoolSignManager.signFile result", () => {
     expect(signedPaths).toEqual(["/out/app.exe"])
   })
 
-  test("a custom sign hook with a publisherName that is not a CN + O DN fails before the hook signs anything", async ({ expect }) => {
+  test("a custom sign hook with a publisherName that is not a DN fails before the hook signs anything", async ({ expect }) => {
     const sign = vi.fn<CustomWindowsSign>(() => Promise.resolve())
     const options = { sign: { type: "signtool", sign, publisherName: "My Company", signingHashAlgorithms: ["sha256"] } } as unknown as WindowsConfiguration
     const manager = makeManager(options)

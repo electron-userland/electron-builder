@@ -1096,7 +1096,7 @@ export async function getWindowsSigningIdentity(): Promise<SelfSignedIdentity> {
 
 /**
  * The `publisherName` a Windows build signed with getWindowsSigningIdentity (`signedWin`) writes to app-update.yml when none is
- * configured: the CN, O and C of its certificate subject. A certificate provided via CSC_LINK / WIN_CSC_LINK has one the tests don't know.
+ * configured: its full certificate subject, in the format Windows reports it. A certificate provided via CSC_LINK / WIN_CSC_LINK has one the tests don't know.
  */
 export async function expectedWindowsPublisherName(expect: ExpectStatic): Promise<Array<unknown>> {
   const { commonName } = await getWindowsSigningIdentity()

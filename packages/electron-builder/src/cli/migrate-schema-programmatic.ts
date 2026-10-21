@@ -517,7 +517,7 @@ class ConfigCodemod {
   }
 
   // Advisory only. Mirrors migrateConfig on the win.sign it produces (see migratedWinSign): a publisherName (or an entry of a publisherName
-  // array literal) that is a string literal but not a certificate subject DN with CN and O, or another literal (no string at all). A value
+  // array literal) that is a string literal but not a distinguished name, or another literal (no string at all). A value
   // the AST cannot read is skipped; publisherName: null is the opt-out.
   private ruleWinPublisherNameDnAdvisory(root: any): void {
     const ts = this.ts

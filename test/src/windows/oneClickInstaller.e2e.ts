@@ -39,7 +39,7 @@ test("one-click (e2e)", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
           sign: {
             type: "signtool" as const,
             // An explicit publisherName must include at least one name matching the signing certificate (the
-            // ephemeral test identity, WIN_SIGNING_PUBLISHER_NAME), and every entry must be a DN with CN and O —
+            // ephemeral test identity, WIN_SIGNING_PUBLISHER_NAME), and every entry must be a distinguished name —
             // extra names for certificate rotation still pass through to app-update.yml verbatim.
             publisherName: [...EXPLICIT_PUBLISHER_NAMES],
           },

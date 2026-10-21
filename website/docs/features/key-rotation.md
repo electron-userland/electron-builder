@@ -141,10 +141,10 @@ Two things happen when a Windows certificate changes: the OS and SmartScreen see
 
 ### How the updater checks the certificate
 
-When `win.verifyUpdateCodeSignature` is `true` (the default), electron-builder writes the resolved publisher name into `app-update.yml` as `publisherName`. It is either what you configured in `win.sign.publisherName` (a string or an array of certificate subject DNs, each including `CN` and `O`) or, when not configured, the `CN`, `O` and (when present) `C` of the signing certificate's subject. When electron-builder cannot read the signing certificate (a custom `sign` hook without a certificate, or a certificate without a CN or O), the build fails unless `publisherName` is set. At update time the NSIS updater reads that value and runs `Get-AuthenticodeSignature` on the downloaded installer:
+When `win.verifyUpdateCodeSignature` is `true` (the default), electron-builder writes the resolved publisher name into `app-update.yml` as `publisherName`. It is either what you configured in `win.sign.publisherName` (a string or an array of distinguished names) or, when not configured, the full subject of the signing certificate, in the format Windows reports it. When electron-builder cannot read the signing certificate (a custom `sign` hook without a certificate, or a certificate without a CN), the build fails unless `publisherName` is set. At update time the NSIS updater reads that value and runs `Get-AuthenticodeSignature` on the downloaded installer:
 
 - The installer must carry a **valid** Authenticode signature.
-- The signer's Subject is compared against **each** configured publisher name. A Distinguished Name with at least `CN` and `O` (`CN=..., O=..., C=...`) matches when every component you listed equals the certificate's; a bare name or a DN without both `CN` and `O` never matches (since electron-updater 7, see [the v27 migration guide](../migration/v27-breaking-changes.md#windows-publishername-must-be-a-distinguished-name)).
+- The signer's Subject is compared against **each** configured publisher name. A Distinguished Name (`CN=..., O=..., C=...`) matches when every component you listed equals the certificate's; a bare name never matches (since electron-updater 7, see [the v27 migration guide](../migration/v27-breaking-changes.md#windows-publishername-must-be-a-distinguished-name)).
 - If **any** entry matches, the update is installed. If none matches, the update is rejected.
 - If `app-update.yml` has no `publisherName` at all, verification is skipped with a deprecation warning (this fail-open behavior becomes fail-closed in v28).
 
@@ -152,7 +152,7 @@ The same check runs again before an [install-on-next-launch](./auto-update.md#in
 
 ### Renewal vs. rotation
 
-- **Renewal with the same Subject** (same CA, same legal entity, same DN): the embedded publisher name still matches and existing installs update without any special release. Verify the DN is byte-for-byte identical: a changed `O=`, `L=`, or `C=` component is a rotation, not a renewal, if you configured a full DN.
+- **Renewal with the same Subject** (same CA, same legal entity, same DN): the embedded publisher name still matches and existing installs update without any special release. Verify the DN is byte-for-byte identical: a changed `O=`, `L=`, or `C=` component is a rotation, not a renewal, if you configured a full DN. Without an explicit `publisherName`, the derived value is the certificate's full subject, so a renewed certificate whose subject changes in any attribute needs a release, signed with the old certificate, that lists both DNs — or an explicit, narrower DN that both subjects share (e.g. only `CN` and `O`) — before you switch.
 - **Rotation to a certificate with a different Subject** (new CA, company rename, moving to Azure Trusted Signing, switching from OV to EV): existing installs will reject installers signed with it until they have received a bridge release.
 
 ### Step by step

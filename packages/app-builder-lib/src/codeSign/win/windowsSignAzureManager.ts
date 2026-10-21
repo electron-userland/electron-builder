@@ -28,8 +28,7 @@ export class WindowsSignAzureManager implements SignManager {
     return Promise.resolve(asArray(this.resolvePublisherName()))
   })
 
-  // Throws synchronously for a missing publisherName, or one that is not a certificate subject DN with CN and O (electron-updater 7
-  // never matches one).
+  // Throws synchronously for a missing publisherName, or one that is not a distinguished name (electron-updater 7 never matches one).
   private resolvePublisherName(): string {
     const result = this.signing.publisherName
     if (isEmptyOrSpaces(result)) {

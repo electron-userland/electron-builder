@@ -71,17 +71,16 @@ export const WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY =
   "Set win.sign.publisherName to the subject of the certificate your hook signs with, or win.verifyUpdateCodeSignature: false only if your updates are not Authenticode-signed. " +
   "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-is-validated-against-the-signing-certificate"
 
-// Advisory surfaced when win.sign.publisherName has an entry that is not a certificate subject DN with CN and O (a bare name, or a
-// DN with the CN only). v27 fails such a build, because electron-updater 7 never matches such an entry.
+// Advisory surfaced when win.sign.publisherName has an entry that is not a distinguished name (DN), e.g. a bare name. v27 fails such a
+// build, because electron-updater 7 never matches such an entry.
 export const WIN_PUBLISHER_NAME_DN_ADVISORY =
-  "win.sign.publisherName with a bare name or a distinguished name without both CN and O detected. In v27, every publisherName entry must be the subject " +
-  'distinguished name (DN) of the code signing certificate, including at least its CN and O (e.g. "CN=My Company, O=My Company, C=US"): ' +
-  "electron-updater 7 never matches any other entry, so the build fails with InvalidConfigurationError. " +
+  "win.sign.publisherName that is not a distinguished name detected. In v27, every publisherName entry must be in distinguished name (DN) " +
+  'format, e.g. "CN=My Company, O=My Company, C=US": electron-updater 7 never matches a bare name, so the build fails with InvalidConfigurationError. ' +
   "Set win.sign.publisherName to the certificate subject (on Windows, (Get-AuthenticodeSignature <signed .exe>).SignerCertificate.Subject prints it), " +
-  "or (unless a custom win.sign.sign hook signs) remove it to derive CN, O and C from the signing certificate. " +
+  "or (unless a custom win.sign.sign hook signs) remove it to derive the full subject from the signing certificate. " +
   "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
 
-/** True when `publisherName` (a string or a list) has an entry that is not a certificate subject DN with CN and O. */
+/** True when `publisherName` (a string or a list) has an entry that is not a distinguished name. */
 export function hasInvalidPublisherNameDn(publisherName: unknown): boolean {
   if (publisherName == null) {
     return false
@@ -158,7 +157,7 @@ function detectSignHookWithoutPublisherName(config: Record<string, any>): boolea
 }
 
 /**
- * True when win.sign.publisherName has an entry that is not a certificate subject DN with CN and O. Evaluated on the migrated config,
+ * True when win.sign.publisherName has an entry that is not a distinguished name. Evaluated on the migrated config,
  * so a v26 `win.signtoolOptions.publisherName` / `win.azureSignOptions.publisherName` counts too.
  */
 function detectPublisherNameWithoutDn(config: Record<string, any>): boolean {

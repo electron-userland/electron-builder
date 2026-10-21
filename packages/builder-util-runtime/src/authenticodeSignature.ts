@@ -53,16 +53,9 @@ export function escapePowerShellSingleQuotes(unescapedPath: string): string {
 }
 
 /**
- * The attributes every publisher name must specify since electron-updater 7 (electron-builder v27): a publisher name is
- * the subject Distinguished Name (DN) of the code signing certificate, including at least its Common Name (CN) and
- * Organization (O), e.g. `CN=My Company, O=My Company, C=US`.
- */
-export const PUBLISHER_NAME_REQUIRED_DN_ATTRIBUTES: ReadonlyArray<string> = ["CN", "O"]
-
-/**
- * Whether a configured publisher name is a Distinguished Name that specifies every attribute of
- * {@link PUBLISHER_NAME_REQUIRED_DN_ATTRIBUTES} with a non-empty value. Only such a name can match a signer in
- * {@link matchPublisherName}: a bare name (`My Company`) or a DN with the CN only (`CN=My Company`) never does.
+ * Whether a configured publisher name is a Distinguished Name (DN), e.g. `CN=My Company, O=My Company, C=US`: one or
+ * more `attribute=value` pairs, each with a non-empty attribute name and value. Only such a name can match a signer in
+ * {@link matchPublisherName} (since electron-updater 7 / electron-builder v27): a bare name (`My Company`) never does.
  * Never throws: a value that is not a string (e.g. read from a hand-edited `app-update.yml`) is not valid.
  */
 export function isValidPublisherNameDn(name: unknown): boolean {
@@ -70,7 +63,15 @@ export function isValidPublisherNameDn(name: unknown): boolean {
     return false
   }
   const dn = parseDn(name)
-  return PUBLISHER_NAME_REQUIRED_DN_ATTRIBUTES.every(key => (dn.get(key) ?? "").length > 0)
+  if (dn.size === 0) {
+    return false
+  }
+  for (const [key, value] of dn) {
+    if (key.length === 0 || value.length === 0) {
+      return false
+    }
+  }
+  return true
 }
 
 /** The part of the parsed `Get-AuthenticodeSignature` output (see {@link parseAuthenticodeSignatureOutput}) that {@link matchPublisherName} reads. */

@@ -9,7 +9,7 @@ const PUBLISHER_NAME_DN_DOCS = "https://www.electron.build/docs/migration/v27-br
 
 /**
  * Explains why some publisherName entries can never match the signer of an update, or returns null when every entry is
- * a certificate subject DN with CN and O. Such entries come from an app-update.yml written by electron-builder before
+ * in distinguished name (DN) format. Such entries come from an app-update.yml written by electron-builder before
  * v27 (which wrote the certificate's Common Name), a dev-app-update.yml or another updateConfigPath file, or a direct call
  * of verifyUpdateFileAuthenticodeSignature.
  * Never throws, whatever the entries are.
@@ -24,7 +24,7 @@ export function publisherNameDnNote(publisherNames: ReadonlyArray<unknown>): str
   }
   const names = invalid.map(it => (typeof it === "string" ? `"${it}"` : `(${typeof it})`)).join(", ")
   return (
-    `electron-updater 7 (electron-builder v27) matches a publisherName only when it is the full certificate subject distinguished name (DN) including CN and O, ` +
+    `electron-updater 7 (electron-builder v27) matches a publisherName only when it is in distinguished name (DN) format, ` +
     `e.g. "CN=My Company, O=My Company, C=US": publisherName ${names} can never match the signer of an update. ` +
     `Build the app with electron-builder v27, which writes such a DN to app-update.yml, or set the publisherName of dev-app-update.yml (or the updateConfigPath file) to the certificate subject. ${PUBLISHER_NAME_DN_DOCS}`
   )

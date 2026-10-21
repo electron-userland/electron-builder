@@ -153,12 +153,12 @@ describe("verifyUpdateInstallerPublisher", () => {
     expect(message).toContain("win.sign.publisherName")
     expect(message).toContain("win.verifyUpdateCodeSignature: false")
     // "Old Corp" is no DN, so the v27 requirement is explained
-    expect(message).toContain("Since electron-builder v27, each publisherName entry must be the subject distinguished name (DN)")
+    expect(message).toContain("Since electron-builder v27, each publisherName entry must be in distinguished name (DN) format")
     expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name")
   })
 
-  test("a mismatch with only CN + O DNs configured does not explain the DN requirement", async ({ expect, tmpDir }) => {
-    const appOutDir = await createAppOutDir(tmpDir, ["CN=Other Corp, O=Other Corporation"])
+  test("a mismatch with only DNs configured does not explain the DN requirement", async ({ expect, tmpDir }) => {
+    const appOutDir = await createAppOutDir(tmpDir, ["CN=Other Corp, O=Other Corporation", "CN=Other Corp"])
     const error = await verify([appOutDir], signedBy(SUBJECT)).then(
       () => null,
       (e: unknown) => e
@@ -173,13 +173,13 @@ describe("verifyUpdateInstallerPublisher", () => {
     expect(readSigner).toHaveBeenCalledWith(INSTALLER)
   })
 
-  test("passes with a partial CN + O DN (attributes it leaves out are not compared)", async ({ expect, tmpDir }) => {
+  test("passes with a partial DN (attributes it leaves out are not compared), a CN-only one included", async ({ expect, tmpDir }) => {
     await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp, O=Acme Corporation, C=US")], signedBy(SUBJECT))).resolves.toBeUndefined()
+    await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp")], signedBy(SUBJECT))).resolves.toBeUndefined()
   })
 
-  test("fails with a bare name or a CN-only DN that equals the signer's CN, as electron-updater 7 rejects them", async ({ expect, tmpDir }) => {
+  test("fails with a bare name that equals the signer's CN, as electron-updater 7 rejects it", async ({ expect, tmpDir }) => {
     await expect(verify([await createAppOutDir(tmpDir, "Acme Corp")], signedBy(SUBJECT))).rejects.toThrow(/Since electron-builder v27/)
-    await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp")], signedBy(SUBJECT))).rejects.toThrow(/Since electron-builder v27/)
   })
 
   test("a DN with an OpenSSL-style ST key fails: Windows reports the state as S", async ({ expect, tmpDir }) => {

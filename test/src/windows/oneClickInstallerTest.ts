@@ -17,7 +17,7 @@ test("one-click", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
           sign: {
             type: "signtool" as const,
             // An explicit publisherName must include at least one name matching the signing certificate (the
-            // ephemeral test identity, WIN_SIGNING_PUBLISHER_NAME), and every entry must be a DN with CN and O —
+            // ephemeral test identity, WIN_SIGNING_PUBLISHER_NAME), and every entry must be a distinguished name —
             // extra names for certificate rotation still pass through to app-update.yml verbatim.
             publisherName: [...EXPLICIT_PUBLISHER_NAMES],
           },
@@ -58,10 +58,10 @@ test("one-click", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   )
 )
 
-// Without an explicit publisherName, a signed build embeds the CN, O and C of its certificate in app-update.yml; electron-updater
+// Without an explicit publisherName, a signed build embeds the full subject of its certificate in app-update.yml; electron-updater
 // checks the signature of a downloaded update against it. Every blackbox update build relies on this (doBuild in
 // blackboxUpdateHelpers.ts asserts the same value on Windows).
-test("one-click signed without publisherName: app-update.yml has the certificate's CN, O and C", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test("one-click signed without publisherName: app-update.yml has the certificate's subject", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
     expect,
     {
