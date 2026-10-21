@@ -2497,6 +2497,8 @@
 - Chore(deps): update dependency app-builder-bin to v5.0.0-alpha.8 _[`#8478`](https://github.com/electron-userland/electron-builder/pull/8478) [`27a8a60`](https://github.com/electron-userland/electron-builder/commit/27a8a60c86adeaf792bbd0c33f3de23400ded2d4)_ — `builder-util`
 - Fix: correct native dependency tree mismatch in app-builder rebuild _[`#8450`](https://github.com/electron-userland/electron-builder/pull/8450) [`55671bd`](https://github.com/electron-userland/electron-builder/commit/55671bd2159d4da8934e7083077d9cc854dc85fb)_ — `electron-builder`, `app-builder-lib`
 - Fix: resolveConfig logic ignores `.mjs` filter _[`#8482`](https://github.com/electron-userland/electron-builder/pull/8482) [`ff8059e`](https://github.com/electron-userland/electron-builder/commit/ff8059e385efbf017b9e325e4e7649b5cb6dff15)_ — `app-builder-lib`
+- Fix(deploy): regenerate lockfile for test package _[`#8484`](https://github.com/electron-userland/electron-builder/pull/8484) [`3faaa72`](https://github.com/electron-userland/electron-builder/commit/3faaa72550fa15dab60112291aacb9fbe7c3d1d1)_
+- Fix(deploy): attempt to install deps before calculating publish changeset _[`17310b4`](https://github.com/electron-userland/electron-builder/commit/17310b4adbf241ff0869e5681e5b34f47ab1a3fb)_
 
 
 
@@ -2521,6 +2523,10 @@
 
 ## electron-builder@25.0.5
 
+### Minor Changes
+
+- Feat: allow `riscv64` support via custom electron dist _[`#8143`](https://github.com/electron-userland/electron-builder/pull/8143) [`b306895`](https://github.com/electron-userland/electron-builder/commit/b3068954d946be5fe2568183819a26c36d54878b)_
+
 ### Patch Changes
 
 - Fix: Snap publish regression in pulling publish config _[`#8424`](https://github.com/electron-userland/electron-builder/pull/8424) [`8e6c171`](https://github.com/electron-userland/electron-builder/commit/8e6c17124cdc523620a66efaf871ef8d335c0f49)_ — `app-builder-lib`
@@ -2544,6 +2550,7 @@
 - Automatically place .node files into app.asar.unpack _[`#8392`](https://github.com/electron-userland/electron-builder/pull/8392) [`12c52a8`](https://github.com/electron-userland/electron-builder/commit/12c52a81420f04ec0e205dd83798c2b0b773011d)_ — `app-builder-lib`
 - Fix: add disableDefaultIgnoredFiles option _[`#8398`](https://github.com/electron-userland/electron-builder/pull/8398) [`5ab2bee`](https://github.com/electron-userland/electron-builder/commit/5ab2bee1e1db77967c65d56443f0dc79de5071da)_ — `app-builder-lib`
 - Fix: return parent dir for local dependency _[`#8406`](https://github.com/electron-userland/electron-builder/pull/8406) [`f7daeb9`](https://github.com/electron-userland/electron-builder/commit/f7daeb9976353f7b12c093c88b6e1136b6317880)_ — `app-builder-lib`
+- Fix: broken link formatting in the docs _[`#8407`](https://github.com/electron-userland/electron-builder/pull/8407) [`6cc6b8d`](https://github.com/electron-userland/electron-builder/commit/6cc6b8deb4c7682d3c4cc9e450572dd7a135f8ae)_
 
 ## electron-updater@6.3.3
 
@@ -2584,6 +2591,7 @@
 - Fix: don't setuid chrome-sandbox when not required _[`#8368`](https://github.com/electron-userland/electron-builder/pull/8368) [`2acdf65`](https://github.com/electron-userland/electron-builder/commit/2acdf65d47ad4b8fb546a00833d646a5e58e5428)_ — `app-builder-lib`
 - Fix: allow enabling tsc lib checking on electron-updater package _[`#8372`](https://github.com/electron-userland/electron-builder/pull/8372) [`c85b73d`](https://github.com/electron-userland/electron-builder/commit/c85b73d7c8dcefe86b0b350946af1cea951e6aae)_ — `electron-builder`, `app-builder-lib`
 - Fix: checking cancellation token during pack and any retry tasks to exit early on process "cancel" _[`#8375`](https://github.com/electron-userland/electron-builder/pull/8375) [`54c1059`](https://github.com/electron-userland/electron-builder/commit/54c1059b961f7c2a493d26b7e6ef674911069cad)_ — `app-builder-lib`, `builder-util`
+- Revert "chore(deps): update dependency mkdocs to <1.7 (#8350)" _[`#8366`](https://github.com/electron-userland/electron-builder/pull/8366) [`30baa4f`](https://github.com/electron-userland/electron-builder/commit/30baa4fe8ddc4c992eafadfb45a16cbd2f7907af)_
 
 ## electron-updater@6.3.1
 
@@ -2602,6 +2610,7 @@
 - Fix(deps): update dependency @electron/osx-sign to v1.3.1 _[`#8341`](https://github.com/electron-userland/electron-builder/pull/8341) [`578a7e1`](https://github.com/electron-userland/electron-builder/commit/578a7e1a0fcf2a700fe5fadcb1567c1193bd978d)_ — `app-builder-lib`
 - Fix(mac): `disablePreGypCopy: true` to handle mac universal builds (fixes #8347) _[`#8352`](https://github.com/electron-userland/electron-builder/pull/8352) [`372b046`](https://github.com/electron-userland/electron-builder/commit/372b046bec23ba0390a6cdb3b4390f033796c833)_ — `app-builder-lib`
 - Fix: updating app-builder dependency to resolve #8351 _[`#8353`](https://github.com/electron-userland/electron-builder/pull/8353) [`089dd63`](https://github.com/electron-userland/electron-builder/commit/089dd6396c9638910967c1968d9b8056acd952a9)_ — `builder-util`
+- Fix: resolve CI flakiness due to lzma-native dependency _[`#8342`](https://github.com/electron-userland/electron-builder/pull/8342) [`60774a3`](https://github.com/electron-userland/electron-builder/commit/60774a3883d021f27ecce7a37608f025f1a80ce3)_
 
 
 
@@ -2659,6 +2668,18 @@
 - Import builder-util from root instead of out _[`#8330`](https://github.com/electron-userland/electron-builder/pull/8330) [`db1894d`](https://github.com/electron-userland/electron-builder/commit/db1894d78a0bbf8377a787a25dddc17af22a4667)_ — `builder-util`
 - Chore(deps): update dependency typescript to v5.5.3 _[`#8323`](https://github.com/electron-userland/electron-builder/pull/8323) [`fa3275c`](https://github.com/electron-userland/electron-builder/commit/fa3275c05b334f59453d04551fffa24bfa558e48)_ — `app-builder-lib`
 - Fix(deps): update dependency minimatch to v10 _[`#8327`](https://github.com/electron-userland/electron-builder/pull/8327) [`f9eae65`](https://github.com/electron-userland/electron-builder/commit/f9eae653985f332ead7545490c73aa27d90c35cd)_ — `app-builder-lib`
+- Fix(deps): update dependency read-config-file to v6.4.0 _[`#8324`](https://github.com/electron-userland/electron-builder/pull/8324) [`1f1f92c`](https://github.com/electron-userland/electron-builder/commit/1f1f92c978acfde789abd740086be2e6398fe5e6)_
+- Fix(deploy): using `pnpm publish` cmd line arg to force `next` tag _[`#8285`](https://github.com/electron-userland/electron-builder/pull/8285) [`81da7c1`](https://github.com/electron-userland/electron-builder/commit/81da7c1491e2b3ff2f7b476f8128183f57074ff5)_
+- Fix(docs): fix typo in default glob pattern _[`#8256`](https://github.com/electron-userland/electron-builder/pull/8256) [`14942b7`](https://github.com/electron-userland/electron-builder/commit/14942b70a5da79a5e36e330f64de66ec501b4ac6)_
+- Fix(deps): update dependency ejs to v3.1.10 [security] _[`#8192`](https://github.com/electron-userland/electron-builder/pull/8192) [`77f9774`](https://github.com/electron-userland/electron-builder/commit/77f977435c99247d5db395895618b150f5006e8f)_
+- Fix(deps): update dependency tar to v6.2.1 [security] _[`#8171`](https://github.com/electron-userland/electron-builder/pull/8171) [`393f140`](https://github.com/electron-userland/electron-builder/commit/393f140459dc4a7d6008750dc48de83c8e8d33a7)_
+- Fix: disable broken test, needs further debugging. It's broken on all previous versions of electron-builder, seems MacOS related _[`ac6d887`](https://github.com/electron-userland/electron-builder/commit/ac6d8875463cba89c02a35baf347a1c2f76697e9)_
+- Fix: disable broken test, needs further debugging. It's broken on all previous versions of electron-builder, seems MacOS related _[`01a9c08`](https://github.com/electron-userland/electron-builder/commit/01a9c08f2ddbd8d1b96c58089771a93fd695c753)_
+- Fix: disable broken test, needs further debugging. It's broken on all previous versions of electron-builder, seems MacOS related _[`dbd1fc5`](https://github.com/electron-userland/electron-builder/commit/dbd1fc5510dca1da90a199fb34407573e464dba3)_
+- Fix(appx): Update `identityName` validation for windows 10 _[`#8203`](https://github.com/electron-userland/electron-builder/pull/8203) [`66d6d6c`](https://github.com/electron-userland/electron-builder/commit/66d6d6c73776b8a62ec30d569bf68c0f1eb83ce2)_
+- Fix(docs/multi-platform-build.md): broken link of build.sh _[`#8193`](https://github.com/electron-userland/electron-builder/pull/8193) [`3a2ccdd`](https://github.com/electron-userland/electron-builder/commit/3a2ccdd9483afa3134198b3ef56ba6163b2aaec9)_
+- Fix(deps): update dependency @electron/universal to v2 _[`#8115`](https://github.com/electron-userland/electron-builder/pull/8115) [`f8602aa`](https://github.com/electron-userland/electron-builder/commit/f8602aa222ad8b85eb0b91a11f359580203ba024)_
+- Fix(deps): update dependency @electron/notarize to v2.3.0 _[`#8114`](https://github.com/electron-userland/electron-builder/pull/8114) [`0e8e7f6`](https://github.com/electron-userland/electron-builder/commit/0e8e7f6524f0f00b28348fc47c57db8f801692b1)_
 
 ## electron-updater@6.3.0
 
@@ -2746,6 +2767,8 @@
 - Fix(mac): Update mac notarize keychain env var to be optional _[`#8022`](https://github.com/electron-userland/electron-builder/pull/8022) [`9d1d150`](https://github.com/electron-userland/electron-builder/commit/9d1d150896a763d3630418bf5be8fd3a070c0c40)_ — `app-builder-lib`
 - Fix(mac): merge `fileAssociations` with existing `CFBundleDocumentTypes` if defined in `mac.extendInfo` _[`#8035`](https://github.com/electron-userland/electron-builder/pull/8035) [`94677f3`](https://github.com/electron-userland/electron-builder/commit/94677f3d70866582635c717b042194f0c75bbf01)_ — `app-builder-lib`
 - Attempt dynamically importing hook as a module if package.json `type=module`, if fail, fallback to default `require` _[`#8042`](https://github.com/electron-userland/electron-builder/pull/8042) [`63a0044`](https://github.com/electron-userland/electron-builder/commit/63a00443cf4bae9d7406f7e879ea607632da08b8)_ — `app-builder-lib`
+- Fix(deps): update dependency @electron/universal to v1.5.1 _[`#8030`](https://github.com/electron-userland/electron-builder/pull/8030) [`db3b18e`](https://github.com/electron-userland/electron-builder/commit/db3b18e799a6579bbc36c41b3125a062ebf075ec)_
+- Fix(deps): update dependency @electron/notarize to v2.2.1 _[`#8029`](https://github.com/electron-userland/electron-builder/pull/8029) [`2248134`](https://github.com/electron-userland/electron-builder/commit/2248134068e035ec76fe696385bb467a94dd384d)_
 
 
 
@@ -2777,6 +2800,8 @@
 - Fix: notarization with an apple API key _[`#7951`](https://github.com/electron-userland/electron-builder/pull/7951) [`869c7e4`](https://github.com/electron-userland/electron-builder/commit/869c7e4652a5d5a3562e25723d6cedd622ab657b)_ — `app-builder-lib`
 - Fix(win): product file name is too long causes the find process exe to fail _[`#7955`](https://github.com/electron-userland/electron-builder/pull/7955) [`88e61bc`](https://github.com/electron-userland/electron-builder/commit/88e61bc410fae8c0bea0b2029ee1347864af98ac)_ — `app-builder-lib`
 - Feat(archive): skip archive when destination file is already up to date _[`#7971`](https://github.com/electron-userland/electron-builder/pull/7971) [`8803852`](https://github.com/electron-userland/electron-builder/commit/8803852c7aadf56771f537dc33ffd51c14830f50)_ — `app-builder-lib`
+- Fix(docs/configuration): broken links _[`#7949`](https://github.com/electron-userland/electron-builder/pull/7949) [`98624c9`](https://github.com/electron-userland/electron-builder/commit/98624c93ae5063886e82eaa81f67317d5e79f26c)_
+- Fix: update unit test snapshot to account for new package dependency files _[`#7968`](https://github.com/electron-userland/electron-builder/pull/7968) [`9335c59`](https://github.com/electron-userland/electron-builder/commit/9335c59e224b3cba57cba8822995a88f5349a927)_
 
 ## electron-updater@6.1.8
 
@@ -2861,6 +2886,7 @@
 ### Patch Changes
 
 - Fix: flatpak build fails due to too large icons _[`#7875`](https://github.com/electron-userland/electron-builder/pull/7875) [`9883ab6`](https://github.com/electron-userland/electron-builder/commit/9883ab60687b67c858b16f09eea6f8af76cf01b0)_ — `app-builder-lib`
+- Fix: temporarily skip flaky test from transient dependency _[`3f6757b`](https://github.com/electron-userland/electron-builder/commit/3f6757b41720c0740886325431c18be81a23ebbf)_
 
 
 
@@ -2949,6 +2975,8 @@
 - Chore(deps): updating @electron notarize, osx-sign, and universal packages and pinning versions _[`#7707`](https://github.com/electron-userland/electron-builder/pull/7707) [`4517d97`](https://github.com/electron-userland/electron-builder/commit/4517d97f48d822f446c48937df4b542a638fcab6)_ — `app-builder-lib`
 - Fix: Only schedule upload for unique files after `afterAllArtifactBuild` _[`#7715`](https://github.com/electron-userland/electron-builder/pull/7715) [`66bef0f`](https://github.com/electron-userland/electron-builder/commit/66bef0f7f1a0371ff924d29ed5453f9b3222c1ab)_ — `app-builder-lib`
 - Chore: updating @electron/osx-sign to latest version to handle preAutoEntitlements _[`#7736`](https://github.com/electron-userland/electron-builder/pull/7736) [`445b7f5`](https://github.com/electron-userland/electron-builder/commit/445b7f5d066781f3938fd6bcaca1d9a12f5b0eeb)_ — `app-builder-lib`
+- Fix(docs): typos in CONTRIBUTING.md _[`#7691`](https://github.com/electron-userland/electron-builder/pull/7691) [`6bcea7f`](https://github.com/electron-userland/electron-builder/commit/6bcea7f8a449daf9af09095b93bee71e22682488)_
+- Fix: adding `IMAGE_VERSION` arg for docker `node` image so that it force rebuilds when pnpm is updated on any date _[`#7690`](https://github.com/electron-userland/electron-builder/pull/7690) [`47c1fd7`](https://github.com/electron-userland/electron-builder/commit/47c1fd71080f8079f97f6513dd037a5a617f3809)_
 
 
 
@@ -3029,6 +3057,7 @@
 
 - Fix(mac): use Identity `hash` instead of `name` if it exists _[`#7622`](https://github.com/electron-userland/electron-builder/pull/7622) [`4652416`](https://github.com/electron-userland/electron-builder/commit/46524169cefbfa18e342d7fa19e79e710aae848e)_ — `app-builder-lib`
 - Fix: use electron/rebuild Rebuilder directly for cross-platform builds _[`#7629`](https://github.com/electron-userland/electron-builder/pull/7629) [`285aa76`](https://github.com/electron-userland/electron-builder/commit/285aa766c2675448689f2e465b6fa2b2acacdbc6)_ — `electron-builder`, `app-builder-lib`
+- Fix: resolve unstable unit test that is on latest mac _[`#7626`](https://github.com/electron-userland/electron-builder/pull/7626) [`16d1430`](https://github.com/electron-userland/electron-builder/commit/16d1430b6c3721f3a258a02b70897a9b2af25c28)_
 
 ## electron-updater@6.1.2
 
@@ -3202,6 +3231,7 @@
 - Fix(arm64): use RPM architecture `aarch64` in name _[`#7466`](https://github.com/electron-userland/electron-builder/pull/7466) [`1342f87`](https://github.com/electron-userland/electron-builder/commit/1342f872f98229cf6c31069253fcf0f435bfd9df)_ — `builder-util`
 - Fix: updating SignOptions to leverage `optionsForFile` for entitlements _[`#7491`](https://github.com/electron-userland/electron-builder/pull/7491) [`c1deace`](https://github.com/electron-userland/electron-builder/commit/c1deace1de707faacb02ae49cfaa59d60ab6ac06)_ — `app-builder-lib`
 - Fix: missing quote syntax error in nsis uninstaller _[`2a6662e`](https://github.com/electron-userland/electron-builder/commit/2a6662eb9fe5473bc348828a96311978b7c42855)_ — `app-builder-lib`
+- Fix: missing quote syntax error in nsis uninstaller _[`#7490`](https://github.com/electron-userland/electron-builder/pull/7490) [`278a3df`](https://github.com/electron-userland/electron-builder/commit/278a3df3c738dbe0d2240f338e901774b7d578c5)_
 
 
 
@@ -3217,6 +3247,7 @@
 - Remove spctl check from Mac notarization step _[`#7361`](https://github.com/electron-userland/electron-builder/pull/7361) [`f9f23be`](https://github.com/electron-userland/electron-builder/commit/f9f23bef64efd429f6dfd1ec81f2d73927f63a8e)_ — `app-builder-lib`
 - Remove extra adapter field if core22 is set as base for snapcraft _[`#7378`](https://github.com/electron-userland/electron-builder/pull/7378) [`db69a18`](https://github.com/electron-userland/electron-builder/commit/db69a1875d219310b3050b35cdc46c20ec45cc04)_ — `app-builder-lib`
 - Fix(BREAKING): Execute `afterSign` hook only when signing is completed, otherwise skip _[`#7388`](https://github.com/electron-userland/electron-builder/pull/7388) [`1cb8f50`](https://github.com/electron-userland/electron-builder/commit/1cb8f50c3551b398e20b798aba0c60bb34860b49)_ — `app-builder-lib`
+- Fix: Execute `afterSign` hook only when signing is complete (i.e. if the signing step wasn't explicitly skipped) (BREAKING) _[`#7311`](https://github.com/electron-userland/electron-builder/pull/7311) [`fd93fce`](https://github.com/electron-userland/electron-builder/commit/fd93fce96f476c09af3379d964bf9092bd20787e)_
 
 ### Minor Changes
 
@@ -3227,6 +3258,7 @@
 - Added the accelerate option to handle accelerated s3 buckets _[`#7314`](https://github.com/electron-userland/electron-builder/pull/7314) [`cc1ddab`](https://github.com/electron-userland/electron-builder/commit/cc1ddabd45f239ee06fde9b2d1534467908791fa)_ — `app-builder-lib`, `builder-util-runtime`
 - Update MacOS signOptions on macPackager _[`#7351`](https://github.com/electron-userland/electron-builder/pull/7351) [`1e8dad8`](https://github.com/electron-userland/electron-builder/commit/1e8dad8bc58f53780c9fac3b0c48e248a8b5467c)_ — `app-builder-lib`
 - Feat: optional vendor information in releaseInfo _[`#7373`](https://github.com/electron-userland/electron-builder/pull/7373) [`9700c75`](https://github.com/electron-userland/electron-builder/commit/9700c75331e7d8de4efd257d8774b8c2a422538b)_ — `app-builder-lib`
+- Feat: Support mjs files for lifecycle operations _[`#7442`](https://github.com/electron-userland/electron-builder/pull/7442) [`37d6db3`](https://github.com/electron-userland/electron-builder/commit/37d6db389e76c61462cb3578ec4abece1a07d0c2)_
 
 ### Patch Changes
 
@@ -3250,6 +3282,13 @@
 - Fix: enable signing of .node modules in order to support WDAC _[`45c07e3`](https://github.com/electron-userland/electron-builder/commit/45c07e3e063e89a6f8a82e8ae5ef7a2453ff161a)_ — `app-builder-lib`
 - Fix: report the correct status result when `doSign` exits early from macPackager and winPackager. Updated function definition to return `Promise<boolean>` to properly flag intellisense _[`#7432`](https://github.com/electron-userland/electron-builder/pull/7432) [`4d3fdfc`](https://github.com/electron-userland/electron-builder/commit/4d3fdfcfe5c6b75cdb8fa8e89f6169c986949bcb)_ — `app-builder-lib`, `builder-util`
 - Fix packager: return success status from doSign function calls _[`#7431`](https://github.com/electron-userland/electron-builder/pull/7431) [`eb842f7`](https://github.com/electron-userland/electron-builder/commit/eb842f7faee3a261635fb3e59230e09c98840e40)_ — `app-builder-lib`
+- Fix(packager): return success status from doSign function calls _[`48747ac`](https://github.com/electron-userland/electron-builder/commit/48747ac9e1fe08f84b2335a8263eebc8f4c35561)_
+- Revert "feat: Support mjs files for lifecycle operations" _[`#7461`](https://github.com/electron-userland/electron-builder/pull/7461) [`0f9da20`](https://github.com/electron-userland/electron-builder/commit/0f9da20dbf8a229242ad9247ca89ef90241512f5)_
+- Fix: Removing file size from BuildTest smart unpack _[`#7456`](https://github.com/electron-userland/electron-builder/pull/7456) [`25dc0bb`](https://github.com/electron-userland/electron-builder/commit/25dc0bbb19637add4c47be88934f70b0e84a122e)_
+- Fix: update docs for updated electron API _[`b7a53d0`](https://github.com/electron-userland/electron-builder/commit/b7a53d0f69f1350b47cef118b1ef4aaf9885f88f)_
+- Fix: enable signing of .node modules in order to support WDAC _[`#7421`](https://github.com/electron-userland/electron-builder/pull/7421) [`d1e0c34`](https://github.com/electron-userland/electron-builder/commit/d1e0c348283b5f099217aa247f9af24c77a3e415)_
+- Fix(docs): PlatformSpecificBuildOptions.md broken link _[`#7405`](https://github.com/electron-userland/electron-builder/pull/7405) [`ece7f88`](https://github.com/electron-userland/electron-builder/commit/ece7f889f93921894cbbcb02b924dc90d793be7c)_
+- Fix: incorrect html comment in issue_template.md _[`#7386`](https://github.com/electron-userland/electron-builder/pull/7386) [`d07b98a`](https://github.com/electron-userland/electron-builder/commit/d07b98accba0c1afea12d18e850fde02dcf8ea51)_
 
 ## electron-updater@6.0.0
 

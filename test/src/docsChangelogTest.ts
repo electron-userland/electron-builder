@@ -378,7 +378,10 @@ describe("docs changelog", () => {
       // 26.0.0 follows 25.1.8 and lists the changesets of its alphas again
       expect(counts("25.1.6", "26.0.0")).toEqual([5, 11, 44])
       // across all of v25
-      expect(counts("24.13.3", "26.0.0")).toEqual([5, 24, 125])
+      expect(counts("24.13.3", "26.0.0")).toEqual([5, 25, 142])
+      // v24 and v25 also list the commits that were released without a changeset
+      expect(compare(real, "25.0.4", "25.0.5").minor.map(change => change.entry.pr)).toContain(8143)
+      expect(compare(real, "24.13.3", "25.0.0").patch.map(change => change.entry.pr)).toContain(8171)
       expect(counts("26.0.0-alpha.5", "26.0.0")).toEqual([3, 6, 20])
       expect(counts("26.0.0-alpha.11", "26.0.0")).toEqual([0, 0, 0])
       expect(counts("27.0.0-alpha.11", "26.15.3")).toEqual([0, 0, 0])
