@@ -940,8 +940,7 @@ test.for([
 test.for([
   { name: "custom channel current with no matching release", version: "1.0.0-nightly.1", channel: undefined, feed: ["v2.0.0", "v2.0.0-beta.1", "v2.0.0-canary.1"] },
   { name: "beta current with only alpha releases", version: "1.0.0-beta.1", channel: undefined, feed: ["v1.1.0-alpha.1"] },
-  // explicit channel "latest" is treated as a custom pre-release channel: stable tags are not eligible
-  { name: 'explicit channel = "latest" with only stable releases', version: "1.0.0", channel: "latest", feed: ["v1.1.0", "v1.2.0"] },
+  { name: 'explicit channel = "latest" with only pre-releases', version: "1.0.0-beta.1", channel: "latest", feed: ["v1.1.0-beta.1", "v1.1.0-alpha.1", "v2.0.0-nightly.1"] },
 ])("allowPrerelease=true - $name throws ERR_UPDATER_NO_PUBLISHED_VERSIONS", async ({ version, channel, feed }, { expect }) => {
   const requestSpy = createMockRequest()
   const updater = await createPublicUpdater(requestSpy, version)
@@ -954,6 +953,45 @@ test.for([
 
   await expect(updater.checkForUpdates()).rejects.toMatchObject({ code: "ERR_UPDATER_NO_PUBLISHED_VERSIONS", message: "No published versions on GitHub" })
   expect(requestSpy).toHaveBeenCalledTimes(1)
+})
+
+// "latest" is the stable channel (release-using-channels docs): with allowPrerelease, only stable releases are eligible
+test.for([
+  {
+    name: "stable current with only stable releases",
+    version: "1.0.0",
+    feed: ["v1.1.0", "v1.2.0"],
+    expectedTag: "v1.2.0",
+  },
+  {
+    name: "stable current ignores higher pre-releases",
+    version: "1.0.0",
+    feed: ["v2.0.0-beta.1", "v1.2.0", "v2.0.0-nightly.1"],
+    expectedTag: "v1.2.0",
+  },
+  {
+    name: "beta current opts out of betas and moves to the highest stable release",
+    version: "1.0.0-beta.1",
+    feed: ["v1.1.0-beta.1", "v1.0.0"],
+    expectedTag: "v1.0.0",
+  },
+  {
+    name: 'stable current ignores a higher "-latest.N" pre-release',
+    version: "1.0.0",
+    feed: ["v2.0.0-latest.1", "v1.2.0"],
+    expectedTag: "v1.2.0",
+  },
+])('allowPrerelease=true with explicit channel = "latest" - $name', async ({ version, feed, expectedTag }, { expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy, version)
+  updater.channel = "latest"
+  updater.allowPrerelease = true
+
+  requestSpy.mockResolvedValueOnce(mockAtomFeed(feed.map(tag => ({ tag, title: tag })))).mockResolvedValueOnce(mockYaml(expectedTag.slice(1)))
+
+  const result = await updater.checkForUpdates()
+  expect((result!.updateInfo as any).tag).toBe(expectedTag)
+  expect(requestedPaths(requestSpy)).toEqual([`${RELEASES_PATH}.atom`, `${RELEASES_PATH}/download/${expectedTag}/latest.yml`])
 })
 
 test('allowPrerelease=true - explicit channel = "alpha" overrides the beta channel derived from the current version', async ({ expect }) => {
@@ -1111,6 +1149,31 @@ test("linux platform - channel file names carry the platform/arch suffix, includ
     `${RELEASES_PATH}/download/${BETA_TAG}/beta-linux-arm64.yml`,
     `${RELEASES_PATH}/download/${BETA_TAG}/latest-linux-arm64.yml`,
   ])
+})
+
+test('linux platform - explicit channel = "latest" picks the stable release and requests latest-linux.yml', async ({ expect }) => {
+  vi.stubEnv("TEST_UPDATER_ARCH", "x64")
+  const requestSpy = createMockRequest()
+  const updater = await createPublicUpdater(requestSpy, "1.0.0-beta.1")
+  ;(updater as any)._testOnlyOptions = { ...(updater as any)._testOnlyOptions, platform: "linux" }
+  updater.channel = "latest"
+  updater.allowPrerelease = true
+
+  requestSpy
+    .mockResolvedValueOnce(
+      mockAtomFeed([
+        { tag: "v1.1.0-beta.1", title: "v1.1.0-beta.1" },
+        { tag: "v1.0.0", title: "v1.0.0" },
+      ])
+    )
+    .mockResolvedValueOnce(mockYaml("1.0.0"))
+
+  try {
+    await updater.checkForUpdates()
+  } finally {
+    vi.unstubAllEnvs()
+  }
+  expect(requestedPaths(requestSpy).slice(1)).toEqual([`${RELEASES_PATH}/download/v1.0.0/latest-linux.yml`])
 })
 
 // --- release name / notes ---

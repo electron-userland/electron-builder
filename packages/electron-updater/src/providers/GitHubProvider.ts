@@ -228,6 +228,10 @@ function prereleaseChannelOf(version: string | semver.SemVer): string | null {
 // A release is eligible when it is on the current channel. Alpha/beta clients additionally accept stable releases
 // and may move from alpha to beta, but not down from beta to alpha; custom channels only follow themselves.
 function isEligibleForChannel(releaseChannel: string | null, currentChannel: string): boolean {
+  // "latest" is the stable channel: only stable releases are eligible (see release-using-channels docs)
+  if (currentChannel === "latest") {
+    return releaseChannel === null
+  }
   if (releaseChannel === currentChannel) {
     return true
   }
