@@ -9,7 +9,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { ExpectStatic } from "vitest"
 import { app, PackedContext } from "../helpers/packTester"
-import { ASAR_INTEGRITY_DIGEST_ELECTRON_VERSION } from "../helpers/testConfig"
+import { ELECTRON_VERSION } from "../helpers/testConfig"
 
 const SENTINEL = Buffer.from(ASAR_INTEGRITY_DIGEST_SENTINEL)
 const STARTED = "ASAR_INTEGRITY_DIGEST_TEST_APP_STARTED"
@@ -19,7 +19,7 @@ const UNOPENED_ASAR = "Resources/Unopened.asar"
 const arch = process.arch === "arm64" ? Arch.arm64 : Arch.x64
 
 const config: Configuration = {
-  electronVersion: ASAR_INTEGRITY_DIGEST_ELECTRON_VERSION,
+  electronVersion: ELECTRON_VERSION,
   // the app is not code signed, so the fuse flip has to restore the ad-hoc signature it invalidates
   electronFuses: { enableEmbeddedAsarIntegrityValidation: true, onlyLoadAppFromAsar: true, resetAdHocDarwinSignature: true },
   // the digest must cover the final Info.plist, as left by the afterPack hook
@@ -114,7 +114,7 @@ describe.ifMac("ASAR integrity digest", { concurrent: false }, () => {
   test("leaves an unsigned app launchable", ({ expect }) =>
     app(
       expect,
-      { targets: Platform.MAC.createTarget(DIR_TARGET, arch), config: { electronVersion: ASAR_INTEGRITY_DIGEST_ELECTRON_VERSION } },
+      { targets: Platform.MAC.createTarget(DIR_TARGET, arch), config: { electronVersion: ELECTRON_VERSION } },
       {
         projectDirCreated: writeMainScript,
         packed: async context => {
