@@ -15,7 +15,7 @@ import {
 import { randomBytes } from "crypto"
 import { release } from "os"
 import { EventEmitter } from "events"
-import { copyFile, mkdir, outputFile, pathExists, readFile, remove, rename, unlink } from "fs-extra"
+import { copyFile, mkdir, outputFile, pathExists, readFile, remove, rename, stat, unlink } from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
@@ -890,6 +890,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
       // get old blockmap from cache dir first, if not found, download it
       let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
+      if (oldBlockMapData != null && !(await isBlockMapOfFile(oldBlockMapData, downloadOptions.oldFile))) {
+        // The cached blockmap is replaced when a download finishes, but NSIS replaces the cached installer only when the update is
+        // installed. A release that arrives before the previous one is installed therefore finds the pending release's blockmap next
+        // to the running release's installer; planning against it downloads every differential byte and then fails the sha512 check.
+        // expected, and fixed by the next step: the installed version's blockmap is fetched from the server
+        this._logger.info(`Cached blockmap does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): ignoring it`)
+        oldBlockMapData = null
+      }
       isOldBlockMapFromCache = oldBlockMapData != null
       if (oldBlockMapData == null) {
         this._logger.info(`No cached blockmap for the old installer, downloading it from "${blockmapFileUrls[0]}"`)
@@ -914,6 +922,50 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return true
     }
   }
+}
+
+/**
+ * Whether `blockMap` (parsed from the cache, so unchecked) is a well-formed blockmap whose blocks end exactly at `file`'s size.
+ * A malformed map is rejected, so a corrupt cache file is replaced like a stale one. A missing file is not rejected here (the
+ * differential download reports it). Releases almost always differ in size, so this catches a blockmap of another release.
+ */
+export async function isBlockMapOfFile(blockMap: unknown, file: string): Promise<boolean> {
+  const end = getBlockMapEnd(blockMap)
+  if (end == null) {
+    return false
+  }
+  const fileStat = await stat(file).catch(() => null)
+  return fileStat == null || end === fileStat.size
+}
+
+/** Where the blocks of `blockMap` end, or null if it is not a well-formed blockmap. */
+function getBlockMapEnd(blockMap: unknown): number | null {
+  if (blockMap == null || typeof blockMap !== "object") {
+    return null
+  }
+  const { files } = blockMap as { files?: unknown }
+  if (!Array.isArray(files)) {
+    return null
+  }
+  let end = 0
+  for (const blockMapFile of files) {
+    if (blockMapFile == null || typeof blockMapFile !== "object") {
+      return null
+    }
+    const { offset, sizes, checksums } = blockMapFile as { offset?: unknown; sizes?: unknown; checksums?: unknown }
+    if (typeof offset !== "number" || !Number.isFinite(offset) || offset < 0 || !Array.isArray(sizes) || !Array.isArray(checksums) || checksums.length !== sizes.length) {
+      return null
+    }
+    let fileEnd = offset
+    for (const size of sizes) {
+      if (typeof size !== "number" || !Number.isFinite(size) || size < 0) {
+        return null
+      }
+      fileEnd += size
+    }
+    end = Math.max(end, fileEnd)
+  }
+  return end
 }
 
 export interface DownloadUpdateOptions {
