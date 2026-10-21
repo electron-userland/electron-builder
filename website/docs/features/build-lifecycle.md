@@ -299,6 +299,7 @@ Some targets expose additional hooks that fire inside their own build sequence:
 |---|---|---|
 | `msiProjectCreated` | MSI (WiX) | After WiX `.wxs` file is written to disk, before `candle.exe` / `light.exe` |
 | `appxManifestCreated` | AppX / MSIX | After `AppxManifest.xml` is written to disk, before `makeappx.exe` |
+| `pkgDistributionCreated` | PKG | After `distribution.xml` is written to disk, before `productbuild` builds the installer |
 
 ```js
 // Edit the WiX XML before MSI compilation
@@ -376,6 +377,7 @@ See [Publish Configuration](/docs/publish) for provider setup.
 | `artifactBuildStarted` | 2h | Target build starting | Logging, timing |
 | `msiProjectCreated` | 2h (MSI) | WiX `.wxs` file on disk | Edit WiX XML |
 | `appxManifestCreated` | 2h (AppX) | `AppxManifest.xml` on disk | Edit AppX manifest |
+| `pkgDistributionCreated` | 2h (PKG) | `distribution.xml` on disk | Edit the installer distribution |
 | `artifactBuildCompleted` | 2h | Artifact file on disk | Checksums, per-artifact upload |
 | `afterAllArtifactBuild` | 3 | All artifacts on disk | Symbol upload, extra publish paths |
 
@@ -400,7 +402,7 @@ Each target runs inside Phase 2h. Here is what happens inside each one:
 |---|---|
 | **DMG** | Create `.dmg` via `dmgbuild` → emit |
 | **ZIP** | Archive `.app` bundle → emit |
-| **PKG** | Build `.pkg` via `pkgbuild` + `productbuild` → sign → emit |
+| **PKG** | Build the component package via `pkgbuild` and write `distribution.xml` → `pkgDistributionCreated` hook → `productbuild` → sign → emit |
 | **MAS** | Re-sign with MAS provisioning profile → build `pkg` → emit |
 
 ### Linux
