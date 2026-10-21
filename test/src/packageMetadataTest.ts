@@ -239,6 +239,33 @@ describe("electron-updater pairing of the collected production node_modules", ()
   test("electron-updater 7 passes", ({ expect }) => {
     expect(() => checkCollectedElectronUpdater([{ name: "electron-updater", version: "7.0.0-alpha.10", dir: "/nonexistent/electron-updater" }])).not.toThrow()
   })
+
+  // pnpm reports a link:ed dependency by its specifier, not its version (the e2e updater fixtures link electron-updater from this repository)
+  test("a link:ed electron-updater is checked by the version of its package.json", async ({ expect, tmpDir }) => {
+    const root = await tmpDir.getTempDir({ prefix: "collected-link" })
+    const updater7 = path.join(root, "updater-7")
+    await fsExtra.outputJson(path.join(updater7, "package.json"), { name: "electron-updater", version: "7.0.0-alpha.10" })
+    expect(() => checkCollectedElectronUpdater([{ name: "electron-updater", version: "link:../updater-7", dir: updater7 }])).not.toThrow()
+
+    const updater6 = path.join(root, "updater-6")
+    await fsExtra.outputJson(path.join(updater6, "package.json"), { name: "electron-updater", version: "6.8.3" })
+    const error = errorOf(() => checkCollectedElectronUpdater([{ name: "electron-updater", version: "link:../updater-6", dir: updater6 }]))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error!.message).toContain("but found electron-updater 6.8.3")
+  })
+
+  test("the copied package.json wins over the collector's version", async ({ expect, tmpDir }) => {
+    const dir = path.join(await tmpDir.getTempDir({ prefix: "collected-disk" }), "node_modules", "electron-updater")
+    await fsExtra.outputJson(path.join(dir, "package.json"), { name: "electron-updater", version: "6.8.3" })
+    const error = errorOf(() => checkCollectedElectronUpdater([{ name: "electron-updater", version: "7.0.0", dir }]))
+    expect(error!.message).toContain("but found electron-updater 6.8.3")
+  })
+
+  test("an unreadable link:ed electron-updater fails with its specifier", ({ expect }) => {
+    const error = errorOf(() => checkCollectedElectronUpdater([{ name: "electron-updater", version: "link:../missing", dir: "/nonexistent/electron-updater" }]))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error!.message).toContain("but found electron-updater link:../missing")
+  })
 })
 
 describe("electron-updater pairing source of truth", () => {

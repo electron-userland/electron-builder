@@ -238,10 +238,13 @@ export function checkCollectedElectronUpdater(nodeModules: ReadonlyArray<NodeMod
     for (const module of modules ?? []) {
       if (module.name === ELECTRON_UPDATER && module.excluded !== true) {
         const packageJsonFile = path.join(module.dir, "package.json")
-        if (!isPairedVersion(module.version)) {
-          throw new InvalidConfigurationError(pairingError(module.version, `bundled from ${packageJsonFile}`))
+        // The copied package.json is what ships, so its version is the one checked. The collector's version is only a fallback:
+        // pnpm reports a `link:`ed dependency by its specifier ("link:../electron-updater"), not by a version.
+        const version = readVersion(packageJsonFile) ?? module.version
+        if (!isPairedVersion(version)) {
+          throw new InvalidConfigurationError(pairingError(version, `bundled from ${packageJsonFile}`))
         }
-        warnOnRuntimeMismatch(module.version, packageJsonFile)
+        warnOnRuntimeMismatch(version, packageJsonFile)
       }
       visit(module.dependencies)
     }
