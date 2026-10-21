@@ -91,7 +91,7 @@ function Releases({ changelog }: { changelog: ChangelogData }): ReactNode {
             {section.pkg} {section.version}
           </h3>
           {section.dependencies !== undefined && (
-            <p>
+            <p data-pagefind-ignore="">
               Updated dependencies:{" "}
               {section.dependencies.map((dependency, i) => (
                 <span key={dependency}>
@@ -200,8 +200,8 @@ export default function Changelog({ changelog }: { changelog: ChangelogData }): 
       <main className="container margin-vert--lg">
         <Heading as="h1">Changelog</Heading>
         <p>
-          The releases of electron-builder and electron-updater since {builder[builder.length - 1].version}. Pick two versions to list only the changes between them, grouped by major, minor
-          and patch changes. Older releases are in <Link href={`${changelog.repo}/blob/master/CHANGELOG.md`}>CHANGELOG.md on GitHub</Link>.
+          The releases of electron-builder and electron-updater since {builder[builder.length - 1].version}. Pick two versions to list only the changes between them, grouped by
+          major, minor and patch changes. Older releases are in <Link href={`${changelog.repo}/blob/master/CHANGELOG.md`}>CHANGELOG.md on GitHub</Link>.
         </p>
         <div className={styles.picker} data-pagefind-ignore="">
           <label>
