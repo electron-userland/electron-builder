@@ -5,6 +5,7 @@ import {
   computeUpdateManifestKeyId,
   normalizePublicKeyList,
   splitPemBlocks,
+  UpdateFileInfo,
   UpdateInfo,
   UPDATE_MANIFEST_SIGNATURE_VERSION,
   validateSignedManifestShape,
@@ -608,5 +609,28 @@ describe("blockMapUrl is signed only when present", () => {
     ["a control character in blockMapUrl", "a\nb", /files\[0\]\.blockMapUrl contains a control character/],
   ])("the shape check rejects %s", ([_name, blockMapUrl, expected], { expect }) => {
     expect(validateSignedManifestShape(withBlockMapUrl(blockMapUrl))).toMatch(expected)
+  })
+})
+
+describe("the MSIX identity hints are not signed", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const hints = { packageFamilyName: "TestApp_rdjwn13tdj8dy", packageVersion: "1.2.3.0" }
+  const msixInfo = (fileHints: Partial<UpdateFileInfo> = {}) => makeInfo({ files: [{ url: "App 1.2.3.msixbundle", sha512: "abc123", size: 8123456, ...fileHints }] })
+
+  test("canonicalizeForSigning is the same with and without packageFamilyName and packageVersion", () => {
+    expect(canonicalizeForSigning(msixInfo(hints))).toBe(canonicalizeForSigning(msixInfo()))
+  })
+
+  test("a manifest signed without the hints still verifies after they are added or edited; the bundle stays pinned", () => {
+    const info = signed(msixInfo(), privateKeyPem)
+    const withHints: UpdateInfo = { ...info, files: [{ ...info.files[0], ...hints }] }
+    expect(verifyManifestSignatures(withHints, [publicKeyPem]).ok).toBe(true)
+    const edited: UpdateInfo = { ...withHints, files: [{ ...withHints.files[0], packageFamilyName: "Other_8wekyb3d8bbwe", packageVersion: "9.9.9.9" }] }
+    expect(verifyManifestSignatures(edited, [publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures({ ...withHints, files: [{ ...withHints.files[0], sha512: "EVIL" }] }, [publicKeyPem]).ok).toBe(false)
+  })
+
+  test("validateSignedManifestShape accepts them", () => {
+    expect(validateSignedManifestShape(msixInfo(hints))).toBeNull()
   })
 })

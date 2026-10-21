@@ -1,24 +1,34 @@
+import type { Configuration } from "app-builder-lib"
+import { assertMsixUpdaterElectronVersion } from "app-builder-lib/src/targets/win/MsixTarget"
 import {
   assertSafeMappingPath,
   buildCapabilitiesXml,
   buildExtensionsXml,
   buildWindowsServicesXml,
+  computePackageFamilyName,
   computeUserAssets,
   defaultTileTag,
   escapeXmlAttr,
+  getPackageIdentity,
   isDefaultAssetIncluded,
+  isMappedTo,
+  isPackageTypeMapping,
   isScaledAssetsProvided,
   lockScreenTag,
+  PACKAGE_TYPE_MAPPING_DESTINATION,
   resolvePackageApplicationId,
   resolvePackageIdentityName,
   resourceLanguageTag,
   splashScreenTag,
+  substituteManifestMacros,
   validateApplicationId,
   validateIdentityName,
 } from "app-builder-lib/src/targets/win/winAppUtil"
-import { mkdtemp, rm, writeFile } from "fs/promises"
+import { InvalidConfigurationError, log } from "builder-util"
+import { mkdtemp, readFile, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
+import { vi } from "vitest"
 
 // Minimal VmManager stub: identity path mapping with a posix separator (enough for computeUserAssets)
 const fakeVm: any = { toVmFile: (f: string) => f, pathSep: "/" }
@@ -657,5 +667,163 @@ test.ifNotWindows("computeUserAssets: rejects a user-asset name that would injec
     await expect(computeUserAssets(fakeVm, "/vendor", dir)).rejects.toThrow("cannot contain a double-quote or newline")
   } finally {
     await rm(dir, { recursive: true, force: true })
+  }
+})
+
+// ─── computePackageFamilyName ─────────────────────────────────────────────────
+
+test("computePackageFamilyName: matches the package family names Windows reports", ({ expect }) => {
+  // 8wekyb3d8bbwe is the PublisherId of Microsoft's inbox apps; CN=EB Test Code Signing is the subject of the test signing certificate
+  expect(computePackageFamilyName("Microsoft.WindowsCalculator", "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US")).toBe(
+    "Microsoft.WindowsCalculator_8wekyb3d8bbwe"
+  )
+  expect(computePackageFamilyName("TestApp", "CN=Electron")).toBe("TestApp_rdjwn13tdj8dy")
+  expect(computePackageFamilyName("TestAppMsixUpdate", "CN=EB Test Code Signing")).toBe("TestAppMsixUpdate_by1eqepggsspe")
+})
+
+test("computePackageFamilyName: keeps the identity name verbatim and appends 13 lowercase Crockford base32 characters", ({ expect }) => {
+  expect(computePackageFamilyName("My.App-Name", "CN=Electron")).toBe("My.App-Name_rdjwn13tdj8dy")
+  for (const publisher of ["CN=Electron", "CN=Müller GmbH, O=Müller GmbH, C=DE", "CN=a"]) {
+    // Crockford's alphabet has no i, l, o or u
+    expect(computePackageFamilyName("TestApp", publisher)).toMatch(/^TestApp_[0-9a-hjkmnp-tv-z]{13}$/)
+  }
+})
+
+test("computePackageFamilyName: hashes the publisher as given, not its XML-escaped form", ({ expect }) => {
+  expect(computePackageFamilyName("TestApp", "CN=O'Brien & Sons")).toBe("TestApp_15tm11f05119t")
+  expect(computePackageFamilyName("TestApp", "CN=O&apos;Brien &amp; Sons")).not.toBe("TestApp_15tm11f05119t")
+})
+
+// ─── getPackageIdentity ───────────────────────────────────────────────────────
+
+const MSIX_TEMPLATE = path.join(__dirname, "../../../packages/app-builder-lib/templates/msix/appxmanifest.xml")
+
+const ESCAPED_PUBLISHER_MANIFEST = `<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10">
+  <Identity Name="TestApp" ProcessorArchitecture="x64" Publisher='CN=O&apos;Brien &amp; Sons' Version="1.2.3.0" />
+</Package>`
+
+test("getPackageIdentity: returns the Identity attributes unescaped", ({ expect }) => {
+  expect(getPackageIdentity(ESCAPED_PUBLISHER_MANIFEST)).toEqual({ name: "TestApp", publisher: "CN=O'Brien & Sons", version: "1.2.3.0" })
+})
+
+test("getPackageIdentity: reads a manifest that starts with a UTF-8 byte order mark", ({ expect }) => {
+  // readFile(..., "utf8") keeps the BOM that a custom manifest or an appxManifestCreated hook may have written
+  expect(getPackageIdentity(`\uFEFF${ESCAPED_PUBLISHER_MANIFEST}`)).toEqual({ name: "TestApp", publisher: "CN=O'Brien & Sons", version: "1.2.3.0" })
+})
+
+test("getPackageIdentity: reads a custom manifest (CRLF, comments, attribute order, double-quoted Publisher, PhoneIdentity)", ({ expect }) => {
+  const manifest = [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    "<!-- custom manifest -->",
+    '<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest">',
+    '  <Identity Version="2.0.1.7" Publisher="CN=&quot;Contoso, Inc.&quot;, O=&quot;Contoso, Inc.&quot;, C=US" Name="Contoso.App" ProcessorArchitecture="arm64" />',
+    '  <mp:PhoneIdentity PhoneProductId="00000000-0000-0000-0000-000000000000" PhonePublisherId="00000000-0000-0000-0000-000000000000" />',
+    "</Package>",
+  ].join("\r\n")
+  expect(getPackageIdentity(manifest)).toEqual({ name: "Contoso.App", publisher: 'CN="Contoso, Inc.", O="Contoso, Inc.", C=US', version: "2.0.1.7" })
+})
+
+test("getPackageIdentity: reads the identity back from the rendered MSIX template", async ({ expect }) => {
+  const publisher = `CN="O'Brien & Sons, Inc.", C=US`
+  const values: Partial<Record<string, string>> = { identityName: "TestApp", publisher, version: "1.2.3.0", arch: "x64" }
+  const manifest = substituteManifestMacros(await readFile(MSIX_TEMPLATE, "utf8"), macro => values[macro] ?? "")
+  expect(manifest).toContain("Publisher='CN=&quot;O&apos;Brien &amp; Sons, Inc.&quot;, C=US'")
+  expect(getPackageIdentity(manifest)).toEqual({ name: "TestApp", publisher, version: "1.2.3.0" })
+})
+
+// ─── isPackageTypeMapping / isMappedTo ────────────────────────────────────────
+
+test("isPackageTypeMapping: matches a [Files] line mapped to app\\resources\\package-type, in any casing", ({ expect }) => {
+  expect(PACKAGE_TYPE_MAPPING_DESTINATION).toBe("app\\resources\\package-type")
+  expect(isPackageTypeMapping('"C:\\x\\package-type" "app\\resources\\package-type"')).toBe(true)
+  // Windows paths are case-insensitive: a walked Resources\Package-Type is the same packaged file
+  expect(isPackageTypeMapping('"C:\\x\\Package-Type" "App\\Resources\\PACKAGE-TYPE"')).toBe(true)
+})
+
+test("isPackageTypeMapping: does not match another destination", ({ expect }) => {
+  expect(isPackageTypeMapping('"C:\\x\\package-type.txt" "app\\resources\\package-type.txt"')).toBe(false)
+  // only the destination counts, not a source that ends in package-type
+  expect(isPackageTypeMapping('"C:\\stage\\app\\resources\\package-type" "app\\resources\\app.asar"')).toBe(false)
+  expect(isPackageTypeMapping('"C:\\x\\package-type" "app\\package-type"')).toBe(false)
+  expect(isPackageTypeMapping('"C:\\x\\package-type" "app\\resources\\nested\\app\\resources\\package-type"')).toBe(false)
+})
+
+test("isMappedTo: compares the whole destination of a [Files] line, case-insensitively", ({ expect }) => {
+  const line = '"/tmp/stage/app-update.yml" "app\\resources\\app-update.yml"'
+  expect(isMappedTo(line, "app\\resources\\app-update.yml")).toBe(true)
+  expect(isMappedTo(line, "APP\\Resources\\App-Update.yml")).toBe(true)
+  expect(isMappedTo(line, "resources\\app-update.yml")).toBe(false)
+})
+
+// ─── assertMsixUpdaterElectronVersion ─────────────────────────────────────────
+
+// The warning is logged once per configuration object, so every call that asserts it gets a fresh one.
+function warningsOf(electronVersion: string | undefined, config: Configuration, isPrepackaged: boolean) {
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    assertMsixUpdaterElectronVersion(electronVersion, config, isPrepackaged)
+    return [...warn.mock.calls]
+  } finally {
+    warn.mockRestore()
+  }
+}
+
+test.for(["39.5.1", "40.0.0", "40.2.0", "41.0.0-alpha.5", "38.0.0"])("assertMsixUpdaterElectronVersion: fails the build for Electron %s", (electronVersion, { expect }) => {
+  const error = (() => {
+    try {
+      assertMsixUpdaterElectronVersion(electronVersion, {}, false)
+    } catch (e: any) {
+      return e
+    }
+  })()
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  // the message names the first usable version of every line, so the user knows where to go
+  for (const floor of ["39.5.2+", "40.2.1+", "41.0.0-alpha.6+", "42+"]) {
+    expect(error.message).toContain(floor)
+  }
+  expect(error.message).toContain(`This build uses Electron ${electronVersion}.`)
+})
+
+test.for(["39.5.2", "39.8.10", "40.2.1", "41.0.0-alpha.6", "41.0.0", "42.0.0", "44.0.0-alpha.1"])(
+  "assertMsixUpdaterElectronVersion: accepts Electron %s without a warning",
+  (electronVersion, { expect }) => {
+    expect(warningsOf(electronVersion, {}, false)).toEqual([])
+  }
+)
+
+test.for<[string, string | undefined, Configuration, boolean, string]>([
+  ["an unparseable version", "custom-1", {}, false, "unparseable Electron version"],
+  ["an unknown version", undefined, {}, false, "unparseable Electron version"],
+  ["a custom electronDist", "39.0.0", { electronDist: "C:/electron" }, false, "custom electronDist"],
+  ["a prepackaged app", "39.0.0", {}, true, "prepackaged app"],
+])("assertMsixUpdaterElectronVersion: only warns for %s, whose Electron cannot be checked", ([, electronVersion, config, isPrepackaged, reason], { expect }) => {
+  const warnings = warningsOf(electronVersion, config, isPrepackaged)
+  expect(warnings).toHaveLength(1)
+  expect(warnings[0][0]).toEqual({ electronVersion, reason })
+  expect(warnings[0][1]).toContain("cannot be checked")
+})
+
+test("assertMsixUpdaterElectronVersion: warns once per build configuration", ({ expect }) => {
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    const config = {}
+    assertMsixUpdaterElectronVersion("custom-1", config, false)
+    assertMsixUpdaterElectronVersion("custom-1", config, false)
+    expect(warn).toHaveBeenCalledTimes(1)
+    assertMsixUpdaterElectronVersion("custom-1", {}, false)
+    expect(warn).toHaveBeenCalledTimes(2)
+  } finally {
+    warn.mockRestore()
+  }
+})
+
+test("assertMsixUpdaterElectronVersion: a mirror still serves the declared version, so it is checked", ({ expect }) => {
+  vi.stubEnv("ELECTRON_MIRROR", "https://mirror.example/")
+  try {
+    expect(() => assertMsixUpdaterElectronVersion("39.0.0", {}, false)).toThrow(InvalidConfigurationError)
+    expect(() => assertMsixUpdaterElectronVersion("39.0.0", { electronGet: { mirrorOptions: { mirror: "https://mirror.example/" } } }, false)).toThrow(InvalidConfigurationError)
+  } finally {
+    vi.unstubAllEnvs()
   }
 })

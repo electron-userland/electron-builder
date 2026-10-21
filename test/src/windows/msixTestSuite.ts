@@ -173,6 +173,44 @@ export function registerMsixTests(toolsets: ToolsetConfig): void {
       }
     ))
 
+  test("msix electronUpdaterAware without the msixbundle throws", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: target,
+        config: {
+          toolsets,
+          msix: {
+            electronUpdaterAware: true,
+            createMsixbundle: false,
+          },
+        },
+      },
+      {},
+      error => {
+        expect(error.message).toContain('"msix.electronUpdaterAware" requires the .msixbundle')
+      }
+    ))
+
+  // packTester opts out of update manifest signing (updateManifest: false) unless a test configures it
+  test("msix electronUpdaterAware without signed update manifests throws", ({ expect }) =>
+    appThrows(
+      expect,
+      {
+        targets: target,
+        config: {
+          toolsets,
+          msix: {
+            electronUpdaterAware: true,
+          },
+        },
+      },
+      {},
+      error => {
+        expect(error.message).toContain('"msix.electronUpdaterAware" requires signed update manifests')
+      }
+    ))
+
   test("msix multi-arch build creates msixbundle and msixupload", ({ expect }) =>
     app(
       expect,

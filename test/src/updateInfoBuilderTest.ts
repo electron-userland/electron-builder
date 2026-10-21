@@ -1054,6 +1054,64 @@ test("alpha channel with arch suffix does not expand", async ({ expect }) => {
   })
 })
 
+// ── MSIX bundle (msix.electronUpdaterAware) ──────────────────────────────────
+
+const msixBundleUpdateInfo = { sha512: "bXNpeGJ1bmRsZQ==", packageFamilyName: "TestApp_rdjwn13tdj8dy", packageVersion: "1.0.0.0" }
+
+// what MsixTarget emits for the .msixbundle: no arch, the bundle's sha512 and the unsigned identity hints
+async function makeMsixBundleEvent(dir: string, packager: any = makePlatformPackager()): Promise<any> {
+  const file = path.join(dir, "App 1.0.0.msixbundle")
+  await fsp.writeFile(file, "fake")
+  return { file, arch: null, packager, target: { name: "msix", outDir: dir }, updateInfo: msixBundleUpdateInfo }
+}
+
+test.for([
+  ["generic", { provider: "generic", url: "https://example.com/updates" }],
+  ["s3", { provider: "s3", bucket: "test" }],
+] as const)("createUpdateInfoTasks writes an msix bundle into latest-msix.yml, with the identity hints in its file entry (%s)", async ([, publishConfig], { expect }) => {
+  await withTmpDir(async dir => {
+    const tasks = await createUpdateInfoTasks(await makeMsixBundleEvent(dir), [publishConfig])
+    expect(tasks.map(t => path.basename(t.file))).toEqual(["latest-msix.yml"])
+    const info: any = tasks[0].info
+    expect(info.files).toEqual([{ url: "App 1.0.0.msixbundle", ...msixBundleUpdateInfo }])
+    expect(info.packageFamilyName).toBeUndefined()
+    expect(info.packageVersion).toBeUndefined()
+  })
+})
+
+test("createUpdateInfoTasks expands the msix manifest to the lower channels", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const tasks = await createUpdateInfoTasks(await makeMsixBundleEvent(dir, makeAllChannelsPackager()), [{ provider: "s3", bucket: "test", channel: "beta" }] as any)
+    expect(tasks.map(t => path.basename(t.file)).sort()).toEqual(["alpha-msix.yml", "beta-msix.yml"])
+  })
+})
+
+test("createUpdateInfoTasks still writes an NSIS installer into latest.yml", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const artifactFile = path.join(dir, "App Setup 1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: null, packager: makePlatformPackager(), target: { name: "nsis", outDir: dir } }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
+    expect(tasks.map(t => path.basename(t.file))).toEqual(["latest.yml"])
+  })
+})
+
+test("writeUpdateInfoFiles keeps the msix bundle and the NSIS installer of one build in separate manifests", async ({ expect }) => {
+  await withTmpDir(async dir => {
+    const packager = { ...makePlatformPackager(), requireUpdateSigningKeys: () => Promise.resolve([]) }
+    const installer = path.join(dir, "App Setup 1.0.0.exe")
+    await fsp.writeFile(installer, "fake")
+    const publishConfigs: any = [{ provider: "s3", bucket: "test" }]
+    const tasks = [
+      ...(await createUpdateInfoTasks({ file: installer, arch: null, packager, target: { name: "nsis", outDir: dir } } as any, publishConfigs)),
+      ...(await createUpdateInfoTasks(await makeMsixBundleEvent(dir, packager), publishConfigs)),
+    ]
+    await writeUpdateInfoFiles(tasks, makePackager() as any)
+    expect((await readYml(path.join(dir, "latest.yml"))).files.map((f: any) => f.url)).toEqual(["App Setup 1.0.0.exe"])
+    expect((await readYml(path.join(dir, "latest-msix.yml"))).files).toEqual([{ url: "App 1.0.0.msixbundle", ...msixBundleUpdateInfo }])
+  })
+})
+
 test("web installer: `packages` and `minimumSystemVersion` are signed as written to YAML and tampering them fails verification", async ({ expect }) => {
   await withTmpDir(async dir => {
     const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()

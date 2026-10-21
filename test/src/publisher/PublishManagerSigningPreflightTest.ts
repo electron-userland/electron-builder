@@ -127,6 +127,44 @@ test("build-start preflight: enforced for every planned target that emits update
   expect(required.requireUpdateSigningKeys).toHaveBeenCalledWith(true)
 })
 
+test("build-start preflight: an electron-updater-aware msix is enforced like nsis, a plain msix is not", async ({ expect }) => {
+  const { targetsCreated } = createManager()
+  const updates = { provider: "generic", url: "https://example.com/updates" }
+
+  // writesUpdateInfo as MsixTarget declares it: only with electronUpdaterAware
+  const plain = makePlatformPackager(updates, missingKey)
+  await targetsCreated([{ packager: plain, arch: Arch.x64, targets: [makeTarget("msix", false, {})] }])
+  expect(plain.requireUpdateSigningKeys).not.toHaveBeenCalled()
+
+  const aware = makePlatformPackager(updates, missingKey)
+  await expect(targetsCreated([{ packager: aware, arch: Arch.x64, targets: [makeTarget("msix", true, { electronUpdaterAware: true })] }])).rejects.toThrow(/must be signed/)
+  expect(aware.requireUpdateSigningKeys).toHaveBeenCalledWith(true)
+})
+
+test("an electron-updater-aware msix bundle fails before its upload when the signing key is missing", async ({ expect }) => {
+  const { manager, scheduleUpload } = createManager()
+  const updates = { provider: "generic", url: "https://example.com/updates" }
+  // the .msixbundle as MsixTarget emits it: no arch
+  const bundleEvent = (packager: any, options: any) => ({
+    packager,
+    target: { name: "msix", options, outDir: __dirname },
+    file: "/nonexistent/App 1.0.0.msixbundle",
+    arch: null,
+    isWriteUpdateInfo: true,
+  })
+
+  const aware = makePlatformPackager(updates, missingKey)
+  await expect(artifactCreated(manager, bundleEvent(aware, { electronUpdaterAware: true }))).rejects.toThrow(/must be signed/)
+  expect(aware.requireUpdateSigningKeys).toHaveBeenCalledWith(true)
+  expect(scheduleUpload).not.toHaveBeenCalled()
+
+  // without electronUpdaterAware an msix artifact writes no update info, even when the event claims it
+  const plain = makePlatformPackager(updates, missingKey)
+  await artifactCreated(manager, bundleEvent(plain, {}))
+  expect(plain.requireUpdateSigningKeys).not.toHaveBeenCalled()
+  expect(scheduleUpload).toHaveBeenCalledTimes(1)
+})
+
 // Emits one artifact per build, like a real target; `isWriteUpdateInfo` mirrors `writesUpdateInfo`.
 class FakeTarget extends Target {
   readonly options = null

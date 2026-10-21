@@ -236,6 +236,40 @@ test("a different url, bucket, path or channel is a different feed", async ({ ex
   }
 })
 
+test("an electron-updater-aware msix gets app-update.yml with its feed and requires the signing key", async ({ expect, tmpDir }) => {
+  const packager = makePackager({ platformPublish: generic })
+  const appUpdate = await afterPackAppUpdate(tmpDir, packager, [target("msix", { electronUpdaterAware: true })])
+  expect(appUpdate).toMatchObject({ ...generic, updaterCacheDirName: "test-app" })
+  expect(appUpdate.updateManifestPublicKey).toBe(trustedKey)
+  expect(packager.requireUpdateSigningKeys).toHaveBeenCalledWith(true)
+  // next to an NSIS installer of the same feed
+  const targets = [target("nsis"), target("msix", { electronUpdaterAware: true })]
+  expect(await afterPackAppUpdate(tmpDir, makePackager({ platformPublish: generic }), targets)).toMatchObject(generic)
+})
+
+test("an msix without electronUpdaterAware writes no app-update.yml and needs no signing key", async ({ expect, tmpDir }) => {
+  const packager = makePackager({ platformPublish: generic })
+  // MsixTarget declares writesUpdateInfo only with electronUpdaterAware, and the declaration alone does not make it a manifest writer
+  for (const writesUpdateInfo of [false, true]) {
+    expect(await afterPackAppUpdate(tmpDir, packager, [target("msix", {}, writesUpdateInfo)])).toBeNull()
+  }
+  expect(packager.requireUpdateSigningKeys).not.toHaveBeenCalled()
+})
+
+test("an electron-updater-aware msix and an nsis with another feed fail the build and write no app-update.yml", async ({ expect, tmpDir }) => {
+  const appOutDir = await tmpDir.getTempDir({ prefix: "win-unpacked" })
+  const packager = makePackager({ platformPublish: generic })
+  const targets = [target("nsis", { publish: s3 }), target("msix", { electronUpdaterAware: true })]
+  const error = await createManager()({ packager, electronPlatformName: "win32", arch: Arch.x64, appOutDir, outDir: appOutDir, targets }).then(
+    () => null,
+    (e: Error) => e
+  )
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toContain(`targets "nsis", "msix" are built from the same windows x64 app`)
+  expect(error!.message).toContain("nsis -> s3, msix -> generic")
+  expect(await pathExists(path.join(appOutDir, "resources", "app-update.yml"))).toBe(false)
+})
+
 test("a provider with publishAutoUpdate: false is not embedded when a later one receives the manifest", async ({ expect, tmpDir }) => {
   // writeUpdateInfoFiles writes no latest*.yml for the disabled provider, so installs must poll the later one
   const mixed = [{ ...s3, publishAutoUpdate: false }, generic]
