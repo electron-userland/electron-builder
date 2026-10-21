@@ -131,6 +131,10 @@ export function configureDifferentialAwareArchiveOptions(archiveOptions: Archive
 
    */
   archiveOptions.dictSize = 1
+  // At these settings 7-Zip splits LZMA2 into 4 MB blocks only with 4+ threads and writes one solid stream with fewer,
+  // where any change rewrites everything after it (measured: a 6.7 MB update became 74 MB on a 2-thread host).
+  // Pinning the size it picks with 4+ threads keeps the bytes identical on every host.
+  archiveOptions.blockSize = 4
   // solid compression leads to a lot of changed blocks
   archiveOptions.solid = false
   // do not allow to change compression level to avoid different packages
