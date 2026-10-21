@@ -1,5 +1,5 @@
 import * as asn1js from "asn1js"
-import { exec } from "builder-util"
+import { authenticodeSignatureStatusName, readAuthenticodeSignature } from "builder-util-runtime"
 import { open } from "fs/promises"
 import * as pkijs from "pkijs"
 import { formatWindowsSubjectDn } from "../certInfo.js"
@@ -7,12 +7,13 @@ import { formatWindowsSubjectDn } from "../certInfo.js"
 /**
  * The embedded Authenticode signature of a Windows executable, as far as the update signature check needs it:
  * - `signed` — the subject of the certificate that made the (primary) signature, in the format Windows reports it
- *   (`X509Certificate2.Subject`), plus the signature status when the host can verify it (Windows only)
+ *   (`X509Certificate2.Subject`), plus the numeric `SignatureStatus` (`AuthenticodeSignatureStatus` in
+ *   builder-util-runtime) when the host can verify it (Windows only)
  * - `unsigned` — the file has no embedded signature
  * - `unreadable` — the signature could not be read (`reason` says why)
  */
 export type AuthenticodeSignerInfo =
-  | { readonly type: "signed"; readonly subject: string; readonly status: string | null }
+  | { readonly type: "signed"; readonly subject: string; readonly status: number | null }
   | { readonly type: "unsigned"; readonly reason: string }
   | { readonly type: "unreadable"; readonly reason: string }
 
@@ -29,54 +30,30 @@ export function readAuthenticodeSigner(file: string): Promise<AuthenticodeSigner
 
 // ─── Windows: Get-AuthenticodeSignature ──────────────────────────────────────
 
-// Doubles ASCII and Unicode single-quote variants (U+2018–U+201B) for a PowerShell single-quoted string — the same
-// escaping electron-updater's verifier applies to the update path.
-function quotePowerShellString(value: string): string {
-  return `'${value.replace(/['‘’‚‛]/g, "$&$&")}'`
-}
-
 /**
- * Runs `Get-AuthenticodeSignature` the way electron-updater's verifier does: the Security module is imported from
- * `$PSHOME` with PSModulePath cleared (no module shadowing), the script is passed as `-EncodedCommand` without a
- * shell, and the output is UTF-8 JSON.
+ * Reads the signer with `Get-AuthenticodeSignature` through the reader electron-updater verifies downloaded updates
+ * with (`readAuthenticodeSignature` from builder-util-runtime): the same PowerShell invocation, path escaping and JSON
+ * parsing, so the build sees exactly what the updater will see.
  */
 export async function readAuthenticodeSignerWithPowerShell(file: string): Promise<AuthenticodeSignerInfo> {
-  const script =
-    `$ProgressPreference = 'SilentlyContinue'; Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Security"; $env:PSModulePath = ""; ` +
-    `$OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; ` +
-    `$signature = Get-AuthenticodeSignature -LiteralPath ${quotePowerShellString(file)}; ` +
-    `$certificate = $signature.SignerCertificate; ` +
-    `ConvertTo-Json -Compress @{ Status = [string]$signature.Status; Subject = $(if ($null -ne $certificate) { $certificate.Subject } else { $null }) }`
-  const env: NodeJS.ProcessEnv = { ...process.env }
-  for (const key of Object.keys(env)) {
-    if (key.toLowerCase() === "psmodulepath") {
-      delete env[key]
+  // longer than the updater's 20s: a busy build machine may still be preparing the PowerShell modules on first use,
+  // and a timeout here fails the build
+  const read = await readAuthenticodeSignature(file, 60 * 1000)
+  switch (read.type) {
+    case "execFailed": {
+      const stderr = read.stderr.trim()
+      return { type: "unreadable", reason: `Get-AuthenticodeSignature failed: ${read.error.message}${stderr.length > 0 ? `\n${stderr}` : ""}` }
+    }
+    case "unparsable":
+      return { type: "unreadable", reason: `cannot parse Get-AuthenticodeSignature output (${read.error.message}): ${read.stdout}` }
+    case "ok": {
+      const { signerSubject, status } = read.signature
+      if (signerSubject == null) {
+        return { type: "unsigned", reason: `Get-AuthenticodeSignature reports no signer certificate (status: ${authenticodeSignatureStatusName(status)})` }
+      }
+      return { type: "signed", subject: signerSubject, status }
     }
   }
-
-  let stdout: string
-  try {
-    stdout = await exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-EncodedCommand", Buffer.from(script, "utf16le").toString("base64")], {
-      env,
-      shell: false,
-      timeout: 60 * 1000,
-    })
-  } catch (e: any) {
-    return { type: "unreadable", reason: `Get-AuthenticodeSignature failed: ${e.message || e}` }
-  }
-
-  let data: unknown
-  try {
-    data = JSON.parse(stdout)
-  } catch (e: any) {
-    return { type: "unreadable", reason: `cannot parse Get-AuthenticodeSignature output (${e.message || e}): ${stdout}` }
-  }
-  const status = data != null && typeof data === "object" && "Status" in data && typeof data.Status === "string" ? data.Status : null
-  const subject = data != null && typeof data === "object" && "Subject" in data && typeof data.Subject === "string" ? data.Subject : null
-  if (subject == null) {
-    return { type: "unsigned", reason: `Get-AuthenticodeSignature reports no signer certificate (status: ${status ?? "unknown"})` }
-  }
-  return { type: "signed", subject, status }
 }
 
 // ─── Any host: PE certificate table + PKCS#7 ────────────────────────────────

@@ -2,4 +2,4 @@
 "electron-updater": patch
 ---
 
-refactor(win): match the update signer against publisherName with the matcher shared with electron-builder
+refactor(win): read the update's Authenticode signature and match its signer against publisherName with the reader and rules shared with electron-builder (builder-util-runtime)

@@ -2,4 +2,4 @@
 "builder-util-runtime": patch
 ---
 
-feat: add `matchPublisherName`, the Windows publisher name matching rules shared by electron-updater and electron-builder
+feat: add the Windows Authenticode signature reader (`readAuthenticodeSignature`, `Get-AuthenticodeSignature` via PowerShell) and publisher checks (`verifyAuthenticodePublisher`, `matchPublisherName`) shared by electron-updater and electron-builder

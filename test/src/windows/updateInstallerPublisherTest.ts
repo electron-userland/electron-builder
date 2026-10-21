@@ -1,4 +1,5 @@
 import { AuthenticodeSignerInfo, readAuthenticodeSignerWithPowerShell, readEmbeddedAuthenticodeSigner } from "app-builder-lib/src/codeSign/win/authenticodeSignature"
+import { AuthenticodeSignatureStatus } from "builder-util-runtime"
 import { verifyUpdateInstallerPublisher } from "app-builder-lib/src/codeSign/win/verifyUpdatePublisher"
 import type { SigningResult } from "app-builder-lib/src/codeSign/signResult"
 import { InvalidConfigurationError, log } from "builder-util"
@@ -119,7 +120,7 @@ async function createAppOutDir(tmpDir: TmpDir, publisherName?: string | Array<st
   return appOutDir
 }
 
-function signedBy(subject: string, status: string | null = null) {
+function signedBy(subject: string, status: number | null = null) {
   return vi.fn(async (_file: string): Promise<AuthenticodeSignerInfo> => ({ type: "signed", subject, status }))
 }
 
@@ -223,7 +224,13 @@ describe("verifyUpdateInstallerPublisher", () => {
   })
 
   test("fails on a signature Windows reports as HashMismatch", async ({ expect, tmpDir }) => {
-    await expect(verify([await createAppOutDir(tmpDir, SUBJECT)], signedBy(SUBJECT, "HashMismatch"))).rejects.toThrow(/modified after signing/)
+    await expect(verify([await createAppOutDir(tmpDir, SUBJECT)], signedBy(SUBJECT, AuthenticodeSignatureStatus.HashMismatch))).rejects.toThrow(/modified after signing/)
+  })
+
+  test("accepts a signature the build host does not trust (NotTrusted), when the publisher matches", async ({ expect, tmpDir }) => {
+    const appOutDir = await createAppOutDir(tmpDir, SUBJECT)
+    await expect(verify([appOutDir], signedBy(SUBJECT, AuthenticodeSignatureStatus.NotTrusted))).resolves.toBeUndefined()
+    await expect(verify([appOutDir], signedBy("CN=Somebody Else", AuthenticodeSignatureStatus.NotTrusted))).rejects.toThrow(/does not match the publisherName/)
   })
 })
 

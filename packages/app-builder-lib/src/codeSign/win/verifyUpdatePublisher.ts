@@ -1,5 +1,5 @@
 import { InvalidConfigurationError, log } from "builder-util"
-import { matchPublisherName } from "builder-util-runtime"
+import { AuthenticodeSignatureStatus, verifyAuthenticodePublisher } from "builder-util-runtime"
 import { readFile } from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -105,27 +105,37 @@ export async function verifyUpdateInstallerPublisher(
     )
     return
   }
-  if (signer.status === "HashMismatch") {
-    throw new InvalidConfigurationError(
-      `The Authenticode signature of ${log.filePath(file)} is invalid (the file was modified after signing), so electron-updater would reject every update installed from it.`
-    )
-  }
-
   for (const publisherNames of publisherNameSets) {
-    const match = matchPublisherName(publisherNames, signer.subject)
-    if (match == null) {
-      throw new InvalidConfigurationError(
-        `${log.filePath(file)} is signed by a certificate that does not match the publisherName electron-updater verifies updates against, so every update installed from it would be rejected.\n` +
-          `  Configured publisherName: ${configured(publisherNames)}\n` +
-          `  Signer certificate subject: ${signer.subject}\n` +
-          FIX_HINT
-      )
-    }
-    if (match.kind === "cn") {
-      log.warn(
-        { file: log.filePath(file), publisherName: match.publisherName, subject: signer.subject },
-        "the signed installer matches publisherName by Common Name (CN) only; set win.sign.publisherName to the full Distinguished Name (DN) of the certificate subject"
-      )
+    // Unlike electron-updater, any status but HashMismatch is accepted: the build host may not trust the signing chain
+    // that the users' machines trust (and the reader used on other hosts reports no status at all).
+    const verification = verifyAuthenticodePublisher({ status: signer.status, signerSubject: signer.subject }, publisherNames, {
+      isAcceptedStatus: status => status !== AuthenticodeSignatureStatus.HashMismatch,
+    })
+    switch (verification.type) {
+      case "invalidStatus":
+        throw new InvalidConfigurationError(
+          `The Authenticode signature of ${log.filePath(file)} is invalid (the file was modified after signing), so electron-updater would reject every update installed from it.`
+        )
+      case "notSigned":
+        // unreachable: a "signed" signer always carries a subject
+        throw new InvalidConfigurationError(
+          `${log.filePath(file)} carries no Authenticode signer certificate, so electron-updater would reject every update installed from it.\n${FIX_HINT}`
+        )
+      case "publisherMismatch":
+        throw new InvalidConfigurationError(
+          `${log.filePath(file)} is signed by a certificate that does not match the publisherName electron-updater verifies updates against, so every update installed from it would be rejected.\n` +
+            `  Configured publisherName: ${configured(publisherNames)}\n` +
+            `  Signer certificate subject: ${verification.subject}\n` +
+            FIX_HINT
+        )
+      case "match":
+        if (verification.match.kind === "cn") {
+          log.warn(
+            { file: log.filePath(file), publisherName: verification.match.publisherName, subject: verification.subject },
+            "the signed installer matches publisherName by Common Name (CN) only; set win.sign.publisherName to the full Distinguished Name (DN) of the certificate subject"
+          )
+        }
+        break
     }
   }
   log.debug({ file: log.filePath(file), subject: signer.subject }, "signed installer matches the update publisherName")

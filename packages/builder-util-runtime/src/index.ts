@@ -1,3 +1,17 @@
+export {
+  AuthenticodePublisherVerification,
+  AuthenticodePublisherVerificationOptions,
+  AuthenticodeSignature,
+  AuthenticodeSignatureReadResult,
+  AuthenticodeSignatureStatus,
+  authenticodeSignatureStatusName,
+  escapePowerShellSingleQuotes,
+  getAuthenticodeSignatureCommand,
+  parseAuthenticodeSignatureOutput,
+  preparePowerShellExec,
+  readAuthenticodeSignature,
+  verifyAuthenticodePublisher,
+} from "./authenticodeSignature.js"
 export { BlockMap } from "./blockMapApi.js"
 export { CancellationError, CancellationToken } from "./CancellationToken.js"
 export { newError } from "./error.js"
