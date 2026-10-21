@@ -1213,4 +1213,28 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
       await expect(manager.computePublisherName(target, "CN=Acme Corp, O=Acme")).resolves.toBe("CN=Acme Corp, O=Acme")
     }
   })
+
+  test("a signed AppX/MSIX package gets the certificate subject in the format Windows reports it", async () => {
+    for (const target of [Object.create(AppXTarget.prototype), Object.create(MsixTarget.prototype)]) {
+      const manager: any = makePublisherNameManager(undefined)
+      manager.cscInfo = { value: Promise.resolve({ file: "env-cert.pfx", password: null }) }
+      manager.lazyCertInfo = {
+        value: Promise.resolve({
+          commonName: "EB Test Code Signing",
+          // readCertInfo: encoding order joined by a bare `,` — MakeAppx rejects that as the Publisher of a multi-RDN subject
+          bloodyMicrosoftSubjectDn: "CN=EB Test Code Signing,O=EB Test Org,ST=California,C=US",
+          windowsSubjectDn: "C=US, S=California, O=EB Test Org, CN=EB Test Code Signing",
+        }),
+      }
+      await expect(manager.computePublisherName(target, null)).resolves.toBe("C=US, S=California, O=EB Test Org, CN=EB Test Code Signing")
+      // an explicitly configured publisher wins
+      await expect(manager.computePublisherName(target, "CN=Acme Corp, O=Acme")).resolves.toBe("CN=Acme Corp, O=Acme")
+    }
+  })
+
+  test("a signed AppX/MSIX package with a certificate-store certificate gets the store subject", async () => {
+    const manager: any = makePublisherNameManager({ type: "signtool", certificateSubjectName: "Acme Corp" })
+    manager.cscInfo = { value: Promise.resolve({ thumbprint: "AB12", subject: "CN=Acme Corp, O=Acme Corporation, C=US", store: "My", isLocalMachineStore: false }) }
+    await expect(manager.computePublisherName(Object.create(AppXTarget.prototype), null)).resolves.toBe("CN=Acme Corp, O=Acme Corporation, C=US")
+  })
 })

@@ -323,9 +323,11 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     // When a signing cert is available, the cert's subject MUST be used so the APPX package
     // Publisher attribute matches the certificate — any mismatch causes SignerSign to fail with
     // ERROR_BAD_FORMAT. Only honour a user-supplied publisherName if it was explicitly configured
-    // (non-null); otherwise derive from the certificate.
+    // (non-null); otherwise derive from the certificate. The subject is written in the format Windows reports it
+    // (`, `-separated, Windows attribute names such as S): MakeAppx rejects a multi-RDN Publisher separated by a bare `,`
+    // or using the OpenSSL name ST.
     const certInfo = await this.lazyCertInfo.value
-    const publisher = publisherName ?? certInfo?.bloodyMicrosoftSubjectDn ?? null
+    const publisher = publisherName ?? (certInfo == null ? null : certificateWindowsSubjectDn(certInfo))
     if (publisher == null) {
       throw new Error("Internal error: cannot compute subject using certificate info")
     }
