@@ -39,7 +39,7 @@ patchedDependencies:
 overrides:
   flatted: '>=3.4.2'
   # --- Dependabot transitive-dependency security overrides ---
-  shell-quote: '>=1.8.4 <2' # GHSA-w7jw-789q-3m8p (critical)
+  shell-quote: '>=1.11.0 <2' # GHSA-pqg4-j6r4-53mv (critical), GHSA-395f-4hp3-45gv (high), GHSA-w7jw-789q-3m8p (critical)
   esbuild: '>=0.28.1 <0.29' # GHSA-gv7w-rqvm-qjhr (high), GHSA-g7r4-m6w7-qqqr (low)
   tmp: '>=0.2.6 <0.3' # GHSA-ph9p-34f9-6g65 (high), GHSA-52f5-9888-hmc6 (low)
   serialize-javascript: '>=7.0.5 <8' # GHSA-5c6j-r48x-rmvq (high), GHSA-qj8w-gfj5-8c6v (med)
@@ -61,4 +61,15 @@ overrides:
   source-map-js: '>=1.2.2 <2' # GHSA-68fv-2mgg-jv7q (high)
   markdown-it: '>=14.3.3 <15' # GHSA-gfr2-rv44-r23c, GHSA-r7fv-28h4-cvq7 (high)
   linkify-it: '>=5.0.2 <6' # GHSA-v245-v573-v5vm (high)
+  launch-editor: '>=2.14.2 <3' # GHSA-587h-7wmj-h5pm (high)
+  follow-redirects: '>=1.16.1 <2' # GHSA-q3jh-wrc6-jgq8, GHSA-8r9p-f939-6h3c (high)
+  'ws@>=7 <7.5.11': '^7.5.11' # GHSA-96hv-2xvq-fx4p (high)
+  'ws@>=8 <8.21.0': '^8.21.0' # GHSA-96hv-2xvq-fx4p (high), GHSA-58qx-3vcg-4xpx (med)
+  websocket-driver: '>=0.7.5 <0.8' # GHSA-xv26-6w52-cph6 (critical), GHSA-mp7j-qc5w-4988 (med)
+  proxy-addr: '>=2.0.8 <3' # GHSA-jqcg-44mw-7w3h (critical)
+  compression: '>=1.8.2 <2' # GHSA-vc2v-76pw-4v95 (high)
+  joi: '>=17.13.7 <18' # GHSA-6h2x-m376-mqjq (high)
+  image-size: '>=2.0.3 <3' # GHSA-w3rx-r6r6-pgpr, GHSA-5p2g-fcmc-qvqq (high)
+  svgo: '>=3.3.5 <4' # GHSA-w27v-7q3p-w38r, GHSA-2p49-hgcm-8545 (high)
+  http-cache-semantics: '>=4.3.0 <5' # GHSA-ch52-4w7c-c8xp (high): no upstream patch; 4.3.0 is outside the advisory range but keeps the disputed max-stale behaviour
 packageImportMethod: copy
