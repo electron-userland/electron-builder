@@ -41,7 +41,7 @@ All Windows code signing is configured under a single `win.sign` key using a dis
 | `{ type: "hsm", ... }` | Hardware Security Module / FIPS token via a Windows CSP — **Beta** | Windows only |
 | `{ type: "pkcs11", ... }` | PKCS#11 hardware token via `osslsigncode` — **Beta** | macOS/Linux |
 | `{ type: "azure", ... }` | Azure Trusted Signing cloud service — **Beta** | all (`signtool /dlib`, Wine on macOS/Linux) |
-| `false` or `null` | Disable signing (resedit resource editing still runs) | all |
+| `false` or `null` | Disable signing (resedit resource editing still runs). No certificate is read, not even from `WIN_CSC_LINK` / `CSC_LINK`, and no `publisherName` is written to `app-update.yml`. If you sign the build outside electron-builder, use `{ type: "signtool", publisherName: [...] }` (or a custom `sign` hook with `publisherName`) instead, so `app-update.yml` carries the publisher electron-updater verifies updates against | all |
 
 Combining `win.sign: false` with `forceCodeSigning: true` is a configuration error and fails the build.
 
