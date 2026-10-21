@@ -37,20 +37,14 @@ function useRange(): Range {
   return { from: query.get("from") ?? undefined, to: query.get("to") ?? undefined, setRange }
 }
 
-function EntryItem({ repo, entry, packages, labels }: { repo: string; entry: Entry; packages: string[]; labels?: ReactNode }): ReactNode {
+function EntryItem({ repo, entry, labels }: { repo: string; entry: Entry; labels?: ReactNode }): ReactNode {
   const { updated } = entry
   return (
     <li className={styles.entry}>
       <span dangerouslySetInnerHTML={{ __html: entry.summary }} />
       <div className={styles.meta} data-pagefind-ignore="">
         {labels}
-        {packages.map(pkg => (
-          <code key={pkg}>{pkg}</code>
-        ))}
         {entry.pr !== undefined && <Link href={`${repo}/pull/${entry.pr}`}>#{entry.pr}</Link>}
-        <Link href={`${repo}/commit/${entry.commit}`}>
-          <code>{entry.commit.slice(0, 7)}</code>
-        </Link>
         {updated !== undefined && (
           <span>
             updated
@@ -115,7 +109,7 @@ function Releases({ changelog }: { changelog: ChangelogData }): ReactNode {
                 <h4>{TITLES[bump]}</h4>
                 <ul className={styles.entries}>
                   {entries.map(entry => (
-                    <EntryItem key={entry.key} repo={changelog.repo} entry={entry} packages={entry.packages} />
+                    <EntryItem key={entry.key} repo={changelog.repo} entry={entry} />
                   ))}
                 </ul>
               </div>
@@ -150,7 +144,7 @@ function Comparison({ changelog, changes }: { changelog: ChangelogData; changes:
         </Heading>
         <ul className={styles.entries}>
           {changes[bump].map(change => (
-            <EntryItem key={change.entry.key} repo={changelog.repo} entry={change.entry} packages={change.packages} labels={<ChangeLabels change={change} />} />
+            <EntryItem key={change.entry.key} repo={changelog.repo} entry={change.entry} labels={<ChangeLabels change={change} />} />
           ))}
         </ul>
       </section>

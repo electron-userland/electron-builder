@@ -16,7 +16,6 @@ export type Entry = {
   pr?: number
   // the commit that added the changeset file
   commit: string
-  packages: string[]
   // the changeset was edited after an earlier release listed it ("updated in #N")
   updated?: { pr?: number; commit?: string }
 }
@@ -51,7 +50,6 @@ export type Change = {
   entry: Entry
   // the package sections of the listing shown
   sections: Section[]
-  packages: string[]
   // the release of the listing shown, and the release that listed the changeset first
   release: Release
   introducedIn: Release
@@ -142,7 +140,6 @@ export function compare(data: ChangelogData, from: string, to: string): Record<B
     result[highest(shown.entries)].push({
       entry: shown.entries[0],
       sections: shown.sections,
-      packages: [...new Set(shown.entries.flatMap(entry => entry.packages))],
       release: data.releases[shown.index],
       introducedIn: data.releases[first.get(key)!],
       updated,

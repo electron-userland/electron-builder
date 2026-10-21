@@ -131,16 +131,13 @@ export function parseChangelog(text: string): ChangelogData {
     }
     if (section !== undefined && bump !== undefined && (match = ENTRY.exec(line)) !== null) {
       const { summary, pr, commit, note } = match.groups!
-      // the package list is left out when it only names the section's package
-      entry = { key: -1, bump, summary, commit, packages: [section.pkg] }
+      entry = { key: -1, bump, summary, commit }
       if (pr !== undefined) {
         entry.pr = Number(pr)
       }
       if (note !== undefined) {
+        // the packages the changeset bumps, then whether it was updated; the page shows only the latter
         const parts = NOTE.exec(note)?.groups ?? fail(i, `unrecognized note "${note}"`)
-        if (parts.packages !== undefined) {
-          entry.packages = codeSpans(parts.packages)
-        }
         const updated = parts.updated ?? parts.updatedOnly
         if (updated !== undefined) {
           const ref = UPDATED.exec(updated)?.groups ?? fail(i, `unrecognized note "${note}"`)

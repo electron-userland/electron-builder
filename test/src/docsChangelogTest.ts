@@ -77,12 +77,12 @@ describe("docs changelog", () => {
     const [builder, updater] = data.releases[2].sections
     expect(updater).toEqual({ pkg: "electron-updater", version: "1.1.0", dependencies: ["builder-util-runtime@9.3.0", "builder-util@26.0.0"], entries: [] })
     expect(builder.entries.map(({ key: _key, ...rest }) => rest)).toEqual([
-      { bump: "major", summary: "Feat!: nest the options — see the guide", pr: 10, commit: sha("a1"), packages: ["electron-builder", "app-builder-lib"], body },
-      { bump: "major", summary: "Fix: no PR", commit: sha("a2"), packages: ["electron-builder"] },
-      { bump: "minor", summary: "Feat: one", pr: 12, commit: sha("b1"), packages: ["app-builder-lib"], updated: { pr: 13 } },
-      { bump: "minor", summary: "Feat: two", pr: 14, commit: sha("b2"), packages: ["electron-builder"], updated: { pr: 15 } },
-      { bump: "minor", summary: "Feat: three", pr: 16, commit: sha("b3"), packages: ["electron-builder"], updated: { commit: "abc1234" } },
-      { bump: "minor", summary: "Feat: four", pr: 17, commit: sha("b4"), packages: ["electron-builder"], updated: {} },
+      { bump: "major", summary: "Feat!: nest the options — see the guide", pr: 10, commit: sha("a1"), body },
+      { bump: "major", summary: "Fix: no PR", commit: sha("a2") },
+      { bump: "minor", summary: "Feat: one", pr: 12, commit: sha("b1"), updated: { pr: 13 } },
+      { bump: "minor", summary: "Feat: two", pr: 14, commit: sha("b2"), updated: { pr: 15 } },
+      { bump: "minor", summary: "Feat: three", pr: 16, commit: sha("b3"), updated: { commit: "abc1234" } },
+      { bump: "minor", summary: "Feat: four", pr: 17, commit: sha("b4"), updated: {} },
     ])
     const keys = data.releases.flatMap(r => r.sections.flatMap(s => s.entries.map(e => e.key)))
     expect(new Set(keys).size).toBe(keys.length)
@@ -254,7 +254,6 @@ describe("docs changelog", () => {
     test("labels a change with the package sections of its newest listing and the release that listed it first", ({ expect }) => {
       const [shared, reworded] = compare(data, "1.6.0", "2.0.0-alpha.1").major
       expect(shared.sections.map(s => `${s.pkg}@${s.version}`)).toEqual(["electron-builder@2.0.0-alpha.1", "electron-updater@1.0.2"])
-      expect(shared.packages).toEqual(["electron-builder", "electron-updater"])
       expect([reworded.release.id, reworded.introducedIn.id]).toEqual(["2.0.0-alpha.1", "2.0.0-alpha.0"])
     })
 
