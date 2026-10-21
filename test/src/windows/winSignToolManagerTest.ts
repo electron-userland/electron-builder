@@ -1007,6 +1007,15 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
     await expect(manager.computedPublisherName.value).rejects.toThrow(/As workaround, set win\.sign\.publisherName\./)
   })
 
+  // `win.sign: false` signs nothing: a certificate in WIN_CSC_LINK / CSC_LINK must not be read to derive a publisherName.
+  test.for([
+    ["false", false],
+    ["null", null],
+  ] as const)("win.sign: %s ignores a certificate from WIN_CSC_LINK / CSC_LINK", async ([, disabled]) => {
+    const manager = makePublisherNameManager(disabled, { getCscLink: () => "env-cert.pfx", getCscPassword: () => "secret" })
+    await expect(manager.computedPublisherName.value).resolves.toBeNull()
+  })
+
   test("custom sign hook + explicit publisherName returns it (documented fix)", async () => {
     const manager = makePublisherNameManager({ type: "signtool", sign: "./customSign.js", publisherName: "CN=My Company, O=My Company, C=US" })
     await expect(manager.computedPublisherName.value).resolves.toEqual(["CN=My Company, O=My Company, C=US"])
