@@ -2,4 +2,4 @@
 "electron-updater": patch
 ---
 
-refactor(win): read the update's Authenticode signature and match its signer against publisherName with the reader and rules shared with electron-builder (builder-util-runtime)
+refactor(win): verify update signatures with the Authenticode helpers moved unchanged to builder-util-runtime (no behavior change)

@@ -1,11 +1,11 @@
 import { InvalidConfigurationError, log } from "builder-util"
-import { AuthenticodeSignatureStatus, verifyAuthenticodePublisher } from "builder-util-runtime"
+import { matchPublisherName } from "builder-util-runtime"
 import { readFile } from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
 import type { WinPackager } from "../../winPackager.js"
 import { isSignResultSigned, SigningResult } from "../signResult.js"
-import { AuthenticodeSignerReader, readAuthenticodeSigner } from "./authenticodeSignature.js"
+import { AuthenticodeSignatureStatus, AuthenticodeSignerReader, readAuthenticodeSigner } from "./authenticodeSignature.js"
 
 export interface UpdatePublisherVerificationOptions {
   /** Reads the embedded signer of the signed file. Defaults to {@link readAuthenticodeSigner}. */
@@ -105,37 +105,25 @@ export async function verifyUpdateInstallerPublisher(
     )
     return
   }
+  // Unlike electron-updater, which requires a Valid status, any status but HashMismatch is accepted: the build host may
+  // not trust the signing chain that the users' machines trust (and the reader used on other hosts reports no status).
+  if (signer.status === AuthenticodeSignatureStatus.HashMismatch) {
+    throw new InvalidConfigurationError(
+      `The Authenticode signature of ${log.filePath(file)} is invalid (the file was modified after signing), so electron-updater would reject every update installed from it.`
+    )
+  }
+  // matchPublisherName takes the parsed Get-AuthenticodeSignature output, as electron-updater passes it
+  const signature = { SignerCertificate: { Subject: signer.subject } }
+  // electron-updater's warning for a match by Common Name (CN) only
+  const logger = { warn: (message: string) => log.warn({ file: log.filePath(file), subject: signer.subject }, message) }
   for (const publisherNames of publisherNameSets) {
-    // Unlike electron-updater, any status but HashMismatch is accepted: the build host may not trust the signing chain
-    // that the users' machines trust (and the reader used on other hosts reports no status at all).
-    const verification = verifyAuthenticodePublisher({ status: signer.status, signerSubject: signer.subject }, publisherNames, {
-      isAcceptedStatus: status => status !== AuthenticodeSignatureStatus.HashMismatch,
-    })
-    switch (verification.type) {
-      case "invalidStatus":
-        throw new InvalidConfigurationError(
-          `The Authenticode signature of ${log.filePath(file)} is invalid (the file was modified after signing), so electron-updater would reject every update installed from it.`
-        )
-      case "notSigned":
-        // unreachable: a "signed" signer always carries a subject
-        throw new InvalidConfigurationError(
-          `${log.filePath(file)} carries no Authenticode signer certificate, so electron-updater would reject every update installed from it.\n${FIX_HINT}`
-        )
-      case "publisherMismatch":
-        throw new InvalidConfigurationError(
-          `${log.filePath(file)} is signed by a certificate that does not match the publisherName electron-updater verifies updates against, so every update installed from it would be rejected.\n` +
-            `  Configured publisherName: ${configured(publisherNames)}\n` +
-            `  Signer certificate subject: ${verification.subject}\n` +
-            FIX_HINT
-        )
-      case "match":
-        if (verification.match.kind === "cn") {
-          log.warn(
-            { file: log.filePath(file), publisherName: verification.match.publisherName, subject: verification.subject },
-            "the signed installer matches publisherName by Common Name (CN) only; set win.sign.publisherName to the full Distinguished Name (DN) of the certificate subject"
-          )
-        }
-        break
+    if (!matchPublisherName(signature, publisherNames, logger)) {
+      throw new InvalidConfigurationError(
+        `${log.filePath(file)} is signed by a certificate that does not match the publisherName electron-updater verifies updates against, so every update installed from it would be rejected.\n` +
+          `  Configured publisherName: ${configured(publisherNames)}\n` +
+          `  Signer certificate subject: ${signer.subject}\n` +
+          FIX_HINT
+      )
     }
   }
   log.debug({ file: log.filePath(file), subject: signer.subject }, "signed installer matches the update publisherName")

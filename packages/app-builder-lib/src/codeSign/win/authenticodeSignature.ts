@@ -1,14 +1,41 @@
 import * as asn1js from "asn1js"
-import { authenticodeSignatureStatusName, readAuthenticodeSignature } from "builder-util-runtime"
+import { escapePowerShellSingleQuotes, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "builder-util-runtime"
+import { execFile } from "child_process"
 import { open } from "fs/promises"
 import * as pkijs from "pkijs"
-import { formatWindowsSubjectDn } from "../certInfo.js"
+
+/**
+ * Values of `System.Management.Automation.SignatureStatus`. `ConvertTo-Json` serializes the enum as its numeric
+ * value, which is the representation {@link AuthenticodeSignerInfo} carries.
+ */
+export const AuthenticodeSignatureStatus = {
+  Valid: 0,
+  UnknownError: 1,
+  NotSigned: 2,
+  HashMismatch: 3,
+  NotTrusted: 4,
+  NotSupportedFileFormat: 5,
+  Incompatible: 6,
+} as const
+
+/** Returns the `SignatureStatus` name of a numeric status (e.g. `HashMismatch` for 3), or the number itself when unknown. */
+export function authenticodeSignatureStatusName(status: number | null): string {
+  if (status == null) {
+    return "unknown"
+  }
+  for (const [name, value] of Object.entries(AuthenticodeSignatureStatus)) {
+    if (value === status) {
+      return name
+    }
+  }
+  return String(status)
+}
 
 /**
  * The embedded Authenticode signature of a Windows executable, as far as the update signature check needs it:
  * - `signed` — the subject of the certificate that made the (primary) signature, in the format Windows reports it
- *   (`X509Certificate2.Subject`), plus the numeric `SignatureStatus` (`AuthenticodeSignatureStatus` in
- *   builder-util-runtime) when the host can verify it (Windows only)
+ *   (`X509Certificate2.Subject`), plus the numeric `SignatureStatus` (see {@link AuthenticodeSignatureStatus}) when
+ *   the host can verify it (Windows only)
  * - `unsigned` — the file has no embedded signature
  * - `unreadable` — the signature could not be read (`reason` says why)
  */
@@ -31,29 +58,96 @@ export function readAuthenticodeSigner(file: string): Promise<AuthenticodeSigner
 // ─── Windows: Get-AuthenticodeSignature ──────────────────────────────────────
 
 /**
- * Reads the signer with `Get-AuthenticodeSignature` through the reader electron-updater verifies downloaded updates
- * with (`readAuthenticodeSignature` from builder-util-runtime): the same PowerShell invocation, path escaping and JSON
- * parsing, so the build sees exactly what the updater will see.
+ * Reads the signer with `Get-AuthenticodeSignature`, with the helpers electron-updater verifies downloaded updates
+ * with (builder-util-runtime: the same PowerShell invocation, path escaping and JSON parsing), so the build sees
+ * exactly what the updater will see.
  */
-export async function readAuthenticodeSignerWithPowerShell(file: string): Promise<AuthenticodeSignerInfo> {
-  // longer than the updater's 20s: a busy build machine may still be preparing the PowerShell modules on first use,
-  // and a timeout here fails the build
-  const read = await readAuthenticodeSignature(file, 60 * 1000)
-  switch (read.type) {
-    case "execFailed": {
-      const stderr = read.stderr.trim()
-      return { type: "unreadable", reason: `Get-AuthenticodeSignature failed: ${read.error.message}${stderr.length > 0 ? `\n${stderr}` : ""}` }
-    }
-    case "unparsable":
-      return { type: "unreadable", reason: `cannot parse Get-AuthenticodeSignature output (${read.error.message}): ${read.stdout}` }
-    case "ok": {
-      const { signerSubject, status } = read.signature
-      if (signerSubject == null) {
-        return { type: "unsigned", reason: `Get-AuthenticodeSignature reports no signer certificate (status: ${authenticodeSignatureStatusName(status)})` }
+export function readAuthenticodeSignerWithPowerShell(file: string): Promise<AuthenticodeSignerInfo> {
+  const escapedFile = escapePowerShellSingleQuotes(file)
+  return new Promise<AuthenticodeSignerInfo>(resolve => {
+    // longer than the updater's 20s: a busy build machine may still be preparing the PowerShell modules on first use,
+    // and a timeout here fails the build
+    execFile(...preparePowerShellExec(`Get-AuthenticodeSignature -LiteralPath '${escapedFile}' | ConvertTo-Json -Compress`, 60 * 1000), (error, stdout, stderr) => {
+      if (error != null) {
+        const stderrText = String(stderr ?? "").trim()
+        resolve({ type: "unreadable", reason: `Get-AuthenticodeSignature failed: ${error.message}${stderrText.length > 0 ? `\n${stderrText}` : ""}` })
+        return
       }
-      return { type: "signed", subject: signerSubject, status }
-    }
+      let data: unknown
+      try {
+        data = parseAuthenticodeSignatureOutput(stdout)
+      } catch (e: any) {
+        resolve({ type: "unreadable", reason: `cannot parse Get-AuthenticodeSignature output (${e.message}): ${stdout}` })
+        return
+      }
+      const status = getProperty(data, "Status")
+      const numericStatus = typeof status === "number" ? status : null
+      const subject = getProperty(getProperty(data, "SignerCertificate"), "Subject")
+      if (typeof subject !== "string") {
+        resolve({ type: "unsigned", reason: `Get-AuthenticodeSignature reports no signer certificate (status: ${authenticodeSignatureStatusName(numericStatus)})` })
+        return
+      }
+      resolve({ type: "signed", subject, status: numericStatus })
+    })
+  })
+}
+
+function getProperty(value: unknown, name: string): unknown {
+  return value != null && typeof value === "object" && name in value ? Reflect.get(value, name) : undefined
+}
+
+// ─── Windows subject format ─────────────────────────────────────────────────
+
+// Maps certificate attribute OIDs to the X.500 names Windows uses when it formats a certificate subject
+// (CertNameToStr with CERT_X500_NAME_STR, i.e. `X509Certificate2.Subject` as Get-AuthenticodeSignature reports it).
+// Other OIDs are written as `OID.<dotted oid>`, as Windows does (e.g. `OID.2.5.4.15` in EV certificates).
+const WINDOWS_ATTRIBUTE_TYPE_NAMES: Record<string, string> = {
+  "2.5.4.3": "CN",
+  "2.5.4.4": "SN",
+  "2.5.4.5": "SERIALNUMBER",
+  "2.5.4.6": "C",
+  "2.5.4.7": "L",
+  "2.5.4.8": "S",
+  "2.5.4.9": "STREET",
+  "2.5.4.10": "O",
+  "2.5.4.11": "OU",
+  "2.5.4.12": "T",
+  "2.5.4.13": "Description",
+  "2.5.4.17": "PostalCode",
+  "2.5.4.18": "POBox",
+  "2.5.4.20": "Phone",
+  "2.5.4.24": "X21Address",
+  "2.5.4.42": "G",
+  "2.5.4.43": "I",
+  "2.5.4.46": "dnQualifier",
+  "1.2.840.113549.1.9.1": "E",
+  "0.9.2342.19200300.100.1.25": "DC",
+}
+
+// Windows quotes an RDN value that has leading/trailing white space or contains one of these characters,
+// doubling embedded quotes.
+const NEEDS_WINDOWS_DN_QUOTING = /[,+="\n<>#;]/
+
+function quoteWindowsDnValue(value: string): string {
+  if (value.length === 0 || value !== value.trim() || NEEDS_WINDOWS_DN_QUOTING.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`
   }
+  return value
+}
+
+/**
+ * Formats a certificate name the way Windows reports a certificate subject (`X509Certificate2.Subject`, which
+ * electron-updater compares the configured publisher names against): RDNs in reverse encoding order separated by
+ * `, `, with the Windows X.500 attribute names (e.g. `S` for the state, not `ST`).
+ */
+export function formatWindowsSubjectDn(name: pkijs.RelativeDistinguishedNames): string {
+  return name.typesAndValues
+    .map(attribute => {
+      const typeName = WINDOWS_ATTRIBUTE_TYPE_NAMES[attribute.type] ?? `OID.${attribute.type}`
+      return `${typeName}=${quoteWindowsDnValue(String(attribute.value.valueBlock.value))}`
+    })
+    .reverse()
+    .join(", ")
 }
 
 // ─── Any host: PE certificate table + PKCS#7 ────────────────────────────────

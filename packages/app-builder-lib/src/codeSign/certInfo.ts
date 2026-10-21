@@ -39,58 +39,6 @@ function escapeDnValue(value: string): string {
   return value
 }
 
-// Maps certificate attribute OIDs to the X.500 names Windows uses when it formats a certificate subject
-// (CertNameToStr with CERT_X500_NAME_STR, i.e. `X509Certificate2.Subject` as Get-AuthenticodeSignature reports it).
-// Other OIDs are written as `OID.<dotted oid>`, as Windows does (e.g. `OID.2.5.4.15` in EV certificates).
-const WINDOWS_ATTRIBUTE_TYPE_NAMES: Record<string, string> = {
-  "2.5.4.3": "CN",
-  "2.5.4.4": "SN",
-  "2.5.4.5": "SERIALNUMBER",
-  "2.5.4.6": "C",
-  "2.5.4.7": "L",
-  "2.5.4.8": "S",
-  "2.5.4.9": "STREET",
-  "2.5.4.10": "O",
-  "2.5.4.11": "OU",
-  "2.5.4.12": "T",
-  "2.5.4.13": "Description",
-  "2.5.4.17": "PostalCode",
-  "2.5.4.18": "POBox",
-  "2.5.4.20": "Phone",
-  "2.5.4.24": "X21Address",
-  "2.5.4.42": "G",
-  "2.5.4.43": "I",
-  "2.5.4.46": "dnQualifier",
-  "1.2.840.113549.1.9.1": "E",
-  "0.9.2342.19200300.100.1.25": "DC",
-}
-
-// Windows quotes an RDN value that has leading/trailing white space or contains one of these characters,
-// doubling embedded quotes.
-const NEEDS_WINDOWS_DN_QUOTING = /[,+="\n<>#;]/
-
-function quoteWindowsDnValue(value: string): string {
-  if (value.length === 0 || value !== value.trim() || NEEDS_WINDOWS_DN_QUOTING.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`
-  }
-  return value
-}
-
-/**
- * Formats a certificate name the way Windows reports a certificate subject (`X509Certificate2.Subject`, which
- * electron-updater compares the configured publisher names against): RDNs in reverse encoding order separated by
- * `, `, with the Windows X.500 attribute names (e.g. `S` for the state, not `ST`).
- */
-export function formatWindowsSubjectDn(name: pkijs.RelativeDistinguishedNames): string {
-  return name.typesAndValues
-    .map(attribute => {
-      const typeName = WINDOWS_ATTRIBUTE_TYPE_NAMES[attribute.type] ?? `OID.${attribute.type}`
-      return `${typeName}=${quoteWindowsDnValue(String(attribute.value.valueBlock.value))}`
-    })
-    .reverse()
-    .join(", ")
-}
-
 // Set up the pkijs WebCrypto engine once. @peculiar/webcrypto supports legacy cipher suites
 // (RC2, 3DES) used by real-world CA-issued PFX files, unlike native Node.js WebCrypto.
 const peculiarCrypto = new PeculiarCrypto()
@@ -422,7 +370,7 @@ function decryptLegacyPkcs12Pbe(algId: string, algParams: any, encContent: any, 
  *   BloodyMsString. These coincide for pkijs-generated certs (CN-first DER) but may
  *   differ for real CA-issued certs stored in traditional C-first DER order.
  */
-export async function readCertInfo(file: string, password: string): Promise<{ commonName: string; bloodyMicrosoftSubjectDn: string; windowsSubjectDn: string }> {
+export async function readCertInfo(file: string, password: string): Promise<{ commonName: string; bloodyMicrosoftSubjectDn: string }> {
   const pfxDer = await readFile(file)
 
   // asn1js requires a plain ArrayBuffer
@@ -556,7 +504,7 @@ export async function readCertInfo(file: string, password: string): Promise<{ co
     })
     .join(",")
 
-  return { commonName, bloodyMicrosoftSubjectDn, windowsSubjectDn: formatWindowsSubjectDn(signingCert.subject) }
+  return { commonName, bloodyMicrosoftSubjectDn }
 }
 
 /**
@@ -569,7 +517,7 @@ export async function readCertInfo(file: string, password: string): Promise<{ co
  * Returns `null` when the publisher name cannot be determined (e.g. no CN attribute), so
  * callers should fall back to requiring an explicit `publisherName` in that case.
  */
-export async function readCertInfoFromX509(file: string): Promise<{ commonName: string; bloodyMicrosoftSubjectDn: string; windowsSubjectDn: string } | null> {
+export async function readCertInfoFromX509(file: string): Promise<{ commonName: string; bloodyMicrosoftSubjectDn: string } | null> {
   const raw = await readFile(file)
 
   // Support PEM (ASCII armor) and DER (raw binary) encoding.
@@ -609,7 +557,7 @@ export async function readCertInfoFromX509(file: string): Promise<{ commonName: 
     })
     .join(",")
 
-  return { commonName, bloodyMicrosoftSubjectDn, windowsSubjectDn: formatWindowsSubjectDn(cert.subject) }
+  return { commonName, bloodyMicrosoftSubjectDn }
 }
 
 /**

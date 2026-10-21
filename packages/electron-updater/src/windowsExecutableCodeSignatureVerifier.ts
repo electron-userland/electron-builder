@@ -1,5 +1,5 @@
-import { AuthenticodeSignature, escapePowerShellSingleQuotes, preparePowerShellExec, readAuthenticodeSignature, verifyAuthenticodePublisher } from "builder-util-runtime"
-import { execFileSync } from "child_process"
+import { escapePowerShellSingleQuotes, matchPublisherName, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "builder-util-runtime"
+import { execFile, execFileSync } from "child_process"
 import * as os from "os"
 import type { VerifyUpdateFileResult } from "./types.js"
 import { Logger } from "./types.js"
@@ -12,15 +12,17 @@ class LiteralPathMismatchError extends Error {}
 
 // Throws LiteralPathMismatchError if a LiteralPath mismatch is detected.
 // Returns normally if path verification passed or was skipped (missing data.Path).
-function checkLiteralPath(dataPath: string | null, unescapedTempUpdateFile: string, logger: Logger): void {
-  if (dataPath == null) {
+function checkLiteralPath(data: any, unescapedTempUpdateFile: string, logger: Logger): void {
+  let normalizedDataPath: string
+  try {
+    normalizedDataPath = path.normalize(data.Path)
+  } catch (error: any) {
     logger.warn(
-      "Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: Get-AuthenticodeSignature reported no Path. " +
+      `Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}. ` +
         "This fail-open behavior is deprecated: electron-builder v28 will treat a missing/mismatched LiteralPath as a verification failure (fail-closed)."
     )
     return
   }
-  const normalizedDataPath = path.normalize(dataPath)
   const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
   logger.info(`LiteralPath: ${normalizedDataPath}. Update Path: ${normalizedTempUpdateFile}`)
   if (normalizedDataPath !== normalizedTempUpdateFile) {
@@ -28,22 +30,18 @@ function checkLiteralPath(dataPath: string | null, unescapedTempUpdateFile: stri
   }
 }
 
-// Checks that the signature is Valid, runs the LiteralPath guard, and matches the signer against publisherNames with
-// the rules shared with electron-builder (verifyAuthenticodePublisher), which applies them to the signed installer at
-// build time. Returns a success/failure result. Throws LiteralPathMismatchError when checkLiteralPath detects a mismatch.
-function evaluateSignatureResult(signature: AuthenticodeSignature, publisherNames: string[], unescapedTempUpdateFile: string, logger: Logger): VerifyUpdateFileResult {
-  const verification = verifyAuthenticodePublisher(signature, publisherNames)
-  if (verification.type !== "invalidStatus") {
-    checkLiteralPath(signature.path, unescapedTempUpdateFile, logger)
-    if (verification.type === "match") {
-      if (verification.match.kind === "cn") {
-        logger.warn(`Signature validated using only CN ${verification.match.publisherName}. Please add your full Distinguished Name (DN) to publisherNames configuration`)
-      }
+// Parses Get-AuthenticodeSignature JSON, checks the LiteralPath guard, and
+// matches against publisherNames. Returns a success/failure result. Throws
+// LiteralPathMismatchError when checkLiteralPath detects a mismatch.
+function evaluateSignatureResult(stdout: string, publisherNames: string[], unescapedTempUpdateFile: string, logger: Logger): VerifyUpdateFileResult {
+  const data = parseAuthenticodeSignatureOutput(stdout)
+  if (data.Status === 0) {
+    checkLiteralPath(data, unescapedTempUpdateFile, logger)
+    if (matchPublisherName(data, publisherNames, logger)) {
       return { response: "success" }
     }
   }
-  const result =
-    `publisherNames: ${publisherNames.join(" | ")}, raw info: ` + JSON.stringify(signature.raw, (name: string, value: unknown) => (name === "RawData" ? undefined : value), 2)
+  const result = `publisherNames: ${publisherNames.join(" | ")}, raw info: ` + JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2)
   logger.warn(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
   return { response: "failure", message: result }
 }
@@ -52,38 +50,30 @@ function evaluateSignatureResult(signature: AuthenticodeSignature, publisherName
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
 // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
 export function verifySignature(publisherNames: Array<string>, unescapedTempUpdateFile: string, logger: Logger): Promise<VerifyUpdateFileResult> {
-  // The path is passed to -LiteralPath as a PowerShell single-quoted string (see escapePowerShellSingleQuotes).
-  logger.info(`Verifying signature ${escapePowerShellSingleQuotes(unescapedTempUpdateFile)}`)
+  const tempUpdateFile = escapePowerShellSingleQuotes(unescapedTempUpdateFile)
+  logger.info(`Verifying signature ${tempUpdateFile}`)
   return new Promise<VerifyUpdateFileResult>((resolve, reject) => {
-    readAuthenticodeSignature(unescapedTempUpdateFile, 20 * 1000)
-      .then(read => {
-        if (read.type === "execFailed" || read.stderr) {
-          if (handleError(logger, read.type === "execFailed" ? read.error : null, read.stderr, reject)) {
-            resolve({ response: "success" })
-          }
+    execFile(...preparePowerShellExec(`Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress`, 20 * 1000), (error, stdout, stderr) => {
+      if (error != null || stderr) {
+        if (handleError(logger, error, stderr, reject)) {
+          resolve({ response: "success" })
+        }
+        return
+      }
+      try {
+        resolve(evaluateSignatureResult(stdout, publisherNames, unescapedTempUpdateFile, logger))
+      } catch (e: any) {
+        if (e instanceof LiteralPathMismatchError) {
+          // Reject directly — the signature data was parsed successfully, so the
+          // ConvertTo-Json availability probe in handleError is not applicable.
+          reject(e)
           return
         }
-        if (read.type === "unparsable") {
-          if (handleError(logger, read.error, null, reject)) {
-            resolve({ response: "success" })
-          }
-          return
+        if (handleError(logger, e, null, reject)) {
+          resolve({ response: "success" })
         }
-        try {
-          resolve(evaluateSignatureResult(read.signature, publisherNames, unescapedTempUpdateFile, logger))
-        } catch (e: any) {
-          if (e instanceof LiteralPathMismatchError) {
-            // Reject directly — the signature data was parsed successfully, so the
-            // ConvertTo-Json availability probe in handleError is not applicable.
-            reject(e)
-            return
-          }
-          if (handleError(logger, e, null, reject)) {
-            resolve({ response: "success" })
-          }
-        }
-      })
-      .catch(reject)
+      }
+    })
   })
 }
 

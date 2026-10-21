@@ -2,4 +2,4 @@
 "builder-util-runtime": patch
 ---
 
-feat: add the Windows Authenticode signature reader (`readAuthenticodeSignature`, `Get-AuthenticodeSignature` via PowerShell) and publisher checks (`verifyAuthenticodePublisher`, `matchPublisherName`) shared by electron-updater and electron-builder
+refactor(win): export the Windows Authenticode helpers electron-updater verifies update signatures with (`preparePowerShellExec`, `escapePowerShellSingleQuotes`, `parseAuthenticodeSignatureOutput`, `matchPublisherName`), moved unchanged from electron-updater so electron-builder can check signed installers with the same code

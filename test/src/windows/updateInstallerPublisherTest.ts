@@ -1,5 +1,9 @@
-import { AuthenticodeSignerInfo, readAuthenticodeSignerWithPowerShell, readEmbeddedAuthenticodeSigner } from "app-builder-lib/src/codeSign/win/authenticodeSignature"
-import { AuthenticodeSignatureStatus } from "builder-util-runtime"
+import {
+  AuthenticodeSignatureStatus,
+  AuthenticodeSignerInfo,
+  readAuthenticodeSignerWithPowerShell,
+  readEmbeddedAuthenticodeSigner,
+} from "app-builder-lib/src/codeSign/win/authenticodeSignature"
 import { verifyUpdateInstallerPublisher } from "app-builder-lib/src/codeSign/win/verifyUpdatePublisher"
 import type { SigningResult } from "app-builder-lib/src/codeSign/signResult"
 import { InvalidConfigurationError, log } from "builder-util"
@@ -160,7 +164,10 @@ describe("verifyUpdateInstallerPublisher", () => {
     const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
     try {
       await expect(verify([await createAppOutDir(tmpDir, "Acme Corp")], signedBy(SUBJECT))).resolves.toBeUndefined()
-      expect(warn).toHaveBeenCalledWith(expect.objectContaining({ publisherName: "Acme Corp" }), expect.stringContaining("Common Name (CN) only"))
+      expect(warn).toHaveBeenCalledWith(
+        expect.objectContaining({ subject: SUBJECT }),
+        "Signature validated using only CN Acme Corp. Please add your full Distinguished Name (DN) to publisherNames configuration"
+      )
     } finally {
       warn.mockRestore()
     }

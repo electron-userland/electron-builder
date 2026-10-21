@@ -1,17 +1,4 @@
-export {
-  AuthenticodePublisherVerification,
-  AuthenticodePublisherVerificationOptions,
-  AuthenticodeSignature,
-  AuthenticodeSignatureReadResult,
-  AuthenticodeSignatureStatus,
-  authenticodeSignatureStatusName,
-  escapePowerShellSingleQuotes,
-  getAuthenticodeSignatureCommand,
-  parseAuthenticodeSignatureOutput,
-  preparePowerShellExec,
-  readAuthenticodeSignature,
-  verifyAuthenticodePublisher,
-} from "./authenticodeSignature.js"
+export { escapePowerShellSingleQuotes, matchPublisherName, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "./authenticodeSignature.js"
 export { BlockMap } from "./blockMapApi.js"
 export { CancellationError, CancellationToken } from "./CancellationToken.js"
 export { newError } from "./error.js"
@@ -59,7 +46,6 @@ export {
   GitlabReleaseInfo,
   GitlabReleaseAsset,
 } from "./publishOptions.js"
-export { matchPublisherName, PublisherNameMatch, PublisherNameMatchKind } from "./publisherName.js"
 export { retry, sleep } from "./retry.js"
 export { parseDn } from "./rfc2253Parser.js"
 export { BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo, UpdateFileInfo, UpdateInfo, UpdateManifestSignature, WindowsUpdateInfo } from "./updateInfo.js"

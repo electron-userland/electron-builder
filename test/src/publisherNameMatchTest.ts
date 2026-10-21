@@ -1,46 +1,63 @@
 import { matchPublisherName } from "builder-util-runtime"
+import { vi } from "vitest"
 
-// The matcher shared by electron-updater (update signature verification) and electron-builder (build-time check of
-// the signed installer and of the signing certificate). Subjects are in the format Windows reports them.
+// The matcher electron-updater verifies downloaded updates with, shared with electron-builder's build-time check of the
+// signed installer. It takes the parsed Get-AuthenticodeSignature output; subjects are in the format Windows reports them.
 const SUBJECT = "CN=Acme Corp, O=Acme Corporation, L=San Francisco, S=California, C=US"
 
+function signedBy(subject: string) {
+  return { SignerCertificate: { Subject: subject } }
+}
+
+function match(publisherNames: Array<string>, subject = SUBJECT) {
+  const logger = { warn: vi.fn() }
+  return { matched: matchPublisherName(signedBy(subject), publisherNames, logger), warnings: logger.warn.mock.calls.map(it => it[0]) }
+}
+
 describe("matchPublisherName", () => {
-  test("plain name matches the subject CN strictly", ({ expect }) => {
-    expect(matchPublisherName(["Acme Corp"], SUBJECT)).toEqual({ publisherName: "Acme Corp", kind: "cn" })
-    expect(matchPublisherName(["acme corp"], SUBJECT)).toBeNull()
-    expect(matchPublisherName(["Acme"], SUBJECT)).toBeNull()
+  test("plain name matches the subject CN strictly, with a warning", ({ expect }) => {
+    expect(match(["Acme Corp"])).toEqual({
+      matched: true,
+      warnings: ["Signature validated using only CN Acme Corp. Please add your full Distinguished Name (DN) to publisherNames configuration"],
+    })
+    expect(match(["acme corp"])).toEqual({ matched: false, warnings: [] })
+    expect(match(["Acme"])).toEqual({ matched: false, warnings: [] })
   })
 
-  test("DN matches when every configured RDN equals the subject's value, in any order", ({ expect }) => {
-    expect(matchPublisherName([SUBJECT], SUBJECT)).toEqual({ publisherName: SUBJECT, kind: "dn" })
-    expect(matchPublisherName(["C=US, S=California, CN=Acme Corp"], SUBJECT)?.kind).toBe("dn")
-    expect(matchPublisherName(["CN=Acme Corp, O=Acme Corporation"], SUBJECT)?.kind).toBe("dn")
+  test("DN matches when every configured RDN equals the subject's value, in any order, without a warning", ({ expect }) => {
+    expect(match([SUBJECT])).toEqual({ matched: true, warnings: [] })
+    expect(match(["C=US, S=California, CN=Acme Corp"])).toEqual({ matched: true, warnings: [] })
+    expect(match(["CN=Acme Corp, O=Acme Corporation"])).toEqual({ matched: true, warnings: [] })
   })
 
   test("DN with a different value or a key the subject lacks does not match", ({ expect }) => {
-    expect(matchPublisherName(["CN=Acme Corp, O=Other Org"], SUBJECT)).toBeNull()
-    expect(matchPublisherName(["CN=Acme Corp, OU=Engineering"], SUBJECT)).toBeNull()
+    expect(match(["CN=Acme Corp, O=Other Org"]).matched).toBe(false)
+    expect(match(["CN=Acme Corp, OU=Engineering"]).matched).toBe(false)
   })
 
   test("the state RDN is S, as Windows reports it — an OpenSSL-style ST does not match", ({ expect }) => {
-    expect(matchPublisherName(["CN=Acme Corp, S=California"], SUBJECT)).not.toBeNull()
-    expect(matchPublisherName(["CN=Acme Corp, ST=California"], SUBJECT)).toBeNull()
+    expect(match(["CN=Acme Corp, S=California"]).matched).toBe(true)
+    expect(match(["CN=Acme Corp, ST=California"]).matched).toBe(false)
   })
 
   test("quoted subject values are compared unquoted", ({ expect }) => {
     const subject = 'CN=Acme Corp, O="Acme, Inc.", C=US'
-    expect(matchPublisherName(['CN=Acme Corp, O="Acme, Inc."'], subject)?.kind).toBe("dn")
-    expect(matchPublisherName(["Acme Corp"], subject)?.kind).toBe("cn")
+    expect(match(['CN=Acme Corp, O="Acme, Inc."'], subject)).toEqual({ matched: true, warnings: [] })
+    expect(match(["Acme Corp"], subject).matched).toBe(true)
   })
 
-  test("the first matching name wins, so a DN listed first matches without the CN-only fallback", ({ expect }) => {
-    expect(matchPublisherName(["Old Corp", "CN=Acme Corp, C=US", "Acme Corp"], SUBJECT)).toEqual({ publisherName: "CN=Acme Corp, C=US", kind: "dn" })
-    expect(matchPublisherName(["Acme Corp", "CN=Acme Corp, C=US"], SUBJECT)).toEqual({ publisherName: "Acme Corp", kind: "cn" })
+  test("names are tried in order and the first match wins", ({ expect }) => {
+    expect(match(["Old Corp", "CN=Acme Corp, C=US", "Acme Corp"])).toEqual({ matched: true, warnings: [] })
+    expect(match(["Acme Corp", "CN=Acme Corp, C=US"]).warnings).toHaveLength(1)
   })
 
   test("no configured name, or a subject without a CN, never matches by CN", ({ expect }) => {
-    expect(matchPublisherName([], SUBJECT)).toBeNull()
-    expect(matchPublisherName([""], "O=Acme Corporation, C=US")).toBeNull()
-    expect(matchPublisherName(["Acme Corporation"], "O=Acme Corporation, C=US")).toBeNull()
+    expect(match([]).matched).toBe(false)
+    expect(match([""], "O=Acme Corporation, C=US").matched).toBe(false)
+    expect(match(["Acme Corporation"], "O=Acme Corporation, C=US").matched).toBe(false)
+  })
+
+  test("throws for a signature without a signer certificate (electron-updater only calls it for a Valid signature)", ({ expect }) => {
+    expect(() => matchPublisherName({ SignerCertificate: null }, ["Acme Corp"], { warn: vi.fn() })).toThrow(TypeError)
   })
 })
