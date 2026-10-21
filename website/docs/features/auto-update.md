@@ -20,12 +20,12 @@ macOS application must be [signed](./code-signing/code-signing.md) in order for 
 
 * macOS: DMG.
 * Linux: AppImage, DEB, Pacman and RPM.
-* Windows: NSIS.
+* Windows: NSIS; MSIX with `msix.electronUpdaterAware: true` (beta, see [MSIX auto-updates](../msix.md#auto-updates)).
 
-All these targets are default, custom configuration is not required. (Though it is possible to [pass in additional configuration, e.g. request headers](#custom-options-instantiating-updater-directly).)
+All these targets are default, custom configuration is not required (apart from the MSIX opt-in). (Though it is possible to [pass in additional configuration, e.g. request headers](#custom-options-instantiating-updater-directly).)
 
 :::info
-1. **Squirrel.Windows is not supported.** Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
+1. **Squirrel.Windows is not supported.** Simplified auto-update is supported on Windows if you use the default NSIS target (or an MSIX target with `electronUpdaterAware`), but is not supported for Squirrel.Windows.
 You can [easily migrate to NSIS](https://github.com/electron-userland/electron-builder/issues/837#issuecomment-355698368).
 2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](../mac.md#macos-target-overview) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
 :::
@@ -103,7 +103,7 @@ If you want more control over the updater configuration (e.g. request header for
 
 ```typescript
 import { NsisUpdater } from "electron-updater"
-// Or MacUpdater, AppImageUpdater
+// Or MacUpdater, AppImageUpdater, MsixUpdater
 
 export default class AppUpdater {
     constructor() {
@@ -220,6 +220,7 @@ The *automatic* install at startup only runs for targets that can install the pe
 | AppImage | ✓ | ✓ |
 | deb / rpm / pacman | skipped — package managers always elevate (pkexec/sudo) | ✓ (auth prompt) |
 | macOS | n/a — Squirrel.Mac stages updates natively and applies them on relaunch | resolves `false` |
+| MSIX (`electronUpdaterAware`) | n/a — Windows stages the update when it is downloaded and applies it on `quitAndInstall()` or at the next activation ([details](../msix.md#how-an-update-is-installed)) | resolves `false` |
 
 electron-builder v27 sets `isAdminRightsRequired` in the update info of every per-machine `nsis` and `nsis-web` build (`perMachine: true`), including assisted installers (`oneClick: false`) and builds with `differentialPackage: false`, so their updates are started with `elevate.exe` and skipped by the automatic install at launch.
 
@@ -334,7 +335,9 @@ Because some of your users will be on the broken 1.0.1, releasing a new 1.0.1 wo
 
 ## File Generated and Uploaded in Addition
 
-`latest.yml` (or `latest-mac.yml` for macOS, or `latest-linux.yml` for Linux) will be generated and uploaded for all providers except `bintray` (because not required, `bintray` doesn't use `latest.yml`).
+`latest.yml` (or `latest-mac.yml` for macOS, `latest-linux.yml` for Linux, or `latest-msix.yml` for MSIX with `msix.electronUpdaterAware`) will be generated and uploaded for all providers except `bintray` (because not required, `bintray` doesn't use `latest.yml`).
+
+A custom provider must name the file it fetches with `getDefaultChannelName()` / `getCustomChannelName(channel)`, as the built-in providers do, and pass the `runtimeOptions` it receives on to `super`. Otherwise it requests `latest.yml` instead of `latest-msix.yml` for `MsixUpdater`: on a feed without NSIS releases, the check fails with the provider's own not-found error (for example an HTTP 404, or `ERR_UPDATER_CHANNEL_FILE_NOT_FOUND`), or, while an old NSIS `latest.yml` is still there, fails with `ERR_UPDATER_MANIFEST_NOT_SIGNED` / `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` unless a key the app trusts signed it (the signature is checked before the version), and otherwise reports no update; on a feed shared with NSIS, a newer release fails with `ERR_UPDATER_MSIX_FILE_NOT_FOUND`.
 
 ## Private GitHub Update Repo
 

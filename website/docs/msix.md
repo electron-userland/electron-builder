@@ -17,6 +17,7 @@ MSIX is the modern successor to AppX. They share the same underlying manifest fo
 | Store upload archive | Manual | Yes (`.msixupload`) |
 | Package Integrity (`uap10`) | No | Yes (`enforcePackageIntegrity`) |
 | Windows Services (`desktop6`) | No | Yes (`windowsServices`) |
+| electron-updater auto-update | No | Opt-in, beta ([`electronUpdaterAware`](#auto-updates)) |
 | Required toolset | any | `winCodeSign` ≥ `1.0.0` |
 
 If you are starting fresh, prefer **MSIX**. AppX remains for backward compatibility.
@@ -30,7 +31,7 @@ Choose MSIX when:
 - **Windows 10S / Windows SE** — these locked-down editions only run Store-packaged apps.
 - **You need modern packaging features** — package integrity, bundled architectures, or registered Windows services.
 
-For standard consumer distribution with self-managed auto-updates, [NSIS](nsis.md) is simpler. For enterprise deployment without the Store, [MSI](msi.md) is often preferred.
+For standard consumer distribution with self-managed auto-updates, [NSIS](nsis.md) is simpler. An MSIX package can also update itself from your own server with electron-updater, but that support is opt-in and beta (see [Auto-Updates](#auto-updates)). For enterprise deployment without the Store, [MSI](msi.md) is often preferred.
 
 ## Requirements
 
@@ -251,11 +252,12 @@ win:
         - x64
         - arm64
 msix:
-  createMsixbundle: true     # combine architectures into one .msixbundle. Default: true (when >1 arch)
+  createMsixbundle: true     # combine architectures into one .msixbundle. Default: true
   createMsixupload: true     # produce a .msixupload for Partner Center submission. Default: false
 ```
 
-- A `.msixbundle` is produced only when more than one architecture is built and `createMsixbundle` is not `false`.
+- A `.msixbundle` is produced when more than one architecture is built and `createMsixbundle` is not `false`, and always with [`electronUpdaterAware`](#auto-updates), even for a single architecture (`createMsixbundle: false` is then rejected).
+- The bundle version (makeappx `/bv`) is the 4-part version of the packages inside it. Bundles built by earlier 27.0.0 alphas carried a date-based version instead; if Windows refuses a newer bundle over such an install as a downgrade (`0x80073D06`), install that bundle once with `Add-AppxPackage -Path <bundle> -ForceUpdateFromAnyVersion`, which keeps the app's data. Reinstalling the app also gets past it, but uninstalling an MSIX package deletes its app data, including Electron's `userData` (kept under `%LOCALAPPDATA%\Packages\<PackageFamilyName>\LocalCache`).
 - A `.msixupload` is a plain ZIP of the bundle (or, if no bundle was produced, the single package). It is **not** code-signed — the Store re-signs on submission.
 
 :::note
@@ -306,7 +308,97 @@ To install a package signed with a self-signed certificate, first import that ce
 
 ## Auto-Updates
 
-MSIX auto-updates are handled by the Microsoft Store (or your App Installer `.appinstaller` flow), **not** by electron-updater. For self-managed auto-updates outside the Store, use [NSIS](nsis.md) instead.
+An MSIX package is updated by the Microsoft Store, by App Installer (an `.appinstaller` file), or — opt-in and **beta** — by [electron-updater](features/auto-update.md) from your own [publish](publish.md) feed. electron-updater keeps its providers, [signed update manifests](features/signed-update-manifests.md), staged rollouts and events: it downloads and verifies the update, and Electron's native MSIX updater has Windows install it.
+
+### Enabling electron-updater
+
+```yaml
+win:
+  target: msix
+msix:
+  identityName: "MyCompany.MyApp"
+  publisher: "CN=My Company, O=My Company, C=US"   # Subject of the signing certificate
+  electronUpdaterAware: true                       # beta. Default: false
+publish:
+  provider: generic
+  url: "https://updates.example.com/my-app"
+```
+
+```js
+import { autoUpdater } from "electron-updater"
+
+autoUpdater.checkForUpdatesAndNotify()
+```
+
+- Sign the package with a certificate your users' machines trust — see [Updater requirements](#updater-requirements).
+- [Signed update manifests](features/signed-update-manifests.md) are required, also for a build that does not publish: build with an Ed25519 signing key, or set `updateManifest.publicKey` when another step signs `latest-msix.yml`, so that `app-update.yml` carries the public key. Without a trusted key, `MsixUpdater` refuses to download updates (`ERR_UPDATER_MSIX_MANIFEST_NOT_SIGNED`), and `updateManifest: false` fails the build. Windows installs any package signed with a certificate it trusts, even another app's, and the `packageFamilyName` / `packageVersion` hints in `latest-msix.yml` are not signed: only a verified manifest pins the bundle, by its sha512.
+- Only releases built with `electronUpdaterAware` update themselves. Installs of earlier releases have to receive the first such release the way they were installed (for example a manual install or your device management).
+
+### What the build writes
+
+- A `.msixbundle`, even for a single architecture. It is the only file electron-updater installs: a package installed from a bundle cannot be updated with a single `.msix`, while a single-`.msix` install can move to a bundle. `createMsixbundle: false` is rejected.
+- `latest-msix.yml` (`<channel>-msix.yml` for other channels), listing only the bundle. Its file entry also records the bundle's `packageFamilyName` and `packageVersion`, which electron-updater checks before downloading; they are not covered by the manifest signature ([why](features/signed-update-manifests.md#what-is-signed)). NSIS keeps its `latest.yml`, so NSIS and MSIX builds can share one feed.
+- `app-update.yml` and a `resources/package-type` marker (`msix`) inside the package. Without the marker, electron-updater leaves the package alone.
+
+### How an update is installed
+
+In a Windows app with package identity, `autoUpdater` is an `MsixUpdater`. An update check:
+
+1. Fetches `latest-msix.yml` (or `<channel>-msix.yml`) and verifies its signature.
+2. Refuses the update before downloading it if the app has no trusted key to verify the manifest with (see [Enabling electron-updater](#enabling-electron-updater)), if the update belongs to another package family, or if its 4-part version is not higher than the installed one (see [Versions and package identity](#versions-and-package-identity)).
+3. Downloads the bundle into `%LOCALAPPDATA%\Packages\<PackageFamilyName>\LocalCache\<updaterCacheDirName>` and verifies its sha512. Windows' deployment service can read this folder; the usual cache folder is virtualized for packaged apps.
+4. Hands it to Electron's native MSIX updater, which stages it with Windows. `update-downloaded` is emitted once the update is staged; with `autoInstallEvent = "manual"` it is emitted after the download, and staging happens in `quitAndInstall()`.
+
+Windows applies the staged update as follows:
+
+- **`quitAndInstall()`** when the app is to run after the install — as for NSIS, when `autoRunAppAfterInstall` is `true` (the default) or, for a silent call (`isSilent: true`, which has no other effect), only with `isForceRunAfter: true`: Windows shuts the app down to register the update right away. The `session-end` event of its windows is turned into `app.quit()`, so your quit handlers run; an app without a `BrowserWindow` is terminated after about 30 seconds. Windows restarts the app, without arguments, only if it had been running for at least 60 seconds. If the app is still running when Electron's install completes, the update was not installed: `ERR_UPDATER_MSIX_INSTALL_FAILED` is emitted, and Windows applies the update at the next launch.
+- **`quitAndInstall()` otherwise** — a non-silent call with `autoRunAppAfterInstall = false`, a silent call without `isForceRunAfter`, or `waitUntilNextLaunch: true`: the app quits, and Windows applies the update the next time the app is activated — from the Start menu or taskbar, a protocol or file association, or a startup task. Starting the `.exe` by its path or `app.relaunch()` does not apply it. As with NSIS, `before-quit-for-update` is emitted on Electron's `autoUpdater` before the quit, except with `waitUntilNextLaunch`. If the app cancels the quit, it can call `quitAndInstall()` again.
+- **Without `quitAndInstall()`**: `autoInstallEvent` `"onQuit"` (the default) and `"onNextLaunch"` both stage the update right after the download, so Windows applies it at the next activation after the app quits. `installPendingUpdateIfAvailable()` resolves `false`.
+- A packaged service ([`windowsServices`](#windows-services)), a tray process or a child process that outlives the app keeps the package in use and delays the update until it exits.
+
+### Updater requirements
+
+`MsixUpdater` needs all of these. Without a trusted manifest key (the last row) it refuses to download updates; when any other requirement is not met, it stays inactive — it logs the reason, and `checkForUpdates()` resolves `null`:
+
+| Requirement | Notes |
+|---|---|
+| The package was built with `electronUpdaterAware: true` | Detected through the `resources/package-type` marker |
+| The app runs with package identity | Activated from the installed package (Start menu, taskbar, alias, protocol, …) |
+| Electron 39.5.2+ (39.x), 40.2.1+ (40.x), 41.0.0-alpha.6+ (41.x), or 42+ | Other versions lack a working native MSIX updater, so the build fails for them; it only warns when it cannot tell the version (custom `electronDist`, prepackaged app) |
+| Windows 10 version 2004 (build 19041) or later | Older versions that `minVersion` admits run the app without updates |
+| Signed with a certificate the machine trusts | A publicly trusted code-signing certificate, or your own certificate imported into Trusted People (Windows reports the signature kind as `developer` or `enterprise`). Not a Store-signed or unsigned package, and not one registered in development mode (`Add-AppxPackage -Register`) |
+| Not installed through App Installer | A package installed from an `.appinstaller` file is updated by App Installer |
+| A trusted key for [signed update manifests](features/signed-update-manifests.md) | Embedded into `app-update.yml` by a build with a signing key or `updateManifest.publicKey`, or set as `autoUpdater.updateManifestPublicKey`. Without one, the check still reports the update, but its download fails with `ERR_UPDATER_MSIX_MANIFEST_NOT_SIGNED` |
+
+### Versions and package identity
+
+- Every release needs a higher 4-part package version. An equal version is always refused: Windows does not install the same version with different contents.
+- By default the package version is `major.minor.patch.0`, so prerelease tags collapse: `1.2.0-beta.1` and `1.2.0` are both `1.2.0.0`. If you ship prereleases, set `setBuildNumber: true` with an increasing numeric build number (the `buildNumber` option, or a CI variable such as `BUILD_NUMBER`); electron-builder warns otherwise.
+- A lower version is refused unless `allowDowngrade` is `true` (setting `autoUpdater.channel` turns it on); Windows is then asked to accept it (`ForceUpdateFromAnyVersion`). A downgrade may only take effect at the next launch.
+- `identityName` and the certificate Subject (`publisher`) make up the package family name and must not change between releases. A package of another family would install as a second app, so electron-updater refuses it before downloading. Switching the signing method (for example to Azure Trusted Signing) can change the Subject — see [Key Rotation](features/key-rotation.md#renewal-vs-rotation).
+
+### Error codes
+
+These are emitted through the regular `error` event:
+
+| Code | Meaning |
+|---|---|
+| `ERR_UPDATER_MSIX_MANIFEST_NOT_SIGNED` | No trusted key verified the update manifest in the update check — the app has no trusted key for [signed update manifests](features/signed-update-manifests.md), or got one only after the check — so nothing pins the bundle that Windows would install (see [Enabling electron-updater](#enabling-electron-updater)). Raised before downloading; the check has already emitted `update-available` |
+| `ERR_UPDATER_MSIX_FILE_NOT_FOUND` | The update info lists no `.msixbundle`: `<channel>-msix.yml` has none, or a custom provider fetched another file (see [Limitations](#limitations)) |
+| `ERR_UPDATER_MSIX_PACKAGE_FAMILY_MISMATCH` | The bundle's `packageFamilyName` is missing or differs from the installed package's. Raised before downloading |
+| `ERR_UPDATER_MSIX_VERSION_NOT_HIGHER` | The bundle's `packageVersion` is missing or not a 4-part numeric version, equal to the installed version, or lower without `allowDowngrade`. Raised before downloading |
+| `ERR_UPDATER_MSIX_STAGING_FAILED` | Windows did not stage the downloaded bundle — the message ends with Windows' error text and the HRESULT as a signed decimal in parentheses, such as `(-2147009274)` for `0x80073D06` (see [Common Questions](#common-questions)) — or staging took longer than 10 minutes. The verified bundle stays cached, so the next check stages it again without downloading it |
+| `ERR_UPDATER_MSIX_INSTALL_FAILED` | `quitAndInstall()` did not install the update while the app was running: Windows could not start registering the staged update, or Electron's native install completed while the app was still running (the registration failed or was deferred). Windows then applies the update at the next launch, and `quitAndInstall()` can be called again. Windows shuts the app down before it registers the update, so a registration that fails after that is not reported |
+
+### Limitations
+
+- Every update is a full download (no differential updates), and the bundle contains every architecture you build.
+- Don't use `${arch}` in the publish `url` or `path`: the bundle and `latest-msix.yml` are not per architecture, so installs would poll a path that never receives them.
+- Prefer an ASCII `artifactName` for the bundle: the downloaded file is handed to Windows by its `file://` URL, and non-ASCII names are untested.
+- A custom `win.sign.sign` hook needs `win.sign.publisherName`, because the build writes `app-update.yml` ([details](win.md#how-do-you-delegate-code-signing)). `MsixUpdater` does not use `publisherName` — the signed update manifest pins the bundle — so an app that ships only as MSIX can set `win.verifyUpdateCodeSignature: false` instead.
+- A custom update provider must name the file it fetches with `getDefaultChannelName()` / `getCustomChannelName(channel)`, as the built-in providers do, and pass the `runtimeOptions` it receives on to `super`. Otherwise it requests `latest.yml` instead of `latest-msix.yml`: on a feed without NSIS releases, the check fails with the provider's own not-found error (for example an HTTP 404, or `ERR_UPDATER_CHANNEL_FILE_NOT_FOUND`), or, while an old NSIS `latest.yml` is still there, fails with `ERR_UPDATER_MANIFEST_NOT_SIGNED` / `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` unless a key the app trusts signed it (the signature is checked before the version), and otherwise reports no update; on a feed shared with NSIS, a newer release fails with `ERR_UPDATER_MSIX_FILE_NOT_FOUND`.
+- A `--prepackaged` build does not write `app-update.yml`: include one in the prepackaged app's `resources` (electron-builder warns when it is missing).
+- AppX packages, App Installer integration and Store-signed packages are not supported.
 
 ## Common Questions
 
@@ -316,7 +408,16 @@ MSIX auto-updates are handled by the Microsoft Store (or your App Installer `.ap
 
 **Why is my multi-arch `.msixbundle` named with one architecture?** Bundle and upload artifacts span all built architectures; a custom `artifactName` containing `${arch}` will still render a single architecture token. Prefer an `artifactName` without `${arch}` for bundles.
 
-**Does MSIX support auto-update via electron-updater?** No — see [Auto-Updates](#auto-updates) above.
+**Does MSIX support auto-update via electron-updater?** Yes, opt-in and beta: set `msix.electronUpdaterAware: true` — see [Auto-Updates](#auto-updates) above.
+
+**Why does `MsixUpdater` do nothing?** It stays inactive unless every one of the [updater requirements](#updater-requirements) holds — except a missing manifest key, which fails the download instead — and logs the first one that does not. Typical causes: a release built without `electronUpdaterAware`, an Electron version outside the supported range, a package installed in development mode or not signed with a trusted certificate, and an install managed by App Installer.
+
+**What do the HRESULTs in `ERR_UPDATER_MSIX_STAGING_FAILED` mean?** The message ends with Windows' error text and, in parentheses, the HRESULT as a signed decimal number. Look up that trailing number: the text before it may mention another, inner error code.
+
+- `0x80073CFB` (`-2147009285`) — this version is already installed with different contents: give every release a new 4-part version.
+- `0x80073D06` (`-2147009274`) — a higher version is installed, and the update was staged without `ForceUpdateFromAnyVersion`: a downgrade needs `allowDowngrade`.
+- `0x80073CF3` (`-2147009293`) — the update conflicts with the installed package, for example a single `.msix` offered to an install made from a `.msixbundle`.
+- `0x800B0109` (`-2146762487`) — the certificate that signed the update is not trusted on this machine: import it into Trusted People, or use a certificate that chains to a trusted root.
 
 ## Configuration
 

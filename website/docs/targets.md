@@ -10,7 +10,7 @@ This page helps you choose the right packaging format for each platform. The rig
 | `nsis-web` | `.exe` web installer | Apps with large assets | Optional | electron-updater |
 | `portable` | `.exe` no-install | USB drives, no-install scenarios | No | Manual |
 | `appx` | `.appx` | Windows Store, enterprise MDM | Managed by Store | Store only |
-| `msix` | `.msix` / `.msixbundle` / `.msixupload` | Windows Store, modern deployment (successor to AppX) | Managed by Store | Store only |
+| `msix` | `.msix` / `.msixbundle` / `.msixupload` | Windows Store, modern deployment (successor to AppX) | Managed by Store | Store, App Installer, or electron-updater (opt-in, beta) |
 | `msi` | `.msi` | Enterprise deployment (SCCM/Intune/GPO) | Yes | Not supported via electron-updater |
 | `msi-wrapped` | `.msi` wrapping NSIS | Enterprise + existing NSIS installer | Yes | electron-updater |
 | `squirrel.windows` | `.exe` / NuGet | Legacy (not recommended) | No | Squirrel |
@@ -44,6 +44,7 @@ This page helps you choose the right packaging format for each platform. The rig
 - Produces `.msix`, multi-architecture `.msixbundle`, and Store `.msixupload` artifacts
 - Adds modern manifest features: package integrity and Windows services
 - Requires the modern `winCodeSign` toolset (the default; only the legacy `0.0.0` bundle is rejected); builds on Windows 10 / Windows Server 2012 R2 (6.3+) or later, or macOS via Parallels
+- Auto-update with electron-updater is opt-in (`msix.electronUpdaterAware`, beta) — see [MSIX auto-updates](msix.md#auto-updates)
 - See [MSIX Configuration](msix.md)
 
 **MSI** (`msi`) — use for enterprise deployment via Group Policy or SCCM.

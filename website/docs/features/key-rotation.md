@@ -114,7 +114,7 @@ An attacker holding a private key that installs still trust can produce a `lates
   A `publicKey` alone does not satisfy the v27 signing requirement, so this workflow takes one of two routes:
 
   - **Build without a publish policy.** The requirement only warns there, and electron-builder writes the unsigned `latest*.yml` locally; your step signs it and publishes the artifacts and the manifest.
-  - **Keep publishing, with `publishAutoUpdate: false` on every publish provider.** electron-builder uploads the artifacts and embeds the `publicKey`, but writes no `latest*.yml` at all, so your step has to generate the manifest as well as sign and upload it.
+  - **Keep publishing, with `publishAutoUpdate: false` on every publish provider.** electron-builder uploads the artifacts and embeds the `publicKey`, but writes no `latest*.yml` at all, so your step has to generate the manifest as well as sign and upload it. For an `electronUpdaterAware` MSIX build, that `latest-msix.yml` must list only the `.msixbundle` and record its `packageFamilyName` and `packageVersion` (see [MSIX auto-updates](../msix.md#what-the-build-writes)), or `MsixUpdater` refuses every update; the route without a publish policy writes them for you.
 - **Pre-signed download URLs** (`files[].url`, `files[].blockMapUrl`, `packages.<arch>.path`) are covered by the signature, so a step that writes them into `latest*.yml` has to run before the manifest is signed — or sign it again afterwards, which needs the private key in that step. A server that mints them per request cannot serve a signed manifest.
 - Use one key per app (or per release channel if channels are operated by different teams). Sharing a key across unrelated apps means one compromise affects all of them.
 
@@ -137,6 +137,7 @@ The same check runs again before an [install-on-next-launch](./auto-update.md#in
 
 - **Renewal with the same Subject** (same CA, same legal entity, same DN): the embedded publisher name still matches and existing installs update without any special release. Verify the DN is byte-for-byte identical: a changed `O=`, `L=`, or `C=` component is a rotation, not a renewal, if you configured a full DN.
 - **Rotation to a certificate with a different Subject** (new CA, company rename, moving to Azure Trusted Signing, switching from OV to EV): existing installs will reject installers signed with it until they have received a bridge release.
+- **MSIX packages** updated by electron-updater ([`msix.electronUpdaterAware`](../msix.md#auto-updates)) cannot be bridged. The certificate Subject is also the package's `Publisher`, from which Windows derives the package family name. A renewal with an identical Subject is fine (a new self-signed certificate must be trusted on the users' machines, like the old one), but a different Subject turns the next release into another package family: Windows would install it as a second app, so `MsixUpdater` refuses it (`ERR_UPDATER_MSIX_PACKAGE_FAMILY_MISMATCH`), and users have to install it themselves. `publisherName` plays no part for MSIX.
 
 ### Step by step
 

@@ -285,7 +285,7 @@ artifactBuildCompleted: async ({ file, safeArtifactName, target, packager, arch,
 }
 ```
 
-After `artifactBuildCompleted` fires, the Publish Manager queues the artifact for upload and schedules update-metadata generation (`latest.yml`, `latest-mac.yml`, etc.).
+After `artifactBuildCompleted` fires, the Publish Manager queues the artifact for upload and schedules update-metadata generation (`latest.yml`, `latest-mac.yml`, `latest-msix.yml`, etc.).
 
 #### Target-specific hooks
 
@@ -352,7 +352,7 @@ afterAllArtifactBuild: async ({ outDir, artifactPaths, platformToTargets, config
 
 The Publish Manager uploads all queued artifacts (and any extra paths returned from `afterAllArtifactBuild`) to the configured providers: GitHub Releases, S3, DigitalOcean Spaces, Generic server, GitLab, Keygen, Snap Store, etc.
 
-Update metadata files (`latest.yml`, `latest-mac.yml`, `latest-linux.yml`) are written to the output directory and included in the publish.
+Update metadata files (`latest.yml`, `latest-mac.yml`, `latest-linux.yml`, `latest-msix.yml`) are written to the output directory and included in the publish.
 
 See [Publish Configuration](/docs/publish) for provider setup.
 

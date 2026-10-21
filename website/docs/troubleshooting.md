@@ -115,7 +115,7 @@ asar:
 : Check that the `publish` configuration matches your distribution channel. For GitHub, ensure the release isn't a draft (draft releases are invisible to electron-updater). Verify `app.getVersion()` matches the version in `package.json` at build time.
 
 **"Cannot find latest.yml" / update server 404**
-: electron-builder generates `latest.yml` (Windows), `latest-mac.yml` (macOS), or `latest-linux.yml` only when publishing. Ensure you ran `--publish always` (or `--publish onTagOrDraft`) when building the release.
+: electron-builder generates `latest.yml` (Windows), `latest-msix.yml` (MSIX with `electronUpdaterAware`), `latest-mac.yml` (macOS), or `latest-linux.yml` only when publishing. Ensure you ran `--publish always` (or `--publish onTagOrDraft`) when building the release.
 
 **"sha512 checksum mismatch"**
 : The downloaded update file is corrupt or the wrong file is being served. Verify that the artifact and the `.yml` metadata file were generated together in the same build and not mixed from different builds. As of electron-builder 27, the manifest `sha512` should be base64-encoded — a 128-hex-character "expected" value in the error message is the tell that a hand-rolled manifest still uses hex, which is accepted but deprecated in v27 and will be removed in v28; convert it with `sha512sum file.ext | cut -d' ' -f1 | xxd -r -p | base64 -w0`.

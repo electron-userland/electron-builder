@@ -127,6 +127,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`autoInstallOnAppQuit` replaced by `autoInstallEvent` enum (electron-updater)](#autoinstallevent-replaces-autoinstallonappquit) | — | `autoInstallOnAppQuit = false` → `autoInstallEvent = "manual"`; default `"onQuit"` preserves behavior |
 | [`downloadUpdate()` resolves with an object, not an array (electron-updater)](#downloadupdate-resolves-with-a-downloadexecutorresult-object) | — | `const [installer] = await downloadUpdate()` → `const { updateFile } = await downloadUpdate()`; same for `checkForUpdates()` → `downloadPromise` |
 | [`verifyUpdateCodeSignature` renamed and returns a result object (electron-updater)](#verifyupdatecodesignature-renamed-to-verifyupdatefileauthenticodesignature) | — | `NsisUpdater.verifyUpdateCodeSignature` → `verifyUpdateFileAuthenticodeSignature`; return `{ response: "success" }` / `{ response: "failure", message }` instead of `null` / `string` |
+| [Windows apps with package identity use `MsixUpdater` (electron-updater)](#windows-apps-with-package-identity-use-msixupdater) | — | None for most apps — in an installed AppX or MSIX package `autoUpdater` is now an `MsixUpdater`, which stays inactive unless the package was built with `msix.electronUpdaterAware`; construct an `NsisUpdater` explicitly only if a packaged app relied on it |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | — | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | — | Use the `snapcraft` config shape / Electron framework |
 
@@ -929,7 +930,7 @@ The signer resolves the path from the `winCodeSign` value: unset / `null` / `"la
 
 ## New: MSIX target (beta)
 
-v27 adds a beta `msix` Windows target alongside `appx`, producing `.msix`, `.msixbundle` (multi-arch), and `.msixupload` (Store) artifacts with modern manifest features that AppX cannot express — Package Integrity (`uap10`) and Windows Services (`desktop6`). It is **purely additive: no migration is required.** It works with the default `winCodeSign` toolset (only the legacy `0.0.0` bundle, which lacks the MSIX-capable Windows SDK, is rejected). MSIX builds on Windows 10+ natively or on macOS via Parallels Desktop (Linux is unsupported), and does **not** auto-update via electron-updater (updates come from the Microsoft Store or App Installer). See the [MSIX target documentation](../msix) for the full configuration surface.
+v27 adds a beta `msix` Windows target alongside `appx`, producing `.msix`, `.msixbundle` (multi-arch), and `.msixupload` (Store) artifacts with modern manifest features that AppX cannot express — Package Integrity (`uap10`) and Windows Services (`desktop6`). It is **purely additive: no migration is required.** It works with the default `winCodeSign` toolset (only the legacy `0.0.0` bundle, which lacks the MSIX-capable Windows SDK, is rejected). MSIX builds on Windows 10+ natively or on macOS via Parallels Desktop (Linux is unsupported). Updates come from the Microsoft Store or App Installer, or — opt-in and beta — from electron-updater with `msix.electronUpdaterAware: true`, which always builds the `.msixbundle`, writes `latest-msix.yml` for it, and requires [signed update manifests](../features/signed-update-manifests.md): such a build rejects `updateManifest: false`, and an app without a trusted key refuses to download updates (see [MSIX auto-updates](../msix.md#auto-updates)). Every `.msixbundle` carries the 4-part version of its packages as its bundle version (makeappx `/bv`); bundles built by earlier 27.0.0 alphas carried a date-based one, so Windows may refuse a newer bundle over such an install as a downgrade ([what to do](../msix.md#bundles-and-store-uploads)). See the [MSIX target documentation](../msix) for the full configuration surface.
 
 ```yaml
 win:
@@ -1212,9 +1213,9 @@ A configured `win.sign.publisherName` (v26: `win.signtoolOptions.publisherName` 
 
 **Action is required only if** a build fails here — update `win.sign.publisherName` to the new certificate subject, sign with the intended certificate, or set `publisherName` to `null` to opt out of update signature verification entirely.
 
-A code-signed build whose publisher name cannot be determined now also fails with `InvalidConfigurationError`. This covers every custom `win.sign.sign` hook without `win.sign.publisherName`: a hook may sign with another certificate than any electron-builder can read, so its publisher name is never derived from a certificate, not even one in the config (`certificateFile`, `certificateSubjectName`, `certificateSha1`, `cscLink`) or from `WIN_CSC_LINK` / `CSC_LINK`. It also covers a certificate without a Common Name (including a certificate-store subject). It applies only to builds that write `app-update.yml`: `nsis`, `nsis-web` and `electronUpdaterAware` `appx` targets with a publish configuration, including one inferred from a GitHub `repository`.
+A code-signed build whose publisher name cannot be determined now also fails with `InvalidConfigurationError`. This covers every custom `win.sign.sign` hook without `win.sign.publisherName`: a hook may sign with another certificate than any electron-builder can read, so its publisher name is never derived from a certificate, not even one in the config (`certificateFile`, `certificateSubjectName`, `certificateSha1`, `cscLink`) or from `WIN_CSC_LINK` / `CSC_LINK`. It also covers a certificate without a Common Name (including a certificate-store subject). It applies only to builds that write `app-update.yml`: `nsis`, `nsis-web` and `electronUpdaterAware` `appx` or `msix` targets with a publish configuration, including one inferred from a GitHub `repository`.
 
-**Action:** set `win.sign.publisherName` to the subject of the certificate that signs your app, copied from a binary it already signed ([how](../win.md#how-do-you-delegate-code-signing)) — every component you list must match. Set `win.verifyUpdateCodeSignature: false` instead only if your updates are not Authenticode-signed or you don't use electron-updater.
+**Action:** set `win.sign.publisherName` to the subject of the certificate that signs your app, copied from a binary it already signed ([how](../win.md#how-do-you-delegate-code-signing)) — every component you list must match. Set `win.verifyUpdateCodeSignature: false` instead only if your updates are not Authenticode-signed, you don't use electron-updater, or your app updates only as MSIX (`MsixUpdater` does not use `publisherName`).
 
 > **Tip:** `electron-builder migrate-schema` prints an advisory for a custom `win.sign.sign` hook without `win.sign.publisherName`, whatever certificate the config names.
 
@@ -1308,7 +1309,7 @@ The deprecated top-level `path` and `sha512` fields are **no longer written** to
 
 ### Signed update manifests are required
 
-Ed25519 signing of `latest*.yml` is new in v27 and **required by default**. A build with a publish policy that includes a target writing auto-update metadata — NSIS, AppImage, deb/rpm/pacman, macOS zip/dmg, or AppX with `electronUpdaterAware` — now fails unless a signing key resolves. The check runs at build start, before anything is packed or uploaded:
+Ed25519 signing of `latest*.yml` is new in v27 and **required by default**. A build with a publish policy that includes a target writing auto-update metadata — NSIS, AppImage, deb/rpm/pacman, macOS zip/dmg, or AppX or MSIX with `electronUpdaterAware` — now fails unless a signing key resolves. The check runs at build start, before anything is packed or uploaded:
 
 ```
 auto-update manifests must be signed, but no Ed25519 signing key was found for mac. Generate one with
@@ -1329,7 +1330,7 @@ ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(cat update-private-key.pem)" electron-builde
 
 **To opt out**, set `updateManifest: false` at the top level or under a platform key. Every build that emits a manifest then logs a warning. `false` also short-circuits the environment variables, so a leftover `ELECTRON_BUILDER_UPDATE_SIGN_KEY` cannot silently re-enable signing. A platform value of `null` is **not** an opt-out — it falls back to the top-level value.
 
-A publishing build whose targets write no update info (for example only snap, flatpak, MSI/MSIX, portable, mas/pkg or plain archives) needs no key. Two more cases need no configuration at all: when every publish provider sets `publishAutoUpdate: false` no manifest is emitted, so the requirement is waived; and a `publicKey` with no private key does **not** satisfy it, since electron-builder still has nothing to sign with (that HSM/KMS workflow either builds without a publish policy, or publishes with `publishAutoUpdate: false` and generates the manifest itself — see [Key storage](../features/key-rotation.md#key-storage)).
+A publishing build whose targets write no update info (for example only snap, flatpak, MSI, MSIX without `electronUpdaterAware`, portable, mas/pkg or plain archives) needs no key. Two more cases need no configuration at all: when every publish provider sets `publishAutoUpdate: false` no manifest is emitted, so the requirement is waived; and a `publicKey` with no private key does **not** satisfy it, since electron-builder still has nothing to sign with (that HSM/KMS workflow either builds without a publish policy, or publishes with `publishAutoUpdate: false` and generates the manifest itself — see [Key storage](../features/key-rotation.md#key-storage)). An `electronUpdaterAware` MSIX target is stricter: its build rejects `updateManifest: false`, and its installs refuse to download updates without a trusted key, so it needs a signing key or an explicit `publicKey` even in a build that does not publish (see [New: MSIX target (beta)](#new-msix-target-beta)).
 
 :::danger[Opting out is not reversible for a release line]
 Once a release embeds a public key, its installs are **fail-closed**: an unsigned manifest is rejected with `ERR_UPDATER_MANIFEST_NOT_SIGNED` and those installs stop updating entirely. Do not switch to `updateManifest: false` after shipping signed manifests, and make sure every pipeline that can publish a release — including a hotfix built from a laptop — has the key.
@@ -1444,6 +1445,18 @@ The old name is kept as a compatibility shim that translates in both directions,
 If you override the protected `BaseUpdater.verifyInstallerSignatureOnLaunch` (added earlier in the same v27 pre-release cycle, so only 7.0.0-alpha users are affected), return `{ response: "success" }` rather than `null` — `null` is now read as a verification failure and blocks every install-on-next-launch.
 
 Additively, all updaters gain `AppUpdater.verifyUpdateFile` for app-defined verification of the downloaded file on every path that can lead to an install. See [Custom downloaded-file verification](../features/auto-update.md#custom-downloaded-file-verification).
+
+### Windows apps with package identity use `MsixUpdater`
+
+On Windows, `autoUpdater` used to be an `NsisUpdater` in every app. In an app that runs with package identity (`process.windowsStore` is `true`: an installed AppX or MSIX package) it is now the new `MsixUpdater`, unless the app's `resources/package-type` marker says `nsis` or `nsis-web`. `MsixUpdater` updates MSIX packages built with [`msix.electronUpdaterAware`](../msix.md#auto-updates) (beta) through Electron's native MSIX updater. In any other package it stays inactive: it logs why, and `checkForUpdates()` resolves `null`. An `NsisUpdater` cannot update a package anyway — an NSIS update installs the app a second time next to it.
+
+**Action:** none for most apps. Only if a packaged app relied on `NsisUpdater` (for example to move its users from the package to an NSIS install), construct it explicitly:
+
+```ts
+import { NsisUpdater } from "electron-updater"
+const updater = new NsisUpdater()
+updater.checkForUpdatesAndNotify()
+```
 
 ---
 

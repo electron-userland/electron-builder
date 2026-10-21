@@ -174,7 +174,7 @@ Import the certificate into "Trusted People" on the target machine — see [Micr
 
 **Does AppX support auto-updates without the Store?**
 
-No — AppX auto-updates are handled by the Windows Store only. electron-updater does not support AppX packages. For auto-updates outside the Store, use NSIS instead.
+No — AppX auto-updates are handled by the Windows Store only. electron-updater does not support AppX packages. For auto-updates outside the Store, use NSIS, or build an [MSIX](msix.md#auto-updates) package with `electronUpdaterAware` (opt-in, beta).
 
 ## Configuration
 
