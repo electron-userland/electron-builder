@@ -1,0 +1,5 @@
+---
+"app-builder-lib": major
+---
+
+feat!: require electron-updater 7 with electron-builder v27. electron-updater ships in the app while electron-builder is only a dev dependency, so the two can drift apart and an app can ship an electron-updater that cannot read the update files this electron-builder writes. A build whose app uses electron-updater (declared in `dependencies` or `devDependencies`, or bundled transitively) now fails with an `InvalidConfigurationError` unless the installed electron-updater has the major released with this electron-builder (7; prereleases count). The installed version is resolved from the app and project directories the way Node resolves it; a declared but uninstalled electron-updater is checked by its specifier, and fails when the specifier pins no version. When the builder-util-runtime that the app's electron-updater loads differs from electron-builder's own, the build warns once. Migration: upgrade electron-updater to `^7` and reinstall. See https://www.electron.build/docs/migration/v27-breaking-changes#electron-updater-7-is-required

@@ -116,6 +116,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [New: Cloudflare R2 publish provider](#new-cloudflare-r2-publish-provider-additive) | — | None — additive; needs `accountId` and an `https` `publicUrl` |
 | [New command: `migrate-schema`](#new-command-migrate-schema) | — | None — run it to apply every **Auto ✓** change above |
 | [DMG `filesystem` defaults to APFS](#dmg-filesystem-defaults-to-apfs) | — | Set `dmg.filesystem: "HFS+"` only if you need pre-10.13 macOS compatibility |
+| [electron-updater 7 is required](#electron-updater-7-is-required) | — | A build whose app uses electron-updater (in `dependencies`, in `devDependencies` for bundled apps, or bundled transitively) fails unless the installed electron-updater is 7.x: upgrade it to `^7` |
 | [`disableWebInstaller` defaults to `true` (electron-updater)](#disablewebinstaller-defaults-to-true) | — | Web-installer updates are rejected (`ERR_UPDATER_WEB_INSTALLER_DISABLED`) unless `disableWebInstaller` is `false`; v27+ `nsis-web` installs opt in automatically; older installs, and apps switching from `nsis` to `nsis-web`, need `disableWebInstaller: false` |
 | [`nsis-web` installer verifies and installs its own copy of the app package](#disablewebinstaller-defaults-to-true) | — | A `--package-file` package or a publish-URL download that does not match, or a `--package-file` package that cannot be copied, aborts the install (exit code `2`); the local package file is now left in place. Only if you run one web installer with a `--package-file` from another build: set `nsisWeb.allowUnverifiedAppPackage: true` |
 | [NSIS: per-machine builds set `isAdminRightsRequired` in the update info](#nsis-per-machine-builds-set-isadminrightsrequired) | — | None for most apps. Their updates are started with `elevate.exe`; with `autoInstallEvent: "onNextLaunch"`, per-machine apps call `installPendingUpdateIfAvailable()` to install a pending update |
@@ -1258,6 +1259,24 @@ v27 adds a new `dmg.format` value, **`"ULMO"`** — an LZMA-compressed disk imag
 ---
 
 ## Auto-update (electron-updater)
+
+### electron-updater 7 is required {#electron-updater-7-is-required}
+
+electron-updater is a runtime dependency of your app, while electron-builder is a dev dependency that only builds it, so nothing kept the two in step: an app could ship electron-updater 6 with the `app-update.yml` and signed `latest*.yml` of electron-builder v27, or the other way round, and its updates then failed on your users' machines rather than at build time. electron-builder v27 now fails the build unless the app's electron-updater is **7.x** (prereleases such as `7.0.0-alpha.10` count as 7). There is no opt-out.
+
+- **When it applies:** electron-updater is declared in the `dependencies` or `devDependencies` of your app's `package.json` (bundled apps that inline it with webpack or Vite keep it in `devDependencies`) — in a two-`package.json` project, of either `package.json` — or it is bundled into the app as a transitive dependency. Apps that do not use electron-updater are not checked.
+- **Which version is checked:** the installed one, resolved from the app directory and then the project directory the way Node resolves it (including a copy hoisted to the workspace root), so `catalog:` and `workspace:` specifiers are checked against the real version. A transitive copy is checked when the production `node_modules` are collected.
+- **Declared but not installed** (e.g. Yarn PnP): the specifier is checked instead — a range must not allow anything below 7, and `link:`/`file:` read the linked `package.json`. A specifier that pins no version (`catalog:`, `workspace:`, a git URL, a dist-tag) fails with a request to install your dependencies first.
+- **builder-util-runtime:** when the `builder-util-runtime` that your electron-updater loads is not the one electron-builder uses, the build warns once. Keep the pair on the versions released together to clear it.
+
+```
+electron-builder v27 requires electron-updater 7, but found electron-updater 6.8.3 (resolved from /project/node_modules/electron-updater/package.json).
+  ...
+  Upgrade electron-updater to ^7 ("electron-updater": "^7.0.0") and reinstall your dependencies.
+  https://www.electron.build/docs/migration/v27-breaking-changes#electron-updater-7-is-required
+```
+
+**Action:** upgrade electron-updater to `^7` and reinstall, then go through its API changes below ([`quitAndInstall`](#quitandinstall-takes-an-options-object), [`autoInstallEvent`](#autoinstallevent-replaces-autoinstallonappquit), [`downloadUpdate()`](#downloadupdate-resolves-with-a-downloadexecutorresult-object), [`verifyUpdateFileAuthenticodeSignature`](#verifyupdatecodesignature-renamed-to-verifyupdatefileauthenticodesignature)). While v27 is in prerelease, use the matching prerelease range, e.g. `"electron-updater": "^7.0.0-alpha.10"` — npm does not match prereleases against `^7.0.0`.
 
 ### `disableWebInstaller` defaults to `true`
 

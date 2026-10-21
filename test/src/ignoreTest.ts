@@ -125,7 +125,7 @@ test.ifNotWindows("copied sub node_modules of the rootDir/node_modules", ({ expe
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.dependencies = {
-              "electron-updater": "6.3.9",
+              "electron-updater": "7.0.0-alpha.10", // electron-builder v27 requires electron-updater 7
               semver: "6.3.1",
               ...data.dependencies,
             }

@@ -29,6 +29,7 @@ import { LogMessageByKey, logMessageLevelByKey, ModuleManager } from "../node-mo
 import { Packager } from "../packager.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { AppFileWalker } from "./AppFileWalker.js"
+import { checkCollectedElectronUpdater } from "./electronUpdaterPairing.js"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper.js"
 import { NodeModuleInfo } from "../node-module-collector/types.js"
 import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
@@ -471,6 +472,10 @@ export async function collectNodeModulesWithLogging(platformPackager: PlatformPa
   // Fail-closed enforcement (issue #10058): collection is complete and the summary above has reached
   // the log, so failing here reports every missing production dependency at once.
   enforceAllowMissingDependencies(platformPackager.config.allowMissingDependencies, deps.logSummary)
+
+  // An electron-updater that only arrives transitively is invisible to the build-start check of the declared dependencies,
+  // so the one about to be bundled must also be the major released with this electron-builder.
+  checkCollectedElectronUpdater(deps.nodeModules)
 
   // Tripwire: the default-ignored packages are excluded because electron-builder already provides them
   // (e.g. the embedded Electron runtime), so a copy in `node_modules` is redundant. They only reach this
