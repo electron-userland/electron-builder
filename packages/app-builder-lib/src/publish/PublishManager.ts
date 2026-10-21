@@ -904,7 +904,7 @@ async function getEmittingUpdateInfoPublishConfigs(
 }
 
 function isSuitableWindowsTarget(target: Target) {
-  if (target.name === "appx" && target.options != null && (target.options as any).electronUpdaterAware) {
+  if ((target.name === "appx" || target.name === "msix") && target.options != null && (target.options as any).electronUpdaterAware) {
     return true
   }
   return target.name === "nsis" || target.name.startsWith("nsis-")
