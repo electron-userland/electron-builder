@@ -95,7 +95,16 @@ export interface MsixOptions extends TargetSpecificOptions {
    */
   readonly showNameOnTiles?: boolean
 
-  /** @private */
+  /**
+   * Whether to build the package for auto-update with electron-updater (beta).
+   * The `.msixbundle` is then always built (for one architecture too) and described by `latest-msix.yml` (`<channel>-msix.yml`), which lists only the bundle.
+   * `app-update.yml` and a `package-type` marker are packaged for electron-updater's `MsixUpdater`, which downloads and verifies the bundle and hands it to Electron's MSIX autoUpdater.
+   *
+   * Requires Electron 39.5.2+ (39.x), 40.2.1+ (40.x), 41.0.0-alpha.6+ or 42+, a package signed with a certificate the machines trust (sideloading, not the Microsoft Store),
+   * and [signed update manifests](https://www.electron.build/docs/features/signed-update-manifests): `MsixUpdater` refuses an update whose manifest it cannot verify, so `updateManifest: false` is an error.
+   * See [MSIX auto-updates](https://www.electron.build/docs/msix#auto-updates).
+   * @default false
+   */
   readonly electronUpdaterAware?: boolean
 
   /**
@@ -121,6 +130,7 @@ export interface MsixOptions extends TargetSpecificOptions {
 
   /**
    * Whether to produce a .msixbundle when more than one architecture is built.
+   * With `electronUpdaterAware`, the bundle is always built (for one architecture too), and `false` is an error: electron-updater updates MSIX installs from the bundle only.
    * @default true
    */
   readonly createMsixbundle?: boolean

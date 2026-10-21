@@ -374,9 +374,12 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    * The requirement is only enforced when a publish policy is in effect (`--publish`); a build without one
    * warns instead, so local builds and pipelines that sign the manifest in a later step of their own are
    * unaffected. It is also waived when every publish provider has `publishAutoUpdate: false`, since no manifest is
-   * emitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI/MSIX, portable,
+   * emitted then, and for a build whose targets write no update info (e.g. only snap, flatpak, MSI, MSIX without electronUpdaterAware, portable,
    * mas/pkg or plain archives). A publishing build checks for the key at build start, before anything is packed
    * or uploaded.
+   *
+   * An `msix` target with `electronUpdaterAware` rejects `false`: its installs refuse an update whose manifest no trusted key
+   * verified, so it needs a signing key (or `publicKey`) even without a publish policy.
    *
    * See [Signed Update Manifests](https://www.electron.build/features/signed-update-manifests).
    */
