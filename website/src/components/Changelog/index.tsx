@@ -79,16 +79,15 @@ function Releases({ changelog }: { changelog: ChangelogData }): ReactNode {
   return changelog.releases.map(release => (
     <section key={release.id} className={styles.release}>
       <Heading as="h2" id={release.pkg === "electron-builder" ? `v${release.version}` : release.id}>
-        {release.id} <small className={styles.date}>{release.date}</small>
+        {release.id}
       </Heading>
-      {release.from !== undefined && (
-        <div className={styles.meta} data-pagefind-ignore="">
-          <Link href={`${changelog.repo}/compare/${release.from}...${release.tag}`}>Compare on GitHub</Link>
-        </div>
-      )}
+      <div className={styles.meta} data-pagefind-ignore="">
+        {release.date}
+        {release.from !== undefined && <Link href={`${changelog.repo}/compare/${release.from}...${release.tag}`}>Compare on GitHub</Link>}
+      </div>
       {release.sections.map(section => (
         <div key={section.pkg}>
-          <h3>
+          <h3 className={styles.section}>
             {section.pkg} {section.version}
           </h3>
           {section.dependencies !== undefined && (
@@ -106,7 +105,7 @@ function Releases({ changelog }: { changelog: ChangelogData }): ReactNode {
             const entries = section.entries.filter(entry => entry.bump === bump)
             return entries.length === 0 ? null : (
               <div key={bump}>
-                <h4>{TITLES[bump]}</h4>
+                <h4 className={styles.group}>{TITLES[bump]}</h4>
                 <ul className={styles.entries}>
                   {entries.map(entry => (
                     <EntryItem key={entry.key} repo={changelog.repo} entry={entry} />

@@ -19,10 +19,18 @@
   margin-top: 2.5rem;
 }
 
-.date {
+/* text is 1rem, metadata 0.875rem; under the 1.5rem release headings the package and bump headings stay small */
+.section {
+  margin-top: 1.25rem;
+  font-size: 1rem;
+}
+
+.group {
+  margin: 1rem 0 0.5rem;
   color: var(--ifm-color-emphasis-700);
-  font-size: 0.8em;
-  font-weight: var(--ifm-font-weight-normal);
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .entries {
@@ -74,8 +82,13 @@
   padding: 0 0.5rem;
   background: var(--pill-bg);
   color: var(--pill-fg);
-  font-size: 0.875rem;
   font-weight: var(--ifm-font-weight-semibold);
+}
+
+/* the count next to a bucket heading is metadata */
+.bucket h2 .pill {
+  font-size: 0.875rem;
+  vertical-align: middle;
 }
 
 .major {
