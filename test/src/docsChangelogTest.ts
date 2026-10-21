@@ -1,7 +1,7 @@
 import * as path from "path"
 import { beforeAll } from "vitest"
 import changelogPlugin, { parseChangelog, renderMarkdown } from "../../website/scripts/docusaurus-plugin-changelog"
-import type { ChangelogData } from "../../website/src/changelog/model"
+import { ancestors, BUMPS, compare, type Bump, type Change, type ChangelogData } from "../../website/src/changelog/model"
 
 const REPO = "https://github.com/electron-userland/electron-builder"
 
@@ -35,6 +35,9 @@ function release(label: string, from: string | undefined, ...sections: string[])
 const CONVENTIONAL = `## [0.9.0](${REPO}/compare/v0.8.0...v0.9.0) (2025-01-01)\n\n\n### Bug Fixes\n\n* fix something ([abc1234](${REPO}/commit/abc1234))\n`
 
 const changelog = (...releases: string[]) => [...releases, CONVENTIONAL].join("\n\n\n\n")
+
+// "<bump> <summary>", plus " (updated)", in bucket order
+const summarize = (changes: Record<Bump, Change[]>) => BUMPS.flatMap(bump => changes[bump].map(change => `${bump} ${change.entry.summary}${change.updated ? " (updated)" : ""}`))
 
 describe("docs changelog", () => {
   test("parses every line form of the changesets format and stops at the conventional-changelog history", ({ expect }) => {
@@ -162,6 +165,157 @@ describe("docs changelog", () => {
     expect(() => parseChangelog([...lines, "", CONVENTIONAL].join("\n"))).toThrow(message)
   })
 
+  describe("compare", () => {
+    const SHARED = { pr: 7, note: "`electron-builder`, `electron-updater`" }
+    const NOTED = { pr: 2, note: `${SHARED.note} · updated in [\`#11\`](${REPO}/pull/11)` }
+    const SEMANTICS = changelog(
+      // a stable release lists every changeset of its prereleases again, with its final text
+      release(
+        "2.0.0",
+        "electron-builder@1.5.0",
+        section(
+          "electron-builder@2.0.0",
+          group("Major", entry("Feat!: x, final", "c1", { pr: 1 }), entry("Feat!: shared", "c7", SHARED)),
+          group("Minor", entry("Feat: h, reworded for the stable release", "c8", { pr: 8 })),
+          group(
+            "Patch",
+            entry("Fix: p", "c2", { pr: 2 }),
+            entry("Fix: n", "c4", { pr: 4 }),
+            entry("Fix: new in the stable release", "c5", { pr: 5 }),
+            entry("Fix: double a", "c6", { pr: 6 }),
+            entry("Fix: double b", "c6", { pr: 6 })
+          )
+        ),
+        section("electron-updater@1.1.0", group("Patch", entry("Feat!: shared", "c7", SHARED), entry("Fix(updater): alone", "c9", { pr: 9 })))
+      ),
+      // c1 reworded and made major after 2.0.0-alpha.0 listed it, c2 listed again unchanged with an updated note; c6 added
+      // two changesets; c7 is major for electron-updater only in this release
+      release(
+        "2.0.0-alpha.1",
+        "electron-builder@2.0.0-alpha.0",
+        section(
+          "electron-builder@2.0.0-alpha.1",
+          group("Major", entry("Feat!: x, final", "c1", { pr: 1, note: `updated in [\`#10\`](${REPO}/pull/10)` })),
+          group(
+            "Patch",
+            entry("Feat!: shared", "c7", SHARED),
+            entry("Fix: n", "c4", { pr: 4 }),
+            entry("Fix: double a", "c6", { pr: 6 }),
+            entry("Fix: double b", "c6", { pr: 6 }),
+            entry("Fix: p", "c2", NOTED)
+          )
+        ),
+        section("electron-updater@1.0.2", group("Major", entry("Feat!: shared", "c7", SHARED)), group("Patch", entry("Fix: p", "c2", NOTED)))
+      ),
+      // released alone between the two prereleases
+      release("electron-updater@1.0.1", "electron-updater@1.0.0", section("electron-updater@1.0.1", group("Patch", entry("Fix(updater): alone", "c9", { pr: 9 })))),
+      release(
+        "2.0.0-alpha.0",
+        "electron-builder@1.5.0",
+        section(
+          "electron-builder@2.0.0-alpha.0",
+          group("Minor", entry("Feat: x", "c1", { pr: 1 }), entry("Feat: h", "c8", { pr: 8 })),
+          group("Patch", entry("Fix: p", "c2", { ...SHARED, pr: 2 }))
+        ),
+        section("electron-updater@1.0.0", group("Patch", entry("Fix: p", "c2", { ...SHARED, pr: 2 })))
+      ),
+      // the parallel release line
+      release("1.6.0", "electron-builder@1.5.0", section("electron-builder@1.6.0", group("Patch", entry("Fix: backport", "c3", { pr: 3 })))),
+      release("1.5.0", "electron-builder@0.9.0", section("electron-builder@1.5.0", group("Patch", entry("Fix: s", "c0", { pr: 100 }))))
+    )
+    const data = parseChangelog(SEMANTICS)
+    const changes = (from: string, to: string) => summarize(compare(data, from, to))
+    const all = (from: string, to: string) => BUMPS.flatMap(bump => compare(data, from, to)[bump])
+
+    test("contains the releases of its line and the packages released alone on it", ({ expect }) => {
+      const ids = (id: string) => [...ancestors(data, id)].sort((a, b) => a - b).map(i => data.releases[i].id)
+      expect(ids("2.0.0-alpha.1")).toEqual(["2.0.0-alpha.1", "electron-updater@1.0.1", "2.0.0-alpha.0", "1.5.0"])
+      expect(ids("2.0.0")).toEqual(["2.0.0", "1.5.0"])
+      expect(ids("1.6.0")).toEqual(["1.6.0", "1.5.0"])
+      expect(ids("0.9.0")).toEqual([])
+    })
+
+    test("lists the changes of the other release line since the branch point only", ({ expect }) => {
+      const expected = [
+        "major Feat!: shared",
+        "major Feat!: x, final",
+        "minor Feat: h",
+        "patch Fix: n",
+        "patch Fix: double a",
+        "patch Fix: double b",
+        "patch Fix(updater): alone",
+        "patch Fix: p",
+      ]
+      expect(changes("1.6.0", "2.0.0-alpha.1")).toEqual(expected)
+      // a reworded changeset that <from> never had is listed once, with the newest text
+      expect(changes("1.5.0", "2.0.0-alpha.1")).toEqual(expected)
+    })
+
+    test("labels a change with the package sections of its newest listing and the release that listed it first", ({ expect }) => {
+      const [shared, reworded] = compare(data, "1.6.0", "2.0.0-alpha.1").major
+      expect(shared.sections.map(s => `${s.pkg}@${s.version}`)).toEqual(["electron-builder@2.0.0-alpha.1", "electron-updater@1.0.2"])
+      expect(shared.packages).toEqual(["electron-builder", "electron-updater"])
+      expect([reworded.release.id, reworded.introducedIn.id]).toEqual(["2.0.0-alpha.1", "2.0.0-alpha.0"])
+    })
+
+    test("lists only the new and the updated changesets of a cumulative stable release", ({ expect }) => {
+      expect(changes("2.0.0-alpha.1", "2.0.0")).toEqual(["minor Feat: h, reworded for the stable release (updated)", "patch Fix: new in the stable release"])
+    })
+
+    test("marks a changeset listed again with an updated note", ({ expect }) => {
+      expect(changes("2.0.0-alpha.0", "2.0.0-alpha.1")).toEqual([
+        "major Feat!: shared",
+        "major Feat!: x, final (updated)",
+        "patch Fix: n",
+        "patch Fix: double a",
+        "patch Fix: double b",
+        "patch Fix(updater): alone",
+        "patch Fix: p (updated)",
+      ])
+    })
+
+    test("finds nothing going back", ({ expect }) => {
+      // from a stable release to its own prerelease, which lists a changeset with an updated note
+      expect(changes("2.0.0", "2.0.0-alpha.1")).toEqual([])
+      expect(changes("2.0.0-alpha.1", "2.0.0-alpha.0")).toEqual([])
+      expect(changes("2.0.0-alpha.1", "2.0.0-alpha.1")).toEqual([])
+    })
+
+    test("compares from a base", ({ expect }) => {
+      expect(changes("0.9.0", "1.6.0")).toEqual(["patch Fix: backport", "patch Fix: s"])
+    })
+
+    test("leaves out a package released alone after the release compared to", ({ expect }) => {
+      expect(changes("0.9.0", "2.0.0-alpha.0")).toEqual(["minor Feat: x", "minor Feat: h", "patch Fix: p", "patch Fix: s"])
+      expect(changes("1.5.0", "1.6.0")).toEqual(["patch Fix: backport"])
+    })
+
+    test("orders each bucket by the release that listed the changeset first, newest first", ({ expect }) => {
+      expect(all("0.9.0", "2.0.0").map(change => change.introducedIn.id)).toEqual([
+        "2.0.0-alpha.1",
+        "2.0.0-alpha.0",
+        "2.0.0-alpha.0",
+        "2.0.0",
+        "2.0.0-alpha.1",
+        "2.0.0-alpha.1",
+        "2.0.0-alpha.1",
+        "electron-updater@1.0.1",
+        "2.0.0-alpha.0",
+        "1.5.0",
+      ])
+    })
+
+    test("lists a reworded changeset of a commit with several changesets as a new change (known limit)", ({ expect }) => {
+      const reworded = parseChangelog(SEMANTICS.replace("- Fix: double b _", "- Fix: double b, reworded _"))
+      expect(summarize(compare(reworded, "2.0.0-alpha.1", "2.0.0"))).toEqual([
+        "minor Feat: h, reworded for the stable release (updated)",
+        "patch Fix: new in the stable release",
+        "patch Fix: double b, reworded",
+      ])
+      expect(summarize(compare(reworded, "2.0.0", "2.0.0-alpha.1"))).toEqual(["patch Fix: double b"])
+    })
+  })
+
   test("renders markdown as HTML with raw HTML as text and only http(s) and mailto links and images", ({ expect }) => {
     expect(renderMarkdown("a <b>bold</b> <script>x()</script>", true)).toBe("a &lt;b&gt;bold&lt;/b&gt; &lt;script&gt;x()&lt;/script&gt;")
     expect(renderMarkdown("<div onclick=x>hi</div>")).toBe("&lt;div onclick=x&gt;hi&lt;/div&gt;")
@@ -202,6 +356,34 @@ describe("docs changelog", () => {
         const parent = index(release.parent)
         expect([release.id, release.parent, parent === -1 ? release.parent === "25.1.8" : parent > index(release.id)]).toEqual([release.id, release.parent, true])
       }
+    })
+
+    test("compares each release with the one it follows by the releases in between only", ({ expect }) => {
+      for (const release of builder()) {
+        const added = ancestors(real, release.id)
+        for (const i of ancestors(real, release.parent!)) {
+          added.delete(i)
+        }
+        for (const change of BUMPS.flatMap(bump => compare(real, release.parent!, release.id)[bump])) {
+          expect([release.id, added.has(index(change.release.id))]).toEqual([release.id, true])
+        }
+      }
+    })
+
+    test("compares across release lines, cumulative releases and updated changesets", ({ expect }) => {
+      const counts = (from: string, to: string) => BUMPS.map(bump => compare(real, from, to)[bump].length)
+      const keys = (from: string, to: string) => BUMPS.flatMap(bump => compare(real, from, to)[bump].map(change => change.entry.key)).sort((a, b) => a - b)
+      // only the 27 alphas: 26.15.4 .. 26.17.0 were released from release/v26 in parallel
+      expect(counts("26.15.3", "27.0.0-alpha.11")).toEqual([41, 38, 151])
+      expect(keys("26.17.0", "27.0.0-alpha.11")).toEqual(keys("26.15.3", "27.0.0-alpha.11"))
+      // 26.0.0 lists the changesets of its alphas again
+      expect(counts("25.1.8", "26.0.0")).toEqual([5, 11, 38])
+      expect(counts("26.0.0-alpha.5", "26.0.0")).toEqual([3, 6, 20])
+      expect(counts("26.0.0-alpha.11", "26.0.0")).toEqual([0, 0, 0])
+      expect(counts("27.0.0-alpha.11", "26.15.3")).toEqual([0, 0, 0])
+      // d45536f was made breaking after 27.0.0-alpha.9 listed it as a minor change
+      const updated = compare(real, "27.0.0-alpha.9", "27.0.0-alpha.10").major.find(change => change.entry.commit.startsWith("d45536f"))
+      expect([updated?.updated, updated?.release.id, updated?.introducedIn.id]).toEqual([true, "27.0.0-alpha.10", "27.0.0-alpha.9"])
     })
   })
 })

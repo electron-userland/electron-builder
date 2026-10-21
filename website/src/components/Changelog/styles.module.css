@@ -1,3 +1,8 @@
+/* kept in the page while empty: a live region that appears together with its text is not announced reliably */
+.summary:empty {
+  margin: 0;
+}
+
 .release {
   margin-top: 2.5rem;
 }
@@ -28,6 +33,12 @@
   font-size: 0.875rem;
 }
 
+.label {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: var(--ifm-global-radius);
+  padding: 0 0.4rem;
+}
+
 .details {
   margin-top: 0.25rem;
 }
@@ -36,4 +47,41 @@
   cursor: pointer;
   color: var(--ifm-color-emphasis-700);
   font-size: 0.875rem;
+}
+
+.bucket {
+  margin-top: 2rem;
+  padding-left: 1rem;
+  border-left: 4px solid var(--pill-fg);
+}
+
+/* Infima's contrast pairs switch with the color mode; text on them is 10.5:1 or more in both */
+.pill {
+  display: inline-block;
+  border-radius: var(--ifm-global-radius);
+  padding: 0 0.5rem;
+  background: var(--pill-bg);
+  color: var(--pill-fg);
+  font-size: 0.875rem;
+  font-weight: var(--ifm-font-weight-semibold);
+}
+
+.major {
+  --pill-bg: var(--ifm-color-danger-contrast-background);
+  --pill-fg: var(--ifm-color-danger-contrast-foreground);
+}
+
+.minor {
+  --pill-bg: var(--ifm-color-info-contrast-background);
+  --pill-fg: var(--ifm-color-info-contrast-foreground);
+}
+
+.patch {
+  --pill-bg: var(--ifm-color-success-contrast-background);
+  --pill-fg: var(--ifm-color-success-contrast-foreground);
+}
+
+.updated {
+  --pill-bg: var(--ifm-color-warning-contrast-background);
+  --pill-fg: var(--ifm-color-warning-contrast-foreground);
 }
