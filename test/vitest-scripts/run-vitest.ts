@@ -27,6 +27,18 @@ async function main() {
   const shards = splitIntoShards(weighted, shardCount)
   const index = SHARD_INDEX ?? 0
 
+  // The CI matrix is sized by the planner job (smart-shard-count.ts); this job re-plans locally and
+  // must arrive at the same plan, otherwise files are silently skipped or run twice across shards.
+  // Never clamp or re-map here — fail loudly so the mismatch gets fixed at its source.
+  const expectedShardCount = process.env.VITEST_EXPECTED_SHARD_COUNT ? Number(process.env.VITEST_EXPECTED_SHARD_COUNT) : null
+  if (expectedShardCount != null && expectedShardCount !== shardCount) {
+    console.error(
+      `Error: Shard plan mismatch: the CI matrix was planned with ${expectedShardCount} shard(s) but this job computed ${shardCount}. ` +
+        `The planner and this job must use the same smart cache (VITEST_SMART_CACHE_SOURCE=${process.env.VITEST_SMART_CACHE_SOURCE || "<unset>"}) and the same test file list.`
+    )
+    process.exit(1)
+  }
+
   if (index >= shardCount) {
     console.error(`Error: Shard index ${index} is out of range (max: ${shardCount - 1})`)
     process.exit(1)
