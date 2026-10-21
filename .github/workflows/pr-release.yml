@@ -60,7 +60,8 @@ jobs:
             fi
 
             echo "tag=$VERSION" >> $GITHUB_OUTPUT
-            # v26 is the current stable line (master publishes v27 prereleases under `next`), so its releases go to `latest`
+            # v26 is the current stable line (master publishes v27 prereleases under `next`), so its releases go to
+            # `latest`; the "Move the v26 dist-tag" step below also points `$VERSION` at them
             echo "npm_tag=latest" >> $GITHUB_OUTPUT
             echo "branch_type=lts" >> $GITHUB_OUTPUT
             echo "config_file=config.release-$VERSION.json" >> $GITHUB_OUTPUT
@@ -146,6 +147,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
           NPM_DIST_TAG: ${{ steps.dist-tag.outputs.npm_tag }}
+
+      # `pnpm publish` takes a single --tag, so point the branch tag (e.g. v26) at what was just published under `latest`.
+      # npm authenticates `dist-tag` through trusted publishing (OIDC) from npm 11.21.0, and only for packages whose
+      # trusted publisher has the dist-tag permission enabled on npmjs.com. A failure only warns: `latest` is already right.
+      - name: Move the ${{ steps.dist-tag.outputs.tag }} dist-tag
+        if: steps.changesets.outputs.published == 'true' && steps.dist-tag.outputs.branch_type == 'lts'
+        env:
+          BRANCH_TAG: ${{ steps.dist-tag.outputs.tag }}
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
+        run: |
+          for spec in $(node -e 'for (const p of JSON.parse(process.env.PUBLISHED_PACKAGES)) console.log(`${p.name}@${p.version}`)'); do
+            npx --yes npm@11.21.0 dist-tag add "$spec" "$BRANCH_TAG" ||
+              echo "::warning::Could not add the $BRANCH_TAG dist-tag to $spec; run: npm dist-tag add $spec $BRANCH_TAG"
+          done
 
       - name: Publish Summary
         if: steps.changesets.outputs.published == 'true'
