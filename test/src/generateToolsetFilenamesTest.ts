@@ -5,9 +5,9 @@ import { generateTests } from "../vitest-scripts/generate-tests"
 import { GENERATED_TESTS_DIR } from "../vitest-scripts/runtime-tests/generate-toolset-tests-shared"
 import { latestToolsetVersion, NSIS_VERSIONS, WINE_VERSIONS, WIN_CODE_SIGN_VERSIONS } from "../vitest-scripts/runtime-tests/generate-toolset-versions"
 import { detectFilePlatforms, getAllTestFiles, isE2eTestFile, platformAllowed } from "../vitest-scripts/vitest-config/file-discovery"
-import { resolveCachedMs } from "../vitest-scripts/vitest-config/shard-builder"
+import { resolveCachedMs, shardPlanMismatchError } from "../vitest-scripts/vitest-config/shard-builder"
 import type { FileStats } from "../vitest-scripts/vitest-config/cache"
-import { getTestFilesOverride, type SupportedPlatforms } from "../vitest-scripts/vitest-config/smart-config"
+import { getTestFilesOverride, parseSmartCacheSource, type SupportedPlatforms } from "../vitest-scripts/vitest-config/smart-config"
 
 // Collect all generated test filenames recursively (`*Test.ts` and `*.e2e.ts`)
 function collectGeneratedFiles(dir: string): string[] {
@@ -346,5 +346,35 @@ describe("resolveCachedMs", () => {
   it("returns undefined for a missing stat or missing platformRuns", () => {
     expect(resolveCachedMs(undefined, "linux")).toBeUndefined()
     expect(resolveCachedMs({}, "linux")).toBeUndefined()
+  })
+})
+
+describe("parseSmartCacheSource", () => {
+  it("parses the planner's <artifact-name>@<run-id> source", () => {
+    expect(parseSmartCacheSource("vitest-smart-cache-release-v26@39493871782")).toEqual({ kind: "artifact", name: "vitest-smart-cache-release-v26", runId: 39493871782 })
+  })
+
+  it("parses 'none' (planner had no cache, so the shard must not restore one either)", () => {
+    expect(parseSmartCacheSource(" none ")).toEqual({ kind: "none" })
+  })
+
+  it("rejects malformed sources instead of silently falling back to another cache", () => {
+    expect(() => parseSmartCacheSource("vitest-smart-cache-master")).toThrow(/Invalid smart cache source/)
+    expect(() => parseSmartCacheSource("@123")).toThrow(/Invalid smart cache source/)
+    expect(() => parseSmartCacheSource("vitest-smart-cache-master@abc")).toThrow(/Invalid smart cache source/)
+    expect(() => parseSmartCacheSource('vitest-smart-cache-PR-""')).toThrow(/Invalid smart cache source/)
+  })
+})
+
+describe("shardPlanMismatchError", () => {
+  it("passes when the in-job shard count equals the matrix size, or no expectation is set", () => {
+    expect(shardPlanMismatchError(14, 14)).toBeNull()
+    expect(shardPlanMismatchError(null, 9)).toBeNull()
+  })
+
+  it("reports a mismatch (e.g. matrix of 14 vs in-job plan of 9) rather than clamping the shard index", () => {
+    const error = shardPlanMismatchError(14, 9, "vitest-smart-cache-master@39494064035")
+    expect(error).toMatch(/Shard plan mismatch: the CI matrix was planned with 14 shard\(s\) but this job computed 9/)
+    expect(error).toContain("vitest-smart-cache-master@39494064035")
   })
 })
