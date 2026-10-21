@@ -32,7 +32,7 @@ const oldContent = Buffer.concat([blocks.A, blocks.X, blocks.C, blocks.Y])
 const newContent = Buffer.concat([blocks.A, blocks.B, blocks.C, blocks.D])
 const blockMapOf = (names: Array<string>): BlockMap => ({ version: "2", files: [{ name: "file", offset: 0, checksums: names, sizes: names.map(() => BLOCK) }] })
 
-type HostBehaviour = "multipart" | "multi-501" | "multi-400" | "multi-200" | "multi-403" | "ignores-ranges" | "wrong-range"
+type HostBehaviour = "multipart" | "multi-501" | "multi-400" | "multi-200" | "multi-403" | "ignores-ranges" | "wrong-range" | "uppercase-unit"
 
 function parseRanges(header: string): Array<[number, number]> {
   return header
@@ -90,7 +90,10 @@ describe("differential download on hosts with limited range support", { concurre
         return
       }
       const [start, end] = ranges[0]
-      const reported = behaviour === "wrong-range" ? `bytes ${start + 1}-${end + 1}/${newContent.length}` : `bytes ${start}-${end}/${newContent.length}`
+      const reported =
+        behaviour === "wrong-range"
+          ? `bytes ${start + 1}-${end + 1}/${newContent.length}`
+          : `${behaviour === "uppercase-unit" ? "BYTES" : "bytes"} ${start}-${end}/${newContent.length}`
       res.writeHead(206, { "Content-Range": reported, "Content-Length": end - start + 1 })
       res.end(newContent.subarray(start, end + 1))
     })
@@ -98,14 +101,19 @@ describe("differential download on hosts with limited range support", { concurre
     return new URL(`http://127.0.0.1:${(server.address() as AddressInfo).port}/new.bin`)
   }
 
-  async function download(dir: string, newUrl: URL, isUseMultipleRangeRequest: boolean): Promise<{ newFile: string; warnings: Array<string> }> {
+  async function download(
+    dir: string,
+    newUrl: URL,
+    isUseMultipleRangeRequest: boolean,
+    httpExecutor: HttpExecutor<ClientRequest> = new LocalHttpExecutor()
+  ): Promise<{ newFile: string; warnings: Array<string> }> {
     const oldFile = path.join(dir, "old.bin")
     const newFile = path.join(dir, "new.bin")
     writeFileSync(oldFile, oldContent)
     const warnings: Array<string> = []
     const logger = { info: () => {}, warn: (message: string) => warnings.push(message), error: () => {} }
     const fileInfo = { size: newContent.length, sha512: createHash("sha512").update(newContent).digest("base64") }
-    const downloader = new GenericDifferentialDownloader(fileInfo, new LocalHttpExecutor(), {
+    const downloader = new GenericDifferentialDownloader(fileInfo, httpExecutor, {
       oldFile,
       newFile,
       newUrl,
@@ -143,6 +151,21 @@ describe("differential download on hosts with limited range support", { concurre
     expect(requests).toHaveLength(1)
   })
 
+  test("a rejection that is not an Error is rethrown as is, without a range-by-range retry", async ({ tmpDir }) => {
+    class ThrowingHttpExecutor extends HttpExecutor<ClientRequest> {
+      calls = 0
+      createRequest(): ClientRequest {
+        this.calls++
+        // oxlint-disable-next-line typescript/only-throw-error -- the test needs a non-Error rejection
+        throw null
+      }
+    }
+    const httpExecutor = new ThrowingHttpExecutor()
+    const promise = download(await tmpDir.createTempDir({ prefix: "single-range" }), new URL("http://127.0.0.1/new.bin"), true, httpExecutor)
+    await expect(promise).rejects.toBeNull()
+    expect(httpExecutor.calls).toBe(1)
+  })
+
   test("a host that ignores ranges fails on the first single-range request instead of streaming the file per range", async ({ tmpDir }) => {
     const promise = download(await tmpDir.createTempDir({ prefix: "single-range" }), await startHost("ignores-ranges"), true)
     await expect(promise).rejects.toMatchObject({ code: "ERR_UPDATER_RANGE_NOT_SUPPORTED" })
@@ -154,6 +177,12 @@ describe("differential download on hosts with limited range support", { concurre
     const promise = download(await tmpDir.createTempDir({ prefix: "single-range" }), await startHost("ignores-ranges"), false)
     await expect(promise).rejects.toMatchObject({ code: "ERR_UPDATER_RANGE_NOT_SUPPORTED" })
     expect(requests).toHaveLength(1)
+  })
+
+  test("single-range downloads accept a range unit in any case (RFC 9110)", async ({ tmpDir }) => {
+    const { newFile } = await download(await tmpDir.createTempDir({ prefix: "single-range" }), await startHost("uppercase-unit"), false)
+    expect(readFileSync(newFile).equals(newContent)).toBe(true)
+    expect(requests).toHaveLength(2)
   })
 
   test("single-range downloads reject a 206 for a different range", async ({ tmpDir }) => {

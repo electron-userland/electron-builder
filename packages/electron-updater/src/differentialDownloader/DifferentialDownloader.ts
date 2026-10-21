@@ -89,8 +89,9 @@ export abstract class DifferentialDownloader {
 
     logger.info(`Full: ${formatBytes(newSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newSize / 100))}%)`)
 
-    return this.downloadFile(operations).catch((e: any) => {
-      if (e.code !== ERR_MULTIPLE_RANGES_NOT_SUPPORTED || !this.isUseMultipleRangeRequest) {
+    return this.downloadFile(operations).catch((e: unknown) => {
+      // anything but our own rejection (including a non-Error throw) is rethrown as is
+      if (!(e instanceof Error) || (e as NodeJS.ErrnoException).code !== ERR_MULTIPLE_RANGES_NOT_SUPPORTED || !this.isUseMultipleRangeRequest) {
         throw e
       }
       // The new file is rewritten from the start, and each single-range answer is checked, so a host that ignores ranges
@@ -249,11 +250,11 @@ export abstract class DifferentialDownloader {
         }
 
         const request = this.httpExecutor.createRequest(requestOptions, response => {
-          // before the abort listeners: rejecting a response destroys it, which would otherwise report a server abort
+          response.on("error", reject)
+          // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
           if (!checkIsPartialContent(response, operation.start, operation.end - 1, reject)) {
             return
           }
-          response.on("error", reject)
           response.on("aborted", () => {
             reject(new Error("response has been aborted by the server"))
           })

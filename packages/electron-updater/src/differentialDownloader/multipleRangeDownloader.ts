@@ -181,8 +181,9 @@ export function checkIsPartialContent(response: IncomingMessage, start: number, 
     return false
   }
 
+  // range units compare case-insensitively (RFC 9110 section 14.1)
   const contentRange = safeGetHeader(response, "content-range")
-  if (statusCode !== 206 || contentRange == null || !contentRange.startsWith(`bytes ${start}-${endInclusive}/`)) {
+  if (statusCode !== 206 || contentRange == null || !contentRange.toLowerCase().startsWith(`bytes ${start}-${endInclusive}/`)) {
     response.destroy()
     reject(
       newError(
