@@ -92,16 +92,18 @@ describe("PowerShell script construction", () => {
     expect(options.timeout).toBe(1234)
   })
 
-  test("PSModulePath is stripped from the inherited environment in every casing", ({ expect }) => {
-    vi.stubEnv("PSModulePath", "C:\\FakeUserModules")
-    vi.stubEnv("psmodulepath", "C:\\FakeUserModules2")
-    vi.stubEnv("ACME_KEEP_ME", "kept")
-    const [, , options] = preparePowerShellExec("Write-Output 1")
-    const keys = Object.keys(options.env ?? {})
-    expect(keys.filter(it => it.toLowerCase() === "psmodulepath")).toEqual([])
-    expect(options.env?.ACME_KEEP_ME).toBe("kept")
-    expect(process.env.PSModulePath).toBe("C:\\FakeUserModules")
-  })
+  // One casing per test: on Windows process.env is case-insensitive, so two casings stubbed together collapse into one variable.
+  for (const key of ["PSModulePath", "PSMODULEPATH", "psmodulepath"]) {
+    test(`PSModulePath is stripped from the inherited environment (${key})`, ({ expect }) => {
+      vi.stubEnv(key, "C:\\FakeUserModules")
+      vi.stubEnv("ACME_KEEP_ME", "kept")
+      const [, , options] = preparePowerShellExec("Write-Output 1")
+      const keys = Object.keys(options.env ?? {})
+      expect(keys.filter(it => it.toLowerCase() === "psmodulepath")).toEqual([])
+      expect(options.env?.ACME_KEEP_ME).toBe("kept")
+      expect(process.env[key]).toBe("C:\\FakeUserModules")
+    })
+  }
 })
 
 describe("parseAuthenticodeSignatureOutput", () => {
