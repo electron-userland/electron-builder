@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import clsx from "clsx"
 import Link from "@docusaurus/Link"
-import { useLocation } from "@docusaurus/router"
+import { useHistory, useLocation } from "@docusaurus/router"
 import useIsBrowser from "@docusaurus/useIsBrowser"
 import Heading from "@theme/Heading"
 import Layout from "@theme/Layout"
@@ -13,13 +13,28 @@ import styles from "./styles.module.css"
 
 const TITLES: Record<Bump, string> = { major: "Major changes", minor: "Minor changes", patch: "Patch changes" }
 
+type Range = { from?: string; to?: string; setRange: (from?: string, to?: string) => void }
+
 // The static HTML is rendered without a query string: read it only after hydration, so that the first render in the
 // browser matches the server's (the list of releases) and the comparison replaces it afterwards
-function useRange(): { from?: string; to?: string } {
+function useRange(): Range {
   const isBrowser = useIsBrowser()
   const location = useLocation()
+  const history = useHistory()
   const query = new URLSearchParams(isBrowser ? location.search : "")
-  return { from: query.get("from") ?? undefined, to: query.get("to") ?? undefined }
+  const setRange = (from?: string, to?: string) => {
+    const next = new URLSearchParams()
+    if (from) {
+      next.set("from", from)
+    }
+    if (to) {
+      next.set("to", to)
+    }
+    const search = next.toString()
+    // replace, not push: after a push Docusaurus moves the focus to the top of the page, away from the control just used
+    history.replace({ pathname: location.pathname, search: search && `?${search}` })
+  }
+  return { from: query.get("from") ?? undefined, to: query.get("to") ?? undefined, setRange }
 }
 
 function EntryItem({ repo, entry, packages, labels }: { repo: string; entry: Entry; packages: string[]; labels?: ReactNode }): ReactNode {
@@ -144,7 +159,7 @@ function Comparison({ changelog, changes }: { changelog: ChangelogData; changes:
 }
 
 export default function Changelog({ changelog }: { changelog: ChangelogData }): ReactNode {
-  const { from, to } = useRange()
+  const { from, to, setRange } = useRange()
   const builder = changelog.releases.filter(release => release.pkg === "electron-builder")
   // a base can only be compared from
   const tags = new Map<string, string>([...builder.map(release => [release.id, release.tag!] as const), ...changelog.bases.map(base => [base.version, base.tag] as const)])
@@ -182,14 +197,48 @@ export default function Changelog({ changelog }: { changelog: ChangelogData }): 
     )
   }
 
+  const versionOptions = builder.map(release => (
+    <option key={release.id} value={release.id}>
+      {release.version} ({release.date})
+    </option>
+  ))
   return (
     <Layout title="Changelog" description="The releases of electron-builder and electron-updater, and the changes between two versions grouped by major, minor and patch changes.">
       <main className="container margin-vert--lg">
         <Heading as="h1">Changelog</Heading>
         <p>
-          The releases of electron-builder and electron-updater since {builder[builder.length - 1].version}. Older releases are in{" "}
-          <Link href={`${changelog.repo}/blob/master/CHANGELOG.md`}>CHANGELOG.md on GitHub</Link>.
+          The releases of electron-builder and electron-updater since {builder[builder.length - 1].version}. Pick two versions to list only the changes between them, grouped by major, minor
+          and patch changes. Older releases are in <Link href={`${changelog.repo}/blob/master/CHANGELOG.md`}>CHANGELOG.md on GitHub</Link>.
         </p>
+        <div className={styles.picker} data-pagefind-ignore="">
+          <label>
+            From{" "}
+            <select value={fromVersion ?? ""} onChange={event => setRange(event.target.value || undefined, toVersion ?? builder[0].id)}>
+              <option value="">Select a version</option>
+              {versionOptions}
+              {changelog.bases.map(base => (
+                <option key={base.version} value={base.version}>
+                  {base.version}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            To{" "}
+            <select value={toVersion ?? ""} onChange={event => setRange(fromVersion, event.target.value || undefined)}>
+              <option value="">Select a version</option>
+              {versionOptions}
+            </select>
+          </label>
+          {comparing && (
+            <>
+              <button type="button" className="button button--secondary button--sm" disabled={!isRelease(fromVersion)} onClick={() => setRange(toVersion, fromVersion)}>
+                Swap
+              </button>
+              <Link to="/changelog">All releases</Link>
+            </>
+          )}
+        </div>
         <p className={styles.summary} aria-live="polite" aria-atomic="true">
           {summary}
         </p>

@@ -1,3 +1,15 @@
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.picker select {
+  max-width: 100%;
+}
+
 /* kept in the page while empty: a live region that appears together with its text is not announced reliably */
 .summary:empty {
   margin: 0;
