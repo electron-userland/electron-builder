@@ -12,8 +12,7 @@ import {
   walk,
 } from "builder-util"
 import type { MsixWindowsService } from "../../options/MsixOptions.js"
-import { Nullish, parseXml } from "builder-util-runtime"
-import { createHash } from "crypto"
+import { Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 const { emptyDir, readdir, readFile, writeFile } = _fsExtra
 import * as path from "path"
@@ -297,28 +296,6 @@ export function resolvePackageIdentityName(identityName: string | null | undefin
   const result = identityName || appName
   validateIdentityName(result, contextLabel)
   return result
-}
-
-// Crockford's base32 alphabet, lowercase
-const PUBLISHER_ID_ALPHABET = "0123456789abcdefghjkmnpqrstvwxyz"
-
-/**
- * The package family name Windows derives from a package identity: `<Name>_<PublisherId>`. The PublisherId is the first 64 bits
- * of the SHA-256 of the UTF-16LE `Publisher`, padded to 65 bits and encoded as 13 Crockford base32 characters.
- */
-export function computePackageFamilyName(identityName: string, publisher: string): string {
-  const bits = createHash("sha256").update(publisher, "utf16le").digest().readBigUInt64BE(0) << 1n
-  let publisherId = ""
-  for (let shift = 60; shift >= 0; shift -= 5) {
-    publisherId += PUBLISHER_ID_ALPHABET[Number((bits >> BigInt(shift)) & 31n)]
-  }
-  return `${identityName}_${publisherId}`
-}
-
-/** The `<Identity>` of an AppX/MSIX manifest, with its attribute values unescaped. */
-export function getPackageIdentity(manifestXml: string): { name: string; publisher: string; version: string } {
-  const identity = parseXml(manifestXml).element("Identity")
-  return { name: identity.attribute("Name"), publisher: identity.attribute("Publisher"), version: identity.attribute("Version") }
 }
 
 export function buildCapabilitiesXml(capabilityNames: Array<string> | null | undefined): string {

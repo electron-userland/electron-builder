@@ -5,11 +5,9 @@ import {
   buildCapabilitiesXml,
   buildExtensionsXml,
   buildWindowsServicesXml,
-  computePackageFamilyName,
   computeUserAssets,
   defaultTileTag,
   escapeXmlAttr,
-  getPackageIdentity,
   isDefaultAssetIncluded,
   isMappedTo,
   isPackageTypeMapping,
@@ -25,6 +23,7 @@ import {
   validateIdentityName,
 } from "app-builder-lib/src/targets/win/winAppUtil"
 import { InvalidConfigurationError, log } from "builder-util"
+import { computePackageFamilyName, getPackageIdentity } from "builder-util-runtime/internal"
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"

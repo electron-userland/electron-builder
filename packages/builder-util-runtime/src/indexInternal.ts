@@ -2,6 +2,7 @@ export { BlockMap, BlockMapFile } from "./blockMapApi.js"
 export { hashSensitiveValue, safeStringifyJson } from "./httpExecutor.js"
 export type { SnapStoreOptions } from "./publishOptions.js"
 export { LogLimiter } from "./logLimiter.js"
+export { computePackageFamilyName, getPackageIdentity } from "./msixIdentity.js"
 
 // the Electron versions whose native MSIX autoUpdater installs an update electron-updater downloaded (electron/electron#49230 and its
 // ComPtr fix #49645); evaluate with semver's `{ includePrerelease: true }`

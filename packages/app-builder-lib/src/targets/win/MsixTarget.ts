@@ -1,6 +1,6 @@
 import { Arch, asArray, copyOrLinkFile, ensureNotBusy, exec, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { Nullish } from "builder-util-runtime"
-import { MSIX_UPDATER_ELECTRON_VERSION_RANGE } from "builder-util-runtime/internal"
+import { computePackageFamilyName, getPackageIdentity, MSIX_UPDATER_ELECTRON_VERSION_RANGE } from "builder-util-runtime/internal"
 import { getPath7za } from "../../toolsets/7zip.js"
 import _fsExtra from "fs-extra"
 const { mkdirs, readFile, remove, writeFile } = _fsExtra
@@ -20,9 +20,7 @@ import {
   buildCapabilitiesXml,
   buildExtensionsXml,
   buildWindowsServicesXml,
-  computePackageFamilyName,
   defaultTileTag,
-  getPackageIdentity,
   isMappedTo,
   isPackageTypeMapping,
   lockScreenTag,
