@@ -5,7 +5,8 @@ import { createNsisUpdater, writeRawUpdateConfig, writeUpdateConfig } from "../h
 // NsisUpdater.verifySignature guard: an app-update.yml without publisherName used to skip verification (including custom
 // verifyUpdateCodeSignature hooks), first silently, then with a deprecation warning. Since electron-updater 7 it fails closed:
 // the update is rejected unless the config opts out explicitly with `verifyUpdateCodeSignature: false` (written by electron-builder
-// for win.verifyUpdateCodeSignature: false). Only an unpackaged app (dev mode) without any update config is not verified.
+// for win.verifyUpdateCodeSignature: false). An app without any update config file (dev mode, or a feed set only with setFeedURL)
+// is not verified, as before: its feed is configured by the developer.
 
 const MISSING_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#missing-publishername-fails-update-verification"
 const DISABLED_FRAGMENT = "disabled by configuration"
@@ -114,41 +115,31 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     expect(messages(logger.warn).filter(it => it.includes(DISABLED_FRAGMENT))).toHaveLength(0)
   })
 
-  test("rejects the update in a packaged app without app-update.yml (a feed set only with setFeedURL)", async () => {
-    const updater = await createNsisUpdater()
-    updater.setFeedURL({ provider: "generic", url: "https://example.com/updates" })
-    updater.updateConfigPath = "/nonexistent/dir/app-update.yml"
-    updater.logger = mockLogger()
-    const verifyHook = vi.fn(async () => ({ response: "success" as const }))
-    updater.verifyUpdateFileAuthenticodeSignature = verifyHook
+  // no update config file at all: skipped silently, exactly as before electron-updater 7
+  for (const isPackaged of [true, false]) {
+    const what = isPackaged ? "a packaged app without app-update.yml (a feed set only with setFeedURL)" : "an unpackaged app (dev mode) without dev-app-update.yml"
+    test(`${what} is not verified, as before, without calling the verifier or logging`, async () => {
+      const updater = await createNsisUpdater()
+      // @ts-expect-error accessing the protected app adapter
+      vi.spyOn(updater.app, "isPackaged", "get").mockReturnValue(isPackaged)
+      updater.setFeedURL({ provider: "generic", url: "https://example.com/updates" })
+      updater.updateConfigPath = isPackaged ? "/nonexistent/dir/app-update.yml" : "/nonexistent/dir/dev-app-update.yml"
+      const logger = mockLogger()
+      updater.logger = logger
+      const verifyHook = vi.fn(async () => ({ response: "failure" as const, message: "must not be called" }))
+      updater.verifyUpdateFileAuthenticodeSignature = verifyHook
 
-    // @ts-expect-error accessing a private method
-    const result = await updater.verifySignature("/path/to/installer.exe")
+      // @ts-expect-error accessing a private method
+      await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "success" })
+      // @ts-expect-error accessing a private method
+      await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "success" })
 
-    expect(result).toEqual({ response: "failure", message: expect.stringContaining("the app has no app-update.yml") })
-    expect(result.response === "failure" && result.message.endsWith(MISSING_DOCS)).toBe(true)
-    expect(verifyHook).not.toHaveBeenCalled()
-  })
-
-  test("an unpackaged app (dev mode) without any update config is not verified, with one info message", async () => {
-    const updater = await createNsisUpdater()
-    // @ts-expect-error accessing the protected app adapter
-    vi.spyOn(updater.app, "isPackaged", "get").mockReturnValue(false)
-    updater.updateConfigPath = "/nonexistent/dir/dev-app-update.yml"
-    const logger = mockLogger()
-    updater.logger = logger
-    const verifyHook = vi.fn()
-    updater.verifyUpdateFileAuthenticodeSignature = verifyHook
-
-    // @ts-expect-error accessing a private method
-    await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "success" })
-    // @ts-expect-error accessing a private method
-    await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "success" })
-
-    expect(verifyHook).not.toHaveBeenCalled()
-    expect(logger.warn).not.toHaveBeenCalled()
-    expect(messages(logger.info).filter(it => it.includes("not packaged and has no dev-app-update.yml"))).toHaveLength(1)
-  })
+      expect(verifyHook).not.toHaveBeenCalled()
+      expect(logger.warn).not.toHaveBeenCalled()
+      expect(logger.info).not.toHaveBeenCalled()
+      expect(logger.error).not.toHaveBeenCalled()
+    })
+  }
 
   test("an unpackaged app (dev mode) with a dev-app-update.yml without publisherName is rejected too", async () => {
     const updater = await createNsisUpdater()

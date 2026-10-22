@@ -239,26 +239,21 @@ export class NsisUpdater extends BaseUpdater {
   // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
   // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
   //
-  // Fails closed: without a publisherName in the update config the update is rejected, unless the config opts out explicitly
+  // Fails closed: when the update config has no publisherName the update is rejected, unless the config opts out explicitly
   // (`verifyUpdateCodeSignature: false`, written by electron-builder for `win.verifyUpdateCodeSignature: false`). A custom verifier is
   // never called without a publisherName: it would get no names to match, and one checking them with e.g. `every` would accept any signer.
-  // An unpackaged app (dev mode) without any update config is the only case that is not verified without an opt-out.
+  // An app with no update config file at all (dev mode, or a feed set only with setFeedURL) is not verified, as before: its feed is
+  // configured by the developer, not by electron-builder.
   private async verifySignature(tempUpdateFile: string): Promise<VerifyUpdateFileResult> {
     let config: unknown
     try {
       config = await this.configOnDisk.value
     } catch (e: any) {
-      if (e?.code !== "ENOENT") {
-        throw e
-      }
-      if (!this.app.isPackaged) {
-        // dev mode (forceDevUpdateConfig with a feed set by setFeedURL and no dev-app-update.yml): nothing is installed from it
-        this.limitedLogger("update-signature-no-dev-config").info(
-          "Signature verification of the downloaded update is skipped: the app is not packaged and has no dev-app-update.yml. A packaged app without app-update.yml rejects the update."
-        )
+      if (e?.code === "ENOENT") {
+        // no app-update.yml at all (unpackaged/dev mode, or a feed set only with setFeedURL): nothing to verify against, stay silent
         return { response: "success" }
       }
-      return { response: "failure", message: missingPublisherNameMessage(false) }
+      throw e
     }
 
     const publisherNames = readConfiguredPublisherNames(config)
@@ -271,7 +266,7 @@ export class NsisUpdater extends BaseUpdater {
       )
       return { response: "success" }
     }
-    return { response: "failure", message: missingPublisherNameMessage(true) }
+    return { response: "failure", message: missingPublisherNameMessage() }
   }
 
   // the cached installer sat on disk since a previous launch, so its Authenticode signature is re-verified before an
