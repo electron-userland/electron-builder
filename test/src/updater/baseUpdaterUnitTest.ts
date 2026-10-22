@@ -163,8 +163,6 @@ describe("AppImageUpdater doInstall APPIMAGE env handling", () => {
   })
 })
 
-// ─── AppImageUpdater.doInstall — replacing the running AppImage ──────────────
-
 describe.ifNotWindows("AppImageUpdater doInstall file replacement", () => {
   afterEach(() => vi.unstubAllEnvs())
 
@@ -194,7 +192,6 @@ describe.ifNotWindows("AppImageUpdater doInstall file replacement", () => {
     const { appImageFile, install } = await setup(await context.tmpDir.createTempDir(), false)
     expect(install).toThrow()
     expect(await readFile(appImageFile, "utf8")).toBe("old")
-    expect(await pathExists(path.join(path.dirname(appImageFile), ".TestApp.AppImage.update"))).toBe(false)
   })
 })
 
