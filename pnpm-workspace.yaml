@@ -78,4 +78,5 @@ overrides:
   mdast-util-to-hast: '>=13.2.1 <14' # GHSA-4fh9-h7wg-q85m (med)
   'ajv@<6.14.0': '>=6.14.0 <7' # GHSA-2g4f-4pwh-qvx6 (med); selector keeps app-builder-lib's ajv 8.x untouched
   webpack-dev-server: '>=5.2.6 <6' # GHSA-79cf-xcqc-c78w, GHSA-mx8g-39q3-5c79, GHSA-m28w-2pqf-7qgj, GHSA-f5vj-f2hx-8m93 (med)
+  http-proxy-middleware: '>=2.0.10 <3' # GHSA-64mm-vxmg-q3vj (med); webpack-dev-server 5.2.x still declares ^2.0.9
 packageImportMethod: copy
