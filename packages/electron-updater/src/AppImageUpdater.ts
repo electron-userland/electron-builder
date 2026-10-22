@@ -1,7 +1,7 @@
 import { AllPublishOptions, newError } from "builder-util-runtime"
 import { execFileSync } from "child_process"
 import fsExtra from "fs-extra"
-import { unlinkSync } from "fs"
+import { copyFileSync, linkSync, renameSync, rmSync } from "fs"
 import * as path from "path"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
@@ -90,16 +90,14 @@ export class AppImageUpdater extends BaseUpdater {
       throw newError(`APPIMAGE env is not a valid absolute path: "${appImageFile}"`, "ERR_UPDATER_OLD_FILE_NOT_FOUND")
     }
 
-    // https://stackoverflow.com/a/1712051/1910191
-    unlinkSync(appImageFile)
-
-    let destination: string
-    const existingBaseName = path.basename(appImageFile)
     const installerPath = this.installerPath
     if (installerPath == null) {
       this.dispatchError(new Error("No update filepath provided, can't quit and install"))
       return false
     }
+
+    let destination: string
+    const existingBaseName = path.basename(appImageFile)
     // https://github.com/electron-userland/electron-builder/issues/2964
     // if no version in existing file name, it means that user wants to preserve current custom name
     if (path.basename(installerPath) === existingBaseName || !/\d+\.\d+\.\d+/.test(existingBaseName)) {
@@ -109,8 +107,28 @@ export class AppImageUpdater extends BaseUpdater {
       destination = path.join(path.dirname(appImageFile), path.basename(installerPath))
     }
 
-    execFileSync("mv", ["-f", installerPath, destination])
+    // Stage the new AppImage next to the destination, then rename it over the destination. The rename is atomic, so the
+    // installed AppImage is never missing: if anything fails, the user still has the old one. Replacing the file
+    // (instead of writing into it) is safe while the old AppImage runs (https://stackoverflow.com/a/1712051/1910191).
+    // No external command is used: PATH can hold the dead FUSE mount of an earlier AppImage launch, which makes every lookup fail.
+    const staged = path.join(path.dirname(destination), `.${existingBaseName}.update`)
+    rmSync(staged, { force: true })
+    try {
+      try {
+        linkSync(installerPath, staged)
+      } catch {
+        // EXDEV (download cache on another filesystem) or a filesystem without hard links
+        copyFileSync(installerPath, staged)
+      }
+      renameSync(staged, destination)
+    } catch (e: any) {
+      rmSync(staged, { force: true })
+      throw e
+    }
+    rmSync(installerPath, { force: true })
+
     if (destination !== appImageFile) {
+      rmSync(appImageFile, { force: true })
       this.emit("appimage-filename-updated", destination)
     }
 
