@@ -58,7 +58,8 @@ function encodeField(value: unknown): string {
  *
  * `files[].packageFamilyName` and `files[].packageVersion` (MSIX) are not signed either. They only let electron-updater
  * refuse, before downloading, an update Windows would install as another app or not at all; the bundle is pinned by the
- * signed `url`/`sha512`/`size`, and electron-updater only installs an MSIX update from a verified manifest.
+ * signed `url`/`sha512`/`size`, electron-updater only installs an MSIX update from a verified manifest, and it checks the
+ * identity in the downloaded bundle's own manifest before staging it.
  *
  * Wire format (`EBUM1`): one record per line, `label:` followed by tab-separated fields, e.g.
  *

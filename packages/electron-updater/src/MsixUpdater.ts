@@ -1,6 +1,7 @@
 import { createRequire } from "node:module"
 import { AllPublishOptions, newError, UpdateFileInfo } from "builder-util-runtime"
-import { MSIX_UPDATER_ELECTRON_VERSION_RANGE } from "builder-util-runtime/internal"
+import { computePackageFamilyName, MSIX_UPDATER_ELECTRON_VERSION_RANGE } from "builder-util-runtime/internal"
+import fsExtra from "fs-extra"
 import { release } from "os"
 import * as path from "path"
 import { satisfies } from "semver"
@@ -8,6 +9,7 @@ import { pathToFileURL } from "url"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater.js"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
+import { newInvalidBundleError, readMsixBundleIdentity } from "./msixBundle.js"
 import { ProviderRuntimeOptions } from "./providers/Provider.js"
 import { DownloadExecutorResult, QuitAndInstallOptions } from "./types.js"
 import { readPackageType } from "./util.js"
@@ -82,23 +84,41 @@ export function getMsixInactiveReason(env: {
 }
 
 /**
- * Refuses, before it is downloaded, an update that Windows would install as another app or not install at all.
+ * Refuses, before it is downloaded, an update that Windows would install as another app or not install at all. The hints are unsigned:
+ * {@link checkMsixBundleIdentity} checks the downloaded bundle itself.
  * @internal
  */
 export function checkMsixUpdateFile(fileInfo: UpdateFileInfo, installed: MsixPackageInfo, allowDowngrade: boolean): void {
-  const familyName = fileInfo.packageFamilyName
+  checkMsixIdentity(`The update ${fileInfo.url}`, fileInfo.packageFamilyName, fileInfo.packageVersion, installed, allowDowngrade)
+}
+
+/**
+ * Refuses a downloaded bundle whose manifest identity Windows would install as another app or not install at all, whatever the unsigned
+ * hints of the update info said.
+ * @internal
+ */
+export function checkMsixBundleIdentity(
+  file: string,
+  identity: { readonly name: string; readonly publisher: string; readonly version: string },
+  installed: MsixPackageInfo,
+  allowDowngrade: boolean
+): void {
+  checkMsixIdentity(`The downloaded bundle ${file}`, computePackageFamilyName(identity.name, identity.publisher), identity.version, installed, allowDowngrade)
+}
+
+function checkMsixIdentity(subject: string, familyName: string | undefined, version: string | undefined, installed: MsixPackageInfo, allowDowngrade: boolean): void {
   if (typeof familyName !== "string" || familyName.toLowerCase() !== installed.familyName.toLowerCase()) {
     throw newError(
-      `The update ${fileInfo.url} is for the MSIX package family ${familyName ?? "(not recorded)"}, but this app is ${installed.familyName}: ` +
+      `${subject} is for the MSIX package family ${familyName ?? "(not recorded)"}, but this app is ${installed.familyName}: ` +
         "Windows would install it as another app. msix.identityName and msix.publisher (the subject of the signing certificate) must not change between releases",
       "ERR_UPDATER_MSIX_PACKAGE_FAMILY_MISMATCH"
     )
   }
-  const comparison = compareMsixVersions(fileInfo.packageVersion, installed.version)
+  const comparison = compareMsixVersions(version, installed.version)
   // an equal version never installs, so it is refused even with allowDowngrade, which the channel setter turns on
   if (comparison == null || comparison === 0 || (comparison < 0 && !allowDowngrade)) {
     throw newError(
-      `The update ${fileInfo.url} has the MSIX package version ${fileInfo.packageVersion ?? "(not recorded)"} and the installed package ${installed.version}: ` +
+      `${subject} has the MSIX package version ${version ?? "(not recorded)"} and the installed package ${installed.version}: ` +
         "Windows only updates a package to a higher 4-part version, or to a lower one with allowDowngrade. A prerelease gets the 4-part version of its release unless msix.setBuildNumber is set",
       "ERR_UPDATER_MSIX_VERSION_NOT_HIGHER"
     )
@@ -231,8 +251,9 @@ export class MsixUpdater extends AppUpdater {
 
   protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const { info, provider } = downloadUpdateOptions.updateInfoAndProvider
-    // Windows installs any package signed with a certificate the machine trusts, even another app's, and the packageFamilyName /
-    // packageVersion hints are unsigned: only a manifest that a trusted key verified in the update check pins the bundle by its sha512
+    // Windows installs any package signed with a certificate the machine trusts, even another app's: only a manifest that a trusted key
+    // verified in the update check pins the bundle by its sha512. The unsigned packageFamilyName / packageVersion hints only refuse an
+    // update early; the downloaded bundle's own manifest is checked before it is staged
     if (!this.isManifestVerified(info)) {
       throw newError(
         "MSIX updates require a signed update manifest: build with updateManifest signing keys, so that their public key is embedded into app-update.yml " +
@@ -252,7 +273,8 @@ export class MsixUpdater extends AppUpdater {
         "ERR_UPDATER_MSIX_FILE_NOT_FOUND"
       )
     }
-    checkMsixUpdateFile(fileInfo.info, this.requirePackageInfo(), this.allowDowngrade)
+    const installed = this.requirePackageInfo()
+    checkMsixUpdateFile(fileInfo.info, installed, this.allowDowngrade)
 
     return await this.executeDownload({
       fileExtension: "msixbundle",
@@ -260,6 +282,8 @@ export class MsixUpdater extends AppUpdater {
       downloadUpdateOptions,
       task: (destinationFile, downloadOptions) => this.httpExecutor.download(fileInfo.url, destinationFile, downloadOptions),
       done: async event => {
+        // also for a bundle cached by an earlier check: the installed version may have changed since
+        await this.checkDownloadedBundle(event.downloadedFile, installed)
         // "update-downloaded" means that Windows staged the update, except in "manual" mode, where quitAndInstall stages it. A staging
         // failure rejects the download, and the verified bundle stays cached for the next check
         if (this.autoInstallEvent !== "manual") {
@@ -268,6 +292,27 @@ export class MsixUpdater extends AppUpdater {
         this.dispatchUpdateDownloaded(event)
       },
     })
+  }
+
+  // The packageFamilyName / packageVersion hints are unsigned and only checked before the download: the manifest of the downloaded bundle is
+  // authoritative. A refused bundle is removed with the pending update, so that no later check takes it from the cache.
+  private async checkDownloadedBundle(file: string, installed: MsixPackageInfo): Promise<void> {
+    try {
+      let identity: { name: string; publisher: string; version: string }
+      try {
+        identity = await readMsixBundleIdentity(file)
+      } catch (e: unknown) {
+        throw newInvalidBundleError(file, e)
+      }
+      checkMsixBundleIdentity(file, identity, installed, this.allowDowngrade)
+    } catch (e: unknown) {
+      const helper = this.downloadedUpdateHelper
+      if (helper != null) {
+        await helper.clear()
+      }
+      await fsExtra.remove(file).catch(() => undefined)
+      throw e
+    }
   }
 
   // Electron's MSIX autoUpdater stages the bundle with AddPackageByUriAsync and deferred registration: Windows registers it on the native

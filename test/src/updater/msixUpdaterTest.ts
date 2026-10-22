@@ -1,9 +1,12 @@
 import { generateUpdateSigningKeypair, serializeToYaml, TmpDir } from "builder-util"
 import { GenericServerOptions, UpdateFileInfo } from "builder-util-runtime"
+import { computePackageFamilyName } from "builder-util-runtime/internal"
+import AdmZip from "adm-zip"
 import { createHash } from "crypto"
 import { MsixUpdater } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
-import { checkMsixUpdateFile, getMsixInactiveReason, isMsixInstall, MsixPackageInfo } from "electron-updater/src/MsixUpdater"
+import { checkMsixBundleIdentity, checkMsixUpdateFile, getMsixInactiveReason, isMsixInstall, MsixPackageInfo } from "electron-updater/src/MsixUpdater"
+import { MSIX_BUNDLE_MANIFEST_ENTRY, readMsixBundleIdentity, readZipEntry } from "electron-updater/src/msixBundle"
 import { GenericProvider } from "electron-updater/src/providers/GenericProvider"
 import { readPackageType } from "electron-updater/src/util"
 import { EventEmitter } from "events"
@@ -16,12 +19,33 @@ import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
 import { createTestAppAdapter, testAppCacheDirName, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 import { resignManifest, rewriteServedManifests } from "./signedManifestTestUtil.js"
 
-const FAMILY_NAME = "TestApp_8wekyb3d8bbwe"
+const IDENTITY_NAME = "TestApp"
+const PUBLISHER = "CN=Electron"
+const FAMILY_NAME = computePackageFamilyName(IDENTITY_NAME, PUBLISHER)
 const INSTALLED: MsixPackageInfo = { familyName: FAMILY_NAME, version: "1.0.0.0", signatureKind: "developer", developmentMode: false }
 
 const BUNDLE_NAME = "App.msixbundle"
-const BUNDLE = Buffer.from("electron-builder MsixUpdater test bundle, not a real package")
-const BUNDLE_SHA512 = createHash("sha512").update(BUNDLE).digest("base64")
+type Identity = { name: string; publisher: string; version: string }
+
+/** A zip with the bundle manifest of the given identity, like the AppxMetadata of an .msixbundle (without packages). */
+function createBundle(identity: Partial<Identity> = {}): Buffer {
+  const { name, publisher, version } = { name: IDENTITY_NAME, publisher: PUBLISHER, version: "1.0.1.0", ...identity }
+  const manifest = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<Bundle xmlns="http://schemas.microsoft.com/appx/2013/bundle" SchemaVersion="5.0">',
+    `  <Identity Name="${name}" Publisher="${publisher.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}" Version="${version}" />`,
+    "</Bundle>",
+  ].join("\r\n")
+  const zip = new AdmZip()
+  zip.addFile("AppxBlockMap.xml", Buffer.from("<BlockMap />"))
+  zip.addFile(MSIX_BUNDLE_MANIFEST_ENTRY, Buffer.from(`\uFEFF${manifest}`, "utf8"))
+  return zip.toBuffer()
+}
+
+const sha512Of = (data: Buffer) => createHash("sha512").update(data).digest("base64")
+
+const BUNDLE = createBundle()
+const BUNDLE_SHA512 = sha512Of(BUNDLE)
 
 // how Electron reports a failed deployment (0x80073D06: a higher version of the package is installed)
 const NATIVE_ERROR = "Deployment failed (-2147009274)"
@@ -198,6 +222,129 @@ describe("checkMsixUpdateFile", () => {
   })
 })
 
+describe("checkMsixBundleIdentity", () => {
+  const identity: Identity = { name: IDENTITY_NAME, publisher: PUBLISHER, version: "1.0.1.0" }
+
+  test("accepts a higher version of the installed package family", ({ expect }) => {
+    expect(() => checkMsixBundleIdentity(BUNDLE_NAME, identity, INSTALLED, false)).not.toThrow()
+  })
+
+  test.for<[string, Partial<Identity>, boolean, string]>([
+    ["another identity name", { name: "OtherApp" }, false, "ERR_UPDATER_MSIX_PACKAGE_FAMILY_MISMATCH"],
+    ["another publisher", { publisher: "CN=Someone Else" }, false, "ERR_UPDATER_MSIX_PACKAGE_FAMILY_MISMATCH"],
+    ["the installed version, even with allowDowngrade", { version: "1.0.0.0" }, true, "ERR_UPDATER_MSIX_VERSION_NOT_HIGHER"],
+    ["a lower version without allowDowngrade", { version: "0.9.0.0" }, false, "ERR_UPDATER_MSIX_VERSION_NOT_HIGHER"],
+  ])("refuses %s", ([, changed, allowDowngrade, code], { expect }) => {
+    expect(() => checkMsixBundleIdentity(BUNDLE_NAME, { ...identity, ...changed }, INSTALLED, allowDowngrade)).toThrow(expect.objectContaining({ code }))
+  })
+})
+
+/** A Zip64 archive of stored entries, every size and offset in the Zip64 extra fields and records, as large archives have them. */
+function createZip64(entries: Array<{ name: string; data: Buffer }>): Buffer {
+  const u16 = (value: number) => {
+    const b = Buffer.alloc(2)
+    b.writeUInt16LE(value)
+    return b
+  }
+  const u32 = (value: number) => {
+    const b = Buffer.alloc(4)
+    b.writeUInt32LE(value)
+    return b
+  }
+  const u64 = (value: number) => {
+    const b = Buffer.alloc(8)
+    b.writeBigUInt64LE(BigInt(value))
+    return b
+  }
+  const local: Array<Buffer> = []
+  const central: Array<Buffer> = []
+  let offset = 0
+  for (const { name, data } of entries) {
+    const nameBytes = Buffer.from(name)
+    const localExtra = Buffer.concat([u16(1), u16(16), u64(data.length), u64(data.length)])
+    const header = Buffer.concat([u32(0x04034b50), u16(45), u16(0), u16(0), u32(0), u32(0), u32(0xffffffff), u32(0xffffffff), u16(nameBytes.length), u16(localExtra.length)])
+    const record = Buffer.concat([header, nameBytes, localExtra, data])
+    const centralExtra = Buffer.concat([u16(1), u16(24), u64(data.length), u64(data.length), u64(offset)])
+    central.push(
+      Buffer.concat([
+        u32(0x02014b50),
+        u16(45),
+        u16(45),
+        u16(0),
+        u16(0),
+        u32(0),
+        u32(0),
+        u32(0xffffffff),
+        u32(0xffffffff),
+        u16(nameBytes.length),
+        u16(centralExtra.length),
+        u16(0),
+        u16(0),
+        u16(0),
+        u32(0),
+        u32(0xffffffff),
+        nameBytes,
+        centralExtra,
+      ])
+    )
+    local.push(record)
+    offset += record.length
+  }
+  const centralDirectory = Buffer.concat(central)
+  const zip64EocdOffset = offset + centralDirectory.length
+  const zip64Eocd = Buffer.concat([
+    u32(0x06064b50),
+    u64(44),
+    u16(45),
+    u16(45),
+    u32(0),
+    u32(0),
+    u64(entries.length),
+    u64(entries.length),
+    u64(centralDirectory.length),
+    u64(offset),
+  ])
+  const locator = Buffer.concat([u32(0x07064b50), u32(0), u64(zip64EocdOffset), u32(1)])
+  const eocd = Buffer.concat([u32(0x06054b50), u16(0), u16(0), u16(0xffff), u16(0xffff), u32(0xffffffff), u32(0xffffffff), u16(0)])
+  return Buffer.concat([...local, centralDirectory, zip64Eocd, locator, eocd])
+}
+
+describe("readZipEntry", () => {
+  async function write(tmpDir: TmpDir, data: Buffer): Promise<string> {
+    const file = path.join(await tmpDir.getTempDir({ prefix: "zip" }), "test.zip")
+    await fsExtra.outputFile(file, data)
+    return file
+  }
+
+  test("reads a deflated entry, with its part name compared case-insensitively", async ({ expect, tmpDir }) => {
+    const content = Buffer.from("<Bundle>".repeat(1000))
+    const zip = new AdmZip()
+    zip.addFile("other.txt", Buffer.from("other"))
+    zip.addFile("AppxMetadata/AppxBundleManifest.xml", content)
+    const file = await write(tmpDir, zip.toBuffer())
+    expect(await readZipEntry(file, "appxmetadata/appxbundlemanifest.xml")).toEqual(content)
+  })
+
+  test("reads a stored entry of a Zip64 archive", async ({ expect, tmpDir }) => {
+    const content = Buffer.from("stored content")
+    const file = await write(tmpDir, createZip64([{ name: "first.bin", data: Buffer.from("first") }, { name: MSIX_BUNDLE_MANIFEST_ENTRY, data: content }]))
+    expect(await readZipEntry(file, MSIX_BUNDLE_MANIFEST_ENTRY)).toEqual(content)
+  })
+
+  test("is null without the entry, and fails for a file that is not a zip", async ({ expect, tmpDir }) => {
+    const zip = new AdmZip()
+    zip.addFile("other.txt", Buffer.from("other"))
+    expect(await readZipEntry(await write(tmpDir, zip.toBuffer()), MSIX_BUNDLE_MANIFEST_ENTRY)).toBeNull()
+    await expect(readZipEntry(await write(tmpDir, Buffer.from("not a zip")), MSIX_BUNDLE_MANIFEST_ENTRY)).rejects.toThrow("not a zip file")
+  })
+
+  test("readMsixBundleIdentity reads the unescaped identity of the bundle manifest", async ({ expect, tmpDir }) => {
+    const publisher = 'CN="O\'Brien & Sons", C=US'
+    const file = await write(tmpDir, createBundle({ publisher, version: "2.0.1.7" }))
+    expect(await readMsixBundleIdentity(file)).toEqual({ name: IDENTITY_NAME, publisher, version: "2.0.1.7" })
+  })
+})
+
 describe("readPackageType", () => {
   // process.resourcesPath is only set in Electron
   function readWithResourcesPath(resourcesPath: string | undefined): string | null {
@@ -260,21 +407,22 @@ class TestMsixNativeUpdater extends EventEmitter {
 }
 
 // a generic provider feed with latest-msix.yml, signed with SIGNING_KEYS, and the bundle; `requests` records the path of every request
-async function serveMsixUpdate(tmpDir: TmpDir, files = [bundleFileInfo()], version = "1.0.1") {
+async function serveMsixUpdate(tmpDir: TmpDir, files = [bundleFileInfo()], version = "1.0.1", bundle = BUNDLE) {
   const root = await tmpDir.getTempDir({ prefix: "msix-feed" })
   const info = resignManifest({ version, files, releaseDate: "2024-01-01T00:00:00.000Z" }, [SIGNING_KEYS.privateKeyPem])
   await fsExtra.outputFile(path.join(root, "latest-msix.yml"), serializeToYaml(info))
-  await fsExtra.outputFile(path.join(root, BUNDLE_NAME), BUNDLE)
+  await fsExtra.outputFile(path.join(root, BUNDLE_NAME), bundle)
   const requests: Array<string> = []
   const { server, port } = await createLocalServer(root, "127.0.0.1", url => requests.push(new URL(url, "http://x").pathname))
   return { url: `http://127.0.0.1:${port}`, root, requests, close: () => server.close() }
 }
 
 // trustedKey is the updateManifestPublicKey of app-update.yml, which a build that signs update manifests embeds; null for none
-async function createMsixUpdater(native: TestMsixNativeUpdater, feedUrl = "http://127.0.0.1:1", trustedKey: string | null = SIGNING_KEYS.publicKeyPem) {
+// `adapter` of an earlier updater: a later launch of the same app, with the same cache
+async function createMsixUpdater(native: TestMsixNativeUpdater, feedUrl = "http://127.0.0.1:1", trustedKey: string | null = SIGNING_KEYS.publicKeyPem, existingAdapter?: AppAdapter) {
   // the updater takes require("electron").autoUpdater when it is created
   mockForNodeRequire("electron", { autoUpdater: native })
-  const adapter: AppAdapter = await createTestAppAdapter("1.0.0")
+  const adapter: AppAdapter = existingAdapter ?? (await createTestAppAdapter("1.0.0"))
   const updater = new MsixUpdater(undefined, adapter)
   const config: GenericServerOptions = { provider: "generic", url: feedUrl, updaterCacheDirName: testAppCacheDirName }
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>(trustedKey == null ? config : { ...config, updateManifestPublicKey: trustedKey })
@@ -283,8 +431,8 @@ async function createMsixUpdater(native: TestMsixNativeUpdater, feedUrl = "http:
 }
 
 // bypasses the check of the environment (package identity, Electron and Windows versions), which fails outside an MSIX package
-async function createActiveMsixUpdater(native: TestMsixNativeUpdater, feedUrl?: string, trustedKey?: string | null) {
-  const result = await createMsixUpdater(native, feedUrl, trustedKey)
+async function createActiveMsixUpdater(native: TestMsixNativeUpdater, feedUrl?: string, trustedKey?: string | null, existingAdapter?: AppAdapter) {
+  const result = await createMsixUpdater(native, feedUrl, trustedKey, existingAdapter)
   vi.spyOn(result.updater, "isUpdaterActive").mockReturnValue(true)
   return result
 }
@@ -345,6 +493,52 @@ describe("MsixUpdater", () => {
       expect(feed.requests).toEqual(["/latest-msix.yml"])
       expect(native.setFeedURL).not.toHaveBeenCalled()
       expect(events).toEqual(["checking-for-update", "update-available", "error"])
+    } finally {
+      feed.close()
+    }
+  })
+
+  // the hints are unsigned: the manifest of the downloaded bundle decides, and a refused bundle does not stay cached
+  test.for<[string, Buffer, string]>([
+    ["of another package family", createBundle({ publisher: "CN=Someone Else" }), "ERR_UPDATER_MSIX_PACKAGE_FAMILY_MISMATCH"],
+    ["of the installed package version", createBundle({ version: "1.0.0.0" }), "ERR_UPDATER_MSIX_VERSION_NOT_HIGHER"],
+    ["that is not a bundle", Buffer.from("not a zip"), "ERR_UPDATER_INVALID_UPDATE_FILE"],
+  ])("refuses a downloaded bundle %s whose hints match, before staging it, and downloads it again next time", async ([, bundle, code], { expect, tmpDir }) => {
+    const feed = await serveMsixUpdate(tmpDir, [bundleFileInfo({ sha512: sha512Of(bundle), size: bundle.length })], "1.0.1", bundle)
+    try {
+      const native = new TestMsixNativeUpdater()
+      const { updater, adapter } = await createActiveMsixUpdater(native, feed.url)
+      const events = trackEvents(updater)
+
+      await expect(checkAndDownload(updater)).rejects.toMatchObject({ code })
+      expect(native.setFeedURL).not.toHaveBeenCalled()
+      expect(events).toEqual(["checking-for-update", "update-available", "error"])
+      expect(await fsExtra.pathExists(pendingBundlePath(adapter))).toBe(false)
+
+      await expect(checkAndDownload(updater)).rejects.toMatchObject({ code })
+      expect(feed.requests).toEqual(["/latest-msix.yml", `/${BUNDLE_NAME}`, "/latest-msix.yml", `/${BUNDLE_NAME}`])
+    } finally {
+      feed.close()
+    }
+  })
+
+  test("checks a cached bundle again: one that is no longer higher than the installed package is refused and removed", async ({ expect, tmpDir }) => {
+    const feed = await serveMsixUpdate(tmpDir)
+    try {
+      const { updater: first, adapter } = await createActiveMsixUpdater(new TestMsixNativeUpdater(), feed.url)
+      first.autoInstallEvent = "manual"
+      await checkAndDownload(first)
+      // the next launch: Windows installed the bundle meanwhile, and the unsigned hint of the served manifest claims a higher version
+      const native = new TestMsixNativeUpdater()
+      vi.spyOn(native, "getPackageInfo").mockReturnValue({ ...INSTALLED, version: "1.0.1.0" })
+      await rewriteServedManifests(feed.root, info => ({ ...info, files: info.files.map(file => ({ ...file, packageVersion: "1.0.2.0" })) }))
+      const { updater } = await createActiveMsixUpdater(native, feed.url, undefined, adapter)
+
+      await expect(checkAndDownload(updater)).rejects.toMatchObject({ code: "ERR_UPDATER_MSIX_VERSION_NOT_HIGHER", message: expect.stringContaining("The downloaded bundle") })
+      // taken from the cache, not downloaded again
+      expect(feed.requests).toEqual(["/latest-msix.yml", `/${BUNDLE_NAME}`, "/latest-msix.yml"])
+      expect(await fsExtra.pathExists(pendingBundlePath(adapter))).toBe(false)
+      expect(native.setFeedURL).not.toHaveBeenCalled()
     } finally {
       feed.close()
     }
@@ -416,7 +610,8 @@ describe("MsixUpdater", () => {
   })
 
   test("stages a lower package version with allowDowngrade", async ({ expect, tmpDir }) => {
-    const feed = await serveMsixUpdate(tmpDir, [bundleFileInfo({ packageVersion: "0.9.0.0" })], "0.9.0")
+    const bundle = createBundle({ version: "0.9.0.0" })
+    const feed = await serveMsixUpdate(tmpDir, [bundleFileInfo({ packageVersion: "0.9.0.0", sha512: sha512Of(bundle), size: bundle.length })], "0.9.0", bundle)
     try {
       const native = new TestMsixNativeUpdater()
       const { updater } = await createActiveMsixUpdater(native, feed.url)
