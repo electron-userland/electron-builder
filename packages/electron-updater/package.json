@@ -45,7 +45,7 @@
     "@types/lodash.escaperegexp": "4.1.6",
     "@types/lodash.isequal": "4.5.5",
     "@types/semver": "7.7.1",
-    "electron": "41.10.6"
+    "electron": "42.11.14"
   },
   "types": "./dist/index.d.ts",
   "publishConfig": {
