@@ -74,4 +74,5 @@ overrides:
   '@babel/core': '>=7.29.6 <8' # GHSA-4x5r-pxfx-6jf8 (low); the docs site's 7.24.9 (@svgr/*) and 7.29.0 (@docusaurus/babel) copies are otherwise kept by lockfile preference
   '@swc/html': '>=1.15.47 <2' # GHSA-5qr2-v392-m9g8 (med); patched upstream as 1.15.47-nightly-20260729.1, 1.15.47 is the first stable
   colord: '>=2.9.4 <3' # GHSA-2wm5-q62r-hmrv (med)
+  postcss-selector-parser: '>=7.1.6 <8' # GHSA-rj75-hqrm-r3gf (med), GHSA-w9m9-85wc-3x92 (low); also moves the cssnano 6 plugins (^6.0.x) onto 7.x, as cssnano itself did upstream: the 6.1.5 backport is outside the GHSA's patched range
 packageImportMethod: copy
