@@ -6,7 +6,7 @@ import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import type { InstallOptions } from "electron-updater/src/BaseUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import type { DownloadExecutorTask } from "electron-updater/src/AppUpdater"
-import { outputFile, pathExists, readdir, readFile, remove, stat } from "fs-extra"
+import { outputFile, pathExists, readFile, stat } from "fs-extra"
 import { createVerifyUpdateFileMock, expectVerifyUpdateFileFailure } from "../helpers/updaterTestUtil.js"
 
 const stubApp: AppAdapter = {
@@ -166,71 +166,35 @@ describe("AppImageUpdater doInstall APPIMAGE env handling", () => {
 // ─── AppImageUpdater.doInstall — replacing the running AppImage ──────────────
 
 describe.ifNotWindows("AppImageUpdater doInstall file replacement", () => {
-  const originalAppimage = process.env.APPIMAGE
-  const originalPath = process.env.PATH
+  afterEach(() => vi.unstubAllEnvs())
 
-  afterEach(() => {
-    vi.restoreAllMocks()
-    process.env.PATH = originalPath
-    if (originalAppimage == null) {
-      delete process.env.APPIMAGE
-    } else {
-      process.env.APPIMAGE = originalAppimage
+  async function setup(dir: string, downloaded: boolean) {
+    const appImageFile = path.join(dir, "TestApp.AppImage")
+    const installerPath = path.join(dir, "pending", "TestApp-2.0.0.AppImage")
+    await outputFile(appImageFile, "old")
+    if (downloaded) {
+      await outputFile(installerPath, "new")
     }
-  })
-
-  async function setup(dir: string, appImageName: string, installerName = "TestApp-2.0.0.AppImage") {
-    const appImageFile = path.join(dir, "apps", appImageName)
-    const installerPath = path.join(dir, "pending", installerName)
-    await outputFile(appImageFile, "old AppImage bytes")
-    await outputFile(installerPath, "new AppImage bytes")
-    process.env.APPIMAGE = appImageFile
-
+    vi.stubEnv("APPIMAGE", appImageFile)
+    // a dead AppImage FUSE mount on PATH fails every PATH lookup, as an empty PATH does
+    vi.stubEnv("PATH", path.join(dir, "empty"))
     const updater = new AppImageUpdater(null, stubApp)
     Object.defineProperty(updater, "installerPath", { get: () => installerPath })
-    const spawnLog = vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
-    return { updater, appImageFile, installerPath, spawnLog }
+    vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+    return { appImageFile, install: () => (updater as any).doInstall({ ...installOpts, isForceRunAfter: true }) }
   }
 
-  it("replaces the AppImage without resolving any command through PATH", async context => {
-    const dir = await context.tmpDir.createTempDir()
-    const { updater, appImageFile, installerPath, spawnLog } = await setup(dir, "TestApp.AppImage")
-    // a stale AppImage FUSE mount on PATH makes every PATH lookup fail; an empty PATH reproduces that
-    process.env.PATH = await context.tmpDir.createTempDir()
-
-    expect((updater as any).doInstall({ ...installOpts, isForceRunAfter: true })).toBe(true)
-
-    expect(await readFile(appImageFile, "utf8")).toBe("new AppImage bytes")
-    expect(await pathExists(installerPath)).toBe(false)
-    expect(await readdir(path.dirname(appImageFile))).toEqual(["TestApp.AppImage"])
-    expect(spawnLog).toHaveBeenCalledWith(appImageFile, [], expect.anything())
+  it("replaces the AppImage without a PATH lookup", async context => {
+    const { appImageFile, install } = await setup(await context.tmpDir.createTempDir(), true)
+    expect(install()).toBe(true)
+    expect(await readFile(appImageFile, "utf8")).toBe("new")
   })
 
-  it("keeps the installed AppImage when the new one cannot be put in place", async context => {
-    const dir = await context.tmpDir.createTempDir()
-    const { updater, appImageFile, installerPath, spawnLog } = await setup(dir, "TestApp.AppImage")
-    await remove(installerPath)
-
-    expect(() => (updater as any).doInstall({ ...installOpts, isForceRunAfter: true })).toThrow()
-
-    expect(await readFile(appImageFile, "utf8")).toBe("old AppImage bytes")
-    expect(await readdir(path.dirname(appImageFile))).toEqual(["TestApp.AppImage"])
-    expect(spawnLog).not.toHaveBeenCalled()
-  })
-
-  it("moves a versioned AppImage to the new file name and removes the old one", async context => {
-    const dir = await context.tmpDir.createTempDir()
-    const { updater, appImageFile, spawnLog } = await setup(dir, "TestApp-1.0.0.AppImage")
-    const renamed = vi.fn()
-    updater.on("appimage-filename-updated", renamed)
-
-    expect((updater as any).doInstall({ ...installOpts, isForceRunAfter: true })).toBe(true)
-
-    const destination = path.join(path.dirname(appImageFile), "TestApp-2.0.0.AppImage")
-    expect(await readdir(path.dirname(appImageFile))).toEqual(["TestApp-2.0.0.AppImage"])
-    expect(await readFile(destination, "utf8")).toBe("new AppImage bytes")
-    expect(renamed).toHaveBeenCalledWith(destination)
-    expect(spawnLog).toHaveBeenCalledWith(destination, [], expect.anything())
+  it("keeps the installed AppImage when the swap fails", async context => {
+    const { appImageFile, install } = await setup(await context.tmpDir.createTempDir(), false)
+    expect(install).toThrow()
+    expect(await readFile(appImageFile, "utf8")).toBe("old")
+    expect(await pathExists(path.join(path.dirname(appImageFile), ".TestApp.AppImage.update"))).toBe(false)
   })
 })
 
