@@ -168,10 +168,13 @@ export default class MsixTarget extends Target {
 
   private async createMsixBundle(packagePaths: ReadonlyArray<string>): Promise<string> {
     const packager = this.packager
-    const vm = this.vm!
-    const kitPath = this.vendorPathKit!
+    const { vm, vendorPathKit: kitPath, finalManifest } = this
+    // set by every build of a package, which finishBuild bundles
+    if (vm == null || kitPath == null || finalManifest == null) {
+      throw new Error("Cannot create the .msixbundle: no MSIX package was built (the Windows SDK, the VM or the package manifest is unknown)")
+    }
     // the packages of a bundle share their identity apart from the architecture
-    const identity = getPackageIdentity(this.finalManifest!)
+    const identity = getPackageIdentity(finalManifest)
 
     const bundleName = packager.expandArtifactBeautyNamePattern(this.options, "msixbundle", Arch.x64)
     const bundlePath = path.join(this.outDir, bundleName)
