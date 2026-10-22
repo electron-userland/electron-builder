@@ -1,4 +1,5 @@
 import type { Configuration } from "app-builder-lib"
+import AppXTarget from "app-builder-lib/src/targets/win/AppxTarget"
 import { assertMsixUpdaterElectronVersion } from "app-builder-lib/src/targets/win/MsixTarget"
 import {
   assertSafeMappingPath,
@@ -824,5 +825,31 @@ test("assertMsixUpdaterElectronVersion: a mirror still serves the declared versi
     expect(() => assertMsixUpdaterElectronVersion("39.0.0", { electronGet: { mirrorOptions: { mirror: "https://mirror.example/" } } }, false)).toThrow(InvalidConfigurationError)
   } finally {
     vi.unstubAllEnvs()
+  }
+})
+
+// ─── AppX electronUpdaterAware ────────────────────────────────────────────────
+
+test("AppXTarget: electronUpdaterAware warns once that electron-updater does not update AppX packages", ({ expect }) => {
+  // the constructor refuses Linux; macOS builds AppX in a Parallels VM
+  const platform = Object.getOwnPropertyDescriptor(process, "platform")
+  Object.defineProperty(process, "platform", { value: "darwin", configurable: true })
+  log.resetLimits("appx-electron-updater-aware")
+  const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+  try {
+    const packager = (options: object): any => ({ getOptionsForTarget: () => options })
+    new AppXTarget(packager({}), "out")
+    expect(warn).not.toHaveBeenCalled()
+    new AppXTarget(packager({ electronUpdaterAware: true }), "out")
+    new AppXTarget(packager({ electronUpdaterAware: true }), "out")
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toMatchObject({ see: "https://www.electron.build/docs/msix#auto-updates" })
+    expect(warn.mock.calls[0][1]).toContain("electron-updater does not update AppX packages")
+  } finally {
+    warn.mockRestore()
+    log.resetLimits("appx-electron-updater-aware")
+    if (platform != null) {
+      Object.defineProperty(process, "platform", platform)
+    }
   }
 })

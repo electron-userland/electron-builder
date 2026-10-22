@@ -36,6 +36,14 @@ export default class AppXTarget extends Target {
     if (process.platform !== "darwin" && (process.platform !== "win32" || isOldWin6())) {
       throw new Error("AppX is supported only on Windows 10 or Windows Server 2012 R2 (version number 6.3+)")
     }
+
+    // the latest.yml it writes lists the .appx, which NsisUpdater cannot install and MsixUpdater (MSIX packages only) does not read
+    if (this.options.electronUpdaterAware === true) {
+      log.once("appx-electron-updater-aware").warn(
+        { solution: "build the msix target with msix.electronUpdaterAware instead", see: "https://www.electron.build/docs/msix#auto-updates" },
+        "appx.electronUpdaterAware: electron-updater does not update AppX packages"
+      )
+    }
   }
 
   get writesUpdateInfo(): boolean {
