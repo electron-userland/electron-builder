@@ -636,13 +636,16 @@ export class SigntoolSignManager extends SigntoolBaseSignManager {
  * - `.msi` holds a single signature, so it is signed once: with `sha256` unless `sha1` is the only algorithm requested.
  * - `.appx`, `.msix` and `.msixbundle` are always `sha256`.
  * - Everything else uses the configured list, defaulting to dual signing with `sha1` then `sha256`.
+ *
+ * Extensions are matched case-insensitively (`app.MSI` is an MSI).
  */
 export function resolveSigningHashAlgorithms(filePath: string, configured: Array<"sha1" | "sha256"> | "sha1" | "sha256" | null | undefined): Array<"sha1" | "sha256"> {
   const requested = configured == null ? null : asArray(configured)
-  if (filePath.endsWith(".msi")) {
+  const ext = path.extname(filePath).toLowerCase()
+  if (ext === ".msi") {
     return [requested != null && requested.length > 0 && !requested.includes("sha256") ? "sha1" : "sha256"]
   }
-  if (filePath.endsWith(".appx") || filePath.endsWith(".msix") || filePath.endsWith(".msixbundle")) {
+  if (ext === ".appx" || ext === ".msix" || ext === ".msixbundle") {
     return ["sha256"]
   }
   return requested ?? ["sha1", "sha256"]
