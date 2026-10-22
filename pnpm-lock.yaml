@@ -42,6 +42,7 @@ overrides:
   tinypool: '>=2.1.2 <3'
   '@babel/core': '>=7.29.6 <8'
   '@swc/html': '>=1.15.47 <2'
+  colord: '>=2.9.4 <3'
 
 patchedDependencies:
   '@changesets/assemble-release-plan@6.0.9': f2f5a0bb950fc32decc8456d79bdcf5d5338418973e8d6061c3cde5882d5f646
@@ -5113,8 +5114,8 @@ packages:
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
 
-  colord@2.9.3:
-    resolution: {integrity: sha512-jeC1axXpnb0/2nn/Y1LPuLdgXBLH7aDcHu4KEKfqw3CUhX7ZpfBSlPKyqXE6btIgEzfWtrX3/tyBCaCvXvMkOw==}
+  colord@2.10.0:
+    resolution: {integrity: sha512-AidJptpBJmjTclAp9BkLwJi0T93fo5epJnbaZslpg6QVzpHjAiveF55mE9AcUJiGMqRHgMDY8soMsQtuNYMHfw==}
 
   colorette@2.0.20:
     resolution: {integrity: sha512-IfEDxwoWIjkeXL1eXcDiow4UbKjhLdq6/EuSVR9GMN7KVH3r9gQ83e73hsz1Nd1T3ijd5xv1wcWRYO+D6kCI2w==}
@@ -15247,7 +15248,7 @@ snapshots:
 
   color-name@1.1.4: {}
 
-  colord@2.9.3: {}
+  colord@2.10.0: {}
 
   colorette@2.0.20: {}
 
@@ -18065,7 +18066,7 @@ snapshots:
     dependencies:
       browserslist: 4.29.0
       caniuse-api: 3.0.0
-      colord: 2.9.3
+      colord: 2.10.0
       postcss: 8.5.28
       postcss-value-parser: 4.2.0
 
@@ -18208,7 +18209,7 @@ snapshots:
 
   postcss-minify-gradients@6.0.3(postcss@8.5.28):
     dependencies:
-      colord: 2.9.3
+      colord: 2.10.0
       cssnano-utils: 4.0.2(postcss@8.5.28)
       postcss: 8.5.28
       postcss-value-parser: 4.2.0
