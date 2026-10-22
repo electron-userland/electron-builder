@@ -145,7 +145,11 @@ export class MsixUpdater extends AppUpdater {
   // the sha512 of the bundle that Windows staged in this process
   private stagedSha512: string | null = null
 
-  private staging: { readonly sha512: string; readonly promise: Promise<void>; readonly fail: (error: Error) => void } | null = null
+  // the staging that callers wait for, until its native operation reports or times out
+  private staging: { readonly sha512: string; readonly promise: Promise<void> } | null = null
+
+  // the native operation in flight, until it reports: it outlives a staging that timed out, and the native updater has one feed URL
+  private nativeStaging: { readonly file: string; readonly end: (error: Error | null) => void } | null = null
 
   private isNativeErrorListenerAdded = false
 
@@ -201,11 +205,23 @@ export class MsixUpdater extends AppUpdater {
 
   // A new folder that a full-trust packaged app creates under %LOCALAPPDATA% (the default cache dir) is virtualized into the package, where
   // the AppX deployment service that reads the file:// URL of the bundle cannot see it; the package's own LocalCache is the same real path for both.
+  // the package info is there when the updater is active; a download started on an inactive updater (downloadUpdate() without a check) has none
+  private requirePackageInfo(): MsixPackageInfo {
+    const info = this.packageInfo
+    if (info == null) {
+      throw newError(
+        "MsixUpdater cannot download an update: Electron's autoUpdater provides no MSIX package info, so the app does not run as an installed MSIX package. See https://www.electron.build/docs/msix#updater-requirements",
+        "ERR_UPDATER_MSIX_INACTIVE"
+      )
+    }
+    return info
+  }
+
   protected async getOrCreateDownloadHelper(): Promise<DownloadedUpdateHelper> {
     let result = this.downloadedUpdateHelper
     if (result == null) {
       const dirName = (await this.configOnDisk.value).updaterCacheDirName
-      const cacheDir = path.join(this.app.baseCachePath, "Packages", this.packageInfo!.familyName, "LocalCache", dirName || this.app.name)
+      const cacheDir = path.join(this.app.baseCachePath, "Packages", this.requirePackageInfo().familyName, "LocalCache", dirName || this.app.name)
       this._logger.debug?.(`updater cache dir: ${cacheDir}`)
       result = new DownloadedUpdateHelper(cacheDir)
       this.downloadedUpdateHelper = result
@@ -236,7 +252,7 @@ export class MsixUpdater extends AppUpdater {
         "ERR_UPDATER_MSIX_FILE_NOT_FOUND"
       )
     }
-    checkMsixUpdateFile(fileInfo.info, this.packageInfo!, this.allowDowngrade)
+    checkMsixUpdateFile(fileInfo.info, this.requirePackageInfo(), this.allowDowngrade)
 
     return await this.executeDownload({
       fileExtension: "msixbundle",
@@ -269,48 +285,77 @@ export class MsixUpdater extends AppUpdater {
       const stageNext = () => this.stage(file, sha512)
       return inProgress.promise.then(stageNext, stageNext)
     }
+    const timedOut = this.nativeStaging
+    if (timedOut != null) {
+      // a new feed URL could change what the running operation installs
+      return Promise.reject(
+        newError(
+          `Windows could not stage the update ${file}: Electron's MSIX autoUpdater is still staging ${timedOut.file}, which gave no result within ${MSIX_STAGING_TIMEOUT_MINUTES} minutes. A later check stages the update again`,
+          "ERR_UPDATER_MSIX_STAGING_FAILED"
+        )
+      )
+    }
 
     this.addNativeErrorListener()
     const native = this.nativeUpdater
-    let fail!: (error: Error) => void
-    const promise = new Promise<void>((resolve, reject) => {
-      let isSettled = false
-      const settle = (error: Error | null) => {
-        if (isSettled) {
-          return
-        }
-        isSettled = true
-        clearTimeout(timer)
-        native.removeListener("update-downloaded", onStaged)
-        native.removeListener("update-not-available", onNotAvailable)
-        this.staging = null
-        if (error == null) {
-          this.stagedSha512 = sha512
-          this._logger.info(`Windows staged the update ${file}`)
-          resolve()
-        } else {
-          reject(newError(`Windows could not stage the update ${file}: ${error.message}`, "ERR_UPDATER_MSIX_STAGING_FAILED"))
-        }
+    const deferred = createDeferred()
+    let isSettled = false
+    const settle = (error: Error | null) => {
+      if (isSettled) {
+        return
       }
-      const onStaged = () => settle(null)
-      const onNotAvailable = () => settle(new Error("Electron's MSIX autoUpdater reported no update"))
-      const timer = setTimeout(() => settle(new Error(`no result within ${MSIX_STAGING_TIMEOUT_MINUTES} minutes`)), MSIX_STAGING_TIMEOUT_MINUTES * 60 * 1000)
-      native.once("update-downloaded", onStaged)
-      native.once("update-not-available", onNotAvailable)
-      fail = settle
-    })
-    this.staging = { sha512, promise, fail }
+      isSettled = true
+      clearTimeout(timer)
+      this.staging = null
+      if (error == null) {
+        this.stagedSha512 = sha512
+        this._logger.info(`Windows staged the update ${file}`)
+        deferred.resolve()
+      } else {
+        deferred.reject(newError(`Windows could not stage the update ${file}: ${error.message}`, "ERR_UPDATER_MSIX_STAGING_FAILED"))
+      }
+    }
+
+    // the first outcome ends the native operation, also once the timeout has settled the staging
+    let isEnded = false
+    const end = (error: Error | null) => {
+      if (isEnded) {
+        return
+      }
+      isEnded = true
+      native.removeListener("update-downloaded", onStaged)
+      native.removeListener("update-not-available", onNotAvailable)
+      this.nativeStaging = null
+      if (!isSettled) {
+        settle(error)
+      } else if (error == null) {
+        this.stagedSha512 = sha512
+        this._logger.info(`Windows staged the update ${file} after the staging timed out`)
+      } else {
+        this._logger.warn(`Windows could not stage the update ${file}, after the staging timed out: ${error.message}`)
+      }
+    }
+    const onStaged = () => end(null)
+    const onNotAvailable = () => end(new Error("Electron's MSIX autoUpdater reported no update"))
+    const timer = setTimeout(() => settle(new Error(`no result within ${MSIX_STAGING_TIMEOUT_MINUTES} minutes`)), MSIX_STAGING_TIMEOUT_MINUTES * 60 * 1000)
+    native.once("update-downloaded", onStaged)
+    native.once("update-not-available", onNotAvailable)
+    this.staging = { sha512, promise: deferred.promise }
+    this.nativeStaging = { file, end }
 
     this._logger.info(`Staging the update ${file} with Electron's MSIX autoUpdater`)
     try {
       // the native updater fetches the URL, whose path has to end in .msixbundle, and passes it to AddPackageByUriAsync
       native.setFeedURL({ url: pathToFileURL(file).href, allowAnyVersion: this.allowDowngrade })
       // its MSIX implementation is async: an error that it does not emit rejects the returned promise
-      void Promise.resolve(native.checkForUpdates() as unknown).catch((e: any) => fail(e))
-    } catch (e: any) {
-      fail(e)
+      const result: unknown = native.checkForUpdates()
+      if (isPromiseLike(result)) {
+        void result.then(undefined, (e: unknown) => end(toError(e)))
+      }
+    } catch (e: unknown) {
+      end(toError(e))
     }
-    return promise
+    return deferred.promise
   }
 
   // Electron's autoUpdater throws on an "error" without a listener, and its MSIX implementation emits some errors twice: one listener, added
@@ -321,8 +366,9 @@ export class MsixUpdater extends AppUpdater {
     }
     this.isNativeErrorListenerAdded = true
     this.nativeUpdater.on("error", (error: Error) => {
-      if (this.staging != null) {
-        this.staging.fail(error)
+      const nativeStaging = this.nativeStaging
+      if (nativeStaging != null) {
+        nativeStaging.end(error)
       } else if (this.isNativeInstallInProgress) {
         this.isNativeInstallInProgress = false
         this.isQuitAndInstallCalled = false
@@ -383,7 +429,7 @@ export class MsixUpdater extends AppUpdater {
         // Electron does not report how the registration ends, and Windows shuts this process down before it registers the update: if the
         // promise settles while the app still runs (and no error was emitted), the update was not installed now, e.g. the registration
         // failed or was deferred, and Windows applies it when the app is launched next
-        if (typeof (result as PromiseLike<unknown> | null)?.then === "function") {
+        if (isPromiseLike(result)) {
           const onSettled = () => {
             if (attempt === this.nativeInstallAttempt && this.isNativeInstallInProgress) {
               this.isNativeInstallInProgress = false
@@ -393,13 +439,32 @@ export class MsixUpdater extends AppUpdater {
               )
             }
           }
-          void (result as PromiseLike<unknown>).then(onSettled, onSettled)
+          void result.then(onSettled, onSettled)
         }
       },
-      (e: Error) => {
+      (e: unknown) => {
         this.isQuitAndInstallCalled = false
-        this.dispatchError(e)
+        this.dispatchError(toError(e))
       }
     )
   }
+}
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return typeof value === "object" && value !== null && "then" in value && typeof value.then === "function"
+}
+
+function toError(value: unknown): Error {
+  return value instanceof Error ? value : new Error(String(value))
+}
+
+// resolve/reject are assigned synchronously by the Promise executor
+function createDeferred(): { readonly promise: Promise<void>; readonly resolve: () => void; readonly reject: (error: Error) => void } {
+  let resolve: () => void = () => undefined
+  let reject: (error: Error) => void = () => undefined
+  const promise = new Promise<void>((onResolve, onReject) => {
+    resolve = onResolve
+    reject = onReject
+  })
+  return { promise, resolve, reject }
 }

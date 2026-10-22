@@ -81,8 +81,8 @@ describe("the Windows autoUpdater", () => {
     if (packageType != null) {
       await fsExtra.outputFile(path.join(resourcesPath, "package-type"), `${packageType}\n`)
     }
-    await mockForNodeRequire("./MsixUpdater.js", { MsixUpdater: FakeMsixUpdater })
-    await mockForNodeRequire("./NsisUpdater.js", { NsisUpdater: FakeNsisUpdater })
+    mockForNodeRequire("./MsixUpdater.js", { MsixUpdater: FakeMsixUpdater })
+    mockForNodeRequire("./NsisUpdater.js", { NsisUpdater: FakeNsisUpdater })
     const restores = [setProcessProperty("platform", "win32"), setProcessProperty("windowsStore", isWindowsStore), setProcessProperty("resourcesPath", resourcesPath)]
     try {
       // a fresh module: the autoUpdater of index.ts is created once, on first use
@@ -91,8 +91,8 @@ describe("the Windows autoUpdater", () => {
       expect((autoUpdater as unknown as { kind: string }).kind).toBe(expected)
     } finally {
       restores.reverse().forEach(restore => restore())
-      await mockForNodeRequire("./MsixUpdater.js", undefined)
-      await mockForNodeRequire("./NsisUpdater.js", undefined)
+      mockForNodeRequire("./MsixUpdater.js", undefined)
+      mockForNodeRequire("./NsisUpdater.js", undefined)
     }
   })
 })
@@ -762,8 +762,87 @@ describe("MsixUpdater", () => {
     expect(isSettled).toBe(false)
     await vi.advanceTimersByTimeAsync(1)
     await expect(staging).rejects.toMatchObject({ code: "ERR_UPDATER_MSIX_STAGING_FAILED", message: expect.stringContaining("no result within 10 minutes") })
+    // the native operation may still be running: its outcome is awaited, and ends it
+    expect(native.listenerCount("update-downloaded")).toBe(1)
+    native.emit("update-not-available")
     expect(native.listenerCount("update-downloaded")).toBe(0)
     expect(native.listenerCount("update-not-available")).toBe(0)
+  })
+
+  test("a staging that timed out keeps the native updater until it reports: another bundle is refused meanwhile, and a late result counts", async ({ expect }) => {
+    const native = new TestMsixNativeUpdater()
+    native.outcomes.push([])
+    const { updater, adapter } = await createActiveMsixUpdater(native)
+    const stage = (name: string, sha512: string): Promise<void> => (updater as any).stage(path.join(adapter.baseCachePath, name), sha512)
+    vi.useFakeTimers()
+
+    const first = stage("A.msixbundle", "a")
+    // chained behind A, so it runs once A timed out
+    const queued = stage("B.msixbundle", "b")
+    const firstResult = expect(first).rejects.toMatchObject({ code: "ERR_UPDATER_MSIX_STAGING_FAILED", message: expect.stringContaining("no result within 10 minutes") })
+    const queuedResult = expect(queued).rejects.toMatchObject({ code: "ERR_UPDATER_MSIX_STAGING_FAILED", message: expect.stringContaining("still staging") })
+    await vi.advanceTimersByTimeAsync(10 * 60 * 1000)
+    await firstResult
+    await queuedResult
+    await expect(stage("B.msixbundle", "b")).rejects.toMatchObject({ code: "ERR_UPDATER_MSIX_STAGING_FAILED", message: expect.stringContaining("A.msixbundle") })
+    // the feed URL of the running operation was not replaced
+    expect(native.setFeedURL).toHaveBeenCalledTimes(1)
+
+    // Windows staged A after all
+    native.emit("update-downloaded")
+    expect(native.listenerCount("update-downloaded")).toBe(0)
+    await stage("A.msixbundle", "a")
+    expect(native.checkForUpdates).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+    await stage("B.msixbundle", "b")
+    expect(native.setFeedURL.mock.calls.map(([{ url }]) => path.basename(fileURLToPath(url)))).toEqual(["A.msixbundle", "B.msixbundle"])
+  })
+
+  test("a native error after the staging timed out ends the native operation without an updater error", async ({ expect }) => {
+    const native = new TestMsixNativeUpdater()
+    native.outcomes.push([])
+    const { updater, adapter } = await createActiveMsixUpdater(native)
+    const errors: Array<Error> = []
+    updater.on("error", error => errors.push(error))
+    const stage = (name: string, sha512: string): Promise<void> => (updater as any).stage(path.join(adapter.baseCachePath, name), sha512)
+    vi.useFakeTimers()
+
+    const staging = expect(stage("A.msixbundle", "a")).rejects.toMatchObject({ code: "ERR_UPDATER_MSIX_STAGING_FAILED" })
+    await vi.advanceTimersByTimeAsync(10 * 60 * 1000)
+    await staging
+    native.emit("error", new Error(NATIVE_ERROR))
+    expect(errors).toEqual([])
+    vi.useRealTimers()
+    // staged again, not taken as staged
+    await stage("A.msixbundle", "a")
+    expect(native.checkForUpdates).toHaveBeenCalledTimes(2)
+  })
+
+  test("a rejection of the native checkForUpdates that is not an Error fails the staging with its text", async ({ expect }) => {
+    const native = new TestMsixNativeUpdater()
+    native.checkForUpdates.mockImplementationOnce(() => Promise.reject("AddPackageByUriAsync failed") as any)
+    const { updater, adapter } = await createActiveMsixUpdater(native)
+
+    await expect((updater as any).stage(path.join(adapter.baseCachePath, BUNDLE_NAME), BUNDLE_SHA512)).rejects.toMatchObject({
+      code: "ERR_UPDATER_MSIX_STAGING_FAILED",
+      message: expect.stringContaining("AddPackageByUriAsync failed"),
+    })
+    expect(native.listenerCount("update-downloaded")).toBe(0)
+  })
+
+  test("a download without MSIX package info fails with ERR_UPDATER_MSIX_INACTIVE", async ({ expect, tmpDir }) => {
+    const feed = await serveMsixUpdate(tmpDir)
+    try {
+      const native = new TestMsixNativeUpdater()
+      vi.spyOn(native, "getPackageInfo").mockReturnValue(undefined as any)
+      const { updater } = await createActiveMsixUpdater(native, feed.url)
+
+      await expect(checkAndDownload(updater)).rejects.toMatchObject({ code: "ERR_UPDATER_MSIX_INACTIVE" })
+      expect(feed.requests).toEqual(["/latest-msix.yml"])
+      expect(native.setFeedURL).not.toHaveBeenCalled()
+    } finally {
+      feed.close()
+    }
   })
 
   test("is inactive outside an MSIX package: checkForUpdates resolves null without a native listener, and logs why once", async ({ expect }) => {
