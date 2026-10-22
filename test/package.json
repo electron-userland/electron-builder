@@ -3,9 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "devDependencies": {
-    "@babel/core": "7.24.9",
-    "@babel/preset-env": "7.15.6",
-    "@babel/preset-typescript": "^7.23.3",
     "@electron-forge/core": "8.0.1",
     "@electron/osx-sign": "^1.0.4",
     "@jest/globals": "^29.7.0",
