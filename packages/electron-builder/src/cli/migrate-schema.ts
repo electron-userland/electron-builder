@@ -80,6 +80,17 @@ export const WIN_PUBLISHER_NAME_DN_ADVISORY =
   "or (unless a custom win.sign.sign hook signs) remove it to derive CN=<common name> from the signing certificate. " +
   "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
 
+// Advisory surfaced when Windows signing is disabled (win.sign: false / null) or win.sign.publisherName is null, while
+// win.verifyUpdateCodeSignature is not false. v27 fails a build that writes app-update.yml without publisherName, because
+// electron-updater 7 rejects every update of such an app; publisherName: null no longer opts out.
+export const WIN_MISSING_PUBLISHER_NAME_ADVISORY =
+  "win.sign: false / null or win.sign.publisherName: null detected without win.verifyUpdateCodeSignature: false. In v27, a build that writes app-update.yml " +
+  "(an nsis, nsis-web or electronUpdaterAware appx target with a publish configuration, including one inferred from a GitHub repository) fails with " +
+  "InvalidConfigurationError when it has no publisherName, because electron-updater 7 rejects every update of such an app; publisherName: null no longer opts out. " +
+  'Sign the build, set win.sign: { type: "signtool", publisherName: ["CN=..."] } to the subject of the certificate that signs your installer (e.g. when you sign outside electron-builder), ' +
+  "or set win.verifyUpdateCodeSignature: false to opt out of update signature verification explicitly. " +
+  "See https://www.electron.build/docs/migration/v27-breaking-changes#missing-publishername-fails-update-verification"
+
 /** True when `publisherName` (a string or a list) has an entry that is not a distinguished name. */
 export function hasInvalidPublisherNameDn(publisherName: unknown): boolean {
   if (publisherName == null) {
@@ -163,6 +174,19 @@ function detectSignHookWithoutPublisherName(config: Record<string, any>): boolea
 function detectPublisherNameWithoutDn(config: Record<string, any>): boolean {
   const sign = isPlainObject(config.win) ? config.win.sign : null
   return isPlainObject(sign) && hasInvalidPublisherNameDn(sign.publisherName)
+}
+
+/**
+ * True when no publisherName can resolve while update signature verification is on: win.sign is false / null (a v26
+ * signExecutable / signAndEditExecutable: false migrates to win.sign: false), or win.sign.publisherName is null (a v26
+ * win.signtoolOptions / win.azureSignOptions publisherName: null migrates there). Evaluated on the migrated config.
+ */
+function detectMissingPublisherName(config: Record<string, any>): boolean {
+  const win = config.win
+  if (!isPlainObject(win) || win.verifyUpdateCodeSignature === false) {
+    return false
+  }
+  return win.sign === false || win.sign === null || (isPlainObject(win.sign) && win.sign.publisherName === null)
 }
 
 /**
@@ -583,6 +607,9 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   }
   if (detectPublisherNameWithoutDn(c)) {
     advisories.push(WIN_PUBLISHER_NAME_DN_ADVISORY)
+  }
+  if (detectMissingPublisherName(c)) {
+    advisories.push(WIN_MISSING_PUBLISHER_NAME_ADVISORY)
   }
   if (detectGenericFeedQuery(c)) {
     advisories.push(FEED_QUERY_ADVISORY)

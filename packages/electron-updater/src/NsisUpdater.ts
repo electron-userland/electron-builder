@@ -11,7 +11,13 @@ import { DOWNLOAD_PROGRESS, DownloadExecutorResult, verificationFailureMessage }
 import type { VerifyUpdateCodeSignature, VerifyUpdateFileAuthenticodeSignature, VerifyUpdateFileResult } from "./types.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import fsExtra from "fs-extra"
-import { publisherNameDnNote, verifySignature } from "./windowsExecutableCodeSignatureVerifier.js"
+import {
+  isUpdateCodeSignatureVerificationDisabled,
+  missingPublisherNameMessage,
+  publisherNameDnNote,
+  readConfiguredPublisherNames,
+  verifySignature,
+} from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
 
 const require = createRequire(import.meta.url)
@@ -107,6 +113,10 @@ export class NsisUpdater extends BaseUpdater {
    * The default verify function uses [windowsExecutableCodeSignatureVerifier](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts)
    *
    * Assigning `null` restores the default verify function.
+   *
+   * It is called only with the `publisherName` of `app-update.yml`. Without one, the update is rejected
+   * (`ERR_UPDATER_INVALID_SIGNATURE`) before any verify function runs, unless `app-update.yml` opts out with
+   * `verifyUpdateCodeSignature: false` (written by electron-builder for `win.verifyUpdateCodeSignature: false`).
    */
   get verifyUpdateFileAuthenticodeSignature(): VerifyUpdateFileAuthenticodeSignature {
     return this._verifyUpdateFileAuthenticodeSignature
@@ -228,26 +238,40 @@ export class NsisUpdater extends BaseUpdater {
   // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
   // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
   // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
+  //
+  // Fails closed: without a publisherName in the update config the update is rejected, unless the config opts out explicitly
+  // (`verifyUpdateCodeSignature: false`, written by electron-builder for `win.verifyUpdateCodeSignature: false`). A custom verifier is
+  // never called without a publisherName: it would get no names to match, and one checking them with e.g. `every` would accept any signer.
+  // An unpackaged app (dev mode) without any update config is the only case that is not verified without an opt-out.
   private async verifySignature(tempUpdateFile: string): Promise<VerifyUpdateFileResult> {
-    let publisherName: Array<string> | string | null
+    let config: unknown
     try {
-      publisherName = (await this.configOnDisk.value).publisherName
-      if (publisherName == null) {
-        this._logger.warn(
-          "Signature verification of the downloaded update was skipped because no publisherName is present in app-update.yml. " +
-            "Sign your build so electron-builder can derive publisherName from the code signing certificate automatically, or set win.sign.publisherName explicitly. " +
-            "This fail-open behavior is deprecated: electron-builder v28 will treat a missing publisherName as a verification failure (fail-closed)."
+      config = await this.configOnDisk.value
+    } catch (e: any) {
+      if (e?.code !== "ENOENT") {
+        throw e
+      }
+      if (!this.app.isPackaged) {
+        // dev mode (forceDevUpdateConfig with a feed set by setFeedURL and no dev-app-update.yml): nothing is installed from it
+        this.limitedLogger("update-signature-no-dev-config").info(
+          "Signature verification of the downloaded update is skipped: the app is not packaged and has no dev-app-update.yml. A packaged app without app-update.yml rejects the update."
         )
         return { response: "success" }
       }
-    } catch (e: any) {
-      if (e.code === "ENOENT") {
-        // no app-update.yml at all (unpackaged/dev mode) — nothing to verify against, stay silent
-        return { response: "success" }
-      }
-      throw e
+      return { response: "failure", message: missingPublisherNameMessage(false) }
     }
-    return await this._verifyUpdateFileAuthenticodeSignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile)
+
+    const publisherNames = readConfiguredPublisherNames(config)
+    if (publisherNames != null) {
+      return await this._verifyUpdateFileAuthenticodeSignature(publisherNames, tempUpdateFile)
+    }
+    if (isUpdateCodeSignatureVerificationDisabled(config)) {
+      this.limitedLogger("update-signature-verification-disabled").warn(
+        "Signature verification of downloaded updates is disabled by configuration (verifyUpdateCodeSignature: false in app-update.yml, written for win.verifyUpdateCodeSignature: false)."
+      )
+      return { response: "success" }
+    }
+    return { response: "failure", message: missingPublisherNameMessage(true) }
   }
 
   // the cached installer sat on disk since a previous launch, so its Authenticode signature is re-verified before an

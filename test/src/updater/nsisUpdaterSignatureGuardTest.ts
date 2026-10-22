@@ -1,46 +1,164 @@
 import { GenericServerOptions } from "builder-util-runtime"
 import { afterEach, describe, expect, test, vi } from "vitest"
-import { createNsisUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
+import { createNsisUpdater, writeRawUpdateConfig, writeUpdateConfig } from "../helpers/updaterTestUtil.js"
 
-// NsisUpdater.verifySignature guard: app-update.yml without publisherName used to skip
-// verification (including custom verifyUpdateCodeSignature hooks) completely silently.
-// It must now warn about the deprecated fail-open behavior; the no-app-update.yml (dev
-// mode) path must stay silent.
+// NsisUpdater.verifySignature guard: an app-update.yml without publisherName used to skip verification (including custom
+// verifyUpdateCodeSignature hooks), first silently, then with a deprecation warning. Since electron-updater 7 it fails closed:
+// the update is rejected unless the config opts out explicitly with `verifyUpdateCodeSignature: false` (written by electron-builder
+// for win.verifyUpdateCodeSignature: false). Only an unpackaged app (dev mode) without any update config is not verified.
 
-const DEPRECATION_FRAGMENT = "fail-open behavior is deprecated"
+const MISSING_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#missing-publishername-fails-update-verification"
+const DISABLED_FRAGMENT = "disabled by configuration"
 
 function mockLogger() {
   return { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
 }
+
+const messages = (mock: ReturnType<typeof vi.fn>) => mock.mock.calls.map(call => String(call[0]))
 
 describe("NsisUpdater verifySignature publisherName guard", () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })
 
-  test("warns and skips verification when app-update.yml has no publisherName", async () => {
+  test("rejects the update when app-update.yml has no publisherName, without calling the verifier", async () => {
     const updater = await createNsisUpdater()
-    updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
+    updater.updateConfigPath = await writeRawUpdateConfig<GenericServerOptions>({
       provider: "generic",
       url: "https://example.com/updates",
     })
+    const logger = mockLogger()
+    updater.logger = logger
+    const verifyHook = vi.fn(async () => ({ response: "success" as const }))
+    updater.verifyUpdateFileAuthenticodeSignature = verifyHook
+
+    // @ts-expect-error accessing a private method
+    const result = await updater.verifySignature("/path/to/installer.exe")
+
+    expect(result.response).toBe("failure")
+    const message = result.response === "failure" ? result.message : ""
+    expect(message).toContain("electron-updater 7 (electron-builder v27) rejects the update: app-update.yml has no publisherName")
+    expect(message).toContain("win.sign.publisherName")
+    expect(message).toContain("win.verifyUpdateCodeSignature: false")
+    expect(message.endsWith(MISSING_DOCS)).toBe(true)
+    // a custom verifier gets no publisher names to match, so it is not asked
+    expect(verifyHook).not.toHaveBeenCalled()
+    expect(messages(logger.warn).filter(it => it.includes(DISABLED_FRAGMENT))).toHaveLength(0)
+  })
+
+  test.each([
+    ["publisherName: null", { publisherName: null }],
+    ["an empty publisherName list", { publisherName: [] }],
+    ["a publisherName without a string entry", { publisherName: [42] }],
+    ["verifyUpdateCodeSignature: true", { verifyUpdateCodeSignature: true }],
+    ['verifyUpdateCodeSignature: "false"', { verifyUpdateCodeSignature: "false" }],
+  ])("rejects the update for %s", async (_name, extra) => {
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeRawUpdateConfig({ provider: "generic", url: "https://example.com/updates", ...extra } as GenericServerOptions)
+    updater.logger = mockLogger()
+    const verifyHook = vi.fn(async () => ({ response: "success" as const }))
+    updater.verifyUpdateFileAuthenticodeSignature = verifyHook
+
+    // @ts-expect-error accessing a private method
+    const result = await updater.verifySignature("/path/to/installer.exe")
+
+    expect(result).toEqual({ response: "failure", message: expect.stringContaining("app-update.yml has no publisherName") })
+    expect(verifyHook).not.toHaveBeenCalled()
+  })
+
+  test("skips verification with one warning per updater when app-update.yml opts out with verifyUpdateCodeSignature: false", async () => {
+    const config = { provider: "generic", url: "https://example.com/updates", verifyUpdateCodeSignature: false } as GenericServerOptions
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeRawUpdateConfig(config)
+    const logger = mockLogger()
+    updater.logger = logger
+    const verifyHook = vi.fn(async () => ({ response: "failure" as const, message: "must not be called" }))
+    updater.verifyUpdateFileAuthenticodeSignature = verifyHook
+
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "success" })
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "success" })
+
+    expect(verifyHook).not.toHaveBeenCalled()
+    const warnings = messages(logger.warn).filter(it => it.includes(DISABLED_FRAGMENT))
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]).toContain("verifyUpdateCodeSignature: false")
+
+    // per instance: another updater announces it again
+    const other = await createNsisUpdater()
+    other.updateConfigPath = await writeRawUpdateConfig(config)
+    const otherLogger = mockLogger()
+    other.logger = otherLogger
+    // @ts-expect-error accessing a private method
+    await other.verifySignature("/path/to/installer.exe")
+    expect(messages(otherLogger.warn).filter(it => it.includes(DISABLED_FRAGMENT))).toHaveLength(1)
+  })
+
+  test("a publisherName wins over the opt-out marker: the update is verified", async () => {
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeRawUpdateConfig<GenericServerOptions>({
+      provider: "generic",
+      url: "https://example.com/updates",
+      publisherName: ["CN=Acme Corp"],
+      verifyUpdateCodeSignature: false,
+    })
+    const logger = mockLogger()
+    updater.logger = logger
+    const verifyHook = vi.fn(async () => ({ response: "failure" as const, message: "wrong signer" }))
+    updater.verifyUpdateFileAuthenticodeSignature = verifyHook
+
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "failure", message: "wrong signer" })
+    expect(verifyHook).toHaveBeenCalledWith(["CN=Acme Corp"], "/path/to/installer.exe")
+    expect(messages(logger.warn).filter(it => it.includes(DISABLED_FRAGMENT))).toHaveLength(0)
+  })
+
+  test("rejects the update in a packaged app without app-update.yml (a feed set only with setFeedURL)", async () => {
+    const updater = await createNsisUpdater()
+    updater.setFeedURL({ provider: "generic", url: "https://example.com/updates" })
+    updater.updateConfigPath = "/nonexistent/dir/app-update.yml"
+    updater.logger = mockLogger()
+    const verifyHook = vi.fn(async () => ({ response: "success" as const }))
+    updater.verifyUpdateFileAuthenticodeSignature = verifyHook
+
+    // @ts-expect-error accessing a private method
+    const result = await updater.verifySignature("/path/to/installer.exe")
+
+    expect(result).toEqual({ response: "failure", message: expect.stringContaining("the app has no app-update.yml") })
+    expect(result.response === "failure" && result.message.endsWith(MISSING_DOCS)).toBe(true)
+    expect(verifyHook).not.toHaveBeenCalled()
+  })
+
+  test("an unpackaged app (dev mode) without any update config is not verified, with one info message", async () => {
+    const updater = await createNsisUpdater()
+    // @ts-expect-error accessing the protected app adapter
+    vi.spyOn(updater.app, "isPackaged", "get").mockReturnValue(false)
+    updater.updateConfigPath = "/nonexistent/dir/dev-app-update.yml"
     const logger = mockLogger()
     updater.logger = logger
     const verifyHook = vi.fn()
     updater.verifyUpdateFileAuthenticodeSignature = verifyHook
 
     // @ts-expect-error accessing a private method
-    const result = await updater.verifySignature("/path/to/installer.exe")
+    await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "success" })
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "success" })
 
-    expect(result).toEqual({ response: "success" })
-    // the custom hook is also skipped by the guard — that is exactly what the warning is about
     expect(verifyHook).not.toHaveBeenCalled()
-    const warnings = logger.warn.mock.calls.map(call => String(call[0]))
-    const deprecationWarnings = warnings.filter(message => message.includes(DEPRECATION_FRAGMENT))
-    expect(deprecationWarnings).toHaveLength(1)
-    expect(deprecationWarnings[0]).toContain("win.sign.publisherName")
-    expect(deprecationWarnings[0]).toContain("app-update.yml")
-    expect(deprecationWarnings[0]).toContain("electron-builder v28")
+    expect(logger.warn).not.toHaveBeenCalled()
+    expect(messages(logger.info).filter(it => it.includes("not packaged and has no dev-app-update.yml"))).toHaveLength(1)
+  })
+
+  test("an unpackaged app (dev mode) with a dev-app-update.yml without publisherName is rejected too", async () => {
+    const updater = await createNsisUpdater()
+    // @ts-expect-error accessing the protected app adapter
+    vi.spyOn(updater.app, "isPackaged", "get").mockReturnValue(false)
+    updater.updateConfigPath = await writeRawUpdateConfig<GenericServerOptions>({ provider: "generic", url: "https://example.com/updates" })
+    updater.logger = mockLogger()
+
+    // @ts-expect-error accessing a private method
+    await expect(updater.verifySignature("/path/to/installer.exe")).resolves.toEqual({ response: "failure", message: expect.stringContaining("dev-app-update.yml") })
   })
 
   test("does not warn and runs the verifier when publisherName is present", async () => {
@@ -61,7 +179,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     expect(result).toEqual({ response: "success" })
     expect(verifyHook).toHaveBeenCalledTimes(1)
     expect(verifyHook).toHaveBeenCalledWith(["Acme Corp"], "/path/to/installer.exe")
-    expect(logger.warn.mock.calls.map(call => String(call[0])).filter(message => message.includes(DEPRECATION_FRAGMENT))).toHaveLength(0)
+    expect(messages(logger.warn).filter(message => message.includes(DISABLED_FRAGMENT))).toHaveLength(0)
   })
 
   test("normalizes a single string publisherName to an array for the verifier", async () => {
@@ -79,22 +197,6 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
     await updater.verifySignature("/path/to/installer.exe")
 
     expect(verifyHook).toHaveBeenCalledWith(["Acme Corp"], "/path/to/installer.exe")
-  })
-
-  test("stays silent when app-update.yml does not exist at all (dev mode)", async () => {
-    const updater = await createNsisUpdater()
-    updater.updateConfigPath = "/nonexistent/dir/app-update.yml"
-    const logger = mockLogger()
-    updater.logger = logger
-    const verifyHook = vi.fn()
-    updater.verifyUpdateFileAuthenticodeSignature = verifyHook
-
-    // @ts-expect-error accessing a private method
-    const result = await updater.verifySignature("/path/to/installer.exe")
-
-    expect(result).toEqual({ response: "success" })
-    expect(verifyHook).not.toHaveBeenCalled()
-    expect(logger.warn).not.toHaveBeenCalled()
   })
 
   // electron-updater 7 matches a publisherName only when it is a distinguished name. An app-update.yml written by electron-builder v26

@@ -1,8 +1,11 @@
 import { InvalidConfigurationError } from "builder-util"
 import { isValidPublisherNameDn } from "builder-util-runtime"
+import { isWindowsSigningDisabled, resolveWindowsSigningConfiguration, WindowsConfiguration } from "../../options/winOptions.js"
 import { quoteWindowsDnValue } from "./authenticodeSignature.js"
 
 export const PUBLISHER_NAME_DN_DOCS_URL = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
+
+export const MISSING_PUBLISHER_NAME_DOCS_URL = "https://www.electron.build/docs/migration/v27-breaking-changes#missing-publishername-fails-update-verification"
 
 /** What electron-updater 7 requires of a publisher name, for the error messages of the build. */
 export const PUBLISHER_NAME_DN_REQUIREMENT =
@@ -22,8 +25,9 @@ function formatPublisherNames(names: ReadonlyArray<unknown>): string {
 
 /**
  * Throws an {@link InvalidConfigurationError} when an explicitly configured publisherName has an entry that is not a
- * distinguished name ({@link isValidPublisherNameDn}), which electron-updater 7 could never match. `null` / `undefined` (opt-out /
- * derive from the certificate) are not validated.
+ * distinguished name ({@link isValidPublisherNameDn}), which electron-updater 7 could never match. `null` / `undefined` (none /
+ * derive from the certificate) are not validated: a build that writes `app-update.yml` without a publisherName fails elsewhere
+ * ({@link missingUpdatePublisherNameError}).
  */
 export function validatePublisherNameFormat(publisherName: string | ReadonlyArray<string> | null | undefined, configKey = "win.sign.publisherName"): void {
   if (publisherName == null) {
@@ -36,7 +40,7 @@ export function validatePublisherNameFormat(publisherName: string | ReadonlyArra
   throw new InvalidConfigurationError(
     `${configKey} ${formatPublisherNames(invalid)} is not a distinguished name. ${PUBLISHER_NAME_DN_REQUIREMENT}. ` +
       `Set ${configKey} to the subject of the certificate that signs your app (on Windows, (Get-AuthenticodeSignature <signed .exe>).SignerCertificate.Subject prints it), ` +
-      `or to null to opt out of update signature verification. See ${PUBLISHER_NAME_DN_DOCS_URL}`
+      `or set win.verifyUpdateCodeSignature: false to opt out of update signature verification. See ${PUBLISHER_NAME_DN_DOCS_URL}`
   )
 }
 
@@ -53,8 +57,34 @@ export function derivePublisherName(commonName: string): string {
     throw new InvalidConfigurationError(
       `Cannot derive publisherName from the code signing certificate: its Common Name (${JSON.stringify(commonName)}) cannot form a distinguished name. ` +
         `Set win.sign.publisherName explicitly to the subject of the certificate that signs your updates (or the attributes of it to compare), ` +
-        `or set it to null (or win.verifyUpdateCodeSignature: false) to opt out of update signature verification. See ${PUBLISHER_NAME_DN_DOCS_URL}`
+        `or set win.verifyUpdateCodeSignature: false to opt out of update signature verification. See ${PUBLISHER_NAME_DN_DOCS_URL}`
     )
   }
   return publisherName
+}
+
+/**
+ * The error for a Windows build that would write `app-update.yml` without a publisherName while update signature verification is
+ * enabled (`win.verifyUpdateCodeSignature` is not `false`): electron-updater 7 rejects every update of such an app. The reason names
+ * what left the publisherName unresolved: signing disabled, an explicit `publisherName: null` (no opt-out any more since v27), or no
+ * certificate to derive it from.
+ */
+export function missingUpdatePublisherNameError(options: WindowsConfiguration): InvalidConfigurationError {
+  const signing = resolveWindowsSigningConfiguration(options)
+  let reason: string
+  if (isWindowsSigningDisabled(options)) {
+    reason = `win.sign is ${options.sign === false ? "false" : "null"} (signing disabled), so no publisherName is derived from a code signing certificate`
+  } else if (signing?.publisherName === null) {
+    reason = "win.sign.publisherName is null, which no longer opts out of update signature verification since electron-builder v27"
+  } else {
+    reason =
+      "no code signing certificate is configured (win.sign.certificateFile, WIN_CSC_LINK / CSC_LINK, win.sign.certificateSubjectName or win.sign.certificateSha1) to derive publisherName from"
+  }
+  return new InvalidConfigurationError(
+    `Cannot write app-update.yml without publisherName: ${reason}. ` +
+      "Since electron-builder v27, electron-updater 7 rejects every update of an app whose app-update.yml has no publisherName (it used to skip the signature verification). " +
+      "Sign the build with a code signing certificate (electron-builder then writes CN=<common name> of it), " +
+      'set win.sign.publisherName to the distinguished name of the certificate that signs your installer (e.g. win.sign: { type: "signtool", publisherName: ["CN=My Company, O=My Company, C=US"] } when you sign outside electron-builder), ' +
+      `or set win.verifyUpdateCodeSignature: false to opt out of update signature verification explicitly. See ${MISSING_PUBLISHER_NAME_DOCS_URL}`
+  )
 }

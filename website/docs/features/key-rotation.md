@@ -141,12 +141,12 @@ Two things happen when a Windows certificate changes: the OS and SmartScreen see
 
 ### How the updater checks the certificate
 
-When `win.verifyUpdateCodeSignature` is `true` (the default), electron-builder writes the resolved publisher name into `app-update.yml` as `publisherName`. It is either what you configured in `win.sign.publisherName` (a string or an array of distinguished names) or, when not configured, `CN=<common name>` of the signing certificate (quoted the way Windows quotes it in the subject). When electron-builder cannot read the signing certificate (a custom `sign` hook without a certificate, or a certificate without a CN), the build fails unless `publisherName` is set. At update time the NSIS updater reads that value and runs `Get-AuthenticodeSignature` on the downloaded installer:
+When `win.verifyUpdateCodeSignature` is `true` (the default), electron-builder writes the resolved publisher name into `app-update.yml` as `publisherName`. It is either what you configured in `win.sign.publisherName` (a string or an array of distinguished names) or, when not configured, `CN=<common name>` of the signing certificate (quoted the way Windows quotes it in the subject). When electron-builder cannot read the signing certificate (a custom `sign` hook, a certificate without a CN, or no certificate at all), the build fails unless `publisherName` is set. At update time the NSIS updater reads that value and runs `Get-AuthenticodeSignature` on the downloaded installer:
 
 - The installer must carry a **valid** Authenticode signature.
 - The signer's Subject is compared against **each** configured publisher name. A Distinguished Name (`CN=..., O=..., C=...`) matches when every component you listed equals the certificate's; a bare name never matches (since electron-updater 7, see [the v27 migration guide](../migration/v27-breaking-changes.md#windows-publishername-must-be-a-distinguished-name)).
 - If **any** entry matches, the update is installed. If none matches, the update is rejected.
-- If `app-update.yml` has no `publisherName` at all, verification is skipped with a deprecation warning (this fail-open behavior becomes fail-closed in v28).
+- If `app-update.yml` has no `publisherName` at all, the update is rejected (since electron-updater 7, see [the v27 migration guide](../migration/v27-breaking-changes.md#missing-publishername-fails-update-verification)) — unless the app was built with `win.verifyUpdateCodeSignature: false`, which writes `verifyUpdateCodeSignature: false` into `app-update.yml` and skips the check. electron-builder fails a build that would write `app-update.yml` without `publisherName` while verification is enabled.
 
 The same check runs again before an [install-on-next-launch](./auto-update.md#install-on-next-launch-windowslinux) installer is executed.
 
@@ -176,7 +176,7 @@ Installs that take this release accept updates signed by either certificate. Bec
 
 ### Build-time validation
 
-When `publisherName` is configured explicitly and electron-builder can read the signing certificate (a `.pfx`/`.p12` file, a Windows certificate-store entry, or an `.crt`/`.cer` file with a CN), it fails the build with `InvalidConfigurationError` if **none** of the configured names matches the certificate's subject. This catches a wrong `WIN_CSC_LINK` before it produces installers that every install would reject. An array containing both old and new names passes as long as one of them matches the certificate actually in use, so the bridge configuration above never trips it. The check is skipped for custom `sign` hooks and for Azure Trusted Signing (no local certificate to compare against). Setting `publisherName: null` opts out of embedding entirely.
+When `publisherName` is configured explicitly and electron-builder can read the signing certificate (a `.pfx`/`.p12` file, a Windows certificate-store entry, or an `.crt`/`.cer` file with a CN), it fails the build with `InvalidConfigurationError` if **none** of the configured names matches the certificate's subject. This catches a wrong `WIN_CSC_LINK` before it produces installers that every install would reject. An array containing both old and new names passes as long as one of them matches the certificate actually in use, so the bridge configuration above never trips it. The check is skipped for custom `sign` hooks and for Azure Trusted Signing (no local certificate to compare against). To opt out of update signature verification, set `win.verifyUpdateCodeSignature: false` (`publisherName: null` is no opt-out since v27).
 
 ### Notes per signing method
 

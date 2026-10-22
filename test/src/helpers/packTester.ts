@@ -312,6 +312,14 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   if (configuration.updateManifest === undefined) {
     ;(configuration as any).updateManifest = false
   }
+  // The same for Windows update signature verification: fixture builds are unsigned unless the test signs them (signedWin), and since
+  // v27 a build that writes app-update.yml without a publisherName fails. Opt them out explicitly - app-update.yml then carries
+  // `verifyUpdateCodeSignature: false`, as the snapshots show - unless the test configures win.sign or the verification itself
+  // (the tests of the requirement set win.sign: false / null, or a sign object without a certificate).
+  const buildsWindows = packagerOptions.targets?.has(Platform.WINDOWS) === true
+  if (buildsWindows && !checkOptions.signedWin && configuration.win?.sign === undefined && configuration.win?.verifyUpdateCodeSignature === undefined) {
+    ;(configuration as any).win = { ...configuration.win, verifyUpdateCodeSignature: false }
+  }
 
   if (checkOptions.signedMac) {
     packagerOptions = await signed(packagerOptions, "mac")

@@ -343,6 +343,7 @@ exports[`perMachine, no run after finish 2`] = `
 {
   "provider": "generic",
   "updaterCacheDirName": "testapp-updater",
+  "verifyUpdateCodeSignature": false,
   "url": "https://develar.s3.amazonaws.com/test/win/ia32",
 }
 `;

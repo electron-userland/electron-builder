@@ -111,7 +111,8 @@ export abstract class SigntoolBaseSignManager implements SignManager {
   }
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
-    // `win.sign: false` / `null` signs nothing, so no publisherName is derived or written to app-update.yml.
+    // `win.sign: false` / `null` signs nothing, so no publisherName is derived: a build that writes app-update.yml then needs
+    // win.verifyUpdateCodeSignature: false (or a win.sign object with publisherName), see missingUpdatePublisherNameError.
     if (isWindowsSigningDisabled(this.platformSpecificBuildOptions)) {
       return null
     }
@@ -203,13 +204,13 @@ export abstract class SigntoolBaseSignManager implements SignManager {
    * The check is intentionally skipped whenever the actual signing certificate's subject is not
    * genuinely known: custom `sign` hooks, PKCS#11 without an extractable certificate file,
    * x509 certificate files without a CN, or any error while reading certificate info.
-   * An explicit `publisherName: null` remains a pure opt-out (nothing to validate).
+   * An explicit `publisherName: null` has nothing to validate (a build that writes `app-update.yml` with it fails in PublishManager).
    */
   protected async validateExplicitPublisherName(): Promise<void> {
     const signing = getSigntoolFamilyConfig(this.platformSpecificBuildOptions)
     const publisherName = signing?.publisherName
     if (publisherName == null) {
-      // not configured (auto-derive) or explicit `null` opt-out — nothing to validate
+      // not configured (auto-derive) or explicit `null` (no opt-out any more: rejected where app-update.yml is written) — nothing to validate
       return
     }
     validatePublisherNameFormat(publisherName)
@@ -240,7 +241,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
           `This usually means the build is signing with the wrong certificate (for example, a code signing certificate for another platform or team leaked into WIN_CSC_LINK/CSC_LINK in CI) — electron-updater would reject every update signed with it.\n` +
           `  Configured publisherName: ${publisherNames.join(" | ")}\n` +
           `  Certificate subject: ${certificateWindowsSubjectDn(certInfo)}\n` +
-          `Fix win.sign.publisherName (or sign with the intended certificate). To opt out of update signature verification entirely, set publisherName to null.`
+          `Fix win.sign.publisherName (or sign with the intended certificate). To opt out of update signature verification entirely, set win.verifyUpdateCodeSignature: false.`
       )
     }
   }

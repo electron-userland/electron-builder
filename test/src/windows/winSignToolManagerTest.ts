@@ -935,7 +935,8 @@ describe("validateExplicitPublisherName", () => {
     expect(error!.message).toContain("is not a distinguished name")
     expect(error!.message).toContain("Since electron-builder v27")
     expect(error!.message).toContain('"CN=My Company, O=My Company, C=US"')
-    expect(error!.message).toContain("or to null to opt out")
+    expect(error!.message).toContain("or set win.verifyUpdateCodeSignature: false to opt out")
+    expect(error!.message).not.toContain("null")
     expect(error!.message.endsWith("https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name")).toBe(true)
   })
 
@@ -944,7 +945,8 @@ describe("validateExplicitPublisherName", () => {
     await expect(validate(manager)).resolves.toBeUndefined()
   })
 
-  test("skips on explicit publisherName: null opt-out", async () => {
+  // nothing to compare: a build that writes app-update.yml with it fails in PublishManager (see appUpdatePublisherNameRequiredTest)
+  test("skips on explicit publisherName: null", async () => {
     const manager = makeValidationManager({ type: "signtool", publisherName: null }, acmeCertInfo)
     await expect(validate(manager)).resolves.toBeUndefined()
   })
@@ -1197,7 +1199,8 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
     })()
     expect(error).toBeInstanceOf(InvalidConfigurationError)
     expect(error.message).toContain("Set win.sign.publisherName explicitly")
-    expect(error.message).toContain("set it to null")
+    expect(error.message).toContain("or set win.verifyUpdateCodeSignature: false to opt out")
+    expect(error.message).not.toContain("set it to null")
     expect(error.message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name")
   })
 

@@ -30,6 +30,49 @@ export function publisherNameDnNote(publisherNames: ReadonlyArray<unknown>): str
   )
 }
 
+const MISSING_PUBLISHER_NAME_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#missing-publishername-fails-update-verification"
+
+/**
+ * The publisher names of an update config (app-update.yml, dev-app-update.yml or the updateConfigPath file), or null when it has
+ * none: no config, no `publisherName`, `publisherName: null`, or no string entry. A single string is one entry. Never throws.
+ * @internal
+ */
+export function readConfiguredPublisherNames(config: unknown): Array<string> | null {
+  if (config == null || typeof config !== "object" || !("publisherName" in config)) {
+    return null
+  }
+  const value: unknown = config.publisherName
+  const values: ReadonlyArray<unknown> = Array.isArray(value) ? value : [value]
+  // an entry that is no string can never match a signer, so it is left out (with no string entry at all, there is no publisherName)
+  const entries = values.filter((it): it is string => typeof it === "string")
+  return entries.length === 0 ? null : entries
+}
+
+/**
+ * Whether the update config opts out of the Authenticode verification of updates: `verifyUpdateCodeSignature: false`, which
+ * electron-builder writes into app-update.yml for a build with `win.verifyUpdateCodeSignature: false`. Never throws.
+ * @internal
+ */
+export function isUpdateCodeSignatureVerificationDisabled(config: unknown): boolean {
+  return config != null && typeof config === "object" && "verifyUpdateCodeSignature" in config && config.verifyUpdateCodeSignature === false
+}
+
+/**
+ * Why an update is rejected when the update config has no publisherName to verify its Authenticode signature against.
+ * `hasConfig` is false for a packaged app without an app-update.yml (a feed set with setFeedURL only). Never throws.
+ * @internal
+ */
+export function missingPublisherNameMessage(hasConfig: boolean): string {
+  const what = hasConfig ? "app-update.yml has no publisherName" : "the app has no app-update.yml (an update feed set only with setFeedURL), so there is no publisherName"
+  return (
+    `electron-updater 7 (electron-builder v27) rejects the update: ${what} to verify its Authenticode signature against (verification used to be skipped). ` +
+    "Build the app with electron-builder v27 and a publish configuration, so that app-update.yml carries the publisherName: sign the build so electron-builder writes it " +
+    "(CN=<common name> of the certificate), set win.sign.publisherName to the subject of the certificate that signs your updates, " +
+    "or set win.verifyUpdateCodeSignature: false at build time to opt out explicitly (in a dev-app-update.yml or updateConfigPath file: verifyUpdateCodeSignature: false). " +
+    MISSING_PUBLISHER_NAME_DOCS
+  )
+}
+
 // Thrown when the Path reported by Get-AuthenticodeSignature does not match the expected
 // update file path. Signals verifySignature to reject directly, without running the
 // ConvertTo-Json availability probe in handleError.

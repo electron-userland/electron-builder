@@ -121,6 +121,7 @@ exports[`nsisWine > perMachine oneClick — build + install 2`] = `
 {
   "provider": "generic",
   "updaterCacheDirName": "testapp-updater",
+  "verifyUpdateCodeSignature": false,
   "url": "https://develar.s3.amazonaws.com/test/win/ia32",
 }
 `;

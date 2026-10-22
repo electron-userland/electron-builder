@@ -84,6 +84,7 @@ export default class AppUpdater {
 ```
 
 The built-in default uses [`windowsExecutableCodeSignatureVerifier`](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts).
+A custom verify function is called only with the `publisherName` of `app-update.yml`: without one, electron-updater rejects the update before any verify function runs, unless the app was built with `win.verifyUpdateCodeSignature: false` (see [the v27 migration guide](./migration/v27-breaking-changes.md#missing-publishername-fails-update-verification)).
 The older property `verifyUpdateCodeSignature`, which differs only in name and return interface, is deprecated and kept only as a compatibility shim (shall be removed in electron-builder v28). The protected `_verifyUpdateCodeSignature` member is likewise deprecated in favour of `_verifyUpdateFileAuthenticodeSignature`.
 
 ## How do you create a Parallels Windows 10 Virtual Machine?

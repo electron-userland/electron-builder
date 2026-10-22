@@ -31,6 +31,7 @@ import {
   SNAP_BASES,
   SNAP_CORE24_UNSUPPORTED,
   v26IncludePdb,
+  WIN_MISSING_PUBLISHER_NAME_ADVISORY,
   WIN_PUBLISHER_NAME_DN_ADVISORY,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
 } from "./migrate-schema.js"
@@ -413,6 +414,7 @@ class ConfigCodemod {
     this.ruleNsisPerMachineAdvisory(root)
     this.ruleWinSignHookPublisherNameAdvisory(root)
     this.ruleWinPublisherNameDnAdvisory(root)
+    this.ruleWinMissingPublisherNameAdvisory(root)
     this.ruleFeedQueryAdvisory(root)
     this.rulePdbFilesPatternsAdvisory(root)
   }
@@ -535,6 +537,42 @@ class ConfigCodemod {
     const isInvalid = (entry: any) => (ts.isStringLiteralLike(entry) ? !isValidPublisherNameDn(entry.text) : this.isLiteral(entry))
     if (entries.some(isInvalid)) {
       this.advisories.push(WIN_PUBLISHER_NAME_DN_ADVISORY)
+    }
+  }
+
+  // Advisory only. Mirrors migrateConfig on the win.sign it produces (see migratedWinSign): win.sign: false / null (also a v26
+  // signExecutable / signAndEditExecutable: false, which migrates to win.sign: false when win.sign is unset) or a publisherName: null,
+  // unless win.verifyUpdateCodeSignature is false. Only literals count: a value the AST cannot read may resolve a publisherName.
+  private ruleWinMissingPublisherNameAdvisory(root: any): void {
+    const ts = this.ts
+    const win = this.objectLiteral(this.propValue(root, "win"))
+    if (win == null) {
+      return
+    }
+    const kind = (v: any) => (v === undefined ? undefined : this.unwrap(v).kind)
+    const verify = this.propValue(win, "verifyUpdateCodeSignature")
+    // a value that is not a literal may be false
+    if (verify !== undefined && (kind(verify) === ts.SyntaxKind.FalseKeyword || !this.isLiteral(verify))) {
+      return
+    }
+    const isNullish = (v: any) => v === undefined || kind(v) === ts.SyntaxKind.NullKeyword
+    const winSign = this.propValue(win, "sign")
+    let missing: boolean
+    if (!isNullish(winSign)) {
+      missing = kind(winSign) === ts.SyntaxKind.FalseKeyword
+    } else if (["signExecutable", "signAndEditExecutable"].some(k => kind(this.propValue(win, k)) === ts.SyntaxKind.FalseKeyword)) {
+      // migrates to win.sign: false
+      missing = true
+    } else {
+      // win.sign: null stays null unless migrateConfig moves v26 signing options into it
+      missing = winSign !== undefined && ["signtoolOptions", "azureSignOptions"].every(k => isNullish(this.propValue(win, k)))
+    }
+    if (!missing) {
+      const field = this.migratedWinSign(win)
+      missing = field != null && kind(field("publisherName")) === ts.SyntaxKind.NullKeyword
+    }
+    if (missing) {
+      this.advisories.push(WIN_MISSING_PUBLISHER_NAME_ADVISORY)
     }
   }
 
