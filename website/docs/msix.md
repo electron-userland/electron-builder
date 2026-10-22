@@ -338,11 +338,11 @@ autoUpdater.checkForUpdatesAndNotify()
 
 - A `.msixbundle`, even for a single architecture. It is the only file electron-updater installs: a package installed from a bundle cannot be updated with a single `.msix`, while a single-`.msix` install can move to a bundle. `createMsixbundle: false` is rejected.
 - `latest-msix.yml` (`<channel>-msix.yml` for other channels), listing only the bundle. Its file entry also records the bundle's `packageFamilyName` and `packageVersion`, which electron-updater checks before downloading; they are not covered by the manifest signature ([why](features/signed-update-manifests.md#what-is-signed)). NSIS keeps its `latest.yml`, so NSIS and MSIX builds can share one feed.
-- `app-update.yml` and a `resources/package-type` marker (`msix`) inside the package. Without the marker, electron-updater leaves the package alone.
+- `app-update.yml` and a `resources/package-type` marker (`msix`) inside the package. electron-updater selects `MsixUpdater` by this marker only: in any other app, including one with package identity but without the marker, `autoUpdater` stays an `NsisUpdater`.
 
 ### How an update is installed
 
-In a Windows app with package identity, `autoUpdater` is an `MsixUpdater`. An update check:
+In a package built with `electronUpdaterAware`, `autoUpdater` is an `MsixUpdater`. An update check:
 
 1. Fetches `latest-msix.yml` (or `<channel>-msix.yml`) and verifies its signature.
 2. Refuses the update before downloading it if the app has no trusted key to verify the manifest with (see [Enabling electron-updater](#enabling-electron-updater)), if the update belongs to another package family, or if its 4-part version is not higher than the installed one (see [Versions and package identity](#versions-and-package-identity)).

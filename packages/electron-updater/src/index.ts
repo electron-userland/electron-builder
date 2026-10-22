@@ -33,8 +33,8 @@ export * from "./types.js"
 function doLoadAutoUpdater(): AppUpdater {
   let updater: any
   if (process.platform === "win32") {
-    // MsixUpdater for apps with package identity (AppX/MSIX) and MSIX packages built with msix.electronUpdaterAware, unless an NSIS installer marked the install
-    updater = isMsixInstall(readPackageType(), process.windowsStore === true) ? new (require("./MsixUpdater.js").MsixUpdater)() : new (require("./NsisUpdater.js").NsisUpdater)()
+    // MsixUpdater only for MSIX packages built with msix.electronUpdaterAware: any other app, packaged or not, keeps NsisUpdater
+    updater = isMsixInstall(readPackageType()) ? new (require("./MsixUpdater.js").MsixUpdater)() : new (require("./NsisUpdater.js").NsisUpdater)()
   } else if (process.platform === "darwin") {
     updater = new (require("./MacUpdater.js").MacUpdater)()
   } else {

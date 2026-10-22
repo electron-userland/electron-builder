@@ -127,7 +127,6 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`autoInstallOnAppQuit` replaced by `autoInstallEvent` enum (electron-updater)](#autoinstallevent-replaces-autoinstallonappquit) | — | `autoInstallOnAppQuit = false` → `autoInstallEvent = "manual"`; default `"onQuit"` preserves behavior |
 | [`downloadUpdate()` resolves with an object, not an array (electron-updater)](#downloadupdate-resolves-with-a-downloadexecutorresult-object) | — | `const [installer] = await downloadUpdate()` → `const { updateFile } = await downloadUpdate()`; same for `checkForUpdates()` → `downloadPromise` |
 | [`verifyUpdateCodeSignature` renamed and returns a result object (electron-updater)](#verifyupdatecodesignature-renamed-to-verifyupdatefileauthenticodesignature) | — | `NsisUpdater.verifyUpdateCodeSignature` → `verifyUpdateFileAuthenticodeSignature`; return `{ response: "success" }` / `{ response: "failure", message }` instead of `null` / `string` |
-| [Windows apps with package identity use `MsixUpdater` (electron-updater)](#windows-apps-with-package-identity-use-msixupdater) | — | None for most apps — in an installed AppX or MSIX package `autoUpdater` is now an `MsixUpdater`, which stays inactive unless the package was built with `msix.electronUpdaterAware`; construct an `NsisUpdater` explicitly only if a packaged app relied on it |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | — | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | — | Use the `snapcraft` config shape / Electron framework |
 
@@ -1445,18 +1444,6 @@ The old name is kept as a compatibility shim that translates in both directions,
 If you override the protected `BaseUpdater.verifyInstallerSignatureOnLaunch` (added earlier in the same v27 pre-release cycle, so only 7.0.0-alpha users are affected), return `{ response: "success" }` rather than `null` — `null` is now read as a verification failure and blocks every install-on-next-launch.
 
 Additively, all updaters gain `AppUpdater.verifyUpdateFile` for app-defined verification of the downloaded file on every path that can lead to an install. See [Custom downloaded-file verification](../features/auto-update.md#custom-downloaded-file-verification).
-
-### Windows apps with package identity use `MsixUpdater`
-
-On Windows, `autoUpdater` used to be an `NsisUpdater` in every app. In an app that runs with package identity (`process.windowsStore` is `true`: an installed AppX or MSIX package) it is now the new `MsixUpdater`, unless the app's `resources/package-type` marker says `nsis` or `nsis-web`. `MsixUpdater` updates MSIX packages built with [`msix.electronUpdaterAware`](../msix.md#auto-updates) (beta) through Electron's native MSIX updater. In any other package it stays inactive: it logs why, and `checkForUpdates()` resolves `null`. An `NsisUpdater` cannot update a package anyway — an NSIS update installs the app a second time next to it.
-
-**Action:** none for most apps. Only if a packaged app relied on `NsisUpdater` (for example to move its users from the package to an NSIS install), construct it explicitly:
-
-```ts
-import { NsisUpdater } from "electron-updater"
-const updater = new NsisUpdater()
-updater.checkForUpdatesAndNotify()
-```
 
 ---
 

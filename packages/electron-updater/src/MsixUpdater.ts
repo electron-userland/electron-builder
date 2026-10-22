@@ -32,12 +32,12 @@ export interface MsixPackageInfo {
 type MsixNativeUpdater = Electron.AutoUpdater & { getPackageInfo?: () => MsixPackageInfo | undefined }
 
 /**
- * Whether the Windows `autoUpdater` is a MsixUpdater: an NSIS installer marks its installs `nsis` / `nsis-web`, an MSIX package built with
- * `msix.electronUpdaterAware` is marked `msix`, and any other app with package identity is packaged too.
+ * Whether the Windows `autoUpdater` is a MsixUpdater: only an MSIX package built with `msix.electronUpdaterAware` is marked `msix`. Every other
+ * app keeps NsisUpdater, also with package identity (process.windowsStore is true for a sparse package too), so that it does not stop updating.
  * @internal
  */
-export function isMsixInstall(packageType: string | null, isWindowsStore: boolean): boolean {
-  return packageType !== "nsis" && packageType !== "nsis-web" && (isWindowsStore || packageType === "msix")
+export function isMsixInstall(packageType: string | null): boolean {
+  return packageType === "msix"
 }
 
 /**
@@ -132,7 +132,7 @@ function compareMsixVersions(candidate: string | undefined, installed: string): 
  * The update manifest has to be signed (`updateManifestPublicKey`, embedded into `app-update.yml` by a build with signing keys): an update
  * whose manifest no trusted key verified in the update check is refused with `ERR_UPDATER_MSIX_MANIFEST_NOT_SIGNED`.
  *
- * `autoUpdater` is a MsixUpdater for every app with package identity, unless an NSIS installer installed it.
+ * `autoUpdater` is a MsixUpdater only in a package built with `msix.electronUpdaterAware` (`resources/package-type` is `msix`).
  * See https://www.electron.build/docs/msix#auto-updates
  */
 export class MsixUpdater extends AppUpdater {

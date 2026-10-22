@@ -35,15 +35,65 @@ afterEach(() => {
 })
 
 describe("isMsixInstall", () => {
-  test.for<[string | null, boolean, boolean]>([
-    ["nsis", true, false],
-    ["nsis-web", true, false],
-    [null, true, true],
-    ["msix", false, true],
-    [null, false, false],
-    ["deb", false, false],
-  ])("package-type %j, windowsStore %s: %s", ([packageType, isWindowsStore, expected], { expect }) => {
-    expect(isMsixInstall(packageType, isWindowsStore)).toBe(expected)
+  test.for<[string | null, boolean]>([
+    ["msix", true],
+    ["nsis", false],
+    ["nsis-web", false],
+    [null, false],
+    ["deb", false],
+  ])("package-type %j: %s", ([packageType, expected], { expect }) => {
+    expect(isMsixInstall(packageType)).toBe(expected)
+  })
+})
+
+describe("the Windows autoUpdater", () => {
+  // the updater classes that index.ts requires, so that the selection runs without Electron
+  class FakeMsixUpdater {
+    readonly kind = "MsixUpdater"
+  }
+  class FakeNsisUpdater {
+    readonly kind = "NsisUpdater"
+  }
+
+  function setProcessProperty(name: "platform" | "windowsStore" | "resourcesPath", value: unknown): () => void {
+    const original = Object.getOwnPropertyDescriptor(process, name)
+    Object.defineProperty(process, name, { value, configurable: true, writable: true })
+    return () => {
+      if (original == null) {
+        delete (process as any)[name]
+      } else {
+        Object.defineProperty(process, name, original)
+      }
+    }
+  }
+
+  // process.windowsStore is true for every app with package identity, a sparse package too: only the marker selects MsixUpdater
+  test.for<[string | null, boolean, string]>([
+    ["msix", true, "MsixUpdater"],
+    ["msix", false, "MsixUpdater"],
+    ["nsis", true, "NsisUpdater"],
+    ["nsis", false, "NsisUpdater"],
+    ["nsis-web", true, "NsisUpdater"],
+    [null, true, "NsisUpdater"],
+    [null, false, "NsisUpdater"],
+  ])("package-type %j, windowsStore %s: %s", async ([packageType, isWindowsStore, expected], { expect, tmpDir }) => {
+    const resourcesPath = await tmpDir.getTempDir({ prefix: "resources" })
+    if (packageType != null) {
+      await fsExtra.outputFile(path.join(resourcesPath, "package-type"), `${packageType}\n`)
+    }
+    await mockForNodeRequire("./MsixUpdater.js", { MsixUpdater: FakeMsixUpdater })
+    await mockForNodeRequire("./NsisUpdater.js", { NsisUpdater: FakeNsisUpdater })
+    const restores = [setProcessProperty("platform", "win32"), setProcessProperty("windowsStore", isWindowsStore), setProcessProperty("resourcesPath", resourcesPath)]
+    try {
+      // a fresh module: the autoUpdater of index.ts is created once, on first use
+      vi.resetModules()
+      const { autoUpdater } = await import("electron-updater")
+      expect((autoUpdater as unknown as { kind: string }).kind).toBe(expected)
+    } finally {
+      restores.reverse().forEach(restore => restore())
+      await mockForNodeRequire("./MsixUpdater.js", undefined)
+      await mockForNodeRequire("./NsisUpdater.js", undefined)
+    }
   })
 })
 
