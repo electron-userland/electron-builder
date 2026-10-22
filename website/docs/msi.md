@@ -97,6 +97,17 @@ Use `msiProjectCreated` hook to modify the generated WiX project files before th
 msiProjectCreated: ./msi-hook.js
 ```
 
+### WiX version and arm64
+
+By default the MSI target uses the legacy WiX bundle (a WiX 4.0.0.5512 preview), which has no `arm64`: an `arm64` build is packaged in an **x64** MSI that installs the arm64 app. Set [`toolsets.wix`](./toolsets.md) to `"2.0.0"` to build with WiX 3.14.1 instead, which produces a native `arm64` MSI:
+
+```yaml
+toolsets:
+  wix: "2.0.0"
+```
+
+The installer is the same either way: same upgrade code, same install paths and the same component GUIDs. What changes is the `.wxs` dialect: it uses the WiX 3 namespace `http://schemas.microsoft.com/wix/2006/wi`, so an `msiProjectCreated` hook that inserts elements of a WiX 4 extension namespace must use the WiX 3 one, for example `http://schemas.microsoft.com/wix/UtilExtension` instead of `http://wixtoolset.org/schemas/v4/wxs/util`.
+
 ## Warnings as Errors
 
 ```yaml

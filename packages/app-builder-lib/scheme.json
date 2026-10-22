@@ -8597,6 +8597,23 @@
           ],
           "default": "latest",
           "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n| `\"system\"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |\n\n`\"system\"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and\nis what `\"latest\"` (the default) currently resolves to on every platform: the published `\"1.0.1\"`\nbundles ship no PE builtins, so a host Wine installation is required to build Windows targets on\nmacOS or Linux.\n\nTo use a custom Wine binary, use a `ToolsetCustom` object.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
+        },
+        "wix": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ToolsetCustom"
+            },
+            {
+              "enum": [
+                "0.0.0",
+                "2.0.0",
+                "latest"
+              ],
+              "type": "string"
+            }
+          ],
+          "default": "0.0.0",
+          "description": "Version of the WiX Toolset bundle used to build `msi` and `msiWrapped` installers.\n\nThe bundle ships **`candle.exe`** and **`light.exe`** (compile and link the generated `.wxs` project) and the WiX\nextensions (`WixUIExtension` for assisted installers). On macOS and Linux they run under Wine with wine-mono.\n\nAvailable versions:\n| Version | WiX version | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | 4.0.0.5512 (preview) | Legacy bundle. An `arm64` MSI is built as `x64`, because this toolset has no `arm64` |\n| `\"2.0.0\"` | 3.14.1 | Builds a native `arm64` MSI for `arm64` |\n\nUnlike the other toolsets, an unset `wix` keeps the legacy `\"0.0.0\"` bundle so existing MSI builds don't change;\n`\"latest\"` selects the newest bundle.\n\nA custom bundle (a {@link ToolsetCustom} object) must have the WiX v3 layout: `candle.exe`, `light.exe` and the\nextensions at its root.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wix/CHANGELOG.md"
         }
       },
       "type": "object"
