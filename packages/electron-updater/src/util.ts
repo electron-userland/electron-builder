@@ -1,6 +1,7 @@
 // if baseUrl path doesn't ends with /, this path will be not prepended to passed pathname for new URL(input, base)
 import { HttpExecutor } from "builder-util-runtime"
 import { URL } from "url"
+import type { Logger } from "./types.js"
 
 /** @internal */
 export function newBaseUrl(url: string): URL {
@@ -32,4 +33,29 @@ export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToA
 
 export function getChannelFilename(channel: string): string {
   return `${channel}.yml`
+}
+
+/**
+ * `logger` with every call made safe: a call that throws is ignored, so logging can never change how a download ends (a throw
+ * would otherwise escape from a stream callback, or stop the fallback to a full download). `debug` is only present when
+ * `logger` has one, so callers can still skip building an expensive debug message.
+ * @internal
+ */
+export function nonThrowingLogger(logger: Logger): Logger {
+  const ignoreErrors = (log: () => void): void => {
+    try {
+      log()
+    } catch (_ignored) {
+      // a throwing logger must not break the caller
+    }
+  }
+  const result: Logger = {
+    info: message => ignoreErrors(() => logger.info(message)),
+    warn: message => ignoreErrors(() => logger.warn(message)),
+    error: message => ignoreErrors(() => logger.error(message)),
+  }
+  if (logger.debug != null) {
+    result.debug = message => ignoreErrors(() => logger.debug?.(message))
+  }
+  return result
 }

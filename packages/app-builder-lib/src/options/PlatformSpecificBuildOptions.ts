@@ -92,9 +92,9 @@ export interface AsarOptions {
    * Whether to skip computing the ASAR integrity hash.
    *
    * Normally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron
-   * can verify it at startup (when the `embeddedAsarIntegrityValidation` fuse is enabled). Set to
+   * can verify it at startup (when the `enableEmbeddedAsarIntegrityValidation` fuse is enabled). Set to
    * `true` only for custom Electron forks with encrypted ASAR support where the header is not
-   * readable by standard tools.
+   * readable by standard tools. It also skips the macOS ASAR integrity digest (`mac.asarIntegrityDigest`).
    *
    * @default false
    */
@@ -363,8 +363,8 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    *
    * **Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key
    * resolves. Generate one once with `electron-builder create-update-key`, then supply it via
-   * `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via
-   * `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and
+   * `ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),
+   * preferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and
    * resolves the key from the environment; `null` is not an opt-out.
    *
    * Set to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then
@@ -418,7 +418,7 @@ export interface UpdateManifestSigningOptions {
    * contain several concatenated keys, or pass an array with one key each; the manifest is signed by every key
    * (dual-signing for [key rotation](https://www.electron.build/features/key-rotation)) and the first key also
    * fills the legacy single `signature` field.
-   * Secret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable in CI over committing this to config.
+   * Secret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable (the PEM file, base64-encoded) in CI over committing this to config.
    */
   readonly signingKey?: string | Array<string> | null
 
@@ -439,8 +439,20 @@ export interface UpdateManifestSigningOptions {
    * without a publish policy, where the requirement only warns and the unsigned manifest is written locally, or
    * keeps publishing with `publishAutoUpdate: false` on every publish provider - electron-builder then uploads the
    * artifacts and embeds this key, but writes no `latest*.yml`, so the external step has to produce it too.
+   *
+   * When set, it must contain at least one of the signing keys: a publishing build signed only by keys outside this
+   * list fails, since its installs would reject manifests signed with them. See `allowSigningKeyOutsideTrustList`.
    */
   readonly publicKey?: string | Array<string> | null
+
+  /**
+   * Allows a publishing build to sign its manifests only with keys that are not in `publicKey` - a deliberate
+   * cutover release that is verified by installs with the old key, but hands them over to the keys listed in
+   * `publicKey`. Every later release must then be signed by a listed key. Without it such a build fails; a build
+   * without a publish policy only warns. Has no effect when `publicKey` is not set.
+   * @default false
+   */
+  readonly allowSigningKeyOutsideTrustList?: boolean | null
 }
 
 export interface ReleaseInfo {

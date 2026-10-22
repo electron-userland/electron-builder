@@ -63,7 +63,7 @@ jobs:
       always() &&
       (needs.check-if-docker-build.outputs.force-docker-build == 'true' ||
       inputs.rebuild-docker-images == 'true' || inputs.rebuild-docker-images == true)
-    uses: ./.github/workflows/docker-build.yml
+    uses: $/.github/workflows/docker-build.yml
 
   # -------------------------
   # Linting + Shard Planning (unified job outputting map for all platforms)
@@ -76,15 +76,19 @@ jobs:
       linux: ${{ steps.plan.outputs.linux }}
       windows: ${{ steps.plan.outputs.windows }}
       macos: ${{ steps.plan.outputs.macos }}
+      # Exact smart cache snapshot used for the plan; shard jobs restore the same one so their
+      # in-job plan matches the matrix (resolving "latest" per job can pick a different cache).
+      smart-cache-source: ${{ steps.pretest.outputs.smart-cache-source }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        id: pretest
+        uses: $/.github/actions/pretest
         with:
-          cache-key: v-39.8.10-linux-electron
+          cache-key: v-42.4.0-linux-electron
           cache-path: ~/.cache/electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
@@ -142,7 +146,7 @@ jobs:
           - platform: linux
             runner: ubuntu-24.04
             cache-path: ~/.cache/electron
-            cache-key: v-39.8.10-linux-electron
+            cache-key: v-42.4.0-linux-electron
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
@@ -152,15 +156,16 @@ jobs:
           persist-credentials: false
 
       - name: Cleanup runner
-        uses: ./.github/actions/cleanup-runner
+        uses: $/.github/actions/cleanup-runner
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-path: ${{ matrix.cache-path }}
           cache-key: ${{ matrix.cache-key }}
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
+          smart-cache-source: ${{ needs.validate-and-shard.outputs.smart-cache-source }}
 
       - name: Download test-runner if exists
         if: needs.run-docker-build.result == 'success'
@@ -187,12 +192,12 @@ jobs:
           echo $TEST_RUNNER_IMAGE_TAG
           pnpm test:linux
         env:
-          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
+          ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_EXPECTED_SHARD_COUNT=${{ strategy.job-total }} -e VITEST_SMART_CACHE_SOURCE=${{ needs.validate-and-shard.outputs.smart-cache-source }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
           TEST_RUNNER_IMAGE_TAG: electronuserland/builder:${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: ${{ matrix.platform }}-${{ matrix.shard }}
 
@@ -207,7 +212,7 @@ jobs:
           - platform: windows
             runner: windows-latest
             cache-path: ~\AppData\Local\electron\Cache
-            cache-key: v-39.8.10-windows-electron
+            cache-key: v-42.4.0-windows-electron
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
@@ -216,12 +221,13 @@ jobs:
           persist-credentials: false
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-key: ${{ matrix.cache-key }}
           cache-path: ${{ matrix.cache-path }}
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
+          smart-cache-source: ${{ needs.validate-and-shard.outputs.smart-cache-source }}
 
       - name: Pre-initialize NuGet IsolatedStorage
         shell: pwsh
@@ -237,11 +243,13 @@ jobs:
         env:
           CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
           VITEST_SHARD_INDEX: ${{ matrix.shard }}
+          VITEST_EXPECTED_SHARD_COUNT: ${{ strategy.job-total }}
+          VITEST_SMART_CACHE_SOURCE: ${{ needs.validate-and-shard.outputs.smart-cache-source }}
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}\test\vitest-scripts\vitest-config\_vitest-smart-cache.json
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: ${{ matrix.platform }}-${{ matrix.shard }}
 
@@ -256,7 +264,7 @@ jobs:
           - platform: macos
             runner: macos-26
             cache-path: ~/Library/Caches/electron
-            cache-key: v-39.8.10-macos-electron
+            cache-key: v-42.4.0-macos-electron
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
@@ -265,12 +273,13 @@ jobs:
           persist-credentials: false
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-path: ${{ matrix.cache-path }}
           cache-key: ${{ matrix.cache-key }}
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
+          smart-cache-source: ${{ needs.validate-and-shard.outputs.smart-cache-source }}
 
       - name: Silence the damn GH runner warnings (temporary until GH updates their runners to a newer macOS base toolset bundle)
         run: |
@@ -286,11 +295,13 @@ jobs:
         run: pnpm ci:test
         env:
           VITEST_SHARD_INDEX: ${{ matrix.shard }}
+          VITEST_EXPECTED_SHARD_COUNT: ${{ strategy.job-total }}
+          VITEST_SMART_CACHE_SOURCE: ${{ needs.validate-and-shard.outputs.smart-cache-source }}
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: ${{ matrix.platform }}-${{ matrix.shard }}
 
@@ -314,13 +325,13 @@ jobs:
           persist-credentials: false
 
       - name: Cleanup runner
-        uses: ./.github/actions/cleanup-runner
+        uses: $/.github/actions/cleanup-runner
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-39.8.10-update-electron
+          cache-key: v-42.4.0-update-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
 
@@ -377,7 +388,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: updater
 
@@ -395,10 +406,10 @@ jobs:
           persist-credentials: false
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-39.8.10-native-electron
+          cache-key: v-42.4.0-native-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
 
@@ -442,7 +453,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: snap-${{ matrix.core }}
 
@@ -473,10 +484,10 @@ jobs:
           persist-credentials: false
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-39.8.10-native-electron
+          cache-key: v-42.4.0-native-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
 
@@ -544,7 +555,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: flatpak-${{ matrix.runner }}
 
@@ -587,10 +598,10 @@ jobs:
           persist-credentials: false
 
       - name: Setup Tests
-        uses: ./.github/actions/pretest
+        uses: $/.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-39.8.10-linux-e2e-electron
+          cache-key: v-42.4.0-linux-e2e-electron
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
 
@@ -608,7 +619,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: ./.github/actions/upload-test-artifacts
+        uses: $/.github/actions/upload-test-artifacts
         with:
           name: e2e-${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || matrix.test_config.stem }}
 
@@ -626,7 +637,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/pnpm
+      - uses: $/.github/actions/pnpm
 
       - name: Download all smart cache artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1

@@ -41,6 +41,7 @@ import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
+import { nonThrowingLogger } from "./util.js"
 import {
   AutoInstallEvent,
   DOWNLOAD_PROGRESS,
@@ -1191,6 +1192,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     log.info(`New version ${version} has been downloaded to ${updateFile}`)
     return await done(true)
   }
+  /**
+   * Logs why a differential download failed, before the full download it falls back to. Never throws: neither a throwing
+   * logger nor an error that cannot be formatted may stop the fallback.
+   * @internal
+   */
+  protected logDifferentialDownloadFallback(error: unknown): void {
+    try {
+      this._logger.error(`Cannot download differentially, fallback to full download: ${error instanceof Error ? error.stack || String(error) : String(error)}`)
+    } catch (_ignored) {
+      // a throwing logger must not stop the fallback
+    }
+  }
+
   protected async differentialDownloadInstaller(
     fileInfo: ResolvedUpdateFileInfo,
     downloadUpdateOptions: DownloadUpdateOptions,
@@ -1271,6 +1285,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
       // get old blockmap from cache dir first, if not found, download it
       let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
+      if (oldBlockMapData != null && !(await isBlockMapOfFile(oldBlockMapData, downloadOptions.oldFile))) {
+        // The cached blockmap is replaced when a download finishes, but NSIS replaces the cached installer only when the update is
+        // installed. A release that arrives before the previous one is installed therefore finds the pending release's blockmap next
+        // to the running release's installer; planning against it downloads every differential byte and then fails the sha512 check.
+        // expected, and fixed by the steps below: the installed version's blockmap is fetched, or (blockMapUrl set, no override) the update is downloaded in full
+        this._logger.info(`Cached blockmap does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): ignoring it`)
+        oldBlockMapData = null
+      }
       isOldBlockMapFromCache = oldBlockMapData != null
       if (oldBlockMapData == null) {
         if (oldBlockMapUrl == null) {
@@ -1289,14 +1311,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
       return false
     } catch (e: any) {
-      if (e.code === "ERR_CHECKSUM_MISMATCH") {
-        this._logger.warn(
+      if (e?.code === "ERR_CHECKSUM_MISMATCH") {
+        nonThrowingLogger(this._logger).warn(
           `sha512 checksum mismatch after differential download (old blockmap ${
             isOldBlockMapFromCache ? "was read from the local cache" : "was downloaded from the server"
           }): cached "${oldInstallerFileName}" is likely out of sync with the old blockmap, e.g. because one of them was replaced or evicted independently of the other`
         )
       }
-      this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+      this.logDifferentialDownloadFallback(e)
       if (this._testOnlyOptions != null) {
         // test mode
         throw e
@@ -1304,6 +1326,51 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return true
     }
   }
+}
+
+/**
+ * Whether `blockMap` (parsed from the cache, so unchecked) is a well-formed blockmap whose blocks end exactly at `file`'s size.
+ * A malformed map is rejected, so a corrupt cache file is replaced like a stale one. A missing file is not rejected here (the
+ * differential download reports it). Releases almost always differ in size, so this catches a blockmap of another release.
+ * @internal
+ */
+export async function isBlockMapOfFile(blockMap: unknown, file: string): Promise<boolean> {
+  const end = getBlockMapEnd(blockMap)
+  if (end == null) {
+    return false
+  }
+  const stat = await fsExtra.stat(file).catch(() => null)
+  return stat == null || end === stat.size
+}
+
+/** Where the blocks of `blockMap` end, or null if it is not a well-formed blockmap. */
+function getBlockMapEnd(blockMap: unknown): number | null {
+  if (blockMap == null || typeof blockMap !== "object") {
+    return null
+  }
+  const { files } = blockMap as { files?: unknown }
+  if (!Array.isArray(files)) {
+    return null
+  }
+  let end = 0
+  for (const blockMapFile of files) {
+    if (blockMapFile == null || typeof blockMapFile !== "object") {
+      return null
+    }
+    const { offset, sizes, checksums } = blockMapFile as { offset?: unknown; sizes?: unknown; checksums?: unknown }
+    if (typeof offset !== "number" || !Number.isFinite(offset) || offset < 0 || !Array.isArray(sizes) || !Array.isArray(checksums) || checksums.length !== sizes.length) {
+      return null
+    }
+    let fileEnd = offset
+    for (const size of sizes) {
+      if (typeof size !== "number" || !Number.isFinite(size) || size < 0) {
+        return null
+      }
+      fileEnd += size
+    }
+    end = Math.max(end, fileEnd)
+  }
+  return end
 }
 
 /** @internal */

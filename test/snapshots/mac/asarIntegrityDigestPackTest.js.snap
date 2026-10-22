@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ASAR integrity digest > is embedded into both slices of a universal app 1`] = `
+{
+  "mac": [],
+}
+`;
+
+exports[`ASAR integrity digest > is embedded into the Electron Framework and enforced by Electron 1`] = `
+{
+  "mac": [],
+}
+`;
+
+exports[`ASAR integrity digest > is not embedded with asarIntegrityDigest set to false, and a changed Info.plist entry goes unnoticed 1`] = `
+{
+  "mac": [],
+}
+`;
+
+exports[`ASAR integrity digest > leaves an unsigned app launchable 1`] = `
+{
+  "mac": [],
+}
+`;

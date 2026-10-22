@@ -15,8 +15,8 @@ jobs:
       fail-fast: false
       matrix:
         nodeVersion: [
-          24.22.0,
-          22.23.3,
+          24.22.1,
+          22.23.4,
           20.20.2,
           18.20.8,
           16.20.2,
@@ -29,7 +29,7 @@ jobs:
           persist-credentials: false
 
       - name: Cleanup runner
-        uses: ./.github/actions/cleanup-runner
+        uses: $/.github/actions/cleanup-runner
 
       - name: Extract node major version to tag docker images
         run: echo "NODE_TAG=$(cut -d '.' -f 1 <<< ${{ matrix.nodeVersion }})" >> $GITHUB_ENV

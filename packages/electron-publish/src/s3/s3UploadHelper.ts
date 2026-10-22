@@ -1,5 +1,6 @@
 import _aws4 from "aws4"
 const { sign } = _aws4
+import { InvalidConfigurationError } from "builder-util"
 import * as fs from "fs"
 import * as http from "http"
 import * as https from "https"
@@ -39,9 +40,14 @@ function resolveS3Request(params: S3RequestTarget): { host: string; hostname: st
   let isHttp = false
 
   if (params.endpoint != null) {
-    const u = new URL(params.endpoint)
+    let u: URL
+    try {
+      u = new URL(params.endpoint)
+    } catch {
+      throw new InvalidConfigurationError(`Invalid S3 endpoint "${params.endpoint}": use an http:// or https:// URL`)
+    }
     if (u.protocol !== "http:" && u.protocol !== "https:") {
-      throw new Error(`Unsupported S3 endpoint protocol: ${u.protocol}`)
+      throw new InvalidConfigurationError(`Unsupported S3 endpoint protocol "${u.protocol}" in "${params.endpoint}": use an http:// or https:// URL`)
     }
     isHttp = u.protocol === "http:"
     host = u.host
@@ -109,20 +115,9 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
 
   let resolvePromise!: () => void
   let rejectPromise!: (err: Error) => void
-  let settled = false
   const done = new Promise<void>((res, rej) => {
-    resolvePromise = () => {
-      if (!settled) {
-        settled = true
-        res()
-      }
-    }
-    rejectPromise = error => {
-      if (!settled) {
-        settled = true
-        rej(error)
-      }
-    }
+    resolvePromise = res
+    rejectPromise = rej
   })
 
   const req = transport.request(
@@ -134,7 +129,12 @@ export function startS3PutObject(params: S3PutObjectParams): { req: http.ClientR
       headers: signed.headers,
     },
     res => {
-      res.on("aborted", () => rejectPromise(new Error("S3 PutObject response aborted")))
+      // "close" before the message completed means the connection dropped mid-response
+      res.on("close", () => {
+        if (!res.complete) {
+          rejectPromise(new Error(`S3 PutObject response aborted (HTTP ${res.statusCode})`))
+        }
+      })
       res.on("error", rejectPromise)
       if (res.statusCode === 200) {
         res.resume()

@@ -5,7 +5,7 @@ import * as path from "path"
 import { startVitest } from "vitest/node"
 import { getAllTestFiles } from "./vitest-config/file-discovery.js"
 import { generateTests } from "./generate-tests.js"
-import { buildWeightedFiles, computeShardCount, splitIntoShards } from "./vitest-config/shard-builder.js"
+import { buildWeightedFiles, computeShardCount, shardPlanMismatchError, splitIntoShards } from "./vitest-config/shard-builder.js"
 import { DEFAULT_TEST_FILE_GLOBS, getTestFilesOverride, SHARD_INDEX, SupportedPlatforms, TEST_MODE } from "./vitest-config/smart-config.js"
 import SmartSequencer from "./vitest-config/vitest-smart-sequencer.js"
 
@@ -87,6 +87,13 @@ async function main() {
   const shardCount = computeShardCount(weighted)
   const shards = splitIntoShards(weighted, shardCount)
   const index = SHARD_INDEX ?? 0
+
+  const expectedShardCount = process.env.VITEST_EXPECTED_SHARD_COUNT ? Number(process.env.VITEST_EXPECTED_SHARD_COUNT) : null
+  const mismatch = shardPlanMismatchError(expectedShardCount, shardCount, process.env.VITEST_SMART_CACHE_SOURCE)
+  if (mismatch) {
+    console.error(`Error: ${mismatch}`)
+    process.exit(1)
+  }
 
   if (index >= shardCount) {
     console.error(`Error: Shard index ${index} is out of range (max: ${shardCount - 1})`)

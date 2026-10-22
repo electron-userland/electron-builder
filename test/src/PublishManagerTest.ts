@@ -111,6 +111,29 @@ test.ifNotWindows("a configured signing key embeds the derived public key into a
   )
 })
 
+test.ifNotWindows("a base64 ELECTRON_BUILDER_UPDATE_SIGN_KEY bundle embeds every derived public key into app-update.yml", ({ expect }) => {
+  stubPublishingBuildEnv()
+  const a = generateUpdateSigningKeypair()
+  const b = generateUpdateSigningKeypair()
+  // what `cat a.pem b.pem | base64 | tr -d '\n'` puts into the CI secret
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", Buffer.from(`${a.privateKeyPem}\n${b.privateKeyPem}\n`).toString("base64"))
+  return app(
+    expect,
+    {
+      targets: Platform.MAC.createTarget("zip", Arch.x64),
+      config: { updateManifest: null, publish: [genericPublish] },
+    },
+    {
+      publish: "always",
+      afterPackTestHook: async () => true,
+      packed: async context => {
+        const updateConfig = load(await fsExtra.readFile(path.join(context.getResources(Platform.MAC, Arch.x64), "app-update.yml"), "utf-8")) as any
+        expect(updateConfig.updateManifestPublicKey).toEqual([a.publicKeyPem, b.publicKeyPem])
+      },
+    }
+  )
+})
+
 test.ifNotWindows("updateManifest: false publishes unsigned manifests without failing", ({ expect }) => {
   stubPublishingBuildEnv()
   return app(

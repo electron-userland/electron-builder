@@ -24,7 +24,7 @@ env:
 
 jobs:
   run-docker-build:
-    uses: ./.github/workflows/docker-build.yml
+    uses: $/.github/workflows/docker-build.yml
 
   deploy:
     name: Build and Push Docker
@@ -42,13 +42,8 @@ jobs:
           14, 16, 18, 20, 22, 24
         ]
     steps:
-      - name: Checkout code repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
       - name: Cleanup runner
-        uses: ./.github/actions/cleanup-runner
+        uses: $/.github/actions/cleanup-runner
 
       - name: Download images artifact - node${{ matrix.nodeMajorVersion }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
