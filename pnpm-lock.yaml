@@ -543,8 +543,8 @@ importers:
         specifier: 7.7.1
         version: 7.7.1
       electron:
-        specifier: 41.10.6
-        version: 41.10.6
+        specifier: 42.11.14
+        version: 42.11.14
 
   test:
     devDependencies:
@@ -2721,10 +2721,6 @@ packages:
     resolution: {integrity: sha512-LoKJUXNiJ4JM8IIrUltSHI+8pkogaGj5wmJx81jE/Wk3g2w1/kfMbTEKNoY5kitGE8hiC12h32R/1SlywFtxXg==}
     engines: {node: '>=22.12.0'}
     hasBin: true
-
-  '@electron/get@5.0.0':
-    resolution: {integrity: sha512-pjoBpru1KdEtcExBnuHAP1cAc/5faoedw0hzJkL3o4/IJp7HNF1+fbrdxT3gMYRX2oJfvnA/WXeCTVQpYYxyJA==}
-    engines: {node: '>=22.12.0'}
 
   '@electron/get@5.1.0':
     resolution: {integrity: sha512-3kSBtG8ObcTVfXanm5vVJ6UnBLEVmVsRk1M+vGqCuMBV+XLCbJYuWQful+yIy0GQDsSlK0kHEriEHn7SPk4EnA==}
@@ -5907,8 +5903,8 @@ packages:
   electron-to-chromium@1.5.438:
     resolution: {integrity: sha512-AN9xMU1hJiT65LkCUPL1DZm5TCbOPb2Qsm5pYwFLEXp6/qj9SdT4yMiqs7Qqstwvkn1zF7l36SRGt+s6XcJ0FA==}
 
-  electron@41.10.6:
-    resolution: {integrity: sha512-NEB7QnVpT2p8S9U5jOCPAtCyhl1WjRT/ODvJP6ec1/dZRUmf/EjYVOBb/dthCmJh4bISqpAroGJ/xRRxX7VwJw==}
+  electron@42.11.14:
+    resolution: {integrity: sha512-EHX0gpd/mV58ah08NOLCp5QbwoCWwAz+hlkdjHRX55lzoVJncUWJcy/gpIErE6T6HdViMaNAiO98f1IBtdvvaA==}
     engines: {node: '>= 22.12.0'}
     hasBin: true
 
@@ -13378,19 +13374,6 @@ snapshots:
 
   '@electron/fuses@2.1.3': {}
 
-  '@electron/get@5.0.0':
-    dependencies:
-      debug: 4.4.3
-      env-paths: 3.0.0
-      graceful-fs: 4.2.11
-      progress: 2.0.3
-      semver: 7.7.3
-      sumchecker: 3.0.1
-    optionalDependencies:
-      undici: 7.29.1
-    transitivePeerDependencies:
-      - supports-color
-
   '@electron/get@5.1.0':
     dependencies:
       debug: 4.4.3
@@ -16593,10 +16576,10 @@ snapshots:
 
   electron-to-chromium@1.5.438: {}
 
-  electron@41.10.6:
+  electron@42.11.14:
     dependencies:
       '@electron-internal/extract-zip': 1.0.5
-      '@electron/get': 5.0.0
+      '@electron/get': 5.1.0
       '@types/node': 24.13.6
     transitivePeerDependencies:
       - supports-color
