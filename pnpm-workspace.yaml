@@ -37,7 +37,7 @@ patchedDependencies:
   '@changesets/assemble-release-plan@6.0.9': patches/@changesets__assemble-release-plan@6.0.9.patch
   estree-walker@3.0.3: patches/estree-walker@3.0.3.patch
 overrides:
-  flatted: '>=3.4.2'
+  flatted: '>=3.4.4' # @vitest/ui 5.0.5 declares ^3.4.4
   # --- Dependabot transitive-dependency security overrides ---
   shell-quote: '>=1.11.0 <2' # GHSA-pqg4-j6r4-53mv (critical), GHSA-395f-4hp3-45gv (high), GHSA-w7jw-789q-3m8p (critical)
   esbuild: '>=0.28.1 <0.29' # GHSA-gv7w-rqvm-qjhr (high), GHSA-g7r4-m6w7-qqqr (low)
