@@ -204,7 +204,13 @@ export class PublishManager implements PublishContext {
       if (emitsManifest) {
         await packager.requireUpdateSigningKeys(this.isPublish)
       }
-      const publishConfig = await createAppUpdateConfiguration(packager, publishConfigs, this.isPublish, false, event.targets.some(it => isPublisherNameConsumer(it)))
+      const publishConfig = await createAppUpdateConfiguration(
+        packager,
+        publishConfigs,
+        this.isPublish,
+        false,
+        event.targets.some(it => isPublisherNameConsumer(it))
+      )
       if (publishConfig != null) {
         await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig, event.appOutDir)
       }
@@ -412,7 +418,13 @@ export async function getPackAppUpdatePublishConfiguration(
   isPublish: boolean
 ): Promise<PublishConfiguration | null> {
   const { publishConfigs, emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, targets, arch, isPublish)
-  return await createAppUpdateConfiguration(packager, publishConfigs, isPublish, emitsManifest, targets.some(it => isPublisherNameConsumer(it)))
+  return await createAppUpdateConfiguration(
+    packager,
+    publishConfigs,
+    isPublish,
+    emitsManifest,
+    targets.some(it => isPublisherNameConsumer(it))
+  )
 }
 
 /**

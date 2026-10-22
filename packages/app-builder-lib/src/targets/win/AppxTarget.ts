@@ -39,10 +39,12 @@ export default class AppXTarget extends Target {
 
     // the latest.yml it writes lists the .appx, which NsisUpdater cannot install and MsixUpdater (MSIX packages only) does not read
     if (this.options.electronUpdaterAware === true) {
-      log.once("appx-electron-updater-aware").warn(
-        { solution: "build the msix target with msix.electronUpdaterAware instead", see: "https://www.electron.build/docs/msix#auto-updates" },
-        "appx.electronUpdaterAware: electron-updater does not update AppX packages"
-      )
+      log
+        .once("appx-electron-updater-aware")
+        .warn(
+          { solution: "build the msix target with msix.electronUpdaterAware instead", see: "https://www.electron.build/docs/msix#auto-updates" },
+          "appx.electronUpdaterAware: electron-updater does not update AppX packages"
+        )
     }
   }
 

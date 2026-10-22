@@ -292,18 +292,7 @@ function createZip64(entries: Array<{ name: string; data: Buffer }>): Buffer {
   }
   const centralDirectory = Buffer.concat(central)
   const zip64EocdOffset = offset + centralDirectory.length
-  const zip64Eocd = Buffer.concat([
-    u32(0x06064b50),
-    u64(44),
-    u16(45),
-    u16(45),
-    u32(0),
-    u32(0),
-    u64(entries.length),
-    u64(entries.length),
-    u64(centralDirectory.length),
-    u64(offset),
-  ])
+  const zip64Eocd = Buffer.concat([u32(0x06064b50), u64(44), u16(45), u16(45), u32(0), u32(0), u64(entries.length), u64(entries.length), u64(centralDirectory.length), u64(offset)])
   const locator = Buffer.concat([u32(0x07064b50), u32(0), u64(zip64EocdOffset), u32(1)])
   const eocd = Buffer.concat([u32(0x06054b50), u16(0), u16(0), u16(0xffff), u16(0xffff), u32(0xffffffff), u32(0xffffffff), u16(0)])
   return Buffer.concat([...local, centralDirectory, zip64Eocd, locator, eocd])
@@ -327,7 +316,13 @@ describe("readZipEntry", () => {
 
   test("reads a stored entry of a Zip64 archive", async ({ expect, tmpDir }) => {
     const content = Buffer.from("stored content")
-    const file = await write(tmpDir, createZip64([{ name: "first.bin", data: Buffer.from("first") }, { name: MSIX_BUNDLE_MANIFEST_ENTRY, data: content }]))
+    const file = await write(
+      tmpDir,
+      createZip64([
+        { name: "first.bin", data: Buffer.from("first") },
+        { name: MSIX_BUNDLE_MANIFEST_ENTRY, data: content },
+      ])
+    )
     expect(await readZipEntry(file, MSIX_BUNDLE_MANIFEST_ENTRY)).toEqual(content)
   })
 
@@ -419,7 +414,12 @@ async function serveMsixUpdate(tmpDir: TmpDir, files = [bundleFileInfo()], versi
 
 // trustedKey is the updateManifestPublicKey of app-update.yml, which a build that signs update manifests embeds; null for none
 // `adapter` of an earlier updater: a later launch of the same app, with the same cache
-async function createMsixUpdater(native: TestMsixNativeUpdater, feedUrl = "http://127.0.0.1:1", trustedKey: string | null = SIGNING_KEYS.publicKeyPem, existingAdapter?: AppAdapter) {
+async function createMsixUpdater(
+  native: TestMsixNativeUpdater,
+  feedUrl = "http://127.0.0.1:1",
+  trustedKey: string | null = SIGNING_KEYS.publicKeyPem,
+  existingAdapter?: AppAdapter
+) {
   // the updater takes require("electron").autoUpdater when it is created
   mockForNodeRequire("electron", { autoUpdater: native })
   const adapter: AppAdapter = existingAdapter ?? (await createTestAppAdapter("1.0.0"))
