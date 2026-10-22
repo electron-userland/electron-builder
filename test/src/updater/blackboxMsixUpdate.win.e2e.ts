@@ -13,7 +13,7 @@
  */
 import AdmZip from "adm-zip"
 import { getTemplatePath } from "app-builder-lib/src/util/pathManager"
-import { generateUpdateSigningKeypair, log, TmpDir } from "builder-util"
+import { generateUpdateSigningKeypair, log } from "builder-util"
 import { parseXml, verifyManifestSignatures } from "builder-util-runtime"
 import { execFileSync } from "child_process"
 import { Arch, Configuration } from "electron-builder"
@@ -182,11 +182,10 @@ describe.heavy("msix auto-update", msixUpdateTestOptions, () => {
       return
     }
 
-    const { expect } = context
+    const { expect, tmpDir } = context
     // signed as in runSignedManifestTest: MsixUpdater refuses to download without a trusted key, and the build refuses packTester's default updateManifest: false
     const key = generateUpdateSigningKeypair()
     const signedMsixConfig: Configuration = { ...msixConfig, updateManifest: { signingKey: key.privateKeyPem } }
-    const tmpDir = new TmpDir("msix-auto-update")
     const outDirs: Array<ApplicationUpdatePaths> = []
     const aliasPath = path.join(windowsLocalAppData(), "Microsoft", "WindowsApps", EXECUTION_ALIAS)
     let trustedThumbprint: string | null = null
@@ -291,7 +290,6 @@ describe.heavy("msix auto-update", msixUpdateTestOptions, () => {
       if (thumbprint != null) {
         await runCleanupStep("removing the trusted certificate", () => removeTrustedCertificateNative(thumbprint))
       }
-      await runCleanupStep("removing the temp dir", () => tmpDir.cleanup())
     }
   })
 })
