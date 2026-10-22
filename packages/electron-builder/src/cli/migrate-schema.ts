@@ -65,7 +65,7 @@ export const NSIS_PER_MACHINE_UPDATE_ADVISORY =
 // Advisory surfaced when a custom win.sign.sign hook has no publisherName. v27 fails such a build when it writes app-update.yml.
 export const WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY =
   "win.sign.sign (custom signing hook) without win.sign.publisherName detected. In v27, a signed build that writes app-update.yml " +
-  "(an nsis, nsis-web or electronUpdaterAware appx or msix target with a publish configuration, including one inferred from a GitHub repository) fails with InvalidConfigurationError " +
+  "(an nsis, nsis-web or electronUpdaterAware appx target with a publish configuration, including one inferred from a GitHub repository) fails with InvalidConfigurationError " +
   "because electron-builder cannot tell which certificate the hook signs with (a certificate in the config or from WIN_CSC_LINK / CSC_LINK doesn't supply the publisher name of a hook). " +
   "Set win.sign.publisherName to the subject of the certificate your hook signs with, or win.verifyUpdateCodeSignature: false only if your updates are not Authenticode-signed. " +
   "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-is-validated-against-the-signing-certificate"

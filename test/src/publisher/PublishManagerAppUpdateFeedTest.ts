@@ -1,4 +1,5 @@
 import { Arch, LinuxPackager, Packager, Platform, PlatformPackager, Target } from "app-builder-lib"
+import { SigntoolSignManager } from "app-builder-lib/src/codeSign/win/signtoolBaseSignManager"
 import { getAppUpdatePublishConfiguration, getPackAppUpdatePublishConfiguration, PublishManager } from "app-builder-lib/src/publish/PublishManager"
 import { derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, log, parsePrivateKey } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
@@ -268,6 +269,47 @@ test("an electron-updater-aware msix and an nsis with another feed fail the buil
   expect(error!.message).toContain(`targets "nsis", "msix" are built from the same windows x64 app`)
   expect(error!.message).toContain("nsis -> s3, msix -> generic")
   expect(await pathExists(path.join(appOutDir, "resources", "app-update.yml"))).toBe(false)
+})
+
+// a Windows packager signing with a custom win.sign.sign hook; the real SigntoolSignManager computes the publisher name, and getCscLink keeps a
+// WIN_CSC_LINK / CSC_LINK of the test environment out of it
+function makeHookSignedPackager(publisherName?: string) {
+  const base = makePackager({ platformPublish: generic })
+  const packager: any = {
+    ...base,
+    platformOptions: { ...base.platformOptions, sign: { type: "signtool", sign: "./customSign.js", ...(publisherName == null ? {} : { publisherName }) } },
+    isForceCodeSigningVerification: true,
+    getCscLink: () => null,
+    getCscPassword: () => null,
+  }
+  packager.signingManager = { value: Promise.resolve(new SigntoolSignManager(packager)) }
+  return packager
+}
+
+test("a custom sign hook without publisherName: an electron-updater-aware msix alone writes app-update.yml without publisherName", async ({ expect, tmpDir }) => {
+  // MsixUpdater does not read publisherName: the signed update manifest pins the bundle
+  const appUpdate = await afterPackAppUpdate(tmpDir, makeHookSignedPackager(), [target("msix", { electronUpdaterAware: true })])
+  expect(appUpdate).toMatchObject(generic)
+  expect(appUpdate).not.toHaveProperty("publisherName")
+  expect(await getPackAppUpdatePublishConfiguration(makeHookSignedPackager(), [target("msix", { electronUpdaterAware: true })] as any, Arch.x64, false)).not.toHaveProperty(
+    "publisherName"
+  )
+})
+
+test.for([["nsis"], ["nsis-web"], ["appx"]] as const)(
+  "a custom sign hook without publisherName still fails a pack with an %s target, also next to an msix",
+  async ([name], { expect, tmpDir }) => {
+    const updaterTarget = target(name, name === "appx" ? { electronUpdaterAware: true } : null)
+    for (const targets of [[updaterTarget], [updaterTarget, target("msix", { electronUpdaterAware: true })]]) {
+      await expect(afterPackAppUpdate(tmpDir, makeHookSignedPackager(), targets)).rejects.toThrow(/win\.sign\.publisherName/)
+    }
+  }
+)
+
+test("a custom sign hook with publisherName writes it for an nsis target, not for an msix alone", async ({ expect, tmpDir }) => {
+  const subject = "CN=My Company, O=My Company, C=US"
+  expect((await afterPackAppUpdate(tmpDir, makeHookSignedPackager(subject), [target("nsis")])).publisherName).toEqual([subject])
+  expect(await afterPackAppUpdate(tmpDir, makeHookSignedPackager(subject), [target("msix", { electronUpdaterAware: true })])).not.toHaveProperty("publisherName")
 })
 
 test("a provider with publishAutoUpdate: false is not embedded when a later one receives the manifest", async ({ expect, tmpDir }) => {

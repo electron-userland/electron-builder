@@ -204,7 +204,7 @@ export class PublishManager implements PublishContext {
       if (emitsManifest) {
         await packager.requireUpdateSigningKeys(this.isPublish)
       }
-      const publishConfig = await createAppUpdateConfiguration(packager, publishConfigs, this.isPublish, false)
+      const publishConfig = await createAppUpdateConfiguration(packager, publishConfigs, this.isPublish, false, event.targets.some(it => isPublisherNameConsumer(it)))
       if (publishConfig != null) {
         await writeAppUpdateYaml(packager.getResourcesDir(event.appOutDir), publishConfig, event.appOutDir)
       }
@@ -395,7 +395,8 @@ export async function getAppUpdatePublishConfiguration(
 ): Promise<PublishConfiguration | null> {
   const own = await getEmittingUpdateInfoPublishConfigs(packager, targetSpecificOptions, arch, isPublish)
   const publishConfigs = own ?? (await getPlatformUpdateInfoPublishConfigs(packager, arch, isPublish))
-  return await createAppUpdateConfiguration(packager, publishConfigs, isPublish, own != null && !signingRequirementApplied)
+  // the target is unknown here: the publisher name is resolved as for an NSIS installer
+  return await createAppUpdateConfiguration(packager, publishConfigs, isPublish, own != null && !signingRequirementApplied, true)
 }
 
 /**
@@ -411,7 +412,7 @@ export async function getPackAppUpdatePublishConfiguration(
   isPublish: boolean
 ): Promise<PublishConfiguration | null> {
   const { publishConfigs, emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, targets, arch, isPublish)
-  return await createAppUpdateConfiguration(packager, publishConfigs, isPublish, emitsManifest)
+  return await createAppUpdateConfiguration(packager, publishConfigs, isPublish, emitsManifest, targets.some(it => isPublisherNameConsumer(it)))
 }
 
 /**
@@ -529,13 +530,15 @@ async function getPlatformUpdateInfoPublishConfigs(packager: PlatformPackager<an
 /**
  * The embedded `app-update.yml` config (first provider, updater cache dir, Windows publisher name, manifest trust
  * list) for already-resolved publish configs. `requireSigning` applies the update-manifest signing requirement
- * (error when publishing, advisory otherwise) before the trust list is derived.
+ * (error when publishing, advisory otherwise) before the trust list is derived. `isPublisherNameNeeded`: a Windows
+ * target of the pack is updated by NsisUpdater, the only reader of `publisherName` (see {@link isPublisherNameConsumer}).
  */
 async function createAppUpdateConfiguration(
   packager: PlatformPackager<any>,
   publishConfigs: Array<PublishConfiguration> | null,
   isPublish: boolean,
-  requireSigning: boolean
+  requireSigning: boolean,
+  isPublisherNameNeeded: boolean
 ): Promise<PublishConfiguration | null> {
   if (publishConfigs == null || publishConfigs.length === 0) {
     return null
@@ -547,7 +550,7 @@ async function createAppUpdateConfiguration(
   }
   warnAboutGenericFeedQuery(publishConfig)
 
-  if (packager.platform === Platform.WINDOWS && publishConfig.publisherName == null) {
+  if (packager.platform === Platform.WINDOWS && isPublisherNameNeeded && publishConfig.publisherName == null) {
     const winPackager = packager as WinPackager
     const publisherName = winPackager.isForceCodeSigningVerification ? await (await winPackager.signingManager.value).computedPublisherName.value : undefined
     if (publisherName != null) {
@@ -901,6 +904,14 @@ async function getEmittingUpdateInfoPublishConfigs(
   const updateInfoConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, targetSpecificOptions, arch, errorIfCannot), arch)
   const emitting = updateInfoConfigs?.filter(it => it.publishAutoUpdate !== false) ?? []
   return emitting.length === 0 ? null : emitting
+}
+
+/**
+ * The Windows targets whose installs NsisUpdater updates (nsis, nsis-web, an electronUpdaterAware appx), which verifies the Authenticode
+ * signature of an update against `publisherName`. MsixUpdater does not read it: a pack of MSIX targets only neither resolves nor requires it.
+ */
+function isPublisherNameConsumer(target: Target): boolean {
+  return target.name !== "msix" && isSuitableWindowsTarget(target)
 }
 
 function isSuitableWindowsTarget(target: Target) {
