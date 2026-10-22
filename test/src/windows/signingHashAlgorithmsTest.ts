@@ -1,3 +1,4 @@
+import { InvalidConfigurationError } from "builder-util"
 import { resolveSigningHashAlgorithms } from "app-builder-lib/internal"
 import { describe, expect, test } from "vitest"
 
@@ -8,7 +9,6 @@ const table: Array<[string, Configured, Array<"sha1" | "sha256">]> = [
   // .msi holds one signature: sha256 unless sha1 is the only algorithm requested
   ["app.msi", undefined, ["sha256"]],
   ["app.msi", null, ["sha256"]],
-  ["app.msi", [], ["sha256"]],
   ["app.msi", ["sha1", "sha256"], ["sha256"]],
   ["app.msi", ["sha256", "sha1"], ["sha256"]],
   ["app.msi", ["sha256"], ["sha256"]],
@@ -35,5 +35,10 @@ const table: Array<[string, Configured, Array<"sha1" | "sha256">]> = [
 describe("resolveSigningHashAlgorithms", () => {
   test.each(table)("%s with %j signs with %j", (file, configured, expected) => {
     expect(resolveSigningHashAlgorithms(file, configured)).toEqual(expected)
+  })
+
+  // an empty list would run no signing pass yet report the file as signed
+  test.each(["app.exe", "app.dll", "app.msi", "app.appx"])("%s with [] throws InvalidConfigurationError", file => {
+    expect(() => resolveSigningHashAlgorithms(file, [])).toThrow(InvalidConfigurationError)
   })
 })

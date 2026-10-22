@@ -637,13 +637,19 @@ export class SigntoolSignManager extends SigntoolBaseSignManager {
  * - `.appx`, `.msix` and `.msixbundle` are always `sha256`.
  * - Everything else uses the configured list, defaulting to dual signing with `sha1` then `sha256`.
  *
- * Extensions are matched case-insensitively (`app.MSI` is an MSI).
+ * Extensions are matched case-insensitively (`app.MSI` is an MSI). An empty list is a configuration error: it would
+ * run no signing pass while the file is still reported as signed.
  */
 export function resolveSigningHashAlgorithms(filePath: string, configured: Array<"sha1" | "sha256"> | "sha1" | "sha256" | null | undefined): Array<"sha1" | "sha256"> {
   const requested = configured == null ? null : asArray(configured)
+  if (requested != null && requested.length === 0) {
+    throw new InvalidConfigurationError(
+      `win.sign.signingHashAlgorithms is an empty list, so no signing pass would run. List at least one of "sha1" or "sha256", remove the option to use the default ["sha1", "sha256"], or set win.sign to false to disable Windows signing.`
+    )
+  }
   const ext = path.extname(filePath).toLowerCase()
   if (ext === ".msi") {
-    return [requested != null && requested.length > 0 && !requested.includes("sha256") ? "sha1" : "sha256"]
+    return [requested != null && !requested.includes("sha256") ? "sha1" : "sha256"]
   }
   if (ext === ".appx" || ext === ".msix" || ext === ".msixbundle") {
     return ["sha256"]
