@@ -32,6 +32,8 @@ minimumReleaseAgeExclude:
   - '@electron/asar@4.3.1'
   # Renovate security update: markdown-it@14.3.3
   - markdown-it@14.3.3
+  # Renovate security update: @vitest/ui@5.0.5
+  - "@vitest/ui@5.0.5"
 patchedDependencies:
   '@changesets/cli@2.29.7': patches/@changesets__cli@2.29.7.patch
   '@changesets/assemble-release-plan@6.0.9': patches/@changesets__assemble-release-plan@6.0.9.patch
