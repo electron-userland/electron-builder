@@ -7,6 +7,7 @@ import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"
 import type { VerifyUpdateFileResult } from "./types.js"
 import { QuitAndInstallOptions, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
+import { nonThrowingLogger } from "./util.js"
 
 const require = createRequire(import.meta.url)
 
@@ -38,17 +39,25 @@ export abstract class BaseUpdater extends AppUpdater {
     }
     this._logger.info(`Install on explicit quitAndInstall`)
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
-    void this.installAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall).then(isInstalled => {
-      if (isInstalled) {
-        setImmediate(() => {
-          // this event is normally emitted when calling quitAndInstall, this emulates that
-          require("electron").autoUpdater.emit("before-quit-for-update")
-          this.app.quit()
-        })
-      } else {
-        this.quitAndInstallCalled = false
-      }
-    })
+    // the install runs asynchronously on targets whose install shows an elevation dialog (see installAsync), so the
+    // app quits once it finished instead of right after this call returns
+    void this.installAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
+      .catch((error: unknown) => {
+        // installAsync reports install failures itself; this is a failure to report one (an "error" listener that throws)
+        nonThrowingLogger(this._logger).error(`Cannot install update: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
+        return false
+      })
+      .then(isInstalled => {
+        if (isInstalled) {
+          setImmediate(() => {
+            // this event is normally emitted when calling quitAndInstall, this emulates that
+            require("electron").autoUpdater.emit("before-quit-for-update")
+            this.app.quit()
+          })
+        } else {
+          this.quitAndInstallCalled = false
+        }
+      })
   }
 
   installPendingUpdateIfAvailable(): Promise<boolean> {
@@ -391,34 +400,6 @@ export abstract class BaseUpdater extends AppUpdater {
    */
   // https://github.com/electron-userland/electron-builder/issues/1129
   // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
-  /** {@link spawnSyncLog} without blocking the main process: same command, same environment, awaited instead. */
-  protected spawnAsyncLog(cmd: string, args: string[] = [], env = {}): Promise<string> {
-    this._logger.info(`Executing: ${cmd} with args: ${args}`)
-    const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
-    return new Promise<string>((resolve, reject) => {
-      const child = spawn(cmd, args, {
-        env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
-        shell: true,
-        stdio: ["ignore", "pipe", "pipe"],
-      })
-
-      let stdout = ""
-      let stderr = ""
-      child.stdout?.on("data", (chunk: Buffer) => (stdout += chunk.toString()))
-      child.stderr?.on("data", (chunk: Buffer) => (stderr += chunk.toString()))
-
-      child.on("error", error => reject(error))
-      child.on("close", status => {
-        if (status === 0) {
-          resolve(stdout.trim())
-          return
-        }
-        this._logger.error(stderr)
-        reject(new Error(`Command ${cmd} exited with code ${status}`))
-      })
-    })
-  }
-
   protected async spawnLog(cmd: string, args: string[] = [], env: any = undefined, stdio: StdioOptions = "ignore"): Promise<boolean> {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     return new Promise<boolean>((resolve, reject) => {
@@ -435,6 +416,41 @@ export abstract class BaseUpdater extends AppUpdater {
       } catch (error) {
         reject(error)
       }
+    })
+  }
+
+  /**
+   * {@link spawnSyncLog} without blocking the main process: same command, same environment, awaited instead.
+   * Rejects when the command exits with a non-zero code or is killed by a signal.
+   *
+   * stdout is not read (as with {@link spawnSyncLog}, nothing uses it), so it is discarded instead of piped: a command
+   * still running when the app quits would otherwise be killed by SIGPIPE on its next write to stdout.
+   */
+  protected spawnAsyncLog(cmd: string, args: string[] = [], env = {}): Promise<void> {
+    // logging runs in child-process callbacks, where a throwing logger would escape as an uncaught exception
+    const logger = nonThrowingLogger(this._logger)
+    logger.info(`Executing: ${cmd} with args: ${args}`)
+    const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
+    return new Promise<void>((resolve, reject) => {
+      const child = spawn(cmd, args, {
+        env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
+        shell: true,
+        stdio: ["ignore", "ignore", "pipe"],
+      })
+
+      let stderr = ""
+      child.stderr?.setEncoding("utf8")
+      child.stderr?.on("data", (chunk: string) => (stderr += chunk))
+
+      child.on("error", error => reject(error))
+      child.on("close", (status, signal) => {
+        if (status === 0) {
+          resolve()
+          return
+        }
+        reject(new Error(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}`))
+        logger.error(stderr)
+      })
     })
   }
 }
