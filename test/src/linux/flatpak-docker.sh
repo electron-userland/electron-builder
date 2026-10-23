@@ -7,8 +7,8 @@
 # Run it from the repository root, with the dependencies installed and compiled (pnpm install && pnpm compile): the
 # container uses the workspace as it is. The flatpak user installation of the calling user (~/.local/share/flatpak), the
 # electron caches and the corepack home (~/.cache/node/corepack, which .github/actions/pnpm caches) are mounted at the same
-# place under the container user's HOME, so actions/cache can restore and save them on the runner, and pnpm starts without
-# a download.
+# place under the container user's HOME: the refs that one run of this script installs are there for the next, the caches
+# that actions/cache restores on the runner are used, and pnpm starts without a download.
 #
 # --privileged gives the container /dev/fuse (flatpak-builder's rofiles-fuse) and lifts docker's seccomp and AppArmor profiles,
 # which block the namespaces bubblewrap creates.

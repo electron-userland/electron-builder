@@ -140,42 +140,41 @@ docker run --rm -v "$PWD":/project -v electron-builder-flatpak:/root/.local/shar
 
 As above, the project's dependencies have to be installed before this command runs. `/project` is the working directory of the images.
 
-## Cache the Refs in GitHub Actions {#github-actions}
+## Run a Privileged Container in GitHub Actions {#github-actions}
 
-On a GitHub-hosted runner, the `electronuserland/builder` image can run as a privileged container, with the runtime, the SDK and the base app kept in the cache of [`actions/cache`](https://github.com/actions/cache) between runs. electron-builder's own flatpak tests run this way, in the `test-flatpak` job of its [test workflow](https://github.com/electron-userland/electron-builder/blob/master/.github/workflows/test.yaml), with the image `electronuserland/builder:22-wine-chrome` (the `-wine-chrome` variant has Xvfb, which the tests need to start the app). The cache is restored to the user installation of the runner's user, and that directory is mounted into the container:
+On a GitHub-hosted runner, the `electronuserland/builder` image can run as a privileged container. electron-builder's own flatpak tests run this way, in the `test-flatpak` job of its [test workflow](https://github.com/electron-userland/electron-builder/blob/master/.github/workflows/test.yaml), with the image `electronuserland/builder:22-wine-chrome` (the `-wine-chrome` variant has Xvfb, which the tests need to start the app). The runtime, the SDK and the base app go into the user installation of the runner's user, `~/.local/share/flatpak`, and that directory is mounted into the container:
 
 ```yaml
-- name: Prepare the runner
-  run: |
-    sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-    echo "FLATPAK_CACHE_MONTH=$(date -u +%Y-%m)" >> "$GITHUB_ENV"
-
-- name: Cache flatpak refs
-  uses: actions/cache@v5
-  with:
-    path: ~/.local/share/flatpak
-    key: flatpak-26.08-v1-${{ env.FLATPAK_CACHE_MONTH }}
-    restore-keys: |
-      flatpak-26.08-v1-
+- name: Allow unprivileged user namespaces
+  run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
 - name: Install the refs
   run: |
     test/src/linux/flatpak-docker.sh sh -c '
       flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo &&
-      flatpak install --user -y --noninteractive flathub org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08 org.electronjs.Electron2.BaseApp//26.08 &&
-      flatpak update --user -y --noninteractive org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08 org.electronjs.Electron2.BaseApp//26.08'
+      flatpak install --user -y --noninteractive flathub org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08 org.electronjs.Electron2.BaseApp//26.08'
 ```
 
 [`test/src/linux/flatpak-docker.sh`](https://github.com/electron-userland/electron-builder/blob/master/test/src/linux/flatpak-docker.sh) runs its arguments in the container, and the job's next step runs the tests the same way. What it does, and why:
 
 - **`docker run --privileged`** gives the container `/dev/fuse` and lifts the seccomp and AppArmor profiles of Docker, which keep bubblewrap from creating namespaces. FUSE and user namespaces then work, so the configuration needs neither of the [two additional arguments](#configure-electron-builder).
-- **It mounts the cached directory** at `.local/share/flatpak` under the `HOME` of the container user, and the workspace at `/project`.
-- **It runs the command as the runner's user, not as root.** That user owns the cached directory, and as root `flatpak` refuses to install into a user installation that another user owns: `error: Refusing to operate on a user installation as root! This can lead to incorrect file ownership and permission errors.` Running as that user also leaves nothing owned by root on the runner, so the cache can save the directory at the end of the job. The script creates the user in the container with the uid and gid of the runner's user.
+- **It mounts `~/.local/share/flatpak` of the runner** at `.local/share/flatpak` under the `HOME` of the container user, so the refs that one step installs are there for the next, and the workspace at `/project`.
+- **It runs the command as the runner's user, not as root.** That user owns the mounted directory, and as root `flatpak` refuses to install into a user installation that another user owns: `error: Refusing to operate on a user installation as root! This can lead to incorrect file ownership and permission errors.` Running as that user also leaves nothing owned by root on the runner. The script creates the user in the container with the uid and gid of the runner's user.
 - **The command runs inside `dbus-run-session`**, with `DBUS_SYSTEM_BUS_ADDRESS` set to the session bus, the wrapper of [Run the Build](#run-the-build) for a build that does not run as root.
-- **The `sysctl` line** lifts Ubuntu 24.04's AppArmor restriction of unprivileged user namespaces. It is a setting of the runner's kernel, and it also applies to bubblewrap when it runs as a user in the container.
+- **The `sysctl` step** lifts Ubuntu 24.04's AppArmor restriction of unprivileged user namespaces. It is a setting of the runner's kernel, and it also applies to bubblewrap when it runs as a user in the container.
 - **The `flatpak remote-add` line** is needed because the image adds the Flathub remote for root only.
 
-The key changes once a month: a user installation with the runtime and the SDK of one version is several GB, and saving a new entry on every run fills the repository's cache, which then evicts entries before a later run restores them. Within a month the key matches exactly, and the cache keeps the refs as they were saved; `flatpak install` skips refs that are installed, so the `flatpak update` line brings them up to date before the build. The first run of a month restores the newest older entry through `restore-keys` and saves the updated refs under the new key. Change the `v1` part when the configuration names other versions.
+The refs are downloaded from Flathub on every run; in electron-builder's job, the runtimes, SDKs and base apps of two versions take about a minute and a half. To keep them between runs instead, restore `~/.local/share/flatpak` with [`actions/cache`](https://github.com/actions/cache) before the install step, and add `flatpak update --user -y --noninteractive` with the same refs after the `flatpak install` line, which skips refs that are installed:
+
+```yaml
+- name: Cache flatpak refs
+  uses: actions/cache@v5
+  with:
+    path: ~/.local/share/flatpak
+    key: flatpak-26.08-v1
+```
+
+The trade-off is the size of the entry: a user installation with the runtime and the SDK of one version is several GB, a large share of a repository's 10 GB cache. Once a repository goes over that limit, GitHub evicts the least recently used entries, and an entry this large may be gone before the next run can restore it. Keep the key fixed rather than unique per run, so that the job does not save a new entry every time.
 
 ## What Does Not Work
 

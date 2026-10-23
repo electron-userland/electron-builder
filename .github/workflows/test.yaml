@@ -469,7 +469,7 @@ jobs:
   # It runs in a privileged container of the electronuserland/builder image built from docker/ (flatpak and flatpak-builder from
   # the Flatpak team's PPA, plus Xvfb in the -wine-chrome variant), so nothing is installed with apt on the runner, whose
   # package mirror at times serves the ~100 MB of flatpak, flatpak-builder and their dependencies at ~50 kB/s. The flatpak user
-  # installation is cached on the runner and mounted into the container.
+  # installation is a directory on the runner, mounted into the container.
   test-flatpak:
     name: Test Flatpak
     needs: [check-if-docker-build, run-docker-build]
@@ -482,7 +482,7 @@ jobs:
     env:
       # Every ref the suite needs, pre-installed so the flatpak target's own `flatpak install` inside a test does not eat the
       # test timeout. 26.08 is the FlatpakTarget default runtime/base version; 25.08 is what the "custom runtime and base app
-      # version" test asks for. Both are supported on flathub. Bump the -vN suffix of the cache key below when this list changes.
+      # version" test asks for. Both are supported on flathub.
       FLATPAK_REFS: >-
         org.freedesktop.Platform//26.08
         org.freedesktop.Sdk//26.08
@@ -517,7 +517,7 @@ jobs:
       - name: Load test runner image if needed
         if: needs.run-docker-build.result == 'success'
         run: |
-          docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
+          docker image load --input "$RUNNER_TEMP/electron-builder-all-$TEST_IMAGE_NODE_MAJOR_VERSION.tar"
           docker image ls -a
 
       # The tests run in the container as the runner's user, whose bubblewrap needs the unprivileged user namespaces that
@@ -536,26 +536,12 @@ jobs:
           fi
           docker run --rm "$IMAGE" sh -c 'flatpak --version && flatpak-builder --version'
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-          echo "FLATPAK_CACHE_MONTH=$(date -u +%Y-%m)" >> "$GITHUB_ENV"
 
-      # The flatpak user installation (remote config + installed runtimes/SDKs/base app). An SDK alone is well over a GB, so
-      # restoring it beats re-downloading from flathub every run. It is restored on the runner and mounted into the container.
-      # The key changes once a month: an entry is about 1.7 GB, and saving a new one on every run (a run_id key) filled the
-      # repository's cache, which evicted the entries before later runs could restore them. The first run of a month restores
-      # the newest older entry through restore-keys, and saves what the install step brought up to date, so the updates that
-      # every run downloads before the tests are at most a month of them. Bump the -vN suffix when FLATPAK_REFS changes.
-      - name: Cache flatpak runtimes
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: ~/.local/share/flatpak
-          key: flatpak-user-docker-fdo-26.08-25.08-electron2-v1-${{ env.FLATPAK_CACHE_MONTH }}
-          restore-keys: |
-            flatpak-user-docker-fdo-26.08-25.08-electron2-v1
-
-      # In the container, as the runner's user (test/src/linux/flatpak-docker.sh), whose user installation the cached directory
-      # is: as root, flatpak refuses to install into a user installation that another user owns. The image adds the flathub
-      # remote for root only, hence the remote-add. `flatpak install` is a no-op for refs already restored from the cache, and
-      # `flatpak update` brings those up to date here, so that the flatpak target's own update does not do it inside a test.
+      # Into the runner user's flatpak user installation (~/.local/share/flatpak), which test/src/linux/flatpak-docker.sh mounts
+      # into the container, in the container as that user: as root, flatpak refuses to install into a user installation that
+      # another user owns. The image adds the flathub remote for root only, hence the remote-add. The refs are not cached: they
+      # are several GB, and an entry that size was evicted from the repository's 10 GB cache before later runs could restore it.
+      # `flatpak update` is a no-op after a fresh install; it keeps the refs current should the directory ever be restored.
       - name: Install flatpak runtimes
         run: |
           test/src/linux/flatpak-docker.sh sh -c '
