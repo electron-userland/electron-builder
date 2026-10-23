@@ -140,6 +140,40 @@ docker run --rm -v "$PWD":/project -v electron-builder-flatpak:/root/.local/shar
 
 As above, the project's dependencies have to be installed before this command runs. `/project` is the working directory of the images.
 
+## Cache the Refs in GitHub Actions {#github-actions}
+
+On a GitHub-hosted runner, the `electronuserland/builder` image can run as a privileged container, with the runtime, the SDK and the base app kept in the cache of [`actions/cache`](https://github.com/actions/cache) between runs. electron-builder's own flatpak tests run this way, in the `test-flatpak` job of its [test workflow](https://github.com/electron-userland/electron-builder/blob/master/.github/workflows/test.yaml). The cache is restored to a directory on the runner, and that directory is mounted into the container as the user installation of root:
+
+```yaml
+- name: Cache flatpak refs
+  uses: actions/cache@v5
+  with:
+    path: ~/.local/share/flatpak
+    key: flatpak-26.08-v1
+
+- name: Build the flatpak
+  run: |
+    mkdir -p ~/.local/share/flatpak
+    docker run --rm --privileged \
+      -e HOST_OWNER="$(id -u):$(id -g)" \
+      -v "$PWD":/project \
+      -v "$HOME/.local/share/flatpak":/root/.local/share/flatpak \
+      electronuserland/builder:22 \
+      sh -c 'set -e
+        flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+        npx electron-builder --linux flatpak --publish never
+        chown -R "$HOST_OWNER" /root/.local/share/flatpak dist'
+```
+
+As in [Use an electronuserland/builder Image](#electronuserland-builder-image), the project's dependencies have to be installed before the build step runs.
+
+- **`--privileged`** gives the container `/dev/fuse` and lifts the seccomp and AppArmor profiles of Docker, which keep bubblewrap from creating namespaces. FUSE and user namespaces then work, so the configuration needs neither of the [two additional arguments](#configure-electron-builder).
+- **The `flatpak remote-add` line** is needed because the mount hides the Flathub remote that the image adds to that directory. On the first run, with nothing restored, the build downloads the refs from Flathub; the cache saves them at the end of the job.
+- **The `chown`** hands the files that root wrote back to the runner's user. The cache is saved by the runner's user, outside the container, and may not be able to read every file of a user installation that belongs to root.
+- **The key** has no part that changes from run to run: a user installation with the runtime and the SDK of one version is several GB, and saving a new entry on every run fills the repository's cache, which then evicts entries before a later run restores them. With a fixed key, the cache keeps the refs as they were saved, and the build brings them up to date. Change the key when the configuration names other versions.
+
+electron-builder's job installs the refs in a step of its own, as above but with `flatpak install --user -y --noninteractive flathub` and the refs in place of the build, and then runs its tests in a second container as the runner's user, because they also start the installed app, and Electron does not start as root with its sandbox on. For that user, the job also lifts Ubuntu 24.04's restriction of unprivileged user namespaces on the runner (`sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0`) and runs the tests inside the `dbus-run-session` wrapper of [Run the Build](#run-the-build).
+
 ## What Does Not Work
 
 - **[`modules`](../flatpak.md#extra-modules).** `flatpak-builder` always runs a module's build commands under bubblewrap, and no argument turns that off. The build fails with the `bwrap:` error followed by `Error: module <name>: Child process exited with code 1`.
@@ -157,4 +191,4 @@ For `Failure spawning rofiles-fuse`, `is not a valid icon: bwrap: ...`, `No remo
 
 ## Outside a Container
 
-On a machine where FUSE and user namespaces work, none of this is needed: install the tools, add the remote, and electron-builder does the rest — see [Build Requirements](../flatpak.md#build-requirements). electron-builder's own flatpak tests run that way, directly on GitHub-hosted `ubuntu-24.04` and `ubuntu-22.04` runners rather than in a container, the latter with the stock `flatpak` 1.12.7 and `flatpak-builder` 1.2.2 of Ubuntu 22.04; the `test-flatpak` job of its [test workflow](https://github.com/electron-userland/electron-builder/blob/master/.github/workflows/test.yaml) shows the steps.
+On a machine where FUSE and user namespaces work, none of this is needed: install the tools, add the remote, and electron-builder does the rest — see [Build Requirements](../flatpak.md#build-requirements). Besides the [privileged container](#github-actions), electron-builder's own flatpak tests run that way, directly on a GitHub-hosted `ubuntu-22.04` runner, with the stock `flatpak` 1.12.7 and `flatpak-builder` 1.2.2 of Ubuntu 22.04; the `test-flatpak` job of its [test workflow](https://github.com/electron-userland/electron-builder/blob/master/.github/workflows/test.yaml) shows the steps.
