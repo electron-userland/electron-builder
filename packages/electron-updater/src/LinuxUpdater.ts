@@ -1,10 +1,112 @@
 import { AllPublishOptions } from "builder-util-runtime"
+import { accessSync, constants as fsConstants } from "fs"
+import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
-import { BaseUpdater } from "./BaseUpdater.js"
+import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
+import { Logger } from "./types.js"
+import { nonThrowingLogger } from "./util.js"
 
 // Matches safe package manager names: alphanumeric, hyphens, underscores only.
 // Rejects names with shell metacharacters that could cause command injection.
 const SAFE_PM_REGEX = /^[a-zA-Z0-9_-]+$/
+
+/**
+ * Where a privileged command passed as argv is looked up. An elevation helper resolves a relative program name with the
+ * caller's PATH, which can hold user-writable directories (`~/.local/bin`): a program planted there would run as root
+ * once the user authenticates. A relative name is resolved in these system directories instead.
+ */
+const TRUSTED_COMMAND_DIRS = ["/usr/sbin", "/usr/bin", "/sbin", "/bin"]
+
+/**
+ * How the asynchronous install runs a privileged command, resolved once per install so that the installer path
+ * escaping and the way the command is spawned cannot disagree.
+ * - `root`: no elevation needed; the command is spawned directly, as argv.
+ * - `argv`: the helper (pkexec, sudo) takes the command as an argv array, so no shell and no escaping are involved.
+ * - `wrapped`: the helper (gksudo, kdesudo, beesu) takes a single command string: `/bin/bash -c '…'` and an escaped path.
+ */
+export type Elevation = { readonly kind: "root" } | { readonly kind: "argv" | "wrapped"; readonly helper: string[] }
+
+/**
+ * The commands that install a package, declared once per package manager so that the synchronous on-quit install
+ * and the asynchronous one run exactly the same thing.
+ *
+ * `execCommand` runs first. Only if it fails, the `recoveryChain` runs, step by step; each step is itself a plan that
+ * can declare its own recovery. The install fails when `execCommand` fails without a recovery chain, or when a step of
+ * the recovery chain fails.
+ */
+export interface InstallPlan {
+  /** The command and its arguments. */
+  readonly execCommand: string[]
+  /** Logged when {@link execCommand} failed, before the {@link recoveryChain} runs. */
+  readonly recoveryMessage?: string
+  /** Run in order, only when {@link execCommand} failed. */
+  readonly recoveryChain?: InstallPlan[]
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+/**
+ * Walks an {@link InstallPlan}: yields each command to run, and expects a failed command to be reported back with
+ * `throw()`. The recovery logic lives here only, so {@link runInstallPlan} and {@link runInstallPlanAsync} differ in
+ * nothing but whether they await the command.
+ */
+function* installPlanCommands(plan: InstallPlan, logger: Logger): Generator<string[], void, void> {
+  try {
+    yield plan.execCommand
+  } catch (error: unknown) {
+    const recoveryChain = plan.recoveryChain ?? []
+    if (recoveryChain.length === 0) {
+      throw error
+    }
+    logger.warn(errorMessage(error))
+    logger.warn(plan.recoveryMessage ?? `${plan.execCommand[0]} failed, attempting recovery`)
+    try {
+      for (const step of recoveryChain) {
+        yield* installPlanCommands(step, logger)
+      }
+    } catch (recoveryError: unknown) {
+      logger.error(`Recovery after ${plan.execCommand[0]} failed`)
+      throw recoveryError
+    }
+  }
+}
+
+/** Runs an {@link InstallPlan} synchronously, for the on-quit path where an async install cannot be awaited. */
+export function runInstallPlan(plan: InstallPlan, commandRunner: (commandWithArgs: string[]) => unknown, logger: Logger): void {
+  const commands = installPlanCommands(plan, nonThrowingLogger(logger))
+  let next = commands.next()
+  while (!next.done) {
+    let failure: { error: unknown } | null = null
+    try {
+      commandRunner(next.value)
+    } catch (error: unknown) {
+      failure = { error }
+    }
+    next = failure == null ? commands.next() : commands.throw(failure.error)
+  }
+}
+
+/** {@link runInstallPlan} for a command runner that does not block the main process. */
+export async function runInstallPlanAsync(plan: InstallPlan, commandRunner: (commandWithArgs: string[]) => Promise<unknown>, logger: Logger): Promise<void> {
+  const commands = installPlanCommands(plan, nonThrowingLogger(logger))
+  let next = commands.next()
+  while (!next.done) {
+    let failure: { error: unknown } | null = null
+    try {
+      await commandRunner(next.value)
+    } catch (error: unknown) {
+      failure = { error }
+    }
+    next = failure == null ? commands.next() : commands.throw(failure.error)
+  }
+}
+
+/** Narrows a detected package manager name to the ones a target supports. */
+export function isSupportedPackageManager<T extends string>(packageManager: string, supported: readonly T[]): packageManager is T {
+  return (supported as readonly string[]).includes(packageManager)
+}
 
 export abstract class LinuxUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
@@ -34,24 +136,149 @@ export abstract class LinuxUpdater extends BaseUpdater {
       .replace(/[\n\r]/g, "")
   }
 
+  /**
+   * The installer path as downloaded. {@link installerPath} escapes shell metacharacters, which is only
+   * correct when the command goes through a shell — passed as an argv element, the escapes would reach the
+   * package manager literally.
+   */
+  protected get rawInstallerPath(): string | null {
+    return super.installerPath
+  }
+
   protected runCommandWithSudoIfNeeded(commandWithArgs: string[]) {
     if (this.isRunningAsRoot()) {
       this._logger.info("Running as root, no need to use sudo")
       return this.spawnSyncLog(commandWithArgs[0], commandWithArgs.slice(1))
     }
 
-    const { name } = this.app
-    // Strip characters that could break shell quoting in the sudo dialog comment string
-    const safeName = name.replace(/["`$\\!\n\r;|&<>(){}*?[\]#~]/g, "")
-    const installComment = `"${safeName} would like to update"`
-    const sudo = this.sudoWithArgs(installComment)
+    const sudo = this.sudoWithArgs(this.installComment())
     this._logger.info(`Running as non-root user, using sudo to install: ${sudo}`)
-    let wrapper = `"`
-    // some sudo commands dont want the command to be wrapped in " quotes
-    if (/pkexec/i.test(sudo[0]) || sudo[0] === "sudo") {
-      wrapper = ""
-    }
+    const wrapper = this.commandWrapperFor(sudo)
     return this.spawnSyncLog(sudo[0], [...(sudo.length > 1 ? sudo.slice(1) : []), `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
+  }
+
+  private installComment(): string {
+    // Strip characters that could break shell quoting in the sudo dialog comment string
+    const safeName = this.app.name.replace(/["`$\\!\n\r;|&<>(){}*?[\]#~]/g, "")
+    return `"${safeName} would like to update"`
+  }
+
+  private commandWrapperFor(sudo: string[]): string {
+    // some sudo commands dont want the command to be wrapped in " quotes
+    return this.takesArgv(sudo[0]) ? "" : `"`
+  }
+
+  /** Whether the elevation helper runs an argv array rather than a single command string. */
+  private takesArgv(sudo: string): boolean {
+    return /pkexec/i.test(sudo) || sudo === "sudo"
+  }
+
+  /** Determines once per install how {@link runCommandWithSudoIfNeededAsync} runs privileged commands. */
+  protected resolveElevation(): Elevation {
+    if (this.isRunningAsRoot()) {
+      this._logger.info("Running as root, no need to use sudo")
+      return { kind: "root" }
+    }
+    const helper = this.sudoWithArgs(this.installComment())
+    this._logger.info(`Running as non-root user, using sudo to install: ${helper}`)
+    return { kind: this.takesArgv(helper[0]) ? "argv" : "wrapped", helper }
+  }
+
+  /**
+   * Resolves a relative command name in {@link TRUSTED_COMMAND_DIRS}, for a command passed as argv to an elevation
+   * helper. Throws when it is not found there; the install plan treats that as a failed command.
+   */
+  protected resolveTrustedCommand(command: string): string {
+    if (path.isAbsolute(command)) {
+      return command
+    }
+    for (const dir of TRUSTED_COMMAND_DIRS) {
+      const candidate = path.join(dir, command)
+      try {
+        accessSync(candidate, fsConstants.X_OK)
+        return candidate
+      } catch {
+        // not in this directory
+      }
+    }
+    throw new Error(`${command} not found in ${TRUSTED_COMMAND_DIRS.join(":")}`)
+  }
+
+  /**
+   * {@link runCommandWithSudoIfNeeded} without blocking the main process, and without a shell wherever the
+   * elevation helper accepts an argv array.
+   *
+   * pkexec and sudo do, so their authentication dialog shows the command being authorized
+   * (`/usr/bin/dpkg -i /path/app.deb`) instead of the `/bin/bash -c '…'` wrapper, the installer path needs no
+   * escaping, and no `shell: true` deprecation applies. gksudo, kdesudo and beesu take the command as a
+   * single string, so those keep the wrapped form.
+   */
+  protected async runCommandWithSudoIfNeededAsync(commandWithArgs: string[], elevation: Elevation): Promise<void> {
+    if (elevation.kind === "root") {
+      await this.spawnAsyncLog(commandWithArgs[0], commandWithArgs.slice(1), {}, false)
+      return
+    }
+
+    const [sudo, ...sudoArgs] = elevation.helper
+    if (elevation.kind === "argv") {
+      const [command, ...args] = commandWithArgs
+      await this.spawnAsyncLog(sudo, [...sudoArgs, this.resolveTrustedCommand(command), ...args], {}, false)
+      return
+    }
+
+    const wrapper = this.commandWrapperFor(elevation.helper)
+    await this.spawnAsyncLog(sudo, [...sudoArgs, `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
+  }
+
+  /**
+   * The {@link InstallPlan} that installs the downloaded package at `installerPath`. Throws when the package cannot
+   * be installed on this system (no supported package manager).
+   */
+  protected abstract resolveInstallPlan(installerPath: string): InstallPlan
+
+  // must be sync (on-quit install)
+  protected doInstall(options: InstallOptions): boolean {
+    const installerPath = this.installerPath
+    if (installerPath == null) {
+      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
+      return false
+    }
+    try {
+      runInstallPlan(this.resolveInstallPlan(installerPath), commandWithArgs => this.runCommandWithSudoIfNeeded(commandWithArgs), this._logger)
+    } catch (error: unknown) {
+      this.dispatchError(error instanceof Error ? error : new Error(String(error)))
+      return false
+    }
+    if (options.isForceRunAfter) {
+      this.app.relaunch()
+    }
+    return true
+  }
+
+  /** {@link doInstall} without blocking the main process while the elevation dialog is open. */
+  protected async doInstallAsync(options: InstallOptions): Promise<boolean> {
+    if (this.installerPath == null) {
+      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
+      return false
+    }
+    try {
+      const elevation = this.resolveElevation()
+      // the path is only escaped when the command goes through the /bin/bash -c wrapper; as an argv element the escapes
+      // would reach the package manager literally
+      const installerPath = elevation.kind === "wrapped" ? this.installerPath : this.rawInstallerPath
+      if (installerPath == null) {
+        throw new Error("No update filepath provided, can't quit and install")
+      }
+      const plan = this.resolveInstallPlan(installerPath)
+      await runInstallPlanAsync(plan, commandWithArgs => this.runCommandWithSudoIfNeededAsync(commandWithArgs, elevation), this._logger)
+    } catch (error: unknown) {
+      this.dispatchError(error instanceof Error ? error : new Error(String(error)))
+      return false
+    }
+    if (options.isForceRunAfter) {
+      this.app.relaunch()
+    }
+    return true
   }
 
   protected sudoWithArgs(installComment: string): string[] {
@@ -78,13 +305,34 @@ export abstract class LinuxUpdater extends BaseUpdater {
   }
 
   protected determineSudoCommand(): string {
-    const sudos = ["gksudo", "kdesudo", "pkexec", "beesu"]
+    // pkexec first: it is the maintained, polkit-based mechanism, it is the only helper here that takes an
+    // argv array (so the dialog shows the install command and the path needs no escaping), and it works under
+    // Wayland. gksudo and kdesudo are unmaintained and were removed from Debian and Ubuntu; they stay as
+    // fallbacks for systems without polkit.
+    const sudos = ["pkexec", "gksudo", "kdesudo", "beesu"]
     for (const sudo of sudos) {
       if (this.hasCommand(sudo)) {
+        if (sudo === "pkexec") {
+          this.announceSkippedLegacyHelpers()
+        }
         return sudo
       }
     }
     return "sudo"
+  }
+
+  private legacyHelpersChecked = false
+
+  // once per updater: on a system that also has gksudo or kdesudo, the authentication prompt comes from polkit
+  private announceSkippedLegacyHelpers(): void {
+    if (this.legacyHelpersChecked) {
+      return
+    }
+    this.legacyHelpersChecked = true
+    const installed = ["gksudo", "kdesudo"].filter(helper => this.hasCommand(helper))
+    if (installed.length !== 0) {
+      this._logger.info(`Elevating the install with pkexec (polkit); ${installed.join(" and ")} ${installed.length === 1 ? "is" : "are"} only used on systems without polkit`)
+    }
   }
 
   /**
