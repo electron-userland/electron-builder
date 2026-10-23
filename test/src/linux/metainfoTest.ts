@@ -172,6 +172,8 @@ describe("prepareMetainfoFile", () => {
     expect(staged).toEqual({ file, installBasename: "com.example.MyApp.metainfo.xml" })
   })
 
+  // the flatpak target does not use installBasename: it always installs the file as <flatpak id>.metainfo.xml, the only name
+  // flatpak-builder composes AppStream data from (see flatpakBundleTest.ts for the related flatpak-builder version gate)
   test("keeps a basename ending in .appdata.xml (AppImageHub convention) without warning about the choice", async () => {
     const file = await writeFixture(metainfoXml(), "myapp.appdata.xml")
     const staged = await prepare(path.basename(file))

@@ -32,7 +32,10 @@ export interface MetainfoOptions {
 export interface StagedMetainfo {
   /** Absolute path to the source metainfo file. */
   file: string
-  /** File name to install under the target's metainfo directory (e.g. `/usr/share/metainfo`). */
+  /**
+   * File name to install under the target's metainfo directory (e.g. `/usr/share/metainfo`). The flatpak target ignores it
+   * and always installs the file as `<flatpak id>.metainfo.xml`, the only name flatpak-builder composes AppStream data from.
+   */
   installBasename: string
 }
 

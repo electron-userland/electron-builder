@@ -139,7 +139,7 @@ linux:
 |---|---|
 | `deb`, `rpm`, `pacman` | `/usr/share/metainfo/` |
 | `AppImage` | `usr/share/metainfo/` inside the image |
-| `flatpak` | `share/metainfo/` in the app prefix |
+| `flatpak` | `share/metainfo/` in the app prefix, always as `<flatpak id>.metainfo.xml` |
 | `snap` | **not supported** — the option is ignored (snap store listings are managed via the Snap Store) |
 
 Because the option cascades from `linux` into each target's options, you can also set it per target (e.g. only under `appImage`) or opt a single target out with `null`:
@@ -151,7 +151,9 @@ appImage:
   metainfo: null   # skip staging for AppImage only
 ```
 
-**Installed file name:** your basename is kept when it ends in `.metainfo.xml` (AppStream spec naming) or `.appdata.xml` (legacy naming — still the convention appimagetool/AppImageHub look for in AppImages; both are accepted). Any other name is normalized to `<component-id>.metainfo.xml`.
+**Installed file name:** your basename is kept when it ends in `.metainfo.xml` (AppStream spec naming) or `.appdata.xml` (legacy naming — still the convention appimagetool/AppImageHub look for in AppImages; both are accepted). Any other name is normalized to `<component-id>.metainfo.xml`. The `flatpak` target is the exception: `flatpak-builder` composes AppStream data only from a file named after the [flatpak application id](flatpak.md#application-id), so there the file is always installed as `<flatpak id>.metainfo.xml`, whatever its source name.
+
+**Flatpak build requirement:** composing the metainfo file needs `flatpak-builder` 1.4 or newer on the freedesktop SDK `24.08` or newer (the default) — older `flatpak-builder` composes with `appstream-compose`, which those SDKs no longer ship, so the build fails early with instructions (see [flatpak build requirements](flatpak.md#build-requirements)). Upgrade `flatpak-builder`, or set `flatpak: { metainfo: null }` to opt only the flatpak target out.
 
 **Validation:** the file is checked at build time. The build fails for a missing/unreadable file, malformed XML, a root element other than `<component type="desktop-application">` (the legacy `desktop` type alias is accepted), or a missing/empty `<id>`, `<name>`, `<summary>`, `<description>` or `<metadata_license>`. Non-fatal warnings are logged when the `<id>` is not reverse-DNS-shaped, differs from your `appId`, or when `<launchable type="desktop-id">` is missing or doesn't match the `.desktop` file the target installs. If `appstreamcli` is available on `PATH`, `appstreamcli validate --no-net` is additionally run and its findings are reported as warnings (never fatal). Set `linux.disableMetainfoValidation: true` to skip all validation — the file is still staged.
 

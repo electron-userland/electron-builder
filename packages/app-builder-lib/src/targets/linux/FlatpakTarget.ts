@@ -200,11 +200,15 @@ export default class FlatpakTarget extends Target {
     const metainfo = await prepareMetainfoFile({
       projectDir: this.packager.projectDir,
       metainfo: this.options.metainfo,
-      appId: this.packager.appInfo.id,
+      // the filtered flatpak id, not the raw appId: it is what the composed AppStream data and the desktop entry are named after
+      appId: this.appId,
       expectedDesktopId: `${this.appId}.desktop`,
       disableValidation: this.options.disableMetainfoValidation === true,
     })
-    await copyFile(metainfo.file, stageDir.getTempFile(path.join("share", "metainfo", metainfo.installBasename)))
+    // always installed as <flatpak id>.metainfo.xml, whatever the source basename: flatpak-builder composes the AppStream
+    // metadata only out of share/metainfo/<id>.metainfo.xml (or the legacy share/appdata/<id>.appdata.xml) — under any other
+    // name the file would be exported but silently never composed, and software centers would not see it
+    await copyFile(metainfo.file, stageDir.getTempFile(path.join("share", "metainfo", `${this.appId}.metainfo.xml`)))
   }
 
   private async copyIcons(stageDir: StageDir) {
@@ -277,6 +281,7 @@ export default class FlatpakTarget extends Target {
       artifactPath,
       tempDir,
       files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...extraFiles],
+      hasMetainfo: this.options.metainfo != null,
       symlinks: [[path.join("/lib", appIdentifier, executableName), path.join("/bin", executableName)], ...(this.options.symlinks || [])],
       installOrUpdateRefs: resolveInstallOrUpdateRefs(this.options.installOrUpdateRefs),
       flatpakBuilderArgs: this.options.additionalArgs?.flatpakBuilder ?? [],
