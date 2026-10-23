@@ -53,14 +53,19 @@ export interface ElectronSignOptions extends Omit<OnlySignOptions, "optionsForFi
    */
   readonly identity?: string | null
   /**
-   * Path to the main app entitlements file.
-   * Falls back to `build/entitlements.mac.plist` if it exists, then to `@electron/osx-sign`'s
-   * built-in defaults.
+   * Path to the main app entitlements file. Resolved relative to the build resources directory, then the project directory.
+   * Falls back to `build/entitlements.mac.plist` (or `build/entitlements.mas.plist` for MAS targets) if it exists.
+   * Otherwise `mac` builds use the bundled default, which grants only `com.apple.security.cs.allow-jit`
+   * (ad-hoc builds use a bundled ad-hoc template that also disables library validation), and MAS builds use
+   * `@electron/osx-sign`'s built-in sandboxed `default.mas.plist`.
    */
   readonly entitlements?: string | null
   /**
-   * Path to child entitlements inherited by embedded frameworks and bundles.
-   * Falls back to `build/entitlements.mac.inherit.plist` if it exists.
+   * Path to child entitlements inherited by embedded frameworks and bundles. Resolved relative to the build resources directory, then the project directory.
+   * Falls back to `build/entitlements.mac.inherit.plist` (or `build/entitlements.mas.inherit.plist` for MAS targets) if it exists.
+   * Otherwise nested binaries receive `@electron/osx-sign`'s per-file defaults (renderer/GPU helpers: `allow-jit`;
+   * plugin helper: Chromium's looser set; everything else: `default.darwin.plist`); ad-hoc `mac` builds use the
+   * bundled ad-hoc template instead.
    */
   readonly entitlementsInherit?: string | null
   /**
@@ -220,13 +225,28 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    *
    * Note: In order to activate the notarization step You MUST specify one of the following via environment variables:
    *
-   * 1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.
+   * 1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.
    * 2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`
    * 3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`
    *
    * For security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)
    */
   readonly notarize?: boolean
+
+  /**
+   * Whether to embed the [ASAR integrity](https://www.electronjs.org/docs/latest/tutorial/asar-integrity) digest into the Electron Framework binary.
+   *
+   * The digest covers the `ElectronAsarIntegrity` entries of `Info.plist`, so with the `enableEmbeddedAsarIntegrityValidation` fuse (see `electronFuses`) the app refuses to launch if those entries are changed, for example to match a modified `app.asar`. Embedding the digest modifies the Electron Framework, which is then signed again ad hoc; code signing the app replaces that signature.
+   *
+   * Applies only when:
+   * - Electron is 41 or later
+   * - the build runs on macOS (`codesign` signs the modified framework again)
+   * - `asar` is enabled and `asar.disableIntegrity` is not `true`
+   *
+   * Set to `false` if you change `app.asar` or `Info.plist` after the `afterPack` hook, sign the app yourself in `afterPack`, or merge separately built `x64` and `arm64` apps with `@electron/universal` yourself (build the `universal` arch instead).
+   * @default true
+   */
+  readonly asarIntegrityDigest?: boolean
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
@@ -396,7 +416,7 @@ export interface DmgContent {
    * The device-independent pixel offset from the top of the window to the **center** of the icon.
    */
   y: number
-  type?: "link" | "file" | "dir"
+  type?: "link" | "file" | "dir" | "position"
 
   /**
    * The name of the file within the DMG. Defaults to basename of `path`.

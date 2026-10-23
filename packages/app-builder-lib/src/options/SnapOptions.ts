@@ -76,7 +76,7 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
   readonly useTemplateApp?: boolean
 
   /**
-   * The type of [snap confinement](https://snapcraft.io/docs/reference/confinement).
+   * The type of [snap confinement](https://snapcraft.io/docs/snap-confinement).
    * - `strict` — recommended; the snap runs in a fully isolated sandbox.
    * - `devmode` — sandbox violations are logged but not enforced; for development only.
    * - `classic` — no confinement; equivalent to a traditionally packaged application.
@@ -94,7 +94,7 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
 
   /**
    * A short summary of the snap (max 78 characters).
-   * Defaults to [productName](./configuration.md#productName).
+   * Defaults to [productName](https://www.electron.build/docs/configuration#productname).
    */
   readonly summary?: string | null
 
@@ -127,7 +127,7 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
   readonly stagePackages?: Array<string> | null
 
   /**
-   * Directory containing [snap hooks](https://snapcraft.io/docs/snap-hooks), relative to
+   * Directory containing [snap hooks](https://snapcraft.io/docs/supported-snap-hooks), relative to
    * the build resources directory (`build/`).
    * @default build/snap-hooks
    */
@@ -142,14 +142,15 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
    * Use `"default"` in the list to keep the defaults and append extras:
    * `["default", "camera"]` adds `camera` to the standard set.
    *
-   * To configure plug attributes (e.g. `allow-sandbox` for Chromium's internal sandbox),
-   * use a descriptor object:
+   * To configure plug attributes, use a descriptor object:
    * ```json
    * [
    *   { "browser-sandbox": { "interface": "browser-support", "allow-sandbox": true } },
    *   "another-simple-plug-name"
    * ]
    * ```
+   * Note that the Snap Store reserves `allow-sandbox` (which keeps Chromium's internal sandbox) for
+   * vetted publishers and rejects other uploads that request it; electron-builder warns when it is set.
    */
   readonly plugs?: Array<string | PlugDescriptor> | PlugDescriptor | null
 
@@ -200,7 +201,7 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
   /**
    * Display title for the snap (may contain uppercase letters and spaces).
    * Defaults to `productName`.
-   * See [snap format](https://snapcraft.io/docs/snap-format).
+   * See [snap format](https://snapcraft.io/docs/the-snap-format).
    */
   readonly title?: string | null
 
@@ -213,6 +214,8 @@ export interface SnapOptionsLegacy extends CommonLinuxOptions, TargetSpecificOpt
    * When not set, `linux.compression` is mapped automatically:
    * `"store"` → `"lzo"`, `"maximum"` → `"xz"`, `"normal"` → snapcraft default.
    * Explicitly setting this field always overrides the mapped value.
+   *
+   * Template app builds (`useTemplateApp`) pack the image with the `mksquashfs` from the `toolsets.appimage` bundle. `lzo` requires a toolset other than the legacy `"0.0.0"`, whose `mksquashfs` supports only `gzip` and `xz`.
    */
   readonly compression?: "xz" | "lzo" | null
 
@@ -371,14 +374,14 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
    * Defaults to `["gnome"]` in normal builds (recommended for Electron apps on Ubuntu 24.04+).
    * Automatically set to `[]` in `useDestructiveMode` builds, where the gnome extension is
    * incompatible. Explicitly including `"gnome"` while `useDestructiveMode` is set will throw.
-   * See: https://snapcraft.io/docs/gnome-extension
+   * See: https://documentation.ubuntu.com/snapcraft/stable/reference/extensions/gnome-extension/
    */
   readonly extensions?: Array<string> | null
 
   // ─── Snap metadata ───────────────────────────────────────────────────────────
 
   /**
-   * The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap.
+   * The type of [confinement](https://snapcraft.io/docs/snap-confinement) supported by the snap.
    * @default strict
    */
   readonly confinement?: "devmode" | "strict" | "classic" | null
@@ -398,7 +401,7 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
 
   /**
    * An optional display title (may contain uppercase letters and spaces). Defaults to `productName`.
-   * See [snap format](https://snapcraft.io/docs/snap-format).
+   * See [snap format](https://snapcraft.io/docs/the-snap-format).
    */
   readonly title?: string | null
 
@@ -450,14 +453,32 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
 
   /**
    * [Plugs](https://snapcraft.io/docs/reference/interfaces) (consumed interfaces) for the app.
-   * When the `gnome` extension is active, content-snap plugs (themes, GNOME platform, GPU)
-   * are added automatically — only list custom plugs here.
-   * Without any extension, defaults to the standard Electron plug set.
+   *
+   * When unset, electron-builder declares its default plug set: `browser-support` (without
+   * `allow-sandbox`, so the app is launched with `--no-sandbox`), plus — unless the `gnome` extension
+   * supplies them — the app-level plugs `["desktop", "desktop-legacy", "home", "x11", "wayland",
+   * "unity7", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]` and, for strict builds
+   * that are not host/destructive-mode, the content-snap plugs `gtk-3-themes`, `icon-themes`,
+   * `sound-themes`, `gnome-46-2404` and `gpu-2404`.
+   *
+   * Include `"default"` to add to that set instead of replacing it: the result is the full default
+   * set (the app-level plugs above plus everything the build flavor declares on its own) together with
+   * your other entries, deduplicated by plug name. A descriptor object named like a default plug
+   * overrides that plug's attributes. A `null` descriptor resets a default plug named like its interface
+   * (`browser-support`) to the snapd defaults, and removes a default content-snap plug (`gtk-3-themes`,
+   * `icon-themes`, `sound-themes`, `gnome-46-2404`, `gpu-2404`) from the snap; the default `layout`
+   * binds into `gnome-46-2404` and `gpu-2404`, so set `layout` too when removing those.
+   * Without `"default"`, the list replaces the defaults entirely.
+   * ```json
+   * ["default", "camera", { "home": { "read": "all" } }]
+   * ```
    *
    * Supports descriptor objects for plugs with attributes:
    * ```json
-   * [{ "browser-sandbox": { "interface": "browser-support", "allow-sandbox": true } }]
+   * [{ "dot-config-app": { "interface": "personal-files", "write": ["$HOME/.config/app"] } }]
    * ```
+   * The Snap Store reserves `browser-support`'s `allow-sandbox` attribute for vetted publishers and
+   * rejects other uploads that request it; electron-builder warns when it is set.
    */
   readonly plugs?: Array<string | PlugDescriptor> | PlugDescriptor | null
 
@@ -504,7 +525,7 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
   // ─── Hooks ───────────────────────────────────────────────────────────────────
 
   /**
-   * Directory containing [snap hooks](https://snapcraft.io/docs/snap-hooks), relative to
+   * Directory containing [snap hooks](https://snapcraft.io/docs/supported-snap-hooks), relative to
    * the build resources directory.
    * @default build/snap-hooks
    */
@@ -517,7 +538,7 @@ export interface SnapOptions24 extends CommonLinuxOptions, TargetSpecificOptions
  *
  * @example
  * ```json
- * { "browser-sandbox": { "interface": "browser-support", "allow-sandbox": true } }
+ * { "dot-config-app": { "interface": "personal-files", "write": ["$HOME/.config/app"] } }
  * ```
  */
 export interface PlugDescriptor {

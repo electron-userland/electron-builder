@@ -1,4 +1,5 @@
-import { Arch, archFromString, copyDir, InvalidConfigurationError, log, removeNullish, toLinuxArchString } from "builder-util"
+import { Arch, archFromString, copyDir, InvalidConfigurationError, log, prepareFixedNameWrite, removeNullish, toLinuxArchString } from "builder-util"
+import { expandDefaultKeyword } from "builder-util/internal"
 
 import { deepAssign, isValidKey, Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
@@ -6,9 +7,19 @@ import * as yaml from "js-yaml"
 import * as path from "path"
 import { PlugDescriptor, SlotDescriptor, SnapOptions24 } from "../../../options/SnapOptions.js"
 import { SnapCore } from "./SnapTarget.js"
+import { getStagingCopyLinkOptions } from "../../../util/trustedSourceRoots.js"
 import { buildSnapCommandLauncherScript } from "./snapCommand.js"
 import { App, Part, SnapcraftYAML } from "./snapcraft.js"
 import { buildSnap, DEFAULT_STAGE_PACKAGES, SNAPCRAFT_YAML_OPTIONS } from "./snapcraftBuilder.js"
+import {
+  Core24PlugFlavor,
+  CORE24_DEFAULT_APP_PLUGS,
+  isBrowserSandboxAllowed,
+  resolveCore24Plugs,
+  warnAboutAllowSandboxPlugs,
+  warnAboutCore24DefaultPlugsExpansion,
+  warnAboutCore24NoSandboxDefault,
+} from "./snapPlugs.js"
 const { chmod, copy, mkdir, readdir, remove, writeFile } = _fsExtra
 
 // Electron's setuid sandbox helper. Removed from the staged app when the snap runs with
@@ -19,9 +30,9 @@ const SNAP_COMMAND_LAUNCHER = "command.sh"
 
 /** Snap build strategy for core24 — generates a native snapcraft.yaml and invokes the snapcraft CLI. */
 export class SnapCore24 extends SnapCore<SnapOptions24> {
-  // browser-support is intentionally absent here; it is auto-injected in mapSnapOptionsToSnapcraftYAML
-  // when the user has not provided custom plugs, so it always lands in both root plugs and app plugs.
-  defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
+  // App-level default plugs. browser-support is intentionally absent here; resolveCore24Plugs adds it (without
+  // allow-sandbox) to both the root and app plugs whenever the defaults apply.
+  defaultPlugs = [...CORE24_DEFAULT_APP_PLUGS]
 
   // Snap file hierarchy:
   // - snap/gui/ gets automatically copied to meta/gui/ in the final snap
@@ -74,7 +85,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // Create desktop file in snap/gui/ directory
     // Snapcraft will automatically copy this to meta/gui/ in the final snap
     const desktopFilePath = path.join(guiOutput, `${this.helper.getDesktopFileName(snap.name)}.desktop`)
-    await this.helper.writeDesktopEntry(this.options, this.packager.executableName + " %U", desktopFilePath, desktopExtraProps)
+    await this.helper.writeDesktopEntry(this.options, snap.name + " %U", desktopFilePath, desktopExtraProps)
 
     // Copy app files to the project root `app` directory so `source: app`
     // in the generated `snapcraft.yaml` (which is under `snap/`) can be
@@ -82,7 +93,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     const appDir = path.resolve(stageDir, "app")
     if (path.resolve(appDir) !== path.resolve(appOutDir)) {
       log.debug({ to: log.filePath(appDir), from: log.filePath(appOutDir) }, "copying app files to project root app directory")
-      await copyDir(appOutDir, appDir)
+      await copyDir(appOutDir, appDir, await getStagingCopyLinkOptions(this.packager))
     }
 
     // Drop the setuid chrome-sandbox helper before snapcraft stages the app — it is unusable under
@@ -94,6 +105,8 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // Write the launcher script the command always points at (see SNAP_COMMAND_LAUNCHER).
     // It lands at the snap root ($SNAP/command.sh) — it is intentionally not added to `organize`.
     const launcherPath = path.join(appDir, SNAP_COMMAND_LAUNCHER)
+    // the app files were just copied there: replace, never follow, a symlink at the name
+    await prepareFixedNameWrite(stageDir, launcherPath, "snap command launcher")
     await writeFile(launcherPath, buildSnapCommandLauncherScript({ execName: this.packager.executableName, args: this.commandArgs }), { mode: 0o755 })
     await chmod(launcherPath, 0o755)
 
@@ -146,7 +159,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     }
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null) {
-      const shouldSkip = await this.packager.packagerOptions.effectiveOptionComputed({ snap, ...buildMode })
+      const shouldSkip = await this.packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile: desktopFilePath, ...buildMode })
       if (shouldSkip) {
         return [artifactPath]
       }
@@ -184,7 +197,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
           `     required stage-packages manually.\n` +
           `  2. Switch to an isolated build environment by setting snapcraft.core24.useLXD: true\n` +
           `     or snapcraft.core24.useMultipass: true instead of useDestructiveMode.\n\n` +
-          `See: https://snapcraft.io/docs/gnome-extension`
+          `See: https://documentation.ubuntu.com/snapcraft/stable/reference/extensions/gnome-extension/`
       )
     }
     const resolvedExtensions = extensionsList.length > 0 ? extensionsList : undefined
@@ -211,25 +224,16 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       stage: options.appPartStage?.length ? options.appPartStage : undefined,
     }
 
-    // Process plugs and slots (see resolvePlugs for the per-build-flavor rules)
-    let { root: rootPlugs, app: appPlugs }: { root: Record<string, any> | undefined; app: string[] | undefined } = this.resolvePlugs(
-      options,
-      isClassic,
-      hostMode,
-      useGnomeExtension
-    )
-
-    // Always add browser-support with allow-sandbox so Chromium's internal sandbox
-    // can create user namespaces under strict confinement.  Without allow-sandbox: true
-    // the app crashes immediately with "FATAL: Permission denied (13)" in credentials.cc.
-    // Skip the injection when the user has explicitly provided their own plugs
-    // (they are responsible for including browser-support in that case) and for
-    // classic confinement, where plugs must not be declared at all.
-    if (!options.plugs && !isClassic) {
-      rootPlugs = { ...rootPlugs, "browser-support": { interface: "browser-support", "allow-sandbox": true } }
-      if (!appPlugs?.includes("browser-support")) {
-        appPlugs = [...(appPlugs ?? []), "browser-support"]
-      }
+    // Process plugs and slots (see resolveCore24Plugs for the per-build-flavor rules).
+    // The defaults request plain browser-support, never allow-sandbox: the Snap Store reserves that
+    // attribute for vetted publishers. Without it the app is launched with --no-sandbox below, which is
+    // what keeps Chromium from aborting in credentials.cc under strict confinement (see #9659).
+    const plugFlavor: Core24PlugFlavor = isClassic ? "classic" : useGnomeExtension ? "gnome-extension" : hostMode ? "host" : "strict"
+    const plugResolution = resolveCore24Plugs(options.plugs, plugFlavor, this.defaultPlugs)
+    const { root: rootPlugs, app: appPlugs } = plugResolution
+    warnAboutAllowSandboxPlugs(rootPlugs, "snapcraft.core24.plugs", this.packager)
+    if (plugResolution.source === "merged") {
+      warnAboutCore24DefaultPlugsExpansion(plugResolution.addedByDefaultExpansion, this.packager)
     }
 
     const { root: rootSlots, app: appSlots } = options.slots ? this.processPlugOrSlots(options.slots) : { root: undefined, app: undefined }
@@ -237,16 +241,21 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     // Build the effective arg list for the snap command.
     // Start with any user-supplied executableArgs, then conditionally add --no-sandbox
     // if browser-support with allow-sandbox:true is not present in the resolved plugs
-    // (mirrors the same logic in SnapCoreLegacy.buildSnap).
+    // (mirrors the same logic in SnapCoreLegacy.buildSnap). Only a user-configured plug can request
+    // allow-sandbox; the generated defaults never do.
     const extraArgs: string[] = [...(this.options.executableArgs ?? [])]
     if (this.options.forceX11 === true) {
       if (!extraArgs.includes("--ozone-platform=x11")) {
         extraArgs.push("--ozone-platform=x11")
       }
     }
-    const noSandbox = this.helper.isElectronVersionGreaterOrEqualThan("5.0.0") && !this.isBrowserSandboxAllowed(rootPlugs)
+    const noSandbox = this.helper.isElectronVersionGreaterOrEqualThan("5.0.0") && !isBrowserSandboxAllowed(rootPlugs)
     if (noSandbox && !extraArgs.includes("--no-sandbox")) {
       extraArgs.push("--no-sandbox")
+    }
+    // electron-builder <= 26 generated browser-support with allow-sandbox, which kept Chromium's sandbox.
+    if (noSandbox && plugResolution.source === "generated" && plugFlavor !== "classic") {
+      warnAboutCore24NoSandboxDefault(this.packager)
     }
     // With --no-sandbox the setuid chrome-sandbox helper is unused; strip it from the snap.
     this.removeChromeSandbox = noSandbox
@@ -257,6 +266,7 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     this.commandArgs = extraArgs
 
     // Create the app configuration
+    // apps.desktop would add a second entry beside the generated snap/gui file.
     const desktopBaseName = this.helper.getDesktopFileName(appName)
     const app: App = {
       command: SNAP_COMMAND_LAUNCHER,
@@ -264,7 +274,6 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
       plugs: appPlugs,
       slots: appSlots,
       autostart: options.autoStart ? `${desktopBaseName}.desktop` : undefined,
-      desktop: `meta/gui/${desktopBaseName}.desktop`,
       extensions: resolvedExtensions,
     }
 
@@ -339,72 +348,6 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     }
 
     return removeNullish(snapcraft)
-  }
-
-  /**
-   * Resolve the root-level plug definitions and the app-level plug references for the build flavor.
-   *
-   * Explicitly configured plugs always win — they are kept even under classic confinement
-   * (with the warning logged in mapSnapOptionsToSnapcraftYAML). Otherwise:
-   * - classic confinement: no plugs at all — the snap store review rejects classic snaps that declare plugs
-   * - GNOME extension: no defaults — the extension supplies the common plugs and content snaps
-   *   (gnome-46-2404, gtk-3-themes, icon-themes, sound-themes) itself
-   * - host/destructive mode: app-level default plugs only, no content-snap root plugs
-   * - default (strict, no extension): manual content-snap root plugs plus the app-level default plugs
-   */
-  private resolvePlugs(
-    options: SnapOptions24,
-    isClassic: boolean,
-    hostMode: boolean,
-    useGnomeExtension: boolean
-  ): { root: Record<string, any> | undefined; app: string[] | undefined } {
-    if (options.plugs) {
-      return this.processPlugOrSlots(options.plugs)
-    }
-    if (isClassic) {
-      return { root: undefined, app: undefined }
-    }
-    if (useGnomeExtension) {
-      return { root: undefined, app: undefined }
-    }
-    if (hostMode) {
-      return { root: undefined, app: this.defaultPlugs }
-    }
-    return { root: this.buildDefaultRootPlugs(), app: this.defaultPlugs }
-  }
-
-  /**
-   * Default root-level content-snap plugs used without the GNOME extension, wiring up the
-   * GNOME platform, theme, and GPU content snaps manually.
-   */
-  private buildDefaultRootPlugs(): Record<string, any> {
-    return {
-      "gtk-3-themes": {
-        interface: "content",
-        target: "$SNAP/data-dir/themes",
-        "default-provider": "gtk-common-themes",
-      },
-      "icon-themes": {
-        interface: "content",
-        target: "$SNAP/data-dir/icons",
-        "default-provider": "gtk-common-themes",
-      },
-      "sound-themes": {
-        interface: "content",
-        target: "$SNAP/data-dir/sounds",
-        "default-provider": "gtk-common-themes",
-      },
-      "gnome-46-2404": {
-        interface: "content",
-        target: "$SNAP/gnome-platform",
-        "default-provider": "gnome-46-2404",
-      },
-      "gpu-2404": {
-        interface: "content",
-        target: "$SNAP/gpu-2404",
-        "default-provider": "mesa-2404",
-      },
-    }
   }
 
   /**
@@ -570,30 +513,11 @@ export class SnapCore24 extends SnapCore<SnapOptions24> {
     return { root: Object.keys(root).length > 0 ? root : undefined, app: app.length > 0 ? app : undefined }
   }
 
-  private isBrowserSandboxAllowed(plugs: Record<string, any> | undefined): boolean {
-    if (!plugs) {
-      return false
-    }
-    for (const plug of Object.values(plugs)) {
-      if (plug?.interface === "browser-support" && plug["allow-sandbox"] === true) {
-        return true
-      }
-    }
-    return false
-  }
-
   /**
    * Expand "default" keyword in arrays of anything
    */
   private expandDefaultsInArray<T>(items: T[] | Nullish, defaults: T[]): T[] | undefined {
-    const result: Array<T> = []
-    for (const item of items ?? []) {
-      if (typeof item === "string" && item === "default") {
-        result.push(...defaults)
-      } else {
-        result.push(item)
-      }
-    }
+    const result = expandDefaultKeyword(items ?? [], defaults)
     return result.length > 0 ? result : undefined
   }
 }

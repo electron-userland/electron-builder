@@ -28,7 +28,7 @@ import { BuildCacheManager, digest } from "./util/cacheManager.js"
 import { isBuildCacheEnabled } from "./util/flags.js"
 import { editWindowsResources, ResourceEditOptions } from "./util/win/resEdit.js"
 import { time } from "./util/timer.js"
-import { getWindowsVm, VmManager } from "./vm/vm.js"
+import { getWindowsExecVm, getWindowsVm, VmManager } from "./vm/vm.js"
 
 const _require = createRequire(import.meta.url)
 
@@ -36,6 +36,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
+  // Like `vm`, but for running Windows executables: falls back to wine rather than PwshVmManager (which runs files natively)
+  readonly execVm = new Lazy<VmManager>(() => getWindowsExecVm(this.debugLogger, this.config.toolsets?.wine, this.buildResourcesDir))
 
   readonly signingManager = new Lazy(async () => {
     const manager = createSignManager(this)

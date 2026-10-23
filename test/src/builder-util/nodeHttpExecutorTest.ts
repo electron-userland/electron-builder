@@ -3,7 +3,7 @@ import { afterEach, beforeEach, vi } from "vitest"
 
 const PROXY_VARS = ["HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy"] as const
 
-describe("buildGotProxyAgent", { sequential: true }, () => {
+describe("buildGotProxyAgent", { concurrent: false }, () => {
   beforeEach(() => {
     for (const key of PROXY_VARS) {
       delete process.env[key]
@@ -125,7 +125,7 @@ describe("buildGotProxyAgent", { sequential: true }, () => {
   })
 })
 
-describe("NodeHttpExecutor.createRequest", { sequential: true }, () => {
+describe("NodeHttpExecutor.createRequest", { concurrent: false }, () => {
   let executor: NodeHttpExecutor
 
   beforeEach(() => {
@@ -157,6 +157,21 @@ describe("NodeHttpExecutor.createRequest", { sequential: true }, () => {
     })
 
     test("sets HttpProxyAgent when http_proxy is set and protocol is http:", ({ expect }) => {
+      vi.stubEnv("http_proxy", "http://proxy.example.com:3128")
+      const options: any = { protocol: "http:" }
+      callCreateRequest(executor, options)
+      expect(options.agent?.constructor?.name).toBe("HttpProxyAgent")
+    })
+
+    test("sets HttpsProxyAgent when HTTPS_PROXY is set", ({ expect }) => {
+      vi.stubEnv("HTTPS_PROXY", "https://proxy.example.com:8080")
+      const options: any = { protocol: "https:" }
+      callCreateRequest(executor, options)
+      expect(options.agent?.constructor?.name).toBe("HttpsProxyAgent")
+    })
+
+    test("falls back to lowercase proxy when the uppercase value is whitespace", ({ expect }) => {
+      vi.stubEnv("HTTP_PROXY", "   ")
       vi.stubEnv("http_proxy", "http://proxy.example.com:3128")
       const options: any = { protocol: "http:" }
       callCreateRequest(executor, options)

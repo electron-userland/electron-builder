@@ -16,6 +16,10 @@ export class GenericProvider extends Provider<UpdateInfo> {
     this.baseUrl = newBaseUrl(this.configuration.url)
   }
 
+  get feedBaseUrl(): URL {
+    return this.baseUrl
+  }
+
   private get channel(): string {
     const result = this.updater.channel || this.configuration.channel
     return result == null ? this.getDefaultChannelName() : this.getCustomChannelName(result)

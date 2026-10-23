@@ -31,7 +31,9 @@ electron-builder build
 │   ├─ 2e. Post-Pack (before signing)
 │   │   └─ 🪝 afterPack
 │   │
-│   ├─ 2f. Apply Electron Fuses (if configured)
+│   ├─ 2f. Patch the Electron binary (before signing)
+│   │   ├─ Embed the ASAR integrity digest (macOS, Electron 41+)
+│   │   └─ Apply Electron Fuses (if configured)
 │   │
 │   ├─ 2g. Code Sign the .app / .exe
 │   │   └─ 🪝 afterSign  (only fires if signing actually ran)
@@ -198,7 +200,9 @@ afterPack: async ({ outDir, appOutDir, packager, electronPlatformName, arch, tar
 
 ---
 
-### Phase 2f — Apply Electron Fuses
+### Phase 2f — Patch the Electron binary
+
+On macOS with Electron 41 and later, electron-builder first embeds the ASAR integrity digest: a digest of the `ElectronAsarIntegrity` hashes in `Info.plist`, as `afterPack` left them, written into the Electron Framework, which is then signed again ad hoc. With the `enableEmbeddedAsarIntegrityValidation` fuse, an app whose `Info.plist` is changed after this point refuses to launch. `mac.asarIntegrityDigest: false` skips this step.
 
 If `electronFuses` is configured, fuse bits are flipped in the Electron binary at this point — after packing, before signing. Fuses are baked into the binary and cannot be changed post-sign.
 
@@ -246,7 +250,10 @@ win:
   sign:
     type: signtool
     sign: ./scripts/custom-sign.js
+    publisherName: "CN=My Company, O=My Company, C=US"
 ```
+
+On Windows, electron-builder cannot read the certificate a custom hook signs with, so set `win.sign.publisherName` to that certificate's subject — it is written to `app-update.yml` for update signature verification, and a build that writes `app-update.yml` fails without it. Copy it from a binary the hook already signed, as shown in [How do you delegate code signing?](../win.md#how-do-you-delegate-code-signing); every component you list must match exactly.
 
 ---
 
@@ -292,6 +299,7 @@ Some targets expose additional hooks that fire inside their own build sequence:
 |---|---|---|
 | `msiProjectCreated` | MSI (WiX) | After WiX `.wxs` file is written to disk, before `candle.exe` / `light.exe` |
 | `appxManifestCreated` | AppX / MSIX | After `AppxManifest.xml` is written to disk, before `makeappx.exe` |
+| `pkgDistributionCreated` | PKG | After `distribution.xml` is written to disk, before `productbuild` builds the installer |
 
 ```js
 // Edit the WiX XML before MSI compilation
@@ -369,6 +377,7 @@ See [Publish Configuration](/docs/publish) for provider setup.
 | `artifactBuildStarted` | 2h | Target build starting | Logging, timing |
 | `msiProjectCreated` | 2h (MSI) | WiX `.wxs` file on disk | Edit WiX XML |
 | `appxManifestCreated` | 2h (AppX) | `AppxManifest.xml` on disk | Edit AppX manifest |
+| `pkgDistributionCreated` | 2h (PKG) | `distribution.xml` on disk | Edit the installer distribution |
 | `artifactBuildCompleted` | 2h | Artifact file on disk | Checksums, per-artifact upload |
 | `afterAllArtifactBuild` | 3 | All artifacts on disk | Symbol upload, extra publish paths |
 
@@ -393,7 +402,7 @@ Each target runs inside Phase 2h. Here is what happens inside each one:
 |---|---|
 | **DMG** | Create `.dmg` via `dmgbuild` → emit |
 | **ZIP** | Archive `.app` bundle → emit |
-| **PKG** | Build `.pkg` via `pkgbuild` + `productbuild` → sign → emit |
+| **PKG** | Build the component package via `pkgbuild` and write `distribution.xml` → `pkgDistributionCreated` hook → `productbuild` → sign → emit |
 | **MAS** | Re-sign with MAS provisioning profile → build `pkg` → emit |
 
 ### Linux
@@ -403,7 +412,7 @@ Each target runs inside Phase 2h. Here is what happens inside each one:
 | **AppImage** | Create squashfs image → embed ELF header → emit |
 | **DEB / RPM / Pacman** | Package via `fpm` → emit |
 | **Snap** | Write `snapcraft.yaml` → run `snapcraft` → emit |
-| **Flatpak** | Write manifest → run `flatpak-builder` → emit |
+| **Flatpak** | Write manifest → run `flatpak-builder` → `flatpak build-export` + `flatpak build-bundle` → emit |
 
 ---
 

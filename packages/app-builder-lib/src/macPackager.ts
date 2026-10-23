@@ -22,7 +22,9 @@ import * as fs from "fs/promises"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import * as semver from "semver"
 import { AppInfo } from "./appInfo.js"
+import { embedAsarIntegrityDigest, FIRST_ELECTRON_MAJOR_WITH_ASAR_INTEGRITY_DIGEST } from "./electron/mac/asarIntegrityDigest.js"
 import { assertSafeHelperName } from "./electron/mac/electronMacUtils.js"
 import { CodeSigningInfo, createKeychain, CreateKeychainOptions, Identity, isSignAllowed, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
 import { combineSignResults, isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
@@ -30,11 +32,13 @@ import { DIR_TARGET, Platform, Target } from "./core.js"
 import { AfterPackContext, ElectronPlatformName } from "./index.js"
 import { MacTargetHelper, MasPlatformType, PlatformType } from "./targets/mac/MacTargetHelper.js"
 import { ElectronSignOptions, MacConfiguration, MasConfiguration } from "./options/macOptions.js"
+import { AsarOptions } from "./options/PlatformSpecificBuildOptions.js"
 import { Packager } from "./packager.js"
 import { chooseNotNull, DoPackOptions, PlatformPackager } from "./platformPackager.js"
 import { ArchiveTarget } from "./targets/ArchiveTarget.js"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/mac/pkg.js"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory.js"
+import { isPlainObject, replaceMergedExcludedExts } from "./util/config/fileOptions.js"
 import { isMacOsHighSierra } from "./util/mac/macosVersion.js"
 import { buildSingleArchFilesPattern, collectIdenticalSingleArchMachOFiles, collectSingleArchPackageNames } from "./util/archCompatibility.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
@@ -46,6 +50,17 @@ export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacP
 
 function isElectronSignOptions(sign: MacConfiguration["sign"]): sign is ElectronSignOptions {
   return typeof sign === "object" && sign !== null
+}
+
+/**
+ * Merges the mac → mas (→ masDev) cascade. `deepAssign` merges a later layer into a nested object it took from an earlier one, so each
+ * layer's `fileOptions` is copied first: merging the mas configuration must not change the `fileOptions` of the mac one. A later layer's
+ * `fileOptions.excludedExts` replaces an earlier one (see replaceMergedExcludedExts).
+ */
+function mergeMasConfig(...layers: Array<MacConfiguration | MasConfiguration | Nullish>): MasConfiguration {
+  const config: MasConfiguration = deepAssign({}, ...layers.map(it => (it != null && isPlainObject(it.fileOptions) ? { ...it, fileOptions: { ...it.fileOptions } } : it)))
+  replaceMergedExcludedExts(config, layers)
+  return config
 }
 
 interface PlatformConfig<C extends MacConfiguration | MasConfiguration = MacConfiguration | MasConfiguration> {
@@ -112,14 +127,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     switch (platformType) {
       case "mas":
-        config = deepAssign({}, this.platformSpecificBuildOptions, this.config.mas)
+        config = mergeMasConfig(this.platformSpecificBuildOptions, this.config.mas)
         platformName = "mas"
         break
 
       case "mas-dev":
         // `mas-dev` cascades mac → mas → masDev. The development/distribution distinction is no longer
         // carried as a config field; it is derived from `platformType` wherever signing happens.
-        config = deepAssign({}, this.platformSpecificBuildOptions, this.config.mas, this.config.masDev)
+        config = mergeMasConfig(this.platformSpecificBuildOptions, this.config.mas, this.config.masDev)
         platformName = "mas"
         break
 
@@ -297,12 +312,53 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       return
     }
 
+    await this.doAddAsarIntegrityDigest(packContext, platformSpecificBuildOptions, await this.computeAsarOptions(platformSpecificBuildOptions))
     await this.doAddElectronFuses(packContext)
 
     // Mirror the base-class guard: skip signing when the caller explicitly set sign:false
     // (e.g. packMasTargets passes sign:false so that its own sign() call is the sole signing step).
     if (config.options?.sign ?? true) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, platformType, arch, platformSpecificBuildOptions, targets)
+    }
+  }
+
+  /**
+   * Embeds the ASAR integrity digest into the Electron Framework, see `mac.asarIntegrityDigest`. A universal app gets it after the slices are merged: they
+   * have no `ElectronAsarIntegrity` entries, and re-signing the framework of a slice would make the slices differ in a way `@electron/universal` rejects.
+   */
+  protected async doAddAsarIntegrityDigest(
+    packContext: AfterPackContext,
+    platformSpecificBuildOptions: MacConfiguration | MasConfiguration,
+    asarOptions: AsarOptions | null
+  ): Promise<void> {
+    // nothing to protect without the entries electron-builder computes: a stock Electron Info.plist still lists the removed default_app.asar
+    if (asarOptions == null || asarOptions.disableIntegrity) {
+      return
+    }
+    if (platformSpecificBuildOptions.asarIntegrityDigest === false) {
+      log.info({ reason: "asarIntegrityDigest is set to false" }, "skipped ASAR integrity digest")
+      return
+    }
+    const electronVersion = semver.coerce(this.info.framework.version)
+    if (electronVersion == null || semver.major(electronVersion) < FIRST_ELECTRON_MAJOR_WITH_ASAR_INTEGRITY_DIGEST) {
+      return
+    }
+    if (process.platform !== "darwin") {
+      log.warn({ reason: "supported only on macOS, where codesign can sign the modified Electron Framework again" }, "skipped ASAR integrity digest")
+      return
+    }
+    const frameworkName = `${path.basename(this.info.framework.distMacOsAppName, ".app")} Framework`
+    const embedded = await embedAsarIntegrityDigest(path.join(packContext.appOutDir, `${this.appInfo.productFilename}.app`), frameworkName)
+    // an afterPack hook that signs the app or changes it in ways the digest must not cover is where this change bites
+    if (embedded && this.info.filterPackagerEventListeners("afterPack", "user").length > 0) {
+      log
+        .once("asar-integrity-digest-after-afterpack")
+        .warn(
+          { solution: "set mac.asarIntegrityDigest to false if your afterPack hook signs the app" },
+          "electron-builder v27 embeds the ASAR integrity digest into the Electron Framework after the afterPack hook and signs the framework again ad hoc, replacing a signature applied in afterPack. " +
+            "Changing app.asar or Info.plist after afterPack now fails the app at launch when the enableEmbeddedAsarIntegrityValidation fuse is on. " +
+            "See https://www.electron.build/docs/migration/v27-breaking-changes#macos-asar-integrity-digest"
+        )
     }
   }
 
@@ -405,6 +461,11 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
       }
 
+      // test-only early exit (see PackagerOptions.afterPackTestHook); a no-op unless the option is set
+      if (await this.info.shouldSkipTargetsAfterPack(packContext)) {
+        continue
+      }
+
       // A development-signed build (mas-dev, or an explicit sign.type "development" — see
       // MacTargetHelper.shouldCreateMasInstaller) produces no installer
       const masSignConfig = platformConfig.config.sign
@@ -429,6 +490,20 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         platformSpecificBuildOptions: platformConfig.config,
         targets,
       })
+    }
+
+    // test-only early exit (see PackagerOptions.afterPackTestHook); a no-op unless the option is set
+    if (
+      await this.info.shouldSkipTargetsAfterPack({
+        appOutDir: path.dirname(appPath),
+        outDir,
+        arch,
+        targets,
+        packager: this,
+        electronPlatformName: this.platform.nodeName,
+      })
+    ) {
+      return
     }
 
     this.packageInDistributableFormat(appPath, arch, targets, taskManager)
@@ -486,8 +561,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
     }
 
-    const signOptions = await this.helper.buildSignOptions(appPath, identity, signOpts, keychainFile, arch, targetPlatform)
+    const signOptions = await this.helper.buildSignOptions(appPath, identity, signOpts, keychainFile, arch, targetPlatform, hasCustomSign)
     await this.doSign(signOptions, config, identity)
+
+    // now that everything is signed, flag binaries that still carry a foreign (or missing) signature and would
+    // fail library validation at launch — the case the old blanket entitlements default used to mask
+    if (!hasCustomSign) {
+      await this.helper.warnAboutForeignSignedBinaries(appPath, identity, targetPlatform, signOpts)
+    }
 
     // Handle notarization for non-MAS builds
     if (!isMas) {
@@ -517,7 +598,9 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       customSign ? "executing custom sign" : "signing"
     )
 
-    return customSign ? Promise.resolve(customSign(opts, this)) : sign({ ...opts, identity: identity ? identity.name : undefined })
+    // `opts.identity` is resolved once, in MacTargetHelper.resolveSignIdentity — never re-derive it here, or a
+    // custom signer and @electron/osx-sign end up signing with different forms of the same certificate
+    return customSign ? Promise.resolve(customSign(opts, this)) : sign(opts)
   }
 
   //noinspection JSMethodCanBeStatic

@@ -6,14 +6,20 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-permissions:
-  contents: read
-  statuses: write
+# a newer event of the same pull request supersedes a run still in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
 
 jobs:
   deploy:
     name: 'Deploy PR'
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read  # actions/checkout
+      statuses: write  # the "Netlify Documentation Site preview" commit status
+    runs-on: ubuntu-24.04
     # Only run on the main repository, not on forks
     if: github.repository == 'electron-userland/electron-builder'
 
@@ -24,7 +30,7 @@ jobs:
           persist-credentials: false
 
       - name: Install deps and audit
-        uses: ./.github/actions/pnpm
+        uses: $/.github/actions/pnpm
 
       - name: Build docusaurus site
         run: pnpm docs:all

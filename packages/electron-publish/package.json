@@ -1,6 +1,6 @@
 {
   "name": "electron-publish",
-  "version": "27.0.0-alpha.8",
+  "version": "27.0.0-alpha.11",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
@@ -35,12 +35,15 @@
     "watch": "tsc --build tsconfig.build.json --watch"
   },
   "dependencies": {
+    "@aws-sdk/credential-provider-ini": "3.973.19",
+    "@aws-sdk/credential-provider-sso": "3.973.18",
+    "@aws-sdk/nested-clients": "3.997.48",
     "@types/fs-extra": "^9.0.11",
     "aws4": "^1.13.2",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
-    "form-data": "^4.0.5",
+    "form-data": "^4.0.6",
     "fs-extra": "^11.3.0",
     "lazy-val": "^1.0.5",
     "mime": "^2.5.2"

@@ -5,6 +5,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../core.js"
 import {
+  isWindowsSigningDisabled,
   resolveWindowsSigningConfiguration,
   WindowsConfiguration,
   WindowsHsmSigningConfig,
@@ -106,6 +107,11 @@ export abstract class SigntoolBaseSignManager implements SignManager {
   }
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
+    // `win.sign: false` / `null` signs nothing, so no publisherName is derived or written to app-update.yml.
+    if (isWindowsSigningDisabled(this.platformSpecificBuildOptions)) {
+      return null
+    }
+
     const signing = getSigntoolFamilyConfig(this.platformSpecificBuildOptions)
     const publisherName = signing?.publisherName
     if (publisherName === null) {
@@ -115,8 +121,32 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       return asArray(publisherName)
     }
 
+    // A custom `sign` hook signs with a certificate electron-builder doesn't see (not even one named in the config is known to be the one
+    // the hook uses), so the publisher name that electron-updater trusts must be configured explicitly.
+    if (signing?.sign != null) {
+      throw new InvalidConfigurationError(
+        "A custom Windows signing hook (`win.sign.sign`) is configured without `win.sign.publisherName`. " +
+          "electron-builder cannot tell which certificate the hook signs with, and electron-updater verifies the signature of downloaded updates against the publisherName in app-update.yml. " +
+          'Set `win.sign.publisherName` to the subject of the certificate that your hook signs with (e.g. "CN=My Company, O=My Company, C=US"), ' +
+          "or set `win.verifyUpdateCodeSignature: false` (only if your updates are not Authenticode-signed or you don't use electron-updater) to opt out of update signature verification explicitly."
+      )
+    }
+
     const certInfo = await this.lazyCertInfo.value
-    return certInfo == null ? null : [certInfo.commonName]
+    if (certInfo?.commonName) {
+      return [certInfo.commonName]
+    }
+    // Signed with a certificate without a CN: electron-updater verifies downloaded updates against the publisherName in app-update.yml, so
+    // the build needs one.
+    if ((await this.cscInfo.value) != null) {
+      throw new InvalidConfigurationError(
+        "Windows code signing is configured, but the publisher name cannot be determined at build time (the signing certificate has no Common Name). " +
+          "electron-updater verifies the signature of downloaded updates against the publisherName in app-update.yml. " +
+          'Set `win.sign.publisherName` to the subject of the certificate that signs your app (e.g. "CN=My Company, O=My Company, C=US"), ' +
+          "or set `win.verifyUpdateCodeSignature: false` (only if your updates are not Authenticode-signed or you don't use electron-updater) to opt out of update signature verification explicitly."
+      )
+    }
+    return null
   })
 
   readonly lazyCertInfo = new MemoLazy<MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>, CertificateInfo | null>(
@@ -130,7 +160,8 @@ export abstract class SigntoolBaseSignManager implements SignManager {
       if ("subject" in cscInfo) {
         const bloodyMicrosoftSubjectDn = cscInfo.subject
         return {
-          commonName: parseDn(bloodyMicrosoftSubjectDn).get("CN")!,
+          // empty for a subject without a CN, like readCertInfo, so computedPublisherName requires an explicit publisherName
+          commonName: parseDn(bloodyMicrosoftSubjectDn).get("CN") ?? "",
           bloodyMicrosoftSubjectDn,
         }
       }
@@ -199,7 +230,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
           `This usually means the build is signing with the wrong certificate (for example, a code signing certificate for another platform or team leaked into WIN_CSC_LINK/CSC_LINK in CI) — electron-updater would reject every update signed with it.\n` +
           `  Configured publisherName: ${publisherNames.join(" | ")}\n` +
           `  Certificate subject: ${certInfo.bloodyMicrosoftSubjectDn}\n` +
-          `Fix win.publisherName (or sign with the intended certificate). To opt out of update signature verification entirely, set publisherName to null.`
+          `Fix win.sign.publisherName (or sign with the intended certificate). To opt out of update signature verification entirely, set publisherName to null.`
       )
     }
   }
@@ -207,6 +238,11 @@ export abstract class SigntoolBaseSignManager implements SignManager {
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
     () => this.platformSpecificBuildOptions,
     platformSpecificBuildOptions => {
+      // `win.sign: false` / `null` signs nothing: no certificate is read (not even from CSC_LINK / WIN_CSC_LINK), so none
+      // supplies an AppX/MSIX publisher, a publisherName for app-update.yml or a build-cache digest.
+      if (isWindowsSigningDisabled(platformSpecificBuildOptions)) {
+        return Promise.resolve(null)
+      }
       const signing = getSigntoolFamilyConfig(platformSpecificBuildOptions)
       // signtool is the implicit default when win.sign is unset, so an absent config still
       // honours the WIN_CSC_LINK/cscLink fallback below (hsm/pkcs11 set signing.type explicitly).
@@ -297,17 +333,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
 
   async signFile(options: WindowsSignOptions): Promise<SignFileResult> {
     const signing = getSigntoolFamilyConfig(options.options)
-    let hashes = signing?.signingHashAlgorithms
-    // msi does not support dual-signing
-    if (options.path.endsWith(".msi")) {
-      hashes = [hashes != null && !hashes.includes("sha1") ? "sha256" : "sha1"]
-    } else if (options.path.endsWith(".appx") || options.path.endsWith(".msix") || options.path.endsWith(".msixbundle")) {
-      hashes = ["sha256"]
-    } else if (hashes == null) {
-      hashes = ["sha1", "sha256"]
-    } else {
-      hashes = Array.isArray(hashes) ? hashes : [hashes]
-    }
+    const hashes = resolveSigningHashAlgorithms(options.path, signing?.signingHashAlgorithms)
 
     const name = this.packager.appInfo.productName
     const site = await this.packager.appInfo.computePackageUrl()
@@ -363,7 +389,7 @@ export abstract class SigntoolBaseSignManager implements SignManager {
   }
 
   async getCertInfo(file: string, password: string): Promise<CertificateInfo> {
-    const errorMessagePrefix = "Cannot extract publisher name from code signing certificate. As workaround, set win.publisherName. Error: "
+    const errorMessagePrefix = "Cannot extract publisher name from code signing certificate. As workaround, set win.sign.publisherName. Error: "
     try {
       return await readCertInfo(file, password)
     } catch (e: any) {
@@ -612,4 +638,31 @@ export class SigntoolSignManager extends SigntoolBaseSignManager {
 
     return args
   }
+}
+
+/**
+ * The hash algorithms to sign `filePath` with, one signing pass each.
+ *
+ * - `.msi` holds a single signature, so it is signed once: with `sha256` unless `sha1` is the only algorithm requested.
+ * - `.appx`, `.msix` and `.msixbundle` are always `sha256`.
+ * - Everything else uses the configured list, defaulting to dual signing with `sha1` then `sha256`.
+ *
+ * Extensions are matched case-insensitively (`app.MSI` is an MSI). An empty list is a configuration error: it would
+ * run no signing pass while the file is still reported as signed.
+ */
+export function resolveSigningHashAlgorithms(filePath: string, configured: Array<"sha1" | "sha256"> | "sha1" | "sha256" | null | undefined): Array<"sha1" | "sha256"> {
+  const requested = configured == null ? null : asArray(configured)
+  if (requested != null && requested.length === 0) {
+    throw new InvalidConfigurationError(
+      `win.sign.signingHashAlgorithms is an empty list, so no signing pass would run. List at least one of "sha1" or "sha256", remove the option to use the default ["sha1", "sha256"], or set win.sign to false to disable Windows signing.`
+    )
+  }
+  const ext = path.extname(filePath).toLowerCase()
+  if (ext === ".msi") {
+    return [requested != null && !requested.includes("sha256") ? "sha1" : "sha256"]
+  }
+  if (ext === ".appx" || ext === ".msix" || ext === ".msixbundle") {
+    return ["sha256"]
+  }
+  return requested ?? ["sha1", "sha256"]
 }

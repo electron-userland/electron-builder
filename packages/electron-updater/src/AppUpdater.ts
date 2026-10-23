@@ -1,4 +1,5 @@
 import { createRequire } from "node:module"
+import { LogLimiter } from "builder-util-runtime/internal"
 import {
   AllPublishOptions,
   asArray,
@@ -9,9 +10,14 @@ import {
   UUID,
   DownloadOptions,
   CancellationError,
+  HttpExecutor,
   ProgressInfo,
   BlockMap,
   retry,
+  collectManifestSignatures,
+  normalizePublicKeyList,
+  verifyManifestSignatures,
+  type LimitedLogger,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { release } from "os"
@@ -35,6 +41,7 @@ import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
+import { nonThrowingLogger } from "./util.js"
 import {
   AutoInstallEvent,
   DOWNLOAD_PROGRESS,
@@ -46,10 +53,15 @@ import {
   DownloadExecutorResult,
   UpdateDownloadedEvent,
   UpdaterSignal,
+  VerifyUpdateFile,
+  verificationFailureMessage,
 } from "./types.js"
-import { VerifyUpdateSupport } from "./index.js"
+import type { VerifyUpdateSupport } from "./index.js"
 
 const require = createRequire(import.meta.url)
+
+// shared rather than per-instance so that `updater.verifyUpdateFile === DEFAULT_VERIFY_UPDATE_FILE` identifies "no custom verifier"
+const DEFAULT_VERIFY_UPDATE_FILE: VerifyUpdateFile = _params => Promise.resolve({ response: "success" })
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
@@ -90,6 +102,30 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * @default "onQuit"
    */
   autoInstallEvent: AutoInstallEvent = "onQuit"
+
+  /**
+   * @deprecated Removed in v27 — use {@link autoInstallEvent}. This accessor is a compatibility shim
+   * and will be deleted in v28.
+   *
+   * A boolean cannot express the three install timings, so `autoInstallOnAppQuit` was replaced rather
+   * than extended. Without this shim the property assignment silently no-ops on a plain object: an app
+   * that set `autoInstallOnAppQuit = false` to opt *out* of install-on-quit would keep the `"onQuit"`
+   * default and install on quit anyway — the exact opposite of what it asked for.
+   */
+  get autoInstallOnAppQuit(): boolean {
+    return this.autoInstallEvent === "onQuit"
+  }
+
+  set autoInstallOnAppQuit(value: boolean) {
+    const mapped: AutoInstallEvent = value ? "onQuit" : "manual"
+    this._logger.warn(
+      `autoInstallOnAppQuit was removed in electron-updater 7 (electron-builder v27) — use autoInstallEvent instead. ` +
+        `Mapping autoInstallOnAppQuit = ${value} to autoInstallEvent = "${mapped}". ` +
+        `This compatibility shim is removed in v28. ` +
+        `https://www.electron.build/docs/migration/v27-breaking-changes#autoinstallevent-replaces-autoinstallonappquit`
+    )
+    this.autoInstallEvent = mapped
+  }
 
   /**
    * Installs an update that a previous launch marked as pending (see `autoInstallEvent: "onNextLaunch"` and
@@ -166,21 +202,35 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   allowUnverifiedLinuxPackages = true
 
+  // undefined until the app sets disableWebInstaller, so NsisUpdater can tell a `false` set by the app from the nsis-web default
   private _disableWebInstaller: boolean | undefined = undefined
 
+  // the value of disableWebInstaller while the app has not set it; NsisUpdater sets it to false for an install made by an nsis-web installer
+  protected disableWebInstallerDefault = true
+
   /**
-   * Whether to block NSIS web-installer packages. Web installer files might not have signature verification, so they are disabled by default as of v27.
+   * Whether to block NSIS web-installer packages. Web installer files might not have signature verification, so they are disabled by default as of v27:
+   * a web-installer update is rejected with `ERR_UPDATER_WEB_INSTALLER_DISABLED` at download time, before an install on next launch, and at install time unless this is `false`.
    *
-   * v27 grace period: apps that do not explicitly set this property will warn (but still download) if a web-installer update is received. In v28 the warning becomes an error and the download is blocked (`ERR_UPDATER_WEB_INSTALLER_DISABLED`). Apps that explicitly set this to `true` throw immediately. Set it to `false` only if you intentionally publish and rely on NSIS web-installer packages.
+   * `NsisUpdater` defaults it to `false` for installs made by an `nsis-web` installer built with electron-builder v27+ (`resources/package-type` marker).
+   * Set it to `false` explicitly only if you intentionally publish and rely on NSIS web-installer packages and your installs lack that marker.
+   *
+   * Set it before the app is `ready` (e.g. right after creating the updater): with `autoInstallEvent: "onNextLaunch"` a pending
+   * web-installer update is checked against it when the app is ready, and rejected (its pending-install marker cleared) while it is `true`.
    *
    * @default true
    */
   get disableWebInstaller(): boolean {
-    return this._disableWebInstaller ?? true
+    return this._disableWebInstaller ?? this.disableWebInstallerDefault
   }
 
   set disableWebInstaller(value: boolean) {
     this._disableWebInstaller = value
+  }
+
+  // the app itself set disableWebInstaller to false (not the nsis-web default)
+  protected get isWebInstallerEnabledByApp(): boolean {
+    return this._disableWebInstaller === false
   }
 
   /**
@@ -233,7 +283,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * `allowDowngrade` will be automatically set to `true`. If this behavior is not suitable for you, simple set `allowDowngrade` explicitly after.
    */
   set channel(value: string | null) {
-    if (this._channel != null) {
+    if (value != null) {
       // noinspection SuspiciousTypeOfGuard
       if (typeof value !== "string") {
         throw newError(`Channel must be a string, but got: ${value}`, "ERR_UPDATER_INVALID_CHANNEL")
@@ -245,6 +295,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this._channel = value
     this.allowDowngrade = true
   }
+
+  /**
+   * The Ed25519 public key(s) (PEM or base64 SPKI) trusted to have signed the update manifest — the
+   * install's trust list. A single string or an array of keys; a manifest is accepted when any listed key
+   * validates one of its signatures. When set (non-empty), overrides the `updateManifestPublicKey` value
+   * embedded in `app-update.yml`.
+   *
+   * When at least one key is available (here or in config) the manifest signature is enforced and a
+   * download will not start unless verification succeeds. When no key is available, verification is
+   * skipped (opt-in) and a one-time warning is logged.
+   */
+  updateManifestPublicKey: string | Array<string> | null = null
 
   /**
    *  The request headers.
@@ -261,6 +323,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   protected _logger: Logger = console
+
+  // per updater instance, so several updaters (and tests) keep their own counts
+  private readonly logLimiter = new LogLimiter()
+
+  /**
+   * The current logger (`this.logger`, whichever one is set at call time), emitting at most `max` times per `key`
+   * for this updater instance. The counting stays here: a logger supplied through `autoUpdater.logger` is called
+   * exactly as before and does not need to support anything beyond {@link Logger}.
+   * @internal
+   */
+  protected limitedLogger(key: string, max = 1): LimitedLogger<Logger> {
+    return this.logLimiter.wrap(() => this._logger, { key, max })
+  }
 
   // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
   get netSession(): Session {
@@ -296,6 +371,33 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this.clientPromise = null
     this._appUpdateConfigPath = value
     this.configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
+  }
+
+  protected _verifyUpdateFile: VerifyUpdateFile = DEFAULT_VERIFY_UPDATE_FILE
+
+  /**
+   * Allows developer to set custom logic for verifying an update file before it is allowed to become installable.
+   * When the verification fails, the file is deleted and electron-updater emits an `ERR_UPDATER_INVALID_UPDATE_FILE` error.
+   * The default behavior is a stub – immediately succeeds.
+   *
+   * It runs on every path that can lead to an install:
+   * - right after a fresh download, while the file still sits under a temporary name and before it is renamed into the
+   *   updater cache under its real filename, so an unverified file can never be executed under its real name;
+   * - when an update downloaded by an earlier session is reused from the updater cache;
+   * - before an install-on-next-launch spawns the cached installer (see {@link BaseUpdater}).
+   *
+   * The custom logic gets `updateFilePath` (the file to verify), `originalUpdateFileName` (its real filename), the
+   * optional `packageFilePath` of an NSIS web installer package, and the active `cancellationToken` when the
+   * verification belongs to a download.
+   *
+   * Assigning `null` restores the default stub.
+   */
+  get verifyUpdateFile(): VerifyUpdateFile {
+    return this._verifyUpdateFile
+  }
+
+  set verifyUpdateFile(value: VerifyUpdateFile | null | undefined) {
+    this._verifyUpdateFile = value ?? DEFAULT_VERIFY_UPDATE_FILE
   }
 
   protected _isUpdateSupported: VerifyUpdateSupport = updateInfo => this.checkIfUpdateSupported(updateInfo)
@@ -387,7 +489,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   /**
-   * Configure update provider. If value is `string`, [GenericServerOptions](https://www.electron.build/publish#genericserveroptions) will be set with value as `url`.
+   * Configure update provider. If value is `string`, [GenericServerOptions](https://www.electron.build/publish#byo-generic-create-your-own) will be set with value as `url`.
    * @param options If you want to override configuration in the `app-update.yml`.
    */
   setFeedURL(options: PublishConfiguration | AllPublishOptions | string) {
@@ -457,10 +559,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return it
       }
 
-      void it.downloadPromise.then(() => {
-        const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
-        new (require("electron").Notification)(notificationContent).show()
-      })
+      void it.downloadPromise.then(
+        () => {
+          const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
+          const ElectronNotification = require("electron").Notification
+          new ElectronNotification(notificationContent).show()
+        },
+        () => {
+          // downloadUpdate already dispatches the error event
+        }
+      )
 
       return it
     })
@@ -487,8 +595,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return true
     }
 
-    stagingPercentage = parseInt(stagingPercentage as any, 10)
-    if (isNaN(stagingPercentage)) {
+    stagingPercentage = Number(stagingPercentage)
+    if (!Number.isFinite(stagingPercentage)) {
       this._logger.warn(`Staging percentage is NaN: ${rawStagingPercentage}`)
       return true
     }
@@ -570,10 +678,71 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
+    const info = await client.getLatestVersion()
+    await this.verifyManifestSignature(info)
     return {
-      info: await client.getLatestVersion(),
+      info,
       provider: client,
     }
+  }
+
+  /**
+   * Verifies the Ed25519 signature(s) embedded in the update manifest against the configured trust list.
+   * Provider-agnostic: runs for every provider since it operates on the resolved `UpdateInfo`.
+   *
+   * - No public key configured → verification skipped (opt-in phase), warns once.
+   * - Key(s) configured, manifest carries no signature at all → throws ERR_UPDATER_MANIFEST_NOT_SIGNED.
+   * - Key(s) configured, no trusted key validates any signature → throws ERR_UPDATER_MANIFEST_SIGNATURE_INVALID.
+   *
+   * A manifest may carry several signatures (`signatures`, one per signing key, tagged with the key id) plus
+   * the legacy single `signature`; any trusted key matching any of them is sufficient, which is what allows
+   * a release to be dual-signed while installs trust `[old, new]` during key rotation. Never fails open once
+   * a key is configured. A throw here propagates before any download starts (fail-closed).
+   */
+  private async verifyManifestSignature(info: UpdateInfo): Promise<void> {
+    let trustedKeys = normalizePublicKeyList(this.updateManifestPublicKey)
+    if (trustedKeys.length === 0) {
+      try {
+        trustedKeys = normalizePublicKeyList((await this.configOnDisk.value)?.updateManifestPublicKey)
+      } catch (e: any) {
+        // app-update.yml is read elsewhere too; a missing/unreadable config here just means "no key"
+        if (e.code !== "ENOENT") {
+          this._logger.warn(`Cannot read updateManifestPublicKey from update config: ${e.message || e}`)
+        }
+        trustedKeys = []
+      }
+    }
+
+    if (trustedKeys.length === 0) {
+      this.limitedLogger("manifest-verification-disabled").warn(
+        "update manifest signature verification is disabled. Configure updateManifestPublicKey (and sign manifests at build time) to enable it."
+      )
+      return
+    }
+
+    if (collectManifestSignatures(info).length === 0) {
+      throw newError(`Update manifest for version ${info.version} is not signed, but updateManifestPublicKey is configured. Refusing to update.`, "ERR_UPDATER_MANIFEST_NOT_SIGNED")
+    }
+
+    const result = verifyManifestSignatures(info, trustedKeys)
+    if (!result.ok) {
+      // `reason` is set when the manifest fails the structural checks a signed manifest must pass (e.g. an empty
+      // `files` list or control characters in a signed field) — those are rejected before any key is tried.
+      const cause =
+        result.reason == null ? `none of the ${trustedKeys.length} trusted key(s) validates any of its signatures` : `the signed manifest is malformed (${result.reason})`
+      // download URLs written into latest*.yml after signing (e.g. pre-signed URLs) are the likely cause, rather than tampering
+      const blockMapUrlHint = (info.files ?? []).some(it => it?.blockMapUrl != null)
+        ? " files[].blockMapUrl is covered by the signature, like files[].url, so it has to be in latest*.yml before the manifest is signed: " +
+          "https://www.electron.build/docs/features/signed-update-manifests#what-is-signed"
+        : ""
+      throw newError(
+        `Update manifest signature verification failed for version ${info.version}: ${cause}. The update metadata may have been tampered with. Refusing to update.${blockMapUrlHint}`,
+        "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID"
+      )
+    }
+
+    this._logger.debug?.(`Update manifest for version ${info.version} verified with trusted key ${result.keyId}`)
+    this._logger.info(`Update manifest signature verified for version ${info.version}`)
   }
 
   private createProviderRuntimeOptions() {
@@ -662,11 +831,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return e
     }
 
+    const requestHeaders = this.computeRequestHeaders(updateInfoAndProvider.provider)
+    try {
+      // fail before any download rather than in the middle of one
+      AppUpdater.checkFeedBaseUrlDeclared(updateInfoAndProvider.provider, requestHeaders)
+    } catch (e: any) {
+      return Promise.reject(errorHandler(e))
+    }
+
     this.downloadPromise = this.doDownloadUpdate({
       updateInfoAndProvider,
-      requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
+      requestHeaders,
       cancellationToken,
-      disableWebInstaller: this._disableWebInstaller,
+      disableWebInstaller: this.disableWebInstaller,
       disableDifferentialDownload: this.disableDifferentialDownload,
     })
       .catch((e: any) => {
@@ -701,6 +878,30 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   abstract quitAndInstall(options?: QuitAndInstallOptions): void
 
+  /**
+   * Accepts the v26 positional call shape, `quitAndInstall(isSilent, isForceRunAfter)`.
+   *
+   * TypeScript callers get a compile error, but plain JavaScript does not: the boolean lands in the
+   * destructured options parameter, every field reads back `undefined`, and the defaults silently take
+   * over — so `quitAndInstall(true)` performs a NON-silent install. Warn and map instead of ignoring.
+   *
+   * @internal
+   */
+  protected normalizeQuitAndInstallOptions(options?: QuitAndInstallOptions | boolean, legacyIsForceRunAfter?: boolean): QuitAndInstallOptions {
+    if (typeof options !== "boolean" && typeof legacyIsForceRunAfter !== "boolean") {
+      return options ?? {}
+    }
+    const isSilent = typeof options === "boolean" ? options : false
+    const isForceRunAfter = legacyIsForceRunAfter === true
+    this._logger.warn(
+      `quitAndInstall(isSilent, isForceRunAfter) was replaced by quitAndInstall({ isSilent, isForceRunAfter }) in electron-updater 7 (electron-builder v27). ` +
+        `Interpreting the positional arguments as { isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter} }. ` +
+        `This compatibility shim is removed in v28. ` +
+        `https://www.electron.build/docs/migration/v27-breaking-changes#quitandinstall-takes-an-options-object`
+    )
+    return { isSilent, isForceRunAfter }
+  }
+
   private async loadUpdateConfig(): Promise<any> {
     if (this._appUpdateConfigPath == null) {
       this._appUpdateConfigPath = this.app.appUpdateConfigPath
@@ -720,6 +921,64 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
           }
     }
     return this.computeFinalHeaders({ accept: "*/*" })
+  }
+
+  /**
+   * Headers for a download from `url`: when the provider has a `feedBaseUrl`, the credential-bearing ones are dropped if `url` is on
+   * another origin than `originUrl` (the feed by default). `null` keeps them for every URL.
+   */
+  protected downloadRequestHeaders(url: URL, downloadUpdateOptions: DownloadUpdateOptions, originUrl?: URL): OutgoingHttpHeaders {
+    const provider = downloadUpdateOptions.updateInfoAndProvider.provider
+    const headers = downloadUpdateOptions.requestHeaders
+    AppUpdater.checkFeedBaseUrlDeclared(provider, headers)
+    const feedBaseUrl = provider.feedBaseUrl
+    if (feedBaseUrl == null) {
+      return headers
+    }
+    const credentialOrigin = originUrl ?? feedBaseUrl
+    if (HttpExecutor.isCrossOrigin(credentialOrigin, url)) {
+      this.announceCrossOriginDownload(url, credentialOrigin, headers, originUrl == null ? feedBaseUrl : null)
+    }
+    return HttpExecutor.removeCrossOriginSensitiveHeaders(headers, credentialOrigin, url)
+  }
+
+  // Only names are logged (header names, query parameter names, origins), never values.
+  private announceCrossOriginDownload(url: URL, credentialOrigin: URL, headers: OutgoingHttpHeaders, feedBaseUrl: URL | null): void {
+    const docs = "https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+    const names = HttpExecutor.sensitiveHeaderNames(headers)
+    // v27 behaviour changes a plain-JavaScript app would otherwise not notice: each is announced once per updater
+    if (names.length !== 0) {
+      this.limitedLogger("cross-origin-headers").warn(
+        `electron-updater 7 (electron-builder v27) sends the credential headers from requestHeaders / addAuthHeader only to the update feed's origin (${credentialOrigin.origin}): ` +
+          `${names.join(", ")} not sent to ${url.origin}, which is another origin. ` +
+          `If that server needs them, serve the update files from the feed origin or use pre-signed URLs. ${docs}`
+      )
+    }
+    const feedQueryNames = feedBaseUrl == null ? [] : [...new Set(feedBaseUrl.searchParams.keys())]
+    if (feedQueryNames.length !== 0) {
+      this.limitedLogger("cross-origin-feed-query").warn(
+        `electron-updater 7 (electron-builder v27) adds the feed URL's query string (${feedQueryNames.join(", ")}) only to URLs on the update feed's origin (${feedBaseUrl!.origin}): ` +
+          `not added to the download from ${url.origin}, which keeps its own query string. ` +
+          `If that server needs it, serve the update files from the feed origin or use pre-signed URLs. ${docs}`
+      )
+    }
+  }
+
+  // Credential headers are only sent where the provider says (Provider.feedBaseUrl); a provider that does not say is a configuration error.
+  private static checkFeedBaseUrlDeclared(provider: Provider<any>, headers: OutgoingHttpHeaders): void {
+    if (provider.feedBaseUrl !== undefined) {
+      return
+    }
+    const names = HttpExecutor.sensitiveHeaderNames(headers)
+    if (names.length !== 0) {
+      throw newError(
+        `The custom update provider ${provider.constructor.name} does not declare feedBaseUrl, but its downloads would send the credential headers ${names.join(", ")} ` +
+          `(from requestHeaders, addAuthHeader or fileExtraDownloadHeaders). Override Provider.feedBaseUrl to return the feed URL ` +
+          `(the headers are then only sent to its origin), or null to send the request headers to every origin. ` +
+          `https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin`,
+        "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED"
+      )
+    }
   }
 
   private async getOrCreateStagingUserId(): Promise<string> {
@@ -797,7 +1056,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       )
     }
     const downloadOptions: DownloadOptions = {
-      headers: taskOptions.downloadUpdateOptions.requestHeaders,
+      headers: this.downloadRequestHeaders(fileInfo.url, taskOptions.downloadUpdateOptions),
       cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
       sha2: (fileInfo.info as any).sha2,
       sha512: fileInfo.info.sha512,
@@ -811,22 +1070,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const version = updateInfo.version
     const packageInfo = fileInfo.packageInfo
 
-    function getCacheUpdateFileName(): string {
-      // NodeJS URL doesn't decode automatically
-      const urlPath = decodeURIComponent(taskOptions.fileInfo.url.pathname)
-      if (urlPath.toLowerCase().endsWith(`.${taskOptions.fileExtension.toLowerCase()}`)) {
-        return path.basename(urlPath)
-      } else {
-        // url like /latest — use basename so a server-supplied path like "../../etc/evil"
-        // cannot escape the cache directory via path.join
-        return path.basename(taskOptions.fileInfo.info.url)
-      }
-    }
-
     const downloadedUpdateHelper = await this.getOrCreateDownloadHelper()
     const cacheDir = downloadedUpdateHelper.cacheDirForPendingUpdate
     await fsExtra.mkdir(cacheDir, { recursive: true })
-    const updateFileName = getCacheUpdateFileName()
+    const updateFileName = getCacheUpdateFileName(taskOptions.fileInfo, taskOptions.fileExtension)
     let updateFile = path.join(cacheDir, updateFileName)
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
 
@@ -848,15 +1095,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         // The differential downloader re-fetches the old blockmap from the server when no cached one exists.
         await fsExtra.remove(cachedBlockMapFile)
       }
-      return packageFile == null ? { updateFile } : { updateFile, packageFile }
+      return withLegacyArrayCompat(packageFile == null ? { updateFile } : { updateFile, packageFile }, this._logger)
     }
 
     const log = this._logger
-    const cachedUpdateFile = await downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo, log)
-    if (cachedUpdateFile != null) {
-      updateFile = cachedUpdateFile
-      return await done(false)
-    }
+    const cancellationToken = taskOptions.downloadUpdateOptions.cancellationToken
 
     const removeFileIfAny = async () => {
       await downloadedUpdateHelper.clear().catch(() => {
@@ -867,6 +1110,38 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       })
     }
 
+    const verifyUpdateFile = async (fileToVerify: string) => {
+      const failure = verificationFailureMessage(
+        await this.verifyUpdateFile({
+          updateFilePath: fileToVerify,
+          originalUpdateFileName: updateFileName,
+          // only offered when the companion package was actually written: `packageFile` is derived from the update
+          // metadata, so it is non-null for any channel file carrying a `packages` block even on targets that never
+          // download one
+          packageFilePath: packageFile != null && (await fsExtra.pathExists(packageFile)) ? packageFile : undefined,
+          cancellationToken,
+        })
+      )
+      if (failure != null) {
+        throw newError(`Downloaded update file ${updateFileName} failed verification: ${failure}`, "ERR_UPDATER_INVALID_UPDATE_FILE")
+      }
+    }
+
+    const cachedUpdateFile = await downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo, log)
+    if (cachedUpdateFile != null) {
+      updateFile = cachedUpdateFile
+      // an update downloaded by an earlier session is about to be announced as ready to install without being
+      // downloaded again, so the custom verifier has to gate it here too — its only other gate is the sha512 taken
+      // from the very update metadata a custom verifier exists to distrust
+      try {
+        await verifyUpdateFile(updateFile)
+      } catch (e: any) {
+        await removeFileIfAny()
+        throw e
+      }
+      return await done(false)
+    }
+
     // a fresh download starts — drop any blockmap left over from a previous update round, so that when this round
     // does not produce a new one (e.g. the differential download is skipped), the leftover cannot be promoted to the
     // cache next to a file it does not describe
@@ -875,6 +1150,18 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
+      // checked before verifying as well as after: verification can be arbitrarily expensive (hashing a large
+      // installer, a remote attestation call), and there is no point paying for it on a download already cancelled
+      if (cancellationToken.cancelled) {
+        throw new CancellationError()
+      }
+      await verifyUpdateFile(tempUpdateFile)
+      if (cancellationToken.cancelled) {
+        throw new CancellationError()
+      }
+      // only now may the file be made executable — doing it inside `task` would leave an unverified binary
+      // executable under a predictable path for as long as verification takes
+      await taskOptions.afterVerification?.(tempUpdateFile)
       await retry(() => fsExtra.rename(tempUpdateFile, updateFile), {
         retries: 60,
         interval: 500,
@@ -905,6 +1192,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     log.info(`New version ${version} has been downloaded to ${updateFile}`)
     return await done(true)
   }
+  /**
+   * Logs why a differential download failed, before the full download it falls back to. Never throws: neither a throwing
+   * logger nor an error that cannot be formatted may stop the fallback.
+   * @internal
+   */
+  protected logDifferentialDownloadFallback(error: unknown): void {
+    try {
+      this._logger.error(`Cannot download differentially, fallback to full download: ${error instanceof Error ? error.stack || String(error) : String(error)}`)
+    } catch (_ignored) {
+      // a throwing logger must not stop the fallback
+    }
+  }
+
   protected async differentialDownloadInstaller(
     fileInfo: ResolvedUpdateFileInfo,
     downloadUpdateOptions: DownloadUpdateOptions,
@@ -918,17 +1218,23 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return true
       }
       const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-      const blockmapFileUrls = await provider.getBlockMapFiles(
-        fileInfo.url,
-        this.app.version,
-        downloadUpdateOptions.updateInfoAndProvider.info.version,
-        this.previousBlockmapBaseUrlOverride
-      )
-      this._logger.info(`Download block maps (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
+      const override = this.previousBlockmapBaseUrlOverride
+      const getBlockMapFiles = () => provider.getBlockMapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version, override)
+      let oldBlockMapUrl: URL | null
+      let newBlockMapUrl: URL
+      if (fileInfo.blockMapUrl == null) {
+        ;[oldBlockMapUrl, newBlockMapUrl] = await getBlockMapFiles()
+      } else {
+        // The update manifest names the new blockmap (e.g. separately pre-signed), so a URL derived from the new file's URL is not
+        // valid for the old one: the old blockmap comes from the cache, else from previousBlockmapBaseUrlOverride.
+        newBlockMapUrl = fileInfo.blockMapUrl
+        oldBlockMapUrl = override ? (await getBlockMapFiles())[0] : null
+      }
+      this._logger.info(`Download block maps (old: "${oldBlockMapUrl ?? "cache only"}", new: ${newBlockMapUrl})`)
 
-      const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
+      const downloadBlockMap = async (url: URL, originUrl?: URL): Promise<BlockMap> => {
         const data = await this.httpExecutor.downloadToBuffer(url, {
-          headers: downloadUpdateOptions.requestHeaders,
+          headers: this.downloadRequestHeaders(url, downloadUpdateOptions, originUrl),
           cancellationToken: downloadUpdateOptions.cancellationToken,
         })
 
@@ -949,7 +1255,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         logger: this._logger,
         newFile: installerPath,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
-        requestHeaders: downloadUpdateOptions.requestHeaders,
+        requestHeaders: this.downloadRequestHeaders(fileInfo.url, downloadUpdateOptions),
         cancellationToken: downloadUpdateOptions.cancellationToken,
       }
 
@@ -974,28 +1280,45 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return null
       }
 
-      const newBlockMapData = await downloadBlockMap(blockmapFileUrls[1])
+      const newBlockMapData = await downloadBlockMap(newBlockMapUrl)
       await saveBlockMapToCacheDir(newBlockMapData, this.downloadedUpdateHelper!.cacheDirForPendingUpdate)
 
       // get old blockmap from cache dir first, if not found, download it
       let oldBlockMapData = await getBlockMapFromCacheDir(this.downloadedUpdateHelper!.cacheDir)
+      if (oldBlockMapData != null && !(await isBlockMapOfFile(oldBlockMapData, downloadOptions.oldFile))) {
+        // The cached blockmap is replaced when a download finishes, but NSIS replaces the cached installer only when the update is
+        // installed. A release that arrives before the previous one is installed therefore finds the pending release's blockmap next
+        // to the running release's installer; planning against it downloads every differential byte and then fails the sha512 check.
+        // expected, and fixed by the steps below: the installed version's blockmap is fetched, or (blockMapUrl set, no override) the update is downloaded in full
+        this._logger.info(`Cached blockmap does not describe the cached "${oldInstallerFileName}" (malformed, or its blocks do not end at the file size): ignoring it`)
+        oldBlockMapData = null
+      }
       isOldBlockMapFromCache = oldBlockMapData != null
       if (oldBlockMapData == null) {
-        this._logger.info(`No cached blockmap for the old installer, downloading it from "${blockmapFileUrls[0]}"`)
-        oldBlockMapData = await downloadBlockMap(blockmapFileUrls[0])
+        if (oldBlockMapUrl == null) {
+          // the full download caches the new blockmap downloaded above, so the next update can be differential
+          this._logger.info(
+            "No cached blockmap for the old installer, and the update manifest sets blockMapUrl, so the old blockmap URL cannot be derived " +
+              "(set previousBlockmapBaseUrlOverride to download it): downloading the full update"
+          )
+          return true
+        }
+        this._logger.info(`No cached blockmap for the old installer, downloading it from "${oldBlockMapUrl}"`)
+        // the old blockmap comes from previousBlockmapBaseUrlOverride when the app sets it, so that origin gets the credentials
+        oldBlockMapData = await downloadBlockMap(oldBlockMapUrl, override ? new URL(override) : undefined)
       }
 
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
       return false
     } catch (e: any) {
-      if (e.code === "ERR_CHECKSUM_MISMATCH") {
-        this._logger.warn(
+      if (e?.code === "ERR_CHECKSUM_MISMATCH") {
+        nonThrowingLogger(this._logger).warn(
           `sha512 checksum mismatch after differential download (old blockmap ${
             isOldBlockMapFromCache ? "was read from the local cache" : "was downloaded from the server"
           }): cached "${oldInstallerFileName}" is likely out of sync with the old blockmap, e.g. because one of them was replaced or evicted independently of the other`
         )
       }
-      this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+      this.logDifferentialDownloadFallback(e)
       if (this._testOnlyOptions != null) {
         // test mode
         throw e
@@ -1003,6 +1326,64 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return true
     }
   }
+}
+
+/**
+ * Whether `blockMap` (parsed from the cache, so unchecked) is a well-formed blockmap whose blocks end exactly at `file`'s size.
+ * A malformed map is rejected, so a corrupt cache file is replaced like a stale one. A missing file is not rejected here (the
+ * differential download reports it). Releases almost always differ in size, so this catches a blockmap of another release.
+ * @internal
+ */
+export async function isBlockMapOfFile(blockMap: unknown, file: string): Promise<boolean> {
+  const end = getBlockMapEnd(blockMap)
+  if (end == null) {
+    return false
+  }
+  const stat = await fsExtra.stat(file).catch(() => null)
+  return stat == null || end === stat.size
+}
+
+/** Where the blocks of `blockMap` end, or null if it is not a well-formed blockmap. */
+function getBlockMapEnd(blockMap: unknown): number | null {
+  if (blockMap == null || typeof blockMap !== "object") {
+    return null
+  }
+  const { files } = blockMap as { files?: unknown }
+  if (!Array.isArray(files)) {
+    return null
+  }
+  let end = 0
+  for (const blockMapFile of files) {
+    if (blockMapFile == null || typeof blockMapFile !== "object") {
+      return null
+    }
+    const { offset, sizes, checksums } = blockMapFile as { offset?: unknown; sizes?: unknown; checksums?: unknown }
+    if (typeof offset !== "number" || !Number.isFinite(offset) || offset < 0 || !Array.isArray(sizes) || !Array.isArray(checksums) || checksums.length !== sizes.length) {
+      return null
+    }
+    let fileEnd = offset
+    for (const size of sizes) {
+      if (typeof size !== "number" || !Number.isFinite(size) || size < 0) {
+        return null
+      }
+      fileEnd += size
+    }
+    end = Math.max(end, fileEnd)
+  }
+  return end
+}
+
+/** @internal */
+export function getCacheUpdateFileName(fileInfo: ResolvedUpdateFileInfo, fileExtension: string): string {
+  // NodeJS URL doesn't decode automatically
+  const urlPath = decodeURIComponent(fileInfo.url.pathname)
+  const fileName = path.basename(urlPath.toLowerCase().endsWith(`.${fileExtension.toLowerCase()}`) ? urlPath : fileInfo.info.url)
+  // basename(".") and basename("..") remain traversal segments. Reject them explicitly,
+  // along with values that cannot be represented as a single portable filename.
+  if (fileName.length === 0 || fileName === "." || fileName === ".." || fileName.includes("\0") || fileName.includes("/") || fileName.includes("\\")) {
+    throw newError(`Invalid update file name: ${JSON.stringify(fileName)}`, "ERR_UPDATER_INVALID_FILE_NAME")
+  }
+  return fileName
 }
 
 export interface DownloadUpdateOptions {
@@ -1047,6 +1428,12 @@ export interface DownloadExecutorTask {
   readonly downloadUpdateOptions: DownloadUpdateOptions
   readonly task: (destinationFile: string, downloadOptions: DownloadOptions, packageFile: string | null, removeTempDirIfAny: () => Promise<any>) => Promise<any>
 
+  /**
+   * Runs after the downloaded file passed verification and before it is renamed into the cache under its real name.
+   * For anything that must not be done to a file that is still unverified — making it executable, in particular.
+   */
+  readonly afterVerification?: (destinationFile: string) => Promise<void>
+
   readonly done?: (event: UpdateDownloadedEvent) => Promise<any>
 }
 
@@ -1060,4 +1447,35 @@ export interface TestOnlyUpdaterOptions {
   platform: ProviderPlatform
 
   isUseDifferentialDownload?: boolean
+}
+
+/**
+ * Adds a warning `Symbol.iterator` to a {@link DownloadExecutorResult}, for callers still written
+ * against v26's `Array<string>` return.
+ *
+ * `const [installer] = await downloadUpdate()` otherwise throws a bare
+ * `TypeError: ... is not iterable`, which names neither `downloadUpdate` nor the replacement, and
+ * `files[0]` silently evaluates to `undefined`. Yielding the same positional order the array had
+ * ([updateFile, packageFile]) keeps those call sites working for one major while they migrate.
+ *
+ * Non-enumerable so the object still serializes and compares as a plain `{ updateFile, packageFile }`.
+ */
+function withLegacyArrayCompat(result: DownloadExecutorResult, logger: Logger): DownloadExecutorResult {
+  return Object.defineProperty(result, Symbol.iterator, {
+    enumerable: false,
+    configurable: true,
+    writable: true,
+    value: function* () {
+      logger.warn(
+        "downloadUpdate() resolves with a DownloadExecutorResult object in electron-updater 7 (electron-builder v27), not an array. " +
+          "Replace `const [updateFile] = await downloadUpdate()` with `const { updateFile } = await downloadUpdate()`. " +
+          "This compatibility shim is removed in v28. " +
+          "https://www.electron.build/docs/migration/v27-breaking-changes#downloadupdate-resolves-with-a-downloadexecutorresult-object"
+      )
+      yield result.updateFile
+      if (result.packageFile != null) {
+        yield result.packageFile
+      }
+    },
+  })
 }

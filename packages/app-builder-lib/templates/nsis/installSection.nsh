@@ -27,6 +27,11 @@ StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
     GetDlgItem $0 $0 1000
     SendMessage $0 ${WM_SETTEXT} 0 "STR:$(installing)"
 
+    # SpiderBanner hides the InstFiles page while keyboard focus is still on one of its controls. Pressing Tab then makes the
+    # dialog manager search forever for a control it can no longer see, and the installer stops responding (#7526).
+    # Move focus to the banner's (visible) status text. This also lets screen readers announce it.
+    SendMessage $hwndparent ${WM_NEXTDLGCTL} $0 1
+
     StrCpy $1 $hwndparent
 		System::Call 'user32::ShutdownBlockReasonCreate(${SYSTYPE_PTR}r1, w "$(installing)")'
   ${endif}
@@ -48,6 +53,21 @@ ${if} $isTryToKeepShortcuts == "true"
     StrCpy $keepShortcuts "true"
   ${endIf}
 ${endif}
+
+# nsis-web: the app package is copied, verified and, if needed, downloaded before the installed version is uninstalled, so a package
+# that is refused or cannot be downloaded leaves that version in place. Empty for other installers.
+!insertmacro prepareWebPackage
+
+# nsis-web: the app may have been started again while the package was downloaded, check again (see CHECK_APP_RUNNING_AGAIN)
+!ifdef WEB_PACKAGE_PREPARED
+  !ifdef ONE_CLICK
+    !insertmacro CHECK_APP_RUNNING_AGAIN
+  !else
+    ${ifNot} ${UAC_IsInnerInstance}
+      !insertmacro CHECK_APP_RUNNING_AGAIN
+    ${endif}
+  !endif
+!endif
 
 !insertmacro uninstallOldVersion SHELL_CONTEXT
 !insertmacro handleUninstallResult SHELL_CONTEXT

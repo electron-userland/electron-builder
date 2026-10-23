@@ -54,6 +54,26 @@ win:
     - bitbucket
 ```
 
+### Which settings become the auto-update feed (`app-update.yml`) {#app-update-yml-feed}
+
+The auto-update feed an installed app polls is the **first** provider written to `app-update.yml` inside the packaged app. One packaged app (for example `win-unpacked`, `linux-unpacked` or the `.app` bundle) holds a single `app-update.yml`, shared by every target built from it. It is resolved like this:
+
+1. The targets of that app that write update info — NSIS/NSIS web installer, AppX with `electronUpdaterAware`, macOS dmg/zip, AppImage, deb/rpm/pacman — each resolve their own `publish`: the target-level value (e.g. `nsis.publish`) first, then the platform level (`win.publish`), then the top level.
+2. If one or more of them emit a manifest under those settings, their first provider that receives the manifest becomes the feed — a provider with `publishAutoUpdate: false` gets no `latest*.yml`, so it is skipped (with `publish: [{ provider: "s3", …, publishAutoUpdate: false }, "github"]` the feed is GitHub). They must agree: two such targets whose first providers differ (for example `nsis.publish` pointing at S3 while an AppX inherits `win.publish: github`, or `dmg.publish` differing from `zip.publish`) would leave some installs polling a feed that never receives their manifest. A publishing build then fails at build start with an `InvalidConfigurationError`; a build without a publish policy logs a warning that publishing will fail, and writes no `app-update.yml` for that app. Configure `publish` once at the platform level, or give the targets the same first provider (later providers may differ). Only what decides the feed is compared — the provider and options such as `url`, `bucket`, `region`, `path`, `owner`, `repo` or `channel`; options that only affect the upload (`publishAutoUpdate`, `timeout`, and for S3-compatible providers `acl`, `storageClass`, `encryption`) may differ.
+3. If none of them emits a manifest — only non-updating targets such as snap or portable, or a target with `publish: null` or `publishAutoUpdate: false` on every provider — the platform/top-level `publish` is used, as before.
+4. If no level configures `publish` at all, the feed falls back to GitHub when the `repository` field points there (see [GitHub Repository](#github-repository-and-bintray-package)).
+
+For example, with only a target-level setting
+
+```yaml
+nsis:
+  publish:
+    provider: s3
+    bucket: my-updates
+```
+
+installed NSIS apps poll the S3 bucket and embed the update-manifest trust key. Before this rule, the target-level setting was not read for `app-update.yml`: such a build shipped no `app-update.yml` at all (no feed and no trusted key), or — with a GitHub `repository` — a GitHub feed while the manifests went to S3.
+
 You can also configure publishing using CLI arguments, for example, to force publishing snap not to Snap Store, but to GitHub: `-c.snap.publish=github`
 
 A [custom](https://github.com/electron-userland/electron-builder/issues/3261) publish provider can be used if needed.
@@ -170,7 +190,7 @@ If your CI sets `BITBUCKET_TOKEN` to an app password / API token **without** a u
 ## Github
 
 :::note[v27: tagNamePrefix replaces vPrefixedTagName]
-The GitHub `vPrefixedTagName` boolean was removed — use `tagNamePrefix` to control the tag prefix (defaults to `"v"`; set `tagNamePrefix: ""` for no prefix). `electron-builder migrate-schema` rewrites it. (On **GitLab**, `vPrefixedTagName` is unchanged and still works.)
+The GitHub `vPrefixedTagName` boolean was removed — use `tagNamePrefix` to control the tag prefix (defaults to `"v"`; set `tagNamePrefix: ""` for no prefix). `electron-builder migrate-schema` rewrites it. Note that v26 ignored an empty `tagNamePrefix` and still tagged `v<version>`; v27 honors it, so the migrator rewrites a v26 `tagNamePrefix: ""` to `"v"` (with a warning) to keep your existing tag names. (On **GitLab**, `vPrefixedTagName` is unchanged and still works.)
 :::
 
   {!./builder-util-runtime.Interface.GithubOptions.md!}
@@ -182,6 +202,24 @@ The GitHub `vPrefixedTagName` boolean was removed — use `tagNamePrefix` to con
   {!./builder-util-runtime.Interface.KeygenOptions.md!}
 
 ## S3
+
+:::note[v27: choose the credential source with `awsCredentials`]
+Publishing to S3 requires `awsCredentials.source`; no credentials are read implicitly. Use `{ "source": "env" }` to read `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN`. `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG` and the `~/.aws` files are not used unless you name a profile. To publish with a named profile, including an IAM Identity Center (SSO) session from `aws sso login`, a `credential_process` or an assume-role profile:
+
+```json
+"publish": {
+  "provider": "s3",
+  "bucket": "my-bucket",
+  "region": "us-west-2",
+  "awsCredentials": { "source": "profile", "profile": "release" }
+}
+```
+
+If the publishing role is assumed from an SSO profile through `source_profile` (a `role_arn` + `source_profile = <sso profile>` role profile), opt in with `{ "source": "sso-role-chain", "profile": "<role profile>" }`: electron-builder resolves the SSO profile and each `AssumeRole` hop from the same configured files.
+
+For a bucket name containing dots, set `region`: it is only looked up automatically when publishing. See [v27 Breaking Changes](./migration/v27-breaking-changes.md#s3-publishing-requires-an-explicit-awscredentialssource).
+:::
+
   {!./builder-util-runtime.Interface.S3Options.md!}
 
 ## Snap Store

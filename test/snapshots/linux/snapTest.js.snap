@@ -2218,6 +2218,17 @@ exports[`snap 1`] = `
 }
 `;
 
+exports[`template app with lzo compression (#7013) 1`] = `
+{
+  "linux": [
+    {
+      "arch": "x64",
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`use template app 1`] = `
 {
   "apps": {

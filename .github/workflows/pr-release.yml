@@ -5,19 +5,23 @@ on:
     branches:
       - master
       - release/v*
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
 
 permissions: {}
 
 jobs:
   pr-release:
+    name: Version and publish
+    # on the job, not the workflow: a docker deploy (the deploy-docker job) takes a while and must not hold up the next release
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: false
     permissions:
       id-token: write  # Required for OIDC token
     environment: release
     timeout-minutes: 15
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    outputs:
+      docker-version: ${{ steps.docker.outputs.version }}
     steps:
       - name: Checkout code repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -27,7 +31,7 @@ jobs:
           persist-credentials: false
 
       - name: Install dependencies
-        uses: ./.github/actions/pnpm
+        uses: $/.github/actions/pnpm
 
       - name: Generate GitHub App token
         uses: electron/github-app-auth-action@e25ab7f5aa15b949aee0f00d7e48972f1f3e0f5a # v1.0.0
@@ -42,9 +46,9 @@ jobs:
           BRANCH="${GITHUB_REF_NAME}"
 
           if [ "$BRANCH" == "master" ]; then
-            echo "tag=next" >> $GITHUB_OUTPUT
-            echo "branch_type=prerelease" >> $GITHUB_OUTPUT
-            echo "config_file=config.json" >> $GITHUB_OUTPUT
+            echo "tag=next" >> "$GITHUB_OUTPUT"
+            echo "branch_type=prerelease" >> "$GITHUB_OUTPUT"
+            echo "config_file=config.json" >> "$GITHUB_OUTPUT"
 
           elif [[ "$BRANCH" =~ ^release/v[0-9]+$ ]]; then
             # Extract version from branch name (e.g., release/v27 -> v27)
@@ -58,9 +62,9 @@ jobs:
               exit 1
             fi
 
-            echo "tag=$VERSION" >> $GITHUB_OUTPUT
-            echo "branch_type=lts" >> $GITHUB_OUTPUT
-            echo "config_file=config.release-$VERSION.json" >> $GITHUB_OUTPUT
+            echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "branch_type=lts" >> "$GITHUB_OUTPUT"
+            echo "config_file=config.release-$VERSION.json" >> "$GITHUB_OUTPUT"
 
           else
             echo "::error::Unsupported branch for release: $BRANCH"
@@ -70,9 +74,9 @@ jobs:
 
           # Log determined values
           echo "Branch: $BRANCH"
-          echo "Dist-tag: $(grep '^tag=' $GITHUB_OUTPUT | cut -d= -f2)"
-          echo "Branch type: $(grep '^branch_type=' $GITHUB_OUTPUT | cut -d= -f2)"
-          echo "Config file: $(grep '^config_file=' $GITHUB_OUTPUT | cut -d= -f2)"
+          echo "Dist-tag: $(grep '^tag=' "$GITHUB_OUTPUT" | cut -d= -f2)"
+          echo "Branch type: $(grep '^branch_type=' "$GITHUB_OUTPUT" | cut -d= -f2)"
+          echo "Config file: $(grep '^config_file=' "$GITHUB_OUTPUT" | cut -d= -f2)"
 
       - name: Link changeset config for this branch
         run: |
@@ -124,8 +128,9 @@ jobs:
         env:
           STEPS_DIST_TAG_OUTPUTS_CONFIG_FILE: ${{ steps.dist-tag.outputs.config_file }}
 
+      # an exact version, as in npm-dist-tag.yml: a version on npm cannot be republished, so the tarball cannot change
       - name: Update npm to support OIDC token authentication for publishing
-        run: |
+        run: | # zizmor: ignore[adhoc-packages]
           for i in 1 2 3; do
             npm install -g npm@11.6.2 && break
             [ $i -lt 3 ] && echo "npm install failed (attempt $i/3), retrying in 15s…" && sleep 15
@@ -149,20 +154,128 @@ jobs:
       - name: Publish Summary
         if: steps.changesets.outputs.published == 'true'
         run: |
-          echo "## 📦 Published Packages" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** \`${GITHUB_REF_NAME}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Dist-tag:** \`${STEPS_DIST_TAG_OUTPUTS_TAG}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Type:** \`${STEPS_DIST_TAG_OUTPUTS_BRANCH_TYPE}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```json' >> $GITHUB_STEP_SUMMARY
-          echo '${STEPS_CHANGESETS_OUTPUTS_PUBLISHEDPACKAGES}' >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Published Packages" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Branch:** \`${GITHUB_REF_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Dist-tag:** \`${STEPS_DIST_TAG_OUTPUTS_TAG}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Type:** \`${STEPS_DIST_TAG_OUTPUTS_BRANCH_TYPE}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          echo "${STEPS_CHANGESETS_OUTPUTS_PUBLISHEDPACKAGES}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
         env:
           STEPS_DIST_TAG_OUTPUTS_TAG: ${{ steps.dist-tag.outputs.tag }}
           STEPS_DIST_TAG_OUTPUTS_BRANCH_TYPE: ${{ steps.dist-tag.outputs.branch_type }}
           STEPS_CHANGESETS_OUTPUTS_PUBLISHEDPACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
 
+      # changesets/action created one GitHub release per tag (electron-builder@<v>, electron-updater@<v>) whose body is
+      # that package's own CHANGELOG.md section; use its sub-section of the root CHANGELOG.md instead. Every body is
+      # built before any release is edited, so a tag missing from CHANGELOG.md fails the step without touching a release.
+      # Re-running the job does not run this step again (the tags exist, so nothing is published): redo a failed edit with
+      #   node scripts/aggregate-changesets.mjs --notes <tag> > notes.md && gh release edit <tag> --notes-file notes.md
+      - name: Release notes from the root CHANGELOG.md
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          # github.token cannot edit releases (permissions: {}); the app token can
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
+        run: |
+          set -euo pipefail
+          tags=$(node -e 'for (const p of JSON.parse(process.env.PUBLISHED_PACKAGES)) console.log(`${p.name}@${p.version}`)')
+          # only electron-builder and electron-updater have a sub-section in the root CHANGELOG.md (the
+          # @changesets/cli patch tags only those two; a guard should that patch ever be dropped)
+          lead_tags=""
+          for tag in $tags; do
+            case "$tag" in
+              electron-builder@* | electron-updater@*) lead_tags="$lead_tags $tag" ;;
+              *) echo "Skipping $tag: not electron-builder or electron-updater" ;;
+            esac
+          done
+          tags=$lead_tags
+          i=0
+          for tag in $tags; do
+            i=$((i + 1))
+            node scripts/aggregate-changesets.mjs --notes "$tag" > "$RUNNER_TEMP/release-notes-$i.md"
+          done
+          # edit every release even if one edit fails, then fail the step
+          failed=0
+          i=0
+          for tag in $tags; do
+            i=$((i + 1))
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --notes-file "$RUNNER_TEMP/release-notes-$i.md" || failed=1
+          done
+          exit $failed
+
       - name: No changes to publish
         if: steps.changesets.outputs.published != 'true'
         run: echo "No changesets to publish"
+
+      # The private package docker (the electronuserland/builder images) is versioned by changesets on its own, without
+      # an npm release or a tag of changesets: a version of docker/package.json that has no tag docker@<version> yet is
+      # not deployed yet (released by this push, or by an earlier one whose run failed before this step). The tag
+      # records the commit the version is deployed from, and the deploy-docker job below deploys it. A tag on this run's
+      # own commit means a re-run of the run that pushed it, which deploys again; a tag on another commit means the
+      # version is deployed. Neither a new tag nor a re-run deploys once a later commit has a newer docker@ tag (e.g. a
+      # re-run of an older run that failed before this step). It runs only after the publish path of the changesets step
+      # (hasChangesets 'false'; on the version path HEAD is the release PR's unmerged commit), also when the release
+      # notes step failed, and on master only: the images have one set of moving tags (latest, wine, …)
+      - name: Tag a new docker version
+        id: docker
+        if: ${{ !cancelled() && steps.changesets.outcome == 'success' && steps.changesets.outputs.hasChangesets == 'false' && github.ref_name == 'master' }}
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          version=$(node -p 'require("./docker/package.json").version')
+          tag="docker@$version"
+          # checkout fetched every tag (fetch-depth: 0)
+          on_head=false
+          if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
+            if [ "$(git rev-parse "refs/tags/$tag^{commit}")" != "$(git rev-parse HEAD)" ]; then
+              echo "$tag is on another commit: no new docker version"
+              exit 0
+            fi
+            on_head=true
+          fi
+          # not once a later commit has a newer docker@ tag, also when $tag is not there yet (a re-run of an older run
+          # that failed before this step): that would put older images on the moving tags. --contains HEAD also
+          # lists $tag when it is on HEAD, so a tag on HEAD itself is not a later one
+          for later in $(git tag -l 'docker@*' --contains HEAD); do
+            if [ "$(git rev-parse "refs/tags/$later^{commit}")" != "$(git rev-parse HEAD)" ]; then
+              echo "::warning::$later is on a later commit: not tagging/deploying $tag"
+              exit 0
+            fi
+          done
+          if [ "$on_head" = true ]; then
+            echo "$tag is on this commit (a re-run): deploying it again"
+          else
+            # an annotated tag object, then its ref, created through the REST API with the app token (GITHUB_TOKEN has
+            # no contents permission in this workflow). gh reads GH_TOKEN from the environment, so the token never lands
+            # in a command line or the git config. The tagger is the release bot (GIT_COMMITTER_* of export-git-user):
+            # the API documents no default for an omitted tagger
+            tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags" -f tag="$tag" -f message="$tag" \
+              -f object="$(git rev-parse HEAD)" -f type=commit \
+              -f "tagger[name]=$GIT_COMMITTER_NAME" -f "tagger[email]=$GIT_COMMITTER_EMAIL" --jq .sha)
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$tag" -f sha="$tag_sha" > /dev/null
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "## 🐳 docker@$version" >> "$GITHUB_STEP_SUMMARY"
+
+  # the images of the new docker version, from this run's commit: a run on master passes the branch policy of the
+  # `release` environment, which holds the Docker Hub secrets (deploy-docker.yml)
+  deploy-docker:
+    needs: pr-release
+    # also when pr-release failed in its release notes step, which runs before the tag step: the tag is created, and a
+    # later run that finds it does not deploy
+    if: ${{ !cancelled() && needs.pr-release.outputs.docker-version != '' }}
+    # one deploy at a time; a newer version waiting replaces an older one waiting
+    concurrency:
+      group: deploy-docker
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    uses: $/.github/workflows/deploy-docker.yml
+    # by name, not `secrets: inherit`, which would also hand RELEASE_BOT_APP_CREDS to the deploy job (it is in the `release` environment too)
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

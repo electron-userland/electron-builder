@@ -2,15 +2,21 @@ name: "Pull Request Labeler"
 on:
 - pull_request
 
+# a newer event of the same pull request supersedes a run still in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   triage:
+    name: Label pull request
     permissions:
       contents: read  # for actions/labeler to determine modified files
       pull-requests: write  # for actions/labeler to add labels to PRs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.repository == 'electron-userland/electron-builder'
     steps:
     - name: Checkout code repository

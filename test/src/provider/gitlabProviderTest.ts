@@ -390,3 +390,27 @@ test("getBlockMapFiles - project_upload throws ERR_UPDATER_BLOCKMAP_FILE_NOT_FOU
   const baseUrl = new URL(`${ASSET_BASE}/my-app-Setup-${STABLE_VERSION}.exe`)
   await expect(provider.getBlockMapFiles(baseUrl, "1.0.0", STABLE_VERSION)).rejects.toMatchObject({ code: "ERR_UPDATER_BLOCKMAP_FILE_NOT_FOUND" })
 })
+
+// electron-builder publishes both upload targets on options.host, the feedBaseUrl origin (project_upload:
+// https://<host>/-/project/<id>/uploads/…, generic_package: https://<host>/api/v4/projects/<id>/packages/generic/…),
+// so their downloads keep the app's request headers; an asset link on another host does not get the credential ones
+test("feedBaseUrl - published asset URLs keep the request headers, an asset on another host does not", async ({ expect }) => {
+  const requestSpy = createMockRequest()
+  const updater = await createGitlabUpdater(requestSpy)
+  updater.addAuthHeader("Bearer app-token")
+
+  requestSpy.mockResolvedValueOnce(JSON.stringify(mockGitlabRelease(STABLE_VERSION))).mockResolvedValueOnce(mockYaml(STABLE_VERSION))
+
+  const result = await updater.checkForUpdates()
+  const provider = getProvider<GitLabProvider>(updater)
+  const downloadUpdateOptions = { updateInfoAndProvider: { info: result!.updateInfo, provider }, requestHeaders: (updater as any).computeRequestHeaders(provider) }
+  const headersFor = (url: URL) => (updater as any).downloadRequestHeaders(url, downloadUpdateOptions)
+
+  expect(provider.feedBaseUrl.href).toBe("https://gitlab.com/api/v4/")
+  const [projectUploadFile] = provider.resolveFiles(result!.updateInfo as any)
+  expect(projectUploadFile.url.href).toBe(`${ASSET_BASE}/my-app-Setup-${STABLE_VERSION}.exe`)
+  expect(headersFor(projectUploadFile.url)).toHaveProperty("authorization", "Bearer app-token")
+  const genericPackageUrl = new URL(`https://gitlab.com/api/v4/projects/${MOCK_PROJECT_ID}/packages/generic/releases/${STABLE_VERSION}/my-app-Setup-${STABLE_VERSION}.exe`)
+  expect(headersFor(genericPackageUrl)).toHaveProperty("authorization", "Bearer app-token")
+  expect(headersFor(new URL(`https://cdn.example.net/my-app-Setup-${STABLE_VERSION}.exe`))).not.toHaveProperty("authorization")
+})

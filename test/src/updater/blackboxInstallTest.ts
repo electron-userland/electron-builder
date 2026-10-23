@@ -1,11 +1,12 @@
 import { AppImageOptions, Configuration, DebOptions, PacmanOptions, RpmOptions, Target, ToolsetConfig } from "app-builder-lib"
 import { PM } from "app-builder-lib/internal"
+import { readAsarHeader } from "app-builder-lib/src/asar/asar"
 import { Arch, Platform } from "electron-builder"
 import { DebUpdater, PacmanUpdater, RpmUpdater } from "electron-updater"
-import { archFromString, log, spawn } from "builder-util"
+import { archFromString, log } from "builder-util"
 import { deepAssign, GenericServerOptions } from "builder-util-runtime"
 import { execSync } from "child_process"
-import { move, outputFile, readJsonSync } from "fs-extra"
+import { move, readJsonSync } from "fs-extra"
 import path from "path"
 import { TestContext, TestOptions } from "vitest"
 import { launchAndWaitForQuit } from "../helpers/launchAppCrossPlatform"
@@ -13,13 +14,17 @@ import { assertPack, EXTENDED_TIMEOUT, modifyPackageJson, PackedContext, readDeb
 import { readAppImageCompression } from "../helpers/fileAssert"
 import { ELECTRON_VERSION, PACMAN_TEST_DEPENDS } from "../helpers/testConfig"
 import { OLD_VERSION_NUMBER, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { canRunFlatpak, cleanupFlatpak, installFlatpak } from "./blackboxInstallLinux"
 
-const optionsForInstall: TestOptions = { sequential: true, retry: 0, timeout: EXTENDED_TIMEOUT }
+const optionsForInstall: TestOptions = { concurrent: false, retry: 0, timeout: EXTENDED_TIMEOUT }
 
 const STANDARD_COMPRESSIONS: NonNullable<Configuration["compression"]>[] = ["store", "normal", "maximum"]
 const APPIMAGE_COMPRESSIONS: AppImageOptions["compression"][] = ["xz", "gzip", "zstd"]
 const LEGACY_COMPRESSIONS: AppImageOptions["compression"][] = ["xz", "gzip", "zstd"]
 // xz/lzo = forwarded as --compression to FUSE2; zstd/null = flag omitted → mksquashfs defaults to gzip (or xz when compression="maximum")
+
+// flatpak installs and runs the app by its id
+const APP_ID = "com.test.app"
 
 // Test runtime check. Can't be executed during test initialization (e.g. `ifEnv`)
 const determineEnvironment = (distro: string) => {
@@ -40,7 +45,7 @@ describe.heavy.ifLinux("linux install", optionsForInstall, () => {
             await runInstallTest(context, "appImage", archFromString(arch), { toolsets: { appimage: "0.0.0" }, compression, appImage: { compression: legacyCompression } })
           })
         }
-        const toolsetAppImage: ToolsetConfig["appimage"][] = ["1.1.0", "1.0.3"]
+        const toolsetAppImage = ["1.1.0", "1.0.3"] satisfies ToolsetConfig["appimage"][]
         for (const appimage of toolsetAppImage) {
           for (const appImageCompression of APPIMAGE_COMPRESSIONS) {
             test.ifEnv(arch === process.arch)(`${arch} - toolset: ${appimage} - compression: ${compression} - compressor: ${appImageCompression}`, async context => {
@@ -83,9 +88,47 @@ describe.heavy.ifLinux("linux install", optionsForInstall, () => {
       }
     })
   }
+  // One case, outside the compression loop: default compression, latest appimage toolset. Electron runs
+  // with the asar integrity fuses on (see runInstallTest), so a launch that reports its version proves it
+  // reads every file of the aligned archive through the rewritten offsets.
+  describe.ifEnv(process.env.RUN_APP_IMAGE_TEST === "true")(`AppImage asar.contentAlignment`, optionsForInstall, () => {
+    test.ifEnv(process.arch === "x64")(`x64 - toolset: latest - compression: default - compressor: zstd - contentAlignment: 512`, async context => {
+      const config: Configuration = { appImage: { compression: "zstd" }, asar: { contentAlignment: 512 } }
+      await runInstallTest(context, "appImage", Arch.x64, config, async ctx => {
+        const asarFile = path.join(ctx.outDir, "linux-unpacked", "resources", "app.asar")
+        const offsets: number[] = []
+        const walk = (node: any) => {
+          for (const child of Object.values<any>(node.files ?? {})) {
+            if (child.files != null) {
+              walk(child)
+            } else if (child.offset != null && !child.unpacked && child.link == null) {
+              offsets.push(parseInt(child.offset, 10))
+            }
+          }
+        }
+        walk(JSON.parse((await readAsarHeader(asarFile)).header))
+        context.expect(offsets.length).toBeGreaterThan(0)
+        context.expect(offsets.filter(offset => offset % 512 !== 0)).toEqual([])
+      })
+    })
+  })
+
+  // The installed app runs in its sandbox, which needs a bubblewrap that can create namespaces. The docker images of the
+  // tests above cannot provide that, so this runs where flatpak can run: the native flatpak job in CI.
+  for (const arch of ["x64", "arm64"] as NodeJS.Architecture[]) {
+    test.ifEnv(arch === process.arch && canRunFlatpak())(`flatpak - ${arch}`, async context => {
+      await runInstallTest(context, "flatpak", archFromString(arch), {})
+    })
+  }
 })
 
-async function runInstallTest(context: TestContext, target: ConstructorParameters<typeof Target>[0], arch: Arch, extraConfig: Configuration): Promise<void> {
+async function runInstallTest(
+  context: TestContext,
+  target: ConstructorParameters<typeof Target>[0],
+  arch: Arch,
+  extraConfig: Configuration,
+  verifyPacked?: (ctx: PackedContext) => Promise<void>
+): Promise<void> {
   const { expect, tmpDir } = context
 
   let artifactsDir: string | undefined
@@ -95,7 +138,7 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
       nativeModules: { npmRebuild: true },
       productName: "TestApp",
       executableName: "TestApp",
-      appId: "com.test.app",
+      appId: APP_ID,
       artifactName: "${productName}.${ext}",
       electronLanguages: ["en"],
       extraMetadata: {
@@ -121,7 +164,12 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
         bucket: "develar",
         path: "test",
       },
-      files: ["**/*", "../**/node_modules/**", "!path/**"],
+      fileOptions: {
+        files: ["**/*", "../**/node_modules/**", "!path/**"],
+        // electron-updater and builder-util-runtime are `link:`ed from this repository (see projectDirCreated below), so their files
+        // and dependencies resolve into the repository, outside the temporary test workspace: allow exactly that tree
+        allowExternalLinks: [path.resolve(__dirname, "../../..")],
+      },
     },
     extraConfig
   )
@@ -136,14 +184,17 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
       storeDepsLockfileSnapshot: false,
       packageManager: PM.PNPM,
       packed: async (ctx: PackedContext) => {
+        await verifyPacked?.(ctx)
         artifactsDir = await tmpDir.getTempDir({ prefix: "artifacts" })
         await move(ctx.outDir, artifactsDir)
       },
-      projectDirCreated: async (projectDir, _tmpDir, runtimeEnv) => {
-        // Write .npmrc to app/ — installDependencies runs pnpm with cwd=appDir, so pnpm 10
-        // reads this file and uses hoisted layout for the main install.
-        await outputFile(path.join(projectDir, "app", ".npmrc"), "node-linker=hoisted")
-
+      // pnpm 11 reads its own settings from pnpm-workspace.yaml alone (neither `node-linker` in .npmrc nor the `pnpm` key of
+      // package.json is consulted any more), so packTester writes these next to app/package.json for the install. Hoisted from the
+      // start, the install keeps the sqlite3 binary that @electron/rebuild produces right after it: the former follow-up
+      // `pnpm install --config.node-linker=hoisted` re-linked node_modules from the store (dropping that binary) and, under pnpm 11,
+      // failed outright with ERR_PNPM_IGNORED_BUILDS for sqlite3 (strictDepBuilds).
+      packageManagerSettings: { nodeLinker: "hoisted", supportedArchitectures: { os: ["current"], cpu: ["x64", "arm64"] } },
+      projectDirCreated: async projectDir => {
         await modifyPackageJson(
           projectDir,
           data => {
@@ -166,23 +217,6 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
           },
           true
         )
-        await modifyPackageJson(
-          projectDir,
-          data => {
-            data.pnpm = {
-              supportedArchitectures: {
-                os: ["current"],
-                cpu: ["x64", "arm64"],
-              },
-            }
-          },
-          false
-        )
-        // Return a post-install hook so the explicit flag runs AFTER installDependencies.
-        // pnpm 11 ignores node-linker from .npmrc; the CLI flag here handles that case.
-        return async () => {
-          await spawn("pnpm", ["install", "--config.node-linker=hoisted"], { cwd: path.join(projectDir, "app"), env: runtimeEnv })
-        }
       },
     }
   )
@@ -233,6 +267,8 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
       console
     )
     appPath = "/opt/TestApp/TestApp"
+  } else if (target === "flatpak") {
+    appPath = installFlatpak(path.join(artifactsDir, "TestApp.flatpak"), APP_ID)
   } else {
     throw new Error(`Unsupported install test target: ${target}`)
   }
@@ -256,9 +292,16 @@ async function runInstallTest(context: TestContext, target: ConstructorParameter
       ...(isLegacyToolset ? { APPIMAGE_EXTRACT_AND_RUN: "1" } : {}),
     },
     waitForExit: true,
+  }).finally(() => {
+    // the packages above are installed into a throwaway container; this one is in the user's flatpak installation
+    if (target === "flatpak") {
+      cleanupFlatpak(APP_ID)
+    }
   })
 
-  log.info({ version: result.version, compression: config[target]?.compression ?? config.compression, target }, "Install test launch completed")
+  // flatpak has no compression option of its own
+  const compression = target === "flatpak" ? config.compression : (config[target]?.compression ?? config.compression)
+  log.info({ version: result.version, compression, target }, "Install test launch completed")
   if (result.version == null) {
     throw new Error("App did not report version after launch")
   }

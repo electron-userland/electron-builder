@@ -7,15 +7,21 @@ on:
       - edited
       - synchronize
 
+# a newer event of the same pull request supersedes a run still in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   main:
+    name: Validate pull request title
     permissions:
       pull-requests: read  # for amannn/action-semantic-pull-request to analyze PRs
       statuses: write  # for amannn/action-semantic-pull-request to mark status of analyzed PR
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # Please look up the latest version from
       # https://github.com/amannn/action-semantic-pull-request/releases
