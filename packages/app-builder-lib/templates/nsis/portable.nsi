@@ -1,4 +1,5 @@
 !include "common.nsh"
+!include "FileFunc.nsh"
 !include "extractAppPackage.nsh"
 
 # https://github.com/electron-userland/electron-builder/issues/3972#issuecomment-505171582
@@ -77,7 +78,7 @@ Section
   System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_DIR", "$EXEDIR").r0'
   System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_FILE", "$EXEPATH").r0'
   System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_APP_FILENAME", "${APP_FILENAME}").r0'
-  ${StdUtils.GetAllParameters} $R0 0
+  ${GetParameters} $R0
 
   !ifdef SPLASH_IMAGE
     BgImage::Destroy
