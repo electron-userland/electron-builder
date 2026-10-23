@@ -113,7 +113,7 @@ function probePackage(pkgName: string, imports: NamespaceImport[]): string[] {
 }
 
 describe("ESM/CJS namespace-import interop", () => {
-  it("every `import * as` of an external package exposes the members it uses at runtime", () => {
+  it("every `import * as` of an external package exposes the members it uses at runtime", { timeout: 60_000 }, () => {
     const byPackage = collectNamespaceImports()
     const broken: string[] = []
     for (const [pkgName, imports] of byPackage) {
@@ -122,5 +122,5 @@ describe("ESM/CJS namespace-import interop", () => {
     // A non-empty list means a namespace import accesses a member that only exists on the CJS default
     // export — switch that import to `import x from "<pkg>"` (default import). See #9883.
     expect(broken).toEqual([])
-  }, 60_000)
+  })
 })

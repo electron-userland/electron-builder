@@ -30,6 +30,7 @@ export async function addWinAsarIntegrity(executablePath: string, asarIntegrity:
   resource.entries.push({
     type: "INTEGRITY",
     id: "ELECTRONASAR",
+    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion -- needed under TS 5.8 (ArrayBufferLike); tsgolint's TS 7 lib types .buffer as ArrayBuffer
     bin: new TextEncoder().encode(JSON.stringify(integrityList)).buffer as ArrayBuffer,
     lang: languages[0].lang,
     codepage: languages[0].codepage,

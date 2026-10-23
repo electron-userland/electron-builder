@@ -74,7 +74,7 @@ export async function installAppDeps(args: any) {
 function main() {
   const factory = (yargs as any).default ?? yargs
   const instance = typeof factory?.parserConfiguration === "function" ? factory : factory(hideBin(process.argv))
-  return installAppDeps(configureInstallAppDepsCommand(instance as unknown as yargs.Argv).argv)
+  return installAppDeps(configureInstallAppDepsCommand(instance).argv)
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

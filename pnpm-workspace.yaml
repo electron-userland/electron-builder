@@ -1,4 +1,5 @@
 packages:
+  - "docker"
   - "packages/**"
   - "test"
   - "website"
@@ -8,7 +9,6 @@ allowBuilds:
   '@swc/core': true
   core-js: false
   electron: false
-  electron-winstaller: true
   esbuild: false
 
 # 10080 minutes = 7 days
@@ -17,21 +17,70 @@ minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
   - esbuild # GHSA-gv7w-rqvm-qjhr: only patched in 0.28.1 (published <7d ago)
   - '@esbuild/*' # platform binaries released in lockstep with esbuild 0.28.1
+  # Renovate security update: toml@4.2.0
+  - toml@4.2.0
+  # Renovate security update: js-yaml@4.3.2
+  - js-yaml@4.3.2
+  # Renovate security update: tar@7.5.21
+  - tar@7.5.21
+  # Renovate security update: undici@7.29.0 || 7.29.1
+  - undici@7.29.0 || 7.29.1
+  # Renovate security update: form-data@4.0.6
+  - form-data@4.0.6
+  - '@electron/asar@4.3.1'
+  # Renovate security update: markdown-it@14.3.3
+  - markdown-it@14.3.3
 patchedDependencies:
   '@changesets/cli@2.29.7': patches/@changesets__cli@2.29.7.patch
   '@changesets/assemble-release-plan@6.0.9': patches/@changesets__assemble-release-plan@6.0.9.patch
   estree-walker@3.0.3: patches/estree-walker@3.0.3.patch
 overrides:
-  flatted: '>=3.4.2'
-  handlebars: '>=4.7.9'
+  flatted: '>=3.4.4' # @vitest/ui 5.0.5 declares ^3.4.4
   # --- Dependabot transitive-dependency security overrides ---
-  shell-quote: '>=1.8.4 <2' # GHSA-w7jw-789q-3m8p (critical)
+  shell-quote: '>=1.11.0 <2' # GHSA-pqg4-j6r4-53mv (critical), GHSA-395f-4hp3-45gv (high), GHSA-w7jw-789q-3m8p (critical)
   esbuild: '>=0.28.1 <0.29' # GHSA-gv7w-rqvm-qjhr (high), GHSA-g7r4-m6w7-qqqr (low)
   tmp: '>=0.2.6 <0.3' # GHSA-ph9p-34f9-6g65 (high), GHSA-52f5-9888-hmc6 (low)
   serialize-javascript: '>=7.0.5 <8' # GHSA-5c6j-r48x-rmvq (high), GHSA-qj8w-gfj5-8c6v (med)
   '@babel/plugin-transform-modules-systemjs': '>=7.29.4 <8' # GHSA-fv7c-fp4j-7gwp (high)
   fast-xml-builder: '>=1.1.7 <2' # GHSA-5wm8-gmm8-39j9 (high), GHSA-45c6-75p6-83cc (med)
-  '@xmldom/xmldom': '>=0.8.13 <0.9' # GHSA-2v35-w6hq-6mfw, -f6ww-3ggp-fr8h, -x6wf-f3px-wcqx, -j759-j44w-7fr8, -wh4c-j3r5-mjhp (high)
-  vite: '>=6.4.2 <7' # GHSA-p9ff-h696-f583 (high) + 7 more vite advisories (alerts #45,46,47,59,60,62,180,185)
+  '@xmldom/xmldom': '>=0.8.15 <0.9' # GHSA-2v35-w6hq-6mfw, -f6ww-3ggp-fr8h, -x6wf-f3px-wcqx, -j759-j44w-7fr8, -wh4c-j3r5-mjhp, -c7q8-3ch8-vqpv, -27p8-2357-5qqv, -8344-3jmq-59r6, -x4fp-j954-r2f4, -965w-775f-mr7g, -93r5-fhx6-vmg9, -w2rr-34g9-rvrj, -4w3w-2rp5-g8jm (high), -6gmq-8vp8-gcm6, -6h8r-xr42-gp59 (med)
+  vite: '>=6.4.4 <7' # GHSA-p9ff-h696-f583, GHSA-587h-7wmj-h5pm (high) + 7 more vite advisories (alerts #45,46,47,59,60,62,180,185,449)
   lodash: '>=4.18.0 <5' # GHSA-r5fr-rjxr-66jc (high), GHSA-f23m-r3pf-42rh, GHSA-xxjr-mmjv-4gpg (med)
+  fast-uri: '>=3.1.8 <4' # GHSA-qw65-cvwx-89v3, -jqff-g426-hqxp, -f65p-4m7j-42xc, -fph4-wmhf-6fwf, -7p8r-x3mc-p8w7, -v2hh-gcrm-f6hx, -4c8g-83qw-93j6 (high), GHSA-hrr3-gc8f-f4qj (med)
+  'brace-expansion@<1.1.21': '>=1.1.21 <2' # GHSA-3jxr-9vmj-r5cp, -mh99-v99m-4gvg, -rgw5-rvv9-x895, -6j4f-fj2g-mc7p, -qhr7-859c-m2p7 (high), GHSA-q2hr-2g5m-vwhr (med)
+  'brace-expansion@>=2 <2.1.7': '>=2.1.7 <3' # same advisories as brace-expansion@<1.1.21
+  'brace-expansion@>=5 <5.0.12': '>=5.0.12 <6' # same advisories as brace-expansion@<1.1.21
+  'minimatch@>=5 <5.1.8': '>=5.1.8 <6' # GHSA-7r86-cg39-jmmj, GHSA-23c5-xmqv-rm74, GHSA-3ppc-4f35-3m26 (high)
+  'minimatch@>=7 <7.4.8': '>=7.4.8 <8' # GHSA-7r86-cg39-jmmj, GHSA-23c5-xmqv-rm74, GHSA-3ppc-4f35-3m26 (high)
+  'js-yaml@>=3 <3.15.2': '^3.15.2' # GHSA-2883-xcg3-v3hh, GHSA-5p4m-2wfm-xmqj, GHSA-52cp-r559-cp3m (high)
+  postcss: '>=8.5.18 <9' # GHSA-r28c-9q8g-f849, GHSA-6g55-p6wh-862q (high)
+  nanoid: '>=3.3.20 <4' # GHSA-2v37-7h3g-55p8, GHSA-28wg-ghj8-5hjv, GHSA-xwg4-73v4-xw9w (high)
+  browserslist: '>=4.28.7 <5' # GHSA-73wf-gq98-2v4g (high)
+  source-map-js: '>=1.2.2 <2' # GHSA-68fv-2mgg-jv7q (high)
+  markdown-it: '>=14.3.3 <15' # GHSA-gfr2-rv44-r23c, GHSA-r7fv-28h4-cvq7 (high)
+  linkify-it: '>=5.0.2 <6' # GHSA-v245-v573-v5vm (high)
+  launch-editor: '>=2.14.2 <3' # GHSA-587h-7wmj-h5pm (high)
+  follow-redirects: '>=1.16.1 <2' # GHSA-q3jh-wrc6-jgq8, GHSA-8r9p-f939-6h3c (high)
+  'ws@>=7 <7.5.11': '^7.5.11' # GHSA-96hv-2xvq-fx4p (high)
+  'ws@>=8 <8.21.0': '^8.21.0' # GHSA-96hv-2xvq-fx4p (high), GHSA-58qx-3vcg-4xpx (med)
+  websocket-driver: '>=0.7.5 <0.8' # GHSA-xv26-6w52-cph6 (critical), GHSA-mp7j-qc5w-4988 (med)
+  proxy-addr: '>=2.0.8 <3' # GHSA-jqcg-44mw-7w3h (critical)
+  compression: '>=1.8.2 <2' # GHSA-vc2v-76pw-4v95 (high)
+  joi: '>=17.13.7 <18' # GHSA-6h2x-m376-mqjq (high)
+  image-size: '>=2.0.3 <3' # GHSA-w3rx-r6r6-pgpr, GHSA-5p2g-fcmc-qvqq (high)
+  svgo: '>=3.3.5 <4' # GHSA-w27v-7q3p-w38r, GHSA-2p49-hgcm-8545 (high)
+  http-cache-semantics: '>=4.3.0 <5' # GHSA-ch52-4w7c-c8xp (high): no upstream patch; 4.3.0 is outside the advisory range but keeps the disputed max-stale behaviour
+  tinypool: '>=2.1.2 <3' # GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr (critical); no 1.x fix, forces @docusaurus/core 3.x (^1.0.2) onto 2.x
+  '@babel/core': '>=7.29.6 <8' # GHSA-4x5r-pxfx-6jf8 (low); the docs site's 7.24.9 (@svgr/*) and 7.29.0 (@docusaurus/babel) copies are otherwise kept by lockfile preference
+  '@swc/html': '>=1.15.47 <2' # GHSA-5qr2-v392-m9g8 (med); patched upstream as 1.15.47-nightly-20260729.1, 1.15.47 is the first stable
+  colord: '>=2.9.4 <3' # GHSA-2wm5-q62r-hmrv (med)
+  postcss-selector-parser: '>=7.1.6 <8' # GHSA-rj75-hqrm-r3gf (med), GHSA-w9m9-85wc-3x92 (low); also moves the cssnano 6 plugins (^6.0.x) onto 7.x, as cssnano itself did upstream: the 6.1.5 backport is outside the GHSA's patched range
+  mdast-util-to-hast: '>=13.2.1 <14' # GHSA-4fh9-h7wg-q85m (med)
+  'ajv@<6.14.0': '>=6.14.0 <7' # GHSA-2g4f-4pwh-qvx6 (med); selector keeps app-builder-lib's ajv 8.x untouched
+  webpack-dev-server: '>=5.2.6 <6' # GHSA-79cf-xcqc-c78w, GHSA-mx8g-39q3-5c79, GHSA-m28w-2pqf-7qgj, GHSA-f5vj-f2hx-8m93 (med)
+  http-proxy-middleware: '>=2.0.10 <3' # GHSA-64mm-vxmg-q3vj (med); webpack-dev-server 5.2.x still declares ^2.0.9
+  express: '>=4.22.3 <5' # pairs with the patched body-parser/qs below; 4.22.3 declares body-parser ~1.20.5 and qs ~6.16.0
+  body-parser: '>=1.20.6 <2' # GHSA-v422-hmwv-36x6 (low)
+  qs: '>=6.16.0 <7' # GHSA-q8mj-m7cp-5q26, GHSA-x5fp-wj9c-mxmx, GHSA-4mjr-xmp4-gh2g (med); the locked express 4.22.1 (~6.14.0) and body-parser 1.20.5 (~6.15.1) would otherwise keep the vulnerable copies
+  'uuid@<9': '>=11.1.1 <12' # GHSA-w5hq-g745-h8pq (med); no 8.x fix, sockjs (webpack-dev-server) only calls require('uuid').v4()
 packageImportMethod: copy

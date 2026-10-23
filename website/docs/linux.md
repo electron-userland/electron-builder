@@ -48,7 +48,7 @@ linux:
 ```
 
 :::note[v27: launcher entrypoint]
-Every Linux target (deb/rpm, AppImage, snap, flatpak) now launches through a generated `<executableName>-launcher` shell script rather than invoking the executable directly. `executableArgs` (and `forceX11`) are injected into that launcher, and the generated `.desktop` `Exec` key points at it (e.g. `Exec=/opt/MyApp/MyApp-launcher %U`) rather than inlining the args. This makes `executableArgs` apply consistently across all Linux targets. If you ship a custom `.desktop` override, an AppArmor/snap profile, or a MIME handler that hard-codes the `Exec` command, point it at the `*-launcher` script. See [v27 Breaking Changes → Linux launcher entrypoint](./migration/v27-breaking-changes.md#linux-launcher-entrypoint).
+Every Linux target except flatpak (deb/rpm, AppImage, snap) now launches through a generated `<executableName>-launcher` shell script rather than invoking the executable directly. `executableArgs` (and `forceX11`) are injected into that launcher, and the generated `.desktop` `Exec` key points at it (e.g. `Exec=/opt/MyApp/MyApp-launcher %U`) rather than inlining the args. This makes `executableArgs` apply consistently across all Linux targets. If you ship a custom `.desktop` override, an AppArmor/snap profile, or a MIME handler that hard-codes the `Exec` command, point it at the `*-launcher` script. The flatpak target keeps its own `electron-wrapper` script (`Exec=electron-wrapper %U`), which receives `executableArgs` as well. See [v27 Breaking Changes → Linux launcher entrypoint](./migration/v27-breaking-changes.md#linux-launcher-entrypoint).
 :::
 
 ## Desktop File Customization
@@ -77,6 +77,16 @@ linux:
 
 Standard freedesktop.org category values include: `AudioVideo`, `Audio`, `Video`, `Development`, `Education`, `Game`, `Graphics`, `Network`, `Office`, `Science`, `Settings`, `System`, `Utility`.
 
+### Desktop entry validation {#desktop-entry-validation}
+
+Keys and values are written to the file as given, so escape sequences such as `\;` in a list value are kept. Every Linux target that writes a desktop entry checks them first, and fails the build with an `InvalidConfigurationError` that names the group and the key (or the action) when:
+
+- a key, in `entry` or in an action, is empty, contains `=` or a line break, or has brackets other than around a trailing locale of letters, digits, `-`, `_`, `.` and `@`, right after the key, such as `Name[de]` or `Comment[sr@latin]`. These are the keys that GLib, which most desktops read the file with, rejects, and it then ignores the whole file. Keys that the specification does not allow but desktop environments read, such as `X_Foo`, are kept;
+- a value contains a line break, which would end the line and start a new key or group. A value must be on one line: write a newline in a string value as `\n`. Line breaks at the end of a value, as in a YAML block scalar (`|`), are dropped. This also applies to the values built from other options: `Categories` from `linux.category`, and `MimeType` from `linux.mimeTypes`, `fileAssociations` and `protocols`;
+- an action name contains `[`, `]` or a control character.
+
+The `Name`, `Comment` and `StartupWMClass` values that electron-builder derives from the product name, the description and `desktopName` are escaped instead, so they are not affected. Each of these cases would otherwise produce a file that desktop environments read differently from what was configured, or not at all. To fix the error, write the value on one line and use a key that the [Desktop Entry Specification](https://specifications.freedesktop.org/desktop-entry/latest/basic-format.html) allows; your own keys start with `X-`, such as `X-MyApp-Feature`.
+
 ## Window Association (`desktopName`)
 
 Electron derives its [`app_id`](https://github.com/electron/electron/blob/main/lib/browser/init.ts) — which becomes the window's `WM_CLASS` — from the `desktopName` field in your root `package.json`. Desktop environments (GNOME, KDE, etc.) use `WM_CLASS` to match a running window to its `.desktop` entry for taskbar grouping, dock badges, and launcher highlighting.
@@ -91,7 +101,7 @@ To fix this, set `desktopName` in `package.json`:
 }
 ```
 
-electron-builder installs the `.desktop` file as `${desktopName}.desktop` (here `com.example.MyApp.desktop`) and sets `StartupWMClass=com.example.MyApp`, both matching Electron's `app_id`. A trailing `.desktop` in `desktopName` is tolerated (stripped before the filename is composed), so configs written for earlier versions keep working. When `desktopName` is absent, the filename falls back to `executableName`.
+electron-builder installs the `.desktop` file as `${desktopName}.desktop` (here `com.example.MyApp.desktop`) and sets `StartupWMClass=com.example.MyApp`, both matching Electron's `app_id`. A trailing `.desktop` in `desktopName` is tolerated (stripped before the filename is composed), so configs written for earlier versions keep working. When `desktopName` is absent, the filename falls back to `executableName`. The flatpak target is the exception: its `.desktop` file is always named after the [Flatpak application ID](flatpak.md#application-id), so for the flatpak `desktopName` has to be that ID followed by `.desktop` — see [Desktop Name](flatpak.md#desktop-name).
 
 :::note[Changed in v27]
 The installed `.desktop` filename is now always derived from `desktopName`. The `linux.syncDesktopName` flag that previously gated this behaviour has been removed — see the [v27 breaking changes](./migration/v27-breaking-changes.md#linuxsyncdesktopname-always-synced).
@@ -254,7 +264,7 @@ deb:
   appArmorProfile: build/apparmor-profile
 ```
 
-Without a profile, the app may be restricted by Ubuntu's default profile. See the [AppArmor documentation](https://ubuntu.com/security/apparmor) for profile syntax.
+Without a profile, the app may be restricted by Ubuntu's default profile. See the [AppArmor documentation](https://ubuntu.com/server/docs/how-to/security/apparmor/) for profile syntax.
 
 ## Base Linux Configuration
 

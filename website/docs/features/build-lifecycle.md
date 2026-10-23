@@ -31,7 +31,9 @@ electron-builder build
 │   ├─ 2e. Post-Pack (before signing)
 │   │   └─ 🪝 afterPack
 │   │
-│   ├─ 2f. Apply Electron Fuses (if configured)
+│   ├─ 2f. Patch the Electron binary (before signing)
+│   │   ├─ Embed the ASAR integrity digest (macOS, Electron 41+)
+│   │   └─ Apply Electron Fuses (if configured)
 │   │
 │   ├─ 2g. Code Sign the .app / .exe
 │   │   └─ 🪝 afterSign  (only fires if signing actually ran)
@@ -198,7 +200,9 @@ afterPack: async ({ outDir, appOutDir, packager, electronPlatformName, arch, tar
 
 ---
 
-### Phase 2f — Apply Electron Fuses
+### Phase 2f — Patch the Electron binary
+
+On macOS with Electron 41 and later, electron-builder first embeds the ASAR integrity digest: a digest of the `ElectronAsarIntegrity` hashes in `Info.plist`, as `afterPack` left them, written into the Electron Framework, which is then signed again ad hoc. With the `enableEmbeddedAsarIntegrityValidation` fuse, an app whose `Info.plist` is changed after this point refuses to launch. `mac.asarIntegrityDigest: false` skips this step.
 
 If `electronFuses` is configured, fuse bits are flipped in the Electron binary at this point — after packing, before signing. Fuses are baked into the binary and cannot be changed post-sign.
 
@@ -246,7 +250,10 @@ win:
   sign:
     type: signtool
     sign: ./scripts/custom-sign.js
+    publisherName: "CN=My Company, O=My Company, C=US"
 ```
+
+On Windows, electron-builder cannot read the certificate a custom hook signs with, so set `win.sign.publisherName` to that certificate's subject — it is written to `app-update.yml` for update signature verification, and a build that writes `app-update.yml` fails without it. Copy it from a binary the hook already signed, as shown in [How do you delegate code signing?](../win.md#how-do-you-delegate-code-signing); every component you list must match exactly.
 
 ---
 
@@ -403,7 +410,7 @@ Each target runs inside Phase 2h. Here is what happens inside each one:
 | **AppImage** | Create squashfs image → embed ELF header → emit |
 | **DEB / RPM / Pacman** | Package via `fpm` → emit |
 | **Snap** | Write `snapcraft.yaml` → run `snapcraft` → emit |
-| **Flatpak** | Write manifest → run `flatpak-builder` → emit |
+| **Flatpak** | Write manifest → run `flatpak-builder` → `flatpak build-export` + `flatpak build-bundle` → emit |
 
 ---
 
@@ -452,6 +459,6 @@ See [Multi Platform Build](/docs/features/multi-platform-build) and [Build Archi
 
 - [Hooks Reference](/docs/features/hooks) — full API for every hook, with examples
 - [File Patterns](/docs/file-patterns) — how `files`, `extraResources`, and `extraFiles` work
-- [Code Signing](/docs/features/code-signing/code-signing) — signing setup for macOS and Windows
+- [Code Signing](/docs/features/code-signing) — signing setup for macOS and Windows
 - [Publish Configuration](/docs/publish) — provider setup and update metadata
 - [Programmatic Usage](/docs/programmatic-usage) — drive the build from Node.js

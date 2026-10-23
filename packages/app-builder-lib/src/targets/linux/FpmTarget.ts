@@ -1,4 +1,18 @@
-import { Arch, asArray, exec, getArchSuffix, log, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
+import {
+  Arch,
+  asArray,
+  exec,
+  getArchSuffix,
+  InvalidConfigurationError,
+  log,
+  prepareFixedNameWrite,
+  stripSensitiveEnvVars,
+  TmpDir,
+  toLinuxArchString,
+  unlinkIfExists,
+  use,
+} from "builder-util"
+import { expandDefaultKeyword } from "builder-util/internal"
 import { Nullish } from "builder-util-runtime"
 
 import { objectToArgs } from "builder-util-runtime"
@@ -11,7 +25,7 @@ import * as errorMessages from "../../errorMessages.js"
 import { LinuxPackager } from "../../linuxPackager.js"
 import { DebOptions, LinuxTargetSpecificOptions } from "../../options/linuxOptions.js"
 import { ArtifactCreated } from "../../packagerApi.js"
-import { getAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../publish/PublishManager.js"
+import { getPackAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../publish/PublishManager.js"
 import { getFpmPath } from "../../toolsets/fpm.js"
 import { getLinuxToolsPath } from "../../toolsets/linuxToolsMac.js"
 import { computeEnv } from "../../util/bundledTool.js"
@@ -171,20 +185,29 @@ export default class FpmTarget extends Target {
     const resourceDir = packager.getResourcesDir(linuxDistType)
 
     const publishConfig = this.supportsAutoUpdate(target)
-      ? await getAppUpdatePublishConfiguration(packager, this.options, arch, false /* in any case validation will be done on publish step */)
+      ? await getPackAppUpdatePublishConfiguration(
+          packager,
+          packager.getPackTargets(appOutDir, arch) ?? [this],
+          arch,
+          false /* in any case validation will be done on publish step */
+        )
       : null
     if (publishConfig != null) {
       log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}`)
-      await writeAppUpdateYaml(resourceDir, publishConfig)
+      await writeAppUpdateYaml(resourceDir, publishConfig, linuxDistType)
       // Extra file needed for auto-updater to detect installation method
-      await outputFile(path.join(resourceDir, "package-type"), target)
+      const packageTypeFile = path.join(resourceDir, "package-type")
+      await prepareFixedNameWrite(linuxDistType, packageTypeFile, "package type file")
+      await outputFile(packageTypeFile, target)
     }
 
     const scripts = await this.scriptFiles
 
     // Install AppArmor support for ubuntu 24+
     // https://github.com/electron-userland/electron-builder/issues/8635
-    await copyFile(scripts.appArmor, path.join(resourceDir, "apparmor-profile"))
+    const appArmorFile = path.join(resourceDir, "apparmor-profile")
+    await prepareFixedNameWrite(linuxDistType, appArmorFile, "AppArmor profile")
+    await copyFile(scripts.appArmor, appArmorFile)
 
     const appInfo = packager.appInfo
     const options = this.options
@@ -233,9 +256,9 @@ export default class FpmTarget extends Target {
     const depends = options.depends
     if (depends != null) {
       if (Array.isArray(depends)) {
-        fpmConfiguration.customDepends = depends
+        fpmConfiguration.customDepends = this.expandDependsDefaults(depends, target)
       } else if (typeof depends === "string") {
-        fpmConfiguration.customDepends = [depends as string]
+        fpmConfiguration.customDepends = [depends]
       } else {
         throw new Error(`depends must be Array or String, but specified as: ${depends}`)
       }
@@ -404,8 +427,23 @@ export default class FpmTarget extends Target {
     })
   }
 
+  // an over-approximation: the artifact only carries update info when its publish config resolves
+  get writesUpdateInfo(): boolean {
+    return this.supportsAutoUpdate(this.name)
+  }
+
   private supportsAutoUpdate(target: string) {
     return ["deb", "rpm", "pacman"].includes(target)
+  }
+
+  /**
+   * Expand the `"default"` keyword in a user-provided `depends` array to the target's default
+   * depends list, so extras can be appended without repeating (and having to keep in sync) the
+   * defaults — same convention as the snap target's `plugs`/`stagePackages`/`buildPackages`.
+   * The result is deduplicated while preserving order.
+   */
+  private expandDependsDefaults(depends: string[], target: string): string[] {
+    return Array.from(new Set(expandDefaultKeyword(depends, this.getDefaultDepends(target))))
   }
 
   private getDefaultDepends(target: string): string[] {
@@ -426,7 +464,7 @@ export default class FpmTarget extends Target {
         ]
 
       case "pacman":
-        return ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"]
+        return ["c-ares", "ffmpeg", "gtk3", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"]
 
       default:
         return []
@@ -463,6 +501,31 @@ interface FpmConfiguration {
   compression?: LinuxTargetSpecificOptions["compression"]
 }
 
+/**
+ * Legacy EJS interpolation, removed in v27 in favour of shell-style `${var}`.
+ *
+ * This has to be detected explicitly: the substitution below is a plain `${var}` regex, so an
+ * `<%= executable %>` left in a template does not match, is copied verbatim into the maintainer
+ * script, and ships inside the .deb/.rpm. The build stays green and every install runs a broken
+ * postinst/postrm — so this fails the build rather than warning.
+ */
+const LEGACY_EJS_TAG = /<%[-=]?\s*([\w.]+)\s*%>/
+
+function assertNoLegacyEjsTemplate(templatePath: string, template: string): void {
+  const match = LEGACY_EJS_TAG.exec(template)
+  if (match == null) {
+    return
+  }
+  const [tag, name] = match
+  throw new InvalidConfigurationError(
+    `${templatePath} uses the EJS template syntax \`${tag}\`, which was removed in electron-builder v27.\n` +
+      `Use the shell-style form instead: \${${name}}\n` +
+      "Left as-is the tag is copied verbatim into the generated maintainer script and shipped inside the package, " +
+      "so every install would run a broken postinst/postrm.\n" +
+      "https://www.electron.build/docs/migration/v27-breaking-changes#linux-maintainer-script-ejs-template-syntax"
+  )
+}
+
 async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: any): Promise<string> {
   //noinspection JSUnusedLocalSymbols
   function replacer(match: string, p1: string) {
@@ -472,7 +535,9 @@ async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: an
       throw new Error(`Macro ${p1} is not defined`)
     }
   }
-  const config = (await readFile(templatePath, "utf8")).replace(/\${([a-zA-Z]+)}/g, replacer)
+  const template = await readFile(templatePath, "utf8")
+  assertNoLegacyEjsTemplate(templatePath, template)
+  const config = template.replace(/\${([a-zA-Z]+)}/g, replacer)
 
   const outputPath = await tmpDir.getTempFile({ suffix: path.basename(templatePath, ".tpl") })
   await outputFile(outputPath, config)

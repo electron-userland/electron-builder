@@ -109,7 +109,7 @@ Section "install" INSTALL_SECTION_ID
                 ${Case} 1223 ;user aborted
                   ${Break}
                 ${Default}
-                  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate, error $0"
+                  MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate, error $0" /SD IDOK
                   ${Break}
               ${EndSwitch}
               Quit

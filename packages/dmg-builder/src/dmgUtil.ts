@@ -70,22 +70,39 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, forc
   if (device == null) {
     throw new Error(`Cannot mount: ${attachResult}`)
   }
-  // Find the volume mount path directly from hdiutil attach output.
-  // APFS images synthesize a new disk device (e.g. disk9) separate from the container disk
-  // (e.g. disk8), so device-name matching via hdiutil info misses the APFS volume.
-  let volumePath: string | null = null
-  for (const line of attachResult!.split("\n")) {
-    const match = /\s+(\/Volumes\/.+?)\s*$/.exec(line)
-    if (match) {
-      volumePath = match[1].trim()
-      break
-    }
-  }
-  if (volumePath == null) {
-    throw new Error(`Cannot find volume mount path for device: ${device}`)
-  }
 
-  return await executeFinally(task(volumePath), () => detach(device, forceDetach))
+  return executeAndDetach(attachResult!, device, forceDetach, task)
+}
+
+/** @internal */
+export async function executeAndDetach(
+  attachResult: string,
+  device: string,
+  forceDetach: boolean,
+  task: (volumePath: string) => Promise<any>,
+  detacher: (device: string, forceDetach: boolean) => Promise<any> = detach
+) {
+  return executeFinally(
+    (async () => {
+      // Find the volume mount path directly from hdiutil attach output.
+      // APFS images synthesize a new disk device (e.g. disk9) separate from the container disk
+      // (e.g. disk8), so device-name matching via hdiutil info misses the APFS volume.
+      let volumePath: string | null = null
+      for (const line of attachResult.split("\n")) {
+        const match = /\s+(\/Volumes\/.+?)\s*$/.exec(line)
+        if (match) {
+          volumePath = match[1].trim()
+          break
+        }
+      }
+      if (volumePath == null) {
+        throw new Error(`Cannot find volume mount path for device: ${device}`)
+      }
+
+      return task(volumePath)
+    })(),
+    () => detacher(device, forceDetach)
+  )
 }
 
 export async function detach(name: string, alwaysForce: boolean) {
@@ -245,14 +262,20 @@ export async function transformBackgroundFileIfNeed(file: string, tmpDir: TmpDir
     return file
   }
 
-  const retinaFile = file.replace(/\.([a-z]+)$/, "@2x.$1")
-  if (await exists(retinaFile)) {
+  const retinaFile = getRetinaFilePath(file)
+  if (retinaFile != null && (await exists(retinaFile))) {
     const tiffFile = await tmpDir.getTempFile({ suffix: ".tiff" })
     await exec("tiffutil", ["-cathidpicheck", file, retinaFile, "-out", tiffFile])
     return tiffFile
   }
 
   return file
+}
+
+/** @internal */
+export function getRetinaFilePath(file: string): string | null {
+  const extension = path.extname(file)
+  return extension === "" ? null : `${file.slice(0, -extension.length)}@2x${extension}`
 }
 
 export async function getImageSizeUsingSips(background: string) {

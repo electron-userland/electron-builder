@@ -58,14 +58,14 @@ CWD=$(dirname "$0")
 # Resolve absolute repo root (three levels up: linux/ → src/ → test/ → .)
 REPO_ROOT=$(cd "$CWD/../../.." && pwd)
 
-export TEST_FILES="${TEST_FILES:-snapTest,snapHeavyTest}"
+export TEST_FILES="${TEST_FILES:-snapTest,snapHeavy}"
 export DEBUG="${DEBUG:-electron-updater}"
 export SKIPPED_TESTS="${SKIPPED_TESTS:-none}"
 
 # Common docker flags forwarded to every test run.
 #
 #   RUN_SNAP_TESTS=true
-#     Activates the test guard in snapHeavyTest.ts even when the snapd client
+#     Activates the test guard in snapHeavy.e2e.ts even when the snapd client
 #     ("snap") is absent — these images have snapcraft but not snapd.
 #
 #   SNAPCRAFT_BUILD_ENVIRONMENT=host

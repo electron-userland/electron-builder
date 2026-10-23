@@ -7,7 +7,7 @@ electron-builder downloads two kinds of artifacts at build time:
 1. The **Electron distribution** (`electron-v<version>-<platform>-<arch>.zip`), fetched via [@electron/get](https://github.com/electron/get).
 2. **electron-builder toolsets** (AppImage tools, fpm, NSIS, winCodeSign, 7-Zip, …), fetched from [electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries) releases.
 
-Both can be pre-seeded so that a build runs with **no network access at all** — the pattern used by Flathub builds, locked-down CI, and other air-gapped environments. This page describes the exact on-disk contracts.
+Both can be pre-seeded so that a build runs with **no network access at all** — the pattern used by Flathub builds, locked-down CI, and other air-gapped environments. This page describes the exact on-disk contracts. The `flatpak` target has one more requirement, which is not a cache: see [Flatpak target](#flatpak-target).
 
 :::tip[Warm the cache online, then copy]
 The simplest approach: run one full build on an online machine with the same OS, architecture, Electron version and targets, then copy both cache directories (see below) to the offline machine. Everything on this page also works with manually seeded files.
@@ -88,7 +88,8 @@ Toolset resolution checks electron-builder's own archive cache **before** any ne
 $ELECTRON_BUILDER_CACHE/<toolset>@<version>/<archive>
 # e.g. ~/.cache/electron-builder/appimage@1.1.0/appimage-tools-runtime-20251108.tar.gz
 #      ~/.cache/electron-builder/fpm@2.2.1/fpm-1.17.0-ruby-3.4.3-linux-amd64.7z
-#      ~/.cache/electron-builder/7zip@1.0.0/7zip-linux-x64.tar.gz
+#      ~/.cache/electron-builder/7zip@1.0.1/7zip-linux-x64.tar.gz
+#      ~/.cache/electron-builder/squirrel.windows@1.1.1/squirrel.windows-2.0.1-patched.zip
 ```
 
 The default cache directory (when `ELECTRON_BUILDER_CACHE` is not set) is `~/.cache/electron-builder` on Linux (respecting `$XDG_CACHE_HOME`), `~/Library/Caches/electron-builder` on macOS, and `%LOCALAPPDATA%\electron-builder\Cache` on Windows.
@@ -98,7 +99,8 @@ Notes on the contract:
 - The archive's SHA-256 is verified **locally** against the checksum pinned in electron-builder — no checksum file is fetched.
 - Extraction happens locally on first use; you do **not** need to seed extracted directories or `.state` marker files.
 - Archive names and versions for your electron-builder version can be read from the toolset modules in [`packages/app-builder-lib/src/toolsets`](https://github.com/electron-userland/electron-builder/tree/master/packages/app-builder-lib/src/toolsets), or captured by warming the cache once online.
-- **7-Zip bootstrap:** extracting any `.7z` toolset (fpm, NSIS, winCodeSign, the legacy FUSE2 AppImage runtime, Wine) requires the `7zip@1.0.0` toolset. Seed its `.tar.gz` archive as well (it extracts without 7-Zip), or configure `toolsets.sevenZip` with a custom local path.
+- **Squirrel.Windows:** the `squirrelWindows` target needs the `squirrel.windows` bundle plus `winCodeSign` (for `rcedit`); `msi: true` additionally needs the `wix-4.0.0.5512.2` bundle.
+- **7-Zip bootstrap:** extracting any `.7z` toolset (fpm, NSIS, winCodeSign, the legacy FUSE2 AppImage runtime, Wine) requires the `7zip@1.0.1` toolset. Seed its `.tar.gz` archive as well (it extracts without 7-Zip), or configure `toolsets.sevenZip` with a custom local path.
 
 :::warning[Cache layouts from electron-builder < 26.15 are not read]
 Older seeding conventions — extracted tool directories such as `electron-builder/appimage/appimage-12.0.1/` (the layout used by the Go-based downloader) or a flat `electron-v<version>-<platform>-<arch>.zip` at the cache root — are never probed by current versions. Re-seed using the `<toolset>@<version>/<archive>` layout above.
@@ -117,6 +119,15 @@ Older seeding conventions — extracted tool directories such as `electron-build
   (a `checksum` is required when `url` points to an archive file rather than a directory).
 
 - **LAN mirror** — `ELECTRON_BUILDER_BINARIES_MIRROR` redirects toolset downloads and `ELECTRON_MIRROR` redirects Electron downloads to an internal HTTP(S) server; not network-free, but internet-free.
+
+## Flatpak target
+
+The `flatpak` target builds on three Flatpak refs that neither cache holds: the runtime, the SDK and the base app (`org.freedesktop.Platform`, `org.freedesktop.Sdk` and `org.electronjs.Electron2.BaseApp` by default, in the configured `runtimeVersion` / `baseVersion`, which both default to `26.08`). They are downloaded by `flatpak` itself into a Flatpak installation (by default `~/.local/share/flatpak` for the user installation), and all three must be installed for a build.
+
+- **Install all three while the machine or image is online.** electron-builder installs whichever of them is missing with `flatpak install --user`, which needs a user-level remote such as Flathub (`flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo`), so a build that has succeeded online leaves all three installed. Offline, a missing ref fails the build with `No remote refs found`. That includes the refs of a new default version after an electron-builder upgrade (v27 changed the default from `20.08` to `26.08`): set `runtimeVersion` and `baseVersion` explicitly to stay on the installed ones — see [Choosing Versions](../flatpak.md#choosing-versions).
+- **Once they are installed, the build needs neither the network nor a remote.** electron-builder still runs `flatpak update` for each of the three on every build; offline that prints `Nothing to do.` and exits successfully, and the build continues with the installed versions. Set `flatpak.installOrUpdateRefs` to `[]` to skip the update and the install: a missing ref then fails the build with an error that names it, instead of `No remote refs found` — see [Building With Installed Refs](../flatpak.md#building-with-installed-refs).
+
+`flatpak` and `flatpak-builder` themselves are not toolsets either: they must be installed on the build machine. See [Flatpak](../flatpak.md), and [Building Flatpak Bundles in CI and Containers](flatpak-in-ci-and-containers.md#prepare-the-image) for installing the refs into a container image.
 
 ## Environment variables: what works and what doesn't
 

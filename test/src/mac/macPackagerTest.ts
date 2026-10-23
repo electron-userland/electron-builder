@@ -7,7 +7,7 @@ import { app, appThrows, assertPack, checkDirContents, modifyPackageJson, platfo
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
 import { parsePlistFile, PlistObject } from "app-builder-lib/internal"
 
-describe("macPackager", { sequential: true }, () => {
+describe("macPackager", { concurrent: false }, () => {
   test.ifMac("two-package", ({ expect }) =>
     assertPack(
       expect,
@@ -44,6 +44,10 @@ describe("macPackager", { sequential: true }, () => {
       },
       {
         signedMac: true,
+        // Universal merge, fuses, languages and signing are all asserted on the .app bundles, so stop before the
+        // 3 dmg + 3 zip targets are built. The full build (artifactName macros, multi-arch latest-mac.yml) is kept
+        // as "two-package (e2e)" in macPackager.e2e.ts.
+        afterPackTestHook: async () => true,
         checkMacApp: async appDir => {
           const resources = await fs.readdir(path.join(appDir, "Contents", "Resources"))
           expect(resources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
@@ -135,7 +139,7 @@ describe("macPackager", { sequential: true }, () => {
         targets: Platform.MAC.createTarget("zip", Arch.universal),
         config: {
           nativeModules: { npmRebuild: true, rebuildMode: "sequential" },
-          files: ["!**/*.stamp", "!**/*.Makefile"],
+          fileOptions: { files: ["!**/*.stamp", "!**/*.Makefile"] },
         },
       },
       {
@@ -152,7 +156,7 @@ describe("macPackager", { sequential: true }, () => {
         targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
         config: {
           mac: { notarize: false },
-          extraFiles: ["extraTestFile.txt"],
+          fileOptions: { extraFiles: ["extraTestFile.txt"] },
         },
       },
       {
@@ -200,10 +204,12 @@ describe("macPackager", { sequential: true }, () => {
       {
         targets: Platform.MAC.createTarget("zip", Arch.x64),
         config: {
-          extraResources: [
-            { from: "build", to: "./", filter: "*.asar" },
-            { from: "build/subdir", to: "./subdir", filter: "*.asar" },
-          ],
+          fileOptions: {
+            extraResources: [
+              { from: "build", to: "./", filter: "*.asar" },
+              { from: "build/subdir", to: "./subdir", filter: "*.asar" },
+            ],
+          },
           electronLanguages: "en",
         },
       },

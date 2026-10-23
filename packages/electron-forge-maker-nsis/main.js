@@ -1,7 +1,18 @@
-import { buildForge } from "app-builder-lib"
+import { ElectronBuilderForgeMaker, withLegacyForgeCall } from "app-builder-lib"
 
-export const isSupportedOnCurrentPlatform = () => Promise.resolve(true)
+class MakerNsis extends ElectronBuilderForgeMaker {
+  name = "nsis"
+  defaultPlatforms = ["win32"]
 
-export default function (options) {
-  return buildForge(options, { win: [`nsis:${options.targetArch}`] })
+  getTarget(targetArch, config) {
+    return { win: [`nsis:${targetArch}`], config: { nsis: config } }
+  }
 }
+
+const Maker = withLegacyForgeCall(MakerNsis)
+
+export { Maker as MakerNsis }
+export default Maker
+
+// Electron Forge 5 checked this on the module
+export const isSupportedOnCurrentPlatform = () => Promise.resolve(true)
