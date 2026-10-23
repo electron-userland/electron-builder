@@ -106,18 +106,37 @@
   !endif
 !macroend
 
+# nsExec's timeout is an inactivity timeout, not a wall-clock deadline. Allow slow
+# PowerShell startup, but do not wait forever for a process that hangs on exit.
+!define /ifndef APP_PROCESS_QUERY_TIMEOUT 30000
+
+# Never widen a path-filtered operation to a name-based kill after a failure.
+!macro ABORT_PROCESS_CHECK
+  MessageBox MB_OK|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDOK
+  SetErrorLevel 2
+  Quit
+!macroend
+
 !macro IS_POWERSHELL_AVAILABLE
   Var /GLOBAL IsPowerShellAvailable ; 0 = available, 1 = not available
   # Try running PowerShell with a simple command to check if it's available
-  nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"`
+  nsExec::Exec /TIMEOUT=${APP_PROCESS_QUERY_TIMEOUT} `"$PowerShellPath" -NoProfile -NonInteractive -C "if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"`
   Pop $0  # Return code (0 = success, other = error)
 
   ${if} $0 == 0
     # PowerShell is available, check if it's not blocked by policies
-    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
+    nsExec::Exec /TIMEOUT=${APP_PROCESS_QUERY_TIMEOUT} `"$PowerShellPath" -NoProfile -NonInteractive -C "if ((Get-ExecutionPolicy -Scope Process) -eq 'Restricted') { exit 1 } else { exit 0 }"`
     Pop $0
   ${endIf}
 
+  # Missing PowerShell (nsExec "error"), unavailable commands and policy
+  # restrictions (exit 1) retain the existing fallback. Other failures do not
+  # establish unavailability, including a timeout from either probe.
+  ${if} $0 != 0
+  ${andIf} $0 != 1
+  ${andIf} $0 != "error"
+    !insertmacro ABORT_PROCESS_CHECK
+  ${endIf}
   ${if} $0 != 0
     StrCpy $0 1
   ${endIf}
@@ -127,9 +146,15 @@
 
 !macro FIND_PROCESS _FILE _RETURN
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)}).Count -gt 0) { exit 0 } else { exit 1 }"`
+    nsExec::Exec /TIMEOUT=${APP_PROCESS_QUERY_TIMEOUT} `"$PowerShellPath" -NoProfile -NonInteractive -C "if ((Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)}).Count -gt 0) { exit 0 } else { exit 1 }"`
     Pop ${_RETURN}
-  ${else}
+    ${if} ${_RETURN} != 0
+    ${andIf} ${_RETURN} != 1
+      # Neither absence nor a broader termination scope has been established.
+      !insertmacro ABORT_PROCESS_CHECK
+    ${endIf}
+  ${endIf}
+  ${if} $IsPowerShellAvailable != 0
     !ifdef INSTALL_MODE_PER_ALL_USERS
       # exact match via findstr anchored to the start of each CSV line
       nsExec::Exec `"$CmdPath" /C tasklist /FI "IMAGENAME eq ${_FILE}" /FO CSV /NH | "$SYSDIR\findstr.exe" /B /I /C:"\"${_FILE}\""`
@@ -144,27 +169,37 @@
 
 !macro KILL_PROCESS _FILE _FORCE
   Push $0
+  Push $1
+  StrCpy $0 ""
   ${if} ${_FORCE} == 1
-    ${if} $IsPowerShellAvailable == 0
-      StrCpy $0 "-Force"
-    ${else}
-      StrCpy $0 "/F"
-    ${endIf}
-  ${else}
-    StrCpy $0 ""
+    StrCpy $0 "-Force"
   ${endIf}
 
   ${if} $IsPowerShellAvailable == 0
-    nsExec::Exec `"$PowerShellPath" -NoProfile -NonInteractive -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)} | % { Stop-Process -Id $$_.ProcessId $0 }"`
-  ${else}
+    nsExec::Exec /TIMEOUT=${APP_PROCESS_QUERY_TIMEOUT} `"$PowerShellPath" -NoProfile -NonInteractive -C "Get-CimInstance -ClassName Win32_Process | ? {$$_.Path -and ($processPathFilter)} | % { Stop-Process -Id $$_.ProcessId $0 }"`
+    Pop $1
+    ${if} $1 != 0
+      Pop $1
+      Pop $0
+      !insertmacro ABORT_PROCESS_CHECK
+    ${endIf}
+  ${endIf}
+  ${if} $IsPowerShellAvailable != 0
+    # PowerShell was unavailable from the outset; preserve the existing fallback.
+    StrCpy $0 ""
+    ${if} ${_FORCE} == 1
+      StrCpy $0 "/F"
+    ${endIf}
     !ifdef INSTALL_MODE_PER_ALL_USERS
-      nsExec::Exec `taskkill /IM "${_FILE}" /FI "PID ne $pid"`
+      nsExec::Exec `taskkill $0 /IM "${_FILE}" /FI "PID ne $pid"`
     !else
       nsExec::Exec `"$CmdPath" /C taskkill $0 /IM "${_FILE}" /FI "PID ne $pid" /FI "USERNAME eq %USERNAME%"`
     !endif
+    Pop $1
   ${endIf}
+  Pop $1
   Pop $0
-!macroend 
+!macroend
 
 !macro _CHECK_APP_RUNNING
   !insertmacro _CHECK_APP_RUNNING_BODY ""
