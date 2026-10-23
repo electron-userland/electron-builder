@@ -117,7 +117,7 @@
     "@types/which": "^3.0.4",
     "dmg-builder": "workspace:*",
     "electron-builder-squirrel-windows": "workspace:*",
-    "toml": "^4.0.0"
+    "toml": "^5.0.0"
   },
   "peerDependencies": {
     "dmg-builder": "workspace:*",
