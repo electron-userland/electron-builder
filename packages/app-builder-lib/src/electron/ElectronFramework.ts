@@ -1,6 +1,7 @@
 import { asArray, copyDir, DO_NOT_USE_HARD_LINKS, isEmptyOrSpaces, log, MAX_FILE_REQUESTS, orIfFileNotExist, statOrNull, unlinkIfExists } from "builder-util"
 import { emptyDir, readdir, rename, rm } from "fs-extra"
 import * as path from "path"
+import * as semver from "semver"
 import asyncPool from "tiny-async-pool"
 import { Configuration } from "../configuration"
 import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
@@ -48,7 +49,41 @@ function createDownloadOpts(opts: Configuration, platform: ElectronPlatformName,
   return { ...base, ...dl }
 }
 
-async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
+/**
+ * Electron 45 ships `electron_wer.dll`, a Windows Error Reporting runtime exception helper that captures crashes which never reach
+ * Crashpad's in-process handler, such as `__fastfail` (https://github.com/electron/electron/pull/53802). Electron looks the helper up
+ * as `<executable name>_wer.dll` next to the executable, so it has to be renamed together with the executable.
+ * The check is on the semver major so 45 prereleases are covered as well.
+ */
+export const FIRST_ELECTRON_MAJOR_WITH_WER_HELPER = 45
+
+/**
+ * Renames `<projectName>_wer.dll` to `<productFilename>_wer.dll` for Electron 45 and later. Does nothing for older Electron versions,
+ * unparseable versions or when the DLL is absent (a custom Electron distribution may omit it to opt out of WER crash capture).
+ *
+ * Exported for unit testing.
+ */
+export async function renameWindowsWerHelperIfNeeded(appOutDir: string, projectName: string, productFilename: string, electronVersion: string): Promise<void> {
+  const coerced = semver.coerce(electronVersion)
+  if (coerced == null || semver.major(coerced) < FIRST_ELECTRON_MAJOR_WITH_WER_HELPER) {
+    return
+  }
+  const source = `${projectName}_wer.dll`
+  const destination = `${productFilename}_wer.dll`
+  if (source === destination) {
+    return
+  }
+  const renamed = await orIfFileNotExist(
+    rename(path.join(appOutDir, source), path.join(appOutDir, destination)).then(() => true),
+    false
+  )
+  if (renamed) {
+    log.debug({ from: source, to: destination }, "renamed Windows Error Reporting helper to match the executable name")
+  }
+}
+
+// exported for unit testing
+export async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions, electronVersion: string) {
   const { appOutDir, packager } = options
   const electronBranding = createBrandingOpts(packager.config)
   if (packager.platform === Platform.LINUX) {
@@ -58,6 +93,7 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
   } else if (packager.platform === Platform.WINDOWS) {
     const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
     await rename(path.join(appOutDir, `${electronBranding.projectName}.exe`), executable)
+    await renameWindowsWerHelperIfNeeded(appOutDir, electronBranding.projectName, packager.appInfo.productFilename, electronVersion)
     if (options.asarIntegrity) {
       await addWinAsarIntegrity(executable, options.asarIntegrity)
     }
@@ -163,7 +199,7 @@ class ElectronFramework implements Framework {
   }
 
   beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
-    return beforeCopyExtraFiles(options)
+    return beforeCopyExtraFiles(options, this.version)
   }
 }
 
