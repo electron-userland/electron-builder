@@ -1,98 +1,111 @@
 name: npm dist-tag
 
-# Points an npm dist-tag (`latest` by default) at a past release, by hand: releases are published under their branch's
-# tag (`next` from master, `v26` from release/v26) and a maintainer promotes one to `latest` once it has had some
-# adoption, or moves `latest` back to an older release. The input is an electron-builder version; every package of the
-# monorepo is tagged with the version it had in that release, read from the commit of the git tag
-# electron-builder@<version> (`changeset tag` pushes it on the release commit), so electron-updater, builder-util-runtime
-# etc. move together with electron-builder. Every run is in the Actions history with its inputs and a summary table.
+# Makes the npm dist-tags of every package match .github/npm-dist-tags.yml, which maps a dist-tag (`latest`) to an
+# electron-builder release. Releases are published under their branch's tag (`next` from master, `v26` from release/v26)
+# by the Release workflow; a maintainer promotes one to `latest` once it has had some adoption, or moves `latest` back
+# to an older release, with a pull request that changes the file:
+#   - on the pull request, the `plan` job validates the file and shows what merging it would move (job summary);
+#   - on the push to master, the `promote` job moves every package whose tag differs from the file (idempotent);
+#   - a manual run re-applies the file of master (dry-run input to only see the plan), e.g. after a failed move or
+#     once the trusted publishers below are set up. There is no input for a version: npm follows what is committed.
+# The plan and the package versions of a release (read from its git tag electron-builder@<version>, so electron-updater,
+# builder-util-runtime etc. move together with electron-builder) come from scripts/npm-dist-tags.mjs.
 #
 # npm authenticates `npm dist-tag` through trusted publishing (OIDC), npm >= 11.21.0. Each package needs a trusted
 # publisher on npmjs.com for this file (repository electron-userland/electron-builder, workflow npm-dist-tag.yml,
 # environment release) with "Allow npm dist-tag" enabled; it does not need direct publishing. A package can have several
 # trusted publishers, so this one is added next to the one of pr-release.yml, which keeps publishing.
 on:
+  push:
+    branches:
+      - master
+    paths:
+      - .github/npm-dist-tags.yml
+      - .github/workflows/npm-dist-tag.yml
+      - scripts/npm-dist-tags.mjs
+  pull_request:
+    paths:
+      - .github/npm-dist-tags.yml
+      - .github/workflows/npm-dist-tag.yml
+      - scripts/npm-dist-tags.mjs
   workflow_dispatch:
     inputs:
-      version:
-        description: 'electron-builder version whose release to tag (e.g. 26.17.0)'
-        required: true
-        type: string
-      dist-tag:
-        description: 'npm dist-tag to point at that release'
-        required: true
-        default: latest
-        type: string
       dry-run:
-        description: 'Dry run: only show what would change'
+        description: 'Dry run: only show what re-applying .github/npm-dist-tags.yml would change'
         required: false
         default: false
         type: boolean
 
-run-name: "npm dist-tag: ${{ inputs.dist-tag }} → electron-builder@${{ inputs.version }}${{ inputs.dry-run && ' (dry run)' || '' }}"
+run-name: "npm dist-tag: ${{ github.event_name == 'pull_request' && format('plan of #{0}', github.event.pull_request.number) || github.event_name == 'push' && format('apply {0}', github.sha) || inputs.dry-run && 're-apply (dry run)' || 're-apply' }}"
 
 permissions: {}
 
-# one dist-tag change at a time; a second run waits for the first
-concurrency:
-  group: ${{ github.workflow }}
-  cancel-in-progress: false
-
 jobs:
+  # read-only, also for pull requests from forks: no environment, no OIDC token, nothing of the file reaches a shell.
+  # The plan is in the job summary only: a comment on the pull request takes a write token, which a pull request from a
+  # fork does not get on pull_request, and pull_request_target would run the fork's file with one
+  plan:
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    concurrency:
+      group: ${{ github.workflow }}-plan-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    timeout-minutes: 10
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '22'
+
+      - name: Plan the dist-tags of .github/npm-dist-tags.yml
+        run: node scripts/npm-dist-tags.mjs --summary "$GITHUB_STEP_SUMMARY" --title "npm dist-tags when this is merged"
+
   # in its own job, so a run nobody may make never gets the `release` environment or an OIDC token
   check:
+    if: github.event_name != 'pull_request'
     permissions:
       contents: read
     timeout-minutes: 5
     runs-on: ubuntu-24.04
     steps:
-      # running a workflow takes write access; moving `latest` takes maintain or admin. role_name (not permission, which
-      # maps maintain to write) is checked for whoever started the run and, on a re-run, whoever re-ran it
-      - name: Check that a maintainer started the run
+      # a push to master went through a pull request (branch rules); a manual run takes maintain or admin, as does a
+      # re-run, which applies the file of master as well. role_name (not permission, which maps maintain to write) is
+      # checked for whoever started the run and whoever re-ran it
+      - name: Check who started the run
         env:
           GH_TOKEN: ${{ github.token }}
           ACTOR: ${{ github.actor }}
           TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
-          for user in $(printf '%s\n' "$ACTOR" "$TRIGGERING_ACTOR" | sort -u); do
+          if [ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]; then
+            echo "::error::Run this workflow on $DEFAULT_BRANCH: it applies .github/npm-dist-tags.yml of $DEFAULT_BRANCH"
+            exit 1
+          fi
+          users=()
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            users+=("$ACTOR" "$TRIGGERING_ACTOR")
+          elif [ "$GITHUB_RUN_ATTEMPT" -gt 1 ]; then
+            users+=("$TRIGGERING_ACTOR")
+          fi
+          for user in $(printf '%s\n' "${users[@]}" | sort -u); do
             role=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$user/permission" --jq .role_name)
             case "$role" in
               admin | maintain) echo "$user has the $role role" ;;
               *)
-                echo "::error::$user has the $role role on $GITHUB_REPOSITORY; changing an npm dist-tag takes maintain or admin"
+                echo "::error::$user has the $role role on $GITHUB_REPOSITORY; running this workflow by hand takes maintain or admin"
                 exit 1
                 ;;
             esac
           done
-
-      - name: Check the inputs
-        env:
-          VERSION: ${{ inputs.version }}
-          DIST_TAG: ${{ inputs.dist-tag }}
-        run: |
-          set -euo pipefail
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "::error::version must be an electron-builder version such as 26.17.0, not '$VERSION'"
-            exit 1
-          fi
-          if [[ ! "$DIST_TAG" =~ ^[A-Za-z][A-Za-z0-9._-]*$ ]]; then
-            echo "::error::dist-tag must be a tag name such as latest, not '$DIST_TAG'"
-            exit 1
-          fi
-          # npm refuses a tag name that is also a semver range (v26, x, …): ask the semver package npm itself uses
-          if node -e 'process.exit(require(process.argv[1]).validRange(process.argv[2]) ? 0 : 1)' \
-            "$(npm root -g)/npm/node_modules/semver" "$DIST_TAG"; then
-            echo "::error::npm does not accept '$DIST_TAG' as a dist-tag: it is a semver range"
-            exit 1
-          fi
-          if ! git ls-remote --exit-code --tags "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" "refs/tags/electron-builder@$VERSION" > /dev/null; then
-            echo "::error::There is no git tag electron-builder@$VERSION, so no release to tag"
-            exit 1
-          fi
-          if [[ "$VERSION" == *-* && "$DIST_TAG" == latest ]]; then
-            echo "::warning::$VERSION is a prerelease: it becomes what \`npm install electron-builder\` installs"
-          fi
 
   promote:
     needs: check
@@ -101,14 +114,19 @@ jobs:
       id-token: write  # Required for OIDC token
     # the environment of the trusted publisher on npmjs.com; its protection rules apply to this job
     environment: release
+    # one run at a time. A run waiting for another is replaced by a newer one, which applies the same file: every run
+    # applies master as it is when the job starts
+    concurrency:
+      group: ${{ github.workflow }}
+      cancel-in-progress: false
     timeout-minutes: 15
     runs-on: ubuntu-24.04
     steps:
-      # the release commit, for the version of every package in that release
-      - name: Checkout electron-builder@${{ inputs.version }}
+      # the file of master now, not of the commit of the run: a re-run of an older run must not move a tag back
+      - name: Checkout ${{ github.event.repository.default_branch }}
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: refs/tags/electron-builder@${{ inputs.version }}
+          ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false
 
       - name: Setup node
@@ -125,85 +143,61 @@ jobs:
           npm -v
         shell: bash
 
-      # every non-private package under packages/ (the pnpm workspace glob packages/**), electron-builder last so that it
-      # moves only once its dependencies have. Inline rather than a script in the repository: the checkout is the
-      # release commit, which may not have it
-      - name: Resolve the packages of the release
+      # fails without a plan when a release or a version is missing, so either every dist-tag of the file can move or
+      # none does
+      - name: Plan the dist-tags of .github/npm-dist-tags.yml
         env:
-          VERSION: ${{ inputs.version }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
-          # shellcheck disable=SC2016 # JavaScript, not shell
-          node -e '
-            const { execFileSync } = require("child_process")
-            const fs = require("fs")
-            const files = execFileSync("git", ["ls-files", "-z", "--", ":(glob)packages/**/package.json"], { encoding: "utf8" })
-            const packages = []
-            for (const file of files.split("\0").filter(Boolean)) {
-              const { name, version, private: isPrivate } = JSON.parse(fs.readFileSync(file, "utf8"))
-              if (!isPrivate && name && version) packages.push({ name, version })
-            }
-            const builder = packages.find(p => p.name === "electron-builder")
-            if (builder?.version !== process.env.VERSION) {
-              console.error(`::error::packages/electron-builder/package.json at this tag is ${builder?.version}, not ${process.env.VERSION}`)
-              process.exit(1)
-            }
-            packages.sort((a, b) => (a === builder) - (b === builder) || a.name.localeCompare(b.name))
-            fs.writeFileSync(process.argv[1], packages.map(p => `${p.name}\t${p.version}\n`).join(""))
-          ' "$RUNNER_TEMP/packages.tsv"
-          cat "$RUNNER_TEMP/packages.tsv"
-          # every version has to be on npm before any tag moves
-          missing=0
-          while IFS=$'\t' read -r name version <&3; do
-            if [ "$(npm view "$name@$version" version < /dev/null)" != "$version" ]; then
-              echo "::error::$name@$version is not on npm"
-              missing=1
-            fi
-          done 3< "$RUNNER_TEMP/packages.tsv"
-          exit $missing
+          node scripts/npm-dist-tags.mjs --plan "$RUNNER_TEMP/plan.tsv" --summary "$GITHUB_STEP_SUMMARY" \
+            --title "npm dist-tags of .github/npm-dist-tags.yml ($DEFAULT_BRANCH at $(git rev-parse --short HEAD))"
 
-      # one failed package does not stop the others (re-running skips the ones already moved), but fails the job
-      - name: Move the ${{ inputs.dist-tag }} dist-tag
+      # one failed package does not stop the others (a re-run skips the ones already moved), except electron-builder,
+      # which moves only once every other package of its release has; the job fails
+      - name: Move the dist-tags
         env:
-          RELEASE_VERSION: ${{ inputs.version }}
-          DIST_TAG: ${{ inputs.dist-tag }}
           DRY_RUN: ${{ inputs.dry-run }}
         run: |
           set -uo pipefail
-          {
-            echo "## npm dist-tag \`$DIST_TAG\` → electron-builder@$RELEASE_VERSION"
-            echo ""
-            if [ "$DRY_RUN" = true ]; then
-              echo "Dry run: no dist-tag was changed."
-              echo ""
-            fi
-            echo "| Package | \`$DIST_TAG\` before | \`$DIST_TAG\` after | |"
-            echo "| --- | --- | --- | --- |"
-          } >> "$GITHUB_STEP_SUMMARY"
+          rows=""
           failed=0
-          while IFS=$'\t' read -r name version <&3; do
-            if ! before=$(npm view "$name" "dist-tags.$DIST_TAG" < /dev/null); then
-              echo "::error::Could not read the $DIST_TAG dist-tag of $name"
-              echo "| $name | ? | ? | failed to read |" >> "$GITHUB_STEP_SUMMARY"
-              failed=1
-              continue
-            fi
-            if [ "$before" = "$version" ]; then
-              after=$version
-              result="already set"
+          failed_tags=""
+          while IFS=$'\t' read -r tag name version before <&3; do
+            [ "$before" = "$version" ] && continue
+            if [ "$name" = electron-builder ] && [[ " $failed_tags " == *" $tag "* ]]; then
+              after=$before
+              result="**skipped**"
+              echo "::error::Not moving $tag of electron-builder: another package of that release failed to move"
             elif [ "$DRY_RUN" = true ]; then
               after=$version
               result="dry run"
-              echo "Would run: npm dist-tag add $name@$version $DIST_TAG (now ${before:-unset})"
-            elif npm dist-tag add "$name@$version" "$DIST_TAG" < /dev/null; then
+              echo "Would run: npm dist-tag add $name@$version $tag (now ${before:-unset})"
+            elif npm dist-tag add "$name@$version" "$tag" < /dev/null; then
               after=$version
               result="moved"
             else
               after=$before
               result="**failed**"
-              echo "::error::npm dist-tag add $name@$version $DIST_TAG failed"
+              echo "::error::npm dist-tag add $name@$version $tag failed"
               failed=1
+              failed_tags+=" $tag"
             fi
-            echo "| $name | ${before:--} | ${after:--} | $result |" >> "$GITHUB_STEP_SUMMARY"
-          done 3< "$RUNNER_TEMP/packages.tsv"
+            rows+="| \`$tag\` | $name | ${before:--} | ${after:--} | $result |"$'\n'
+          done 3< "$RUNNER_TEMP/plan.tsv"
+          {
+            echo "## Result"
+            echo ""
+            if [ "$DRY_RUN" = true ]; then
+              echo "Dry run: no dist-tag was changed."
+              echo ""
+            fi
+            if [ -z "$rows" ]; then
+              echo "Nothing to change: npm already matches the file."
+            else
+              echo "| Dist-tag | Package | Before | After | |"
+              echo "| --- | --- | --- | --- | --- |"
+              printf '%s' "$rows"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
           exit $failed
