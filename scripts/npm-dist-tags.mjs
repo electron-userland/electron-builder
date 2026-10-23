@@ -16,24 +16,14 @@
 // not valid, a release has no git tag, or a version is not on npm, so the workflow moves nothing unless every dist-tag
 // of the file can be moved. On a pull request the file comes from the fork: nothing of it reaches a shell, and only
 // values that passed validation reach the summary.
+//
+// The functions without I/O are exported for test/src/npmDistTagsTest.ts; importing the file does not run it.
 import { execFileSync } from "node:child_process"
 import fs from "node:fs"
 import { createRequire } from "node:module"
 import path from "node:path"
+import { pathToFileURL } from "node:url"
 import { parseArgs } from "node:util"
-
-const { values: opt } = parseArgs({
-  options: {
-    config: { type: "string", default: ".github/npm-dist-tags.yml" },
-    plan: { type: "string" },
-    summary: { type: "string" },
-    title: { type: "string", default: "npm dist-tags" },
-    remote: { type: "string", default: "origin" },
-  },
-})
-
-// the semver package npm itself uses, to refuse what `npm dist-tag add` refuses
-const semver = createRequire(import.meta.url)(path.join(run("npm", ["root", "-g"]).trim(), "npm", "node_modules", "semver"))
 
 // moved by the Release workflow (pr-release.yml) on every release: `next` from master, `v<major>` from release/v<major>
 // (a semver range, so refused by the range check as well)
@@ -41,22 +31,21 @@ const RELEASE_WORKFLOW_TAGS = /^(next|v\d+)$/
 const VERSION = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/
 const TAG = /^[A-Za-z][A-Za-z0-9._-]*$/
 
-const errors = []
-const warnings = []
-
 function run(file, args) {
   return execFileSync(file, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 64 * 1024 * 1024 })
 }
 
 // a workflow command takes one line; % \r \n escaped as the runner unescapes them
-function annotation(kind, message) {
+export function annotation(kind, message) {
   return `::${kind}::${message.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A")}`
 }
 
-// a strict subset of YAML: `<tag>: <version>` lines, comments and blank lines
-function parseConfig(file) {
+// a strict subset of YAML: `<tag>: <version>` lines, comments and blank lines. `text` is the content of `file`;
+// `semver` the semver package of npm (validRange)
+export function parseConfig(text, file, semver) {
   const entries = []
-  const lines = fs.readFileSync(file, "utf8").split("\n")
+  const errors = []
+  const lines = text.split("\n")
   lines.forEach((raw, i) => {
     const line = raw.replace(/\r$/, "").replace(/(^|\s)#.*$/, "").trimEnd()
     if (line === "") return
@@ -84,17 +73,57 @@ function parseConfig(file) {
   if (errors.length === 0 && !entries.some(e => e.tag === "latest")) {
     errors.push(`${file}: has no latest (what \`npm install electron-builder\` installs)`)
   }
-  return entries
+  return { entries, errors }
 }
 
-// every non-private package of the release, electron-builder last so that it moves only once its dependencies have
-function packagesOf(entry) {
+// electron-builder last so that it moves only once its dependencies have, the others by name
+export function orderPackages(packages) {
+  const isBuilder = p => p.name === "electron-builder"
+  return [...packages].sort((a, b) => isBuilder(a) - isBuilder(b) || a.name.localeCompare(b.name))
+}
+
+// what moving `entry` (a dist-tag of the file) from electron-builder@`before` (its version on npm, if any) is worth a
+// warning for
+export function warningsOf(entry, before, semver) {
+  const warnings = []
+  if (entry.tag === "latest" && semver.prerelease(entry.version)) {
+    warnings.push(`${entry.version} is a prerelease: it becomes what \`npm install electron-builder\` installs`)
+  }
+  if (before && semver.valid(before) && semver.lt(entry.version, before)) {
+    warnings.push(`${entry.tag} moves back from electron-builder@${before} to ${entry.version}`)
+  }
+  return warnings
+}
+
+// the plan of the workflow (--plan): tag, name, version, version of the tag on npm, tab-separated
+export function formatPlan(plan) {
+  return plan.map(p => `${p.tag}\t${p.name}\t${p.version}\t${p.before}\n`).join("")
+}
+
+// the job summary (--summary)
+export function formatMarkdown(title, entries, plan, warnings) {
+  const lines = [`## ${title}`, ""]
+  for (const { tag, version } of entries) {
+    const rows = plan.filter(p => p.tag === tag)
+    const changes = rows.filter(p => p.before !== p.version).length
+    lines.push(`### \`${tag}\` → electron-builder@${version}`, "")
+    lines.push(changes === 0 ? "Every package is already at this release: nothing to change." : `${changes} of ${rows.length} packages move.`, "")
+    lines.push(`| Package | \`${tag}\` now | \`${tag}\` after | |`, "| --- | --- | --- | --- |")
+    for (const p of rows) lines.push(`| ${p.name} | ${p.before || "-"} | ${p.version} | ${p.before === p.version ? "already set" : "moves"} |`)
+    lines.push("")
+  }
+  if (warnings.length > 0) lines.push(...warnings.map(w => `> [!WARNING]\n> ${w}\n`))
+  return lines.join("\n") + "\n"
+}
+
+// every non-private package of the release, in the order they move
+function packagesOf(entry, remote, errors) {
   const ref = `refs/tags/electron-builder@${entry.version}`
   try {
     run("git", ["rev-parse", "--verify", "--quiet", `${ref}^{commit}`])
   } catch {
     try {
-      run("git", ["fetch", "--quiet", "--no-tags", "--depth=1", opt.remote, `+${ref}:${ref}`])
+      run("git", ["fetch", "--quiet", "--no-tags", "--depth=1", remote, `+${ref}:${ref}`])
     } catch {
       errors.push(`${entry.where}: there is no git tag electron-builder@${entry.version}, so no release ${entry.version}`)
       return null
@@ -113,7 +142,7 @@ function packagesOf(entry) {
     errors.push(`${entry.where}: packages/electron-builder/package.json at electron-builder@${entry.version} is ${builder?.version}`)
     return null
   }
-  return packages.sort((a, b) => (a === builder) - (b === builder) || a.name.localeCompare(b.name))
+  return orderPackages(packages)
 }
 
 const registry = new Map()
@@ -131,44 +160,47 @@ function npmView(name) {
   return registry.get(name)
 }
 
-const entries = parseConfig(opt.config)
-const plan = []
-for (const entry of errors.length === 0 ? entries : []) {
-  const packages = packagesOf(entry)
-  if (packages == null) continue
-  for (const { name, version } of packages) {
-    const { distTags, versions } = npmView(name)
-    if (!versions.has(version)) {
-      errors.push(`${entry.where}: ${name}@${version} (of electron-builder@${entry.version}) is not on npm`)
-      continue
+function main() {
+  const { values: opt } = parseArgs({
+    options: {
+      config: { type: "string", default: ".github/npm-dist-tags.yml" },
+      plan: { type: "string" },
+      summary: { type: "string" },
+      title: { type: "string", default: "npm dist-tags" },
+      remote: { type: "string", default: "origin" },
+    },
+  })
+
+  // the semver package npm itself uses, to refuse what `npm dist-tag add` refuses
+  const semver = createRequire(import.meta.url)(path.join(run("npm", ["root", "-g"]).trim(), "npm", "node_modules", "semver"))
+
+  const { entries, errors } = parseConfig(fs.readFileSync(opt.config, "utf8"), opt.config, semver)
+  const warnings = []
+  const plan = []
+  for (const entry of errors.length === 0 ? entries : []) {
+    const packages = packagesOf(entry, opt.remote, errors)
+    if (packages == null) continue
+    for (const { name, version } of packages) {
+      const { distTags, versions } = npmView(name)
+      if (!versions.has(version)) {
+        errors.push(`${entry.where}: ${name}@${version} (of electron-builder@${entry.version}) is not on npm`)
+        continue
+      }
+      plan.push({ tag: entry.tag, name, version, before: distTags[entry.tag] ?? "" })
     }
-    plan.push({ tag: entry.tag, name, version, before: distTags[entry.tag] ?? "" })
+    warnings.push(...warningsOf(entry, npmView("electron-builder").distTags[entry.tag], semver))
   }
-  const before = npmView("electron-builder").distTags[entry.tag]
-  if (entry.tag === "latest" && semver.prerelease(entry.version)) {
-    warnings.push(`${entry.version} is a prerelease: it becomes what \`npm install electron-builder\` installs`)
-  }
-  if (before && semver.valid(before) && semver.lt(entry.version, before)) {
-    warnings.push(`${entry.tag} moves back from electron-builder@${before} to ${entry.version}`)
-  }
+
+  for (const warning of warnings) console.log(annotation("warning", warning))
+  for (const error of errors) console.log(annotation("error", error))
+  if (errors.length > 0) process.exit(1)
+
+  const markdown = formatMarkdown(opt.title, entries, plan, warnings)
+  console.log(markdown)
+  if (opt.summary) fs.appendFileSync(opt.summary, markdown)
+  if (opt.plan) fs.writeFileSync(opt.plan, formatPlan(plan))
 }
 
-for (const warning of warnings) console.log(annotation("warning", warning))
-for (const error of errors) console.log(annotation("error", error))
-if (errors.length > 0) process.exit(1)
-
-const lines = [`## ${opt.title}`, ""]
-for (const { tag, version } of entries) {
-  const rows = plan.filter(p => p.tag === tag)
-  const changes = rows.filter(p => p.before !== p.version).length
-  lines.push(`### \`${tag}\` → electron-builder@${version}`, "")
-  lines.push(changes === 0 ? "Every package is already at this release: nothing to change." : `${changes} of ${rows.length} packages move.`, "")
-  lines.push(`| Package | \`${tag}\` now | \`${tag}\` after | |`, "| --- | --- | --- | --- |")
-  for (const p of rows) lines.push(`| ${p.name} | ${p.before || "-"} | ${p.version} | ${p.before === p.version ? "already set" : "moves"} |`)
-  lines.push("")
+if (process.argv[1] != null && import.meta.url === pathToFileURL(fs.realpathSync(process.argv[1])).href) {
+  main()
 }
-if (warnings.length > 0) lines.push(...warnings.map(w => `> [!WARNING]\n> ${w}\n`))
-const markdown = lines.join("\n") + "\n"
-console.log(markdown)
-if (opt.summary) fs.appendFileSync(opt.summary, markdown)
-if (opt.plan) fs.writeFileSync(opt.plan, plan.map(p => `${p.tag}\t${p.name}\t${p.version}\t${p.before}\n`).join(""))

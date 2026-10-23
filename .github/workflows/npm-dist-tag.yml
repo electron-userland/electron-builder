@@ -6,8 +6,9 @@ name: npm dist-tag
 # to an older release, with a pull request that changes the file:
 #   - on the pull request, the `plan` job validates the file and shows what merging it would move (job summary);
 #   - on the push to master, the `promote` job moves every package whose tag differs from the file (idempotent);
-#   - a manual run re-applies the file of master (dry-run input to only see the plan), e.g. after a failed move or
-#     once the trusted publishers below are set up. There is no input for a version: npm follows what is committed.
+#   - a manual run re-applies the file of master, e.g. after a failed move or once the trusted publishers below are set
+#     up; with the dry-run input, only the `plan` job runs, for the file of master. There is no input for a version: npm
+#     follows what is committed.
 # The plan and the package versions of a release (read from its git tag electron-builder@<version>, so electron-updater,
 # builder-util-runtime etc. move together with electron-builder) come from scripts/npm-dist-tags.mjs.
 #
@@ -31,56 +32,63 @@ on:
   workflow_dispatch:
     inputs:
       dry-run:
-        description: 'Dry run: only show what re-applying .github/npm-dist-tags.yml would change'
+        description: 'Dry run: only show what re-applying .github/npm-dist-tags.yml of master would change'
         required: false
         default: false
         type: boolean
 
-run-name: "npm dist-tag: ${{ github.event_name == 'pull_request' && format('plan of #{0}', github.event.pull_request.number) || github.event_name == 'push' && format('apply {0}', github.sha) || inputs.dry-run && 're-apply (dry run)' || 're-apply' }}"
+run-name: "npm dist-tag: ${{ github.event_name == 'pull_request' && format('plan of #{0}', github.event.pull_request.number) || github.event_name == 'push' && format('apply {0}', github.sha) || inputs.dry-run && 'plan of master (dry run)' || 're-apply' }}"
 
 permissions: {}
 
 jobs:
   # read-only, also for pull requests from forks: no environment, no OIDC token, nothing of the file reaches a shell.
   # The plan is in the job summary only: a comment on the pull request takes a write token, which a pull request from a
-  # fork does not get on pull_request, and pull_request_target would run the fork's file with one
+  # fork does not get on pull_request, and pull_request_target would run the fork's file with one.
+  # A dry run is this job for the file of master, so it never gets the `release` environment either, and never enters
+  # the concurrency groups of the jobs below (where it could replace the pending promote of a real run)
   plan:
     name: Plan
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.dry-run)
     permissions:
       contents: read
     concurrency:
-      group: ${{ github.workflow }}-plan-${{ github.event.pull_request.number }}
+      group: ${{ github.workflow }}-plan-${{ github.event.pull_request.number || 'dry-run' }}
       cancel-in-progress: true
     timeout-minutes: 10
     runs-on: ubuntu-24.04
     steps:
+      # the merge commit of the pull request; master for a dry run, whichever branch it was started on
       - name: Checkout code repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.repository.default_branch || '' }}
           persist-credentials: false
 
       - name: Setup node
         uses: $/.github/actions/setup-node
 
       - name: Plan the dist-tags of .github/npm-dist-tags.yml
-        run: node scripts/npm-dist-tags.mjs --summary "$GITHUB_STEP_SUMMARY" --title "npm dist-tags when this is merged"
+        env:
+          TITLE: ${{ github.event_name == 'workflow_dispatch' && 'npm dist-tags of .github/npm-dist-tags.yml of master (dry run)' || 'npm dist-tags when this is merged' }}
+        run: node scripts/npm-dist-tags.mjs --summary "$GITHUB_STEP_SUMMARY" --title "$TITLE"
 
-  # in its own job, so a run nobody may make never gets the `release` environment or an OIDC token
+  # in its own job, so a run nobody may make never asks for the `release` environment or enters the concurrency group
+  # of promote. promote repeats the check: a re-run of failed jobs, or of promote alone, reuses the result of this job
   check:
     name: Check who started the run
-    if: github.event_name != 'pull_request'
-    permissions:
-      contents: read
+    if: github.event_name != 'pull_request' && !inputs.dry-run
+    # only metadata (always granted), which is all the collaborator permission API takes
+    permissions: {}
     concurrency:
       group: ${{ github.workflow }}-check
       cancel-in-progress: false
     timeout-minutes: 5
     runs-on: ubuntu-24.04
     steps:
-      # a push to master went through a pull request (branch rules); a manual run takes maintain or admin, as does a
-      # re-run, which applies the file of master as well. role_name (not permission, which maps maintain to write) is
-      # checked for whoever started the run and whoever re-ran it
+      # whoever started the run and, on every attempt, whoever started that attempt (triggering_actor: the merger of a
+      # push, the user of a re-run) needs the maintain or admin role, as a re-run applies the file of master as well.
+      # role_name, not permission, which maps maintain to write. Fails closed: an API error fails the job
       - name: Check who started the run
         env:
           GH_TOKEN: ${{ github.token }}
@@ -93,18 +101,19 @@ jobs:
             echo "::error::Run this workflow on $DEFAULT_BRANCH: it applies .github/npm-dist-tags.yml of $DEFAULT_BRANCH"
             exit 1
           fi
-          users=()
+          users=("$TRIGGERING_ACTOR")
           if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
-            users+=("$ACTOR" "$TRIGGERING_ACTOR")
-          elif [ "$GITHUB_RUN_ATTEMPT" -gt 1 ]; then
-            users+=("$TRIGGERING_ACTOR")
+            users+=("$ACTOR")
           fi
           for user in $(printf '%s\n' "${users[@]}" | sort -u); do
-            role=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$user/permission" --jq .role_name)
+            if ! role=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$user/permission" --jq .role_name); then
+              echo "::error::Could not read the role of $user on $GITHUB_REPOSITORY"
+              exit 1
+            fi
             case "$role" in
               admin | maintain) echo "$user has the $role role" ;;
               *)
-                echo "::error::$user has the $role role on $GITHUB_REPOSITORY; running this workflow by hand takes maintain or admin"
+                echo "::error::$user has the ${role:-no} role on $GITHUB_REPOSITORY; running or re-running this workflow takes maintain or admin"
                 exit 1
                 ;;
             esac
@@ -118,14 +127,46 @@ jobs:
       id-token: write  # Required for OIDC token
     # the environment of the trusted publisher on npmjs.com; its protection rules apply to this job
     environment: release
-    # one run at a time. A run waiting for another is replaced by a newer one, which applies the same file: every run
-    # applies master as it is when the job starts
+    # one run at a time, real runs only (a dry run is the plan job). A run waiting for another is replaced by a newer
+    # one, which applies the same file: every run applies master as it is when the job starts
     concurrency:
       group: ${{ github.workflow }}
       cancel-in-progress: false
     timeout-minutes: 15
     runs-on: ubuntu-24.04
     steps:
+      # the check of the check job again, first and on every attempt: that job is not re-run with failed jobs or with
+      # this job alone, so its result can be from an attempt that someone else started
+      - name: Check who started the run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]; then
+            echo "::error::Run this workflow on $DEFAULT_BRANCH: it applies .github/npm-dist-tags.yml of $DEFAULT_BRANCH"
+            exit 1
+          fi
+          users=("$TRIGGERING_ACTOR")
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            users+=("$ACTOR")
+          fi
+          for user in $(printf '%s\n' "${users[@]}" | sort -u); do
+            if ! role=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$user/permission" --jq .role_name); then
+              echo "::error::Could not read the role of $user on $GITHUB_REPOSITORY"
+              exit 1
+            fi
+            case "$role" in
+              admin | maintain) echo "$user has the $role role" ;;
+              *)
+                echo "::error::$user has the ${role:-no} role on $GITHUB_REPOSITORY; running or re-running this workflow takes maintain or admin"
+                exit 1
+                ;;
+            esac
+          done
+
       # the file of master now, not of the commit of the run: a re-run of an older run must not move a tag back
       - name: Checkout ${{ github.event.repository.default_branch }}
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -166,8 +207,6 @@ jobs:
       # one failed package does not stop the others (a re-run skips the ones already moved), except electron-builder,
       # which moves only once every other package of its release has; the job fails
       - name: Move the dist-tags
-        env:
-          DRY_RUN: ${{ inputs.dry-run }}
         run: |
           set -uo pipefail
           rows=""
@@ -179,10 +218,6 @@ jobs:
               after=$before
               result="**skipped**"
               echo "::error::Not moving $tag of electron-builder: another package of that release failed to move"
-            elif [ "$DRY_RUN" = true ]; then
-              after=$version
-              result="dry run"
-              echo "Would run: npm dist-tag add $name@$version $tag (now ${before:-unset})"
             elif npm dist-tag add "$name@$version" "$tag" < /dev/null; then
               after=$version
               result="moved"
@@ -198,10 +233,6 @@ jobs:
           {
             echo "## Result"
             echo ""
-            if [ "$DRY_RUN" = true ]; then
-              echo "Dry run: no dist-tag was changed."
-              echo ""
-            fi
             if [ -z "$rows" ]; then
               echo "Nothing to change: npm already matches the file."
             else
