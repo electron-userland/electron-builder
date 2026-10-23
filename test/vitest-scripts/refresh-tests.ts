@@ -7,6 +7,7 @@ import { GENERATED_TESTS_DIR, SNAPSHOTS_GEN_DIR } from "./runtime-tests/generate
 import { LINUX_SUITE_METADATA } from "./runtime-tests/generate-toolset-tests-linux.js"
 import { MAC_SUITE_METADATA } from "./runtime-tests/generate-toolset-tests-mac.js"
 import { WINDOWS_SUITE_METADATA } from "./runtime-tests/generate-toolset-tests-windows.js"
+import { isE2eTestFile } from "./vitest-config/file-discovery.js"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -111,7 +112,7 @@ function resolveGeneratedFiles(suiteNames: Set<string>): string[] {
       continue
     }
     for (const f of fs.readdirSync(suiteDir)) {
-      if (f.endsWith("Test.ts")) {
+      if (f.endsWith("Test.ts") || isE2eTestFile(f)) {
         files.push(f.replace(/\.ts$/, ""))
       }
     }

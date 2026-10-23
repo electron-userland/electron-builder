@@ -5,17 +5,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 // ─── Hoist mocks before any module imports ────────────────────────────────────
 
 vi.mock("https")
-vi.mock("electron-publish/src/s3/awsCredentials", () => ({
-  resolveAwsCredentials: vi.fn().mockReturnValue({ accessKeyId: "test-key", secretAccessKey: "test-secret" }),
+vi.mock("electron-publish/src/s3/awsCredentials", async importOriginal => ({
+  ...(await importOriginal<typeof import("electron-publish/src/s3/awsCredentials")>()),
+  resolveS3Credentials: vi.fn().mockResolvedValue({ accessKeyId: "test-key", secretAccessKey: "test-secret" }),
 }))
 
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import * as https from "https"
-import { Arch } from "builder-util"
+import { Arch, InvalidConfigurationError } from "builder-util"
 import { CancellationToken, S3Options, SpacesOptions } from "builder-util-runtime"
 import { PublishContext, UploadTask } from "electron-publish"
-import { resolveAwsCredentials } from "electron-publish/src/s3/awsCredentials"
+import { resolveS3Credentials } from "electron-publish/src/s3/awsCredentials"
 import { S3Publisher } from "electron-publish/internal"
 import { SpacesPublisher } from "electron-publish/internal"
 import { getS3ContentType } from "electron-publish/src/s3/s3UploadHelper"
@@ -96,36 +97,49 @@ describe("getS3ContentType — mirrors Go binary getContentType()", () => {
 // ─── S3Publisher — getS3UploadConfig ─────────────────────────────────────────
 
 describe("S3Publisher — getS3UploadConfig", () => {
-  it("forwards region from options", () => {
-    expect(makeS3Publisher({ region: "eu-west-1" }).getS3UploadConfig()).toMatchObject({ region: "eu-west-1" })
+  it("forwards region from options", async () => {
+    await expect(makeS3Publisher({ region: "eu-west-1" }).getS3UploadConfig()).resolves.toMatchObject({ region: "eu-west-1" })
   })
 
-  it("defaults region to us-east-1 when not set", () => {
-    expect(makeS3Publisher({ region: null }).getS3UploadConfig()).toMatchObject({ region: "us-east-1" })
+  it("defaults region to us-east-1 when not set", async () => {
+    await expect(makeS3Publisher({ region: null }).getS3UploadConfig()).resolves.toMatchObject({ region: "us-east-1" })
   })
 
-  it("forwards endpoint when set", () => {
-    expect(makeS3Publisher({ endpoint: "https://minio.example.com" }).getS3UploadConfig()).toMatchObject({ endpoint: "https://minio.example.com" })
+  it("forwards endpoint when set", async () => {
+    await expect(makeS3Publisher({ endpoint: "https://minio.example.com" }).getS3UploadConfig()).resolves.toMatchObject({ endpoint: "https://minio.example.com" })
   })
 
-  it("endpoint is undefined when not set", () => {
-    const config = makeS3Publisher({ endpoint: null }).getS3UploadConfig()
+  it("endpoint is undefined when not set", async () => {
+    const config = await makeS3Publisher({ endpoint: null }).getS3UploadConfig()
     expect(config.endpoint).toBeUndefined()
   })
 
-  it("forwards forcePathStyle: true", () => {
-    expect(makeS3Publisher({ forcePathStyle: true }).getS3UploadConfig()).toMatchObject({ forcePathStyle: true })
+  it("forwards forcePathStyle: true", async () => {
+    await expect(makeS3Publisher({ forcePathStyle: true }).getS3UploadConfig()).resolves.toMatchObject({ forcePathStyle: true })
   })
 
-  it("forcePathStyle is undefined when not set", () => {
-    const config = makeS3Publisher({ forcePathStyle: undefined }).getS3UploadConfig()
+  it("forcePathStyle is undefined when not set", async () => {
+    const config = await makeS3Publisher({ forcePathStyle: undefined }).getS3UploadConfig()
     expect(config.forcePathStyle).toBeUndefined()
   })
 
-  it("uses credentials from resolveAwsCredentials()", () => {
-    vi.mocked(resolveAwsCredentials).mockReturnValueOnce({ accessKeyId: "AKIAchain", secretAccessKey: "chain-secret" })
-    const config = makeS3Publisher().getS3UploadConfig()
+  it("resolves profile credentials before signing the upload", async ({ tmpDir }) => {
+    const { capturedOpts } = mockSuccessfulUpload()
+    const { writeFile } = await import("fs/promises")
+    const file = path.join(await tmpDir.createTempDir({ prefix: "s3-upload" }), "artifact.zip")
+    await writeFile(file, "artifact")
+    vi.mocked(resolveS3Credentials).mockResolvedValueOnce({ accessKeyId: "CONFIG_KEY", secretAccessKey: "config-secret", sessionToken: "config-token" })
+    await makeS3Publisher({ awsCredentials: { source: "profile", profile: "release" } }).upload(makeTask(file))
+    expect(capturedOpts()?.headers.Authorization).toContain("CONFIG_KEY")
+    expect(capturedOpts()?.headers["X-Amz-Security-Token"] ?? capturedOpts()?.headers["x-amz-security-token"]).toBe("config-token")
+  })
+
+  it("uses credentials from the configured awsCredentials source", async () => {
+    const awsCredentials = { source: "profile" as const, profile: "release" }
+    vi.mocked(resolveS3Credentials).mockResolvedValueOnce({ accessKeyId: "AKIAchain", secretAccessKey: "chain-secret" })
+    const config = await makeS3Publisher({ awsCredentials }).getS3UploadConfig()
     expect(config.credentials).toEqual({ accessKeyId: "AKIAchain", secretAccessKey: "chain-secret" })
+    expect(resolveS3Credentials).toHaveBeenLastCalledWith(awsCredentials)
   })
 })
 
@@ -168,7 +182,7 @@ describe("S3Publisher — getUploadExtraParams", () => {
 
 // ─── SpacesPublisher — getS3UploadConfig ─────────────────────────────────────
 
-describe("SpacesPublisher — getS3UploadConfig", { sequential: true }, () => {
+describe("SpacesPublisher — getS3UploadConfig", { concurrent: false }, () => {
   const savedEnv: Record<string, string | undefined> = {}
 
   beforeEach(() => {
@@ -216,7 +230,7 @@ describe("SpacesPublisher — getS3UploadConfig", { sequential: true }, () => {
 
 // ─── Upload — key construction and request params ────────────────────────────
 
-describe("BaseS3Publisher.upload — key construction and S3 request", { sequential: true }, () => {
+describe("BaseS3Publisher.upload — key construction and S3 request", { concurrent: false }, () => {
   let tmpDir: string
   let testFile: string
 
@@ -270,6 +284,43 @@ describe("BaseS3Publisher.upload — key construction and S3 request", { sequent
     const publisher = makeS3Publisher({ endpoint: "https://minio.example.com" })
     await publisher.upload(makeTask(testFile))
     expect(capturedOpts()?.hostname).toBe("minio.example.com")
+  })
+
+  it("splits the port from a custom endpoint hostname", async () => {
+    const { capturedOpts } = mockSuccessfulUpload()
+    await makeS3Publisher({ endpoint: "https://minio.local:9000" }).upload(makeTask(testFile))
+    expect(capturedOpts()?.hostname).toBe("minio.local")
+    expect(capturedOpts()?.port).toBe(9000)
+    expect(capturedOpts()?.headers?.Host).toBe("minio.local:9000")
+  })
+
+  it("preserves IPv6 custom endpoint hosts and ports", async () => {
+    const { capturedOpts } = mockSuccessfulUpload()
+    const publisher = makeS3Publisher({ endpoint: "https://[::1]:9000" })
+    await publisher.upload(makeTask(testFile))
+    expect(capturedOpts()?.hostname).toBe("::1")
+    expect(capturedOpts()?.port).toBe(9000)
+    expect(capturedOpts()?.headers?.Host).toBe("[::1]:9000")
+  })
+
+  // "localhost:9000" (no scheme) parses with protocol "localhost:" and an empty host
+  it.each(["ftp://minio.example.com", "localhost:9000"])("rejects non-HTTP(S) custom endpoint %s as a configuration error", async endpoint => {
+    const error = await makeS3Publisher({ endpoint })
+      .upload(makeTask(testFile))
+      .catch(e => e)
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain(`Unsupported S3 endpoint protocol "${new URL(endpoint).protocol}" in "${endpoint}"`)
+    expect(vi.mocked(https.request)).not.toHaveBeenCalled()
+  })
+
+  // "minio.local" (no scheme, no colon) cannot be parsed as a URL at all
+  it("rejects an unparseable custom endpoint as a configuration error", async () => {
+    const error = await makeS3Publisher({ endpoint: "minio.local" })
+      .upload(makeTask(testFile))
+      .catch(e => e)
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain(`Invalid S3 endpoint "minio.local"`)
+    expect(vi.mocked(https.request)).not.toHaveBeenCalled()
   })
 
   it("sets x-amz-acl header when ACL is public-read", async () => {
@@ -333,7 +384,28 @@ describe("BaseS3Publisher.upload — key construction and S3 request", { sequent
     expect(auth).toMatch(/x-amz-content-sha256/)
   })
 
-  it("cancellation destroys the request", async () => {
+  it("resolves credentials once per publisher across multiple uploads (artifacts, blockmaps, latest*.yml)", async () => {
+    const { writeFile } = await import("fs/promises")
+    const files = ["MyApp-1.0.0.exe", "MyApp-1.0.0.exe.blockmap", "latest.yml"].map(name => path.join(tmpDir, name))
+    await Promise.all(files.map(file => writeFile(file, "x")))
+    vi.mocked(resolveS3Credentials).mockClear()
+    const publisher = makeS3Publisher({ awsCredentials: { source: "profile", profile: "release" } })
+    files.forEach(() => mockSuccessfulUpload())
+    // concurrent, as PublishManager schedules them
+    await Promise.all(files.map(file => publisher.upload(makeTask(file))))
+    mockSuccessfulUpload()
+    await publisher.upload(makeTask(files[0]))
+    expect(vi.mocked(https.request)).toHaveBeenCalledTimes(4)
+    expect(resolveS3Credentials).toHaveBeenCalledTimes(1)
+  })
+
+  it("fails the upload without sending a request when credentials cannot be resolved", async () => {
+    vi.mocked(resolveS3Credentials).mockRejectedValueOnce(new Error("S3 publishing requires AWS credentials"))
+    await expect(makeS3Publisher().upload(makeTask(testFile))).rejects.toThrow("S3 publishing requires AWS credentials")
+    expect(vi.mocked(https.request)).not.toHaveBeenCalled()
+  })
+
+  it("cancellation destroys a request that was already started", async () => {
     let destroyCalled = false
     vi.mocked(https.request).mockImplementationOnce((_opts: unknown, _cb: unknown) => {
       const req = new EventEmitter() as ReturnType<typeof https.request>
@@ -349,15 +421,68 @@ describe("BaseS3Publisher.upload — key construction and S3 request", { sequent
     const context = makeContext()
     const publisher = new S3Publisher(context, { provider: "s3", bucket: "b", region: "us-east-1" })
     const uploadPromise = publisher.upload(makeTask(testFile))
+    // credentials resolve asynchronously; cancel once the request is in flight
+    await vi.waitFor(() => expect(https.request).toHaveBeenCalledTimes(1))
     context.cancellationToken.cancel()
     await uploadPromise.catch(() => null)
     expect(destroyCalled).toBe(true)
+  })
+
+  it("cancellation before the credentials resolve sends no request", async () => {
+    const context = makeContext()
+    const publisher = new S3Publisher(context, { provider: "s3", bucket: "b", region: "us-east-1" })
+    const uploadPromise = publisher.upload(makeTask(testFile))
+    context.cancellationToken.cancel()
+    await uploadPromise.catch(() => null)
+    // let the pending credential resolution settle
+    await new Promise(resolve => setImmediate(resolve))
+    expect(https.request).not.toHaveBeenCalled()
+  })
+
+  it("rejects when the S3 response is aborted", async ({ expect }) => {
+    vi.mocked(https.request).mockImplementationOnce((_opts: unknown, callback: unknown) => {
+      const req = new EventEmitter() as ReturnType<typeof https.request>
+      ;(req as any).end = vi.fn()
+      ;(req as any).destroy = vi.fn()
+      ;(req as any).write = vi.fn()
+      setImmediate(() => {
+        const res = new EventEmitter() as any
+        res.statusCode = 200
+        // Connection dropped before the message completed: "close" without "end"
+        res.complete = false
+        res.resume = vi.fn()
+        ;(callback as (response: unknown) => void)(res)
+        setImmediate(() => res.emit("close"))
+      })
+      return req
+    })
+
+    await expect(makeS3Publisher().upload(makeTask(testFile))).rejects.toThrow("S3 PutObject response aborted (HTTP 200)")
+  })
+
+  it("destroys the request when the source file cannot be read", async () => {
+    const destroy = vi.fn()
+    vi.mocked(https.request).mockImplementationOnce((_opts: unknown, _cb: unknown) => {
+      const req = new EventEmitter() as ReturnType<typeof https.request>
+      ;(req as any).end = vi.fn()
+      ;(req as any).destroy = destroy
+      ;(req as any).write = vi.fn()
+      // Never call the response callback — only the file stream error can settle the upload
+      return req
+    })
+
+    // A directory passes the statSync size check, then fails once the stream reads it
+    const error = await makeS3Publisher()
+      .upload(makeTask(tmpDir))
+      .catch(e => e)
+    expect(error).toBeInstanceOf(Error)
+    expect(destroy).toHaveBeenCalledWith(error)
   })
 })
 
 // ─── Upload — test mode bypass ────────────────────────────────────────────────
 
-describe("BaseS3Publisher.upload — __TEST_S3_PUBLISHER__ bypass", { sequential: true }, () => {
+describe("BaseS3Publisher.upload — __TEST_S3_PUBLISHER__ bypass", { concurrent: false }, () => {
   let testPublisherDir: string
   let srcDir: string
   let srcFile: string
@@ -390,7 +515,7 @@ describe("BaseS3Publisher.upload — __TEST_S3_PUBLISHER__ bypass", { sequential
 
 // ─── Parity contract: Go binary publish-s3 flag → TS header/URL mapping ──────
 
-describe("publish-s3 parity — Go binary flag mapping to HTTP request", { sequential: true }, () => {
+describe("publish-s3 parity — Go binary flag mapping to HTTP request", { concurrent: false }, () => {
   // The Go binary accepted:
   //   --acl         → x-amz-acl header
   //   --storageClass → x-amz-storage-class header

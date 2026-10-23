@@ -53,39 +53,45 @@ test.ifLinux("cli", ({ expect }) => {
 test("merge configurations", ({ expect }) => {
   const result = doMergeConfigs([
     {
-      files: [
-        {
-          from: "dist/renderer",
-        },
-        {
-          from: "dist/renderer-dll",
-        },
-      ],
+      fileOptions: {
+        files: [
+          {
+            from: "dist/renderer",
+          },
+          {
+            from: "dist/renderer-dll",
+          },
+        ],
+      },
     },
     {
-      files: [
-        {
-          from: ".",
-          filter: ["package.json"],
-        },
-        {
-          from: "dist/main",
-        },
-      ],
+      fileOptions: {
+        files: [
+          {
+            from: ".",
+            filter: ["package.json"],
+          },
+          {
+            from: "dist/main",
+          },
+        ],
+      },
     },
     {
-      files: ["**/*", "!webpack", "!.*", "!config/jsdoc.json", "!package.*"],
+      fileOptions: { files: ["**/*", "!webpack", "!.*", "!config/jsdoc.json", "!package.*"] },
     },
     {
-      files: [
-        {
-          from: ".",
-          filter: ["!docs"],
-        },
-      ],
+      fileOptions: {
+        files: [
+          {
+            from: ".",
+            filter: ["!docs"],
+          },
+        ],
+      },
     },
     {
-      files: ["!private"],
+      fileOptions: { files: ["!private"] },
     },
   ])
 
@@ -95,21 +101,25 @@ test("merge configurations", ({ expect }) => {
       output: "dist",
       buildResources: "build",
     },
-    files: [
-      {
-        filter: ["package.json", "**/*", "!webpack", "!.*", "!config/jsdoc.json", "!package.*", "!docs", "!private"],
-      },
-      {
-        from: "dist/main",
-      },
-      {
-        from: "dist/renderer",
-      },
-      {
-        from: "dist/renderer-dll",
-      },
-    ],
+    fileOptions: {
+      files: [
+        {
+          filter: ["package.json", "**/*", "!webpack", "!.*", "!config/jsdoc.json", "!package.*", "!docs", "!private"],
+        },
+        {
+          from: "dist/main",
+        },
+        {
+          from: "dist/renderer",
+        },
+        {
+          from: "dist/renderer-dll",
+        },
+      ],
+    },
   })
+  // `files` is only a non-enumerable forwarding accessor on the merged config
+  expect(Object.keys(result)).not.toContain("files")
 })
 
 test("build in the app package.json", ({ expect }) =>
@@ -263,10 +273,12 @@ test.ifNotWindows("hooks as functions", ({ expect }) => {
   )
 })
 
+// The hook files only have to load and run (they log); a dir target exercises beforePack/afterExtract/afterPack without
+// building the zips. Artifact hook counts (artifactBuildStarted/Completed) are covered by "hooks as functions" above.
 test.ifNotWindows("hooks as file - cjs", async ({ expect }) => {
   const hookScript = path.join(getFixtureDir(), "build-hook.cjs")
   return assertPack(expect, "test-app-one", {
-    targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
+    targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET, "x64"),
     config: {
       artifactBuildStarted: hookScript,
       artifactBuildCompleted: hookScript,
@@ -280,7 +292,7 @@ test.ifNotWindows("hooks as file - cjs", async ({ expect }) => {
 test.ifNotWindows("hooks as file - mjs exported functions", async ({ expect }) => {
   const hookScript = path.join(getFixtureDir(), "build-hook.mjs")
   return assertPack(expect, "test-app-one", {
-    targets: createTargets([Platform.LINUX, Platform.MAC], "zip", "x64"),
+    targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET, "x64"),
     config: {
       artifactBuildStarted: hookScript,
       artifactBuildCompleted: hookScript,
@@ -306,9 +318,37 @@ test.ifWindows("afterSign", ({ expect }) => {
       },
     },
     {
+      // afterSign is only called when the app is actually signed, so sign with an ephemeral self-signed certificate
+      signedWin: true,
       packed: async () => {
         // afterSign is only called when an app is actually signed and ignored otherwise.
         expect(called).toEqual(1)
+        return Promise.resolve()
+      },
+    }
+  )
+})
+
+test.ifWindows("afterSign is skipped when signing does not occur", ({ expect }) => {
+  let called = 0
+  return assertPack(
+    expect,
+    "test-app-one",
+    {
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+      config: {
+        win: {
+          sign: false,
+        },
+        afterSign: () => {
+          called++
+          return Promise.resolve()
+        },
+      },
+    },
+    {
+      packed: async () => {
+        expect(called).toEqual(0)
         return Promise.resolve()
       },
     }
@@ -387,10 +427,14 @@ test("smart unpack local module with dll file", ({ expect }) => {
     {
       targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       config: {
-        files: [
-          "!foo",
-          "!**/NuGet", // for some reason, NuGet only shows up on CI builds, but no Windows VMs or local linux/mac machines
-        ],
+        fileOptions: {
+          files: [
+            "!foo",
+            "!**/NuGet", // for some reason, NuGet only shows up on CI builds, but no Windows VMs or local linux/mac machines
+          ],
+          // `foo` is a `file:` dependency in another temporary directory, which npm links into node_modules: it is outside the workspace
+          allowExternalLinks: true,
+        },
       },
     },
     {
@@ -431,12 +475,14 @@ test.ifNotWindows("posix smart unpack", ({ expect }) =>
           // Force include this directory in the package
           return filePath.includes("node_modules/three/examples")
         },
-        files: [
-          // test ignore pattern for node_modules defined as file set filter
-          {
-            filter: ["!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz", "!node_modules/node-abi/*", "!node_modules/**/eslint-format.js"],
-          },
-        ],
+        fileOptions: {
+          files: [
+            // test ignore pattern for node_modules defined as file set filter
+            {
+              filter: ["!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz", "!node_modules/node-abi/*", "!node_modules/**/eslint-format.js"],
+            },
+          ],
+        },
       },
     },
     {

@@ -8,6 +8,9 @@
   --ifm-color-primary-lightest: #2b86f1;
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  /* Version banner (see themeConfig.announcementBar); white on this blue is 5.75:1 */
+  --eb-version-banner-bg: #1565c0;
+  --eb-version-banner-fg: #fff;
 }
 
 [data-theme="dark"] {
@@ -19,10 +22,28 @@
   --ifm-color-primary-lighter: #7aade1;
   --ifm-color-primary-lightest: #9ec2eb;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  /* The dark-theme primary (#5b9bd5) is only ~3:1 against white, so the banner
+     gets its own darker blue: white on #0d3b73 is 11.11:1 */
+  --eb-version-banner-bg: #0d3b73;
+  --eb-version-banner-fg: #fff;
 }
 
 /* Keep wide tables from overflowing */
 .markdown table {
   display: block;
   overflow-x: auto;
+}
+
+/* Version banner (themeConfig.announcementBar, only set on prerelease builds).
+   Colours come from the --eb-version-banner-* variables above via the config;
+   let the long sentence wrap on narrow screens
+   instead of overflowing the fixed default height. */
+div[class^="announcementBar"] {
+  --docusaurus-announcement-bar-height: auto;
+  font-weight: var(--ifm-font-weight-semibold);
+}
+
+div[class^="announcementBar"] a {
+  color: inherit;
+  text-decoration: underline;
 }

@@ -5,7 +5,9 @@ import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion } from "semver"
 import { AppAdapter } from "./AppAdapter.js"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"
-import { QuitAndInstallOptions } from "./types.js"
+import type { VerifyUpdateFileResult } from "./types.js"
+import { QuitAndInstallOptions, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
+import { nonThrowingLogger } from "./util.js"
 
 const require = createRequire(import.meta.url)
 
@@ -25,8 +27,8 @@ export abstract class BaseUpdater extends AppUpdater {
     })
   }
 
-  quitAndInstall(options: QuitAndInstallOptions = {}): void {
-    const { isSilent = false, isForceRunAfter = false, waitUntilNextLaunch = false } = options
+  quitAndInstall(options: QuitAndInstallOptions | boolean = {}, legacyIsForceRunAfter?: boolean): void {
+    const { isSilent = false, isForceRunAfter = false, waitUntilNextLaunch = false } = this.normalizeQuitAndInstallOptions(options, legacyIsForceRunAfter)
     if (waitUntilNextLaunch) {
       this._logger.info(`Deferring install to next launch on explicit quitAndInstall (waitUntilNextLaunch)`)
       if (this.markPendingInstallOnNextLaunch()) {
@@ -37,17 +39,25 @@ export abstract class BaseUpdater extends AppUpdater {
     }
     this._logger.info(`Install on explicit quitAndInstall`)
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
-    void this.installAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall).then(isInstalled => {
-      if (isInstalled) {
-        setImmediate(() => {
-          // this event is normally emitted when calling quitAndInstall, this emulates that
-          require("electron").autoUpdater.emit("before-quit-for-update")
-          this.app.quit()
-        })
-      } else {
-        this.quitAndInstallCalled = false
-      }
-    })
+    // the install runs asynchronously on targets whose install shows an elevation dialog (see installAsync), so the
+    // app quits once it finished instead of right after this call returns
+    void this.installAsync(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
+      .catch((error: unknown) => {
+        // installAsync reports install failures itself; this is a failure to report one (an "error" listener that throws)
+        nonThrowingLogger(this._logger).error(`Cannot install update: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
+        return false
+      })
+      .then(isInstalled => {
+        if (isInstalled) {
+          setImmediate(() => {
+            // this event is normally emitted when calling quitAndInstall, this emulates that
+            require("electron").autoUpdater.emit("before-quit-for-update")
+            this.app.quit()
+          })
+        } else {
+          this.quitAndInstallCalled = false
+        }
+      })
   }
 
   installPendingUpdateIfAvailable(): Promise<boolean> {
@@ -63,7 +73,7 @@ export abstract class BaseUpdater extends AppUpdater {
     return false
   }
 
-  protected executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
+  protected executeDownload(taskOptions: DownloadExecutorTask): Promise<DownloadExecutorResult> {
     return super.executeDownload({
       ...taskOptions,
       done: event => {
@@ -211,6 +221,12 @@ export abstract class BaseUpdater extends AppUpdater {
       return false
     }
 
+    if (fileInfo.packageInfo != null && this.disableWebInstaller) {
+      await downloadedUpdateHelper.clearPendingInstallMarker(this._logger)
+      this.dispatchError(newError(`Unable to install pending update ${latestInfo.version}. Web Installers are disabled`, "ERR_UPDATER_WEB_INSTALLER_DISABLED"))
+      return false
+    }
+
     const installerPath = await downloadedUpdateHelper.validateCachedPendingInstall(fileInfo, this._logger)
     if (installerPath == null) {
       // validation already logged the reason and cleaned the pending cache
@@ -218,12 +234,31 @@ export abstract class BaseUpdater extends AppUpdater {
       return false
     }
 
-    const signatureVerificationStatus = await this.verifyInstallerSignatureOnLaunch(installerPath)
-    if (signatureVerificationStatus != null) {
-      await downloadedUpdateHelper.clear().catch(() => {
+    const clearPendingCache = () =>
+      downloadedUpdateHelper.clear().catch(() => {
         // ignore
       })
-      this.dispatchError(newError(`Pending update ${latestInfo.version} is not signed by the application owner: ${signatureVerificationStatus}`, "ERR_UPDATER_INVALID_SIGNATURE"))
+
+    const signatureFailure = verificationFailureMessage(await this.verifyInstallerSignatureOnLaunch(installerPath))
+    if (signatureFailure != null) {
+      await clearPendingCache()
+      this.dispatchError(newError(`Pending update ${latestInfo.version} is not signed by the application owner: ${signatureFailure}`, "ERR_UPDATER_INVALID_SIGNATURE"))
+      return false
+    }
+
+    // the installer sat on disk since a previous launch, so the app's own verifier gets to inspect it again before it
+    // is spawned — `verifyInstallerSignatureOnLaunch` only covers Authenticode, and only on Windows
+    const updateFileFailure = verificationFailureMessage(
+      await this.verifyUpdateFile({
+        updateFilePath: installerPath,
+        originalUpdateFileName: path.basename(installerPath),
+        // the cached package of a web installer is passed to it with --package-file, so the verifier gets it as well
+        packageFilePath: downloadedUpdateHelper.packageFile ?? undefined,
+      })
+    )
+    if (updateFileFailure != null) {
+      await clearPendingCache()
+      this.dispatchError(newError(`Pending update ${latestInfo.version} failed verification: ${updateFileFailure}`, "ERR_UPDATER_INVALID_UPDATE_FILE"))
       return false
     }
 
@@ -247,10 +282,13 @@ export abstract class BaseUpdater extends AppUpdater {
 
   /**
    * Re-verification of the cached installer's code signature before an install-on-next-launch is executed.
-   * Platforms without installer signature verification resolve to `null` (no error).
+   * Platforms without installer signature verification resolve to `{ response: "success" }`.
+   *
+   * This covers only the platform's own signature scheme; {@link AppUpdater.verifyUpdateFile} is re-run on the same
+   * installer right after, and is the cross-platform place for an app's own verification.
    */
-  protected verifyInstallerSignatureOnLaunch(_installerPath: string): Promise<string | null> {
-    return Promise.resolve(null)
+  protected verifyInstallerSignatureOnLaunch(_installerPath: string): Promise<VerifyUpdateFileResult> {
+    return Promise.resolve({ response: "success" })
   }
 
   private markPendingInstallOnNextLaunch(): boolean {
@@ -362,39 +400,6 @@ export abstract class BaseUpdater extends AppUpdater {
    */
   // https://github.com/electron-userland/electron-builder/issues/1129
   // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
-  /**
-   * {@link spawnSyncLog} without blocking the main process, awaited instead.
-   *
-   * `useShell` is opt-out: without a shell the arguments are passed as an argv array, so nothing has to be
-   * escaped and Node's DEP0190 warning about `shell: true` does not apply.
-   */
-  protected spawnAsyncLog(cmd: string, args: string[] = [], env = {}, useShell = true): Promise<string> {
-    this._logger.info(`Executing: ${cmd} with args: ${args}`)
-    const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
-    return new Promise<string>((resolve, reject) => {
-      const child = spawn(cmd, args, {
-        env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
-        shell: useShell,
-        stdio: ["ignore", "pipe", "pipe"],
-      })
-
-      let stdout = ""
-      let stderr = ""
-      child.stdout?.on("data", (chunk: Buffer) => (stdout += chunk.toString()))
-      child.stderr?.on("data", (chunk: Buffer) => (stderr += chunk.toString()))
-
-      child.on("error", error => reject(error))
-      child.on("close", status => {
-        if (status === 0) {
-          resolve(stdout.trim())
-          return
-        }
-        this._logger.error(stderr)
-        reject(new Error(`Command ${cmd} exited with code ${status}`))
-      })
-    })
-  }
-
   protected async spawnLog(cmd: string, args: string[] = [], env: any = undefined, stdio: StdioOptions = "ignore"): Promise<boolean> {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     return new Promise<boolean>((resolve, reject) => {
@@ -411,6 +416,44 @@ export abstract class BaseUpdater extends AppUpdater {
       } catch (error) {
         reject(error)
       }
+    })
+  }
+
+  /**
+   * {@link spawnSyncLog} without blocking the main process: same command, same environment, awaited instead.
+   * Rejects when the command exits with a non-zero code or is killed by a signal.
+   *
+   * stdout is not read (as with {@link spawnSyncLog}, nothing uses it), so it is discarded instead of piped: a command
+   * still running when the app quits would otherwise be killed by SIGPIPE on its next write to stdout.
+   *
+   * `useShell` is opt-out: without a shell the arguments are passed as an argv array, so nothing has to be
+   * escaped and Node's DEP0190 warning about `shell: true` does not apply.
+   */
+  protected spawnAsyncLog(cmd: string, args: string[] = [], env = {}, useShell = true): Promise<void> {
+    // logging runs in child-process callbacks, where a throwing logger would escape as an uncaught exception
+    const logger = nonThrowingLogger(this._logger)
+    logger.info(`Executing: ${cmd} with args: ${args}`)
+    const mergedEnv: NodeJS.ProcessEnv = { ...process.env, ...env }
+    return new Promise<void>((resolve, reject) => {
+      const child = spawn(cmd, args, {
+        env: { ...mergedEnv, PATH: this.sanitizeEnvPath(mergedEnv.PATH ?? "") },
+        shell: useShell,
+        stdio: ["ignore", "ignore", "pipe"],
+      })
+
+      let stderr = ""
+      child.stderr?.setEncoding("utf8")
+      child.stderr?.on("data", (chunk: string) => (stderr += chunk))
+
+      child.on("error", error => reject(error))
+      child.on("close", (status, signal) => {
+        if (status === 0) {
+          resolve()
+          return
+        }
+        reject(new Error(`Command ${cmd} exited with code ${status}${signal == null ? "" : `, signal ${signal}`}`))
+        logger.error(stderr)
+      })
     })
   }
 }

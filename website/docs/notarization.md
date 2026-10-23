@@ -63,12 +63,19 @@ API keys don't expire and don't require two-factor authentication, making them i
 Then set the following environment variables:
 
 ```bash
-# base64-encode the .p8 file for use as a CI secret
-APPLE_API_KEY=<base64-encoded-p8-content>
+APPLE_API_KEY=/path/to/AuthKey_KEYID.p8   # the .p8 file's path, or its contents base64-encoded (see below)
 APPLE_API_KEY_ID=KEYID
 APPLE_API_ISSUER=your-issuer-id
-APPLE_TEAM_ID=ABCDE12345
 ```
+
+`APPLE_API_KEY` is either the path of the `.p8` file, which is passed to `notarytool` as is, or — so that a masked CI variable can hold it — the file's contents **base64-encoded on one line**:
+
+| Platform | Command |
+| --- | --- |
+| macOS, Linux | `base64 < AuthKey_KEYID.p8 \| tr -d '\n'` |
+| PowerShell | `[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path AuthKey_KEYID.p8)))` |
+
+electron-builder writes a base64 value to a new temporary file (mode `0600`) for each notarization and deletes it as soon as `notarytool` is done. The key text itself (`-----BEGIN PRIVATE KEY-----…`) and a damaged base64 value (surrounding quotes, URL-safe characters, cut off) fail the build before notarization, without printing the key. `APPLE_TEAM_ID` is not used with an API key. A custom `afterSign` hook that calls `@electron/notarize` itself still has to pass a path.
 
 ### Authentication — Option C: Keychain Profile (stored credentials)
 
@@ -85,7 +92,7 @@ This approach requires credentials to be pre-stored on the build machine and is 
 
 Notarization requires **Hardened Runtime** (`mac.sign.hardenedRuntime: true`). This restricts what your app process can do unless you explicitly declare entitlements.
 
-Electron requires at minimum:
+Modern Electron needs exactly one exception, and electron-builder grants it by default — **no entitlements file is required to notarize a stock Electron app**:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -94,23 +101,23 @@ Electron requires at minimum:
 <dict>
   <key>com.apple.security.cs.allow-jit</key>
   <true/>
-  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-  <true/>
 </dict>
 </plist>
 ```
 
-Save this as `build/entitlements.mac.plist`.
+Write that to `build/entitlements.mac.plist` only if you need to add capabilities of your own; your file replaces the default rather than extending it, so keep `com.apple.security.cs.allow-jit` in it.
 
-For the inherit entitlements file (`build/entitlements.mac.inherit.plist`), use the same content — it applies to child processes (helper processes, renderer, etc.).
+Do **not** add `com.apple.security.cs.allow-unsigned-executable-memory` out of habit. It was needed by Electron versions from the 2019 era, is not needed by modern V8/Electron, and weakens the Hardened Runtime for no benefit.
+
+Leave `build/entitlements.mac.inherit.plist` absent unless you truly need it. Without it, each nested binary is signed with [`@electron/osx-sign`](https://github.com/electron/osx-sign)'s per-file defaults, which mirror Chromium's own entitlements — renderer and GPU helpers get only `allow-jit`, and the looser exceptions go to the plugin helper alone. Supplying the file applies one plist to every nested binary instead.
 
 ### Common Entitlements
 
 | Entitlement | When Needed |
 |---|---|
-| `com.apple.security.cs.allow-jit` | Required by Electron (V8 JIT) |
-| `com.apple.security.cs.allow-unsigned-executable-memory` | Required by some Electron versions |
-| `com.apple.security.cs.disable-library-validation` | When loading third-party frameworks or plugins |
+| `com.apple.security.cs.allow-jit` | Required by Electron (V8 JIT) — granted by default |
+| `com.apple.security.cs.allow-unsigned-executable-memory` | Legacy Electron only — not needed by modern V8/Electron and weakens the Hardened Runtime |
+| `com.apple.security.cs.disable-library-validation` | Loading frameworks/native modules signed by another team, or unsigned |
 | `com.apple.security.network.client` | Outbound network access |
 | `com.apple.security.network.server` | Incoming connections |
 | `com.apple.security.files.user-selected.read-write` | Read/write files the user selects |
@@ -183,6 +190,9 @@ codesign --verify --deep --strict --verbose=2 dist/mac/MyApp.app
 ```
 
 ## Troubleshooting
+
+**"The value '…' is invalid for `'--key <key>'`: The file couldn't be opened because it doesn't exist."**
+: `APPLE_API_KEY` names a file that does not exist — a relative path resolves against the directory electron-builder runs in. To provide the key's contents instead of a path, base64-encode the `.p8` file (see Option B above).
 
 **"The software certificate used to sign this application is not trusted on this machine"**
 : Your Developer ID certificate is not in the system keychain or hasn't been trusted. Verify `CSC_LINK` points to a valid Developer ID certificate — electron-builder imports and configures the certificate automatically.

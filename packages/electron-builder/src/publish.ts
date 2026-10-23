@@ -69,13 +69,27 @@ export async function publishArtifactsWithOptions(
   const buildOptions: BuildOptions = normalizeOptions({ config, publish: publishOptions?.publish })
   checkBuildRequestOptions(buildOptions)
 
-  const uniqueUploads = Array.from(new Set(uploadOptions))
-  const tasks: UploadTask[] = uniqueUploads.map(({ file, arch }) => {
-    const filename = path.basename(file)
-    return { file, arch: arch ? archFromString(arch) : null, safeArtifactName: computeSafeArtifactNameIfNeeded(filename, () => filename) }
-  })
+  const tasks = createUploadTasks(uploadOptions)
 
   return publishPackageWithTasks(buildOptions, tasks, buildVersion)
+}
+
+/** @internal */
+export function createUploadTasks(uploadOptions: { file: string; arch: string | null }[]): UploadTask[] {
+  const seen = new Set<string>()
+  return uploadOptions
+    .filter(({ file, arch }) => {
+      const key = `${file}\0${arch ?? ""}`
+      if (seen.has(key)) {
+        return false
+      }
+      seen.add(key)
+      return true
+    })
+    .map(({ file, arch }) => {
+      const filename = path.basename(file)
+      return { file, arch: arch ? archFromString(arch) : null, safeArtifactName: computeSafeArtifactNameIfNeeded(filename, () => filename) }
+    })
 }
 
 async function publishPackageWithTasks(
@@ -94,29 +108,39 @@ async function publishPackageWithTasks(
     packager.cancellationToken.cancel()
     publishManager.cancelTasks()
   }
-  process.once("SIGINT", sigIntHandler)
 
-  try {
-    const publishConfigurations = await publishManager.getGlobalPublishConfigurations()
-    if (publishConfigurations == null || publishConfigurations.length === 0) {
-      throw new InvalidConfigurationError("unable to find any publish configuration")
-    }
-
-    for (const newArtifact of uploadTasks) {
-      for (const publishConfiguration of publishConfigurations) {
-        await publishManager.scheduleUpload(publishConfiguration, newArtifact, appInfo)
+  return withPublishSigIntHandler(sigIntHandler, async () => {
+    try {
+      const publishConfigurations = await publishManager.getGlobalPublishConfigurations()
+      if (publishConfigurations == null || publishConfigurations.length === 0) {
+        throw new InvalidConfigurationError("unable to find any publish configuration")
       }
-    }
 
-    await publishManager.awaitTasks()
-    return uploadTasks
-  } catch (error: any) {
-    packager.cancellationToken.cancel()
-    publishManager.cancelTasks()
-    process.removeListener("SIGINT", sigIntHandler)
-    log.error({ message: (error.stack || error.message || error).toString() }, "error publishing")
+      for (const newArtifact of uploadTasks) {
+        for (const publishConfiguration of publishConfigurations) {
+          await publishManager.scheduleUpload(publishConfiguration, newArtifact, appInfo)
+        }
+      }
+
+      await publishManager.awaitTasks()
+      return uploadTasks
+    } catch (error: any) {
+      packager.cancellationToken.cancel()
+      publishManager.cancelTasks()
+      log.error({ message: (error.stack || error.message || error).toString() }, "error publishing")
+      return null
+    }
+  })
+}
+
+/** @internal */
+export async function withPublishSigIntHandler<T>(handler: () => void, task: () => Promise<T>): Promise<T> {
+  process.once("SIGINT", handler)
+  try {
+    return await task()
+  } finally {
+    process.removeListener("SIGINT", handler)
   }
-  return null
 }
 
 function main() {

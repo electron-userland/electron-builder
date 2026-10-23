@@ -3,6 +3,7 @@
 exports[`repo slug from APPVEYOR 1`] = `
 {
   "project": "travis-build",
+  "source": "APPVEYOR_REPO_NAME",
   "user": "travis-ci",
 }
 `;
@@ -10,6 +11,7 @@ exports[`repo slug from APPVEYOR 1`] = `
 exports[`repo slug from TRAVIS_REPO_SLUG 1`] = `
 {
   "project": "travis-build",
+  "source": "TRAVIS_REPO_SLUG",
   "user": "travis-ci",
 }
 `;

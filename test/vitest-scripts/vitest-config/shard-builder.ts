@@ -1,5 +1,5 @@
 import { FileStats, loadCache } from "./cache.js"
-import { DEFAULT_FILE_MS, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform, TEST_ROOT } from "./smart-config.js"
+import { DEFAULT_FILE_MS, getTestFilesOverride, SAFEGUARD_MAX_SHARDS, SupportedPlatforms, TARGET_MS, TargetPlatform, TEST_ROOT } from "./smart-config.js"
 
 export interface WeightedFile {
   filename: string
@@ -42,7 +42,8 @@ export function buildWeightedFiles(files: string[], targetPlatform: TargetPlatfo
  * Compute optimal shard count based on total platform-specific duration
  */
 export function computeShardCount(files: WeightedFile[]): number {
-  if (!process.env.CI || process.env.TEST_FILES || process.env.VITEST_SHARD_COUNT) {
+  // a scoped run (real TEST_FILES override) or an explicit count is never smart-sharded; a blank TEST_FILES is neither
+  if (!process.env.CI || getTestFilesOverride() != null || process.env.VITEST_SHARD_COUNT) {
     return Math.max(1, parseInt(process.env.VITEST_SHARD_COUNT || "1", 10))
   }
 
@@ -50,6 +51,22 @@ export function computeShardCount(files: WeightedFile[]): number {
   const actualShardCount = Math.max(1, Math.ceil(total / TARGET_MS))
   const safeguardedShardCount = Math.min(actualShardCount, SAFEGUARD_MAX_SHARDS)
   return safeguardedShardCount
+}
+
+/**
+ * The CI matrix is sized by the planner job (smart-shard-count.ts) and every shard job re-plans locally;
+ * both must arrive at the same plan or files are silently skipped or run twice across shards. Returns an
+ * error message when the in-job count differs from the matrix size (VITEST_EXPECTED_SHARD_COUNT), else null.
+ * Callers must fail on a mismatch — never clamp or re-map the shard index.
+ */
+export function shardPlanMismatchError(expectedShardCount: number | null, shardCount: number, cacheSource?: string): string | null {
+  if (expectedShardCount == null || expectedShardCount === shardCount) {
+    return null
+  }
+  return (
+    `Shard plan mismatch: the CI matrix was planned with ${expectedShardCount} shard(s) but this job computed ${shardCount}. ` +
+    `The planner and this job must use the same smart cache (VITEST_SMART_CACHE_SOURCE=${cacheSource || "<unset>"}) and the same test file list.`
+  )
 }
 
 /**

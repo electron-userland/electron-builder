@@ -2,6 +2,7 @@ import { DebugLogger, exec, ExtraSpawnOptions, InvalidConfigurationError, log, s
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { ToolsetConfig } from "../configuration.js"
 import { ParallelsVm } from "./ParallelsVm.js"
 export class VmManager {
   get pathSep(): string {
@@ -40,7 +41,7 @@ export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager>
   const parallelsVmModule = await import("./ParallelsVm.js")
   let vmList: ParallelsVm[] = []
   try {
-    vmList = (await parallelsVmModule.parseVmList(debugLogger)).filter(it => ["win-10", "win-11"].includes(it.os))
+    vmList = await parseWindowsVmList(debugLogger)
   } catch (_error) {
     if ((await isPwshAvailable.value) && (await isWineAvailable.value)) {
       const vmModule = await import("./PwshVm.js")
@@ -51,8 +52,32 @@ export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager>
     throw new InvalidConfigurationError("Cannot find suitable Parallels Desktop virtual machine (Windows 10 is required) and cannot access `pwsh` and `wine` locally")
   }
 
-  // prefer running or suspended vm
-  return new parallelsVmModule.ParallelsVmManager(vmList.find(it => it.state === "running") || vmList.find(it => it.state === "suspended") || vmList[0])
+  return new parallelsVmModule.ParallelsVmManager(preferRunningVm(vmList))
+}
+
+// Runs Windows executables: natively on Windows, else in a Parallels Windows VM when one exists, else via wine.
+// Unlike getWindowsVm, it never falls back to PwshVmManager, which runs the file natively and requires pwsh.
+export async function getWindowsExecVm(debugLogger: DebugLogger, wineToolset: ToolsetConfig["wine"], buildResourcesDir: string): Promise<VmManager> {
+  if (process.platform === "win32") {
+    return new VmManager()
+  }
+  const vmList = await parseWindowsVmList(debugLogger).catch(() => [])
+  if (vmList.length > 0) {
+    const parallelsVmModule = await import("./ParallelsVm.js")
+    return new parallelsVmModule.ParallelsVmManager(preferRunningVm(vmList))
+  }
+  const wineVmModule = await import("./WineVm.js")
+  return new wineVmModule.WineVmManager(wineToolset, buildResourcesDir)
+}
+
+async function parseWindowsVmList(debugLogger: DebugLogger): Promise<ParallelsVm[]> {
+  const parallelsVmModule = await import("./ParallelsVm.js")
+  return (await parallelsVmModule.parseVmList(debugLogger)).filter(it => ["win-10", "win-11"].includes(it.os))
+}
+
+// prefer running or suspended vm
+function preferRunningVm(vmList: ParallelsVm[]): ParallelsVm {
+  return vmList.find(it => it.state === "running") || vmList.find(it => it.state === "suspended") || vmList[0]
 }
 
 export async function getLinuxVm(debugLogger: DebugLogger): Promise<VmManager | undefined> {
@@ -65,8 +90,7 @@ export async function getLinuxVm(debugLogger: DebugLogger): Promise<VmManager | 
     if (vmList.length === 0) {
       return undefined
     }
-    const vm = vmList.find(it => it.state === "running") || vmList.find(it => it.state === "suspended") || vmList[0]
-    return new parallelsVmModule.ParallelsVmManager(vm)
+    return new parallelsVmModule.ParallelsVmManager(preferRunningVm(vmList))
   } catch {
     return undefined
   }

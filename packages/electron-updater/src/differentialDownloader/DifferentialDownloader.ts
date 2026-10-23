@@ -1,10 +1,12 @@
 import { BlockMapDataHolder, createHttpError, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime"
+import { detectSha512Encoding } from "builder-util-runtime/internal"
 import fsExtra from "fs-extra"
 import { createWriteStream } from "fs"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { ProgressInfo, CancellationToken } from "builder-util-runtime"
 import { Logger } from "../types.js"
+import { nonThrowingLogger } from "../util.js"
 import { copyData } from "./DataSplitter.js"
 import { URL } from "url"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder.js"
@@ -36,7 +38,8 @@ export abstract class DifferentialDownloader {
     readonly httpExecutor: HttpExecutor<any>,
     readonly options: DifferentialDownloaderOptions
   ) {
-    this.logger = options.logger
+    // logging runs in stream and response callbacks, where a throwing logger would escape as an uncaught exception
+    this.logger = nonThrowingLogger(options.logger)
   }
 
   createRequestOptions(): RequestOptions {
@@ -151,7 +154,9 @@ export abstract class DifferentialDownloader {
         streams.push(downloadInfoTransform)
       }
 
-      const digestTransform = new DigestTransform(this.blockAwareFileInfo.sha512)
+      // like the full download, accept the legacy hex encoding of the manifest's sha512
+      const sha512 = this.blockAwareFileInfo.sha512
+      const digestTransform = new DigestTransform(sha512, "sha512", detectSha512Encoding(sha512))
       // to simply debug, do manual validation to allow file to be fully written
       digestTransform.isValidateOnEnd = false
       streams.push(digestTransform)

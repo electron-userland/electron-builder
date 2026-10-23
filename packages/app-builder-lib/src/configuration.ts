@@ -434,16 +434,6 @@ export interface CommonConfiguration {
   readonly forceCodeSigning?: boolean
 
   /**
-   * Whether to include `.pdb` (Program Database) symbol files in the output.
-   *
-   * PDB files enable Windows crash-dump analysis but significantly increase artifact size. Enable
-   * for internal builds where you want symbol information; disable for public distribution.
-   *
-   * @default false
-   */
-  readonly includePdb?: boolean
-
-  /**
    * Whether to remove the `scripts` field from bundled `package.json` files.
    *
    * Lifecycle scripts (`preinstall`, `postinstall`, etc.) have no meaning inside a packaged
@@ -531,6 +521,15 @@ export interface Configuration extends CommonConfiguration, PlatformSpecificBuil
   electronVersion?: string | null
 
   /**
+   * Whether to write `builder-effective-config.yaml` (the resolved configuration, including the detected
+   * `electronVersion`) to the output directory.
+   *
+   * Defaults to writing it only for local interactive builds: not on CI and not when stdout is piped.
+   * Set `true` to always write it, e.g. to read the resolved configuration in a CI step, or `false` to never write it.
+   */
+  readonly writeEffectiveConfig?: boolean | null
+
+  /**
    * One or more configuration presets or file paths to merge into this configuration.
    *
    * Accepts a string or array of strings, each of which is either:
@@ -559,6 +558,10 @@ export interface NativeModulesConfig {
    *
    * Useful when pre-built binaries are not available for the target platform/arch combination,
    * or when you need to ensure native modules are compiled against the exact Electron ABI.
+   *
+   * Only honored when the target platform matches the host platform: native modules cannot be
+   * cross-compiled from source for another OS, so for a cross-platform target native dependencies are
+   * rebuilt with prebuilt binaries for that target instead (and a warning is logged).
    *
    * @default false
    */
@@ -605,6 +608,30 @@ export interface NativeModulesConfig {
    * @default "sequential"
    */
   readonly rebuildMode?: "sequential" | "parallel" | null
+
+  /**
+   * Whether to verify, after the app is packed, that every native binary shipped in the app was built for
+   * the target platform and architecture.
+   *
+   * electron-builder reads the header of each `.node` addon (and of other native libraries and executables
+   * such as `.so`, `.dylib`, `.dll`, `.exe`) in `app.asar`, `app.asar.unpacked` or the unpacked `app`
+   * directory, and compares its format (ELF / Mach-O / PE) and machine type against the target (for
+   * a macOS universal build, each per-arch slice is checked before the slices are merged). This catches a
+   * stale or host-platform binary left in `node_modules` by a skipped or cached rebuild, which otherwise
+   * only surfaces at runtime as `invalid ELF header` / `not a valid Win32 application` /
+   * `incompatible architecture`.
+   *
+   * Files whose package declares another platform via `package.json` `os`/`cpu`, or whose path names
+   * another platform/arch (e.g. prebuildify's `prebuilds/linux-arm64/`), are not loaded for this target
+   * and are ignored.
+   *
+   * - `true` (default) — a mismatched `.node` addon fails the build; other mismatched native files log a warning.
+   * - `"warn"` — log every mismatch as a warning and continue.
+   * - `false` — skip the check.
+   *
+   * @default true
+   */
+  readonly verifyNativeBinaries?: boolean | "warn" | null
 }
 
 export type Hook<T, V> = (contextOrPath: T) => Promise<V> | V
@@ -659,7 +686,7 @@ export interface ToolsetConfig {
    * Version of the AppImage toolset bundle used for building `.AppImage` files.
    *
    * The bundle ships:
-   * - **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage.
+   * - **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage. It also packs legacy-base (core18/core20/core22) snaps built from the snap template app.
    * - **`desktop-file-validate`** — validates the generated `.desktop` entry.
    * - **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.
    *
@@ -669,6 +696,8 @@ export interface ToolsetConfig {
    * | `"0.0.0"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |
    * | `"1.0.3"` | 20251108 | Introduces static AppImage runtime |
    * | `"1.1.0"` | 20251108 | Adds `unsquashfs` support |
+   *
+   * An explicit version pin always selects exactly that release.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/appimage/CHANGELOG.md
    *
@@ -693,6 +722,9 @@ export interface ToolsetConfig {
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/nsis/CHANGELOG.md
    *
+   * A custom bundle (a {@link ToolsetCustom} object) must follow the layout at
+   * https://www.electron.build/docs/toolsets#custom-nsis-bundle-layout
+   *
    * @default "latest"
    */
   readonly nsis?: "0.0.0" | "1.2.1" | ToolsetCustom | "latest"
@@ -709,6 +741,12 @@ export interface ToolsetConfig {
    * |---------|-------------|-----------------|-------|
    * | `"0.0.0"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |
    * | `"1.0.1"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |
+   * | `"system"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |
+   *
+   * `"system"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and
+   * is what `"latest"` (the default) currently resolves to on every platform: the published `"1.0.1"`
+   * bundles ship no PE builtins, so a host Wine installation is required to build Windows targets on
+   * macOS or Linux.
    *
    * To use a custom Wine binary, use a `ToolsetCustom` object.
    *
@@ -716,7 +754,7 @@ export interface ToolsetConfig {
    *
    * @default "latest"
    */
-  readonly wine?: "0.0.0" | "1.0.1" | ToolsetCustom | "latest"
+  readonly wine?: "0.0.0" | "1.0.1" | "system" | ToolsetCustom | "latest"
 
   /**
    * Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)
@@ -743,12 +781,13 @@ export interface ToolsetConfig {
    * | Version | Notes |
    * |---------|-------|
    * | `"1.0.0"` | gnu-tar, lzip, makedepend, glib, libgsf, libtool, pcre, gettext, binutils |
+   * | `"1.0.1"` | Same tools rebuilt on macOS 15 runners — binaries run on macOS 15+ (1.0.0 required macOS 26) |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/linux-tools-mac/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly linuxToolsMac?: "1.0.0" | ToolsetCustom | "latest"
+  readonly linuxToolsMac?: "1.0.0" | "1.0.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the 7-Zip binary bundle used internally to extract `.7z` and `.tar.xz` archives.
@@ -761,9 +800,17 @@ export interface ToolsetConfig {
    * (or a bare `file://` directory). `.7z` and `.tar.xz` archives cannot be used here because
    * extracting them requires 7za — a circular dependency.
    *
+   * Available versions:
+   * | Version | Notes |
+   * |---------|-------|
+   * | `"1.0.0"` | Shipped the 32-bit `7za.exe` for every Windows arch (1.75 GiB memory cap, no LZMA2 multithreading on x64/arm64) |
+   * | `"1.0.1"` | Correct per-arch Windows binaries (x64, ia32, arm64) |
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/7zip/CHANGELOG.md
+   *
    * @default "latest"
    */
-  readonly sevenZip?: "1.0.0" | ToolsetCustom | "latest"
+  readonly sevenZip?: "1.0.0" | "1.0.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the icons-conversion bundle used to convert source images to `.icns`, `.ico`,
@@ -781,6 +828,31 @@ export interface ToolsetConfig {
    * @default "latest"
    */
   readonly icons?: "1.2.3" | ToolsetCustom | "latest"
+
+  /**
+   * Version of the `squirrel.windows` bundle used to build Squirrel.Windows installers.
+   *
+   * The bundle ships the Squirrel vendor toolset under `electron-winstaller/vendor/`:
+   * - **`Squirrel.exe`** / **`Squirrel-Mono.exe`** — releasify the app into `Setup.exe` (and an optional MSI).
+   * - **`SyncReleases.exe`** — downloads prior releases to produce delta packages.
+   * - **`nuget.exe`**, **`7z`** — pack the app into a `.nupkg` and compress release assets.
+   *
+   * `rcedit.exe` is provisioned from the {@link winCodeSign} toolset at runtime (on every platform;
+   * under Wine on non-Windows hosts). Building an MSI additionally uses the shared WiX toolset.
+   *
+   * Available versions:
+   * | Version | Notes |
+   * |---------|-------|
+   * | `"1.1.1"` | Squirrel.Windows 2.0.1 (patched) with a standalone, checksum-verified `nuget.exe` 6.14.0 |
+   *
+   * Set to a {@link ToolsetCustom} object to supply your own bundle — it must contain the
+   * `electron-winstaller/vendor/` subtree. Only used when building the `squirrelWindows` target.
+   *
+   * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/squirrel.windows/CHANGELOG.md
+   *
+   * @default "latest"
+   */
+  readonly squirrel?: "1.1.1" | ToolsetCustom | "latest"
 }
 
 /**
@@ -792,13 +864,16 @@ export interface ToolsetConfig {
  *
  * File formats supported for `url` archives: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`.
  *
+ * `checksum` is the SHA-256 of the archive as 64 hex characters or its SHA-512 as 88 base64 characters (the format v26
+ * used for all toolset checksums), the same for every toolset. See https://www.electron.build/docs/toolsets#custom-toolset-checksum
+ *
  * @example
  * ```json
  * {
  *   "toolsets": {
  *     "nsis": {
  *       "url": "file:///path/to/my-nsis-bundle.tar.gz",
- *       "checksum": "abc123...",
+ *       "checksum": "56997fdefe25e7928a1a68b4583d08b240b66cf660234053b20131a74cc082f4",
  *       "version": "my-custom-1.0"
  *     }
  *   }
@@ -818,15 +893,24 @@ export interface ToolsetCustom {
   readonly url: string
 
   /**
-   * SHA checksum of the custom toolset bundle for verification.
+   * Checksum of the bundle archive, in one of two formats:
+   * - the SHA-256 as 64 hex characters (uppercase is lowercased), e.g. `shasum -a 256 <archive>` (macOS / Linux),
+   *   `(Get-FileHash -Algorithm SHA256 <archive>).Hash` (PowerShell) or `certutil -hashfile <archive> SHA256`;
+   * - the SHA-512 as 88 base64 characters, the format v26 used for all toolset checksums, e.g.
+   *   `openssl dgst -sha512 -binary <archive> | openssl base64 -A`.
+   *
+   * Prefixed forms such as `sha256:…` or `sha512-…`, and a hex-encoded SHA-512, are rejected before anything is downloaded.
+   * A downloaded archive is verified before it is cached or extracted, and a local `file://` archive before it is extracted.
+   *
    * Required for remote (`https://`) URLs and local archive files (`file://`).
-   * Not needed for bare directory paths — the directory is used as-is with no caching.
+   * Not needed for bare directory paths — the directory is used as-is with no caching and no verification.
+   * @see https://www.electron.build/docs/toolsets#custom-toolset-checksum
    */
   readonly checksum?: string
 
   /**
    * Optional version label used in the local cache directory name.
-   * Falls back to the first 8 characters of `checksum` when omitted.
+   * Falls back to the first 8 hex characters of the `checksum` digest when omitted.
    */
   readonly version?: string
 }
@@ -999,9 +1083,9 @@ export interface MetadataDirectories {
    * custom NSIS scripts, etc.) that electron-builder reads during packaging.
    *
    * **Build resources are not copied into the packaged app.** If you need runtime access to a
-   * file (e.g. a tray icon), include it explicitly via the `files` option:
+   * file (e.g. a tray icon), include it explicitly via the `fileOptions.files` option:
    * ```json
-   * { "files": ["**\/*", "build/icon.*"] }
+   * { "fileOptions": { "files": ["**\/*", "build/icon.*"] } }
    * ```
    *
    * @default "build"

@@ -10,7 +10,7 @@ AppImage is one of the two default Linux targets for electron-builder (along wit
 |---|---|---|---|---|
 | Installation | None | `snap install` | `flatpak install` | `apt`/`dnf` |
 | Sandboxed | No | Yes (strict) | Yes | No |
-| Auto-update | AppImageUpdate / electron-updater | Snap Store | Flathub | Package manager |
+| Auto-update | AppImageUpdate / electron-updater | Snap Store | Flathub (not via eb) | Package manager |
 | Cross-distro | Yes | Yes (snapd needed) | Yes | No |
 | Root required | No | No | No | Yes |
 | electron-builder default | **Yes** | **Yes** | No | No |
@@ -146,7 +146,7 @@ The AppImage build tools are configured via the top-level [`toolsets.appimage`](
 The default toolset bundles a **static AppImage runtime** that does not depend on FUSE2. The runtime is prepended directly to the squashfs filesystem and handles mounting internally, so AppImages run on modern distributions (Arch, Fedora, Ubuntu 24.04+) without installing FUSE. Its `AppRun` entry point also performs smart sandbox detection — it passes `--no-sandbox` to Electron only when unprivileged user namespaces are unavailable, rather than always.
 
 :::note[v27: default --no-sandbox change]
-With the legacy FUSE2 runtime (`toolsets.appimage: "0.0.0"`), electron-builder injects `--no-sandbox` by default. With the default static runtime it does **not** — `AppRun` adds it only when user namespaces are unavailable. Set `executableArgs: ["--no-sandbox"]` if you need to force it.
+With the legacy FUSE2 runtime (`toolsets.appimage: "0.0.0"`), electron-builder injects `--no-sandbox` by default. With the default static runtime it does **not** — `AppRun` adds it only when user namespaces are unavailable. Set `appImage.executableArgs: ["--no-sandbox"]` if you need to force it: in `linux.executableArgs` it would reach the other Linux targets too, the [flatpak](flatpak.md#executable-args) included.
 :::
 
 ### Legacy runtime (`0.0.0`) — FUSE2
@@ -168,7 +168,7 @@ toolsets:
 AppImage files use [squashfs](https://en.wikipedia.org/wiki/SquashFS) internally. The compression algorithm affects file size and launch speed.
 
 :::info[Compression support by toolset]
-- **Legacy FUSE2 (`0.0.0`)**: only `xz` can be passed explicitly (when the root `compression` is `"maximum"`). All other values use mksquashfs's default (gzip).
+- **Legacy FUSE2 (`0.0.0`)**: an explicit `appImage.compression` of `xz` or `gzip` is forwarded to mksquashfs; otherwise the root `compression: "maximum"` selects `xz`. All other values use mksquashfs's default (gzip).
 - **Static runtime (default)**: supports `gzip` and `zstd`. The `appImage.compression` option selects the algorithm directly; `"xz"` is mapped to `"zstd"` (xz is not compiled into the static runtime binary).
 :::
 
@@ -178,7 +178,7 @@ AppImage files use [squashfs](https://en.wikipedia.org/wiki/SquashFS) internally
 | `gzip` | Moderate | Moderate | Legacy mksquashfs default |
 | `xz` | Smallest | Slowest | Mapped to `zstd` on static runtime |
 
-Direct algorithm selection (static runtime only):
+Direct algorithm selection (the legacy `0.0.0` toolset forwards only `gzip` and `xz`):
 
 ```yaml
 appImage:

@@ -1,32 +1,93 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter.js"
-import { BaseUpdater } from "./BaseUpdater.js"
+import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { Logger } from "./types.js"
+import { nonThrowingLogger } from "./util.js"
 
 // Matches safe package manager names: alphanumeric, hyphens, underscores only.
 // Rejects names with shell metacharacters that could cause command injection.
 const SAFE_PM_REGEX = /^[a-zA-Z0-9_-]+$/
 
 /**
- * An install plan: a list of alternatives, each a sequence of commands. The first alternative that succeeds
- * wins; the next one is attempted only when the previous failed. It exists so the commands of a package
- * manager are declared once and executed by both the synchronous on-quit path and the asynchronous one.
+ * The commands that install a package, declared once per package manager so that the synchronous on-quit install
+ * and the asynchronous one run exactly the same thing.
+ *
+ * `execCommand` runs first. Only if it fails, the `recoveryChain` runs, step by step; each step is itself a plan that
+ * can declare its own recovery. The install fails when `execCommand` fails without a recovery chain, or when a step of
+ * the recovery chain fails.
  */
-export type InstallPlan = string[][][]
+export interface InstallPlan {
+  /** The command and its arguments. */
+  readonly execCommand: string[]
+  /** Logged when {@link execCommand} failed, before the {@link recoveryChain} runs. */
+  readonly recoveryMessage?: string
+  /** Run in order, only when {@link execCommand} failed. */
+  readonly recoveryChain?: InstallPlan[]
+}
 
-/** Runs an {@link InstallPlan} synchronously, for the on-quit path where an async install cannot be awaited. */
-export function runInstallPlan(plan: InstallPlan, commandRunner: (commandWithArgs: string[]) => void, logger: Logger): void {
-  for (let i = 0; i < plan.length; i++) {
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+/**
+ * Walks an {@link InstallPlan}: yields each command to run, and expects a failed command to be reported back with
+ * `throw()`. The recovery logic lives here only, so {@link runInstallPlan} and {@link runInstallPlanAsync} differ in
+ * nothing but whether they await the command.
+ */
+function* installPlanCommands(plan: InstallPlan, logger: Logger): Generator<string[], void, void> {
+  try {
+    yield plan.execCommand
+  } catch (error: unknown) {
+    const recoveryChain = plan.recoveryChain ?? []
+    if (recoveryChain.length === 0) {
+      throw error
+    }
+    logger.warn(errorMessage(error))
+    logger.warn(plan.recoveryMessage ?? `${plan.execCommand[0]} failed, attempting recovery`)
     try {
-      plan[i].forEach(commandRunner)
-      return
-    } catch (error: any) {
-      if (i === plan.length - 1) {
-        throw error
+      for (const step of recoveryChain) {
+        yield* installPlanCommands(step, logger)
       }
-      logger.warn(`${error.message ?? error} — trying the next install command`)
+    } catch (recoveryError: unknown) {
+      logger.error(`Recovery after ${plan.execCommand[0]} failed`)
+      throw recoveryError
     }
   }
+}
+
+/** Runs an {@link InstallPlan} synchronously, for the on-quit path where an async install cannot be awaited. */
+export function runInstallPlan(plan: InstallPlan, commandRunner: (commandWithArgs: string[]) => unknown, logger: Logger): void {
+  const commands = installPlanCommands(plan, nonThrowingLogger(logger))
+  let next = commands.next()
+  while (!next.done) {
+    let failure: { error: unknown } | null = null
+    try {
+      commandRunner(next.value)
+    } catch (error: unknown) {
+      failure = { error }
+    }
+    next = failure == null ? commands.next() : commands.throw(failure.error)
+  }
+}
+
+/** {@link runInstallPlan} for a command runner that does not block the main process. */
+export async function runInstallPlanAsync(plan: InstallPlan, commandRunner: (commandWithArgs: string[]) => Promise<unknown>, logger: Logger): Promise<void> {
+  const commands = installPlanCommands(plan, nonThrowingLogger(logger))
+  let next = commands.next()
+  while (!next.done) {
+    let failure: { error: unknown } | null = null
+    try {
+      await commandRunner(next.value)
+    } catch (error: unknown) {
+      failure = { error }
+    }
+    next = failure == null ? commands.next() : commands.throw(failure.error)
+  }
+}
+
+/** Narrows a detected package manager name to the ones a target supports. */
+export function isSupportedPackageManager<T extends string>(packageManager: string, supported: readonly T[]): packageManager is T {
+  return (supported as readonly string[]).includes(packageManager)
 }
 
 export abstract class LinuxUpdater extends BaseUpdater {
@@ -132,23 +193,47 @@ export abstract class LinuxUpdater extends BaseUpdater {
   }
 
   /**
-   * Runs an install plan: the first sequence of commands that succeeds wins, the next one is only attempted
-   * when the previous failed. Both install paths share it so the commands themselves live in one place.
+   * The {@link InstallPlan} that installs the downloaded package at `installerPath`. Throws when the package cannot
+   * be installed on this system (no supported package manager).
    */
-  protected async runInstallPlanWithSudoIfNeededAsync(plan: InstallPlan): Promise<void> {
-    for (let i = 0; i < plan.length; i++) {
-      try {
-        for (const command of plan[i]) {
-          await this.runCommandWithSudoIfNeededAsync(command)
-        }
-        return
-      } catch (error: any) {
-        if (i === plan.length - 1) {
-          throw error
-        }
-        this._logger.warn(`${error.message ?? error} — trying the next install command`)
-      }
+  protected abstract resolveInstallPlan(installerPath: string): InstallPlan
+
+  // must be sync (on-quit install)
+  protected doInstall(options: InstallOptions): boolean {
+    const installerPath = this.installerPath
+    if (installerPath == null) {
+      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
+      return false
     }
+    try {
+      runInstallPlan(this.resolveInstallPlan(installerPath), commandWithArgs => this.runCommandWithSudoIfNeeded(commandWithArgs), this._logger)
+    } catch (error: unknown) {
+      this.dispatchError(error instanceof Error ? error : new Error(String(error)))
+      return false
+    }
+    if (options.isForceRunAfter) {
+      this.app.relaunch()
+    }
+    return true
+  }
+
+  /** {@link doInstall} without blocking the main process while the elevation dialog is open. */
+  protected async doInstallAsync(options: InstallOptions): Promise<boolean> {
+    const installerPath = this.asyncInstallerPath
+    if (installerPath == null) {
+      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
+      return false
+    }
+    try {
+      await runInstallPlanAsync(this.resolveInstallPlan(installerPath), commandWithArgs => this.runCommandWithSudoIfNeededAsync(commandWithArgs), this._logger)
+    } catch (error: unknown) {
+      this.dispatchError(error instanceof Error ? error : new Error(String(error)))
+      return false
+    }
+    if (options.isForceRunAfter) {
+      this.app.relaunch()
+    }
+    return true
   }
 
   protected sudoWithArgs(installComment: string): string[] {

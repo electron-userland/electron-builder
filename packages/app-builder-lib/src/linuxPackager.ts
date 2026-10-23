@@ -1,5 +1,6 @@
-import { Arch } from "builder-util"
+import { Arch, log } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
+import { Nullish } from "builder-util-runtime"
 import { DIR_TARGET, Platform, Target } from "./core.js"
 import { LinuxConfiguration } from "./options/linuxOptions.js"
 import { Packager } from "./packager.js"
@@ -11,6 +12,28 @@ import { LinuxTargetHelper } from "./targets/linux/LinuxTargetHelper.js"
 import SnapTarget from "./targets/linux/snap/SnapTarget.js"
 import { createCommonTarget } from "./targets/targetFactory.js"
 
+/** Desktop Entry field codes — the DE substitutes these in `Exec`, they are not literal arguments. */
+const DESKTOP_FIELD_CODE = /^%[a-zA-Z]$/
+
+/**
+ * v26 passed a field code through to the .desktop `Exec` key unquoted and skipped appending `%U`.
+ * v27 routes executableArgs through the generated `<executableName>-launcher` script, where they are
+ * single-quoted — so `%F` reaches the app as the literal string "%F" instead of the file list, and
+ * a file-handling app silently stops receiving the files it was opened with.
+ */
+function warnAboutDesktopFieldCodes(executableArgs: Array<string> | Nullish): void {
+  const fieldCodes = (executableArgs ?? []).filter(arg => DESKTOP_FIELD_CODE.test(arg))
+  if (fieldCodes.length === 0) {
+    return
+  }
+  log.warn(
+    { fieldCodes: fieldCodes.join(", "), solution: "remove the field code from executableArgs and set linux.desktop.entry.Exec if you need a custom Exec line" },
+    "linux.executableArgs contains desktop-entry field codes, which are no longer expanded. " +
+      "In v27 executableArgs are injected into the generated *-launcher script and quoted, so these reach your app as literal arguments. " +
+      "See https://www.electron.build/docs/migration/v27-breaking-changes#linux-launcher-entrypoint"
+  )
+}
+
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   readonly executableName: string
 
@@ -19,6 +42,8 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
 
     const executableName = this.platformSpecificBuildOptions.executableName ?? info.config.executableName
     this.executableName = executableName == null ? this.appInfo.sanitizedName.toLowerCase() : sanitizeFileName(executableName)
+
+    warnAboutDesktopFieldCodes(this.platformSpecificBuildOptions.executableArgs)
   }
 
   get defaultTarget(): Array<string> {

@@ -1,11 +1,25 @@
-import { asArray, copyDir, copyOrLinkFile, FileTransformer, Filter, InvalidConfigurationError, log, statOrNull, USE_HARD_LINKS } from "builder-util"
+import {
+  asArray,
+  copyDir,
+  copyOrLinkFile,
+  ExternalLinkPolicy,
+  FileTransformer,
+  Filter,
+  InvalidConfigurationError,
+  isPathWithin,
+  log,
+  statOrNull,
+  USE_HARD_LINKS,
+  WriteContainment,
+} from "builder-util"
+import { DEFAULT_KEYWORD, resolveDefaultKeywordList } from "builder-util/internal"
 import { Nullish } from "builder-util-runtime"
-import { mkdir } from "fs/promises"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import type { Configuration } from "./configuration.js"
 import type { Packager } from "./packager.js"
 import { FileSet, PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions.js"
+import { normalizeExcludedExtensions } from "./util/config/fileOptions.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { createFilter, hasMagic } from "./util/filter.js"
 
@@ -53,7 +67,7 @@ export const DEFAULT_EXCLUDED_NAMES: ReadonlyArray<string> = [
   "electron-builder.env",
 ]
 
-// File extensions (without leading dot) excluded by default from the packaged app.
+// File extensions (without leading dot) excluded by default from the packaged app, the `"default"` entry of `fileOptions.excludedExts`.
 export const DEFAULT_EXCLUDED_EXTENSIONS: ReadonlyArray<string> = [
   "iml",
   "hprof",
@@ -64,6 +78,7 @@ export const DEFAULT_EXCLUDED_EXTENSIONS: ReadonlyArray<string> = [
   "swp",
   "csproj",
   "sln",
+  "slnx",
   "suo",
   "xproj",
   "cc",
@@ -74,7 +89,19 @@ export const DEFAULT_EXCLUDED_EXTENSIONS: ReadonlyArray<string> = [
   "o",
   "obj",
   "forge-meta",
+  "pdb",
 ]
+
+/**
+ * The file extensions (without leading dot) excluded from the app files and the copied `node_modules`, from the
+ * `fileOptions.excludedExts` build option: the platform-level value (`mac.fileOptions.excludedExts`, ...) when it is set,
+ * otherwise the root one, otherwise `["default"]`. See `FilesBuildOptions.excludedExts`.
+ */
+export function resolveExcludedExtensions(config: Pick<Configuration, "fileOptions">, platformOptions: PlatformSpecificBuildOptions | Nullish): Array<string> {
+  const entries = platformOptions?.fileOptions?.excludedExts ?? config.fileOptions?.excludedExts ?? [DEFAULT_KEYWORD]
+  // a "!ext" that removes nothing is reported by validateConfiguration, naming the section
+  return resolveDefaultKeywordList(normalizeExcludedExtensions(entries), DEFAULT_EXCLUDED_EXTENSIONS).result
+}
 
 // Hard cap on the number of strings a single pattern may expand to. Real opt-in patterns expand to a
 // handful (`{obj,gltf,glb}`); this bound makes the expansion provably finite so a pathological pattern
@@ -140,17 +167,22 @@ function splitTopLevel(value: string): Array<string> {
 }
 
 /**
- * Determines which default-excluded extensions and names a user has explicitly opted back in to via
- * their `files` patterns, so the corresponding defaults are not re-applied.
+ * Determines which excluded extensions (`excludedExtensions`, see {@link resolveExcludedExtensions}) and default-excluded
+ * names a user has explicitly opted back in to via their `files` patterns: the extensions for the warning (the files a pattern
+ * names are let through by {@link FileMatcher.extensionReincludes}), the names to leave out of the name exclusion glob.
  *
- * A default is treated as opted back in only when a non-negated pattern references it concretely:
+ * An exclusion is treated as opted back in only when a non-negated pattern references it concretely:
  * an extension when a pattern's basename ends with `.<ext>` (e.g. `**\/*.obj`, `assets/*.{obj,gltf}`,
- * `**\/*.d.ts`); a name when any path segment equals it (e.g. `**\/.github/**`, `**\/yarn.lock`).
+ * `**\/*.d.ts`), only the longest such extension counting (`*.d.ts` names `d.ts`, not also a listed `ts`);
+ * a name when any path segment equals it (e.g. `**\/.github/**`, `**\/yarn.lock`).
  * Broad patterns such as `**\/*` reference nothing concrete and therefore opt nothing in.
  */
-export function collectExplicitReincludes(patterns: ReadonlyArray<string>): { extensions: Set<string>; names: Set<string> } {
+export function collectExplicitReincludes(
+  patterns: ReadonlyArray<string>,
+  excludedExtensions: ReadonlyArray<string> = DEFAULT_EXCLUDED_EXTENSIONS
+): { extensions: Set<string>; names: Set<string> } {
   const segments = new Set<string>()
-  const basenames: Array<string> = []
+  const namedExtensions = new Set<string>()
   for (const pattern of patterns) {
     if (pattern.startsWith("!")) {
       continue
@@ -160,39 +192,37 @@ export function collectExplicitReincludes(patterns: ReadonlyArray<string>): { ex
       for (const part of parts) {
         segments.add(part)
       }
-      basenames.push(parts[parts.length - 1])
+      const named = longestExcludedExtension(parts[parts.length - 1], excludedExtensions)
+      if (named != null) {
+        namedExtensions.add(named)
+      }
     }
   }
 
-  const extensions = new Set(DEFAULT_EXCLUDED_EXTENSIONS.filter(ext => basenames.some(name => name.endsWith(`.${ext}`))))
+  const extensions = new Set(excludedExtensions.filter(ext => namedExtensions.has(ext)))
   const names = new Set(DEFAULT_EXCLUDED_NAMES.filter(name => segments.has(name)))
   return { extensions, names }
 }
 
 /**
- * Builds the trailing list of default ignore globs appended to the main app file matcher. Extensions
- * and names the user has explicitly re-included (see {@link collectExplicitReincludes}) are omitted,
- * so a `files` entry like `**\/*.obj` overrides the matching built-in exclusion.
+ * Builds the trailing list of default ignore globs appended to the main app file matcher: a glob that excludes every one of
+ * `excludedExtensions` (see {@link resolveExcludedExtensions}), then the default-excluded names except those a `files` entry
+ * re-includes (see {@link collectExplicitReincludes}) and the fixed ignores. The files a `files` entry names despite their
+ * excluded extension are let through by {@link FileMatcher.extensionReincludes}, not by these patterns.
  */
-export function getDefaultIgnoredPatterns(userPatterns: ReadonlyArray<string>, includePdb: boolean): Array<string> {
-  const reincluded = collectExplicitReincludes(userPatterns)
-
-  const extensions = DEFAULT_EXCLUDED_EXTENSIONS.filter(ext => !reincluded.extensions.has(ext))
-  if (!includePdb) {
-    extensions.push("pdb")
-  }
-  const names = DEFAULT_EXCLUDED_NAMES.filter(name => !reincluded.names.has(name))
+export function getDefaultIgnoredPatterns(userPatterns: ReadonlyArray<string>, excludedExtensions: ReadonlyArray<string> = DEFAULT_EXCLUDED_EXTENSIONS): Array<string> {
+  const reincludedNames = collectExplicitReincludes(userPatterns, excludedExtensions).names
+  const names = DEFAULT_EXCLUDED_NAMES.filter(name => !reincludedNames.has(name))
 
   const patterns: Array<string> = []
-  // minimatch does not expand a single-member brace (`{x}` is matched literally), so emit a bare
-  // glob when only one extension/name survives the opt-in filtering.
-  if (extensions.length === 1) {
-    patterns.push(`!**/*.${extensions[0]}`)
-  } else if (extensions.length > 1) {
-    patterns.push(`!**/*.{${extensions.join(",")}}`)
+  const extensionGlob = excludedExtensionsGlob(excludedExtensions)
+  if (extensionGlob != null) {
+    patterns.push(extensionGlob)
   }
   patterns.push("!**/._*")
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
+  // minimatch does not expand a single-member brace (`{x}` is matched literally), so emit a bare
+  // glob when only one name is excluded.
   if (names.length === 1) {
     patterns.push(`!**/${names[0]}`)
   } else if (names.length > 1) {
@@ -206,13 +236,68 @@ export function getDefaultIgnoredPatterns(userPatterns: ReadonlyArray<string>, i
   return patterns
 }
 
+/** The glob that excludes `excludedExtensions` (a bare one for a single extension, since minimatch matches `{x}` literally), or null for none. */
+function excludedExtensionsGlob(excludedExtensions: ReadonlyArray<string>): string | null {
+  if (excludedExtensions.length === 0) {
+    return null
+  }
+  return excludedExtensions.length === 1 ? `!**/*.${excludedExtensions[0]}` : `!**/*.{${excludedExtensions.join(",")}}`
+}
+
+/** The longest of `excludedExtensions` that `name` ends with (`index.d.ts` → `d.ts`, not also a listed `ts`), or null. */
+function longestExcludedExtension(name: string, excludedExtensions: ReadonlyArray<string>): string | null {
+  let result: string | null = null
+  for (const ext of excludedExtensions) {
+    if (name.endsWith(`.${ext}`) && (result == null || ext.length > result.length)) {
+      result = ext
+    }
+  }
+  return result
+}
+
+/**
+ * Per excluded extension, the `files` patterns that name it: each brace-expanded alternative of a non-negated pattern whose basename
+ * ends with that extension (the longest one, see {@link longestExcludedExtension}). An alternative of `native/{**\/*,addon.pdb}`
+ * without such an extension names nothing. An alternative that still holds braces (a pattern too large to expand, or a literal brace)
+ * is recorded whole: an extension cannot hold a brace, so the extension it ends with follows its last brace and every alternative minimatch
+ * expands it to ends with it.
+ */
+function collectExtensionReincludes(patterns: ReadonlyArray<string>, excludedExtensions: ReadonlyArray<string>): Map<string, Array<string>> {
+  const result = new Map<string, Array<string>>()
+  for (const pattern of patterns) {
+    if (pattern.startsWith("!")) {
+      continue
+    }
+    for (const expanded of expandBraces(pattern)) {
+      const extension = longestExcludedExtension(expanded.substring(expanded.lastIndexOf("/") + 1), excludedExtensions)
+      if (extension != null) {
+        result.set(extension, [...(result.get(extension) ?? []), expanded])
+      }
+    }
+  }
+  return result
+}
+
+/**
+ * Lets through the files a `files` pattern names despite their excluded extension (see getMainFileMatchers): the extension glob
+ * excludes every file with an excluded extension, and such a file is included only when a pattern that names its extension matches
+ * it and the matcher's other patterns (`node_modules` and the build resources and output directories, `files` negations) include it.
+ */
+export interface ExtensionReincludes {
+  /** The pattern of the matcher that excludes the extensions. */
+  readonly glob: string
+  readonly extensions: ReadonlyArray<string>
+  /** Per excluded extension, the `files` patterns that name it (see {@link collectExtensionReincludes}). */
+  readonly namedBy: ReadonlyMap<string, ReadonlyArray<string>>
+}
+
 /**
  * Returns the default-excluded names/extensions that the given `files` patterns opt back in, formatted
  * for display (extensions as `*.<ext>`, names verbatim). Empty when nothing default-excluded is
  * re-included. Used to warn that files normally kept out of the package will now be included.
  */
-export function getReincludedDefaultExclusions(patterns: ReadonlyArray<string>): Array<string> {
-  const reincluded = collectExplicitReincludes(patterns)
+export function getReincludedDefaultExclusions(patterns: ReadonlyArray<string>, excludedExtensions: ReadonlyArray<string> = DEFAULT_EXCLUDED_EXTENSIONS): Array<string> {
+  const reincluded = collectExplicitReincludes(patterns, excludedExtensions)
   return [...[...reincluded.extensions].map(ext => `*.${ext}`), ...reincluded.names]
 }
 
@@ -238,6 +323,9 @@ export class FileMatcher {
   readonly patterns: Array<string>
 
   excludePatterns: Array<Minimatch> | null = null
+
+  /** The files a `files` pattern names despite their excluded extension, which the filter lets through the extension glob. */
+  extensionReincludes: ExtensionReincludes | null = null
 
   readonly isSpecifiedAsEmptyArray: boolean
 
@@ -276,16 +364,16 @@ export class FileMatcher {
     return !this.isEmpty() && this.patterns.find(it => !it.startsWith("!")) == null
   }
 
-  computeParsedPatterns(result: Array<Minimatch>, fromDir?: string): void {
+  computeParsedPatterns(result: Array<Minimatch>, fromDir?: string, patterns: ReadonlyArray<string> = this.patterns): void {
     const relativeFrom = fromDir == null ? null : path.relative(fromDir, this.from)
 
-    if (this.patterns.length === 0 && relativeFrom != null) {
+    if (patterns.length === 0 && relativeFrom != null) {
       // file mappings, from here is a file
       result.push(new Minimatch(relativeFrom, minimatchOptions))
       return
     }
 
-    for (let pattern of this.patterns) {
+    for (let pattern of patterns) {
       if (relativeFrom != null) {
         pattern = path.join(relativeFrom, pattern)
       }
@@ -305,7 +393,35 @@ export class FileMatcher {
   createFilter(): Filter {
     const parsedPatterns: Array<Minimatch> = []
     this.computeParsedPatterns(parsedPatterns)
-    return createFilter(this.from, parsedPatterns, this.excludePatterns)
+    const filter = createFilter(this.from, parsedPatterns, this.excludePatterns)
+    const reincludes = this.extensionReincludes
+    if (reincludes == null) {
+      return filter
+    }
+
+    // only the glob getMainFileMatchers appended (the last one): a `files` negation with the same text still applies
+    const globIndex = this.patterns.lastIndexOf(reincludes.glob)
+    const withoutGlob = this.patterns.filter((_, index) => index !== globIndex)
+    const otherPatterns: Array<Minimatch> = []
+    this.computeParsedPatterns(otherPatterns, undefined, withoutGlob)
+    const withoutExtensionGlob = createFilter(this.from, otherPatterns, this.excludePatterns)
+    const namedBy = new Map([...reincludes.namedBy].map(([extension, patterns]) => [extension, patterns.map(it => new Minimatch(it, minimatchOptions))]))
+    return (file, stat) => {
+      if (filter(file, stat)) {
+        return true
+      }
+      // a directory named with an excluded extension stays excluded
+      if (stat.isDirectory()) {
+        return false
+      }
+      const extension = longestExcludedExtension(path.basename(file), reincludes.extensions)
+      const named = extension == null ? undefined : namedBy.get(extension)
+      if (named == null) {
+        return false
+      }
+      const relative = path.relative(this.from, file).split(path.sep).join("/")
+      return named.some(it => it.match(relative)) && withoutExtensionGlob(file, stat)
+    }
   }
 
   toString() {
@@ -392,13 +508,19 @@ export function getMainFileMatchers(
   }
   patterns.splice(insertIndex, 0, ...customFirstPatterns)
 
-  const reincludedDefaults = getReincludedDefaultExclusions(userSpecifiedPatterns)
+  const excludedExtensions = resolveExcludedExtensions(platformPackager.config, platformSpecificBuildOptions)
+  const reincludedDefaults = getReincludedDefaultExclusions(userSpecifiedPatterns, excludedExtensions)
   if (reincludedDefaults.length > 0) {
     // These files are kept out of the package by default; a user `files` pattern is opting them back in.
     log.warn({ files: reincludedDefaults.join(", ") }, "`files` configuration re-includes files that are excluded by default — verify this is intentional")
   }
 
-  patterns.push(...getDefaultIgnoredPatterns(userSpecifiedPatterns, platformPackager.config.includePdb === true))
+  patterns.push(...getDefaultIgnoredPatterns(userSpecifiedPatterns, excludedExtensions))
+  const extensionGlob = excludedExtensionsGlob(excludedExtensions)
+  const namedBy = collectExtensionReincludes(userSpecifiedPatterns, excludedExtensions)
+  if (extensionGlob != null && namedBy.size > 0) {
+    matcher.extensionReincludes = { glob: extensionGlob, extensions: excludedExtensions, namedBy }
+  }
 
   const debugLogger = platformPackager.debugLogger
   if (debugLogger.isEnabled) {
@@ -448,8 +570,8 @@ export function getNodeModuleFileMatcher(
     }
   }
 
-  addPatterns(packager.config.files)
-  addPatterns(platformSpecificBuildOptions.files)
+  addPatterns(packager.config.fileOptions?.files)
+  addPatterns(platformSpecificBuildOptions.fileOptions?.files)
 
   if (!matcher.isEmpty()) {
     matcher.prependPattern("**/*")
@@ -554,10 +676,14 @@ export function getFileMatchers(
     }
   }
 
-  if (name !== "extraDistFiles") {
-    addPatterns((config as any)[name])
+  // `extraDistFiles` is a mac option of its own; the others are read from `fileOptions`, into which flat keys are
+  // normalized when the configuration is loaded (see util/config/fileOptions.ts)
+  if (name === "extraDistFiles") {
+    addPatterns((options.customBuildOptions as any).extraDistFiles)
+  } else {
+    addPatterns(config.fileOptions?.[name])
+    addPatterns(options.customBuildOptions.fileOptions?.[name])
   }
-  addPatterns((options.customBuildOptions as any)[name])
 
   if (!defaultMatcher.isEmpty()) {
     // default matcher should be first in the array
@@ -573,8 +699,30 @@ export function getFileMatchers(
   return fileMatchers.length === 0 ? null : fileMatchers
 }
 
+/** Where {@link copyFiles} may write, and where a copied symlink may lead. */
+export interface CopyFilesContainment {
+  /**
+   * The output directories the matchers copy into, most specific first (e.g. the app output directory, then the output directory).
+   * Each matcher is confined, by real path, to the first one its destination is in.
+   */
+  readonly roots: ReadonlyArray<string>
+  /** Besides the root, the directories a copied symlink may lead into, such as the workspace root and the package-manager store. */
+  readonly allowedSymlinkRoots?: ReadonlyArray<string> | null
+  /** The `fileOptions.allowExternalLinks` build option: a copied symlink that leads anywhere else is kept when it allows it. */
+  readonly externalLinks?: ExternalLinkPolicy | null
+}
+
+function containmentRootFor(destination: string, containment: CopyFilesContainment | Nullish): string {
+  return containment?.roots.find(root => isPathWithin(path.resolve(root), path.resolve(destination))) ?? destination
+}
+
 /** @internal */
-export function copyFiles(matchers: Array<FileMatcher> | null, transformer: FileTransformer | null, isUseHardLink?: boolean): Promise<any> {
+export function copyFiles(
+  matchers: Array<FileMatcher> | null,
+  transformer: FileTransformer | null,
+  isUseHardLink?: boolean,
+  containment?: CopyFilesContainment | null
+): Promise<any> {
   if (matchers == null || matchers.length === 0) {
     return Promise.resolve()
   }
@@ -587,14 +735,18 @@ export function copyFiles(matchers: Array<FileMatcher> | null, transformer: File
         return
       }
 
+      const containmentRoot = containmentRootFor(matcher.to, containment)
       if (fromStat.isFile()) {
+        const writes = new WriteContainment(containmentRoot, "copied file")
         const toStat = await statOrNull(matcher.to)
         // https://github.com/electron-userland/electron-builder/issues/1245
         if (toStat != null && toStat.isDirectory()) {
-          return await copyOrLinkFile(matcher.from, path.join(matcher.to, path.basename(matcher.from)), fromStat, isUseHardLink)
+          const dest = path.join(matcher.to, path.basename(matcher.from))
+          await writes.prepareFile(dest)
+          return await copyOrLinkFile(matcher.from, dest, fromStat, isUseHardLink)
         }
 
-        await mkdir(path.dirname(matcher.to), { recursive: true })
+        await writes.prepareFile(matcher.to)
         return await copyOrLinkFile(matcher.from, matcher.to, fromStat)
       }
 
@@ -602,7 +754,14 @@ export function copyFiles(matchers: Array<FileMatcher> | null, transformer: File
         matcher.prependPattern("**/*")
       }
       log.debug({ matcher }, "copying files using pattern")
-      return await copyDir(matcher.from, matcher.to, { filter: matcher.createFilter(), transformer, isUseHardLink: isUseHardLink ? USE_HARD_LINKS : null })
+      return await copyDir(matcher.from, matcher.to, {
+        filter: matcher.createFilter(),
+        transformer,
+        isUseHardLink: isUseHardLink ? USE_HARD_LINKS : null,
+        containmentRoot,
+        allowedSymlinkRoots: containment?.allowedSymlinkRoots,
+        externalLinks: containment?.externalLinks,
+      })
     })
   )
 }

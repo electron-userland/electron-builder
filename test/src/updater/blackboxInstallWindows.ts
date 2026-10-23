@@ -1,13 +1,151 @@
 import { ParallelsVmManager } from "app-builder-lib/internal"
-import { execFileSync, execSync } from "child_process"
+import { execFileSync, execSync, spawn } from "child_process"
 import { randomUUID } from "crypto"
 import { Arch } from "electron-builder"
-import { existsSync, outputFile, remove } from "fs-extra"
+import { existsSync, outputFile, readFile, remove } from "fs-extra"
+import { rm } from "fs/promises"
 import { homedir, tmpdir } from "os"
 import path from "path"
 import { createLocalServer, getParallelsHostIP, sha256File, toVmHomePath } from "../helpers/launchAppCrossPlatform"
 
 // ─── native Windows ───────────────────────────────────────────────────────────
+
+/** File name of the NSIS installer of the blackbox builds (`nsis.artifactName`, inherited by nsis-web), which is also its process image name. */
+export const NSIS_INSTALLER_IMAGE_NAME = "TestApp Setup.exe"
+/** `updaterCacheDirName` of the test app: the directory below %LOCALAPPDATA% where an nsis-web installer stores the package it installed. */
+export const UPDATER_STORE_DIR_NAME = "testapp-updater"
+
+export function windowsLocalAppData(): string {
+  return process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local")
+}
+
+/** Removes `file` (a directory too); fails when it is still there, e.g. because the app or an installer still holds it. */
+export async function removeWindowsPath(file: string): Promise<void> {
+  // retries: Defender or the Search indexer can hold a handle for a moment (see vitest-tmpdir.ts)
+  await rm(file, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 })
+  if (existsSync(file)) {
+    throw new Error(`${file} could not be removed`)
+  }
+}
+
+/**
+ * Removes the updater cache of the test app (`%LOCALAPPDATA%\testapp`, used when the served update config has no
+ * `updaterCacheDirName`) and its package store (`%LOCALAPPDATA%\testapp-updater`). The uninstaller keeps both and all Windows
+ * blackbox tests share them, so a test that asserts their content clears them first. No-op off Windows.
+ */
+export async function clearWindowsUpdaterCaches(): Promise<void> {
+  if (process.platform !== "win32") {
+    return
+  }
+  for (const imageName of [NSIS_INSTALLER_IMAGE_NAME, "TestApp.exe"]) {
+    try {
+      execFileSync("taskkill", ["/F", "/T", "/IM", imageName], { stdio: "ignore" })
+    } catch {
+      // no matching process
+    }
+  }
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  for (const dirName of ["testapp", UPDATER_STORE_DIR_NAME]) {
+    await removeWindowsPath(path.join(windowsLocalAppData(), dirName))
+  }
+}
+
+/** Waits until no process with the image name `imageName` runs anymore, e.g. until a detached update installer has finished. */
+export async function waitForWindowsProcessExit(imageName: string, timeoutMs = 2 * 60 * 1000): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  // CSV rows quote the image name; "no tasks" is reported as an INFO line without it
+  const quotedImageName = `"${imageName.toLowerCase()}"`
+  while (
+    execFileSync("tasklist", ["/FI", `IMAGENAME eq ${imageName}`, "/NH", "/FO", "CSV"], { encoding: "utf8" })
+      .toLowerCase()
+      .includes(quotedImageName)
+  ) {
+    if (Date.now() > deadline) {
+      throw new Error(`${imageName} is still running after ${timeoutMs} ms`)
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000))
+  }
+}
+
+/**
+ * Runs an installer and resolves with its exit code. Asynchronous, unlike `execFileSync`, so an installer can download from a
+ * server of this process; the installer and its child processes are killed after `timeoutMs`.
+ */
+export function runWindowsInstaller(file: string, args: ReadonlyArray<string>, timeoutMs = 5 * 60 * 1000): Promise<number | null> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(file, [...args], { stdio: "ignore", windowsHide: true })
+    const timer = setTimeout(() => {
+      try {
+        execFileSync("taskkill", ["/F", "/T", "/PID", String(child.pid)], { stdio: "ignore" })
+      } catch {
+        // exited in the meantime
+      }
+      reject(new Error(`${path.basename(file)} ${args.join(" ")} did not exit within ${timeoutMs} ms`))
+    }, timeoutMs)
+    child.once("error", error => {
+      clearTimeout(timer)
+      reject(error)
+    })
+    child.once("exit", code => {
+      clearTimeout(timer)
+      resolve(code)
+    })
+  })
+}
+
+/** The `resources/package-type` marker the NSIS installer writes next to the installed app: "nsis" or "nsis-web" (no newline). */
+export function readInstalledPackageType(appPath: string): Promise<string> {
+  return readFile(path.join(path.dirname(appPath), "resources", "package-type"), "utf8")
+}
+
+/** What the install directory of `appPath` holds, for the failure message of a test whose installed app did not update. */
+export async function describeWindowsInstallDir(appPath: string): Promise<string> {
+  const dir = path.dirname(appPath)
+  const state = (name: string) => `  ${name}: ${existsSync(path.join(dir, name)) ? "present" : "absent"}`
+  const packageType = await readInstalledPackageType(appPath).catch(() => null)
+  const lines = [
+    `Install directory ${dir}:`,
+    state(path.basename(appPath)),
+    state("Uninstall TestApp.exe"),
+    `  resources\\package-type: ${packageType == null ? "absent" : JSON.stringify(packageType)}`,
+  ]
+  if (!existsSync(appPath) && !existsSync(path.join(dir, "Uninstall TestApp.exe"))) {
+    lines.push("  No app files in the install directory (neither TestApp.exe nor the uninstaller).")
+  }
+  return lines.join("\n")
+}
+
+/**
+ * Native Windows: stops a running installer (`installerImageName`), silently uninstalls a per-user TestApp and waits until its
+ * files are gone, then removes `pathsToRemove` (e.g. the package a web installer stored).
+ */
+export async function resetWindowsNativeInstall(installerImageName: string, pathsToRemove: ReadonlyArray<string> = []): Promise<void> {
+  try {
+    execFileSync("taskkill", ["/F", "/T", "/IM", installerImageName], { stdio: "ignore" })
+    await new Promise(resolve => setTimeout(resolve, 1000))
+  } catch {
+    // no matching process
+  }
+
+  const installDir = path.join(windowsLocalAppData(), "Programs", "TestApp")
+  const appExe = path.join(installDir, "TestApp.exe")
+  const uninstaller = path.join(installDir, "Uninstall TestApp.exe")
+  if (existsSync(uninstaller)) {
+    console.log("Uninstalling", uninstaller)
+    execFileSync(uninstaller, ["/S", "/C", "exit"], { stdio: "inherit", timeout: 2 * 60 * 1000 })
+    // the uninstaller goes on from a copy of itself and removes its own file with the install directory
+    const deadline = Date.now() + 30 * 1000
+    while (existsSync(appExe) || existsSync(uninstaller)) {
+      if (Date.now() > deadline) {
+        throw new Error(`TestApp is still installed in ${installDir} 30 s after the uninstaller ran`)
+      }
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+  }
+  for (const file of pathsToRemove) {
+    await removeWindowsPath(file)
+  }
+}
 
 export async function installWindowsNative(dirPath: string, perMachine: boolean): Promise<string> {
   // Kill any lingering NSIS installer processes left over from previous test retries.
@@ -35,7 +173,8 @@ export async function installWindowsNative(dirPath: string, perMachine: boolean)
 
   const installerPath = path.join(dirPath, "TestApp Setup.exe")
   console.log("Installing windows", installerPath)
-  execFileSync(installerPath, ["/S"], { stdio: "inherit" })
+  // bounded, so an installer that doesn't exit fails this step instead of running into the test timeout
+  execFileSync(installerPath, ["/S"], { stdio: "inherit", timeout: 5 * 60 * 1000 })
 
   return path.join(localProgramsPath, "TestApp.exe")
 }

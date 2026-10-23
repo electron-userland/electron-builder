@@ -1,8 +1,7 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter.js"
 import { DownloadUpdateOptions } from "./AppUpdater.js"
-import { InstallOptions } from "./BaseUpdater.js"
-import { DOWNLOAD_PROGRESS, Logger } from "./types.js"
+import { DOWNLOAD_PROGRESS, Logger, DownloadExecutorResult } from "./types.js"
 import { findFile } from "./providers/Provider.js"
 import { InstallPlan, LinuxUpdater, runInstallPlan } from "./LinuxUpdater.js"
 
@@ -12,7 +11,7 @@ export class PacmanUpdater extends LinuxUpdater {
   }
 
   /*** @private */
-  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<DownloadExecutorResult> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "pacman", ["AppImage", "deb", "rpm"])!
     return this.executeDownload({
@@ -28,45 +27,7 @@ export class PacmanUpdater extends LinuxUpdater {
     })
   }
 
-  protected doInstall(options: InstallOptions): boolean {
-    const plan = this.planInstall(this.installerPath)
-    if (plan == null) {
-      return false
-    }
-    try {
-      runInstallPlan(plan, this.runCommandWithSudoIfNeeded.bind(this), this._logger)
-    } catch (error: any) {
-      this.dispatchError(error)
-      return false
-    }
-    if (options.isForceRunAfter) {
-      this.app.relaunch() // note: `app` is undefined in tests since vite doesn't run in electron
-    }
-    return true
-  }
-
-  protected async doInstallAsync(options: InstallOptions): Promise<boolean> {
-    const plan = this.planInstall(this.asyncInstallerPath)
-    if (plan == null) {
-      return false
-    }
-    try {
-      await this.runInstallPlanWithSudoIfNeededAsync(plan)
-    } catch (error: any) {
-      this.dispatchError(error)
-      return false
-    }
-    if (options.isForceRunAfter) {
-      this.app.relaunch()
-    }
-    return true
-  }
-
-  private planInstall(installerPath: string | null): InstallPlan | null {
-    if (installerPath == null) {
-      this.dispatchError(new Error("No update filepath provided, can't quit and install"))
-      return null
-    }
+  protected resolveInstallPlan(installerPath: string): InstallPlan {
     return PacmanUpdater.planInstall(installerPath)
   }
 
@@ -76,7 +37,11 @@ export class PacmanUpdater extends LinuxUpdater {
 
   static planInstall(installerPath: string): InstallPlan {
     const install = ["pacman", "-U", "--noconfirm", installerPath]
-    // if the install fails, refresh the package database (not a full upgrade, just sync) and retry once
-    return [[install], [["pacman", "-Sy", "--noconfirm"], install]]
+    return {
+      execCommand: install,
+      recoveryMessage: "pacman installation failed, attempting to update package database and retry",
+      // refresh the package database (not a full upgrade, just sync), then retry the install once
+      recoveryChain: [{ execCommand: ["pacman", "-Sy", "--noconfirm"] }, { execCommand: install }],
+    }
   }
 }

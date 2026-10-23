@@ -23,6 +23,11 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     super(options, "api.github.com", runtimeOptions)
   }
 
+  // the asset URLs come from the GitHub API (api.github.com or the Enterprise host), not from latest*.yml, and need the token
+  get feedBaseUrl(): null {
+    return null
+  }
+
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
     const result = super.createRequestOptions(url, headers)
     ;(result as any).redirect = "manual"

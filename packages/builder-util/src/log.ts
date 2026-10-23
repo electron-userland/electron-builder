@@ -1,6 +1,9 @@
+import type { LimitedLogger, LogLevel, LogLimitOptions } from "builder-util-runtime"
+import { LogLimiter } from "builder-util-runtime/internal"
 import chalk from "chalk"
 import { Chalk } from "chalk"
 import _debug from "debug"
+import * as path from "path"
 type WritableStream = NodeJS.WritableStream
 
 let printer: ((message: string) => void) | null = null
@@ -15,7 +18,7 @@ export function setPrinter(value: ((message: string) => void) | null) {
   printer = value
 }
 
-export type LogLevel = "info" | "warn" | "debug" | "error"
+export type { LimitedLogger, LogLevel, LogLimitOptions } from "builder-util-runtime"
 
 export const PADDING = 2
 
@@ -26,9 +29,38 @@ export class Logger {
 
   messageTransformer: (message: string, level: LogLevel) => string = it => it
 
+  private readonly limiter = new LogLimiter()
+
+  /**
+   * Emits through the returned methods at most `max` times per `key` (and `scope`), replacing hand-rolled
+   * `xxxWarned = false` flags and `Set`s of already-warned keys:
+   *
+   * ```ts
+   * log.limit({ key: "arch-all-expansion" }).warn({ expandsTo: "x64, arm64" }, "arch all no longer includes ia32")
+   * log.limit({ key: "unsigned-update-manifest", scope: this }).warn(fields, message) // once per packager
+   * ```
+   *
+   * Each emission still goes through {@link Logger.info} / {@link Logger.warn} / ..., so spies on those see only what was emitted.
+   */
+  limit(options: LogLimitOptions): LimitedLogger<Logger> {
+    // a debug message suppressed by the debug level is not counted (the vitest output suppression is not a level and still counts)
+    return this.limiter.wrap(() => this, { ...options, isLevelEnabled: level => level !== "debug" || this.isDebugEnabled })
+  }
+
+  /** Shorthand for `limit({ key, max: 1, scope })`. */
+  once(key: string, scope?: object): LimitedLogger<Logger> {
+    return this.limit({ key, scope })
+  }
+
+  /** Forgets recorded emissions of `key` (in `scope`), of every key in `scope`, or of everything. Intended for tests. */
+  resetLimits(key?: string, scope?: object): void {
+    this.limiter.reset(key, scope)
+  }
+
   filePath(file: string) {
     const cwd = process.cwd()
-    return file.startsWith(cwd) ? file.substring(cwd.length + 1) : file
+    const relative = path.relative(cwd, file)
+    return relative === "" || (!path.isAbsolute(relative) && relative !== ".." && !relative.startsWith(`..${path.sep}`)) ? relative : file
   }
 
   // noinspection JSMethodCanBeStatic
