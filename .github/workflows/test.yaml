@@ -554,7 +554,9 @@ jobs:
           docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
           docker image ls -a
 
-      - name: Pull flatpak test image
+      # The tests run in the container as the runner's user, whose bubblewrap needs the unprivileged user namespaces that
+      # Ubuntu 24.04 restricts via AppArmor: lift that on the host. See test/src/linux/flatpak-docker.sh.
+      - name: Prepare flatpak test image
         if: matrix.leg == 'docker'
         run: |
           IMAGE="electronuserland/builder:${TEST_IMAGE_NODE_MAJOR_VERSION}-wine-chrome"
@@ -568,6 +570,7 @@ jobs:
             done
           fi
           docker run --rm "$IMAGE" sh -c 'flatpak --version && flatpak-builder --version'
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
       # The flatpak user installation (remote config + installed runtimes/SDKs/base app). An SDK alone is well over a GB, so
       # restoring it beats re-downloading from flathub every run. The docker leg restores it on the runner and mounts it into
@@ -588,21 +591,16 @@ jobs:
           flatpak install --user -y --noninteractive flathub $FLATPAK_REFS
           flatpak list --user --columns=ref,size
 
-      # As root, whose user installation is /root/.local/share/flatpak. The mount hides the flathub remote that the image
-      # adds there, hence the remote-add. The files are handed to the runner's user, which runs the tests and saves the cache.
+      # In the container, as the runner's user (test/src/linux/flatpak-docker.sh), whose user installation the cached directory
+      # is: as root, flatpak refuses to install into a user installation that another user owns. The image adds the flathub
+      # remote for root only, hence the remote-add.
       - name: Install flatpak runtimes (docker)
         if: matrix.leg == 'docker'
         run: |
-          mkdir -p ~/.local/share/flatpak
-          docker run --rm --privileged \
-            -e FLATPAK_REFS -e HOST_OWNER="$(id -u):$(id -g)" \
-            -v "$HOME/.local/share/flatpak:/root/.local/share/flatpak" \
-            "$FLATPAK_TEST_IMAGE" \
-            sh -c 'set -e
-              flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-              flatpak install --user -y --noninteractive flathub $FLATPAK_REFS
-              flatpak list --user --columns=ref,size
-              chown -R "$HOST_OWNER" /root/.local/share/flatpak'
+          test/src/linux/flatpak-docker.sh sh -c '
+            flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo &&
+            flatpak install --user -y --noninteractive flathub "$@" &&
+            flatpak list --user --columns=ref,size' sh $FLATPAK_REFS
 
       - name: Test flatpak
         if: matrix.leg != 'docker'
@@ -612,39 +610,10 @@ jobs:
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
-      # --privileged gives the container /dev/fuse and lifts docker's seccomp and AppArmor profiles, which block the
-      # namespaces bubblewrap creates. The suite runs as the runner's user, not as root: Electron does not start as root
-      # with its sandbox on, and the blackbox case starts the installed app. That user owns the workspace (with the
-      # node_modules and the build of the Setup Tests step) and the mounted caches, so nothing is left owned by root.
-      # As a user, bubblewrap needs unprivileged user namespaces, which Ubuntu 24.04 restricts on the host via AppArmor,
-      # and installing an app (the base app, the test bundle) looks up parental controls on the system D-Bus, which the
-      # container does not have: dbus-run-session starts a bus that stands in for it.
+      # The suite fails fast here if bubblewrap cannot create namespaces, rather than skipping itself
       - name: Test flatpak (docker)
         if: matrix.leg == 'docker'
-        run: |
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-          mkdir -p ~/.cache/electron ~/.cache/electron-builder
-          docker run --rm --privileged \
-            -e CI -e TEST_FILES -e VITEST_SMART_CACHE_FILE -e RESET_VITEST_SHARD_CACHE -e VITEST_COVERAGE \
-            -e HOST_UID="$(id -u)" -e HOST_GID="$(id -g)" \
-            -v "$GITHUB_WORKSPACE:/project" -w /project \
-            -v "$HOME/.local/share/flatpak:/home/runner/.local/share/flatpak" \
-            -v "$HOME/.cache/electron:/home/runner/.cache/electron" \
-            -v "$HOME/.cache/electron-builder:/home/runner/.cache/electron-builder" \
-            "$FLATPAK_TEST_IMAGE" \
-            bash -c 'set -e
-              # pnpm 11 through corepack, as in docker/test-in-docker.sh
-              npm i -g corepack > /dev/null
-              corepack enable
-              groupadd -o -g "$HOST_GID" runner
-              useradd -o -u "$HOST_UID" -g "$HOST_GID" -d /home/runner -M runner
-              # the parents of the mounts were created for root
-              chown runner: /home/runner /home/runner/.local /home/runner/.local/share /home/runner/.cache
-              install -d -m 700 -o runner -g runner "/run/user/$HOST_UID"
-              # rofiles-fuse opens the device as the user; the node keeps the mode of the host
-              chmod 666 /dev/fuse
-              exec runuser -u runner -- env XDG_RUNTIME_DIR="/run/user/$HOST_UID" dbus-run-session -- \
-                sh -c "export DBUS_SYSTEM_BUS_ADDRESS=\$DBUS_SESSION_BUS_ADDRESS && bwrap --ro-bind / / true && pnpm ci:test"'
+        run: test/src/linux/flatpak-docker.sh sh -c 'bwrap --ro-bind / / true && pnpm ci:test'
         env:
           TEST_FILES: flatpak,blackboxInstallTest
           VITEST_SMART_CACHE_FILE: ./test/vitest-scripts/vitest-config/_vitest-smart-cache.json

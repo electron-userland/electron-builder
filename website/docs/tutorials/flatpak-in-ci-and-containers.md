@@ -142,37 +142,35 @@ As above, the project's dependencies have to be installed before this command ru
 
 ## Cache the Refs in GitHub Actions {#github-actions}
 
-On a GitHub-hosted runner, the `electronuserland/builder` image can run as a privileged container, with the runtime, the SDK and the base app kept in the cache of [`actions/cache`](https://github.com/actions/cache) between runs. electron-builder's own flatpak tests run this way, in the `test-flatpak` job of its [test workflow](https://github.com/electron-userland/electron-builder/blob/master/.github/workflows/test.yaml). The cache is restored to a directory on the runner, and that directory is mounted into the container as the user installation of root:
+On a GitHub-hosted runner, the `electronuserland/builder` image can run as a privileged container, with the runtime, the SDK and the base app kept in the cache of [`actions/cache`](https://github.com/actions/cache) between runs. electron-builder's own flatpak tests run this way, in the `test-flatpak` job of its [test workflow](https://github.com/electron-userland/electron-builder/blob/master/.github/workflows/test.yaml), with the image `electronuserland/builder:22-wine-chrome` (the `-wine-chrome` variant has Xvfb, which the tests need to start the app). The cache is restored to the user installation of the runner's user, and that directory is mounted into the container:
 
 ```yaml
+- name: Allow unprivileged user namespaces
+  run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
 - name: Cache flatpak refs
   uses: actions/cache@v5
   with:
     path: ~/.local/share/flatpak
     key: flatpak-26.08-v1
 
-- name: Build the flatpak
+- name: Install the refs
   run: |
-    mkdir -p ~/.local/share/flatpak
-    docker run --rm --privileged \
-      -e HOST_OWNER="$(id -u):$(id -g)" \
-      -v "$PWD":/project \
-      -v "$HOME/.local/share/flatpak":/root/.local/share/flatpak \
-      electronuserland/builder:22 \
-      sh -c 'set -e
-        flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-        npx electron-builder --linux flatpak --publish never
-        chown -R "$HOST_OWNER" /root/.local/share/flatpak dist'
+    test/src/linux/flatpak-docker.sh sh -c '
+      flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo &&
+      flatpak install --user -y --noninteractive flathub org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08 org.electronjs.Electron2.BaseApp//26.08'
 ```
 
-As in [Use an electronuserland/builder Image](#electronuserland-builder-image), the project's dependencies have to be installed before the build step runs.
+[`test/src/linux/flatpak-docker.sh`](https://github.com/electron-userland/electron-builder/blob/master/test/src/linux/flatpak-docker.sh) runs its arguments in the container, and the job's next step runs the tests the same way. What it does, and why:
 
-- **`--privileged`** gives the container `/dev/fuse` and lifts the seccomp and AppArmor profiles of Docker, which keep bubblewrap from creating namespaces. FUSE and user namespaces then work, so the configuration needs neither of the [two additional arguments](#configure-electron-builder).
-- **The `flatpak remote-add` line** is needed because the mount hides the Flathub remote that the image adds to that directory. On the first run, with nothing restored, the build downloads the refs from Flathub; the cache saves them at the end of the job.
-- **The `chown`** hands the files that root wrote back to the runner's user. The cache is saved by the runner's user, outside the container, and may not be able to read every file of a user installation that belongs to root.
-- **The key** has no part that changes from run to run: a user installation with the runtime and the SDK of one version is several GB, and saving a new entry on every run fills the repository's cache, which then evicts entries before a later run restores them. With a fixed key, the cache keeps the refs as they were saved, and the build brings them up to date. Change the key when the configuration names other versions.
+- **`docker run --privileged`** gives the container `/dev/fuse` and lifts the seccomp and AppArmor profiles of Docker, which keep bubblewrap from creating namespaces. FUSE and user namespaces then work, so the configuration needs neither of the [two additional arguments](#configure-electron-builder).
+- **It mounts the cached directory** at `.local/share/flatpak` under the `HOME` of the container user, and the workspace at `/project`.
+- **It runs the command as the runner's user, not as root.** That user owns the cached directory, and as root `flatpak` refuses to install into a user installation that another user owns: `error: Refusing to operate on a user installation as root! This can lead to incorrect file ownership and permission errors.` Running as that user also leaves nothing owned by root on the runner, so the cache can save the directory at the end of the job. The script creates the user in the container with the uid and gid of the runner's user.
+- **The command runs inside `dbus-run-session`**, with `DBUS_SYSTEM_BUS_ADDRESS` set to the session bus, the wrapper of [Run the Build](#run-the-build) for a build that does not run as root.
+- **The sysctl step** lifts Ubuntu 24.04's AppArmor restriction of unprivileged user namespaces. It is a setting of the runner's kernel, and it also applies to bubblewrap when it runs as a user in the container.
+- **The `flatpak remote-add` line** is needed because the image adds the Flathub remote for root only.
 
-electron-builder's job installs the refs in a step of its own, as above but with `flatpak install --user -y --noninteractive flathub` and the refs in place of the build, and then runs its tests in a second container as the runner's user, because they also start the installed app, and Electron does not start as root with its sandbox on. For that user, the job also lifts Ubuntu 24.04's restriction of unprivileged user namespaces on the runner (`sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0`) and runs the tests inside the `dbus-run-session` wrapper of [Run the Build](#run-the-build).
+The key has no part that changes from run to run: a user installation with the runtime and the SDK of one version is several GB, and saving a new entry on every run fills the repository's cache, which then evicts entries before a later run restores them. With a fixed key, the cache keeps the refs as they were saved, and the build brings them up to date. Change the key when the configuration names other versions.
 
 ## What Does Not Work
 
