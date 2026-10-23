@@ -7,6 +7,7 @@ permissions:
 
 jobs:
   triage:
+    name: Label pull request
     permissions:
       contents: read  # for actions/labeler to determine modified files
       pull-requests: write  # for actions/labeler to add labels to PRs

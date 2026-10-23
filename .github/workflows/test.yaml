@@ -36,6 +36,7 @@ env:
 
 jobs:
   check-if-docker-build:
+    name: Check for Docker image changes
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -70,6 +71,7 @@ jobs:
   # -------------------------
 
   validate-and-shard:
+    name: Validate and plan shards
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     outputs:
@@ -658,6 +660,7 @@ jobs:
   # -------------------------
 
   merge-smart-cache:
+    name: Merge smart cache and test reports
     needs: [test-linux, test-windows, test-macos, test-e2e, test-updater, test-snap, test-flatpak]
     if: always()
     runs-on: ubuntu-24.04
