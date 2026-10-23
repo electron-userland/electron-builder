@@ -282,7 +282,7 @@ importers:
         specifier: workspace:*
         version: link:../electron-builder-squirrel-windows
       toml:
-        specifier: ^5.0.0
+        specifier: ^5.0.1
         version: 5.0.1
 
   packages/app-builder-lib/helpers: {}
