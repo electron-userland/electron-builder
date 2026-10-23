@@ -60,6 +60,7 @@ type PackagerEvents = {
 
   msiProjectCreated: Hook<string, void>
   appxManifestCreated: Hook<string, void>
+  pkgDistributionCreated: Hook<string, void>
 
   // internal-use only, prefer usage of `artifactBuildCompleted`
   artifactCreated: Hook<ArtifactCreated, void>
@@ -287,6 +288,7 @@ export class Packager {
 
     this.eventEmitter.on("appxManifestCreated", await resolveFunction(type, this.config.appxManifestCreated, "appxManifestCreated", root), "user")
     this.eventEmitter.on("msiProjectCreated", await resolveFunction(type, this.config.msiProjectCreated, "msiProjectCreated", root), "user")
+    this.eventEmitter.on("pkgDistributionCreated", await resolveFunction(type, this.config.pkgDistributionCreated, "pkgDistributionCreated", root), "user")
 
     this.eventEmitter.on("beforePack", await resolveFunction(type, this.config.beforePack, "beforePack", root), "user")
     this.eventEmitter.on("afterExtract", await resolveFunction(type, this.config.afterExtract, "afterExtract", root), "user")
@@ -348,6 +350,10 @@ export class Packager {
 
   async emitMsiProjectCreated(path: string) {
     await this.eventEmitter.emit("msiProjectCreated", path)
+  }
+
+  async emitPkgDistributionCreated(path: string) {
+    await this.eventEmitter.emit("pkgDistributionCreated", path)
   }
 
   async emitBeforePack(context: BeforePackContext) {
