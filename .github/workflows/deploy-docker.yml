@@ -52,15 +52,17 @@ jobs:
           path: ${{ runner.temp }}
 
       - name: Load all images
-        run: docker image load --input ${{ runner.temp }}/electron-builder-all-${{ matrix.nodeMajorVersion }}.tar
+        run: docker image load --input "$RUNNER_TEMP/electron-builder-all-$NODE_MAJOR_VERSION.tar"
+        env:
+          NODE_MAJOR_VERSION: ${{ matrix.nodeMajorVersion }}
 
       - name: Tag LTS (${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}) images for electron-builder latest/wine/wine-chrome/wine-mono
         if: ${{ matrix.nodeMajorVersion == env.LATEST_IMAGE_NODE_MAJOR_VERSION }}
         run: |
-          docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }} electronuserland/builder:latest
-          docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}-wine electronuserland/builder:wine
-          docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}-wine-mono electronuserland/builder:wine-mono
-          docker image tag electronuserland/builder:${{ env.LATEST_IMAGE_NODE_MAJOR_VERSION }}-wine-chrome electronuserland/builder:wine-chrome
+          docker image tag "electronuserland/builder:$LATEST_IMAGE_NODE_MAJOR_VERSION" electronuserland/builder:latest
+          docker image tag "electronuserland/builder:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine" electronuserland/builder:wine
+          docker image tag "electronuserland/builder:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine-mono" electronuserland/builder:wine-mono
+          docker image tag "electronuserland/builder:$LATEST_IMAGE_NODE_MAJOR_VERSION-wine-chrome" electronuserland/builder:wine-chrome
 
       - name: List all images and tags
         run: docker image ls -a

@@ -32,18 +32,22 @@ jobs:
         uses: $/.github/actions/cleanup-runner
 
       - name: Extract node major version to tag docker images
-        run: echo "NODE_TAG=$(cut -d '.' -f 1 <<< ${{ matrix.nodeVersion }})" >> $GITHUB_ENV
+        run: echo "NODE_TAG=$(cut -d '.' -f 1 <<< "$MATRIX_NODE_VERSION")" >> "$GITHUB_ENV"
+        env:
+          MATRIX_NODE_VERSION: ${{ matrix.nodeVersion }}
 
       - name: Builds all images
         shell: bash
         run: |
-          bash docker/build.sh ${{ matrix.nodeVersion }}
+          bash docker/build.sh "$MATRIX_NODE_VERSION"
+        env:
+          MATRIX_NODE_VERSION: ${{ matrix.nodeVersion }}
 
       - name: List and export images
         shell: bash
         run: |
           docker images --filter=reference="electronuserland/builder:*"
-          docker save -o ${{ runner.temp }}/electron-builder-all-${NODE_TAG}.tar electronuserland/builder
+          docker save -o "$RUNNER_TEMP/electron-builder-all-${NODE_TAG}.tar" electronuserland/builder
 
       - name: Bundle all images
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
