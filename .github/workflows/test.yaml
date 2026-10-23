@@ -536,26 +536,32 @@ jobs:
           fi
           docker run --rm "$IMAGE" sh -c 'flatpak --version && flatpak-builder --version'
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          echo "FLATPAK_CACHE_MONTH=$(date -u +%Y-%m)" >> "$GITHUB_ENV"
 
       # The flatpak user installation (remote config + installed runtimes/SDKs/base app). An SDK alone is well over a GB, so
       # restoring it beats re-downloading from flathub every run. It is restored on the runner and mounted into the container.
-      # The key is static: an entry is about 1.7 GB, and saving a new one on every run (a run_id key) filled the repository's
-      # cache, which evicted the entries before later runs could restore them. The install step below brings an entry that
-      # misses a ref up to date, but such an entry is not saved again: bump the -vN suffix then.
+      # The key changes once a month: an entry is about 1.7 GB, and saving a new one on every run (a run_id key) filled the
+      # repository's cache, which evicted the entries before later runs could restore them. The first run of a month restores
+      # the newest older entry through restore-keys, and saves what the install step brought up to date, so the updates that
+      # every run downloads before the tests are at most a month of them. Bump the -vN suffix when FLATPAK_REFS changes.
       - name: Cache flatpak runtimes
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.local/share/flatpak
-          key: flatpak-user-docker-fdo-26.08-25.08-electron2-v1
+          key: flatpak-user-docker-fdo-26.08-25.08-electron2-v1-${{ env.FLATPAK_CACHE_MONTH }}
+          restore-keys: |
+            flatpak-user-docker-fdo-26.08-25.08-electron2-v1
 
       # In the container, as the runner's user (test/src/linux/flatpak-docker.sh), whose user installation the cached directory
       # is: as root, flatpak refuses to install into a user installation that another user owns. The image adds the flathub
-      # remote for root only, hence the remote-add. `flatpak install` is a no-op for refs already restored from the cache.
+      # remote for root only, hence the remote-add. `flatpak install` is a no-op for refs already restored from the cache, and
+      # `flatpak update` brings those up to date here, so that the flatpak target's own update does not do it inside a test.
       - name: Install flatpak runtimes
         run: |
           test/src/linux/flatpak-docker.sh sh -c '
             flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo &&
             flatpak install --user -y --noninteractive flathub "$@" &&
+            flatpak update --user -y --noninteractive "$@" &&
             flatpak list --user --columns=ref,size' sh $FLATPAK_REFS
 
       # The suite fails fast here if bubblewrap cannot create namespaces, rather than skipping itself

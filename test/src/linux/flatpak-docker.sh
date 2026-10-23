@@ -5,9 +5,10 @@
 #   FLATPAK_TEST_IMAGE=electronuserland/builder:22-wine-chrome test/src/linux/flatpak-docker.sh pnpm ci:test
 #
 # Run it from the repository root, with the dependencies installed and compiled (pnpm install && pnpm compile): the
-# container uses the workspace as it is. The flatpak user installation of the calling user (~/.local/share/flatpak) and the
-# electron caches are mounted at the same place under the container user's HOME, so actions/cache can restore and save them
-# on the runner.
+# container uses the workspace as it is. The flatpak user installation of the calling user (~/.local/share/flatpak), the
+# electron caches and the corepack home (~/.cache/node/corepack, which .github/actions/pnpm caches) are mounted at the same
+# place under the container user's HOME, so actions/cache can restore and save them on the runner, and pnpm starts without
+# a download.
 #
 # --privileged gives the container /dev/fuse (flatpak-builder's rofiles-fuse) and lifts docker's seccomp and AppArmor profiles,
 # which block the namespaces bubblewrap creates.
@@ -29,7 +30,7 @@ fi
 _IMAGE="${FLATPAK_TEST_IMAGE:-electronuserland/builder:22-wine-chrome}"
 
 # docker would create missing mount sources owned by root
-mkdir -p "$HOME/.local/share/flatpak" "$HOME/.cache/electron" "$HOME/.cache/electron-builder"
+mkdir -p "$HOME/.local/share/flatpak" "$HOME/.cache/electron" "$HOME/.cache/electron-builder" "$HOME/.cache/node/corepack"
 
 exec docker run --rm --privileged \
   -e CI="${CI:-}" \
@@ -44,17 +45,17 @@ exec docker run --rm --privileged \
   -v "$HOME/.local/share/flatpak:/home/runner/.local/share/flatpak" \
   -v "$HOME/.cache/electron:/home/runner/.cache/electron" \
   -v "$HOME/.cache/electron-builder:/home/runner/.cache/electron-builder" \
+  -v "$HOME/.cache/node/corepack:/home/runner/.cache/node/corepack" \
   ${ADDITIONAL_DOCKER_ARGS:-} \
   "$_IMAGE" \
   bash -c '
     set -e
-    # pnpm 11 through corepack, as in docker/test-in-docker.sh
-    npm i -g corepack > /dev/null
+    # pnpm 11 through the corepack that comes with Node.js in the image, from the mounted corepack home, as on the runner
     corepack enable
     groupadd -o -g "$HOST_GID" runner
     useradd -o -u "$HOST_UID" -g "$HOST_GID" -d /home/runner -M runner
     # the parents of the mounts were created for root
-    chown runner: /home/runner /home/runner/.local /home/runner/.local/share /home/runner/.cache
+    chown runner: /home/runner /home/runner/.local /home/runner/.local/share /home/runner/.cache /home/runner/.cache/node
     install -d -m 700 -o runner -g runner "/run/user/$HOST_UID"
     # rofiles-fuse opens the device as the user; the device node keeps the mode it has on the host
     chmod 666 /dev/fuse
