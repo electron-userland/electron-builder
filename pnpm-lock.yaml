@@ -350,6 +350,9 @@ importers:
 
   packages/builder-util-runtime:
     dependencies:
+      '@noble/hashes':
+        specifier: ^2.2.0
+        version: 2.2.0
       debug:
         specifier: ^4.3.4
         version: 4.4.3
