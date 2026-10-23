@@ -197,6 +197,48 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
     })
   })
 
+  test("bounds every PowerShell invocation with an inactivity timeout", () => {
+    const calls = templateContent.split("\n").filter(line => line.includes("nsExec::Exec") && line.includes('"$PowerShellPath"'))
+    expect(calls).toHaveLength(4)
+    for (const call of calls) {
+      expect(call).toContain("/TIMEOUT=${APP_PROCESS_QUERY_TIMEOUT}")
+    }
+    expect(templateContent).toContain("!define /ifndef APP_PROCESS_QUERY_TIMEOUT 30000")
+  })
+
+  // Check ordered branches, not just the presence of an abort somewhere in the file.
+  const instructions = (body: string) => body.replace(/#.*$/gm, "").replace(/\s+/g, " ").trim()
+
+  test("failed FIND cannot reach name-based fallback or be treated as absence", () => {
+    expect(instructions(findProcessMacro)).toContain(
+      "Pop ${_RETURN} ${if} ${_RETURN} != 0 ${andIf} ${_RETURN} != 1 !insertmacro ABORT_PROCESS_CHECK ${endIf} ${endIf} ${if} $IsPowerShellAvailable != 0"
+    )
+    expect(findProcessMacro).not.toMatch(/StrCpy\s+\$IsPowerShellAvailable/)
+  })
+
+  test("failed KILL restores saved registers before aborting, never enabling fallback", () => {
+    const killMacro = templateContent.match(/!macro KILL_PROCESS[\s\S]*?!macroend/)![0]
+    expect(instructions(killMacro)).toContain("!macro KILL_PROCESS _FILE _FORCE Push $0 Push $1")
+    expect(instructions(killMacro)).toContain("Pop $1 ${if} $1 != 0 Pop $1 Pop $0 !insertmacro ABORT_PROCESS_CHECK ${endIf} ${endIf} ${if} $IsPowerShellAvailable != 0")
+    expect(instructions(killMacro)).toMatch(/Pop \$1 \$\{endIf\} Pop \$1 Pop \$0 !macroend$/)
+    expect(killMacro).not.toMatch(/StrCpy\s+\$IsPowerShellAvailable/)
+    expect(killMacro).toContain('StrCpy $0 "/F"')
+    expect(killMacro).toContain('/FI "USERNAME eq %USERNAME%"')
+  })
+
+  test("either availability probe timeout aborts before normal unavailable fallback", () => {
+    const availability = instructions(templateContent.match(/!macro IS_POWERSHELL_AVAILABLE[\s\S]*?!macroend/)![0])
+    expect(availability).toMatch(/Pop \$0 \$\{if\} \$0 == 0 nsExec::Exec/)
+    expect(availability).toContain(
+      'Pop $0 ${endIf} ${if} $0 != 0 ${andIf} $0 != 1 ${andIf} $0 != "error" !insertmacro ABORT_PROCESS_CHECK ${endIf} ${if} $0 != 0 StrCpy $0 1 ${endIf} StrCpy $IsPowerShellAvailable $0'
+    )
+  })
+
+  test("failure shows the localized close-app message and quits even in silent mode", () => {
+    const abort = instructions(templateContent.match(/!macro ABORT_PROCESS_CHECK[\s\S]*?!macroend/)![0])
+    expect(abort).toBe('!macro ABORT_PROCESS_CHECK MessageBox MB_OK|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDOK SetErrorLevel 2 Quit !macroend')
+  })
+
   test("snapshot of FIND_PROCESS macro", () => {
     expect(findProcessMacro).toMatchSnapshot()
   })
