@@ -9,7 +9,7 @@ import { normalizeExt } from "../../platformPackager.js"
 import { savePlistFile, parsePlistFile, PlistObject, PlistValue } from "../../util/mac/plist.js"
 import { createBrandingOpts } from "../ElectronFramework.js"
 import { MacTargetHelper, PlatformType } from "../../targets/mac/MacTargetHelper.js"
-import { assertSafeHelperName, getAvailableHelperSuffixes } from "./electronMacUtils.js"
+import { assertSafeHelperName, configureLocalhostAts, getAvailableHelperSuffixes } from "./electronMacUtils.js"
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
@@ -259,35 +259,4 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   // https://github.com/electron-userland/electron-builder/issues/840
   const now = Date.now() / 1000
   await utimes(appPath, now, now)
-}
-
-function configureLocalhostAts(appPlist: any) {
-  // https://bencoding.com/2015/07/20/app-transport-security-and-localhost/
-  let ats = appPlist.NSAppTransportSecurity
-  if (ats == null) {
-    ats = {}
-    appPlist.NSAppTransportSecurity = ats
-  }
-
-  ats.NSAllowsLocalNetworking = true
-  // https://github.com/electron-userland/electron-builder/issues/3377#issuecomment-446035814
-  ats.NSAllowsArbitraryLoads = true
-
-  let exceptionDomains = ats.NSExceptionDomains
-  if (exceptionDomains == null) {
-    exceptionDomains = {}
-    ats.NSExceptionDomains = exceptionDomains
-  }
-
-  if (exceptionDomains.localhost == null) {
-    const allowHttp = {
-      NSTemporaryExceptionAllowsInsecureHTTPSLoads: false,
-      NSIncludesSubdomains: false,
-      NSTemporaryExceptionAllowsInsecureHTTPLoads: true,
-      NSTemporaryExceptionMinimumTLSVersion: "1.0",
-      NSTemporaryExceptionRequiresForwardSecrecy: false,
-    }
-    exceptionDomains.localhost = allowHttp
-    exceptionDomains["127.0.0.1"] = allowHttp
-  }
 }

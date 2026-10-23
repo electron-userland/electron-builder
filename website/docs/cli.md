@@ -19,6 +19,8 @@ Commands:
                                   ectron-webpack
   electron-builder clear-cache              Clear the electron-builder default cache direc
                                   tory
+  electron-builder create-update-key        Generate an Ed25519 keypair for signing auto-u
+                                  pdate manifests
   electron-builder migrate-schema           Migrate build config from v26 to v27 format
 
 Building:

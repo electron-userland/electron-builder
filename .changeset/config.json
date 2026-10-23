@@ -1,6 +1,7 @@
 {
-  "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
-  "changelog": ["changesets-changelog-clean", { "repo": "electron-userland/electron-builder" }],
+  "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+  "changelog": ["./changelog.cjs", { "repo": "electron-userland/electron-builder" }],
+  "prettier": false,
   "commit": false,
   "linked": [[
     "app-builder-lib",

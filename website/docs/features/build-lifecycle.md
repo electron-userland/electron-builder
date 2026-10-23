@@ -31,7 +31,9 @@ electron-builder build
 │   ├─ 2e. Post-Pack (before signing)
 │   │   └─ 🪝 afterPack
 │   │
-│   ├─ 2f. Apply Electron Fuses (if configured)
+│   ├─ 2f. Patch the Electron binary (before signing)
+│   │   ├─ Embed the ASAR integrity digest (macOS, Electron 41+)
+│   │   └─ Apply Electron Fuses (if configured)
 │   │
 │   ├─ 2g. Code Sign the .app / .exe
 │   │   └─ 🪝 afterSign  (only fires if signing actually ran)
@@ -198,7 +200,9 @@ afterPack: async ({ outDir, appOutDir, packager, electronPlatformName, arch, tar
 
 ---
 
-### Phase 2f — Apply Electron Fuses
+### Phase 2f — Patch the Electron binary
+
+On macOS with Electron 41 and later, electron-builder first embeds the ASAR integrity digest: a digest of the `ElectronAsarIntegrity` hashes in `Info.plist`, as `afterPack` left them, written into the Electron Framework, which is then signed again ad hoc. With the `enableEmbeddedAsarIntegrityValidation` fuse, an app whose `Info.plist` is changed after this point refuses to launch. `mac.asarIntegrityDigest: false` skips this step.
 
 If `electronFuses` is configured, fuse bits are flipped in the Electron binary at this point — after packing, before signing. Fuses are baked into the binary and cannot be changed post-sign.
 

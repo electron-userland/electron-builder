@@ -816,6 +816,7 @@ exports[`pkg scripts 3`] = `
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Helpers",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/_CodeSignature",
   "Test App ßW.app/Contents/Frameworks/Mantle.framework/Versions/A/Mantle",
   "Test App ßW.app/Contents/Frameworks/Mantle.framework/Versions/A/Resources",
   "Test App ßW.app/Contents/Frameworks/ReactiveObjC.framework/Versions/A/ReactiveObjC",
@@ -1059,6 +1060,7 @@ exports[`pkg scripts 3`] = `
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/zh_TW_FEMININE.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/zh_TW_MASCULINE.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/zh_TW_NEUTER.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/_CodeSignature/CodeResources",
   "Test App ßW.app/Contents/Frameworks/Mantle.framework/Versions/A/Resources/Info.plist",
   "Test App ßW.app/Contents/Frameworks/ReactiveObjC.framework/Versions/A/Resources/Info.plist",
   "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/A/Resources/Info.plist",
@@ -1315,12 +1317,14 @@ XElement {
           "isCData": false,
           "name": "bundle-version",
           "value": "
+            
         ",
         },
       ],
       "isCData": false,
       "name": "pkg-ref",
       "value": "
+        
     ",
     },
     XElement {
@@ -1369,12 +1373,14 @@ XElement {
           "isCData": false,
           "name": "allowed-os-versions",
           "value": "
+            
         ",
         },
       ],
       "isCData": false,
       "name": "volume-check",
       "value": "
+        
     ",
     },
     XElement {
@@ -1398,12 +1404,14 @@ XElement {
           "isCData": false,
           "name": "line",
           "value": "
+            
         ",
         },
       ],
       "isCData": false,
       "name": "choices-outline",
       "value": "
+        
     ",
     },
     XElement {
@@ -1437,6 +1445,7 @@ XElement {
       "isCData": false,
       "name": "choice",
       "value": "
+        
     ",
     },
     XElement {
@@ -1465,6 +1474,16 @@ XElement {
   "isCData": false,
   "name": "installer-gui-script",
   "value": "
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 ",
 }
 `;

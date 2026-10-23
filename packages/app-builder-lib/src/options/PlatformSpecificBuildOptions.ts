@@ -57,6 +57,27 @@ export interface AsarOptions {
   unpack?: Array<string> | string | null
 
   /**
+   * Align the start of every packed file's content inside `app.asar` to a multiple of this many bytes
+   * (zero padding between files). Off when unset or `0`.
+   *
+   * Meant for differential updates with `nsis.differentialPackage: "store-asar"`: the asar header stores
+   * every file's absolute content offset, so without alignment a change that grows a file by a single byte
+   * shifts the offset of every later file and most of the header has to be re-downloaded. With alignment
+   * a file can grow within its slot and no other offset moves. Measured on a 32 MB asar with 3,000 files:
+   * `512` cut a small length-changing edit from 414 KB to 139 KB of differential download for 2.2 % more
+   * asar size. Padding does not help when a file is added or removed (a new header entry shifts all later
+   * offsets) or when growth crosses the slot. File order, sizes and per-file integrity are unchanged;
+   * Electron and `@electron/asar` read files by offset + size and ignore the gaps.
+   *
+   * Must be a positive integer; values above 64 KiB log a warning because every file is padded up to the
+   * boundary. The alignment is applied when electron-builder packs `app.asar`, so it is lost when the
+   * archive is rebuilt afterwards: macOS universal builds with `mac.universal.mergeASARs` (the default)
+   * repack the merged asar, and `--prepackaged` skips packing entirely.
+   * @default 0
+   */
+  contentAlignment?: number | null
+
+  /**
    * Whether to skip the ASAR package integrity sanity check.
    *
    * Set to `true` only when using a custom Electron fork that implements its own encrypted or
@@ -71,9 +92,9 @@ export interface AsarOptions {
    * Whether to skip computing the ASAR integrity hash.
    *
    * Normally electron-builder computes and embeds a SHA-256 hash of `app.asar` so that Electron
-   * can verify it at startup (when the `embeddedAsarIntegrityValidation` fuse is enabled). Set to
+   * can verify it at startup (when the `enableEmbeddedAsarIntegrityValidation` fuse is enabled). Set to
    * `true` only for custom Electron forks with encrypted ASAR support where the header is not
-   * readable by standard tools.
+   * readable by standard tools. It also skips the macOS ASAR integrity digest (`mac.asarIntegrityDigest`).
    *
    * @default false
    */
@@ -81,9 +102,9 @@ export interface AsarOptions {
 }
 
 /**
- * Which files are copied into the packaged app, and which symlinks among them may lead outside it, set under `fileOptions` at the
- * configuration root or per platform (e.g. `mac.fileOptions`). A platform's lists are added to the root ones; a platform's
- * `allowExternalLinks` replaces the root one.
+ * Which files are copied into the packaged app, which file extensions are excluded from it, and which symlinks among them may lead outside it,
+ * set under `fileOptions` at the configuration root or per platform (e.g. `mac.fileOptions`). A platform's file lists are added to the root
+ * ones; a platform's `excludedExts` and `allowExternalLinks` replace the root ones.
  * See [file options](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
  */
 export interface FilesBuildOptions {
@@ -144,6 +165,65 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
   extraFiles?: Array<FileSet | string> | FileSet | string | null
 
   /**
+   * File extensions (without the leading dot) excluded from the packaged app files and the copied `node_modules`.
+   *
+   * - `"default"` expands to the built-in list of excluded extensions (see the table below).
+   * - Any other entry adds that extension, e.g. `"map"`.
+   * - An entry starting with `!` removes that extension from the others listed, e.g. `["default", "!pdb"]` to keep `.pdb` (Program Database)
+   *   symbol files for Windows crash-dump analysis. `.pdb` files contain symbol names and the source paths of the build machine:
+   *   keep them only in internal builds or builds for a symbol server, or upload them to a symbol server instead of shipping them.
+   *   A list of removals only, such as `["!pdb"]`, is rejected because it would exclude no extension at all: write `["default", "!pdb"]`. A `"!ext"` in a list that does not otherwise list that extension (e.g. `["map", "!pdb"]`) has no effect and logs a warning.
+   *
+   * The built-in list (`"default"`):
+   *
+   * | Extension | Typically used for |
+   * | --- | --- |
+   * | `.iml` | IntelliJ IDEA / WebStorm module file |
+   * | `.hprof` | Java heap dump |
+   * | `.orig` | Original copy of a file, left behind by merge tools and `patch` |
+   * | `.pyc` | Compiled Python bytecode |
+   * | `.pyo` | Optimized compiled Python bytecode (Python 2) |
+   * | `.rbc` | Compiled Ruby bytecode (Rubinius) |
+   * | `.swp` | Vim swap file |
+   * | `.csproj` | C# (MSBuild) project file |
+   * | `.sln` | Visual Studio solution file |
+   * | `.slnx` | Visual Studio XML solution file |
+   * | `.suo` | Visual Studio solution user options |
+   * | `.xproj` | .NET Core project file (Visual Studio 2015) |
+   * | `.cc` | C++ source file, e.g. of a native module |
+   * | `.d.ts` | TypeScript declaration file |
+   * | `.mk` | Makefile fragment generated by node-gyp |
+   * | `.a` | Static library archive from a native build |
+   * | `.o` | Object file from a native build |
+   * | `.obj` | Object file from an MSVC native build; also used for Wavefront 3D models, which a `files` pattern can re-include |
+   * | `.forge-meta` | Metadata `@electron/rebuild` writes next to a rebuilt native module |
+   * | `.pdb` | Program Database: Windows debug symbols, with symbol names and the build machine's source paths |
+   *
+   * The list replaces the defaults: list `"default"` to extend them rather than replace them. `null` (or omitting it) is `["default"]`,
+   * and an empty array `[]` excludes no extension.
+   *
+   * An invalid list (an entry that is not a file extension, `"!default"`, or removals only) fails the build when the configuration is validated, at the root and in every platform section, before anything is packed.
+   *
+   * ```json
+   * { "fileOptions": { "excludedExts": ["default", "!pdb", "map"] } }
+   * ```
+   *
+   * Set it under `fileOptions`, at the configuration root or per platform. Unlike the other lists, a later list replaces an earlier one rather
+   * than being merged with it. For the root and for each platform section, the last layer that sets the list wins: the `extends` parents in
+   * order, then the configuration file, then the programmatic or `-c` configuration. For the `mas` and `mas-dev` targets, a `mas` list then
+   * replaces the `mac` one, and a `masDev` list (for `mas-dev`) replaces both. A platform's list then replaces the root one, whichever layer
+   * set either. A `null` value keeps the earlier list.
+   *
+   * A `files` pattern that names an excluded extension includes only the app files it matches: `**\/*.obj` every `.obj` file outside
+   * `node_modules` and the build resources and output directories, `models/teapot.obj` only that file.
+   *
+   * A single entry may be given as a string, e.g. on the command line: `-c.fileOptions.excludedExts=default`. For several entries, repeat the flag:
+   * `-c.fileOptions.excludedExts=default -c.fileOptions.excludedExts=!pdb` (in an interactive bash or zsh, write the second one as `'-c.fileOptions.excludedExts=!pdb'`, single-quoted, so that `!pdb` is not expanded).
+   * @default ["default"]
+   */
+  excludedExts?: Array<string> | string | null
+
+  /**
    * Whether symlinks among the packaged files may lead outside the app, the workspace and the package-manager store.
    *
    * Only the build configuration is trusted, not the files it packages: by default (`false`) electron-builder refuses
@@ -180,10 +260,10 @@ You can use [file macros](https://www.electron.build/file-patterns#file-macros) 
 
 export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   /**
-   * Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), and whether symlinks among
-   * them may lead outside the app and the workspace (`allowExternalLinks`).
-   * Set at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's lists are added to the root ones,
-   * and a platform's `allowExternalLinks` replaces the root one.
+   * Which files to copy into the packaged app (`files`, the app sources, `extraResources` and `extraFiles`), which file extensions to exclude
+   * from it (`excludedExts`), and whether symlinks among them may lead outside the app and the workspace (`allowExternalLinks`).
+   * Set at the configuration root, per platform (e.g. `mac.fileOptions`), or both: a platform's file lists are added to the root ones,
+   * and a platform's `excludedExts` and `allowExternalLinks` replace the root ones.
    *
    * ```json
    * {
@@ -283,8 +363,8 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    *
    * **Signing is required.** Publishing a build that emits auto-update metadata fails unless a signing key
    * resolves. Generate one once with `electron-builder create-update-key`, then supply it via
-   * `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (preferred in CI) or via
-   * `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and
+   * `ELECTRON_BUILDER_UPDATE_SIGN_KEY` (the PEM file, base64-encoded) / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` (its path),
+   * preferred in CI, or via `signingKey` / `signingKeyFile` below. Leaving this option unset — or `null` — keeps signing required and
    * resolves the key from the environment; `null` is not an opt-out.
    *
    * Set to `false`, the only opt-out, to ship **unsigned** manifests. Every build that produces a manifest then
@@ -338,7 +418,7 @@ export interface UpdateManifestSigningOptions {
    * contain several concatenated keys, or pass an array with one key each; the manifest is signed by every key
    * (dual-signing for [key rotation](https://www.electron.build/features/key-rotation)) and the first key also
    * fills the legacy single `signature` field.
-   * Secret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable in CI over committing this to config.
+   * Secret — prefer the `ELECTRON_BUILDER_UPDATE_SIGN_KEY` environment variable (the PEM file, base64-encoded) in CI over committing this to config.
    */
   readonly signingKey?: string | Array<string> | null
 
@@ -359,8 +439,20 @@ export interface UpdateManifestSigningOptions {
    * without a publish policy, where the requirement only warns and the unsigned manifest is written locally, or
    * keeps publishing with `publishAutoUpdate: false` on every publish provider - electron-builder then uploads the
    * artifacts and embeds this key, but writes no `latest*.yml`, so the external step has to produce it too.
+   *
+   * When set, it must contain at least one of the signing keys: a publishing build signed only by keys outside this
+   * list fails, since its installs would reject manifests signed with them. See `allowSigningKeyOutsideTrustList`.
    */
   readonly publicKey?: string | Array<string> | null
+
+  /**
+   * Allows a publishing build to sign its manifests only with keys that are not in `publicKey` - a deliberate
+   * cutover release that is verified by installs with the old key, but hands them over to the keys listed in
+   * `publicKey`. Every later release must then be signed by a listed key. Without it such a build fails; a build
+   * without a publish policy only warns. Has no effect when `publicKey` is not set.
+   * @default false
+   */
+  readonly allowSigningKeyOutsideTrustList?: boolean | null
 }
 
 export interface ReleaseInfo {

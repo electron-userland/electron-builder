@@ -60,6 +60,27 @@ export const SAFEGUARD_MAX_SHARDS = 14
 
 export const SHARD_INDEX = process.env.VITEST_SHARD_INDEX != null ? Number(process.env.VITEST_SHARD_INDEX) : null
 
+/**
+ * The exact smart cache snapshot the CI shard planner restored, as written by fetch-smart-cache.ts:
+ * `<artifact-name>@<run-id>`, or `none` when the planner had no cache. Shard jobs restore this exact
+ * snapshot so their in-job plan matches the matrix the planner sized.
+ */
+export type SmartCacheSource = { kind: "none" } | { kind: "artifact"; name: string; runId: number }
+
+export function parseSmartCacheSource(source: string): SmartCacheSource {
+  const value = source.trim()
+  if (value === "none") {
+    return { kind: "none" }
+  }
+  const at = value.lastIndexOf("@")
+  const name = value.slice(0, at)
+  const runId = Number(value.slice(at + 1))
+  if (at <= 0 || !Number.isInteger(runId) || runId <= 0) {
+    throw new Error(`Invalid smart cache source "${source}" (expected "<artifact-name>@<run-id>" or "none")`)
+  }
+  return { kind: "artifact", name, runId }
+}
+
 export const PLATFORM = process.platform as SupportedPlatforms
 
 export const IS_MAC = PLATFORM === "darwin"

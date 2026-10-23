@@ -1170,7 +1170,7 @@ exports[`Rebuilder Test > yarn berry workspace 3`] = `
   {
     "content": "{
   "name": "better-sqlite3-multiple-ciphers",
-  "version": "12.9.0",
+  "version": "12.11.1",
   "description": "better-sqlite3 with multiple-cipher encryption support",
   "homepage": "https://github.com/m4heshd/better-sqlite3-multiple-ciphers",
   "author": "Mahesh Bandara Wijerathna (m4heshd) <m4heshd@gmail.com>",
@@ -1188,7 +1188,7 @@ exports[`Rebuilder Test > yarn berry workspace 3`] = `
     "deps/**"
   ],
   "engines": {
-    "node": "20.x || 22.x || 23.x || 24.x"
+    "node": "20.x || 22.x || 23.x || 24.x || 25.x || 26.x"
   },
   "dependencies": {
     "bindings": "^1.5.0",
@@ -1204,7 +1204,7 @@ exports[`Rebuilder Test > yarn berry workspace 3`] = `
     "chai": "^4.3.8",
     "cli-color": "^2.0.3",
     "fs-extra": "^11.1.1",
-    "mocha": "^10.2.0",
+    "mocha": "^11.7.5",
     "nodemark": "^0.3.0",
     "prebuild": "^13.0.1",
     "sqlite": "^5.0.1",
@@ -2432,7 +2432,7 @@ exports[`Rebuilder Test > yarn workspace 3`] = `
   {
     "content": "{
   "name": "better-sqlite3-multiple-ciphers",
-  "version": "12.9.0",
+  "version": "12.11.1",
   "description": "better-sqlite3 with multiple-cipher encryption support",
   "homepage": "https://github.com/m4heshd/better-sqlite3-multiple-ciphers",
   "author": "Mahesh Bandara Wijerathna (m4heshd) <m4heshd@gmail.com>",
@@ -2450,7 +2450,7 @@ exports[`Rebuilder Test > yarn workspace 3`] = `
     "deps/**"
   ],
   "engines": {
-    "node": "20.x || 22.x || 23.x || 24.x"
+    "node": "20.x || 22.x || 23.x || 24.x || 25.x || 26.x"
   },
   "dependencies": {
     "bindings": "^1.5.0",
@@ -2466,7 +2466,7 @@ exports[`Rebuilder Test > yarn workspace 3`] = `
     "chai": "^4.3.8",
     "cli-color": "^2.0.3",
     "fs-extra": "^11.1.1",
-    "mocha": "^10.2.0",
+    "mocha": "^11.7.5",
     "nodemark": "^0.3.0",
     "prebuild": "^13.0.1",
     "sqlite": "^5.0.1",

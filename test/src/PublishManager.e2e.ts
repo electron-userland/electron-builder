@@ -242,6 +242,7 @@ test.ifNotWindows("os macro", ({ expect }) =>
           bucket: "my bucket",
           // tslint:disable-next-line:no-invalid-template-strings
           path: "${channel}/${os}/${arch}",
+          awsCredentials: { source: "env" },
         },
       },
     },

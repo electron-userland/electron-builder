@@ -1,5 +1,6 @@
 import type { FuseConfig, FuseV1Config } from "@electron/fuses"
 import { dynamicImport } from "./util/dynamicImport.js"
+import { CONTENT_ALIGNMENT_WARN_THRESHOLD, validateContentAlignment } from "./asar/asarAlign.js"
 import {
   Arch,
   asArray,
@@ -203,7 +204,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (!optedOut && required) {
       throw new InvalidConfigurationError(
         `auto-update manifests must be signed, but no Ed25519 signing key was found for ${this.platform.name}. ` +
-          "Generate one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (PEM contents) " +
+          "Generate one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file) " +
           "or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey / " +
           "updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out explicitly with " +
           "`updateManifest: false`. See https://www.electron.build/features/signed-update-manifests"
@@ -599,12 +600,20 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       mode: this.config.nativeModules?.verifyNativeBinaries,
     })
 
+    if (!options?.disableAsarIntegrity) {
+      await this.doAddAsarIntegrityDigest(packContext, platformSpecificBuildOptions, asarOptions)
+    }
     if (!options?.disableFuses) {
       await this.doAddElectronFuses(packContext)
     }
     if (options?.sign ?? true) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, platformType, arch, platformSpecificBuildOptions, targets)
     }
+  }
+
+  // macOS only (see MacPackager). It writes into the binary the fuses patch too, so it runs before them and, like them, before signing.
+  protected async doAddAsarIntegrityDigest(_packContext: AfterPackContext, _platformSpecificBuildOptions: DC, _asarOptions: AsarOptions | null): Promise<void> {
+    // only Electron's macOS framework has an ASAR integrity digest slot
   }
 
   // the fuses MUST be flipped right before signing
@@ -743,7 +752,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return computeFileSets(matchers, this.info.isPrepackedAppAsar ? null : transformer, this).then(async result => {
         if (!this.info.isPrepackedAppAsar && !this.info.areNodeModulesHandledExternally) {
           const moduleFileMatcher = getNodeModuleFileMatcher(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this.info)
-          result = result.concat(await computeNodeModuleFileSets(this, moduleFileMatcher, packContext.arch, !disableArchFilter))
+          result = result.concat(await computeNodeModuleFileSets(this, platformSpecificBuildOptions, moduleFileMatcher, packContext.arch, !disableArchFilter))
         }
         return result.filter(it => it.files.length > 0)
       })
@@ -814,7 +823,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return Promise.resolve(null)
   }
 
-  private async computeAsarOptions(customBuildOptions: DC): Promise<AsarOptions | null> {
+  protected async computeAsarOptions(customBuildOptions: DC): Promise<AsarOptions | null> {
     if (!isElectronBased(this.info.framework)) {
       return null
     }
@@ -839,7 +848,19 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return {}
     }
 
-    return deepAssign({}, result)
+    const asarOptions: AsarOptions = deepAssign({}, result)
+    const alignment = asarOptions.contentAlignment
+    if (alignment != null && alignment !== 0) {
+      // fail before anything is packed, not after @electron/asar has written the archive
+      validateContentAlignment(alignment)
+      if (alignment > CONTENT_ALIGNMENT_WARN_THRESHOLD) {
+        log.warn(
+          { contentAlignment: alignment, threshold: CONTENT_ALIGNMENT_WARN_THRESHOLD },
+          "asar.contentAlignment pads every packed file up to the next boundary; such a large alignment makes app.asar much bigger"
+        )
+      }
+    }
+    return asarOptions
   }
 
   public getElectronSrcDir(dist: string): string {
