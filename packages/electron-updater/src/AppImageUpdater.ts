@@ -125,11 +125,11 @@ export class AppImageUpdater extends BaseUpdater {
       rmSync(staged, { force: true })
       throw e
     }
-    rmSync(installerPath, { force: true })
+    this.removeAfterInstall(installerPath)
 
     if (destination !== appImageFile) {
-      rmSync(appImageFile, { force: true })
       this.emit("appimage-filename-updated", destination)
+      this.removeAfterInstall(appImageFile)
     }
 
     const env: NodeJS.ProcessEnv = {
@@ -145,5 +145,14 @@ export class AppImageUpdater extends BaseUpdater {
       execFileSync(destination, [], { env })
     }
     return true
+  }
+
+  // The new AppImage is already in place, so a leftover file must not fail the install and skip the relaunch.
+  private removeAfterInstall(file: string) {
+    try {
+      rmSync(file, { force: true })
+    } catch (e: any) {
+      this._logger.warn(`Cannot remove ${file} after install: ${e.message || e}`)
+    }
   }
 }
