@@ -36,6 +36,7 @@ env:
 
 jobs:
   check-if-docker-build:
+    name: Check for Docker image changes
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -70,6 +71,7 @@ jobs:
   # -------------------------
 
   validate-and-shard:
+    name: Validate and plan shards
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     outputs:
@@ -117,9 +119,9 @@ jobs:
           MACOS_SHARDS=$(echo "$SHARD_JSON" | jq -c '.darwin')
 
           # Set outputs
-          echo "linux=$LINUX_SHARDS" >> $GITHUB_OUTPUT
-          echo "windows=$WINDOWS_SHARDS" >> $GITHUB_OUTPUT
-          echo "macos=$MACOS_SHARDS" >> $GITHUB_OUTPUT
+          echo "linux=$LINUX_SHARDS" >> "$GITHUB_OUTPUT"
+          echo "windows=$WINDOWS_SHARDS" >> "$GITHUB_OUTPUT"
+          echo "macos=$MACOS_SHARDS" >> "$GITHUB_OUTPUT"
 
           # Debug output
           echo "Planned shards:"
@@ -177,19 +179,19 @@ jobs:
       - name: Load test runner image if needed
         if: needs.run-docker-build.result == 'success'
         run: |
-          docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
+          docker image load --input "$RUNNER_TEMP/electron-builder-all-$TEST_IMAGE_NODE_MAJOR_VERSION.tar"
           docker image ls -a
 
       - name: Write Docker secrets env file
         run: |
-          printf 'CSC_KEY_PASSWORD=%s\n' "$CSC_KEY_PASSWORD_SECRET" > "${{ runner.temp }}/docker-secrets.env"
-          chmod 600 "${{ runner.temp }}/docker-secrets.env"
+          printf 'CSC_KEY_PASSWORD=%s\n' "$CSC_KEY_PASSWORD_SECRET" > "$RUNNER_TEMP/docker-secrets.env"
+          chmod 600 "$RUNNER_TEMP/docker-secrets.env"
         env:
           CSC_KEY_PASSWORD_SECRET: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
 
       - name: Run shard in docker
         run: |
-          echo $TEST_RUNNER_IMAGE_TAG
+          echo "$TEST_RUNNER_IMAGE_TAG"
           pnpm test:linux
         env:
           ADDITIONAL_DOCKER_ARGS: "--env-file ${{ runner.temp }}/docker-secrets.env -e VITEST_SHARD_INDEX=${{ matrix.shard }} -e VITEST_EXPECTED_SHARD_COUNT=${{ strategy.job-total }} -e VITEST_SMART_CACHE_SOURCE=${{ needs.validate-and-shard.outputs.smart-cache-source }} -e VITEST_SMART_CACHE_FILE=./test/vitest-scripts/vitest-config/_vitest-smart-cache.json -e RESET_VITEST_SHARD_CACHE=${{ inputs.reset-vitest-smart-cache }} -e VITEST_COVERAGE=${{ inputs.collect-coverage }}"
@@ -291,6 +293,30 @@ jobs:
           brew install rpm
           brew install snapcraft
 
+      # The published win-codesign darwin bundles (1.0.0 through 1.3.0) link osslsigncode dynamically against
+      # $(brew --prefix)/opt/openssl@3/lib/libcrypto.3.dylib and were built against OpenSSL 3.6 (they import
+      # _OPENSSL_sk_set_thunks, which first shipped in 3.6). Homebrew's `openssl@3` formula now tracks the 3.5 LTS line
+      # (runner image macos-26-arm64 20261021.0445 ships 3.5.9), so dyld aborts with "Symbol not found". Point the
+      # openssl@3 opt link at the keg-only `openssl@3.6` formula; 3.6 stays ABI-compatible with anything built
+      # against 3.5. Must run after every other `brew install` so nothing relinks openssl@3 afterwards.
+      # Remove once the darwin bundles link OpenSSL statically and the older toolset versions are no longer tested here.
+      - name: Provide OpenSSL 3.6 for bundled osslsigncode
+        run: |
+          OPT="$(brew --prefix)/opt/openssl@3"
+          has_symbol() { nm -gU "$1/lib/libcrypto.3.dylib" 2>/dev/null | grep '_OPENSSL_sk_set_thunks$' >/dev/null; }
+          if has_symbol "$OPT"; then
+            # Older images still ship openssl@3 3.6.x, where `openssl@3.6` resolves to openssl@3 itself.
+            echo "openssl@3 at $OPT already provides OpenSSL 3.6+"
+          else
+            brew install openssl@3.6
+            # Resolve to the real Cellar keg so the opt link can never point back at itself.
+            KEG="$(cd "$(brew --prefix openssl@3.6)" && pwd -P)"
+            has_symbol "$KEG" || { echo "::error::openssl@3.6 keg $KEG does not export _OPENSSL_sk_set_thunks"; exit 1; }
+            ln -sfn "$KEG" "$OPT"
+          fi
+          "$OPT/bin/openssl" version
+          has_symbol "$OPT" || { echo "::error::libcrypto at $OPT does not export _OPENSSL_sk_set_thunks"; exit 1; }
+
       - name: Run shard
         run: pnpm ci:test
         env:
@@ -351,7 +377,7 @@ jobs:
       - name: Load test runner image if needed
         if: needs.run-docker-build.result == 'success'
         run: |
-          docker image load --input ${{ runner.temp }}/electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}.tar
+          docker image load --input "$RUNNER_TEMP/electron-builder-all-$TEST_IMAGE_NODE_MAJOR_VERSION.tar"
           docker image ls -a
 
       # The updater tests no longer hit live provider endpoints, so no provider tokens are injected.
@@ -359,8 +385,8 @@ jobs:
       # and the R2 append step below is skipped on forks.
       - name: Create Docker secrets env file
         run: |
-          : > "${{ runner.temp }}/docker-secrets.env"
-          chmod 600 "${{ runner.temp }}/docker-secrets.env"
+          : > "$RUNNER_TEMP/docker-secrets.env"
+          chmod 600 "$RUNNER_TEMP/docker-secrets.env"
 
       # Gated on the upstream repository so forks cannot substitute their own R2 credentials;
       # without these vars the R2 live smoke test is skipped (test.ifEnv).
@@ -369,7 +395,7 @@ jobs:
         run: |
           printf 'CF_R2_ACCESS_KEY_ID=%s\nCF_R2_SECRET_ACCESS_KEY=%s\nCF_R2_ACCOUNT_ID=%s\nCF_R2_BUCKET=%s\nCF_R2_PUBLIC_URL=%s\n' \
             "$CF_R2_ACCESS_KEY_ID_SECRET" "$CF_R2_SECRET_ACCESS_KEY_SECRET" "$CF_R2_ACCOUNT_ID_SECRET" "$CF_R2_BUCKET_SECRET" "$CF_R2_PUBLIC_URL_SECRET" \
-            >> "${{ runner.temp }}/docker-secrets.env"
+            >> "$RUNNER_TEMP/docker-secrets.env"
         env:
           CF_R2_ACCESS_KEY_ID_SECRET: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
           CF_R2_SECRET_ACCESS_KEY_SECRET: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
@@ -379,7 +405,7 @@ jobs:
 
       - name: Test
         run: |
-          echo $TEST_RUNNER_IMAGE_TAG
+          echo "$TEST_RUNNER_IMAGE_TAG"
           pnpm test:linux
         env:
           TEST_FILES: nsisUpdaterTest,PublishManager,differentialUpdateTest,GitlabPublisherTest,R2PublisherTest
@@ -414,8 +440,9 @@ jobs:
           collect-coverage: ${{ inputs.collect-coverage }}
 
       - name: Test snap ${{ matrix.core }} (Docker)
-        run: SNAP_CORE=${{ matrix.core }} ./test/src/linux/test-snap.sh
+        run: ./test/src/linux/test-snap.sh
         env:
+          SNAP_CORE: ${{ matrix.core }}
           VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
@@ -611,11 +638,14 @@ jobs:
           collect-coverage: ${{ inputs.collect-coverage }}
 
       - name: docker build
-        run: ./test/src/updater/test-specific-platforms.sh ${{ matrix.test_config.stem }} build
+        run: ./test/src/updater/test-specific-platforms.sh "$TEST_STEM" build
+        env:
+          TEST_STEM: ${{ matrix.test_config.stem }}
 
       - name: e2e Linux Updater tests (install, auto-update, uninstall)
-        run: ./test/src/updater/test-specific-platforms.sh ${{ matrix.test_config.stem }} run
+        run: ./test/src/updater/test-specific-platforms.sh "$TEST_STEM" run
         env:
+          TEST_STEM: ${{ matrix.test_config.stem }}
           ADDITIONAL_DOCKER_ARGS: >-
             -e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || '' }}
             -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }}
@@ -633,6 +663,7 @@ jobs:
   # -------------------------
 
   merge-smart-cache:
+    name: Merge smart cache and test reports
     needs: [test-linux, test-windows, test-macos, test-e2e, test-updater, test-snap, test-flatpak]
     if: always()
     runs-on: ubuntu-24.04
@@ -722,8 +753,9 @@ jobs:
 
       - name: Compute Vitest smart cache ref
         if: always()
+        env:
+          PR_NUM: ${{ github.event.pull_request.number }}
         run: |
-          PR_NUM="${{ github.event.pull_request.number }}"
           if [ -n "$PR_NUM" ]; then
             echo "VITEST_CACHE_REF=PR-${PR_NUM}" >> "$GITHUB_ENV"
           else
