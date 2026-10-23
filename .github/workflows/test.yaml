@@ -300,11 +300,20 @@ jobs:
       # Remove once the darwin bundles link OpenSSL statically and the older toolset versions are no longer tested here.
       - name: Provide OpenSSL 3.6 for bundled osslsigncode
         run: |
-          brew install openssl@3.6
-          ln -sfn "$(brew --prefix openssl@3.6)" "$(brew --prefix)/opt/openssl@3"
-          "$(brew --prefix)/opt/openssl@3/bin/openssl" version
-          nm -gU "$(brew --prefix)/opt/openssl@3/lib/libcrypto.3.dylib" | grep '_OPENSSL_sk_set_thunks$' \
-            || { echo "::error::libcrypto at $(brew --prefix)/opt/openssl@3 does not export _OPENSSL_sk_set_thunks"; exit 1; }
+          OPT="$(brew --prefix)/opt/openssl@3"
+          has_symbol() { nm -gU "$1/lib/libcrypto.3.dylib" 2>/dev/null | grep '_OPENSSL_sk_set_thunks$' >/dev/null; }
+          if has_symbol "$OPT"; then
+            # Older images still ship openssl@3 3.6.x, where `openssl@3.6` resolves to openssl@3 itself.
+            echo "openssl@3 at $OPT already provides OpenSSL 3.6+"
+          else
+            brew install openssl@3.6
+            # Resolve to the real Cellar keg so the opt link can never point back at itself.
+            KEG="$(cd "$(brew --prefix openssl@3.6)" && pwd -P)"
+            has_symbol "$KEG" || { echo "::error::openssl@3.6 keg $KEG does not export _OPENSSL_sk_set_thunks"; exit 1; }
+            ln -sfn "$KEG" "$OPT"
+          fi
+          "$OPT/bin/openssl" version
+          has_symbol "$OPT" || { echo "::error::libcrypto at $OPT does not export _OPENSSL_sk_set_thunks"; exit 1; }
 
       - name: Run shard
         run: pnpm ci:test
