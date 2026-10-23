@@ -127,8 +127,9 @@ jobs:
         env:
           STEPS_DIST_TAG_OUTPUTS_CONFIG_FILE: ${{ steps.dist-tag.outputs.config_file }}
 
+      # an exact version, as in npm-dist-tag.yml: a version on npm cannot be republished, so the tarball cannot change
       - name: Update npm to support OIDC token authentication for publishing
-        run: |
+        run: | # zizmor: ignore[adhoc-packages]
           for i in 1 2 3; do
             npm install -g npm@11.6.2 && break
             [ $i -lt 3 ] && echo "npm install failed (attempt $i/3), retrying in 15s…" && sleep 15

@@ -547,7 +547,9 @@ jobs:
       # restore-keys and re-saves at the end. With a static key, actions/cache never saves after an exact
       # hit, so an incomplete first save would be re-downloaded forever. The ubuntu-22.04 leg is the exception: it
       # keeps one entry, with a static key, so that the two legs do not both save several GB on every run.
-      - name: Cache flatpak runtimes
+      # zizmor's cache-poisoning finding does not apply: only this test job restores the flatpak-user-* entries, and
+      # nothing it builds is published (the Release workflow neither runs this job nor reads these keys).
+      - name: Cache flatpak runtimes # zizmor: ignore[cache-poisoning]
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.local/share/flatpak
