@@ -6,13 +6,14 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-permissions:
-  contents: read
-  statuses: write
+permissions: {}
 
 jobs:
   deploy:
     name: 'Deploy PR'
+    permissions:
+      contents: read  # actions/checkout
+      statuses: write  # the "Netlify Documentation Site preview" commit status
     runs-on: ubuntu-24.04
     # Only run on the main repository, not on forks
     if: github.repository == 'electron-userland/electron-builder'
