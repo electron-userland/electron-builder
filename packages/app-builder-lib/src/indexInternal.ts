@@ -42,6 +42,7 @@ export { validateCriticalPathString } from "./targets/linux/appimage/appImageUti
 export { copyMimeTypes } from "./targets/linux/appimage/appLauncher.js"
 export { MacTargetHelper, isLoadableMachOFileType, isMachOFile, MachOFileType, parseSigningTeamId, readMachOFileType, type PlatformType } from "./targets/mac/MacTargetHelper.js"
 export { assertSafeHelperName, configureLocalhostAts, getAvailableHelperSuffixes, type AvailableHelpers } from "./electron/mac/electronMacUtils.js"
+export { resolveSigningHashAlgorithms } from "./codeSign/win/signtoolBaseSignManager.js"
 export { addTargetsForPlatform, computeArchToTargetNamesMap } from "./targets/targetFactory.js"
 export type { Defines } from "./targets/win/nsis/Defines.js"
 export { nsisEscapeString, NsisScriptGenerator } from "./targets/win/nsis/nsisScriptGenerator.js"
