@@ -3,9 +3,9 @@ import { Nullish } from "builder-util-runtime"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { getCustomToolsetPath } from "./custom.js"
+import { resolveToolsetVersion } from "./version.js"
 
-// Newest WiX bundle — selected by `"latest"`. Unlike the other toolsets, an unset `toolsets.wix` keeps the legacy bundle, so
-// existing MSI builds are unchanged until the default moves.
+// Newest WiX bundle — selected when the config is unset or "latest".
 const WIX_LATEST = "2.0.0"
 
 export const wixChecksums = {
@@ -37,12 +37,9 @@ export function getWixNamespace(schema: WixSchema): string {
   return schema === "v3" ? "http://schemas.microsoft.com/wix/2006/wi" : "http://wixtoolset.org/schemas/v4/wxs"
 }
 
-/** Resolves a `toolsets.wix` version: unset or `"0.0.0"` is the legacy bundle, `"latest"` the newest one. */
+/** Resolves a `toolsets.wix` version: unset or `"latest"` is the newest bundle, `"0.0.0"` the legacy one. */
 export function resolveWixVersion(wix: Exclude<ToolsetConfig["wix"], object> | Nullish): "0.0.0" | "2.0.0" {
-  if (wix == null) {
-    return "0.0.0"
-  }
-  return wix === "latest" ? WIX_LATEST : wix
+  return resolveToolsetVersion(wix, WIX_LATEST)
 }
 
 export async function getWixToolset(wix: ToolsetConfig["wix"] | Nullish, resourcesDir: string): Promise<WixToolset> {

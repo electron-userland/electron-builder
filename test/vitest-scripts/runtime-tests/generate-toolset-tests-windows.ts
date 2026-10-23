@@ -109,8 +109,9 @@ const SUITES: WindowsSuiteConfig[] = [
     wineVersions: WINE_VERSIONS,
   },
   {
-    // the wrapper MSI with WiX 3, once, on the newest NSIS and winCodeSign (the msiWrapped suite above covers the legacy bundle)
-    name: "msiWrappedWix3",
+    // the wrapper MSI with the legacy WiX bundle, once, on the newest NSIS and winCodeSign (the msiWrapped suite above leaves toolsets.wix
+    // unset, which is WiX 3)
+    name: "msiWrappedLegacyWix",
     e2e: true,
     registerFn: namedFn("registerMsiWrappedTests" satisfies keyof typeof _MsiWrappedSuite),
     importPath: "windows/msiWrappedTestSuite",
@@ -119,7 +120,7 @@ const SUITES: WindowsSuiteConfig[] = [
     winCodeSignVersions: newestVersion(WIN_CODE_SIGN_VERSIONS),
     nsisVersions: newestVersion(NSIS_VERSIONS),
     wineVersions: WINE_VERSIONS,
-    wixVersions: ["2.0.0"],
+    wixVersions: ["0.0.0"],
   },
   {
     name: "squirrelWindows",

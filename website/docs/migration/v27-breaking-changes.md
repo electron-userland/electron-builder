@@ -841,11 +841,12 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 | `linuxToolsMac` | `1.0.0` | `1.0.1` | Same tools rebuilt to run on macOS 15+ (1.0.0 required macOS 26) |
 | `sevenZip` | `1.0.0` | `1.0.1` | Correct per-arch Windows `7za.exe` (x64, ia32, arm64) |
 | `squirrel` | *(electron-winstaller npm package)* | `1.1.1` | New toolset — Squirrel.Windows vendor bundle, replaces the `electron-winstaller` dependency |
+| `wix` | *(fixed, WiX 4.0.0.5512 preview)* — now `0.0.0` | `2.0.0` | WiX 3.14.1: native `arm64` MSIs (the preview packaged an arm64 app in an x64 MSI). The generated `.wxs` uses the WiX 3 schema, so an `msiProjectCreated` hook that inserts WiX 4-namespace elements needs the WiX 3 namespace (e.g. `http://schemas.microsoft.com/wix/UtilExtension`) or `wix: "0.0.0"` |
 
-**No action required** for most projects — the new bundles are drop-in replacements and produce identical output. **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`). If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
+**No action required** for most projects — the new bundles are drop-in replacements and produce identical output (for `wix`, the same installer from a WiX 3 project; only `msiProjectCreated` hooks that edit the project can notice). **`wine` is the exception:** its default is no longer a bundle at all, so a macOS host that builds Windows targets now needs Wine installed (`brew install --cask wine-stable`). If you hit a regression introduced by a newer bundle, pin back by setting the toolset version to `"0.0.0"`:
 
 ```json5
-{ "build": { "toolsets": { "winCodeSign": "0.0.0", "nsis": "0.0.0", "appimage": "0.0.0", "wine": "0.0.0" } } }
+{ "build": { "toolsets": { "winCodeSign": "0.0.0", "nsis": "0.0.0", "appimage": "0.0.0", "wine": "0.0.0", "wix": "0.0.0" } } }
 ```
 
 This escape hatch is intended as a short-term workaround. The `"0.0.0"` alias may be removed in a future major release.

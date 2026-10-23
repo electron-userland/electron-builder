@@ -77,8 +77,8 @@ export default class MsiTarget extends Target {
 
     const commonOptions = getEffectiveOptions(this.options, this.packager)
 
-    // The legacy wix 4.0.0.5512.2 bundle doesn't support the arm64 architecture, so with it an arm64 build is packaged as an x64 MSI
-    // that installs the arm64 app. `toolsets.wix: "2.0.0"` (WiX 3.14.1) builds an arm64 MSI.
+    // The legacy wix 4.0.0.5512.2 bundle (`toolsets.wix: "0.0.0"`) doesn't support the arm64 architecture, so with it an arm64 build is
+    // packaged as an x64 MSI that installs the arm64 app. The default WiX 3.14.1 bundle builds an arm64 MSI.
     // https://github.com/electron-userland/electron-builder/issues/6077
     const wixToolset = await this.wixToolset.value
     const wixArch = getWixArch(arch, wixToolset.schema)

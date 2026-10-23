@@ -4,9 +4,9 @@ import { getCandleArch, getWixArch, getWixNamespace, resolveWixVersion } from "a
 import { describe, expect, test } from "vitest"
 
 describe("toolsets.wix", () => {
-  test("an unset wix keeps the legacy bundle; latest selects WiX 3.14.1", () => {
-    expect(resolveWixVersion(undefined)).toBe("0.0.0")
-    expect(resolveWixVersion(null)).toBe("0.0.0")
+  test("unset and latest select WiX 3.14.1; 0.0.0 keeps the legacy bundle", () => {
+    expect(resolveWixVersion(undefined)).toBe("2.0.0")
+    expect(resolveWixVersion(null)).toBe("2.0.0")
     expect(resolveWixVersion("0.0.0")).toBe("0.0.0")
     expect(resolveWixVersion("2.0.0")).toBe("2.0.0")
     expect(resolveWixVersion("latest")).toBe("2.0.0")
