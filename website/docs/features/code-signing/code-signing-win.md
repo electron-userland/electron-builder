@@ -3,7 +3,7 @@
 Windows code signing is supported and runs automatically once you configure a signing method — or simply provide signing credentials through environment variables. electron-builder signs every executable and installer it produces so that Windows SmartScreen and your auto-updater can verify your app's publisher and confirm it hasn't been tampered with.
 
 :::tip[Dual signing]
-By default each binary is dual-signed with both SHA-1 and SHA-256 (`signingHashAlgorithms: ["sha1", "sha256"]`) so it validates on legacy as well as modern Windows. A few targets are fixed: `.msi` is single-signed and AppX/MSIX is SHA-256 only.
+By default each binary is dual-signed with both SHA-1 and SHA-256 (`signingHashAlgorithms: ["sha1", "sha256"]`) so it validates on legacy as well as modern Windows. A few targets are fixed: `.msi` holds a single signature, which is SHA-256 unless `sha1` is the only algorithm listed, and AppX/MSIX is SHA-256 only.
 :::
 
 ## Choosing a signing method
