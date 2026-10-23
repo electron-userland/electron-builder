@@ -140,12 +140,17 @@ jobs:
 
       # an exact version, as in pr-release.yml: a version on npm cannot be republished, so the tarball cannot change
       - name: Update npm to support OIDC token authentication for dist-tag
+        env:
+          NPM_VERSION: 11.21.0
         run: | # zizmor: ignore[adhoc-packages]
           for i in 1 2 3; do
-            npm install -g npm@11.21.0 && break
+            npm install -g "npm@$NPM_VERSION" && break
             [ $i -lt 3 ] && echo "npm install failed (attempt $i/3), retrying in 15s…" && sleep 15
           done
-          npm -v
+          # the loop ends with a failed attempt too: without npm $NPM_VERSION, npm dist-tag cannot authenticate
+          version=$(npm -v)
+          test "$version" = "$NPM_VERSION" || { echo "::error::npm $NPM_VERSION install failed (npm is $version)"; exit 1; }
+          echo "npm $version"
         shell: bash
 
       # fails without a plan when a release or a version is missing, so either every dist-tag of the file can move or
