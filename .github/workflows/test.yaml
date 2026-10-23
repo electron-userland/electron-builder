@@ -281,6 +281,30 @@ jobs:
           brew install rpm
           brew install snapcraft
 
+      # The published win-codesign darwin bundles (1.0.0 through 1.3.0) link osslsigncode dynamically against
+      # $(brew --prefix)/opt/openssl@3/lib/libcrypto.3.dylib and were built against OpenSSL 3.6 (they import
+      # _OPENSSL_sk_set_thunks, which first shipped in 3.6). Homebrew's `openssl@3` formula now tracks the 3.5 LTS line
+      # (runner image macos-26-arm64 20261021.0445 ships 3.5.9), so dyld aborts with "Symbol not found". Point the
+      # openssl@3 opt link at the keg-only `openssl@3.6` formula; 3.6 stays ABI-compatible with anything built
+      # against 3.5. Must run after every other `brew install` so nothing relinks openssl@3 afterwards.
+      # Remove once the darwin bundles link OpenSSL statically and the older toolset versions are no longer tested here.
+      - name: Provide OpenSSL 3.6 for bundled osslsigncode
+        run: |
+          OPT="$(brew --prefix)/opt/openssl@3"
+          has_symbol() { nm -gU "$1/lib/libcrypto.3.dylib" 2>/dev/null | grep '_OPENSSL_sk_set_thunks$' >/dev/null; }
+          if has_symbol "$OPT"; then
+            # Older images still ship openssl@3 3.6.x, where `openssl@3.6` resolves to openssl@3 itself.
+            echo "openssl@3 at $OPT already provides OpenSSL 3.6+"
+          else
+            brew install openssl@3.6
+            # Resolve to the real Cellar keg so the opt link can never point back at itself.
+            KEG="$(cd "$(brew --prefix openssl@3.6)" && pwd -P)"
+            has_symbol "$KEG" || { echo "::error::openssl@3.6 keg $KEG does not export _OPENSSL_sk_set_thunks"; exit 1; }
+            ln -sfn "$KEG" "$OPT"
+          fi
+          "$OPT/bin/openssl" version
+          has_symbol "$OPT" || { echo "::error::libcrypto at $OPT does not export _OPENSSL_sk_set_thunks"; exit 1; }
+
       - name: Run shard
         run: pnpm ci:test
         env:
