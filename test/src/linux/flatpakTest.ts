@@ -1,4 +1,4 @@
-import { Configuration, FlatpakOptions } from "app-builder-lib"
+import { Configuration, FilesBuildOptions, FlatpakOptions } from "app-builder-lib"
 import { FlatpakBundleOptions } from "app-builder-lib/src/targets/linux/flatpakBundle"
 import { InvalidConfigurationError, log } from "builder-util"
 import { Arch, Platform } from "electron-builder"
@@ -45,10 +45,14 @@ interface Computed {
 }
 
 async function computeOptions(expect: ExpectStatic, flatpak: FlatpakOptions): Promise<Computed> {
+  return computeOptionsForConfig(expect, { flatpak })
+}
+
+async function computeOptionsForConfig(expect: ExpectStatic, config: Configuration): Promise<Computed> {
   const calls: Computed[] = []
   await app(expect, {
     targets: flatpakTarget,
-    config: { flatpak },
+    config,
     effectiveOptionComputed: async (options: FlatpakBundleOptions) => {
       // checked here because the working directory is removed when the build finishes
       calls.push({ options, tempDirExisted: existsSync(options.tempDir) })
@@ -558,6 +562,33 @@ describe.heavy.ifNotWindows("flatpak", { concurrent: false, timeout: EXTENDED_TI
 
   test("additionalArgs with a key that is not a tool is rejected by the configuration schema", async ({ expect }) => {
     await expect(computeOptions(expect, { additionalArgs: { export: ["--disable-sandbox"] } as any })).rejects.toThrow(/additionalArgs/)
+  })
+
+  // Regression tests: `linux.files` (a string[] of glob patterns, used by most real-world Linux configs) used to get merged into
+  // FlatpakOptions.files (a [string, string][] of copy tuples) by getOptionsForTarget's deepAssign, which concatenates arrays
+  // instead of replacing them. The copy step of buildFlatpakBundle then destructured each glob string as [src, dest], producing a
+  // bogus path and crashing the build with ENOENT. `linux.files` may also be a single glob string or a single FileSet object;
+  // the merged target options then hold a string or an object under `files`, which is not filterable, so FlatpakTarget threw.
+  // FlatpakTarget computes the copy pairs before the bundle step, so these check the pairs it hands to buildFlatpakBundle.
+  test.for<[string, FilesBuildOptions["files"]]>([
+    ["linux.files does not corrupt the flatpak files option", ["**/*", "!**/*.ts"]],
+    ["single-string linux.files does not throw in FlatpakTarget", "**/*"],
+    ["single FileSet linux.files does not throw in FlatpakTarget", { from: ".", filter: ["**/*"] }],
+  ])("%s", async ([, files], { expect }) => {
+    const { options } = await computeOptionsForConfig(expect, { linux: { fileOptions: { files } } })
+    const outDir = path.dirname(options.artifactPath)
+    expect(options.files).toEqual([
+      [path.join(outDir, "__flatpak-x86_64"), "/"],
+      [path.join(outDir, "linux-unpacked"), `/lib/${APP_ID}`],
+    ])
+  })
+
+  test("linux.files leaves the flatpak files pairs as they are", async ({ expect }) => {
+    const { options } = await computeOptionsForConfig(expect, {
+      linux: { fileOptions: { files: ["**/*", "!**/*.ts"] } },
+      flatpak: { files: [["build/extra.txt", "/share/extra.txt"]] },
+    })
+    expect(options.files.slice(2)).toEqual([["build/extra.txt", "/share/extra.txt"]])
   })
 
   test("custom manifest options, files and symlinks", async ({ expect }) => {
