@@ -46,9 +46,9 @@ jobs:
           BRANCH="${GITHUB_REF_NAME}"
 
           if [ "$BRANCH" == "master" ]; then
-            echo "tag=next" >> $GITHUB_OUTPUT
-            echo "branch_type=prerelease" >> $GITHUB_OUTPUT
-            echo "config_file=config.json" >> $GITHUB_OUTPUT
+            echo "tag=next" >> "$GITHUB_OUTPUT"
+            echo "branch_type=prerelease" >> "$GITHUB_OUTPUT"
+            echo "config_file=config.json" >> "$GITHUB_OUTPUT"
 
           elif [[ "$BRANCH" =~ ^release/v[0-9]+$ ]]; then
             # Extract version from branch name (e.g., release/v27 -> v27)
@@ -62,9 +62,9 @@ jobs:
               exit 1
             fi
 
-            echo "tag=$VERSION" >> $GITHUB_OUTPUT
-            echo "branch_type=lts" >> $GITHUB_OUTPUT
-            echo "config_file=config.release-$VERSION.json" >> $GITHUB_OUTPUT
+            echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "branch_type=lts" >> "$GITHUB_OUTPUT"
+            echo "config_file=config.release-$VERSION.json" >> "$GITHUB_OUTPUT"
 
           else
             echo "::error::Unsupported branch for release: $BRANCH"
@@ -74,9 +74,9 @@ jobs:
 
           # Log determined values
           echo "Branch: $BRANCH"
-          echo "Dist-tag: $(grep '^tag=' $GITHUB_OUTPUT | cut -d= -f2)"
-          echo "Branch type: $(grep '^branch_type=' $GITHUB_OUTPUT | cut -d= -f2)"
-          echo "Config file: $(grep '^config_file=' $GITHUB_OUTPUT | cut -d= -f2)"
+          echo "Dist-tag: $(grep '^tag=' "$GITHUB_OUTPUT" | cut -d= -f2)"
+          echo "Branch type: $(grep '^branch_type=' "$GITHUB_OUTPUT" | cut -d= -f2)"
+          echo "Config file: $(grep '^config_file=' "$GITHUB_OUTPUT" | cut -d= -f2)"
 
       - name: Link changeset config for this branch
         run: |
@@ -154,15 +154,15 @@ jobs:
       - name: Publish Summary
         if: steps.changesets.outputs.published == 'true'
         run: |
-          echo "## 📦 Published Packages" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** \`${GITHUB_REF_NAME}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Dist-tag:** \`${STEPS_DIST_TAG_OUTPUTS_TAG}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Type:** \`${STEPS_DIST_TAG_OUTPUTS_BRANCH_TYPE}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```json' >> $GITHUB_STEP_SUMMARY
-          echo "${STEPS_CHANGESETS_OUTPUTS_PUBLISHEDPACKAGES}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Published Packages" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Branch:** \`${GITHUB_REF_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Dist-tag:** \`${STEPS_DIST_TAG_OUTPUTS_TAG}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Type:** \`${STEPS_DIST_TAG_OUTPUTS_BRANCH_TYPE}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          echo "${STEPS_CHANGESETS_OUTPUTS_PUBLISHEDPACKAGES}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
         env:
           STEPS_DIST_TAG_OUTPUTS_TAG: ${{ steps.dist-tag.outputs.tag }}
           STEPS_DIST_TAG_OUTPUTS_BRANCH_TYPE: ${{ steps.dist-tag.outputs.branch_type }}
