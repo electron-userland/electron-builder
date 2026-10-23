@@ -1,3 +1,5 @@
+import { mkdir, writeFile } from "fs/promises"
+import * as path from "path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { DebUpdater, NoOpLogger, PacmanUpdater, RpmUpdater } from "electron-updater"
 import { runInstallPlan, runInstallPlanAsync } from "electron-updater/src/LinuxUpdater"
@@ -180,6 +182,51 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
       expect((updater as any).determineSudoCommand()).toBe("sudo")
     })
+
+    it("says once that pkexec is used when a legacy helper is installed too", () => {
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => ["pkexec", "kdesudo"].includes(args[0] as string))
+      const info = vi.fn()
+      updater.logger = { info, warn() {}, error() {} }
+
+      ;(updater as any).determineSudoCommand()
+      ;(updater as any).determineSudoCommand()
+
+      const announcements = info.mock.calls.filter(([message]) => String(message).includes("polkit"))
+      expect(announcements).toEqual([["Elevating the install with pkexec (polkit); kdesudo is only used on systems without polkit"]])
+    })
+
+    it("does not announce anything when pkexec is the only helper", () => {
+      vi.spyOn(updater as any, "hasCommand").mockImplementation((...args: unknown[]) => args[0] === "pkexec")
+      const info = vi.fn()
+      updater.logger = { info, warn() {}, error() {} }
+
+      ;(updater as any).determineSudoCommand()
+
+      expect(info.mock.calls.filter(([message]) => String(message).includes("polkit"))).toEqual([])
+    })
+  })
+
+  describe("resolveTrustedCommand", () => {
+    it("keeps an absolute path", () => {
+      expect((updater as any).resolveTrustedCommand("/opt/bin/dpkg")).toBe("/opt/bin/dpkg")
+    })
+
+    it.skipIf(process.platform === "win32")("finds a command in the system directories", () => {
+      expect(["/usr/bin/sh", "/bin/sh", "/usr/sbin/sh", "/sbin/sh"]).toContain((updater as any).resolveTrustedCommand("sh"))
+    })
+
+    it.skipIf(process.platform === "win32")("ignores the caller's PATH, which can hold user-writable directories", async ({ tmpDir }) => {
+      const dir = await tmpDir.getTempDir({ prefix: "user-bin" })
+      await mkdir(dir, { recursive: true })
+      const name = "electron-updater-test-package-manager"
+      await writeFile(path.join(dir, name), "#!/bin/sh\n", { mode: 0o755 })
+      vi.stubEnv("PATH", `${dir}${path.delimiter}${process.env.PATH ?? ""}`)
+      try {
+        expect(() => (updater as any).resolveTrustedCommand(name)).toThrow(`${name} not found in /usr/sbin:/usr/bin:/sbin:/bin`)
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
   })
 
   describe("async install", () => {
@@ -193,6 +240,8 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
         const cmd = args[0] as string
         return cmd === "dpkg" || cmd === "pkexec"
       })
+      // independent of where the test machine has its package managers
+      vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => `/usr/bin/${args[0] as string}`)
     })
 
     it("passes the command to pkexec as argv, without a shell and without escaping the path", async () => {
@@ -201,19 +250,48 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
 
       await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
 
-      // the dialog shows `dpkg -i …` instead of `/bin/bash -c '…'`, and the space is not backslash-escaped
-      expect(spawnAsyncLog).toHaveBeenCalledWith("pkexec", ["--disable-internal-agent", "dpkg", "-i", "/tmp/a b/update-1.0.2.deb"], {}, false)
+      // the dialog shows `/usr/bin/dpkg -i …` instead of `/bin/bash -c '…'`, and the space is not backslash-escaped
+      expect(spawnAsyncLog).toHaveBeenCalledWith("pkexec", ["--disable-internal-agent", "/usr/bin/dpkg", "-i", "/tmp/a b/update-1.0.2.deb"], {}, false)
     })
 
-    it("keeps the wrapped command string for helpers that cannot take argv", async () => {
-      setRawPath("/tmp/update-1.0.2.deb")
+    it("keeps the wrapped command string and the escaped path for helpers that cannot take argv", async () => {
+      setRawPath("/tmp/a b/update-1.0.2.deb")
       vi.spyOn(updater as any, "determineSudoCommand").mockReturnValue("gksudo")
       const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
 
       await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
 
-      // gksudo takes a single command string, so the bash wrapper and the shell stay
-      expect(spawnAsyncLog).toHaveBeenCalledWith("gksudo", ["--message", expect.any(String), `"/bin/bash`, "-c", `'dpkg -i /tmp/update-1.0.2.deb'"`])
+      // gksudo takes a single command string, so the bash wrapper, the shell and the escaping stay
+      expect(spawnAsyncLog).toHaveBeenCalledWith("gksudo", ["--message", expect.any(String), `"/bin/bash`, "-c", `'dpkg -i /tmp/a\\ b/update-1.0.2.deb'"`])
+    })
+
+    it("resolves the elevation helper once per install, for every command of the plan", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      const determineSudoCommand = vi.spyOn(updater as any, "determineSudoCommand")
+      const spawnAsyncLog = vi
+        .spyOn(updater as any, "spawnAsyncLog")
+        .mockRejectedValueOnce(new Error("Command pkexec exited with code 1"))
+        .mockResolvedValue(undefined)
+
+      await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
+
+      // dpkg, then the apt-get repair: two privileged commands, one helper resolution
+      expect(spawnAsyncLog).toHaveBeenCalledTimes(2)
+      expect(determineSudoCommand).toHaveBeenCalledTimes(1)
+    })
+
+    it("does not run a command that is not in the system directories", async () => {
+      setRawPath("/tmp/update-1.0.2.deb")
+      vi.spyOn(updater as any, "resolveTrustedCommand").mockImplementation((...args: unknown[]) => {
+        throw new Error(`${args[0] as string} not found in /usr/sbin:/usr/bin:/sbin:/bin`)
+      })
+      const spawnAsyncLog = vi.spyOn(updater as any, "spawnAsyncLog").mockResolvedValue(undefined)
+      const dispatchError = vi.spyOn(updater as any, "dispatchError").mockReturnValue(undefined)
+
+      expect(await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })).toBe(false)
+      expect(spawnAsyncLog).not.toHaveBeenCalled()
+      // like the wrapped form's `command not found`, a missing dpkg leads to the apt-get repair, which is not found either
+      expect(dispatchError).toHaveBeenCalledWith(expect.objectContaining({ message: "apt-get not found in /usr/sbin:/usr/bin:/sbin:/bin" }))
     })
 
     it("never falls back to the blocking spawnSync path", async () => {
@@ -239,8 +317,8 @@ describe("LinuxUpdater unit tests", { concurrent: false }, () => {
       await (updater as any).doInstallAsync({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: false })
 
       expect(spawnAsyncLog.mock.calls.map(([, argv]: any) => argv.slice(1))).toEqual([
-        ["dpkg", "-i", "/tmp/update-1.0.2.deb"],
-        ["apt-get", "install", "-f", "-y"],
+        ["/usr/bin/dpkg", "-i", "/tmp/update-1.0.2.deb"],
+        ["/usr/bin/apt-get", "install", "-f", "-y"],
       ])
     })
 

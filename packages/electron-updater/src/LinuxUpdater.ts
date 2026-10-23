@@ -1,4 +1,6 @@
 import { AllPublishOptions } from "builder-util-runtime"
+import { accessSync, constants as fsConstants } from "fs"
+import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { Logger } from "./types.js"
@@ -7,6 +9,22 @@ import { nonThrowingLogger } from "./util.js"
 // Matches safe package manager names: alphanumeric, hyphens, underscores only.
 // Rejects names with shell metacharacters that could cause command injection.
 const SAFE_PM_REGEX = /^[a-zA-Z0-9_-]+$/
+
+/**
+ * Where a privileged command passed as argv is looked up. An elevation helper resolves a relative program name with the
+ * caller's PATH, which can hold user-writable directories (`~/.local/bin`): a program planted there would run as root
+ * once the user authenticates. A relative name is resolved in these system directories instead.
+ */
+const TRUSTED_COMMAND_DIRS = ["/usr/sbin", "/usr/bin", "/sbin", "/bin"]
+
+/**
+ * How the asynchronous install runs a privileged command, resolved once per install so that the installer path
+ * escaping and the way the command is spawned cannot disagree.
+ * - `root`: no elevation needed; the command is spawned directly, as argv.
+ * - `argv`: the helper (pkexec, sudo) takes the command as an argv array, so no shell and no escaping are involved.
+ * - `wrapped`: the helper (gksudo, kdesudo, beesu) takes a single command string: `/bin/bash -c '…'` and an escaped path.
+ */
+export type Elevation = { readonly kind: "root" } | { readonly kind: "argv" | "wrapped"; readonly helper: string[] }
 
 /**
  * The commands that install a package, declared once per package manager so that the synchronous on-quit install
@@ -150,46 +168,66 @@ export abstract class LinuxUpdater extends BaseUpdater {
     return this.takesArgv(sudo[0]) ? "" : `"`
   }
 
-  /**
-   * {@link runCommandWithSudoIfNeeded} without blocking the main process, and without a shell wherever the
-   * elevation helper accepts an argv array.
-   *
-   * pkexec and sudo do, so their authentication dialog shows the command being authorized
-   * (`dpkg -i /path/app.deb`) instead of the `/bin/bash -c '…'` wrapper, the installer path needs no
-   * escaping, and no `shell: true` deprecation applies. gksudo, kdesudo and beesu take the command as a
-   * single string, so those keep the wrapped form.
-   */
-  protected async runCommandWithSudoIfNeededAsync(commandWithArgs: string[]): Promise<void> {
-    if (this.isRunningAsRoot()) {
-      this._logger.info("Running as root, no need to use sudo")
-      await this.spawnAsyncLog(commandWithArgs[0], commandWithArgs.slice(1), {}, false)
-      return
-    }
-
-    const sudo = this.sudoWithArgs(this.installComment())
-    this._logger.info(`Running as non-root user, using sudo to install: ${sudo}`)
-    const sudoArgs = sudo.length > 1 ? sudo.slice(1) : []
-
-    if (this.takesArgv(sudo[0])) {
-      await this.spawnAsyncLog(sudo[0], [...sudoArgs, ...commandWithArgs], {}, false)
-      return
-    }
-
-    const wrapper = this.commandWrapperFor(sudo)
-    await this.spawnAsyncLog(sudo[0], [...sudoArgs, `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
-  }
-
   /** Whether the elevation helper runs an argv array rather than a single command string. */
   private takesArgv(sudo: string): boolean {
     return /pkexec/i.test(sudo) || sudo === "sudo"
   }
 
+  /** Determines once per install how {@link runCommandWithSudoIfNeededAsync} runs privileged commands. */
+  protected resolveElevation(): Elevation {
+    if (this.isRunningAsRoot()) {
+      this._logger.info("Running as root, no need to use sudo")
+      return { kind: "root" }
+    }
+    const helper = this.sudoWithArgs(this.installComment())
+    this._logger.info(`Running as non-root user, using sudo to install: ${helper}`)
+    return { kind: this.takesArgv(helper[0]) ? "argv" : "wrapped", helper }
+  }
+
   /**
-   * The installer path for the asynchronous path: unescaped when the command is passed as argv, escaped when
-   * it still goes through the `/bin/bash -c` wrapper.
+   * Resolves a relative command name in {@link TRUSTED_COMMAND_DIRS}, for a command passed as argv to an elevation
+   * helper. Throws when it is not found there; the install plan treats that as a failed command.
    */
-  protected get asyncInstallerPath(): string | null {
-    return this.isRunningAsRoot() || this.takesArgv(this.determineSudoCommand()) ? this.rawInstallerPath : this.installerPath
+  protected resolveTrustedCommand(command: string): string {
+    if (path.isAbsolute(command)) {
+      return command
+    }
+    for (const dir of TRUSTED_COMMAND_DIRS) {
+      const candidate = path.join(dir, command)
+      try {
+        accessSync(candidate, fsConstants.X_OK)
+        return candidate
+      } catch {
+        // not in this directory
+      }
+    }
+    throw new Error(`${command} not found in ${TRUSTED_COMMAND_DIRS.join(":")}`)
+  }
+
+  /**
+   * {@link runCommandWithSudoIfNeeded} without blocking the main process, and without a shell wherever the
+   * elevation helper accepts an argv array.
+   *
+   * pkexec and sudo do, so their authentication dialog shows the command being authorized
+   * (`/usr/bin/dpkg -i /path/app.deb`) instead of the `/bin/bash -c '…'` wrapper, the installer path needs no
+   * escaping, and no `shell: true` deprecation applies. gksudo, kdesudo and beesu take the command as a
+   * single string, so those keep the wrapped form.
+   */
+  protected async runCommandWithSudoIfNeededAsync(commandWithArgs: string[], elevation: Elevation): Promise<void> {
+    if (elevation.kind === "root") {
+      await this.spawnAsyncLog(commandWithArgs[0], commandWithArgs.slice(1), {}, false)
+      return
+    }
+
+    const [sudo, ...sudoArgs] = elevation.helper
+    if (elevation.kind === "argv") {
+      const [command, ...args] = commandWithArgs
+      await this.spawnAsyncLog(sudo, [...sudoArgs, this.resolveTrustedCommand(command), ...args], {}, false)
+      return
+    }
+
+    const wrapper = this.commandWrapperFor(elevation.helper)
+    await this.spawnAsyncLog(sudo, [...sudoArgs, `${wrapper}/bin/bash`, "-c", `'${commandWithArgs.join(" ")}'${wrapper}`])
   }
 
   /**
@@ -219,13 +257,20 @@ export abstract class LinuxUpdater extends BaseUpdater {
 
   /** {@link doInstall} without blocking the main process while the elevation dialog is open. */
   protected async doInstallAsync(options: InstallOptions): Promise<boolean> {
-    const installerPath = this.asyncInstallerPath
-    if (installerPath == null) {
+    if (this.installerPath == null) {
       this.dispatchError(new Error("No update filepath provided, can't quit and install"))
       return false
     }
     try {
-      await runInstallPlanAsync(this.resolveInstallPlan(installerPath), commandWithArgs => this.runCommandWithSudoIfNeededAsync(commandWithArgs), this._logger)
+      const elevation = this.resolveElevation()
+      // the path is only escaped when the command goes through the /bin/bash -c wrapper; as an argv element the escapes
+      // would reach the package manager literally
+      const installerPath = elevation.kind === "wrapped" ? this.installerPath : this.rawInstallerPath
+      if (installerPath == null) {
+        throw new Error("No update filepath provided, can't quit and install")
+      }
+      const plan = this.resolveInstallPlan(installerPath)
+      await runInstallPlanAsync(plan, commandWithArgs => this.runCommandWithSudoIfNeededAsync(commandWithArgs, elevation), this._logger)
     } catch (error: unknown) {
       this.dispatchError(error instanceof Error ? error : new Error(String(error)))
       return false
@@ -267,10 +312,27 @@ export abstract class LinuxUpdater extends BaseUpdater {
     const sudos = ["pkexec", "gksudo", "kdesudo", "beesu"]
     for (const sudo of sudos) {
       if (this.hasCommand(sudo)) {
+        if (sudo === "pkexec") {
+          this.announceSkippedLegacyHelpers()
+        }
         return sudo
       }
     }
     return "sudo"
+  }
+
+  private legacyHelpersChecked = false
+
+  // once per updater: on a system that also has gksudo or kdesudo, the authentication prompt comes from polkit
+  private announceSkippedLegacyHelpers(): void {
+    if (this.legacyHelpersChecked) {
+      return
+    }
+    this.legacyHelpersChecked = true
+    const installed = ["gksudo", "kdesudo"].filter(helper => this.hasCommand(helper))
+    if (installed.length !== 0) {
+      this._logger.info(`Elevating the install with pkexec (polkit); ${installed.join(" and ")} ${installed.length === 1 ? "is" : "are"} only used on systems without polkit`)
+    }
   }
 
   /**
