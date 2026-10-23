@@ -89,7 +89,8 @@ export interface WindowsSigntoolConfiguration {
   readonly sign?: CustomWindowsSign | string | null
 
   /**
-   * Array of signing algorithms used. For AppX `sha256` is always used.
+   * Array of signing algorithms used. For AppX/MSIX `sha256` is always used. `.msi` cannot be dual-signed,
+   * so it is signed once, with `sha256` unless `sha1` is the only algorithm listed.
    * @default ['sha1', 'sha256']
    */
   readonly signingHashAlgorithms?: Array<"sha1" | "sha256"> | null
