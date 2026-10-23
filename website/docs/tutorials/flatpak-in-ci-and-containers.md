@@ -189,4 +189,4 @@ For `Failure spawning rofiles-fuse`, `is not a valid icon: bwrap: ...`, `No remo
 
 ## Outside a Container
 
-On a machine where FUSE and user namespaces work, none of this is needed: install the tools, add the remote, and electron-builder does the rest — see [Build Requirements](../flatpak.md#build-requirements). Besides the [privileged container](#github-actions), electron-builder's own flatpak tests run that way, directly on a GitHub-hosted `ubuntu-22.04` runner, with the stock `flatpak` 1.12.7 and `flatpak-builder` 1.2.2 of Ubuntu 22.04; the `test-flatpak` job of its [test workflow](https://github.com/electron-userland/electron-builder/blob/master/.github/workflows/test.yaml) shows the steps.
+On a machine where FUSE and user namespaces work, none of this is needed: install the tools, add the remote, and electron-builder does the rest — see [Build Requirements](../flatpak.md#build-requirements).

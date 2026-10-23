@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs a command for the flatpak tests (the "Test Flatpak (docker)" job of .github/workflows/test.yaml) in a privileged
+# Runs a command for the flatpak tests (the "Test Flatpak" job of .github/workflows/test.yaml) in a privileged
 # container of the electronuserland/builder image, as the calling user rather than as root.
 #
 #   FLATPAK_TEST_IMAGE=electronuserland/builder:22-wine-chrome test/src/linux/flatpak-docker.sh pnpm ci:test
