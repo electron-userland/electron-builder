@@ -6,6 +6,12 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# one deploy per release tag at a time (a manual re-run waits for the one in progress); deploys of different
+# releases are not serialized or cancelled, so none is skipped
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions: {}
 
 jobs:

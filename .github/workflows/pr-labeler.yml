@@ -2,6 +2,11 @@ name: "Pull Request Labeler"
 on:
 - pull_request
 
+# a newer event of the same pull request supersedes a run still in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
