@@ -56,8 +56,9 @@ export function getAvailableHelperSuffixes(present: AvailableHelpers): string[] 
  * Adds the App Transport Security entries that electron-updater's local update proxy needs: local networking, and
  * plain-HTTP exceptions for `localhost` and `127.0.0.1`.
  *
- * `NSAllowsArbitraryLoads` is set to `true` only when the app has not set it already, for example through
- * `mac.extendInfo`, so an explicit `false` is kept.
+ * Electron's default `Info.plist` already enables `NSAllowsArbitraryLoads`, and `mac.extendInfo` is merged over it before this runs,
+ * so whatever value the app sets there is kept; the key is set to `true` only when it is missing (or `null`, which `extendInfo` cannot
+ * use to remove it).
  */
 export function configureLocalhostAts(appPlist: any): void {
   // https://bencoding.com/2015/07/20/app-transport-security-and-localhost/
