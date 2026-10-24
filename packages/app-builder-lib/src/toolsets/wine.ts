@@ -3,7 +3,7 @@ import { Nullish } from "builder-util-runtime"
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
-import { findExecutable, findHostWine, HOST_WINE_PATHS } from "../util/systemTools.js"
+import { findHostWine, HOST_WINE_PATHS } from "../util/systemTools.js"
 import { getCustomToolsetPath } from "./custom.js"
 
 const githubOrgRepo = "electron-userland/electron-builder-binaries"
@@ -11,9 +11,6 @@ const githubOrgRepo = "electron-userland/electron-builder-binaries"
 // What an unset / null / "latest" config resolves to. Not necessarily a bundle version: the published
 // wine@1.0.1 bundles ship no PE builtins, so the default is the host wine (at a fixed install location).
 const WINE_LATEST = "system"
-
-// The Wine prefix shipped inside a Wine bundle
-const WINE_PREFIX_DIR = "wine-home"
 
 const wineToolsChecksums: Record<string, Record<string, string>> = {
   "0.0.0": {
@@ -44,11 +41,6 @@ export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, reso
     // Custom toolset — honored on every platform (never overridden by the host-wine branch below).
     toolsetPath = await getCustomToolsetPath(toolset, resourcesDir)
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
-    if (!(await exists(path.join(toolsetPath, WINE_PREFIX_DIR)))) {
-      // No bundled prefix: a host Wine installation directory (e.g. file:///opt/wine-stable). Its executable is used by
-      // absolute path, with Wine's own default prefix and library lookup, like "system".
-      return { execPath: hostInstallWinePath(toolsetPath, execSubPath), env: defaultEnv }
-    }
   } else if (toolset === "system" || process.platform === "linux") {
     // Host wine, only from its fixed install locations — never looked up on PATH. Linux ships no portable bundle so it always
     // lands here; other platforms opt in with `toolsets.wine: "system"` — the replacement for the `USE_SYSTEM_WINE` env var
@@ -93,10 +85,7 @@ function systemWinePath(): string {
   const wine = findHostWine()
   if (wine == null) {
     const paths = HOST_WINE_PATHS[process.platform] ?? []
-    throw new InvalidConfigurationError(
-      `Wine is used only from its install locations (${paths.join(", ")}), where it was not found. ` +
-        `To use a Wine installed elsewhere, set its installation directory (the one containing bin/wine): "toolsets": { "wine": { "url": "file:///absolute/path/to/wine-dir" } }`
-    )
+    throw new InvalidConfigurationError(`Wine is used only from its install locations (${paths.join(", ")}), where it was not found. Install Wine at one of these locations.`)
   }
   if (loggedHostWine !== wine) {
     loggedHostWine = wine
@@ -105,19 +94,11 @@ function systemWinePath(): string {
   return wine
 }
 
-function hostInstallWinePath(toolsetPath: string, execSubPath: string): string {
-  const execPath = path.resolve(sanitizeDirPath(toolsetPath), execSubPath)
-  if (findExecutable([execPath]) == null) {
-    throw new InvalidConfigurationError(`Wine toolset at "${toolsetPath}" is missing an executable bin/wine or bin/wine64`)
-  }
-  return execPath
-}
-
 async function createWineEnvironment(toolsetPath: string, execSubPath: string) {
   const sanitizedWinePath = sanitizeDirPath(toolsetPath)
 
   const execPath = path.resolve(sanitizedWinePath, execSubPath)
-  const winePrefix = path.resolve(sanitizedWinePath, WINE_PREFIX_DIR)
+  const winePrefix = path.resolve(sanitizedWinePath, "wine-home")
 
   for (const p of [execPath, winePrefix]) {
     if (!(await exists(p))) {

@@ -294,17 +294,7 @@ The host Wine (`toolsets.wine: "system"`, the default) is started by absolute pa
 | macOS | `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine`, `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine`, the same path in `Wine Devel.app` and `Wine Staging.app` |
 | Linux | `/usr/local/bin/wine`, `/usr/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`, `/opt/wine-staging/bin/wine` |
 
-If Wine is not installed at one of these locations, the build fails with a configuration error. To use a Wine installed elsewhere, point a [custom toolset](#custom-toolsets) at its installation directory, the one containing `bin/wine` (or `bin/wine64`):
-
-```json
-{
-  "toolsets": {
-    "wine": { "url": "file:///opt/my-wine" }
-  }
-}
-```
-
-The executable is taken from that directory by absolute path. A directory without a bundled `wine-home` prefix is treated as a host installation and runs with Wine's own default prefix and library lookup, the same as `"system"`; a Wine bundle that ships `wine-home` uses that prefix and its `lib` directory.
+If Wine is not installed at one of these locations, the build fails with a configuration error naming them.
 
 ## Replacing removed environment variables
 

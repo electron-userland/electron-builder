@@ -92,6 +92,13 @@ describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env me
     expect(result.env.WINEPREFIX).toBe(path.join(FAKE_WINE_DIR, "wine-home"))
   })
 
+  test("custom bundle without its wine-home prefix is a configuration error", async ({ expect }) => {
+    await rm(path.join(FAKE_WINE_DIR, "wine-home"), { recursive: true })
+    const result = getWineToolset(fakeToolset(), "")
+    await expect(result).rejects.toBeInstanceOf(InvalidConfigurationError)
+    await expect(result).rejects.toThrow("is missing expected path")
+  })
+
   test("custom bundle with only bin/wine64: falls back to bin/wine64 as execPath", async ({ expect }) => {
     await rm(path.join(FAKE_WINE_DIR, "bin", "wine"))
     await writeFile(path.join(FAKE_WINE_DIR, "bin", "wine64"), "#!/bin/sh\necho fake wine64", { mode: 0o755 })
@@ -126,12 +133,11 @@ describe.ifNotWindows('getWineToolset — "system"', { concurrent: false }, () =
     })
   }
 
-  test("is a configuration error naming the checked locations and the override when wine is not installed at one", async ({ expect }) => {
+  test("is a configuration error naming the checked locations when wine is not installed at one", async ({ expect }) => {
     vi.mocked(findHostWine).mockReturnValue(null)
     const result = getWineToolset("system", "")
     await expect(result).rejects.toBeInstanceOf(InvalidConfigurationError)
     await expect(result).rejects.toThrow((HOST_WINE_PATHS[process.platform] ?? []).join(", "))
-    await expect(result).rejects.toThrow('"toolsets": { "wine": { "url": "file:///absolute/path/to/wine-dir" } }')
   })
 
   test("only looks for wine at absolute install locations", ({ expect }) => {
@@ -146,35 +152,5 @@ describe.ifNotWindows('getWineToolset — "system"', { concurrent: false }, () =
     const darwin = HOST_WINE_PATHS.darwin ?? []
     expect(darwin.slice(0, 2)).toEqual(["/opt/homebrew/bin/wine", "/usr/local/bin/wine"])
     expect(darwin.findIndex(it => it.startsWith("/Applications/"))).toBeGreaterThan(darwin.indexOf("/opt/local/bin/wine"))
-  })
-})
-
-describe.ifNotWindows("getWineToolset — ToolsetCustom pointing at a host Wine installation directory", { concurrent: false }, () => {
-  const HOST_ENV = { WINEDEBUG: "-all,err+all", WINEDLLOVERRIDES: "winemenubuilder.exe=d" }
-
-  test("uses bin/wine of a directory without a bundled prefix by absolute path, with Wine's own defaults", async ({ expect }) => {
-    vi.mocked(findHostWine).mockReset()
-    await rm(path.join(FAKE_WINE_DIR, "wine-home"), { recursive: true })
-    const result = await getWineToolset(fakeToolset(), "")
-    expect(result).toStrictEqual({ execPath: path.join(FAKE_WINE_DIR, "bin", "wine"), env: HOST_ENV })
-    expect(path.isAbsolute(result.execPath)).toBe(true)
-    expect(vi.mocked(findHostWine)).not.toHaveBeenCalled()
-  })
-
-  test("needs no lib directory, and falls back to bin/wine64", async ({ expect }) => {
-    await rm(path.join(FAKE_WINE_DIR, "wine-home"), { recursive: true })
-    await rm(path.join(FAKE_WINE_DIR, "lib"), { recursive: true })
-    await rm(path.join(FAKE_WINE_DIR, "bin", "wine"))
-    await writeFile(path.join(FAKE_WINE_DIR, "bin", "wine64"), "#!/bin/sh\necho fake wine64", { mode: 0o755 })
-    const result = await getWineToolset(fakeToolset(), "")
-    expect(result).toStrictEqual({ execPath: path.join(FAKE_WINE_DIR, "bin", "wine64"), env: HOST_ENV })
-  })
-
-  test("is a configuration error when the directory has no executable bin/wine or bin/wine64", async ({ expect }) => {
-    await rm(path.join(FAKE_WINE_DIR, "wine-home"), { recursive: true })
-    await rm(path.join(FAKE_WINE_DIR, "bin", "wine"))
-    await expect(getWineToolset(fakeToolset(), "")).rejects.toBeInstanceOf(InvalidConfigurationError)
-    await writeFile(path.join(FAKE_WINE_DIR, "bin", "wine"), "", { mode: 0o644 })
-    await expect(getWineToolset(fakeToolset(), "")).rejects.toThrow("missing an executable bin/wine or bin/wine64")
   })
 })
