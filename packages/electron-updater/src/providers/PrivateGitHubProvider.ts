@@ -7,7 +7,7 @@ import { URL } from "url"
 import { getChannelFilename, newUrlFromBase } from "../util.js"
 import { BaseGitHubProvider } from "./GitHubProvider.js"
 import { ResolvedUpdateFileInfo } from "../types.js"
-import { channelFileNotFoundError, getFileList, ProviderRuntimeOptions } from "./Provider.js"
+import { channelFileNotFoundError, getFileList, ProviderRuntimeOptions, rememberUpdateManifestSource } from "./Provider.js"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>
@@ -48,7 +48,11 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     const url = new URL(asset.url)
     let result: any
     try {
-      result = load((await this.httpRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken))!)
+      const rawData = await this.httpRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken)
+      result = load(rawData ?? "null")
+      if (rawData != null) {
+        rememberUpdateManifestSource(result, rawData)
+      }
     } catch (e: any) {
       if (e instanceof HttpError && e.statusCode === 404) {
         throw channelFileNotFoundError(channelFile, url, e)

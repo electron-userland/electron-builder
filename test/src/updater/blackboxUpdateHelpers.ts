@@ -1027,13 +1027,17 @@ async function expectRejectedUpdate(
   await probe.assert(() => expect(probe.version).toMatch(installedVersion))
 }
 
-/** Asserts the manifest of a build is signed by exactly `publicKeyPems` (in order), legacy `signature` included. */
+/**
+ * Asserts the manifest of a build is signed by exactly `publicKeyPems` (in order), legacy `signature` included: one EBUM1
+ * entry per key (what electron-updater 7.0.0-alpha.8 to alpha.11 verify), then one EBUM2 entry per key.
+ */
 function assertManifestSignedBy(expect: ExpectStatic, info: UpdateInfo, version: string, publicKeyPems: Array<string>): void {
   expect(info.version).toBe(version)
-  expect(info.signatures?.map(it => it.keyId)).toEqual(publicKeyPems.map(computeUpdateManifestKeyId))
+  const keyIds = publicKeyPems.map(computeUpdateManifestKeyId)
+  expect(info.signatures?.map(it => [it.keyId, it.format])).toEqual([...keyIds.map(it => [it, "EBUM1"]), ...keyIds.map(it => [it, "EBUM2"])])
   expect(info.signature).toBe(info.signatures![0].signature)
   for (const publicKeyPem of publicKeyPems) {
-    expect(verifyManifestSignatures(info, [publicKeyPem])).toMatchObject({ ok: true, keyId: computeUpdateManifestKeyId(publicKeyPem) })
+    expect(verifyManifestSignatures(info, [publicKeyPem])).toMatchObject({ ok: true, keyId: computeUpdateManifestKeyId(publicKeyPem), format: "EBUM2" })
   }
 }
 

@@ -89,6 +89,12 @@ exports[`linux > appimage tool: 1.1.0 > AppImage - key rotation - x64 1`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -127,10 +133,22 @@ exports[`linux > appimage tool: 1.1.0 > AppImage - key rotation - x64 2`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
             "keyId": "@keyId",
             "signature": "@signature",
           },
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -169,6 +187,12 @@ exports[`linux > appimage tool: 1.1.0 > AppImage - key rotation - x64 3`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -207,6 +231,12 @@ exports[`linux > appimage tool: 1.1.0 > AppImage - signed update manifest - x64 
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -245,6 +275,12 @@ exports[`linux > appimage tool: 1.1.0 > AppImage - signed update manifest - x64 
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },

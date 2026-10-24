@@ -133,6 +133,12 @@ exports[`linux > arch - key rotation 1`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -169,10 +175,22 @@ exports[`linux > arch - key rotation 2`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
             "keyId": "@keyId",
             "signature": "@signature",
           },
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -209,6 +227,12 @@ exports[`linux > arch - key rotation 3`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -245,6 +269,12 @@ exports[`linux > arch - signed update manifest 1`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -281,6 +311,12 @@ exports[`linux > arch - signed update manifest 2`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -1135,6 +1171,12 @@ exports[`linux > debian - key rotation 1`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -1277,10 +1319,22 @@ exports[`linux > debian - key rotation 5`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
             "keyId": "@keyId",
             "signature": "@signature",
           },
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -1423,6 +1477,12 @@ exports[`linux > debian - key rotation 9`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -1565,6 +1625,12 @@ exports[`linux > debian - signed update manifest 1`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -1707,6 +1773,12 @@ exports[`linux > debian - signed update manifest 5`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -2139,6 +2211,12 @@ exports[`linux > fedora - key rotation 1`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -2175,10 +2253,22 @@ exports[`linux > fedora - key rotation 2`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
             "keyId": "@keyId",
             "signature": "@signature",
           },
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -2215,6 +2305,12 @@ exports[`linux > fedora - key rotation 3`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -2251,6 +2347,12 @@ exports[`linux > fedora - signed update manifest 1`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -2287,6 +2389,12 @@ exports[`linux > fedora - signed update manifest 2`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },

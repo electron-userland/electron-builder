@@ -239,7 +239,7 @@ describe("AppUpdater.verifyManifestSignature: malformed signed manifests", () =>
     }
     await expect(verify(makeUpdater(), forged)).rejects.toMatchObject({
       code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID",
-      message: expect.stringContaining("the signed manifest is malformed (files must be a non-empty array)"),
+      message: expect.stringContaining("the signed manifest was refused (files must be a non-empty array)"),
     })
   })
 

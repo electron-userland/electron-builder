@@ -271,13 +271,18 @@ test("per-task signing: only the task whose packager yields a key is signed", as
   })
 })
 
-test("single key: `signatures` carries one entry tagged with the key id and `signature` repeats it", async ({ expect }) => {
+test("single key: `signatures` carries an EBUM1 and an EBUM2 entry tagged with the key id, and `signature` repeats the EBUM1 one", async ({ expect }) => {
   await withTmpDir(async dir => {
     const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
     const task = { ...makeTask(dir, "App-1.0.0.exe", "sha", null), packager: makeTaskPackager(parsePrivateKey(privateKeyPem)) }
     await writeUpdateInfoFiles([task], makePackager() as any)
     const yml = await readYml(path.join(dir, "latest.yml"))
-    expect(yml.signatures).toEqual([{ keyId: computeUpdateManifestKeyId(publicKeyPem), signature: yml.signature }])
+    const keyId = computeUpdateManifestKeyId(publicKeyPem)
+    expect(yml.signatures).toEqual([
+      { keyId, signature: yml.signature, format: "EBUM1" },
+      { keyId, signature: expect.any(String), format: "EBUM2" },
+    ])
+    expect(verifyManifestSignatures(yml, [publicKeyPem])).toEqual({ ok: true, keyId, format: "EBUM2" })
   })
 })
 
@@ -288,7 +293,14 @@ test("dual-signing: every configured key signs, `signature` is the first key's, 
     const task = { ...makeTask(dir, "App-1.0.0.exe", "sha", null), packager: makeTaskPackager(parsePrivateKey(oldKey.privateKeyPem), parsePrivateKey(newKey.privateKeyPem)) }
     await writeUpdateInfoFiles([task], makePackager() as any)
     const yml = await readYml(path.join(dir, "latest.yml"))
-    expect(yml.signatures.map((it: any) => it.keyId)).toEqual([computeUpdateManifestKeyId(oldKey.publicKeyPem), computeUpdateManifestKeyId(newKey.publicKeyPem)])
+    const oldId = computeUpdateManifestKeyId(oldKey.publicKeyPem)
+    const newId = computeUpdateManifestKeyId(newKey.publicKeyPem)
+    expect(yml.signatures.map((it: any) => [it.keyId, it.format])).toEqual([
+      [oldId, "EBUM1"],
+      [newId, "EBUM1"],
+      [oldId, "EBUM2"],
+      [newId, "EBUM2"],
+    ])
     expect(yml.signature).toBe(yml.signatures[0].signature)
     // an install trusting only the old key and one trusting only the new key both verify this manifest
     expect(verifyManifestSignatures(yml, [oldKey.publicKeyPem]).ok).toBe(true)

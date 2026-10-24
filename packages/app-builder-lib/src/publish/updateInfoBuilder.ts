@@ -1,5 +1,5 @@
 import asyncPool from "tiny-async-pool"
-import { Arch, createUpdateManifestSignatures, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, log, safeStringifyJson, serializeSignedUpdateManifest, serializeToYaml } from "builder-util"
 import { deepAssign, GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -292,28 +292,25 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
       task.info.releaseDate = releaseDate
     }
 
-    // Sign last: the signatures must cover the final version/files/packages/stagingPercentage/minimumSystemVersion.
-    // releaseDate is excluded from the signed payload, so setting it above does not affect them.
+    // Sign last: the signatures must cover the final manifest. The EBUM2 signatures cover every field but
+    // releaseName/releaseNotes, releaseDate included, so it is set above, before signing.
     // The keys are resolved per task (not once for the batch) so each manifest is signed iff that
     // platform's config requires it, matching the per-platform public-key embedding in PublishManager.
-    // Every configured key signs (dual-signing during key rotation): `signatures` holds one tagged entry
-    // per key and the legacy single `signature` field repeats the first key's signature, so the manifest
-    // shape is the same whether one or several keys are configured.
+    // Every configured key signs, in both formats (dual-signing during key rotation, and EBUM1 next to EBUM2 for
+    // electron-updater 7.0.0-alpha.8 to alpha.11): `signatures` holds one tagged entry per key and format, and the
+    // legacy single `signature` field repeats the first key's EBUM1 signature, so the manifest shape is the same
+    // whether one or several keys are configured. The YAML is read back and checked against what was signed.
     const signingKeys = await task.packager.requireUpdateSigningKeys(isPublish)
-    let info: UpdateInfo = task.info
     // empty only when signing is opted out of with `updateManifest: false`, or on a build without a publish
     // policy that has no key configured - both of which have already warned
-    if (signingKeys.length > 0) {
-      const signatures = createUpdateManifestSignatures(task.info, signingKeys)
-      info = { ...task.info, signature: signatures[0].signature, signatures }
-    } else if ("allowCatalogSignature" in info && info.allowCatalogSignature === true) {
+    if (signingKeys.length === 0 && "allowCatalogSignature" in task.info && task.info.allowCatalogSignature === true) {
       log.warn(
         { file: log.filePath(task.file), reason: "electron-updater honors it only in an update manifest whose signature it verified" },
         "win.allowCatalogSignature has no effect: the update manifest is not signed"
       )
     }
-
-    const fileContent = Buffer.from(serializeToYaml(info, false, true))
+    const yaml = signingKeys.length > 0 ? serializeSignedUpdateManifest(task.info, signingKeys) : serializeToYaml(task.info, false, true)
+    const fileContent = Buffer.from(yaml)
     await fsExtra.outputFile(task.file, fileContent)
     await packager.emitArtifactCreated({
       file: task.file,
