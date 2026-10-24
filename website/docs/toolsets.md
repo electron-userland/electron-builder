@@ -16,7 +16,7 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 
 | Toolset | Used for | `"latest"` resolves to |
 |---|---|---|
-| `winCodeSign` | Windows code signing & resource editing (`signtool` / `osslsigncode`, `rcedit`, Windows Kits for AppX/MSIX) | `1.3.0` |
+| `winCodeSign` | Windows code signing & resource editing (`signtool` / `osslsigncode`, `rcedit`, Windows Kits for AppX/MSIX) | `1.3.1` |
 | `appimage` | Building `.AppImage` files (`mksquashfs`, `unsquashfs`, the self-executing runtime); its `mksquashfs` also packs legacy-base snaps built from the snap template app | `1.1.0` |
 | `nsis` | Compiling Windows installers (`makensis`, plugin DLLs, `elevate.exe`) | `1.2.1` |
 | `wine` | Running Windows tools (NSIS, rcedit, signtool) on non-Windows hosts | `system` (host `wine` on `PATH`) |
@@ -53,7 +53,7 @@ Pinning to a concrete version is as simple as naming it:
 ```yaml
 toolsets:
   nsis: "1.2.1"
-  winCodeSign: "1.3.0"
+  winCodeSign: "1.3.1"
 ```
 
 ## Pinning the legacy bundle (`"0.0.0"`)
@@ -322,7 +322,7 @@ See [Toolset env-var overrides removed](./migration/v27-breaking-changes.md#tool
 
 Windows signing is driven by the `winCodeSign` toolset in combination with [`win.sign`](./features/code-signing/code-signing-win.md):
 
-- The default `winCodeSign` (`"latest"` → `1.3.0`) bundles a modern `signtool` / `osslsigncode` (native arm64) plus the Windows Kits used for AppX/MSIX. The `hsm` and `pkcs11` signing modes require this modern bundle.
+- The default `winCodeSign` (`"latest"` → `1.3.1`) bundles a modern `signtool` / `osslsigncode` (native arm64) plus the Windows Kits used for AppX/MSIX. The `hsm` and `pkcs11` signing modes require this modern bundle.
 - **Azure Trusted Signing** (`win.sign: { type: "azure" }`) uses the faster `signtool /dlib` path **out of the box**, because the default `winCodeSign` ships the ATS `dlib` + .NET 8 payload — no pin needed. To force the legacy PowerShell `Invoke-TrustedSigning` path, pin `winCodeSign` **below** `1.3.0` (e.g. `"1.2.1"` or `"0.0.0"`). A `ToolsetCustom` object uses the `dlib` from your supplied bundle.
 
 For full setup — certificate methods, HSM/PKCS#11, and Azure — see [Code Signing for Windows](./features/code-signing/code-signing-win.md) and [Azure Trusted Signing `signtool /dlib` is the default](./migration/v27-breaking-changes.md#azure-trusted-signing-signtool-dlib-is-the-default).

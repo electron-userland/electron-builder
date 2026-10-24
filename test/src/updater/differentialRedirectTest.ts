@@ -86,7 +86,7 @@ class FakeNetRequest extends EventEmitter {
       }
 
       const [start, end] = /^bytes=(\d+)-(\d+)$/.exec(String(this.headers.range))!.slice(1).map(Number)
-      const response = Object.assign(new PassThrough(), { statusCode: 206, headers: {} })
+      const response = Object.assign(new PassThrough(), { statusCode: 206, headers: { "content-range": `bytes ${start}-${end}/${NEW.length}` } })
       this.emit("response", response)
       response.end(NEW.subarray(start, end + 1))
     })

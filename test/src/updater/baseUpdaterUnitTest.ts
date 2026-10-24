@@ -6,7 +6,7 @@ import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import type { InstallOptions } from "electron-updater/src/BaseUpdater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import type { DownloadExecutorTask } from "electron-updater/src/AppUpdater"
-import { outputFile, pathExists, stat } from "fs-extra"
+import { outputFile, pathExists, readFile, stat } from "fs-extra"
 import { createVerifyUpdateFileMock, expectVerifyUpdateFileFailure } from "../helpers/updaterTestUtil.js"
 
 const stubApp: AppAdapter = {
@@ -157,9 +157,56 @@ describe("AppImageUpdater doInstall APPIMAGE env handling", () => {
 
   it("proceeds past validation when APPIMAGE is a valid absolute path", () => {
     process.env.APPIMAGE = "/opt/app/myapp.AppImage"
-    // It should fail AFTER the validation check (on unlinkSync since the file doesn't exist)
+    // It should fail AFTER the validation check (no update has been downloaded)
     // but NOT with our validation error message
     expect(() => (updater as any).doInstall(installOpts)).not.toThrow(/not a valid absolute path/)
+  })
+})
+
+describe.ifNotWindows("AppImageUpdater doInstall file replacement", () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  async function setup(dir: string, downloaded: boolean, appImageName = "TestApp.AppImage") {
+    const appImageFile = path.join(dir, appImageName)
+    const installerPath = path.join(dir, "pending", "TestApp-2.0.0.AppImage")
+    await outputFile(appImageFile, "old")
+    if (downloaded) {
+      await outputFile(installerPath, "new")
+    }
+    vi.stubEnv("APPIMAGE", appImageFile)
+    // a dead AppImage FUSE mount on PATH fails every PATH lookup, as an empty PATH does
+    vi.stubEnv("PATH", path.join(dir, "empty"))
+    const updater = new AppImageUpdater(null, stubApp)
+    Object.defineProperty(updater, "installerPath", { get: () => installerPath })
+    vi.spyOn(updater as any, "spawnLog").mockResolvedValue(true)
+    return { appImageFile, installerPath, updater, install: () => (updater as any).doInstall({ ...installOpts, isForceRunAfter: true }) }
+  }
+
+  it("replaces the AppImage without a PATH lookup", async context => {
+    const dir = await context.tmpDir.createTempDir()
+    const { appImageFile, installerPath, install } = await setup(dir, true)
+    expect(install()).toBe(true)
+    expect(await readFile(appImageFile, "utf8")).toBe("new")
+    expect(await pathExists(installerPath)).toBe(false)
+    expect(await pathExists(path.join(dir, ".TestApp.AppImage.update"))).toBe(false)
+  })
+
+  it("installs a versioned AppImage under the new version's name", async context => {
+    const dir = await context.tmpDir.createTempDir()
+    const { appImageFile, updater, install } = await setup(dir, true, "TestApp-1.0.0.AppImage")
+    const renamed = vi.fn()
+    updater.on("appimage-filename-updated", renamed)
+    expect(install()).toBe(true)
+    const newFile = path.join(dir, "TestApp-2.0.0.AppImage")
+    expect(await readFile(newFile, "utf8")).toBe("new")
+    expect(await pathExists(appImageFile)).toBe(false)
+    expect(renamed).toHaveBeenCalledWith(newFile)
+  })
+
+  it("keeps the installed AppImage when the swap fails", async context => {
+    const { appImageFile, install } = await setup(await context.tmpDir.createTempDir(), false)
+    expect(install).toThrow()
+    expect(await readFile(appImageFile, "utf8")).toBe("old")
   })
 })
 
