@@ -59,6 +59,7 @@ import { ArtifactCreated, PlannedTargets } from "../packagerApi.js"
 import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
 import { PlatformPackager } from "../platformPackager.js"
+import { missingUpdatePublisherNameError, validatePublisherNameFormat } from "../codeSign/win/publisherName.js"
 import { WinPackager } from "../winPackager.js"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
 import { resolveModule } from "../util/resolve.js"
@@ -552,12 +553,12 @@ async function createAppUpdateConfiguration(
   }
   warnAboutGenericFeedQuery(publishConfig)
 
-  if (packager.platform === Platform.WINDOWS && publishConfig.publisherName == null) {
-    const winPackager = packager as WinPackager
-    const publisherName = winPackager.isForceCodeSigningVerification ? await (await winPackager.signingManager.value).computedPublisherName.value : undefined
-    if (publisherName != null) {
-      publishConfig.publisherName = publisherName
-    }
+  // like updateManifestPublicKey: the opt-out marker is only ever assigned below, from win.verifyUpdateCodeSignature
+  if (publishConfig.verifyUpdateCodeSignature !== undefined) {
+    throw new InvalidConfigurationError("publish.verifyUpdateCodeSignature is managed by electron-builder and must not be set; configure win.verifyUpdateCodeSignature instead")
+  }
+  if (packager.platform === Platform.WINDOWS) {
+    await applyUpdateCodeSignatureVerification(packager as WinPackager, publishConfig)
   }
 
   // Embed the update-manifest trust list so the updater can verify signed manifests. An explicit
@@ -588,6 +589,34 @@ async function createAppUpdateConfiguration(
   }
   checkSigningKeysTrusted(packager, signingKeys, explicitKeys, isPublish && requireSigning)
   return publishConfig
+}
+
+/**
+ * The Windows publisher electron-updater verifies the Authenticode signature of NSIS updates against, written into a fresh copy of the
+ * first provider's config. electron-updater 7 rejects an update when `app-update.yml` has no publisherName, so:
+ *
+ * - `win.verifyUpdateCodeSignature: false` writes the explicit opt-out marker (`verifyUpdateCodeSignature: false`) and no publisherName,
+ *   not even a publish-level one;
+ * - otherwise a publish-level publisherName (validated as a distinguished name) or the one of the signing configuration (explicit, or
+ *   `CN=<common name>` of the certificate) is written, and without any the build fails ({@link missingUpdatePublisherNameError}).
+ */
+async function applyUpdateCodeSignatureVerification(winPackager: WinPackager, publishConfig: PublishConfiguration): Promise<void> {
+  if (!winPackager.isForceCodeSigningVerification) {
+    delete publishConfig.publisherName
+    publishConfig.verifyUpdateCodeSignature = false
+    return
+  }
+  if (publishConfig.publisherName != null) {
+    validatePublisherNameFormat(publishConfig.publisherName, "publish.publisherName")
+    if (asArray(publishConfig.publisherName).length > 0) {
+      return
+    }
+  }
+  const publisherName = await (await winPackager.signingManager.value).computedPublisherName.value
+  if (publisherName == null || publisherName.length === 0) {
+    throw missingUpdatePublisherNameError(winPackager.platformOptions)
+  }
+  publishConfig.publisherName = publisherName
 }
 
 /**

@@ -5,7 +5,19 @@ import { TmpDir } from "temp-file"
 import { createSelfSignedCodeSigningIdentity, SelfSignedIdentity } from "./selfSignedIdentity"
 
 const PUBLISHER = "EB Test Code Signing"
+// The Windows test identity has more than a CN, so the tests cover a derived publisherName (only the CN) of a subject with several attributes,
+// and an explicit publisherName pinning the full subject
+const WIN_PUBLISHER_ADDITIONAL_DN_FIELDS = { O: "EB Test Org", C: "US" } as const
 const TEAM_ID = "TEAMID1234"
+
+/**
+ * The full subject of the Windows test identity in the format Windows reports it (RDNs in reverse encoding order, separated by `, `).
+ * Also a valid explicit publisherName matching it (a stricter pin than the derived one).
+ */
+export const WIN_SIGNING_SUBJECT = `C=${WIN_PUBLISHER_ADDITIONAL_DN_FIELDS.C}, O=${WIN_PUBLISHER_ADDITIONAL_DN_FIELDS.O}, CN=${PUBLISHER}`
+
+/** The publisherName a build signed with the Windows test identity derives when none is configured: `CN=<common name>`. */
+export const WIN_SIGNING_PUBLISHER_NAME = `CN=${PUBLISHER}`
 
 // Single source of the Windows signing identity for tests, resolved once per worker. An ephemeral, untrusted
 // self-signed identity is generated at runtime (no committed cert/secret) and injected into each build's
@@ -15,7 +27,7 @@ export const winSigningCredentialsInfo = new Lazy<SelfSignedIdentity>(async () =
   try {
     // Modern PBES2/AES p12 with an EMPTY password: osslsigncode/signtool reject legacy 3DES bags, and an
     // empty password avoids osslsigncode's no-TTY console-prompt fallback (see SelfSignedIdentityOptions).
-    const identity = await createSelfSignedCodeSigningIdentity(PUBLISHER, tmpDir, { password: "" })
+    const identity = await createSelfSignedCodeSigningIdentity(PUBLISHER, tmpDir, { password: "", additionalDnFields: WIN_PUBLISHER_ADDITIONAL_DN_FIELDS })
     log.info("provisioned ephemeral self-signed Windows identity for code-signing tests")
     return identity
   } finally {

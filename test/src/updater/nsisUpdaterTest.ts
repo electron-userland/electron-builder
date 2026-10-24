@@ -16,6 +16,7 @@ import {
   trackEvents,
   tuneTestUpdater,
   validateDownload,
+  writeRawUpdateConfig,
   writeUpdateConfig,
 } from "../helpers/updaterTestUtil.js"
 import { createLocalServer } from "../helpers/launchAppCrossPlatform.js"
@@ -379,41 +380,10 @@ test.skip("test download progress", config, async ({ expect }) => {
   }
 })
 
-// On non-Windows platforms the built-in Authenticode verifier is a no-op, which is exactly what these
-// tests exercised before against externally hosted (signed) installers. Verifying a genuinely signed
-// installer requires a production code-signing certificate and is intentionally not reproducible
-// in-repo; the failure path of the real verifier is still covered by "invalid signature" below.
-test.ifNotWindows("valid signature", config, async ({ expect }) => {
-  const { url, close } = await serveDefaultUpdate()
-  try {
-    const updater = await createNsisUpdater("0.0.1")
-    updater.updateConfigPath = await writeUpdateConfig({
-      provider: "generic",
-      url,
-      publisherName: ["Vladimir Krivosheev"],
-    })
-    await validateDownload(expect, updater)
-  } finally {
-    await close()
-  }
-})
-
-test.ifNotWindows("valid signature - multiple publisher DNs", config, async ({ expect }) => {
-  const { url, close } = await serveDefaultUpdate()
-  try {
-    const updater = await createNsisUpdater("0.0.1")
-    updater.updateConfigPath = await writeUpdateConfig({
-      provider: "generic",
-      url,
-      publisherName: ["Foo Bar", "CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE", "Bar Foo"],
-    })
-    await validateDownload(expect, updater)
-  } finally {
-    await close()
-  }
-})
-
-test.ifNotWindows("valid signature using DN", config, async ({ expect }) => {
+// Without PowerShell (any non-Windows host), the built-in Authenticode verifier cannot verify the update, so it fails closed:
+// before v27 it skipped the verification with a warning and accepted the update. Verifying a genuinely signed installer is
+// covered by the real-certificate e2e tests in windowsExecutableCodeSignatureVerifierTest.
+test.ifNotWindows("fails closed when the signature cannot be verified (no PowerShell)", config, async ({ expect }) => {
   const { url, close } = await serveDefaultUpdate()
   try {
     const updater = await createNsisUpdater("0.0.1")
@@ -422,8 +392,13 @@ test.ifNotWindows("valid signature using DN", config, async ({ expect }) => {
       url,
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
-
-    await validateDownload(expect, updater)
+    const actualEvents = trackEvents(updater)
+    const updateCheckResult = await updater.checkForUpdates()
+    await expect(updateCheckResult?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_SIGNATURE_UNVERIFIABLE",
+      message: expect.stringContaining("Cannot verify the Authenticode signature of the update"),
+    })
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
   } finally {
     await close()
   }
@@ -437,7 +412,7 @@ test.ifWindows("invalid signature", config, async ({ expect }) => {
     updater.updateConfigPath = await writeUpdateConfig({
       provider: "generic",
       url,
-      publisherName: ["Foo Bar"],
+      publisherName: ["CN=Foo Bar, O=Foo Bar"],
     })
     const actualEvents = trackEvents(updater)
     await assertThat(
@@ -510,6 +485,45 @@ test("malformed custom signature verifier result fails closed", config, async ({
       message: expect.stringContaining("unknown error"),
     })
     expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
+  } finally {
+    await close()
+  }
+})
+
+// electron-updater 7 fails closed: an app-update.yml without publisherName rejects the downloaded update (even with a custom verifier,
+// which is not called), unless it opts out with verifyUpdateCodeSignature: false
+test("missing publisherName rejects the downloaded update", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater("1.0.2")
+    updater.updateConfigPath = await writeRawUpdateConfig<GenericServerOptions>({ provider: "generic", url })
+    const verifier = vi.fn(async () => ({ response: "success" as const }))
+    updater.verifyUpdateFileAuthenticodeSignature = verifier
+    const actualEvents = trackEvents(updater)
+    const updateCheckResult = await updater.checkForUpdates()
+
+    await expect(updateCheckResult?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_INVALID_SIGNATURE",
+      message: expect.stringContaining("v27-breaking-changes#missing-publishername-fails-update-verification"),
+    })
+    expect(verifier).not.toHaveBeenCalled()
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
+  } finally {
+    await close()
+  }
+})
+
+test("verifyUpdateCodeSignature: false in app-update.yml installs the update unverified", config, async ({ expect }) => {
+  const { url, close } = await serveDefaultUpdate()
+  try {
+    const updater = await createNsisUpdater("1.0.2")
+    updater.updateConfigPath = await writeRawUpdateConfig<GenericServerOptions>({ provider: "generic", url, verifyUpdateCodeSignature: false })
+    const verifier = vi.fn(async () => ({ response: "failure" as const, message: "must not be called" }))
+    updater.verifyUpdateFileAuthenticodeSignature = verifier
+    const updateCheckResult = await updater.checkForUpdates()
+
+    await expect(updateCheckResult?.downloadPromise).resolves.toBeDefined()
+    expect(verifier).not.toHaveBeenCalled()
   } finally {
     await close()
   }
