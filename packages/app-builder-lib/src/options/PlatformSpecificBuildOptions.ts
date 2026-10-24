@@ -105,7 +105,7 @@ export interface AsarOptions {
  * Which files are copied into the packaged app, which file extensions are excluded from it, and which symlinks among them may lead outside it,
  * set under `fileOptions` at the configuration root or per platform (e.g. `mac.fileOptions`). A platform's file lists are added to the root
  * ones; a platform's `excludedExts` and `allowExternalLinks` replace the root ones.
- * See [file options](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).
+ * See [file options](https://www.electron.build/docs/migration/v27-config-changes#file-options-fileoptions).
  */
 export interface FilesBuildOptions {
   /**

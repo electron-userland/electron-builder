@@ -64,6 +64,7 @@ exports[`assisted > allowToChangeInstallationDirectory 2`] = `
   "provider": "github",
   "repo": "bar",
   "updaterCacheDirName": "test-custom-inst-dir-updater",
+  "verifyUpdateCodeSignature": false,
 }
 `;
 

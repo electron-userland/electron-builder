@@ -9,7 +9,7 @@ export const BROWSER_SUPPORT_INTERFACE = "browser-support"
 /** Keyword in a `plugs` list that stands for electron-builder's default plug set. */
 export const DEFAULT_PLUGS_KEYWORD = "default"
 
-const MIGRATION_GUIDE = "https://www.electron.build/docs/migration/v27-breaking-changes"
+const MIGRATION_GUIDE = "https://www.electron.build/docs/migration/v27-runtime-changes"
 export const CORE24_NO_ALLOW_SANDBOX_DOCS = `${MIGRATION_GUIDE}#snap-core24-no-allow-sandbox-by-default`
 export const CORE24_DEFAULT_PLUGS_MERGE_DOCS = `${MIGRATION_GUIDE}#snap-core24-default-in-plugs-merges-the-full-default-set`
 

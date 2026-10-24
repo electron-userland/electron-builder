@@ -34,6 +34,7 @@ import { NodeModuleInfo } from "../node-module-collector/types.js"
 import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { archToNodeCpu } from "./archCompatibility.js"
 import { assertSourceFileInTrustedRoots } from "./trustedSourceRoots.js"
+import { BUILD_CHANGES_URL } from "./config/legacyOptions.js"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
@@ -415,7 +416,8 @@ export function enforceAllowMissingDependencies(allowMissingDependencies: boolea
   throw new InvalidConfigurationError(
     `The following production dependencies could not be resolved during node-module collection:\n` +
       fatal.map(id => `  - ${id}`).join("\n") +
-      `\nInstall the missing dependencies, list names in \`allowMissingDependencies\` to allow specific ones to be missing, or set \`allowMissingDependencies\` to true to only warn (electron-builder <= 26 behavior).`
+      `\nInstall the missing dependencies, list names in \`allowMissingDependencies\` to allow specific ones to be missing, or set \`allowMissingDependencies\` to true to only warn (electron-builder <= 26 behavior).` +
+      `\nSee ${BUILD_CHANGES_URL}#allowmissingdependencies-now-fails-the-build`
   )
 }
 
@@ -506,7 +508,7 @@ function warnAboutDeprecatedElectronPackages(nodeModules: Array<{ name: string; 
       { dependency: name, solution: `add "${name}" to ignoredProductionDependencies, or move it to devDependencies` },
       `${name} is declared in dependencies and is being packaged into your app (${DEPRECATED_ELECTRON_PACKAGES[name]}). ` +
         "electron-builder <= 26 rejected this outright; v27 removed that guard and does not exclude it by default. " +
-        "See https://www.electron.build/docs/migration/v27-breaking-changes#electron-prebuilt-electron-rebuild-no-longer-error-and-are-not-excluded"
+        "See https://www.electron.build/docs/migration/v27-build-changes#electron-prebuilt-electron-rebuild-no-longer-error-and-are-not-excluded"
     )
   }
 }

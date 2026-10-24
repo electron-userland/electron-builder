@@ -972,7 +972,7 @@ export class NsisTarget extends Target {
       { progIds: examples, solution: "update any registry keys, shell verbs, or external tooling that references the old ProgID" },
       "NSIS file associations now register a generated ProgID instead of the association name or extension. " +
         "You ship a custom NSIS script (nsis.include / nsis.script), which may reference the old value. " +
-        "See https://www.electron.build/docs/migration/v27-breaking-changes#nsis-file-association-progid-format-changed"
+        "See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-file-association-progid-format-changed"
     )
   }
 

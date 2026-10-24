@@ -2,7 +2,7 @@ import { exec, InvalidConfigurationError, log } from "builder-util"
 import { cp, mkdir, realpath, symlink, writeFile } from "fs/promises"
 import * as path from "path"
 import * as semver from "semver"
-import { BREAKING_CHANGES_URL } from "../../util/config/legacyOptions.js"
+import { BUILD_CHANGES_URL } from "../../util/config/legacyOptions.js"
 
 // flatpak-builder 1.2.2 is the one of Ubuntu 22.04, the oldest current distribution release (Debian 12 and RHEL 8/9 have 1.2.3). It fixes
 // CVE-2022-21682 with an option that flatpak supports from 1.12.4 on; Ubuntu 22.04 has flatpak 1.12.7
@@ -12,7 +12,7 @@ const MIN_VERSIONS = { flatpak: "1.12.4", "flatpak-builder": "1.2.2" }
 const MODULES_FLATPAK_BUILDER_VERSION = "1.4.4"
 const MODULES_FREEDESKTOP_SDK_VERSION = "24.8.0"
 
-const NEW_IN_V27 = `This is new in electron-builder v27. See ${BREAKING_CHANGES_URL}#flatpak-tooling-requirements`
+const NEW_IN_V27 = `This is new in electron-builder v27. See ${BUILD_CHANGES_URL}#flatpak-tooling-requirements`
 
 const FLATPAK_DOCS = "https://www.electron.build/docs/flatpak"
 const UNPRIVILEGED_CONTAINERS_DOCS = `${FLATPAK_DOCS}#building-in-unprivileged-containers`
