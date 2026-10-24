@@ -131,14 +131,15 @@ describe("VmManager.powershellCommand", () => {
     expect(await new VmManager().powershellCommand.value).toBe(POWERSHELL)
     expect(executedFiles()).toEqual([PWSH])
     expect(warn).toHaveBeenCalledOnce()
-    expect(warn.mock.calls[0][1]).toContain("%ProgramFiles%\\PowerShell\\7\\pwsh.exe")
+    expect(warn.mock.calls[0][1]).toBe(`PowerShell 7 is used only from ${PWSH}, the install location of its MSI installer, where it was not found; using Windows PowerShell`)
   })
 
   test("does not probe PowerShell 7 when ProgramFiles is not absolute", async ({ expect }) => {
-    vi.spyOn(log, "warn")
+    const warn = vi.spyOn(log, "warn")
     vi.stubEnv("ProgramFiles", "Program Files")
     expect(await new VmManager().powershellCommand.value).toBe(POWERSHELL)
     expect(vi.mocked(exec)).not.toHaveBeenCalled()
+    expect(warn.mock.calls[0][1]).toContain("ProgramFiles is not an absolute path (Program Files); using Windows PowerShell")
   })
 
   test("rejects without running anything when SystemRoot is not absolute", async ({ expect }) => {
@@ -147,15 +148,32 @@ describe("VmManager.powershellCommand", () => {
     expect(vi.mocked(exec)).not.toHaveBeenCalled()
   })
 
-  test("uses the default Windows install locations inside a Parallels guest, through prlctl by absolute path", async ({ expect }) => {
+  test("uses only the space-free Windows PowerShell inside a Parallels guest, through prlctl by absolute path", async ({ expect }) => {
     const prlctl = PRLCTL_PATHS[0]
     vi.mocked(findPrlctl).mockReturnValue(prlctl)
-    vi.mocked(exec).mockRejectedValueOnce(new Error("not installed"))
-    vi.spyOn(log, "warn")
+    vi.mocked(exec).mockResolvedValue("")
+    const warn = vi.spyOn(log, "warn")
     const vm = new ParallelsVmManager({ id: "{win}", name: "win", os: "win-11", state: "running" })
-    expect(await vm.powershellCommand.value).toBe(PARALLELS_GUEST_WINDOWS_POWERSHELL)
+    const ps = await vm.powershellCommand.value
+    expect(ps).toBe(PARALLELS_GUEST_WINDOWS_POWERSHELL)
+    expect(ps).not.toContain(" ")
+    // no probe of PowerShell 7, whose path contains a space that prlctl exec does not pass through intact
+    expect(vi.mocked(exec)).not.toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledOnce()
+    expect(warn.mock.calls[0][1]).toContain(`PowerShell 7 (${PARALLELS_GUEST_PWSH}) is not used in a Parallels VM`)
+
+    await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-Command", "Get-ChildItem Cert:"])
     expect(executedFiles()).toEqual([prlctl])
-    expect(vi.mocked(exec).mock.calls[0][1]).toEqual(["exec", "{win}", "--current-user", PARALLELS_GUEST_PWSH, "-NoProfile", "-NonInteractive", "-Command", "exit 0"])
+    expect(vi.mocked(exec).mock.calls[0][1]).toEqual([
+      "exec",
+      "{win}",
+      "--current-user",
+      PARALLELS_GUEST_WINDOWS_POWERSHELL,
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      "Get-ChildItem Cert:",
+    ])
   })
 })
 
