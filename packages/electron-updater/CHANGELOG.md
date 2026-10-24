@@ -1,5 +1,12 @@
 ## 4.3.0
 
+## 6.8.12
+
+### Patch Changes
+
+- Fix(updater): differential downloads made with single range requests no longer send credential headers such as `Authorization` to a redirect target on another origin, which made pre-signed S3 or R2 URLs reject the range requests and forced a full download _[`#10427`](https://github.com/electron-userland/electron-builder/pull/10427) [`a1a74b1`](https://github.com/electron-userland/electron-builder/commit/a1a74b18587e430fb0e7759861d0930786f26408) [@claude](https://github.com/apps/claude)_
+- Fix(nsis): don't plan a differential download against a cached block map of another release. The cached block map is replaced when a download finishes, but the cached installer only when the update is installed, so a release found before the previous one was installed was planned against the wrong base: every differential byte was downloaded, the sha512 check failed, and the full installer was downloaded too. A cached block map that does not end at the cached installer's size is now ignored and the installed version's block map is fetched from the server. _[`#10338`](https://github.com/electron-userland/electron-builder/pull/10338) [`6f2dd83`](https://github.com/electron-userland/electron-builder/commit/6f2dd83818d128a4b112fa4cc0684a7c55418494) [@imlucas](https://github.com/imlucas)_
+
 ## 6.8.11
 
 ### Patch Changes

@@ -1,5 +1,25 @@
 # app-builder-lib
 
+## 26.18.1
+
+### Patch Changes
+
+- Fix(win): rename Electron's `electron_wer.dll` Windows Error Reporting helper together with the executable for Electron 45 and later, so fail-fast crashes are captured in packaged apps _[`#10428`](https://github.com/electron-userland/electron-builder/pull/10428) [`80ec271`](https://github.com/electron-userland/electron-builder/commit/80ec271172b86055879845b29ede39f8c5a56483) [@claude](https://github.com/apps/claude)_
+- Fix(mac): keep an explicit `NSAllowsArbitraryLoads` from `mac.extendInfo`. Before, electron-builder always set `NSAppTransportSecurity.NSAllowsArbitraryLoads` to `true` on non-MAS builds, after `extendInfo` was merged, so an app could not turn it off. After, it is set to `true` only when the app has not set it; the local-networking and `localhost`/`127.0.0.1` exceptions that electron-updater's proxy needs are still added. _[`#10387`](https://github.com/electron-userland/electron-builder/pull/10387) [`f7526d8`](https://github.com/electron-userland/electron-builder/commit/f7526d86b88d4d32f8637d5106588a383a8162df) [@claude](https://github.com/apps/claude)_
+- Fix(nsis): pin the LZMA2 block size of differential-aware packages so their bytes no longer depend on the build host's thread count. On hosts with fewer than 4 threads (such as 2-CPU GitHub runners), 7-Zip wrote one solid stream, so most of the package changed every release and differential updates downloaded nearly the whole package. Output on 4+ thread hosts is unchanged. _[`#10336`](https://github.com/electron-userland/electron-builder/pull/10336) [`bb061e8`](https://github.com/electron-userland/electron-builder/commit/bb061e84825abb5f187f2d7301cda2299ca17376) [@imlucas](https://github.com/imlucas)_
+- Fix(win): sign `.msi` with SHA-256 by default. An MSI holds a single signature, and electron-builder picked SHA-1 for it unless `signingHashAlgorithms` explicitly left SHA-1 out, so the default configuration (`["sha1", "sha256"]`) produced SHA-1-only signed MSIs. Now an MSI is signed with SHA-256 unless SHA-1 is the only algorithm listed. To keep the previous behaviour, set `signingHashAlgorithms: ["sha1"]`. Executables are still dual-signed by default. Because an MSI now takes the SHA-256 path, signtool timestamps it via RFC 3161 (`/tr rfc3161TimeStampServer /td sha256`) instead of the legacy `/t timeStampServer`, and a custom `win.signtoolOptions.sign` hook now receives `hash: "sha256"` for `.msi` files. Signing with an empty `signingHashAlgorithms` list now fails with an `InvalidConfigurationError` instead of running no signing pass and reporting the file as signed. _[`#10399`](https://github.com/electron-userland/electron-builder/pull/10399) [`3fd038f`](https://github.com/electron-userland/electron-builder/commit/3fd038f5edec0424821ee9b2b7421ad59491acf6) [@claude](https://github.com/apps/claude)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+</small>
+
+- `dmg-builder@26.18.1`
+- `electron-builder-squirrel-windows@26.18.1`
+
+</details>
+
 ## 26.18.0
 
 ### Minor Changes
