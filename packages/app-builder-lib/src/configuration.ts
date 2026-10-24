@@ -755,9 +755,9 @@ export interface ToolsetConfig {
    * - Linux: `/usr/local/bin/wine`, `/usr/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`,
    *   `/opt/wine-staging/bin/wine`
    *
-   * To use a Wine installed elsewhere, point a `ToolsetCustom` object at its installation directory, the one
-   * containing `bin/wine` (`{ "url": "file:///opt/my-wine" }`). A directory without a bundled `wine-home` prefix
-   * runs with Wine's own default prefix, like `"system"`. A `ToolsetCustom` object is also how a custom Wine bundle is used.
+   * If Wine is not installed at one of these locations, the build fails with a configuration error.
+   *
+   * To use a custom Wine bundle, use a `ToolsetCustom` object.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md
    *
