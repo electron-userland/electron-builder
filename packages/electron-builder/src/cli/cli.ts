@@ -10,6 +10,7 @@ import { createSelfSignedCert } from "./create-self-signed-cert.js"
 import { createUpdateKey } from "./create-update-key.js"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js"
 import { configureMigrateSchemaCommand, migrateSchema } from "./migrate-schema.js"
+import { signUpdateManifest } from "./sign-update-manifest.js"
 import { start } from "./start.js"
 
 // tslint:disable:no-unused-expression
@@ -55,6 +56,34 @@ void createYargs()
         description: "Path to write the private key PEM (default: ./update-private-key.pem)",
       }),
     wrap(argv => createUpdateKey(argv.out))
+  )
+  .command(
+    "sign-update-manifest <files..>",
+    "Re-sign edited auto-update manifests (latest*.yml) in place, or verify them",
+    yargs =>
+      yargs
+        .positional("files", {
+          type: "string",
+          array: true,
+          description: "Path(s) to the latest*.yml manifest(s)",
+        })
+        .option("key-file", {
+          type: "string",
+          array: true,
+          requiresArg: true,
+          description: "Path to the Ed25519 private key PEM (repeat to dual-sign). Default: ELECTRON_BUILDER_UPDATE_SIGN_KEY / ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE",
+        })
+        .option("verify", {
+          type: "boolean",
+          description: "Only verify the existing signatures; nothing is written",
+        })
+        .option("public-key", {
+          type: "string",
+          array: true,
+          requiresArg: true,
+          description: "Trusted public key (PEM file path, PEM or base64 SPKI) to verify against; implies --verify. Default: derived from the signing key(s)",
+        }),
+    wrap(argv => signUpdateManifest({ files: argv.files as Array<string>, keyFile: argv["key-file"], verify: argv.verify, publicKey: argv["public-key"] }))
   )
   .command("migrate-schema", "Migrate build config from v26 to v27 format", configureMigrateSchemaCommand, wrap(migrateSchema))
   .help()

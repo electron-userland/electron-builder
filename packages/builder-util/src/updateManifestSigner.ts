@@ -1,5 +1,6 @@
 import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject, sign as cryptoSign } from "crypto"
 import { readFileSync } from "fs"
+import { load } from "js-yaml"
 import * as path from "path"
 import {
   canonicalizeForSigning,
@@ -11,7 +12,7 @@ import {
   validateSignedManifestShape,
 } from "builder-util-runtime"
 import { decodeStrictBase64 } from "./cscLink.js"
-import { InvalidConfigurationError } from "./util.js"
+import { InvalidConfigurationError, serializeToYaml } from "./util.js"
 
 /**
  * Build-time counterpart to `verifyManifestSignature`. Lives in builder-util (never bundled into a
@@ -197,4 +198,47 @@ export function generateUpdateSigningKeypair(): { publicKeyPem: string; privateK
     publicKeyPem: publicKey.export({ type: "spki", format: "pem" }).toString().trim(),
     privateKeyPem: privateKey.export({ type: "pkcs8", format: "pem" }).toString().trim(),
   }
+}
+
+/**
+ * Parses the text of a `latest*.yml` the way electron-updater does (js-yaml `load`, default schema), so a manifest is
+ * re-signed or verified over exactly the values the updater will see. Throws an InvalidConfigurationError naming
+ * `file` when the text is not YAML or not a mapping.
+ */
+export function parseUpdateManifestYaml(content: string, file: string): UpdateInfo {
+  let parsed: unknown
+  try {
+    parsed = load(content)
+  } catch (e: any) {
+    throw new InvalidConfigurationError(`${file} is not valid YAML: ${e.message || e}`)
+  }
+  if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new InvalidConfigurationError(`${file} is not an update manifest: expected a YAML mapping with version and files`)
+  }
+  return parsed as UpdateInfo
+}
+
+/**
+ * Re-signs the text of an existing `latest*.yml` (backing the `sign-update-manifest` CLI command): drops its
+ * `signature`/`signatures` fields, checks the shape the updater requires of a signed manifest
+ * ({@link validateSignedManifestShape}), signs it with every key, and serializes it the way a build writes it —
+ * every other field kept as parsed and in its order, `signature` (first key) and `signatures` (one entry per key) last.
+ * Throws an InvalidConfigurationError naming `file` when the manifest cannot be signed; never includes key material.
+ */
+export function resignUpdateManifestYaml(
+  content: string,
+  privateKeys: Array<string | KeyObject>,
+  file: string
+): { content: string; info: UpdateInfo; signatures: Array<UpdateManifestSignature> } {
+  const fields: Record<string, unknown> = { ...parseUpdateManifestYaml(content, file) }
+  delete fields.signature
+  delete fields.signatures
+  const unsigned = fields as unknown as UpdateInfo
+  const shapeProblem = validateSignedManifestShape(unsigned)
+  if (shapeProblem != null) {
+    throw new InvalidConfigurationError(`Cannot sign ${file}: ${shapeProblem} (the updater would reject it)`)
+  }
+  const signatures = createUpdateManifestSignatures(unsigned, privateKeys)
+  const info: UpdateInfo = { ...unsigned, signature: signatures[0].signature, signatures }
+  return { content: serializeToYaml(info, false, true), info, signatures }
 }

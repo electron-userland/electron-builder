@@ -21,6 +21,8 @@ Commands:
                                   tory
   electron-builder create-update-key        Generate an Ed25519 keypair for signing auto-u
                                   pdate manifests
+  electron-builder sign-update-manifest <files..>  Re-sign edited auto-update manifests (l
+                                  atest*.yml) in place, or verify them
   electron-builder migrate-schema           Migrate build config from v26 to v27 format
 
 Building:
@@ -75,6 +77,19 @@ For other commands please see help using `--help` arg, e.g. `./node_modules/.bin
 :::note[Requirements]
 electron-builder v27 requires **Node.js >=22.12.0**. Upgrading from v26? Review the [v27 breaking changes](./migration/v27-breaking-changes), then follow the [migration walkthrough](./migration/v26-to-v27).
 :::
+
+## `sign-update-manifest`
+
+Re-signs one or more existing `latest*.yml` files in place with the [update signing key](./features/signed-update-manifests.md), so a published manifest can be edited — for example to change `stagingPercentage` — without rebuilding.
+
+```bash
+electron-builder sign-update-manifest latest.yml latest-mac.yml            # key from ELECTRON_BUILDER_UPDATE_SIGN_KEY(_FILE)
+electron-builder sign-update-manifest latest.yml --key-file update-key.pem # repeat --key-file to dual-sign
+electron-builder sign-update-manifest latest.yml --verify                  # check only, nothing is written
+electron-builder sign-update-manifest latest.yml --public-key pub.pem      # check against a given public key
+```
+
+See [Re-signing a published manifest](./features/signed-update-manifests.md#re-signing-a-published-manifest).
 
 ## `migrate-schema`
 

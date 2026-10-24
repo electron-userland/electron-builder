@@ -111,6 +111,15 @@ Every later release must be signed by the new key, so remove the option again in
 - **Keep dual-signing longer**, or serve them a separate feed (for example a `latest-legacy.yml` on a different `channel`) whose manifests are still signed with the old key. This only works if the old builds can be steered there (`autoUpdater.channel`, `setFeedURL`, or a feed URL you controlled at the time).
 - **Runtime override.** Newer app code can set `autoUpdater.updateManifestPublicKey` to a list explicitly; this overrides the value from `app-update.yml`, which helps if the trust list must change without rebuilding `app-update.yml`, but it does not help installs that are already in the field.
 
+**Editing a published manifest during the rotation.** If you change a signed field of a `latest*.yml` that is already on the feed (for example its `stagingPercentage`), re-sign it with the same keys the release was built with — both keys, old first, for a bridge release — or installs that trust only the old key reject it. Verify against the old key before uploading:
+
+```sh
+npx electron-builder sign-update-manifest latest.yml --key-file update-key.old.pem --key-file update-key.new.pem
+npx electron-builder sign-update-manifest latest.yml --public-key update-public-key.old.pem   # check before uploading
+```
+
+See [Re-signing a published manifest](./signed-update-manifests.md#re-signing-a-published-manifest).
+
 **6. Retire the old key.** Once no feed is signed with it, delete the old private key from CI. Keep the *public* key and its key id on file for auditing.
 
 ### If the private key is compromised
@@ -132,7 +141,7 @@ An attacker holding a private key that installs still trust can produce a `lates
 
   - **Build without a publish policy.** The requirement only warns there, and electron-builder writes the unsigned `latest*.yml` locally; your step signs it and publishes the artifacts and the manifest.
   - **Keep publishing, with `publishAutoUpdate: false` on every publish provider.** electron-builder uploads the artifacts and embeds the `publicKey`, but writes no `latest*.yml` at all, so your step has to generate the manifest as well as sign and upload it.
-- **Pre-signed download URLs** (`files[].url`, `files[].blockMapUrl`, `packages.<arch>.path`) are covered by the signature, so a step that writes them into `latest*.yml` has to run before the manifest is signed — or sign it again afterwards, which needs the private key in that step. A server that mints them per request cannot serve a signed manifest.
+- **Pre-signed download URLs** (`files[].url`, `files[].blockMapUrl`, `packages.<arch>.path`) are covered by the signature, so a step that writes them into `latest*.yml` has to run before the manifest is signed — or sign it again afterwards with `electron-builder sign-update-manifest`, which needs the private key in that step. A server that mints them per request cannot serve a signed manifest.
 - Use one key per app (or per release channel if channels are operated by different teams). Sharing a key across unrelated apps means one compromise affects all of them.
 
 ## Windows: code-signing certificate rotation

@@ -181,13 +181,35 @@ Both fields are always written, even with a single key, so the manifest shape do
 
 ## What is signed
 
-Every signature covers the integrity-critical fields of the manifest: `version`, `stagingPercentage`, `minimumSystemVersion` (its absence is signed too, so an OS-version gate cannot be added or removed after signing), every file entry's `url`, `sha512`, and `size` (and its `blockMapUrl` when present), and — for the NSIS web installer — every `packages` entry's `path`, `sha512`, `size`, `blockMapSize`, and `isAdminRightsRequired` (all in a canonical, order-independent form). Cosmetic fields — `releaseName`, `releaseNotes`, and `releaseDate` — are not covered, so they remain editable after publishing without invalidating the signature. The `signature`/`signatures` fields themselves (including `keyId`) are not part of the signed payload, so signatures can be added or removed without invalidating the others.
+Every signature covers the integrity-critical fields of the manifest: `version`, `stagingPercentage`, `minimumSystemVersion` (its absence is signed too, so an OS-version gate cannot be added or removed after signing), every file entry's `url`, `sha512`, and `size` (and its `blockMapUrl` when present), and — for the NSIS web installer — every `packages` entry's `path`, `sha512`, `size`, `blockMapSize`, and `isAdminRightsRequired` (all in a canonical, order-independent form). Cosmetic fields — `releaseName`, `releaseNotes`, and `releaseDate` — are not covered, so they remain editable after publishing without invalidating the signature. To change a covered field after publishing, edit the file and [re-sign it](#re-signing-a-published-manifest). The `signature`/`signatures` fields themselves (including `keyId`) are not part of the signed payload, so signatures can be added or removed without invalidating the others.
 
 `files[].isAdminRightsRequired` is intentionally not signed either. It only decides how electron-updater launches the already hash-verified installer (directly, or through `elevate.exe`), so tampering with it cannot change what gets installed — at worst it causes an unexpected UAC prompt — while leaving it unsigned lets you correct a misconfigured value in `latest.yml` after publishing without re-signing.
 
 The canonical form is injective: every string value is JSON-quoted (so a value can never contain an unescaped newline or tab and cannot impersonate another record), numbers are written bare, and an absent optional field is encoded differently from an empty one. Two manifests therefore produce the same signed bytes only if every covered field is identical.
 
 A signed manifest must also have the shape the signature is meant to protect. Before trying any key, the updater rejects a manifest whose `files` list is empty or missing, whose `version`, `files[].url`/`sha512`, `minimumSystemVersion` or `packages` entries are not plain strings/numbers, or whose signed string fields contain control characters, with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID` naming the problem. In particular, the deprecated top-level `path`/`sha512` fields (an unsigned mirror of `files[0]`) are never used to download a verified update. electron-builder applies the same checks when signing, so a build cannot produce a signed manifest that its updaters would refuse.
+
+## Re-signing a published manifest {#re-signing-a-published-manifest}
+
+Cosmetic fields can be edited in a published `latest*.yml` as they are, but changing a signed field — raising `stagingPercentage` during a staged rollout, adding a `minimumSystemVersion`, pointing a file `url` at a different host — invalidates its signatures, and every install that embeds a public key then refuses the update with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`. Rather than rebuilding, edit the file and sign it again with the same key(s) the build uses:
+
+```sh
+# the key comes from ELECTRON_BUILDER_UPDATE_SIGN_KEY / ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE, as in a build…
+npx electron-builder sign-update-manifest dist/latest.yml dist/latest-mac.yml dist/latest-linux.yml
+
+# …or from a PEM file; repeat --key-file to dual-sign (old key first, as in a build)
+npx electron-builder sign-update-manifest latest.yml --key-file update-key.old.pem --key-file update-key.new.pem
+```
+
+Each file is parsed the way electron-updater parses it, its existing `signature`/`signatures` fields are dropped, and it is checked against the same shape rules the updater applies (a manifest the updater would reject is never signed). It is then signed by every key and written back in place in the format a build writes: every other field keeps its value and position, and `signature` plus `signatures` come last. YAML comments are not preserved. When several files are given, all of them are signed before any is written, so one invalid manifest leaves every file untouched. Without a key the command fails with an error naming the key sources; the private key itself is never printed.
+
+To check signatures without writing anything, pass `--verify`. It checks against the public half of the configured signing key(s), or against `--public-key` (a PEM file path, a PEM value, or a base64 SPKI key; repeatable, and it implies `--verify`), and exits non-zero naming every file that is unsigned or not signed by a trusted key:
+
+```sh
+npx electron-builder sign-update-manifest latest.yml --public-key update-public-key.pem
+```
+
+Upload the re-signed file to the update feed afterwards; the command does not publish.
 
 ## Verification behavior in electron-updater
 
