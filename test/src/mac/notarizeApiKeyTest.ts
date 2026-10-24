@@ -39,7 +39,10 @@ beforeEach(() => {
   vi.spyOn(Executables, "notarytool").mockResolvedValue(NOTARYTOOL)
 })
 
+const originalPlatform = process.platform
+
 afterEach(() => {
+  Object.defineProperty(process, "platform", { value: originalPlatform, configurable: true })
   vi.restoreAllMocks()
   vi.unstubAllEnvs()
 })
@@ -83,6 +86,8 @@ describe("notarizeIfProvided with APPLE_API_KEY", () => {
 
   test("passes notarytool to notarize by absolute path, resolved from toolsets.executables", async ({ expect, tmpDir }) => {
     stubApiKeyEnv("/path/to/AuthKey_ABCDE12345.p8")
+    // notarization runs on macOS, where the entry (a URI without a drive letter) has a location; on a Windows test host it has none
+    Object.defineProperty(process, "platform", { value: "darwin", configurable: true })
     vi.mocked(Executables.notarytool).mockRestore()
     const resolve = vi.spyOn(Executables, "resolve").mockReturnValue("/opt/xcode/notarytool")
     await Executables.run({ notarytool: "file:///opt/xcode/notarytool" }, () => createHelper(tmpDir).notarizeIfProvided("/My.app"))
