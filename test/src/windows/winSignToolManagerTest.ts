@@ -840,6 +840,26 @@ describe("publisherNameMatchesCertificate", () => {
   })
 })
 
+describe("getCertificateFromStoreInfo", () => {
+  test("reads the certificate store with the non-ASCII characters of subjects escaped, so they survive the console code page", async () => {
+    const manager = Object.create(SigntoolSignManager.prototype) as SigntoolSignManager
+    const subject = "CN=Firma UG (haftungsbeschränkt), O=Firma UG (haftungsbeschränkt), C=DE"
+    // what the script prints for it: pure ASCII JSON, \u-escaped
+    const output = JSON.stringify([{ Subject: subject, PSParentPath: "Microsoft.PowerShell.Security\\Certificate::CurrentUser\\My", Thumbprint: "ab12" }]).replace(
+      /[^ -~]/g,
+      c => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`
+    )
+    const exec = vi.fn().mockResolvedValue(`${output}\r\n`)
+    const vm: any = { powershellCommand: { value: Promise.resolve("powershell.exe") }, exec }
+    const result = await manager.getCertificateFromStoreInfo({ sign: { type: "signtool", certificateSubjectName: "haftungsbeschränkt" } } as any, vm)
+    expect(result).toEqual({ thumbprint: "ab12", subject, store: "My", isLocalMachineStore: false })
+    const command: string = exec.mock.calls[0][1].at(-1)
+    expect(command).toContain("| ConvertTo-Json -Compress; if ($json) { ConvertTo-AsciiEscaped $json }")
+    // Constrained Language Mode forbids assigning an output encoding
+    expect(command).not.toMatch(/\[Console\]::|\$OutputEncoding/)
+  })
+})
+
 describe("validateExplicitPublisherName", () => {
   function makeValidationManager(sign: any, certInfo: unknown | null, options: { certInfoRejects?: boolean } = {}) {
     const manager: any = Object.create(SigntoolSignManager.prototype)

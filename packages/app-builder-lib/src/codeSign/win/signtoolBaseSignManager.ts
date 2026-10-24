@@ -1,5 +1,5 @@
 import { asArray, InvalidConfigurationError, log, retry } from "builder-util"
-import { MemoLazy, parseDn } from "builder-util-runtime"
+import { MemoLazy, parseDn, POWERSHELL_ASCII_ESCAPE_FUNCTION } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -479,11 +479,12 @@ export abstract class SigntoolBaseSignManager implements SignManager {
     const certificateSha1 = signing?.certificateSha1?.toUpperCase()
 
     const ps = await vm.powershellCommand.value
+    // the non-ASCII characters of a subject are escaped, so they read back losslessly whatever the console code page
     const rawResult = await vm.exec(ps, [
       "-NoProfile",
       "-NonInteractive",
       "-Command",
-      "Get-ChildItem -Recurse Cert: -CodeSigningCert | Select-Object -Property Subject,PSParentPath,Thumbprint | ConvertTo-Json -Compress",
+      `${POWERSHELL_ASCII_ESCAPE_FUNCTION}; $json = Get-ChildItem -Recurse Cert: -CodeSigningCert | Select-Object -Property Subject,PSParentPath,Thumbprint | ConvertTo-Json -Compress; if ($json) { ConvertTo-AsciiEscaped $json }`,
     ])
     const certList = rawResult.length === 0 ? [] : asArray<CertInfo>(JSON.parse(rawResult))
     for (const certInfo of certList) {

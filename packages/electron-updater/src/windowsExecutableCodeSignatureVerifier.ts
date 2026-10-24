@@ -1,4 +1,4 @@
-import { escapePowerShellSingleQuotes, matchPublisherName, newError, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "builder-util-runtime"
+import { matchPublisherName, newError, parseAuthenticodeSignatureOutput, prepareAuthenticodeSignatureExec } from "builder-util-runtime"
 import { execFile, ExecFileException } from "child_process"
 import type { VerifyUpdateFileResult } from "./types.js"
 import { Logger } from "./types.js"
@@ -91,8 +91,7 @@ export function verifySignature(publisherNames: Array<string>, updateFile: strin
   logger.info(`Verifying signature ${updateFile}`)
   return new Promise<VerifyUpdateFileResult>((resolve, reject) => {
     try {
-      const command = `Get-AuthenticodeSignature -LiteralPath '${escapePowerShellSingleQuotes(updateFile)}' | ConvertTo-Json -Compress`
-      execFile(...preparePowerShellExec(command, VERIFY_TIMEOUT_MS), (error, stdout, stderr) => {
+      execFile(...prepareAuthenticodeSignatureExec(updateFile, VERIFY_TIMEOUT_MS), (error, stdout, stderr) => {
         if (error != null) {
           reject(cannotVerify(describeExecError(error, String(stderr ?? "")), { cause: error }))
           return
@@ -108,7 +107,7 @@ export function verifySignature(publisherNames: Array<string>, updateFile: strin
         }
       })
     } catch (e: any) {
-      // PowerShell cannot be started at all, e.g. blocked by AppLocker / WDAC
+      // PowerShell cannot be located (no SystemRoot) or started at all, e.g. blocked by AppLocker / WDAC
       reject(cannotVerify(`cannot run PowerShell: ${e.message}`, { cause: e }))
     }
   })
