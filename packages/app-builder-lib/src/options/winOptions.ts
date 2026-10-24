@@ -64,9 +64,9 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    *
    * When enabled (the default), the resolved [publisher name](#publisherName) is embedded into
    * `app-update.yml` at build time. At update time electron-updater inspects the certificate that
-   * signed the downloaded installer and compares its subject (Distinguished Name / Common Name)
-   * against that publisher name, refusing to install on a mismatch. This prevents a tampered or
-   * maliciously substituted update from being installed.
+   * signed the downloaded installer and compares its subject (Distinguished Name) against that
+   * publisher name, refusing to install on a mismatch or when the signature cannot be verified.
+   * This prevents a tampered or maliciously substituted update from being installed.
    *
    * While enabled, electron-builder also checks at build time that the signed NSIS installer (or
    * nsis-web stub) is signed by a certificate matching that publisher name, using the same matching

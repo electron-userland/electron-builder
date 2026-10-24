@@ -111,11 +111,9 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
       const verifyHook = vi.fn().mockResolvedValue(null) // success as per old interface
       updater.verifyUpdateCodeSignature = verifyHook
 
-      // Assert the CALL COUNT after each hop, not just toHaveBeenCalledWith. Two reasons: toHaveBeenCalledWith
-      // matches any recorded call, so repeating it proves nothing after the first hop; and off Windows the built-in
-      // verifier this shim delegates to fails open (no powershell.exe -> `{ response: "success" }`, i.e. `null`
-      // through the legacy shim), which is exactly what every assertion below expects. Without the counts, a
-      // completely non-delegating implementation would pass this test on macOS and Linux.
+      // Assert the CALL COUNT after each hop, not just toHaveBeenCalledWith: toHaveBeenCalledWith matches any
+      // recorded call, so repeating it proves nothing after the first hop. (Before v27 the built-in verifier also
+      // failed open off Windows to exactly the values asserted below; it now rejects when PowerShell cannot run.)
       // @ts-expect-error accessing a private method
       const innerMethodResult = await updater.verifySignature("/path/to/installer.exe")
       expect(innerMethodResult).toEqual({ response: "success" }) // private method uses new interface internally
@@ -216,8 +214,7 @@ describe("NsisUpdater verifySignature publisherName guard", () => {
       })
 
       // The real assertion — expect(this).toBe(updater) — lives inside each hook, so each one needs a call-count
-      // check to prove it ran at all. Off Windows the built-in verifier fails open to these very same values
-      // (`{ response: "success" }` / `null`), so without the counts neither hook has to be reached for this to pass.
+      // check to prove it ran at all.
       const newStyleHook = vi.fn(async function (this: typeof updater) {
         expect(this).toBe(updater)
         return { response: "success" as const }
