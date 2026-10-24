@@ -1,8 +1,82 @@
-import { derivePublicKeyPem, InvalidConfigurationError, loadUpdateSigningKeys, log, parseUpdateManifestYaml, resignUpdateManifestYaml } from "builder-util"
-import { collectManifestSignatures, parsePublicKey, UpdateInfo, verifyManifestSignatures } from "builder-util-runtime"
+import {
+  derivePublicKeyPem,
+  InvalidConfigurationError,
+  loadUpdateSigningKeyFiles,
+  loadUpdateSigningKeys,
+  log,
+  parseUpdateManifestYaml,
+  resignUpdateManifestYaml,
+} from "builder-util"
+import { collectManifestSignatures, normalizePublicKeyList, parsePublicKey, UpdateInfo, verifyManifestSignatures } from "builder-util-runtime"
 import { KeyObject } from "crypto"
 import { readFile, stat, writeFile } from "fs/promises"
 import * as path from "path"
+import type { Argv } from "yargs"
+
+export const SIGN_UPDATE_MANIFEST_COMMAND = "sign-update-manifest <files..>"
+
+/**
+ * Options of `sign-update-manifest`. `--key-file` and `--public-key` take exactly one value each (`nargs: 1`) and are
+ * repeated for several keys, so a manifest path after them stays a positional file instead of being read as a key.
+ * @internal
+ */
+export function configureSignUpdateManifestCommand(yargs: Argv) {
+  return yargs
+    .positional("files", {
+      type: "string",
+      array: true,
+      description: "Path(s) to the latest*.yml manifest(s)",
+    })
+    .option("key-file", {
+      type: "string",
+      array: true,
+      nargs: 1,
+      requiresArg: true,
+      description: "Path to the Ed25519 private key PEM (repeat to dual-sign). Default: ELECTRON_BUILDER_UPDATE_SIGN_KEY / ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE",
+    })
+    .option("verify", {
+      type: "boolean",
+      description: "Only verify the existing signatures; nothing is written",
+    })
+    .option("public-key", {
+      type: "string",
+      array: true,
+      nargs: 1,
+      requiresArg: true,
+      description:
+        "Trusted public key(s) to verify against: a PEM file path, a PEM value or a base64 SPKI key (repeatable); implies --verify. Default: derived from the signing key(s)",
+    })
+}
+
+/** Maps parsed `sign-update-manifest` arguments to {@link SignUpdateManifestOptions}. @internal */
+export function signUpdateManifestOptionsFromArgs(args: Record<string, unknown>): SignUpdateManifestOptions {
+  return {
+    files: (args.files as Array<string> | undefined) ?? [],
+    keyFile: args["key-file"] as Array<string> | undefined,
+    verify: args.verify as boolean | undefined,
+    publicKey: args["public-key"] as Array<string> | undefined,
+  }
+}
+
+/**
+ * yargs reads every argument that starts with `-` as an option, so a PEM passed as `--public-key "$PEM"` (which starts
+ * with `-----BEGIN`) would never reach the option. Joins such a pair into the `--public-key=<PEM>` form, which yargs
+ * parses as the option's value. Every other argument is returned unchanged.
+ * @internal
+ */
+export function joinPemOptionValues(args: Array<string>): Array<string> {
+  const result: Array<string> = []
+  for (let i = 0; i < args.length; i++) {
+    const next = args[i + 1]
+    if (args[i] === "--public-key" && next != null && next.trimStart().startsWith("-----BEGIN")) {
+      result.push(`--public-key=${next}`)
+      i++
+    } else {
+      result.push(args[i])
+    }
+  }
+  return result
+}
 
 export interface SignUpdateManifestOptions {
   /** The `latest*.yml` files to re-sign (or, with `verify`, to check). */
@@ -57,8 +131,9 @@ export async function signUpdateManifest(options: SignUpdateManifestOptions): Pr
 }
 
 function loadSigningKeys(keyFile: Array<string> | null | undefined): Array<string> {
-  // explicit --key-file wins; otherwise the same environment variables the build reads
-  return loadUpdateSigningKeys({ signingKeyFile: keyFile ?? null })
+  const files = (keyFile ?? []).filter(it => typeof it === "string" && it.trim().length > 0)
+  // explicit --key-file wins, with errors that name the flag; otherwise the same environment variables the build reads
+  return files.length > 0 ? loadUpdateSigningKeyFiles(files, "--key-file") : loadUpdateSigningKeys(null)
 }
 
 async function resignUpdateManifests(files: Array<string>, keyFile: Array<string> | null | undefined): Promise<Array<SignedUpdateManifest>> {
@@ -94,25 +169,39 @@ async function resolvePublicKeys(values: Array<string>, keyFile: Array<string> |
     }
     return keys.map(it => parsePublicKey(derivePublicKeyPem(it)))
   }
-  return Promise.all(
-    values.map(async value => {
-      const text = value.includes("-----BEGIN") ? value : await readPublicKeyFile(value)
-      try {
-        return parsePublicKey(text)
-      } catch (e: any) {
-        throw new InvalidConfigurationError(`--public-key ${value.includes("-----BEGIN") ? "value" : JSON.stringify(value)} is not a valid Ed25519 public key: ${e.message || e}`)
-      }
-    })
-  )
+  const keys = await Promise.all(values.map(it => readPublicKeys(it)))
+  return keys.flat()
 }
 
-/** A `--public-key` value that names an existing file is read from it; anything else is taken as a base64 SPKI key. */
-async function readPublicKeyFile(value: string): Promise<string> {
-  const isFile = await stat(value).then(
-    it => it.isFile(),
-    () => false
-  )
-  return isFile ? readFile(value, "utf8") : value
+/**
+ * Parses one `--public-key` value into every key it holds: the text of a file when the value names one, otherwise the value
+ * itself (PEM or base64 SPKI). A file or value may hold several concatenated PEM blocks (a trust list), split the way
+ * electron-updater splits `updateManifestPublicKey`. Errors name the file path when a file was read, and otherwise only say
+ * "value": a value that is not a valid public key may be a private key pasted by mistake, so it is never echoed.
+ */
+async function readPublicKeys(value: string): Promise<Array<KeyObject>> {
+  const isFile =
+    !value.includes("-----BEGIN") &&
+    (await stat(value).then(
+      it => it.isFile(),
+      () => false
+    ))
+  const source = isFile ? `--public-key file ${value}` : "--public-key value"
+  const blocks = normalizePublicKeyList(isFile ? await readFile(value, "utf8") : value)
+  if (blocks.length === 0) {
+    throw new InvalidConfigurationError(`${source} holds no public key`)
+  }
+  return blocks.map((block, index) => {
+    try {
+      return parsePublicKey(block)
+    } catch (e: any) {
+      const which = blocks.length > 1 ? ` (key #${index + 1})` : ""
+      throw new InvalidConfigurationError(
+        `${source}${which} is not a valid Ed25519 public key (PEM or base64 SPKI; the value is not shown): ${e.message || e}. ` +
+          'To pass a PEM inline, use --public-key=<PEM> or --public-key "$PEM"; to pass a file, give its path.'
+      )
+    }
+  })
 }
 
 async function verifyUpdateManifests(files: Array<string>, publicKeyValues: Array<string>, keyFile: Array<string> | null | undefined): Promise<Array<VerifiedUpdateManifest>> {

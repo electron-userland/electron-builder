@@ -203,7 +203,7 @@ npx electron-builder sign-update-manifest latest.yml --key-file update-key.old.p
 
 Each file is parsed the way electron-updater parses it, its existing `signature`/`signatures` fields are dropped, and it is checked against the same shape rules the updater applies (a manifest the updater would reject is never signed). It is then signed by every key and written back in place in the format a build writes: every other field keeps its value and position, and `signature` plus `signatures` come last. YAML comments are not preserved. When several files are given, all of them are signed before any is written, so one invalid manifest leaves every file untouched. Without a key the command fails with an error naming the key sources; the private key itself is never printed.
 
-To check signatures without writing anything, pass `--verify`. It checks against the public half of the configured signing key(s), or against `--public-key` (a PEM file path, a PEM value, or a base64 SPKI key; repeatable, and it implies `--verify`), and exits non-zero naming every file that is unsigned or not signed by a trusted key:
+To check signatures without writing anything, pass `--verify`. It checks against the public half of the configured signing key(s), or against `--public-key` (a PEM file path, a PEM value, or a base64 SPKI key; a file or value may hold several concatenated PEM keys, as a trust list does; repeatable, and it implies `--verify`), and exits non-zero naming every file that is unsigned or not signed by a trusted key:
 
 ```sh
 npx electron-builder sign-update-manifest latest.yml --public-key update-public-key.pem

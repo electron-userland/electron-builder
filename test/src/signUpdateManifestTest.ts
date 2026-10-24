@@ -2,7 +2,15 @@ import * as fsp from "fs/promises"
 import * as path from "path"
 import { createUpdateManifestSignatures, derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, log, serializeToYaml } from "builder-util"
 import { canonicalizeForSigning, computeUpdateManifestKeyId, UpdateInfo, verifyManifestSignatures, WindowsUpdateInfo } from "builder-util-runtime"
-import { signUpdateManifest } from "electron-builder/src/cli/sign-update-manifest"
+import { createYargs } from "electron-builder/src/builder"
+import {
+  configureSignUpdateManifestCommand,
+  joinPemOptionValues,
+  SIGN_UPDATE_MANIFEST_COMMAND,
+  signUpdateManifest,
+  SignUpdateManifestOptions,
+  signUpdateManifestOptionsFromArgs,
+} from "electron-builder/src/cli/sign-update-manifest"
 import { load } from "js-yaml"
 import { afterEach, beforeEach, vi } from "vitest"
 
@@ -222,4 +230,101 @@ test("re-signs a manifest with allowCatalogSignature: true over the shared EBUM1
   expect(verifyManifestSignatures(withFlag, [current.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(current.publicKeyPem) })
   // the signatures are exactly what a build would write for the same manifest
   expect(withFlag.signatures).toEqual(createUpdateManifestSignatures(info, [current.privateKeyPem]))
+})
+
+/** Parses `sign-update-manifest` arguments through the real yargs parser, set up exactly as cli.ts sets it up. */
+function parseCli(args: Array<string>): SignUpdateManifestOptions {
+  let options: SignUpdateManifestOptions | null = null
+  let failure: string | null = null
+  void createYargs()
+    .command(SIGN_UPDATE_MANIFEST_COMMAND, "", configureSignUpdateManifestCommand, argv => {
+      options = signUpdateManifestOptionsFromArgs(argv)
+    })
+    .strict()
+    .exitProcess(false)
+    .fail(message => {
+      failure = message
+    })
+    .parse(joinPemOptionValues(["sign-update-manifest", ...args]))
+  if (failure != null) {
+    throw new Error(failure)
+  }
+  return options!
+}
+
+test("the CLI parser takes an inline PEM for --public-key, and one value per --key-file / --public-key in any order", ({ expect }) => {
+  const pem = current.publicKeyPem
+  expect(parseCli(["latest.yml", "--public-key", pem, "latest-mac.yml"])).toMatchObject({ files: ["latest.yml", "latest-mac.yml"], publicKey: [pem] })
+  expect(parseCli(["--public-key", pem, "--public-key", next.publicKeyPem, "latest.yml"])).toMatchObject({ files: ["latest.yml"], publicKey: [pem, next.publicKeyPem] })
+  expect(parseCli([`--public-key=${pem}`, "latest.yml"])).toMatchObject({ files: ["latest.yml"], publicKey: [pem] })
+
+  // files first or flags first: a path after a flag's value stays a manifest
+  const expected = { files: ["latest.yml", "latest-mac.yml"], keyFile: ["old.pem", "new.pem"] }
+  expect(parseCli(["latest.yml", "latest-mac.yml", "--key-file", "old.pem", "--key-file", "new.pem"])).toMatchObject(expected)
+  expect(parseCli(["--key-file", "old.pem", "latest.yml", "--key-file", "new.pem", "latest-mac.yml"])).toMatchObject(expected)
+  expect(parseCli(["--public-key", "pub.pem", "latest.yml", "--verify"])).toMatchObject({ files: ["latest.yml"], publicKey: ["pub.pem"], verify: true })
+
+  expect(() => parseCli(["latest.yml", "--key-file"])).toThrow("Not enough arguments following: key-file")
+  expect(() => parseCli(["--key-file", "k.pem"])).toThrow()
+})
+
+test("--public-key trusts every key of a concatenated PEM file, and never echoes a value that is not a public key", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const dir = await tmpDir.createTempDir()
+  const file = path.join(dir, "latest.yml")
+  await writeSigned(file, manifest("5.0.0", "App-Setup-5.0.0.exe"), [next.privateKeyPem])
+
+  // a trust list in one file, the way updateManifest.publicKey accepts it: the manifest is signed by its second key only
+  const trustFile = path.join(dir, "trust.pem")
+  await fsp.writeFile(trustFile, `${current.publicKeyPem}\n${next.publicKeyPem}\n`)
+  expect(await signUpdateManifest({ files: [file], publicKey: [trustFile] })).toEqual([
+    { file, version: "5.0.0", ok: true, keyId: computeUpdateManifestKeyId(next.publicKeyPem), reason: undefined },
+  ])
+  expect((await signUpdateManifest({ files: [file], publicKey: [`${current.publicKeyPem}\n${next.publicKeyPem}`] }))[0]).toMatchObject({ ok: true })
+
+  // the CI secret (a base64 private key) passed as --public-key by mistake: rejected without printing it
+  const secret = Buffer.from(current.privateKeyPem + "\n").toString("base64")
+  const body = current.privateKeyPem.split("\n")[1]
+  for (const value of [secret, body]) {
+    const error = await rejection(signUpdateManifest({ files: [file], publicKey: [value] }))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error!.message).toContain("--public-key value is not a valid Ed25519 public key")
+    expect(error!.message).not.toContain(value)
+    expect(error!.message).not.toContain(body)
+  }
+
+  // a file that was read is named by its path, never by its contents
+  const badFile = path.join(dir, "not-a-key.pem")
+  await fsp.writeFile(badFile, secret)
+  const fileError = await rejection(signUpdateManifest({ files: [file], publicKey: [badFile] }))
+  expect(fileError!.message).toContain(`--public-key file ${badFile} is not a valid Ed25519 public key`)
+  expect(fileError!.message).not.toContain(secret)
+})
+
+test("a bad --key-file fails with an InvalidConfigurationError naming the flag", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const dir = await tmpDir.createTempDir()
+  const file = path.join(dir, "latest.yml")
+  await writeSigned(file, manifest("6.0.0", "App-Setup-6.0.0.exe"), [current.privateKeyPem])
+  // a valid key in the environment must not be used instead of the --key-file the user named
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", Buffer.from(current.privateKeyPem + "\n").toString("base64"))
+
+  const missing = path.join(dir, "missing.pem")
+  const missingError = await rejection(signUpdateManifest({ files: [file], keyFile: [missing] }))
+  expect(missingError).toBeInstanceOf(InvalidConfigurationError)
+  expect(missingError!.message).toBe(`--key-file ${missing} cannot be read (ENOENT)`)
+
+  const empty = path.join(dir, "empty.pem")
+  await fsp.writeFile(empty, "\n")
+  const emptyError = await rejection(signUpdateManifest({ files: [file], keyFile: [empty] }))
+  expect(emptyError).toBeInstanceOf(InvalidConfigurationError)
+  expect(emptyError!.message).toContain(`--key-file ${empty} is empty`)
+
+  // a public key where the private key belongs
+  const wrong = path.join(dir, "public.pem")
+  await fsp.writeFile(wrong, current.publicKeyPem + "\n")
+  const wrongError = await rejection(signUpdateManifest({ files: [file], verify: true, keyFile: [wrong] }))
+  expect(wrongError).toBeInstanceOf(InvalidConfigurationError)
+  expect(wrongError!.message).toMatch(/^Update manifest signing key #1 from --key-file is not a valid Ed25519 private key/)
+  expect(wrongError!.message).not.toContain("updateManifest.signingKeyFile")
 })

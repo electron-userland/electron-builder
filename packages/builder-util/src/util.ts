@@ -43,6 +43,7 @@ export {
   derivePublicKeyPem,
   loadUpdateSigningKey,
   loadUpdateSigningKeys,
+  loadUpdateSigningKeyFiles,
   UpdateSigningKeySources,
   generateUpdateSigningKeypair,
   parseUpdateManifestYaml,
