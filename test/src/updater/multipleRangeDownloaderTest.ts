@@ -24,6 +24,7 @@ function createFakeDifferentialDownloader(response: PassThrough): DifferentialDo
         abort: () => {},
       }),
       addErrorAndTimeoutHandlers: () => {},
+      addRedirectHandlers: () => {},
     },
   } as unknown as DifferentialDownloader
 }
@@ -46,7 +47,7 @@ function createFakeRangeServer(remote: Buffer): { downloader: DifferentialDownlo
     httpExecutor: {
       createRequest: (options: { headers: Record<string, string> }, callback: (response: unknown) => void) => ({
         end: () => {
-          const rangeHeader = options.headers.Range
+          const rangeHeader = options.headers.range
           rangeHeaders.push(rangeHeader)
           const ranges = rangeHeader
             .substring("bytes=".length)
@@ -71,6 +72,7 @@ function createFakeRangeServer(remote: Buffer): { downloader: DifferentialDownlo
         abort: () => {},
       }),
       addErrorAndTimeoutHandlers: () => {},
+      addRedirectHandlers: () => {},
     },
   } as unknown as DifferentialDownloader
   return { downloader, rangeHeaders }

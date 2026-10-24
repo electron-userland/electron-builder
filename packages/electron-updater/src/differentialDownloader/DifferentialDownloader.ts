@@ -10,7 +10,7 @@ import { nonThrowingLogger } from "../util.js"
 import { copyData } from "./DataSplitter.js"
 import { URL } from "url"
 import { coalesceDownloadGaps, computeOperations, downloadGapCoalesceThreshold, Operation, OperationKind } from "./downloadPlanBuilder.js"
-import { checkIsPartialContent, ERR_MULTIPLE_RANGES_NOT_SUPPORTED, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader.js"
+import { checkIsPartialContent, ERR_MULTIPLE_RANGES_NOT_SUPPORTED, executeTasksUsingMultipleRangeRequests, RangeRequestTarget, requestRange } from "./multipleRangeDownloader.js"
 import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
 
 export interface DifferentialDownloaderOptions {
@@ -47,11 +47,13 @@ export abstract class DifferentialDownloader {
   }
 
   createRequestOptions(): RequestOptions {
-    const result = {
+    // requestRange follows a redirect itself, without the credential headers when the target is on another origin
+    const result: RequestOptions & { redirect: "manual" } = {
       headers: {
         ...this.options.requestHeaders,
         accept: "*/*",
       },
+      redirect: "manual",
     }
     configureRequestUrl(this.options.newUrl, result)
     // user-agent, cache-control and other common options
@@ -217,8 +219,8 @@ export abstract class DifferentialDownloader {
       let downloadOperationCount = 0
       this.logger.info(`Differential download: ${this.options.newUrl}`)
 
-      let requestOptions = this.createRequestOptions()
-      ;(requestOptions as any).redirect = "manual"
+      // once a request is redirected, the remaining ranges are requested from the redirect target
+      const target: RangeRequestTarget = { options: this.createRequestOptions() }
 
       w = (index: number): void => {
         if (index >= tasks.length) {
@@ -241,7 +243,6 @@ export abstract class DifferentialDownloader {
         }
 
         const range = `bytes=${operation.start}-${operation.end - 1}`
-        requestOptions.headers!.range = range
 
         this.logger?.debug?.(`download range: ${range}`)
 
@@ -250,8 +251,11 @@ export abstract class DifferentialDownloader {
           downloadInfoTransform.beginRangeDownload()
         }
 
-        const requestRange = (redirectCount: number): void => {
-          const request = this.httpExecutor.createRequest(requestOptions, response => {
+        requestRange(
+          this,
+          target,
+          range,
+          response => {
             response.on("error", reject)
             // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
             if (!checkIsPartialContent(response, operation.start, operation.end - 1, reject)) {
@@ -277,23 +281,9 @@ export abstract class DifferentialDownloader {
                 w(index)
               }
             })
-          })
-          request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
-            this.logger.info(`Redirect to ${removeQuery(redirectUrl)}`)
-            // like ElectronHttpExecutor: followRedirect() would resend every header, so abort and request the range again, without
-            // the credential headers if the redirect leaves the origin. The remaining ranges are requested from the redirect URL too.
-            request.abort()
-            if (redirectCount >= MAX_REDIRECTS) {
-              reject(new Error(`Too many redirects (> ${MAX_REDIRECTS})`))
-              return
-            }
-            requestOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions)
-            requestRange(redirectCount + 1)
-          })
-          this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-          request.end()
-        }
-        requestRange(0)
+          },
+          reject
+        )
       }
 
       w(0)
@@ -302,10 +292,8 @@ export abstract class DifferentialDownloader {
 
   protected async readRemoteBytes(start: number, endInclusive: number): Promise<Buffer> {
     const buffer = Buffer.allocUnsafe(endInclusive + 1 - start)
-    const requestOptions = this.createRequestOptions()
-    requestOptions.headers!.range = `bytes=${start}-${endInclusive}`
     let position = 0
-    await this.request(requestOptions, start, endInclusive, chunk => {
+    await this.request(start, endInclusive, chunk => {
       chunk.copy(buffer, position)
       position += chunk.length
     })
@@ -316,39 +304,34 @@ export abstract class DifferentialDownloader {
     return buffer
   }
 
-  private request(requestOptions: RequestOptions, start: number, endInclusive: number, dataHandler: (chunk: Buffer) => void): Promise<void> {
+  private request(start: number, endInclusive: number, dataHandler: (chunk: Buffer) => void): Promise<void> {
     return new Promise((resolve, reject) => {
-      const request = this.httpExecutor.createRequest(requestOptions, response => {
-        response.on("error", reject)
-        // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
-        if (!checkIsPartialContent(response, start, endInclusive, reject)) {
-          return
-        }
+      requestRange(
+        this,
+        { options: this.createRequestOptions() },
+        `bytes=${start}-${endInclusive}`,
+        response => {
+          response.on("error", reject)
+          // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
+          if (!checkIsPartialContent(response, start, endInclusive, reject)) {
+            return
+          }
 
-        response.on("aborted", () => {
-          reject(new Error("response has been aborted by the server"))
-        })
+          response.on("aborted", () => {
+            reject(new Error("response has been aborted by the server"))
+          })
 
-        response.on("data", dataHandler)
-        response.on("end", () => resolve())
-      })
-      this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-      request.end()
+          response.on("data", dataHandler)
+          response.on("end", () => resolve())
+        },
+        reject
+      )
     })
   }
 }
 
-// the redirect limit of HttpExecutor
-const MAX_REDIRECTS = 10
-
 function formatBytes(value: number, symbol = " KB"): string {
   return new Intl.NumberFormat("en").format((value / 1024).toFixed(2) as any) + symbol
-}
-
-// safety
-function removeQuery(url: string): string {
-  const index = url.indexOf("?")
-  return index < 0 ? url : url.substring(0, index)
 }
 
 interface OpenedFile {

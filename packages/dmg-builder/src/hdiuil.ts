@@ -1,4 +1,4 @@
-import { exec, log, retry, spawnAndWriteWithOutput } from "builder-util"
+import { exec, Executables, log, retry, spawnAndWriteWithOutput } from "builder-util"
 
 /**
  * Table of hdiutil error codes that are transient and can be retried.
@@ -52,7 +52,8 @@ const shouldRetry = (args: string[]) => (error: any) => {
 }
 
 export async function hdiUtil(args: string[]): Promise<string | null> {
-  return await retry(() => exec("hdiutil", args), {
+  const hdiutil = Executables.resolve("hdiutil")
+  return await retry(() => exec(hdiutil, args), {
     retries: 5,
     interval: 5000,
     backoff: 2000,
@@ -63,7 +64,8 @@ export async function hdiUtil(args: string[]): Promise<string | null> {
 // Like hdiUtil but pipes `stdin` to the process — used for `hdiutil attach` on
 // DMGs that have an embedded SLA so the prompt is auto-accepted without blocking.
 export async function hdiUtilWithStdin(args: string[], stdin: string): Promise<string | null> {
-  return retry(() => spawnAndWriteWithOutput("hdiutil", args, stdin).then(({ stdout }) => stdout || null), {
+  const hdiutil = Executables.resolve("hdiutil")
+  return retry(() => spawnAndWriteWithOutput(hdiutil, args, stdin).then(({ stdout }) => stdout || null), {
     retries: 5,
     interval: 5000,
     backoff: 2000,

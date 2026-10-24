@@ -1,6 +1,6 @@
 import { DmgContent, DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
 import { downloadBuilderToolset, withToolsetLock } from "app-builder-lib/internal"
-import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
+import { exec, Executables, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
 import { sleep } from "builder-util-runtime"
 import { stat } from "fs/promises"
 
@@ -265,7 +265,7 @@ export async function transformBackgroundFileIfNeed(file: string, tmpDir: TmpDir
   const retinaFile = getRetinaFilePath(file)
   if (retinaFile != null && (await exists(retinaFile))) {
     const tiffFile = await tmpDir.getTempFile({ suffix: ".tiff" })
-    await exec("tiffutil", ["-cathidpicheck", file, retinaFile, "-out", tiffFile])
+    await exec(Executables.resolve("tiffutil"), ["-cathidpicheck", file, retinaFile, "-out", tiffFile])
     return tiffFile
   }
 
@@ -279,7 +279,7 @@ export function getRetinaFilePath(file: string): string | null {
 }
 
 export async function getImageSizeUsingSips(background: string) {
-  const stdout = await exec("sips", ["-g", "pixelHeight", "-g", "pixelWidth", background])
+  const stdout = await exec(Executables.resolve("sips"), ["-g", "pixelHeight", "-g", "pixelWidth", background])
 
   let width = 0
   let height = 0
