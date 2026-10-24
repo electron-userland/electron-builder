@@ -1,4 +1,5 @@
 import { BlockMap, CancellationToken } from "builder-util-runtime"
+import { DOWNLOAD_GAP_COALESCE_THRESHOLD } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
 import { GenericDifferentialDownloader } from "electron-updater/src/differentialDownloader/GenericDifferentialDownloader"
 import { ElectronHttpExecutor } from "electron-updater/src/electronHttpExecutor"
 import { createHash } from "crypto"
@@ -18,10 +19,14 @@ const FILE_URL = "https://feed.example.com/updates/app-1.1.0.exe"
 const PRE_SIGNED_URL = "https://bucket.example.net/app-1.1.0.exe?X-Amz-Signature=abc"
 const SAME_ORIGIN_URL = "https://feed.example.com/files/app-1.1.0.exe"
 
-// three blocks; the middle one is unchanged, so the plan is: download bytes 0-15, copy 16-31 from the old file, download bytes 32-47
+// a changed block, an unchanged middle and a changed block, so the plan is: download the first block, copy the middle from the old
+// file, download the last block. The middle is as large as the gap that is still downloaded rather than copied, so the two changed
+// blocks stay two requests.
 const BLOCK = 16
-const OLD = Buffer.from("a".repeat(BLOCK) + "b".repeat(BLOCK) + "c".repeat(BLOCK))
-const NEW = Buffer.from("x".repeat(BLOCK) + "b".repeat(BLOCK) + "z".repeat(BLOCK))
+const MIDDLE = DOWNLOAD_GAP_COALESCE_THRESHOLD
+const OLD = Buffer.from("a".repeat(BLOCK) + "b".repeat(MIDDLE) + "c".repeat(BLOCK))
+const NEW = Buffer.from("x".repeat(BLOCK) + "b".repeat(MIDDLE) + "z".repeat(BLOCK))
+const SECOND_RANGE = `bytes=${BLOCK + MIDDLE}-${2 * BLOCK + MIDDLE - 1}`
 
 function blockMapOf(data: Buffer): BlockMap {
   const checksums: Array<string> = []
@@ -136,7 +141,7 @@ describe("differential download redirects", () => {
     expect(requests.map(it => [it.url, it.headers.range])).toEqual([
       [FILE_URL, "bytes=0-15"],
       [PRE_SIGNED_URL, "bytes=0-15"],
-      [PRE_SIGNED_URL, "bytes=32-47"],
+      [PRE_SIGNED_URL, SECOND_RANGE],
     ])
     // positive control: the feed gets the credentials
     expect(requests[0].headers).toHaveProperty("authorization", "Bearer feed-secret")
@@ -153,7 +158,7 @@ describe("differential download redirects", () => {
     expect(requests.map(it => [it.url, it.headers.range])).toEqual([
       [FILE_URL, "bytes=0-15"],
       [SAME_ORIGIN_URL, "bytes=0-15"],
-      [SAME_ORIGIN_URL, "bytes=32-47"],
+      [SAME_ORIGIN_URL, SECOND_RANGE],
     ])
     for (const { headers } of requests) {
       expect(headers).toHaveProperty("authorization", "Bearer feed-secret")
