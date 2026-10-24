@@ -167,7 +167,7 @@ export function checkRemovedEnvVars(env: NodeJS.ProcessEnv = process.env): strin
     ...entries,
     "",
     "Unset the variable once you have moved the setting into your configuration.",
-    "https://www.electron.build/docs/migration/v27-breaking-changes#toolset-env-var-overrides-removed",
+    "https://www.electron.build/docs/migration/v27-build-changes#toolset-env-var-overrides-removed",
   ].join("\n")
 }
 

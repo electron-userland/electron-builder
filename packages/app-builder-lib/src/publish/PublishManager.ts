@@ -107,7 +107,7 @@ export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): 
     "the generic publish url has a query string. electron-updater 7 (electron-builder v27) adds it, and sends the credential headers from requestHeaders / addAuthHeader, " +
       "only to downloads on the feed's origin (scheme, host and port): a download url in latest*.yml on another origin is requested without them. " +
       "Nothing changes for the relative URLs electron-builder writes. " +
-      "See https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+      "See https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
   )
 }
 
@@ -136,7 +136,7 @@ function warnIfImplicitPublishExpected(packager: Packager): void {
     { tag, solution: "pass --publish <always|onTag|onTagOrDraft|never>, or set the `publish` policy in your build configuration" },
     "a publish configuration and a CI tag are present, but no publish policy was given — nothing will be uploaded. " +
       "electron-builder v27 removed implicit publishing (v26 auto-published when it detected a CI tag). " +
-      "See https://www.electron.build/docs/migration/v27-breaking-changes#implicit-publish-removed"
+      "See https://www.electron.build/docs/migration/v27-build-changes#implicit-publish-removed"
   )
 }
 
@@ -630,7 +630,7 @@ function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: R
     )
 }
 
-const SIGNING_KEY_OUTSIDE_TRUST_LIST_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#signing-key-must-be-in-updatemanifestpublickey"
+const SIGNING_KEY_OUTSIDE_TRUST_LIST_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#signing-key-must-be-in-updatemanifestpublickey"
 
 /**
  * Normalizes the configured `updateManifest.publicKey` (string, multi-PEM string, or array) into distinct,

@@ -16,7 +16,7 @@ import { TmpDir } from "temp-file"
 
 const DOCS = "https://www.electron.build/docs/flatpak#building-in-unprivileged-containers"
 // the version check and the app-prefix check are new in v27, so their messages say so and link to the migration guide
-const NEW_IN_V27 = "This is new in electron-builder v27. See https://www.electron.build/docs/migration/v27-breaking-changes#flatpak-tooling-requirements"
+const NEW_IN_V27 = "This is new in electron-builder v27. See https://www.electron.build/docs/migration/v27-build-changes#flatpak-tooling-requirements"
 
 const manifest: FlatpakBuilderManifest = {
   id: "com.example.App",

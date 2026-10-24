@@ -42,7 +42,7 @@ describe("checkRemovedEnvVars", () => {
     expect(message).not.toBeNull()
     expect(message).toContain(name)
     expect(message).toContain(expected)
-    expect(message).toContain("v27-breaking-changes")
+    expect(message).toContain("v27-build-changes#toolset-env-var-overrides-removed")
   })
 
   test("every removed variable is reported at once, not just the first", () => {

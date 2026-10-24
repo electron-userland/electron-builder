@@ -79,7 +79,7 @@ export function orderAsarStreams(
 
 type AsarOrderingPackager = Pick<PlatformPackager<any>, "getResource" | "buildResourcesDir" | "projectDir">
 
-const ASAR_ORDERING_MIGRATION_URL = "https://www.electron.build/docs/migration/v27-breaking-changes#asar-ordering-is-now-applied"
+const ASAR_ORDERING_MIGRATION_URL = "https://www.electron.build/docs/migration/v27-build-changes#asar-ordering-is-now-applied"
 
 /**
  * Resolves `asar.ordering` like other build resources (build resources directory first, then the project directory),

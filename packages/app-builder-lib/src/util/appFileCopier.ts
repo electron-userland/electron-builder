@@ -506,7 +506,7 @@ function warnAboutDeprecatedElectronPackages(nodeModules: Array<{ name: string; 
       { dependency: name, solution: `add "${name}" to ignoredProductionDependencies, or move it to devDependencies` },
       `${name} is declared in dependencies and is being packaged into your app (${DEPRECATED_ELECTRON_PACKAGES[name]}). ` +
         "electron-builder <= 26 rejected this outright; v27 removed that guard and does not exclude it by default. " +
-        "See https://www.electron.build/docs/migration/v27-breaking-changes#electron-prebuilt-electron-rebuild-no-longer-error-and-are-not-excluded"
+        "See https://www.electron.build/docs/migration/v27-build-changes#electron-prebuilt-electron-rebuild-no-longer-error-and-are-not-excluded"
     )
   }
 }

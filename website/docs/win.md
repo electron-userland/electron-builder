@@ -31,7 +31,7 @@ Copy the subject from a binary your hook has already signed (a previous release,
 - **macOS / Linux:** `osslsigncode verify -in <App>.exe` — the `Subject:` line under "Signer's certificate", printed as `/C=US/ST=California/O=My Company, Inc./CN=My Company, Inc.`. Keep only `CN`, `O` and `C` and write them as `CN="My Company, Inc.", O="My Company, Inc.", C=US`: OpenSSL names some other components differently from Windows (`ST` instead of `S`, for example), and a value that contains a comma must be wrapped in double quotes.
 
 :::note[Upgrading from v26]
-The v26 `win.signtoolOptions` / `win.azureSignOptions` keys were removed — `electron-builder migrate-schema` rewrites them to `win.sign` automatically. See [v27 Breaking Changes → Windows signing](./migration/v27-breaking-changes.md#windows-signing-winsign).
+The v26 `win.signtoolOptions` / `win.azureSignOptions` keys were removed — `electron-builder migrate-schema` rewrites them to `win.sign` automatically. See [v27 Breaking Changes → Windows signing](./migration/v27-config-changes.md#windows-signing-winsign).
 :::
 
 File `customSign.js` in the project root directory:
