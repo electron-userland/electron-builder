@@ -1,14 +1,14 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`windowsExecutableCodeSignatureVerifier (unit) > preparePowerShellExec params > exe and decoded command match snapshot 1`] = `
+exports[`windowsExecutableCodeSignatureVerifier (unit) > PowerShell invocation > exe and decoded command match snapshot 1`] = `
 [
-  "powershell.exe",
+  "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
   [
     "-NoProfile",
     "-NonInteractive",
     "-InputFormat",
     "None",
-    "$ProgressPreference = 'SilentlyContinue'; Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Security"; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; Get-AuthenticodeSignature -LiteralPath '<UPDATE_PATH>' | ConvertTo-Json -Compress",
+    "$ProgressPreference = 'SilentlyContinue'; Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Security"; Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Utility"; $env:PSModulePath = ""; function ConvertTo-AsciiEscaped([string]$text) { if ($text -cmatch '[^\\x00-\\x7F]') { -join $(foreach ($c in $text.ToCharArray()) { if ([int]$c -gt 127) { '\\u{0:x4}' -f [int]$c } else { $c } }) } else { $text } }; try { $json = Get-AuthenticodeSignature -LiteralPath $env:ELECTRON_BUILDER_AUTHENTICODE_FILE -ErrorAction Stop | ConvertTo-Json -Compress } catch { Write-Error -Message (ConvertTo-AsciiEscaped ($_ | Out-String)); exit 1 }; ConvertTo-AsciiEscaped $json",
   ],
 ]
 `;

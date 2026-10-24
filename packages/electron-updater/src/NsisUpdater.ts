@@ -2,7 +2,7 @@ import { createRequire } from "node:module"
 import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME } from "builder-util-runtime"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter.js"
-import { DownloadUpdateOptions } from "./AppUpdater.js"
+import { DownloadUpdateOptions, UpdateInfoAndProvider } from "./AppUpdater.js"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater.js"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper.js"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
@@ -16,6 +16,7 @@ import {
   missingPublisherNameMessage,
   publisherNameDnNote,
   readConfiguredPublisherNames,
+  resolveCatalogSignatureOptions,
   verifySignature,
 } from "./windowsExecutableCodeSignatureVerifier.js"
 import { URL } from "url"
@@ -28,6 +29,27 @@ export class NsisUpdater extends BaseUpdater {
    *
    */
   installDirectory?: string
+
+  /**
+   * Whether the default verify function accepts an update whose signature Windows reports from a security catalog.
+   *
+   * `Get-AuthenticodeSignature` reports the signer of a Windows security catalog (a signed list of file hashes, as Windows uses for its
+   * in-box programs and drivers) in preference to the signature embedded in the file, when a catalog installed on the machine lists the
+   * file's hash. An update installer built by electron-builder carries an embedded signature and is in no catalog, so a catalog
+   * signature means that the downloaded file is another, catalogued file: it is rejected by default (`ERR_UPDATER_INVALID_SIGNATURE`).
+   *
+   * Set it to `true` only if your update installers are catalog-signed on purpose (for example, an enterprise deployment that adds their
+   * hashes to a catalog). A catalog signature is then accepted only when it is valid, the catalog signer matches `publisherName` and the
+   * verified file is the update file, like an embedded signature, and a warning is logged.
+   *
+   * An update can also allow it itself: a catalog signature is accepted the same way for an update whose `latest.yml` sets
+   * `allowCatalogSignature: true` (written by electron-builder for `win.allowCatalogSignature`), but only when that manifest's signature was
+   * verified against a trusted key (`updateManifestPublicKey`). In a manifest that was not verified, the setting is ignored with a warning.
+   *
+   * It applies to the default verify function only: a custom `verifyUpdateFileAuthenticodeSignature` decides for itself.
+   * @default false
+   */
+  allowCatalogSignature = false
 
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
@@ -80,14 +102,25 @@ export class NsisUpdater extends BaseUpdater {
     }
   }
 
-  private readonly _defaultVerifyUpdateFileAuthenticodeSignature: VerifyUpdateFileAuthenticodeSignature = (publisherNames: Array<string>, unescapedTempUpdateFile: string) => {
+  // called without an update: only NsisUpdater.allowCatalogSignature can allow a catalog signature (the update being installed is passed by
+  // verifySignature below, which calls defaultVerifyAuthenticodeSignature directly while this default is in place)
+  private readonly _defaultVerifyUpdateFileAuthenticodeSignature: VerifyUpdateFileAuthenticodeSignature = (publisherNames: Array<string>, unescapedTempUpdateFile: string) =>
+    this.defaultVerifyAuthenticodeSignature(publisherNames, unescapedTempUpdateFile, null)
+
+  private defaultVerifyAuthenticodeSignature(
+    publisherNames: Array<string>,
+    unescapedTempUpdateFile: string,
+    update: UpdateInfoAndProvider | null
+  ): Promise<VerifyUpdateFileResult> {
     // a v27 behaviour change an app built with an older electron-builder (or configured at runtime) would otherwise only
     // notice as rejected updates: announced once per updater, and repeated in the failure message
     const note = publisherNameDnNote(publisherNames)
     if (note != null) {
       this.limitedLogger("publisher-name-not-dn").warn(note)
     }
-    return verifySignature(publisherNames, unescapedTempUpdateFile, this._logger)
+    // read when the verification runs, for this update only
+    const options = resolveCatalogSignatureOptions(this.allowCatalogSignature, update, this._logger)
+    return verifySignature(publisherNames, unescapedTempUpdateFile, this._logger, options)
   }
 
   protected _verifyUpdateFileAuthenticodeSignature: VerifyUpdateFileAuthenticodeSignature = this._defaultVerifyUpdateFileAuthenticodeSignature
@@ -110,7 +143,8 @@ export class NsisUpdater extends BaseUpdater {
 
   /**
    * The verifyUpdateFileAuthenticodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust) or another custom verify function: ` (publisherName: string[], path: string) => Promise<{ response: "success" } | { response: "failure", message: string }>`
-   * The default verify function uses [windowsExecutableCodeSignatureVerifier](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts)
+   * The default verify function uses [windowsExecutableCodeSignatureVerifier](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts),
+   * which rejects an update it cannot verify, e.g. when Windows PowerShell cannot be started or does not finish in time.
    *
    * Assigning `null` restores the default verify function.
    *
@@ -201,7 +235,7 @@ export class NsisUpdater extends BaseUpdater {
           await this.httpExecutor.download(fileInfo.url, destinationFile, downloadOptions)
         }
 
-        const signatureFailure = verificationFailureMessage(await this.verifySignature(destinationFile))
+        const signatureFailure = verificationFailureMessage(await this.verifySignature(destinationFile, downloadUpdateOptions.updateInfoAndProvider))
         if (signatureFailure != null) {
           await removeTempDirIfAny()
           // noinspection ThrowInsideFinallyBlockJS
@@ -244,7 +278,10 @@ export class NsisUpdater extends BaseUpdater {
   // never called without a publisherName: it would get no names to match, and one checking them with e.g. `every` would accept any signer.
   // An app with no update config file at all (dev mode, or a feed set only with setFeedURL) is not verified, as before: its feed is
   // configured by the developer, not by electron-builder.
-  private async verifySignature(tempUpdateFile: string): Promise<VerifyUpdateFileResult> {
+  //
+  // `update` is the update the file belongs to: the default verify function accepts a catalog signature for it when its verified manifest
+  // allows one (see allowCatalogSignature). Without it, only NsisUpdater.allowCatalogSignature does.
+  private async verifySignature(tempUpdateFile: string, update: UpdateInfoAndProvider | null = null): Promise<VerifyUpdateFileResult> {
     let config: unknown
     try {
       config = await this.configOnDisk.value
@@ -258,7 +295,11 @@ export class NsisUpdater extends BaseUpdater {
 
     const publisherNames = readConfiguredPublisherNames(config)
     if (publisherNames != null) {
-      return await this._verifyUpdateFileAuthenticodeSignature(publisherNames, tempUpdateFile)
+      const implementation = this._verifyUpdateFileAuthenticodeSignature
+      if (implementation === this._defaultVerifyUpdateFileAuthenticodeSignature) {
+        return await this.defaultVerifyAuthenticodeSignature(publisherNames, tempUpdateFile, update)
+      }
+      return await implementation.call(this, publisherNames, tempUpdateFile)
     }
     if (isUpdateCodeSignatureVerificationDisabled(config)) {
       this.limitedLogger("update-signature-verification-disabled").warn(
@@ -271,8 +312,8 @@ export class NsisUpdater extends BaseUpdater {
 
   // the cached installer sat on disk since a previous launch, so its Authenticode signature is re-verified before an
   // install-on-next-launch is executed (same check as at download time)
-  protected verifyInstallerSignatureOnLaunch(installerPath: string): Promise<VerifyUpdateFileResult> {
-    return this.verifySignature(installerPath)
+  protected verifyInstallerSignatureOnLaunch(installerPath: string, updateInfoAndProvider: UpdateInfoAndProvider): Promise<VerifyUpdateFileResult> {
+    return this.verifySignature(installerPath, updateInfoAndProvider)
   }
 
   // per-user NSIS installs run without an elevation prompt (per-machine installs are filtered separately via
