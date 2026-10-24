@@ -15,6 +15,7 @@ import type { VerifyUpdateFileResult } from "electron-updater/src/index"
 import type { Logger } from "electron-updater/src/types"
 import { publisherNameDnNote, verifySignature } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
 import { cleanupWindowsSignedFixture, createSignedExecutable, getWindowsSignedFixture } from "../helpers/windowsSignedFixture"
+import { createNsisUpdater } from "../helpers/updaterTestUtil.js"
 
 // =============================================================================
 // Constants
@@ -26,6 +27,8 @@ const DN_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#
 const FILE_ENV = "ELECTRON_BUILDER_AUTHENTICODE_FILE"
 const UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-update-signature-verification-fails-closed"
 const POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+// the start of the warning logged when allowCatalogSignature accepts a catalog signature
+const CATALOG_ACCEPTED = "is accepted via a signature Windows reports from a security catalog"
 
 // =============================================================================
 // Logger stub
@@ -424,13 +427,79 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
 
   // ---------------------------------------------------------------------------
   describe("signature type", () => {
-    test("a Windows security catalog signature is rejected, even when its signer matches", async ({ tmpDir }) => {
+    test("a Windows security catalog signature is rejected by default, even when its signer matches, naming the opt-in", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ signatureType: 2 }))
       const message = expectVerificationFailure(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
       expect(message).toContain("Windows security catalog")
       expect(message).toContain("electron-updater 7 (electron-builder v27)")
+      expect(message).toContain("autoUpdater.allowCatalogSignature = true")
       expect(message).toContain(UNVERIFIABLE_DOCS)
+      expect(
+        vi
+          .mocked(logger.warn)
+          .mock.calls.map(call => String(call[0]))
+          .filter(it => it.includes(CATALOG_ACCEPTED))
+      ).toHaveLength(0)
+    })
+
+    test.for([
+      ["false", false],
+      ["a truthy value that is not true (JavaScript caller)", "yes"],
+      ["null options (JavaScript caller)", null],
+    ] as const)("a catalog signature is rejected when allowCatalogSignature is %s", async ([, value], { tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson({ signatureType: 2 }))
+      const options: any = value === null ? null : { allowCatalogSignature: value }
+      const message = expectVerificationFailure(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger, options))
+      expect(message).toContain("autoUpdater.allowCatalogSignature = true")
+    })
+
+    test("with allowCatalogSignature, a catalog signature whose signer matches verifies, with one warning", async ({ tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson({ signatureType: 2 }))
+      expectVerificationSuccess(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger, { allowCatalogSignature: true }))
+      const warnings = vi.mocked(logger.warn).mock.calls.map(call => String(call[0]))
+      expect(warnings).toHaveLength(1)
+      expect(warnings[0]).toContain(CATALOG_ACCEPTED)
+      expect(warnings[0]).toContain(DEFAULT_SUBJECT)
+      expect(warnings[0]).toContain("allowCatalogSignature is true")
+    })
+
+    test("with allowCatalogSignature, a catalog signature whose signer does not match still fails", async ({ tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson({ signatureType: 2, subject: "CN=Windows, O=Some Vendor, C=US" }))
+      const message = expectVerificationFailure(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger, { allowCatalogSignature: true }))
+      expect(message).toContain("does not match publisherName")
+      expect(message).not.toContain("autoUpdater.allowCatalogSignature = true")
+      expect(rawInfoOf(message).SignerCertificate.Subject).toBe("CN=Windows, O=Some Vendor, C=US")
+      expect(
+        vi
+          .mocked(logger.warn)
+          .mock.calls.map(call => String(call[0]))
+          .filter(it => it.includes(CATALOG_ACCEPTED))
+      ).toHaveLength(0)
+    })
+
+    test("with allowCatalogSignature, a catalog signature is still bound to the update file (LiteralPath) and to a Valid status", async ({ tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson({ signatureType: 2, filePath: "C:\\Windows\\System32\\notepad.exe" }))
+      await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger, { allowCatalogSignature: true })).rejects.toMatchObject({ code: "ERR_UPDATER_SIGNATURE_UNVERIFIABLE" })
+      mockPsSuccess(makeJson({ signatureType: 2, status: 2 }))
+      expectVerificationFailure(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger, { allowCatalogSignature: true }))
+      expect(
+        vi
+          .mocked(logger.warn)
+          .mock.calls.map(call => String(call[0]))
+          .filter(it => it.includes(CATALOG_ACCEPTED))
+      ).toHaveLength(0)
+    })
+
+    test("allowCatalogSignature does not change how an embedded signature is verified", async ({ tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson({ signatureType: 1 }))
+      expectVerificationSuccess(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger, { allowCatalogSignature: true }))
+      expect(vi.mocked(logger.warn)).not.toHaveBeenCalled()
     })
 
     test("an embedded Authenticode signature (1) verifies, as does a PowerShell that reports no SignatureType", async ({ tmpDir }) => {
@@ -604,6 +673,80 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       expect(options.env[FILE_ENV]).toBe(trickyPath)
       expect(script).toBe(plainScript)
     })
+  })
+})
+
+// NsisUpdater.allowCatalogSignature reaches the default verify function, read when it runs, and leaves a custom one alone.
+describe("NsisUpdater.allowCatalogSignature", () => {
+  async function setup(tmpDir: TmpDir) {
+    vi.clearAllMocks()
+    vi.stubEnv("SystemRoot", "C:\\Windows")
+    const file = path.join(await tmpDir.getTempDir(), "test-update-1.0.1.exe")
+    const updater = await createNsisUpdater()
+    const logger = createLogger()
+    updater.logger = logger
+    const catalogSignature = (subject = DEFAULT_SUBJECT) => {
+      vi.mocked(execFile).mockImplementationOnce((_: any, __: any, ___: any, cb: any) => {
+        cb(null, makeSignatureJson({ filePath: file, subject, signatureType: 2 }), "")
+        return {} as any
+      })
+    }
+    const catalogWarnings = () =>
+      vi
+        .mocked(logger.warn)
+        .mock.calls.map(call => String(call[0]))
+        .filter(it => it.includes(CATALOG_ACCEPTED))
+    return { file, updater, catalogSignature, catalogWarnings }
+  }
+
+  afterEach(() => {
+    vi.clearAllMocks()
+    vi.unstubAllEnvs()
+  })
+
+  test("is false by default: the default verify function rejects a catalog signature, naming the opt-in", async ({ tmpDir }) => {
+    const { file, updater, catalogSignature, catalogWarnings } = await setup(tmpDir)
+    expect(updater.allowCatalogSignature).toBe(false)
+    catalogSignature()
+    const message = expectVerificationFailure(await updater.verifyUpdateFileAuthenticodeSignature([DEFAULT_SUBJECT], file))
+    expect(message).toContain("autoUpdater.allowCatalogSignature = true")
+    expect(catalogWarnings()).toHaveLength(0)
+  })
+
+  test("when true, the default verify function accepts a catalog signature whose signer matches, with a warning, and still rejects another signer", async ({ tmpDir }) => {
+    const { file, updater, catalogSignature, catalogWarnings } = await setup(tmpDir)
+    updater.allowCatalogSignature = true
+    catalogSignature()
+    expectVerificationSuccess(await updater.verifyUpdateFileAuthenticodeSignature([DEFAULT_SUBJECT], file))
+    expect(catalogWarnings()).toHaveLength(1)
+
+    catalogSignature("CN=Windows, O=Some Vendor, C=US")
+    expect(expectVerificationFailure(await updater.verifyUpdateFileAuthenticodeSignature([DEFAULT_SUBJECT], file))).toContain("does not match publisherName")
+    expect(catalogWarnings()).toHaveLength(1)
+
+    // read when the verification runs, so turning it off again applies to the next update
+    updater.allowCatalogSignature = false
+    catalogSignature()
+    expectVerificationFailure(await updater.verifyUpdateFileAuthenticodeSignature([DEFAULT_SUBJECT], file))
+  })
+
+  test("the deprecated verifyUpdateCodeSignature shim of the default verify function honors it", async ({ tmpDir }) => {
+    const { file, updater, catalogSignature } = await setup(tmpDir)
+    catalogSignature()
+    expect(await updater.verifyUpdateCodeSignature([DEFAULT_SUBJECT], file)).toContain("autoUpdater.allowCatalogSignature = true")
+    updater.allowCatalogSignature = true
+    catalogSignature()
+    expect(await updater.verifyUpdateCodeSignature([DEFAULT_SUBJECT], file)).toBeNull()
+  })
+
+  test("a custom verify function (current or deprecated property) is not affected and runs no PowerShell", async ({ tmpDir }) => {
+    const { file, updater } = await setup(tmpDir)
+    updater.allowCatalogSignature = true
+    updater.verifyUpdateFileAuthenticodeSignature = vi.fn(async () => ({ response: "failure" as const, message: "custom says no" }))
+    await expect(updater.verifyUpdateFileAuthenticodeSignature([DEFAULT_SUBJECT], file)).resolves.toEqual({ response: "failure", message: "custom says no" })
+    updater.verifyUpdateCodeSignature = vi.fn(async () => "legacy says no")
+    await expect(updater.verifyUpdateFileAuthenticodeSignature([DEFAULT_SUBJECT], file)).resolves.toEqual({ response: "failure", message: "legacy says no" })
+    expect(vi.mocked(execFile)).not.toHaveBeenCalled()
   })
 })
 

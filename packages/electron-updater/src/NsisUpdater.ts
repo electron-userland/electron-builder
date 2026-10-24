@@ -29,6 +29,23 @@ export class NsisUpdater extends BaseUpdater {
    */
   installDirectory?: string
 
+  /**
+   * Whether the default verify function accepts an update whose signature Windows reports from a security catalog.
+   *
+   * `Get-AuthenticodeSignature` reports the signer of a Windows security catalog (a signed list of file hashes, as Windows uses for its
+   * in-box programs and drivers) in preference to the signature embedded in the file, when a catalog installed on the machine lists the
+   * file's hash. An update installer built by electron-builder carries an embedded signature and is in no catalog, so a catalog
+   * signature means that the downloaded file is another, catalogued file: it is rejected by default (`ERR_UPDATER_INVALID_SIGNATURE`).
+   *
+   * Set it to `true` only if your update installers are catalog-signed on purpose (for example, an enterprise deployment that adds their
+   * hashes to a catalog). A catalog signature is then accepted only when it is valid, the catalog signer matches `publisherName` and the
+   * verified file is the update file, like an embedded signature, and a warning is logged.
+   *
+   * It applies to the default verify function only: a custom `verifyUpdateFileAuthenticodeSignature` decides for itself.
+   * @default false
+   */
+  allowCatalogSignature = false
+
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
     this.seedWebInstallerDefaultFromPackageType()
@@ -87,7 +104,7 @@ export class NsisUpdater extends BaseUpdater {
     if (note != null) {
       this.limitedLogger("publisher-name-not-dn").warn(note)
     }
-    return verifySignature(publisherNames, unescapedTempUpdateFile, this._logger)
+    return verifySignature(publisherNames, unescapedTempUpdateFile, this._logger, { allowCatalogSignature: this.allowCatalogSignature === true })
   }
 
   protected _verifyUpdateFileAuthenticodeSignature: VerifyUpdateFileAuthenticodeSignature = this._defaultVerifyUpdateFileAuthenticodeSignature

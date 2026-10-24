@@ -83,10 +83,46 @@ const CUSTOM_VERIFIER_HINT =
 // System.Management.Automation.SignatureType.Catalog (None 0, Authenticode 1, Catalog 2). Get-AuthenticodeSignature reports the
 // signer of a Windows security catalog that lists the file's hash in preference to the signature embedded in the file. A uniquely
 // built update installer is in no catalog, so a catalog signature means the file is another (catalogued, e.g. in-box Windows)
-// file. A missing SignatureType comes from a PowerShell that only checks embedded signatures.
+// file. A missing SignatureType comes from a PowerShell that only checks embedded signatures. An app whose installers are catalog-signed
+// on purpose opts in with NsisUpdater.allowCatalogSignature: the catalog signer must then match publisherName like an embedded one.
 const CATALOG_SIGNATURE_TYPE = 2
 
 const SIGNATURE_UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-update-signature-verification-fails-closed"
+
+/**
+ * Options of the default Authenticode verification of an update.
+ * @internal
+ */
+export interface VerifySignatureOptions {
+  /**
+   * Accept a signature that Windows reports from a security catalog instead of one embedded in the update file, when the catalog
+   * signer matches publisherName (`NsisUpdater.allowCatalogSignature`). Rejected unless exactly `true`.
+   */
+  readonly allowCatalogSignature?: boolean
+}
+
+/**
+ * Why a catalog signature is rejected (the reason a failure message starts with). Never throws.
+ * @internal
+ */
+export function catalogSignatureRejectedReason(): string {
+  return (
+    "Windows reports the signer of a Windows security catalog for the update file instead of a signature embedded in it, which electron-updater 7 (electron-builder v27) " +
+    "does not accept by default. If your update installers are catalog-signed on purpose, set autoUpdater.allowCatalogSignature = true to accept a catalog signature " +
+    `whose signer matches publisherName (${SIGNATURE_UNVERIFIABLE_DOCS}). `
+  )
+}
+
+/**
+ * The warning logged when a catalog signature is accepted because allowCatalogSignature is true. Never throws.
+ * @internal
+ */
+export function catalogSignatureAcceptedWarning(subject: string, updateFile: string): string {
+  return (
+    `The update ${String(updateFile)} is accepted via a signature Windows reports from a security catalog (signer ${String(subject)}), not one embedded in the installer, ` +
+    "because allowCatalogSignature is true."
+  )
+}
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
@@ -145,7 +181,7 @@ function checkLiteralPath(reportedPath: unknown, updateFile: string, logger: Log
 // Parses Get-AuthenticodeSignature JSON, checks the LiteralPath guard, and matches against publisherNames. Returns a
 // success/failure result; throws (ERR_UPDATER_SIGNATURE_UNVERIFIABLE) when the output cannot be parsed, names another file,
 // or reports a valid signature without a signer certificate subject.
-function evaluateSignatureResult(stdout: string, publisherNames: string[], updateFile: string, logger: Logger): VerifyUpdateFileResult {
+function evaluateSignatureResult(stdout: string, publisherNames: string[], updateFile: string, logger: Logger, allowCatalogSignature: boolean): VerifyUpdateFileResult {
   let data: unknown
   try {
     data = parseAuthenticodeSignatureOutput(stdout)
@@ -163,12 +199,16 @@ function evaluateSignatureResult(stdout: string, publisherNames: string[], updat
     if (typeof subject !== "string") {
       throw cannotVerify("Get-AuthenticodeSignature reports a valid signature without a signer certificate subject", { isPowerShellProblem: false })
     }
-    if (data.SignatureType === CATALOG_SIGNATURE_TYPE) {
-      reason =
-        "Windows reports the signer of a Windows security catalog for the update file instead of a signature embedded in it, which electron-updater 7 (electron-builder v27) " +
-        `does not accept (${SIGNATURE_UNVERIFIABLE_DOCS}). `
+    const isCatalogSignature = data.SignatureType === CATALOG_SIGNATURE_TYPE
+    if (isCatalogSignature && !allowCatalogSignature) {
+      reason = catalogSignatureRejectedReason()
     } else if (matchPublisherName({ SignerCertificate: { Subject: subject } }, publisherNames)) {
+      if (isCatalogSignature) {
+        logger.warn(catalogSignatureAcceptedWarning(subject, updateFile))
+      }
       return { response: "success" }
+    } else if (isCatalogSignature) {
+      reason = "Windows reports the signer of a Windows security catalog for the update file (allowCatalogSignature is true), but that signer does not match publisherName. "
     }
   }
   const note = publisherNameDnNote(publisherNames)
@@ -183,8 +223,10 @@ function evaluateSignatureResult(stdout: string, publisherNames: string[], updat
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
 // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
-export function verifySignature(publisherNames: Array<string>, updateFile: string, logger: Logger): Promise<VerifyUpdateFileResult> {
+export function verifySignature(publisherNames: Array<string>, updateFile: string, logger: Logger, options: VerifySignatureOptions = {}): Promise<VerifyUpdateFileResult> {
   logger.info(`Verifying signature ${updateFile}`)
+  // a JavaScript caller may pass anything: only `true` opts in
+  const allowCatalogSignature = options?.allowCatalogSignature === true
   return new Promise<VerifyUpdateFileResult>((resolve, reject) => {
     try {
       execFile(...prepareAuthenticodeSignatureExec(updateFile, VERIFY_TIMEOUT_MS), (error, stdout, stderr) => {
@@ -197,7 +239,7 @@ export function verifySignature(publisherNames: Array<string>, updateFile: strin
           return
         }
         try {
-          resolve(evaluateSignatureResult(String(stdout), publisherNames, updateFile, logger))
+          resolve(evaluateSignatureResult(String(stdout), publisherNames, updateFile, logger, allowCatalogSignature))
         } catch (e: unknown) {
           reject(e)
         }
