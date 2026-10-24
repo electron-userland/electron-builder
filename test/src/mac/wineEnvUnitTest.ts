@@ -1,8 +1,17 @@
-import { afterEach, beforeEach } from "vitest"
+import { afterEach, beforeEach, vi } from "vitest"
 import type { ToolsetCustom } from "app-builder-lib/internal"
 import * as path from "path"
 import { mkdir, rm, writeFile } from "fs/promises"
+import { InvalidConfigurationError } from "builder-util"
 import { getWineToolset } from "app-builder-lib/src/toolsets/wine"
+import { findHostWine, HOST_WINE_PATHS } from "app-builder-lib/src/util/systemTools.js"
+
+// The host wine is only taken from its fixed install locations; stand in for one being installed (or not)
+vi.mock("app-builder-lib/src/util/systemTools.js", async importOriginal => {
+  const actual = await importOriginal<typeof import("app-builder-lib/src/util/systemTools.js")>()
+  return { ...actual, findHostWine: vi.fn<typeof actual.findHostWine>() }
+})
+const HOST_WINE = "/usr/bin/wine"
 
 // Unit tests for wine env merging via ToolsetCustom with a file:// directory path.
 // A minimal fake wine directory is created in /tmp for each test.
@@ -83,6 +92,13 @@ describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env me
     expect(result.env.WINEPREFIX).toBe(path.join(FAKE_WINE_DIR, "wine-home"))
   })
 
+  test("custom bundle without its wine-home prefix is a configuration error", async ({ expect }) => {
+    await rm(path.join(FAKE_WINE_DIR, "wine-home"), { recursive: true })
+    const result = getWineToolset(fakeToolset(), "")
+    await expect(result).rejects.toBeInstanceOf(InvalidConfigurationError)
+    await expect(result).rejects.toThrow("is missing expected path")
+  })
+
   test("custom bundle with only bin/wine64: falls back to bin/wine64 as execPath", async ({ expect }) => {
     await rm(path.join(FAKE_WINE_DIR, "bin", "wine"))
     await writeFile(path.join(FAKE_WINE_DIR, "bin", "wine64"), "#!/bin/sh\necho fake wine64", { mode: 0o755 })
@@ -93,9 +109,13 @@ describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env me
 })
 
 describe.ifNotWindows('getWineToolset — "system"', { concurrent: false }, () => {
-  test("resolves the host wine on PATH and downloads no bundle", async ({ expect }) => {
+  beforeEach(() => {
+    vi.mocked(findHostWine).mockReset().mockReturnValue(HOST_WINE)
+  })
+
+  test("resolves the host wine at its install location and downloads no bundle", async ({ expect }) => {
     const result = await getWineToolset("system", "")
-    expect(result.execPath).toBe("wine")
+    expect(result.execPath).toBe(HOST_WINE)
   })
 
   test("sets no WINEPREFIX or library paths, so the host wine uses its own defaults", async ({ expect }) => {
@@ -109,7 +129,28 @@ describe.ifNotWindows('getWineToolset — "system"', { concurrent: false }, () =
   for (const value of [undefined, null, "latest"] as const) {
     test(`${value} resolves through the WINE_LATEST alias without downloading`, async ({ expect }) => {
       const result = await getWineToolset(value, "")
-      expect(result.execPath).toBe("wine")
+      expect(result.execPath).toBe(HOST_WINE)
     })
   }
+
+  test("is a configuration error naming the checked locations when wine is not installed at one", async ({ expect }) => {
+    vi.mocked(findHostWine).mockReturnValue(null)
+    const result = getWineToolset("system", "")
+    await expect(result).rejects.toBeInstanceOf(InvalidConfigurationError)
+    await expect(result).rejects.toThrow((HOST_WINE_PATHS[process.platform] ?? []).join(", "))
+  })
+
+  test("only looks for wine at absolute install locations", ({ expect }) => {
+    for (const candidate of Object.values(HOST_WINE_PATHS).flat()) {
+      expect(path.isAbsolute(candidate)).toBe(true)
+    }
+  })
+
+  test("looks in the order of the default PATH", ({ expect }) => {
+    const linux = HOST_WINE_PATHS.linux ?? []
+    expect(linux.indexOf("/usr/local/bin/wine")).toBeLessThan(linux.indexOf("/usr/bin/wine"))
+    const darwin = HOST_WINE_PATHS.darwin ?? []
+    expect(darwin.slice(0, 2)).toEqual(["/opt/homebrew/bin/wine", "/usr/local/bin/wine"])
+    expect(darwin.findIndex(it => it.startsWith("/Applications/"))).toBeGreaterThan(darwin.indexOf("/opt/local/bin/wine"))
+  })
 })

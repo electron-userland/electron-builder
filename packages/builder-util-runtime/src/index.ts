@@ -5,6 +5,7 @@ export {
   POWERSHELL_ASCII_ESCAPE_FUNCTION,
   prepareAuthenticodeSignatureExec,
   preparePowerShellExec,
+  windowsPowerShellPath,
 } from "./authenticodeSignature.js"
 export type { AuthenticodeSignerCertificateData } from "./authenticodeSignature.js"
 export { BlockMap } from "./blockMapApi.js"
