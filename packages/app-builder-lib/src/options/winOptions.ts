@@ -91,6 +91,23 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly verifyUpdateCodeSignature?: boolean
 
   /**
+   * Whether electron-updater accepts an update installer whose signature Windows reports from a security catalog (a signed list of
+   * file hashes) instead of one embedded in the installer — for update installers that are catalog-signed on purpose, such as an
+   * enterprise deployment that adds their hashes to a catalog. The catalog signer must still match the [publisher name](#publisherName).
+   *
+   * When `true`, the `latest.yml` written for the `nsis` and `nsis-web` targets carries `allowCatalogSignature: true`. electron-updater
+   * honors it only when the [signature of that update manifest](https://www.electron.build/docs/features/signed-update-manifests)
+   * was verified against a trusted key; in an unsigned manifest (or one signed by an untrusted key) it is ignored with a warning, and
+   * catalog signatures stay rejected unless the app sets `autoUpdater.allowCatalogSignature = true`. Since it is covered by the manifest
+   * signature, changing it for a published release means signing `latest.yml` again or republishing it.
+   *
+   * Installs running electron-updater 7.0.0-alpha.8 to alpha.11 with an update key configured reject a signed manifest that sets it
+   * (`ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`).
+   * @default false
+   */
+  readonly allowCatalogSignature?: boolean
+
+  /**
    * The [security level](https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9) at which the application requests to be executed.
    * Cannot be specified per target, allowed only in the `win`.
    * @default asInvoker

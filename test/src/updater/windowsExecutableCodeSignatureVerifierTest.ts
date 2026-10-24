@@ -15,7 +15,8 @@ import type { VerifyUpdateFileResult } from "electron-updater/src/index"
 import type { Logger } from "electron-updater/src/types"
 import { publisherNameDnNote, verifySignature } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
 import { cleanupWindowsSignedFixture, createSignedExecutable, getWindowsSignedFixture } from "../helpers/windowsSignedFixture"
-import { createNsisUpdater } from "../helpers/updaterTestUtil.js"
+import { createNsisUpdater, writeRawUpdateConfig } from "../helpers/updaterTestUtil.js"
+import { CancellationToken, type GenericServerOptions } from "builder-util-runtime"
 
 // =============================================================================
 // Constants
@@ -747,6 +748,178 @@ describe("NsisUpdater.allowCatalogSignature", () => {
     updater.verifyUpdateCodeSignature = vi.fn(async () => "legacy says no")
     await expect(updater.verifyUpdateFileAuthenticodeSignature([DEFAULT_SUBJECT], file)).resolves.toEqual({ response: "failure", message: "legacy says no" })
     expect(vi.mocked(execFile)).not.toHaveBeenCalled()
+  })
+})
+
+// A verified update manifest with allowCatalogSignature: true allows a catalog signature for that update; an unverified one does not.
+describe("allowCatalogSignature in the update manifest", () => {
+  // the start of the warning logged when an unverified manifest's allowCatalogSignature is ignored
+  const IGNORED = "sets allowCatalogSignature: true, but its signature was not verified"
+  const MANIFEST_SOURCE = "because the verified update manifest sets allowCatalogSignature: true"
+  const OTHER_SIGNER = "CN=Windows, O=Some Vendor, C=US"
+
+  async function setup(tmpDir: TmpDir) {
+    vi.clearAllMocks()
+    vi.stubEnv("SystemRoot", "C:\\Windows")
+    const file = path.join(await tmpDir.getTempDir(), "test-update-1.0.1.exe")
+    const updater = await createNsisUpdater()
+    updater.updateConfigPath = await writeRawUpdateConfig<GenericServerOptions>({ provider: "generic", url: "https://example.com/updates", publisherName: [DEFAULT_SUBJECT] })
+    const logger = createLogger()
+    updater.logger = logger
+    const signature = (signatureType: number, subject = DEFAULT_SUBJECT) => {
+      vi.mocked(execFile).mockImplementationOnce((_: any, __: any, ___: any, cb: any) => {
+        cb(null, makeSignatureJson({ filePath: file, subject, signatureType }), "")
+        return {} as any
+      })
+    }
+    const warnings = (fragment: string) =>
+      vi
+        .mocked(logger.warn)
+        .mock.calls.map(call => String(call[0]))
+        .filter(it => it.includes(fragment))
+    // what AppUpdater.getUpdateInfoAndProvider returns for the update being installed
+    const update = (allowCatalogSignature: unknown, manifestSignatureVerified?: boolean) => {
+      const info: Record<string, unknown> = { version: "1.0.1", files: [{ url: "test-update-1.0.1.exe", sha512: "x" }] }
+      if (allowCatalogSignature !== undefined) {
+        info.allowCatalogSignature = allowCatalogSignature
+      }
+      return manifestSignatureVerified === undefined ? { info, provider: {} } : { info, provider: {}, manifestSignatureVerified }
+    }
+    const verify = (context: unknown): Promise<VerifyUpdateFileResult> => (updater as any).verifySignature(file, context)
+    return { file, updater, logger, signature, warnings, update, verify }
+  }
+
+  afterEach(() => {
+    vi.clearAllMocks()
+    vi.unstubAllEnvs()
+  })
+
+  test("verified and true: a catalog signature whose signer matches is accepted, with a warning naming the manifest", async ({ tmpDir }) => {
+    const { signature, warnings, update, verify } = await setup(tmpDir)
+    const context = update(true, true)
+    const before = JSON.stringify(context)
+    signature(2)
+    expectVerificationSuccess(await verify(context))
+    expect(warnings(CATALOG_ACCEPTED)).toHaveLength(1)
+    expect(warnings(CATALOG_ACCEPTED)[0]).toContain(MANIFEST_SOURCE)
+    expect(warnings(IGNORED)).toHaveLength(0)
+    // nothing is recorded on the update or its info
+    expect(JSON.stringify(context)).toBe(before)
+  })
+
+  test("verified and true: the publisherName match and the LiteralPath check still apply", async ({ tmpDir }) => {
+    const { signature, warnings, update, verify } = await setup(tmpDir)
+    signature(2, OTHER_SIGNER)
+    expect(expectVerificationFailure(await verify(update(true, true)))).toContain("does not match publisherName")
+    vi.mocked(execFile).mockImplementationOnce((_: any, __: any, ___: any, cb: any) => {
+      cb(null, makeSignatureJson({ filePath: "C:\\Windows\\System32\\notepad.exe", signatureType: 2 }), "")
+      return {} as any
+    })
+    await expect(verify(update(true, true))).rejects.toMatchObject({ code: "ERR_UPDATER_SIGNATURE_UNVERIFIABLE" })
+    expect(warnings(CATALOG_ACCEPTED)).toHaveLength(0)
+  })
+
+  test.for([
+    ["not verified (no updateManifestPublicKey)", false],
+    ["of unknown verification state", undefined],
+  ] as const)(
+    "true in a manifest %s is ignored: the catalog signature is rejected, with one warning naming autoUpdater.allowCatalogSignature",
+    async ([, verified], { tmpDir }) => {
+      const { signature, warnings, update, verify } = await setup(tmpDir)
+      signature(2)
+      const message = expectVerificationFailure(await verify(update(true, verified)))
+      expect(message).toContain("autoUpdater.allowCatalogSignature = true")
+      const ignored = warnings(IGNORED)
+      expect(ignored).toHaveLength(1)
+      expect(ignored[0]).toContain('version "1.0.1"')
+      expect(ignored[0]).toContain("autoUpdater.allowCatalogSignature")
+      expect(warnings(CATALOG_ACCEPTED)).toHaveLength(0)
+    }
+  )
+
+  test.for([
+    ["false", false],
+    ["absent", undefined],
+    ["a string (only a parsed, unsigned manifest can carry one)", "true"],
+  ] as const)("a verified manifest with allowCatalogSignature %s does not allow a catalog signature", async ([, value], { tmpDir }) => {
+    const { signature, warnings, update, verify } = await setup(tmpDir)
+    signature(2)
+    expect(expectVerificationFailure(await verify(update(value, true)))).toContain("autoUpdater.allowCatalogSignature = true")
+    expect(warnings(IGNORED)).toHaveLength(0)
+    expect(warnings(CATALOG_ACCEPTED)).toHaveLength(0)
+  })
+
+  test("an embedded signature is verified as before, whatever the manifest says", async ({ tmpDir }) => {
+    const { logger, signature, update, verify } = await setup(tmpDir)
+    signature(1)
+    expectVerificationSuccess(await verify(update(true, true)))
+    signature(1, OTHER_SIGNER)
+    expectVerificationFailure(await verify(update(true, true)))
+    expect(vi.mocked(logger.warn).mock.calls.filter(call => String(call[0]).includes("security catalog"))).toHaveLength(0)
+  })
+
+  test("the runtime property alone still allows it, without an update or with an unverified manifest, and wins without a warning", async ({ tmpDir }) => {
+    const { updater, signature, warnings, update, verify } = await setup(tmpDir)
+    updater.allowCatalogSignature = true
+    for (const context of [null, undefined, update(undefined, false), update(true, false), update(false, true)]) {
+      signature(2)
+      expectVerificationSuccess(await verify(context))
+    }
+    expect(warnings(CATALOG_ACCEPTED)).toHaveLength(5)
+    expect(warnings(CATALOG_ACCEPTED).every(it => it.includes("because autoUpdater.allowCatalogSignature is true"))).toBe(true)
+    expect(warnings(IGNORED)).toHaveLength(0)
+  })
+
+  test("the launch-time re-verification gets the update the cached installer was matched against", async ({ tmpDir }) => {
+    const { file, updater, signature, warnings, update } = await setup(tmpDir)
+    signature(2)
+    expectVerificationSuccess(await (updater as any).verifyInstallerSignatureOnLaunch(file, update(true, true)))
+    expect(warnings(MANIFEST_SOURCE)).toHaveLength(1)
+    signature(2)
+    expectVerificationFailure(await (updater as any).verifyInstallerSignatureOnLaunch(file, update(true, false)))
+    expect(warnings(IGNORED)).toHaveLength(1)
+  })
+
+  test("the download passes the update being downloaded to the verification", async ({ tmpDir }) => {
+    const { updater, update } = await setup(tmpDir)
+    const context = {
+      ...update(true, true),
+      provider: { resolveFiles: () => [{ url: new URL("https://example.com/updates/test-update-1.0.1.exe"), info: { url: "x", sha512: "x" } }] },
+    }
+    const verifySignatureSpy = vi.spyOn(updater as any, "verifySignature").mockResolvedValue({ response: "success" })
+    ;(updater as any).httpExecutor = { download: vi.fn(async () => "") }
+    const destination = path.join(await tmpDir.getTempDir(), "downloaded.exe")
+    // runs only the download task: the file is "downloaded" to `destination`, then its signature is verified
+    ;(updater as any).executeDownload = async (task: any) => {
+      await task.task(destination, {}, null, async () => undefined)
+      return []
+    }
+    await (updater as any).doDownloadUpdate({ updateInfoAndProvider: context, requestHeaders: {}, cancellationToken: new CancellationToken(), disableDifferentialDownload: true })
+    expect(verifySignatureSpy).toHaveBeenCalledWith(destination, context)
+  })
+
+  test("a custom verify function is not affected and runs no PowerShell", async ({ tmpDir }) => {
+    const { updater, update, verify } = await setup(tmpDir)
+    const custom = vi.fn(async () => ({ response: "failure" as const, message: "custom says no" }))
+    updater.verifyUpdateFileAuthenticodeSignature = custom
+    await expect(verify(update(true, true))).resolves.toEqual({ response: "failure", message: "custom says no" })
+    expect(custom).toHaveBeenCalledWith([DEFAULT_SUBJECT], expect.any(String))
+    expect(vi.mocked(execFile)).not.toHaveBeenCalled()
+  })
+
+  test("a logger that throws does not change the outcome of the accepted or the ignored warning", async ({ tmpDir }) => {
+    const { updater, signature, update, verify } = await setup(tmpDir)
+    const throwing = createLogger()
+    vi.mocked(throwing.warn).mockImplementation(() => {
+      throw new Error("logger is broken")
+    })
+    updater.logger = throwing
+    signature(2)
+    expectVerificationSuccess(await verify(update(true, true)))
+    // the ignored setting is announced (and the logger throws), then the embedded signature is verified as usual
+    signature(1)
+    expectVerificationSuccess(await verify(update(true, false)))
+    expect(vi.mocked(throwing.warn)).toHaveBeenCalledTimes(2)
   })
 })
 

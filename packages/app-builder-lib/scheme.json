@@ -8856,6 +8856,11 @@
     "WindowsConfiguration": {
       "additionalProperties": false,
       "properties": {
+        "allowCatalogSignature": {
+          "default": false,
+          "description": "Whether electron-updater accepts an update installer whose signature Windows reports from a security catalog (a signed list of\nfile hashes) instead of one embedded in the installer — for update installers that are catalog-signed on purpose, such as an\nenterprise deployment that adds their hashes to a catalog. The catalog signer must still match the [publisher name](#publisherName).\n\nWhen `true`, the `latest.yml` written for the `nsis` and `nsis-web` targets carries `allowCatalogSignature: true`. electron-updater\nhonors it only when the [signature of that update manifest](https://www.electron.build/docs/features/signed-update-manifests)\nwas verified against a trusted key; in an unsigned manifest (or one signed by an untrusted key) it is ignored with a warning, and\ncatalog signatures stay rejected unless the app sets `autoUpdater.allowCatalogSignature = true`. Since it is covered by the manifest\nsignature, changing it for a published release means signing `latest.yml` again or republishing it.\n\nInstalls running electron-updater 7.0.0-alpha.8 to alpha.11 with an update key configured reject a signed manifest that sets it\n(`ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`).",
+          "type": "boolean"
+        },
         "appId": {
           "default": "com.electron.${name}",
           "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",

@@ -84,7 +84,8 @@ const CUSTOM_VERIFIER_HINT =
 // signer of a Windows security catalog that lists the file's hash in preference to the signature embedded in the file. A uniquely
 // built update installer is in no catalog, so a catalog signature means the file is another (catalogued, e.g. in-box Windows)
 // file. A missing SignatureType comes from a PowerShell that only checks embedded signatures. An app whose installers are catalog-signed
-// on purpose opts in with NsisUpdater.allowCatalogSignature: the catalog signer must then match publisherName like an embedded one.
+// on purpose opts in with NsisUpdater.allowCatalogSignature, or per update with allowCatalogSignature: true in a manifest whose signature
+// was verified (win.allowCatalogSignature): the catalog signer must then match publisherName like an embedded one.
 const CATALOG_SIGNATURE_TYPE = 2
 
 const SIGNATURE_UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-update-signature-verification-fails-closed"
@@ -96,9 +97,32 @@ const SIGNATURE_UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v
 export interface VerifySignatureOptions {
   /**
    * Accept a signature that Windows reports from a security catalog instead of one embedded in the update file, when the catalog
-   * signer matches publisherName (`NsisUpdater.allowCatalogSignature`). Rejected unless exactly `true`.
+   * signer matches publisherName (`NsisUpdater.allowCatalogSignature`, or a verified manifest's `allowCatalogSignature`, see
+   * {@link resolveCatalogSignatureOptions}). Rejected unless exactly `true`.
    */
   readonly allowCatalogSignature?: boolean
+  /**
+   * What allowed a catalog signature, named in the warning logged when one is accepted: `NsisUpdater.allowCatalogSignature`
+   * (`"updater"`, the default) or the verified update manifest (`"manifest"`).
+   */
+  readonly allowCatalogSignatureSource?: CatalogSignatureSource
+}
+
+/**
+ * What allowed a catalog signature.
+ * @internal
+ */
+export type CatalogSignatureSource = "updater" | "manifest"
+
+/**
+ * The update whose installer is verified, as far as the catalog-signature policy needs it (an `UpdateInfoAndProvider` fits).
+ * @internal
+ */
+export interface CatalogSignatureUpdateContext {
+  /** The update info (the parsed `latest*.yml`) of the update. */
+  readonly info: unknown
+  /** Whether the signature of that update info was verified against a trusted key (`updateManifestPublicKey`). */
+  readonly manifestSignatureVerified?: unknown
 }
 
 /**
@@ -108,7 +132,8 @@ export interface VerifySignatureOptions {
 export function catalogSignatureRejectedReason(): string {
   return (
     "Windows reports the signer of a Windows security catalog for the update file instead of a signature embedded in it, which electron-updater 7 (electron-builder v27) " +
-    "does not accept by default. If your update installers are catalog-signed on purpose, set autoUpdater.allowCatalogSignature = true to accept a catalog signature " +
+    "does not accept by default. If your update installers are catalog-signed on purpose, set autoUpdater.allowCatalogSignature = true (or build with " +
+    "win.allowCatalogSignature and signed update manifests) to accept a catalog signature " +
     `whose signer matches publisherName (${SIGNATURE_UNVERIFIABLE_DOCS}). `
   )
 }
@@ -117,11 +142,59 @@ export function catalogSignatureRejectedReason(): string {
  * The warning logged when a catalog signature is accepted because allowCatalogSignature is true. Never throws.
  * @internal
  */
-export function catalogSignatureAcceptedWarning(subject: string, updateFile: string): string {
+export function catalogSignatureAcceptedWarning(subject: string, updateFile: string, source: CatalogSignatureSource = "updater"): string {
+  const because =
+    source === "manifest"
+      ? "because the verified update manifest sets allowCatalogSignature: true (win.allowCatalogSignature)"
+      : "because autoUpdater.allowCatalogSignature is true"
   return (
     `The update ${String(updateFile)} is accepted via a signature Windows reports from a security catalog (signer ${String(subject)}), not one embedded in the installer, ` +
-    "because allowCatalogSignature is true."
+    `${because}.`
   )
+}
+
+/**
+ * The warning logged when an update manifest sets `allowCatalogSignature: true` but its signature was not verified, so the setting is
+ * ignored. Never throws.
+ * @internal
+ */
+export function unverifiedManifestCatalogSignatureWarning(version: unknown): string {
+  const update = typeof version === "string" ? `version ${JSON.stringify(version)}` : "the update"
+  return (
+    `The update manifest of ${update} sets allowCatalogSignature: true, but its signature was not verified against a trusted updateManifestPublicKey, so the setting is ignored. ` +
+    "A signature Windows reports from a security catalog is accepted only when autoUpdater.allowCatalogSignature is true, or when the update manifest that sets " +
+    "allowCatalogSignature: true is signed and verified: https://www.electron.build/docs/features/signed-update-manifests"
+  )
+}
+
+// a logger supplied by the app must not turn a warning into a failed (or, worse, a skipped) verification
+function warnSafely(logger: Logger, message: string): void {
+  try {
+    logger.warn(message)
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Decides whether the default verification accepts a catalog signature for one update: when `NsisUpdater.allowCatalogSignature` is
+ * exactly `true`, or when the update info sets `allowCatalogSignature: true` and its manifest signature was verified against a trusted key.
+ * An `allowCatalogSignature: true` in a manifest that was not verified is ignored, with a warning. Never throws.
+ * @internal
+ */
+export function resolveCatalogSignatureOptions(updaterAllows: unknown, update: CatalogSignatureUpdateContext | null | undefined, logger: Logger): VerifySignatureOptions {
+  if (updaterAllows === true) {
+    return { allowCatalogSignature: true, allowCatalogSignatureSource: "updater" }
+  }
+  const info = update == null ? undefined : update.info
+  if (!isRecord(info) || info.allowCatalogSignature !== true) {
+    return { allowCatalogSignature: false }
+  }
+  if (update != null && update.manifestSignatureVerified === true) {
+    return { allowCatalogSignature: true, allowCatalogSignatureSource: "manifest" }
+  }
+  warnSafely(logger, unverifiedManifestCatalogSignatureWarning(info.version))
+  return { allowCatalogSignature: false }
 }
 
 function errorMessage(error: unknown): string {
@@ -181,7 +254,14 @@ function checkLiteralPath(reportedPath: unknown, updateFile: string, logger: Log
 // Parses Get-AuthenticodeSignature JSON, checks the LiteralPath guard, and matches against publisherNames. Returns a
 // success/failure result; throws (ERR_UPDATER_SIGNATURE_UNVERIFIABLE) when the output cannot be parsed, names another file,
 // or reports a valid signature without a signer certificate subject.
-function evaluateSignatureResult(stdout: string, publisherNames: string[], updateFile: string, logger: Logger, allowCatalogSignature: boolean): VerifyUpdateFileResult {
+function evaluateSignatureResult(
+  stdout: string,
+  publisherNames: string[],
+  updateFile: string,
+  logger: Logger,
+  allowCatalogSignature: boolean,
+  allowCatalogSignatureSource: CatalogSignatureSource
+): VerifyUpdateFileResult {
   let data: unknown
   try {
     data = parseAuthenticodeSignatureOutput(stdout)
@@ -204,7 +284,7 @@ function evaluateSignatureResult(stdout: string, publisherNames: string[], updat
       reason = catalogSignatureRejectedReason()
     } else if (matchPublisherName({ SignerCertificate: { Subject: subject } }, publisherNames)) {
       if (isCatalogSignature) {
-        logger.warn(catalogSignatureAcceptedWarning(subject, updateFile))
+        warnSafely(logger, catalogSignatureAcceptedWarning(subject, updateFile, allowCatalogSignatureSource))
       }
       return { response: "success" }
     } else if (isCatalogSignature) {
@@ -227,6 +307,7 @@ export function verifySignature(publisherNames: Array<string>, updateFile: strin
   logger.info(`Verifying signature ${updateFile}`)
   // a JavaScript caller may pass anything: only `true` opts in
   const allowCatalogSignature = options?.allowCatalogSignature === true
+  const allowCatalogSignatureSource: CatalogSignatureSource = options?.allowCatalogSignatureSource === "manifest" ? "manifest" : "updater"
   return new Promise<VerifyUpdateFileResult>((resolve, reject) => {
     try {
       execFile(...prepareAuthenticodeSignatureExec(updateFile, VERIFY_TIMEOUT_MS), (error, stdout, stderr) => {
@@ -239,7 +320,7 @@ export function verifySignature(publisherNames: Array<string>, updateFile: strin
           return
         }
         try {
-          resolve(evaluateSignatureResult(String(stdout), publisherNames, updateFile, logger, allowCatalogSignature))
+          resolve(evaluateSignatureResult(String(stdout), publisherNames, updateFile, logger, allowCatalogSignature, allowCatalogSignatureSource))
         } catch (e: unknown) {
           reject(e)
         }

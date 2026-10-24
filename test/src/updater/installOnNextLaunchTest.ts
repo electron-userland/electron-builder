@@ -326,6 +326,21 @@ describe("install on next launch", { concurrent: false }, () => {
       expect(errors.some(it => it.message.includes("not signed"))).toBe(true)
     })
 
+    test("the launch-time signature re-verification gets the latest update info the cached installer was matched against", async () => {
+      const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
+      const { updater, doInstall, getUpdateInfoAndProvider } = createUpdater(seeded.updateInfo, NsisUpdater)
+      helper.markInstallOnNextLaunchSync(log)
+      // what getUpdateInfoAndProvider records for a manifest a trusted key verified
+      const latest = { ...(await (updater as any).getUpdateInfoAndProvider()), manifestSignatureVerified: true }
+      getUpdateInfoAndProvider.mockResolvedValue(latest)
+      const verifyOnLaunch = vi.spyOn(updater as any, "verifyInstallerSignatureOnLaunch").mockResolvedValue({ response: "success" })
+
+      await expect(updater.installPendingUpdateIfAvailable()).resolves.toBe(true)
+      expect(verifyOnLaunch).toHaveBeenCalledTimes(1)
+      expect(verifyOnLaunch.mock.calls[0][1]).toBe(latest)
+      expect(doInstall).toHaveBeenCalledTimes(1)
+    })
+
     test("fails closed when the launch-time signature verifier returns a malformed result", async () => {
       const seeded = await seedDownloadedUpdate(helper, { version: "1.0.1" })
       const { updater, doInstall } = createUpdater(seeded.updateInfo)
