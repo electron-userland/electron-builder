@@ -65,7 +65,9 @@ export async function validateDownload(expect: ExpectStatic, updater: AppUpdater
     const downloadResult = await updateCheckResult?.downloadPromise
     await assertThat(expect, downloadResult!.updateFile).isFile()
   } else {
-    // noinspection JSIgnoredPromiseFromCall
+    // An unexpected download outlives the test (and its update server): handle its outcome, so the test fails on the
+    // assertion below rather than on an unhandled rejection reported after it
+    updateCheckResult?.downloadPromise?.catch(() => undefined)
     expect(updateCheckResult?.downloadPromise).toBeUndefined()
   }
 
