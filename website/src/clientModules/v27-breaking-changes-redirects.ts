@@ -30,9 +30,9 @@ const MOVED_SECTIONS: ReadonlyMap<string, string> = new Map(
     "disablewebinstaller-defaults-to-true": "v27-runtime-changes#disablewebinstaller-defaults-to-true",
     "dmg-filesystem-defaults-to-apfs": "v27-runtime-changes#dmg-filesystem-defaults-to-apfs",
     "downloadupdate-resolves-with-a-downloadexecutorresult-object": "v27-runtime-changes#downloadupdate-resolves-with-a-downloadexecutorresult-object",
-    "electron_builder_binaries_allow_http-renamed": "v27-build-changes#electron_builder_binaries_allow_http-renamed",
     "electron-forge-maker-plugins": "v27-developer-changes#electron-forge-maker-plugins",
     "electron-prebuilt-electron-rebuild-no-longer-error-and-are-not-excluded": "v27-build-changes#electron-prebuilt-electron-rebuild-no-longer-error-and-are-not-excluded",
+    "electron_builder_binaries_allow_http-renamed": "v27-build-changes#electron_builder_binaries_allow_http-renamed",
     electroncompile: "v27-config-changes#electroncompile",
     "electrondownload-electronget": "v27-config-changes#electrondownload-electronget",
     "electrongetoptionsforce-removed": "v27-config-changes#electrongetoptionsforce-removed",
@@ -58,6 +58,7 @@ const MOVED_SECTIONS: ReadonlyMap<string, string> = new Map(
     "macos-productname-and-executablename-are-validated-not-sanitized": "v27-build-changes#macos-productname-and-executablename-are-validated-not-sanitized",
     "macos-signing-macsign": "v27-config-changes#macos-signing-macsign",
     macuniversal: "v27-config-changes#macuniversal",
+    "missing-publishername-fails-update-verification": "v27-build-changes#missing-publishername-fails-update-verification",
     "native-binaries-are-verified-against-the-target": "v27-build-changes#native-binaries-are-verified-against-the-target",
     "native-esm-output": "v27-developer-changes#native-esm-output",
     "native-module-options-nativemodules": "v27-config-changes#native-module-options-nativemodules",
@@ -113,7 +114,9 @@ const MOVED_SECTIONS: ReadonlyMap<string, string> = new Map(
     "why-restructure-snap-into-snapcraft": "v27-config-changes#snap-snapcraft",
     "why-unify-all-windows-signing-under-winsign": "v27-config-changes#windows-signing-winsign",
     "windows-publishername-is-validated-against-the-signing-certificate": "v27-build-changes#windows-publishername-is-validated-against-the-signing-certificate",
+    "windows-publishername-must-be-a-distinguished-name": "v27-build-changes#windows-publishername-must-be-a-distinguished-name",
     "windows-signing-winsign": "v27-config-changes#windows-signing-winsign",
+    "windows-update-signature-verification-fails-closed": "v27-runtime-changes#windows-update-signature-verification-fails-closed",
     "winsignexecutable-winsignandeditexecutable-removed": "v27-config-changes#winsignexecutable-winsignandeditexecutable-removed",
   })
 )

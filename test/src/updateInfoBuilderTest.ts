@@ -913,6 +913,15 @@ test("app-update.yml: verifyUpdateCodeSignature: false skips publisherName for a
   const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
   expect(publishConfig).not.toBeNull()
   expect(publishConfig?.publisherName).toBeUndefined()
+  // the explicit opt-out electron-updater 7 needs to install an update without publisherName
+  expect(publishConfig?.verifyUpdateCodeSignature).toBe(false)
+})
+
+test("app-update.yml: an unsigned Windows build (no certificate) without publisherName fails", async ({ expect }) => {
+  const packager = makeWinAppUpdateConfigPackager({ type: "signtool" })
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)).rejects.toThrow(
+    /Cannot write app-update\.yml without publisherName: no code signing certificate is configured/
+  )
 })
 
 test("no signature field is written when the packager yields no signing key", async ({ expect }) => {
@@ -1218,5 +1227,84 @@ test("web installer: `packages` and `minimumSystemVersion` are signed as written
     expect(verifyManifestSignature(withoutMin, publicKeyPem)).toBe(false)
     // cosmetic fields stay editable after signing
     expect(verifyManifestSignature({ ...yml, releaseNotes: "edited later", releaseName: "Renamed", releaseDate: "2099-01-01T00:00:00.000Z" }, publicKeyPem)).toBe(true)
+  })
+})
+
+// ── win.allowCatalogSignature ────────────────────────────────────────────────
+
+describe("win.allowCatalogSignature", () => {
+  function makeWinPackager(allowCatalogSignature: unknown, platform = Platform.WINDOWS): any {
+    const packager = makePlatformPackager()
+    return { ...packager, platform, platformOptions: { ...packager.platformOptions, allowCatalogSignature } }
+  }
+
+  async function createInfos(tmpDir: TmpDir, packager: any, targetName: string, updateInfo?: any): Promise<Array<any>> {
+    const dir = await tmpDir.createTempDir()
+    const artifactFile = path.join(dir, "App-1.0.0.exe")
+    await fsp.writeFile(artifactFile, "fake")
+    const event: any = { file: artifactFile, arch: null, packager, target: { name: targetName, outDir: dir }, updateInfo }
+    const tasks = await createUpdateInfoTasks(event, [{ provider: "s3", bucket: "test" }] as any)
+    return tasks.map(it => it.info)
+  }
+
+  const WEB_UPDATE_INFO = { packages: { x64: { path: "App-1.0.0-x64.nsis.7z", sha512: "p64", size: 5000 } } }
+
+  test.for([
+    ["nsis", undefined],
+    ["nsis-web", WEB_UPDATE_INFO],
+  ] as const)("true writes allowCatalogSignature: true into the update info of %s", async ([targetName, updateInfo], { expect, tmpDir }) => {
+    const infos = await createInfos(tmpDir, makeWinPackager(true), targetName, updateInfo)
+    expect(infos).toHaveLength(1)
+    const info = infos[0]
+    expect(info.allowCatalogSignature).toBe(true)
+    expect(info.files[0].url).toBe("App-1.0.0.exe")
+    if (updateInfo != null) {
+      expect(info.packages).toEqual(updateInfo.packages)
+    }
+  })
+
+  test.for([
+    ["unset", undefined, Platform.WINDOWS, "nsis"],
+    ["false", false, Platform.WINDOWS, "nsis"],
+    ["a truthy value that is not true", "yes", Platform.WINDOWS, "nsis-web"],
+    ["true for an electronUpdaterAware appx target", true, Platform.WINDOWS, "appx"],
+    ["true on another platform", true, Platform.LINUX, "AppImage"],
+  ] as const)("is not written when the option is %s", async ([, value, platform, targetName], { expect, tmpDir }) => {
+    const infos = await createInfos(tmpDir, makeWinPackager(value, platform), targetName)
+    expect(infos).toHaveLength(1)
+    expect("allowCatalogSignature" in infos[0]).toBe(false)
+  })
+
+  test("is written to latest.yml and covered by the manifest signature", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+    const base = makeTask(dir, "App-1.0.0.exe", "sha-nsis", null)
+    const task: UpdateInfoFileTask = { ...base, packager: makeTaskPackager(parsePrivateKey(privateKeyPem)), info: { ...base.info, allowCatalogSignature: true } as any }
+    await writeUpdateInfoFiles([task], makePackager() as any)
+    const yml = await readYml(path.join(dir, "latest.yml"))
+    expect(yml.allowCatalogSignature).toBe(true)
+    expect(verifyManifestSignature(yml, publicKeyPem)).toBe(true)
+    // turning it off (or removing it) after signing invalidates the signature: the manifest has to be signed again
+    expect(verifyManifestSignature({ ...yml, allowCatalogSignature: false }, publicKeyPem)).toBe(false)
+    const { allowCatalogSignature: _removed, ...withoutField } = yml
+    expect(verifyManifestSignature(withoutField, publicKeyPem)).toBe(false)
+  })
+
+  test("warns that it has no effect when the update manifest is not signed", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.createTempDir()
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    try {
+      const base = makeTask(dir, "App-1.0.0.exe", "sha-nsis", null)
+      await writeUpdateInfoFiles([{ ...base, info: { ...base.info, allowCatalogSignature: true } as any }], makePackager() as any)
+      expect((await readYml(path.join(dir, "latest.yml"))).allowCatalogSignature).toBe(true)
+      const messages = warn.mock.calls.map(call => String(call[1]))
+      expect(messages.filter(it => it.includes("win.allowCatalogSignature has no effect"))).toHaveLength(1)
+
+      warn.mockClear()
+      await writeUpdateInfoFiles([makeTask(dir, "App-1.0.0.exe", "sha-nsis", null)], makePackager() as any)
+      expect(warn.mock.calls.map(call => String(call[1])).filter(it => it.includes("win.allowCatalogSignature"))).toHaveLength(0)
+    } finally {
+      warn.mockRestore()
+    }
   })
 })
