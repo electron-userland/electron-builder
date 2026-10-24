@@ -557,6 +557,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -644,6 +655,17 @@
           "type": [
             "null",
             "string"
+          ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
@@ -1977,6 +1999,17 @@
         "useMultipleRangeRequest": {
           "description": "Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.",
           "type": "boolean"
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -2128,6 +2161,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -2248,6 +2292,17 @@
           "default": true,
           "description": "Whether to use `v`-prefixed tag name.",
           "type": "boolean"
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -2354,6 +2409,17 @@
           "type": [
             "null",
             "string"
+          ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
@@ -6318,6 +6384,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -6928,6 +7005,17 @@
           "type": [
             "null",
             "string"
+          ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
@@ -7801,6 +7889,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -8295,6 +8394,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -8715,7 +8825,7 @@
           "type": "string"
         },
         "publisherName": {
-          "description": "The publisher name to associate with the signature, exactly as it appears in the certificate\nissued by your Trusted Signing certificate profile. Required. Used for\n[update verification](#verifyUpdateCodeSignature) (embedded in `app-update.yml` and checked by\nelectron-updater) and must match the certificate subject.",
+          "description": "The publisher name to associate with the signature: a Distinguished Name (DN) of the subject of\nthe certificate issued by your Trusted Signing certificate profile (e.g.\n`CN=My Company, O=My Company, C=US`). Required. Used for\n[update verification](#verifyUpdateCodeSignature) (embedded in `app-update.yml` and checked by\nelectron-updater) and must match the certificate subject. A bare name fails the build since\nv27 — see\n[the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).",
           "type": "string"
         },
         "timestampDigest": {
@@ -8996,7 +9106,7 @@
               "type": "null"
             }
           ],
-          "description": "Code signing configuration. Code signing stamps every installer and executable\nelectron-builder produces with an Authenticode signature, so that Windows (SmartScreen / UAC)\nand your auto-updater can verify the publisher and that the files were not tampered with.\n\nHow this option behaves:\n- Leave **unset** to sign using credentials discovered from the environment — primarily a\n  certificate supplied via `WIN_CSC_LINK` (or `CSC_LINK`) with its password in\n  `WIN_CSC_KEY_PASSWORD` (or `CSC_KEY_PASSWORD`). `WIN_CSC_LINK` accepts a file path, an\n  `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.\n- Set to `false` or `null` to **disable** code signing entirely (executable resources such as\n  the icon and metadata are still edited).\n- Set to an **object** to configure signing explicitly. The **required** `type` field selects the\n  signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign\n  manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`\n  backend is used with env-discovered credentials. Each output artifact is signed individually,\n  and by default executables are dual-signed (see `signingHashAlgorithms`).\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and\n  `osslsigncode` on macOS/Linux.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires a modern `winCodeSign` toolset (the default — only the legacy\n  `\"0.0.0\"` pin is unsupported). Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication.\n\nSee [Code Signing](https://www.electron.build/docs/features/code-signing)."
+          "description": "Code signing configuration. Code signing stamps every installer and executable\nelectron-builder produces with an Authenticode signature, so that Windows (SmartScreen / UAC)\nand your auto-updater can verify the publisher and that the files were not tampered with.\n\nHow this option behaves:\n- Leave **unset** to sign using credentials discovered from the environment — primarily a\n  certificate supplied via `WIN_CSC_LINK` (or `CSC_LINK`) with its password in\n  `WIN_CSC_KEY_PASSWORD` (or `CSC_KEY_PASSWORD`). `WIN_CSC_LINK` accepts a file path, an\n  `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.\n- Set to `false` or `null` to **disable** code signing entirely (executable resources such as\n  the icon and metadata are still edited). A build that writes `app-update.yml` then also needs\n  [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) set to `false`, since no publisher\n  name is derived; if you sign outside electron-builder, use `{ type: \"signtool\", publisherName: [...] }`\n  instead.\n- Set to an **object** to configure signing explicitly. The **required** `type` field selects the\n  signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign\n  manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`\n  backend is used with env-discovered credentials. Each output artifact is signed individually,\n  and by default executables are dual-signed (see `signingHashAlgorithms`).\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and\n  `osslsigncode` on macOS/Linux.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires a modern `winCodeSign` toolset (the default — only the legacy\n  `\"0.0.0\"` pin is unsupported). Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication.\n\nSee [Code Signing](https://www.electron.build/docs/features/code-signing)."
         },
         "signExts": {
           "anyOf": [
@@ -9057,7 +9167,7 @@
         },
         "verifyUpdateCodeSignature": {
           "default": true,
-          "description": "Whether the NSIS auto-updater should verify the Authenticode signature of a downloaded update\nbefore installing it. The verification itself runs in your app, via electron-updater.\n\nWhen enabled (the default), the resolved [publisher name](#publisherName) is embedded into\n`app-update.yml` at build time. At update time electron-updater inspects the certificate that\nsigned the downloaded installer and compares its subject (Distinguished Name / Common Name)\nagainst that publisher name, refusing to install on a mismatch. This prevents a tampered or\nmaliciously substituted update from being installed.\n\nWhile enabled, electron-builder also checks at build time that the signed NSIS installer (or\nnsis-web stub) is signed by a certificate matching that publisher name, using the same matching\nrules, and fails the build otherwise.\n\nSet to `false` to skip verification — in which case the publisher name is **not** embedded.\nDisable this only if your updates are not Authenticode-signed.",
+          "description": "Whether the NSIS auto-updater should verify the Authenticode signature of a downloaded update\nbefore installing it. The verification itself runs in your app, via electron-updater.\n\nWhen enabled (the default), the resolved [publisher name](#publisherName) is embedded into\n`app-update.yml` at build time. At update time electron-updater inspects the certificate that\nsigned the downloaded installer and compares its subject (Distinguished Name)\nagainst that publisher name, refusing to install on a mismatch. This prevents a tampered or\nmaliciously substituted update from being installed.\n\nWhile enabled, electron-builder also checks at build time that the signed NSIS installer (or\nnsis-web stub) is signed by a certificate matching that publisher name, using the same matching\nrules, and fails the build otherwise.\n\nSince v27 a build that writes `app-update.yml` (an `nsis`, `nsis-web` or `electronUpdaterAware`\n`appx` target with a publish configuration) fails while this is enabled and no publisher name\nresolves (`sign: false` / `null`, no certificate, `publisherName: null`): electron-updater 7\nrejects every update of an app whose `app-update.yml` has no publisher name. Sign the build, set\n[publisherName](#publisherName), or set this to `false`.\n\nSet to `false` to skip verification explicitly — the publisher name is then **not** embedded, and\n`app-update.yml` carries `verifyUpdateCodeSignature: false` instead, which tells electron-updater\nto install updates without verifying their signature. This is the only opt-out.\nDisable this only if your updates are not Authenticode-signed.",
           "type": "boolean"
         }
       },
@@ -9117,7 +9227,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
+          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9222,7 +9332,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
+          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9340,7 +9450,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
+          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",

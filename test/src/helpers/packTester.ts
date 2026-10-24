@@ -29,7 +29,7 @@ import { Format, NtExecutable, NtExecutableResource } from "resedit"
 import { TmpDir } from "temp-file"
 import { getCollectorByPackageManager, PM } from "app-builder-lib/internal"
 import { promisify } from "util"
-import { macSigningCredentialsInfo, winSigningCredentialsInfo } from "./codeSignData"
+import { macSigningCredentialsInfo, WIN_SIGNING_PUBLISHER_NAME, winSigningCredentialsInfo } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 import AdmZip from "adm-zip"
 // @ts-ignore
@@ -311,6 +311,14 @@ export async function assertPack(expect: ExpectStatic, fixtureName: string, pack
   // `=== undefined` on purpose - a test writes `updateManifest: null` to exercise the required path.
   if (configuration.updateManifest === undefined) {
     ;(configuration as any).updateManifest = false
+  }
+  // The same for Windows update signature verification: fixture builds are unsigned unless the test signs them (signedWin), and since
+  // v27 a build that writes app-update.yml without a publisherName fails. Opt them out explicitly - app-update.yml then carries
+  // `verifyUpdateCodeSignature: false`, as the snapshots show - unless the test configures win.sign or the verification itself
+  // (the tests of the requirement set win.sign: false / null, or a sign object without a certificate).
+  const buildsWindows = packagerOptions.targets?.has(Platform.WINDOWS) === true
+  if (buildsWindows && !checkOptions.signedWin && configuration.win?.sign === undefined && configuration.win?.verifyUpdateCodeSignature === undefined) {
+    ;(configuration as any).win = { ...configuration.win, verifyUpdateCodeSignature: false }
   }
 
   if (checkOptions.signedMac) {
@@ -1096,11 +1104,11 @@ export async function getWindowsSigningIdentity(): Promise<SelfSignedIdentity> {
 
 /**
  * The `publisherName` a Windows build signed with getWindowsSigningIdentity (`signedWin`) writes to app-update.yml when none is
- * configured: the common name of its certificate. A certificate provided via CSC_LINK / WIN_CSC_LINK has one the tests don't know.
+ * configured: `CN=<common name>` of its certificate. A certificate provided via CSC_LINK / WIN_CSC_LINK has one the tests don't know.
  */
 export async function expectedWindowsPublisherName(expect: ExpectStatic): Promise<Array<unknown>> {
   const { commonName } = await getWindowsSigningIdentity()
-  return commonName === "provided" ? [expect.any(String)] : [commonName]
+  return commonName === "provided" ? [expect.any(String)] : [WIN_SIGNING_PUBLISHER_NAME]
 }
 
 async function signed(packagerOptions: PackagerOptions, platform: "win" | "mac"): Promise<PackagerOptions> {

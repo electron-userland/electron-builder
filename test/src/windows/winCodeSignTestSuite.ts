@@ -176,7 +176,7 @@ export function registerWinCodeSignTests(toolsets: Partial<ToolsetConfig>): void
           win: {
             sign: {
               type: "azure" as const,
-              publisherName: "test",
+              publisherName: "CN=Test, O=Test",
               endpoint: "https://weu.codesigning.azure.net/",
               certificateProfileName: "profilenamehere",
               codeSigningAccountName: "codesigningnamehere",

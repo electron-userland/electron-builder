@@ -128,7 +128,8 @@ const WINDOWS_ATTRIBUTE_TYPE_NAMES: Record<string, string> = {
 // doubling embedded quotes.
 const NEEDS_WINDOWS_DN_QUOTING = /[,+="\n<>#;]/
 
-function quoteWindowsDnValue(value: string): string {
+/** Quotes an RDN value the way Windows does when it formats a certificate subject (see {@link formatWindowsSubjectDn}). */
+export function quoteWindowsDnValue(value: string): string {
   if (value.length === 0 || value !== value.trim() || NEEDS_WINDOWS_DN_QUOTING.test(value)) {
     return `"${value.replace(/"/g, '""')}"`
   }

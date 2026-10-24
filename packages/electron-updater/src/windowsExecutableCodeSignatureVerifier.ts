@@ -1,9 +1,76 @@
-import { escapePowerShellSingleQuotes, matchPublisherName, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "builder-util-runtime"
+import { escapePowerShellSingleQuotes, isValidPublisherNameDn, matchPublisherName, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "builder-util-runtime"
 import { execFile, execFileSync } from "child_process"
 import * as os from "os"
 import type { VerifyUpdateFileResult } from "./types.js"
 import { Logger } from "./types.js"
 import * as path from "path"
+
+const PUBLISHER_NAME_DN_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
+
+/**
+ * Explains why some publisherName entries can never match the signer of an update, or returns null when every entry is
+ * in distinguished name (DN) format. Such entries come from an app-update.yml written by electron-builder before
+ * v27 (which wrote the certificate's Common Name), a dev-app-update.yml or another updateConfigPath file, or a direct call
+ * of verifyUpdateFileAuthenticodeSignature.
+ * Never throws, whatever the entries are.
+ * @internal
+ */
+export function publisherNameDnNote(publisherNames: ReadonlyArray<unknown>): string | null {
+  // typed as an array, but a JavaScript caller of verifyUpdateFileAuthenticodeSignature may pass anything
+  const entries: ReadonlyArray<unknown> = Array.isArray(publisherNames) ? publisherNames : [publisherNames]
+  const invalid = entries.filter(it => !isValidPublisherNameDn(it))
+  if (invalid.length === 0) {
+    return null
+  }
+  const names = invalid.map(it => (typeof it === "string" ? `"${it}"` : `(${typeof it})`)).join(", ")
+  return (
+    `electron-updater 7 (electron-builder v27) matches a publisherName only when it is in distinguished name (DN) format, ` +
+    `e.g. "CN=My Company, O=My Company, C=US": publisherName ${names} can never match the signer of an update. ` +
+    `Build the app with electron-builder v27, which writes such a DN to app-update.yml, or set the publisherName of dev-app-update.yml (or the updateConfigPath file) to the certificate subject. ${PUBLISHER_NAME_DN_DOCS}`
+  )
+}
+
+const MISSING_PUBLISHER_NAME_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#missing-publishername-fails-update-verification"
+
+/**
+ * The publisher names of an update config (app-update.yml, dev-app-update.yml or the updateConfigPath file), or null when it has
+ * none: no config, no `publisherName`, `publisherName: null`, or no string entry. A single string is one entry. Never throws.
+ * @internal
+ */
+export function readConfiguredPublisherNames(config: unknown): Array<string> | null {
+  if (config == null || typeof config !== "object" || !("publisherName" in config)) {
+    return null
+  }
+  const value: unknown = config.publisherName
+  const values: ReadonlyArray<unknown> = Array.isArray(value) ? value : [value]
+  // an entry that is no string can never match a signer, so it is left out (with no string entry at all, there is no publisherName)
+  const entries = values.filter((it): it is string => typeof it === "string")
+  return entries.length === 0 ? null : entries
+}
+
+/**
+ * Whether the update config opts out of the Authenticode verification of updates: `verifyUpdateCodeSignature: false`, which
+ * electron-builder writes into app-update.yml for a build with `win.verifyUpdateCodeSignature: false`. Never throws.
+ * @internal
+ */
+export function isUpdateCodeSignatureVerificationDisabled(config: unknown): boolean {
+  return config != null && typeof config === "object" && "verifyUpdateCodeSignature" in config && config.verifyUpdateCodeSignature === false
+}
+
+/**
+ * Why an update is rejected when the update config has no publisherName to verify its Authenticode signature against.
+ * Never throws.
+ * @internal
+ */
+export function missingPublisherNameMessage(): string {
+  return (
+    "electron-updater 7 (electron-builder v27) rejects the update: app-update.yml has no publisherName to verify its Authenticode signature against (verification used to be skipped). " +
+    "Build the app with electron-builder v27 and a publish configuration, so that app-update.yml carries the publisherName: sign the build so electron-builder writes it " +
+    "(CN=<common name> of the certificate), set win.sign.publisherName to the subject of the certificate that signs your updates, " +
+    "or set win.verifyUpdateCodeSignature: false at build time to opt out explicitly (in a dev-app-update.yml or updateConfigPath file: verifyUpdateCodeSignature: false). " +
+    MISSING_PUBLISHER_NAME_DOCS
+  )
+}
 
 // Thrown when the Path reported by Get-AuthenticodeSignature does not match the expected
 // update file path. Signals verifySignature to reject directly, without running the
@@ -37,11 +104,15 @@ function evaluateSignatureResult(stdout: string, publisherNames: string[], unesc
   const data = parseAuthenticodeSignatureOutput(stdout)
   if (data.Status === 0) {
     checkLiteralPath(data, unescapedTempUpdateFile, logger)
-    if (matchPublisherName(data, publisherNames, logger)) {
+    if (matchPublisherName(data, publisherNames)) {
       return { response: "success" }
     }
   }
-  const result = `publisherNames: ${publisherNames.join(" | ")}, raw info: ` + JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2)
+  const note = publisherNameDnNote(publisherNames)
+  const result =
+    `publisherNames: ${publisherNames.join(" | ")}, raw info: ` +
+    JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2) +
+    (note == null ? "" : `\n${note}`)
   logger.warn(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
   return { response: "failure", message: result }
 }

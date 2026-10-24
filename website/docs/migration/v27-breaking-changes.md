@@ -103,6 +103,8 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Native binaries are verified against the target](#native-binaries-are-verified-against-the-target) | — | A `.node` addon built for another platform/arch now fails the build; set `nativeModules.verifyNativeBinaries: "warn"` (or `false`) to package anyway |
 | [`extraFiles` / `extraResources` `to` is validated](#extrafiles--extraresources-destinations-are-validated) | — | An absolute `to`, or one escaping the output dir, now throws |
 | [Windows `publisherName` validated against the certificate](#windows-publishername-is-validated-against-the-signing-certificate) | — | Update `publisherName` after a certificate rotation, or drop it. Custom `win.sign.sign` hooks (even with a certificate configured) and certificates without a CN now **require** it when `app-update.yml` is written (or set `win.verifyUpdateCodeSignature: false` if your updates are not Authenticode-signed) |
+| [Windows `publisherName` must be a distinguished name](#windows-publishername-must-be-a-distinguished-name) | — | Set every `win.sign.publisherName` entry to a distinguished name (e.g. `"CN=My Company, O=My Company, C=US"`) — a bare name now **fails the build**, and electron-updater 7 never matches it. Without `publisherName`, the build now writes `CN=<common name>` of the certificate (a DN) instead of the bare Common Name |
+| [A missing Windows `publisherName` fails update verification](#missing-publishername-fails-update-verification) | — | A Windows build that writes `app-update.yml` without a `publisherName` (`win.sign: false` / `null`, no certificate, `publisherName: null`) now **fails the build**, and electron-updater 7 rejects updates whose `app-update.yml` has none. Sign the build, set `win.sign.publisherName`, or set `win.verifyUpdateCodeSignature: false` (the only opt-out) |
 | [Custom Windows signing hook moved to `win.sign.sign`](#custom-windows-signing-hooks-move-to-winsignsign) | ✓ | `win.signtoolOptions.sign` moves with the rest of `signtoolOptions` to `win.sign.sign` |
 | [macOS names are no longer NFD-normalized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | Update tooling that matches the normalized on-disk bundle filename |
 | [Linux `executableArgs` field codes are now literal](#linux-launcher-entrypoint) | — | Remove `%F`/`%U` from `executableArgs`; use `linux.desktop.entry.Exec` |
@@ -752,7 +754,7 @@ v27 adds `electron-builder migrate-schema`, which rewrites your config to v27 fo
 
 **It warns but leaves in place** what cannot be rewritten mechanically: `squirrelWindows.customSquirrelVendorDir`, a custom NSIS bundle in `customNsisBinary` / `customNsisResources` ([→ `toolsets.nsis`](#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis); it does move `customNsisBinary.debugLogging` → `installerDebugLogging`), a custom `mac.sign` signer combined with sibling signing options, an `includePdb` value v26 rejected, and, in JS/TS configs, platform-level `asarUnpack` next to root-level ASAR options, an `includePdb` whose value is not a literal, or, for `includePdb: true`, a platform section the codemod cannot read or a root `fileOptions.excludedExts` with an element it cannot read (a spread, an identifier, a call; readable platform lists still get `"!pdb"`).
 
-**It prints an advisory** (without changing the config) for runtime defaults and behavior changes you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)), `nsis.perMachine` or `nsisWeb.perMachine` set to `true` ([per-machine NSIS updates](#nsis-per-machine-builds-set-isadminrightsrequired)), a custom `win.sign.sign` hook without `win.sign.publisherName`, unless `win.verifyUpdateCodeSignature` is `false` ([publisher name](#windows-publishername-is-validated-against-the-signing-certificate)), a `generic` publish configuration whose `url` has a query string ([update credentials](#update-credentials-stay-on-the-feeds-origin)), a `fileOptions.files` pattern that names `.pdb` files ([`includePdb` → `fileOptions.excludedExts`](#includepdb-fileoptionsexcludedexts)), and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
+**It prints an advisory** (without changing the config) for runtime defaults and behavior changes you should check: an `nsis-web` target ([`disableWebInstaller`](#disablewebinstaller-defaults-to-true)), `nsis.perMachine` or `nsisWeb.perMachine` set to `true` ([per-machine NSIS updates](#nsis-per-machine-builds-set-isadminrightsrequired)), a custom `win.sign.sign` hook without `win.sign.publisherName`, unless `win.verifyUpdateCodeSignature` is `false` ([publisher name](#windows-publishername-is-validated-against-the-signing-certificate)), a `win.sign.publisherName` entry that is not a distinguished name, e.g. a bare name ([publisher name DN](#windows-publishername-must-be-a-distinguished-name)), `win.sign: false` / `null` or `win.sign.publisherName: null`, unless `win.verifyUpdateCodeSignature` is `false` ([missing publisher name](#missing-publishername-fails-update-verification)), a `generic` publish configuration whose `url` has a query string ([update credentials](#update-credentials-stay-on-the-feeds-origin)), a `fileOptions.files` pattern that names `.pdb` files ([`includePdb` → `fileOptions.excludedExts`](#includepdb-fileoptionsexcludedexts)), and a `mac`/`mas`/`masDev` section that names no entitlements file ([tightened default entitlements](#macos-default-entitlements-tightened)).
 
 **It does not touch** anything outside the config: CLI flags, environment variables, custom NSIS scripts, Linux maintainer scripts, app code using the electron-updater API, or plugins using `PlatformPackager`. Every other row marked **—** in the [table above](#breaking-changes-at-a-glance) is a manual step.
 
@@ -1224,7 +1226,7 @@ A `to` path that is absolute (POSIX, drive-letter, or UNC) or that escapes the b
 
 A configured `win.sign.publisherName` (v26: `win.signtoolOptions.publisherName` / `win.azureSignOptions.publisherName`) that does not match the signing certificate's subject now fails the build instead of producing an installer that electron-updater would reject every update for. The common triggers are a certificate rotation and the wrong certificate leaking into `WIN_CSC_LINK` / `CSC_LINK` in CI.
 
-**Action is required only if** a build fails here — update `win.sign.publisherName` to the new certificate subject, sign with the intended certificate, or set `publisherName` to `null` to opt out of update signature verification entirely.
+**Action is required only if** a build fails here — update `win.sign.publisherName` to the new certificate subject, sign with the intended certificate, or set `win.verifyUpdateCodeSignature: false` to opt out of update signature verification entirely.
 
 A code-signed build whose publisher name cannot be determined now also fails with `InvalidConfigurationError`. This covers every custom `win.sign.sign` hook without `win.sign.publisherName`: a hook may sign with another certificate than any electron-builder can read, so its publisher name is never derived from a certificate, not even one in the config (`certificateFile`, `certificateSubjectName`, `certificateSha1`, `cscLink`) or from `WIN_CSC_LINK` / `CSC_LINK`. It also covers a certificate without a Common Name (including a certificate-store subject). It applies only to builds that write `app-update.yml`: `nsis`, `nsis-web` and `electronUpdaterAware` `appx` targets with a publish configuration, including one inferred from a GitHub `repository`.
 
@@ -1232,7 +1234,45 @@ A code-signed build whose publisher name cannot be determined now also fails wit
 
 > **Tip:** `electron-builder migrate-schema` prints an advisory for a custom `win.sign.sign` hook without `win.sign.publisherName`, whatever certificate the config names.
 
-> Related, on the updater side: an `app-update.yml` with no `publisherName` means signature verification is silently skipped. v27 warns; **v28 will fail closed.**
+> Related: a build that would write `app-update.yml` without any `publisherName` fails too, and electron-updater 7 rejects updates whose `app-update.yml` has none — see [A missing `publisherName` fails update verification](#missing-publishername-fails-update-verification).
+
+### Windows `publisherName` must be a distinguished name {#windows-publishername-must-be-a-distinguished-name}
+
+Every `publisherName` entry must now be in distinguished name (DN) format — for example `"CN=My Company, O=My Company, C=US"`. v26 also accepted a bare name (`"My Company"`) and compared it with the certificate's Common Name, which electron-updater accepted with a warning.
+
+- **electron-updater 7** never matches a bare name. A DN entry matches when every attribute it lists equals the signer's, in the attribute names Windows uses (`S` for the state or province, not `ST`); attributes it leaves out are not compared. When `app-update.yml` (or `dev-app-update.yml`) has an entry that can never match, the updater warns once, naming the entries, and the `ERR_UPDATER_INVALID_SIGNATURE` failure says so too. This also happens when electron-updater 7 runs in an app built with electron-builder v26, whose `app-update.yml` carries the certificate's Common Name — build the app with v27.
+- **electron-builder v27** fails the build with `InvalidConfigurationError` when an explicit `win.sign.publisherName` (any signing type: `signtool`, `hsm`, `pkcs11`, a custom `sign` hook or `azure`) has an entry that is not a DN, before anything is signed. `publisherName: null` no longer opts out of update signature verification — see [below](#missing-publishername-fails-update-verification).
+- **Without `publisherName`**, the build now writes `CN=<common name>` of the certificate to `app-update.yml` (v26 wrote the bare Common Name), with the value quoted the way Windows quotes it in the certificate subject (e.g. `CN=My Company`, or `CN="My Company, Inc."`). Only the CN is compared, so a renewed certificate that keeps the same CN keeps updates working even when its other subject attributes change. For a stricter pin, set a fuller DN explicitly; a renewal that changes an attribute you configured then needs a release, signed with the old certificate, that lists both DNs before you switch to it (see [key rotation](../features/key-rotation.md#windows-code-signing-certificate-rotation)).
+
+**Action:** replace each bare-name entry with a DN — the full certificate subject, which on Windows `(Get-AuthenticodeSignature .\dist\win-unpacked\<App>.exe).SignerCertificate.Subject` prints in the form to use as-is (see also [How do you delegate code signing?](../win.md#how-do-you-delegate-code-signing)), or the attributes of it you want compared. Or remove `publisherName` (unless a custom `sign` hook, PKCS#11 without a certificate file, or Azure signs) to let electron-builder derive `CN=<common name>` from the certificate.
+
+```json5
+{ "win": { "sign": { "publisherName": "My Company" } } }                                  // v26: matched the CN — fails in v27
+{ "win": { "sign": { "publisherName": "CN=My Company, O=My Company, C=US" } } }           // v27
+```
+
+> **Tip:** `electron-builder migrate-schema` prints an advisory for a `win.sign.publisherName` entry that is not a DN (e.g. a bare name).
+
+### A missing Windows `publisherName` fails update verification {#missing-publishername-fails-update-verification}
+
+electron-updater verifies the Authenticode signature of a downloaded NSIS update against the `publisherName` in `app-update.yml`. In v26, an `app-update.yml` without `publisherName` (written for an unsigned build, `win.sign: false`, or `publisherName: null`) made it install updates **without verifying them**. v27 fails closed on both sides:
+
+- **electron-updater 7** rejects the update with `ERR_UPDATER_INVALID_SIGNATURE` when `app-update.yml` (or `dev-app-update.yml`, or the `updateConfigPath` file) has no `publisherName`. A custom `verifyUpdateFileAuthenticodeSignature` / `verifyUpdateCodeSignature` is never called without a `publisherName`. This also applies to an app built with electron-builder v26 — build it with v27.
+- **An app with no update config file at all** (no `app-update.yml`, e.g. one that only uses `setFeedURL`) is not verified, as before: its feed is configured by the developer, not by electron-builder.
+- **electron-builder v27** fails the build with `InvalidConfigurationError` when it would write `app-update.yml` (an `nsis`, `nsis-web` or `electronUpdaterAware` `appx` target with a publish configuration of any provider, including one inferred from a GitHub `repository`) while `win.verifyUpdateCodeSignature` is enabled and no `publisherName` resolves: `win.sign: false` / `null`, no code signing certificate (no `certificateFile`, `WIN_CSC_LINK` / `CSC_LINK` or certificate-store lookup), or `win.sign.publisherName: null`. Builds without `app-update.yml` (e.g. `portable`, `zip`, `msi` or a `dir` target only, or `publish: null`) are not affected.
+- **The only opt-out** is `win.verifyUpdateCodeSignature: false`. The build then writes `verifyUpdateCodeSignature: false` (and no `publisherName`) into `app-update.yml`, and electron-updater installs updates without verifying their signature, warning once per updater. `publisherName: null` is no longer an opt-out.
+
+**Action:** sign the build with a code signing certificate (electron-builder writes `CN=<common name>` of it), or — when you sign outside electron-builder — set `win.sign.publisherName` to the subject of the certificate that signs your installer. Set `win.verifyUpdateCodeSignature: false` only if your updates are not Authenticode-signed.
+
+```json5
+{ "win": { "sign": false } }                                                                     // v26: updates installed unverified — fails in v27
+{ "win": { "sign": { "type": "signtool", "publisherName": ["CN=My Company, O=My Company, C=US"] } } } // v27: signed outside electron-builder
+{ "win": { "sign": false, "verifyUpdateCodeSignature": false } }                                 // v27: explicit opt-out
+```
+
+For testing updates in development (`forceDevUpdateConfig`), put the certificate subject into `dev-app-update.yml` as `publisherName`, or `verifyUpdateCodeSignature: false` to skip the check. Without a `dev-app-update.yml` (a feed set only with `setFeedURL`), the update is not verified, as before.
+
+> **Tip:** `electron-builder migrate-schema` prints an advisory for `win.sign: false` / `null` or `win.sign.publisherName: null` without `win.verifyUpdateCodeSignature: false`.
 
 ---
 

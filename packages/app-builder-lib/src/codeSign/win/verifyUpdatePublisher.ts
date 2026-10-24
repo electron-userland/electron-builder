@@ -6,6 +6,7 @@ import * as path from "path"
 import type { WinPackager } from "../../winPackager.js"
 import { isSignResultSigned, SigningResult } from "../signResult.js"
 import { AuthenticodeSignatureStatus, AuthenticodeSignerReader, readAuthenticodeSigner } from "./authenticodeSignature.js"
+import { invalidPublisherNames, PUBLISHER_NAME_DN_DOCS_URL, PUBLISHER_NAME_DN_REQUIREMENT } from "./publisherName.js"
 
 export interface UpdatePublisherVerificationOptions {
   /** Reads the embedded signer of the signed file. Defaults to {@link readAuthenticodeSigner}. */
@@ -114,14 +115,14 @@ export async function verifyUpdateInstallerPublisher(
   }
   // matchPublisherName takes the parsed Get-AuthenticodeSignature output, as electron-updater passes it
   const signature = { SignerCertificate: { Subject: signer.subject } }
-  // electron-updater's warning for a match by Common Name (CN) only
-  const logger = { warn: (message: string) => log.warn({ file: log.filePath(file), subject: signer.subject }, message) }
   for (const publisherNames of publisherNameSets) {
-    if (!matchPublisherName(signature, publisherNames, logger)) {
+    if (!matchPublisherName(signature, publisherNames)) {
+      const hasInvalidNames = invalidPublisherNames(publisherNames).length > 0
       throw new InvalidConfigurationError(
         `${log.filePath(file)} is signed by a certificate that does not match the publisherName electron-updater verifies updates against, so every update installed from it would be rejected.\n` +
           `  Configured publisherName: ${configured(publisherNames)}\n` +
           `  Signer certificate subject: ${signer.subject}\n` +
+          (hasInvalidNames ? `${PUBLISHER_NAME_DN_REQUIREMENT}. See ${PUBLISHER_NAME_DN_DOCS_URL}\n` : "") +
           FIX_HINT
       )
     }

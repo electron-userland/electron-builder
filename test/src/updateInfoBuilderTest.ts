@@ -913,6 +913,15 @@ test("app-update.yml: verifyUpdateCodeSignature: false skips publisherName for a
   const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)
   expect(publishConfig).not.toBeNull()
   expect(publishConfig?.publisherName).toBeUndefined()
+  // the explicit opt-out electron-updater 7 needs to install an update without publisherName
+  expect(publishConfig?.verifyUpdateCodeSignature).toBe(false)
+})
+
+test("app-update.yml: an unsigned Windows build (no certificate) without publisherName fails", async ({ expect }) => {
+  const packager = makeWinAppUpdateConfigPackager({ type: "signtool" })
+  await expect(getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)).rejects.toThrow(
+    /Cannot write app-update\.yml without publisherName: no code signing certificate is configured/
+  )
 })
 
 test("no signature field is written when the packager yields no signing key", async ({ expect }) => {
