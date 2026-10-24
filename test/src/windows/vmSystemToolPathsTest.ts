@@ -32,13 +32,13 @@ function setPlatform(p: NodeJS.Platform) {
 
 let installed = new Set<string>()
 
-// The resolver's rule (the configured locations replace the default ones, except that an entry with no location for this operating
-// system leaves the default ones to a program that is optional; the first that exists is used), over `installed`
-function findInstalled(name: ExecutableName, executables: ExecutablesConfig | Nullish, isOptional: boolean, platform: NodeJS.Platform = process.platform): string | null {
+// The resolver's rule (the configured locations for this operating system replace the default ones, which apply when there are none;
+// the first that exists is used), over `installed`
+function findInstalled(name: ExecutableName, executables: ExecutablesConfig | Nullish, platform: NodeJS.Platform = process.platform): string | null {
   const entry = executables?.[name]
   const configured = entry == null ? [] : asArray(entry).map(uri => executableUriToPath(name, uri, platform))
   let candidates: ReadonlyArray<string | null>
-  if (entry == null || (isOptional && configured.every(it => it == null))) {
+  if (configured.every(it => it == null)) {
     try {
       candidates = defaultExecutableLocations(name, platform)
     } catch {
@@ -60,9 +60,9 @@ beforeEach(() => {
   vi.mocked(spawn).mockReset()
   // the resolver looks at the files of this machine; stand in for the programs of the simulated host being installed (or not), with
   // the configuration of the current Executables.run scope
-  vi.spyOn(Executables, "find").mockImplementation(name => findInstalled(name, Executables.configuration, true))
+  vi.spyOn(Executables, "find").mockImplementation(name => findInstalled(name, Executables.configuration))
   vi.spyOn(Executables, "resolve").mockImplementation(name => {
-    const found = findInstalled(name, Executables.configuration, false)
+    const found = findInstalled(name, Executables.configuration)
     if (found == null) {
       throw new InvalidConfigurationError(`${name} not found`)
     }
@@ -208,6 +208,17 @@ describe("PwshVmManager.powershellCommand", () => {
     installed.add("/opt/pwsh/pwsh")
     installed.add("/snap/bin/pwsh")
     expect(await Executables.run({ pwsh: "file:///opt/pwsh/pwsh" }, () => new PwshVmManager().powershellCommand.value)).toBe("/opt/pwsh/pwsh")
+  })
+
+  test("a toolsets.executables.pwsh entry for Windows only, from a shared configuration, leaves pwsh to its install location", async ({ expect }) => {
+    setPlatform("darwin")
+    installed = new Set(["/usr/local/microsoft/powershell/7/pwsh", "/opt/homebrew/bin/wine"])
+    const pwsh = await Executables.run({ pwsh: "file:///C:/Tools/PowerShell/pwsh.exe" }, async () => {
+      const vm = await getWindowsVm(new DebugLogger(false))
+      expect(vm).toBeInstanceOf(PwshVmManager)
+      return vm.powershellCommand.value
+    })
+    expect(pwsh).toBe("/usr/local/microsoft/powershell/7/pwsh")
   })
 
   test("is a configuration error when pwsh is not found", async ({ expect }) => {

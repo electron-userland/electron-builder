@@ -1,7 +1,7 @@
 import { Packager } from "app-builder-lib"
 import { getWineToolset } from "app-builder-lib/src/toolsets/wine.js"
 import { DEFAULT_EXECUTABLES, defaultExecutableLocations, executableUriToPath, findExecutable, resolveExecutable, validateExecutablesConfig } from "builder-util/src/executables"
-import { Executables, InvalidConfigurationError } from "builder-util"
+import { Executables, ExecutablesConfig, InvalidConfigurationError } from "builder-util"
 import { ChildProcess, execFile } from "child_process"
 import { promises as fs } from "fs"
 import { homedir } from "os"
@@ -172,10 +172,15 @@ describe.skipIf(process.platform === "win32")("resolveExecutable with toolsets.e
     expect(error.message).not.toContain("/usr/bin/wine")
   })
 
-  test("an entry with no location for this operating system is an error, not a fallback to the defaults", ({ expect }) => {
-    expect(configError(() => resolveExecutable("pwsh", { pwsh: "file:///C:/Program%20Files/PowerShell/7/pwsh.exe" }, "linux")).message).toContain(
-      "toolsets.executables.pwsh has no location for this operating system"
-    )
+  test("an entry with no location for this operating system leaves the default locations there", ({ expect }) => {
+    const outcome = (executables: ExecutablesConfig | null) => {
+      try {
+        return resolveExecutable("pwsh", executables, "linux")
+      } catch (e: any) {
+        return e.message
+      }
+    }
+    expect(outcome({ pwsh: "file:///C:/Program%20Files/PowerShell/7/pwsh.exe" })).toBe(outcome(null))
   })
 })
 
@@ -328,14 +333,11 @@ describe("Executables", () => {
     expect(Executables.isConfigured("mono")).toBe(false)
   })
 
-  test("an entry with locations for other operating systems only counts as not configured for an optional lookup", ({ expect }) => {
+  test("an entry with locations for other operating systems only counts as not configured", ({ expect }) => {
     setPlatform("linux")
-    const executables = { mono: "file:///C:/Mono/bin/mono.exe" }
-    Executables.run(executables, () => {
+    Executables.run({ mono: "file:///C:/Mono/bin/mono.exe" }, () => {
       expect(Executables.isConfigured("mono")).toBe(false)
-      // find, for a program that is optional, looks at the default locations; resolve, for one that is required, does not
       expect(Executables.find("mono")).toBe(findExecutable("mono", null))
-      expect(() => Executables.resolve("mono")).toThrow("toolsets.executables.mono has no location for this operating system")
     })
     Executables.run({ mono: ["file:///C:/Mono/bin/mono.exe", "file:///opt/mono/bin/mono"] }, () => {
       expect(Executables.isConfigured("mono")).toBe(true)

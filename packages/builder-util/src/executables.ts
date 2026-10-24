@@ -245,13 +245,13 @@ function configuredLocations(name: ExecutableName, executables: ExecutablesConfi
 }
 
 /**
- * Where to look for a program. An entry replaces the default locations. A program that is required has to be in it, so an entry
- * with no location for this operating system finds nothing; for an optional one (`isOptional`), such an entry, written for other
- * hosts sharing the configuration, leaves the default locations.
+ * Where to look for a program: the locations of its entry for this operating system, which replace the default locations, or the
+ * default locations when there are none. An entry applies only on the hosts it has a location for, so that one configuration can
+ * serve several.
  */
-function candidates(name: ExecutableName, executables: ExecutablesConfig | Nullish, platform: NodeJS.Platform, isOptional = false): Candidates {
+function candidates(name: ExecutableName, executables: ExecutablesConfig | Nullish, platform: NodeJS.Platform): Candidates {
   const paths = configuredLocations(name, executables, platform)
-  if (executables?.[name] != null && (paths.length > 0 || !isOptional)) {
+  if (paths.length > 0) {
     return { isConfigured: true, paths, unavailable: null }
   }
   try {
@@ -299,10 +299,7 @@ function notFoundError(name: ExecutableName, { isConfigured, paths, unavailable 
   const tried = paths.map(it => `"${it}"`).join(", ")
   let found: string
   if (isConfigured) {
-    found =
-      paths.length === 0
-        ? `toolsets.executables.${name} has no location for this operating system (a URI with a drive letter is for Windows, one without it for macOS and Linux)`
-        : `none of the locations in toolsets.executables.${name} is an executable file on this machine (tried ${tried})`
+    found = `none of the locations in toolsets.executables.${name} is an executable file on this machine (tried ${tried})`
   } else if (paths.length === 0) {
     found = `${name} has no default install location on ${platform}${unavailable == null ? "" : ` (${unavailable})`}`
   } else {
@@ -313,8 +310,8 @@ function notFoundError(name: ExecutableName, { isConfigured, paths, unavailable 
 
 /**
  * The absolute path of a host program: the first location of its `toolsets.executables` entry, or else of its default install
- * locations, that is an executable file (on Windows, an `.exe`). Null when there is none; an invalid entry still throws. As for a
- * program that is optional, an entry with no location for this operating system leaves the default locations.
+ * locations when the entry has none for this operating system, that is an executable file (on Windows, an `.exe`). Null when there
+ * is none; an invalid entry still throws.
  * @internal use {@link Executables}; exported for tests
  */
 export function findExecutable(
@@ -323,7 +320,7 @@ export function findExecutable(
   platform: NodeJS.Platform = process.platform,
   cache: ResolvedPaths = new Map()
 ): string | null {
-  return findIn(name, candidates(name, executables, platform, true).paths, platform, cache)
+  return findIn(name, candidates(name, executables, platform).paths, platform, cache)
 }
 
 /**
@@ -401,10 +398,7 @@ export class Executables {
     return resolveExecutable(name, config, process.platform, resolved)
   }
 
-  /**
-   * The absolute path of a program, or null when it is not installed (for a program that is optional, like PowerShell 7). An entry
-   * with no location for this operating system leaves the default locations; one that has a location here is all that is looked at.
-   */
+  /** The absolute path of a program, or null when it is not installed (for a program that is optional, like PowerShell 7). */
   static find(name: ExecutableName): string | null {
     const { config, resolved } = Executables.scope
     return findExecutable(name, config, process.platform, resolved)

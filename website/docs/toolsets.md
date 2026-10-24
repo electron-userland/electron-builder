@@ -291,7 +291,7 @@ Besides the bundles above, electron-builder starts a few programs that are insta
 
 For each program it uses the first location that is an executable file: the locations of its `toolsets.executables` entry when that is set, otherwise the default install locations below. If none is, the build fails with a configuration error that names the locations it tried. An entry **replaces** the default locations of that program; it is not merged with them.
 
-Each entry is one `file://` URI or a list of them. A list can serve several hosts: a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Where a program has another source, an entry with no URI for the host counts as not set there: `pwsh` is then looked for at its default locations (and Windows PowerShell used without it), `notarytool` found with `xcrun`, and a selected Wine bundle used. Where the build needs the program from the entry, an entry with no URI for the host is a configuration error. Plain paths, `~` and URIs that name another host (`file://server/share/...`) are refused with a configuration error that shows the `file://` form to write. Program names have no `.exe` suffix.
+Each entry is one `file://` URI or a list of them. A list can serve several hosts: a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. An entry applies only on the hosts it has a URI for; elsewhere the program is used as if the entry were not set, from its default locations. Plain paths, `~` and URIs that name another host (`file://server/share/...`) are refused with a configuration error that shows the `file://` form to write. Program names have no `.exe` suffix.
 
 ```json
 {
