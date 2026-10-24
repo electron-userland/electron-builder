@@ -2,6 +2,7 @@ import * as asn1js from "asn1js"
 import { parseAuthenticodeSignatureOutput, prepareAuthenticodeSignatureExec } from "builder-util-runtime"
 import { execFile } from "child_process"
 import { open } from "fs/promises"
+import * as path from "path"
 import * as pkijs from "pkijs"
 
 /**
@@ -53,6 +54,30 @@ export type AuthenticodeSignerReader = (file: string) => Promise<AuthenticodeSig
  */
 export function readAuthenticodeSigner(file: string): Promise<AuthenticodeSignerInfo> {
   return process.platform === "win32" ? readAuthenticodeSignerWithPowerShell(file) : readEmbeddedAuthenticodeSigner(file)
+}
+
+/** File types electron-builder Authenticode-signs and can read the signature of back: PE files, MSI and AppX/MSIX packages. */
+const AUTHENTICODE_FILE_EXTENSIONS = new Set([".exe", ".dll", ".node", ".msi", ".appx", ".appxbundle", ".msix", ".msixbundle"])
+
+/** Whether `file` is a type whose Authenticode signature can be read back (see `AUTHENTICODE_FILE_EXTENSIONS`). */
+export function isAuthenticodeFileType(file: string): boolean {
+  return AUTHENTICODE_FILE_EXTENSIONS.has(path.extname(file).toLowerCase())
+}
+
+/**
+ * Why a signature read back with {@link readAuthenticodeSigner} does not count as valid, or `null` when it does. Any
+ * status but `HashMismatch` is accepted: the build host may not trust the signing chain that the users' machines
+ * trust, and the reader used off Windows reports no status at all.
+ */
+export function authenticodeSignatureProblem(signer: AuthenticodeSignerInfo): string | null {
+  switch (signer.type) {
+    case "unsigned":
+      return `carries no Authenticode signature (${signer.reason})`
+    case "unreadable":
+      return `has an Authenticode signature that cannot be read (${signer.reason})`
+    case "signed":
+      return signer.status === AuthenticodeSignatureStatus.HashMismatch ? "has an invalid Authenticode signature (HashMismatch: the file was modified after signing)" : null
+  }
 }
 
 // ─── Windows: Get-AuthenticodeSignature ──────────────────────────────────────
