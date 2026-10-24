@@ -1,5 +1,5 @@
 import { createHttpError, newError, safeGetHeader } from "builder-util-runtime"
-import { IncomingMessage } from "http"
+import { IncomingMessage, RequestOptions } from "http"
 import { Writable } from "stream"
 import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter.js"
 import { DifferentialDownloader } from "./DifferentialDownloader.js"
@@ -44,6 +44,8 @@ export function executeTasksUsingMultipleRangeRequests(
   return w
 }
 
+// Each request starts at the update URL and follows its own redirects: a redirect target can be a pre-signed URL that
+// expires before a later batch of a long download.
 function doExecuteTasks(differentialDownloader: DifferentialDownloader, options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: Error) => void): void {
   let ranges = "bytes="
   let partCount = 0
@@ -74,22 +76,24 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       if (task.kind === OperationKind.COPY) {
         copyData(task, out, options.oldFileFd, reject, () => w(index))
       } else {
-        const requestOptions = differentialDownloader.createRequestOptions()
-        requestOptions.headers!.Range = `bytes=${task.start}-${task.end - 1}`
-        const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
-          response.on("error", reject)
+        requestRange(
+          differentialDownloader,
+          { options: differentialDownloader.createRequestOptions() },
+          `bytes=${task.start}-${task.end - 1}`,
+          response => {
+            response.on("error", reject)
 
-          if (!checkIsPartialContent(response, task.start, task.end - 1, reject)) {
-            return
-          }
+            if (!checkIsPartialContent(response, task.start, task.end - 1, reject)) {
+              return
+            }
 
-          response.pipe(out, {
-            end: false,
-          })
-          response.once("end", () => w(index))
-        })
-        differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-        request.end()
+            response.pipe(out, {
+              end: false,
+            })
+            response.once("end", () => w(index))
+          },
+          reject
+        )
       }
     }
 
@@ -97,9 +101,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     return
   }
 
-  const requestOptions = differentialDownloader.createRequestOptions()
-  requestOptions.headers!.Range = ranges.substring(0, ranges.length - 2)
-  const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
+  const onResponse = (response: IncomingMessage, request: AbortableRequest): void => {
     response.on("error", reject)
 
     // other errors (auth, missing file, server failure) are not about ranges: fail as before, without a range-by-range retry
@@ -162,9 +164,53 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
         reject(new Error("Response ends without calling any handlers"))
       }, 10000)
     })
-  })
-  differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-  request.end()
+  }
+  requestRange(differentialDownloader, { options: differentialDownloader.createRequestOptions() }, ranges.substring(0, ranges.length - 2), onResponse, reject)
+}
+
+/** Where a range is requested: the update URL, or the redirect target once a request to it was redirected. */
+export interface RangeRequestTarget {
+  options: RequestOptions
+}
+
+export interface AbortableRequest {
+  abort(): void
+}
+
+/**
+ * Requests `range` (a `Range` header value) from `target`, whose options ask for manual redirects (see
+ * DifferentialDownloader.createRequestOptions). The executor's redirect handler aborts a redirected request and it is sent
+ * again to the redirect target, without the credential headers when the target is on another origin, up to the executor's
+ * redirect limit. The redirect target becomes the `target`, so a caller that passes the same `target` again requests the next
+ * range from the redirect target. `onResponse` gets the request that was answered.
+ */
+export function requestRange(
+  differentialDownloader: DifferentialDownloader,
+  target: RangeRequestTarget,
+  range: string,
+  onResponse: (response: IncomingMessage, request: AbortableRequest) => void,
+  reject: (error: Error) => void
+): void {
+  const { httpExecutor } = differentialDownloader
+  const send = (requestOptions: RequestOptions, redirectCount: number): void => {
+    const request = httpExecutor.createRequest(requestOptions, (response: IncomingMessage) => onResponse(response, request))
+    httpExecutor.addErrorAndTimeoutHandlers(request, reject)
+    httpExecutor.addRedirectHandlers(request, requestOptions, reject, redirectCount, redirectOptions => {
+      differentialDownloader.logger.info(`Redirect to ${urlWithoutQuery(redirectOptions)}`)
+      target.options = redirectOptions
+      send(redirectOptions, redirectCount + 1)
+    })
+    request.end()
+  }
+  send({ ...target.options, headers: { ...target.options.headers, range } }, 0)
+}
+
+// the query of a redirect target (a pre-signed URL) can hold a signature, and the user info is not in the options
+function urlWithoutQuery(options: RequestOptions): string {
+  const port = options.port == null ? "" : `:${options.port}`
+  const path = options.path ?? "/"
+  const queryIndex = path.indexOf("?")
+  return `${options.protocol ?? "https:"}//${options.hostname ?? ""}${port}${queryIndex < 0 ? path : path.substring(0, queryIndex)}`
 }
 
 /**
@@ -173,7 +219,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
  * fails. A rejected response is destroyed, so nothing more is read from it.
  */
 export function checkIsPartialContent(response: IncomingMessage, start: number, endInclusive: number, reject: (error: Error) => void): boolean {
-  // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
+  // requestRange follows redirects (Electron reports them as events); any other status but 206, a 3xx included, is rejected below
   const { statusCode } = response
   if (typeof statusCode === "number" && statusCode >= 400) {
     response.destroy()

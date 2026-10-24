@@ -59,6 +59,29 @@ describe("HttpExecutor.prepareRedirectUrlOptions", () => {
       expect(result.hostname).toBe("objects.githubusercontent.com")
       expect(result.path).toBe("/github-production-release-asset-12345/asset.zip")
     })
+
+    // ElectronHttpExecutor.createRequest moves a `Host` header to `host`, which Electron's net prefers over `hostname`
+    for (const [label, redirectUrl, hostname] of [
+      ["another host", "https://bucket.example.net/app.exe?X-Amz-Signature=abc", "bucket.example.net"],
+      ["the same host", "/files/app.exe", "feed.example.com"],
+    ] as const) {
+      test(`a redirect to ${label} is sent to the redirect target, not to the original \`host\``, () => {
+        const originalOptions: RequestOptions = {
+          protocol: "https:",
+          hostname: "feed.example.com",
+          host: "my-bucket.s3.amazonaws.com",
+          path: "/updates/app.exe",
+          headers: { authorization: "Bearer secret" },
+        }
+
+        const result = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, originalOptions)
+
+        expect(result).not.toHaveProperty("host")
+        expect(result.hostname).toBe(hostname)
+        // the original options are not changed
+        expect(originalOptions.host).toBe("my-bucket.s3.amazonaws.com")
+      })
+    }
   })
 
   describe("authorization header handling", () => {
