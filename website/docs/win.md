@@ -27,7 +27,7 @@ electron-builder cannot read the certificate your hook signs with, so set `publi
 
 Copy the subject from a binary your hook has already signed (a previous release, or `win-unpacked` from an `electron-builder --win dir` build, which does not write `app-update.yml`) instead of typing it by hand. electron-builder cannot check it against the certificate the hook uses, and every component you list (`CN`, `O`, `C`, …) must match the certificate exactly — otherwise installed apps reject every later update:
 
-- **Windows (PowerShell):** `(Get-AuthenticodeSignature .\dist\win-unpacked\<App>.exe).SignerCertificate.Subject` prints it in the form to use as-is.
+- **Windows (PowerShell):** `(Get-AuthenticodeSignature .\dist\win-unpacked\<App>.exe).SignerCertificate.Subject` prints it in the form Windows uses. Keep its `CN`, `O` and `C` (what electron-builder derives itself when it can read the certificate), e.g. `CN="My Company, Inc.", O="My Company, Inc.", C=US`: other components, such as `L` or `STREET`, can change when the certificate is renewed, and every component you list must keep matching.
 - **macOS / Linux:** `osslsigncode verify -in <App>.exe` — the `Subject:` line under "Signer's certificate", printed as `/C=US/ST=California/O=My Company, Inc./CN=My Company, Inc.`. Keep only `CN`, `O` and `C` and write them as `CN="My Company, Inc.", O="My Company, Inc.", C=US`: OpenSSL names some other components differently from Windows (`ST` instead of `S`, for example), and a value that contains a comma must be wrapped in double quotes.
 
 :::note[Upgrading from v26]
@@ -83,7 +83,7 @@ export default class AppUpdater {
 }
 ```
 
-The built-in default uses [`windowsExecutableCodeSignatureVerifier`](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts).
+The built-in default uses [`windowsExecutableCodeSignatureVerifier`](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts), which runs Windows PowerShell's `Get-AuthenticodeSignature` and rejects an update it cannot verify (`ERR_UPDATER_SIGNATURE_UNVERIFIABLE`) — for example when `powershell.exe` is blocked, which electron-updater 6 answered by installing the update with a warning. Where PowerShell may not run on your users' machines, a native verifier like the one above keeps updates working: ship it in your first release built with electron-updater 7, since installs that cannot verify an update cannot receive a later release that adds it.
 The older property `verifyUpdateCodeSignature`, which differs only in name and return interface, is deprecated and kept only as a compatibility shim (shall be removed in electron-builder v28). The protected `_verifyUpdateCodeSignature` member is likewise deprecated in favour of `_verifyUpdateFileAuthenticodeSignature`.
 
 ## How do you create a Parallels Windows 10 Virtual Machine?

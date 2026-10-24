@@ -103,6 +103,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [Native binaries are verified against the target](#native-binaries-are-verified-against-the-target) | — | A `.node` addon built for another platform/arch now fails the build; set `nativeModules.verifyNativeBinaries: "warn"` (or `false`) to package anyway |
 | [`extraFiles` / `extraResources` `to` is validated](#extrafiles--extraresources-destinations-are-validated) | — | An absolute `to`, or one escaping the output dir, now throws |
 | [Windows `publisherName` validated against the certificate](#windows-publishername-is-validated-against-the-signing-certificate) | — | Update `publisherName` after a certificate rotation, or drop it. Custom `win.sign.sign` hooks (even with a certificate configured) and certificates without a CN now **require** it when `app-update.yml` is written (or set `win.verifyUpdateCodeSignature: false` if your updates are not Authenticode-signed) |
+| [Windows `publisherName` must be a distinguished name](#windows-publishername-must-be-a-distinguished-name) | — | A bare common name (`"My Company"`) never matches in electron-updater and fails a build that writes `app-update.yml`: use the certificate's `CN`, `O` and `C`, e.g. `CN=My Company, O=My Company, C=US`. Without a configured name the build writes those instead of the CN |
 | [Custom Windows signing hook moved to `win.sign.sign`](#custom-windows-signing-hooks-move-to-winsignsign) | ✓ | `win.signtoolOptions.sign` moves with the rest of `signtoolOptions` to `win.sign.sign` |
 | [macOS names are no longer NFD-normalized](#macos-productname-and-executablename-are-validated-not-sanitized) | — | Update tooling that matches the normalized on-disk bundle filename |
 | [Linux `executableArgs` field codes are now literal](#linux-launcher-entrypoint) | — | Remove `%F`/`%U` from `executableArgs`; use `linux.desktop.entry.Exec` |
@@ -129,6 +130,7 @@ Rows marked **Auto ✓** are rewritten for you. For the shortlist of changes the
 | [`autoInstallOnAppQuit` replaced by `autoInstallEvent` enum (electron-updater)](#autoinstallevent-replaces-autoinstallonappquit) | — | `autoInstallOnAppQuit = false` → `autoInstallEvent = "manual"`; default `"onQuit"` preserves behavior |
 | [`downloadUpdate()` resolves with an object, not an array (electron-updater)](#downloadupdate-resolves-with-a-downloadexecutorresult-object) | — | `const [installer] = await downloadUpdate()` → `const { updateFile } = await downloadUpdate()`; same for `checkForUpdates()` → `downloadPromise` |
 | [`verifyUpdateCodeSignature` renamed and returns a result object (electron-updater)](#verifyupdatecodesignature-renamed-to-verifyupdatefileauthenticodesignature) | — | `NsisUpdater.verifyUpdateCodeSignature` → `verifyUpdateFileAuthenticodeSignature`; return `{ response: "success" }` / `{ response: "failure", message }` instead of `null` / `string` |
+| [Windows update signature verification fails closed (electron-updater)](#windows-update-signature-verification-fails-closed) | — | An NSIS update is installed only when PowerShell verifies it: one electron-updater 6 installed with a warning (PowerShell could not be started or run, Windows 7/8) is now rejected (`ERR_UPDATER_SIGNATURE_UNVERIFIABLE`); a catalog signature is rejected as an invalid signature (`ERR_UPDATER_INVALID_SIGNATURE`). If PowerShell may be blocked on your users' machines, assign a native `verifyUpdateFileAuthenticodeSignature` in your first electron-updater 7 release |
 | [Renamed type exports (`ElectronDownloadOptions`, `WindowsAzureSigningConfiguration`, …)](#removed-exports) | — | Import the new names — no compat aliases |
 | [`SnapOptions`, `ProtonFramework`, `LibUiFramework` exports removed](#removed-exports) | — | Use the `snapcraft` config shape / Electron framework |
 
@@ -1234,6 +1236,16 @@ A code-signed build whose publisher name cannot be determined now also fails wit
 
 > Related, on the updater side: an `app-update.yml` with no `publisherName` means signature verification is silently skipped. v27 warns; **v28 will fail closed.**
 
+### Windows `publisherName` must be a distinguished name
+
+electron-updater no longer accepts a `publisherName` that is a bare common name (`"My Company"`). It used to compare such a name with the signer's Common Name only, with a warning — a check that a trusted code-signing certificate issued to any company or person of that name passes. Every `publisherName` must now be a distinguished name, and each component it lists must match the certificate subject (`CN=My Company, O=My Company, C=US`). A DN that lists only `CN` makes the same weak check: it is accepted, with a warning — at build time and when an update is verified — if the certificate subject has an `O` or `C` to list as well.
+
+A bare name never matches, so electron-builder fails a build that writes one into `app-update.yml` (an `nsis`, `nsis-web` or `electronUpdaterAware` `appx` target with a publish configuration, while `win.verifyUpdateCodeSignature` is not `false`), however it is signed — Azure Trusted Signing and custom `sign` hooks included — instead of producing an app that rejects every update. A build that writes no `app-update.yml` still compares a bare name with the certificate's Common Name to catch signing with the wrong certificate.
+
+Without a configured `publisherName`, the build now writes the `CN`, `O` and `C` of the signing certificate's subject into `app-update.yml` (those the subject has, e.g. `CN=My Company, O=My Company, C=US`) instead of its Common Name. A configured DN is now compared with the certificate the way Windows names the subject's components — `S` for the state, not `ST` — so a subject copied from a signed binary also passes the build-time check with a `.pfx` certificate.
+
+**Action:** replace a bare `win.sign.publisherName` with the `CN`, `O` and `C` of the certificate subject, copied from a binary it signed ([how](../win.md#how-do-you-delegate-code-signing)), e.g. `CN=My Company, O=My Company, C=US`. Prefer these three — what electron-builder derives itself — to the full subject: components such as `L`, `S` or `STREET` can change when the certificate is renewed, and every component you list must keep matching ([renewal vs. rotation](../features/key-rotation.md#renewal-vs-rotation)). Installs built with electron-builder v26 update to a v27 build as before: the installed electron-updater 6 verifies it with its own rules, and the new build's `app-update.yml` carries a DN. Upgrade electron-builder and electron-updater together: electron-updater 7 rejects every update of an app whose `app-update.yml` has a bare name — as electron-builder 26 writes one by default — including the update that would fix it, so such installs can only be recovered by reinstalling.
+
 ---
 
 ## macOS DMG
@@ -1481,6 +1493,19 @@ The old name is kept as a compatibility shim that translates in both directions,
 If you override the protected `BaseUpdater.verifyInstallerSignatureOnLaunch` (added earlier in the same v27 pre-release cycle, so only 7.0.0-alpha users are affected), return `{ response: "success" }` rather than `null` — `null` is now read as a verification failure and blocks every install-on-next-launch.
 
 Additively, all updaters gain `AppUpdater.verifyUpdateFile` for app-defined verification of the downloaded file on every path that can lead to an install. See [Custom downloaded-file verification](../features/auto-update.md#custom-downloaded-file-verification).
+
+### Windows update signature verification fails closed
+
+The NSIS updater now installs an update only when `Get-AuthenticodeSignature` positively verifies it. electron-updater 6 (and the earlier v27 alphas) installed the update unverified, with a warning, when it could not run PowerShell: on Windows 7 and 8 whenever PowerShell failed, and elsewhere when a follow-up `ConvertTo-Json` check failed as well — when `powershell.exe` could not be started (missing, blocked, not found on `PATH`), or when that check failed or timed out after PowerShell had failed or timed out, which an installer that takes long to verify, served by a compromised update feed, could bring about. Each of these now rejects the update with the error code `ERR_UPDATER_SIGNATURE_UNVERIFIABLE`, as do a timeout, output that cannot be parsed and output without the path of the verified file (which skipped only that path check). An update whose signature Windows reports from a security catalog instead of one embedded in the installer is rejected too (`ERR_UPDATER_INVALID_SIGNATURE`): an update installer is in no catalog, so the file is another, catalogued one, such as an in-box Windows program (before, the catalog signer was matched against `publisherName` like any other).
+
+PowerShell is also run more defensively:
+
+- `powershell.exe` is started by its absolute path (`%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`) instead of being looked up in the current directory and `PATH`, where a planted `powershell.exe` — for example next to a document the app was opened with — could report any installer as validly signed. A process without a `SystemRoot` (or `windir`) environment variable cannot verify updates.
+- The installer's path is passed in an environment variable instead of being quoted into the PowerShell command.
+- The script no longer assigns an output encoding, which PowerShell's Constrained Language Mode (AppLocker / WDAC script enforcement) forbids — electron-updater 7.0.0-alpha.8 to alpha.10 rejected every update there. Non-ASCII characters of paths, certificate subjects and error messages are escaped in PowerShell's output instead.
+- PowerShell gets up to 60 s (was 20 s) before the verification fails.
+
+**Action:** none if your users' machines can run Windows PowerShell. If some may not — for example where AppLocker or WDAC blocks `powershell.exe` — verify updates natively by assigning [`verifyUpdateFileAuthenticodeSignature`](../win.md#how-do-you-use-a-custom-verify-function-to-enable-nsis-signature-verification-alternatives-instead-of-powershell) in the first release you build with electron-updater 7. electron-updater 6 still installs that release where PowerShell cannot run (with a warning), but from then on such an install rejects every update, including one that adds the native verifier, and only reinstalling recovers it. An `app-update.yml` without `publisherName` still skips the verification with a warning until v28.
 
 ---
 

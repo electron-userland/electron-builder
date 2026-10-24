@@ -47,9 +47,10 @@ Combining `win.sign: false` with `forceCodeSigning: true` is a configuration err
 
 ### Publisher name and update verification
 
-When your app uses electron-updater, the resolved `publisherName` (your explicit `win.sign.publisherName`, or the certificate's Common Name) is written into `app-update.yml`, and electron-updater refuses to install a downloaded NSIS update whose Authenticode signer does not match it. To catch a wrong `publisherName` before you ship, electron-builder checks the signed installer itself at build time — the `nsis` installer, or the `nsis-web` stub — with the same matching rules electron-updater applies, and fails the build if the signer does not match. Because it inspects the signed output, this also covers signing routes where the certificate is not known up front: a custom `sign` hook, Azure Trusted Signing and PKCS#11.
+When your app uses electron-updater, the resolved `publisherName` (your explicit `win.sign.publisherName`, or the `CN`, `O` and `C` of the certificate's subject) is written into `app-update.yml`, and electron-updater refuses to install a downloaded NSIS update whose Authenticode signer does not match it. To catch a wrong `publisherName` before you ship, electron-builder checks the signed installer itself at build time — the `nsis` installer, or the `nsis-web` stub — with the same matching rules electron-updater applies, and fails the build if the signer does not match. Because it inspects the signed output, this also covers signing routes where the certificate is not known up front: a custom `sign` hook, Azure Trusted Signing and PKCS#11.
 
-- A DN `publisherName` (e.g. `CN=My Company, O=My Company, L=Berlin, S=Berlin, C=DE`) must match every attribute it lists; attribute names are the ones Windows shows in the certificate subject (for example `S` for the state or province, not `ST`). A plain name is compared with the certificate's Common Name only, which electron-updater accepts with a warning.
+- A `publisherName` must be a distinguished name and match every attribute it lists; attribute names are the ones Windows shows in the certificate subject (for example `S` for the state or province, not `ST`). Prefer the `CN`, `O` and `C` of the subject (e.g. `CN=My Company, O=My Company, C=DE`), which electron-builder also derives when it can read the certificate: other attributes, such as `L` or `STREET`, can change when the certificate is renewed. A bare common name (`My Company`) fails a build that writes `app-update.yml`, because electron-updater never matches one; a name listing only `CN` is accepted with a warning when the certificate has an `O` or `C` to list as well.
+- electron-updater installs an update only when PowerShell (`Get-AuthenticodeSignature`) verifies it. When PowerShell cannot be started (for example because it is blocked by AppLocker), fails, times out or reports a signature from a Windows security catalog instead of one embedded in the installer, the update is rejected. Where PowerShell may not run on your users' machines, [plug in a native verifier](../../win.md#how-do-you-use-a-custom-verify-function-to-enable-nsis-signature-verification-alternatives-instead-of-powershell) in your first release built with electron-updater 7.
 - The signer is read with `Get-AuthenticodeSignature` on Windows (a signature it cannot read fails the build) and from the installer's embedded signature on macOS/Linux (a signature that cannot be parsed there is only warned about).
 - The check runs only when the installer was signed by electron-builder (or your `sign` hook), `win.verifyUpdateCodeSignature` is enabled and `app-update.yml` carries a `publisherName`. Set `win.verifyUpdateCodeSignature: false` only if your updates are not Authenticode-signed. Signing that happens after electron-builder finishes is not checked.
 
@@ -155,7 +156,7 @@ The default `winCodeSign` toolset already supports HSM signing, so no `toolsets`
 - **Windows only.** The `/csp` and `/kc` flags are signtool-specific. On macOS/Linux, use `type: "pkcs11"`.
 - The CSP driver must be installed on the machine where the build runs (not available in most cloud CI environments without extra setup).
 - `certificateFile`, `certificateSha1`, or `certificateSubjectName` must be provided unless a custom `sign` hook does the signing — HSM signing requires a certificate identifier (unlike signtool where the cert can be embedded in the token implicitly).
-- Set `publisherName` to the certificate subject when electron-builder cannot read it — a custom `sign` hook without a certificate identifier, or a `.crt`/`.cer` without a Common Name (CN). Otherwise a build that writes `app-update.yml` fails, because electron-updater needs the publisher name to verify updates.
+- Set `publisherName` to the certificate subject for any custom `sign` hook (even with a certificate identifier configured) or a `.crt`/`.cer` without a Common Name (CN). Otherwise a build that writes `app-update.yml` fails, because electron-updater needs the publisher name to verify updates.
 
 ### Configuration reference
 
@@ -303,7 +304,7 @@ Use `additionalMetadata` to pass extra fields verbatim into `metadata.json`. Thi
       "endpoint": "https://weu.codesigning.azure.net/",
       "codeSigningAccountName": "my-account",
       "certificateProfileName": "my-profile",
-      "publisherName": "CN=My Company",
+      "publisherName": "CN=My Company, O=My Company, C=US",
       "additionalMetadata": {
         "ExcludeCredentials": "ManagedIdentityCredential",
         "CorrelationId": "my-build-run-id"
