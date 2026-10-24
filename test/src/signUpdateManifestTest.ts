@@ -1,7 +1,7 @@
 import * as fsp from "fs/promises"
 import * as path from "path"
 import { createUpdateManifestSignatures, derivePublicKeyPem, generateUpdateSigningKeypair, InvalidConfigurationError, log, serializeToYaml } from "builder-util"
-import { computeUpdateManifestKeyId, UpdateInfo, verifyManifestSignatures } from "builder-util-runtime"
+import { canonicalizeForSigning, computeUpdateManifestKeyId, UpdateInfo, verifyManifestSignatures, WindowsUpdateInfo } from "builder-util-runtime"
 import { signUpdateManifest } from "electron-builder/src/cli/sign-update-manifest"
 import { load } from "js-yaml"
 import { afterEach, beforeEach, vi } from "vitest"
@@ -191,4 +191,35 @@ test("re-signs several manifests with several keys, and writes none when one can
   const verifyError = await rejection(signUpdateManifest({ files: [win, unsigned], publicKey: [untrusted] }))
   expect(verifyError).toBeInstanceOf(InvalidConfigurationError)
   expect(verifyError!.message).toBe(`2 of 2 update manifest(s) failed signature verification: ${win} (no signature matches a trusted key), ${unsigned} (not signed)`)
+})
+
+test("re-signs a manifest with allowCatalogSignature: true over the shared EBUM1 payload, which signs that flag", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const dir = await tmpDir.createTempDir()
+  const file = path.join(dir, "latest.yml")
+  const keyFile = path.join(dir, "current.pem")
+  await fsp.writeFile(keyFile, current.privateKeyPem + "\n", { mode: 0o600 })
+  const info: WindowsUpdateInfo = { ...manifest("4.0.0", "App-Setup-4.0.0.exe"), allowCatalogSignature: true }
+  await writeSigned(file, info, [current.privateKeyPem])
+  expect(verifyManifestSignatures(await readManifest(file), [current.publicKeyPem]).ok).toBe(true)
+
+  // the flag is signed: dropping it breaks the signature, re-signing restores it without the flag's line in the payload
+  await editManifest(file, it => (it.allowCatalogSignature = false))
+  expect(verifyManifestSignatures(await readManifest(file), [current.publicKeyPem]).ok).toBe(false)
+  await signUpdateManifest({ files: [file], keyFile: [keyFile] })
+  const withoutFlag = (await readManifest(file)) as WindowsUpdateInfo
+  expect(withoutFlag.allowCatalogSignature).toBe(false)
+  expect(canonicalizeForSigning(withoutFlag)).not.toContain("allowCatalogSignature")
+  expect(verifyManifestSignatures(withoutFlag, [current.publicKeyPem]).ok).toBe(true)
+
+  // turning it back on also needs a re-sign, after which the payload carries the line and the runtime verifier accepts it
+  await editManifest(file, it => (it.allowCatalogSignature = true))
+  expect(verifyManifestSignatures(await readManifest(file), [current.publicKeyPem]).ok).toBe(false)
+  await signUpdateManifest({ files: [file], keyFile: [keyFile] })
+  const withFlag = (await readManifest(file)) as WindowsUpdateInfo
+  expect(withFlag.allowCatalogSignature).toBe(true)
+  expect(canonicalizeForSigning(withFlag).split("\n")).toContain("allowCatalogSignature:true")
+  expect(verifyManifestSignatures(withFlag, [current.publicKeyPem])).toEqual({ ok: true, keyId: computeUpdateManifestKeyId(current.publicKeyPem) })
+  // the signatures are exactly what a build would write for the same manifest
+  expect(withFlag.signatures).toEqual(createUpdateManifestSignatures(info, [current.privateKeyPem]))
 })
