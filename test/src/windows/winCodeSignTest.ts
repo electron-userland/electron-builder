@@ -69,6 +69,14 @@ test("parseDn", ({ expect }) => {
   expect(load("publisherName:\n  - 7digital Limited")).toMatchObject({ publisherName: ["7digital Limited"] })
 })
 
+test("parseDn decodes escaped characters", ({ expect }) => {
+  // a "\\+" escape followed by a hex digit, and UTF-8 hex pairs as `openssl x509 -nameopt RFC2253` prints them
+  const dn = parseDn("CN=Acme\\+Bolt Caf\\C3\\A9, O=Acme, C=FR")
+  expect(dn.get("CN")).toEqual("Acme+Bolt Café")
+  expect(dn.get("O")).toEqual("Acme")
+  expect(dn.get("C")).toEqual("FR")
+})
+
 const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
