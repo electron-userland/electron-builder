@@ -1,0 +1,13 @@
+# Approval from a code owner is required on pull requests to master (enterprise ruleset "Require CODEOWNER Review").
+
+# Merging a change to these files can move the npm dist-tags: the npm dist-tag workflow applies
+# .github/npm-dist-tags.yml of master in the `release` environment, which holds the npm OIDC token.
+# The owners are the repository admins, the role that workflow requires of whoever starts it (maintain or admin).
+/.github/npm-dist-tags.yml @mmaietta
+/.github/workflows/npm-dist-tag.yml @mmaietta
+/scripts/npm-dist-tags.mjs @mmaietta
+# run by the promote job next to the OIDC token
+/.github/actions/setup-node/ @mmaietta
+
+# owned as well, so a pull request cannot drop the entries above without an owner's review
+/.github/CODEOWNERS @mmaietta
