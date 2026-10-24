@@ -238,7 +238,8 @@ describe("SnapStorePublisher", { concurrent: false }, () => {
       expect(spawnEnv.env.SNAPCRAFT_STORE_CREDENTIALS).toBe(CREDS)
       expect(spawnEnv.env).not.toHaveProperty("GH_TOKEN")
       expect(spawnEnv.env).not.toHaveProperty("CSC_KEY_PASSWORD")
-      expect(spawnEnv.env.PATH).toBe(process.env.PATH)
+      // the key keeps its casing ("Path" on Windows)
+      expect(Object.entries(spawnEnv.env).find(([name]) => name.toUpperCase() === "PATH")?.[1]).toBe(process.env.PATH)
     })
 
     test("SNAPCRAFT_STORE_CREDENTIALS set in the environment still reaches snapcraft", async ({ expect }) => {

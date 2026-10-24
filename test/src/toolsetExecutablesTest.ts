@@ -235,6 +235,8 @@ describe("default locations", () => {
         `prlctl has no default install location on linux. electron-builder starts prlctl only from an absolute path, never from PATH: set the file:// URI of its location, for example "toolsets": { "executables": { "prlctl": "file:///path/to/prlctl" } }`
       )
     }
+    // not where a Windows host (such as a CI runner) may have PowerShell 7
+    vi.stubEnv("ProgramFiles", "C:\\electron-builder-test-missing")
     expect(configError(() => resolveExecutable("pwsh", null, "win32")).message).toContain(`"toolsets": { "executables": { "pwsh": "file:///C:/path/to/pwsh.exe" } }`)
   })
 })

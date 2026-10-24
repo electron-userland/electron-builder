@@ -180,7 +180,8 @@ describe("VmManager.exec", () => {
     await new VmManager().exec("C:\\tool.exe", [], { env: { AZURE_CLIENT_SECRET: "azure" } })
     const env = vi.mocked(exec).mock.calls[0][2]?.env ?? {}
     expect(env.AZURE_CLIENT_SECRET).toBe("azure")
-    expect(env.SystemRoot).toBe("C:\\Windows")
+    // process.env, and so its copy, keeps the casing the variable was first set with (SYSTEMROOT on some Windows hosts)
+    expect(Object.entries(env).find(([name]) => name.toLowerCase() === "systemroot")?.[1]).toBe("C:\\Windows")
     expect(env.CSC_KEY_PASSWORD).toBeUndefined()
     expect(env.GH_TOKEN).toBeUndefined()
   })

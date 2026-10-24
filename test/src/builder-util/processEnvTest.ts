@@ -19,6 +19,11 @@ function setPlatform(platform: NodeJS.Platform) {
   Object.defineProperty(process, "platform", { value: platform, configurable: true })
 }
 
+// process.env keeps the casing a variable was first set with, which on Windows can be SYSTEMROOT rather than SystemRoot
+function valueOf(env: NodeJS.ProcessEnv | undefined, name: string): string | undefined {
+  return Object.entries(env ?? {}).find(([key]) => key.toLowerCase() === name.toLowerCase())?.[1]
+}
+
 async function childEnv(options?: { env?: NodeJS.ProcessEnv }): Promise<NodeJS.ProcessEnv | undefined> {
   await exec("tool", [], options)
   const call = vi.mocked(execFile).mock.calls.at(-1) as unknown as [string, string[], { env?: NodeJS.ProcessEnv }]
@@ -48,16 +53,16 @@ describe.each(["win32", "linux", "darwin"] as const)("the environment of a child
     expect(env).not.toHaveProperty("CSC_KEY_PASSWORD")
     expect(env).not.toHaveProperty("GH_TOKEN")
     expect(env).not.toHaveProperty("AZURE_CLIENT_SECRET")
-    expect(env?.SystemRoot).toBe("C:\\Windows")
-    expect(env?.TEMP).toBe("C:\\Temp")
-    expect(env?.PATH).toBe(process.env.PATH)
+    expect(valueOf(env, "SystemRoot")).toBe("C:\\Windows")
+    expect(valueOf(env, "TEMP")).toBe("C:\\Temp")
+    expect(valueOf(env, "PATH")).toBe(process.env.PATH)
   })
 
   test("is the caller's environment when it passes one", async ({ expect }) => {
     setPlatform(platform)
     const env = await childEnv({ env: { AZURE_CLIENT_SECRET: "azure-secret", PATH: "/bin" } })
     expect(env?.AZURE_CLIENT_SECRET).toBe("azure-secret")
-    expect(env?.PATH).toBe("/bin")
+    expect(valueOf(env, "PATH")).toBe("/bin")
     expect(env).not.toHaveProperty("GH_TOKEN")
   })
 })
