@@ -18,8 +18,6 @@ export function executeTasksUsingMultipleRangeRequests(
   oldFileFd: number,
   reject: (error: Error) => void
 ): (taskOffset: number) => void {
-  // shared by all requests of this download, so that once one is redirected the remaining ranges are requested from the target
-  const target: RangeRequestTarget = { options: differentialDownloader.createRequestOptions() }
   const w = (taskOffset: number): void => {
     if (taskOffset >= tasks.length) {
       if (differentialDownloader.fileMetadataBuffer != null) {
@@ -32,7 +30,6 @@ export function executeTasksUsingMultipleRangeRequests(
     const nextOffset = taskOffset + 1000
     doExecuteTasks(
       differentialDownloader,
-      target,
       {
         tasks,
         start: taskOffset,
@@ -47,14 +44,9 @@ export function executeTasksUsingMultipleRangeRequests(
   return w
 }
 
-function doExecuteTasks(
-  differentialDownloader: DifferentialDownloader,
-  target: RangeRequestTarget,
-  options: PartListDataTask,
-  out: Writable,
-  resolve: () => void,
-  reject: (error: Error) => void
-): void {
+// Each request starts at the update URL and follows its own redirects: a redirect target can be a pre-signed URL that
+// expires before a later batch of a long download.
+function doExecuteTasks(differentialDownloader: DifferentialDownloader, options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: Error) => void): void {
   let ranges = "bytes="
   let partCount = 0
   let grandTotalBytes = 0
@@ -86,7 +78,7 @@ function doExecuteTasks(
       } else {
         requestRange(
           differentialDownloader,
-          target,
+          { options: differentialDownloader.createRequestOptions() },
           `bytes=${task.start}-${task.end - 1}`,
           response => {
             response.on("error", reject)
@@ -173,10 +165,10 @@ function doExecuteTasks(
       }, 10000)
     })
   }
-  requestRange(differentialDownloader, target, ranges.substring(0, ranges.length - 2), onResponse, reject)
+  requestRange(differentialDownloader, { options: differentialDownloader.createRequestOptions() }, ranges.substring(0, ranges.length - 2), onResponse, reject)
 }
 
-/** Where the ranges of a download are requested: the update URL, or the redirect target once a request was redirected. */
+/** Where a range is requested: the update URL, or the redirect target once a request to it was redirected. */
 export interface RangeRequestTarget {
   options: RequestOptions
 }
@@ -189,8 +181,8 @@ export interface AbortableRequest {
  * Requests `range` (a `Range` header value) from `target`, whose options ask for manual redirects (see
  * DifferentialDownloader.createRequestOptions). The executor's redirect handler aborts a redirected request and it is sent
  * again to the redirect target, without the credential headers when the target is on another origin, up to the executor's
- * redirect limit. The redirect target becomes the `target`, so the remaining ranges are requested from it too. `onResponse`
- * gets the request that was answered.
+ * redirect limit. The redirect target becomes the `target`, so a caller that passes the same `target` again requests the next
+ * range from the redirect target. `onResponse` gets the request that was answered.
  */
 export function requestRange(
   differentialDownloader: DifferentialDownloader,

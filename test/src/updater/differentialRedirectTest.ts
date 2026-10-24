@@ -69,6 +69,8 @@ interface DownloadCase {
   // a redirect for these ranges only
   readonly redirectRanges?: Array<string>
   readonly multiRangeStatus?: number
+  readonly old?: Buffer
+  readonly blockSize?: number
 }
 
 function createExecutor(c: DownloadCase, content: Buffer): FakeElectronHttpExecutor {
@@ -94,7 +96,9 @@ async function download(tmpDir: TmpDir, c: DownloadCase, executor = createExecut
   const dir = await tmpDir.createTempDir({ prefix: "differential-redirect" })
   const oldFile = path.join(dir, "old.exe")
   const newFile = path.join(dir, "new.exe")
-  await fsExtra.writeFile(oldFile, OLD)
+  const old = c.old ?? OLD
+  const blockSize = c.blockSize ?? BLOCK
+  await fsExtra.writeFile(oldFile, old)
   const infos: Array<string> = []
   const warnings: Array<string> = []
   const progress: Array<ProgressInfo> = []
@@ -108,7 +112,7 @@ async function download(tmpDir: TmpDir, c: DownloadCase, executor = createExecut
     cancellationToken: new CancellationToken(),
     onProgress: it => progress.push(it),
   })
-  await downloader.download(blockMapOf(OLD, BLOCK), blockMapOf(content, BLOCK))
+  await downloader.download(blockMapOf(old, blockSize), blockMapOf(content, blockSize))
   return { sent: executor.sent, downloaded: await fsExtra.readFile(newFile), content, infos, warnings, progress }
 }
 
@@ -213,6 +217,33 @@ describe("differential download redirects", () => {
     ])
     expectCredentials(expect, sent[0].headers, true)
     expectCredentials(expect, sent[1].headers, false)
+  })
+
+  test("each multi-range batch and the lone range of a batch start at the update URL, so each gets its own redirect", async ({ tmpDir, expect }) => {
+    // 2001 blocks, every other one changed: 1001 ranges to download and 1000 to copy. The multi-range downloader sends the
+    // operations in batches of 1000: two of 500 ranges, then one with the last range alone.
+    const blockSize = 8
+    const blockCount = 2001
+    const blocksOf = (marker: (index: number) => string) =>
+      Buffer.from(Array.from({ length: blockCount }, (_, index) => marker(index) + String(index).padStart(blockSize - 1, "0")).join(""))
+    const old = blocksOf(() => "o")
+    const content = blocksOf(index => (index % 2 === 0 ? "n" : "o"))
+    // a pre-signed URL can expire during a long download, so a later batch does not reuse it
+    const { sent, downloaded } = await download(tmpDir, { redirects: { [FILE_URL]: PRE_SIGNED_URL }, isUseMultipleRangeRequest: true, content, old, blockSize })
+
+    expect(downloaded).toEqual(content)
+    expect(sent.map(it => [it.url, parseRanges(it.headers.range).length])).toEqual([
+      [FILE_URL, 500],
+      [PRE_SIGNED_URL, 500],
+      [FILE_URL, 500],
+      [PRE_SIGNED_URL, 500],
+      [FILE_URL, 1],
+      [PRE_SIGNED_URL, 1],
+    ])
+    expect(sent[4].headers.range).toBe(`bytes=${2000 * blockSize}-${2001 * blockSize - 1}`)
+    for (const { url, headers } of sent) {
+      expectCredentials(expect, headers, url === FILE_URL)
+    }
   })
 
   test("a redirect target that rejects multi-range requests is retried with one range per request", async ({ tmpDir, expect }) => {
