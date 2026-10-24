@@ -1,5 +1,23 @@
 # dmg-builder
 
+## 27.0.0-alpha.12
+### Patch Changes
+
+
+<details><summary>Updated 3 dependencies</summary>
+
+<small>
+
+[`f8a6719`](https://github.com/electron-userland/electron-builder/commit/f8a6719bded7b02881f7b88778f1645a53321825) [`45d3bc4`](https://github.com/electron-userland/electron-builder/commit/45d3bc431b5274b38b6b50b0b299d9ae6575469b) [`f8a6719`](https://github.com/electron-userland/electron-builder/commit/f8a6719bded7b02881f7b88778f1645a53321825) [`08d4a10`](https://github.com/electron-userland/electron-builder/commit/08d4a10765028f9a36c88aefcae4cbdc421dd358) [`538aef4`](https://github.com/electron-userland/electron-builder/commit/538aef405d68940cb1322147ab050c24eb581342) [`e9c5ae6`](https://github.com/electron-userland/electron-builder/commit/e9c5ae6ac326216c21c8690e1f2f970711b7a405) [`8b71ed8`](https://github.com/electron-userland/electron-builder/commit/8b71ed87224beed7c0674fdd312d54047095d965) [`0b508ab`](https://github.com/electron-userland/electron-builder/commit/0b508abc19243c7309931c693f7b91bc66d62fb9) [`370d18c`](https://github.com/electron-userland/electron-builder/commit/370d18cb25e18b204d9ddbaf010879f8939cbeef) [`1e32919`](https://github.com/electron-userland/electron-builder/commit/1e32919ec0bd9e5948376836ce26acb1fdc43655) [`4cd8a92`](https://github.com/electron-userland/electron-builder/commit/4cd8a921efb5e05f1b54489a02a7c2e5df54677e) [`f1e4a45`](https://github.com/electron-userland/electron-builder/commit/f1e4a4519e1172da023a8de031aa4a6bb319aa03) [`b1460cc`](https://github.com/electron-userland/electron-builder/commit/b1460cc01adb394db3cffd1ba4b547b4181c562d) [`cf3f5db`](https://github.com/electron-userland/electron-builder/commit/cf3f5db080fe28989c96f9ccab402f48d5e5ef75) [`f0833ea`](https://github.com/electron-userland/electron-builder/commit/f0833ea0f4db96b7cfee7a1caba5cde24addbbde) [`09dae73`](https://github.com/electron-userland/electron-builder/commit/09dae73bf312ddcca5234ab302c11a0f95f01478) [`46be1f4`](https://github.com/electron-userland/electron-builder/commit/46be1f48e51a59b846ca76e631fc9e4e33348fb5) [`60e3708`](https://github.com/electron-userland/electron-builder/commit/60e3708955724138009f157cf0ad3f80a36ddeae) [`38fba92`](https://github.com/electron-userland/electron-builder/commit/38fba920cb951122150ab8d41c58b6994bdd6f49) [`6e3153b`](https://github.com/electron-userland/electron-builder/commit/6e3153bc6453dfa9ee01899fcd7de58f94d3763c) [`f8a6719`](https://github.com/electron-userland/electron-builder/commit/f8a6719bded7b02881f7b88778f1645a53321825) [`60e3708`](https://github.com/electron-userland/electron-builder/commit/60e3708955724138009f157cf0ad3f80a36ddeae) [`5d84f91`](https://github.com/electron-userland/electron-builder/commit/5d84f91231a9853752e14b35f71dd8374dc97de9) [`0bef576`](https://github.com/electron-userland/electron-builder/commit/0bef5767fad365941747c88d01e31931e35960d9)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.12`
+- `builder-util-runtime@10.0.0-alpha.11`
+- `builder-util@27.0.0-alpha.12`
+
+</details>
+
 ## 27.0.0-alpha.11
 ### Patch Changes
 

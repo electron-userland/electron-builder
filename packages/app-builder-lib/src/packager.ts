@@ -84,7 +84,7 @@ function checkRemovedPackagerOptions(options: PackagerOptions): void {
       throw new InvalidConfigurationError(
         `\`${key}\` was removed from PackagerOptions in electron-builder v27. Pass \`${replacement}\` instead, ` +
           `e.g. build({ targets, config: ${key === "devMetadata" ? "{ … }" : "{ extraMetadata: { … } }"} }).\n` +
-          "https://www.electron.build/docs/migration/v27-breaking-changes#devmetadata-extrametadata-programmatic-packageroptions"
+          "https://www.electron.build/docs/migration/v27-developer-changes#devmetadata-extrametadata-programmatic-packageroptions"
       )
     }
   }

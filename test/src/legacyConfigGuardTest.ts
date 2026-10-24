@@ -168,7 +168,7 @@ describe("checkLegacyConfiguration — includePdb replaced by fileOptions.exclud
     // the command-line form: one flag per entry (quoting is left to the shell: cmd.exe keeps single quotes)
     expect(message).toContain("`-c.fileOptions.excludedExts=default -c.fileOptions.excludedExts=!pdb`, single-quoting the second one in an interactive bash or zsh")
     expect(message).toContain("electron-builder migrate-schema")
-    expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#includepdb-fileoptionsexcludedexts")
+    expect(message).toContain("https://www.electron.build/docs/migration/v27-config-changes#includepdb-fileoptionsexcludedexts")
   })
 
   test('includePdb: false is reported too, with ["default"] (also as a -c value) in its place where it overrides an includePdb: true from another layer', () => {
@@ -177,11 +177,11 @@ describe("checkLegacyConfiguration — includePdb replaced by fileOptions.exclud
     expect(message).toContain('set `"fileOptions": { "excludedExts": ["default"] }` in its place')
     expect(message).toContain("`-c.fileOptions.excludedExts=default`")
     expect(message).toContain("otherwise remove it.")
-    expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#includepdb-fileoptionsexcludedexts")
+    expect(message).toContain("https://www.electron.build/docs/migration/v27-config-changes#includepdb-fileoptionsexcludedexts")
   })
 
-  test("the breaking-changes page has the linked section", () => {
-    const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-breaking-changes.md"), "utf8")
+  test("the config-changes page has the linked section", () => {
+    const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-config-changes.md"), "utf8")
     expect(doc).toContain("{#includepdb-fileoptionsexcludedexts}")
   })
 
@@ -326,7 +326,7 @@ describe("checkLegacyConfiguration — removed custom NSIS bundle keys", () => {
     expect(message).toContain("`nsis.customNsisBinary` was replaced by `toolsets.nsis` and `nsis.installerDebugLogging` in electron-builder v27.")
     expect(message).toContain("toolsets#custom-nsis-bundle-layout")
     expect(message).toContain("v26-to-v27#step-4-custom-nsis-migration-guide")
-    expect(message).toContain("v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis")
+    expect(message).toContain("v27-config-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis")
     expect(message).not.toContain(url)
     expect(message).not.toContain(checksum)
   })
@@ -361,7 +361,7 @@ describe("assertInstallerDebugLoggingSupported", () => {
     expect(message).toContain("`installerDebugLogging` (nsis-web target) needs a log-enabled NSIS")
     expect(message).toContain("NSIS_CONFIG_LOG=yes")
     expect(message).toContain(`\`toolsets.nsis\` is ${shown}`)
-    expect(message.endsWith("https://www.electron.build/docs/migration/v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis")).toBe(true)
+    expect(message.endsWith("https://www.electron.build/docs/migration/v27-config-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis")).toBe(true)
   })
 
   test("accepts a custom toolsets.nsis bundle", () => {

@@ -30,7 +30,7 @@ export function assertNodeVersion(actual = process.versions.node) {
           `stable without a flag, which is what lets both CJS and ESM projects consume these packages.\n\n` +
           `Upgrade the Node.js version used by your shell, your CI job, and any Docker image that runs\n` +
           `electron-builder, then try again.\n` +
-          `https://www.electron.build/docs/migration/v27-breaking-changes#nodejs-22120-required`
+          `https://www.electron.build/docs/migration/v27-build-changes#nodejs-22120-required`
       )
     }
   }

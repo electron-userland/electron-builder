@@ -693,12 +693,13 @@ export interface ToolsetConfig {
    * | `"1.1.1"` | Updates `osslsigncode` to v2.11 |
    * | `"1.2.1"` | Adds native `osslsigncode` arm64 |
    * | `"1.3.0"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |
+   * | `"1.3.1"` | macOS `osslsigncode` bundles its own OpenSSL (no Homebrew `openssl@3` needed) and libp11's PKCS#11 provider |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | "1.1.1" | "1.2.1" | "1.3.0" | ToolsetCustom | "latest"
+  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | "1.1.1" | "1.2.1" | "1.3.0" | "1.3.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the AppImage toolset bundle used for building `.AppImage` files.

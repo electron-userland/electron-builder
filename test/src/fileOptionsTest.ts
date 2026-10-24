@@ -18,7 +18,7 @@ import { mkdir, writeFile } from "fs/promises"
 import * as path from "path"
 import { afterEach, beforeEach, describe, MockInstance, test, vi } from "vitest"
 
-const FILE_OPTIONS_URL = "https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions"
+const FILE_OPTIONS_URL = "https://www.electron.build/docs/migration/v27-config-changes#file-options-fileoptions"
 const noMacro = (s: string) => s
 
 let warn: MockInstance<typeof log.warn>
@@ -111,9 +111,9 @@ describe("flat-key warning", () => {
     ])
   })
 
-  test("links a section that exists on the breaking-changes page", ({ expect }) => {
+  test("links a section that exists on the config-changes page", ({ expect }) => {
     expect(FILE_OPTIONS_URL.endsWith(`#${FILE_OPTIONS_ANCHOR}`)).toBe(true)
-    const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-breaking-changes.md"), "utf8")
+    const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-config-changes.md"), "utf8")
     expect(doc).toContain(`{#${FILE_OPTIONS_ANCHOR}}`)
   })
 
