@@ -270,6 +270,12 @@ describe.skipIf(process.platform === "win32")("getWineToolset and toolsets.execu
     }
   })
 
+  test("toolsets.executables.wine with Windows locations only does not conflict with a Wine bundle on macOS", async ({ expect }) => {
+    setPlatform("darwin")
+    const error = await Executables.run({ wine: "file:///C:/wine/wine.exe" }, () => getWineToolset({ url: "file:///opt/my-wine-bundle" }, "")).catch((e: Error) => e)
+    expect(error).not.toBeInstanceOf(InvalidConfigurationError)
+  })
+
   test("on Linux a version pin selects no bundle, so it goes with toolsets.executables.wine (a config shared with macOS)", async ({ expect, tmpDir }) => {
     const wine = await makeFile(await tmpDir.getTempDir({ prefix: "executables-wine-linux" }), "bin/wine", 0o755)
     setPlatform("linux")
@@ -286,6 +292,13 @@ describe.skipIf(process.platform === "win32")("Executables.notarytool", { concur
     const notarytool = await makeFile(await tmpDir.getTempDir({ prefix: "executables-notarytool" }), "notarytool", 0o755)
     expect(await Executables.run({ notarytool: uri(notarytool) }, () => Executables.notarytool())).toBe(notarytool)
     expect(execFile).not.toHaveBeenCalled()
+  })
+
+  test("finds notarytool with /usr/bin/xcrun when toolsets.executables.notarytool has no location for macOS", async ({ expect, tmpDir }) => {
+    const notarytool = await makeFile(await tmpDir.getTempDir({ prefix: "executables-xcrun" }), "Xcode.app/usr/bin/notarytool", 0o755)
+    xcrun(`${notarytool}\n`)
+    expect(await Executables.run({ notarytool: "file:///C:/Tools/notarytool.exe" }, () => Executables.notarytool())).toBe(notarytool)
+    expect(startedFiles()).toEqual([["/usr/bin/xcrun", ["--find", "notarytool"]]])
   })
 
   test("is a configuration error when /usr/bin/xcrun cannot find notarytool", async ({ expect }) => {
@@ -313,6 +326,20 @@ describe("Executables", () => {
       expect(() => Executables.resolve("prlctl")).toThrow("prlctl has no default install location on linux")
     }
     expect(Executables.isConfigured("mono")).toBe(false)
+  })
+
+  test("an entry with locations for other operating systems only counts as not configured for an optional lookup", ({ expect }) => {
+    setPlatform("linux")
+    const executables = { mono: "file:///C:/Mono/bin/mono.exe" }
+    Executables.run(executables, () => {
+      expect(Executables.isConfigured("mono")).toBe(false)
+      // find, for a program that is optional, looks at the default locations; resolve, for one that is required, does not
+      expect(Executables.find("mono")).toBe(findExecutable("mono", null))
+      expect(() => Executables.resolve("mono")).toThrow("toolsets.executables.mono has no location for this operating system")
+    })
+    Executables.run({ mono: ["file:///C:/Mono/bin/mono.exe", "file:///opt/mono/bin/mono"] }, () => {
+      expect(Executables.isConfigured("mono")).toBe(true)
+    })
   })
 
   test("run checks the configuration before running anything", ({ expect }) => {

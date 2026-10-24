@@ -35,7 +35,8 @@ export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, reso
   // Resolve the "latest"/unset alias up front so every branch below sees a concrete toolset, and an
   // explicitly requested version is never silently swapped for whatever WINE_LATEST points at.
   const toolset = wine == null || wine === "latest" ? WINE_LATEST : wine
-  // on Linux a version string selects no bundle (the host Wine is always used), so only a custom bundle conflicts there
+  // on Linux a version string selects no bundle (the host Wine is always used), so only a custom bundle conflicts there; and only a
+  // toolsets.executables.wine with a location for this operating system conflicts, not one written for the other hosts of a shared config
   const isBundle = typeof toolset === "object" || (toolset !== "system" && process.platform !== "linux")
   if (isBundle && Executables.isConfigured("wine")) {
     throw new InvalidConfigurationError(

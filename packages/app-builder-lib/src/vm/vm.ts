@@ -28,7 +28,7 @@ export class VmManager {
   // Absolute path of Windows PowerShell on the machine this manager runs commands on, and of PowerShell 7 — or, as a sentence, why
   // PowerShell 7 is not used there
   protected windowsPowerShellPaths(): { powershell: string; pwsh: { path: string } | { unavailable: string } } {
-    // PowerShell 7 is optional, unless toolsets.executables.pwsh is set: then it has to be found there
+    // PowerShell 7 is optional, unless toolsets.executables.pwsh has a location for this operating system: then it has to be found there
     const pwsh = Executables.isConfigured("pwsh") ? Executables.resolve("pwsh") : Executables.find("pwsh")
     return {
       powershell: Executables.resolve("powershell"),

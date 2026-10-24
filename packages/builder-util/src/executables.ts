@@ -233,13 +233,25 @@ interface Candidates {
   unavailable: string | null
 }
 
-function candidates(name: ExecutableName, executables: ExecutablesConfig | Nullish, platform: NodeJS.Platform): Candidates {
+/** The locations of the `toolsets.executables` entry of a program for an operating system: none when it has no entry, or none for it. */
+function configuredLocations(name: ExecutableName, executables: ExecutablesConfig | Nullish, platform: NodeJS.Platform): Array<string> {
   validateExecutablesConfig(executables)
   const entry = executables?.[name]
-  if (entry != null) {
-    const paths = asArray(entry)
-      .map(uri => executableUriToPath(name, uri, platform))
-      .filter((it): it is string => it != null)
+  return entry == null
+    ? []
+    : asArray(entry)
+        .map(uri => executableUriToPath(name, uri, platform))
+        .filter((it): it is string => it != null)
+}
+
+/**
+ * Where to look for a program. An entry replaces the default locations. A program that is required has to be in it, so an entry
+ * with no location for this operating system finds nothing; for an optional one (`isOptional`), such an entry, written for other
+ * hosts sharing the configuration, leaves the default locations.
+ */
+function candidates(name: ExecutableName, executables: ExecutablesConfig | Nullish, platform: NodeJS.Platform, isOptional = false): Candidates {
+  const paths = configuredLocations(name, executables, platform)
+  if (executables?.[name] != null && (paths.length > 0 || !isOptional)) {
     return { isConfigured: true, paths, unavailable: null }
   }
   try {
@@ -301,7 +313,8 @@ function notFoundError(name: ExecutableName, { isConfigured, paths, unavailable 
 
 /**
  * The absolute path of a host program: the first location of its `toolsets.executables` entry, or else of its default install
- * locations, that is an executable file (on Windows, an `.exe`). Null when there is none; an invalid entry still throws.
+ * locations, that is an executable file (on Windows, an `.exe`). Null when there is none; an invalid entry still throws. As for a
+ * program that is optional, an entry with no location for this operating system leaves the default locations.
  * @internal use {@link Executables}; exported for tests
  */
 export function findExecutable(
@@ -310,7 +323,7 @@ export function findExecutable(
   platform: NodeJS.Platform = process.platform,
   cache: ResolvedPaths = new Map()
 ): string | null {
-  return findIn(name, candidates(name, executables, platform).paths, platform, cache)
+  return findIn(name, candidates(name, executables, platform, true).paths, platform, cache)
 }
 
 /**
@@ -388,7 +401,10 @@ export class Executables {
     return resolveExecutable(name, config, process.platform, resolved)
   }
 
-  /** The absolute path of a program, or null when it is not installed (for a program that is optional, like PowerShell 7). */
+  /**
+   * The absolute path of a program, or null when it is not installed (for a program that is optional, like PowerShell 7). An entry
+   * with no location for this operating system leaves the default locations; one that has a location here is all that is looked at.
+   */
   static find(name: ExecutableName): string | null {
     const { config, resolved } = Executables.scope
     return findExecutable(name, config, process.platform, resolved)
@@ -399,9 +415,12 @@ export class Executables {
     return Executables.scope.config
   }
 
-  /** Whether the configuration has an entry for the program. */
+  /**
+   * Whether the configuration has a location of the program for this operating system. An entry with locations for other operating
+   * systems only, from a configuration shared by several hosts, does not count.
+   */
   static isConfigured(name: ExecutableName): boolean {
-    return Executables.configuration?.[name] != null
+    return configuredLocations(name, Executables.configuration, process.platform).length > 0
   }
 
   /**
@@ -410,7 +429,7 @@ export class Executables {
    */
   static notarytool(): Promise<string> {
     const scope = Executables.scope
-    if (scope.config?.notarytool != null) {
+    if (Executables.isConfigured("notarytool")) {
       return Promise.resolve(Executables.resolve("notarytool"))
     }
     scope.notarytool ??= findNotarytoolWithXcrun().catch(e => {
