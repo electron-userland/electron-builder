@@ -751,8 +751,8 @@ export interface ToolsetConfig {
    *
    * The host Wine (`"system"`) is started by absolute path, never looked up on `PATH`: it is the `wine` entry of
    * {@link executables}, which lists its default install locations and is where a Wine installed elsewhere is set.
-   * Setting both a bundle here (a version other than `"system"`, or a `ToolsetCustom` object) and `executables.wine`
-   * is a configuration error.
+   * Setting both a bundle that would be used (a `ToolsetCustom` object, or a version on macOS; on Linux a version selects no
+   * bundle) and `executables.wine` is a configuration error.
    *
    * To use a custom Wine bundle, use a `ToolsetCustom` object.
    *

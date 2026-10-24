@@ -253,6 +253,18 @@ describe("SnapStorePublisher", { concurrent: false }, () => {
       expect(spawnEnv.env.SNAPCRAFT_STORE_CREDENTIALS).toBe(CREDS)
     })
 
+    test("SNAPCRAFT_STORE_AUTH (the credential format, e.g. candid) reaches snapcraft with the credentials", async ({ expect }) => {
+      vi.stubEnv("SNAPCRAFT_STORE_AUTH", "candid")
+      try {
+        await makePublisher(undefined, BASE64).upload(makeTask())
+      } finally {
+        vi.unstubAllEnvs()
+      }
+      const spawnEnv = vi.mocked(spawn).mock.calls[0][2] as any
+      expect(spawnEnv.env.SNAPCRAFT_STORE_AUTH).toBe("candid")
+      expect(spawnEnv.env.SNAPCRAFT_STORE_CREDENTIALS).toBe(CREDS)
+    })
+
     test("cscLink base64 → SNAPCRAFT_STORE_CREDENTIALS injected into spawn env", async ({ expect }) => {
       await makePublisher(undefined, BASE64).upload(makeTask())
       const spawnEnv = vi.mocked(spawn).mock.calls[0][2] as any

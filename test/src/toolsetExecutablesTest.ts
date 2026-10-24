@@ -21,7 +21,13 @@ vi.mock("builder-util", async importOriginal => {
   return { ...actual, exec: vi.fn<typeof actual.exec>() }
 })
 
+const originalPlatform = process.platform
+function setPlatform(platform: NodeJS.Platform) {
+  Object.defineProperty(process, "platform", { value: platform, configurable: true })
+}
+
 afterEach(() => {
+  setPlatform(originalPlatform)
   vi.unstubAllEnvs()
   vi.mocked(exec).mockReset()
 })
@@ -250,11 +256,22 @@ describe.skipIf(process.platform === "win32")("getWineToolset and toolsets.execu
   })
 
   test("a Wine bundle and toolsets.executables.wine together are a configuration error", async ({ expect }) => {
+    setPlatform("darwin")
     for (const toolset of ["0.0.0", "1.0.1", { url: "file:///opt/my-wine-bundle" }] as const) {
       const result = getWineToolset(toolset, "", { wine: "file:///opt/homebrew/bin/wine" })
       await expect(result).rejects.toBeInstanceOf(InvalidConfigurationError)
       await expect(result).rejects.toThrow("and toolsets.executables.wine a host Wine: set only one of them")
     }
+  })
+
+  test("on Linux a version pin selects no bundle, so it goes with toolsets.executables.wine (a config shared with macOS)", async ({ expect, tmpDir }) => {
+    const wine = await makeFile(await tmpDir.getTempDir({ prefix: "executables-wine-linux" }), "bin/wine", 0o755)
+    setPlatform("linux")
+    for (const toolset of ["0.0.0", "1.0.1"] as const) {
+      expect((await getWineToolset(toolset, "", { wine: uri(wine) })).execPath).toBe(wine)
+    }
+    // a custom bundle is used on Linux too, so it still conflicts
+    await expect(getWineToolset({ url: "file:///opt/my-wine-bundle" }, "", { wine: uri(wine) })).rejects.toThrow("set only one of them")
   })
 })
 

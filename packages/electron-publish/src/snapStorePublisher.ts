@@ -48,18 +48,31 @@ export class SnapStorePublisher extends Publisher {
       args.push("--release", channels.join(","))
     }
 
-    // the store credentials (from cscLink, or SNAPCRAFT_STORE_CREDENTIALS set directly) and no other secret of the publish
-    // environment, such as GH_TOKEN
-    const { SNAPCRAFT_STORE_CREDENTIALS } = process.env
+    // the store credentials (from cscLink, or SNAPCRAFT_STORE_CREDENTIALS set directly) and their format (SNAPCRAFT_STORE_AUTH,
+    // e.g. "candid", which the credential filter would remove for its name), but no other secret of the publish environment
     return spawn(snapcraft, args, {
       stdio: ["ignore", "inherit", "inherit"],
-      env: { ...stripSensitiveEnvVars(process.env), ...(SNAPCRAFT_STORE_CREDENTIALS == null ? {} : { SNAPCRAFT_STORE_CREDENTIALS }), ...credEnv },
+      env: { ...stripSensitiveEnvVars(process.env), ...snapStoreEnv(), ...credEnv },
     })
   }
 
   toString(): string {
     return "Snap Store"
   }
+}
+
+const SNAP_STORE_ENV_NAMES = ["SNAPCRAFT_STORE_CREDENTIALS", "SNAPCRAFT_STORE_AUTH"]
+
+// The store settings of the publish environment that snapcraft upload reads
+function snapStoreEnv(): Record<string, string> {
+  const env: Record<string, string> = {}
+  for (const name of SNAP_STORE_ENV_NAMES) {
+    const value = process.env[name]
+    if (value != null) {
+      env[name] = value
+    }
+  }
+  return env
 }
 
 // Resolves Snap Store credentials from cscLink / SNAP_CSC_LINK and returns

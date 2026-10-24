@@ -41,7 +41,9 @@ export async function getWineToolset(
   // Resolve the "latest"/unset alias up front so every branch below sees a concrete toolset, and an
   // explicitly requested version is never silently swapped for whatever WINE_LATEST points at.
   const toolset = wine == null || wine === "latest" ? WINE_LATEST : wine
-  if (toolset !== "system" && executables?.wine != null) {
+  // on Linux a version string selects no bundle (the host Wine is always used), so only a custom bundle conflicts there
+  const isBundle = typeof toolset === "object" || (toolset !== "system" && process.platform !== "linux")
+  if (isBundle && executables?.wine != null) {
     throw new InvalidConfigurationError(
       `toolsets.wine selects a Wine bundle (${typeof toolset === "object" ? "a custom toolset" : `"${toolset}"`}) and toolsets.executables.wine a host Wine: set only one of them`
     )

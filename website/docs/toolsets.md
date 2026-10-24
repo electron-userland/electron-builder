@@ -328,7 +328,7 @@ Where a program has several default locations they are tried in the order of the
 
 ### Host Wine {#host-wine}
 
-`toolsets.wine` selects a Wine **bundle** (`"0.0.0"`, `"1.0.1"`, or a custom bundle with a `wine-home` prefix). `"system"`, which `"latest"` and an unset value resolve to, is the Wine installed on the build machine, taken from `toolsets.executables.wine` or its default locations above, and run with Wine's own default prefix. Setting both a bundle in `toolsets.wine` and `toolsets.executables.wine` is a configuration error.
+`toolsets.wine` selects a Wine **bundle** (`"0.0.0"`, `"1.0.1"`, or a custom bundle with a `wine-home` prefix). `"system"`, which `"latest"` and an unset value resolve to, is the Wine installed on the build machine, taken from `toolsets.executables.wine` or its default locations above, and run with Wine's own default prefix. Setting both a bundle that would be used (a custom bundle, or a version on macOS; on Linux a version selects no bundle) and `toolsets.executables.wine` is a configuration error.
 
 ## Replacing removed environment variables
 
