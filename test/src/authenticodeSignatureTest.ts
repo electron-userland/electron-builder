@@ -136,6 +136,19 @@ describe("PowerShell script construction", () => {
     })
   }
 
+  test("an extraEnv with an own __proto__ key cannot replace the environment's prototype", ({ expect }) => {
+    // JSON.parse creates `__proto__` as an own data property; Object.assign would pass it to the __proto__ setter
+    const extraEnv: Record<string, string> = JSON.parse('{"__proto__": {"polluted": "yes"}, "ACME_EXTRA": "extra"}')
+    expect(Object.prototype.hasOwnProperty.call(extraEnv, "__proto__")).toBe(true)
+    const [, , options] = preparePowerShellExec("Write-Output 1", 1, extraEnv)
+    const env = options.env ?? {}
+    expect(Object.getPrototypeOf(env)).toBe(Object.prototype)
+    expect(env.polluted).toBeUndefined()
+    expect(Object.prototype.hasOwnProperty.call(env, "__proto__")).toBe(false)
+    expect(env.ACME_EXTRA).toBe("extra")
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined()
+  })
+
   // One casing per test: on Windows process.env is case-insensitive, so two casings stubbed together collapse into one variable.
   for (const key of ["PSModulePath", "PSMODULEPATH", "psmodulepath"]) {
     test(`PSModulePath is stripped from the inherited environment (${key})`, ({ expect }) => {

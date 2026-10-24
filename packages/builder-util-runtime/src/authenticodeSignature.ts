@@ -1,5 +1,6 @@
 import { ExecFileOptions } from "child_process"
 import * as path from "path"
+import { deepAssign } from "./objects.js"
 import { parseDn } from "./rfc2253Parser.js"
 
 // Windows Authenticode signature helpers shared by electron-updater (verifying a downloaded update at runtime) and
@@ -51,7 +52,8 @@ export function preparePowerShellExec(command: string, timeout?: number, extraEn
       delete env[key]
     }
   }
-  Object.assign(env, extraEnv)
+  // deepAssign, not Object.assign: an own `__proto__` key (e.g. from JSON.parse) would otherwise replace env's prototype
+  deepAssign(env, extraEnv)
   const options: ExecFileOptions = {
     shell: false,
     timeout,
