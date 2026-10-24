@@ -24,6 +24,7 @@ const DEFAULT_SUBJECT = "CN=Test Publisher, O=Test Org, C=US"
 const DN_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
 // the environment variable that carries the update path into the PowerShell script
 const FILE_ENV = "ELECTRON_BUILDER_AUTHENTICODE_FILE"
+const UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-update-signature-verification-fails-closed"
 const POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
 
 // =============================================================================
@@ -329,11 +330,27 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       expect(message).not.toContain(DN_DOCS)
     })
 
-    test("a Valid signature without a signer certificate subject rejects, without a fail-open probe", async ({ tmpDir }) => {
+    test("a Valid signature without a signer certificate subject cannot be verified, without a fail-open probe", async ({ tmpDir }) => {
       const { defaultFile, logger } = await setup(tmpDir)
-      mockPsSuccess(JSON.stringify({ SignerCertificate: null, Status: 0, Path: defaultFile }))
-      await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow(TypeError)
+      for (const signerCertificate of [null, {}, { Subject: 42 }]) {
+        mockPsSuccess(JSON.stringify({ SignerCertificate: signerCertificate, Status: 0, Path: defaultFile }))
+        await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toMatchObject({
+          code: "ERR_UPDATER_SIGNATURE_UNVERIFIABLE",
+          message: expect.stringContaining("a valid signature without a signer certificate subject"),
+        })
+      }
       expect(vi.mocked(execFileSync)).not.toHaveBeenCalled()
+    })
+
+    test("output that is not a signature object cannot be verified", async ({ tmpDir }) => {
+      const { defaultFile, logger } = await setup(tmpDir)
+      for (const output of ["42", "[]", '"text"']) {
+        mockPsSuccess(output)
+        await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toMatchObject({
+          code: "ERR_UPDATER_SIGNATURE_UNVERIFIABLE",
+          message: expect.stringContaining("not a signature object"),
+        })
+      }
     })
 
     test("second publisher in list matches when first does not", async ({ tmpDir }) => {
@@ -412,6 +429,8 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       mockPsSuccess(makeJson({ signatureType: 2 }))
       const message = expectVerificationFailure(await verifySignature([DEFAULT_SUBJECT], defaultFile, logger))
       expect(message).toContain("Windows security catalog")
+      expect(message).toContain("electron-updater 7 (electron-builder v27)")
+      expect(message).toContain(UNVERIFIABLE_DOCS)
     })
 
     test("an embedded Authenticode signature (1) verifies, as does a PowerShell that reports no SignatureType", async ({ tmpDir }) => {
@@ -490,6 +509,8 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       expect(rejection?.message).toMatch(/^Cannot verify the Authenticode signature of the update, so it is not installed: /)
       expect(rejection?.message).toContain("Get-AuthenticodeSignature failed with exit code 1: Get-AuthenticodeSignature : boom")
       expect(rejection?.message).toMatch(CUSTOM_VERIFIER_HINT)
+      // self-announces the v27 behavior change with the migration guide
+      expect(rejection?.message).toContain(`electron-updater 7 (electron-builder v27) installs an update only when its signature is verified: ${UNVERIFIABLE_DOCS}`)
       // the original error is kept for diagnostics, and the code tells "cannot verify" apart from an invalid signature
       expect(rejection?.cause).toBe(error)
       expect((rejection as any)?.code).toBe("ERR_UPDATER_SIGNATURE_UNVERIFIABLE")

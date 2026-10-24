@@ -83,7 +83,7 @@ export default class AppUpdater {
 }
 ```
 
-The built-in default uses [`windowsExecutableCodeSignatureVerifier`](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts).
+The built-in default uses [`windowsExecutableCodeSignatureVerifier`](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts), which runs Windows PowerShell's `Get-AuthenticodeSignature` and rejects an update it cannot verify (`ERR_UPDATER_SIGNATURE_UNVERIFIABLE`) — for example when `powershell.exe` is blocked, which electron-updater 6 answered by installing the update with a warning. Where PowerShell may not run on your users' machines, a native verifier like the one above keeps updates working: ship it in your first release built with electron-updater 7, since installs that cannot verify an update cannot receive a later release that adds it.
 A custom verify function is called only with the `publisherName` of `app-update.yml`: without one, electron-updater rejects the update before any verify function runs, unless the app was built with `win.verifyUpdateCodeSignature: false` (see [the v27 migration guide](./migration/v27-breaking-changes.md#missing-publishername-fails-update-verification)).
 The older property `verifyUpdateCodeSignature`, which differs only in name and return interface, is deprecated and kept only as a compatibility shim (shall be removed in electron-builder v28). The protected `_verifyUpdateCodeSignature` member is likewise deprecated in favour of `_verifyUpdateFileAuthenticodeSignature`.
 

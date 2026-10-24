@@ -143,9 +143,9 @@ Two things happen when a Windows certificate changes: the OS and SmartScreen see
 
 When `win.verifyUpdateCodeSignature` is `true` (the default), electron-builder writes the resolved publisher name into `app-update.yml` as `publisherName`. It is either what you configured in `win.sign.publisherName` (a string or an array of distinguished names) or, when not configured, `CN=<common name>` of the signing certificate (quoted the way Windows quotes it in the subject). When electron-builder cannot read the signing certificate (a custom `sign` hook, a certificate without a CN, or no certificate at all), the build fails unless `publisherName` is set. At update time the NSIS updater reads that value and runs `Get-AuthenticodeSignature` on the downloaded installer:
 
-- The installer must carry a **valid** Authenticode signature.
+- The installer must carry a **valid** Authenticode signature embedded in it (a signature Windows reports from a security catalog is rejected).
 - The signer's Subject is compared against **each** configured publisher name. A Distinguished Name (`CN=..., O=..., C=...`) matches when every component you listed equals the certificate's; a bare name never matches (since electron-updater 7, see [the v27 migration guide](../migration/v27-breaking-changes.md#windows-publishername-must-be-a-distinguished-name)).
-- If **any** entry matches, the update is installed. If none matches, the update is rejected.
+- If **any** entry matches, the update is installed. If none matches, the update is rejected — as it is when PowerShell cannot verify the installer (it cannot be started, fails, or does not finish within 60 s).
 - If `app-update.yml` has no `publisherName` at all, the update is rejected (since electron-updater 7, see [the v27 migration guide](../migration/v27-breaking-changes.md#missing-publishername-fails-update-verification)) — unless the app was built with `win.verifyUpdateCodeSignature: false`, which writes `verifyUpdateCodeSignature: false` into `app-update.yml` and skips the check. electron-builder fails a build that would write `app-update.yml` without `publisherName` while verification is enabled.
 
 The same check runs again before an [install-on-next-launch](./auto-update.md#install-on-next-launch-windowslinux) installer is executed.

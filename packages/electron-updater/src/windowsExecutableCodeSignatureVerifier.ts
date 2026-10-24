@@ -86,10 +86,24 @@ const CUSTOM_VERIFIER_HINT =
 // file. A missing SignatureType comes from a PowerShell that only checks embedded signatures.
 const CATALOG_SIGNATURE_TYPE = 2
 
+const SIGNATURE_UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-update-signature-verification-fails-closed"
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === "object" && !Array.isArray(value)
+}
+
 // The verification could not be done, as opposed to a signature that does not verify (a failure result, ERR_UPDATER_INVALID_SIGNATURE).
 function cannotVerify(reason: string, options: { cause?: unknown; isPowerShellProblem?: boolean } = {}): Error {
   const hint = options.isPowerShellProblem === false ? "" : ` ${CUSTOM_VERIFIER_HINT}`
-  const error = newError(`Cannot verify the Authenticode signature of the update, so it is not installed: ${reason}.${hint}`, "ERR_UPDATER_SIGNATURE_UNVERIFIABLE")
+  const error = newError(
+    `Cannot verify the Authenticode signature of the update, so it is not installed: ${reason}.${hint} ` +
+      `electron-updater 7 (electron-builder v27) installs an update only when its signature is verified: ${SIGNATURE_UNVERIFIABLE_DOCS}`,
+    "ERR_UPDATER_SIGNATURE_UNVERIFIABLE"
+  )
   if (options.cause !== undefined) {
     error.cause = options.cause
   }
@@ -116,11 +130,11 @@ function normalizeForComparison(file: string): string {
 }
 
 // Get-AuthenticodeSignature reports the path of the file it verified: it must be the update file (it is not resolved through links).
-function checkLiteralPath(data: any, updateFile: string, logger: Logger): void {
-  if (typeof data.Path !== "string") {
+function checkLiteralPath(reportedPath: unknown, updateFile: string, logger: Logger): void {
+  if (typeof reportedPath !== "string") {
     throw cannotVerify("Get-AuthenticodeSignature did not report the path of the verified file", { isPowerShellProblem: false })
   }
-  const normalizedDataPath = normalizeForComparison(data.Path)
+  const normalizedDataPath = normalizeForComparison(reportedPath)
   const normalizedUpdateFile = normalizeForComparison(updateFile)
   logger.info(`LiteralPath: ${normalizedDataPath}. Update Path: ${normalizedUpdateFile}`)
   if (normalizedDataPath !== normalizedUpdateFile) {
@@ -129,20 +143,31 @@ function checkLiteralPath(data: any, updateFile: string, logger: Logger): void {
 }
 
 // Parses Get-AuthenticodeSignature JSON, checks the LiteralPath guard, and matches against publisherNames. Returns a
-// success/failure result; throws when the output cannot be parsed or names another file.
+// success/failure result; throws (ERR_UPDATER_SIGNATURE_UNVERIFIABLE) when the output cannot be parsed, names another file,
+// or reports a valid signature without a signer certificate subject.
 function evaluateSignatureResult(stdout: string, publisherNames: string[], updateFile: string, logger: Logger): VerifyUpdateFileResult {
-  let data: any
+  let data: unknown
   try {
     data = parseAuthenticodeSignatureOutput(stdout)
-  } catch (e: any) {
-    throw cannotVerify(`cannot parse the output of Get-AuthenticodeSignature (${e.message})`, { cause: e })
+  } catch (e: unknown) {
+    throw cannotVerify(`cannot parse the output of Get-AuthenticodeSignature (${errorMessage(e)})`, { cause: e })
+  }
+  if (!isRecord(data)) {
+    throw cannotVerify("the output of Get-AuthenticodeSignature is not a signature object", { isPowerShellProblem: false })
   }
   let reason = ""
   if (data.Status === 0) {
-    checkLiteralPath(data, updateFile, logger)
+    checkLiteralPath(data.Path, updateFile, logger)
+    const signerCertificate = data.SignerCertificate
+    const subject = isRecord(signerCertificate) ? signerCertificate.Subject : undefined
+    if (typeof subject !== "string") {
+      throw cannotVerify("Get-AuthenticodeSignature reports a valid signature without a signer certificate subject", { isPowerShellProblem: false })
+    }
     if (data.SignatureType === CATALOG_SIGNATURE_TYPE) {
-      reason = "Windows reports the signer of a Windows security catalog for the update file instead of a signature embedded in it. "
-    } else if (matchPublisherName(data, publisherNames)) {
+      reason =
+        "Windows reports the signer of a Windows security catalog for the update file instead of a signature embedded in it, which electron-updater 7 (electron-builder v27) " +
+        `does not accept (${SIGNATURE_UNVERIFIABLE_DOCS}). `
+    } else if (matchPublisherName({ SignerCertificate: { Subject: subject } }, publisherNames)) {
       return { response: "success" }
     }
   }
@@ -172,14 +197,14 @@ export function verifySignature(publisherNames: Array<string>, updateFile: strin
           return
         }
         try {
-          resolve(evaluateSignatureResult(stdout, publisherNames, updateFile, logger))
-        } catch (e: any) {
+          resolve(evaluateSignatureResult(String(stdout), publisherNames, updateFile, logger))
+        } catch (e: unknown) {
           reject(e)
         }
       })
-    } catch (e: any) {
+    } catch (e: unknown) {
       // PowerShell cannot be located (no SystemRoot) or started at all, e.g. blocked by AppLocker / WDAC
-      reject(cannotVerify(`cannot run PowerShell: ${e.message}`, { cause: e }))
+      reject(cannotVerify(`cannot run PowerShell: ${errorMessage(e)}`, { cause: e }))
     }
   })
 }
