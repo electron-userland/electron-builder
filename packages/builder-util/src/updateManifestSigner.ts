@@ -144,7 +144,7 @@ export function loadUpdateSigningKeys(config?: UpdateSigningKeySources | null, b
     pems = configKeys.flatMap(splitPemBlocks)
   } else if (configFiles.length > 0) {
     source = "updateManifest.signingKeyFile"
-    pems = configFiles.flatMap(file => splitPemBlocks(readFileSync(baseDir == null ? file : path.resolve(baseDir, file), "utf8")))
+    pems = configFiles.flatMap(file => splitPemBlocks(readKeyFile(baseDir == null ? file : path.resolve(baseDir, file), source)))
   } else if (envKey != null && envKey.trim().length > 0) {
     source = "ELECTRON_BUILDER_UPDATE_SIGN_KEY"
     // decoded only here, after both config sources were passed over, so a stale value never breaks a build keyed from the config
@@ -155,34 +155,20 @@ export function loadUpdateSigningKeys(config?: UpdateSigningKeySources | null, b
       .split(path.delimiter)
       .map(it => it.trim())
       .filter(it => it.length > 0)
-      .flatMap(file => splitPemBlocks(readFileSync(file, "utf8")))
+      .flatMap(file => splitPemBlocks(readKeyFile(file, source)))
   } else {
     return []
   }
   return validateSigningKeys(pems, source)
 }
 
-/**
- * Reads Ed25519 signing private keys (PEM, PKCS#8) from explicitly named files, for a CLI flag such as `--key-file`. Like the
- * `signingKeyFile` source of {@link loadUpdateSigningKeys} — each file may hold several concatenated keys — but every error is
- * an InvalidConfigurationError naming `label` (and the file, never its contents), and a file without a key is an error rather
- * than a fall-through to the environment variables.
- */
-export function loadUpdateSigningKeyFiles(files: Array<string>, label: string): Array<string> {
-  const pems = files.flatMap(file => {
-    let text: string
-    try {
-      text = readFileSync(file, "utf8")
-    } catch (e: any) {
-      throw new InvalidConfigurationError(`${label} ${file} cannot be read (${e?.code ?? e?.message ?? e})`)
-    }
-    const blocks = splitPemBlocks(text)
-    if (blocks.length === 0) {
-      throw new InvalidConfigurationError(`${label} ${file} is empty: expected an Ed25519 private key (PEM, PKCS#8)`)
-    }
-    return blocks
-  })
-  return validateSigningKeys(pems, label)
+/** Reads a signing key file; an unreadable file is an InvalidConfigurationError naming its path and `source`, never its contents. */
+function readKeyFile(file: string, source: string): string {
+  try {
+    return readFileSync(file, "utf8")
+  } catch (e: any) {
+    throw new InvalidConfigurationError(`Update manifest signing key file ${file} from ${source} cannot be read (${e?.code ?? e?.message ?? e})`)
+  }
 }
 
 function validateSigningKeys(pems: Array<string>, source: string): Array<string> {

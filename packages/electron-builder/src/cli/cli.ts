@@ -10,17 +10,8 @@ import { createSelfSignedCert } from "./create-self-signed-cert.js"
 import { createUpdateKey } from "./create-update-key.js"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps.js"
 import { configureMigrateSchemaCommand, migrateSchema } from "./migrate-schema.js"
-import {
-  configureSignUpdateManifestCommand,
-  joinPemOptionValues,
-  SIGN_UPDATE_MANIFEST_COMMAND,
-  signUpdateManifest,
-  signUpdateManifestOptionsFromArgs,
-} from "./sign-update-manifest.js"
+import { configureSignUpdateManifestCommand, SIGN_UPDATE_MANIFEST_COMMAND, signUpdateManifest, signUpdateManifestOptionsFromArgs } from "./sign-update-manifest.js"
 import { start } from "./start.js"
-
-// a PEM value starts with "-----", which yargs would otherwise read as an option: `--public-key "$PEM"` -> `--public-key=$PEM`
-process.argv = joinPemOptionValues(process.argv)
 
 // tslint:disable:no-unused-expression
 void createYargs()

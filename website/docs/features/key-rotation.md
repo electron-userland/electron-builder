@@ -114,8 +114,10 @@ Every later release must be signed by the new key, so remove the option again in
 **Editing a published manifest during the rotation.** If you change a signed field of a `latest*.yml` that is already on the feed (for example its `stagingPercentage`), re-sign it with the same keys the release was built with — both keys, old first, for a bridge release — or installs that trust only the old key reject it. Verify against the old key before uploading:
 
 ```sh
-npx electron-builder sign-update-manifest latest.yml --key-file update-key.old.pem --key-file update-key.new.pem
-npx electron-builder sign-update-manifest latest.yml --public-key update-public-key.old.pem   # check before uploading
+# the same keys as the bridge build, old first
+ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=/run/secrets/update-key.old.pem:/run/secrets/update-key.new.pem npx electron-builder sign-update-manifest latest.yml
+# check before uploading, with the old key as the only trusted one
+npx electron-builder sign-update-manifest latest.yml --verify "-c.updateManifest.publicKey=$(cat update-public-key.old.pem)"
 ```
 
 See [Re-signing a published manifest](./signed-update-manifests.md#re-signing-a-published-manifest).

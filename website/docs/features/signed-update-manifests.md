@@ -191,22 +191,23 @@ A signed manifest must also have the shape the signature is meant to protect. Be
 
 ## Re-signing a published manifest {#re-signing-a-published-manifest}
 
-Cosmetic fields can be edited in a published `latest*.yml` as they are, but changing a signed field — raising `stagingPercentage` during a staged rollout, adding a `minimumSystemVersion`, pointing a file `url` at a different host — invalidates its signatures, and every install that embeds a public key then refuses the update with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`. Rather than rebuilding, edit the file and sign it again with the same key(s) the build uses:
+Cosmetic fields can be edited in a published `latest*.yml` as they are, but changing a signed field — raising `stagingPercentage` during a staged rollout, adding a `minimumSystemVersion`, pointing a file `url` at a different host — invalidates its signatures, and every install that embeds a public key then refuses the update with `ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`. Rather than rebuilding, edit the file and sign it again from the project directory. Like `electron-builder publish`, the command reads the project's electron-builder configuration (`-c` / `--config` picks a different file), and it takes the key(s) from the same place the build does: `updateManifest.signingKey` / `updateManifest.signingKeyFile` (the platform's own `mac.updateManifest` / `win.updateManifest` / `linux.updateManifest` first), then `ELECTRON_BUILDER_UPDATE_SIGN_KEY` / `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE`. There is no flag that takes key material.
 
 ```sh
-# the key comes from ELECTRON_BUILDER_UPDATE_SIGN_KEY / ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE, as in a build…
+# keys from the configuration or the environment, exactly as in a build
 npx electron-builder sign-update-manifest dist/latest.yml dist/latest-mac.yml dist/latest-linux.yml
 
-# …or from a PEM file; repeat --key-file to dual-sign (old key first, as in a build)
-npx electron-builder sign-update-manifest latest.yml --key-file update-key.old.pem --key-file update-key.new.pem
+# a different config file, or an inline override of a single setting (relative key files resolve against the project directory)
+npx electron-builder sign-update-manifest latest.yml -c electron-builder.release.yml
+npx electron-builder sign-update-manifest latest.yml -c.updateManifest.signingKeyFile=keys/update-key.pem
 ```
 
-Each file is parsed the way electron-updater parses it, its existing `signature`/`signatures` fields are dropped, and it is checked against the same shape rules the updater applies (a manifest the updater would reject is never signed). It is then signed by every key and written back in place in the format a build writes: every other field keeps its value and position, and `signature` plus `signatures` come last. YAML comments are not preserved. When several files are given, all of them are signed before any is written, so one invalid manifest leaves every file untouched. Without a key the command fails with an error naming the key sources; the private key itself is never printed.
+The platform of each manifest follows from its name, as the build writes it: `<channel>-mac.yml` is macOS, `<channel>-linux.yml` and `<channel>-linux-<arch>.yml` are Linux, and `<channel>.yml` is Windows. Each file is parsed the way electron-updater parses it, its existing `signature`/`signatures` fields are dropped, and it is checked against the same shape rules the updater applies (a manifest the updater would reject is never signed). It is then signed by every configured key (several keys dual-sign, as in a build) and written back in place in the format a build writes: every other field keeps its value and position, and `signature` plus `signatures` come last. YAML comments are not preserved. When several files are given, all of them are signed before any is written, so one invalid manifest leaves every file untouched. Without a key, or with `updateManifest: false`, the command fails with an error naming the key sources; errors name the configuration field or environment variable a key came from, and key material itself is never printed.
 
-To check signatures without writing anything, pass `--verify`. It checks against the public half of the configured signing key(s), or against `--public-key` (a PEM file path, a PEM value, or a base64 SPKI key; a file or value may hold several concatenated PEM keys, as a trust list does; repeatable, and it implies `--verify`), and exits non-zero naming every file that is unsigned or not signed by a trusted key:
+To check signatures without writing anything, pass `--verify`. It checks against the trust list the build embeds into `app-update.yml`: `updateManifest.publicKey` when it is set, otherwise the public half of every configured signing key. It exits non-zero naming every file that is unsigned or not signed by a trusted key:
 
 ```sh
-npx electron-builder sign-update-manifest latest.yml --public-key update-public-key.pem
+npx electron-builder sign-update-manifest latest.yml --verify
 ```
 
 Upload the re-signed file to the update feed afterwards; the command does not publish.

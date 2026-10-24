@@ -80,13 +80,13 @@ electron-builder v27 requires **Node.js >=22.12.0**. Upgrading from v26? Review 
 
 ## `sign-update-manifest`
 
-Re-signs one or more existing `latest*.yml` files in place with the [update signing key](./features/signed-update-manifests.md), so a published manifest can be edited — for example to change `stagingPercentage` — without rebuilding.
+Re-signs one or more existing `latest*.yml` files in place with the [update signing key](./features/signed-update-manifests.md), so a published manifest can be edited — for example to change `stagingPercentage` — without rebuilding. Like `publish`, it reads the project configuration from the current directory; the keys come from its `updateManifest` settings or the `ELECTRON_BUILDER_UPDATE_SIGN_KEY(_FILE)` environment variables, as in a build.
 
 ```bash
-electron-builder sign-update-manifest latest.yml latest-mac.yml            # key from ELECTRON_BUILDER_UPDATE_SIGN_KEY(_FILE)
-electron-builder sign-update-manifest latest.yml --key-file update-key.pem # repeat --key-file to dual-sign
-electron-builder sign-update-manifest latest.yml --verify                  # check only, nothing is written
-electron-builder sign-update-manifest latest.yml --public-key pub.pem      # check against a given public key
+electron-builder sign-update-manifest latest.yml latest-mac.yml                       # keys from the config or the environment
+electron-builder sign-update-manifest latest.yml -c electron-builder.release.yml      # a different config file
+electron-builder sign-update-manifest latest.yml -c.updateManifest.signingKeyFile=k.pem # override one setting
+electron-builder sign-update-manifest latest.yml --verify                             # check against the trust list; nothing is written
 ```
 
 See [Re-signing a published manifest](./features/signed-update-manifests.md#re-signing-a-published-manifest).
