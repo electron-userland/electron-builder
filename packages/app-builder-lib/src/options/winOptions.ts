@@ -60,14 +60,17 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * Whether the NSIS auto-updater should verify the Authenticode signature of a downloaded update
-   * before installing it. This is a **runtime** check performed by your app via electron-updater,
-   * not a build-time check.
+   * before installing it. The verification itself runs in your app, via electron-updater.
    *
    * When enabled (the default), the resolved [publisher name](#publisherName) is embedded into
    * `app-update.yml` at build time. At update time electron-updater inspects the certificate that
    * signed the downloaded installer and compares its subject (Distinguished Name / Common Name)
    * against that publisher name, refusing to install on a mismatch. This prevents a tampered or
    * maliciously substituted update from being installed.
+   *
+   * While enabled, electron-builder also checks at build time that the signed NSIS installer (or
+   * nsis-web stub) is signed by a certificate matching that publisher name, using the same matching
+   * rules, and fails the build otherwise.
    *
    * Set to `false` to skip verification — in which case the publisher name is **not** embedded.
    * Disable this only if your updates are not Authenticode-signed.
@@ -139,8 +142,8 @@ interface WindowsSigningSharedOptions {
    * (signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on
    * legacy (pre-SHA-2) Windows as well as modern Windows.
    *
-   * Some targets override this: `.msi` cannot be dual-signed (a single hash is used) and AppX/MSIX
-   * is always `sha256` only.
+   * Some targets override this: `.msi` cannot be dual-signed, so it is signed once, with `sha256`
+   * unless `sha1` is the only algorithm listed, and AppX/MSIX is always `sha256` only.
    *
    * @default ['sha1', 'sha256']
    */

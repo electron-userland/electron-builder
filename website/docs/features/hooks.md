@@ -23,6 +23,7 @@ Hook execution is serial within each platform/arch combination. Async hooks are 
 - `electronDist` — supply a custom Electron binary
 - `msiProjectCreated` — edit WiX XML before MSI compilation
 - `appxManifestCreated` — edit AppX manifest XML before packaging
+- `pkgDistributionCreated` — edit the macOS PKG `distribution.xml` before `productbuild`
 - `onNodeModuleFile` — filter which `node_modules` files are included in the bundle
 
 ## Defining Hooks
@@ -215,6 +216,20 @@ appxManifestCreated: async (manifestPath) => {
   let manifest = fs.readFileSync(manifestPath, "utf8")
   // ... modify manifest ...
   fs.writeFileSync(manifestPath, manifest)
+}
+```
+
+### `pkgDistributionCreated`
+
+Runs after the `distribution.xml` of a macOS PKG installer has been written (synthesized by `productbuild --synthesize`, then customized from the `pkg` options) but before `productbuild` builds the installer from it. Receives the path to the distribution file; edit it in place or overwrite it.
+
+```js
+pkgDistributionCreated: async (distributionPath) => {
+  // Give the installer window a title
+  const fs = require("fs")
+  let xml = fs.readFileSync(distributionPath, "utf8")
+  xml = xml.replace("</installer-gui-script>", "    <title>My App</title>\n</installer-gui-script>")
+  fs.writeFileSync(distributionPath, xml)
 }
 ```
 

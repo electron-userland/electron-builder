@@ -27,6 +27,11 @@ StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
     GetDlgItem $0 $0 1000
     SendMessage $0 ${WM_SETTEXT} 0 "STR:$(installing)"
 
+    # SpiderBanner hides the InstFiles page while keyboard focus is still on one of its controls. Pressing Tab then makes the
+    # dialog manager search forever for a control it can no longer see, and the installer stops responding (#7526).
+    # Move focus to the banner's (visible) status text. This also lets screen readers announce it.
+    SendMessage $hwndparent ${WM_NEXTDLGCTL} $0 1
+
     StrCpy $1 $hwndparent
 		System::Call 'user32::ShutdownBlockReasonCreate(${SYSTYPE_PTR}r1, w "$(installing)")'
   ${endif}

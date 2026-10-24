@@ -3,7 +3,7 @@
 Windows code signing is supported and runs automatically once you configure a signing method — or simply provide signing credentials through environment variables. electron-builder signs every executable and installer it produces so that Windows SmartScreen and your auto-updater can verify your app's publisher and confirm it hasn't been tampered with.
 
 :::tip[Dual signing]
-By default each binary is dual-signed with both SHA-1 and SHA-256 (`signingHashAlgorithms: ["sha1", "sha256"]`) so it validates on legacy as well as modern Windows. A few targets are fixed: `.msi` is single-signed and AppX/MSIX is SHA-256 only.
+By default each binary is dual-signed with both SHA-1 and SHA-256 (`signingHashAlgorithms: ["sha1", "sha256"]`) so it validates on legacy as well as modern Windows. A few targets are fixed: `.msi` holds a single signature, which is SHA-256 unless `sha1` is the only algorithm listed, and AppX/MSIX is SHA-256 only.
 :::
 
 ## Choosing a signing method
@@ -41,9 +41,17 @@ All Windows code signing is configured under a single `win.sign` key using a dis
 | `{ type: "hsm", ... }` | Hardware Security Module / FIPS token via a Windows CSP — **Beta** | Windows only |
 | `{ type: "pkcs11", ... }` | PKCS#11 hardware token via `osslsigncode` — **Beta** | macOS/Linux |
 | `{ type: "azure", ... }` | Azure Trusted Signing cloud service — **Beta** | all (`signtool /dlib`, Wine on macOS/Linux) |
-| `false` or `null` | Disable signing (resedit resource editing still runs) | all |
+| `false` or `null` | Disable signing (resedit resource editing still runs). No certificate is read, not even from `WIN_CSC_LINK` / `CSC_LINK`, and no `publisherName` is written to `app-update.yml`. If you sign the build outside electron-builder, use `{ type: "signtool", publisherName: [...] }` (or a custom `sign` hook with `publisherName`) instead, so `app-update.yml` carries the publisher electron-updater verifies updates against | all |
 
 Combining `win.sign: false` with `forceCodeSigning: true` is a configuration error and fails the build.
+
+### Publisher name and update verification
+
+When your app uses electron-updater, the resolved `publisherName` (your explicit `win.sign.publisherName`, or the certificate's Common Name) is written into `app-update.yml`, and electron-updater refuses to install a downloaded NSIS update whose Authenticode signer does not match it. To catch a wrong `publisherName` before you ship, electron-builder checks the signed installer itself at build time — the `nsis` installer, or the `nsis-web` stub — with the same matching rules electron-updater applies, and fails the build if the signer does not match. Because it inspects the signed output, this also covers signing routes where the certificate is not known up front: a custom `sign` hook, Azure Trusted Signing and PKCS#11.
+
+- A DN `publisherName` (e.g. `CN=My Company, O=My Company, L=Berlin, S=Berlin, C=DE`) must match every attribute it lists; attribute names are the ones Windows shows in the certificate subject (for example `S` for the state or province, not `ST`). A plain name is compared with the certificate's Common Name only, which electron-updater accepts with a warning.
+- The signer is read with `Get-AuthenticodeSignature` on Windows (a signature it cannot read fails the build) and from the installer's embedded signature on macOS/Linux (a signature that cannot be parsed there is only warned about).
+- The check runs only when the installer was signed by electron-builder (or your `sign` hook), `win.verifyUpdateCodeSignature` is enabled and `app-update.yml` carries a `publisherName`. Set `win.verifyUpdateCodeSignature: false` only if your updates are not Authenticode-signed. Signing that happens after electron-builder finishes is not checked.
 
 ---
 

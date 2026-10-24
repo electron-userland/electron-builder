@@ -1,4 +1,4 @@
-import { BlockMapDataHolder, createHttpError, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
+import { BlockMapDataHolder, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime"
 import { detectSha512Encoding } from "builder-util-runtime/internal"
 import fsExtra from "fs-extra"
@@ -10,7 +10,7 @@ import { nonThrowingLogger } from "../util.js"
 import { copyData } from "./DataSplitter.js"
 import { URL } from "url"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder.js"
-import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader.js"
+import { checkIsPartialContent, ERR_MULTIPLE_RANGES_NOT_SUPPORTED, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader.js"
 import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
 
 export interface DifferentialDownloaderOptions {
@@ -55,6 +55,9 @@ export abstract class DifferentialDownloader {
   // range requests that have not closed yet, aborted when the download is cancelled
   private readonly requestsInFlight = new Set<AbortableRequest>()
 
+  // starts from the provider's choice; turned off for the rest of this download when the server rejects multi-range requests
+  private isUseMultipleRangeRequest: boolean
+
   // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
   constructor(
     protected readonly blockAwareFileInfo: BlockMapDataHolder,
@@ -63,6 +66,7 @@ export abstract class DifferentialDownloader {
   ) {
     // logging runs in stream and response callbacks, where a throwing logger would escape as an uncaught exception
     this.logger = nonThrowingLogger(options.logger)
+    this.isUseMultipleRangeRequest = options.isUseMultipleRangeRequest === true
   }
 
   createRequestOptions(): RequestOptions {
@@ -137,7 +141,19 @@ export abstract class DifferentialDownloader {
 
     logger.info(`Full: ${formatBytes(newSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newSize / 100))}%)`)
 
-    return this.downloadFile(operations)
+    return this.downloadFile(operations).catch((e: unknown) => {
+      // a cancel (or a failure caused by one, such as an aborted request) ends the download instead of starting the retry
+      throwIfCancelled(e, this.options.cancellationToken)
+      // anything but our own rejection (including a non-Error throw) is rethrown as is
+      if (!(e instanceof Error) || !("code" in e) || e.code !== ERR_MULTIPLE_RANGES_NOT_SUPPORTED || !this.isUseMultipleRangeRequest) {
+        throw e
+      }
+      // The new file is rewritten from the start, and each single-range answer is checked, so a host that ignores ranges
+      // fails on its first request instead of streaming the whole file per range.
+      logger.warn(`${e.message}: retrying with one range per request`)
+      this.isUseMultipleRangeRequest = false
+      return this.downloadFile(operations)
+    })
   }
 
   private downloadFile(tasks: Array<Operation>): Promise<any> {
@@ -194,7 +210,7 @@ export abstract class DifferentialDownloader {
 
       // Create our download info transformer if we have one
       let downloadInfoTransform: ProgressDifferentialDownloadCallbackTransform | undefined = undefined
-      if (!this.options.isUseMultipleRangeRequest && this.options.onProgress) {
+      if (!this.isUseMultipleRangeRequest && this.options.onProgress) {
         const expectedByteCounts: Array<number> = []
         let grandTotalBytes = 0
 
@@ -252,7 +268,7 @@ export abstract class DifferentialDownloader {
       const firstStream = streams[0]
 
       let w: any
-      if (this.options.isUseMultipleRangeRequest) {
+      if (this.isUseMultipleRangeRequest) {
         w = executeTasksUsingMultipleRangeRequests(this, tasks, firstStream, oldFileFd, reject)
         w(0)
         return
@@ -302,13 +318,13 @@ export abstract class DifferentialDownloader {
 
         const request = this.createRangeRequest(requestOptions, response => {
           response.on("error", reject)
+          // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
+          if (!checkIsPartialContent(response, operation.start, operation.end - 1, reject)) {
+            return
+          }
           response.on("aborted", () => {
             reject(new Error("response has been aborted by the server"))
           })
-          // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
-          if (response.statusCode != null && response.statusCode >= 400) {
-            reject(createHttpError(response))
-          }
 
           response.pipe(firstStream, {
             end: false,
@@ -346,7 +362,7 @@ export abstract class DifferentialDownloader {
     const requestOptions = this.createRequestOptions()
     requestOptions.headers!.range = `bytes=${start}-${endInclusive}`
     let position = 0
-    await this.request(requestOptions, chunk => {
+    await this.request(requestOptions, start, endInclusive, chunk => {
       chunk.copy(buffer, position)
       position += chunk.length
     })
@@ -357,15 +373,16 @@ export abstract class DifferentialDownloader {
     return buffer
   }
 
-  private request(requestOptions: RequestOptions, dataHandler: (chunk: Buffer) => void): Promise<void> {
+  private request(requestOptions: RequestOptions, start: number, endInclusive: number, dataHandler: (chunk: Buffer) => void): Promise<void> {
     return this.options.cancellationToken.createPromise<void>((resolve, reject, onCancel) => {
       onCancel(() => this.abortRequestsInFlight())
       const request = this.createRangeRequest(requestOptions, response => {
-        if (!checkIsRangesSupported(response, reject)) {
+        response.on("error", reject)
+        // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
+        if (!checkIsPartialContent(response, start, endInclusive, reject)) {
           return
         }
 
-        response.on("error", reject)
         response.on("aborted", () => {
           reject(new Error("response has been aborted by the server"))
         })

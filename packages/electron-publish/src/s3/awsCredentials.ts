@@ -185,11 +185,15 @@ const UNSUPPORTED_PROFILE_KEYS: ReadonlyArray<[key: string, reason: string]> = [
     "web_identity_token_file",
     "web identity (web_identity_token_file) is resolved by an AWS SDK STS client that reads its region and endpoint from AWS_REGION, AWS_ENDPOINT_URL_STS and AWS_CONFIG_FILE",
   ],
+  [
+    "login_session",
+    "an aws login session (login_session) is resolved by an AWS SDK sign-in client that reads its region from AWS_REGION and its token cache from AWS_LOGIN_CACHE_DIRECTORY",
+  ],
 ]
 
 /**
  * Walks the named profile's `role_arn` + `source_profile` chain the way the AWS SDK resolves it (static keys of a source
- * profile end it) and refuses a profile that would make the SDK read ambient settings: `credential_source` or web identity.
+ * profile end it) and refuses a profile that would make the SDK read ambient settings: `credential_source`, web identity or `login_session`.
  * Only the configured files are read; nothing is loaded or requested.
  */
 function checkProfileChainIsExplicit(profiles: IniData, profileName: string): void {
@@ -312,7 +316,7 @@ async function resolveFromProfile(options: S3AwsCredentialsOptions): Promise<Aws
     return { accessKeyId: profile.aws_access_key_id, secretAccessKey: profile.aws_secret_access_key, sessionToken: profile.aws_session_token || undefined }
   }
 
-  // before any SDK is loaded: no credential_source / web identity anywhere in the chain
+  // before any SDK is loaded: no credential_source / web identity / login_session anywhere in the chain
   checkProfileChainIsExplicit(profiles, profileName)
 
   const ssoSourceProfile = findSsoSourceProfile(profiles, profileName)
