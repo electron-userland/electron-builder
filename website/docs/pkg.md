@@ -95,6 +95,17 @@ pkg:
     scaling: tofit          # tofit | proportional | none
 ```
 
+For anything these options do not cover (for example, the installer window's `<title>`), the `pkgDistributionCreated` [hook](/docs/features/hooks#pkgdistributioncreated) receives the path to the generated `distribution.xml` before `productbuild` uses it:
+
+```js
+// electron-builder.config.js
+pkgDistributionCreated: async (distributionPath) => {
+  const fs = require("fs")
+  const xml = fs.readFileSync(distributionPath, "utf8")
+  fs.writeFileSync(distributionPath, xml.replace("</installer-gui-script>", "    <title>My App</title>\n</installer-gui-script>"))
+}
+```
+
 ## Installation Behavior Options
 
 Control how the installer behaves when re-installing or upgrading:

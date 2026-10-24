@@ -154,8 +154,6 @@ const config: Config = {
     ],
   ],
 
-  themes: ["@docusaurus/theme-mermaid"],
-
   themeConfig: {
     ...versionBanner,
     colorMode: {

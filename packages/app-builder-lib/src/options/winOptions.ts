@@ -164,8 +164,8 @@ interface WindowsSigningSharedOptions {
    * (signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on
    * legacy (pre-SHA-2) Windows as well as modern Windows.
    *
-   * Some targets override this: `.msi` cannot be dual-signed (a single hash is used) and AppX/MSIX
-   * is always `sha256` only.
+   * Some targets override this: `.msi` cannot be dual-signed, so it is signed once, with `sha256`
+   * unless `sha1` is the only algorithm listed, and AppX/MSIX is always `sha256` only.
    *
    * @default ['sha1', 'sha256']
    */

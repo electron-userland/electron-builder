@@ -28,13 +28,13 @@ This handles every change marked **Auto ✓** below. See the [walkthrough](./v26
 In v27 every `toolsets.*` property defaults to **`"latest"`** — an **unset** property and the literal `"latest"` both resolve to the **newest published bundle** for that toolset (previously each property defaulted to a fixed pinned version; `null` is no longer accepted). No config change is required, but the effective defaults moved:
 
 - **`wine` → `"system"`** — the **host-installed `wine`** on `PATH`, on macOS as well as Linux (v26 downloaded a Wine 4.0.1 bundle on macOS). **Building Windows targets on macOS now requires Wine on the host** (`brew install --cask wine-stable`). The `"1.0.1"` Wine 11.0 bundle still downloads when pinned explicitly, but the published bundle ships no PE builtins, so it cannot run Windows tools on its own.
-- **`winCodeSign` → `1.3.0`** — Windows Kits 10.0.26100.0, `osslsigncode` 2.11 (native arm64), and the Azure Trusted Signing `dlib` + .NET 8 payload.
+- **`winCodeSign` → `1.3.1`** — Windows Kits 10.0.26100.0, `osslsigncode` 2.11 (native arm64), and the Azure Trusted Signing `dlib` + .NET 8 payload.
 - **`appimage` → `1.1.0`** — static FUSE3-compatible runtime; adds `unsquashfs` support.
 - `icons` → `1.2.3` — newer `wasm-vips` / `@resvg/resvg-wasm` bundle that writes 16/32 px ICNS entries as ARGB (was `1.1.0`).
 - `linuxToolsMac` → `1.0.1` (runs on macOS 15+) and `sevenZip` → `1.0.1` (correct per-arch Windows binaries).
 - `nsis` (`1.2.1`) and `fpm` (`2.2.1`) are unchanged; the new `squirrel` toolset resolves to `1.1.1`.
 
-To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` now defaults to `1.3.0`, **Azure Trusted Signing uses the faster `signtool /dlib` path out of the box**. Full breakdown in [Toolsets & environment variables](#toolsets-environment-variables).
+To stay on a legacy bundle, pin the toolset to `"0.0.0"`. Because `winCodeSign` now defaults to `1.3.1`, **Azure Trusted Signing uses the faster `signtool /dlib` path out of the box**. Full breakdown in [Toolsets & environment variables](#toolsets-environment-variables).
 :::
 
 ---
@@ -786,7 +786,7 @@ What changed compared with v26:
 - When the configured source has no credentials, publishing **fails** with a clear error. Before, the request was signed with whatever aws4 found in the environment (including the undocumented `AWS_ACCESS_KEY` / `AWS_SECRET_KEY`), or with `Credential=undefined`.
 - For a bucket name with dots and no `region`, the region is now looked up **only when publishing**. Builds that don't publish log a warning and leave `region` unset, so set `region` explicitly for dotted bucket names.
 - With `source: "profile"`, an assume-role profile whose `source_profile` chain starts at an SSO profile is rejected, because the AWS SDK would resolve that SSO profile without the configured files. Use `source: "sso-role-chain"` for it (see below).
-- With `source: "profile"`, a profile that sets `credential_source` (`Environment`, `Ec2InstanceMetadata`, `EcsContainer`) or web identity (`web_identity_token_file`), itself or anywhere in its `source_profile` chain, is rejected with an `InvalidConfigurationError`: they read ambient credentials, or an AWS SDK STS client that takes its region and endpoint from `AWS_REGION` / `AWS_ENDPOINT_URL_STS` / `AWS_CONFIG_FILE`. In CI with OIDC, export the temporary keys first and use `source: "env"`.
+- With `source: "profile"`, a profile that sets `credential_source` (`Environment`, `Ec2InstanceMetadata`, `EcsContainer`), web identity (`web_identity_token_file`) or an `aws login` session (`login_session`), itself or anywhere in its `source_profile` chain, is rejected with an `InvalidConfigurationError`: they read ambient credentials, or an AWS SDK STS / sign-in client that takes its region, endpoint or token cache from `AWS_REGION` / `AWS_ENDPOINT_URL_STS` / `AWS_CONFIG_FILE` / `AWS_LOGIN_CACHE_DIRECTORY`. In CI with OIDC, export the temporary keys first and use `source: "env"`.
 - `awsCredentials` is build-time only and is never written to `app-update.yml`. electron-updater is unaffected: it downloads S3 updates without credentials.
 - DigitalOcean Spaces (`DO_KEY_ID` / `DO_SECRET_KEY`) and Cloudflare R2 (`CF_R2_*`) are unchanged.
 
@@ -835,7 +835,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 | Toolset | v26 default | v27 `"latest"` resolves to | What the upgrade entails |
 |---------|-------------|----------------------------|--------------------------|
 | `wine` | `0.0.0` (Wine 4.0.1, macOS only) | `system` | Host-installed `wine` on `PATH`, on macOS and Linux. **Requires a host Wine on macOS** — see the note below. The `"1.0.1"` Wine 11.0 bundle still downloads when pinned, but ships no PE builtins and cannot run Windows tools on its own |
-| `winCodeSign` | `0.0.0` (winCodeSign 2.6.0) | `1.3.0` | Windows Kits 10.0.26100.0; `osslsigncode` 2.11 + native arm64; bundles the Azure Trusted Signing `dlib` + .NET 8 runtime |
+| `winCodeSign` | `0.0.0` (winCodeSign 2.6.0) | `1.3.1` | Windows Kits 10.0.26100.0; `osslsigncode` 2.11 + native arm64; bundles the Azure Trusted Signing `dlib` + .NET 8 runtime |
 | `appimage` | `0.0.0` (FUSE2 runtime) | `1.1.0` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support |
 | `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `1.2.1` | NSIS 3.12; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR` |
 | `fpm` | `2.2.1` | `2.2.1` | Unchanged — FPM 1.17.0 / Ruby 3.4.3 |
@@ -923,7 +923,7 @@ electron-builder no longer inspects `npm_lifecycle_event`: naming your npm/yarn/
 
 ### Azure Trusted Signing `signtool /dlib` is the default
 
-Azure Trusted Signing (`win.sign: { type: "azure" }`) uses the faster `signtool /dlib` path automatically: the default `winCodeSign` (`"latest"` → `1.3.0`) ships the ATS `dlib` + .NET 8 payload, so no pin is required. To **force the legacy** PowerShell `Invoke-TrustedSigning` path instead (which requires the `TrustedSigning` PS module in the signing environment), pin `winCodeSign` below `1.3.0`:
+Azure Trusted Signing (`win.sign: { type: "azure" }`) uses the faster `signtool /dlib` path automatically: the default `winCodeSign` (`"latest"` → `1.3.1`) ships the ATS `dlib` + .NET 8 payload, so no pin is required. To **force the legacy** PowerShell `Invoke-TrustedSigning` path instead (which requires the `TrustedSigning` PS module in the signing environment), pin `winCodeSign` below `1.3.0`:
 
 ```json5
 { "build": { "toolsets": { "winCodeSign": "1.2.1" } } } // or "0.0.0" — forces the legacy PowerShell signing path

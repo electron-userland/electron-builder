@@ -221,6 +221,7 @@ export class PkgTarget extends Target {
 
     debug(distInfo)
     await writeFile(distInfoFile, distInfo)
+    await this.packager.emitPkgDistributionCreated(distInfoFile)
   }
 
   private async buildComponentPackage(appPath: string, propertyListOutputFile: string, packageOutputFile: string) {

@@ -399,7 +399,7 @@ export interface BaseS3Options extends PublishConfiguration {
  * Publishing requires choosing where they come from with [awsCredentials](#awsCredentials) `source` (there is no default):
  * - `source: "env"` reads only the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and optional `AWS_SESSION_TOKEN` environment variables (or custom names);
  * - `source: "profile"` reads the named `profile` from the [shared config and credentials files](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)
- *   (static keys, IAM Identity Center / SSO, `credential_process`, assume-role with `source_profile`; `credential_source` and web identity are rejected).
+ *   (static keys, IAM Identity Center / SSO, `credential_process`, assume-role with `source_profile`; `credential_source`, web identity and `login_session` are rejected).
  * - `source: "sso-role-chain"` reads the named assume-role `profile` from the same files and resolves its `source_profile` chain, which must start at an
  *   IAM Identity Center (SSO) profile, with the configured files only.
  *
@@ -502,7 +502,7 @@ export interface S3AwsCredentialsOptions {
    * - `env`: read only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` (or the variable names given in `env`).
    * - `profile`: read the named `profile` from the shared config/credentials files. Static keys, IAM Identity Center (SSO), `credential_process` and assume-role profiles are supported.
    *   An assume-role profile whose `source_profile` chain starts at an SSO profile is rejected; use `sso-role-chain` for it.
-   *   `credential_source` and web identity (`web_identity_token_file`) anywhere in the chain are rejected: they read ambient credentials or settings.
+   *   `credential_source`, web identity (`web_identity_token_file`) and `aws login` sessions (`login_session`) anywhere in the chain are rejected: they read ambient credentials or settings.
    * - `sso-role-chain`: `profile` names an assume-role profile (`role_arn` + `source_profile`). Its `source_profile` chain (up to 5 assume-role hops, no cycles)
    *   must end at an IAM Identity Center (SSO) profile. electron-builder resolves that SSO profile from the configured files, then calls STS AssumeRole for each hop
    *   with the previous hop's credentials. `role_session_name`, `external_id` and `duration_seconds` are honoured per hop; STS uses the named profile's `region`
