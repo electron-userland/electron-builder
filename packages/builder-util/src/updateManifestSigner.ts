@@ -144,18 +144,18 @@ export function loadUpdateSigningKeys(config?: UpdateSigningKeySources | null, b
     pems = configKeys.flatMap(splitPemBlocks)
   } else if (configFiles.length > 0) {
     source = "updateManifest.signingKeyFile"
-    pems = configFiles.flatMap(file => splitPemBlocks(readKeyFile(file, baseDir == null ? file : path.resolve(baseDir, file), source)))
+    pems = configFiles.flatMap((file, index) => splitPemBlocks(readKeyFile(baseDir == null ? file : path.resolve(baseDir, file), source, index, configFiles.length)))
   } else if (envKey != null && envKey.trim().length > 0) {
     source = "ELECTRON_BUILDER_UPDATE_SIGN_KEY"
     // decoded only here, after both config sources were passed over, so a stale value never breaks a build keyed from the config
     pems = decodeSigningKeyEnv(envKey)
   } else if (envFile != null && envFile.trim().length > 0) {
     source = "ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE"
-    pems = envFile
+    const envFiles = envFile
       .split(path.delimiter)
       .map(it => it.trim())
       .filter(it => it.length > 0)
-      .flatMap(file => splitPemBlocks(readKeyFile(file, file, source)))
+    pems = envFiles.flatMap((file, index) => splitPemBlocks(readKeyFile(file, source, index, envFiles.length)))
   } else {
     return []
   }
@@ -163,48 +163,20 @@ export function loadUpdateSigningKeys(config?: UpdateSigningKeySources | null, b
 }
 
 /**
- * Reads a signing key file; an unreadable file is an InvalidConfigurationError naming `source` and the configured `value`, never
- * the file's contents. When `value` looks like key material rather than a path — the key itself put where its path belongs, e.g.
- * the base64 secret in ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE or a PEM in `signingKeyFile` — the value is not shown either.
+ * Reads a signing key file. An unreadable file is an InvalidConfigurationError naming only `source` (and the entry's position when
+ * there are several) and the error code — never the configured value: a secret put where its path belongs (the base64 value in
+ * ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE, a PEM in `signingKeyFile`) would otherwise land in the CI log, and no check on the value's
+ * shape can tell every encoding of a key apart from a path.
  */
-function readKeyFile(value: string, file: string, source: string): string {
+function readKeyFile(file: string, source: string, index: number, count: number): string {
   try {
     return readFileSync(file, "utf8")
   } catch (e: any) {
     const reason = typeof e?.code === "string" ? e.code : "unreadable"
-    if (looksLikeKeyMaterial(value)) {
-      throw new InvalidConfigurationError(
-        `Update manifest signing key file from ${source} cannot be read (${reason}): the value looks like key material, not a path, so it is not shown. ` +
-          `${source} takes the path of a PEM file; provide the key itself via ELECTRON_BUILDER_UPDATE_SIGN_KEY (the PEM file, base64-encoded) or updateManifest.signingKey.`
-      )
-    }
-    throw new InvalidConfigurationError(`Update manifest signing key file ${file} from ${source} cannot be read (${reason})`)
-  }
-}
-
-/** Longer than any path a key file plausibly lives at; a longer value is treated as pasted content, not a path. */
-const MAX_PLAUSIBLE_KEY_PATH_LENGTH = 1024
-
-/**
- * True when a value configured as a key file path is more likely the key itself: PEM text, multi-line text, an implausibly long
- * value, or standard base64 that decodes to PEM text or to a DER private key (a key body without its PEM lines).
- */
-function looksLikeKeyMaterial(value: string): boolean {
-  if (value.includes("-----BEGIN") || /[\r\n]/.test(value) || value.length > MAX_PLAUSIBLE_KEY_PATH_LENGTH) {
-    return true
-  }
-  const decoded = decodeStrictBase64(value.trim())
-  if (decoded == null || decoded.length === 0) {
-    return false
-  }
-  if (decoded.toString("utf8").includes("-----BEGIN")) {
-    return true
-  }
-  try {
-    createPrivateKey({ key: decoded, format: "der", type: "pkcs8" })
-    return true
-  } catch {
-    return false
+    const which = count > 1 ? ` #${index + 1}` : ""
+    throw new InvalidConfigurationError(
+      `Update manifest signing key file${which} from ${source} cannot be read (${reason}); check that it points to a readable PEM file (the value is not shown)`
+    )
   }
 }
 

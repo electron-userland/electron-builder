@@ -329,12 +329,19 @@ test("bad key configuration fails with an InvalidConfigurationError naming its s
 
   const missingError = await rejection(run(dir, [file, "-c.updateManifest.signingKeyFile=keys/missing.pem"]))
   expect(missingError).toBeInstanceOf(InvalidConfigurationError)
-  expect(missingError!.message).toBe(`Update manifest signing key file ${path.join(dir, "keys", "missing.pem")} from updateManifest.signingKeyFile cannot be read (ENOENT)`)
+  expect(missingError!.message).toBe(
+    "Update manifest signing key file from updateManifest.signingKeyFile cannot be read (ENOENT); check that it points to a readable PEM file (the value is not shown)"
+  )
 
-  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", path.join(dir, "keys", "gone.pem"))
+  // with several entries, the failing one is identified by its position, still without its value
+  await writeKey(dir, "current.pem", current.privateKeyPem)
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", [path.join(dir, "keys", "current.pem"), path.join(dir, "keys", "gone.pem")].join(path.delimiter))
   const envError = await rejection(run(dir, [file]))
   expect(envError).toBeInstanceOf(InvalidConfigurationError)
-  expect(envError!.message).toContain("from ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE cannot be read (ENOENT)")
+  expect(envError!.message).toBe(
+    "Update manifest signing key file #2 from ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE cannot be read (ENOENT); check that it points to a readable PEM file (the value is not shown)"
+  )
+  expect(envError!.message).not.toContain("gone.pem")
   vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", undefined)
 
   // a public key where the private key belongs
@@ -357,7 +364,7 @@ test("bad key configuration fails with an InvalidConfigurationError naming its s
   expect(output()).not.toContain(body)
 })
 
-test("key material put where a key file path belongs is never echoed in the error", async ({ expect, tmpDir }) => {
+test("a signing key file value is never echoed, whatever key material was put where its path belongs", async ({ expect, tmpDir }) => {
   const output = captureOutput()
   const dir = await createProject(await tmpDir.createTempDir())
   const file = path.join(dir, "latest.yml")
@@ -366,35 +373,44 @@ test("key material put where a key file path belongs is never echoed in the erro
 
   const pem = current.privateKeyPem
   const body = pem.split("\n")[1]
-  const secrets = {
-    "base64 secret": Buffer.from(pem + "\n").toString("base64"),
-    "PEM text": pem,
-    "key body without PEM lines": pem.split("\n").slice(1, -1).join(""),
+  const canonical = Buffer.from(pem + "\n").toString("base64")
+  const variants = {
+    canonical,
+    quoted: `"${canonical}"`,
+    urlSafe: canonical.replace(/\+/g, "-").replace(/\//g, "_"),
+    unpadded: canonical.replace(/=+$/, ""),
+    truncated: canonical.slice(0, 101),
+    pem,
+    bareBody: pem.split("\n").slice(1, -1).join(""),
   }
-  const assertRedacted = (error: Error | null, source: string, secret: string) => {
+  const expectRedacted = (error: Error | null, source: string, secret: string) => {
     expect(error).toBeInstanceOf(InvalidConfigurationError)
-    expect(error!.message).toContain(`Update manifest signing key file from ${source} cannot be read (`)
-    expect(error!.message).toContain("it is not shown")
-    expect(error!.message).not.toContain(secret)
+    expect(error!.message).toMatch(
+      new RegExp(`^Update manifest signing key file from ${source} cannot be read \\([A-Z]+\\); check that it points to a readable PEM file \\(the value is not shown\\)$`)
+    )
+    expect(error!.message).not.toContain(secret.trim())
+    expect(error!.message).not.toContain(canonical.slice(0, 40))
     expect(error!.message).not.toContain(body)
   }
 
-  for (const secret of Object.values(secrets)) {
+  for (const secret of Object.values(variants)) {
     // the CI secret meant for ELECTRON_BUILDER_UPDATE_SIGN_KEY set on the _FILE variable instead
     vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", secret)
-    assertRedacted(await rejection(run(dir, [file])), "ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", secret)
+    expectRedacted(await rejection(run(dir, [file])), "ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", secret)
     vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", undefined)
 
     // ...or pasted into signingKeyFile, in the config file or as a -c override
     await fsp.writeFile(path.join(dir, "electron-builder.yml"), serializeToYaml({ updateManifest: { signingKeyFile: secret } }))
-    assertRedacted(await rejection(run(dir, [file])), "updateManifest.signingKeyFile", secret)
+    expectRedacted(await rejection(run(dir, [file])), "updateManifest.signingKeyFile", secret)
     await fsp.rm(path.join(dir, "electron-builder.yml"))
-    assertRedacted(await rejection(run(dir, [file, `-c.updateManifest.signingKeyFile=${secret}`])), "updateManifest.signingKeyFile", secret)
+    expectRedacted(await rejection(run(dir, [file, `-c.updateManifest.signingKeyFile=${secret}`])), "updateManifest.signingKeyFile", secret)
   }
   expect(await fsp.readFile(file, "utf8")).toBe(before)
-  expect(output()).not.toContain(body)
+  const printed = output()
+  expect(printed).not.toContain(body)
+  expect(printed).not.toContain(canonical.slice(0, 40))
 
-  // an ordinary missing path is still named, so the error stays actionable
+  // an ordinary missing path gets the same source-only message
   const missing = await rejection(run(dir, [file, "-c.updateManifest.signingKeyFile=keys/update-key.pem"]))
-  expect(missing!.message).toBe(`Update manifest signing key file ${path.join(dir, "keys", "update-key.pem")} from updateManifest.signingKeyFile cannot be read (ENOENT)`)
+  expectRedacted(missing, "updateManifest.signingKeyFile", "keys/update-key.pem")
 })
