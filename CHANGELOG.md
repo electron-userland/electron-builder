@@ -1,3 +1,20 @@
+## [26.18.1](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.18.0...electron-builder@26.18.1) (2026-10-24)
+
+
+### Bug Fixes
+
+* **ci:** pin shard jobs to the planner's smart cache snapshot to fix shard index out of range (v26) ([#10357](https://github.com/electron-userland/electron-builder/issues/10357)) ([385cde0](https://github.com/electron-userland/electron-builder/commit/385cde09e284f0ab0567532ddf78341a156c7773))
+* **ci:** publish v26 releases to the v26 dist-tag only ([#10407](https://github.com/electron-userland/electron-builder/issues/10407)) ([612d63a](https://github.com/electron-userland/electron-builder/commit/612d63af8f762ef9900e6042e0732ce9a11e4cc5))
+* **ci:** publish v26 releases under the correct npm dist-tag ([#10379](https://github.com/electron-userland/electron-builder/issues/10379)) ([e8028d9](https://github.com/electron-userland/electron-builder/commit/e8028d923bc8869a11c93b53465b7583f097ff7d))
+* **mac:** keep an explicit NSAllowsArbitraryLoads from extendInfo (backport [#10353](https://github.com/electron-userland/electron-builder/issues/10353) to v26) ([#10387](https://github.com/electron-userland/electron-builder/issues/10387)) ([f7526d8](https://github.com/electron-userland/electron-builder/commit/f7526d86b88d4d32f8637d5106588a383a8162df))
+* **nsis:** ignore a cached block map that does not describe the cached installer (v26 backport) ([#10338](https://github.com/electron-userland/electron-builder/issues/10338)) ([6f2dd83](https://github.com/electron-userland/electron-builder/commit/6f2dd83818d128a4b112fa4cc0684a7c55418494))
+* **nsis:** pin the LZMA2 block size of differential-aware packages (v26 backport) ([#10336](https://github.com/electron-userland/electron-builder/issues/10336)) ([bb061e8](https://github.com/electron-userland/electron-builder/commit/bb061e84825abb5f187f2d7301cda2299ca17376))
+* **updater:** drop credentials on cross-origin differential download redirects (v26 backport of [#10413](https://github.com/electron-userland/electron-builder/issues/10413)) ([#10427](https://github.com/electron-userland/electron-builder/issues/10427)) ([a1a74b1](https://github.com/electron-userland/electron-builder/commit/a1a74b18587e430fb0e7759861d0930786f26408))
+* **win:** rename electron_wer.dll with the executable for Electron >= 45 (v26 backport of [#10398](https://github.com/electron-userland/electron-builder/issues/10398)) ([#10428](https://github.com/electron-userland/electron-builder/issues/10428)) ([80ec271](https://github.com/electron-userland/electron-builder/commit/80ec271172b86055879845b29ede39f8c5a56483))
+* **win:** sign .msi with SHA-256 by default (backport [#10374](https://github.com/electron-userland/electron-builder/issues/10374) to v26) ([#10399](https://github.com/electron-userland/electron-builder/issues/10399)) ([3fd038f](https://github.com/electron-userland/electron-builder/commit/3fd038f5edec0424821ee9b2b7421ad59491acf6))
+
+
+
 # [26.18.0](https://github.com/electron-userland/electron-builder/compare/electron-builder@26.17.0...electron-builder@26.18.0) (2026-10-20)
 
 
