@@ -5,6 +5,7 @@ import { Crypto as PeculiarCrypto } from "@peculiar/webcrypto"
 
 import { log } from "builder-util"
 import _fsExtra from "fs-extra"
+import { formatWindowsSubjectDn } from "./win/authenticodeSignature.js"
 const { readFile } = _fsExtra
 
 // OID for codeSigning extended key usage
@@ -361,7 +362,8 @@ function decryptLegacyPkcs12Pbe(algId: string, algParams: any, encContent: any, 
  * Mirrors the `certificate-info` subcommand of app-builder-bin.
  * https://github.com/develar/app-builder/blob/master/pkg/codesign/p12.go
  *
- * Returns { commonName, bloodyMicrosoftSubjectDn } on success.
+ * Returns { commonName, bloodyMicrosoftSubjectDn, windowsSubjectDn } on success. `windowsSubjectDn` is the subject as Windows reports it
+ * (`S` for the state, not `ST`), which is what electron-updater compares the publisherName against.
  *
  * Known divergences from the Go binary:
  * - No OpenSSL fallback when the pure PKCS#12 decoder fails for a non-password reason.
@@ -370,7 +372,7 @@ function decryptLegacyPkcs12Pbe(algId: string, algParams: any, encContent: any, 
  *   BloodyMsString. These coincide for pkijs-generated certs (CN-first DER) but may
  *   differ for real CA-issued certs stored in traditional C-first DER order.
  */
-export async function readCertInfo(file: string, password: string): Promise<{ commonName: string; bloodyMicrosoftSubjectDn: string }> {
+export async function readCertInfo(file: string, password: string): Promise<{ commonName: string; bloodyMicrosoftSubjectDn: string; windowsSubjectDn: string }> {
   const pfxDer = await readFile(file)
 
   // asn1js requires a plain ArrayBuffer
@@ -504,7 +506,7 @@ export async function readCertInfo(file: string, password: string): Promise<{ co
     })
     .join(",")
 
-  return { commonName, bloodyMicrosoftSubjectDn }
+  return { commonName, bloodyMicrosoftSubjectDn, windowsSubjectDn: formatWindowsSubjectDn(signingCert.subject) }
 }
 
 /**
@@ -517,7 +519,7 @@ export async function readCertInfo(file: string, password: string): Promise<{ co
  * Returns `null` when the publisher name cannot be determined (e.g. no CN attribute), so
  * callers should fall back to requiring an explicit `publisherName` in that case.
  */
-export async function readCertInfoFromX509(file: string): Promise<{ commonName: string; bloodyMicrosoftSubjectDn: string } | null> {
+export async function readCertInfoFromX509(file: string): Promise<{ commonName: string; bloodyMicrosoftSubjectDn: string; windowsSubjectDn: string } | null> {
   const raw = await readFile(file)
 
   // Support PEM (ASCII armor) and DER (raw binary) encoding.
@@ -557,7 +559,7 @@ export async function readCertInfoFromX509(file: string): Promise<{ commonName: 
     })
     .join(",")
 
-  return { commonName, bloodyMicrosoftSubjectDn }
+  return { commonName, bloodyMicrosoftSubjectDn, windowsSubjectDn: formatWindowsSubjectDn(cert.subject) }
 }
 
 /**

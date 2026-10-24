@@ -271,25 +271,48 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
 
   // ---------------------------------------------------------------------------
   describe("publisher name matching", () => {
-    test("full DN match returns null", async ({ tmpDir }) => {
+    test("full DN match returns success", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       const dn = "CN=Acme Corp, O=Acme Corp, L=Austin, S=TX, C=US"
       mockPsSuccess(makeJson({ subject: dn }))
       expectVerificationSuccess(await verifySignature([dn], defaultFile, logger))
     })
 
-    test("CN-only match returns null and logs a deprecation warning", async ({ tmpDir }) => {
+    test("a bare common name never matches, even when it equals the signer CN — the failure says why", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ subject: "CN=Acme Corp, O=Acme Corp, C=US" }))
-      expectVerificationSuccess(await verifySignature(["Acme Corp"], defaultFile, logger))
-      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Acme Corp"))
+      const message = expectVerificationFailure(await verifySignature(["Acme Corp"], defaultFile, logger))
+      expect(message).toContain("distinguished name")
+      expect(message).toContain("a bare common name never matches")
+    })
+
+    test("a match by a name listing only CN warns when the signer has an O or C, as a bare-name match did before v27", async ({ tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson())
+      expectVerificationSuccess(await verifySignature(["CN=Test Publisher"], defaultFile, logger))
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Signature validated using only the Common Name (CN): CN=Test Publisher"))
+
+      vi.mocked(logger.warn).mockClear()
+      mockPsSuccess(makeJson())
+      expectVerificationSuccess(await verifySignature(["CN=Test Publisher", DEFAULT_SUBJECT], defaultFile, logger))
+      // a signer with nothing but a CN cannot be named more precisely
+      mockPsSuccess(makeJson({ subject: "CN=Solo Developer" }))
+      expectVerificationSuccess(await verifySignature(["CN=Solo Developer"], defaultFile, logger))
+      expect(logger.warn).not.toHaveBeenCalled()
     })
 
     test("second publisher in list matches when first does not", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       const dn = "CN=Real Publisher, O=Real, C=DE"
       mockPsSuccess(makeJson({ subject: dn }))
-      expectVerificationSuccess(await verifySignature(["Fake Corp", dn], defaultFile, logger))
+      expectVerificationSuccess(await verifySignature(["CN=Fake Corp", dn], defaultFile, logger))
+    })
+
+    test("a bare name next to a matching DN is ignored", async ({ tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      const dn = "CN=Real Publisher, O=Real, C=DE"
+      mockPsSuccess(makeJson({ subject: dn }))
+      expectVerificationSuccess(await verifySignature(["Real Publisher", dn], defaultFile, logger))
     })
 
     test("partial DN (publisherName has fewer keys than cert subject) matches on provided keys only", async ({ tmpDir }) => {
@@ -299,15 +322,17 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       expectVerificationSuccess(await verifySignature(["CN=Acme, O=Acme Corp"], defaultFile, logger))
     })
 
-    test("no matching publisher returns non-null error string listing all provided names", async ({ tmpDir }) => {
+    test("no matching publisher returns a failure listing all provided names", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson({ subject: "CN=Real, O=Real, C=US" }))
-      const result = expectVerificationFailure(await verifySignature(["Wrong1", "CN=Wrong2, O=Wrong2, C=US"], defaultFile, logger))
-      expect(result).toContain("Wrong1")
+      const result = expectVerificationFailure(await verifySignature(["CN=Wrong1", "CN=Wrong2, O=Wrong2, C=US"], defaultFile, logger))
+      expect(result).toContain("CN=Wrong1")
       expect(result).toContain("CN=Wrong2")
+      // a configured DN that does not match is not a bare-name problem
+      expect(result).not.toContain("bare common name")
     })
 
-    test("empty publisherNames array always returns non-null error string", async ({ tmpDir }) => {
+    test("empty publisherNames array always returns a failure", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson())
       expectVerificationFailure(await verifySignature([], defaultFile, logger))
@@ -663,12 +688,13 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
       expectVerificationSuccess(await verifySignature([`CN=${fixture.commonName}, O=EB Test Org, C=US`], exe, logger))
     })
 
-    test("CN-only match succeeds and logs the deprecation warning", { timeout: 120_000 }, async (context: TestContext) => {
+    test("a bare common name is rejected even when it equals the signer's CN", { timeout: 120_000 }, async (context: TestContext) => {
       const { logger } = await setup()
       const { fixture, exe } = await signedExecutable(context)
-      expectVerificationSuccess(await verifySignature([fixture.commonName], exe, logger))
-      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining(fixture.commonName))
-      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Distinguished Name"))
+      const message = expectVerificationFailure(await verifySignature([fixture.commonName], exe, logger))
+      expect(message).toContain("a bare common name never matches")
+      // the same certificate verifies with its DN
+      expectVerificationSuccess(await verifySignature([`CN=${fixture.commonName}`], exe, logger))
     })
 
     test("partial DN (subset of the subject's keys) matches when all provided keys agree", { timeout: 120_000 }, async (context: TestContext) => {

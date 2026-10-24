@@ -160,14 +160,24 @@ describe("verifyUpdateInstallerPublisher", () => {
     expect(readSigner).toHaveBeenCalledWith(INSTALLER)
   })
 
-  test("passes with a CN-only publisherName and warns, as electron-updater does", async ({ expect, tmpDir }) => {
+  test("fails with a bare common name publisherName even when it equals the signer CN: electron-updater never matches it", async ({ expect, tmpDir }) => {
+    await expect(verify([await createAppOutDir(tmpDir, "Acme Corp")], signedBy(SUBJECT))).rejects.toThrow(InvalidConfigurationError)
+    await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp")], signedBy(SUBJECT))).resolves.toBeUndefined()
+  })
+
+  test("warns when only a name listing just the CN matches a signer whose subject has an O or C, naming the DN to use", async ({ expect, tmpDir }) => {
     const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
     try {
-      await expect(verify([await createAppOutDir(tmpDir, "Acme Corp")], signedBy(SUBJECT))).resolves.toBeUndefined()
+      await expect(verify([await createAppOutDir(tmpDir, ["CN=Acme Corp", "CN=Old Corp, O=Old Corp, C=US"])], signedBy(SUBJECT))).resolves.toBeUndefined()
       expect(warn).toHaveBeenCalledWith(
         expect.objectContaining({ subject: SUBJECT }),
-        "Signature validated using only CN Acme Corp. Please add your full Distinguished Name (DN) to publisherNames configuration"
+        'publisherName lists only the Common Name (CN) of the certificate, which any certificate issued with that CN matches: set it to "CN=Acme Corp, O=Acme Corporation, C=US"'
       )
+      warn.mockClear()
+      await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp, O=Acme Corporation, C=US")], signedBy(SUBJECT))).resolves.toBeUndefined()
+      // a certificate with nothing but a CN cannot be named more precisely
+      await expect(verify([await createAppOutDir(tmpDir, "CN=Acme Corp")], signedBy("CN=Acme Corp"))).resolves.toBeUndefined()
+      expect(warn).not.toHaveBeenCalled()
     } finally {
       warn.mockRestore()
     }

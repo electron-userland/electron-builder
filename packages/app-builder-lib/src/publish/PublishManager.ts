@@ -12,6 +12,7 @@ import {
   safeStringifyJson,
   serializeToYaml,
 } from "builder-util"
+import { assertDistinguishedPublisherNames } from "../codeSign/win/publisherName.js"
 import {
   BitbucketOptions,
   CancellationToken,
@@ -552,11 +553,16 @@ async function createAppUpdateConfiguration(
   }
   warnAboutGenericFeedQuery(publishConfig)
 
-  if (packager.platform === Platform.WINDOWS && publishConfig.publisherName == null) {
-    const winPackager = packager as WinPackager
-    const publisherName = winPackager.isForceCodeSigningVerification ? await (await winPackager.signingManager.value).computedPublisherName.value : undefined
-    if (publisherName != null) {
-      publishConfig.publisherName = publisherName
+  if (packager.platform === Platform.WINDOWS) {
+    if (publishConfig.publisherName == null) {
+      const winPackager = packager as WinPackager
+      const publisherName = winPackager.isForceCodeSigningVerification ? await (await winPackager.signingManager.value).computedPublisherName.value : undefined
+      if (publisherName != null) {
+        publishConfig.publisherName = publisherName
+      }
+    } else {
+      // a publisherName in the publish configuration is written into app-update.yml as is, and electron-updater never matches a bare common name
+      assertDistinguishedPublisherNames(asArray(publishConfig.publisherName), "publish.publisherName")
     }
   }
 

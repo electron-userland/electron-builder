@@ -86,23 +86,20 @@ export function prepareAuthenticodeSignatureExec(file: string, timeout: number) 
   return preparePowerShellExec(AUTHENTICODE_SIGNATURE_COMMAND, timeout, { [AUTHENTICODE_FILE_ENV]: file })
 }
 
-// Returns true if any entry in publisherNames matches the signing certificate subject.
-export function matchPublisherName(data: any, publisherNames: string[], logger: { warn(message?: any): void }): boolean {
+// Whether a publisher name is a Distinguished Name (at least one `KEY=value` attribute, e.g. "CN=My Company, O=My Company, C=US")
+// rather than a bare common name ("My Company").
+export function isDistinguishedName(name: string): boolean {
+  return parseDn(name).size > 0
+}
+
+// Returns true if any entry in publisherNames is a Distinguished Name whose every attribute matches the signing certificate
+// subject. A bare common name never matches.
+export function matchPublisherName(data: any, publisherNames: string[]): boolean {
   const subject = parseDn(data.SignerCertificate.Subject)
-  for (const name of publisherNames) {
+  return publisherNames.some(name => {
     const dn = parseDn(name)
-    if (dn.size) {
-      // if we have a full DN, compare all values
-      const allKeys = Array.from(dn.keys())
-      if (allKeys.every(key => dn.get(key) === subject.get(key))) {
-        return true
-      }
-    } else if (name === subject.get("CN")!) {
-      logger.warn(`Signature validated using only CN ${name}. Please add your full Distinguished Name (DN) to publisherNames configuration`)
-      return true
-    }
-  }
-  return false
+    return dn.size > 0 && Array.from(dn.keys()).every(key => dn.get(key) === subject.get(key))
+  })
 }
 
 // SignatureType is kept: electron-updater rejects a signature from a Windows security catalog (2) instead of one embedded in the file.

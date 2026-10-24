@@ -40,8 +40,9 @@ test("one-click (e2e)", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
             type: "signtool" as const,
             // An explicit publisherName must now include at least one name matching the signing
             // certificate (the ephemeral test identity, CN=EB Test Code Signing) — extra names for
-            // certificate rotation still pass through to app-update.yml verbatim.
-            publisherName: ["Foo, Inc", "CN=EB Test Code Signing"],
+            // certificate rotation still pass through to app-update.yml verbatim. Every name must be
+            // a distinguished name: a bare common name fails the build.
+            publisherName: ['CN="Foo, Inc"', "CN=EB Test Code Signing"],
           },
         },
         publish: {

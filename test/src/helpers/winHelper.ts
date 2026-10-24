@@ -15,7 +15,7 @@ import { ExpectStatic } from "vitest"
 export async function expectUpdateMetadata(expect: ExpectStatic, context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
   const data = load(await fs.readFile(path.join(context.getResources(Platform.WINDOWS, arch), "app-update.yml"), "utf-8")) as any
   if (requireCodeSign) {
-    expect(data.publisherName).toEqual(["Foo, Inc", "CN=EB Test Code Signing"])
+    expect(data.publisherName).toEqual(['CN="Foo, Inc"', "CN=EB Test Code Signing"])
     delete data.publisherName
   }
 

@@ -31,7 +31,7 @@ function makePackager(azureSignConfig: Partial<WindowsAzureSigningConfig>, vm?: 
 
 const baseAzureOpts: WindowsAzureSigningConfig = {
   type: "azure",
-  publisherName: "Test Publisher",
+  publisherName: "CN=Test Publisher, O=Test Publisher, C=US",
   endpoint: "https://weu.codesigning.azure.net/",
   certificateProfileName: "my-profile",
   codeSigningAccountName: "my-account",
@@ -56,9 +56,14 @@ function captureEncodedCommand(execArgs: ExecArgs): string {
 
 describe("WindowsSignAzureManager.computedPublisherName", () => {
   test("wraps a single publisherName string in an array", async ({ expect }) => {
-    const manager = new WindowsSignAzureManager(makePackager({ ...baseAzureOpts, publisherName: "ACME Corp" }))
+    const manager = new WindowsSignAzureManager(makePackager({ ...baseAzureOpts, publisherName: "CN=ACME Corp, O=ACME Corp, C=US" }))
     const result = await manager.computedPublisherName.value
-    expect(result).toEqual(["ACME Corp"])
+    expect(result).toEqual(["CN=ACME Corp, O=ACME Corp, C=US"])
+  })
+
+  test("throws synchronously when publisherName is a bare common name (electron-updater would reject every update)", ({ expect }) => {
+    const manager = new WindowsSignAzureManager(makePackager({ ...baseAzureOpts, publisherName: "ACME Corp" }))
+    expect(() => manager.computedPublisherName.value).toThrow('not a bare common name: "ACME Corp"')
   })
 
   test("throws synchronously when publisherName is empty", ({ expect }) => {

@@ -126,7 +126,13 @@ interface WindowsSigningSharedOptions {
    *   subject, so electron-builder derives it from this value (or the certificate) to keep them
    *   in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.
    *
-   * Defaults to the Common Name (CN) extracted from your code signing certificate. **Required**
+   * Each name should be a Distinguished Name, e.g. `CN=My Company, O=My Company, C=US`: every
+   * attribute it lists must match the certificate subject as Windows reports it (`S` for the state,
+   * not `ST`). A bare common name (`My Company`) fails a build that writes `app-update.yml` (while
+   * `verifyUpdateCodeSignature` is enabled), because electron-updater rejects every update verified
+   * against it; other builds only compare it with the certificate's Common Name.
+   *
+   * Defaults to the `CN`, `O` and `C` attributes of your code signing certificate's subject. **Required**
    * (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom
    * [sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —
    * otherwise the build fails. Set to `null` to opt out.
@@ -362,7 +368,8 @@ export interface WindowsAzureSigningConfig {
    * The publisher name to associate with the signature, exactly as it appears in the certificate
    * issued by your Trusted Signing certificate profile. Required. Used for
    * [update verification](#verifyUpdateCodeSignature) (embedded in `app-update.yml` and checked by
-   * electron-updater) and must match the certificate subject.
+   * electron-updater) and must match the certificate subject. Should be a Distinguished Name, e.g.
+   * `CN=My Company, O=My Company, C=US`; a bare common name fails a build that writes `app-update.yml`.
    *
    * @see https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073
    */

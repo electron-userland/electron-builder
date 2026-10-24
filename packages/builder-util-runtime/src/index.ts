@@ -1,4 +1,5 @@
 export {
+  isDistinguishedName,
   matchPublisherName,
   parseAuthenticodeSignatureOutput,
   POWERSHELL_ASCII_ESCAPE_FUNCTION,

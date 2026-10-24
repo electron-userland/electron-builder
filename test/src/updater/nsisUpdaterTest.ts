@@ -411,7 +411,7 @@ test.ifWindows("invalid signature", config, async ({ expect }) => {
     updater.updateConfigPath = await writeUpdateConfig({
       provider: "generic",
       url,
-      publisherName: ["Foo Bar"],
+      publisherName: ["CN=Foo Bar, O=Foo Bar, C=US"],
     })
     const actualEvents = trackEvents(updater)
     await assertThat(

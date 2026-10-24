@@ -10,6 +10,7 @@ import { resolveToolsetVersion } from "../../toolsets/version.js"
 import { VmManager } from "../../vm/vm.js"
 import { WineVmManager } from "../../vm/WineVm.js"
 import { WinPackager } from "../../winPackager.js"
+import { assertDistinguishedPublisherNames } from "./publisherName.js"
 import { SignManager } from "./signManager.js"
 import { WindowsSignOptions } from "./windowsCodeSign.js"
 import { SignFileResult } from "../signResult.js"
@@ -24,7 +25,7 @@ export class WindowsSignAzureManager implements SignManager {
   private readonly vm: VmManager = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine, this.packager.buildResourcesDir)
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(() => {
-    return Promise.resolve(asArray(this.publisherName))
+    return Promise.resolve(assertDistinguishedPublisherNames(asArray(this.publisherName)))
   })
 
   private get publisherName(): string {

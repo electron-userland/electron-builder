@@ -1,4 +1,4 @@
-import { matchPublisherName, newError, parseAuthenticodeSignatureOutput, prepareAuthenticodeSignatureExec } from "builder-util-runtime"
+import { isDistinguishedName, matchPublisherName, newError, parseAuthenticodeSignatureOutput, parseDn, prepareAuthenticodeSignatureExec } from "builder-util-runtime"
 import { execFile, ExecFileException } from "child_process"
 import type { VerifyUpdateFileResult } from "./types.js"
 import { Logger } from "./types.js"
@@ -61,6 +61,20 @@ function checkLiteralPath(data: any, updateFile: string, logger: Logger): void {
   }
 }
 
+// A name that lists only CN makes the check a bare name made: any certificate issued with that Common Name matches it. Warns when the
+// signer could be identified more precisely, as electron-updater 6 did for a bare name.
+function warnIfMatchedOnlyByCommonName(data: any, publisherNames: Array<string>, logger: Logger): void {
+  const matching = publisherNames.filter(name => matchPublisherName(data, [name]))
+  const onlyCommonName = (name: string) => [...parseDn(name).keys()].every(key => key === "CN")
+  const subject = parseDn(data.SignerCertificate.Subject)
+  if (matching.every(onlyCommonName) && (subject.has("O") || subject.has("C"))) {
+    logger.warn(
+      `Signature validated using only the Common Name (CN): ${matching.join(" | ")}. Add the O and C of the certificate subject to publisherName (e.g. "CN=My Company, O=My Company, C=US"): ` +
+        "a name listing only CN matches any certificate issued with that CN."
+    )
+  }
+}
+
 // Parses Get-AuthenticodeSignature JSON, checks the LiteralPath guard, and matches against publisherNames. Returns a
 // success/failure result; throws when the output cannot be parsed or names another file.
 function evaluateSignatureResult(stdout: string, publisherNames: string[], updateFile: string, logger: Logger): VerifyUpdateFileResult {
@@ -75,8 +89,11 @@ function evaluateSignatureResult(stdout: string, publisherNames: string[], updat
     checkLiteralPath(data, updateFile, logger)
     if (data.SignatureType === CATALOG_SIGNATURE_TYPE) {
       reason = "Windows reports the signer of a Windows security catalog for the update file instead of a signature embedded in it. "
-    } else if (matchPublisherName(data, publisherNames, logger)) {
+    } else if (matchPublisherName(data, publisherNames)) {
+      warnIfMatchedOnlyByCommonName(data, publisherNames, logger)
       return { response: "success" }
+    } else if (!publisherNames.some(isDistinguishedName)) {
+      reason = 'publisherName must be the distinguished name of the signing certificate\'s subject (e.g. "CN=My Company, O=My Company, C=US"), a bare common name never matches. '
     }
   }
   const result = `${reason}publisherNames: ${publisherNames.join(" | ")}, raw info: ` + JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2)

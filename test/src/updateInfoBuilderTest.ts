@@ -908,6 +908,19 @@ test("app-update.yml: the publisherName configured for a custom sign hook is wri
   expect(publishConfig?.publisherName).toEqual(["CN=My Company, O=My Company, C=US"])
 })
 
+// a publisherName in the publish configuration (a private option) is written into app-update.yml as is
+test("app-update.yml: a bare common name in publish.publisherName fails, a distinguished name is written", async ({ expect }) => {
+  const packagerPublishing = (publisherName: Array<string>) => {
+    const packager = makeWinAppUpdateConfigPackager({ type: "signtool" })
+    packager.config = { publish: { provider: "generic", url: "https://example.com/updates", publisherName } }
+    return packager
+  }
+  await expect(getAppUpdatePublishConfiguration(packagerPublishing(["Acme Corp"]), null, Arch.x64, false)).rejects.toThrow(/publish\.publisherName must be the distinguished name/)
+  await expect(getAppUpdatePublishConfiguration(packagerPublishing(["CN=Acme Corp, O=Acme Corp, C=US"]), null, Arch.x64, false)).resolves.toMatchObject({
+    publisherName: ["CN=Acme Corp, O=Acme Corp, C=US"],
+  })
+})
+
 test("app-update.yml: verifyUpdateCodeSignature: false skips publisherName for a custom sign hook", async ({ expect }) => {
   const packager = makeWinAppUpdateConfigPackager({ type: "signtool", sign: "./customSign.js" }, false)
   const publishConfig = await getAppUpdatePublishConfiguration(packager, null, Arch.x64, false)

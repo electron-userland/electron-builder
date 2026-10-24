@@ -1,11 +1,12 @@
 import { InvalidConfigurationError, log } from "builder-util"
-import { matchPublisherName } from "builder-util-runtime"
+import { matchPublisherName, parseDn } from "builder-util-runtime"
 import { readFile } from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
 import type { WinPackager } from "../../winPackager.js"
 import { isSignResultSigned, SigningResult } from "../signResult.js"
 import { AuthenticodeSignatureStatus, AuthenticodeSignerReader, readAuthenticodeSigner } from "./authenticodeSignature.js"
+import { publisherNameFromSubject } from "./publisherName.js"
 
 export interface UpdatePublisherVerificationOptions {
   /** Reads the embedded signer of the signed file. Defaults to {@link readAuthenticodeSigner}. */
@@ -114,15 +115,22 @@ export async function verifyUpdateInstallerPublisher(
   }
   // matchPublisherName takes the parsed Get-AuthenticodeSignature output, as electron-updater passes it
   const signature = { SignerCertificate: { Subject: signer.subject } }
-  // electron-updater's warning for a match by Common Name (CN) only
-  const logger = { warn: (message: string) => log.warn({ file: log.filePath(file), subject: signer.subject }, message) }
+  const listsOnlyCommonName = (name: string) => [...parseDn(name).keys()].every(key => key === "CN")
   for (const publisherNames of publisherNameSets) {
-    if (!matchPublisherName(signature, publisherNames, logger)) {
+    if (!matchPublisherName(signature, publisherNames)) {
       throw new InvalidConfigurationError(
         `${log.filePath(file)} is signed by a certificate that does not match the publisherName electron-updater verifies updates against, so every update installed from it would be rejected.\n` +
           `  Configured publisherName: ${configured(publisherNames)}\n` +
           `  Signer certificate subject: ${signer.subject}\n` +
           FIX_HINT
+      )
+    }
+    // a name that lists only CN is matched by any certificate issued with that Common Name, like the bare names electron-updater rejects
+    const suggested = publisherNameFromSubject(signer.subject)
+    if (publisherNames.filter(name => matchPublisherName(signature, [name])).every(listsOnlyCommonName) && suggested != null && !listsOnlyCommonName(suggested)) {
+      log.warn(
+        { file: log.filePath(file), publisherName: configured(publisherNames), subject: signer.subject },
+        `publisherName lists only the Common Name (CN) of the certificate, which any certificate issued with that CN matches: set it to "${suggested}"`
       )
     }
   }
