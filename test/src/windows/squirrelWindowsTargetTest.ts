@@ -3,7 +3,8 @@ import { Platform } from "app-builder-lib"
 import { ArchiveTarget } from "app-builder-lib/src/targets/ArchiveTarget"
 import { Arch } from "builder-util"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows/src/SquirrelWindowsTarget"
-import { mkdtemp, readFile, rm, writeFile } from "fs/promises"
+import { existsSync } from "fs"
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "fs/promises"
 import { arch as osArch } from "os"
 import * as path from "path"
 import { tmpdir } from "os"
@@ -53,7 +54,12 @@ describe("SquirrelWindowsTarget.select7zipArch", () => {
 
 describe("SquirrelWindowsTarget.build", () => {
   // the zip/7z archive of a pack is still reading appOutDir when Squirrel.Windows (a sync target) starts building it
-  function createBuild() {
+  async function createBuild(root: string, appOutDir: string) {
+    const vendorDirectory = path.join(root, "vendor")
+    await mkdir(vendorDirectory)
+    await mkdir(appOutDir)
+    await writeFile(path.join(vendorDirectory, "Squirrel.exe"), "Squirrel.exe")
+
     const events: Array<string> = []
     let finishZip: () => void = () => {}
     const zipDone = new Promise<void>(resolve => (finishZip = resolve))
@@ -73,21 +79,25 @@ describe("SquirrelWindowsTarget.build", () => {
         }
       },
     }
-    const zip = new ArchiveTarget("zip", "/out", packager)
+    const zip = new ArchiveTarget("zip", root, packager)
 
     const squirrel: any = Object.create(SquirrelWindowsTarget.prototype)
     squirrel.options = {}
-    squirrel.outDir = "/out"
+    squirrel.outDir = root
     squirrel.packager = packager
-    squirrel.buildQueueManager = { add: vi.fn(() => events.push("installer queued")) }
-    squirrel.computeEffectiveDistOptions = async () => ({ vendorDirectory: "/vendor" })
+    // the queued installer work must find every file Squirrel adds to appOutDir already there
+    squirrel.buildQueueManager = {
+      add: vi.fn(() => events.push(existsSync(path.join(appOutDir, "Squirrel.exe")) ? "installer queued (Squirrel.exe in appOutDir)" : "installer queued")),
+    }
+    squirrel.computeEffectiveDistOptions = async () => ({ vendorDirectory })
     squirrel.generateStubExecutableExe = vi.fn(async () => events.push("stub written"))
-    return { events, finishZip, packager, zip, squirrel }
+    return { events, finishZip, zip, squirrel }
   }
 
-  test("waits for the archive of the same pack before writing the stub into appOutDir, even once finishBuild() drained it", async () => {
-    const { events, finishZip, zip, squirrel } = createBuild()
-    const appOutDir = "/out/win-unpacked"
+  test("waits for the archive of the same pack before writing into appOutDir, even once finishBuild() drained it", async ({ tmpDir }) => {
+    const root = await tmpDir.createTempDir()
+    const appOutDir = path.join(root, "win-unpacked")
+    const { events, finishZip, zip, squirrel } = await createBuild(root, appOutDir)
     await zip.build(appOutDir, Arch.x64)
     // packager.ts calls finishBuild() of the async targets right after pack(), before Squirrel reaches its wait
     const zipFinished = expect(zip.finishBuild()).rejects.toThrow("archive stub")
@@ -95,18 +105,21 @@ describe("SquirrelWindowsTarget.build", () => {
     const build = squirrel.build(appOutDir, Arch.x64)
     await new Promise(resolve => setTimeout(resolve, 10))
     expect(squirrel.generateStubExecutableExe).not.toHaveBeenCalled()
+    expect(existsSync(path.join(appOutDir, "Squirrel.exe"))).toBe(false)
 
     finishZip()
     await build
-    expect(events).toEqual(["zip done", "stub written", "installer queued"])
+    expect(events).toEqual(["zip done", "stub written", "installer queued (Squirrel.exe in appOutDir)"])
     await zipFinished
   })
 
-  test("does not wait for the archive of another arch", async () => {
-    const { events, zip, squirrel } = createBuild()
+  test("does not wait for the archive of another arch", async ({ tmpDir }) => {
+    const root = await tmpDir.createTempDir()
+    const appOutDir = path.join(root, "win-ia32-unpacked")
+    const { events, zip, squirrel } = await createBuild(root, appOutDir)
     // the x64 archive never finishes
-    await zip.build("/out/win-unpacked", Arch.x64)
-    await squirrel.build("/out/win-ia32-unpacked", Arch.ia32)
-    expect(events).toEqual(["stub written", "installer queued"])
+    await zip.build(path.join(root, "win-unpacked"), Arch.x64)
+    await squirrel.build(appOutDir, Arch.ia32)
+    expect(events).toEqual(["stub written", "installer queued (Squirrel.exe in appOutDir)"])
   }, 5000)
 })
