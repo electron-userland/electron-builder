@@ -176,15 +176,16 @@ describe("resolveMonoPath", () => {
     expect(vi.mocked(findExecutable).mock.calls).toEqual([[candidates]])
   })
 
-  test("checks the documented install locations", () => {
+  test("checks the documented install locations in the order of the default PATH", () => {
+    // in the order of the default PATH
     expect(HOST_MONO_PATHS.darwin).toEqual([
-      "/Library/Frameworks/Mono.framework/Versions/Current/Commands/mono",
-      "/Library/Frameworks/Mono.framework/Versions/Current/bin/mono",
       "/opt/homebrew/bin/mono",
       "/usr/local/bin/mono",
       "/opt/local/bin/mono",
+      "/Library/Frameworks/Mono.framework/Versions/Current/Commands/mono",
+      "/Library/Frameworks/Mono.framework/Versions/Current/bin/mono",
     ])
-    expect(HOST_MONO_PATHS.linux).toEqual(["/usr/bin/mono", "/usr/local/bin/mono", "/home/linuxbrew/.linuxbrew/bin/mono"])
+    expect(HOST_MONO_PATHS.linux).toEqual(["/home/linuxbrew/.linuxbrew/bin/mono", "/usr/local/bin/mono", "/usr/bin/mono"])
   })
 
   test.each(["darwin", "linux"] as const)("on %s fails with a configuration error naming the locations and the option when Mono is not installed", platform => {

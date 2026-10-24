@@ -8329,7 +8329,7 @@
           ]
         },
         "monoPath": {
-          "description": "The absolute path of the Mono executable (`mono`) that runs the Squirrel.Windows tools when building on macOS or Linux.\nNot used on Windows.\n\nMono is started by absolute path and never looked up on `PATH`. When this is not set, the first of these that exists is used:\n- macOS: `/Library/Frameworks/Mono.framework/Versions/Current/Commands/mono`,\n  `/Library/Frameworks/Mono.framework/Versions/Current/bin/mono`, `/opt/homebrew/bin/mono`, `/usr/local/bin/mono`,\n  `/opt/local/bin/mono`\n- Linux: `/usr/bin/mono`, `/usr/local/bin/mono`, `/home/linuxbrew/.linuxbrew/bin/mono`\n\nIf Mono is not found there, the build fails with a configuration error. Set this to use a Mono installed elsewhere.",
+          "description": "The absolute path of the Mono executable (`mono`) that runs the Squirrel.Windows tools when building on macOS or Linux.\nNot used on Windows.\n\nMono is started by absolute path and never looked up on `PATH`. When this is not set, the first of these that exists is\nused, in the order of the default `PATH`:\n- macOS: `/opt/homebrew/bin/mono`, `/usr/local/bin/mono`, `/opt/local/bin/mono`,\n  `/Library/Frameworks/Mono.framework/Versions/Current/Commands/mono`, `/Library/Frameworks/Mono.framework/Versions/Current/bin/mono`\n- Linux: `/home/linuxbrew/.linuxbrew/bin/mono`, `/usr/local/bin/mono`, `/usr/bin/mono`\n\nIf Mono is not found there, the build fails with a configuration error. Set this to use a Mono installed elsewhere.",
           "type": [
             "null",
             "string"
