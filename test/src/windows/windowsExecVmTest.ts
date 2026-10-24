@@ -1,7 +1,7 @@
 import { ParallelsVm, ParallelsVmManager } from "app-builder-lib/src/vm/ParallelsVm.js"
 import { getWindowsExecVm, VmManager } from "app-builder-lib/src/vm/vm.js"
 import { WineVmManager } from "app-builder-lib/src/vm/WineVm.js"
-import { findPrlctl, PRLCTL_PATHS } from "app-builder-lib/src/vm/systemTools.js"
+import { findPrlctl, PRLCTL_PATHS } from "app-builder-lib/src/util/systemTools.js"
 import { DebugLogger, exec } from "builder-util"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 
@@ -13,8 +13,8 @@ vi.mock("builder-util", async importOriginal => {
   return { ...actual, exec: vi.fn<typeof actual.exec>() }
 })
 // `prlctl` is started by absolute path, found only at its install locations; stand in for Parallels Desktop being installed
-vi.mock("app-builder-lib/src/vm/systemTools.js", async importOriginal => {
-  const actual = await importOriginal<typeof import("app-builder-lib/src/vm/systemTools.js")>()
+vi.mock("app-builder-lib/src/util/systemTools.js", async importOriginal => {
+  const actual = await importOriginal<typeof import("app-builder-lib/src/util/systemTools.js")>()
   return { ...actual, findPrlctl: vi.fn<typeof actual.findPrlctl>() }
 })
 const PRLCTL = PRLCTL_PATHS[0]

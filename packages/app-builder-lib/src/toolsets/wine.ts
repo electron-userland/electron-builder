@@ -3,12 +3,13 @@ import { Nullish } from "builder-util-runtime"
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
+import { findExecutable, findHostWine, HOST_WINE_PATHS } from "../util/systemTools.js"
 import { getCustomToolsetPath } from "./custom.js"
 
 const githubOrgRepo = "electron-userland/electron-builder-binaries"
 
 // What an unset / null / "latest" config resolves to. Not necessarily a bundle version: the published
-// wine@1.0.1 bundles ship no PE builtins, so the default is the host wine on PATH.
+// wine@1.0.1 bundles ship no PE builtins, so the default is the host wine (at a fixed install location).
 const WINE_LATEST = "system"
 
 const wineToolsChecksums: Record<string, Record<string, string>> = {
@@ -36,15 +37,18 @@ export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, reso
   let toolsetPath: string
   let execSubPath: string
 
-  if (typeof toolset === "object") {
+  if (typeof toolset === "object" && "path" in toolset) {
+    // Host wine at a path the user configured explicitly
+    return { execPath: configuredWinePath(toolset.path), env: defaultEnv }
+  } else if (typeof toolset === "object") {
     // Custom toolset — honored on every platform (never overridden by the host-wine branch below).
     toolsetPath = await getCustomToolsetPath(toolset, resourcesDir)
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
   } else if (toolset === "system" || process.platform === "linux") {
-    // Host wine on PATH. Linux ships no portable bundle so it always lands here; other platforms
-    // opt in with `toolsets.wine: "system"` — the replacement for the `USE_SYSTEM_WINE` env var
+    // Host wine, only from its fixed install locations — never looked up on PATH. Linux ships no portable bundle so it always
+    // lands here; other platforms opt in with `toolsets.wine: "system"` — the replacement for the `USE_SYSTEM_WINE` env var
     // removed in v27.
-    return { execPath: "wine", env: defaultEnv }
+    return { execPath: systemWinePath(), env: defaultEnv }
   } else if (toolset === "0.0.0") {
     // Explicit opt-in to the legacy wine-4.0.1-mac bundle (pre-v27).
     toolsetPath = await downloadBuilderToolset({
@@ -76,6 +80,25 @@ export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, reso
       LD_LIBRARY_PATH: [wineLibPath, process.env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
     },
   }
+}
+
+function systemWinePath(): string {
+  const wine = findHostWine()
+  if (wine == null) {
+    const paths = HOST_WINE_PATHS[process.platform] ?? []
+    throw new InvalidConfigurationError(
+      `Wine is used only from its install locations (${paths.join(", ")}), where it was not found. ` +
+        `To use a Wine installed elsewhere, set its absolute path: "toolsets": { "wine": { "path": "/absolute/path/to/wine" } }`
+    )
+  }
+  return wine
+}
+
+function configuredWinePath(winePath: string): string {
+  if (!path.isAbsolute(winePath) || findExecutable([winePath]) == null) {
+    throw new InvalidConfigurationError(`toolsets.wine.path must be the absolute path of the wine executable, but "${winePath}" is not an executable file at an absolute path`)
+  }
+  return winePath
 }
 
 async function createWineEnvironment(toolsetPath: string, execSubPath: string) {

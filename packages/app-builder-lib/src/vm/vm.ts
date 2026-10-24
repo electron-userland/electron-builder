@@ -4,7 +4,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { ParallelsVm } from "./ParallelsVm.js"
-import { findHostPwsh, HOST_PWSH_PATHS, windowsPowerShellPath, windowsPwshPath } from "./systemTools.js"
+import { findHostPwsh, findHostWine, HOST_PWSH_PATHS, windowsPowerShellPath, windowsPwshPath } from "../util/systemTools.js"
 
 export class VmManager {
   get pathSep(): string {
@@ -51,13 +51,13 @@ export class VmManager {
   })
 }
 
-export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager> {
+export async function getWindowsVm(debugLogger: DebugLogger, wineToolset?: ToolsetConfig["wine"]): Promise<VmManager> {
   const parallelsVmModule = await import("./ParallelsVm.js")
   let vmList: ParallelsVm[] = []
   try {
     vmList = await parseWindowsVmList(debugLogger)
   } catch (_error) {
-    if (findHostPwsh() != null && (await isWineAvailable.value)) {
+    if (findHostPwsh() != null && isWineAvailable(wineToolset)) {
       const vmModule = await import("./PwshVm.js")
       return new vmModule.PwshVmManager()
     }
@@ -113,15 +113,7 @@ export async function getLinuxVm(debugLogger: DebugLogger): Promise<VmManager | 
   }
 }
 
-const isWineAvailable = new Lazy(async () => {
-  return isCommandAvailable("wine", ["--version"])
-})
-
-export const isCommandAvailable = async (command: string, args: string[]) => {
-  try {
-    await exec(command, args)
-    return true
-  } catch {
-    return false
-  }
+// Without running anything: wine is configured explicitly, or installed at one of its fixed locations (it is never looked up on PATH)
+function isWineAvailable(wineToolset: ToolsetConfig["wine"] | undefined): boolean {
+  return (typeof wineToolset === "object" && wineToolset != null) || findHostWine() != null
 }

@@ -1,8 +1,10 @@
 import { ParallelsVmManager } from "app-builder-lib/src/vm/ParallelsVm.js"
 import { PwshVmManager } from "app-builder-lib/src/vm/PwshVm.js"
+import { streamSpawnToFile } from "app-builder-lib/src/util/streamSpawnToFile.js"
 import {
   findExecutable,
   findHostPwsh,
+  findHostWine,
   findPrlctl,
   HOST_PWSH_PATHS,
   PARALLELS_GUEST_PWSH,
@@ -10,21 +12,26 @@ import {
   PRLCTL_PATHS,
   windowsPowerShellPath,
   windowsPwshPath,
-} from "app-builder-lib/src/vm/systemTools.js"
+} from "app-builder-lib/src/util/systemTools.js"
 import { getWindowsVm, VmManager } from "app-builder-lib/src/vm/vm.js"
 import { DebugLogger, exec, InvalidConfigurationError, log } from "builder-util"
+import { spawn } from "child_process"
 import { promises as fs } from "fs"
 import * as path from "path"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 
-// System tools run by the VM managers are started by absolute path; `exec` is mocked so nothing is ever spawned.
+// System tools are started by absolute path; `exec` and `spawn` are mocked so nothing is ever started.
 vi.mock("builder-util", async importOriginal => {
   const actual = await importOriginal<typeof import("builder-util")>()
   return { ...actual, exec: vi.fn<typeof actual.exec>() }
 })
-vi.mock("app-builder-lib/src/vm/systemTools.js", async importOriginal => {
-  const actual = await importOriginal<typeof import("app-builder-lib/src/vm/systemTools.js")>()
-  return { ...actual, findHostPwsh: vi.fn(actual.findHostPwsh), findPrlctl: vi.fn(actual.findPrlctl) }
+vi.mock("child_process", async importOriginal => {
+  const actual = await importOriginal<typeof import("child_process")>()
+  return { ...actual, spawn: vi.fn<typeof actual.spawn>() }
+})
+vi.mock("app-builder-lib/src/util/systemTools.js", async importOriginal => {
+  const actual = await importOriginal<typeof import("app-builder-lib/src/util/systemTools.js")>()
+  return { ...actual, findHostPwsh: vi.fn(actual.findHostPwsh), findHostWine: vi.fn(actual.findHostWine), findPrlctl: vi.fn(actual.findPrlctl) }
 })
 
 const POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
@@ -44,6 +51,8 @@ beforeEach(() => {
   vi.mocked(exec).mockReset()
   vi.mocked(findHostPwsh).mockReset().mockReturnValue(null)
   vi.mocked(findPrlctl).mockReset().mockReturnValue(null)
+  vi.mocked(findHostWine).mockReset().mockReturnValue(null)
+  vi.mocked(spawn).mockReset()
   vi.stubEnv("SystemRoot", "C:\\Windows")
   vi.stubEnv("windir", "")
   vi.stubEnv("ProgramFiles", "C:\\Program Files")
@@ -174,13 +183,42 @@ describe("getWindowsVm", () => {
     }
   )
 
-  test("never runs a bare pwsh, powershell or prlctl", async ({ expect }) => {
+  test("never runs a bare pwsh, powershell, prlctl or wine", async ({ expect }) => {
     setPlatform("darwin")
     vi.mocked(findHostPwsh).mockReturnValue(HOST_PWSH_PATHS.darwin?.[0] ?? null)
+    vi.mocked(findHostWine).mockReturnValue("/opt/homebrew/bin/wine")
     vi.mocked(exec).mockResolvedValue("")
     const vm = await getWindowsVm(new DebugLogger(false))
     expect(vm).toBeInstanceOf(PwshVmManager)
     await vm.powershellCommand.value
-    expect(executedFiles().filter(file => /^(pwsh|powershell|prlctl)(\.exe)?$/i.test(file))).toEqual([])
+    expect(executedFiles().filter(file => !path.isAbsolute(file))).toEqual([])
+  })
+
+  test("counts an explicitly configured wine as available without running it", async ({ expect }) => {
+    setPlatform("linux")
+    vi.mocked(findHostPwsh).mockReturnValue("/opt/microsoft/powershell/7/pwsh")
+    expect(await getWindowsVm(new DebugLogger(false), { path: "/opt/my-wine/bin/wine" })).toBeInstanceOf(PwshVmManager)
+    expect(vi.mocked(exec)).not.toHaveBeenCalled()
+  })
+})
+
+describe("streamSpawnToFile on Windows", () => {
+  test("wraps the command in Windows PowerShell started by absolute path", async ({ expect, tmpDir }) => {
+    setPlatform("win32")
+    const dir = await tmpDir.getTempDir({ prefix: "stream-spawn" })
+    await fs.mkdir(dir, { recursive: true })
+    vi.mocked(spawn).mockImplementation(() => {
+      throw new Error("not started")
+    })
+    await expect(streamSpawnToFile("npm", ["list"], dir, path.join(dir, "out.json"), {})).rejects.toThrow("not started")
+    expect(vi.mocked(spawn).mock.calls.map(call => call[0])).toEqual([POWERSHELL])
+  })
+
+  test("rejects without starting anything when SystemRoot is not absolute", async ({ expect, tmpDir }) => {
+    setPlatform("win32")
+    vi.stubEnv("SystemRoot", "Windows")
+    const dir = await tmpDir.getTempDir({ prefix: "stream-spawn" })
+    await expect(streamSpawnToFile("npm", ["list"], dir, path.join(dir, "out.json"), {})).rejects.toThrow("SystemRoot is not an absolute path (Windows)")
+    expect(vi.mocked(spawn)).not.toHaveBeenCalled()
   })
 })

@@ -66,6 +66,27 @@ export function findHostPwsh(): string | null {
   return findExecutable(HOST_PWSH_PATHS[process.platform] ?? [])
 }
 
+/**
+ * Install locations of Wine: the WineHQ app bundles (Homebrew casks `wine-stable`, `wine@devel`, `wine@staging`), Homebrew
+ * and MacPorts on macOS; distribution and WineHQ packages (which install to /opt/wine-<branch>) and source builds on Linux.
+ */
+export const HOST_WINE_PATHS: Partial<Record<NodeJS.Platform, ReadonlyArray<string>>> = {
+  darwin: [
+    "/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine",
+    "/Applications/Wine Devel.app/Contents/Resources/wine/bin/wine",
+    "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine",
+    "/opt/homebrew/bin/wine",
+    "/usr/local/bin/wine",
+    "/opt/local/bin/wine",
+  ],
+  linux: ["/usr/bin/wine", "/usr/local/bin/wine", "/opt/wine-stable/bin/wine", "/opt/wine-devel/bin/wine", "/opt/wine-staging/bin/wine"],
+}
+
+/** Wine of this macOS or Linux machine, or null when it is not installed at one of {@link HOST_WINE_PATHS}. */
+export function findHostWine(): string | null {
+  return findExecutable(HOST_WINE_PATHS[process.platform] ?? [])
+}
+
 /** The Parallels Desktop command line tool, or null when it is not installed at one of {@link PRLCTL_PATHS} (or this is not macOS). */
 export function findPrlctl(): string | null {
   return process.platform === "darwin" ? findExecutable(PRLCTL_PATHS) : null

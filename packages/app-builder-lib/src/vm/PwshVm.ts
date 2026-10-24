@@ -1,6 +1,6 @@
 import { log } from "builder-util"
 import { Lazy } from "lazy-val"
-import { findHostPwsh, hostPwshNotFoundError } from "./systemTools.js"
+import { findHostPwsh, hostPwshNotFoundError } from "../util/systemTools.js"
 import { VmManager } from "./vm.js"
 
 export class PwshVmManager extends VmManager {

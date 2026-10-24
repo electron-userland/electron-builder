@@ -20,6 +20,7 @@ export {
   PackContext,
   ToolsetConfig,
   ToolsetCustom,
+  ToolsetExecutable,
 } from "./configuration.js"
 export {
   BeforeBuildContext,

@@ -1,7 +1,7 @@
 import { DebugLogger, ExtraSpawnOptions, exec, log, sanitizeDirPath, spawn, stripSensitiveEnvVars } from "builder-util"
 import { ExecFileOptions, SpawnOptions, execFileSync } from "child_process"
 import { homedir } from "os"
-import { findPrlctl, PARALLELS_GUEST_PWSH, PARALLELS_GUEST_WINDOWS_POWERSHELL, PRLCTL_PATHS } from "./systemTools.js"
+import { findPrlctl, PARALLELS_GUEST_PWSH, PARALLELS_GUEST_WINDOWS_POWERSHELL, PRLCTL_PATHS } from "../util/systemTools.js"
 import { VmManager } from "./vm.js"
 
 // `prlctl` by absolute path; throws when Parallels Desktop is not installed (callers treat that as "no Parallels VM")

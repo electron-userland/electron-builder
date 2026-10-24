@@ -742,20 +742,27 @@ export interface ToolsetConfig {
    * |---------|-------------|-----------------|-------|
    * | `"0.0.0"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |
    * | `"1.0.1"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |
-   * | `"system"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |
+   * | `"system"` | host install | macOS, Linux | Uses the host Wine at a fixed install location instead of a bundle |
    *
    * `"system"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and
    * is what `"latest"` (the default) currently resolves to on every platform: the published `"1.0.1"`
    * bundles ship no PE builtins, so a host Wine installation is required to build Windows targets on
    * macOS or Linux.
    *
-   * To use a custom Wine binary, use a `ToolsetCustom` object.
+   * The host Wine is never looked up on `PATH`. `"system"` uses the first of these that exists:
+   * - macOS: `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine` (likewise `Wine Devel.app`,
+   *   `Wine Staging.app`), `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine`
+   * - Linux: `/usr/bin/wine`, `/usr/local/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`,
+   *   `/opt/wine-staging/bin/wine`
+   *
+   * To use a Wine installed elsewhere, set its absolute path with a {@link ToolsetExecutable} object
+   * (`{ "path": "/opt/my-wine/bin/wine" }`). To use a custom Wine bundle, use a `ToolsetCustom` object.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly wine?: "0.0.0" | "1.0.1" | "system" | ToolsetCustom | "latest"
+  readonly wine?: "0.0.0" | "1.0.1" | "system" | ToolsetCustom | ToolsetExecutable | "latest"
 
   /**
    * Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)
@@ -914,6 +921,19 @@ export interface ToolsetCustom {
    * Falls back to the first 8 hex characters of the `checksum` digest when omitted.
    */
   readonly version?: string
+}
+
+/**
+ * An executable already installed on the build machine, used in place of a toolset bundle.
+ *
+ * @example
+ * ```json
+ * { "toolsets": { "wine": { "path": "/opt/my-wine/bin/wine" } } }
+ * ```
+ */
+export interface ToolsetExecutable {
+  /** Absolute path of the executable. */
+  readonly path: string
 }
 
 /**

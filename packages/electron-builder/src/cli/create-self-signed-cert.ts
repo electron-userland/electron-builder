@@ -1,4 +1,4 @@
-import { getWindowsKitsBundle } from "app-builder-lib/internal"
+import { getWindowsKitsBundle, windowsPowerShellPath } from "app-builder-lib/internal"
 import { exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import chalk from "chalk"
@@ -27,7 +27,7 @@ export async function createSelfSignedCert(publisher: string) {
 
     const certLocation = "Cert:\\LocalMachine\\TrustedPeople"
     log.info({ file: pfx, certLocation }, `importing. Operation will be succeed only if runned from root. Otherwise import  file manually.`)
-    await spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "Import-PfxCertificate", "-FilePath", `"${pfx}"`, "-CertStoreLocation", certLocation])
+    await spawn(windowsPowerShellPath(), ["-NoProfile", "-NonInteractive", "-Command", "Import-PfxCertificate", "-FilePath", `"${pfx}"`, "-CertStoreLocation", certLocation])
   } finally {
     await tmpDir.cleanup()
   }
