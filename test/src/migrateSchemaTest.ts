@@ -14,6 +14,7 @@ import {
   pdbFilesPatternsAdvisory,
   platformExcludedExtsPdbChange,
   PORTABLE_DEBUG_LOGGING_DROPPED,
+  WIN_SIGN_BARE_PUBLISHER_NAME_ADVISORY,
   WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY,
 } from "../../packages/electron-builder/src/cli/migrate-schema"
 
@@ -990,6 +991,7 @@ describe("migrateConfig — updater advisories", () => {
     ["NSIS_WEB_ADVISORY", NSIS_WEB_ADVISORY, "disablewebinstaller-defaults-to-true"],
     ["NSIS_PER_MACHINE_UPDATE_ADVISORY", NSIS_PER_MACHINE_UPDATE_ADVISORY, "nsis-per-machine-builds-set-isadminrightsrequired"],
     ["WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY", WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, "windows-publishername-is-validated-against-the-signing-certificate"],
+    ["WIN_SIGN_BARE_PUBLISHER_NAME_ADVISORY", WIN_SIGN_BARE_PUBLISHER_NAME_ADVISORY, "windows-publishername-must-be-a-distinguished-name"],
     ["FEED_QUERY_ADVISORY", FEED_QUERY_ADVISORY, "update-credentials-stay-on-the-feeds-origin"],
   ])("%s links its v27 breaking-changes section", (_name, advisory, anchor) => {
     expect(advisory.endsWith(` See https://www.electron.build/docs/migration/v27-breaking-changes#${anchor}`)).toBe(true)
@@ -1020,6 +1022,17 @@ describe("migrateConfig — updater advisories", () => {
       publish: { provider: "generic", url: "https://updates.example.com/?token=t" },
     })
     expect(result.advisories).toEqual([NSIS_WEB_ADVISORY, MAC_ENTITLEMENTS_ADVISORY, NSIS_PER_MACHINE_UPDATE_ADVISORY, WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, FEED_QUERY_ADVISORY])
+    expect(result.modified).toBe(false)
+  })
+
+  test("the bare publisherName advisory comes right after the sign hook one (a config has one or the other)", () => {
+    const result = migrateConfig({
+      win: { target: "nsis-web", sign: { type: "signtool", publisherName: "Acme" } },
+      nsisWeb: { perMachine: true },
+      mac: { target: "dmg" },
+      publish: { provider: "generic", url: "https://updates.example.com/?token=t" },
+    })
+    expect(result.advisories).toEqual([NSIS_WEB_ADVISORY, MAC_ENTITLEMENTS_ADVISORY, NSIS_PER_MACHINE_UPDATE_ADVISORY, WIN_SIGN_BARE_PUBLISHER_NAME_ADVISORY, FEED_QUERY_ADVISORY])
     expect(result.modified).toBe(false)
   })
 
@@ -1093,6 +1106,76 @@ describe("migrateConfig — updater advisories", () => {
       const result = migrateConfig({ win: { signExecutable: false, signtoolOptions: { sign: "./sign.js" } } })
       expect(result.migrated.win).toEqual({ sign: false })
       expect(result.advisories).toEqual([])
+    })
+  })
+
+  describe("Windows publisherName that is not a distinguished name", () => {
+    const azure = { type: "azure", endpoint: "https://e/", codeSigningAccountName: "a", certificateProfileName: "p" }
+
+    test.each<[string, Record<string, any>]>([
+      ["signtool", { type: "signtool", certificateFile: "c.pfx", publisherName: "Acme Corp" }],
+      ["hsm", { type: "hsm", cryptoServiceProvider: "p", keyContainer: "k", publisherName: "Acme Corp" }],
+      ["pkcs11", { type: "pkcs11", pkcs11Module: "/m.so", pkcs11KeyUri: "pkcs11:object=k", publisherName: "Acme Corp" }],
+      ["azure", { ...azure, publisherName: "Hendrik Erz" }],
+      ["no type", { publisherName: "Acme Corp" }],
+      ["list of bare names", { type: "signtool", publisherName: ["Ferdium Contributors", "Ambroise Grau"] }],
+      ["bare name next to a DN", { type: "signtool", publisherName: ["CN=Acme, O=Acme, C=US", "Acme"] }],
+      // the build rejects an empty string like a bare name
+      ["empty string", { type: "signtool", publisherName: "" }],
+    ])("%s emits the advisory without changing the config", (_name, sign) => {
+      for (const win of [{ sign }, { sign, verifyUpdateCodeSignature: true }]) {
+        const result = migrateConfig({ win })
+        expect(result.advisories).toEqual([WIN_SIGN_BARE_PUBLISHER_NAME_ADVISORY])
+        expect(result.modified).toBe(false)
+        expect(result.migrated).toEqual({ win })
+      }
+    })
+
+    test.each<[string, Record<string, any>]>([
+      ["a DN", { win: { sign: { type: "signtool", publisherName: "CN=Acme Corp, O=Acme Corp, C=US" } } }],
+      ["a DN with a quoted value", { win: { sign: { type: "signtool", publisherName: 'CN="Acme, Inc.", O="Acme, Inc.", C=US' } } }],
+      ["a list of DNs", { win: { sign: { type: "signtool", publisherName: ["CN=Old", "CN=New, O=New, C=US"] } } }],
+      ["an azure DN", { win: { sign: { ...azure, publisherName: "CN=Hendrik Erz, O=Hendrik Erz, C=DE" } } }],
+      ["null (opt out)", { win: { sign: { type: "signtool", publisherName: null } } }],
+      ["an empty list", { win: { sign: { type: "signtool", publisherName: [] } } }],
+      ["no publisherName", { win: { sign: { type: "signtool", certificateFile: "c.pfx" } } }],
+      ["verifyUpdateCodeSignature: false", { win: { sign: { type: "signtool", publisherName: "Acme Corp" }, verifyUpdateCodeSignature: false } }],
+      ["win.sign: false", { win: { sign: false } }],
+      ["win.sign: null", { win: { sign: null } }],
+    ])("no advisory for %s", (_name, config) => {
+      expect(advisoriesOf(config)).toEqual([])
+    })
+
+    test("a hook with a bare publisherName gets this advisory, not the sign hook one", () => {
+      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: "Acme Corp" } } })).toEqual([WIN_SIGN_BARE_PUBLISHER_NAME_ADVISORY])
+      expect(advisoriesOf({ win: { sign: { type: "signtool", sign: "./sign.js", publisherName: "" } } })).toEqual([WIN_SIGN_BARE_PUBLISHER_NAME_ADVISORY])
+    })
+
+    test("a v26 win.signtoolOptions.publisherName migrates into win.sign and then emits the advisory", () => {
+      const result = migrateConfig({ win: { signtoolOptions: { certificateFile: "c.pfx", publisherName: "Acme Corp" } } })
+      expect(result.migrated.win.sign).toEqual({ type: "signtool", certificateFile: "c.pfx", publisherName: "Acme Corp" })
+      expect(result.advisories).toEqual([WIN_SIGN_BARE_PUBLISHER_NAME_ADVISORY])
+      expect(result.modified).toBe(true)
+    })
+
+    test("a v26 win.azureSignOptions.publisherName migrates into win.sign (not additionalMetadata) and then emits the advisory", () => {
+      const result = migrateConfig({
+        win: { azureSignOptions: { endpoint: "https://e/", certificateProfileName: "p", codeSigningAccountName: "a", publisherName: "Hendrik Erz" } },
+      })
+      expect(result.migrated.win.sign).toEqual({ ...azure, publisherName: "Hendrik Erz" })
+      expect(result.advisories).toEqual([WIN_SIGN_BARE_PUBLISHER_NAME_ADVISORY])
+    })
+
+    test("a v26 publisherName is not flagged when signing was disabled, win.sign is already set, or Azure wins over it", () => {
+      const signtoolOptions = { certificateFile: "c.pfx", publisherName: "Acme Corp" }
+      expect(advisoriesOf({ win: { signExecutable: false, signtoolOptions } })).toEqual([])
+      expect(advisoriesOf({ win: { signAndEditExecutable: false, signtoolOptions } })).toEqual([])
+      expect(advisoriesOf({ win: { sign: false, signtoolOptions } })).toEqual([])
+      // the legacy key is kept next to the existing win.sign (with a warning), and only win.sign is read
+      expect(advisoriesOf({ win: { sign: { type: "signtool", certificateFile: "c.pfx" }, signtoolOptions } })).toEqual([])
+      // signtoolOptions is dropped when azureSignOptions is set too
+      expect(advisoriesOf({ win: { azureSignOptions: { endpoint: "https://e/", publisherName: "CN=A" }, signtoolOptions } })).toEqual([])
+      expect(advisoriesOf({ win: { verifyUpdateCodeSignature: false, signtoolOptions } })).toEqual([])
     })
   })
 

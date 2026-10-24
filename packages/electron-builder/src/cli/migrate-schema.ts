@@ -15,6 +15,7 @@ import {
 } from "app-builder-lib/internal"
 import { log, orNullIfFileNotExist } from "builder-util"
 import { resolveDefaultKeywordList } from "builder-util/internal"
+import { asArray, isDistinguishedName } from "builder-util-runtime"
 import { promises as fs } from "fs"
 import * as path from "path"
 import type { Argv } from "yargs"
@@ -69,6 +70,15 @@ export const WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY =
   "because electron-builder cannot tell which certificate the hook signs with (a certificate in the config or from WIN_CSC_LINK / CSC_LINK doesn't supply the publisher name of a hook). " +
   "Set win.sign.publisherName to the subject of the certificate your hook signs with, or win.verifyUpdateCodeSignature: false only if your updates are not Authenticode-signed. " +
   "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-is-validated-against-the-signing-certificate"
+
+// Advisory surfaced when win.sign.publisherName lists a bare common name. v27 electron-updater never matches one, so electron-builder
+// fails a build that writes app-update.yml with it.
+export const WIN_SIGN_BARE_PUBLISHER_NAME_ADVISORY =
+  'win.sign.publisherName with a bare common name (not a distinguished name, e.g. "My Company") detected. In v27, electron-updater only matches a publisherName ' +
+  "that is a distinguished name, so a build that writes app-update.yml (an nsis, nsis-web or electronUpdaterAware appx target with a publish configuration, " +
+  "including one inferred from a GitHub repository) fails with InvalidConfigurationError. " +
+  "Set win.sign.publisherName to the CN, O and C of your signing certificate's subject (e.g. CN=My Company, O=My Company, C=US); every component you list must match. " +
+  "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
 
 // Advisory surfaced when a mac/mas/masDev config does not name its own entitlements file. v27 stopped granting
 // allow-unsigned-executable-memory and disable-library-validation in the bundled default, which only fails at runtime.
@@ -136,6 +146,17 @@ function detectSignHookWithoutPublisherName(config: Record<string, any>): boolea
   const sign = isPlainObject(win) ? win.sign : null
   // a function-valued hook cannot occur here: migrateConfig works on a JSON copy of the config
   return isPlainObject(sign) && typeof sign.sign === "string" && sign.publisherName === undefined && win.verifyUpdateCodeSignature !== false
+}
+
+/**
+ * True when `win.sign.publisherName` (a string or a list) has a string entry that is not a distinguished name and update signature
+ * verification is on. Evaluated on the migrated config, so a v26 `win.signtoolOptions` / `win.azureSignOptions` publisherName counts too.
+ * An empty string counts as bare: the build rejects it like one. `null` (opt out) and an empty list don't.
+ */
+function detectBarePublisherName(config: Record<string, any>): boolean {
+  const win = config.win
+  const sign = isPlainObject(win) ? win.sign : null
+  return isPlainObject(sign) && win.verifyUpdateCodeSignature !== false && asArray(sign.publisherName).some(name => typeof name === "string" && !isDistinguishedName(name))
 }
 
 /**
@@ -553,6 +574,9 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   }
   if (detectSignHookWithoutPublisherName(c)) {
     advisories.push(WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY)
+  }
+  if (detectBarePublisherName(c)) {
+    advisories.push(WIN_SIGN_BARE_PUBLISHER_NAME_ADVISORY)
   }
   if (detectGenericFeedQuery(c)) {
     advisories.push(FEED_QUERY_ADVISORY)
