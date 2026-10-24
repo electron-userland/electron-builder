@@ -9,6 +9,22 @@ export enum Arch {
 export type ArchType = "x64" | "ia32" | "armv7l" | "arm64" | "universal"
 
 export function toLinuxArchString(arch: Arch, targetName: string): string {
+  if (targetName === "gentoo") {
+    switch (arch) {
+      case Arch.x64:
+        return "amd64"
+      case Arch.ia32:
+        return "x86"
+      case Arch.armv7l:
+        return "arm"
+      case Arch.arm64:
+        return "arm64"
+
+      default:
+        throw new Error(`Unsupported arch ${arch}`)
+    }
+  }
+
   switch (arch) {
     case Arch.x64:
       return targetName === "flatpak" ? "x86_64" : "amd64"
