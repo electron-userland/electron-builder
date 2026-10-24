@@ -6,14 +6,7 @@ vi.mock("builder-util", async () => {
   const actual = await vi.importActual<typeof import("builder-util")>("builder-util")
   return { ...actual, exec: vi.fn().mockResolvedValue("") }
 })
-// Mono is started by absolute path, from toolsets.executables.mono or its default install locations: stand in for the resolver
-vi.mock("app-builder-lib/src/util/systemTools.js", async importOriginal => {
-  const actual = await importOriginal<typeof import("app-builder-lib/src/util/systemTools.js")>()
-  return { ...actual, resolveExecutable: vi.fn(actual.resolveExecutable) }
-})
-
-import { resolveExecutable } from "app-builder-lib/src/util/systemTools.js"
-import { exec, InvalidConfigurationError } from "builder-util"
+import { exec, Executables, InvalidConfigurationError } from "builder-util"
 import {
   buildAdditionalFilesXml,
   convertVersion,
@@ -25,7 +18,6 @@ import {
 import { access, chmod, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
-import { pathToFileURL } from "url"
 
 describe("convertVersion", () => {
   test.each([
@@ -176,7 +168,12 @@ describe("createWindowsInstaller", () => {
     await Promise.all(["Squirrel.exe", "Squirrel-Mono.exe", "nuget.exe", "SyncReleases.exe"].map(name => writeFile(path.join(vendorDir, name), name)))
     monoPath = await writeExecutable(path.join(tmpDir, "mono", "mono"))
     vi.mocked(exec).mockClear()
-    vi.mocked(resolveExecutable).mockClear()
+    // Mono is started by absolute path, from toolsets.executables.mono or its default install locations: stand in for the resolver
+    vi.spyOn(Executables, "resolve").mockReturnValue(monoPath)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   function baseOptions(overrides: Partial<InstallerOptions> = {}): InstallerOptions {
@@ -196,7 +193,6 @@ describe("createWindowsInstaller", () => {
       loadingGif: path.join(tmpDir, "spinner.gif"),
       setupExe: "Test App Setup 1.1.0.exe",
       fixUpPaths: true,
-      executables: { mono: pathToFileURL(monoPath).href },
       createTempDir: async ({ prefix }) => {
         const dir = await mkdtemp(path.join(tmpDir, prefix))
         nugetOutputDirs.push(dir)
@@ -321,11 +317,11 @@ describe("createWindowsInstaller", () => {
 
     test("runs every vendor tool under the Mono that the resolver finds when toolsets.executables.mono is not set", async () => {
       setPlatform("linux")
-      vi.mocked(resolveExecutable).mockReturnValueOnce("/usr/local/bin/mono")
+      vi.mocked(Executables.resolve).mockReturnValueOnce("/usr/local/bin/mono")
       await fakeReleasifyOutput(["Setup.exe"])
-      await createWindowsInstaller(baseOptions({ executables: undefined, remoteReleases: "https://github.com/some-user/some-project" }))
+      await createWindowsInstaller(baseOptions({ remoteReleases: "https://github.com/some-user/some-project" }))
 
-      expect(vi.mocked(resolveExecutable).mock.calls).toEqual([["mono", undefined]])
+      expect(vi.mocked(Executables.resolve).mock.calls).toEqual([["mono"]])
       const calls = vi.mocked(exec).mock.calls
       expect(calls.map(it => it[0])).toEqual(["/usr/local/bin/mono", "/usr/local/bin/mono", "/usr/local/bin/mono"])
       expect(calls.map(it => path.basename((it[1] as Array<string>)[0]))).toEqual(["nuget.exe", "SyncReleases.exe", "Squirrel-Mono.exe"])
@@ -333,10 +329,10 @@ describe("createWindowsInstaller", () => {
 
     test("fails before running or copying anything when Mono is not installed", async () => {
       setPlatform("darwin")
-      vi.mocked(resolveExecutable).mockImplementationOnce(() => {
+      vi.mocked(Executables.resolve).mockImplementationOnce(() => {
         throw new InvalidConfigurationError("mono is not installed at its default install locations")
       })
-      await expect(createWindowsInstaller(baseOptions({ executables: undefined }))).rejects.toThrow(InvalidConfigurationError)
+      await expect(createWindowsInstaller(baseOptions())).rejects.toThrow(InvalidConfigurationError)
       expect(exec).not.toHaveBeenCalled()
       expect(await readdir(appDir)).toEqual([])
     })
@@ -344,9 +340,9 @@ describe("createWindowsInstaller", () => {
     test("is neither looked for nor used on Windows", async () => {
       setPlatform("win32")
       await fakeReleasifyOutput(["Setup.exe"])
-      await createWindowsInstaller(baseOptions({ executables: { mono: "file:///opt/mono/bin/mono" } }))
+      await Executables.run({ mono: "file:///opt/mono/bin/mono" }, () => createWindowsInstaller(baseOptions()))
 
-      expect(resolveExecutable).not.toHaveBeenCalled()
+      expect(Executables.resolve).not.toHaveBeenCalled()
       expect(vi.mocked(exec).mock.calls.map(it => it[0])).toEqual([path.join(vendorDir, "nuget.exe"), path.join(vendorDir, "Squirrel.exe")])
     })
   })

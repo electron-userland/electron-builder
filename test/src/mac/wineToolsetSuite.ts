@@ -1,6 +1,6 @@
 import type { ToolsetConfig } from "app-builder-lib/internal"
 import { getWineToolset } from "app-builder-lib/src/toolsets/wine"
-import { defaultExecutableLocations } from "app-builder-lib/src/util/systemTools.js"
+import { defaultExecutableLocations } from "builder-util/src/executables"
 import { exists } from "builder-util"
 import * as path from "path"
 

@@ -23,8 +23,7 @@ export class WindowsSignAzureManager implements SignManager {
   private readonly signing: WindowsAzureSigningConfig
 
   // signtool.exe is a Windows PE binary; use Wine on non-Windows (same pattern as MsiTarget).
-  private readonly vm: VmManager =
-    process.platform === "win32" ? new VmManager(this.packager.config.toolsets?.executables) : new WineVmManager(this.packager.config.toolsets, this.packager.buildResourcesDir)
+  private readonly vm: VmManager = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine, this.packager.buildResourcesDir)
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(() => {
     return Promise.resolve(asArray(this.resolvePublisherName()))

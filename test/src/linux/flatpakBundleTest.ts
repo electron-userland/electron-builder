@@ -6,24 +6,10 @@ vi.mock("builder-util", async () => {
   const actual = await vi.importActual<typeof import("builder-util")>("builder-util")
   return { ...actual, exec: vi.fn() }
 })
-// flatpak and flatpak-builder are started by absolute path, from toolsets.executables here; the files themselves are not checked
-vi.mock("app-builder-lib/src/util/systemTools.js", async importOriginal => {
-  const actual = await importOriginal<typeof import("app-builder-lib/src/util/systemTools.js")>()
-  return {
-    ...actual,
-    resolveExecutable: vi.fn<typeof actual.resolveExecutable>((name, executables) => {
-      const location = executables?.[name]
-      if (typeof location !== "string") {
-        throw new Error(`no toolsets.executables.${name} in the test`)
-      }
-      return actual.executableUriToPath(name, location, "linux") ?? ""
-    }),
-  }
-})
 const TOOLS_DIR = "/opt/flatpak/bin"
 
 import { buildFlatpakBundle, FlatpakBuilderManifest, FlatpakBundleOptions } from "app-builder-lib/src/targets/linux/flatpakBundle"
-import { exec, ExecError, InvalidConfigurationError, log } from "builder-util"
+import { exec, ExecError, Executables, InvalidConfigurationError, log } from "builder-util"
 import { existsSync } from "fs"
 import { chmod, mkdir, readdir, readFile, readlink, realpath, stat, symlink, writeFile } from "fs/promises"
 import * as path from "path"
@@ -53,6 +39,15 @@ type Command = [file: string, ...args: string[]]
 /** What the tools print for --version, in the two formats that are in use ("flatpak-builder 1.2.3" is the third). */
 const VERSION_OUTPUT: Record<string, string> = { flatpak: "Flatpak 1.16.6\n", "flatpak-builder": "flatpak-builder-1.4.4\n" }
 
+// flatpak and flatpak-builder are started by absolute path, which the resolver would look for on this machine's disk
+beforeEach(() => {
+  vi.spyOn(Executables, "resolve").mockImplementation(name => `${TOOLS_DIR}/${name}`)
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
 async function setup(tmpDir: TmpDir, overrides: Partial<FlatpakBundleOptions> = {}) {
   const tempDir = await tmpDir.createTempDir({ prefix: "flatpak" })
   const options: FlatpakBundleOptions = {
@@ -67,7 +62,6 @@ async function setup(tmpDir: TmpDir, overrides: Partial<FlatpakBundleOptions> = 
     flatpakBuilderArgs: [],
     buildExportArgs: [],
     buildBundleArgs: [],
-    executables: { flatpak: `file://${TOOLS_DIR}/flatpak`, "flatpak-builder": `file://${TOOLS_DIR}/flatpak-builder` },
     ...overrides,
   }
   return { options, appDir: path.join(tempDir, "build"), repo: path.join(tempDir, "repo"), manifestFile: path.join(tempDir, "manifest.json") }

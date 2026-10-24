@@ -1,15 +1,16 @@
-import { DebugLogger, ExtraSpawnOptions, exec, log, sanitizeDirPath, spawn, stripSensitiveEnvVars } from "builder-util"
+import { DebugLogger, Executables, ExtraSpawnOptions, exec, log, sanitizeDirPath, spawn, stripSensitiveEnvVars } from "builder-util"
 import { ExecFileOptions, SpawnOptions, execFileSync } from "child_process"
 import { homedir } from "os"
-import { Nullish } from "builder-util-runtime"
-import { ExecutablesConfig } from "../configuration.js"
-import { PARALLELS_GUEST_PWSH, PARALLELS_GUEST_WINDOWS_POWERSHELL, resolveExecutable } from "../util/systemTools.js"
 import { VmManager } from "./vm.js"
 
+/** The same executables inside a Parallels Windows guest, at the locations of a default Windows installation. */
+export const PARALLELS_GUEST_WINDOWS_POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+export const PARALLELS_GUEST_PWSH = "C:\\Program Files\\PowerShell\\7\\pwsh.exe"
+
 /** @internal */
-export async function parseVmList(debugLogger: DebugLogger, executables?: ExecutablesConfig | Nullish) {
+export async function parseVmList(debugLogger: DebugLogger) {
   // prlctl by absolute path; when Parallels Desktop is not installed this throws, which callers treat as "no Parallels VM"
-  const prlctl = resolveExecutable("prlctl", executables)
+  const prlctl = Executables.resolve("prlctl")
   // do not log output if debug - it is huge, logged using debugLogger
   let rawList = await exec(prlctl, ["list", "-i", "-s", "name"], undefined, false)
   debugLogger.add("parallels.list", rawList)
@@ -46,12 +47,9 @@ export class ParallelsVmManager extends VmManager {
 
   private readonly prlctl: string
 
-  constructor(
-    private readonly vm: ParallelsVm,
-    executables?: ExecutablesConfig | null
-  ) {
-    super(executables)
-    this.prlctl = resolveExecutable("prlctl", executables)
+  constructor(private readonly vm: ParallelsVm) {
+    super()
+    this.prlctl = Executables.resolve("prlctl")
 
     this.startPromise = this.doStartVm()
   }

@@ -1,10 +1,8 @@
-import { exec, InvalidConfigurationError, log } from "builder-util"
+import { exec, Executables, InvalidConfigurationError, log } from "builder-util"
 import { cp, mkdir, realpath, symlink, writeFile } from "fs/promises"
 import * as path from "path"
 import * as semver from "semver"
-import { ExecutablesConfig } from "../../configuration.js"
 import { BUILD_CHANGES_URL } from "../../util/config/legacyOptions.js"
-import { resolveExecutable } from "../../util/systemTools.js"
 
 // flatpak-builder 1.2.2 is the one of Ubuntu 22.04, the oldest current distribution release (Debian 12 and RHEL 8/9 have 1.2.3). It fixes
 // CVE-2022-21682 with an option that flatpak supports from 1.12.4 on; Ubuntu 22.04 has flatpak 1.12.7
@@ -54,8 +52,6 @@ export interface FlatpakBundleOptions {
   flatpakBuilderArgs: string[]
   buildExportArgs: string[]
   buildBundleArgs: string[]
-  /** `toolsets.executables`: where flatpak and flatpak-builder are installed */
-  executables?: ExecutablesConfig | null
 }
 
 /** The absolute paths of the tools, which are never looked up on PATH. */
@@ -211,8 +207,8 @@ export async function buildFlatpakBundle(options: FlatpakBundleOptions): Promise
 
   // by absolute path (toolsets.executables or their default install locations), never looked up on PATH
   const tools: FlatpakTools = {
-    flatpak: resolveExecutable("flatpak", options.executables),
-    "flatpak-builder": resolveExecutable("flatpak-builder", options.executables),
+    flatpak: Executables.resolve("flatpak"),
+    "flatpak-builder": Executables.resolve("flatpak-builder"),
   }
   await requireTool(tools, "flatpak", cwd)
   const builderVersion = await requireTool(tools, "flatpak-builder", cwd)

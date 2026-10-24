@@ -24,6 +24,7 @@ export { Arch, archFromString, ArchType, defaultArchFromString, getArchCliNames,
 export { AsyncTaskManager } from "./asyncTaskManager.js"
 export { DebugLogger } from "./DebugLogger.js"
 export * from "./envUtil.js"
+export { Executables, ExecutableLocation, ExecutableName, ExecutablesConfig } from "./executables.js"
 export { parseValidEnvVarUrl } from "./envUtil.js"
 export * from "./log.js"
 export { buildGotProxyAgent, httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor.js"

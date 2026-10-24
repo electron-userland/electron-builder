@@ -18,6 +18,9 @@ import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis/nsisOptions.js"
 import { ElectronGetOptions } from "./util/electronGet.js"
+import type { ExecutablesConfig } from "builder-util"
+// the types of toolsets.executables live with its resolver, in builder-util
+export type { ExecutableLocation, ExecutableName, ExecutablesConfig } from "builder-util"
 import { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 
 /**
@@ -883,43 +886,6 @@ export interface ToolsetConfig {
    */
   readonly executables?: ExecutablesConfig | null
 }
-
-/**
- * The name of a host program that electron-builder starts, as a key of {@link ToolsetConfig.executables}. Names are the same
- * on every host and have no `.exe` suffix (`powershell` is `powershell.exe` on Windows).
- */
-export type ExecutableName =
-  | "powershell"
-  | "pwsh"
-  | "prlctl"
-  | "wine"
-  | "mono"
-  | "productbuild"
-  | "pkgbuild"
-  | "hdiutil"
-  | "codesign"
-  | "actool"
-  | "tiffutil"
-  | "sips"
-  | "zip"
-  | "notarytool"
-  | "lzip"
-  | "snapcraft"
-  | "flatpak"
-  | "flatpak-builder"
-
-/**
- * One `file://` URI, or a list of them, of an executable file on the build machine, such as `file:///opt/homebrew/bin/mono` or
- * `file:///C:/Program%20Files/PowerShell/7/pwsh.exe`. The first that is an executable file is used, so one list can name the
- * locations of several hosts: a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows.
- * Plain paths, `~` and URIs that name another host (`file://server/share/...`) are not accepted.
- */
-export type ExecutableLocation = string | string[]
-
-/**
- * The locations of host programs, by {@link ExecutableName}. An unset or `null` entry uses the built-in default locations.
- */
-export type ExecutablesConfig = { readonly [K in ExecutableName]?: ExecutableLocation | null }
 
 /**
  * A custom toolset bundle supplied by the user in place of a built-in versioned bundle.

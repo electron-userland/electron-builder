@@ -6,16 +6,12 @@ import * as childProcess from "child_process"
 import * as fse from "fs-extra"
 import * as nodeFs from "node:fs"
 import { EventEmitter } from "events"
-import type { TmpDir } from "builder-util"
+import { Executables, type TmpDir } from "builder-util"
+import { defaultExecutableLocations } from "builder-util/src/executables"
 
 vi.mock("child_process", async importOriginal => {
   const actual = await importOriginal<typeof import("child_process")>()
   return { ...actual, spawn: vi.fn() }
-})
-// Windows PowerShell is started from its default location, which the resolver would look for on this machine's disk
-vi.mock("app-builder-lib/src/util/systemTools.js", async importOriginal => {
-  const actual = await importOriginal<typeof import("app-builder-lib/src/util/systemTools.js")>()
-  return { ...actual, resolveExecutable: vi.fn<typeof actual.resolveExecutable>((name, _executables, platform) => actual.defaultExecutableLocations(name, platform)[0]) }
 })
 vi.mock("node:fs", async () => {
   const actual = await vi.importActual<typeof import("node:fs")>("node:fs")
@@ -90,6 +86,8 @@ async function waitForRetrySpawn() {
 
 beforeEach(async context => {
   vi.stubEnv("SystemRoot", "C:\\Windows")
+  // Windows PowerShell is started from its default location, which the resolver would look for on this machine's disk
+  vi.spyOn(Executables, "resolve").mockImplementation(name => defaultExecutableLocations(name, process.platform)[0])
   OUTPUT_FILE = await context.tmpDir.getTempFile({ suffix: ".json" })
   closeCb = undefined
   stderrDataCb = undefined

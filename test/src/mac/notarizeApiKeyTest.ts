@@ -1,6 +1,5 @@
 import { MacTargetHelper } from "app-builder-lib/internal"
-import { resolveNotarytool } from "app-builder-lib/src/util/systemTools.js"
-import { InvalidConfigurationError } from "builder-util"
+import { Executables, InvalidConfigurationError } from "builder-util"
 import { generateKeyPairSync } from "crypto"
 import * as fs from "fs/promises"
 import { afterEach, beforeEach, vi } from "vitest"
@@ -8,11 +7,6 @@ import { afterEach, beforeEach, vi } from "vitest"
 // the test package does not depend on @electron/notarize, so mock the very module app-builder-lib imports
 const { notarize } = vi.hoisted(() => ({ notarize: vi.fn() }))
 vi.mock("../../../packages/app-builder-lib/node_modules/@electron/notarize/lib/index.js", () => ({ notarize }))
-// notarytool by absolute path: toolsets.executables.notarytool, or what /usr/bin/xcrun finds
-vi.mock("app-builder-lib/src/util/systemTools.js", async importOriginal => {
-  const actual = await importOriginal<typeof import("app-builder-lib/src/util/systemTools.js")>()
-  return { ...actual, resolveNotarytool: vi.fn() }
-})
 const NOTARYTOOL = "/Applications/Xcode.app/Contents/Developer/usr/bin/notarytool"
 
 // an App Store Connect API key file (AuthKey_<KEY_ID>.p8) holds an EC P-256 key as PKCS#8 PEM
@@ -41,10 +35,12 @@ function decodeError(value: string): Error | null {
 
 beforeEach(() => {
   notarize.mockReset()
-  vi.mocked(resolveNotarytool).mockReset().mockResolvedValue(NOTARYTOOL)
+  // notarytool by absolute path: toolsets.executables.notarytool, or what /usr/bin/xcrun finds
+  vi.spyOn(Executables, "notarytool").mockResolvedValue(NOTARYTOOL)
 })
 
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.unstubAllEnvs()
 })
 
@@ -81,16 +77,16 @@ describe("decodeAppleApiKey", () => {
 })
 
 describe("notarizeIfProvided with APPLE_API_KEY", () => {
-  function createHelper(tempDirManager: any, notarizeOption?: boolean, executables?: any) {
-    return new MacTargetHelper({ platformOptions: { notarize: notarizeOption }, tempDirManager, config: { toolsets: { executables } } } as any)
+  function createHelper(tempDirManager: any, notarizeOption?: boolean) {
+    return new MacTargetHelper({ platformOptions: { notarize: notarizeOption }, tempDirManager, config: {} } as any)
   }
 
   test("passes notarytool to notarize by absolute path, resolved from toolsets.executables", async ({ expect, tmpDir }) => {
     stubApiKeyEnv("/path/to/AuthKey_ABCDE12345.p8")
-    const executables = { notarytool: "file:///opt/xcode/notarytool" }
-    vi.mocked(resolveNotarytool).mockResolvedValue("/opt/xcode/notarytool")
-    await createHelper(tmpDir, undefined, executables).notarizeIfProvided("/My.app")
-    expect(resolveNotarytool).toHaveBeenCalledWith(executables)
+    vi.mocked(Executables.notarytool).mockRestore()
+    const resolve = vi.spyOn(Executables, "resolve").mockReturnValue("/opt/xcode/notarytool")
+    await Executables.run({ notarytool: "file:///opt/xcode/notarytool" }, () => createHelper(tmpDir).notarizeIfProvided("/My.app"))
+    expect(resolve).toHaveBeenCalledWith("notarytool")
     expect(notarize).toHaveBeenCalledWith(expect.objectContaining({ appPath: "/My.app", notarytoolPath: "/opt/xcode/notarytool" }))
   })
 
@@ -103,7 +99,7 @@ describe("notarizeIfProvided with APPLE_API_KEY", () => {
   test("does not notarize when notarytool cannot be found", async ({ expect, tmpDir }) => {
     stubApiKeyEnv("/path/to/AuthKey_ABCDE12345.p8")
     const failure = new InvalidConfigurationError("/usr/bin/xcrun --find notarytool failed")
-    vi.mocked(resolveNotarytool).mockRejectedValue(failure)
+    vi.mocked(Executables.notarytool).mockRejectedValue(failure)
     await expect(createHelper(tmpDir).notarizeIfProvided("/My.app")).rejects.toBe(failure)
     expect(notarize).not.toHaveBeenCalled()
   })

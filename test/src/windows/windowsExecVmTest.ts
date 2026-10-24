@@ -1,8 +1,7 @@
 import { ParallelsVm, ParallelsVmManager } from "app-builder-lib/src/vm/ParallelsVm.js"
 import { getWindowsExecVm, VmManager } from "app-builder-lib/src/vm/vm.js"
 import { WineVmManager } from "app-builder-lib/src/vm/WineVm.js"
-import { resolveExecutable } from "app-builder-lib/src/util/systemTools.js"
-import { DebugLogger, exec, InvalidConfigurationError } from "builder-util"
+import { DebugLogger, exec, Executables, InvalidConfigurationError } from "builder-util"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 
 // getWindowsExecVm picks how to run a Windows executable (e.g. the NSIS installer that writes the uninstaller):
@@ -12,15 +11,11 @@ vi.mock("builder-util", async importOriginal => {
   const actual = await importOriginal<typeof import("builder-util")>()
   return { ...actual, exec: vi.fn<typeof actual.exec>() }
 })
-// `prlctl` is started by absolute path (toolsets.executables.prlctl or its install locations); stand in for Parallels Desktop being installed
-vi.mock("app-builder-lib/src/util/systemTools.js", async importOriginal => {
-  const actual = await importOriginal<typeof import("app-builder-lib/src/util/systemTools.js")>()
-  return { ...actual, resolveExecutable: vi.fn<typeof actual.resolveExecutable>() }
-})
 const PRLCTL = "/Applications/Parallels Desktop.app/Contents/MacOS/prlctl"
 
+// `prlctl` is started by absolute path (toolsets.executables.prlctl or its install locations); stand in for Parallels Desktop being installed
 function prlctlInstalled(isInstalled: () => boolean) {
-  vi.mocked(resolveExecutable).mockImplementation(name => {
+  vi.spyOn(Executables, "resolve").mockImplementation(name => {
     if (name === "prlctl" && isInstalled()) {
       return PRLCTL
     }
@@ -43,11 +38,11 @@ const execVm = () => getWindowsExecVm(new DebugLogger(false), undefined, "/build
 describe("getWindowsExecVm", () => {
   beforeEach(() => {
     vi.mocked(exec).mockReset()
-    vi.mocked(resolveExecutable).mockReset()
     prlctlInstalled(() => process.platform === "darwin")
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     setPlatform(originalPlatform)
   })
 

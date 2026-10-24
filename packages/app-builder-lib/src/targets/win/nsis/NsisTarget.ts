@@ -231,8 +231,6 @@ export class NsisTarget extends Target {
     )
     // 7za stores what a symlink points to: one that leaves the app fails the package unless fileOptions.allowExternalLinks allows it
     archiveOptions.externalLinks = await packager.getExternalLinkPolicy()
-    // the macOS zip that archives file names 7-Zip cannot store (NFD) comes from toolsets.executables.zip or /usr/bin/zip
-    archiveOptions.executables = packager.config.toolsets?.executables
 
     const timer = time(`nsis package, ${Arch[arch]}`)
     await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)

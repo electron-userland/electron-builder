@@ -457,7 +457,7 @@ export async function collectNodeModulesWithLogging(platformPackager: PlatformPa
     searchDirectories,
     dependencies: platformPackager.originalMetadata.dependencies,
     run: (pm, dir) =>
-      getCollectorByPackageManager(pm, dir, tempDirManager, platformPackager.config.toolsets?.executables).getNodeModules({
+      getCollectorByPackageManager(pm, dir, tempDirManager).getNodeModules({
         packageName: platformPackager.nodePackageName,
         archFilter,
         ignoredDependencies,

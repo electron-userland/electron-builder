@@ -1,25 +1,31 @@
+import { Packager } from "app-builder-lib"
 import { getWineToolset } from "app-builder-lib/src/toolsets/wine.js"
-import {
-  DEFAULT_EXECUTABLES,
-  defaultExecutableLocations,
-  executableUriToPath,
-  findExecutable,
-  resolveExecutable,
-  resolveNotarytool,
-  validateExecutablesConfig,
-} from "app-builder-lib/src/util/systemTools.js"
-import { exec, InvalidConfigurationError } from "builder-util"
+import { DEFAULT_EXECUTABLES, defaultExecutableLocations, executableUriToPath, findExecutable, resolveExecutable, validateExecutablesConfig } from "builder-util/src/executables"
+import { Executables, InvalidConfigurationError } from "builder-util"
+import { ChildProcess, execFile } from "child_process"
 import { promises as fs } from "fs"
 import { homedir } from "os"
 import * as path from "path"
 import { pathToFileURL } from "url"
 import { afterEach, describe, test, vi } from "vitest"
 
-// only /usr/bin/xcrun is mocked; everything else looks at real files
-vi.mock("builder-util", async importOriginal => {
-  const actual = await importOriginal<typeof import("builder-util")>()
-  return { ...actual, exec: vi.fn<typeof actual.exec>() }
+// only /usr/bin/xcrun is stood in for (see xcrun below); everything else looks at real files and starts real processes
+vi.mock("child_process", async importOriginal => {
+  const actual = await importOriginal<typeof import("child_process")>()
+  return { ...actual, execFile: vi.fn(actual.execFile) }
 })
+
+/** The next program started with execFile, which is /usr/bin/xcrun here, prints `result` or fails with it. */
+function xcrun(result: string | Error) {
+  vi.mocked(execFile).mockImplementationOnce(((_file: string, _args: string[], _options: unknown, callback: (error: Error | null, stdout: string, stderr: string) => void) => {
+    setImmediate(() => (typeof result === "string" ? callback(null, result, "") : callback(result, "", "")))
+    return {} as ChildProcess
+  }) as typeof execFile)
+}
+
+function startedFiles() {
+  return vi.mocked(execFile).mock.calls.map(call => [call[0], call[1]])
+}
 
 const originalPlatform = process.platform
 function setPlatform(platform: NodeJS.Platform) {
@@ -29,7 +35,7 @@ function setPlatform(platform: NodeJS.Platform) {
 afterEach(() => {
   setPlatform(originalPlatform)
   vi.unstubAllEnvs()
-  vi.mocked(exec).mockReset()
+  vi.mocked(execFile).mockReset()
 })
 
 function configError(fn: () => unknown): InvalidConfigurationError {
@@ -251,14 +257,14 @@ describe.skipIf(process.platform === "win32")("getWineToolset and toolsets.execu
   test("the host Wine comes from toolsets.executables.wine", async ({ expect, tmpDir }) => {
     const wine = await makeFile(await tmpDir.getTempDir({ prefix: "executables-wine" }), "bin/wine", 0o755)
     for (const toolset of [undefined, "latest", "system"] as const) {
-      expect((await getWineToolset(toolset, "", { wine: uri(wine) })).execPath).toBe(wine)
+      expect((await Executables.run({ wine: uri(wine) }, () => getWineToolset(toolset, ""))).execPath).toBe(wine)
     }
   })
 
   test("a Wine bundle and toolsets.executables.wine together are a configuration error", async ({ expect }) => {
     setPlatform("darwin")
     for (const toolset of ["0.0.0", "1.0.1", { url: "file:///opt/my-wine-bundle" }] as const) {
-      const result = getWineToolset(toolset, "", { wine: "file:///opt/homebrew/bin/wine" })
+      const result = Executables.run({ wine: "file:///opt/homebrew/bin/wine" }, () => getWineToolset(toolset, ""))
       await expect(result).rejects.toBeInstanceOf(InvalidConfigurationError)
       await expect(result).rejects.toThrow("and toolsets.executables.wine a host Wine: set only one of them")
     }
@@ -268,33 +274,115 @@ describe.skipIf(process.platform === "win32")("getWineToolset and toolsets.execu
     const wine = await makeFile(await tmpDir.getTempDir({ prefix: "executables-wine-linux" }), "bin/wine", 0o755)
     setPlatform("linux")
     for (const toolset of ["0.0.0", "1.0.1"] as const) {
-      expect((await getWineToolset(toolset, "", { wine: uri(wine) })).execPath).toBe(wine)
+      expect((await Executables.run({ wine: uri(wine) }, () => getWineToolset(toolset, ""))).execPath).toBe(wine)
     }
     // a custom bundle is used on Linux too, so it still conflicts
-    await expect(getWineToolset({ url: "file:///opt/my-wine-bundle" }, "", { wine: uri(wine) })).rejects.toThrow("set only one of them")
+    await expect(Executables.run({ wine: uri(wine) }, () => getWineToolset({ url: "file:///opt/my-wine-bundle" }, ""))).rejects.toThrow("set only one of them")
   })
 })
 
-describe.skipIf(process.platform === "win32")("resolveNotarytool", { concurrent: false }, () => {
+describe.skipIf(process.platform === "win32")("Executables.notarytool", { concurrent: false }, () => {
   test("uses toolsets.executables.notarytool without running xcrun", async ({ expect, tmpDir }) => {
     const notarytool = await makeFile(await tmpDir.getTempDir({ prefix: "executables-notarytool" }), "notarytool", 0o755)
-    expect(await resolveNotarytool({ notarytool: uri(notarytool) })).toBe(notarytool)
-    expect(vi.mocked(exec)).not.toHaveBeenCalled()
+    expect(await Executables.run({ notarytool: uri(notarytool) }, () => Executables.notarytool())).toBe(notarytool)
+    expect(execFile).not.toHaveBeenCalled()
   })
 
   test("is a configuration error when /usr/bin/xcrun cannot find notarytool", async ({ expect }) => {
-    vi.mocked(exec).mockRejectedValue(new Error('xcrun: error: unable to find utility "notarytool"'))
-    const result = resolveNotarytool(null)
+    xcrun(new Error('xcrun: error: unable to find utility "notarytool"'))
+    const result = Executables.run(null, () => Executables.notarytool())
     await expect(result).rejects.toBeInstanceOf(InvalidConfigurationError)
     await expect(result).rejects.toThrow("/usr/bin/xcrun --find notarytool failed")
-    vi.mocked(exec).mockResolvedValue("notarytool\n")
-    await expect(resolveNotarytool(null)).rejects.toThrow(`did not return the absolute path of an executable file (it returned "notarytool")`)
+    xcrun("notarytool\n")
+    await expect(Executables.run(null, () => Executables.notarytool())).rejects.toThrow(`did not return the absolute path of an executable file (it returned "notarytool")`)
   })
 
   test("otherwise is the notarytool that /usr/bin/xcrun finds", async ({ expect, tmpDir }) => {
     const notarytool = await makeFile(await tmpDir.getTempDir({ prefix: "executables-xcrun" }), "Xcode.app/usr/bin/notarytool", 0o755)
-    vi.mocked(exec).mockResolvedValue(`${notarytool}\n`)
-    expect(await resolveNotarytool(undefined)).toBe(notarytool)
-    expect(vi.mocked(exec).mock.calls).toEqual([["/usr/bin/xcrun", ["--find", "notarytool"]]])
+    xcrun(`${notarytool}\n`)
+    expect(await Executables.run(undefined, () => Executables.notarytool())).toBe(notarytool)
+    expect(startedFiles()).toEqual([["/usr/bin/xcrun", ["--find", "notarytool"]]])
+  })
+})
+
+describe("Executables", () => {
+  test("outside any run scope uses the default locations, never PATH", ({ expect }) => {
+    expect(Executables.configuration).toBeNull()
+    // prlctl has no default location on Linux, and a bare name on PATH is never used
+    if (process.platform === "linux") {
+      expect(() => Executables.resolve("prlctl")).toThrow("prlctl has no default install location on linux")
+    }
+    expect(Executables.isConfigured("mono")).toBe(false)
+  })
+
+  test("run checks the configuration before running anything", ({ expect }) => {
+    const fn = vi.fn()
+    expect(() => Executables.run({ "mono.exe": "file:///x" } as any, fn)).toThrow(InvalidConfigurationError)
+    expect(() => Executables.run({ mono: "/usr/bin/mono" }, fn)).toThrow(`"/usr/bin/mono" is a plain path`)
+    expect(fn).not.toHaveBeenCalled()
+  })
+
+  describe.skipIf(process.platform === "win32")("scopes", () => {
+    test("two concurrent runs with different configurations resolve independently", async ({ expect, tmpDir }) => {
+      const dir = await tmpDir.getTempDir({ prefix: "executables-scopes" })
+      const first = await makeFile(dir, "first/mono", 0o755)
+      const second = await makeFile(dir, "second/mono", 0o755)
+      const resolveLater = () => new Promise<string>(resolve => setTimeout(() => resolve(Executables.resolve("mono")), 10))
+      const [a, b] = await Promise.all([
+        Executables.run({ mono: uri(first) }, async () => {
+          await new Promise(resolve => setTimeout(resolve, 20))
+          return [Executables.resolve("mono"), await resolveLater()]
+        }),
+        Executables.run({ mono: uri(second) }, async () => [Executables.resolve("mono"), await resolveLater()]),
+      ])
+      expect(a).toEqual([first, first])
+      expect(b).toEqual([second, second])
+      expect(Executables.configuration).toBeNull()
+    })
+
+    test("asynchronous work started inside a run sees its configuration", async ({ expect, tmpDir }) => {
+      const mono = await makeFile(await tmpDir.getTempDir({ prefix: "executables-async" }), "mono", 0o755)
+      const seen = await Executables.run({ mono: uri(mono) }, async () => {
+        const fromTimer = await new Promise<string>(resolve => setTimeout(() => resolve(Executables.resolve("mono")), 5))
+        const fromImmediate = await new Promise<string>(resolve => setImmediate(() => resolve(Executables.resolve("mono"))))
+        const fromChain = await Promise.resolve()
+          .then(() => fs.stat(mono))
+          .then(() => Executables.resolve("mono"))
+        // the callback of a child process, like those of exec and spawn
+        const fromChild = await new Promise<string>((resolve, reject) => {
+          execFile(process.execPath, ["-e", ""], error => (error == null ? resolve(Executables.resolve("mono")) : reject(error)))
+        })
+        return [fromTimer, fromImmediate, fromChain, fromChild]
+      })
+      expect(seen).toEqual([mono, mono, mono, mono])
+    })
+  })
+})
+
+describe("Packager", () => {
+  // the private step of Packager.build after the configuration is loaded and validated
+  type BuildStep = { buildWithValidatedConfig: () => Promise<unknown> }
+
+  async function createPackager(projectDir: string, executables: Record<string, string>) {
+    await fs.mkdir(projectDir, { recursive: true })
+    await fs.writeFile(path.join(projectDir, "package.json"), JSON.stringify({ name: "app", version: "1.0.0", description: "App", author: "Foo Bar" }))
+    return new Packager({ projectDir, config: { electronVersion: "38.0.0", toolsets: { executables } } })
+  }
+
+  test("builds in an Executables.run scope of its toolsets.executables", async ({ expect, tmpDir }) => {
+    const executables = { mono: "file:///opt/mono/bin/mono" }
+    const packager = await createPackager(await tmpDir.getTempDir({ prefix: "executables-packager" }), executables)
+    // stands in for the build itself, which runs once the configuration is loaded and validated
+    const build = vi.spyOn(packager as unknown as BuildStep, "buildWithValidatedConfig").mockImplementation(() => Promise.resolve(Executables.configuration))
+    expect(await packager.build()).toEqual(executables)
+    expect(build).toHaveBeenCalledTimes(1)
+    expect(Executables.configuration).toBeNull()
+  })
+
+  test("refuses a toolsets.executables entry the schema lets through before building", async ({ expect, tmpDir }) => {
+    const packager = await createPackager(await tmpDir.getTempDir({ prefix: "executables-packager" }), { mono: "/opt/mono/bin/mono" })
+    const build = vi.spyOn(packager as unknown as BuildStep, "buildWithValidatedConfig")
+    await expect(packager.build()).rejects.toThrow(`"/opt/mono/bin/mono" is a plain path`)
+    expect(build).not.toHaveBeenCalled()
   })
 })

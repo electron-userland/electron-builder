@@ -1,5 +1,4 @@
-import { ExecutablesConfig, resolveExecutable } from "app-builder-lib/internal"
-import { assertNoSymlinkLeaves, exec, exists, ExternalLinkPolicy, prepareFixedNameWrite } from "builder-util"
+import { assertNoSymlinkLeaves, exec, Executables, exists, ExternalLinkPolicy, prepareFixedNameWrite } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 
@@ -60,8 +59,6 @@ export interface InstallerOptions {
   createTempDir: (options: { prefix: string }) => Promise<string>
   /** The `fileOptions.allowExternalLinks` build option: NuGet stores what a symlink points to, so a symlink that leaves the app fails unless it allows it. */
   externalLinks?: ExternalLinkPolicy | null
-  /** The `toolsets.executables` configuration: where Mono, which runs the vendor tools on macOS and Linux, is installed. */
-  executables?: ExecutablesConfig | null
 }
 
 export async function createWindowsInstaller(options: InstallerOptions): Promise<void> {
@@ -82,11 +79,10 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
     fixUpPaths = false,
     createTempDir,
     externalLinks,
-    executables,
   } = options
 
   // On macOS and Linux the vendor tools run under Mono, started by absolute path (toolsets.executables.mono or its default locations)
-  const mono = process.platform === "win32" ? null : resolveExecutable("mono", executables)
+  const mono = process.platform === "win32" ? null : Executables.resolve("mono")
 
   // Squirrel.exe must live in the app directory so the nuspec can reference it
   // into the app output directory, which untrusted files were copied into: replace, never follow, a symlink at the name

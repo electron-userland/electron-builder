@@ -1,13 +1,12 @@
-import { assertNoSymlinkLeaves, debug7z, exec, exists, ExternalLinkPolicy, log, statOrNull, unlinkIfExists } from "builder-util"
+import { assertNoSymlinkLeaves, debug7z, exec, Executables, exists, ExternalLinkPolicy, log, statOrNull, unlinkIfExists } from "builder-util"
 import * as path from "path"
 import { create } from "tar"
 import type { TarOptionsWithAliasesAsync } from "tar"
 import { TmpDir } from "temp-file"
 import { CompressionLevel, Platform } from "../core.js"
 import { getLinuxToolsMacToolset } from "../toolsets/linuxToolsMac.js"
-import { ExecutablesConfig, ToolsetConfig } from "../configuration.js"
+import { ToolsetConfig } from "../configuration.js"
 import { getPath7za } from "../toolsets/7zip.js"
-import { resolveExecutable } from "../util/systemTools.js"
 import _fsExtra from "fs-extra"
 const { move } = _fsExtra
 
@@ -30,13 +29,11 @@ type TarConfig = {
   isMacApp: boolean
   tempDirManager: TmpDir
   linuxToolsMac: ToolsetConfig["linuxToolsMac"]
-  /** `toolsets.executables`, for the location of `lzip` on Linux */
-  executables?: ExecutablesConfig | null
   buildResourcesDir: string
 }
 
 /** @internal */
-export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager, linuxToolsMac, executables, buildResourcesDir }: TarConfig): Promise<void> {
+export async function tar({ compression, format, outFile, dirToArchive, isMacApp, tempDirManager, linuxToolsMac, buildResourcesDir }: TarConfig): Promise<void> {
   const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
   const tarArgs: TarOptionsWithAliasesAsync = {
     file: tarFile,
@@ -58,7 +55,7 @@ export async function tar({ compression, format, outFile, dirToArchive, isMacApp
   ])
 
   if (format === "tar.lz") {
-    const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset(linuxToolsMac, buildResourcesDir)).lzip : resolveExecutable("lzip", executables)
+    const lzipPath = process.platform === "darwin" ? (await getLinuxToolsMacToolset(linuxToolsMac, buildResourcesDir)).lzip : Executables.resolve("lzip")
     await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
     // lzip creates the output file in the same directory as the input with a .lz suffix
     await move(`${tarFile}.lz`, outFile)
@@ -117,9 +114,6 @@ export interface ArchiveOptions {
    * the archived directory fails the archive unless it allows it.
    */
   externalLinks?: ExternalLinkPolicy | null
-
-  /** `toolsets.executables`, for the location of the macOS `zip` that archives NFD-normalized file names */
-  executables?: ExecutablesConfig | null
 
   /**
    * Paths, relative to the archived directory, to append as uncompressed (`Copy`) members instead of
@@ -361,7 +355,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
     await unlinkIfExists(outFile)
     args.push(outFile, options.withoutDir ? "." : path.basename(dirToArchive))
     args.push(...buildExcludeArgs(options.excluded, "-x"))
-    await exec(resolveExecutable("zip", options.executables), args, { cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive) }, debug7z.enabled)
+    await exec(Executables.resolve("zip"), args, { cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive) }, debug7z.enabled)
   }
 
   return outFile

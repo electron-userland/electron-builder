@@ -1,4 +1,4 @@
-import { exec, loadCscLink, spawn, stripSensitiveEnvVars } from "builder-util"
+import { exec, Executables, loadCscLink, spawn, stripSensitiveEnvVars } from "builder-util"
 import { SnapStoreOptions } from "builder-util-runtime"
 import * as path from "path"
 import { PublishContext, UploadTask } from "./index.js"
@@ -13,8 +13,6 @@ export class SnapStorePublisher extends Publisher {
     private readonly credentials: {
       cscLink: string | undefined
       resourcesDir: string
-      /** The absolute path of snapcraft, which is never looked up on PATH. */
-      snapcraft: string
     }
   ) {
     super(context)
@@ -23,7 +21,8 @@ export class SnapStorePublisher extends Publisher {
   async upload(task: UploadTask): Promise<any> {
     this.createProgressBar(path.basename(task.file), -1)
 
-    const { snapcraft } = this.credentials
+    // by absolute path (toolsets.executables.snapcraft or its default install locations), never looked up on PATH
+    const snapcraft = Executables.resolve("snapcraft")
     await checkSnapcraft(snapcraft)
 
     // Credentials are injected via SNAPCRAFT_STORE_CREDENTIALS so that the

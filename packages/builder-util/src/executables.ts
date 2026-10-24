@@ -1,10 +1,48 @@
-import { exec, InvalidConfigurationError, log } from "builder-util"
 import { asArray, Nullish, windowsPowerShellPath } from "builder-util-runtime"
+import { AsyncLocalStorage } from "async_hooks"
 import { accessSync, constants, statSync } from "fs"
 import { homedir } from "os"
 import * as path from "path"
 import { fileURLToPath, pathToFileURL } from "url"
-import { ExecutableName, ExecutablesConfig } from "../configuration.js"
+import { log } from "./log.js"
+import { exec, InvalidConfigurationError } from "./util.js"
+
+/**
+ * The name of a host program that electron-builder starts, as a key of `toolsets.executables`. Names are the same
+ * on every host and have no `.exe` suffix (`powershell` is `powershell.exe` on Windows).
+ */
+export type ExecutableName =
+  | "powershell"
+  | "pwsh"
+  | "prlctl"
+  | "wine"
+  | "mono"
+  | "productbuild"
+  | "pkgbuild"
+  | "hdiutil"
+  | "codesign"
+  | "actool"
+  | "tiffutil"
+  | "sips"
+  | "zip"
+  | "notarytool"
+  | "lzip"
+  | "snapcraft"
+  | "flatpak"
+  | "flatpak-builder"
+
+/**
+ * One `file://` URI, or a list of them, of an executable file on the build machine, such as `file:///opt/homebrew/bin/mono` or
+ * `file:///C:/Program%20Files/PowerShell/7/pwsh.exe`. The first that is an executable file is used, so one list can name the
+ * locations of several hosts: a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows.
+ * Plain paths, `~` and URIs that name another host (`file://server/share/...`) are not accepted.
+ */
+export type ExecutableLocation = string | string[]
+
+/**
+ * The locations of host programs, by {@link ExecutableName}. An unset or `null` entry uses the built-in default locations.
+ */
+export type ExecutablesConfig = { readonly [K in ExecutableName]?: ExecutableLocation | null }
 
 // Host programs are started by absolute path, never by a bare name: a bare name is resolved through PATH (on Windows also the
 // current directory), where package managers prepend directories such as node_modules/.bin that a dependency can write to.
@@ -79,7 +117,7 @@ export const DEFAULT_EXECUTABLES: Readonly<Record<ExecutableName, DefaultLocatio
   tiffutil: inUsrBinOnMac("tiffutil"),
   sips: inUsrBinOnMac("sips"),
   zip: inUsrBinOnMac("zip"),
-  // no fixed location: by default it is the notarytool of the selected Xcode, found with /usr/bin/xcrun (see resolveNotarytool)
+  // no fixed location: by default it is the notarytool of the selected Xcode, found with /usr/bin/xcrun (see Executables.notarytool)
   notarytool: {},
   // on macOS lzip comes from the linuxToolsMac toolset
   lzip: inUsrBinOnLinux("lzip"),
@@ -90,10 +128,6 @@ export const DEFAULT_EXECUTABLES: Readonly<Record<ExecutableName, DefaultLocatio
   flatpak: inUsrBinOnLinux("flatpak"),
   "flatpak-builder": inUsrBinOnLinux("flatpak-builder"),
 }
-
-/** The same executables inside a Parallels Windows guest, at the locations of a default Windows installation. */
-export const PARALLELS_GUEST_WINDOWS_POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
-export const PARALLELS_GUEST_PWSH = "C:\\Program Files\\PowerShell\\7\\pwsh.exe"
 
 function isExecutableName(name: string): name is ExecutableName {
   return Object.prototype.hasOwnProperty.call(DEFAULT_EXECUTABLES, name)
@@ -231,17 +265,18 @@ function isExecutableFile(file: string, platform: NodeJS.Platform): boolean {
   }
 }
 
-const resolvedPaths = new Map<string, string>()
+// What a program resolved to, by name, operating system and candidate locations, within one Executables.run scope
+type ResolvedPaths = Map<string, string>
 
-function findIn(name: ExecutableName, paths: ReadonlyArray<string>, platform: NodeJS.Platform): string | null {
+function findIn(name: ExecutableName, paths: ReadonlyArray<string>, platform: NodeJS.Platform, cache: ResolvedPaths): string | null {
   const key = JSON.stringify([name, platform, paths])
-  const cached = resolvedPaths.get(key)
+  const cached = cache.get(key)
   if (cached != null) {
     return cached
   }
   const found = paths.find(it => isExecutableFile(it, platform)) ?? null
   if (found != null) {
-    resolvedPaths.set(key, found)
+    cache.set(key, found)
     log.debug({ program: name, path: found }, "using host program")
   }
   return found
@@ -267,15 +302,29 @@ function notFoundError(name: ExecutableName, { isConfigured, paths, unavailable 
 /**
  * The absolute path of a host program: the first location of its `toolsets.executables` entry, or else of its default install
  * locations, that is an executable file (on Windows, an `.exe`). Null when there is none; an invalid entry still throws.
+ * @internal use {@link Executables}; exported for tests
  */
-export function findExecutable(name: ExecutableName, executables: ExecutablesConfig | Nullish, platform: NodeJS.Platform = process.platform): string | null {
-  return findIn(name, candidates(name, executables, platform).paths, platform)
+export function findExecutable(
+  name: ExecutableName,
+  executables: ExecutablesConfig | Nullish,
+  platform: NodeJS.Platform = process.platform,
+  cache: ResolvedPaths = new Map()
+): string | null {
+  return findIn(name, candidates(name, executables, platform).paths, platform, cache)
 }
 
-/** Like {@link findExecutable}, but a program that is not found is an {@link InvalidConfigurationError} that lists the locations tried. */
-export function resolveExecutable(name: ExecutableName, executables: ExecutablesConfig | Nullish, platform: NodeJS.Platform = process.platform): string {
+/**
+ * Like {@link findExecutable}, but a program that is not found is an {@link InvalidConfigurationError} that lists the locations tried.
+ * @internal use {@link Executables}; exported for tests
+ */
+export function resolveExecutable(
+  name: ExecutableName,
+  executables: ExecutablesConfig | Nullish,
+  platform: NodeJS.Platform = process.platform,
+  cache: ResolvedPaths = new Map()
+): string {
   const found = candidates(name, executables, platform)
-  const result = findIn(name, found.paths, platform)
+  const result = findIn(name, found.paths, platform, cache)
   if (result == null) {
     throw notFoundError(name, found, platform)
   }
@@ -283,25 +332,6 @@ export function resolveExecutable(name: ExecutableName, executables: Executables
 }
 
 const XCRUN = "/usr/bin/xcrun"
-
-let defaultNotarytool: Promise<string> | null = null
-
-/**
- * notarytool: its `toolsets.executables` entry when it is set, otherwise the notarytool of the selected Xcode, which
- * `/usr/bin/xcrun --find notarytool` locates, so that notarytool never runs through an `xcrun` looked up on PATH.
- */
-export function resolveNotarytool(executables: ExecutablesConfig | Nullish): Promise<string> {
-  validateExecutablesConfig(executables)
-  if (executables?.notarytool != null) {
-    return Promise.resolve(resolveExecutable("notarytool", executables))
-  }
-  defaultNotarytool ??= findNotarytoolWithXcrun().catch(e => {
-    // looked up again next time, after the developer tools may have been installed
-    defaultNotarytool = null
-    throw e
-  })
-  return defaultNotarytool
-}
 
 async function findNotarytoolWithXcrun(): Promise<string> {
   const notFound = (reason: string) =>
@@ -319,4 +349,75 @@ async function findNotarytoolWithXcrun(): Promise<string> {
   }
   log.debug({ program: "notarytool", path: found }, "using host program")
   return found
+}
+
+interface Scope {
+  readonly config: ExecutablesConfig | Nullish
+  readonly resolved: ResolvedPaths
+  notarytool: Promise<string> | null
+}
+
+const scopes = new AsyncLocalStorage<Scope>()
+// outside any Executables.run: the default locations
+const defaultScope: Scope = { config: null, resolved: new Map(), notarytool: null }
+
+/**
+ * The host programs electron-builder starts, from the `toolsets.executables` configuration of the current build. A build runs inside
+ * {@link Executables.run}, which scopes the configuration to everything the build does, including its asynchronous work, so that
+ * builds in one process do not see each other's configuration. Outside any build the default install locations are used. A program
+ * is never looked up on `PATH`.
+ */
+export class Executables {
+  /**
+   * Runs `fn` with `executables` (the `toolsets.executables` configuration) as the configuration of every program it resolves.
+   * The configuration is checked first: an unknown name, a name with `.exe`, or a location that is not a `file://` URI of a local file
+   * is an {@link InvalidConfigurationError}.
+   */
+  static run<T>(executables: ExecutablesConfig | Nullish, fn: () => T): T {
+    validateExecutablesConfig(executables)
+    return scopes.run({ config: executables, resolved: new Map(), notarytool: null }, fn)
+  }
+
+  private static get scope(): Scope {
+    return scopes.getStore() ?? defaultScope
+  }
+
+  /** The absolute path of a program, or an {@link InvalidConfigurationError} that lists the locations tried. */
+  static resolve(name: ExecutableName): string {
+    const { config, resolved } = Executables.scope
+    return resolveExecutable(name, config, process.platform, resolved)
+  }
+
+  /** The absolute path of a program, or null when it is not installed (for a program that is optional, like PowerShell 7). */
+  static find(name: ExecutableName): string | null {
+    const { config, resolved } = Executables.scope
+    return findExecutable(name, config, process.platform, resolved)
+  }
+
+  /** The `toolsets.executables` configuration of the current {@link Executables.run} scope (none outside of one). */
+  static get configuration(): ExecutablesConfig | Nullish {
+    return Executables.scope.config
+  }
+
+  /** Whether the configuration has an entry for the program. */
+  static isConfigured(name: ExecutableName): boolean {
+    return Executables.configuration?.[name] != null
+  }
+
+  /**
+   * notarytool: its `toolsets.executables` entry when it is set, otherwise the notarytool of the selected Xcode, which
+   * `/usr/bin/xcrun --find notarytool` locates, so that notarytool never runs through an `xcrun` looked up on PATH.
+   */
+  static notarytool(): Promise<string> {
+    const scope = Executables.scope
+    if (scope.config?.notarytool != null) {
+      return Promise.resolve(Executables.resolve("notarytool"))
+    }
+    scope.notarytool ??= findNotarytoolWithXcrun().catch(e => {
+      // looked up again next time, after the developer tools may have been installed
+      scope.notarytool = null
+      throw e
+    })
+    return scope.notarytool
+  }
 }

@@ -1,8 +1,6 @@
 import * as childProcess from "child_process"
 import { createWriteStream } from "node:fs"
-import { Nullish } from "builder-util-runtime"
-import { ExecutablesConfig } from "../configuration.js"
-import { resolveExecutable } from "./systemTools.js"
+import { Executables } from "builder-util"
 
 export interface StreamSpawnResult {
   /** The child's exit code (null if it was killed by a signal). */
@@ -37,20 +35,12 @@ export interface StreamSpawnResult {
  * @param cwd - The working directory to execute the command in
  * @param outputFile - The path to the file where stdout will be streamed
  * @param env - The environment for the child process (callers are responsible for stripping secrets)
- * @param executables - The `toolsets.executables` configuration, for the location of Windows PowerShell
  */
-export function streamSpawnToFile(
-  command: string,
-  args: string[],
-  cwd: string,
-  outputFile: string,
-  env: NodeJS.ProcessEnv,
-  executables?: ExecutablesConfig | Nullish
-): Promise<StreamSpawnResult> {
+export function streamSpawnToFile(command: string, args: string[], cwd: string, outputFile: string, env: NodeJS.ProcessEnv): Promise<StreamSpawnResult> {
   return new Promise<StreamSpawnResult>((resolve, reject) => {
     // inside the executor, so a SystemRoot that cannot locate PowerShell rejects like any other spawn failure
     const [spawnCommand, spawnArgs] =
-      process.platform === "win32" ? ([resolveExecutable("powershell", executables), buildPowerShellEncodedArgs(command, args)] as const) : ([command, args] as const)
+      process.platform === "win32" ? ([Executables.resolve("powershell"), buildPowerShellEncodedArgs(command, args)] as const) : ([command, args] as const)
     const outStream = createWriteStream(outputFile)
 
     const child = childProcess.spawn(spawnCommand, spawnArgs, { cwd, env })

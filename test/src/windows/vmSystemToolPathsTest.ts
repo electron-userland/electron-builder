@@ -1,17 +1,10 @@
-import { ParallelsVmManager } from "app-builder-lib/src/vm/ParallelsVm.js"
+import { PARALLELS_GUEST_PWSH, PARALLELS_GUEST_WINDOWS_POWERSHELL, ParallelsVmManager } from "app-builder-lib/src/vm/ParallelsVm.js"
 import { PwshVmManager } from "app-builder-lib/src/vm/PwshVm.js"
 import { streamSpawnToFile } from "app-builder-lib/src/util/streamSpawnToFile.js"
-import {
-  defaultExecutableLocations,
-  executableUriToPath,
-  findExecutable,
-  PARALLELS_GUEST_PWSH,
-  PARALLELS_GUEST_WINDOWS_POWERSHELL,
-  resolveExecutable,
-} from "app-builder-lib/src/util/systemTools.js"
+import { defaultExecutableLocations, executableUriToPath } from "builder-util/src/executables"
 import { ExecutableName, ExecutablesConfig } from "app-builder-lib"
 import { getWindowsVm, VmManager } from "app-builder-lib/src/vm/vm.js"
-import { DebugLogger, exec, InvalidConfigurationError, log } from "builder-util"
+import { DebugLogger, exec, Executables, InvalidConfigurationError, log } from "builder-util"
 import { asArray, Nullish } from "builder-util-runtime"
 import { spawn } from "child_process"
 import { promises as fs } from "fs"
@@ -26,11 +19,6 @@ vi.mock("builder-util", async importOriginal => {
 vi.mock("child_process", async importOriginal => {
   const actual = await importOriginal<typeof import("child_process")>()
   return { ...actual, spawn: vi.fn<typeof actual.spawn>() }
-})
-// The resolver looks at the files of this machine; stand in for the programs of the simulated host being installed (or not)
-vi.mock("app-builder-lib/src/util/systemTools.js", async importOriginal => {
-  const actual = await importOriginal<typeof import("app-builder-lib/src/util/systemTools.js")>()
-  return { ...actual, findExecutable: vi.fn<typeof actual.findExecutable>(), resolveExecutable: vi.fn<typeof actual.resolveExecutable>() }
 })
 
 const POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
@@ -68,16 +56,16 @@ beforeEach(() => {
   installed = new Set([POWERSHELL])
   vi.mocked(exec).mockReset()
   vi.mocked(spawn).mockReset()
-  vi.mocked(findExecutable).mockReset().mockImplementation(findInstalled)
-  vi.mocked(resolveExecutable)
-    .mockReset()
-    .mockImplementation((name, executables, platform) => {
-      const found = findInstalled(name, executables, platform)
-      if (found == null) {
-        throw new InvalidConfigurationError(`${name} not found`)
-      }
-      return found
-    })
+  // the resolver looks at the files of this machine; stand in for the programs of the simulated host being installed (or not), with
+  // the configuration of the current Executables.run scope
+  vi.spyOn(Executables, "find").mockImplementation(name => findInstalled(name, Executables.configuration))
+  vi.spyOn(Executables, "resolve").mockImplementation(name => {
+    const found = findInstalled(name, Executables.configuration)
+    if (found == null) {
+      throw new InvalidConfigurationError(`${name} not found`)
+    }
+    return found
+  })
   setPlatform("win32")
   vi.stubEnv("SystemRoot", "C:\\Windows")
   vi.stubEnv("windir", "")
@@ -119,12 +107,12 @@ describe("VmManager.powershellCommand", () => {
     installed = new Set([pwsh, powershell, PWSH])
     vi.mocked(exec).mockResolvedValue("")
     const executables = { pwsh: "file:///D:/Tools/PowerShell/pwsh.exe", powershell: "file:///D:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe" }
-    expect(await new VmManager(executables).powershellCommand.value).toBe(pwsh)
-    expect(await new VmManager({ powershell: executables.powershell }).powershellCommand.value).toBe(PWSH)
+    expect(await Executables.run(executables, () => new VmManager().powershellCommand.value)).toBe(pwsh)
+    expect(await Executables.run({ powershell: executables.powershell }, () => new VmManager().powershellCommand.value)).toBe(PWSH)
   })
 
   test("a toolsets.executables.pwsh entry that names no executable is a configuration error, not a fallback", async ({ expect }) => {
-    await expect(new VmManager({ pwsh: "file:///D:/missing/pwsh.exe" }).powershellCommand.value).rejects.toBeInstanceOf(InvalidConfigurationError)
+    await expect(Executables.run({ pwsh: "file:///D:/missing/pwsh.exe" }, () => new VmManager().powershellCommand.value)).rejects.toBeInstanceOf(InvalidConfigurationError)
     expect(vi.mocked(exec)).not.toHaveBeenCalled()
   })
 
@@ -166,8 +154,9 @@ describe("VmManager.powershellCommand", () => {
     setPlatform("darwin")
     installed.add("/opt/parallels/prlctl")
     vi.mocked(exec).mockResolvedValue("")
-    const vm = new ParallelsVmManager({ id: "{win}", name: "win", os: "win-11", state: "running" }, { prlctl: "file:///opt/parallels/prlctl" })
-    await vm.exec("cmd.exe", [])
+    await Executables.run({ prlctl: "file:///opt/parallels/prlctl" }, () =>
+      new ParallelsVmManager({ id: "{win}", name: "win", os: "win-11", state: "running" }).exec("cmd.exe", [])
+    )
     expect(executedFiles()).toEqual(["/opt/parallels/prlctl"])
   })
 })
@@ -198,7 +187,7 @@ describe("PwshVmManager.powershellCommand", () => {
     setPlatform("linux")
     installed.add("/opt/pwsh/pwsh")
     installed.add("/snap/bin/pwsh")
-    expect(await new PwshVmManager({ pwsh: "file:///opt/pwsh/pwsh" }).powershellCommand.value).toBe("/opt/pwsh/pwsh")
+    expect(await Executables.run({ pwsh: "file:///opt/pwsh/pwsh" }, () => new PwshVmManager().powershellCommand.value)).toBe("/opt/pwsh/pwsh")
   })
 
   test("is a configuration error when pwsh is not found", async ({ expect }) => {
@@ -232,8 +221,8 @@ describe("getWindowsVm", () => {
   test("counts an explicitly configured wine bundle, or toolsets.executables.wine, as available without running it", async ({ expect }) => {
     setPlatform("linux")
     installed = new Set(["/opt/microsoft/powershell/7/pwsh", "/opt/wine/bin/wine"])
-    expect(await getWindowsVm(new DebugLogger(false), { wine: { url: "file:///opt/my-wine-bundle" } })).toBeInstanceOf(PwshVmManager)
-    expect(await getWindowsVm(new DebugLogger(false), { executables: { wine: "file:///opt/wine/bin/wine" } })).toBeInstanceOf(PwshVmManager)
+    expect(await getWindowsVm(new DebugLogger(false), { url: "file:///opt/my-wine-bundle" })).toBeInstanceOf(PwshVmManager)
+    expect(await Executables.run({ wine: "file:///opt/wine/bin/wine" }, () => getWindowsVm(new DebugLogger(false)))).toBeInstanceOf(PwshVmManager)
     expect(vi.mocked(exec)).not.toHaveBeenCalled()
   })
 })
@@ -243,7 +232,7 @@ describe("streamSpawnToFile on Windows", () => {
     vi.mocked(spawn).mockImplementation(() => {
       throw new Error("not started")
     })
-    await expect(streamSpawnToFile("npm", ["list"], dir, path.join(dir, "out.json"), {}, executables)).rejects.toThrow("not started")
+    await expect(Executables.run(executables, () => streamSpawnToFile("npm", ["list"], dir, path.join(dir, "out.json"), {}))).rejects.toThrow("not started")
     return vi.mocked(spawn).mock.calls.map(call => call[0])
   }
 

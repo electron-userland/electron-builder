@@ -1,6 +1,6 @@
 import { notarize, type NotarizeOptions, type NotaryToolKeychainCredentials } from "@electron/notarize"
 import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign"
-import { Arch, decodeStrictBase64, InvalidConfigurationError, log, MAX_FILE_REQUESTS, spawnAndWriteWithOutput, statOrNull, walk } from "builder-util"
+import { Arch, decodeStrictBase64, Executables, InvalidConfigurationError, log, MAX_FILE_REQUESTS, spawnAndWriteWithOutput, statOrNull, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { createPrivateKey } from "crypto"
 import { open, rm, writeFile, type FileHandle } from "fs/promises"
@@ -11,7 +11,6 @@ import type { MacPackager } from "../../macPackager.js"
 import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
 import { parsePlistFile, savePlistFile, PlistObject, PlistValue } from "../../util/mac/plist.js"
 import { getTemplatePath } from "../../util/pathManager.js"
-import { resolveNotarytool } from "../../util/systemTools.js"
 import asyncPool from "tiny-async-pool"
 
 export type MasPlatformType = "mas" | "mas-dev"
@@ -663,7 +662,7 @@ export class MacTargetHelper {
     }
     const apiKey = "appleApiKey" in options ? MacTargetHelper.decodeAppleApiKey(options.appleApiKey) : null
     // notarytool by absolute path, so that it never runs through an xcrun looked up on PATH: the credentials are in its arguments
-    const notarytoolPath = await resolveNotarytool(this.packager.config.toolsets?.executables)
+    const notarytoolPath = await Executables.notarytool()
     if (apiKey == null) {
       await notarize({ ...options, notarytoolPath })
     } else {

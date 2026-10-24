@@ -1,4 +1,4 @@
-import { Arch, debug, exec, statOrNull, use } from "builder-util"
+import { Arch, debug, exec, Executables, statOrNull, use } from "builder-util"
 import { deepAssign, Nullish } from "builder-util-runtime"
 import { readdirSync } from "fs"
 import { readFile, unlink, writeFile } from "fs/promises"
@@ -8,7 +8,6 @@ import { findIdentity } from "../../codeSign/mac/macCodeSign.js"
 import type { Identity } from "../../codeSign/mac/macCodeSign.js"
 import { Target } from "../../core.js"
 import { MacPackager } from "../../macPackager.js"
-import { resolveExecutable } from "../../util/systemTools.js"
 import { PkgOptions } from "../../options/pkgOptions.js"
 import { savePlistFile, parsePlistFile, PlistObject } from "../../util/mac/plist.js"
 import { getNotLocalizedLicenseFile } from "../../util/license.js"
@@ -102,7 +101,7 @@ export class PkgTarget extends Target {
     }
     args.push(artifactPath)
     use(options.productbuild, it => args.push(...(it as any)))
-    await exec(resolveExecutable("productbuild", this.packager.config.toolsets?.executables), args, {
+    await exec(Executables.resolve("productbuild"), args, {
       cwd: appOutDir,
     })
     await Promise.all([unlink(innerPackageFile), unlink(distInfoFile)])
@@ -167,7 +166,7 @@ export class PkgTarget extends Target {
       })
     }
     args.push(distInfoFile)
-    await exec(resolveExecutable("productbuild", this.packager.config.toolsets?.executables), args, {
+    await exec(Executables.resolve("productbuild"), args, {
       cwd: this.outDir,
     })
 
@@ -230,7 +229,7 @@ export class PkgTarget extends Target {
     const rootPath = path.dirname(appPath)
 
     // first produce a component plist template
-    await exec(resolveExecutable("pkgbuild", this.packager.config.toolsets?.executables), ["--analyze", "--root", rootPath, propertyListOutputFile])
+    await exec(Executables.resolve("pkgbuild"), ["--analyze", "--root", rootPath, propertyListOutputFile])
 
     // process the template plist
     const plistInfo = (await parsePlistFile<PlistObject[]>(propertyListOutputFile)).filter((it: PlistObject) => it.RootRelativeBundlePath !== "Electron.dSYM")
@@ -287,7 +286,7 @@ export class PkgTarget extends Target {
 
     args.push(packageOutputFile)
 
-    await exec(resolveExecutable("pkgbuild", this.packager.config.toolsets?.executables), args)
+    await exec(Executables.resolve("pkgbuild"), args)
   }
 }
 

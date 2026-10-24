@@ -243,7 +243,7 @@ export async function installDependencies(
         // rather than cmd.exe, which also sidesteps the spurious ".cmd" shim "batch file cannot be
         // found." re-open race that previously forced the win32 retry guard below.
         const outputFile = await tmpDir.getTempFile({ prefix: "install-", suffix: ".log" })
-        const { code, stderr } = await streamSpawnToFile(execPath, execArgs, appDir, outputFile, spawnEnv, config.toolsets?.executables)
+        const { code, stderr } = await streamSpawnToFile(execPath, execArgs, appDir, outputFile, spawnEnv)
         if (code !== 0) {
           const stdout = await readFile(outputFile, "utf8").catch(() => "")
           throw new Error(`Package install (${execPath} ${execArgs.join(" ")}) exited with code ${code}:\n${stdout}\n${stderr}`)

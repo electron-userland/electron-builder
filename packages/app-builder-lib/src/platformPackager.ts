@@ -1059,7 +1059,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return cachedPromise
     }
 
-    const promise = generateAssetCatalogForIcon(this.tempDirManager, iconPath, this.config.toolsets?.executables)
+    const promise = generateAssetCatalogForIcon(this.tempDirManager, iconPath)
     this.assetCatalogResults.set(iconPath, promise)
     return promise
   }

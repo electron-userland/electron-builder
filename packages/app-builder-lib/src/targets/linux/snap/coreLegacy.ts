@@ -3,6 +3,7 @@ import {
   Arch,
   copyDir,
   exec,
+  Executables,
   InvalidConfigurationError,
   log,
   serializeToYaml,
@@ -20,7 +21,6 @@ import { PlugDescriptor, SnapOptionsLegacy } from "../../../options/SnapOptions.
 import { getAppImageTools } from "../../../toolsets/appimage.js"
 import { downloadBuilderToolset } from "../../../util/electronGet.js"
 import { isSnapDestructiveMode } from "../../../util/flags.js"
-import { resolveExecutable } from "../../../util/systemTools.js"
 import { getTemplatePath } from "../../../util/pathManager.js"
 import { buildLauncherScript } from "../launcherScript.js"
 import { SnapCore } from "./SnapTarget.js"
@@ -363,7 +363,7 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
     }
 
     // a local build: snapcraft needs no credentials
-    await exec(resolveExecutable("snapcraft", this.packager.config.toolsets?.executables), snapArgs, {
+    await exec(Executables.resolve("snapcraft"), snapArgs, {
       cwd: stageDir,
       env: { ...stripSensitiveEnvVars(process.env), SNAPCRAFT_HAS_TTY: "false" },
     })

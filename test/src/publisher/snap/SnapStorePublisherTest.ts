@@ -1,8 +1,8 @@
-import { exec, spawn } from "builder-util"
+import { exec, Executables, spawn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { SnapStoreOptions } from "builder-util-runtime/internal"
 import { PublishContext, UploadTask } from "electron-publish"
-import { beforeEach, describe, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, test, vi } from "vitest"
 // Import from source so Vitest's vi.mock intercepts builder-util in the same module graph
 import { SnapStorePublisher } from "../../../../packages/electron-publish/src/snapStorePublisher"
 
@@ -20,17 +20,22 @@ function makeTask(file = "/tmp/app_1.0.0_amd64.snap"): UploadTask {
 }
 
 function makePublisher(channels?: SnapStoreOptions["channels"], cscLink?: string): SnapStorePublisher {
-  return new SnapStorePublisher(makeContext(), { provider: "snapStore", channels }, { cscLink, resourcesDir: "/resources", snapcraft: SNAPCRAFT })
+  return new SnapStorePublisher(makeContext(), { provider: "snapStore", channels }, { cscLink, resourcesDir: "/resources" })
 }
 
-// resolved by app-builder-lib's publish manager: snapcraft is never looked up on PATH
+// started by absolute path, from toolsets.executables.snapcraft or its default install locations: never looked up on PATH
 const SNAPCRAFT = "/snap/bin/snapcraft"
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.spyOn(Executables, "resolve").mockReturnValue(SNAPCRAFT)
   // Default: snapcraft is installed at a valid version
   vi.mocked(exec).mockResolvedValue("snapcraft, version 8.4.0\n")
   vi.mocked(spawn).mockResolvedValue(undefined)
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 describe("SnapStorePublisher", { concurrent: false }, () => {

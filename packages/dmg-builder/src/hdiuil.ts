@@ -1,6 +1,4 @@
-import { ExecutablesConfig, resolveExecutable } from "app-builder-lib/internal"
-import { exec, log, retry, spawnAndWriteWithOutput } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { exec, Executables, log, retry, spawnAndWriteWithOutput } from "builder-util"
 
 /**
  * Table of hdiutil error codes that are transient and can be retried.
@@ -53,9 +51,8 @@ const shouldRetry = (args: string[]) => (error: any) => {
   return willRetry
 }
 
-/** @param executables the `toolsets.executables` configuration, where hdiutil is installed (it is never looked up on PATH) */
-export async function hdiUtil(args: string[], executables?: ExecutablesConfig | Nullish): Promise<string | null> {
-  const hdiutil = resolveExecutable("hdiutil", executables)
+export async function hdiUtil(args: string[]): Promise<string | null> {
+  const hdiutil = Executables.resolve("hdiutil")
   return await retry(() => exec(hdiutil, args), {
     retries: 5,
     interval: 5000,
@@ -66,8 +63,8 @@ export async function hdiUtil(args: string[], executables?: ExecutablesConfig | 
 
 // Like hdiUtil but pipes `stdin` to the process — used for `hdiutil attach` on
 // DMGs that have an embedded SLA so the prompt is auto-accepted without blocking.
-export async function hdiUtilWithStdin(args: string[], stdin: string, executables?: ExecutablesConfig | Nullish): Promise<string | null> {
-  const hdiutil = resolveExecutable("hdiutil", executables)
+export async function hdiUtilWithStdin(args: string[], stdin: string): Promise<string | null> {
+  const hdiutil = Executables.resolve("hdiutil")
   return retry(() => spawnAndWriteWithOutput(hdiutil, args, stdin).then(({ stdout }) => stdout || null), {
     retries: 5,
     interval: 5000,

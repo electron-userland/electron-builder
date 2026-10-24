@@ -63,7 +63,6 @@ import { missingUpdatePublisherNameError, validatePublisherNameFormat } from "..
 import { WinPackager } from "../winPackager.js"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder.js"
 import { resolveModule } from "../util/resolve.js"
-import { resolveExecutable } from "../util/systemTools.js"
 import { parseUrl } from "../util/pathManager.js"
 import { isPublishForPullRequest } from "../util/flags.js"
 import { BUILD_CHANGES_URL } from "../util/config/legacyOptions.js"
@@ -784,11 +783,7 @@ export async function createPublisher(
       return new KeygenPublisher(context, publishConfig as KeygenOptions, version)
 
     case "snapStore":
-      return new SnapStorePublisher(context, publishConfig as SnapStoreOptions, {
-        cscLink: packager.config.snapcraft?.cscLink,
-        resourcesDir: packager.buildResourcesDir,
-        snapcraft: resolveExecutable("snapcraft", packager.config.toolsets?.executables),
-      })
+      return new SnapStorePublisher(context, publishConfig as SnapStoreOptions, { cscLink: packager.config.snapcraft?.cscLink, resourcesDir: packager.buildResourcesDir })
 
     case "generic":
       return null

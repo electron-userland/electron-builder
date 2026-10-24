@@ -1,9 +1,8 @@
-import { exists, InvalidConfigurationError, sanitizeDirPath } from "builder-util"
+import { Executables, exists, InvalidConfigurationError, sanitizeDirPath } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as path from "path"
-import { ExecutablesConfig, ToolsetConfig } from "../configuration.js"
+import { ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
-import { resolveExecutable } from "../util/systemTools.js"
 import { getCustomToolsetPath } from "./custom.js"
 
 const githubOrgRepo = "electron-userland/electron-builder-binaries"
@@ -24,13 +23,8 @@ const wineToolsChecksums: Record<string, Record<string, string>> = {
 
 /**
  * @param wine `toolsets.wine`: a bundle, or `"system"` (the default) for the host Wine
- * @param executables `toolsets.executables`, whose `wine` entry is where the host Wine is installed
  */
-export async function getWineToolset(
-  wine: ToolsetConfig["wine"] | Nullish,
-  resourcesDir: string,
-  executables?: ExecutablesConfig | Nullish
-): Promise<{ execPath: string; env: Record<string, string> }> {
+export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, resourcesDir: string): Promise<{ execPath: string; env: Record<string, string> }> {
   if (process.platform === "win32") {
     // oxlint-disable-next-line typescript/no-base-to-string -- pre-existing message; a custom toolset object prints as "[object Object]", changing it is out of scope for the lint migration
     throw new InvalidConfigurationError(`Wine toolset is not supported on Windows, but got: ${wine}`)
@@ -43,7 +37,7 @@ export async function getWineToolset(
   const toolset = wine == null || wine === "latest" ? WINE_LATEST : wine
   // on Linux a version string selects no bundle (the host Wine is always used), so only a custom bundle conflicts there
   const isBundle = typeof toolset === "object" || (toolset !== "system" && process.platform !== "linux")
-  if (isBundle && executables?.wine != null) {
+  if (isBundle && Executables.isConfigured("wine")) {
     throw new InvalidConfigurationError(
       `toolsets.wine selects a Wine bundle (${typeof toolset === "object" ? "a custom toolset" : `"${toolset}"`}) and toolsets.executables.wine a host Wine: set only one of them`
     )
@@ -60,7 +54,7 @@ export async function getWineToolset(
     // Host wine, by absolute path from toolsets.executables.wine or its default install locations — never looked up on PATH. Linux ships no portable bundle so it always
     // lands here; other platforms opt in with `toolsets.wine: "system"` — the replacement for the `USE_SYSTEM_WINE` env var
     // removed in v27.
-    return { execPath: resolveExecutable("wine", executables), env: defaultEnv }
+    return { execPath: Executables.resolve("wine"), env: defaultEnv }
   } else if (toolset === "0.0.0") {
     // Explicit opt-in to the legacy wine-4.0.1-mac bundle (pre-v27).
     toolsetPath = await downloadBuilderToolset({

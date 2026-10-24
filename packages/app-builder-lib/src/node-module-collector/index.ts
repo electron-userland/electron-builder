@@ -1,6 +1,5 @@
 import { Nullish } from "builder-util-runtime"
 import { TmpDir } from "temp-file"
-import { ExecutablesConfig } from "../configuration.js"
 import { NpmNodeModulesCollector } from "./npmNodeModulesCollector.js"
 import { detectPackageManager, getPackageManagerCommand, PM } from "./packageManager.js"
 import { PnpmNodeModulesCollector } from "./pnpmNodeModulesCollector.js"
@@ -15,20 +14,20 @@ import { TraversalNodeModulesCollector } from "./traversalNodeModulesCollector.j
 
 export { getPackageManagerCommand, PM, PnpmNodeModulesCollector, YarnNodeModulesCollector, YarnBerryNodeModulesCollector, BunNodeModulesCollector, TraversalNodeModulesCollector }
 
-export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir, executables?: ExecutablesConfig | null) {
+export function getCollectorByPackageManager(pm: PM, rootDir: string, tempDirManager: TmpDir) {
   switch (pm) {
     case PM.PNPM:
-      return new PnpmNodeModulesCollector(rootDir, tempDirManager, executables)
+      return new PnpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.YARN:
-      return new YarnNodeModulesCollector(rootDir, tempDirManager, executables)
+      return new YarnNodeModulesCollector(rootDir, tempDirManager)
     case PM.YARN_BERRY:
-      return new YarnBerryNodeModulesCollector(rootDir, tempDirManager, executables)
+      return new YarnBerryNodeModulesCollector(rootDir, tempDirManager)
     case PM.BUN:
-      return new BunNodeModulesCollector(rootDir, tempDirManager, executables)
+      return new BunNodeModulesCollector(rootDir, tempDirManager)
     case PM.NPM:
-      return new NpmNodeModulesCollector(rootDir, tempDirManager, executables)
+      return new NpmNodeModulesCollector(rootDir, tempDirManager)
     case PM.TRAVERSAL:
-      return new TraversalNodeModulesCollector(rootDir, tempDirManager, executables)
+      return new TraversalNodeModulesCollector(rootDir, tempDirManager)
   }
 }
 

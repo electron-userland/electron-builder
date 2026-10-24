@@ -1,11 +1,10 @@
-import { Arch, exec, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveEnvVars } from "builder-util"
+import { Arch, exec, Executables, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveEnvVars } from "builder-util"
 import { randomUUID } from "crypto"
 import { resolveSnapCredentials } from "electron-publish"
 
 import * as path from "path"
 import { LinuxPackager } from "../../../linuxPackager.js"
 import { RemoteBuildOptions } from "../../../options/SnapOptions.js"
-import { resolveExecutable } from "../../../util/systemTools.js"
 import { SnapcraftYAML } from "./snapcraft.js"
 import { deepAssign, sleep } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
@@ -247,7 +246,7 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string[]> {
   validateSnapcraftConfig(snapcraftConfig)
 
   // snapcraft by absolute path (toolsets.executables.snapcraft or its default install locations), never looked up on PATH
-  const snapcraft = resolveExecutable("snapcraft", options.packager.config.toolsets?.executables)
+  const snapcraft = Executables.resolve("snapcraft")
 
   try {
     await validateSnapcraftYamlWithCLI(snapcraft, stageDir)

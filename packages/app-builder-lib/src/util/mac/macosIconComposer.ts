@@ -1,13 +1,10 @@
 // Adapted from https://github.com/electron/packager/pull/1806
 
-import { spawn, TmpDir } from "builder-util"
-import { Nullish } from "builder-util-runtime"
+import { Executables, spawn, TmpDir } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "node:path"
 import plist from "plist"
 import * as semver from "semver"
-import { ExecutablesConfig } from "../../configuration.js"
-import { resolveExecutable } from "../systemTools.js"
 
 export interface AssetCatalogResult {
   assetCatalog: Buffer
@@ -51,11 +48,10 @@ async function checkActoolVersion(actool: string, tmpDir: string) {
 /**
  * Generates an asset catalog and extra assets that are useful for packaging the app.
  * @param inputPath The path to the `.icon` file
- * @param executables The `toolsets.executables` configuration, for the location of `actool`
  * @returns The asset catalog and extra assets
  */
-export async function generateAssetCatalogForIcon(tmpDir: TmpDir, inputPath: string, executables?: ExecutablesConfig | Nullish): Promise<AssetCatalogResult> {
-  const actool = resolveExecutable("actool", executables)
+export async function generateAssetCatalogForIcon(tmpDir: TmpDir, inputPath: string): Promise<AssetCatalogResult> {
+  const actool = Executables.resolve("actool")
   const tmpDirPath = await tmpDir.createTempDir({ prefix: "macos-icon-composer" })
 
   await checkActoolVersion(actool, tmpDirPath)

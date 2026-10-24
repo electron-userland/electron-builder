@@ -1,16 +1,11 @@
-import { DebugLogger, exec, ExtraSpawnOptions, InvalidConfigurationError, log, spawn, stripSensitiveEnvVars } from "builder-util"
+import { DebugLogger, exec, Executables, ExtraSpawnOptions, InvalidConfigurationError, log, spawn, stripSensitiveEnvVars } from "builder-util"
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { Nullish } from "builder-util-runtime"
-import { ExecutablesConfig, ToolsetConfig } from "../configuration.js"
+import { ToolsetConfig } from "../configuration.js"
 import { ParallelsVm } from "./ParallelsVm.js"
-import { findExecutable, resolveExecutable } from "../util/systemTools.js"
 
 export class VmManager {
-  /** @param executables the `toolsets.executables` configuration, where the host programs the manager starts are installed */
-  constructor(protected readonly executables?: ExecutablesConfig | null) {}
-
   get pathSep(): string {
     return path.sep
   }
@@ -34,9 +29,9 @@ export class VmManager {
   // PowerShell 7 is not used there
   protected windowsPowerShellPaths(): { powershell: string; pwsh: { path: string } | { unavailable: string } } {
     // PowerShell 7 is optional, unless toolsets.executables.pwsh is set: then it has to be found there
-    const pwsh = this.executables?.pwsh == null ? findExecutable("pwsh", null) : resolveExecutable("pwsh", this.executables)
+    const pwsh = Executables.isConfigured("pwsh") ? Executables.resolve("pwsh") : Executables.find("pwsh")
     return {
-      powershell: resolveExecutable("powershell", this.executables),
+      powershell: Executables.resolve("powershell"),
       pwsh: pwsh == null ? { unavailable: "PowerShell 7 (pwsh) is not installed at its default install location" } : { path: pwsh },
     }
   }
@@ -61,16 +56,15 @@ export class VmManager {
   })
 }
 
-export async function getWindowsVm(debugLogger: DebugLogger, toolsets?: ToolsetConfig | null): Promise<VmManager> {
-  const executables = toolsets?.executables
+export async function getWindowsVm(debugLogger: DebugLogger, wineToolset?: ToolsetConfig["wine"]): Promise<VmManager> {
   const parallelsVmModule = await import("./ParallelsVm.js")
   let vmList: ParallelsVm[] = []
   try {
-    vmList = await parseWindowsVmList(debugLogger, executables)
+    vmList = await parseWindowsVmList(debugLogger)
   } catch (_error) {
-    if (findExecutable("pwsh", executables) != null && isWineAvailable(toolsets)) {
+    if (Executables.find("pwsh") != null && isWineAvailable(wineToolset)) {
       const vmModule = await import("./PwshVm.js")
-      return new vmModule.PwshVmManager(executables)
+      return new vmModule.PwshVmManager()
     }
   }
   if (vmList.length === 0) {
@@ -79,27 +73,27 @@ export async function getWindowsVm(debugLogger: DebugLogger, toolsets?: ToolsetC
     )
   }
 
-  return new parallelsVmModule.ParallelsVmManager(preferRunningVm(vmList), executables)
+  return new parallelsVmModule.ParallelsVmManager(preferRunningVm(vmList))
 }
 
 // Runs Windows executables: natively on Windows, else in a Parallels Windows VM when one exists, else via wine.
 // Unlike getWindowsVm, it never falls back to PwshVmManager, which runs the file natively and requires pwsh.
-export async function getWindowsExecVm(debugLogger: DebugLogger, toolsets: ToolsetConfig | Nullish, buildResourcesDir: string): Promise<VmManager> {
+export async function getWindowsExecVm(debugLogger: DebugLogger, wineToolset: ToolsetConfig["wine"], buildResourcesDir: string): Promise<VmManager> {
   if (process.platform === "win32") {
-    return new VmManager(toolsets?.executables)
+    return new VmManager()
   }
-  const vmList = await parseWindowsVmList(debugLogger, toolsets?.executables).catch(() => [])
+  const vmList = await parseWindowsVmList(debugLogger).catch(() => [])
   if (vmList.length > 0) {
     const parallelsVmModule = await import("./ParallelsVm.js")
-    return new parallelsVmModule.ParallelsVmManager(preferRunningVm(vmList), toolsets?.executables)
+    return new parallelsVmModule.ParallelsVmManager(preferRunningVm(vmList))
   }
   const wineVmModule = await import("./WineVm.js")
-  return new wineVmModule.WineVmManager(toolsets, buildResourcesDir)
+  return new wineVmModule.WineVmManager(wineToolset, buildResourcesDir)
 }
 
-async function parseWindowsVmList(debugLogger: DebugLogger, executables: ExecutablesConfig | Nullish): Promise<ParallelsVm[]> {
+async function parseWindowsVmList(debugLogger: DebugLogger): Promise<ParallelsVm[]> {
   const parallelsVmModule = await import("./ParallelsVm.js")
-  return (await parallelsVmModule.parseVmList(debugLogger, executables)).filter(it => ["win-10", "win-11"].includes(it.os))
+  return (await parallelsVmModule.parseVmList(debugLogger)).filter(it => ["win-10", "win-11"].includes(it.os))
 }
 
 // prefer running or suspended vm
@@ -107,23 +101,23 @@ function preferRunningVm(vmList: ParallelsVm[]): ParallelsVm {
   return vmList.find(it => it.state === "running") || vmList.find(it => it.state === "suspended") || vmList[0]
 }
 
-export async function getLinuxVm(debugLogger: DebugLogger, executables?: ExecutablesConfig | null): Promise<VmManager | undefined> {
+export async function getLinuxVm(debugLogger: DebugLogger): Promise<VmManager | undefined> {
   if (process.platform !== "darwin") {
     return undefined
   }
   try {
     const parallelsVmModule = await import("./ParallelsVm.js")
-    const vmList = (await parallelsVmModule.parseVmList(debugLogger, executables)).filter(it => it.os === "ubuntu")
+    const vmList = (await parallelsVmModule.parseVmList(debugLogger)).filter(it => it.os === "ubuntu")
     if (vmList.length === 0) {
       return undefined
     }
-    return new parallelsVmModule.ParallelsVmManager(preferRunningVm(vmList), executables)
+    return new parallelsVmModule.ParallelsVmManager(preferRunningVm(vmList))
   } catch {
     return undefined
   }
 }
 
 // Without running anything: a custom Wine bundle is configured, or the host Wine is found (it is never looked up on PATH)
-function isWineAvailable(toolsets: ToolsetConfig | Nullish): boolean {
-  return (typeof toolsets?.wine === "object" && toolsets.wine != null) || findExecutable("wine", toolsets?.executables) != null
+function isWineAvailable(wineToolset: ToolsetConfig["wine"] | undefined): boolean {
+  return (typeof wineToolset === "object" && wineToolset != null) || Executables.find("wine") != null
 }

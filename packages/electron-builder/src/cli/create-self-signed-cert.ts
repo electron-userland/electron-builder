@@ -1,5 +1,5 @@
-import { getWindowsKitsBundle, resolveExecutable } from "app-builder-lib/internal"
-import { exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
+import { getWindowsKitsBundle } from "app-builder-lib/internal"
+import { exec, Executables, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import chalk from "chalk"
 import { mkdir } from "fs/promises"
@@ -28,7 +28,7 @@ export async function createSelfSignedCert(publisher: string) {
     const certLocation = "Cert:\\LocalMachine\\TrustedPeople"
     log.info({ file: pfx, certLocation }, `importing. Operation will be succeed only if runned from root. Otherwise import  file manually.`)
     // this command loads no configuration: Windows PowerShell from its default location
-    await spawn(resolveExecutable("powershell", null), [
+    await spawn(Executables.resolve("powershell"), [
       "-NoProfile",
       "-NonInteractive",
       "-Command",
