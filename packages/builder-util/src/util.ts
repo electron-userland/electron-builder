@@ -46,6 +46,8 @@ export {
   loadUpdateSigningKeys,
   UpdateSigningKeySources,
   generateUpdateSigningKeypair,
+  parseUpdateManifestYaml,
+  resignUpdateManifestYaml,
 } from "./updateManifestSigner.js"
 
 export const debug7z = _debug("electron-builder:7z")
