@@ -814,5 +814,103 @@ describe("differential download failures fall back to a verified full download, 
         }
       }, 15000)
     }
+
+    test("cancel during a write to the new file settles only once the new file is closed", async ({ tmpDir }) => {
+      const url = await startServer()
+      const { updater, logs, cacheDir } = await createUpdater(tmpDir, url)
+      await updater.checkForUpdates()
+      const newFile = path.join(cacheDir, "pending", `temp-${INSTALLER.slice(1)}`)
+
+      // Holds the first write to the new file so the cancel lands while that write is in flight. The stream that owns the
+      // descriptor of the new file closes it only once the write is over, and the download must not settle before: a caller
+      // that reacts to the rejection (a retry, a full download, removing the file) would race the stream still using it.
+      let newFileFd: number | null = null
+      let releaseHeldWrite: (() => void) | null = null
+      let onWriteHeld: () => void = () => {}
+      const writeHeld = new Promise<void>(resolve => (onWriteHeld = resolve))
+      const ioErrors: Array<unknown> = []
+      const events: Array<string> = []
+      const isNewFile = (fd: number): boolean => {
+        try {
+          return fs.fstatSync(fd).ino === fs.statSync(newFile).ino
+        } catch (_ignored) {
+          return false
+        }
+      }
+      const recordError =
+        (callback: unknown) =>
+        (error: unknown, ...rest: Array<any>) => {
+          if (error != null) {
+            ioErrors.push(error)
+          }
+          if (typeof callback === "function") {
+            callback(error, ...rest)
+          }
+        }
+      // the stream writes with fs.write or, for buffered chunks, fs.writev
+      const holdFirstWrite =
+        (realWrite: (...args: Array<any>) => void) =>
+        (...args: Array<any>): void => {
+          if (newFileFd == null && isNewFile(args[0])) {
+            newFileFd = args[0]
+          }
+          if (newFileFd == null || args[0] !== newFileFd || events.length > 0) {
+            realWrite(...args)
+            return
+          }
+          args[args.length - 1] = recordError(args[args.length - 1])
+          if (releaseHeldWrite != null) {
+            realWrite(...args)
+            return
+          }
+          releaseHeldWrite = () => realWrite(...args)
+          onWriteHeld()
+        }
+      const realWrite = fs.write
+      const realWritev = fs.writev
+      const realClose = fs.close
+      const writeSpy = vi.spyOn(fs, "write").mockImplementation(holdFirstWrite(realWrite) as any)
+      const writevSpy = vi.spyOn(fs, "writev").mockImplementation(holdFirstWrite(realWritev) as any)
+      const closeSpy = vi.spyOn(fs, "close").mockImplementation((fd: number, callback?: unknown) => {
+        // once settled, the descriptor number can be reused by another file
+        if (fd !== newFileFd || events.includes("settled")) {
+          realClose(fd, callback as any)
+          return
+        }
+        realClose(fd, (error: unknown) => {
+          events.push("new file closed")
+          recordError(callback)(error)
+        })
+      })
+
+      try {
+        const token = new CancellationToken()
+        const download = updater.downloadUpdate(token).then(
+          () => "resolved",
+          (e: any) => `rejected: ${e?.constructor?.name} ${e?.message}`
+        )
+        void download.then(() => events.push("settled"))
+        await writeHeld
+        token.cancel()
+        await new Promise(resolve => setTimeout(resolve, 300))
+        const isSettledWhileWriting = events.includes("settled")
+        const release: () => void = releaseHeldWrite ?? (() => {})
+        release()
+        const outcome = await Promise.race([download, new Promise<string>(resolve => setTimeout(() => resolve("still pending 5s after cancel (hang)"), 5000))])
+
+        expect(outcome).toMatch(/^rejected: CancellationError/)
+        // the download must not settle while the new file is still written
+        expect(isSettledWhileWriting).toBe(false)
+        // the new file is closed once, by its stream, before the download settles
+        expect(events).toEqual(["new file closed", "settled"])
+        expect(ioErrors).toEqual([])
+        expect(logs.filter(it => it.includes("fallback to full download") || it.includes("cannot close"))).toEqual([])
+        expect(fullDownloads()).toHaveLength(0)
+      } finally {
+        writeSpy.mockRestore()
+        writevSpy.mockRestore()
+        closeSpy.mockRestore()
+      }
+    }, 15000)
   })
 })
