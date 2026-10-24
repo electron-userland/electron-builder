@@ -750,19 +750,20 @@ export interface ToolsetConfig {
    * macOS or Linux.
    *
    * The host Wine is never looked up on `PATH`. `"system"` uses the first of these that exists:
-   * - macOS: `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine` (likewise `Wine Devel.app`,
-   *   `Wine Staging.app`), `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine`
-   * - Linux: `/usr/bin/wine`, `/usr/local/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`,
+   * - macOS: `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine`,
+   *   `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine` (likewise `Wine Devel.app`, `Wine Staging.app`)
+   * - Linux: `/usr/local/bin/wine`, `/usr/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`,
    *   `/opt/wine-staging/bin/wine`
    *
-   * To use a Wine installed elsewhere, set its absolute path with a {@link ToolsetExecutable} object
-   * (`{ "path": "/opt/my-wine/bin/wine" }`). To use a custom Wine bundle, use a `ToolsetCustom` object.
+   * To use a Wine installed elsewhere, point a `ToolsetCustom` object at its installation directory, the one
+   * containing `bin/wine` (`{ "url": "file:///opt/my-wine" }`). A directory without a bundled `wine-home` prefix
+   * runs with Wine's own default prefix, like `"system"`. A `ToolsetCustom` object is also how a custom Wine bundle is used.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly wine?: "0.0.0" | "1.0.1" | "system" | ToolsetCustom | ToolsetExecutable | "latest"
+  readonly wine?: "0.0.0" | "1.0.1" | "system" | ToolsetCustom | "latest"
 
   /**
    * Version of the FPM bundle used to build Linux packages (`.deb`, `.rpm`, `.pacman`, etc.)
@@ -921,19 +922,6 @@ export interface ToolsetCustom {
    * Falls back to the first 8 hex characters of the `checksum` digest when omitted.
    */
   readonly version?: string
-}
-
-/**
- * An executable already installed on the build machine, used in place of a toolset bundle.
- *
- * @example
- * ```json
- * { "toolsets": { "wine": { "path": "/opt/my-wine/bin/wine" } } }
- * ```
- */
-export interface ToolsetExecutable {
-  /** Absolute path of the executable. */
-  readonly path: string
 }
 
 /**

@@ -8587,9 +8587,6 @@
               "$ref": "#/definitions/ToolsetCustom"
             },
             {
-              "$ref": "#/definitions/ToolsetExecutable"
-            },
-            {
               "enum": [
                 "0.0.0",
                 "1.0.1",
@@ -8600,7 +8597,7 @@
             }
           ],
           "default": "latest",
-          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n| `\"system\"` | host install | macOS, Linux | Uses the host Wine at a fixed install location instead of a bundle |\n\n`\"system\"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and\nis what `\"latest\"` (the default) currently resolves to on every platform: the published `\"1.0.1\"`\nbundles ship no PE builtins, so a host Wine installation is required to build Windows targets on\nmacOS or Linux.\n\nThe host Wine is never looked up on `PATH`. `\"system\"` uses the first of these that exists:\n- macOS: `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine` (likewise `Wine Devel.app`,\n  `Wine Staging.app`), `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine`\n- Linux: `/usr/bin/wine`, `/usr/local/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`,\n  `/opt/wine-staging/bin/wine`\n\nTo use a Wine installed elsewhere, set its absolute path with a {@link ToolsetExecutable} object\n(`{ \"path\": \"/opt/my-wine/bin/wine\" }`). To use a custom Wine bundle, use a `ToolsetCustom` object.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
+          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n| `\"system\"` | host install | macOS, Linux | Uses the host Wine at a fixed install location instead of a bundle |\n\n`\"system\"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and\nis what `\"latest\"` (the default) currently resolves to on every platform: the published `\"1.0.1\"`\nbundles ship no PE builtins, so a host Wine installation is required to build Windows targets on\nmacOS or Linux.\n\nThe host Wine is never looked up on `PATH`. `\"system\"` uses the first of these that exists:\n- macOS: `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine`,\n  `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine` (likewise `Wine Devel.app`, `Wine Staging.app`)\n- Linux: `/usr/local/bin/wine`, `/usr/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`,\n  `/opt/wine-staging/bin/wine`\n\nTo use a Wine installed elsewhere, point a `ToolsetCustom` object at its installation directory, the one\ncontaining `bin/wine` (`{ \"url\": \"file:///opt/my-wine\" }`). A directory without a bundled `wine-home` prefix\nruns with Wine's own default prefix, like `\"system\"`. A `ToolsetCustom` object is also how a custom Wine bundle is used.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
         }
       },
       "type": "object"
@@ -8624,20 +8621,6 @@
       },
       "required": [
         "url"
-      ],
-      "type": "object"
-    },
-    "ToolsetExecutable": {
-      "additionalProperties": false,
-      "description": "An executable already installed on the build machine, used in place of a toolset bundle.",
-      "properties": {
-        "path": {
-          "description": "Absolute path of the executable.",
-          "type": "string"
-        }
-      },
-      "required": [
-        "path"
       ],
       "type": "object"
     },
