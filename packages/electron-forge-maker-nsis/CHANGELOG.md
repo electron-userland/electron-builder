@@ -1,5 +1,21 @@
 # electron-forge-maker-nsis
 
+## 27.0.0-alpha.13
+### Patch Changes
+
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`862437f`](https://github.com/electron-userland/electron-builder/commit/862437ff62e30d88c29ba112dd2f6b5a16c42183) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`b5e144d`](https://github.com/electron-userland/electron-builder/commit/b5e144dfeea1e0e8eaa13aec151457227ee4d7d5) [`8366dc6`](https://github.com/electron-userland/electron-builder/commit/8366dc690ba5bc453c45f6ebbb8f8ad3561521df) [`b98e1f2`](https://github.com/electron-userland/electron-builder/commit/b98e1f2910edaa14b554e603d3ff509c8b04ccf2) [`a7f005c`](https://github.com/electron-userland/electron-builder/commit/a7f005ce837df409cc7cf9049e3eff74a2d5a503)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.13`
+
+</details>
+
 ## 27.0.0-alpha.12
 ### Patch Changes
 

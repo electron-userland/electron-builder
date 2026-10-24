@@ -1,5 +1,36 @@
 # electron-builder
 
+## 27.0.0-alpha.13
+### Patch Changes
+
+- Feat(win)!: a missing `publisherName` fails Windows update signature verification closed instead of skipping it. _[`#10380`](https://github.com/electron-userland/electron-builder/pull/10380) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14)_
+
+  - **electron-updater**: an NSIS update is rejected with `ERR_UPDATER_INVALID_SIGNATURE` when `app-update.yml` (or `dev-app-update.yml` / the `updateConfigPath` file) has no `publisherName`; it used to be installed unverified with a warning. A custom `verifyUpdateFileAuthenticodeSignature` / `verifyUpdateCodeSignature` is never called without a `publisherName`. The only opt-out is `verifyUpdateCodeSignature: false` in `app-update.yml`, which electron-builder writes for `win.verifyUpdateCodeSignature: false`; verification is then skipped with one warning per updater. An app with no update config file at all (no `app-update.yml` / `dev-app-update.yml`, e.g. one that only uses `setFeedURL`) is still not verified, as before: its feed is configured by the developer.
+  - **app-builder-lib**: a Windows build that writes `app-update.yml` (`nsis`, `nsis-web` or `electronUpdaterAware` `appx` with a publish configuration of any provider, including one inferred from a GitHub `repository`) fails with `InvalidConfigurationError` while `win.verifyUpdateCodeSignature` is enabled and no `publisherName` resolves: `win.sign: false` / `null`, no code signing certificate, or `win.sign.publisherName: null`, which no longer opts out. Sign the build, set `win.sign.publisherName` (e.g. `win.sign: { type: "signtool", publisherName: [...] }` when signing outside electron-builder), or set `win.verifyUpdateCodeSignature: false`, which now writes `verifyUpdateCodeSignature: false` (and no `publisherName`) into `app-update.yml`. A `publisherName` in the `publish` configuration must be a distinguished name too, and `verifyUpdateCodeSignature` must not be set there.
+  - **builder-util-runtime**: `PublishConfiguration` has the private, Windows-only `verifyUpdateCodeSignature` field.
+  - **electron-builder**: `migrate-schema` prints an advisory for `win.sign: false` / `null` or `win.sign.publisherName: null` without `win.verifyUpdateCodeSignature: false`.
+
+  See https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification
+- Docs: split the v27 breaking-changes page into config, build, runtime and developer pages, point the migration links in build and updater messages at the page each change moved to, and add links to the v27 messages that had none _[`#10421`](https://github.com/electron-userland/electron-builder/pull/10421) [`b5e144d`](https://github.com/electron-userland/electron-builder/commit/b5e144dfeea1e0e8eaa13aec151457227ee4d7d5)_
+- Electron-builder starts the host programs it uses only from an absolute path, never by looking up a name on `PATH`: PowerShell, Wine, Mono (Squirrel.Windows on macOS and Linux), `prlctl`, `productbuild`, `pkgbuild`, `codesign`, `hdiutil`, `tiffutil`, `sips`, `actool`, `zip`, `notarytool` (passed to `@electron/notarize` as `notarytoolPath`, located with `/usr/bin/xcrun` by default), `lzip`, `snapcraft`, `flatpak` and `flatpak-builder`. Each comes from its default install locations or from the new `toolsets.executables` map, whose entries are `file://` URIs, or lists of them, that replace the defaults for that program. Child processes started without an explicit environment get no credential variables on Windows either, and `snapcraft upload` gets the store credentials but no other secret. The NSIS installer starts `tasklist` and `taskkill` from `$SYSDIR` (and passes the force flag in per-machine mode), the AppImage launcher runs the dialog tool it checked by its absolute path, and electron-updater on macOS starts `/usr/sbin/sysctl` and `/usr/bin/uname`. _[`#10430`](https://github.com/electron-userland/electron-builder/pull/10430) [`b98e1f2`](https://github.com/electron-userland/electron-builder/commit/b98e1f2910edaa14b554e603d3ff509c8b04ccf2)_
+- Start system tools by absolute path instead of looking them up on `PATH`: Windows PowerShell from `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe` (for Windows code signing, package-manager commands and `create-self-signed-cert`), PowerShell 7 from `%ProgramFiles%\PowerShell\7\pwsh.exe` on Windows and from the install location of Microsoft's package on macOS and Linux, `prlctl` from the Parallels Desktop install location, and the host Wine (`toolsets.wine: "system"`, the default) from its fixed install locations. `SystemRoot` and `ProgramFiles` must be drive-absolute paths. _[`#10422`](https://github.com/electron-userland/electron-builder/pull/10422) [`a7f005c`](https://github.com/electron-userland/electron-builder/commit/a7f005ce837df409cc7cf9049e3eff74a2d5a503)_
+
+<details><summary>Updated 5 dependencies</summary>
+
+<small>
+
+[`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`2d97c85`](https://github.com/electron-userland/electron-builder/commit/2d97c85e3e3e63aade6497923d3012ce0569e414) [`862437f`](https://github.com/electron-userland/electron-builder/commit/862437ff62e30d88c29ba112dd2f6b5a16c42183) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`2d97c85`](https://github.com/electron-userland/electron-builder/commit/2d97c85e3e3e63aade6497923d3012ce0569e414) [`674e18d`](https://github.com/electron-userland/electron-builder/commit/674e18dd3e6d2720c46b42ce309cac83ae760e14) [`b5e144d`](https://github.com/electron-userland/electron-builder/commit/b5e144dfeea1e0e8eaa13aec151457227ee4d7d5) [`8366dc6`](https://github.com/electron-userland/electron-builder/commit/8366dc690ba5bc453c45f6ebbb8f8ad3561521df) [`b98e1f2`](https://github.com/electron-userland/electron-builder/commit/b98e1f2910edaa14b554e603d3ff509c8b04ccf2) [`a7f005c`](https://github.com/electron-userland/electron-builder/commit/a7f005ce837df409cc7cf9049e3eff74a2d5a503)
+
+</small>
+
+- `app-builder-lib@27.0.0-alpha.13`
+- `builder-util-runtime@10.0.0-alpha.12`
+- `electron-publish@27.0.0-alpha.13`
+- `builder-util@27.0.0-alpha.13`
+- `dmg-builder@27.0.0-alpha.13`
+
+</details>
+
 ## 27.0.0-alpha.12
 ### Major Changes
 
