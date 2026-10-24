@@ -1,5 +1,5 @@
-import { createHttpError, newError, safeGetHeader } from "builder-util-runtime"
-import { IncomingMessage } from "http"
+import { createHttpError, HttpExecutor, newError, safeGetHeader } from "builder-util-runtime"
+import { IncomingMessage, RequestOptions } from "http"
 import { Writable } from "stream"
 import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter.js"
 import { DifferentialDownloader } from "./DifferentialDownloader.js"
@@ -10,6 +10,9 @@ export const ERR_MULTIPLE_RANGES_NOT_SUPPORTED = "ERR_UPDATER_MULTIPLE_RANGES_NO
 
 // 400 Bad Request (Google Cloud Storage: "Multiple ranges are not supported"), 416 Range Not Satisfiable, 501 Not Implemented (GitHub release assets)
 const MULTIPLE_RANGES_REJECTED_STATUS_CODES = new Set([400, 416, 501])
+
+// the redirect limit of HttpExecutor
+const MAX_REDIRECTS = 10
 
 export function executeTasksUsingMultipleRangeRequests(
   differentialDownloader: DifferentialDownloader,
@@ -76,7 +79,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       } else {
         const requestOptions = differentialDownloader.createRequestOptions()
         requestOptions.headers!.Range = `bytes=${task.start}-${task.end - 1}`
-        const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
+        requestRange(differentialDownloader, requestOptions, reject, response => {
           response.on("error", reject)
 
           if (!checkIsPartialContent(response, task.start, task.end - 1, reject)) {
@@ -88,8 +91,6 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
           })
           response.once("end", () => w(index))
         })
-        differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-        request.end()
       }
     }
 
@@ -99,7 +100,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
 
   const requestOptions = differentialDownloader.createRequestOptions()
   requestOptions.headers!.Range = ranges.substring(0, ranges.length - 2)
-  const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
+  requestRange(differentialDownloader, requestOptions, reject, (response, request) => {
     response.on("error", reject)
 
     // other errors (auth, missing file, server failure) are not about ranges: fail as before, without a range-by-range retry
@@ -163,8 +164,44 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       }, 10000)
     })
   })
-  differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-  request.end()
+}
+
+/**
+ * Sends a range request of a differential download; every one must go through here. Electron net would follow a redirect itself and
+ * send `Authorization` and the other credential headers to the redirect target, so, like ElectronHttpExecutor, the request is aborted
+ * and sent again with HttpExecutor.prepareRedirectUrlOptions, which drops them when the redirect leaves the origin. `callback` gets the
+ * response, the request that produced it and that request's options (the redirect target's after a redirect).
+ */
+export function requestRange(
+  differentialDownloader: DifferentialDownloader,
+  requestOptions: RequestOptions,
+  reject: (error: Error) => void,
+  callback: (response: IncomingMessage, request: any, options: RequestOptions) => void
+): void {
+  // fails closed: a redirect that is not aborted below is cancelled ("Redirect was cancelled") instead of followed
+  ;(requestOptions as any).redirect = "manual"
+  const send = (options: RequestOptions, redirectCount: number): void => {
+    // not a copy: ElectronHttpExecutor.createRequest moves a Host header to `host`, and the single-range loop reuses the options
+    const request = differentialDownloader.httpExecutor.createRequest(options, response => callback(response, request, options))
+    request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
+      differentialDownloader.logger.info(`Redirect to ${removeQuery(redirectUrl)}`)
+      request.abort()
+      if (redirectCount >= MAX_REDIRECTS) {
+        reject(new Error(`Too many redirects (> ${MAX_REDIRECTS})`))
+        return
+      }
+      send(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options), redirectCount + 1)
+    })
+    differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
+    request.end()
+  }
+  send(requestOptions, 0)
+}
+
+// safety
+function removeQuery(url: string): string {
+  const index = url.indexOf("?")
+  return index < 0 ? url : url.substring(0, index)
 }
 
 /**
@@ -173,7 +210,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
  * fails. A rejected response is destroyed, so nothing more is read from it.
  */
 export function checkIsPartialContent(response: IncomingMessage, start: number, endInclusive: number, reject: (error: Error) => void): boolean {
-  // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
+  // requestRange follows redirects (Electron net reports them as a "redirect" event), our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
   const { statusCode } = response
   if (typeof statusCode === "number" && statusCode >= 400) {
     response.destroy()
