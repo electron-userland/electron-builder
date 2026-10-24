@@ -19,9 +19,13 @@ export function executeTasksUsingMultipleRangeRequests(
   reject: (error: Error) => void
 ): (taskOffset: number) => void {
   const w = (taskOffset: number): void => {
-    // the next batch may start after a cancel already settled the download
+    // the next batch may start after a cancel or a failure already settled the download
     if (differentialDownloader.options.cancellationToken.cancelled) {
       reject(new CancellationError())
+      return
+    }
+    if (out.destroyed) {
+      reject(new Error("Cannot download the next batch: the output stream is destroyed"))
       return
     }
     if (taskOffset >= tasks.length) {
@@ -71,6 +75,10 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     const w = (index: number): void => {
       if (differentialDownloader.options.cancellationToken.cancelled) {
         reject(new CancellationError())
+        return
+      }
+      if (out.destroyed) {
+        reject(new Error("Cannot download the next part: the output stream is destroyed"))
         return
       }
       if (index >= options.end) {

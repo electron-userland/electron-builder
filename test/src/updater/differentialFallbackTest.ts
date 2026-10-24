@@ -3,11 +3,12 @@ import { CancellationToken, CURRENT_APP_INSTALLER_FILE_NAME, DownloadOptions, Ht
 import { NsisUpdater } from "electron-updater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import { createHash } from "crypto"
+import fs from "fs"
 import fsExtra from "fs-extra"
 import { ClientRequest, createServer, IncomingMessage, request as httpRequest, Server, ServerResponse } from "http"
 import { AddressInfo } from "net"
 import * as path from "path"
-import { afterEach, describe, expect, test } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
 import { gzipSync } from "zlib"
 import { TestAppAdapter } from "../helpers/TestAppAdapter.js"
 
@@ -656,5 +657,72 @@ describe("every differential download failure falls back to a verified full down
       // the differential download unsubscribes from the token once settled
       expect(token.listenerCount("cancel")).toBe(0)
     }, 15000)
+
+    for (const multiRange of [true, false]) {
+      test(`cancel during a copy from the old file settles only once the copy stopped reading it (${multiRange ? "multi" : "single"}-range)`, async ({ tmpDir }) => {
+        const url = await startServer()
+        const { updater, logs, cacheDir } = await createUpdater(tmpDir, url, { multiRange })
+        await updater.checkForUpdates()
+        const oldFileInode = (await fsExtra.stat(path.join(cacheDir, CURRENT_APP_INSTALLER_FILE_NAME))).ino
+
+        // Holds the first read of the old installer (the copy of block A, the first operation on both paths) so the cancel
+        // lands while that read is in flight. The descriptor must stay open until the read is over: closing it earlier lets
+        // the read fail with EBADF or, worse, hit whatever file reuses the descriptor number.
+        let releaseHeldRead: (() => void) | null = null
+        let onReadHeld: () => void = () => {}
+        const readHeld = new Promise<void>(resolve => (onReadHeld = resolve))
+        const readErrors: Array<unknown> = []
+        const realRead = fs.read
+        const readSpy = vi.spyOn(fs, "read").mockImplementation(((...args: Array<any>) => {
+          let isOldFile = false
+          try {
+            isOldFile = fs.fstatSync(args[0]).ino === oldFileInode
+          } catch (_ignored) {
+            // not a valid descriptor: let the real read report it
+          }
+          if (!isOldFile) {
+            return (realRead as any)(...args)
+          }
+          const callback = args[args.length - 1]
+          args[args.length - 1] = (error: unknown, ...rest: Array<any>) => {
+            if (error != null) {
+              readErrors.push(error)
+            }
+            callback(error, ...rest)
+          }
+          if (releaseHeldRead != null || readErrors.length > 0) {
+            return (realRead as any)(...args)
+          }
+          releaseHeldRead = () => (realRead as any)(...args)
+          onReadHeld()
+        }) as any)
+
+        try {
+          const token = new CancellationToken()
+          let isSettled = false
+          const download = updater.downloadUpdate(token).then(
+            () => "resolved",
+            (e: any) => `rejected: ${e?.constructor?.name} ${e?.message}`
+          )
+          void download.then(() => (isSettled = true))
+          await readHeld
+          token.cancel()
+          await new Promise(resolve => setTimeout(resolve, 300))
+          const isSettledWhileReading = isSettled
+          const release: () => void = releaseHeldRead ?? (() => {})
+          release()
+          const outcome = await Promise.race([download, new Promise<string>(resolve => setTimeout(() => resolve("still pending 5s after cancel (hang)"), 5000))])
+
+          expect(outcome).toMatch(/^rejected: CancellationError/)
+          // the download must not settle (and close the old file) while the copy still reads it
+          expect(isSettledWhileReading).toBe(false)
+          expect(readErrors).toEqual([])
+          expect(logs.filter(it => it.includes("fallback to full download") || it.includes("cannot close"))).toEqual([])
+          expect(fullDownloads()).toHaveLength(0)
+        } finally {
+          readSpy.mockRestore()
+        }
+      }, 15000)
+    }
   })
 })
