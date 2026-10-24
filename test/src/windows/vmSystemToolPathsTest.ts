@@ -197,7 +197,7 @@ describe("getWindowsVm", () => {
   test("counts an explicitly configured wine as available without running it", async ({ expect }) => {
     setPlatform("linux")
     vi.mocked(findHostPwsh).mockReturnValue("/opt/microsoft/powershell/7/pwsh")
-    expect(await getWindowsVm(new DebugLogger(false), { path: "/opt/my-wine/bin/wine" })).toBeInstanceOf(PwshVmManager)
+    expect(await getWindowsVm(new DebugLogger(false), { url: "file:///opt/my-wine" })).toBeInstanceOf(PwshVmManager)
     expect(vi.mocked(exec)).not.toHaveBeenCalled()
   })
 })

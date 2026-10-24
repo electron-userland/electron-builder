@@ -287,24 +287,24 @@ Plugins are particularly of-note here. NSIS scripts do not offer a lot of functi
 
 ## Host Wine {#host-wine}
 
-The host Wine (`toolsets.wine: "system"`, the default) is started by absolute path and never looked up on `PATH`. electron-builder uses the first of these that exists:
+The host Wine (`toolsets.wine: "system"`, the default) is started by absolute path and never looked up on `PATH`. electron-builder uses the first of these that exists, in the order of the default `PATH`:
 
 | Host | Locations |
 |------|-----------|
-| macOS | `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine`, the same path in `Wine Devel.app` and `Wine Staging.app`, `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine` |
-| Linux | `/usr/bin/wine`, `/usr/local/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`, `/opt/wine-staging/bin/wine` |
+| macOS | `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine`, `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine`, the same path in `Wine Devel.app` and `Wine Staging.app` |
+| Linux | `/usr/local/bin/wine`, `/usr/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`, `/opt/wine-staging/bin/wine` |
 
-If Wine is not installed at one of these locations, the build fails with a configuration error. To use a Wine installed elsewhere, set its absolute path:
+If Wine is not installed at one of these locations, the build fails with a configuration error. To use a Wine installed elsewhere, point a [custom toolset](#custom-toolsets) at its installation directory, the one containing `bin/wine` (or `bin/wine64`):
 
 ```json
 {
   "toolsets": {
-    "wine": { "path": "/opt/my-wine/bin/wine" }
+    "wine": { "url": "file:///opt/my-wine" }
   }
 }
 ```
 
-The configured Wine runs with the same environment as `"system"` (its own default prefix). To use a portable Wine bundle with its own prefix instead, use a [custom toolset](#custom-toolsets).
+The executable is taken from that directory by absolute path. A directory without a bundled `wine-home` prefix is treated as a host installation and runs with Wine's own default prefix and library lookup, the same as `"system"`; a Wine bundle that ships `wine-home` uses that prefix and its `lib` directory.
 
 ## Replacing removed environment variables
 
