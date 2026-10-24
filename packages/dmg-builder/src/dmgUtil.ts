@@ -1,7 +1,7 @@
 import { DmgContent, DmgOptions, MacPackager, PlatformPackager } from "app-builder-lib"
-import { downloadBuilderToolset, withToolsetLock } from "app-builder-lib/internal"
+import { downloadBuilderToolset, ExecutablesConfig, resolveExecutable, withToolsetLock } from "app-builder-lib/internal"
 import { exec, executeFinally, exists, InvalidConfigurationError, isEmptyOrSpaces, log, TmpDir } from "builder-util"
-import { sleep } from "builder-util-runtime"
+import { Nullish, sleep } from "builder-util-runtime"
 import { stat } from "fs/promises"
 
 import * as path from "path"
@@ -52,7 +52,14 @@ async function getDmgVendorPath(): Promise<string> {
   return path.resolve(file, "dmgbuild")
 }
 
-export async function attachAndExecute(dmgPath: string, readWrite: boolean, forceDetach: boolean, task: (devicePath: string) => Promise<any>) {
+/** @param executables the `toolsets.executables` configuration, where hdiutil is installed (it is never looked up on PATH) */
+export async function attachAndExecute(
+  dmgPath: string,
+  readWrite: boolean,
+  forceDetach: boolean,
+  task: (devicePath: string) => Promise<any>,
+  executables?: ExecutablesConfig | Nullish
+) {
   //noinspection SpellCheckingInspection
   const args = ["attach", "-noverify", "-noautoopen"]
   if (readWrite) {
@@ -62,7 +69,7 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, forc
   args.push(dmgPath)
   // Pipe "y\n" to stdin so that hdiutil auto-accepts any SLA/EULA dialog
   // embedded in the DMG instead of blocking on a terminal prompt.
-  const attachResult = await hdiUtilWithStdin(args, "y\n")
+  const attachResult = await hdiUtilWithStdin(args, "y\n", executables)
   // Use multiline flag so ^ matches any line start — the EULA text (if any)
   // precedes the /dev/... device lines in hdiutil's stdout output.
   const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/m.exec(attachResult)
@@ -71,7 +78,7 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, forc
     throw new Error(`Cannot mount: ${attachResult}`)
   }
 
-  return executeAndDetach(attachResult!, device, forceDetach, task)
+  return executeAndDetach(attachResult!, device, forceDetach, task, (it, force) => detach(it, force, executables))
 }
 
 /** @internal */
@@ -105,12 +112,12 @@ export async function executeAndDetach(
   )
 }
 
-export async function detach(name: string, alwaysForce: boolean) {
-  return hdiUtil(["detach", "-quiet", name]).catch(async e => {
+export async function detach(name: string, alwaysForce: boolean, executables?: ExecutablesConfig | Nullish) {
+  return hdiUtil(["detach", "-quiet", name], executables).catch(async e => {
     if (hdiutilTransientExitCodes.has(e.code) || alwaysForce) {
       // Delay then force unmount with verbose output
       await sleep(3000)
-      return hdiUtil(["detach", "-force", name])
+      return hdiUtil(["detach", "-force", name], executables)
     }
     throw e
   })
@@ -202,11 +209,12 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
       }
     }
   } else {
-    settings.background = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.tempDirManager)
+    settings.background =
+      specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.tempDirManager, packager.config.toolsets?.executables)
   }
 
   if (!isEmptyOrSpaces(settings.background)) {
-    const size = await getImageSizeUsingSips(settings.background)
+    const size = await getImageSizeUsingSips(settings.background, packager.config.toolsets?.executables)
     settings.window = { position: { x: 400, y: Math.round((1440 - size.height) / 2) }, size, ...settings.window }
   }
 
@@ -240,24 +248,30 @@ export async function customizeDmg({ appPath, artifactPath, volumeName, specific
   // effectiveOptionComputed, when present, is purely for verifying result during test execution
   return (
     packager.packagerOptions.effectiveOptionComputed == null ||
-    (await attachAndExecute(artifactPath, false, true, async volumePath => {
-      return !(await packager.packagerOptions.effectiveOptionComputed!({
-        volumePath,
-        specification: {
-          ...specification,
-          // clean up `contents` for test snapshot verification since app path is absolute to a unique tmp dir
-          contents: specification.contents?.map((c: any) => ({
-            ...c,
-            path: path.extname(c.path ?? "") === ".app" ? path.relative(packager.projectDir, c.path) : c.path,
-          })),
-        },
-        packager,
-      }))
-    }))
+    (await attachAndExecute(
+      artifactPath,
+      false,
+      true,
+      async volumePath => {
+        return !(await packager.packagerOptions.effectiveOptionComputed!({
+          volumePath,
+          specification: {
+            ...specification,
+            // clean up `contents` for test snapshot verification since app path is absolute to a unique tmp dir
+            contents: specification.contents?.map((c: any) => ({
+              ...c,
+              path: path.extname(c.path ?? "") === ".app" ? path.relative(packager.projectDir, c.path) : c.path,
+            })),
+          },
+          packager,
+        }))
+      },
+      packager.config.toolsets?.executables
+    ))
   )
 }
 
-export async function transformBackgroundFileIfNeed(file: string, tmpDir: TmpDir): Promise<string> {
+export async function transformBackgroundFileIfNeed(file: string, tmpDir: TmpDir, executables?: ExecutablesConfig | Nullish): Promise<string> {
   if (path.extname(file.toLowerCase()) === ".tiff") {
     return file
   }
@@ -265,7 +279,7 @@ export async function transformBackgroundFileIfNeed(file: string, tmpDir: TmpDir
   const retinaFile = getRetinaFilePath(file)
   if (retinaFile != null && (await exists(retinaFile))) {
     const tiffFile = await tmpDir.getTempFile({ suffix: ".tiff" })
-    await exec("tiffutil", ["-cathidpicheck", file, retinaFile, "-out", tiffFile])
+    await exec(resolveExecutable("tiffutil", executables), ["-cathidpicheck", file, retinaFile, "-out", tiffFile])
     return tiffFile
   }
 
@@ -278,8 +292,8 @@ export function getRetinaFilePath(file: string): string | null {
   return extension === "" ? null : `${file.slice(0, -extension.length)}@2x${extension}`
 }
 
-export async function getImageSizeUsingSips(background: string) {
-  const stdout = await exec("sips", ["-g", "pixelHeight", "-g", "pixelWidth", background])
+export async function getImageSizeUsingSips(background: string, executables?: ExecutablesConfig | Nullish) {
+  const stdout = await exec(resolveExecutable("sips", executables), ["-g", "pixelHeight", "-g", "pixelWidth", background])
 
   let width = 0
   let height = 0

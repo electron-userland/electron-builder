@@ -58,6 +58,7 @@ export class ArchiveTarget extends Target {
           isMacApp: isMac,
           tempDirManager: packager.tempDirManager,
           linuxToolsMac: packager.config.toolsets?.linuxToolsMac,
+          executables: packager.config.toolsets?.executables,
           buildResourcesDir: packager.buildResourcesDir,
         })
       } else {
@@ -83,6 +84,7 @@ export class ArchiveTarget extends Target {
           withoutDir,
           preserveSymlinks: shouldPreserveSymlinks(packager.platform),
           externalLinks: await packager.getExternalLinkPolicy(),
+          executables: packager.config.toolsets?.executables,
         }
         await archive(format, artifactPath, dirToArchive, archiveOptions)
 

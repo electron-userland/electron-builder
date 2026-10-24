@@ -6,6 +6,12 @@ const templatePath = path.join(__dirname, "../../../packages/app-builder-lib/tem
 const uninstallerPath = path.join(__dirname, "../../../packages/app-builder-lib/templates/nsis/uninstaller.nsh")
 
 let templateContent: string
+
+const withoutComments = (text: string) =>
+  text
+    .split("\n")
+    .filter(line => !line.trim().startsWith("#"))
+    .join("\n")
 let findProcessMacro: string
 
 describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
@@ -194,6 +200,23 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
       const killMacro = templateContent.match(/!macro KILL_PROCESS[\s\S]*?!macroend/)
       expect(killMacro).not.toBeNull()
       expect(killMacro![0]).toContain("$$_.Path -and ($processPathFilter)")
+    })
+
+    test("starts taskkill by absolute path, with the force flag, in both install modes", () => {
+      const killMacro = templateContent.match(/!macro KILL_PROCESS[\s\S]*?!macroend/)
+      expect(killMacro).not.toBeNull()
+      const body = killMacro![0]
+      // a bare name is looked up in the installer's directory and the current directory first
+      expect(withoutComments(body)).not.toMatch(/[`\s]taskkill[\s`]/)
+      expect(body).toContain('nsExec::Exec `"$SYSDIR\\taskkill.exe" $0 /IM "${_FILE}" /FI "PID ne $pid"`')
+      expect(body).toContain('"$CmdPath" /S /C ""$SYSDIR\\taskkill.exe" $0 /IM')
+    })
+  })
+
+  describe("FIND_PROCESS macro — program paths", () => {
+    test("starts tasklist by absolute path inside cmd.exe, which keeps the quoted paths with /S", () => {
+      expect(withoutComments(findProcessMacro)).not.toMatch(/[`\s]tasklist[\s`]/)
+      expect(findProcessMacro.match(/"\$CmdPath" \/S \/C ""\$SYSDIR\\tasklist\.exe" /g)).toHaveLength(2)
     })
   })
 

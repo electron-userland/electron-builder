@@ -1,6 +1,8 @@
 import * as childProcess from "child_process"
 import { createWriteStream } from "node:fs"
-import { windowsPowerShellPath } from "./systemTools.js"
+import { Nullish } from "builder-util-runtime"
+import { ExecutablesConfig } from "../configuration.js"
+import { resolveExecutable } from "./systemTools.js"
 
 export interface StreamSpawnResult {
   /** The child's exit code (null if it was killed by a signal). */
@@ -21,7 +23,8 @@ export interface StreamSpawnResult {
  * which emits the DEP0190 "args with shell" deprecation warning and forces manual metacharacter
  * escaping — wrap the invocation in a single PowerShell `-EncodedCommand`. The base64 (UTF-16LE)
  * payload sidesteps every shell-quoting layer, and `powershell.exe` is a real executable we spawn
- * directly with no shell, by its absolute path (never looked up in the current directory or on PATH).
+ * directly with no shell, by its absolute path (`toolsets.executables.powershell` or its default location;
+ * never looked up in the current directory or on PATH).
  * See buildPowerShellEncodedArgs for the UTF-8 / exit-code handling. This
  * also avoids the cmd.exe "The batch file cannot be found." re-open race that plagues `.cmd` shims.
  *
@@ -34,11 +37,20 @@ export interface StreamSpawnResult {
  * @param cwd - The working directory to execute the command in
  * @param outputFile - The path to the file where stdout will be streamed
  * @param env - The environment for the child process (callers are responsible for stripping secrets)
+ * @param executables - The `toolsets.executables` configuration, for the location of Windows PowerShell
  */
-export function streamSpawnToFile(command: string, args: string[], cwd: string, outputFile: string, env: NodeJS.ProcessEnv): Promise<StreamSpawnResult> {
+export function streamSpawnToFile(
+  command: string,
+  args: string[],
+  cwd: string,
+  outputFile: string,
+  env: NodeJS.ProcessEnv,
+  executables?: ExecutablesConfig | Nullish
+): Promise<StreamSpawnResult> {
   return new Promise<StreamSpawnResult>((resolve, reject) => {
     // inside the executor, so a SystemRoot that cannot locate PowerShell rejects like any other spawn failure
-    const [spawnCommand, spawnArgs] = process.platform === "win32" ? ([windowsPowerShellPath(), buildPowerShellEncodedArgs(command, args)] as const) : ([command, args] as const)
+    const [spawnCommand, spawnArgs] =
+      process.platform === "win32" ? ([resolveExecutable("powershell", executables), buildPowerShellEncodedArgs(command, args)] as const) : ([command, args] as const)
     const outStream = createWriteStream(outputFile)
 
     const child = childProcess.spawn(spawnCommand, spawnArgs, { cwd, env })

@@ -1,5 +1,5 @@
 import { DmgOptions, MacPackager, Target } from "app-builder-lib"
-import { createBlockmap, findIdentity, isSignAllowed } from "app-builder-lib/internal"
+import { createBlockmap, findIdentity, isSignAllowed, resolveExecutable } from "app-builder-lib/internal"
 import { Arch, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import { release as getOsRelease } from "os"
@@ -88,7 +88,7 @@ export class DmgTarget extends Target {
     }
 
     if (this.options.internetEnabled && parseInt(getOsRelease().split(".")[0], 10) < 19) {
-      await hdiUtil(addLogLevel(["internet-enable"]).concat(artifactPath))
+      await hdiUtil(addLogLevel(["internet-enable"]).concat(artifactPath), packager.config.toolsets?.executables)
     }
 
     if (packager.packagerOptions.effectiveOptionComputed != null) {
@@ -143,7 +143,8 @@ export class DmgTarget extends Target {
       args.push("--keychain", keychainFile)
     }
     args.push(artifactPath)
-    await exec("codesign", args)
+    // by absolute path, the program the keychain lets use the signing key (security import -T /usr/bin/codesign)
+    await exec(resolveExecutable("codesign", packager.config.toolsets?.executables), args)
   }
 
   computeVolumeName(arch: Arch, custom?: string | null): string {

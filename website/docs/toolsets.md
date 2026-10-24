@@ -29,7 +29,7 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 :::note[Platform notes]
 - **`wine`** is only needed to build **Windows targets on a non-Windows machine**. On Windows it has no effect. It defaults to the **host-installed `wine`** (`"system"`) on both macOS and Linux, so a macOS host that builds Windows targets needs Wine installed (`brew install --cask wine-stable`). See [Host Wine](#host-wine) for where it is looked for. `toolsets.wine: "1.0.1"` still downloads the Wine 11.0 bundle on macOS when pinned explicitly, but the published bundle ships no PE builtins, so it cannot run Windows tools on its own.
 - **`winCodeSign`** is used on all platforms (`signtool.exe` on Windows, `osslsigncode` on macOS/Linux).
-- **`squirrel`** is only used by the `squirrelWindows` target. It runs natively on Windows; on macOS/Linux it needs a host-installed `mono`, and `rcedit` (from `winCodeSign`) runs under Wine.
+- **`squirrel`** is only used by the `squirrelWindows` target. It runs natively on Windows; on macOS/Linux it needs a host-installed `mono` (see [`executables`](#executables)), and `rcedit` (from `winCodeSign`) runs under Wine.
 - **`fpm`**, **`icons`**, and **`squirrel`** each have only one published version today, so `"latest"` and the listed version are equivalent.
 :::
 
@@ -285,16 +285,50 @@ Plugins are particularly of-note here. NSIS scripts do not offer a lot of functi
 `.installerDebugLogging` However it additionally needs `makensis/makensis.exe` binaries and the stubs compiled with `NSIS_CONFIG_LOG=yes`, which the default bundle's NSIS versions are not.
 :::
 
-## Host Wine {#host-wine}
+## Host programs — `executables` {#executables}
 
-The host Wine (`toolsets.wine: "system"`, the default) is started by absolute path and never looked up on `PATH`. electron-builder uses the first of these that exists, in the order of the default `PATH`:
+Besides the bundles above, electron-builder starts a few programs that are installed on the build machine: PowerShell, Wine, Mono, the Parallels Desktop command line tool, the macOS packaging and signing tools, `lzip`, `snapcraft` and `flatpak`. electron-builder starts these programs only from an absolute path, never by looking up a name on `PATH`, so that nothing a dependency puts on `PATH` (such as `node_modules/.bin`) or in the current directory can stand in for them.
 
-| Host | Locations |
-|------|-----------|
-| macOS | `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine`, `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine`, the same path in `Wine Devel.app` and `Wine Staging.app` |
-| Linux | `/usr/local/bin/wine`, `/usr/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`, `/opt/wine-staging/bin/wine` |
+For each program it uses the first location that is an executable file: the locations of its `toolsets.executables` entry when that is set, otherwise the default install locations below. If none is, the build fails with a configuration error that names the locations it tried. An entry **replaces** the default locations of that program; it is not merged with them.
 
-If Wine is not installed at one of these locations, the build fails with a configuration error naming them.
+Each entry is one `file://` URI or a list of them. A list can serve several hosts: a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host (`file://server/share/...`) are refused with a configuration error that shows the `file://` form to write. Program names have no `.exe` suffix.
+
+```json
+{
+  "toolsets": {
+    "executables": {
+      "wine": "file:///opt/wine-custom/bin/wine",
+      "mono": "file:///opt/homebrew/bin/mono",
+      "pwsh": ["file:///usr/local/microsoft/powershell/7/pwsh", "file:///C:/Program%20Files/PowerShell/7/pwsh.exe"]
+    }
+  }
+}
+```
+
+| Name | Used for | Default locations |
+|---|---|---|
+| `powershell` | Windows certificate-store lookups and legacy Azure Trusted Signing, package-manager commands on Windows, `create-self-signed-cert` | Windows: `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe` |
+| `pwsh` | PowerShell 7, preferred over `powershell` on Windows when it is installed; the signing helper on macOS and Linux | Windows: `%ProgramFiles%\PowerShell\7\pwsh.exe`; macOS: `/usr/local/microsoft/powershell/7/pwsh`; Linux: `/opt/microsoft/powershell/7/pwsh`, `/snap/bin/pwsh` |
+| `prlctl` | Running Windows and Linux tools in a Parallels Desktop VM | macOS: `/Applications/Parallels Desktop.app/Contents/MacOS/prlctl`, `/usr/local/bin/prlctl` |
+| `wine` | The host Wine (`toolsets.wine: "system"`, the default) | macOS: `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine`, `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine` (likewise `Wine Devel.app`, `Wine Staging.app`); Linux: `/usr/local/bin/wine`, `/usr/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`, `/opt/wine-staging/bin/wine` |
+| `mono` | The Squirrel.Windows tools on macOS and Linux | macOS: `/opt/homebrew/bin/mono`, `/usr/local/bin/mono`, `/opt/local/bin/mono`, `/Library/Frameworks/Mono.framework/Versions/Current/Commands/mono`, `/Library/Frameworks/Mono.framework/Versions/Current/bin/mono`; Linux: `/home/linuxbrew/.linuxbrew/bin/mono`, `/usr/local/bin/mono`, `/usr/bin/mono` |
+| `productbuild`, `pkgbuild` | `pkg` and `mas` installers | macOS: `/usr/bin/<name>` |
+| `codesign` | Signing the DMG | macOS: `/usr/bin/codesign` |
+| `hdiutil`, `tiffutil`, `sips` | Building the DMG and its background | macOS: `/usr/bin/<name>` |
+| `actool` | Icon Composer (`.icon`) icons | macOS: `/usr/bin/actool` (which runs the `actool` of the selected Xcode) |
+| `zip` | `zip` archives of file names that 7-Zip cannot store (NFD) | macOS: `/usr/bin/zip` |
+| `notarytool` | Notarization | the `notarytool` of the selected Xcode, located with `/usr/bin/xcrun --find notarytool` |
+| `lzip` | `tar.lz` archives on Linux (macOS uses the `linuxToolsMac` toolset) | Linux: `/usr/bin/lzip`, `/usr/local/bin/lzip` |
+| `snapcraft` | Building and publishing snaps | macOS: `/opt/homebrew/bin/snapcraft`, `/usr/local/bin/snapcraft`; Linux: `/snap/bin/snapcraft`, `/usr/bin/snapcraft` |
+| `flatpak`, `flatpak-builder` | Building flatpaks | Linux: `/usr/bin/<name>`, `/usr/local/bin/<name>` |
+
+Where a program has several default locations they are tried in the order of the default `PATH`. `SystemRoot` and `ProgramFiles` must be drive-absolute paths such as `C:\Windows`.
+
+`toolsets.executables` describes the build machine only: inside a Parallels Windows VM, electron-builder runs Windows PowerShell from `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`, the location of a default Windows installation. Package managers (`npm`, `pnpm`, `yarn`, `bun`) and `node-gyp` are not configured here.
+
+### Host Wine {#host-wine}
+
+`toolsets.wine` selects a Wine **bundle** (`"0.0.0"`, `"1.0.1"`, or a custom bundle with a `wine-home` prefix). `"system"`, which `"latest"` and an unset value resolve to, is the Wine installed on the build machine, taken from `toolsets.executables.wine` or its default locations above, and run with Wine's own default prefix. Setting both a bundle in `toolsets.wine` and `toolsets.executables.wine` is a configuration error.
 
 ## Replacing removed environment variables
 

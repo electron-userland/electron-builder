@@ -6,6 +6,21 @@ vi.mock("builder-util", async () => {
   const actual = await vi.importActual<typeof import("builder-util")>("builder-util")
   return { ...actual, exec: vi.fn() }
 })
+// flatpak and flatpak-builder are started by absolute path, from toolsets.executables here; the files themselves are not checked
+vi.mock("app-builder-lib/src/util/systemTools.js", async importOriginal => {
+  const actual = await importOriginal<typeof import("app-builder-lib/src/util/systemTools.js")>()
+  return {
+    ...actual,
+    resolveExecutable: vi.fn<typeof actual.resolveExecutable>((name, executables) => {
+      const location = executables?.[name]
+      if (typeof location !== "string") {
+        throw new Error(`no toolsets.executables.${name} in the test`)
+      }
+      return actual.executableUriToPath(name, location, "linux") ?? ""
+    }),
+  }
+})
+const TOOLS_DIR = "/opt/flatpak/bin"
 
 import { buildFlatpakBundle, FlatpakBuilderManifest, FlatpakBundleOptions } from "app-builder-lib/src/targets/linux/flatpakBundle"
 import { exec, ExecError, InvalidConfigurationError, log } from "builder-util"
@@ -52,6 +67,7 @@ async function setup(tmpDir: TmpDir, overrides: Partial<FlatpakBundleOptions> = 
     flatpakBuilderArgs: [],
     buildExportArgs: [],
     buildBundleArgs: [],
+    executables: { flatpak: `file://${TOOLS_DIR}/flatpak`, "flatpak-builder": `file://${TOOLS_DIR}/flatpak-builder` },
     ...overrides,
   }
   return { options, appDir: path.join(tempDir, "build"), repo: path.join(tempDir, "repo"), manifestFile: path.join(tempDir, "manifest.json") }
@@ -68,7 +84,9 @@ function execError(file: string, args: string[], output: string): ExecError {
  * the app prefix, as the real one does.
  */
 function mockTools(installedIn: Array<"--user" | "--system">, run: (file: string, args: string[]) => void | Promise<void> = () => {}, versionOutput = VERSION_OUTPUT) {
-  vi.mocked(exec).mockImplementation(async (file, args) => {
+  vi.mocked(exec).mockImplementation(async (path_, args) => {
+    // the tools are started by absolute path; the stand-ins below go by name
+    const file = path.basename(path_)
     const argv = args ?? []
     await run(file, argv)
     // the app directory is the second to last argument
@@ -107,8 +125,10 @@ async function rejection(promise: Promise<unknown>): Promise<unknown> {
 
 /** Every command in the order it was started, after checking the directory and the environment that each one ran with. */
 function commands(expect: ExpectStatic, options: FlatpakBundleOptions): Command[] {
-  return vi.mocked(exec).mock.calls.map(([file, args, execOptions]) => {
-    const command: Command = [file, ...(args ?? [])]
+  return vi.mocked(exec).mock.calls.map(([toolPath, args, execOptions]) => {
+    // never looked up on PATH
+    expect(path.dirname(toolPath)).toBe(TOOLS_DIR)
+    const command: Command = [path.basename(toolPath), ...(args ?? [])]
     // with modules, the two runs of flatpak-builder download their sources, which can take credentials from the environment.
     // Every other command, and flatpak-builder without modules, gets the filtered environment that exec defaults to
     const isBuilderRun = command.includes("--build-only") || command.includes("--finish-only")

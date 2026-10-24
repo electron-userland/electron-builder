@@ -12,6 +12,11 @@ vi.mock("child_process", async importOriginal => {
   const actual = await importOriginal<typeof import("child_process")>()
   return { ...actual, spawn: vi.fn() }
 })
+// Windows PowerShell is started from its default location, which the resolver would look for on this machine's disk
+vi.mock("app-builder-lib/src/util/systemTools.js", async importOriginal => {
+  const actual = await importOriginal<typeof import("app-builder-lib/src/util/systemTools.js")>()
+  return { ...actual, resolveExecutable: vi.fn<typeof actual.resolveExecutable>((name, _executables, platform) => actual.defaultExecutableLocations(name, platform)[0]) }
+})
 vi.mock("node:fs", async () => {
   const actual = await vi.importActual<typeof import("node:fs")>("node:fs")
   return { ...actual, createWriteStream: vi.fn() }

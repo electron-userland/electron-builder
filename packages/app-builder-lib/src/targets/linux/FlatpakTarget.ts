@@ -263,6 +263,8 @@ export default class FlatpakTarget extends Target {
       files: [[stageDir, "/"], [appOutDir, path.join("/lib", appIdentifier)], ...extraFiles],
       symlinks: [[path.join("/lib", appIdentifier, executableName), path.join("/bin", executableName)], ...(this.options.symlinks || [])],
       installOrUpdateRefs: resolveInstallOrUpdateRefs(this.options.installOrUpdateRefs),
+      // only when set, so that the options a test snapshots stay the same without it
+      ...(this.packager.config.toolsets?.executables == null ? {} : { executables: this.packager.config.toolsets.executables }),
       flatpakBuilderArgs: this.options.additionalArgs?.flatpakBuilder ?? [],
       buildExportArgs: this.options.additionalArgs?.buildExport ?? [],
       buildBundleArgs: this.options.additionalArgs?.buildBundle ?? [],

@@ -43,6 +43,7 @@ import { isMacOsHighSierra } from "./util/mac/macosVersion.js"
 import { buildSingleArchFilesPattern, collectIdenticalSingleArchMachOFiles, collectSingleArchPackageNames } from "./util/archCompatibility.js"
 import { expandMacro as doExpandMacro } from "./util/macroExpander.js"
 import { resolveFunction } from "./util/resolve.js"
+import { resolveExecutable } from "./util/systemTools.js"
 import { makeUniversalApp } from "@electron/universal"
 
 export type CustomMacSignOptions = SignOptions
@@ -613,7 +614,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const args = prepareProductBuildArgs(identity, keychain)
     args.push("--component", safeAppPath, "/Applications")
     args.push(safeOutFile)
-    return await exec("productbuild", args)
+    return await exec(resolveExecutable("productbuild", this.config.toolsets?.executables), args)
   }
 
   public getElectronSrcDir(dist: string) {

@@ -1,15 +1,15 @@
-import { exists, InvalidConfigurationError, log, sanitizeDirPath } from "builder-util"
+import { exists, InvalidConfigurationError, sanitizeDirPath } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import * as path from "path"
-import { ToolsetConfig } from "../configuration.js"
+import { ExecutablesConfig, ToolsetConfig } from "../configuration.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
-import { findHostWine, HOST_WINE_PATHS } from "../util/systemTools.js"
+import { resolveExecutable } from "../util/systemTools.js"
 import { getCustomToolsetPath } from "./custom.js"
 
 const githubOrgRepo = "electron-userland/electron-builder-binaries"
 
 // What an unset / null / "latest" config resolves to. Not necessarily a bundle version: the published
-// wine@1.0.1 bundles ship no PE builtins, so the default is the host wine (at a fixed install location).
+// wine@1.0.1 bundles ship no PE builtins, so the default is the host wine (toolsets.executables.wine or its install locations).
 const WINE_LATEST = "system"
 
 const wineToolsChecksums: Record<string, Record<string, string>> = {
@@ -22,7 +22,15 @@ const wineToolsChecksums: Record<string, Record<string, string>> = {
   },
 }
 
-export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, resourcesDir: string): Promise<{ execPath: string; env: Record<string, string> }> {
+/**
+ * @param wine `toolsets.wine`: a bundle, or `"system"` (the default) for the host Wine
+ * @param executables `toolsets.executables`, whose `wine` entry is where the host Wine is installed
+ */
+export async function getWineToolset(
+  wine: ToolsetConfig["wine"] | Nullish,
+  resourcesDir: string,
+  executables?: ExecutablesConfig | Nullish
+): Promise<{ execPath: string; env: Record<string, string> }> {
   if (process.platform === "win32") {
     // oxlint-disable-next-line typescript/no-base-to-string -- pre-existing message; a custom toolset object prints as "[object Object]", changing it is out of scope for the lint migration
     throw new InvalidConfigurationError(`Wine toolset is not supported on Windows, but got: ${wine}`)
@@ -33,6 +41,11 @@ export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, reso
   // Resolve the "latest"/unset alias up front so every branch below sees a concrete toolset, and an
   // explicitly requested version is never silently swapped for whatever WINE_LATEST points at.
   const toolset = wine == null || wine === "latest" ? WINE_LATEST : wine
+  if (toolset !== "system" && executables?.wine != null) {
+    throw new InvalidConfigurationError(
+      `toolsets.wine selects a Wine bundle (${typeof toolset === "object" ? "a custom toolset" : `"${toolset}"`}) and toolsets.executables.wine a host Wine: set only one of them`
+    )
+  }
 
   let toolsetPath: string
   let execSubPath: string
@@ -42,10 +55,10 @@ export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, reso
     toolsetPath = await getCustomToolsetPath(toolset, resourcesDir)
     execSubPath = (await exists(path.join(toolsetPath, "bin", "wine"))) ? "bin/wine" : "bin/wine64"
   } else if (toolset === "system" || process.platform === "linux") {
-    // Host wine, only from its fixed install locations — never looked up on PATH. Linux ships no portable bundle so it always
+    // Host wine, by absolute path from toolsets.executables.wine or its default install locations — never looked up on PATH. Linux ships no portable bundle so it always
     // lands here; other platforms opt in with `toolsets.wine: "system"` — the replacement for the `USE_SYSTEM_WINE` env var
     // removed in v27.
-    return { execPath: systemWinePath(), env: defaultEnv }
+    return { execPath: resolveExecutable("wine", executables), env: defaultEnv }
   } else if (toolset === "0.0.0") {
     // Explicit opt-in to the legacy wine-4.0.1-mac bundle (pre-v27).
     toolsetPath = await downloadBuilderToolset({
@@ -77,21 +90,6 @@ export async function getWineToolset(wine: ToolsetConfig["wine"] | Nullish, reso
       LD_LIBRARY_PATH: [wineLibPath, process.env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter),
     },
   }
-}
-
-let loggedHostWine: string | null = null
-
-function systemWinePath(): string {
-  const wine = findHostWine()
-  if (wine == null) {
-    const paths = HOST_WINE_PATHS[process.platform] ?? []
-    throw new InvalidConfigurationError(`Wine is used only from its install locations (${paths.join(", ")}), where it was not found. Install Wine at one of these locations.`)
-  }
-  if (loggedHostWine !== wine) {
-    loggedHostWine = wine
-    log.debug({ path: wine }, "using host Wine")
-  }
-  return wine
 }
 
 async function createWineEnvironment(toolsetPath: string, execSubPath: string) {

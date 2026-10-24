@@ -11,6 +11,7 @@ import type { MacPackager } from "../../macPackager.js"
 import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
 import { parsePlistFile, savePlistFile, PlistObject, PlistValue } from "../../util/mac/plist.js"
 import { getTemplatePath } from "../../util/pathManager.js"
+import { resolveNotarytool } from "../../util/systemTools.js"
 import asyncPool from "tiny-async-pool"
 
 export type MasPlatformType = "mas" | "mas-dev"
@@ -661,14 +662,16 @@ export class MacTargetHelper {
       return
     }
     const apiKey = "appleApiKey" in options ? MacTargetHelper.decodeAppleApiKey(options.appleApiKey) : null
+    // notarytool by absolute path, so that it never runs through an xcrun looked up on PATH: the credentials are in its arguments
+    const notarytoolPath = await resolveNotarytool(this.packager.config.toolsets?.executables)
     if (apiKey == null) {
-      await notarize(options)
+      await notarize({ ...options, notarytoolPath })
     } else {
       // notarytool only reads the API key from a file: a fresh 0600 file in the build's temp dir, deleted as soon as notarytool is done
       const keyFile = await this.packager.tempDirManager.getTempFile({ prefix: "notarize-api-key", suffix: ".p8" })
       try {
         await writeFile(keyFile, apiKey, { mode: 0o600, flag: "wx" })
-        await notarize({ ...options, appleApiKey: keyFile })
+        await notarize({ ...options, appleApiKey: keyFile, notarytoolPath })
       } finally {
         await rm(keyFile, { force: true }).catch((e: any) => log.warn({ error: e.message }, "cannot delete the temporary App Store Connect API key file"))
       }

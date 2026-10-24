@@ -7,7 +7,7 @@ The top-level [squirrelWindows](./configuration.md#squirrelwindows) key contains
 Squirrel.Windows target is maintained, but deprecated. Please use [nsis](nsis.md) instead.
 
 To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
-To build for Squirrel.Windows on macOS or Linux, please install `mono` (`brew install mono` / `apt install mono-devel`).
+To build for Squirrel.Windows on macOS or Linux, please install `mono` (`brew install mono` / `apt install mono-devel`). Mono is started by absolute path, from its default install locations or [`toolsets.executables.mono`](./toolsets.md#executables), never from `PATH`.
 
 The Squirrel vendor binaries (`Squirrel.exe`, `SyncReleases.exe`, `nuget.exe`, …) are downloaded from the checksummed `squirrel.windows` bundle; `rcedit` comes from the `winCodeSign` bundle. Pin a version or supply your own bundle via [`toolsets.squirrel`](./toolsets.md).
 

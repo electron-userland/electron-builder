@@ -2,7 +2,9 @@ import { exec, InvalidConfigurationError, log } from "builder-util"
 import { cp, mkdir, realpath, symlink, writeFile } from "fs/promises"
 import * as path from "path"
 import * as semver from "semver"
+import { ExecutablesConfig } from "../../configuration.js"
 import { BUILD_CHANGES_URL } from "../../util/config/legacyOptions.js"
+import { resolveExecutable } from "../../util/systemTools.js"
 
 // flatpak-builder 1.2.2 is the one of Ubuntu 22.04, the oldest current distribution release (Debian 12 and RHEL 8/9 have 1.2.3). It fixes
 // CVE-2022-21682 with an option that flatpak supports from 1.12.4 on; Ubuntu 22.04 has flatpak 1.12.7
@@ -52,6 +54,14 @@ export interface FlatpakBundleOptions {
   flatpakBuilderArgs: string[]
   buildExportArgs: string[]
   buildBundleArgs: string[]
+  /** `toolsets.executables`: where flatpak and flatpak-builder are installed */
+  executables?: ExecutablesConfig | null
+}
+
+/** The absolute paths of the tools, which are never looked up on PATH. */
+interface FlatpakTools {
+  flatpak: string
+  "flatpak-builder": string
 }
 
 /**
@@ -69,10 +79,10 @@ function hintOn(...hints: Array<[marker: string, hint: string]>) {
 }
 
 /** Checks that the tool runs and is new enough, and returns its version, or null when the output has none. */
-async function requireTool(tool: keyof typeof MIN_VERSIONS, cwd: string): Promise<semver.SemVer | null> {
+async function requireTool(tools: FlatpakTools, tool: keyof typeof MIN_VERSIONS, cwd: string): Promise<semver.SemVer | null> {
   let stdout: string
   try {
-    stdout = await exec(tool, ["--version"], { cwd })
+    stdout = await exec(tools[tool], ["--version"], { cwd })
   } catch (e: any) {
     log.error({ error: e.message }, `cannot run ${tool}`)
     throw new InvalidConfigurationError(`cannot run ${tool} - flatpak and flatpak-builder must be installed to build the flatpak target`)
@@ -142,9 +152,9 @@ async function requireDirectoryInAppPrefix(prefix: string, realPrefix: string, f
 }
 
 /** Whether a ref is installed for the user and system-wide. */
-async function findRef(ref: string, cwd: string): Promise<{ inUser: boolean; inSystem: boolean }> {
+async function findRef(flatpak: string, ref: string, cwd: string): Promise<{ inUser: boolean; inSystem: boolean }> {
   const isInstalled = (installation: "--user" | "--system") =>
-    exec("flatpak", ["info", "--show-commit", installation, ref], { cwd }).then(
+    exec(flatpak, ["info", "--show-commit", installation, ref], { cwd }).then(
       () => true,
       () => false
     )
@@ -153,16 +163,16 @@ async function findRef(ref: string, cwd: string): Promise<{ inUser: boolean; inS
 }
 
 /** Brings a ref that the build needs up to date, wherever it is installed, and installs it for the user when it is installed nowhere. */
-async function installOrUpdateRef(ref: string, cwd: string): Promise<void> {
-  const { inUser, inSystem } = await findRef(ref, cwd)
+async function installOrUpdateRef(flatpak: string, ref: string, cwd: string): Promise<void> {
+  const { inUser, inSystem } = await findRef(flatpak, ref, cwd)
 
   if (inUser || inSystem) {
-    await exec("flatpak", ["update", ...(inUser ? ["--user"] : []), "--no-deps", "--noninteractive", ref], { cwd })
+    await exec(flatpak, ["update", ...(inUser ? ["--user"] : []), "--no-deps", "--noninteractive", ref], { cwd })
     return
   }
 
   log.info({ ref }, "installing flatpak ref, this can download several gigabytes")
-  await exec("flatpak", ["install", "--user", "--no-deps", "--noninteractive", ref], { cwd }).catch(
+  await exec(flatpak, ["install", "--user", "--no-deps", "--noninteractive", ref], { cwd }).catch(
     hintOn([
       "No remote refs found",
       `missing flatpak refs are installed with "flatpak install --user", which only searches the remotes of the user installation. If flathub is not one of them, add it with: flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo (otherwise check that the configured runtime, sdk and base versions exist)`,
@@ -171,8 +181,8 @@ async function installOrUpdateRef(ref: string, cwd: string): Promise<void> {
 }
 
 /** Checks that a ref that the build is not to install or update is installed, in either installation. */
-async function requireInstalledRef(kind: FlatpakRefKind, ref: string, cwd: string): Promise<void> {
-  const { inUser, inSystem } = await findRef(ref, cwd)
+async function requireInstalledRef(flatpak: string, kind: FlatpakRefKind, ref: string, cwd: string): Promise<void> {
+  const { inUser, inSystem } = await findRef(flatpak, ref, cwd)
   if (!inUser && !inSystem) {
     throw new InvalidConfigurationError(
       `the ${kind} ${ref} is not installed, and flatpak.installOrUpdateRefs does not include "${kind}", so the build does not install it. Install it, for example with: flatpak install --user flathub ${ref} (or add "${kind}" to flatpak.installOrUpdateRefs)`
@@ -199,8 +209,13 @@ export async function buildFlatpakBundle(options: FlatpakBundleOptions): Promise
   const copies = options.files.map(([source, destination]) => [source, inAppPrefix(prefix, destination, "flatpak.files destination")] as const)
   const links = options.symlinks.map(([target, link]) => [target, inAppPrefix(prefix, link, "flatpak.symlinks link")] as const)
 
-  await requireTool("flatpak", cwd)
-  const builderVersion = await requireTool("flatpak-builder", cwd)
+  // by absolute path (toolsets.executables or their default install locations), never looked up on PATH
+  const tools: FlatpakTools = {
+    flatpak: resolveExecutable("flatpak", options.executables),
+    "flatpak-builder": resolveExecutable("flatpak-builder", options.executables),
+  }
+  await requireTool(tools, "flatpak", cwd)
+  const builderVersion = await requireTool(tools, "flatpak-builder", cwd)
   // a freedesktop SDK before 24.08 is left out; any other SDK is not modelled and warned about. Loose, because the strict coerce rejects
   // the zero-padded minor of "22.08"
   const sdkVersion = manifest.sdk === "org.freedesktop.Sdk" ? semver.coerce(manifest["runtime-version"], { loose: true }) : null
@@ -224,10 +239,10 @@ export async function buildFlatpakBundle(options: FlatpakBundleOptions): Promise
   // the refs to use as installed are checked first, so that a missing one fails the build before anything is downloaded
   const toInstallOrUpdate = refs.filter(([kind]) => options.installOrUpdateRefs.includes(kind))
   for (const [kind, ref] of refs.filter(it => !toInstallOrUpdate.includes(it))) {
-    await requireInstalledRef(kind, ref, cwd)
+    await requireInstalledRef(tools.flatpak, kind, ref, cwd)
   }
   for (const [, ref] of toInstallOrUpdate) {
-    await installOrUpdateRef(ref, cwd)
+    await installOrUpdateRef(tools.flatpak, ref, cwd)
   }
 
   await writeFile(manifestFile, JSON.stringify(manifest, null, 2))
@@ -236,7 +251,7 @@ export async function buildFlatpakBundle(options: FlatpakBundleOptions): Promise
   // modules it fetches nothing, so it gets the environment that exec filters for every other command
   const builderEnv = (manifest.modules?.length ?? 0) > 0 ? process.env : undefined
   const runFlatpakBuilder = (stage: "--build-only" | "--finish-only") =>
-    exec("flatpak-builder", ["--arch", arch, stage, ...options.flatpakBuilderArgs, appDir, manifestFile], { cwd, env: builderEnv }).catch(
+    exec(tools["flatpak-builder"], ["--arch", arch, stage, ...options.flatpakBuilderArgs, appDir, manifestFile], { cwd, env: builderEnv }).catch(
       hintOn(
         [
           "Failure spawning rofiles-fuse",
@@ -279,7 +294,7 @@ export async function buildFlatpakBundle(options: FlatpakBundleOptions): Promise
 
   await runFlatpakBuilder("--finish-only")
 
-  await exec("flatpak", ["build-export", "--arch", arch, ...options.buildExportArgs, repo, appDir, ...branch], { cwd }).catch(
+  await exec(tools.flatpak, ["build-export", "--arch", arch, ...options.buildExportArgs, repo, appDir, ...branch], { cwd }).catch(
     hintOn([
       "bwrap: ",
       `flatpak build-export could not start the sandbox of its icon validator because bubblewrap (bwrap) cannot create namespaces, which is typical in unprivileged containers. Set flatpak.additionalArgs.buildExport to ["--disable-sandbox"]. See ${UNPRIVILEGED_CONTAINERS_DOCS}`,
@@ -287,5 +302,5 @@ export async function buildFlatpakBundle(options: FlatpakBundleOptions): Promise
   )
 
   await mkdir(path.dirname(options.artifactPath), { recursive: true })
-  await exec("flatpak", ["build-bundle", "--arch", arch, ...options.buildBundleArgs, repo, options.artifactPath, manifest.id, ...branch], { cwd })
+  await exec(tools.flatpak, ["build-bundle", "--arch", arch, ...options.buildBundleArgs, repo, options.artifactPath, manifest.id, ...branch], { cwd })
 }

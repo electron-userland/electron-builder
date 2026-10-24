@@ -5,6 +5,7 @@ import * as path from "path"
 import { hoist, type HoisterResult, type HoisterTree } from "./hoist.js"
 import { LogMessageByKey, ModuleManager } from "./moduleManager.js"
 import { getPackageManagerCommand, PM } from "./packageManager.js"
+import { ExecutablesConfig } from "../configuration.js"
 import { streamSpawnToFile } from "../util/streamSpawnToFile.js"
 import type { Dependency, DependencyGraph, NodeModuleInfo, PackageJson } from "./types.js"
 import { isPackageCompatible } from "../util/archCompatibility.js"
@@ -26,7 +27,9 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
 
   constructor(
     protected readonly rootDir: string,
-    private readonly tempDirManager: TmpDir
+    private readonly tempDirManager: TmpDir,
+    // `toolsets.executables`: on Windows the package manager runs in Windows PowerShell, started from its configured location
+    private readonly executables?: ExecutablesConfig | null
   ) {}
 
   /**
@@ -480,14 +483,21 @@ export abstract class NodeModulesCollector<ProdDepType extends Dependency<ProdDe
     // real invocation (e.g. "npm"), not the "powershell" wrapper streamSpawnToFile uses on Windows.
     const execName = path.basename(command, path.extname(command))
 
-    const { code, stderr } = await streamSpawnToFile(command, args, cwd, tempOutputFile, {
-      // Package manager invocations do not need signing/publishing credentials. Silence corepack:
-      // strict=0 so a project's `packageManager` pin can't abort our read-only queries, and the
-      // download prompt/notice off so corepack doesn't flood stdout/stderr with activation chatter.
-      ...stripSensitiveEnvVars(process.env),
-      COREPACK_ENABLE_STRICT: "0",
-      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0",
-    })
+    const { code, stderr } = await streamSpawnToFile(
+      command,
+      args,
+      cwd,
+      tempOutputFile,
+      {
+        // Package manager invocations do not need signing/publishing credentials. Silence corepack:
+        // strict=0 so a project's `packageManager` pin can't abort our read-only queries, and the
+        // download prompt/notice off so corepack doesn't flood stdout/stderr with activation chatter.
+        ...stripSensitiveEnvVars(process.env),
+        COREPACK_ENABLE_STRICT: "0",
+        COREPACK_ENABLE_DOWNLOAD_PROMPT: "0",
+      },
+      this.executables
+    )
 
     // https://github.com/npm/npm/issues/17624
     const shouldIgnore = code === 1 && "npm" === execName.toLowerCase() && args.includes("list")

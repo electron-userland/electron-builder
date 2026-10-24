@@ -1,6 +1,6 @@
 import type { ToolsetConfig } from "app-builder-lib/internal"
 import { getWineToolset } from "app-builder-lib/src/toolsets/wine"
-import { HOST_WINE_PATHS } from "app-builder-lib/src/util/systemTools.js"
+import { defaultExecutableLocations } from "app-builder-lib/src/util/systemTools.js"
 import { exists } from "builder-util"
 import * as path from "path"
 
@@ -17,7 +17,7 @@ export function registerWineToolsetTests(toolsets: ToolsetConfig): void {
       expect(await exists(result.execPath)).toBe(true)
       if (process.platform === "linux") {
         // Linux ships no portable bundle for string/null configs — uses the host wine at one of its install locations.
-        expect(HOST_WINE_PATHS.linux).toContain(result.execPath)
+        expect(defaultExecutableLocations("wine", "linux")).toContain(result.execPath)
       }
       // macOS downloads a bundle for the explicit versions (legacy 4.0.1 for 0.0.0, or wine@1.0.1).
     })

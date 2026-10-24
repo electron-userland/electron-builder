@@ -1,4 +1,4 @@
-import { exec, loadCscLink, spawn } from "builder-util"
+import { exec, loadCscLink, spawn, stripSensitiveEnvVars } from "builder-util"
 import { SnapStoreOptions } from "builder-util-runtime"
 import * as path from "path"
 import { PublishContext, UploadTask } from "./index.js"
@@ -13,6 +13,8 @@ export class SnapStorePublisher extends Publisher {
     private readonly credentials: {
       cscLink: string | undefined
       resourcesDir: string
+      /** The absolute path of snapcraft, which is never looked up on PATH. */
+      snapcraft: string
     }
   ) {
     super(context)
@@ -21,7 +23,8 @@ export class SnapStorePublisher extends Publisher {
   async upload(task: UploadTask): Promise<any> {
     this.createProgressBar(path.basename(task.file), -1)
 
-    await checkSnapcraft()
+    const { snapcraft } = this.credentials
+    await checkSnapcraft(snapcraft)
 
     // Credentials are injected via SNAPCRAFT_STORE_CREDENTIALS so that the
     // snapcraft subprocess authenticates without an interactive login session.
@@ -45,9 +48,12 @@ export class SnapStorePublisher extends Publisher {
       args.push("--release", channels.join(","))
     }
 
-    return spawn("snapcraft", args, {
+    // the store credentials (from cscLink, or SNAPCRAFT_STORE_CREDENTIALS set directly) and no other secret of the publish
+    // environment, such as GH_TOKEN
+    const { SNAPCRAFT_STORE_CREDENTIALS } = process.env
+    return spawn(snapcraft, args, {
       stdio: ["ignore", "inherit", "inherit"],
-      env: { ...process.env, ...credEnv },
+      env: { ...stripSensitiveEnvVars(process.env), ...(SNAPCRAFT_STORE_CREDENTIALS == null ? {} : { SNAPCRAFT_STORE_CREDENTIALS }), ...credEnv },
     })
   }
 
@@ -81,12 +87,12 @@ export async function resolveSnapCredentials(cscLink: string | undefined, resour
 // https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate/
 const REQUIRED_SNAPCRAFT_MAJOR = 7
 
-async function checkSnapcraft(): Promise<void> {
+async function checkSnapcraft(snapcraft: string): Promise<void> {
   const installMessage = process.platform === "darwin" ? "brew install snapcraft" : "sudo snap install snapcraft --classic"
 
   let versionOutput: string
   try {
-    versionOutput = await exec("snapcraft", ["--version"])
+    versionOutput = await exec(snapcraft, ["--version"])
   } catch {
     throw new Error(`snapcraft is not installed, please: ${installMessage}`)
   }

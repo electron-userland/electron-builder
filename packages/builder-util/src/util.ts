@@ -146,14 +146,15 @@ export function filterSensitiveEnv(env: Record<string, string | undefined>): Rec
 }
 
 function getProcessEnv(env: Record<string, string | undefined> | Nullish): NodeJS.ProcessEnv | undefined {
-  // Windows: passing a filtered env to execFile drops critical system vars (PATH, SYSTEMROOT, TEMP)
-  // that many tools require. Credential stripping is therefore not applied on Windows.
+  // When no explicit env is provided, strip credential env vars so child processes
+  // (package managers, signing tools, etc.) don't inherit secrets they don't need. A caller that
+  // starts a tool which needs a credential passes the environment explicitly.
   if (process.platform === "win32") {
-    return env == null ? undefined : env
+    // Only credentials are removed: the system variables that Windows tools need (PATH, SystemRoot, TEMP, …) are kept.
+    // The locale variables below are a POSIX convention and are not set on Windows.
+    return env == null ? stripSensitiveEnvVars(process.env) : env
   }
 
-  // When no explicit env is provided, strip credential env vars so child processes
-  // (package managers, signing tools, etc.) don't inherit secrets they don't need.
   const finalEnv = {
     ...(env == null ? stripSensitiveEnvVars(process.env) : env),
   }

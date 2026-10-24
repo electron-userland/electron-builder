@@ -142,7 +142,7 @@ export default class SquirrelWindowsTarget extends Target {
     const writeZipToSetupExe = await this.ensurePathInside(vendorDir, path.join(vendorDir, "WriteZipToSetup.exe"), "WriteZipToSetup executable")
 
     await fs.promises.copyFile(stubExecutableSource, stubExePath)
-    const wineVm = new WineVmManager(this.packager.config.toolsets?.wine, this.packager.buildResourcesDir)
+    const wineVm = new WineVmManager(this.packager.config.toolsets, this.packager.buildResourcesDir)
     await wineVm.exec(writeZipToSetupExe, ["--copy-stub-resources", filePath, stubExePath])
     await this.packager.signIf(stubExePath)
     log.debug({ file: filePath }, "signing app executable")
@@ -327,6 +327,7 @@ export default class SquirrelWindowsTarget extends Target {
       remoteToken: firstNonBlank(this.options.remoteToken, process.env.GH_TOKEN, process.env.GITHUB_TOKEN),
       createTempDir: opts => this.packager.tempDirManager.createTempDir(opts),
       externalLinks: await packager.getExternalLinkPolicy(),
+      executables: packager.config.toolsets?.executables,
     }
   }
 }

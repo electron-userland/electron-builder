@@ -1,8 +1,8 @@
 import { ParallelsVm, ParallelsVmManager } from "app-builder-lib/src/vm/ParallelsVm.js"
 import { getWindowsExecVm, VmManager } from "app-builder-lib/src/vm/vm.js"
 import { WineVmManager } from "app-builder-lib/src/vm/WineVm.js"
-import { findPrlctl, PRLCTL_PATHS } from "app-builder-lib/src/util/systemTools.js"
-import { DebugLogger, exec } from "builder-util"
+import { resolveExecutable } from "app-builder-lib/src/util/systemTools.js"
+import { DebugLogger, exec, InvalidConfigurationError } from "builder-util"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 
 // getWindowsExecVm picks how to run a Windows executable (e.g. the NSIS installer that writes the uninstaller):
@@ -12,12 +12,21 @@ vi.mock("builder-util", async importOriginal => {
   const actual = await importOriginal<typeof import("builder-util")>()
   return { ...actual, exec: vi.fn<typeof actual.exec>() }
 })
-// `prlctl` is started by absolute path, found only at its install locations; stand in for Parallels Desktop being installed
+// `prlctl` is started by absolute path (toolsets.executables.prlctl or its install locations); stand in for Parallels Desktop being installed
 vi.mock("app-builder-lib/src/util/systemTools.js", async importOriginal => {
   const actual = await importOriginal<typeof import("app-builder-lib/src/util/systemTools.js")>()
-  return { ...actual, findPrlctl: vi.fn<typeof actual.findPrlctl>() }
+  return { ...actual, resolveExecutable: vi.fn<typeof actual.resolveExecutable>() }
 })
-const PRLCTL = PRLCTL_PATHS[0]
+const PRLCTL = "/Applications/Parallels Desktop.app/Contents/MacOS/prlctl"
+
+function prlctlInstalled(isInstalled: () => boolean) {
+  vi.mocked(resolveExecutable).mockImplementation(name => {
+    if (name === "prlctl" && isInstalled()) {
+      return PRLCTL
+    }
+    throw new InvalidConfigurationError(`${name} is not installed`)
+  })
+}
 
 const originalPlatform = process.platform
 
@@ -34,9 +43,8 @@ const execVm = () => getWindowsExecVm(new DebugLogger(false), undefined, "/build
 describe("getWindowsExecVm", () => {
   beforeEach(() => {
     vi.mocked(exec).mockReset()
-    vi.mocked(findPrlctl)
-      .mockReset()
-      .mockImplementation(() => (process.platform === "darwin" ? PRLCTL : null))
+    vi.mocked(resolveExecutable).mockReset()
+    prlctlInstalled(() => process.platform === "darwin")
   })
 
   afterEach(() => {
@@ -73,7 +81,7 @@ describe("getWindowsExecVm", () => {
 
   test.for<NodeJS.Platform>(["darwin", "linux"])("falls back to wine on %s without running anything when prlctl is not installed", async (platform, { expect }) => {
     setPlatform(platform)
-    vi.mocked(findPrlctl).mockReturnValue(null)
+    prlctlInstalled(() => false)
     expect(await execVm()).toBeInstanceOf(WineVmManager)
     expect(vi.mocked(exec)).not.toHaveBeenCalled()
   })

@@ -749,13 +749,10 @@ export interface ToolsetConfig {
    * bundles ship no PE builtins, so a host Wine installation is required to build Windows targets on
    * macOS or Linux.
    *
-   * The host Wine is never looked up on `PATH`. `"system"` uses the first of these that exists:
-   * - macOS: `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine`,
-   *   `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine` (likewise `Wine Devel.app`, `Wine Staging.app`)
-   * - Linux: `/usr/local/bin/wine`, `/usr/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`,
-   *   `/opt/wine-staging/bin/wine`
-   *
-   * If Wine is not installed at one of these locations, the build fails with a configuration error.
+   * The host Wine (`"system"`) is started by absolute path, never looked up on `PATH`: it is the `wine` entry of
+   * {@link executables}, which lists its default install locations and is where a Wine installed elsewhere is set.
+   * Setting both a bundle here (a version other than `"system"`, or a `ToolsetCustom` object) and `executables.wine`
+   * is a configuration error.
    *
    * To use a custom Wine bundle, use a `ToolsetCustom` object.
    *
@@ -862,7 +859,67 @@ export interface ToolsetConfig {
    * @default "latest"
    */
   readonly squirrel?: "1.1.1" | ToolsetCustom | "latest"
+
+  /**
+   * Where the host programs that electron-builder starts are installed on the build machine, by program name.
+   *
+   * electron-builder starts these programs only from an absolute path, never by looking up a name on `PATH`. For each one it
+   * uses the first location that is an executable file: from this entry when it is set, otherwise from a built-in list of
+   * default install locations for the host operating system (see https://www.electron.build/docs/toolsets#executables).
+   * An entry replaces the default list for that program; it is not merged with it.
+   *
+   * @example
+   * ```json
+   * {
+   *   "toolsets": {
+   *     "executables": {
+   *       "mono": "file:///opt/homebrew/bin/mono",
+   *       "pwsh": ["file:///usr/local/microsoft/powershell/7/pwsh", "file:///opt/microsoft/powershell/7/pwsh"],
+   *       "powershell": "file:///C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+   *     }
+   *   }
+   * }
+   * ```
+   */
+  readonly executables?: ExecutablesConfig | null
 }
+
+/**
+ * The name of a host program that electron-builder starts, as a key of {@link ToolsetConfig.executables}. Names are the same
+ * on every host and have no `.exe` suffix (`powershell` is `powershell.exe` on Windows).
+ */
+export type ExecutableName =
+  | "powershell"
+  | "pwsh"
+  | "prlctl"
+  | "wine"
+  | "mono"
+  | "productbuild"
+  | "pkgbuild"
+  | "hdiutil"
+  | "codesign"
+  | "actool"
+  | "tiffutil"
+  | "sips"
+  | "zip"
+  | "notarytool"
+  | "lzip"
+  | "snapcraft"
+  | "flatpak"
+  | "flatpak-builder"
+
+/**
+ * One `file://` URI, or a list of them, of an executable file on the build machine, such as `file:///opt/homebrew/bin/mono` or
+ * `file:///C:/Program%20Files/PowerShell/7/pwsh.exe`. The first that is an executable file is used, so one list can name the
+ * locations of several hosts: a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows.
+ * Plain paths, `~` and URIs that name another host (`file://server/share/...`) are not accepted.
+ */
+export type ExecutableLocation = string | string[]
+
+/**
+ * The locations of host programs, by {@link ExecutableName}. An unset or `null` entry uses the built-in default locations.
+ */
+export type ExecutablesConfig = { readonly [K in ExecutableName]?: ExecutableLocation | null }
 
 /**
  * A custom toolset bundle supplied by the user in place of a built-in versioned bundle.
