@@ -39,7 +39,7 @@ export abstract class DifferentialDownloader {
 
   readonly logger: Logger
 
-  // range requests that have not closed yet, aborted when the download is cancelled
+  // range requests that have not closed yet, aborted when the download is cancelled or fails
   private readonly requestsInFlight = new Set<AbortableRequest>()
 
   // starts from the provider's choice; turned off for the rest of this download when the server rejects multi-range requests
@@ -72,32 +72,26 @@ export abstract class DifferentialDownloader {
   }
 
   /**
-   * Creates a request for a part of the new file, tracked so that a cancellation aborts it even when no data flows.
+   * Creates a request for a part of the new file, tracked so that a cancel or a failure aborts it even when no data flows.
    * @internal
    */
   createRangeRequest(requestOptions: RequestOptions, callback: (response: IncomingMessage) => void): any {
     const request = this.httpExecutor.createRequest(requestOptions, callback)
     this.requestsInFlight.add(request)
-    request.on("close", () => {
-      this.requestsInFlight.delete(request)
-    })
+    request.on("close", () => this.requestsInFlight.delete(request))
     return request
   }
 
   private abortRequestsInFlight(): void {
-    const requests = Array.from(this.requestsInFlight)
-    this.requestsInFlight.clear()
-    for (const request of requests) {
+    for (const request of this.requestsInFlight) {
       try {
         request.abort()
       } catch (e: unknown) {
-        try {
-          this.logger.warn(`Cannot abort request: ${e}`)
-        } catch (_ignored) {
-          // runs inside CancellationToken.cancel(): a throwing logger must not escape to its caller
-        }
+        // runs inside CancellationToken.cancel(), which must not throw
+        this.logger.warn(`Cannot abort request: ${e}`)
       }
     }
+    this.requestsInFlight.clear()
   }
 
   protected doDownload(oldBlockMap: BlockMap, newBlockMap: BlockMap): Promise<any> {
@@ -145,73 +139,44 @@ export abstract class DifferentialDownloader {
     })
   }
 
-  private downloadFile(tasks: Array<Operation>): Promise<any> {
-    const fdList: Array<OpenedFile> = []
-    const closeFiles = (): Promise<Array<void>> => {
-      return Promise.all(
-        fdList.map(openedFile => {
-          return fsExtra.close(openedFile.descriptor).catch((e: any) => {
-            this.logger.error(`cannot close file "${openedFile.path}": ${e}`)
-          })
-        })
-      )
-    }
-    return this.doDownloadFile(tasks, fdList)
-      .then(closeFiles)
-      .catch((e: any) => {
-        // then must be after catch here (since then always throws error)
-        return closeFiles()
-          .catch(closeFilesError => {
-            // closeFiles never throw error, but just to be sure
-            try {
-              this.logger.error(`cannot close files: ${closeFilesError}`)
-            } catch (errorOnLog) {
-              try {
-                console.error(errorOnLog)
-              } catch (_ignored) {
-                // ok, give up and ignore error
-              }
-            }
-            throw e
-          })
-          .then(() => {
-            throw e
-          })
-      })
-  }
-
-  private async doDownloadFile(tasks: Array<Operation>, fdList: Array<OpenedFile>): Promise<any> {
-    const cancellationToken = this.options.cancellationToken
-    if (cancellationToken.cancelled) {
+  private async downloadFile(tasks: Array<Operation>): Promise<void> {
+    if (this.options.cancellationToken.cancelled) {
       throw new CancellationError()
     }
     const oldFileFd = await fsExtra.open(this.options.oldFile, "r")
-    fdList.push({ descriptor: oldFileFd, path: this.options.oldFile })
-    const newFileFd = await fsExtra.open(this.options.newFile, "w")
+    try {
+      await this.doDownloadFile(tasks, oldFileFd)
+    } finally {
+      // after a failure, a copy may still read the old file: closing the descriptor under it would fail the read or, worse,
+      // let it read whatever file reuses the descriptor number
+      await stopCopies(oldFileFd)
+      await fsExtra.close(oldFileFd).catch((e: unknown) => this.logger.error(`cannot close file "${this.options.oldFile}": ${e}`))
+    }
+  }
+
+  private async doDownloadFile(tasks: Array<Operation>, oldFileFd: number): Promise<void> {
     // fileOut owns the descriptor of the new file: it closes it when it finishes, fails or is destroyed
-    const fileOut = createWriteStream(this.options.newFile, { fd: newFileFd })
+    const fileOut = createWriteStream(this.options.newFile, { fd: await fsExtra.open(this.options.newFile, "w") })
     const fileOutClosed = new Promise<void>(resolve => fileOut.once("close", () => resolve()))
     const streams: Array<any> = []
     try {
       await this.writeNewFile(tasks, oldFileFd, fileOut, streams)
     } catch (e: unknown) {
-      // `downloadFile` closes the old file once this throws, so nothing may still read it or write the new one
+      // stop everything that may still write the new file or start another copy from the old one
       this.abortRequestsInFlight()
       for (const stream of streams) {
         stream.destroy()
       }
       fileOut.destroy()
-      await Promise.all([fileOutClosed, streams.length === 0 ? Promise.resolve() : stopCopies(streams[0])])
+      await fileOutClosed
       throw e
     }
   }
 
   private writeNewFile(tasks: Array<Operation>, oldFileFd: number, fileOut: WriteStream, streams: Array<any>): Promise<void> {
-    const cancellationToken = this.options.cancellationToken
-    // A cancellation is otherwise only noticed by the progress transform when data flows, so a stalled range request would
-    // never settle: createPromise rejects with a CancellationError on cancel (and unsubscribes once settled), and the
-    // requests in flight are aborted. `doDownloadFile` then stops the streams before the files are closed.
-    return cancellationToken.createPromise<void>((resolve, reject, onCancel) => {
+    // A cancel is otherwise only noticed by the progress transform when data flows, so a stalled range request would never
+    // settle: createPromise rejects on cancel (and unsubscribes once settled), and the requests in flight are aborted.
+    return this.options.cancellationToken.createPromise<void>((resolve, reject, onCancel) => {
       onCancel(() => this.abortRequestsInFlight())
 
       // Create our download info transformer if we have one
@@ -285,15 +250,6 @@ export abstract class DifferentialDownloader {
       const target: RangeRequestTarget = { options: this.createRequestOptions() }
 
       w = (index: number): void => {
-        // the next part may be scheduled (copy, throttling timer) after a cancel or a failure already settled the download
-        if (cancellationToken.cancelled) {
-          reject(new CancellationError())
-          return
-        }
-        if (firstStream.destroyed) {
-          reject(new Error("Cannot download the next part: the output stream is destroyed"))
-          return
-        }
         if (index >= tasks.length) {
           if (this.fileMetadataBuffer != null) {
             firstStream.write(this.fileMetadataBuffer)
@@ -405,9 +361,4 @@ export abstract class DifferentialDownloader {
 
 function formatBytes(value: number, symbol = " KB"): string {
   return new Intl.NumberFormat("en").format((value / 1024).toFixed(2) as any) + symbol
-}
-
-interface OpenedFile {
-  readonly descriptor: number
-  readonly path: string
 }
