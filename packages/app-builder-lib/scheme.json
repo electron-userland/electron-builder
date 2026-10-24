@@ -8572,13 +8572,14 @@
                 "1.1.1",
                 "1.2.1",
                 "1.3.0",
+                "1.3.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — embeds version metadata and icons into `.exe` files (legacy usage, migrated to npm `resedit` package).\n- **Windows Kits** — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27) |\n| `\"1.0.0\"` | Windows Kits 10.0.26100.0, `osslsigncode` v2.9 |\n| `\"1.1.1\"` | Updates `osslsigncode` to v2.11 |\n| `\"1.2.1\"` | Adds native `osslsigncode` arm64 |\n| `\"1.3.0\"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md"
+          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — embeds version metadata and icons into `.exe` files (legacy usage, migrated to npm `resedit` package).\n- **Windows Kits** — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27) |\n| `\"1.0.0\"` | Windows Kits 10.0.26100.0, `osslsigncode` v2.9 |\n| `\"1.1.1\"` | Updates `osslsigncode` to v2.11 |\n| `\"1.2.1\"` | Adds native `osslsigncode` arm64 |\n| `\"1.3.0\"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |\n| `\"1.3.1\"` | macOS `osslsigncode` bundles its own OpenSSL (no Homebrew `openssl@3` needed) and libp11's PKCS#11 provider |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md"
         },
         "wine": {
           "anyOf": [
