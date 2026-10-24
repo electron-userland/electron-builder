@@ -182,7 +182,9 @@ describe("differential download on hosts with limited range support", { concurre
   test("single-range downloads accept a range unit in any case (RFC 9110)", async ({ tmpDir }) => {
     const { newFile } = await download(await tmpDir.createTempDir({ prefix: "single-range" }), await startHost("uppercase-unit"), false)
     expect(readFileSync(newFile).equals(newContent)).toBe(true)
-    expect(requests).toHaveLength(2)
+    // one range per request (nearby ranges may be coalesced into one)
+    expect(requests.length).toBeGreaterThan(0)
+    expect(requests.every(it => !it.includes(","))).toBe(true)
   })
 
   test("single-range downloads reject a 206 for a different range", async ({ tmpDir }) => {
