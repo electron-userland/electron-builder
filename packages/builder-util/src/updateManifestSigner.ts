@@ -144,7 +144,7 @@ export function loadUpdateSigningKeys(config?: UpdateSigningKeySources | null, b
     pems = configKeys.flatMap(splitPemBlocks)
   } else if (configFiles.length > 0) {
     source = "updateManifest.signingKeyFile"
-    pems = configFiles.flatMap(file => splitPemBlocks(readKeyFile(baseDir == null ? file : path.resolve(baseDir, file), source)))
+    pems = configFiles.flatMap(file => splitPemBlocks(readKeyFile(file, baseDir == null ? file : path.resolve(baseDir, file), source)))
   } else if (envKey != null && envKey.trim().length > 0) {
     source = "ELECTRON_BUILDER_UPDATE_SIGN_KEY"
     // decoded only here, after both config sources were passed over, so a stale value never breaks a build keyed from the config
@@ -155,19 +155,56 @@ export function loadUpdateSigningKeys(config?: UpdateSigningKeySources | null, b
       .split(path.delimiter)
       .map(it => it.trim())
       .filter(it => it.length > 0)
-      .flatMap(file => splitPemBlocks(readKeyFile(file, source)))
+      .flatMap(file => splitPemBlocks(readKeyFile(file, file, source)))
   } else {
     return []
   }
   return validateSigningKeys(pems, source)
 }
 
-/** Reads a signing key file; an unreadable file is an InvalidConfigurationError naming its path and `source`, never its contents. */
-function readKeyFile(file: string, source: string): string {
+/**
+ * Reads a signing key file; an unreadable file is an InvalidConfigurationError naming `source` and the configured `value`, never
+ * the file's contents. When `value` looks like key material rather than a path — the key itself put where its path belongs, e.g.
+ * the base64 secret in ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE or a PEM in `signingKeyFile` — the value is not shown either.
+ */
+function readKeyFile(value: string, file: string, source: string): string {
   try {
     return readFileSync(file, "utf8")
   } catch (e: any) {
-    throw new InvalidConfigurationError(`Update manifest signing key file ${file} from ${source} cannot be read (${e?.code ?? e?.message ?? e})`)
+    const reason = typeof e?.code === "string" ? e.code : "unreadable"
+    if (looksLikeKeyMaterial(value)) {
+      throw new InvalidConfigurationError(
+        `Update manifest signing key file from ${source} cannot be read (${reason}): the value looks like key material, not a path, so it is not shown. ` +
+          `${source} takes the path of a PEM file; provide the key itself via ELECTRON_BUILDER_UPDATE_SIGN_KEY (the PEM file, base64-encoded) or updateManifest.signingKey.`
+      )
+    }
+    throw new InvalidConfigurationError(`Update manifest signing key file ${file} from ${source} cannot be read (${reason})`)
+  }
+}
+
+/** Longer than any path a key file plausibly lives at; a longer value is treated as pasted content, not a path. */
+const MAX_PLAUSIBLE_KEY_PATH_LENGTH = 1024
+
+/**
+ * True when a value configured as a key file path is more likely the key itself: PEM text, multi-line text, an implausibly long
+ * value, or standard base64 that decodes to PEM text or to a DER private key (a key body without its PEM lines).
+ */
+function looksLikeKeyMaterial(value: string): boolean {
+  if (value.includes("-----BEGIN") || /[\r\n]/.test(value) || value.length > MAX_PLAUSIBLE_KEY_PATH_LENGTH) {
+    return true
+  }
+  const decoded = decodeStrictBase64(value.trim())
+  if (decoded == null || decoded.length === 0) {
+    return false
+  }
+  if (decoded.toString("utf8").includes("-----BEGIN")) {
+    return true
+  }
+  try {
+    createPrivateKey({ key: decoded, format: "der", type: "pkcs8" })
+    return true
+  } catch {
+    return false
   }
 }
 
