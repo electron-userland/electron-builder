@@ -90,23 +90,30 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     }
   }
 
-  protected addRedirectHandlers(
-    request: ClientRequest,
-    options: RequestOptions,
-    reject: (error: Error) => void,
-    redirectCount: number,
-    handler: (options: RequestOptions) => void
-  ): void {
+  /**
+   * A redirect aborts `request` and `handler` sends a new one to the target: followRedirect() would resend every header,
+   * while {@link HttpExecutor.prepareRedirectUrlOptions} leaves out the credential headers when the target is on another origin.
+   * Up to `maxRedirects` redirects are followed; `redirectCount` is the number already followed.
+   */
+  addRedirectHandlers(request: ClientRequest, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void): void {
     request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
       // no way to modify request options, abort old and make a new one
       // https://github.com/electron/electron/issues/11505
       request.abort()
 
-      if (redirectCount > this.maxRedirects) {
+      if (redirectCount >= this.maxRedirects) {
         reject(this.createMaxRedirectError())
-      } else {
-        handler(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options))
+        return
       }
+      let redirectOptions: RequestOptions
+      try {
+        redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options)
+      } catch (e: unknown) {
+        // an event listener: a throw would escape as an uncaught exception
+        reject(e instanceof Error ? e : new Error(`Cannot follow the redirect: ${String(e)}`))
+        return
+      }
+      handler(redirectOptions)
     })
   }
 }

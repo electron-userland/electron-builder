@@ -675,7 +675,8 @@ class ConfigCodemod {
     }
     for (const prop of toolsets.properties) {
       const name = this.propName(prop)
-      if (name == null || !ts.isPropertyAssignment(prop)) {
+      // toolsets.executables is not a bundle, and null is valid for it (the default locations)
+      if (name == null || name === "executables" || !ts.isPropertyAssignment(prop)) {
         continue
       }
       const value = this.unwrap(prop.initializer)

@@ -3,7 +3,7 @@
 import { fileURLToPath } from "node:url"
 import { AppInfo, CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
 import { Publish, computeSafeArtifactNameIfNeeded, getConfig } from "app-builder-lib/internal"
-import { InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
+import { Executables, InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
 import type { PublishPolicy } from "electron-publish"
 import chalk from "chalk"
 import * as path from "path"
@@ -109,28 +109,31 @@ async function publishPackageWithTasks(
     publishManager.cancelTasks()
   }
 
-  return withPublishSigIntHandler(sigIntHandler, async () => {
-    try {
-      const publishConfigurations = await publishManager.getGlobalPublishConfigurations()
-      if (publishConfigurations == null || publishConfigurations.length === 0) {
-        throw new InvalidConfigurationError("unable to find any publish configuration")
-      }
-
-      for (const newArtifact of uploadTasks) {
-        for (const publishConfiguration of publishConfigurations) {
-          await publishManager.scheduleUpload(publishConfiguration, newArtifact, appInfo)
+  // the uploads (snapcraft) get the toolsets.executables of the loaded configuration
+  return withPublishSigIntHandler(sigIntHandler, () =>
+    Executables.run(packager.config.toolsets?.executables, async () => {
+      try {
+        const publishConfigurations = await publishManager.getGlobalPublishConfigurations()
+        if (publishConfigurations == null || publishConfigurations.length === 0) {
+          throw new InvalidConfigurationError("unable to find any publish configuration")
         }
-      }
 
-      await publishManager.awaitTasks()
-      return uploadTasks
-    } catch (error: any) {
-      packager.cancellationToken.cancel()
-      publishManager.cancelTasks()
-      log.error({ message: (error.stack || error.message || error).toString() }, "error publishing")
-      return null
-    }
-  })
+        for (const newArtifact of uploadTasks) {
+          for (const publishConfiguration of publishConfigurations) {
+            await publishManager.scheduleUpload(publishConfiguration, newArtifact, appInfo)
+          }
+        }
+
+        await publishManager.awaitTasks()
+        return uploadTasks
+      } catch (error: any) {
+        packager.cancellationToken.cancel()
+        publishManager.cancelTasks()
+        log.error({ message: (error.stack || error.message || error).toString() }, "error publishing")
+        return null
+      }
+    })
+  )
 }
 
 /** @internal */

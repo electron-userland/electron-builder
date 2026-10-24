@@ -3,6 +3,7 @@ import {
   archFromString,
   AsyncTaskManager,
   DebugLogger,
+  Executables,
   executeFinally,
   getArtifactArchName,
   InvalidConfigurationError,
@@ -432,6 +433,12 @@ export class Packager {
 
     await this.validateConfig()
 
+    // every host program the build starts, also in its asynchronous work, comes from this build's toolsets.executables (or the
+    // default install locations), whatever other builds in this process configure
+    return await Executables.run(this.config.toolsets?.executables, () => this.buildWithValidatedConfig(repositoryInfo))
+  }
+
+  private async buildWithValidatedConfig(repositoryInfo: SourceRepositoryInfo | undefined): Promise<BuildResult> {
     if (repositoryInfo != null) {
       this._repositoryInfo.value = Promise.resolve(repositoryInfo)
     }

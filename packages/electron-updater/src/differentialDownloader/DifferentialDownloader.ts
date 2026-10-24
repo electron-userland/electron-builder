@@ -10,7 +10,7 @@ import { nonThrowingLogger } from "../util.js"
 import { copyData } from "./DataSplitter.js"
 import { URL } from "url"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder.js"
-import { checkIsPartialContent, ERR_MULTIPLE_RANGES_NOT_SUPPORTED, executeTasksUsingMultipleRangeRequests, requestRange } from "./multipleRangeDownloader.js"
+import { checkIsPartialContent, ERR_MULTIPLE_RANGES_NOT_SUPPORTED, executeTasksUsingMultipleRangeRequests, RangeRequestTarget, requestRange } from "./multipleRangeDownloader.js"
 import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
 
 export interface DifferentialDownloaderOptions {
@@ -47,11 +47,13 @@ export abstract class DifferentialDownloader {
   }
 
   createRequestOptions(): RequestOptions {
-    const result = {
+    // requestRange follows a redirect itself, without the credential headers when the target is on another origin
+    const result: RequestOptions & { redirect: "manual" } = {
       headers: {
         ...this.options.requestHeaders,
         accept: "*/*",
       },
+      redirect: "manual",
     }
     configureRequestUrl(this.options.newUrl, result)
     // user-agent, cache-control and other common options
@@ -215,7 +217,8 @@ export abstract class DifferentialDownloader {
       let downloadOperationCount = 0
       this.logger.info(`Differential download: ${this.options.newUrl}`)
 
-      let requestOptions = this.createRequestOptions()
+      // once a request is redirected, the remaining ranges are requested from the redirect target
+      const target: RangeRequestTarget = { options: this.createRequestOptions() }
 
       w = (index: number): void => {
         if (index >= tasks.length) {
@@ -238,7 +241,6 @@ export abstract class DifferentialDownloader {
         }
 
         const range = `bytes=${operation.start}-${operation.end - 1}`
-        requestOptions.headers!.range = range
 
         this.logger?.debug?.(`download range: ${range}`)
 
@@ -247,35 +249,39 @@ export abstract class DifferentialDownloader {
           downloadInfoTransform.beginRangeDownload()
         }
 
-        requestRange(this, requestOptions, reject, (response, _request, options) => {
-          // after a redirect, the remaining ranges are requested from the redirect URL too
-          requestOptions = options
-          response.on("error", reject)
-          // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
-          if (!checkIsPartialContent(response, operation.start, operation.end - 1, reject)) {
-            return
-          }
-          response.on("aborted", () => {
-            reject(new Error("response has been aborted by the server"))
-          })
-
-          response.pipe(firstStream, {
-            end: false,
-          })
-          response.once("end", () => {
-            // Pass on that we are downloading a segment
-            if (downloadInfoTransform) {
-              downloadInfoTransform.endRangeDownload()
+        requestRange(
+          this,
+          target,
+          range,
+          response => {
+            response.on("error", reject)
+            // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
+            if (!checkIsPartialContent(response, operation.start, operation.end - 1, reject)) {
+              return
             }
+            response.on("aborted", () => {
+              reject(new Error("response has been aborted by the server"))
+            })
 
-            if (++downloadOperationCount === 100) {
-              downloadOperationCount = 0
-              setTimeout(() => w(index), 1000)
-            } else {
-              w(index)
-            }
-          })
-        })
+            response.pipe(firstStream, {
+              end: false,
+            })
+            response.once("end", () => {
+              // Pass on that we are downloading a segment
+              if (downloadInfoTransform) {
+                downloadInfoTransform.endRangeDownload()
+              }
+
+              if (++downloadOperationCount === 100) {
+                downloadOperationCount = 0
+                setTimeout(() => w(index), 1000)
+              } else {
+                w(index)
+              }
+            })
+          },
+          reject
+        )
       }
 
       w(0)
@@ -284,10 +290,8 @@ export abstract class DifferentialDownloader {
 
   protected async readRemoteBytes(start: number, endInclusive: number): Promise<Buffer> {
     const buffer = Buffer.allocUnsafe(endInclusive + 1 - start)
-    const requestOptions = this.createRequestOptions()
-    requestOptions.headers!.range = `bytes=${start}-${endInclusive}`
     let position = 0
-    await this.request(requestOptions, start, endInclusive, chunk => {
+    await this.request(start, endInclusive, chunk => {
       chunk.copy(buffer, position)
       position += chunk.length
     })
@@ -298,22 +302,28 @@ export abstract class DifferentialDownloader {
     return buffer
   }
 
-  private request(requestOptions: RequestOptions, start: number, endInclusive: number, dataHandler: (chunk: Buffer) => void): Promise<void> {
+  private request(start: number, endInclusive: number, dataHandler: (chunk: Buffer) => void): Promise<void> {
     return new Promise((resolve, reject) => {
-      requestRange(this, requestOptions, reject, response => {
-        response.on("error", reject)
-        // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
-        if (!checkIsPartialContent(response, start, endInclusive, reject)) {
-          return
-        }
+      requestRange(
+        this,
+        { options: this.createRequestOptions() },
+        `bytes=${start}-${endInclusive}`,
+        response => {
+          response.on("error", reject)
+          // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
+          if (!checkIsPartialContent(response, start, endInclusive, reject)) {
+            return
+          }
 
-        response.on("aborted", () => {
-          reject(new Error("response has been aborted by the server"))
-        })
+          response.on("aborted", () => {
+            reject(new Error("response has been aborted by the server"))
+          })
 
-        response.on("data", dataHandler)
-        response.on("end", () => resolve())
-      })
+          response.on("data", dataHandler)
+          response.on("end", () => resolve())
+        },
+        reject
+      )
     })
   }
 }

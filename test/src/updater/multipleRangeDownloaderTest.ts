@@ -15,9 +15,9 @@ function createFakeDifferentialDownloader(response: PassThrough): DifferentialDo
       createRequest: (_options: unknown, callback: (response: unknown) => void) => ({
         end: () => callback(response),
         abort: () => {},
-        on: () => {},
       }),
       addErrorAndTimeoutHandlers: () => {},
+      addRedirectHandlers: () => {},
     },
   } as unknown as DifferentialDownloader
 }
