@@ -9,6 +9,7 @@ import { Arch, DIR_TARGET, Platform, Target } from "electron-builder"
 import { Packager } from "electron-builder"
 import { mkdir, writeFile } from "fs/promises"
 import * as path from "path"
+import { Lazy } from "lazy-val"
 import { afterEach, describe, test, vi } from "vitest"
 import { app } from "../helpers/packTester"
 
@@ -107,6 +108,9 @@ describe("SigntoolSignManager.signFile result", () => {
       config: { toolsets: { winCodeSign: "1.1.0" } },
     }
     ;(manager as any).cscInfo = { value: Promise.resolve(cscInfo) }
+    // the class fields signFile reads (Object.create skips the constructor)
+    ;(manager as any).platformSpecificBuildOptions = options
+    ;(manager as any).explicitPublisherNameValidation = new Lazy(() => (manager as any).validateExplicitPublisherName())
     return manager
   }
 
@@ -126,6 +130,15 @@ describe("SigntoolSignManager.signFile result", () => {
 
     await expect(manager.signFile({ path: "/out/app.exe", options })).resolves.toBe("signed:custom")
     expect(signedPaths).toEqual(["/out/app.exe"])
+  })
+
+  test("a custom sign hook with a publisherName that is not a DN fails before the hook signs anything", async ({ expect }) => {
+    const sign = vi.fn<CustomWindowsSign>(() => Promise.resolve())
+    const options = { sign: { type: "signtool", sign, publisherName: "My Company", signingHashAlgorithms: ["sha256"] } } as unknown as WindowsConfiguration
+    const manager = makeManager(options)
+
+    await expect(manager.signFile({ path: "/out/app.exe", options })).rejects.toThrow(/Since electron-builder v27/)
+    expect(sign).not.toHaveBeenCalled()
   })
 })
 

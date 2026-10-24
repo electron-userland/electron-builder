@@ -1,4 +1,12 @@
-export { escapePowerShellSingleQuotes, matchPublisherName, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "./authenticodeSignature.js"
+export {
+  isValidPublisherNameDn,
+  matchPublisherName,
+  parseAuthenticodeSignatureOutput,
+  POWERSHELL_ASCII_ESCAPE_FUNCTION,
+  prepareAuthenticodeSignatureExec,
+  preparePowerShellExec,
+} from "./authenticodeSignature.js"
+export type { AuthenticodeSignerCertificateData } from "./authenticodeSignature.js"
 export { BlockMap } from "./blockMapApi.js"
 export { CancellationError, CancellationToken } from "./CancellationToken.js"
 export { newError } from "./error.js"

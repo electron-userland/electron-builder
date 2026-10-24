@@ -293,8 +293,12 @@ async function handleCleanupPerOS({ target, perMachine }: { target: string; perM
 }
 
 /** (Re)writes the runtime update config the fixture app reads (`autoUpdater.updateConfigPath`), e.g. to change the trust list between hops. */
+// The Windows builds are signed with an untrusted self-signed certificate, which the Authenticode verification of electron-updater rejects, and the
+// served config has no publisherName (with which electron-updater 7 rejects every update): it opts out the way electron-builder writes it for
+// win.verifyUpdateCodeSignature: false, as writeUpdateConfig does.
 export async function writeServedUpdateConfig(updateConfigPath: string, config: GenericServerOptions): Promise<void> {
-  await outputFile(updateConfigPath, serializeToYaml(config))
+  const served: GenericServerOptions = config.publisherName != null || config.verifyUpdateCodeSignature !== undefined ? config : { ...config, verifyUpdateCodeSignature: false }
+  await outputFile(updateConfigPath, serializeToYaml(served))
 }
 
 /**

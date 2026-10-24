@@ -681,10 +681,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
     const info = await client.getLatestVersion()
-    await this.verifyManifestSignature(info)
+    // recorded on the new result object (never on the parsed manifest, which listeners of update-available also get), so the state
+    // travels with exactly the update info it was established for
+    const manifestSignatureVerified = await this.verifyManifestSignature(info)
     return {
       info,
       provider: client,
+      manifestSignatureVerified,
     }
   }
 
@@ -700,8 +703,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * the legacy single `signature`; any trusted key matching any of them is sufficient, which is what allows
    * a release to be dual-signed while installs trust `[old, new]` during key rotation. Never fails open once
    * a key is configured. A throw here propagates before any download starts (fail-closed).
+   *
+   * Resolves to `true` when a trusted key verified the manifest — through an EBUM2 signature, or an EBUM1 signature for a manifest
+   * whose fields EBUM1 vouches for — and `false` when verification was skipped (no key configured).
    */
-  private async verifyManifestSignature(info: UpdateInfo): Promise<void> {
+  private async verifyManifestSignature(info: UpdateInfo): Promise<boolean> {
     let trustedKeys = normalizePublicKeyList(this.updateManifestPublicKey)
     if (trustedKeys.length === 0) {
       try {
@@ -719,7 +725,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       this.limitedLogger("manifest-verification-disabled").warn(
         "update manifest signature verification is disabled. Configure updateManifestPublicKey (and sign manifests at build time) to enable it."
       )
-      return
+      return false
     }
 
     // Verify the manifest as published: EBUM2 signs every field, so it must not see the fields a provider adds after
@@ -759,6 +765,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     this._logger.debug?.(`Update manifest for version ${info.version} verified with trusted key ${result.keyId} (${result.format})`)
     this._logger.info(`Update manifest signature verified for version ${info.version} (${result.format})`)
+    return true
   }
 
   private createProviderRuntimeOptions() {
@@ -1436,6 +1443,12 @@ export class NoOpLogger implements Logger {
 export interface UpdateInfoAndProvider {
   info: UpdateInfo
   provider: Provider<any>
+  /**
+   * Whether the signature of `info` was verified against a trusted key (`updateManifestPublicKey`) when it was fetched. Absent (or
+   * `false`) when no key is configured, and for an object not made by the update check. Settings that only a signed manifest may make,
+   * such as `allowCatalogSignature`, are honored only when it is `true`.
+   */
+  readonly manifestSignatureVerified?: boolean
 }
 
 export interface DownloadExecutorTask {

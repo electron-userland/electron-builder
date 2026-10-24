@@ -513,7 +513,7 @@ describe("canonicalizeForSigning is injective", () => {
     for (const info of [smuggled, makeInfo({ version: "1.2.3\nstaging:100" }), makeInfo({ minimumSystemVersion: "10\tx" })]) {
       const lines = canonicalizeForSigning(info).split("\n")
       expect(lines.length).toBe(canonicalizeForSigning(base).split("\n").length)
-      expect(lines.every(line => /^(EBUM1|version:|staging:|minimumSystemVersion:|file:|package:)/.test(line))).toBe(true)
+      expect(lines.every(line => /^(EBUM1|version:|staging:|minimumSystemVersion:|allowCatalogSignature:|file:|package:)/.test(line))).toBe(true)
     }
   })
 
@@ -625,5 +625,79 @@ describe("blockMapUrl is signed only when present", () => {
     ["a control character in blockMapUrl", "a\nb", /files\[0\]\.blockMapUrl contains a control character/],
   ])("the shape check rejects %s", ([_name, blockMapUrl, expected], { expect }) => {
     expect(validateSignedManifestShape(withBlockMapUrl(blockMapUrl))).toMatch(expected)
+  })
+})
+
+describe("allowCatalogSignature is signed only when true", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  // the web-installer manifest of the pinned wire-format test above, and a signature over its EBUM1 payload made with a fixed key
+  // before allowCatalogSignature existed: Ed25519 is deterministic, so these bytes prove that such manifests still verify unchanged
+  const FIXED_PUBLIC_KEY = "MCowBQYDK2VwAyEAWN6cOonJrZAKnF2bxj6m9JvW182PtEyTY30E2DTwWPQ="
+  const FIXED_SIGNATURE = "zUR1FF7UhH10t9i2o7kaHS+ST8rr9rS0bbOw9wDxad0SijUl0rXMoi4RNCyQTHRo5OjZZiowUbX1/o58Y5z5CQ=="
+  const FIXED_PAYLOAD = [
+    "EBUM1",
+    'version:"1.2.3"',
+    "staging:25",
+    'minimumSystemVersion:"10.0.22631"',
+    'file:"App-1.2.3.exe"\t"abc123"\t8123456',
+    'package:"ia32"\t"App-1.2.3-ia32.nsis.7z"\t"p32"\t4000\t\t',
+    'package:"x64"\t"App-1.2.3-x64.nsis.7z"\t"p64"\t5000\t120\t1',
+  ].join("\n")
+  const fixedInfo = (allowCatalogSignature?: unknown): WindowsUpdateInfo => {
+    const info = makeWebInfo({ stagingPercentage: 25, minimumSystemVersion: "10.0.22631" })
+    return allowCatalogSignature === undefined ? info : { ...info, allowCatalogSignature: allowCatalogSignature as boolean }
+  }
+
+  test.for<[string, unknown]>([
+    ["without the field", undefined],
+    ["with false", false],
+    ["with null (YAML ~)", null],
+  ])("a manifest %s canonicalizes to the same bytes as before, and a signature made before it existed still verifies", ([, value], { expect }) => {
+    const info = fixedInfo(value)
+    expect(canonicalizeForSigning(info)).toBe(FIXED_PAYLOAD)
+    expect(validateSignedManifestShape(info)).toBeNull()
+    expect(verifyManifestSignatures({ ...info, signature: FIXED_SIGNATURE }, [FIXED_PUBLIC_KEY]).ok).toBe(true)
+  })
+
+  test("true adds one line after minimumSystemVersion, so the signature made without it no longer verifies", ({ expect }) => {
+    const lines = FIXED_PAYLOAD.split("\n")
+    expect(canonicalizeForSigning(fixedInfo(true))).toBe([...lines.slice(0, 4), "allowCatalogSignature:true", ...lines.slice(4)].join("\n"))
+    expect(verifyManifestSignatures({ ...fixedInfo(true), signature: FIXED_SIGNATURE }, [FIXED_PUBLIC_KEY])).toEqual({ ok: false })
+    // a plain manifest (no files other than the installer) gets the same line in the same place
+    expect(canonicalizeForSigning({ ...makeInfo(), allowCatalogSignature: true } as WindowsUpdateInfo)).toBe(
+      ["EBUM1", 'version:"1.2.3"', "staging:", "minimumSystemVersion:", "allowCatalogSignature:true", 'file:"App-1.2.3.exe"\t"abc123"\t8123456'].join("\n")
+    )
+  })
+
+  test("a manifest signed with true verifies; turning it off, removing it or turning it on after signing does not", ({ expect }) => {
+    const withTrue = signed(fixedInfo(true), privateKeyPem)
+    expect(verifyManifestSignatures(withTrue, [publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures({ ...withTrue, allowCatalogSignature: false } as WindowsUpdateInfo, [publicKeyPem]).ok).toBe(false)
+    const { allowCatalogSignature: _removed, ...withoutField } = withTrue as WindowsUpdateInfo
+    expect(verifyManifestSignatures(withoutField, [publicKeyPem]).ok).toBe(false)
+
+    const withoutTrue = signed(fixedInfo(), privateKeyPem)
+    expect(verifyManifestSignatures(withoutTrue, [publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures({ ...withoutTrue, allowCatalogSignature: true } as WindowsUpdateInfo, [publicKeyPem]).ok).toBe(false)
+    // false and absent are the same payload, so switching between them keeps the signature valid
+    expect(verifyManifestSignatures({ ...withoutTrue, allowCatalogSignature: false } as WindowsUpdateInfo, [publicKeyPem]).ok).toBe(true)
+  })
+
+  test.for<[string, unknown]>([
+    ["a string", "true"],
+    ["a number", 1],
+    ["an object", { enabled: true }],
+  ])("the shape check rejects %s, and the signer refuses to sign it", ([, value], { expect }) => {
+    const info = fixedInfo(value)
+    expect(validateSignedManifestShape(info)).toBe("allowCatalogSignature must be a boolean")
+    // the non-boolean value is not signed, so the signature of the plain manifest would match; the shape check rejects it first
+    expect(verifyManifestSignatures({ ...info, signature: FIXED_SIGNATURE }, [FIXED_PUBLIC_KEY])).toEqual({ ok: false, reason: "allowCatalogSignature must be a boolean" })
+    expect(() => signUpdateManifest(info, privateKeyPem)).toThrow(/allowCatalogSignature must be a boolean/)
+  })
+
+  test("the line cannot be smuggled in through another field", ({ expect }) => {
+    const smuggled = makeWebInfo({ stagingPercentage: 25, minimumSystemVersion: "10.0.22631\nallowCatalogSignature:true" })
+    expect(canonicalizeForSigning(smuggled).split("\n")).not.toContain("allowCatalogSignature:true")
+    expect(canonicalizeForSigning(smuggled)).not.toBe(canonicalizeForSigning(fixedInfo(true)))
   })
 })

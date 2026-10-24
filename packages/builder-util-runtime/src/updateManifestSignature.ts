@@ -22,7 +22,8 @@ export const UPDATE_MANIFEST_SIGNATURE_VERSION_2 = "EBUM2"
 export const UPDATE_MANIFEST_UNSIGNED_FIELDS: ReadonlyArray<string> = ["signature", "signatures", "releaseName", "releaseNotes"]
 
 /**
- * Every top-level field an `EBUM1`-only electron-builder (27.0.0-alpha.9 to alpha.12) can write into `latest*.yml`.
+ * Every top-level field an `EBUM1`-only electron-builder (27.0.0-alpha.9 to alpha.12) can write into `latest*.yml`, plus
+ * `allowCatalogSignature`, which `EBUM1` itself signs when it is `true` (see {@link canonicalizeForSigning}).
  * {@link verifyManifestSignatures} accepts an `EBUM1` signature only for a manifest whose top-level fields are all in this
  * list. Stripping the `EBUM2` signatures from a dual-signed manifest therefore cannot smuggle a newer field past the
  * updater on the strength of its `EBUM1` signature, which does not cover it: a field added after `EBUM2` is protected
@@ -41,6 +42,7 @@ export const EBUM1_MANIFEST_FIELDS: ReadonlyArray<string> = [
   "releaseDate",
   "stagingPercentage",
   "minimumSystemVersion",
+  "allowCatalogSignature",
   "vendor",
   "signature",
   "signatures",
@@ -73,6 +75,8 @@ function encodeField(value: unknown): string {
  *   - `stagingPercentage`     — prevents tampering with staged-rollout gating
  *   - `minimumSystemVersion`  — prevents bypassing or forging the OS-version gate (its absence is signed too,
  *                               so one cannot be added after the fact)
+ *   - `allowCatalogSignature` — (`WindowsUpdateInfo`) only when it is exactly `true`, as an extra line; a manifest without it, or
+ *                               with `false`, canonicalizes exactly as before, and adding `true` after signing breaks the signature
  *   - each file's `url`, `sha512`, `size` — the artifact identity + integrity hash the updater enforces — and its
  *     `blockMapUrl` when present (an extra field on the file record only then, so other manifests are unaffected)
  *   - each NSIS web-installer package's arch key and `path`, `sha512`, `size`, `blockMapSize`, `isAdminRightsRequired`
@@ -98,6 +102,7 @@ function encodeField(value: unknown): string {
  *     version:"1.2.3"
  *     staging:25
  *     minimumSystemVersion:"10.0.19041"
+ *     allowCatalogSignature:true                                                (only with allowCatalogSignature: true)
  *     file:"App-1.2.3.exe"<TAB>"<sha512>"<TAB>8123456
  *     file:"App-1.2.4.exe"<TAB>"<sha512>"<TAB>8123456<TAB>"https://cdn.example.com/App-1.2.4.exe.blockmap?sig=…"   (with a blockMapUrl)
  *     package:"x64"<TAB>"App-1.2.3-x64.nsis.7z"<TAB>"<sha512>"<TAB>5000<TAB>120<TAB>1
@@ -121,6 +126,11 @@ export function canonicalizeForSigning(info: UpdateInfo): string {
     // always emitted (empty when unset) so that adding a minimumSystemVersion to a signed manifest is detected
     `minimumSystemVersion:${encodeField(info.minimumSystemVersion)}`,
   ]
+  // only emitted for exactly `true`, so manifests without it (or with `false`) canonicalize exactly as before; a manifest that has it
+  // cannot be verified by an electron-updater without this line (7.0.0-alpha.8 to alpha.11)
+  if (readAllowCatalogSignature(info) === true) {
+    lines.push("allowCatalogSignature:true")
+  }
 
   const files = (info.files ?? []).map(f => {
     const record = `file:${encodeField(f?.url)}\t${encodeField(f?.sha512)}\t${encodeField(f?.size)}`
@@ -308,6 +318,14 @@ export function findFieldsOutsideEbum1(info: UpdateInfo): Array<string> {
   return Object.keys(info).filter(key => !known.has(key))
 }
 
+/**
+ * `WindowsUpdateInfo.allowCatalogSignature` as written in the manifest, read without assuming the manifest's type (a parsed
+ * `latest*.yml` may carry any value, or none). Never throws for an object.
+ */
+function readAllowCatalogSignature(info: UpdateInfo): unknown {
+  return "allowCatalogSignature" in info ? info.allowCatalogSignature : undefined
+}
+
 /** True when `value` contains an ASCII control character (U+0000-U+001F or U+007F). */
 function hasControlCharacter(value: string): boolean {
   for (let i = 0; i < value.length; i++) {
@@ -333,7 +351,8 @@ function isNonEmptyString(value: unknown): value is string {
  *   - `files` is a non-empty array whose entries have a non-empty string `url` and `sha512` (and a numeric
  *     `size` and a non-empty string `blockMapUrl` when present) — a signed manifest must describe its own files, so the updater never consults the
  *     unsigned legacy top-level `path`/`sha512` for it
- *   - `stagingPercentage` is a number when present, `minimumSystemVersion` a string when present
+ *   - `stagingPercentage` is a number when present, `minimumSystemVersion` a string when present, `allowCatalogSignature`
+ *     a boolean when present
  *   - every `packages` entry (NSIS web installer) has a non-empty string `path` and `sha512`, numeric
  *     `size`/`blockMapSize` when present, and a boolean `isAdminRightsRequired` when present
  *   - no signed string field (including package arch keys) contains a control character (U+0000–U+001F, U+007F)
@@ -355,6 +374,10 @@ export function validateSignedManifestShape(info: UpdateInfo): string | null {
       return "minimumSystemVersion must be a string"
     }
     strings.push(["minimumSystemVersion", info.minimumSystemVersion])
+  }
+  const allowCatalogSignature = readAllowCatalogSignature(info)
+  if (allowCatalogSignature != null && typeof allowCatalogSignature !== "boolean") {
+    return "allowCatalogSignature must be a boolean"
   }
 
   const files = info.files

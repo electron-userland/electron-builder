@@ -57,7 +57,7 @@ describe("AppUpdater.verifyManifestSignature (A1)", () => {
   it("passes a correctly signed manifest", async () => {
     const updater = makeUpdater(publicKeyPem)
     const info = signed(makeInfo(), privateKeyPem)
-    await expect(verify(updater, info)).resolves.toBeUndefined()
+    await expect(verify(updater, info)).resolves.toBe(true)
   })
 
   it("throws ERR_UPDATER_MANIFEST_SIGNATURE_INVALID when sha512 is tampered after signing", async () => {
@@ -76,8 +76,8 @@ describe("AppUpdater.verifyManifestSignature (A1)", () => {
     const updater = makeUpdater(null)
     const warnSpy = vi.spyOn((updater as any)._logger, "warn")
     try {
-      await expect(verify(updater, makeInfo())).resolves.toBeUndefined()
-      await expect(verify(updater, makeInfo())).resolves.toBeUndefined()
+      await expect(verify(updater, makeInfo())).resolves.toBe(false)
+      await expect(verify(updater, makeInfo())).resolves.toBe(false)
       const verificationWarnings = warnSpy.mock.calls.filter(c => String(c[0]).includes("signature verification is disabled"))
       expect(verificationWarnings.length).toBe(1)
     } finally {
@@ -100,7 +100,7 @@ describe("AppUpdater.verifyManifestSignature (A1)", () => {
     const debugSpy = vi.fn()
     updater.logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: debugSpy }
     const info = multiSigned(makeInfo(), [privateKeyPem, newKey.privateKeyPem])
-    await expect(verify(updater, info)).resolves.toBeUndefined()
+    await expect(verify(updater, info)).resolves.toBe(true)
     expect(debugSpy.mock.calls.some(c => String(c[0]).includes(computeUpdateManifestKeyId(publicKeyPem)))).toBe(true)
   })
 
@@ -108,7 +108,7 @@ describe("AppUpdater.verifyManifestSignature (A1)", () => {
     const newKey = generateUpdateSigningKeypair()
     const updater = makeUpdater(newKey.publicKeyPem)
     const info = multiSigned(makeInfo(), [privateKeyPem, newKey.privateKeyPem])
-    await expect(verify(updater, info)).resolves.toBeUndefined()
+    await expect(verify(updater, info)).resolves.toBe(true)
   })
 
   it("accepts a legacy single-signature manifest when the install trusts a LIST containing the signer", async () => {
@@ -116,14 +116,14 @@ describe("AppUpdater.verifyManifestSignature (A1)", () => {
     const updater = makeUpdater([nextKey.publicKeyPem, publicKeyPem])
     const info = signed(makeInfo(), privateKeyPem)
     expect(info.signatures).toBeUndefined()
-    await expect(verify(updater, info)).resolves.toBeUndefined()
+    await expect(verify(updater, info)).resolves.toBe(true)
   })
 
   it("accepts a manifest signed only by the NEXT key once the install trusts [current, next]", async () => {
     const nextKey = generateUpdateSigningKeypair()
     const updater = makeUpdater([publicKeyPem, nextKey.publicKeyPem])
     const info = multiSigned(makeInfo(), [nextKey.privateKeyPem])
-    await expect(verify(updater, info)).resolves.toBeUndefined()
+    await expect(verify(updater, info)).resolves.toBe(true)
   })
 
   it("rejects a dual-signed manifest when none of the trusted keys signed it (fail-closed)", async () => {
@@ -148,7 +148,7 @@ describe("AppUpdater.verifyManifestSignature (A1)", () => {
 
   it("treats an empty runtime trust list like no runtime override (falls back to config, here: none)", async () => {
     const updater = makeUpdater([])
-    await expect(verify(updater, makeInfo())).resolves.toBeUndefined()
+    await expect(verify(updater, makeInfo())).resolves.toBe(false)
   })
 })
 
@@ -177,7 +177,7 @@ describe("AppUpdater.verifyManifestSignature: minimumSystemVersion and packages"
   const verify = (updater: DebUpdater, info: UpdateInfo) => (updater as any).verifyManifestSignature(info)
 
   it("passes a correctly signed web-installer manifest", async () => {
-    await expect(verify(makeUpdater(), signed(makeWebInfo(), privateKeyPem))).resolves.toBeUndefined()
+    await expect(verify(makeUpdater(), signed(makeWebInfo(), privateKeyPem))).resolves.toBe(true)
   })
 
   it("throws ERR_UPDATER_MANIFEST_SIGNATURE_INVALID when a package's sha512 or path is tampered", async () => {
@@ -199,7 +199,7 @@ describe("AppUpdater.verifyManifestSignature: minimumSystemVersion and packages"
     const info = signed(makeWebInfo(), privateKeyPem) as WindowsUpdateInfo
     const updater = makeUpdater()
     // getUpdateInfoAndProvider verifies right after getLatestVersion(), before any provider resolves URLs
-    await expect(verify(updater, info)).resolves.toBeUndefined()
+    await expect(verify(updater, info)).resolves.toBe(true)
     const resolved = resolveFiles(info, new URL("https://example.com/feed/"))
     // resolveFiles picks packages[process.arch] and falls back to ia32 (e.g. on the arm64 macOS runner)
     const expectedArch = process.arch in info.packages! ? process.arch : "ia32"
@@ -209,7 +209,7 @@ describe("AppUpdater.verifyManifestSignature: minimumSystemVersion and packages"
     // ...and leaves the parsed manifest untouched, so the signed payload is the same on both sides
     expect(info.packages![expectedArch].path).toBe(`App-2.0.0-${expectedArch}.nsis.7z`)
     expect(info.files[0].url).toBe("App-2.0.0.exe")
-    await expect(verify(updater, info)).resolves.toBeUndefined()
+    await expect(verify(updater, info)).resolves.toBe(true)
   })
 })
 
@@ -270,7 +270,7 @@ describe("AppUpdater.verifyManifestSignature: blockMapUrl", () => {
   const info = signed({ ...makeInfo(), files: [{ ...makeInfo().files[0], blockMapUrl: "https://cdn.example.com/App-2.0.0.exe.blockmap?sig=1" }] }, privateKeyPem)
 
   it("passes a manifest signed with a blockMapUrl", async ({ expect }) => {
-    await expect(verify(makeUpdater(), info)).resolves.toBeUndefined()
+    await expect(verify(makeUpdater(), info)).resolves.toBe(true)
   })
 
   it("throws ERR_UPDATER_MANIFEST_SIGNATURE_INVALID when the blockMapUrl is changed after signing", async ({ expect }) => {
@@ -288,5 +288,49 @@ describe("AppUpdater.verifyManifestSignature: blockMapUrl", () => {
     const error = await verify(makeUpdater(), { ...plain, files: [{ ...plain.files[0], sha512: "tampered" }] }).catch((e: Error) => e)
     expect(error).toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
     expect(error.message).not.toContain("blockMapUrl")
+  })
+})
+
+// The verified state travels with the update info it was established for (UpdateInfoAndProvider.manifestSignatureVerified), so that
+// settings only a signed manifest may make, such as allowCatalogSignature, can be honored for exactly that update.
+describe("AppUpdater.getUpdateInfoAndProvider: manifestSignatureVerified", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const catalogInfo = (): WindowsUpdateInfo => ({ ...makeInfo(), allowCatalogSignature: true })
+
+  function makeUpdater(publicKey: string | null, info: UpdateInfo) {
+    const updater = new DebUpdater(null, stubApp)
+    updater.updateManifestPublicKey = publicKey
+    updater.logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+    // no feed and no staging id file: the provider returns the manifest as served
+    ;(updater as any).clientPromise = Promise.resolve({ setRequestHeaders: vi.fn(), getLatestVersion: () => Promise.resolve(info) })
+    ;(updater as any).stagingUserIdPromise = { value: Promise.resolve("staging-id") }
+    return updater
+  }
+  const fetch = (updater: DebUpdater) => (updater as any).getUpdateInfoAndProvider()
+
+  it("is true for a manifest a trusted key verified, and the manifest itself is not changed", async ({ expect }) => {
+    const info = signed(catalogInfo(), privateKeyPem)
+    const snapshot = JSON.stringify(info)
+    const result = await fetch(makeUpdater(publicKeyPem, info))
+    expect(result.manifestSignatureVerified).toBe(true)
+    expect(result.info).toBe(info)
+    expect(JSON.stringify(info)).toBe(snapshot)
+    expect("manifestSignatureVerified" in info).toBe(false)
+  })
+
+  it("is false when no key is configured, even for a signed manifest", async ({ expect }) => {
+    const result = await fetch(makeUpdater(null, signed(catalogInfo(), privateKeyPem)))
+    expect(result.manifestSignatureVerified).toBe(false)
+  })
+
+  it("never resolves for a manifest the key does not verify: allowCatalogSignature added after signing fails the check", async ({ expect }) => {
+    const signedWithout = signed(makeInfo(), privateKeyPem)
+    const tampered: WindowsUpdateInfo = { ...signedWithout, allowCatalogSignature: true }
+    await expect(fetch(makeUpdater(publicKeyPem, tampered))).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+    const nonBoolean = { ...signedWithout, allowCatalogSignature: "true" } as unknown as UpdateInfo
+    await expect(fetch(makeUpdater(publicKeyPem, nonBoolean))).rejects.toMatchObject({
+      code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID",
+      message: expect.stringContaining("allowCatalogSignature must be a boolean"),
+    })
   })
 })

@@ -20,6 +20,7 @@ import { generateUpdateSigningKeypair, loadUpdateSigningKeys, serializeSignedUpd
 import { DebUpdater } from "electron-updater"
 import type { AppAdapter } from "electron-updater/src/AppAdapter"
 import { carryUpdateManifestSource, parseUpdateInfo } from "electron-updater/src/providers/Provider"
+import { resolveCatalogSignatureOptions } from "electron-updater/src/windowsExecutableCodeSignatureVerifier"
 
 function makeInfo(overrides: Record<string, unknown> = {}): UpdateInfo {
   return {
@@ -446,7 +447,7 @@ describe("AppUpdater verifies the manifest as published, before providers add fi
     updater.updateManifestPublicKey = publicKeyPem
     return updater
   }
-  const verify = (updater: DebUpdater, info: UpdateInfo): Promise<void> => (updater as any).verifyManifestSignature(info)
+  const verify = (updater: DebUpdater, info: UpdateInfo): Promise<boolean> => (updater as any).verifyManifestSignature(info)
   const feedUrl = new URL("https://example.com/latest.yml")
 
   test("a GitHub-style `{ tag, ...result }` with a feed release name verifies with EBUM2", async () => {
@@ -456,7 +457,7 @@ describe("AppUpdater verifies the manifest as published, before providers add fi
     const info = carryUpdateManifestSource(result, { tag: "v1.2.3", assets: { "App-1.2.3.exe": "https://api.example.com/1" }, ...result })
     const updater = makeUpdater()
     const infoSpy = vi.spyOn((updater as any)._logger, "info")
-    await expect(verify(updater, info)).resolves.toBeUndefined()
+    await expect(verify(updater, info)).resolves.toBe(true)
     expect(infoSpy).toHaveBeenCalledWith("Update manifest signature verified for version 1.2.3 (EBUM2)")
   })
 
@@ -488,11 +489,97 @@ describe("AppUpdater verifies the manifest as published, before providers add fi
 
   test("an UpdateInfo built without parseUpdateInfo (a custom provider) is verified as it is", async () => {
     const parsed = publish(makeInfo(), [privateKeyPem])
-    await expect(verify(makeUpdater(), parsed)).resolves.toBeUndefined()
+    await expect(verify(makeUpdater(), parsed)).resolves.toBe(true)
     // a field it adds is then part of what is verified: EBUM2 fails, and EBUM1 does not vouch for it
     await expect(verify(makeUpdater(), { ...parsed, tag: "v1.2.3" } as UpdateInfo)).rejects.toMatchObject({
       code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID",
       message: expect.stringContaining('"tag" is not covered by an EBUM1 signature'),
+    })
+  })
+})
+
+// win.allowCatalogSignature (#10416): EBUM1 signs `allowCatalogSignature:true` as an extra line, EBUM2 signs the field like any other, and
+// the updater honors it only when the manifest was verified, through either format.
+describe("allowCatalogSignature under EBUM2 and the EBUM1 fallback", () => {
+  const { publicKeyPem, privateKeyPem } = generateUpdateSigningKeypair()
+  const catalogInfo = (): WindowsUpdateInfo => ({ ...makeInfo(), allowCatalogSignature: true })
+  const feedUrl = new URL("https://example.com/latest.yml")
+  const withFlag = (info: UpdateInfo, value: unknown): UpdateInfo => ({ ...info, allowCatalogSignature: value }) as UpdateInfo
+  const withoutFlag = (info: UpdateInfo): UpdateInfo => {
+    const { allowCatalogSignature: _removed, ...rest } = info as WindowsUpdateInfo
+    return rest
+  }
+
+  test("is a field EBUM1 vouches for, so the EBUM1 fallback accepts a manifest carrying it", () => {
+    expect(EBUM1_MANIFEST_FIELDS).toContain("allowCatalogSignature")
+  })
+
+  test("a dual-signed manifest with the flag verifies under EBUM2 and under the EBUM1 fallback", () => {
+    const parsed = publish(catalogInfo(), [privateKeyPem])
+    expect((parsed as WindowsUpdateInfo).allowCatalogSignature).toBe(true)
+    expect(canonicalizeForSigning(parsed).split("\n")).toContain("allowCatalogSignature:true")
+    expect(verifyManifestSignatures(parsed, [publicKeyPem])).toMatchObject({ ok: true, format: "EBUM2" })
+    expect(verifyManifestSignatures(onlyFormat(parsed, "EBUM2"), [publicKeyPem])).toMatchObject({ ok: true, format: "EBUM2" })
+    expect(verifyManifestSignatures(onlyFormat(parsed, "EBUM1"), [publicKeyPem])).toMatchObject({ ok: true, format: "EBUM1" })
+  })
+
+  test.each<["EBUM1" | "EBUM2" | "both"]>([["EBUM1"], ["EBUM2"], ["both"]])("tampering with the flag is caught when signed with %s", format => {
+    const pick = (info: UpdateInfo) => (format === "both" ? info : onlyFormat(info, format))
+    const signedWith = pick(publish(catalogInfo(), [privateKeyPem]))
+    expect(verifyManifestSignatures(signedWith, [publicKeyPem]).ok).toBe(true)
+    // flipped, removed, or turned into a non-boolean after signing
+    expect(verifyManifestSignatures(withFlag(signedWith, false), [publicKeyPem]).ok).toBe(false)
+    expect(verifyManifestSignatures(withoutFlag(signedWith), [publicKeyPem]).ok).toBe(false)
+    expect(verifyManifestSignatures(withFlag(signedWith, "true"), [publicKeyPem])).toEqual({ ok: false, reason: "allowCatalogSignature must be a boolean" })
+    // added to a manifest signed without it
+    const signedWithout = pick(publish(makeInfo(), [privateKeyPem]))
+    expect(verifyManifestSignatures(signedWithout, [publicKeyPem]).ok).toBe(true)
+    expect(verifyManifestSignatures(withFlag(signedWithout, true), [publicKeyPem]).ok).toBe(false)
+  })
+
+  describe("manifestSignatureVerified", () => {
+    const stubApp: AppAdapter = {
+      name: "TestApp",
+      version: "1.0.0",
+      isPackaged: false,
+      appUpdateConfigPath: "/tmp/does-not-exist-app-update.yml",
+      userDataPath: "/tmp",
+      baseCachePath: "/tmp",
+      whenReady: () => Promise.resolve(),
+      relaunch: () => {},
+      quit: () => {},
+      onQuit: () => {},
+    }
+    function makeUpdater(info: UpdateInfo) {
+      const updater = new DebUpdater(null, stubApp)
+      updater.updateManifestPublicKey = publicKeyPem
+      updater.logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+      ;(updater as any).clientPromise = Promise.resolve({ setRequestHeaders: vi.fn(), getLatestVersion: () => Promise.resolve(info) })
+      ;(updater as any).stagingUserIdPromise = { value: Promise.resolve("staging-id") }
+      return updater
+    }
+    /** The served YAML, parsed by electron-updater's own `parseUpdateInfo` as a provider would. */
+    const served = (info: UpdateInfo) => parseUpdateInfo(serializeToYaml(info, false, true), "latest.yml", feedUrl)
+
+    test.each<["EBUM1" | "EBUM2" | "both"]>([["EBUM2"], ["EBUM1"], ["both"]])("is true when verified via %s, and the catalog opt-in is honored", async format => {
+      const signedInfo = publish(catalogInfo(), [privateKeyPem])
+      const info = served(format === "both" ? signedInfo : onlyFormat(signedInfo, format))
+      const updater = makeUpdater(info)
+      const result = await (updater as any).getUpdateInfoAndProvider()
+      expect(result.manifestSignatureVerified).toBe(true)
+      expect(updater.logger?.info).toHaveBeenCalledWith(`Update manifest signature verified for version 1.2.3 (${format === "EBUM1" ? "EBUM1" : "EBUM2"})`)
+      expect(resolveCatalogSignatureOptions(false, result, { info: vi.fn(), warn: vi.fn(), error: vi.fn() })).toEqual({
+        allowCatalogSignature: true,
+        allowCatalogSignatureSource: "manifest",
+      })
+    })
+
+    test("never resolves when the flag was added after signing, whichever formats the manifest carries", async () => {
+      for (const format of ["EBUM1", "EBUM2", "both"] as const) {
+        const signedInfo = publish(makeInfo(), [privateKeyPem])
+        const info = served(withFlag(format === "both" ? signedInfo : onlyFormat(signedInfo, format), true))
+        await expect((makeUpdater(info) as any).getUpdateInfoAndProvider()).rejects.toMatchObject({ code: "ERR_UPDATER_MANIFEST_SIGNATURE_INVALID" })
+      }
     })
   })
 })
