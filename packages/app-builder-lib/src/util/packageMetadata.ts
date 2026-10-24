@@ -77,7 +77,7 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
         `  { "build": { "directories": ${JSON.stringify(rootDirectories)} } }\n` +
         "  Left where it is, it is ignored and your build output goes to the default 'dist' directory.\n" +
         "  Run `electron-builder migrate-schema` to move it automatically.\n" +
-        "  https://www.electron.build/docs/migration/v27-breaking-changes#root-level-directories-in-packagejson"
+        "  https://www.electron.build/docs/migration/v27-config-changes#root-level-directories-in-packagejson"
     )
   }
 

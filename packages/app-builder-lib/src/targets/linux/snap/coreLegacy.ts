@@ -1,7 +1,19 @@
-import { replaceDefault as _replaceDefault, Arch, copyDir, exec, InvalidConfigurationError, log, serializeToYaml, toLinuxArchString, validateShellEmbeddable } from "builder-util"
+import {
+  replaceDefault as _replaceDefault,
+  Arch,
+  copyDir,
+  exec,
+  Executables,
+  InvalidConfigurationError,
+  log,
+  serializeToYaml,
+  stripSensitiveEnvVars,
+  toLinuxArchString,
+  validateShellEmbeddable,
+} from "builder-util"
 import { asArray, deepAssign, isValidKey, Nullish } from "builder-util-runtime"
 import _fsExtra from "fs-extra"
-import { chmod, copyFile, mkdir, readdir, rename, writeFile } from "fs/promises"
+import { chmod, copyFile, lstat, mkdir, readdir, rename, writeFile } from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
 import { ToolsetConfig } from "../../../configuration.js"
@@ -297,9 +309,9 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
 
     await this.stageSnapFiles({ stageDir, appOutDir, hooksDir, extraAppArgs, isTemplate: true })
 
-    // chmod -R g-s to avoid setgid bits in final image
+    // no setgid bits in the final image (chmod -R g-s)
     for (const dir of [stageDir, appOutDir, templateDir]) {
-      await exec("chmod", ["-R", "g-s", dir]).catch(err => log.warn({ error: err.message }, "chmod g-s failed"))
+      await clearSetgidBits(dir).catch(err => log.warn({ error: err.message }, "chmod g-s failed"))
     }
 
     const { mksquashfs } = await getAppImageTools(appimageToolset, snapArch, this.packager.buildResourcesDir)
@@ -350,9 +362,10 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
       snapArgs.push("--destructive-mode")
     }
 
-    await exec("snapcraft", snapArgs, {
+    // a local build: snapcraft needs no credentials
+    await exec(Executables.resolve("snapcraft"), snapArgs, {
       cwd: stageDir,
-      env: { ...process.env, SNAPCRAFT_HAS_TTY: "false" },
+      env: { ...stripSensitiveEnvVars(process.env), SNAPCRAFT_HAS_TTY: "false" },
     })
 
     if (!isDestructiveMode) {
@@ -432,6 +445,22 @@ export class SnapCoreLegacy extends SnapCore<SnapOptionsLegacy & { base: "core18
 
       default:
         throw new Error(`Unsupported arch ${arch}`)
+    }
+  }
+}
+
+/** Clears the setgid bit of a directory and of everything in it, like `chmod -R g-s`: symlinks are not followed. */
+async function clearSetgidBits(file: string): Promise<void> {
+  const stat = await lstat(file)
+  if (stat.isSymbolicLink()) {
+    return
+  }
+  if ((stat.mode & 0o2000) !== 0) {
+    await chmod(file, stat.mode & 0o7777 & ~0o2000)
+  }
+  if (stat.isDirectory()) {
+    for (const name of await readdir(file)) {
+      await clearSetgidBits(path.join(file, name))
     }
   }
 }

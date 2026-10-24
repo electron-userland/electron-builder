@@ -67,7 +67,12 @@ export const NSIS_CONFIG_KEYS = ["nsis", "nsisWeb", "portable"] as const
 /** Every platform key that accepted the shared per-platform options in v26. */
 export const ALL_PLATFORM_KEYS = ["mac", "mas", "masDev", "win", "linux"] as const
 
+/** Overview of the v27 breaking changes. Each change is documented on one of the category pages below. */
 export const BREAKING_CHANGES_URL = "https://www.electron.build/docs/migration/v27-breaking-changes"
+export const CONFIG_CHANGES_URL = "https://www.electron.build/docs/migration/v27-config-changes"
+export const BUILD_CHANGES_URL = "https://www.electron.build/docs/migration/v27-build-changes"
+export const RUNTIME_CHANGES_URL = "https://www.electron.build/docs/migration/v27-runtime-changes"
+export const DEVELOPER_CHANGES_URL = "https://www.electron.build/docs/migration/v27-developer-changes"
 
 /**
  * File-copy options nested under `fileOptions`, at the configuration root and on every platform key
@@ -79,7 +84,7 @@ export const BREAKING_CHANGES_URL = "https://www.electron.build/docs/migration/v
  */
 export const FILE_OPTION_KEYS = ["files", "extraResources", "extraFiles"] as const
 
-/** Anchor of the `fileOptions` entry within the breaking-changes page. */
+/** Anchor of the `fileOptions` entry within the config-changes page. */
 export const FILE_OPTIONS_ANCHOR = "file-options-fileoptions"
 
 export interface LegacyConfigOption {
@@ -99,8 +104,10 @@ export interface LegacyConfigOption {
   readonly severity: "error" | "warn"
   /** Extra sentence appended to the message — inverted polarity, lost behaviour, etc. */
   readonly detail?: string
-  /** Anchor within the breaking-changes page. */
+  /** Anchor within the config-changes page, or within `docsUrl` when set. */
   readonly anchor: string
+  /** Page holding `anchor` when it is not the config-changes page. */
+  readonly docsUrl?: string
 }
 
 const MAC_SIGN_ANCHOR = "macos-signing-macsign"
@@ -392,6 +399,7 @@ export const LEGACY_CONFIG_OPTIONS: readonly LegacyConfigOption[] = [
     severity: "error",
     detail: "Put build configuration at the configuration root instead.",
     anchor: "devmetadata-extrametadata-programmatic-packageroptions",
+    docsUrl: DEVELOPER_CHANGES_URL,
   },
 
   // ── macOS signing: one entry per moved field, per platform key ────────────
@@ -477,6 +485,6 @@ export function formatLegacyOptionMessage(option: ResolvedLegacyConfigOption): s
   if (option.autoMigrated) {
     lines.push("  Run `electron-builder migrate-schema` to update your configuration automatically.")
   }
-  lines.push(`  ${BREAKING_CHANGES_URL}#${option.anchor}`)
+  lines.push(`  ${option.docsUrl ?? CONFIG_CHANGES_URL}#${option.anchor}`)
   return lines.join("\n")
 }

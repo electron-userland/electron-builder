@@ -1,6 +1,6 @@
 import { DmgOptions, MacPackager, Target } from "app-builder-lib"
 import { createBlockmap, findIdentity, isSignAllowed } from "app-builder-lib/internal"
-import { Arch, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
+import { Arch, exec, Executables, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import { release as getOsRelease } from "os"
 import * as path from "path"
@@ -143,7 +143,8 @@ export class DmgTarget extends Target {
       args.push("--keychain", keychainFile)
     }
     args.push(artifactPath)
-    await exec("codesign", args)
+    // by absolute path, the program the keychain lets use the signing key (security import -T /usr/bin/codesign)
+    await exec(Executables.resolve("codesign"), args)
   }
 
   computeVolumeName(arch: Arch, custom?: string | null): string {

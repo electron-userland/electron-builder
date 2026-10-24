@@ -6,9 +6,10 @@ vi.mock("builder-util", async () => {
   const actual = await vi.importActual<typeof import("builder-util")>("builder-util")
   return { ...actual, exec: vi.fn() }
 })
+const TOOLS_DIR = "/opt/flatpak/bin"
 
 import { buildFlatpakBundle, FlatpakBuilderManifest, FlatpakBundleOptions } from "app-builder-lib/src/targets/linux/flatpakBundle"
-import { exec, ExecError, InvalidConfigurationError, log } from "builder-util"
+import { exec, ExecError, Executables, InvalidConfigurationError, log } from "builder-util"
 import { existsSync } from "fs"
 import { chmod, mkdir, readdir, readFile, readlink, realpath, stat, symlink, writeFile } from "fs/promises"
 import * as path from "path"
@@ -16,7 +17,7 @@ import { TmpDir } from "temp-file"
 
 const DOCS = "https://www.electron.build/docs/flatpak#building-in-unprivileged-containers"
 // the version check and the app-prefix check are new in v27, so their messages say so and link to the migration guide
-const NEW_IN_V27 = "This is new in electron-builder v27. See https://www.electron.build/docs/migration/v27-breaking-changes#flatpak-tooling-requirements"
+const NEW_IN_V27 = "This is new in electron-builder v27. See https://www.electron.build/docs/migration/v27-build-changes#flatpak-tooling-requirements"
 
 const manifest: FlatpakBuilderManifest = {
   id: "com.example.App",
@@ -37,6 +38,15 @@ type Command = [file: string, ...args: string[]]
 
 /** What the tools print for --version, in the two formats that are in use ("flatpak-builder 1.2.3" is the third). */
 const VERSION_OUTPUT: Record<string, string> = { flatpak: "Flatpak 1.16.6\n", "flatpak-builder": "flatpak-builder-1.4.4\n" }
+
+// flatpak and flatpak-builder are started by absolute path, which the resolver would look for on this machine's disk
+beforeEach(() => {
+  vi.spyOn(Executables, "resolve").mockImplementation(name => `${TOOLS_DIR}/${name}`)
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 async function setup(tmpDir: TmpDir, overrides: Partial<FlatpakBundleOptions> = {}) {
   const tempDir = await tmpDir.createTempDir({ prefix: "flatpak" })
@@ -68,7 +78,9 @@ function execError(file: string, args: string[], output: string): ExecError {
  * the app prefix, as the real one does.
  */
 function mockTools(installedIn: Array<"--user" | "--system">, run: (file: string, args: string[]) => void | Promise<void> = () => {}, versionOutput = VERSION_OUTPUT) {
-  vi.mocked(exec).mockImplementation(async (file, args) => {
+  vi.mocked(exec).mockImplementation(async (path_, args) => {
+    // the tools are started by absolute path; the stand-ins below go by name
+    const file = path.basename(path_)
     const argv = args ?? []
     await run(file, argv)
     // the app directory is the second to last argument
@@ -107,8 +119,10 @@ async function rejection(promise: Promise<unknown>): Promise<unknown> {
 
 /** Every command in the order it was started, after checking the directory and the environment that each one ran with. */
 function commands(expect: ExpectStatic, options: FlatpakBundleOptions): Command[] {
-  return vi.mocked(exec).mock.calls.map(([file, args, execOptions]) => {
-    const command: Command = [file, ...(args ?? [])]
+  return vi.mocked(exec).mock.calls.map(([toolPath, args, execOptions]) => {
+    // never looked up on PATH
+    expect(path.dirname(toolPath)).toBe(TOOLS_DIR)
+    const command: Command = [path.basename(toolPath), ...(args ?? [])]
     // with modules, the two runs of flatpak-builder download their sources, which can take credentials from the environment.
     // Every other command, and flatpak-builder without modules, gets the filtered environment that exec defaults to
     const isBuilderRun = command.includes("--build-only") || command.includes("--finish-only")

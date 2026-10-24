@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, vi } from "vitest"
 // is false - which writes the explicit `verifyUpdateCodeSignature: false` marker instead. These drive PublishManager's afterPack handler
 // with the real sign managers on a stub Windows packager, so no Electron download or signing tool is needed.
 
-const MISSING_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#missing-publishername-fails-update-verification"
+const MISSING_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification"
 
 beforeEach(() => {
   vi.stubEnv("PUBLISH_FOR_PULL_REQUEST", "true")

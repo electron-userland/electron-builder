@@ -1,17 +1,7 @@
 import { ElectronHttpExecutor } from "electron-updater/src/electronHttpExecutor"
 import { EventEmitter } from "events"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
-
-// Stands in for Electron's net ClientRequest: like the real one it never emits "socket", and with autoDestroy it emits "close"
-// as soon as the request body is sent, long before the response.
-class FakeNetRequest extends EventEmitter {
-  aborted = false
-
-  abort(): void {
-    this.aborted = true
-    this.emit("abort")
-  }
-}
+import { FakeNetRequest } from "../helpers/updaterTestUtil.js"
 
 const TIMEOUT = 1000
 

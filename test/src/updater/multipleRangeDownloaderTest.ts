@@ -20,6 +20,7 @@ function createFakeDifferentialDownloader(response: PassThrough): DifferentialDo
     httpExecutor: {
       createRequest,
       addErrorAndTimeoutHandlers: () => {},
+      addRedirectHandlers: () => {},
     },
   } as unknown as DifferentialDownloader
 }

@@ -504,7 +504,7 @@ test("missing publisherName rejects the downloaded update", config, async ({ exp
 
     await expect(updateCheckResult?.downloadPromise).rejects.toMatchObject({
       code: "ERR_UPDATER_INVALID_SIGNATURE",
-      message: expect.stringContaining("v27-breaking-changes#missing-publishername-fails-update-verification"),
+      message: expect.stringContaining("v27-build-changes#missing-publishername-fails-update-verification"),
     })
     expect(verifier).not.toHaveBeenCalled()
     expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])

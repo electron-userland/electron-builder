@@ -1,4 +1,4 @@
-import { exec, ExtraSpawnOptions } from "builder-util"
+import { exec, ExtraSpawnOptions, stripSensitiveEnvVars } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { ExecFileOptions, SpawnOptions } from "child_process"
 import * as path from "path"
@@ -43,8 +43,8 @@ export class WineVmManager extends VmManager {
       return exec(target, appArgs, options)
     }
     const { execPath: wineExe, env: wineEnv } = await getWineToolset(toolset, this.buildResourcesDir)
-    // Preserve the base process environment (PATH, HOME, TMPDIR, etc.) so Wine and child
-    // tools start correctly. Wine env vars override the base; caller options.env wins last.
-    return exec(wineExe, [target, ...appArgs], { ...options, env: { ...process.env, ...wineEnv, ...options.env } })
+    // Preserve the base process environment (PATH, HOME, TMPDIR, etc.) so Wine and child tools start correctly, without credentials:
+    // a caller passes those it needs. Wine env vars override the base; caller options.env wins last.
+    return exec(wineExe, [target, ...appArgs], { ...options, env: { ...stripSensitiveEnvVars(process.env), ...wineEnv, ...options.env } })
   }
 }

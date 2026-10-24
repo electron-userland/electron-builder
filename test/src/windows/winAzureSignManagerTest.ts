@@ -69,7 +69,7 @@ describe("WindowsSignAzureManager.computedPublisherName", () => {
   test.for(["ACME Corp", "CN="])("throws synchronously when publisherName %j is not a DN (electron-builder v27)", (publisherName, { expect }) => {
     const manager = new WindowsSignAzureManager(makePackager({ ...baseAzureOpts, publisherName }))
     expect(() => manager.computedPublisherName.value).toThrow(/is not a distinguished name\. Since electron-builder v27/)
-    expect(() => manager.computedPublisherName.value).toThrow(/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name$/)
+    expect(() => manager.computedPublisherName.value).toThrow(/v27-build-changes#windows-publishername-must-be-a-distinguished-name$/)
   })
 
   test("throws synchronously when publisherName is empty", ({ expect }) => {
@@ -103,6 +103,21 @@ describe("WindowsSignAzureManager.signFile", { concurrent: false }, () => {
     const bareNameManager = new WindowsSignAzureManager(makePackager({ ...baseAzureOpts, publisherName: "Test Publisher" }, makeVm(execSpy)))
     await expect(bareNameManager.signFile(signOptions)).rejects.toThrow(/Since electron-builder v27/)
     expect(execSpy).not.toHaveBeenCalled()
+  })
+
+  test("passes the AZURE_* credential variables explicitly, since a child process gets no credentials otherwise", async ({ expect }) => {
+    vi.stubEnv("AZURE_CLIENT_SECRET", "azure-secret")
+    vi.stubEnv("AZURE_TENANT_ID", "tenant")
+    vi.stubEnv("GH_TOKEN", "github-token")
+    try {
+      await manager.signFile(signOptions)
+    } finally {
+      vi.unstubAllEnvs()
+    }
+    const env = (execSpy.mock.calls[0][2] as { env: Record<string, string> }).env
+    expect(env.AZURE_CLIENT_SECRET).toBe("azure-secret")
+    expect(env.AZURE_TENANT_ID).toBe("tenant")
+    expect(env).not.toHaveProperty("GH_TOKEN")
   })
 
   test("invokes PowerShell via -EncodedCommand flag", async ({ expect }) => {

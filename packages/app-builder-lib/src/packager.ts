@@ -3,6 +3,7 @@ import {
   archFromString,
   AsyncTaskManager,
   DebugLogger,
+  Executables,
   executeFinally,
   getArtifactArchName,
   InvalidConfigurationError,
@@ -84,7 +85,7 @@ function checkRemovedPackagerOptions(options: PackagerOptions): void {
       throw new InvalidConfigurationError(
         `\`${key}\` was removed from PackagerOptions in electron-builder v27. Pass \`${replacement}\` instead, ` +
           `e.g. build({ targets, config: ${key === "devMetadata" ? "{ … }" : "{ extraMetadata: { … } }"} }).\n` +
-          "https://www.electron.build/docs/migration/v27-breaking-changes#devmetadata-extrametadata-programmatic-packageroptions"
+          "https://www.electron.build/docs/migration/v27-developer-changes#devmetadata-extrametadata-programmatic-packageroptions"
       )
     }
   }
@@ -432,6 +433,12 @@ export class Packager {
 
     await this.validateConfig()
 
+    // every host program the build starts, also in its asynchronous work, comes from this build's toolsets.executables (or the
+    // default install locations), whatever other builds in this process configure
+    return await Executables.run(this.config.toolsets?.executables, () => this.buildWithValidatedConfig(repositoryInfo))
+  }
+
+  private async buildWithValidatedConfig(repositoryInfo: SourceRepositoryInfo | undefined): Promise<BuildResult> {
     if (repositoryInfo != null) {
       this._repositoryInfo.value = Promise.resolve(repositoryInfo)
     }

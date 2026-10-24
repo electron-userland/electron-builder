@@ -1372,6 +1372,319 @@
       },
       "type": "object"
     },
+    "ExecutablesConfig": {
+      "additionalProperties": false,
+      "description": "The locations of host programs, by {@link ExecutableName}. An unset or `null` entry uses the built-in default locations.",
+      "properties": {
+        "actool": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `actool` executable on the build machine, such as `file:///opt/homebrew/bin/actool` or `file:///C:/Program%20Files/actool/actool.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "codesign": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `codesign` executable on the build machine, such as `file:///opt/homebrew/bin/codesign` or `file:///C:/Program%20Files/codesign/codesign.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "flatpak": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `flatpak` executable on the build machine, such as `file:///opt/homebrew/bin/flatpak` or `file:///C:/Program%20Files/flatpak/flatpak.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "flatpak-builder": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `flatpak-builder` executable on the build machine, such as `file:///opt/homebrew/bin/flatpak-builder` or `file:///C:/Program%20Files/flatpak-builder/flatpak-builder.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "hdiutil": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `hdiutil` executable on the build machine, such as `file:///opt/homebrew/bin/hdiutil` or `file:///C:/Program%20Files/hdiutil/hdiutil.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "lzip": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `lzip` executable on the build machine, such as `file:///opt/homebrew/bin/lzip` or `file:///C:/Program%20Files/lzip/lzip.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "mono": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `mono` executable on the build machine, such as `file:///opt/homebrew/bin/mono` or `file:///C:/Program%20Files/mono/mono.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "notarytool": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `notarytool` executable on the build machine, such as `file:///opt/homebrew/bin/notarytool` or `file:///C:/Program%20Files/notarytool/notarytool.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "pkgbuild": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `pkgbuild` executable on the build machine, such as `file:///opt/homebrew/bin/pkgbuild` or `file:///C:/Program%20Files/pkgbuild/pkgbuild.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "powershell": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `powershell` executable on the build machine, such as `file:///opt/homebrew/bin/powershell` or `file:///C:/Program%20Files/powershell/powershell.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "prlctl": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `prlctl` executable on the build machine, such as `file:///opt/homebrew/bin/prlctl` or `file:///C:/Program%20Files/prlctl/prlctl.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "productbuild": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `productbuild` executable on the build machine, such as `file:///opt/homebrew/bin/productbuild` or `file:///C:/Program%20Files/productbuild/productbuild.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "pwsh": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `pwsh` executable on the build machine, such as `file:///opt/homebrew/bin/pwsh` or `file:///C:/Program%20Files/pwsh/pwsh.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "sips": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `sips` executable on the build machine, such as `file:///opt/homebrew/bin/sips` or `file:///C:/Program%20Files/sips/sips.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "snapcraft": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `snapcraft` executable on the build machine, such as `file:///opt/homebrew/bin/snapcraft` or `file:///C:/Program%20Files/snapcraft/snapcraft.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "tiffutil": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `tiffutil` executable on the build machine, such as `file:///opt/homebrew/bin/tiffutil` or `file:///C:/Program%20Files/tiffutil/tiffutil.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "wine": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `wine` executable on the build machine, such as `file:///opt/homebrew/bin/wine` or `file:///C:/Program%20Files/wine/wine.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "zip": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `zip` executable on the build machine, such as `file:///opt/homebrew/bin/zip` or `file:///C:/Program%20Files/zip/zip.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        }
+      },
+      "type": "object"
+    },
     "FileAssociation": {
       "additionalProperties": false,
       "description": "File associations.\n\nmacOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)), NSIS, and MSI only.\n\nOn Windows (NSIS) works only if [nsis.perMachine](https://www.electron.build/nsis) is set to `true`.",
@@ -1468,7 +1781,7 @@
     },
     "FilesBuildOptions": {
       "additionalProperties": false,
-      "description": "Which files are copied into the packaged app, which file extensions are excluded from it, and which symlinks among them may lead outside it,\nset under `fileOptions` at the configuration root or per platform (e.g. `mac.fileOptions`). A platform's file lists are added to the root\nones; a platform's `excludedExts` and `allowExternalLinks` replace the root ones.\nSee [file options](https://www.electron.build/docs/migration/v27-breaking-changes#file-options-fileoptions).",
+      "description": "Which files are copied into the packaged app, which file extensions are excluded from it, and which symlinks among them may lead outside it,\nset under `fileOptions` at the configuration root or per platform (e.g. `mac.fileOptions`). A platform's file lists are added to the root\nones; a platform's `excludedExts` and `allowExternalLinks` replace the root ones.\nSee [file options](https://www.electron.build/docs/migration/v27-config-changes#file-options-fileoptions).",
       "properties": {
         "allowExternalLinks": {
           "anyOf": [
@@ -8570,6 +8883,18 @@
           "default": "latest",
           "description": "Version of the AppImage toolset bundle used for building `.AppImage` files.\n\nThe bundle ships:\n- **`mksquashfs`** — creates the SquashFS filesystem embedded in the AppImage. It also packs legacy-base (core18/core20/core22) snaps built from the snap template app.\n- **`desktop-file-validate`** — validates the generated `.desktop` entry.\n- **AppImage runtime** — the self-executing stub that mounts the SquashFS at launch.\n\nAvailable versions:\n| Version | Runtime date | Notes |\n|---------|-------------|-------|\n| `\"0.0.0\"` | Legacy | FUSE2-based AppImage runtime (pre-v27) |\n| `\"1.0.3\"` | 20251108 | Introduces static AppImage runtime |\n| `\"1.1.0\"` | 20251108 | Adds `unsquashfs` support |\n\nAn explicit version pin always selects exactly that release.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/appimage/CHANGELOG.md"
         },
+        "executables": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ExecutablesConfig",
+              "description": "The locations of host programs, by {@link ExecutableName}. An unset or `null` entry uses the built-in default locations."
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Where the host programs that electron-builder starts are installed on the build machine, by program name.\n\nelectron-builder starts these programs only from an absolute path, never by looking up a name on `PATH`. For each one it\nuses the first location that is an executable file: from this entry when it is set, otherwise from a built-in list of\ndefault install locations for the host operating system (see https://www.electron.build/docs/toolsets#executables).\nAn entry replaces the default list for that program; it is not merged with it."
+        },
         "fpm": {
           "anyOf": [
             {
@@ -8707,7 +9032,7 @@
             }
           ],
           "default": "latest",
-          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n| `\"system\"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |\n\n`\"system\"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and\nis what `\"latest\"` (the default) currently resolves to on every platform: the published `\"1.0.1\"`\nbundles ship no PE builtins, so a host Wine installation is required to build Windows targets on\nmacOS or Linux.\n\nTo use a custom Wine binary, use a `ToolsetCustom` object.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
+          "description": "Version of the Wine bundle used to run Windows tools (NSIS, rcedit, signtool) on\nnon-Windows hosts (macOS and Linux).\n\nWine is only required when building Windows targets on a non-Windows machine. On Windows,\nthis setting has no effect.\n\nAvailable versions:\n| Version | Wine version | Platform support | Notes |\n|---------|-------------|-----------------|-------|\n| `\"0.0.0\"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |\n| `\"1.0.1\"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |\n| `\"system\"` | host install | macOS, Linux | Uses the host Wine at a fixed install location instead of a bundle |\n\n`\"system\"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and\nis what `\"latest\"` (the default) currently resolves to on every platform: the published `\"1.0.1\"`\nbundles ship no PE builtins, so a host Wine installation is required to build Windows targets on\nmacOS or Linux.\n\nThe host Wine (`\"system\"`) is started by absolute path, never looked up on `PATH`: it is the `wine` entry of\n{@link executables}, which lists its default install locations and is where a Wine installed elsewhere is set.\nSetting both a bundle that would be used (a `ToolsetCustom` object, or a version on macOS; on Linux a version selects no\nbundle) and `executables.wine` is a configuration error.\n\nTo use a custom Wine bundle, use a `ToolsetCustom` object.\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md"
         }
       },
       "type": "object"
@@ -8825,7 +9150,7 @@
           "type": "string"
         },
         "publisherName": {
-          "description": "The publisher name to associate with the signature: a Distinguished Name (DN) of the subject of\nthe certificate issued by your Trusted Signing certificate profile (e.g.\n`CN=My Company, O=My Company, C=US`). Required. Used for\n[update verification](#verifyUpdateCodeSignature) (embedded in `app-update.yml` and checked by\nelectron-updater) and must match the certificate subject. A bare name fails the build since\nv27 — see\n[the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).",
+          "description": "The publisher name to associate with the signature: a Distinguished Name (DN) of the subject of\nthe certificate issued by your Trusted Signing certificate profile (e.g.\n`CN=My Company, O=My Company, C=US`). Required. Used for\n[update verification](#verifyUpdateCodeSignature) (embedded in `app-update.yml` and checked by\nelectron-updater) and must match the certificate subject. A bare name fails the build since\nv27 — see\n[the migration guide](https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name).",
           "type": "string"
         },
         "timestampDigest": {
@@ -9232,7 +9557,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
+          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9337,7 +9662,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
+          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9455,7 +9780,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
+          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",

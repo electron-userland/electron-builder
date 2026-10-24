@@ -1,4 +1,5 @@
 import { InvalidConfigurationError, isEnvTrue } from "builder-util"
+import { removedEnvVarDocsUrl } from "./removedEnvVars.js"
 
 // ─── Code signing ─────────────────────────────────────────────────────────────
 
@@ -103,7 +104,7 @@ const REMOVED_ENV_VARS: Record<string, RemovedEnvVar> = {
   },
   USE_SYSTEM_WINE: {
     controlled: "forcing the host-installed Wine instead of the downloaded bundle",
-    replacement: 'toolsets.wine: "system" (the host `wine` on PATH is already the default on macOS and Linux, so you can simply drop this variable)',
+    replacement: 'toolsets.wine: "system" (the host `wine` is already the default on macOS and Linux, so you can simply drop this variable)',
   },
   USE_SYSTEM_SIGNCODE: {
     controlled: "forcing the host signtool/signcode instead of the bundled winCodeSign toolset",
@@ -161,14 +162,7 @@ export function checkRemovedEnvVars(env: NodeJS.ProcessEnv = process.env): strin
     const { controlled, replacement } = REMOVED_ENV_VARS[name]
     return `• ${name} controlled ${controlled}.\n  Use ${replacement} instead.`
   })
-  return [
-    header,
-    "",
-    ...entries,
-    "",
-    "Unset the variable once you have moved the setting into your configuration.",
-    "https://www.electron.build/docs/migration/v27-breaking-changes#toolset-env-var-overrides-removed",
-  ].join("\n")
+  return [header, "", ...entries, "", "Unset the variable once you have moved the setting into your configuration.", ...new Set(found.map(removedEnvVarDocsUrl))].join("\n")
 }
 
 /**
