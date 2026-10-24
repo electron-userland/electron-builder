@@ -5,34 +5,21 @@ import * as path from "path"
 // System tools are started by absolute path, never by a bare name: a bare name is resolved through PATH (on Windows also the
 // current directory), where package managers prepend directories such as node_modules/.bin that a dependency can write to.
 
-// An environment variable that names a Windows directory, accepted only as a drive-absolute path: a relative, drive-relative
-// ("\Windows") or UNC value would be resolved against the current directory or drive, or reach out to another host.
-function windowsDirectoryFromEnv(names: ReadonlyArray<string>): { dir: string } | { error: string } {
-  const name = names.find(it => process.env[it])
-  // process.env is case-insensitive on Windows
-  const value = name == null ? undefined : process.env[name]
-  if (value == null) {
-    return { error: `${names[0]} is not set` }
-  }
-  if (!/^[a-zA-Z]:[\\/]/.test(value)) {
-    return { error: `${names[0]} is not an absolute path (${value})` }
-  }
-  return { dir: value }
-}
-
-/** The in-box Windows PowerShell 5.1 of this machine: `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`. */
-export function windowsPowerShellPath(): string {
-  const systemRoot = windowsDirectoryFromEnv(["SystemRoot", "windir"])
-  if ("error" in systemRoot) {
-    throw new Error(`cannot locate Windows PowerShell: ${systemRoot.error}`)
-  }
-  return path.win32.join(systemRoot.dir, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
-}
+// Windows PowerShell by absolute path, from %SystemRoot% (shared with electron-updater's signature verification)
+export { windowsPowerShellPath } from "builder-util-runtime"
 
 /** PowerShell 7 of this machine at the install location of its MSI installer, `%ProgramFiles%\PowerShell\7\pwsh.exe`, or the reason it has no such location. */
 export function windowsPwshPath(): { path: string } | { error: string } {
-  const programFiles = windowsDirectoryFromEnv(["ProgramFiles"])
-  return "error" in programFiles ? programFiles : { path: path.win32.join(programFiles.dir, "PowerShell", "7", "pwsh.exe") }
+  // process.env is case-insensitive on Windows. A relative, drive-relative ("\Program Files") or UNC value would be resolved
+  // against the current directory or drive, or reach out to another host, so only a drive-absolute path is accepted.
+  const programFiles = process.env.ProgramFiles
+  if (!programFiles) {
+    return { error: "ProgramFiles is not set" }
+  }
+  if (!/^[a-zA-Z]:[\\/]/.test(programFiles)) {
+    return { error: `ProgramFiles is not an absolute path (${programFiles})` }
+  }
+  return { path: path.win32.join(programFiles, "PowerShell", "7", "pwsh.exe") }
 }
 
 /** The same executables inside a Parallels Windows guest, at the locations of a default Windows installation. */

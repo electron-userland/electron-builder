@@ -75,7 +75,8 @@ describe("windowsPowerShellPath", () => {
   })
 
   test("refuses a SystemRoot that is missing, relative, drive-relative or UNC", ({ expect }) => {
-    vi.stubEnv("SystemRoot", "")
+    vi.stubEnv("SystemRoot", undefined)
+    vi.stubEnv("windir", undefined)
     expect(() => windowsPowerShellPath()).toThrow("cannot locate Windows PowerShell: SystemRoot is not set")
     for (const value of NOT_ABSOLUTE) {
       vi.stubEnv("SystemRoot", value)
