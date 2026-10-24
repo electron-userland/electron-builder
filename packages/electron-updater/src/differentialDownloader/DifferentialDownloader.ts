@@ -6,7 +6,7 @@ import { createWriteStream, WriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { ProgressInfo, CancellationError, CancellationToken } from "builder-util-runtime"
 import { Logger } from "../types.js"
-import { nonThrowingLogger } from "../util.js"
+import { nonThrowingLogger, throwIfCancelled } from "../util.js"
 import { copyData, stopCopies } from "./DataSplitter.js"
 import { URL } from "url"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder.js"
@@ -25,21 +25,6 @@ export interface DifferentialDownloaderOptions {
 
   readonly cancellationToken: CancellationToken
   onProgress?: (progress: ProgressInfo) => void
-}
-
-/**
- * A differential download that failed because the user cancelled it must surface as a cancellation, not fall back to a
- * full download: rethrows a {@link CancellationError}, or throws one when the token was cancelled and the failure is a
- * side effect of that (e.g. an aborted request). Returns normally for any other failure.
- * @internal
- */
-export function throwIfCancelled(error: unknown, cancellationToken: CancellationToken): void {
-  if (error instanceof CancellationError) {
-    throw error
-  }
-  if (cancellationToken.cancelled) {
-    throw new CancellationError()
-  }
 }
 
 // the part of a Node.js or Electron `ClientRequest` used to abort it on cancellation

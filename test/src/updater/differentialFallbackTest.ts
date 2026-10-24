@@ -1,6 +1,6 @@
 import { serializeToYaml } from "builder-util"
 import { CancellationToken, CURRENT_APP_INSTALLER_FILE_NAME, DownloadOptions, HttpExecutor } from "builder-util-runtime"
-import { NsisUpdater } from "electron-updater"
+import { AppImageUpdater, BaseUpdater, NsisUpdater } from "electron-updater"
 import { DownloadedUpdateHelper } from "electron-updater/src/DownloadedUpdateHelper"
 import { createHash } from "crypto"
 import fs from "fs"
@@ -13,8 +13,10 @@ import { gzipSync } from "zlib"
 import { TestAppAdapter } from "../helpers/TestAppAdapter.js"
 
 // Every way the differential download can fail must end in a full download whose sha512 is verified — never in a failed
-// update, a hang, or an unverified file. These tests drive a real NsisUpdater (production fallback path, i.e. without
-// `_testOnlyOptions`, which turns the fallback into a rethrow) against a local server that injects one failure at a time.
+// update, a hang, or an unverified file. Two things are not failures and must not fall back: a cancel ends the download
+// with update-cancelled, and a download-progress listener that throws is only logged. These tests drive a real NsisUpdater
+// (production fallback path, i.e. without `_testOnlyOptions`, which turns the fallback into a rethrow) against a local
+// server that injects one failure at a time.
 
 // Plain node:http (no proxy agent), with a `download` like ElectronHttpExecutor's: the real configurePipes, so the full
 // download is checked against the sha512 from the update manifest.
@@ -92,7 +94,7 @@ function multipart(ranges: Array<[number, number]>, boundary = "test-boundary", 
   return Buffer.concat([...parts, Buffer.from(`\r\n--${bodyBoundary}--\r\n`)])
 }
 
-describe("every differential download failure falls back to a verified full download", { concurrent: false }, () => {
+describe("differential download failures fall back to a verified full download, a cancel or a throwing listener does not", { concurrent: false }, () => {
   let server: Server | null = null
   let requests: Array<Req> = []
 
@@ -147,11 +149,14 @@ describe("every differential download failure falls back to a verified full down
     cacheOldBlockMap?: Buffer | null
     socketTimeout?: number
     onProgress?: () => void
+    // an AppImageUpdater instead of an NsisUpdater
+    appImage?: boolean
   }
 
   async function createUpdater(tmpDir: any, feedUrl: string, setup: Setup = {}) {
     const root = await tmpDir.getTempDir({ prefix: "diff-fallback" })
-    const updater = new NsisUpdater(null, new TestAppAdapter(OLD_VERSION, root))
+    const appAdapter = new TestAppAdapter(OLD_VERSION, root)
+    const updater: BaseUpdater = setup.appImage === true ? new AppImageUpdater(null, appAdapter) : new NsisUpdater(null, appAdapter)
     const executor = new LocalHttpExecutor()
     executor.socketTimeout = setup.socketTimeout ?? null
     ;(updater as any).httpExecutor = executor
@@ -510,17 +515,17 @@ describe("every differential download failure falls back to a verified full down
       ))
   })
 
-  // f. cache problems
-  describe("f. cache", () => {
+  // e. cache problems
+  describe("e. cache", () => {
     test("cached old installer missing", ({ tmpDir }) => expectFallback(tmpDir, () => false, { cacheOldInstaller: null }, false))
     test("cached old installer out of sync with the old blockmap", ({ tmpDir }) =>
       expectFallback(tmpDir, () => false, { cacheOldInstaller: Buffer.concat([blocks.Y, blocks.Y, blocks.Y, blocks.Y]) }))
     test("cached old installer shorter than the blockmap says", ({ tmpDir }) => expectFallback(tmpDir, () => false, { cacheOldInstaller: blocks.A }))
   })
 
-  // h. synchronous throws in callbacks: an app's download-progress listener that throws runs inside a stream callback or a
+  // f. synchronous throws in callbacks: an app's download-progress listener that throws runs inside a stream callback or a
   // response handler; it must neither escape as an uncaught exception nor break the download
-  describe("h. synchronous throws", () => {
+  describe("f. synchronous throws", () => {
     // the multi-range splitter only reports progress once time has passed since the response started, so send the
     // multipart body in two halves
     const slowMultipart: Override = (req, res, ranges) => {
@@ -561,6 +566,28 @@ describe("every differential download failure falls back to a verified full down
         expect(logs.filter(it => it.includes('"download-progress" listener threw'))).toHaveLength(1)
       }, 15000)
     }
+
+    test("a throwing download-progress listener does not keep progress from the listeners after it", async ({ tmpDir }) => {
+      const url = await startServer()
+      const { updater, logs } = await createUpdater(tmpDir, url, {
+        multiRange: false,
+        onProgress: () => {
+          throw new Error("listener bug")
+        },
+      })
+      let calls = 0
+      updater.on("download-progress", () => calls++)
+      let onceCalls = 0
+      updater.once("download-progress", () => onceCalls++)
+      await updater.checkForUpdates()
+      const { updateFile } = await updater.downloadUpdate()
+      expect((await fsExtra.readFile(updateFile)).equals(NEW)).toBe(true)
+      expect(calls).toBeGreaterThan(0)
+      // a `once` listener still runs once and removes itself
+      expect(onceCalls).toBe(1)
+      expect(updater.listenerCount("download-progress")).toBe(2)
+      expect(logs.filter(it => it.includes('"download-progress" listener threw'))).toHaveLength(1)
+    })
   })
 
   // g. cancellation: must NOT fall back to a full download, and must not hang
@@ -657,6 +684,61 @@ describe("every differential download failure falls back to a verified full down
       // the differential download unsubscribes from the token once settled
       expect(token.listenerCount("cancel")).toBe(0)
     }, 15000)
+
+    // The NSIS web package and the AppImage carry their blockmap at the end of the file, and their differential download first
+    // reads it with a range request: a cancel while that request is stalled must not fall back to a full download either.
+    for (const target of ["NSIS web package", "AppImage"] as const) {
+      test(`cancel while the embedded blockmap request is stalled is a cancellation, not a fallback (${target})`, async ({ tmpDir }) => {
+        const file = target === "AppImage" ? `/TestApp-${NEW_VERSION}.AppImage` : `/TestApp-${NEW_VERSION}.nsis.7z`
+        let onStalled: () => void = () => {}
+        const stalled = new Promise<void>(resolve => (onStalled = resolve))
+        let onRequestClosed: () => void = () => {}
+        const requestClosed = new Promise<string>(resolve => (onRequestClosed = () => resolve("closed")))
+        const url = await startServer((req, res, ranges) => {
+          if (req.url !== file || ranges == null) {
+            return false
+          }
+          const [start, end] = ranges[0]
+          res.writeHead(206, { "Content-Range": `bytes ${start}-${end}/${NEW.length}`, "Content-Length": end - start + 1 })
+          // headers only, then nothing: a stalled connection
+          res.flushHeaders()
+          res.on("close", onRequestClosed)
+          setTimeout(onStalled, 100)
+          return true
+        })
+        const { updater, logs, cacheDir } = await createUpdater(tmpDir, url, { appImage: target === "AppImage" })
+        const token = new CancellationToken()
+        const fileUrl = new URL(file, url)
+        const info = { url: fileUrl.href, sha512: sha512(NEW), size: NEW.length, blockMapSize: 100 }
+        // feedBaseUrl null: no credential headers to strip, only the cancellation matters here
+        const provider = { feedBaseUrl: null, isUseMultipleRangeRequest: false }
+        const options = { updateInfoAndProvider: { info: { version: NEW_VERSION }, provider }, requestHeaders: {}, cancellationToken: token }
+        const newFile = path.join(cacheDir, "new")
+        const download: Promise<boolean> =
+          target === "AppImage"
+            ? (updater as any).downloadDifferential({ url: fileUrl, info }, path.join(cacheDir, "old.AppImage"), newFile, provider, options)
+            : (updater as any).differentialDownloadWebPackage(
+                options,
+                { path: fileUrl.href, sha512: info.sha512, size: info.size, blockMapSize: info.blockMapSize },
+                newFile,
+                provider
+              )
+        await stalled
+        token.cancel()
+        const outcome = await Promise.race([
+          download.then(
+            isFallback => `resolved (fallback: ${isFallback})`,
+            (e: any) => `rejected: ${e?.constructor?.name} ${e?.message}`
+          ),
+          new Promise<string>(resolve => setTimeout(() => resolve("still pending 5s after cancel (hang)"), 5000)),
+        ])
+        expect(logs.filter(it => it.includes("fallback to full download"))).toEqual([])
+        expect(outcome).toMatch(/^rejected: CancellationError/)
+        // the stalled request is aborted, not left open
+        expect(await Promise.race([requestClosed, new Promise<string>(resolve => setTimeout(() => resolve("still open"), 2000))])).toBe("closed")
+        expect(token.listenerCount("cancel")).toBe(0)
+      }, 15000)
+    }
 
     for (const multiRange of [true, false]) {
       test(`cancel during a copy from the old file settles only once the copy stopped reading it (${multiRange ? "multi" : "single"}-range)`, async ({ tmpDir }) => {
