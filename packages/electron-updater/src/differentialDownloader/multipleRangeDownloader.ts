@@ -1,4 +1,4 @@
-import { createHttpError, newError, safeGetHeader } from "builder-util-runtime"
+import { CancellationError, createHttpError, newError, safeGetHeader } from "builder-util-runtime"
 import { IncomingMessage, RequestOptions } from "http"
 import { Writable } from "stream"
 import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter.js"
@@ -19,6 +19,15 @@ export function executeTasksUsingMultipleRangeRequests(
   reject: (error: Error) => void
 ): (taskOffset: number) => void {
   const w = (taskOffset: number): void => {
+    // the next batch may start after a cancel or a failure already settled the download
+    if (differentialDownloader.options.cancellationToken.cancelled) {
+      reject(new CancellationError())
+      return
+    }
+    if (out.destroyed) {
+      reject(new Error("Cannot download the next batch: the output stream is destroyed"))
+      return
+    }
     if (taskOffset >= tasks.length) {
       if (differentialDownloader.fileMetadataBuffer != null) {
         out.write(differentialDownloader.fileMetadataBuffer)
@@ -66,6 +75,14 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
   if (partCount <= 1) {
     // the only remote range - copy
     const w = (index: number): void => {
+      if (differentialDownloader.options.cancellationToken.cancelled) {
+        reject(new CancellationError())
+        return
+      }
+      if (out.destroyed) {
+        reject(new Error("Cannot download the next part: the output stream is destroyed"))
+        return
+      }
       if (index >= options.end) {
         resolve()
         return
@@ -92,7 +109,8 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
             })
             response.once("end", () => w(index))
           },
-          reject
+          reject,
+          out
         )
       }
     }
@@ -165,7 +183,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
       }, 10000)
     })
   }
-  requestRange(differentialDownloader, { options: differentialDownloader.createRequestOptions() }, ranges.substring(0, ranges.length - 2), onResponse, reject)
+  requestRange(differentialDownloader, { options: differentialDownloader.createRequestOptions() }, ranges.substring(0, ranges.length - 2), onResponse, reject, out)
 }
 
 /** Where a range is requested: the update URL, or the redirect target once a request to it was redirected. */
@@ -183,19 +201,32 @@ export interface AbortableRequest {
  * again to the redirect target, without the credential headers when the target is on another origin, up to the executor's
  * redirect limit. The redirect target becomes the `target`, so a caller that passes the same `target` again requests the next
  * range from the redirect target. `onResponse` gets the request that was answered.
+ *
+ * Every request, a redirected one included, is created with DifferentialDownloader.createRangeRequest, so a cancel aborts it.
+ * A redirect reported after a cancel (or, when `out` is given, after a failure destroyed it) is not followed: the download
+ * already settled, and a new request would outlive it.
  */
 export function requestRange(
   differentialDownloader: DifferentialDownloader,
   target: RangeRequestTarget,
   range: string,
   onResponse: (response: IncomingMessage, request: AbortableRequest) => void,
-  reject: (error: Error) => void
+  reject: (error: Error) => void,
+  out?: Writable
 ): void {
   const { httpExecutor } = differentialDownloader
   const send = (requestOptions: RequestOptions, redirectCount: number): void => {
-    const request = httpExecutor.createRequest(requestOptions, (response: IncomingMessage) => onResponse(response, request))
+    const request = differentialDownloader.createRangeRequest(requestOptions, (response: IncomingMessage) => onResponse(response, request))
     httpExecutor.addErrorAndTimeoutHandlers(request, reject)
     httpExecutor.addRedirectHandlers(request, requestOptions, reject, redirectCount, redirectOptions => {
+      if (differentialDownloader.options.cancellationToken.cancelled) {
+        reject(new CancellationError())
+        return
+      }
+      if (out?.destroyed === true) {
+        reject(new Error("Cannot follow the redirect: the output stream is destroyed"))
+        return
+      }
       differentialDownloader.logger.info(`Redirect to ${urlWithoutQuery(redirectOptions)}`)
       target.options = redirectOptions
       send(redirectOptions, redirectCount + 1)

@@ -1,4 +1,4 @@
-import { BlockMapDataHolder, CancellationToken, ProgressInfo } from "builder-util-runtime"
+import { BlockMapDataHolder, CancellationError, CancellationToken, ProgressInfo } from "builder-util-runtime"
 import { DifferentialDownloader } from "electron-updater/src/differentialDownloader/DifferentialDownloader"
 import { GenericDifferentialDownloader } from "electron-updater/src/differentialDownloader/GenericDifferentialDownloader"
 import { createHash } from "crypto"
@@ -71,6 +71,7 @@ interface DownloadCase {
   readonly multiRangeStatus?: number
   readonly old?: Buffer
   readonly blockSize?: number
+  readonly cancellationToken?: CancellationToken
 }
 
 function createExecutor(c: DownloadCase, content: Buffer): FakeElectronHttpExecutor {
@@ -109,7 +110,7 @@ async function download(tmpDir: TmpDir, c: DownloadCase, executor = createExecut
     logger: createLogger(infos, warnings),
     requestHeaders: REQUEST_HEADERS,
     isUseMultipleRangeRequest: c.isUseMultipleRangeRequest === true,
-    cancellationToken: new CancellationToken(),
+    cancellationToken: c.cancellationToken ?? new CancellationToken(),
     onProgress: it => progress.push(it),
   })
   await downloader.download(blockMapOf(old, blockSize), blockMapOf(content, blockSize))
@@ -269,6 +270,25 @@ describe("differential download redirects", () => {
     await expect(download(tmpDir, c, executor)).rejects.toThrow("Too many redirects (> 10)")
     // the request and the 10 redirects it may follow
     expect(executor.sent).toHaveLength(11)
+  })
+
+  test("a redirect reported after a cancel is a cancellation, and the range is not requested again", async ({ tmpDir, expect }) => {
+    const cancellationToken = new CancellationToken()
+    const c: DownloadCase = { redirects: { [FILE_URL]: PRE_SIGNED_URL }, cancellationToken }
+    // the cancel comes while the redirect is answered, so the redirect event is reported after it
+    const executor = new FakeElectronHttpExecutor((url, headers) => {
+      if (url === FILE_URL) {
+        cancellationToken.cancel()
+        return { location: PRE_SIGNED_URL }
+      }
+      return serveRanges(NEW, headers)
+    })
+    const error = await download(tmpDir, c, executor).then(
+      () => null,
+      (e: unknown) => e
+    )
+    expect(error).toBeInstanceOf(CancellationError)
+    expect(urlsAndRanges(executor.sent)).toEqual([[FILE_URL, "bytes=0-15"]])
   })
 })
 
