@@ -80,13 +80,27 @@ function setGithubOutput(key: string, value: string) {
   }
 }
 
+const DOWNLOAD_ATTEMPTS = 3
+const DOWNLOAD_RETRY_DELAY_MS = 5000
+
+// `gh run download` fails now and then on a transient GitHub API or blob storage error, so it is tried a few times, and
+// what gh reports is printed: without it, the failure of a pinned restore says nothing about its cause.
 function downloadArtifact(runId: number, artifactName: string, dest: string): boolean {
   const tmpDir = path.join(path.dirname(dest), ".cache-download-tmp")
-  fs.mkdirSync(tmpDir, { recursive: true })
   try {
-    const result = spawnSync("gh", ["run", "download", String(runId), "--repo", REPO, "--name", artifactName, "--dir", tmpDir], { encoding: "utf8" })
-    if (result.status !== 0) {
-      return false
+    for (let attempt = 1; ; attempt++) {
+      fs.rmSync(tmpDir, { recursive: true, force: true })
+      fs.mkdirSync(tmpDir, { recursive: true })
+      const result = spawnSync("gh", ["run", "download", String(runId), "--repo", REPO, "--name", artifactName, "--dir", tmpDir], { encoding: "utf8" })
+      if (result.status === 0) {
+        break
+      }
+      const reason = (result.stderr || result.error?.message || `exit code ${result.status}`).trim()
+      console.log(`  gh run download failed (attempt ${attempt}/${DOWNLOAD_ATTEMPTS}): ${reason}`)
+      if (attempt === DOWNLOAD_ATTEMPTS) {
+        return false
+      }
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, DOWNLOAD_RETRY_DELAY_MS)
     }
     const downloaded = fs.readdirSync(tmpDir).find(f => f === "_vitest-smart-cache.json")
     if (!downloaded) {
