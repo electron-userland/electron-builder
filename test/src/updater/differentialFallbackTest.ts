@@ -583,5 +583,56 @@ describe("every differential download failure falls back to a verified full down
         expect(cancelledEvents).toBe(1)
       }, 15000)
     }
+
+    test("cancel while a single-range retry request is stalled does not start a full download and settles", async ({ tmpDir }) => {
+      let onStalled: () => void = () => {}
+      const stalled = new Promise<void>(resolve => (onStalled = resolve))
+      const url = await startServer((req, res, ranges) => {
+        if (req.url !== INSTALLER || ranges == null) {
+          return false
+        }
+        if (ranges.length > 1) {
+          // a host that serves one range per request (GitHub release assets): the downloader retries range by range
+          res.writeHead(501)
+          res.end("Multiple ranges are not supported")
+          return true
+        }
+        const [start, end] = ranges[0]
+        res.writeHead(206, { "Content-Range": `bytes ${start}-${end}/${NEW.length}`, "Content-Length": end - start + 1 })
+        // headers only, then nothing: a stalled connection
+        res.flushHeaders()
+        res.on("close", onRetryClosed)
+        setTimeout(onStalled, 100)
+        return true
+      })
+      let onRetryClosed: () => void = () => {}
+      const retryClosed = new Promise<string>(resolve => (onRetryClosed = () => resolve("closed")))
+      const { updater, logs } = await createUpdater(tmpDir, url, { multiRange: true, onProgress: () => {} })
+      let cancelledEvents = 0
+      updater.on("update-cancelled", () => cancelledEvents++)
+      await updater.checkForUpdates()
+      const token = new CancellationToken()
+      const download = updater.downloadUpdate(token)
+      await stalled
+      token.cancel()
+      const outcome = await Promise.race([
+        download.then(
+          () => "resolved",
+          (e: any) => `rejected: ${e?.constructor?.name} ${e?.message}`
+        ),
+        new Promise<string>(resolve => setTimeout(() => resolve("still pending 5s after cancel (hang)"), 5000)),
+      ])
+      // the stall is on the retry, not on the multi-range request
+      expect(logs.some(it => it.includes("retrying with one range per request"))).toBe(true)
+      expect(rangeRequests().map(it => it.range?.includes(",") === true)).toEqual([true, false])
+      expect(logs.filter(it => it.includes("fallback to full download"))).toEqual([])
+      expect(outcome).toMatch(/^rejected: CancellationError/)
+      expect(fullDownloads()).toHaveLength(0)
+      expect(cancelledEvents).toBe(1)
+      // the stalled retry request is aborted, not left open
+      expect(await Promise.race([retryClosed, new Promise<string>(resolve => setTimeout(() => resolve("still open"), 2000))])).toBe("closed")
+      // the differential download unsubscribes from the token once settled
+      expect(token.listenerCount("cancel")).toBe(0)
+    }, 15000)
   })
 })
