@@ -1,4 +1,5 @@
 import { BlockMapDataHolder, CancellationToken, ProgressInfo } from "builder-util-runtime"
+import { DifferentialDownloader } from "electron-updater/src/differentialDownloader/DifferentialDownloader"
 import { GenericDifferentialDownloader } from "electron-updater/src/differentialDownloader/GenericDifferentialDownloader"
 import { createHash } from "crypto"
 import fsExtra from "fs-extra"
@@ -19,6 +20,8 @@ const SAME_ORIGIN_URL = "https://feed.example.com/files/app-1.1.0.exe"
 const BLOCK = 16
 const OLD = Buffer.from("a".repeat(BLOCK) + "b".repeat(BLOCK) + "c".repeat(BLOCK))
 const NEW = Buffer.from("x".repeat(BLOCK) + "b".repeat(BLOCK) + "z".repeat(BLOCK))
+// only the first block changed: one range to download, which the multi-range downloader requests on its own
+const NEW_FIRST_BLOCK = Buffer.from("x".repeat(BLOCK) + "b".repeat(BLOCK) + "c".repeat(BLOCK))
 
 const REQUEST_HEADERS: OutgoingHttpHeaders = {
   authorization: "Bearer feed-secret",
@@ -158,6 +161,77 @@ describe("differential download redirects", () => {
     }
   })
 
+  test("a redirect of a later range only moves the ranges from there on, and progress counts each range once", async ({ tmpDir, expect }) => {
+    const { sent, downloaded, progress } = await download(tmpDir, { redirects: { [FILE_URL]: PRE_SIGNED_URL }, redirectRanges: ["bytes=32-47"] })
+
+    expect(downloaded).toEqual(NEW)
+    expect(urlsAndRanges(sent)).toEqual([
+      [FILE_URL, "bytes=0-15"],
+      [FILE_URL, "bytes=32-47"],
+      [PRE_SIGNED_URL, "bytes=32-47"],
+    ])
+    expectCredentials(expect, sent[0].headers, true)
+    expectCredentials(expect, sent[1].headers, true)
+    expectCredentials(expect, sent[2].headers, false)
+    expect(progress.length).toBeGreaterThan(0)
+    expect(Math.max(...progress.map(it => it.transferred))).toBe(2 * BLOCK)
+    expect(progress.every(it => it.total === 2 * BLOCK)).toBe(true)
+  })
+
+  test("a multi-range request redirected to another origin gets no credential headers", async ({ tmpDir, expect }) => {
+    const { sent, downloaded } = await download(tmpDir, { redirects: { [FILE_URL]: PRE_SIGNED_URL }, isUseMultipleRangeRequest: true })
+
+    expect(downloaded).toEqual(NEW)
+    expect(urlsAndRanges(sent)).toEqual([
+      [FILE_URL, "bytes=0-15, 32-47"],
+      [PRE_SIGNED_URL, "bytes=0-15, 32-47"],
+    ])
+    expectCredentials(expect, sent[0].headers, true)
+    expectCredentials(expect, sent[1].headers, false)
+  })
+
+  test("a multi-range request redirected on the same origin keeps the credential headers", async ({ tmpDir, expect }) => {
+    const { sent, downloaded } = await download(tmpDir, { redirects: { [FILE_URL]: SAME_ORIGIN_URL }, isUseMultipleRangeRequest: true })
+
+    expect(downloaded).toEqual(NEW)
+    expect(urlsAndRanges(sent)).toEqual([
+      [FILE_URL, "bytes=0-15, 32-47"],
+      [SAME_ORIGIN_URL, "bytes=0-15, 32-47"],
+    ])
+    for (const { headers } of sent) {
+      expectCredentials(expect, headers, true)
+    }
+  })
+
+  test("the lone range of a multi-range download, redirected to another origin, gets no credential headers", async ({ tmpDir, expect }) => {
+    const { sent, downloaded } = await download(tmpDir, { redirects: { [FILE_URL]: PRE_SIGNED_URL }, isUseMultipleRangeRequest: true, content: NEW_FIRST_BLOCK })
+
+    expect(downloaded).toEqual(NEW_FIRST_BLOCK)
+    expect(urlsAndRanges(sent)).toEqual([
+      [FILE_URL, "bytes=0-15"],
+      [PRE_SIGNED_URL, "bytes=0-15"],
+    ])
+    expectCredentials(expect, sent[0].headers, true)
+    expectCredentials(expect, sent[1].headers, false)
+  })
+
+  test("a redirect target that rejects multi-range requests is retried with one range per request", async ({ tmpDir, expect }) => {
+    const { sent, downloaded, warnings } = await download(tmpDir, { redirects: { [FILE_URL]: PRE_SIGNED_URL }, isUseMultipleRangeRequest: true, multiRangeStatus: 501 })
+
+    expect(downloaded).toEqual(NEW)
+    expect(warnings.some(it => it.includes("retrying with one range per request"))).toBe(true)
+    expect(urlsAndRanges(sent)).toEqual([
+      [FILE_URL, "bytes=0-15, 32-47"],
+      [PRE_SIGNED_URL, "bytes=0-15, 32-47"],
+      [FILE_URL, "bytes=0-15"],
+      [PRE_SIGNED_URL, "bytes=0-15"],
+      [PRE_SIGNED_URL, "bytes=32-47"],
+    ])
+    for (const { url, headers } of sent) {
+      expectCredentials(expect, headers, url === FILE_URL)
+    }
+  })
+
   test("a redirect loop fails the download after 10 redirects", async ({ tmpDir, expect }) => {
     const c: DownloadCase = { redirects: { [FILE_URL]: PRE_SIGNED_URL, [PRE_SIGNED_URL]: FILE_URL } }
     const executor = createExecutor(c, NEW)
@@ -165,4 +239,38 @@ describe("differential download redirects", () => {
     // the request and the 10 redirects it may follow
     expect(executor.sent).toHaveLength(11)
   })
+})
+
+// FileWithEmbeddedBlockMapDifferentialDownloader reads the block map at the end of the new file with readRemoteBytes
+class RemoteBytesReader extends DifferentialDownloader {
+  read(start: number, endInclusive: number): Promise<Buffer> {
+    return this.readRemoteBytes(start, endInclusive)
+  }
+}
+
+describe("differential download redirects when reading remote bytes", () => {
+  for (const [label, target, isSent] of [
+    ["another origin gets no credential headers", PRE_SIGNED_URL, false],
+    ["the same origin keeps the credential headers", SAME_ORIGIN_URL, true],
+  ] as const) {
+    test(`a redirect to ${label}`, async ({ expect }) => {
+      const executor = createExecutor({ redirects: { [FILE_URL]: target } }, NEW)
+      const reader = new RemoteBytesReader(fileInfoOf(NEW), executor, {
+        newUrl: new URL(FILE_URL),
+        oldFile: "unused",
+        newFile: "unused",
+        logger: createLogger([], []),
+        requestHeaders: REQUEST_HEADERS,
+        cancellationToken: new CancellationToken(),
+      })
+
+      expect(await reader.read(32, 47)).toEqual(NEW.subarray(32, 48))
+      expect(urlsAndRanges(executor.sent)).toEqual([
+        [FILE_URL, "bytes=32-47"],
+        [target, "bytes=32-47"],
+      ])
+      expectCredentials(expect, executor.sent[0].headers, true)
+      expectCredentials(expect, executor.sent[1].headers, isSent)
+    })
+  }
 })

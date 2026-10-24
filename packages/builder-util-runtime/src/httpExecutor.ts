@@ -171,9 +171,16 @@ export abstract class HttpExecutor<T extends Request> {
     })
   }
 
+  /**
+   * Follows the redirects of `request` when it reports them as events instead of 3xx responses (Electron's `net` with
+   * `redirect: "manual"`, see ElectronHttpExecutor): the request is aborted and `handler` gets the options for the redirect
+   * target from {@link HttpExecutor.prepareRedirectUrlOptions}, or `reject` gets the too-many-redirects error when
+   * `redirectCount`, the number of redirects already followed, has reached the limit. Node.js requests answer a redirect
+   * with a 3xx response, so this does nothing here.
+   */
   // noinspection JSUnusedLocalSymbols
   // eslint-disable-next-line
-  protected addRedirectHandlers(request: any, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void) {
+  addRedirectHandlers(request: any, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void) {
     // not required for NodeJS
   }
 

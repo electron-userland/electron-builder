@@ -210,6 +210,8 @@ describe("differential multipart download", () => {
         httpExecutor: {
           createRequest: (options: RequestOptions, callback: (response: IncomingMessage) => void) => httpRequest(options, callback),
           addErrorAndTimeoutHandlers: (request: any, reject: (error: Error) => void) => request.on("error", reject),
+          // node:http answers a redirect with a 3xx response
+          addRedirectHandlers: () => {},
         },
       }
 
