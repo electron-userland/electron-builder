@@ -1,7 +1,15 @@
 import { InvalidConfigurationError, log } from "builder-util"
 import { Configuration } from "../../configuration.js"
 import { hasFlatFileOption, isPlainObject } from "./fileOptions.js"
-import { ALL_PLATFORM_KEYS, BREAKING_CHANGES_URL, FILE_OPTION_KEYS, FILE_OPTIONS_ANCHOR, formatLegacyOptionMessage, RESOLVED_LEGACY_CONFIG_OPTIONS } from "./legacyOptions.js"
+import {
+  ALL_PLATFORM_KEYS,
+  BREAKING_CHANGES_URL,
+  CONFIG_CHANGES_URL,
+  FILE_OPTION_KEYS,
+  FILE_OPTIONS_ANCHOR,
+  formatLegacyOptionMessage,
+  RESOLVED_LEGACY_CONFIG_OPTIONS,
+} from "./legacyOptions.js"
 
 /**
  * Build-time guard for configurations still written against v26.
@@ -43,7 +51,7 @@ const SNAPCRAFT_BASE_LEVEL_KEYS = new Set([
 const SNAPCRAFT_BASES = ["core18", "core20", "core22", "core24", "custom"]
 
 function docLink(anchor: string): string {
-  return `  ${BREAKING_CHANGES_URL}#${anchor}`
+  return `  ${CONFIG_CHANGES_URL}#${anchor}`
 }
 
 /** Resolves `path` against `config`, returning the holding object or null when any segment is missing. */

@@ -12,7 +12,18 @@ const sidebars: SidebarsConfig = {
       items: [
         { type: "doc", id: "migration/whats-new-v27", label: "What's New in v27" },
         { type: "doc", id: "migration/v26-to-v27", label: "v26 → v27 Walkthrough" },
-        { type: "doc", id: "migration/v27-breaking-changes", label: "v27 Breaking Changes" },
+        {
+          type: "category",
+          label: "v27 Breaking Changes",
+          link: { type: "doc", id: "migration/v27-breaking-changes" },
+          collapsed: true,
+          items: [
+            { type: "doc", id: "migration/v27-config-changes", label: "Config" },
+            { type: "doc", id: "migration/v27-build-changes", label: "Build & Publish" },
+            { type: "doc", id: "migration/v27-runtime-changes", label: "Runtime (Shipped App)" },
+            { type: "doc", id: "migration/v27-developer-changes", label: "Developer-Only" },
+          ],
+        },
         { type: "link", label: "Changelog", href: "/changelog" },
       ],
     },

@@ -1,4 +1,5 @@
 import { log } from "builder-util"
+import { BUILD_CHANGES_URL } from "./config/legacyOptions.js"
 
 interface RemovedEnvVar {
   /** The environment variable that was read in v26 but is no longer read in v27. */
@@ -51,6 +52,20 @@ export const REMOVED_ENV_VARS: ReadonlyArray<RemovedEnvVar> = [
   },
 ]
 
+/** The section of the v27 build-changes page that documents a removed environment variable. */
+export function removedEnvVarDocsUrl(name: string): string {
+  switch (name) {
+    case "CI_BUILD_TAG":
+      return `${BUILD_CHANGES_URL}#ci_build_tag-environment-variable`
+    case "ELECTRON_BUILDER_BINARIES_ALLOW_HTTP":
+      return `${BUILD_CHANGES_URL}#electron_builder_binaries_allow_http-renamed`
+    case "ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY":
+      return `${BUILD_CHANGES_URL}#allow_electron_builder_as_production_dependency-is-removed-and-the-default-flipped`
+    default:
+      return `${BUILD_CHANGES_URL}#toolset-env-var-overrides-removed`
+  }
+}
+
 /**
  * Logs a one-time deprecation warning for every {@link REMOVED_ENV_VARS} entry still present in the
  * environment. Called once per build (from the {@link Packager} constructor) so both the CLI and the
@@ -59,7 +74,7 @@ export const REMOVED_ENV_VARS: ReadonlyArray<RemovedEnvVar> = [
 export function warnOnRemovedEnvVars(env: NodeJS.ProcessEnv = process.env): void {
   for (const { name, remediation } of REMOVED_ENV_VARS) {
     if (env[name] != null) {
-      log.warn({ envVar: name }, `environment variable was removed in electron-builder v27 and no longer has any effect — ${remediation}`)
+      log.warn({ envVar: name, docs: removedEnvVarDocsUrl(name) }, `environment variable was removed in electron-builder v27 and no longer has any effect — ${remediation}`)
     }
   }
 }

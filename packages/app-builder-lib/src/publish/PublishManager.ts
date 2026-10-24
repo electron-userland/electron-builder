@@ -65,6 +65,7 @@ import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from 
 import { resolveModule } from "../util/resolve.js"
 import { parseUrl } from "../util/pathManager.js"
 import { isPublishForPullRequest } from "../util/flags.js"
+import { BUILD_CHANGES_URL } from "../util/config/legacyOptions.js"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/guides/integration/oss/#pass-secrets-to-builds-from-forked-pull-requests) for details)" +
@@ -108,7 +109,7 @@ export function warnAboutGenericFeedQuery(publishConfig: PublishConfiguration): 
     "the generic publish url has a query string. electron-updater 7 (electron-builder v27) adds it, and sends the credential headers from requestHeaders / addAuthHeader, " +
       "only to downloads on the feed's origin (scheme, host and port): a download url in latest*.yml on another origin is requested without them. " +
       "Nothing changes for the relative URLs electron-builder writes. " +
-      "See https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+      "See https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
   )
 }
 
@@ -137,7 +138,7 @@ function warnIfImplicitPublishExpected(packager: Packager): void {
     { tag, solution: "pass --publish <always|onTag|onTagOrDraft|never>, or set the `publish` policy in your build configuration" },
     "a publish configuration and a CI tag are present, but no publish policy was given — nothing will be uploaded. " +
       "electron-builder v27 removed implicit publishing (v26 auto-published when it detected a CI tag). " +
-      "See https://www.electron.build/docs/migration/v27-breaking-changes#implicit-publish-removed"
+      "See https://www.electron.build/docs/migration/v27-build-changes#implicit-publish-removed"
   )
 }
 
@@ -477,8 +478,9 @@ function reportConflictingAppUpdateFeeds(
     `targets ${targets} are built from the same ${packager.platform.name} ${Arch[arch]} app, which holds a single app-update.yml, ` +
     `but their publish settings resolve to different auto-update feeds (${feeds}; the first provider of each that receives the manifest is embedded)`
   const solution = `configure \`publish\` once at the platform level (\`${packager.platform.buildConfigurationKey}.publish\`) and remove the target-level overrides, or point their first providers at the same feed`
+  const docs = `${BUILD_CHANGES_URL}#app-updateyml-feed-follows-the-update-writing-targets`
   if (isPublish) {
-    throw new InvalidConfigurationError(`${problem}. To fix it, ${solution}.`)
+    throw new InvalidConfigurationError(`${problem}. To fix it, ${solution}. See ${docs}`)
   }
 
   // scoped to the platform packager (one per platform and build): afterPack and the targets writing app-update.yml themselves
@@ -486,7 +488,7 @@ function reportConflictingAppUpdateFeeds(
   log
     .once(`conflicting-app-update-feeds:${feeds}`, packager)
     .warn(
-      { solution },
+      { solution, docs },
       `${problem}. No app-update.yml is written, so installed apps get neither an update feed nor the update-manifest public key. ` +
         "Publishing this configuration fails with an InvalidConfigurationError."
     )
@@ -659,7 +661,7 @@ function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: R
     )
 }
 
-const SIGNING_KEY_OUTSIDE_TRUST_LIST_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#signing-key-must-be-in-updatemanifestpublickey"
+const SIGNING_KEY_OUTSIDE_TRUST_LIST_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#signing-key-must-be-in-updatemanifestpublickey"
 
 /**
  * Normalizes the configured `updateManifest.publicKey` (string, multi-PEM string, or array) into distinct,

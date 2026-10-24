@@ -357,7 +357,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
           { solution: "set mac.asarIntegrityDigest to false if your afterPack hook signs the app" },
           "electron-builder v27 embeds the ASAR integrity digest into the Electron Framework after the afterPack hook and signs the framework again ad hoc, replacing a signature applied in afterPack. " +
             "Changing app.asar or Info.plist after afterPack now fails the app at launch when the enableEmbeddedAsarIntegrityValidation fuse is on. " +
-            "See https://www.electron.build/docs/migration/v27-breaking-changes#macos-asar-integrity-digest"
+            "See https://www.electron.build/docs/migration/v27-runtime-changes#macos-asar-integrity-digest"
         )
     }
   }

@@ -147,7 +147,7 @@ interface WindowsSigningSharedOptions {
    * `CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;
    * attributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,
    * because electron-updater 7 never matches it — see
-   * [the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).
+   * [the migration guide](https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name).
    * May be a single string or an array — an array is useful when rotating certificates, so updates
    * signed by either the old or the new certificate still verify.
    *
@@ -404,7 +404,7 @@ export interface WindowsAzureSigningConfig {
    * [update verification](#verifyUpdateCodeSignature) (embedded in `app-update.yml` and checked by
    * electron-updater) and must match the certificate subject. A bare name fails the build since
    * v27 — see
-   * [the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).
+   * [the migration guide](https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name).
    *
    * @see https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073
    */

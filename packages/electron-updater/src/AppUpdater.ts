@@ -124,7 +124,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       `autoInstallOnAppQuit was removed in electron-updater 7 (electron-builder v27) — use autoInstallEvent instead. ` +
         `Mapping autoInstallOnAppQuit = ${value} to autoInstallEvent = "${mapped}". ` +
         `This compatibility shim is removed in v28. ` +
-        `https://www.electron.build/docs/migration/v27-breaking-changes#autoinstallevent-replaces-autoinstallonappquit`
+        `https://www.electron.build/docs/migration/v27-runtime-changes#autoinstallevent-replaces-autoinstallonappquit`
     )
     this.autoInstallEvent = mapped
   }
@@ -920,7 +920,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       `quitAndInstall(isSilent, isForceRunAfter) was replaced by quitAndInstall({ isSilent, isForceRunAfter }) in electron-updater 7 (electron-builder v27). ` +
         `Interpreting the positional arguments as { isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter} }. ` +
         `This compatibility shim is removed in v28. ` +
-        `https://www.electron.build/docs/migration/v27-breaking-changes#quitandinstall-takes-an-options-object`
+        `https://www.electron.build/docs/migration/v27-runtime-changes#quitandinstall-takes-an-options-object`
     )
     return { isSilent, isForceRunAfter }
   }
@@ -967,7 +967,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   // Only names are logged (header names, query parameter names, origins), never values.
   private announceCrossOriginDownload(url: URL, credentialOrigin: URL, headers: OutgoingHttpHeaders, feedBaseUrl: URL | null): void {
-    const docs = "https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+    const docs = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
     const names = HttpExecutor.sensitiveHeaderNames(headers)
     // v27 behaviour changes a plain-JavaScript app would otherwise not notice: each is announced once per updater
     if (names.length !== 0) {
@@ -998,7 +998,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         `The custom update provider ${provider.constructor.name} does not declare feedBaseUrl, but its downloads would send the credential headers ${names.join(", ")} ` +
           `(from requestHeaders, addAuthHeader or fileExtraDownloadHeaders). Override Provider.feedBaseUrl to return the feed URL ` +
           `(the headers are then only sent to its origin), or null to send the request headers to every origin. ` +
-          `https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin`,
+          `https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin`,
         "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED"
       )
     }
@@ -1499,7 +1499,7 @@ function withLegacyArrayCompat(result: DownloadExecutorResult, logger: Logger): 
         "downloadUpdate() resolves with a DownloadExecutorResult object in electron-updater 7 (electron-builder v27), not an array. " +
           "Replace `const [updateFile] = await downloadUpdate()` with `const { updateFile } = await downloadUpdate()`. " +
           "This compatibility shim is removed in v28. " +
-          "https://www.electron.build/docs/migration/v27-breaking-changes#downloadupdate-resolves-with-a-downloadexecutorresult-object"
+          "https://www.electron.build/docs/migration/v27-runtime-changes#downloadupdate-resolves-with-a-downloadexecutorresult-object"
       )
       yield result.updateFile
       if (result.packageFile != null) {
