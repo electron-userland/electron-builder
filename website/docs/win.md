@@ -105,7 +105,7 @@ You don't need to have a Windows 10 license. A free license is provided (expires
 
 Parallels Windows 10 VM will be used automatically to build AppX on macOS. No need even start VM — it will be started automatically on demand and suspended after build. No need to specify VM — it will be detected automatically (first Windows 10 VM will be used).
 
-electron-builder runs the Parallels Desktop command line tool from `/Applications/Parallels Desktop.app/Contents/MacOS/prlctl` or `/usr/local/bin/prlctl`, the locations its installer uses; a `prlctl` elsewhere on `PATH` is not used.
+electron-builder runs the Parallels Desktop command line tool by absolute path, from `/Applications/Parallels Desktop.app/Contents/MacOS/prlctl` or `/usr/local/bin/prlctl`, the locations its installer uses, or from [`toolsets.executables.prlctl`](./toolsets.md#executables); it is never looked up on `PATH`.
 
 ## How do you create a VirtualBox Windows 10 Virtual Machine?
 

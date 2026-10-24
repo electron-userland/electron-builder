@@ -1,4 +1,4 @@
-import { Arch, exec, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveEnvVars } from "builder-util"
+import { Arch, exec, Executables, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, stripSensitiveEnvVars } from "builder-util"
 import { randomUUID } from "crypto"
 import { resolveSnapCredentials } from "electron-publish"
 
@@ -38,9 +38,9 @@ interface BuildSnapOptions {
  * Validates snapcraft.yaml using snapcraft's built-in `expand-extensions` command.
  * Throws on failure. The caller in `buildSnap` catches this and treats it as a non-fatal warning.
  */
-async function validateSnapcraftYamlWithCLI(workDir: string): Promise<void> {
+async function validateSnapcraftYamlWithCLI(snapcraft: string, workDir: string): Promise<void> {
   try {
-    const stdout = await exec("snapcraft", ["expand-extensions"], {
+    const stdout = await exec(snapcraft, ["expand-extensions"], {
       cwd: workDir,
       timeout: 30000,
     })
@@ -245,13 +245,16 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string[]> {
   // Config validation — throws InvalidConfigurationError, no build artifacts exist yet.
   validateSnapcraftConfig(snapcraftConfig)
 
+  // snapcraft by absolute path (toolsets.executables.snapcraft or its default install locations), never looked up on PATH
+  const snapcraft = Executables.resolve("snapcraft")
+
   try {
-    await validateSnapcraftYamlWithCLI(stageDir)
+    await validateSnapcraftYamlWithCLI(snapcraft, stageDir)
   } catch (validationError: any) {
     log.warn({ error: validationError.message }, "snapcraft CLI pre-validation failed (non-fatal), continuing build")
   }
 
-  await ensureSnapcraftInstalled()
+  await ensureSnapcraftInstalled(snapcraft)
 
   // Inject credentials for all build modes from snapcraft.cscLink / SNAP_CSC_LINK.
   const credEnv = await resolveSnapCredentials(cscLink, options.packager.buildResourcesDir)
@@ -260,7 +263,7 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string[]> {
   if (remoteBuild?.enabled) {
     // Remote-build auth does additional checks (interactive session, throws on missing creds)
     // and overrides any credential already set above.
-    const authEnv = await ensureRemoteBuildAuthentication(cscLink, options.packager.buildResourcesDir)
+    const authEnv = await ensureRemoteBuildAuthentication(snapcraft, cscLink, options.packager.buildResourcesDir)
     deepAssign(isolatedEnv, authEnv)
   }
 
@@ -281,6 +284,7 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string[]> {
     return await executeWithRetry(
       () =>
         executeSnapcraftBuild({
+          snapcraft,
           workDir: stageDir,
           remoteBuild,
           outputSnap: artifactPath,
@@ -303,9 +307,9 @@ export async function buildSnap(options: BuildSnapOptions): Promise<string[]> {
 /**
  * Ensures snapcraft is installed on the system
  */
-async function ensureSnapcraftInstalled(): Promise<void> {
+async function ensureSnapcraftInstalled(snapcraft: string): Promise<void> {
   try {
-    const stdout = await exec("snapcraft", ["--version"])
+    const stdout = await exec(snapcraft, ["--version"])
     log.info({ version: stdout.trim() }, "snapcraft found")
   } catch (error: any) {
     log.error({ error: error.message }, "snapcraft is not installed")
@@ -330,7 +334,7 @@ async function ensureSnapcraftInstalled(): Promise<void> {
  * env entries to inject. Returns an empty map when snapcraft can authenticate itself
  * (interactive session). Throws when no credential source is found.
  */
-async function ensureRemoteBuildAuthentication(cscLink: string | undefined, resourcesDir: string | undefined): Promise<Record<string, string>> {
+async function ensureRemoteBuildAuthentication(snapcraft: string, cscLink: string | undefined, resourcesDir: string | undefined): Promise<Record<string, string>> {
   log.debug(null, "resolving remote build authentication...")
 
   // 1. snapcraft.cscLink / SNAP_CSC_LINK — config-level or env credential (base64 or file path).
@@ -350,7 +354,7 @@ async function ensureRemoteBuildAuthentication(cscLink: string | undefined, reso
 
   // 3. Interactive snapcraft session.
   try {
-    const stdout = await exec("snapcraft", ["whoami"])
+    const stdout = await exec(snapcraft, ["whoami"])
     if (stdout.includes("email:")) {
       log.debug({ account: stdout.trim() }, "already authenticated with snapcraft")
       return {}
@@ -370,6 +374,8 @@ async function ensureRemoteBuildAuthentication(cscLink: string | undefined, reso
 }
 
 interface ExecuteSnapcraftOptions {
+  /** absolute path of snapcraft */
+  snapcraft: string
   workDir: string
   outputSnap: string
   remoteBuild?: RemoteBuildOptions
@@ -383,7 +389,7 @@ interface ExecuteSnapcraftOptions {
  * Executes the snapcraft build command
  */
 async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<string[]> {
-  const { workDir, outputSnap: outputFileName, remoteBuild, useLXD, useMultipass, useDestructiveMode, isolatedEnv } = options
+  const { snapcraft, workDir, outputSnap: outputFileName, remoteBuild, useLXD, useMultipass, useDestructiveMode, isolatedEnv } = options
   let processedEnv: NodeJS.ProcessEnv = { ...stripSensitiveEnvVars(process.env), ...isolatedEnv }
 
   // Use a UUID-based temp name as the --output target so the copy below doesn't
@@ -391,10 +397,9 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
   const tmpSnap = `eb-snap-${randomUUID().replace(/-/g, "")}.snap`
 
   if (useDestructiveMode && !remoteBuild?.enabled) {
-    return [await runDestructiveBuild(workDir, processedEnv, tmpSnap, outputFileName)]
+    return [await runDestructiveBuild(snapcraft, workDir, processedEnv, tmpSnap, outputFileName)]
   }
 
-  const command = "snapcraft"
   const args: string[] = []
 
   if (remoteBuild?.enabled) {
@@ -425,7 +430,7 @@ async function executeSnapcraftBuild(options: ExecuteSnapcraftOptions): Promise<
 
   log.info({ workDir: log.filePath(workDir) }, "executing snapcraft")
 
-  await spawn(command, args, {
+  await spawn(snapcraft, args, {
     cwd: workDir,
     env: processedEnv,
   })
@@ -525,13 +530,13 @@ function generateRemoteBuildArgs(remoteBuild: RemoteBuildOptions, workDir: strin
 //      exits cleanly (no post-pack teardown executed).
 //   2. `snapcraft pack <primeDir>`  — packs the pre-primed directory without
 //      running the full build lifecycle, avoiding the problematic teardown.
-async function runDestructiveBuild(workDir: string, processedEnv: NodeJS.ProcessEnv, tmpSnap: string, outputFileName: string) {
+async function runDestructiveBuild(snapcraft: string, workDir: string, processedEnv: NodeJS.ProcessEnv, tmpSnap: string, outputFileName: string) {
   const primeArgs = ["prime", "--destructive-mode"]
   if (log.isDebugEnabled) {
     primeArgs.push("--verbose")
   }
   log.info({ command: `snapcraft ${primeArgs.join(" ")}`, workDir: log.filePath(workDir) }, "snapcraft prime (1/2)")
-  await spawn("snapcraft", primeArgs, {
+  await spawn(snapcraft, primeArgs, {
     cwd: workDir,
     env: processedEnv,
   })
@@ -542,7 +547,7 @@ async function runDestructiveBuild(workDir: string, processedEnv: NodeJS.Process
     snapcraftPackArgs.push("--verbose")
   }
   log.info({ command: `snapcraft ${snapcraftPackArgs.join(" ")}`, workDir: log.filePath(workDir) }, "snapcraft pack prime dir (2/2)")
-  await spawn("snapcraft", snapcraftPackArgs, {
+  await spawn(snapcraft, snapcraftPackArgs, {
     cwd: workDir,
     env: processedEnv,
   })

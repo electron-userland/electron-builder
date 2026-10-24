@@ -1,8 +1,8 @@
-import { exec, spawn } from "builder-util"
+import { exec, Executables, spawn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { SnapStoreOptions } from "builder-util-runtime/internal"
 import { PublishContext, UploadTask } from "electron-publish"
-import { beforeEach, describe, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, test, vi } from "vitest"
 // Import from source so Vitest's vi.mock intercepts builder-util in the same module graph
 import { SnapStorePublisher } from "../../../../packages/electron-publish/src/snapStorePublisher"
 
@@ -23,11 +23,19 @@ function makePublisher(channels?: SnapStoreOptions["channels"], cscLink?: string
   return new SnapStorePublisher(makeContext(), { provider: "snapStore", channels }, { cscLink, resourcesDir: "/resources" })
 }
 
+// started by absolute path, from toolsets.executables.snapcraft or its default install locations: never looked up on PATH
+const SNAPCRAFT = "/snap/bin/snapcraft"
+
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.spyOn(Executables, "resolve").mockReturnValue(SNAPCRAFT)
   // Default: snapcraft is installed at a valid version
   vi.mocked(exec).mockResolvedValue("snapcraft, version 8.4.0\n")
   vi.mocked(spawn).mockResolvedValue(undefined)
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 describe("SnapStorePublisher", { concurrent: false }, () => {
@@ -125,7 +133,7 @@ describe("SnapStorePublisher", { concurrent: false }, () => {
 
     function expectSpawnCall(args: string[]) {
       return (expect: any) => {
-        expect(vi.mocked(spawn)).toHaveBeenCalledWith("snapcraft", args, expect.objectContaining(STDIO))
+        expect(vi.mocked(spawn)).toHaveBeenCalledWith(SNAPCRAFT, args, expect.objectContaining(STDIO))
       }
     }
 
@@ -156,7 +164,7 @@ describe("SnapStorePublisher", { concurrent: false }, () => {
 
     test("empty string omits --release flag", async ({ expect }) => {
       await makePublisher("  ").upload(makeTask())
-      expect(vi.mocked(spawn)).toHaveBeenCalledWith("snapcraft", ["upload", FILE], expect.objectContaining(STDIO))
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith(SNAPCRAFT, ["upload", FILE], expect.objectContaining(STDIO))
     })
 
     test("handles single-element array", async ({ expect }) => {
@@ -171,19 +179,19 @@ describe("SnapStorePublisher", { concurrent: false }, () => {
 
     test("empty array omits --release flag entirely", async ({ expect }) => {
       await makePublisher([]).upload(makeTask())
-      expect(vi.mocked(spawn)).toHaveBeenCalledWith("snapcraft", ["upload", FILE], expect.objectContaining(STDIO))
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith(SNAPCRAFT, ["upload", FILE], expect.objectContaining(STDIO))
     })
 
     test("passes the snap file path as the second argument", async ({ expect }) => {
       const file = "/build/output/myapp_2.0.0_amd64.snap"
       await makePublisher().upload(makeTask(file))
-      expect(vi.mocked(spawn)).toHaveBeenCalledWith("snapcraft", ["upload", file, "--release", "edge"], expect.objectContaining(STDIO))
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith(SNAPCRAFT, ["upload", file, "--release", "edge"], expect.objectContaining(STDIO))
     })
 
     test("full command: upload <file> --release <channel>", async ({ expect }) => {
       const file = "/tmp/app.snap"
       await makePublisher("edge").upload(makeTask(file))
-      expect(vi.mocked(spawn)).toHaveBeenCalledWith("snapcraft", ["upload", file, "--release", "edge"], expect.objectContaining(STDIO))
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith(SNAPCRAFT, ["upload", file, "--release", "edge"], expect.objectContaining(STDIO))
     })
 
     test("supports track/risk format (2.0/beta)", async ({ expect }) => {
@@ -203,7 +211,7 @@ describe("SnapStorePublisher", { concurrent: false }, () => {
 
     test("passes inherit stdio so snapcraft output streams to terminal", async ({ expect }) => {
       await makePublisher().upload(makeTask())
-      expect(vi.mocked(spawn)).toHaveBeenCalledWith("snapcraft", expect.any(Array), expect.objectContaining(STDIO))
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith(SNAPCRAFT, expect.any(Array), expect.objectContaining(STDIO))
     })
   })
 
@@ -211,10 +219,55 @@ describe("SnapStorePublisher", { concurrent: false }, () => {
     const CREDS = "snapcraft-login-token-content"
     const BASE64 = Buffer.from(CREDS).toString("base64")
 
-    test("no cscLink and no SNAP_CSC_LINK → inherits process.env unchanged", async ({ expect }) => {
-      await makePublisher().upload(makeTask())
+    test("no cscLink and no SNAP_CSC_LINK → no store credentials", async ({ expect }) => {
+      vi.stubEnv("SNAPCRAFT_STORE_CREDENTIALS", undefined)
+      try {
+        await makePublisher().upload(makeTask())
+      } finally {
+        vi.unstubAllEnvs()
+      }
       const spawnEnv = vi.mocked(spawn).mock.calls[0][2] as any
       expect(spawnEnv.env).not.toHaveProperty("SNAPCRAFT_STORE_CREDENTIALS")
+    })
+
+    test("snapcraft gets the store credentials but no other secret of the publish environment", async ({ expect }) => {
+      vi.stubEnv("GH_TOKEN", "github-token")
+      vi.stubEnv("CSC_KEY_PASSWORD", "signing-password")
+      vi.stubEnv("SNAPCRAFT_STORE_CREDENTIALS", undefined)
+      try {
+        await makePublisher(undefined, BASE64).upload(makeTask())
+      } finally {
+        vi.unstubAllEnvs()
+      }
+      const spawnEnv = vi.mocked(spawn).mock.calls[0][2] as any
+      expect(spawnEnv.env.SNAPCRAFT_STORE_CREDENTIALS).toBe(CREDS)
+      expect(spawnEnv.env).not.toHaveProperty("GH_TOKEN")
+      expect(spawnEnv.env).not.toHaveProperty("CSC_KEY_PASSWORD")
+      // the key keeps its casing ("Path" on Windows)
+      expect(Object.entries(spawnEnv.env).find(([name]) => name.toUpperCase() === "PATH")?.[1]).toBe(process.env.PATH)
+    })
+
+    test("SNAPCRAFT_STORE_CREDENTIALS set in the environment still reaches snapcraft", async ({ expect }) => {
+      vi.stubEnv("SNAPCRAFT_STORE_CREDENTIALS", CREDS)
+      try {
+        await makePublisher().upload(makeTask())
+      } finally {
+        vi.unstubAllEnvs()
+      }
+      const spawnEnv = vi.mocked(spawn).mock.calls[0][2] as any
+      expect(spawnEnv.env.SNAPCRAFT_STORE_CREDENTIALS).toBe(CREDS)
+    })
+
+    test("SNAPCRAFT_STORE_AUTH (the credential format, e.g. candid) reaches snapcraft with the credentials", async ({ expect }) => {
+      vi.stubEnv("SNAPCRAFT_STORE_AUTH", "candid")
+      try {
+        await makePublisher(undefined, BASE64).upload(makeTask())
+      } finally {
+        vi.unstubAllEnvs()
+      }
+      const spawnEnv = vi.mocked(spawn).mock.calls[0][2] as any
+      expect(spawnEnv.env.SNAPCRAFT_STORE_AUTH).toBe("candid")
+      expect(spawnEnv.env.SNAPCRAFT_STORE_CREDENTIALS).toBe(CREDS)
     })
 
     test("cscLink base64 → SNAPCRAFT_STORE_CREDENTIALS injected into spawn env", async ({ expect }) => {

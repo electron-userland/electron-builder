@@ -1,22 +1,18 @@
-import { DebugLogger, ExtraSpawnOptions, exec, log, sanitizeDirPath, spawn, stripSensitiveEnvVars } from "builder-util"
+import { DebugLogger, Executables, ExtraSpawnOptions, exec, log, sanitizeDirPath, spawn, stripSensitiveEnvVars } from "builder-util"
 import { ExecFileOptions, SpawnOptions, execFileSync } from "child_process"
 import { homedir } from "os"
-import { findPrlctl, PARALLELS_GUEST_PWSH, PARALLELS_GUEST_WINDOWS_POWERSHELL, PRLCTL_PATHS } from "../util/systemTools.js"
 import { VmManager } from "./vm.js"
 
-// `prlctl` by absolute path; throws when Parallels Desktop is not installed (callers treat that as "no Parallels VM")
-function prlctlPath(): string {
-  const prlctl = findPrlctl()
-  if (prlctl == null) {
-    throw new Error(`Parallels Desktop command line tool (prlctl) not found at ${PRLCTL_PATHS.join(", ")}`)
-  }
-  return prlctl
-}
+/** The same executables inside a Parallels Windows guest, at the locations of a default Windows installation. */
+export const PARALLELS_GUEST_WINDOWS_POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+export const PARALLELS_GUEST_PWSH = "C:\\Program Files\\PowerShell\\7\\pwsh.exe"
 
 /** @internal */
 export async function parseVmList(debugLogger: DebugLogger) {
+  // prlctl by absolute path; when Parallels Desktop is not installed this throws, which callers treat as "no Parallels VM"
+  const prlctl = Executables.resolve("prlctl")
   // do not log output if debug - it is huge, logged using debugLogger
-  let rawList = await exec(prlctlPath(), ["list", "-i", "-s", "name"], undefined, false)
+  let rawList = await exec(prlctl, ["list", "-i", "-s", "name"], undefined, false)
   debugLogger.add("parallels.list", rawList)
 
   rawList = rawList.substring(rawList.indexOf("ID:"))
@@ -49,10 +45,11 @@ export class ParallelsVmManager extends VmManager {
 
   private isExitHookAdded = false
 
-  private readonly prlctl = prlctlPath()
+  private readonly prlctl: string
 
   constructor(private readonly vm: ParallelsVm) {
     super()
+    this.prlctl = Executables.resolve("prlctl")
 
     this.startPromise = this.doStartVm()
   }
