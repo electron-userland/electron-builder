@@ -10,4 +10,4 @@
 # release (a rollback is a pull request as well). Releases are published under `next` (master) and `v<major>`
 # (release/v<major>) by the Release workflow, which moves those tags itself: they cannot be listed here. Removing a line
 # does not remove that dist-tag from npm. Format: one `<dist-tag>: <electron-builder version>` per line.
-latest: 26.15.3
+latest: 26.18.0

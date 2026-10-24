@@ -1051,6 +1051,16 @@ export interface Hooks {
   readonly appxManifestCreated?: Hook<string, void> | string | null
 
   /**
+   * Called after the `distribution.xml` of a macOS `pkg` installer has been written (synthesized by
+   * `productbuild --synthesize`, then customized from {@link PkgOptions}) but before `productbuild` builds the
+   * installer from it.
+   *
+   * The hook receives the path to the distribution file as a string. Edit it in place or overwrite it to
+   * customize the installer beyond {@link PkgOptions} (for example, its `<title>`).
+   */
+  readonly pkgDistributionCreated?: Hook<string, void> | string | null
+
+  /**
    * Called for every file inside each `node_modules` package directory as electron-builder
    * decides whether to include it in the packaged app.
    *

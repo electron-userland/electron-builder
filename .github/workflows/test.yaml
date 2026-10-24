@@ -488,27 +488,43 @@ jobs:
   # being able to create namespaces (canRunFlatpak in test/src/updater/blackboxInstallLinux.ts), so it skips inside the docker shards,
   # whose image includes flatpak but which run unprivileged, and on every other runner. It needs FUSE
   # (flatpak-builder's rofiles-fuse) and user namespaces (the bubblewrap sandbox of flatpak build-export's
-  # icon validator), which are painful inside Docker, so it runs natively here.
+  # icon validator), so this job runs it where both work.
   # The flatpak case of the blackbox install suite (test/src/updater/blackboxInstallTest.ts) runs here too: it
   # installs the bundle and starts the app with `flatpak run`, which needs bubblewrap again, plus an X display.
   # The flatpak target installs missing refs with `flatpak install --user` (no explicit remote), so
   # the runtimes are pre-installed into the same user installation from a user-level flathub remote.
-  # It runs with the stock packages of two runners: ubuntu-24.04, and ubuntu-22.04, which has the oldest tools of any current
-  # distribution release: flatpak-builder 1.2.2, the target's minimum, and flatpak 1.12.7 (the minimum is 1.12.4). The ubuntu-22.04
-  # image is deprecated: GitHub's brownouts in March and April 2027 fail that leg, and the image is removed on 2027-04-17
-  # (actions/runner-images#14254), so the leg has to move, for example into a 22.04 container, before then.
+  # It runs in a privileged container of the electronuserland/builder image built from docker/ (flatpak and flatpak-builder from
+  # the Flatpak team's PPA, plus Xvfb in the -wine-chrome variant), so nothing is installed with apt on the runner, whose
+  # package mirror at times serves the ~100 MB of flatpak, flatpak-builder and their dependencies at ~50 kB/s. The flatpak user
+  # installation is a directory on the runner, mounted into the container.
   test-flatpak:
-    name: Test Flatpak (${{ matrix.runner }})
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        runner: [ubuntu-24.04, ubuntu-22.04]
+    name: Test Flatpak
+    needs: [check-if-docker-build, run-docker-build]
+    if: |
+      always() &&
+      needs.check-if-docker-build.result == 'success' &&
+      (needs.run-docker-build.result == 'success' || needs.run-docker-build.result == 'skipped')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      # Every ref the suite needs, pre-installed so the flatpak target's own `flatpak install` inside a test does not eat the
+      # test timeout. 26.08 is the FlatpakTarget default runtime/base version; 25.08 is what the "custom runtime and base app
+      # version" test asks for. Both are supported on flathub.
+      FLATPAK_REFS: >-
+        org.freedesktop.Platform//26.08
+        org.freedesktop.Sdk//26.08
+        org.electronjs.Electron2.BaseApp//26.08
+        org.freedesktop.Platform//25.08
+        org.freedesktop.Sdk//25.08
+        org.electronjs.Electron2.BaseApp//25.08
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+
+      # The image and the flatpak user installation take several GB each
+      - name: Cleanup runner
+        uses: $/.github/actions/cleanup-runner
 
       - name: Setup Tests
         uses: $/.github/actions/pretest
@@ -518,75 +534,62 @@ jobs:
           reset-vitest-smart-cache: ${{ inputs.reset-vitest-smart-cache }}
           collect-coverage: ${{ inputs.collect-coverage }}
 
-      - name: Install flatpak and flatpak-builder
-        run: |
-          # Disable background apt services (prevent apt lock contention)
-          sudo systemctl stop unattended-upgrades apt-daily.service apt-daily-upgrade.service || true
-          sudo systemctl disable apt-daily.timer apt-daily-upgrade.timer || true
-          sudo systemctl kill --kill-who=all apt-daily.service apt-daily-upgrade.service || true
-          while sudo fuser /var/lib/apt/lists/lock /var/lib/dpkg/lock /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-            echo "Waiting for apt lock to be released…"
-            sleep 2
-          done
-          sudo apt-get update
-          # fuse3 has the fusermount3 that rofiles-fuse needs; nothing pulls it in on Ubuntu 22.04
-          sudo apt-get install -y flatpak flatpak-builder fuse3 xvfb
-          # Ubuntu 24.04 restricts unprivileged user namespaces via AppArmor; the bubblewrap sandbox of
-          # flatpak build-export's icon validator needs them. The apparmor package ships a profile that allows
-          # them for /usr/bin/flatpak, but lift the restriction too so a runner image without that profile
-          # does not fail the build with "setting up uid map: Permission denied".
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
-          flatpak --version
-          flatpak-builder --version
-          # The suite skips itself where bubblewrap cannot create namespaces. Fail here instead, so that this job
-          # cannot pass without having run it.
-          bwrap --ro-bind / / true
-
-      # The flatpak user installation (remote config + installed runtimes/SDKs/base app). An SDK alone
-      # is well over a GB, so restoring it beats re-downloading from flathub every run. Bump the
-      # -vN suffix whenever the ref list in the install step below changes.
-      # The key includes run_id so it never exactly matches: the job restores the newest entry via
-      # restore-keys and re-saves at the end. With a static key, actions/cache never saves after an exact
-      # hit, so an incomplete first save would be re-downloaded forever. The ubuntu-22.04 leg is the exception: it
-      # keeps one entry, with a static key, so that the two legs do not both save several GB on every run.
-      # zizmor's cache-poisoning finding does not apply: only this test job restores the flatpak-user-* entries, and
-      # nothing it builds is published (the Release workflow neither runs this job nor reads these keys).
-      - name: Cache flatpak runtimes # zizmor: ignore[cache-poisoning]
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      - name: Download test-runner if exists
+        if: needs.run-docker-build.result == 'success'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          path: ~/.local/share/flatpak
-          key: flatpak-user-${{ matrix.runner }}-fdo-26.08-25.08-electron2-v1${{ matrix.runner != 'ubuntu-22.04' && format('-{0}', github.run_id) || '' }}
-          restore-keys: |
-            flatpak-user-${{ matrix.runner }}-fdo-26.08-25.08-electron2-v1
+          name: electron-builder-all-${{ env.TEST_IMAGE_NODE_MAJOR_VERSION }}
+          path: ${{ runner.temp }}
 
-      # Pre-install every ref the suite needs so the flatpak target's own `flatpak install` inside a test
-      # does not eat the test timeout. `flatpak install` is a no-op for refs already restored from the cache.
-      # 26.08 is the FlatpakTarget default runtime/base version; 25.08 is what the
-      # "custom runtime and base app version" test asks for. Both are supported on flathub.
+      - name: Load test runner image if needed
+        if: needs.run-docker-build.result == 'success'
+        run: |
+          docker image load --input "$RUNNER_TEMP/electron-builder-all-$TEST_IMAGE_NODE_MAJOR_VERSION.tar"
+          docker image ls -a
+
+      # The tests run in the container as the runner's user, whose bubblewrap needs the unprivileged user namespaces that
+      # Ubuntu 24.04 restricts via AppArmor: lift that on the host. See test/src/linux/flatpak-docker.sh.
+      - name: Prepare flatpak test image
+        run: |
+          IMAGE="electronuserland/builder:${TEST_IMAGE_NODE_MAJOR_VERSION}-wine-chrome"
+          echo "FLATPAK_TEST_IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          if ! docker image inspect "$IMAGE" > /dev/null 2>&1; then
+            for i in 1 2 3; do
+              docker pull "$IMAGE" && break
+              if [ "$i" -eq 3 ]; then exit 1; fi
+              echo "docker pull failed (attempt $i/3), retrying in 30s…" >&2
+              sleep 30
+            done
+          fi
+          docker run --rm "$IMAGE" sh -c 'flatpak --version && flatpak-builder --version'
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      # Into the runner user's flatpak user installation (~/.local/share/flatpak), which test/src/linux/flatpak-docker.sh mounts
+      # into the container, in the container as that user: as root, flatpak refuses to install into a user installation that
+      # another user owns. The image adds the flathub remote for root only, hence the remote-add. The refs are not cached: they
+      # are several GB, and an entry that size was evicted from the repository's 10 GB cache before later runs could restore it.
+      # `flatpak update` is a no-op after a fresh install; it keeps the refs current should the directory ever be restored.
       - name: Install flatpak runtimes
         run: |
-          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y --noninteractive flathub \
-            org.freedesktop.Platform//26.08 \
-            org.freedesktop.Sdk//26.08 \
-            org.electronjs.Electron2.BaseApp//26.08 \
-            org.freedesktop.Platform//25.08 \
-            org.freedesktop.Sdk//25.08 \
-            org.electronjs.Electron2.BaseApp//25.08
-          flatpak list --user --columns=ref,size
+          test/src/linux/flatpak-docker.sh sh -c '
+            flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo &&
+            flatpak install --user -y --noninteractive flathub "$@" &&
+            flatpak update --user -y --noninteractive "$@" &&
+            flatpak list --user --columns=ref,size' sh $FLATPAK_REFS
 
+      # The suite fails fast here if bubblewrap cannot create namespaces, rather than skipping itself
       - name: Test flatpak
-        run: pnpm ci:test
+        run: test/src/linux/flatpak-docker.sh sh -c 'bwrap --ro-bind / / true && pnpm ci:test'
         env:
           TEST_FILES: flatpak,blackboxInstallTest
-          VITEST_SMART_CACHE_FILE: ${{ github.workspace }}/test/vitest-scripts/vitest-config/_vitest-smart-cache.json
+          VITEST_SMART_CACHE_FILE: ./test/vitest-scripts/vitest-config/_vitest-smart-cache.json
           RESET_VITEST_SHARD_CACHE: ${{ inputs.reset-vitest-smart-cache }}
 
       - name: Upload test artifacts
         if: always()
         uses: $/.github/actions/upload-test-artifacts
         with:
-          name: flatpak-${{ matrix.runner }}
+          name: flatpak
 
   test-e2e:
     name: Test e2e Auto Updater Linux

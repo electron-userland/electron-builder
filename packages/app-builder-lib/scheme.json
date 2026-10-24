@@ -10100,6 +10100,20 @@
       ],
       "description": "macOS PKG flat-package installer options."
     },
+    "pkgDistributionCreated": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "Called after the `distribution.xml` of a macOS `pkg` installer has been written (synthesized by\n`productbuild --synthesize`, then customized from {@link PkgOptions}) but before `productbuild` builds the\ninstaller from it.\n\nThe hook receives the path to the distribution file as a string. Edit it in place or overwrite it to\ncustomize the installer beyond {@link PkgOptions} (for example, its `<title>`)."
+    },
     "portable": {
       "anyOf": [
         {

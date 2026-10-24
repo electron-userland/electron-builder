@@ -114,7 +114,7 @@ describe.heavy.ifLinux("linux install", optionsForInstall, () => {
   })
 
   // The installed app runs in its sandbox, which needs a bubblewrap that can create namespaces. The docker images of the
-  // tests above cannot provide that, so this runs where flatpak can run: the native flatpak job in CI.
+  // tests above cannot provide that, so this runs where flatpak can run: the "Test Flatpak" job in CI.
   for (const arch of ["x64", "arm64"] as NodeJS.Architecture[]) {
     test.ifEnv(arch === process.arch && canRunFlatpak())(`flatpak - ${arch}`, async context => {
       await runInstallTest(context, "flatpak", archFromString(arch), {})
