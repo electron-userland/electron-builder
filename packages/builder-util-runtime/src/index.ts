@@ -48,10 +48,24 @@ export {
 } from "./publishOptions.js"
 export { retry, sleep } from "./retry.js"
 export { parseDn } from "./rfc2253Parser.js"
-export { BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo, UpdateFileInfo, UpdateInfo, UpdateManifestSignature, WindowsUpdateInfo } from "./updateInfo.js"
+export {
+  BlockMapDataHolder,
+  PackageFileInfo,
+  ReleaseNoteInfo,
+  UpdateFileInfo,
+  UpdateInfo,
+  UpdateManifestSignature,
+  UpdateManifestSignatureFormat,
+  WindowsUpdateInfo,
+} from "./updateInfo.js"
 export {
   canonicalizeForSigning,
+  canonicalizeForSigningV2,
+  CanonicalizationResult,
   collectManifestSignatures,
+  EBUM1_MANIFEST_FIELDS,
+  findFieldsOutsideEbum1,
+  ManifestSignatureCandidate,
   computeUpdateManifestKeyId,
   createManifestSignatureEntry,
   normalizePublicKeyList,
@@ -60,7 +74,10 @@ export {
   validateSignedManifestShape,
   verifyManifestSignature,
   verifyManifestSignatures,
+  ManifestVerificationResult,
   UPDATE_MANIFEST_SIGNATURE_VERSION,
+  UPDATE_MANIFEST_SIGNATURE_VERSION_2,
+  UPDATE_MANIFEST_UNSIGNED_FIELDS,
 } from "./updateManifestSignature.js"
 export { UUID } from "./uuid.js"
 export { parseXml, XElement } from "./xml.js"

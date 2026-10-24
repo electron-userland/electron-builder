@@ -96,30 +96,44 @@ export interface UpdateInfo {
   readonly minimumSystemVersion?: string
 
   /**
-   * Base64-encoded Ed25519 signature over the manifest's integrity-critical fields, populated at
-   * publish time when update manifest signing is enabled. Verified by electron-updater against the
-   * configured `updateManifestPublicKey` before any download starts. See `canonicalizeForSigning`.
+   * Base64-encoded Ed25519 signature over the manifest's integrity-critical fields (the `EBUM1` payload),
+   * populated at publish time when update manifest signing is enabled. Verified by electron-updater against
+   * the configured `updateManifestPublicKey` before any download starts. See `canonicalizeForSigning`.
    *
-   * Always the signature of the *first* configured signing key; `signatures` carries the same value
-   * (tagged with its key id) plus one entry per additional signing key. Kept so updaters that only know
-   * this single-signature form keep verifying.
+   * Always the `EBUM1` signature of the *first* configured signing key; `signatures` carries the same value
+   * (tagged with its key id) plus the other entries. Kept so updaters that only know this single-signature
+   * form keep verifying.
    */
   readonly signature?: string
 
   /**
-   * One Ed25519 signature per signing key the manifest was signed with, each tagged with the id of the
-   * key that produced it (see `computeUpdateManifestKeyId`). All entries sign the same canonical payload.
-   * A manifest carrying several entries is "dual-signed": an install verifies it as long as *any* of its
-   * trusted keys matches *any* entry, which is what makes key rotation possible without a flag day.
+   * The manifest's Ed25519 signatures, each tagged with the id of the key that produced it (see
+   * `computeUpdateManifestKeyId`) and the payload `format` it signs. electron-builder writes one `EBUM1` entry
+   * per signing key, then one `EBUM2` entry per signing key. A manifest carrying entries from several keys is
+   * "dual-signed": an install verifies it as long as *any* of its trusted keys matches *any* entry, which is what
+   * makes key rotation possible without a flag day.
    */
   readonly signatures?: Array<UpdateManifestSignature>
 }
 
+/**
+ * Payload format of a manifest signature:
+ * - `EBUM1` — a fixed list of integrity-critical fields (see `canonicalizeForSigning`); electron-updater 7.0.0-alpha.8 and later.
+ * - `EBUM2` — every top-level field except `signature`, `signatures`, `releaseName` and `releaseNotes`, as canonical JSON
+ *   (see `canonicalizeForSigningV2`); electron-updater 7.0.0-alpha.12 and later.
+ */
+export type UpdateManifestSignatureFormat = "EBUM1" | "EBUM2"
+
 export interface UpdateManifestSignature {
   /** Lowercase hex SHA-256 of the SPKI DER encoding of the signing key's public half. */
   readonly keyId: string
-  /** Base64-encoded Ed25519 signature over the canonical manifest payload. */
+  /** Base64-encoded Ed25519 signature over the canonical manifest payload of `format`. */
   readonly signature: string
+  /**
+   * The payload this signature covers. Absent means `EBUM1`, the only format before `EBUM2` existed. Updaters that
+   * predate `format` ignore it and simply fail to verify an `EBUM2` entry, so they fall through to the `EBUM1` entries.
+   */
+  readonly format?: UpdateManifestSignatureFormat
 }
 
 export interface WindowsUpdateInfo extends UpdateInfo {

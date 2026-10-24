@@ -1,51 +1,115 @@
 import { createPrivateKey, createPublicKey, generateKeyPairSync, KeyObject, sign as cryptoSign } from "crypto"
 import { readFileSync } from "fs"
+import { load } from "js-yaml"
 import * as path from "path"
 import {
   canonicalizeForSigning,
+  canonicalizeForSigningV2,
   computeUpdateManifestKeyId,
   createManifestSignatureEntry,
   splitPemBlocks,
   UpdateInfo,
   UpdateManifestSignature,
+  UpdateManifestSignatureFormat,
+  UPDATE_MANIFEST_SIGNATURE_VERSION,
+  UPDATE_MANIFEST_SIGNATURE_VERSION_2,
   validateSignedManifestShape,
 } from "builder-util-runtime"
 import { decodeStrictBase64 } from "./cscLink.js"
-import { InvalidConfigurationError } from "./util.js"
+import { InvalidConfigurationError, serializeToYaml } from "./util.js"
+
+/** `info` without the signature fields, which no signed payload covers. */
+function withoutSignatures(info: UpdateInfo): UpdateInfo {
+  const { signature: _signature, signatures: _signatures, ...rest } = info
+  return rest
+}
 
 /**
- * Build-time counterpart to `verifyManifestSignature`. Lives in builder-util (never bundled into a
- * shipped app) because it handles the private key. Produces the base64 Ed25519 signature embedded as
- * `UpdateInfo.signature`, computed over the same canonical payload the runtime verifier reconstructs.
- * Throws when the manifest does not have the shape the verifier requires of a signed manifest
- * (`validateSignedManifestShape`), so a build never publishes a signed manifest the updater would refuse.
+ * The `EBUM2` payload of `info` as electron-updater will compute it: the manifest is serialized to YAML exactly as it is
+ * written to `latest*.yml` and parsed back with js-yaml, so the signature covers what the updater reads rather than the
+ * in-memory object (a `Date` or `undefined` cannot slip through). Throws when the parsed manifest has no canonical form.
  */
-export function signUpdateManifest(info: UpdateInfo, privateKey: string | KeyObject): string {
+function computeEbum2Payload(info: UpdateInfo): string {
+  const canonical = canonicalizeForSigningV2(load(serializeToYaml(withoutSignatures(info), false, true)))
+  if (!canonical.ok) {
+    throw new Error(`Cannot sign update manifest for version ${info.version}: ${canonical.reason}`)
+  }
+  return canonical.payload
+}
+
+function toPrivateKey(privateKey: string | KeyObject): KeyObject {
   const key = typeof privateKey === "string" ? parsePrivateKey(privateKey) : privateKey
   if (key.asymmetricKeyType !== "ed25519") {
     throw new Error(`Update manifest signing key must be Ed25519, got: ${key.asymmetricKeyType}`)
   }
+  return key
+}
+
+function assertSignableShape(info: UpdateInfo): void {
   const shapeProblem = validateSignedManifestShape(info)
   if (shapeProblem != null) {
     throw new Error(`Cannot sign update manifest for version ${info.version}: ${shapeProblem} (the updater would reject it)`)
   }
-  const data = Buffer.from(canonicalizeForSigning(info), "utf8")
-  return cryptoSign(null, data, key).toString("base64")
 }
 
 /**
- * Signs the manifest with every given key and returns one `signatures` entry per key, in order, each
- * tagged with the id of the key that produced it. `UpdateInfo.signature` is the first entry's signature.
+ * Build-time counterpart to `verifyManifestSignature`. Lives in builder-util (never bundled into a
+ * shipped app) because it handles the private key. Produces the base64 Ed25519 signature of `info` in the
+ * given payload `format` (`EBUM1` by default, the format of the legacy single `UpdateInfo.signature`),
+ * computed over the same canonical payload the runtime verifier reconstructs.
+ * Throws when the manifest does not have the shape the verifier requires of a signed manifest
+ * (`validateSignedManifestShape`), so a build never publishes a signed manifest the updater would refuse.
+ */
+export function signUpdateManifest(info: UpdateInfo, privateKey: string | KeyObject, format: UpdateManifestSignatureFormat = UPDATE_MANIFEST_SIGNATURE_VERSION): string {
+  const key = toPrivateKey(privateKey)
+  assertSignableShape(info)
+  const payload = format === UPDATE_MANIFEST_SIGNATURE_VERSION_2 ? computeEbum2Payload(info) : canonicalizeForSigning(info)
+  return cryptoSign(null, Buffer.from(payload, "utf8"), key).toString("base64")
+}
+
+/**
+ * Signs the manifest with every given key in both payload formats and returns the `signatures` entries: one `EBUM1`
+ * entry per key, in order, then one `EBUM2` entry per key, in order, each tagged with the id of the key that produced it
+ * and its `format`. `UpdateInfo.signature` is the first entry's signature (the first key's `EBUM1` signature).
+ *
+ * The `EBUM1` entries keep electron-updater 7.0.0-alpha.8 to alpha.11 verifying: they do not know `format`, try the
+ * `EBUM2` entries as `EBUM1`, fail, and verify the `EBUM1` entry of the same key. Newer updaters prefer `EBUM2`.
  * Throws when `privateKeys` is empty — callers decide whether an unsigned manifest is acceptable.
  */
 export function createUpdateManifestSignatures(info: UpdateInfo, privateKeys: Array<string | KeyObject>): Array<UpdateManifestSignature> {
   if (privateKeys.length === 0) {
     throw new Error("Cannot sign update manifest: no signing key provided")
   }
-  return privateKeys.map(privateKey => {
-    const key = typeof privateKey === "string" ? parsePrivateKey(privateKey) : privateKey
-    return createManifestSignatureEntry(key, signUpdateManifest(info, key))
-  })
+  assertSignableShape(info)
+  const keys = privateKeys.map(toPrivateKey)
+  const payloads: Array<[UpdateManifestSignatureFormat, Buffer]> = [
+    [UPDATE_MANIFEST_SIGNATURE_VERSION, Buffer.from(canonicalizeForSigning(info), "utf8")],
+    [UPDATE_MANIFEST_SIGNATURE_VERSION_2, Buffer.from(computeEbum2Payload(info), "utf8")],
+  ]
+  return payloads.flatMap(([format, data]) => keys.map(key => createManifestSignatureEntry(key, cryptoSign(null, data, key).toString("base64"), format)))
+}
+
+/**
+ * Signs `info` with every key (see {@link createUpdateManifestSignatures}) and returns the YAML to write as `latest*.yml`.
+ * Before returning, the YAML is parsed back the way electron-updater parses it and both canonical payloads are recomputed
+ * from that parse: if either differs from what was signed, the build fails here instead of publishing a manifest that
+ * installs would refuse.
+ */
+export function serializeSignedUpdateManifest(info: UpdateInfo, privateKeys: Array<string | KeyObject>): string {
+  const unsigned = withoutSignatures(info)
+  const signatures = createUpdateManifestSignatures(unsigned, privateKeys)
+  const yaml = serializeToYaml({ ...unsigned, signature: signatures[0].signature, signatures }, false, true)
+
+  const published = load(yaml)
+  const ebum2 = canonicalizeForSigningV2(published)
+  if (!ebum2.ok || ebum2.payload !== computeEbum2Payload(unsigned)) {
+    throw new Error(`Update manifest for version ${info.version} does not read back as it was signed (EBUM2)${ebum2.ok ? "" : `: ${ebum2.reason}`}`)
+  }
+  // ebum2.ok implies a mapping; re-check the EBUM1 payload over the parse as well
+  if (typeof published !== "object" || published == null || canonicalizeForSigning(published as UpdateInfo) !== canonicalizeForSigning(unsigned)) {
+    throw new Error(`Update manifest for version ${info.version} does not read back as it was signed (EBUM1)`)
+  }
+  return yaml
 }
 
 /** Accepts an Ed25519 private key as a PEM string (PKCS#8) and returns a normalized KeyObject. */

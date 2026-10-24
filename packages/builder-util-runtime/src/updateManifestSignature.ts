@@ -1,14 +1,50 @@
 import { createHash, createPublicKey, KeyObject, verify as cryptoVerify } from "crypto"
-import { PackageFileInfo, UpdateFileInfo, UpdateInfo, UpdateManifestSignature, WindowsUpdateInfo } from "./updateInfo.js"
+import { PackageFileInfo, UpdateFileInfo, UpdateInfo, UpdateManifestSignature, UpdateManifestSignatureFormat, WindowsUpdateInfo } from "./updateInfo.js"
 
 /**
- * Version tag of the canonical signing format. Prefixed onto the signed payload so the
- * scheme can evolve without ambiguity: an updater that only understands `EBUM1` will refuse
- * a future `EBUM2` payload rather than silently mis-verify it.
+ * Version tag of the `EBUM1` canonical signing format (see {@link canonicalizeForSigning}). Prefixed onto the signed
+ * payload so the scheme can evolve without ambiguity: an `EBUM1` signature can never verify as an `EBUM2` one, or the
+ * other way round, because the two payloads start with different tags.
  *
  * EBUM = "electron-builder update manifest".
  */
 export const UPDATE_MANIFEST_SIGNATURE_VERSION = "EBUM1"
+
+/** Version tag of the `EBUM2` canonical signing format (see {@link canonicalizeForSigningV2}). */
+export const UPDATE_MANIFEST_SIGNATURE_VERSION_2 = "EBUM2"
+
+/**
+ * Top-level manifest fields that `EBUM2` does not sign. `signature`/`signatures` hold the signatures themselves, so
+ * signatures can be added or removed independently of each other. `releaseNotes` stays editable after publishing.
+ * `releaseName` is excluded because the GitHub and GitLab providers fill it in from the release when the manifest has
+ * none, so the updater could not tell a signed value from one it added itself. Everything else is signed, at every depth.
+ */
+export const UPDATE_MANIFEST_UNSIGNED_FIELDS: ReadonlyArray<string> = ["signature", "signatures", "releaseName", "releaseNotes"]
+
+/**
+ * Every top-level field an `EBUM1`-only electron-builder (27.0.0-alpha.9 to alpha.12) can write into `latest*.yml`.
+ * {@link verifyManifestSignatures} accepts an `EBUM1` signature only for a manifest whose top-level fields are all in this
+ * list. Stripping the `EBUM2` signatures from a dual-signed manifest therefore cannot smuggle a newer field past the
+ * updater on the strength of its `EBUM1` signature, which does not cover it: a field added after `EBUM2` is protected
+ * from the release that introduces it. Frozen — a new field must never be added here.
+ */
+export const EBUM1_MANIFEST_FIELDS: ReadonlyArray<string> = [
+  "version",
+  "files",
+  "path",
+  "sha512",
+  "sha2",
+  "packages",
+  "isAdminRightsRequired",
+  "releaseName",
+  "releaseNotes",
+  "releaseDate",
+  "stagingPercentage",
+  "minimumSystemVersion",
+  "vendor",
+  "signature",
+  "signatures",
+]
 
 /**
  * Encodes one field value for the canonical payload. Strings are JSON-quoted, which escapes `"`, `\`,
@@ -110,6 +146,166 @@ export function canonicalizeForSigning(info: UpdateInfo): string {
   }
 
   return lines.join("\n")
+}
+
+/** Returned by {@link canonicalizeForSigningV2}: the payload, or why the manifest cannot be canonicalized. */
+export type CanonicalizationResult = { readonly ok: true; readonly payload: string } | { readonly ok: false; readonly reason: string }
+
+/** Deeper than any manifest electron-builder writes; bounds the recursion on hostile input. */
+const MAX_CANONICAL_DEPTH = 32
+
+const UNSIGNED_FIELDS_V2 = new Set(UPDATE_MANIFEST_UNSIGNED_FIELDS)
+
+class CanonicalizationError extends Error {}
+
+/** A mapping as js-yaml parses it: a plain object (prototype `Object.prototype` or `null`), not an array. */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return false
+  }
+  const prototype: unknown = Object.getPrototypeOf(value)
+  return prototype === Object.prototype || prototype === null
+}
+
+function describeValue(value: unknown): string {
+  if (value === null) {
+    return "null"
+  }
+  if (typeof value !== "object") {
+    return typeof value
+  }
+  const tag = Object.prototype.toString.call(value)
+  return tag.substring(8, tag.length - 1)
+}
+
+/** Appends a key to a diagnostic path, e.g. `files[0].url` or `vendor["a b"]`. */
+function childPath(parent: string, key: string): string {
+  const segment = /^[A-Za-z_$][\w$]*$/.test(key) ? key : `[${JSON.stringify(key)}]`
+  if (parent.length === 0) {
+    return segment
+  }
+  return segment.startsWith("[") ? `${parent}${segment}` : `${parent}.${segment}`
+}
+
+function encodeCanonical(value: unknown, path: string, depth: number, seen: Set<object>): string {
+  if (value === null) {
+    return "null"
+  }
+  switch (typeof value) {
+    case "string":
+      // JSON.stringify escapes `"`, `\`, control characters and lone surrogates identically in every ES2019+ engine
+      return JSON.stringify(value)
+    case "boolean":
+      return value ? "true" : "false"
+    case "number":
+      if (!Number.isFinite(value)) {
+        throw new CanonicalizationError(`${path} is not a finite number`)
+      }
+      if (Object.is(value, -0)) {
+        throw new CanonicalizationError(`${path} is negative zero`)
+      }
+      // the ECMAScript Number-to-String algorithm: shortest round-tripping form, as RFC 8785 specifies
+      return JSON.stringify(value)
+    case "object":
+      break
+    default:
+      throw new CanonicalizationError(`${path} is ${describeValue(value)}, which has no canonical form`)
+  }
+
+  if (depth > MAX_CANONICAL_DEPTH) {
+    throw new CanonicalizationError(`${path} is nested deeper than ${MAX_CANONICAL_DEPTH} levels`)
+  }
+  // electron-builder writes manifests without YAML anchors/aliases (noRefs), so a value reached twice is an alias,
+  // and an alias can expand exponentially or form a cycle — refuse it rather than walk it
+  if (seen.has(value)) {
+    throw new CanonicalizationError(`${path} repeats an earlier value (a YAML alias), which a signed manifest cannot contain`)
+  }
+  seen.add(value)
+
+  if (Array.isArray(value)) {
+    if (Object.getPrototypeOf(value) !== Array.prototype) {
+      throw new CanonicalizationError(`${path} is ${describeValue(value)}, which has no canonical form`)
+    }
+    const items: Array<string> = []
+    for (let i = 0; i < value.length; i++) {
+      if (!Object.prototype.hasOwnProperty.call(value, i)) {
+        throw new CanonicalizationError(`${path}[${i}] is missing`)
+      }
+      items.push(encodeCanonical(value[i], `${path}[${i}]`, depth + 1, seen))
+    }
+    return `[${items.join(",")}]`
+  }
+
+  if (!isPlainObject(value)) {
+    // e.g. a Date from an unquoted YAML timestamp, or a Buffer from !!binary: the signer's and verifier's views of such
+    // a value are not guaranteed to agree, so it is refused instead of being converted
+    throw new CanonicalizationError(`${path} is ${describeValue(value)}, which has no canonical form (quote it in the YAML to make it a string)`)
+  }
+  return encodeCanonicalObject(value, path, depth, seen, false)
+}
+
+function encodeCanonicalObject(value: Record<string, unknown>, path: string, depth: number, seen: Set<object>, topLevel: boolean): string {
+  const members: Array<string> = []
+  // Array.prototype.sort without a comparator orders by UTF-16 code units, as RFC 8785 specifies
+  for (const key of Object.keys(value).sort()) {
+    if (topLevel && UNSIGNED_FIELDS_V2.has(key)) {
+      continue
+    }
+    const memberPath = childPath(path, key)
+    const member = value[key]
+    if (member === undefined) {
+      // YAML has no undefined; the signer serializes and re-parses before signing, so this is never produced
+      throw new CanonicalizationError(`${memberPath} is undefined`)
+    }
+    members.push(`${JSON.stringify(key)}:${encodeCanonical(member, memberPath, depth + 1, seen)}`)
+  }
+  return `{${members.join(",")}}`
+}
+
+/**
+ * Produces the exact byte string an `EBUM2` signature covers: the tag `EBUM2`, a newline, and the manifest as canonical
+ * JSON. Every top-level field is included except {@link UPDATE_MANIFEST_UNSIGNED_FIELDS} (`signature`, `signatures`,
+ * `releaseName`, `releaseNotes`), and everything below the top level is included in full. A field added to the manifest
+ * format later is therefore signed without any change to the verifier, and adding, removing or changing any covered
+ * field — including one this version of electron-updater does not know — invalidates the signature.
+ *
+ * Canonical JSON (the RFC 8785 / JCS serialization, restricted to the values listed here):
+ *   - object members sorted by key (UTF-16 code units), at every depth; no whitespace
+ *   - arrays in their original order
+ *   - strings and finite numbers as `JSON.stringify` writes them; `true`, `false`, `null`
+ *
+ * The signer and the verifier must canonicalize the same value. electron-builder serializes the manifest to YAML, parses
+ * it back with js-yaml and signs that, and electron-updater canonicalizes the manifest exactly as js-yaml parsed it, before
+ * any provider adds fields of its own. Values whose parsed form is not guaranteed to be the same on both sides are refused
+ * rather than guessed at: anything other than a plain mapping, array, string, finite number, boolean or null (an unquoted
+ * YAML timestamp becomes a `Date`, `!!binary` a `Buffer`), negative zero, `undefined`, a value reached twice (a YAML alias)
+ * and nesting deeper than 32 levels. electron-builder writes `releaseDate` as a quoted string, so it stays a string.
+ *
+ * Never throws: a manifest that cannot be canonicalized yields `{ ok: false, reason }`.
+ */
+export function canonicalizeForSigningV2(manifest: unknown): CanonicalizationResult {
+  if (!isPlainObject(manifest)) {
+    return { ok: false, reason: `the manifest is ${describeValue(manifest)}, not a mapping` }
+  }
+  try {
+    const seen = new Set<object>([manifest])
+    return { ok: true, payload: `${UPDATE_MANIFEST_SIGNATURE_VERSION_2}\n${encodeCanonicalObject(manifest, "", 0, seen, true)}` }
+  } catch (e: unknown) {
+    if (e instanceof CanonicalizationError) {
+      return { ok: false, reason: e.message }
+    }
+    // e.g. a stack overflow or a throwing getter on a hand-built object; never on a parsed manifest
+    return { ok: false, reason: `the manifest cannot be canonicalized: ${e instanceof Error ? e.message : String(e)}` }
+  }
+}
+
+/**
+ * Top-level fields of `info` that are not in {@link EBUM1_MANIFEST_FIELDS}, i.e. that an `EBUM1` signature does not vouch
+ * for and that no `EBUM1`-only electron-builder writes. Empty when an `EBUM1` signature may be accepted for the manifest.
+ */
+export function findFieldsOutsideEbum1(info: UpdateInfo): Array<string> {
+  const known = new Set(EBUM1_MANIFEST_FIELDS)
+  return Object.keys(info).filter(key => !known.has(key))
 }
 
 /** True when `value` contains an ASCII control character (U+0000-U+001F or U+007F). */
@@ -341,21 +537,35 @@ export function computeUpdateManifestKeyId(publicKey: string | KeyObject): strin
     .digest("hex")
 }
 
+/** One signature carried by a manifest, as a candidate for verification (see {@link collectManifestSignatures}). */
+export interface ManifestSignatureCandidate {
+  /** The id of the key that produced it, when the entry names one. */
+  readonly keyId?: string
+  readonly signature: string
+  /** The payload format the entry claims to sign: its `format` value, or `EBUM1` when it has none. May be a format this version does not know. */
+  readonly format: string
+}
+
 /**
  * Every signature carried by a manifest, as candidates for verification: the entries of
- * `info.signatures` (each tagged with the id of the key that produced it) plus the legacy
- * top-level `info.signature` (untagged) when it is set and not already present in the list.
- * Blank entries are dropped. An empty result means the manifest is unsigned.
+ * `info.signatures` (each tagged with the id of the key that produced it and the payload format it signs)
+ * plus the legacy top-level `info.signature` (untagged, `EBUM1`) when it is set and not already present in
+ * the list. Blank entries are dropped. An empty result means the manifest is unsigned.
  */
-export function collectManifestSignatures(info: UpdateInfo): Array<{ readonly keyId?: string; readonly signature: string }> {
-  const result: Array<{ readonly keyId?: string; readonly signature: string }> = []
-  for (const entry of info.signatures ?? []) {
+export function collectManifestSignatures(info: UpdateInfo): Array<ManifestSignatureCandidate> {
+  const result: Array<ManifestSignatureCandidate> = []
+  const entries: unknown = info.signatures
+  for (const entry of Array.isArray(entries) ? entries : []) {
     if (entry != null && typeof entry.signature === "string" && entry.signature.length > 0) {
-      result.push({ keyId: typeof entry.keyId === "string" && entry.keyId.length > 0 ? entry.keyId : undefined, signature: entry.signature })
+      result.push({
+        keyId: typeof entry.keyId === "string" && entry.keyId.length > 0 ? entry.keyId : undefined,
+        signature: entry.signature,
+        format: typeof entry.format === "string" && entry.format.length > 0 ? entry.format : UPDATE_MANIFEST_SIGNATURE_VERSION,
+      })
     }
   }
   if (typeof info.signature === "string" && info.signature.length > 0 && !result.some(it => it.signature === info.signature)) {
-    result.push({ signature: info.signature })
+    result.push({ signature: info.signature, format: UPDATE_MANIFEST_SIGNATURE_VERSION })
   }
   return result
 }
@@ -376,20 +586,61 @@ function verifySignatureBytes(data: Buffer, key: KeyObject, signature: string): 
   }
 }
 
+interface TrustedKey {
+  readonly key: KeyObject
+  readonly keyId: string
+}
+
+/**
+ * For each trusted key in order, tries the candidates tagged with that key's id first, then the untagged ones, so a
+ * stale or foreign `keyId` never prevents a legitimately signed manifest from verifying. Returns the id of the key that
+ * verified, or null.
+ */
+function findVerifyingKey(data: Buffer, trustedKeys: Array<TrustedKey>, candidates: Array<ManifestSignatureCandidate>): string | null {
+  for (const { key, keyId } of trustedKeys) {
+    const tagged = candidates.filter(it => it.keyId === keyId)
+    const untagged = candidates.filter(it => it.keyId == null)
+    for (const candidate of [...tagged, ...untagged]) {
+      if (verifySignatureBytes(data, key, candidate.signature)) {
+        return keyId
+      }
+    }
+  }
+  return null
+}
+
+/** Result of {@link verifyManifestSignatures}. */
+export interface ManifestVerificationResult {
+  readonly ok: boolean
+  /** The id of the trusted key that verified the manifest. */
+  readonly keyId?: string
+  /** The payload format of the signature that verified the manifest. */
+  readonly format?: UpdateManifestSignatureFormat
+  /** Why the manifest was refused before or apart from a plain signature mismatch, when it was. */
+  readonly reason?: string
+}
+
 /**
  * Verifies a manifest against a trust list of Ed25519 public keys. The manifest is accepted when ANY
  * trusted key validates ANY of the signatures it carries (see {@link collectManifestSignatures}); this is
  * what lets a release be dual-signed during key rotation and an install trust `[old, new]`.
  *
- * For each trusted key, signatures tagged with that key's {@link computeUpdateManifestKeyId} are tried
- * first, then untagged (legacy `signature`) entries — so a stale or foreign `keyId` never prevents a
- * legitimately signed manifest from verifying. Never throws on a bad signature; malformed *keys* still
- * throw, since that is a configuration error. Returns the id of the trusted key that verified, if any.
+ * Formats are tried in order of preference:
+ *   1. `EBUM2` entries, over {@link canonicalizeForSigningV2} — every field but the unsigned ones.
+ *   2. `EBUM1` entries (and the legacy `signature`), over {@link canonicalizeForSigning} — only when every top-level field
+ *      of the manifest is one an `EBUM1`-only electron-builder writes ({@link EBUM1_MANIFEST_FIELDS}). This keeps manifests
+ *      from 27.0.0-alpha.9 to alpha.12 verifying, while a field newer than `EBUM1` is only ever accepted under an `EBUM2`
+ *      signature, which covers it.
+ * Entries in a format this version does not know are skipped. Within a format, signatures tagged with a trusted key's
+ * {@link computeUpdateManifestKeyId} are tried first, then untagged entries. Never throws on a bad signature; malformed
+ * *keys* still throw, since that is a configuration error. Returns the id of the trusted key and the format that verified.
  *
- * Before any signature is tried the manifest must pass {@link validateSignedManifestShape}; a manifest that
- * does not is rejected with `reason` set, regardless of what it is signed with.
+ * `info` must be the manifest exactly as js-yaml parsed it: `EBUM2` covers every field, so a field a provider adds after
+ * parsing (a GitHub `tag`, say) would fail verification. Before any signature is tried the manifest must pass
+ * {@link validateSignedManifestShape}; a manifest that does not is rejected with `reason` set, regardless of what it is
+ * signed with.
  */
-export function verifyManifestSignatures(info: UpdateInfo, publicKeys: Array<string | KeyObject>): { ok: boolean; keyId?: string; reason?: string } {
+export function verifyManifestSignatures(info: UpdateInfo, publicKeys: Array<string | KeyObject>): ManifestVerificationResult {
   const candidates = collectManifestSignatures(info)
   if (candidates.length === 0 || publicKeys.length === 0) {
     return { ok: false }
@@ -401,24 +652,47 @@ export function verifyManifestSignatures(info: UpdateInfo, publicKeys: Array<str
   if (shapeProblem != null) {
     return { ok: false, reason: shapeProblem }
   }
-  const data = Buffer.from(canonicalizeForSigning(info), "utf8")
-  const seen = new Set<string>()
+  const trustedKeys: Array<TrustedKey> = []
   for (const publicKey of publicKeys) {
     const key = typeof publicKey === "string" ? parsePublicKey(publicKey) : publicKey
     const keyId = computeUpdateManifestKeyId(key)
-    if (seen.has(keyId)) {
-      continue
+    if (!trustedKeys.some(it => it.keyId === keyId)) {
+      trustedKeys.push({ key, keyId })
     }
-    seen.add(keyId)
-    const tagged = candidates.filter(it => it.keyId === keyId)
-    const untagged = candidates.filter(it => it.keyId == null)
-    for (const candidate of [...tagged, ...untagged]) {
-      if (verifySignatureBytes(data, key, candidate.signature)) {
-        return { ok: true, keyId }
+  }
+
+  const reasons: Array<string> = []
+  const ebum2 = candidates.filter(it => it.format === UPDATE_MANIFEST_SIGNATURE_VERSION_2)
+  if (ebum2.length > 0) {
+    const canonical = canonicalizeForSigningV2(info)
+    if (canonical.ok) {
+      const keyId = findVerifyingKey(Buffer.from(canonical.payload, "utf8"), trustedKeys, ebum2)
+      if (keyId != null) {
+        return { ok: true, keyId, format: UPDATE_MANIFEST_SIGNATURE_VERSION_2 }
+      }
+    } else {
+      reasons.push(`its EBUM2 payload cannot be computed: ${canonical.reason}`)
+    }
+  }
+
+  const ebum1 = candidates.filter(it => it.format === UPDATE_MANIFEST_SIGNATURE_VERSION)
+  if (ebum1.length > 0) {
+    const outside = findFieldsOutsideEbum1(info)
+    if (outside.length > 0) {
+      // only reported when no EBUM2 signature verified: an EBUM1 signature does not cover these fields
+      reasons.push(`${outside.map(it => JSON.stringify(it)).join(", ")} ${outside.length === 1 ? "is" : "are"} not covered by an EBUM1 signature, and no EBUM2 signature validates`)
+    } else {
+      const keyId = findVerifyingKey(Buffer.from(canonicalizeForSigning(info), "utf8"), trustedKeys, ebum1)
+      if (keyId != null) {
+        return { ok: true, keyId, format: UPDATE_MANIFEST_SIGNATURE_VERSION }
       }
     }
   }
-  return { ok: false }
+
+  if (ebum1.length === 0 && ebum2.length === 0) {
+    reasons.push(`it carries no signature in a supported format (${UPDATE_MANIFEST_SIGNATURE_VERSION_2}, ${UPDATE_MANIFEST_SIGNATURE_VERSION})`)
+  }
+  return reasons.length === 0 ? { ok: false } : { ok: false, reason: reasons.join("; ") }
 }
 
 /**
@@ -430,7 +704,11 @@ export function verifyManifestSignature(info: UpdateInfo, publicKey: string | Ke
   return verifyManifestSignatures(info, [publicKey]).ok
 }
 
-/** Builds the `signatures` entry for one key: the key's id next to its base64 signature. */
-export function createManifestSignatureEntry(publicKey: string | KeyObject, signature: string): UpdateManifestSignature {
-  return { keyId: computeUpdateManifestKeyId(publicKey), signature }
+/** Builds the `signatures` entry for one key: the key's id and the payload format next to its base64 signature. */
+export function createManifestSignatureEntry(
+  publicKey: string | KeyObject,
+  signature: string,
+  format: UpdateManifestSignatureFormat = UPDATE_MANIFEST_SIGNATURE_VERSION
+): UpdateManifestSignature {
+  return { keyId: computeUpdateManifestKeyId(publicKey), signature, format }
 }

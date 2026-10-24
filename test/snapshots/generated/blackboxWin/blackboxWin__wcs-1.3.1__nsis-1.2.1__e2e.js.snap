@@ -191,6 +191,12 @@ exports[`blackboxWin > windows > nsis - key rotation 1`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -237,10 +243,22 @@ exports[`blackboxWin > windows > nsis - key rotation 2`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
             "keyId": "@keyId",
             "signature": "@signature",
           },
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -287,6 +305,12 @@ exports[`blackboxWin > windows > nsis - key rotation 3`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -333,6 +357,12 @@ exports[`blackboxWin > windows > nsis - signed update manifest 1`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },
@@ -379,6 +409,12 @@ exports[`blackboxWin > windows > nsis - signed update manifest 2`] = `
         "signature": "@signature",
         "signatures": [
           {
+            "format": "EBUM1",
+            "keyId": "@keyId",
+            "signature": "@signature",
+          },
+          {
+            "format": "EBUM2",
             "keyId": "@keyId",
             "signature": "@signature",
           },

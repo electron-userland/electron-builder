@@ -23,7 +23,7 @@ export { RpmUpdater } from "./RpmUpdater.js"
 export { AppUpdater }
 export { NoOpLogger } from "./AppUpdater.js"
 
-export { Provider } from "./providers/Provider.js"
+export { carryUpdateManifestSource, parseUpdateInfo, Provider } from "./providers/Provider.js"
 
 export * from "./types.js"
 
