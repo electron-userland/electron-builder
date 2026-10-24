@@ -326,7 +326,7 @@ describe("migrateConfig — files patterns that name .pdb files", () => {
       'files patterns that name .pdb files detected: fileOptions.files "native/*.pdb", win.fileOptions.files "**/*.{node,pdb}". ' +
         "In v27 such a pattern ships the .pdb files it matches (v26 excluded .pdb files whatever files said, unless includePdb was true), also in configs that extend this one. " +
         'To keep them out, remove the pattern, or add a negation after it, such as "!native/*.pdb". ' +
-        "See https://www.electron.build/docs/migration/v27-breaking-changes#includepdb-fileoptionsexcludedexts"
+        "See https://www.electron.build/docs/migration/v27-config-changes#includepdb-fileoptionsexcludedexts"
     )
   })
 
@@ -988,16 +988,16 @@ describe("migrateConfig — nsis-web advisory", () => {
 describe("migrateConfig — updater advisories", () => {
   const advisoriesOf = (config: Record<string, any>) => migrateConfig(config).advisories
 
-  test.each<[string, string, string]>([
-    ["NSIS_WEB_ADVISORY", NSIS_WEB_ADVISORY, "disablewebinstaller-defaults-to-true"],
-    ["NSIS_PER_MACHINE_UPDATE_ADVISORY", NSIS_PER_MACHINE_UPDATE_ADVISORY, "nsis-per-machine-builds-set-isadminrightsrequired"],
-    ["WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY", WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, "windows-publishername-is-validated-against-the-signing-certificate"],
-    ["FEED_QUERY_ADVISORY", FEED_QUERY_ADVISORY, "update-credentials-stay-on-the-feeds-origin"],
-    ["WIN_PUBLISHER_NAME_DN_ADVISORY", WIN_PUBLISHER_NAME_DN_ADVISORY, "windows-publishername-must-be-a-distinguished-name"],
-    ["WIN_MISSING_PUBLISHER_NAME_ADVISORY", WIN_MISSING_PUBLISHER_NAME_ADVISORY, "missing-publishername-fails-update-verification"],
-  ])("%s links its v27 breaking-changes section", (_name, advisory, anchor) => {
-    expect(advisory.endsWith(` See https://www.electron.build/docs/migration/v27-breaking-changes#${anchor}`)).toBe(true)
-    const doc = readFileSync(path.join(import.meta.dirname, "../../website/docs/migration/v27-breaking-changes.md"), "utf8")
+  test.each<[string, string, string, string]>([
+    ["NSIS_WEB_ADVISORY", NSIS_WEB_ADVISORY, "v27-runtime-changes", "disablewebinstaller-defaults-to-true"],
+    ["NSIS_PER_MACHINE_UPDATE_ADVISORY", NSIS_PER_MACHINE_UPDATE_ADVISORY, "v27-runtime-changes", "nsis-per-machine-builds-set-isadminrightsrequired"],
+    ["WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY", WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, "v27-build-changes", "windows-publishername-is-validated-against-the-signing-certificate"],
+    ["FEED_QUERY_ADVISORY", FEED_QUERY_ADVISORY, "v27-runtime-changes", "update-credentials-stay-on-the-feeds-origin"],
+    ["WIN_PUBLISHER_NAME_DN_ADVISORY", WIN_PUBLISHER_NAME_DN_ADVISORY, "v27-build-changes", "windows-publishername-must-be-a-distinguished-name"],
+    ["WIN_MISSING_PUBLISHER_NAME_ADVISORY", WIN_MISSING_PUBLISHER_NAME_ADVISORY, "v27-build-changes", "missing-publishername-fails-update-verification"],
+  ])("%s links its v27 breaking-changes section", (_name, advisory, page, anchor) => {
+    expect(advisory.endsWith(` See https://www.electron.build/docs/migration/${page}#${anchor}`)).toBe(true)
+    const doc = readFileSync(path.join(import.meta.dirname, `../../website/docs/migration/${page}.md`), "utf8")
     expect(doc.includes(`(#${anchor})`) || doc.includes(`{#${anchor}}`)).toBe(true)
   })
 
@@ -1115,7 +1115,7 @@ describe("migrateConfig — updater advisories", () => {
       expect(advisoriesOf(config)).toEqual([WIN_MISSING_PUBLISHER_NAME_ADVISORY])
       expect(WIN_MISSING_PUBLISHER_NAME_ADVISORY).toContain("win.verifyUpdateCodeSignature: false")
       expect(WIN_MISSING_PUBLISHER_NAME_ADVISORY).toContain("publisherName: null no longer opts out")
-      expect(WIN_MISSING_PUBLISHER_NAME_ADVISORY.endsWith("v27-breaking-changes#missing-publishername-fails-update-verification")).toBe(true)
+      expect(WIN_MISSING_PUBLISHER_NAME_ADVISORY.endsWith("v27-build-changes#missing-publishername-fails-update-verification")).toBe(true)
     })
 
     test.each<[string, Record<string, any>]>([

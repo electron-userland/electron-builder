@@ -279,7 +279,7 @@ export class LinuxTargetHelper {
           { desktopName: resolved, previousFileName: `${fallback}.desktop`, fileName: `${resolved}.desktop` },
           "the installed .desktop filename is now always derived from `desktopName` (electron-builder v26 only did this with `linux.syncDesktopName: true`, which defaulted to off). " +
             "Update any packaging, AppArmor, or MIME tooling that referenced the old filename. " +
-            "See https://www.electron.build/docs/migration/v27-breaking-changes#linuxsyncdesktopname-always-synced"
+            "See https://www.electron.build/docs/migration/v27-config-changes#linuxsyncdesktopname-always-synced"
         )
     }
     return resolved

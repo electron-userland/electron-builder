@@ -69,7 +69,7 @@ describe("WindowsSignAzureManager.computedPublisherName", () => {
   test.for(["ACME Corp", "CN="])("throws synchronously when publisherName %j is not a DN (electron-builder v27)", (publisherName, { expect }) => {
     const manager = new WindowsSignAzureManager(makePackager({ ...baseAzureOpts, publisherName }))
     expect(() => manager.computedPublisherName.value).toThrow(/is not a distinguished name\. Since electron-builder v27/)
-    expect(() => manager.computedPublisherName.value).toThrow(/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name$/)
+    expect(() => manager.computedPublisherName.value).toThrow(/v27-build-changes#windows-publishername-must-be-a-distinguished-name$/)
   })
 
   test("throws synchronously when publisherName is empty", ({ expect }) => {
