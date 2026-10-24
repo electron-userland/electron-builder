@@ -4,6 +4,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../../core.js"
 import { LinuxPackager } from "../../../linuxPackager.js"
+import { waitForPackWork } from "../../../platformPackager.js"
 import { AppImageOptions } from "../../../options/linuxOptions.js"
 import { getPackAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../../publish/PublishManager.js"
 import { getNotLocalizedLicenseFile } from "../../../util/license.js"
@@ -76,6 +77,9 @@ export default class AppImageTarget extends Target {
     ])
 
     if (publishConfig != null) {
+      // the only app-update.yml of a prepackaged app (afterPack, which writes it otherwise, does not run for one), written
+      // into the app dir that the zip/7z/tar.* of this pack may still be archiving
+      await waitForPackWork(packager, appOutDir, arch)
       await writeAppUpdateYaml(packager.getResourcesDir(appOutDir), publishConfig, appOutDir)
     }
 
