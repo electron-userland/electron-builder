@@ -6,8 +6,8 @@ import fsExtra from "fs-extra"
 import type { OutgoingHttpHeaders } from "http"
 import * as path from "path"
 import type { TmpDir } from "temp-file"
-import { describe, type ExpectStatic, test } from "vitest"
-import { blockMapOf, FakeElectronHttpExecutor, FakeNetAnswer, FakeNetSentRequest } from "../helpers/updaterTestUtil.js"
+import { describe, type ExpectStatic, test, vi } from "vitest"
+import { blockMapOf, FakeElectronHttpExecutor, FakeNetAnswer, FakeNetRequest, FakeNetSentRequest } from "../helpers/updaterTestUtil.js"
 
 // Differential downloads make `redirect: "manual"` Electron net requests, which go to a fake net request here (our Node test
 // server never redirects). Like ElectronHttpExecutor.download, a redirect must not send the credential headers to another origin.
@@ -261,6 +261,27 @@ describe("differential download redirects", () => {
     for (const { url, headers } of sent) {
       expectCredentials(expect, headers, url === FILE_URL)
     }
+  })
+
+  test("a non-multipart answer from a redirect target aborts the request that got it, not the one that was redirected", async ({ tmpDir, expect }) => {
+    const c: DownloadCase = { redirects: { [FILE_URL]: PRE_SIGNED_URL }, isUseMultipleRangeRequest: true, multiRangeStatus: 501 }
+    const executor = createExecutor(c, NEW)
+    const createRequest = vi.spyOn(executor, "createRequest")
+    const { sent, downloaded } = await download(tmpDir, c, executor)
+
+    expect(downloaded).toEqual(NEW)
+    // with manual redirects, every request is sent once, so `sent` and the created requests line up
+    const aborted = createRequest.mock.results.map(it => (it.value as FakeNetRequest).aborted)
+    expect(sent.map((it, index) => [it.url, it.headers.range, aborted[index]])).toEqual([
+      // aborted by the redirect handler
+      [FILE_URL, "bytes=0-15, 32-47", true],
+      // aborted by the multi-range downloader for the 501 answer
+      [PRE_SIGNED_URL, "bytes=0-15, 32-47", true],
+      // the retry with one range per request
+      [FILE_URL, "bytes=0-15", true],
+      [PRE_SIGNED_URL, "bytes=0-15", false],
+      [PRE_SIGNED_URL, "bytes=32-47", false],
+    ])
   })
 
   test("a redirect loop fails the download after 10 redirects", async ({ tmpDir, expect }) => {
