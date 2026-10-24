@@ -26,27 +26,32 @@ export class VmManager {
     return file
   }
 
-  // Absolute paths of Windows PowerShell and PowerShell 7 on the machine this manager runs commands on
-  protected windowsPowerShellPaths(): { powershell: string; pwsh: { path: string } | { error: string } } {
-    return { powershell: windowsPowerShellPath(), pwsh: windowsPwshPath() }
+  // Absolute path of Windows PowerShell on the machine this manager runs commands on, and of PowerShell 7 at its fixed
+  // location — or, as a sentence, why PowerShell 7 is not used there
+  protected windowsPowerShellPaths(): { powershell: string; pwsh: { path: string } | { unavailable: string } } {
+    const pwsh = windowsPwshPath()
+    return {
+      powershell: windowsPowerShellPath(),
+      pwsh: "path" in pwsh ? pwsh : { unavailable: `PowerShell 7 is used only from %ProgramFiles%\\PowerShell\\7\\pwsh.exe, and ${pwsh.error}` },
+    }
   }
 
   // PowerShell 7 when it is installed at its fixed location, else Windows PowerShell — both by absolute path, never looked up on PATH
   readonly powershellCommand = new Lazy(async () => {
     const { powershell, pwsh } = this.windowsPowerShellPaths()
+    let reason: string
     if ("path" in pwsh) {
       try {
         await this.exec(pwsh.path, ["-NoProfile", "-NonInteractive", "-Command", "exit 0"])
         log.info({ path: pwsh.path }, "using PowerShell 7")
         return pwsh.path
       } catch {
-        // not installed at its fixed location
+        reason = `PowerShell 7 is used only from ${pwsh.path}, the install location of its MSI installer, where it was not found`
       }
+    } else {
+      reason = pwsh.unavailable
     }
-    log.warn(
-      { path: powershell, reason: "path" in pwsh ? `not found at ${pwsh.path}` : pwsh.error },
-      "PowerShell 7 (pwsh.exe) is used only from %ProgramFiles%\\PowerShell\\7\\pwsh.exe, the install location of its MSI installer; using Windows PowerShell"
-    )
+    log.warn({ path: powershell }, `${reason}; using Windows PowerShell`)
     return powershell
   })
 }

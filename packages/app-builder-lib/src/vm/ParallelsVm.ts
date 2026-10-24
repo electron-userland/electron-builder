@@ -126,9 +126,13 @@ export class ParallelsVmManager extends VmManager {
     return startPromise
   }
 
-  // The guest's environment is not visible from the host, so the locations of a default Windows installation are used
+  // The guest's environment is not visible from the host, so the location of a default Windows installation is used. PowerShell 7
+  // is not: `prlctl exec` passes its arguments to the guest without quoting, so a path containing a space cannot be started.
   protected windowsPowerShellPaths() {
-    return { powershell: PARALLELS_GUEST_WINDOWS_POWERSHELL, pwsh: { path: PARALLELS_GUEST_PWSH } }
+    return {
+      powershell: PARALLELS_GUEST_WINDOWS_POWERSHELL,
+      pwsh: { unavailable: `PowerShell 7 (${PARALLELS_GUEST_PWSH}) is not used in a Parallels VM, because prlctl exec cannot start a path that contains a space` },
+    }
   }
 
   toVmFile(file: string): string {
