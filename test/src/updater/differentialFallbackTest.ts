@@ -169,9 +169,17 @@ describe("differential download failures fall back to a verified full download, 
     updater.forceDevUpdateConfig = true
     updater.autoDownload = false
     const updateConfigPath = path.join(root, "app-update.yml")
+    // the test installers are unsigned bytes: opt out of the Authenticode check (#10380 fails closed without a publisherName),
+    // these tests are about the differential download, not the signature
     await fsExtra.outputFile(
       updateConfigPath,
-      serializeToYaml({ provider: "generic", url: feedUrl, useMultipleRangeRequest: setup.multiRange !== false, updaterCacheDirName: "cache" })
+      serializeToYaml({
+        provider: "generic",
+        url: feedUrl,
+        useMultipleRangeRequest: setup.multiRange !== false,
+        updaterCacheDirName: "cache",
+        verifyUpdateCodeSignature: false,
+      })
     )
     updater.updateConfigPath = updateConfigPath
     const cacheDir = path.join(root, "cache")

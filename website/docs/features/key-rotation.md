@@ -132,6 +132,7 @@ An attacker holding a private key that installs still trust can produce a `lates
 
   - **Build without a publish policy.** The requirement only warns there, and electron-builder writes the unsigned `latest*.yml` locally; your step signs it and publishes the artifacts and the manifest.
   - **Keep publishing, with `publishAutoUpdate: false` on every publish provider.** electron-builder uploads the artifacts and embeds the `publicKey`, but writes no `latest*.yml` at all, so your step has to generate the manifest as well as sign and upload it.
+- **`allowCatalogSignature`** (written for `win.allowCatalogSignature: true`) is covered by the signature too: turning it on or off for a published release means signing `latest.yml` again or republishing it.
 - **Pre-signed download URLs** (`files[].url`, `files[].blockMapUrl`, `packages.<arch>.path`) are covered by the signature, so a step that writes them into `latest*.yml` has to run before the manifest is signed — or sign it again afterwards, which needs the private key in that step. A server that mints them per request cannot serve a signed manifest.
 - Use one key per app (or per release channel if channels are operated by different teams). Sharing a key across unrelated apps means one compromise affects all of them.
 
@@ -141,18 +142,18 @@ Two things happen when a Windows certificate changes: the OS and SmartScreen see
 
 ### How the updater checks the certificate
 
-When `win.verifyUpdateCodeSignature` is `true` (the default), electron-builder writes the resolved publisher name into `app-update.yml` as `publisherName`. It is either what you configured in `win.sign.publisherName` (a string or an array) or, when not configured, the Common Name of the signing certificate. When electron-builder cannot read the signing certificate (a custom `sign` hook without a certificate, or a certificate without a CN), the build fails unless `publisherName` is set. At update time the NSIS updater reads that value and runs `Get-AuthenticodeSignature` on the downloaded installer:
+When `win.verifyUpdateCodeSignature` is `true` (the default), electron-builder writes the resolved publisher name into `app-update.yml` as `publisherName`. It is either what you configured in `win.sign.publisherName` (a string or an array of distinguished names) or, when not configured, `CN=<common name>` of the signing certificate (quoted the way Windows quotes it in the subject). When electron-builder cannot read the signing certificate (a custom `sign` hook, a certificate without a CN, or no certificate at all), the build fails unless `publisherName` is set. At update time the NSIS updater reads that value and runs `Get-AuthenticodeSignature` on the downloaded installer:
 
-- The installer must carry a **valid** Authenticode signature.
-- The signer's Subject is compared against **each** configured publisher name. A full Distinguished Name (`CN=..., O=..., C=...`) matches when every component you listed equals the certificate's; a bare `CN=` value matches on the Common Name alone (with a warning asking you to configure the full DN).
-- If **any** entry matches, the update is installed. If none matches, the update is rejected.
-- If `app-update.yml` has no `publisherName` at all, verification is skipped with a deprecation warning (this fail-open behavior becomes fail-closed in v28).
+- The installer must carry a **valid** Authenticode signature embedded in it. A signature Windows reports from a security catalog is rejected, unless the app opts in with `autoUpdater.allowCatalogSignature = true`, or the release was built with `win.allowCatalogSignature: true` and its signed `latest.yml` verifies against a trusted key — the catalog signer must then match the publisher names below like an embedded one.
+- The signer's Subject is compared against **each** configured publisher name. A Distinguished Name (`CN=..., O=..., C=...`) matches when every component you listed equals the certificate's; a bare name never matches (since electron-updater 7, see [the v27 migration guide](../migration/v27-breaking-changes.md#windows-publishername-must-be-a-distinguished-name)).
+- If **any** entry matches, the update is installed. If none matches, the update is rejected — as it is when PowerShell cannot verify the installer (it cannot be started, fails, or does not finish within 60 s).
+- If `app-update.yml` has no `publisherName` at all, the update is rejected (since electron-updater 7, see [the v27 migration guide](../migration/v27-breaking-changes.md#missing-publishername-fails-update-verification)) — unless the app was built with `win.verifyUpdateCodeSignature: false`, which writes `verifyUpdateCodeSignature: false` into `app-update.yml` and skips the check. electron-builder fails a build that would write `app-update.yml` without `publisherName` while verification is enabled.
 
 The same check runs again before an [install-on-next-launch](./auto-update.md#install-on-next-launch-windowslinux) installer is executed.
 
 ### Renewal vs. rotation
 
-- **Renewal with the same Subject** (same CA, same legal entity, same DN): the embedded publisher name still matches and existing installs update without any special release. Verify the DN is byte-for-byte identical: a changed `O=`, `L=`, or `C=` component is a rotation, not a renewal, if you configured a full DN.
+- **Renewal with the same Subject** (same CA, same legal entity, same DN): the embedded publisher name still matches and existing installs update without any special release. Without an explicit `publisherName`, the derived value is `CN=<common name>`, so only the CN has to stay the same: a renewed certificate with the same CN keeps updates working even when its other subject attributes change. If you configured a fuller DN, verify every component you listed is identical: a changed `O=`, `L=`, or `C=` component you configured is a rotation, not a renewal, and needs a release, signed with the old certificate, that lists both DNs before you switch.
 - **Rotation to a certificate with a different Subject** (new CA, company rename, moving to Azure Trusted Signing, switching from OV to EV): existing installs will reject installers signed with it until they have received a bridge release.
 
 ### Step by step
@@ -176,7 +177,7 @@ Installs that take this release accept updates signed by either certificate. Bec
 
 ### Build-time validation
 
-When `publisherName` is configured explicitly and electron-builder can read the signing certificate (a `.pfx`/`.p12` file, a Windows certificate-store entry, or an `.crt`/`.cer` file with a CN), it fails the build with `InvalidConfigurationError` if **none** of the configured names matches the certificate's subject. This catches a wrong `WIN_CSC_LINK` before it produces installers that every install would reject. An array containing both old and new names passes as long as one of them matches the certificate actually in use, so the bridge configuration above never trips it. The check is skipped for custom `sign` hooks and for Azure Trusted Signing (no local certificate to compare against). Setting `publisherName: null` opts out of embedding entirely.
+When `publisherName` is configured explicitly and electron-builder can read the signing certificate (a `.pfx`/`.p12` file, a Windows certificate-store entry, or an `.crt`/`.cer` file with a CN), it fails the build with `InvalidConfigurationError` if **none** of the configured names matches the certificate's subject. This catches a wrong `WIN_CSC_LINK` before it produces installers that every install would reject. An array containing both old and new names passes as long as one of them matches the certificate actually in use, so the bridge configuration above never trips it. The check is skipped for custom `sign` hooks and for Azure Trusted Signing (no local certificate to compare against). To opt out of update signature verification, set `win.verifyUpdateCodeSignature: false` (`publisherName: null` is no opt-out since v27).
 
 ### Notes per signing method
 
