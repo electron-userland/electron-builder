@@ -1,4 +1,6 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { Arch, AsyncTaskManager } from "builder-util"
+import { CancellationToken } from "builder-util-runtime"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows/src/SquirrelWindowsTarget"
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises"
 import { arch as osArch } from "os"
@@ -45,5 +47,38 @@ describe("SquirrelWindowsTarget.select7zipArch", () => {
     expect(await readFile(path.join(tmpDir, "7z.exe"), "utf8")).toBe("exe-only")
     // 7z.dll was never created — should still not exist
     await expect(readFile(path.join(tmpDir, "7z.dll"), "utf8")).rejects.toThrow()
+  })
+})
+
+describe("SquirrelWindowsTarget.build", () => {
+  test("waits for queued archive work of the same pack before writing the stub into appOutDir", async () => {
+    const events: Array<string> = []
+    let finishZip: () => void = () => {}
+    const zipTarget = { buildQueueManager: new AsyncTaskManager(new CancellationToken()) }
+    zipTarget.buildQueueManager.add(async () => {
+      await new Promise<void>(resolve => (finishZip = resolve))
+      events.push("zip done")
+    })
+
+    const t: any = Object.create(SquirrelWindowsTarget.prototype)
+    t.options = {}
+    t.outDir = "/out"
+    t.buildQueueManager = { add: vi.fn(() => events.push("installer queued")) }
+    t.packager = {
+      appInfo: { version: "1.0.0", name: "app" },
+      expandArtifactNamePattern: () => "Setup.exe",
+      emitArtifactBuildStarted: async () => {},
+      getPackTargets: () => [zipTarget, t],
+    }
+    t.computeEffectiveDistOptions = async () => ({ vendorDirectory: "/vendor" })
+    t.generateStubExecutableExe = vi.fn(async () => events.push("stub written"))
+
+    const build = t.build("/out/win-unpacked", Arch.x64)
+    await new Promise(resolve => setTimeout(resolve, 10))
+    expect(t.generateStubExecutableExe).not.toHaveBeenCalled()
+
+    finishZip()
+    await build
+    expect(events).toEqual(["zip done", "stub written", "installer queued"])
   })
 })

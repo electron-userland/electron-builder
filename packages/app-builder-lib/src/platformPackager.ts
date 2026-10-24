@@ -1182,6 +1182,15 @@ function capitalizeFirstLetter(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
+/**
+ * Waits for the work that the other targets of the pack from `appOutDir` queued in their `build()` (zip/7z archive
+ * `appOutDir` after `build()` returns), so `target` can then write into `appOutDir`.
+ */
+export async function waitForOtherPackTargets(packager: PlatformPackager<any>, target: Target, appOutDir: string, arch: Arch): Promise<void> {
+  const targets = packager.getPackTargets(appOutDir, arch) ?? []
+  await Promise.all(targets.filter(it => it !== target).flatMap(it => it.buildQueueManager.tasks))
+}
+
 function packKey(appOutDir: string, arch: Arch) {
   return `${Arch[arch]}:${appOutDir}`
 }
