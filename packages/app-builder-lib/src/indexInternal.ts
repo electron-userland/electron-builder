@@ -92,6 +92,8 @@ export {
   getCacheDirectoryInternal,
   resolveBuilderBinaryUrl,
 } from "./util/electronGet.js"
+export { verifyBuildOutput } from "./util/buildOutputVerifier.js"
+export type { VerificationResult, VerificationStatus, VerifyBuildOutputOptions } from "./util/buildOutputVerifier.js"
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"
 export { getLicenseAssets, getLicenseFiles } from "./util/license.js"
 export { parsePlistFile, PlistObject } from "./util/mac/plist.js"
