@@ -9,7 +9,8 @@ import { parseDn } from "./rfc2253Parser.js"
 // The in-box Windows PowerShell 5.1, by absolute path: a bare "powershell.exe" is searched for in the current directory before
 // PATH (libuv's search_path), so a powershell.exe planted next to a document the app was opened with could report any file as
 // validly signed. A 32-bit process is redirected to the 32-bit Windows PowerShell in SysWOW64, as it is for the bare name.
-function windowsPowerShellPath(): string {
+/** The in-box Windows PowerShell 5.1 of this machine by absolute path: `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`. */
+export function windowsPowerShellPath(): string {
   // process.env is case-insensitive on Windows
   const systemRoot = process.env.SystemRoot || process.env.windir
   // a relative or drive-relative value ("\Windows") would be resolved against the current directory or drive again
