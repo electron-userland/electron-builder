@@ -23,6 +23,7 @@ import { smarten } from "../../appInfo.js"
 import { Target } from "../../core.js"
 import * as errorMessages from "../../errorMessages.js"
 import { LinuxPackager } from "../../linuxPackager.js"
+import { waitForPackWork } from "../../platformPackager.js"
 import { DebOptions, LinuxTargetSpecificOptions } from "../../options/linuxOptions.js"
 import { ArtifactCreated } from "../../packagerApi.js"
 import { getPackAppUpdatePublishConfiguration, writeAppUpdateYaml } from "../../publish/PublishManager.js"
@@ -192,6 +193,8 @@ export default class FpmTarget extends Target {
           false /* in any case validation will be done on publish step */
         )
       : null
+    // app-update.yml, package-type and apparmor-profile are written into the app dir, which the zip/7z/tar.* of this pack may still be archiving
+    await waitForPackWork(packager, appOutDir, arch)
     if (publishConfig != null) {
       log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}`)
       await writeAppUpdateYaml(resourceDir, publishConfig, linuxDistType)
