@@ -5,7 +5,9 @@ import { Nullish } from "builder-util-runtime"
 import { createPrivateKey } from "crypto"
 import { open, rm, writeFile, type FileHandle } from "fs/promises"
 import * as path from "path"
+import { forceCodeSigningError, VERIFICATION_FAILED_ERROR_CODE } from "../../codeSign/forceCodeSigning.js"
 import { CertType, findIdentity, Identity, reportError } from "../../codeSign/mac/macCodeSign.js"
+import { checkInstallerPackageSignature, validateStapledTicket } from "../../codeSign/mac/macSignatureVerifier.js"
 import { SigningResult } from "../../codeSign/signResult.js"
 import type { MacPackager } from "../../macPackager.js"
 import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
@@ -289,7 +291,8 @@ export class MacTargetHelper {
 
   async buildSignOptions(
     appPath: string,
-    identity: Identity,
+    // null only for a custom signer without a keychain identity, which forceCodeSigning calls anyway (see MacPackager.sign)
+    identity: Identity | null,
     config: ElectronSignOptions | null | undefined,
     keychainFile: string | Nullish,
     arch: Arch,
@@ -505,6 +508,7 @@ export class MacTargetHelper {
     MacTargetHelper.assertSafePathForCommandUsage(artifactName, "artifact name")
     const artifactPath = path.resolve(outDir, artifactName)
     await this.packager.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
+    await this.verifyInstallerPackage(artifactPath)
     await this.packager.emitArtifactBuildCompleted({
       file: artifactPath,
       target: null,
@@ -649,14 +653,45 @@ export class MacTargetHelper {
     return undefined
   }
 
+  /** The error for a forceCodeSigning build that would skip notarization because no notarization credentials are set. */
+  static missingNotarizationCredentialsError(): InvalidConfigurationError {
+    return forceCodeSigningError(
+      "forceCodeSigning is enabled, but no notarization credentials are set, so the macOS app would not be notarized. " +
+        "Set APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER (recommended for CI), or APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD and APPLE_TEAM_ID, or APPLE_KEYCHAIN_PROFILE (with APPLE_KEYCHAIN); " +
+        "they must be set when the build starts. To skip notarization - for an ad-hoc or development-signed app, or one you notarize yourself, e.g. in an afterSign hook - set mac.notarize: false (the build then warns)."
+    )
+  }
+
+  /** Under forceCodeSigning, checks the signature of an installer package electron-builder signed (`pkgutil --check-signature`). */
+  async verifyInstallerPackage(pkg: string): Promise<void> {
+    if (!this.packager.forceCodeSigning) {
+      return
+    }
+    const problem = await checkInstallerPackageSignature(pkg)
+    if (problem != null) {
+      throw forceCodeSigningError(`forceCodeSigning is enabled, but the installer package ${log.filePath(pkg)} is not validly signed (${problem}).`, VERIFICATION_FAILED_ERROR_CODE)
+    }
+  }
+
   async notarizeIfProvided(appPath: string): Promise<void> {
     const notarizeOptions = this.packager.platformOptions.notarize
+    const forceCodeSigning = this.packager.forceCodeSigning
     if (notarizeOptions === false) {
-      log.info({ reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization")
+      if (forceCodeSigning) {
+        // an explicit opt-out is honored under forceCodeSigning - the app may be notarized in an afterSign hook - but not silently
+        log
+          .once("notarize-false-with-force-code-signing", this.packager)
+          .warn({ reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization although forceCodeSigning is enabled")
+      } else {
+        log.info({ reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization")
+      }
       return
     }
     const options = MacTargetHelper.getNotarizeOptions(appPath)
     if (!options) {
+      if (forceCodeSigning) {
+        throw MacTargetHelper.missingNotarizationCredentialsError()
+      }
       log.warn({ reason: "`notarize` options were unable to be generated" }, "skipped macOS notarization")
       return
     }
@@ -674,6 +709,17 @@ export class MacTargetHelper {
       }
     }
     log.info(null, "notarization successful")
+
+    // @electron/notarize staples the ticket but never validates it
+    if (forceCodeSigning) {
+      const problem = await validateStapledTicket(appPath)
+      if (problem != null) {
+        throw forceCodeSigningError(
+          `forceCodeSigning is enabled, but ${log.filePath(appPath)} was notarized and xcrun stapler validate rejects its stapled ticket (${problem}).`,
+          VERIFICATION_FAILED_ERROR_CODE
+        )
+      }
+    }
   }
 
   /**

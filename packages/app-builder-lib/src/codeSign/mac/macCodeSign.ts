@@ -10,6 +10,7 @@ import * as path from "path"
 import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity, isCscForPullRequest, isTravis } from "../../util/flags.js"
 import { importCertificate } from "../codesign.js"
+import { forceCodeSigningError } from "../forceCodeSigning.js"
 import { cacheDirectoryOverrideAllowed } from "../../util/electronGet.js"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
@@ -56,6 +57,28 @@ export function isSignAllowed(isPrintWarn = true): boolean {
   }
 
   return true
+}
+
+/**
+ * The error for a `forceCodeSigning` build that cannot sign `subject` here — the two cases {@link isSignAllowed} skips
+ * signing for: a host other than macOS, and a pull-request build without `CSC_FOR_PULL_REQUEST`. `null` when signing
+ * is possible. `overrideHint` is the `-c` option that turns `forceCodeSigning` off (see `forceCodeSigningOverrideHint`).
+ */
+export function macSigningUnavailableError(subject: string, overrideHint: string): InvalidConfigurationError | null {
+  if (process.platform !== "darwin") {
+    return forceCodeSigningError(
+      `forceCodeSigning is enabled, but ${subject} cannot be code signed or notarized on ${process.platform}: macOS code signing needs a macOS host. ` +
+        `Build the macOS targets on macOS, or pass ${overrideHint} to build them unsigned.`
+    )
+  }
+  if (isPullRequest() && !isCscForPullRequest()) {
+    return forceCodeSigningError(
+      `forceCodeSigning is enabled, but this is a pull-request build (GITHUB_BASE_REF, TRAVIS_PULL_REQUEST, CIRCLE_PULL_REQUEST, BITRISE_PULL_REQUEST or APPVEYOR_PULL_REQUEST_NUMBER is set), ` +
+        `where electron-builder does not sign ${subject}. Set CSC_FOR_PULL_REQUEST=true to sign pull-request builds (only if untrusted forks cannot open pull requests, since the build gets your signing credentials), ` +
+        `or pass ${overrideHint} for pull-request builds.`
+    )
+  }
+  return null
 }
 
 export async function reportError(isMas: boolean, certificateTypes: CertType[], qualifier: string | Nullish, keychainFile: string | Nullish, isForceCodeSigning: boolean) {
