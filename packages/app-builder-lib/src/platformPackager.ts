@@ -34,6 +34,7 @@ import type { UpdateManifestSigningOptions } from "./options/PlatformSpecificBui
 import type { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { AppInfo } from "./appInfo.js"
 import { isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
+import { FORCE_CODE_SIGNING_DOCS, forceCodeSigningOverrideHint } from "./codeSign/forceCodeSigning.js"
 import { checkFileInArchive } from "./asar/asarFileChecker.js"
 import { AsarPackager } from "./asar/asarUtil.js"
 import { AsarIntegrity, computeData } from "./asar/integrity.js"
@@ -188,11 +189,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
    * signed: an unsigned `latest*.yml` lets anyone who can write to the update feed point every install at an
    * arbitrary installer.
    *
-   * `required` is the publish gate - only a build with a publish policy fails. A build that merely writes a
-   * manifest (which includes any GitHub-hosted project, since the publish config is inferred from `repository`)
-   * gets an advisory warning instead, so local builds and external-signer pipelines keep working. The warning is
-   * emitted at most once per packager; the throw stays re-derivable, since the call sites run per arch and per
-   * manifest task.
+   * `required` is the publish gate - a build with a publish policy fails - and `forceCodeSigning` enforces it for every
+   * build, publishing or not (pull-request builds included). Any other build that merely writes a manifest (which
+   * includes any GitHub-hosted project, since the publish config is inferred from `repository`) gets an advisory
+   * warning instead, so local builds and external-signer pipelines keep working. `updateManifest: false` stays an
+   * explicit opt-out that only warns, also under `forceCodeSigning`. The warning is emitted at most once per packager;
+   * the throw stays re-derivable, since the call sites run per arch and per manifest task.
    */
   async requireUpdateSigningKeys(required: boolean): Promise<Array<KeyObject>> {
     const optedOut = this.updateManifestOptions === false
@@ -201,27 +203,34 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return keys
     }
 
-    if (!optedOut && required) {
+    const forced = !required && this.forceCodeSigning
+    if (!optedOut && (required || forced)) {
       throw new InvalidConfigurationError(
-        `auto-update manifests must be signed, but no Ed25519 signing key was found for ${this.platform.name}. ` +
+        `auto-update manifests must be signed${forced ? " because forceCodeSigning is enabled (also for builds that do not publish, including pull-request builds)" : ""}, ` +
+          `but no Ed25519 signing key was found for ${this.platform.name}. ` +
           "Generate one with `electron-builder create-update-key`, then supply it via the ELECTRON_BUILDER_UPDATE_SIGN_KEY (base64-encoded PEM file) " +
           "or ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE (path) environment variable, or via updateManifest.signingKey / " +
           "updateManifest.signingKeyFile in the build configuration. To publish unsigned manifests anyway, opt out explicitly with " +
-          "`updateManifest: false`. See https://www.electron.build/features/signed-update-manifests"
+          (forced
+            ? `\`updateManifest: false\`, or pass ${forceCodeSigningOverrideHint(this)} to build without forceCodeSigning. See ${FORCE_CODE_SIGNING_DOCS}`
+            : "`updateManifest: false`. See https://www.electron.build/features/signed-update-manifests")
       )
     }
 
-    log
-      .once("unsigned-update-manifest", this)
-      .warn(
-        { platform: this.platform.name, reason: optedOut ? "updateManifest is set to false" : "no Ed25519 signing key is configured" },
-        "auto-update manifests will be unsigned: anyone who can overwrite latest*.yml on your update server can point installs at an arbitrary payload. " +
-          (optedOut
-            ? "Remove `updateManifest: false` and provide a key with `electron-builder create-update-key` to enable signing. "
-            : "Publishing this configuration will fail until you provide a key with `electron-builder create-update-key`, or opt out explicitly with `updateManifest: false`. ") +
-          "Note that installs which already embed a public key reject unsigned manifests (ERR_UPDATER_MANIFEST_NOT_SIGNED). " +
-          "See https://www.electron.build/features/signed-update-manifests"
-      )
+    log.once("unsigned-update-manifest", this).warn(
+      {
+        platform: this.platform.name,
+        reason: optedOut
+          ? `updateManifest is set to false${this.forceCodeSigning ? " (forceCodeSigning does not cover update manifests while updateManifest is false)" : ""}`
+          : "no Ed25519 signing key is configured",
+      },
+      "auto-update manifests will be unsigned: anyone who can overwrite latest*.yml on your update server can point installs at an arbitrary payload. " +
+        (optedOut
+          ? "Remove `updateManifest: false` and provide a key with `electron-builder create-update-key` to enable signing. "
+          : "Publishing this configuration will fail (and so will a build with forceCodeSigning) until you provide a key with `electron-builder create-update-key`, or opt out explicitly with `updateManifest: false`. ") +
+        "Note that installs which already embed a public key reject unsigned manifests (ERR_UPDATER_MANIFEST_NOT_SIGNED). " +
+        "See https://www.electron.build/features/signed-update-manifests"
+    )
     return keys
   }
 

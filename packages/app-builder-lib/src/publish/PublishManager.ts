@@ -234,19 +234,23 @@ export class PublishManager implements PublishContext {
    * none, `publishAutoUpdate: false` on every provider waives it - which stays in place for targets that do not
    * declare `writesUpdateInfo`. Each planned platform x arch is one pack, so targets of a pack that disagree about the
    * app-update.yml feed fail here too, before anything is packed (also for a prepackaged app, which has no afterPack).
+   *
+   * A build that does not publish (no publish policy, `never`, or a pull-request build) is checked only for the
+   * platforms with `forceCodeSigning`, which requires signed manifests either way (see requireUpdateSigningKeys).
    */
   private async requireSigningKeysForPlannedTargets(plan: ReadonlyArray<PlannedTargets>): Promise<void> {
-    if (!this.isPublish) {
-      return
-    }
     for (const { packager, arch, targets } of plan) {
+      if (!this.isPublish && !packager.forceCodeSigning) {
+        continue
+      }
       // resolving publish configs is async: a build cancelled meanwhile stops instead of failing on a missing key
       if (this.cancellationToken.cancelled) {
         return
       }
-      const { emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, targets, arch, true)
+      const { emitsManifest } = await resolvePackAppUpdatePublishConfigs(packager, targets, arch, this.isPublish)
       if (emitsManifest && !this.cancellationToken.cancelled) {
-        const signingKeys = await packager.requireUpdateSigningKeys(true)
+        // requireUpdateSigningKeys enforces forceCodeSigning itself
+        const signingKeys = await packager.requireUpdateSigningKeys(this.isPublish)
         const updateManifestConfig = packager.updateManifestOptions
         if (updateManifestConfig !== false) {
           checkSigningKeysTrusted(packager, signingKeys, normalizeExplicitPublicKeys(updateManifestConfig?.publicKey), true)

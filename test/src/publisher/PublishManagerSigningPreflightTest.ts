@@ -477,3 +477,60 @@ test("a signing key in updateManifest.publicKey, or no publicKey at all, neither
     warn.mockRestore()
   }
 })
+
+// ── forceCodeSigning: the signing requirement also applies to builds that do not publish ────────────────────────────
+
+// like PlatformPackager.requireUpdateSigningKeys: forceCodeSigning requires the key whether or not the build publishes
+function makeForcedPlatformPackager(publish: any) {
+  const packager: any = makePlatformPackager(publish, (required: boolean) =>
+    required || packager.forceCodeSigning
+      ? Promise.reject(new InvalidConfigurationError("auto-update manifests must be signed because forceCodeSigning is enabled"))
+      : Promise.resolve([])
+  )
+  packager.forceCodeSigning = true
+  return packager
+}
+
+test("build-start preflight: forceCodeSigning enforces the signing key in a build that does not publish", async ({ expect }) => {
+  const { targetsCreated, scheduleUpload } = createManager("never")
+  const updates = { provider: "generic", url: "https://example.com/updates" }
+  const notForced = makePlatformPackager(updates, missingKey)
+  const forced = makeForcedPlatformPackager(updates)
+  await expect(
+    targetsCreated([
+      { packager: notForced, arch: Arch.x64, targets: [makeTarget("nsis", true)] },
+      { packager: forced, arch: Arch.arm64, targets: [makeTarget("nsis", true)] },
+    ])
+  ).rejects.toThrow(/forceCodeSigning/)
+  // a platform without forceCodeSigning keeps the advisory-only behavior of a build that does not publish
+  expect(notForced.requireUpdateSigningKeys).not.toHaveBeenCalled()
+  expect(forced.requireUpdateSigningKeys).toHaveBeenCalledWith(false)
+  expect(scheduleUpload).not.toHaveBeenCalled()
+})
+
+test("build-start preflight: forceCodeSigning is enforced on a pull-request build too", async ({ expect }) => {
+  vi.stubEnv("GITHUB_BASE_REF", "main")
+  vi.stubEnv("PUBLISH_FOR_PULL_REQUEST", undefined)
+  const { manager, targetsCreated } = createManager()
+  // a pull-request build does not publish...
+  expect(manager.isPublish).toBe(false)
+  // ...but forceCodeSigning still requires signed manifests
+  const forced = makeForcedPlatformPackager({ provider: "generic", url: "https://example.com/updates" })
+  await expect(targetsCreated([{ packager: forced, arch: Arch.x64, targets: [makeTarget("nsis", true)] }])).rejects.toThrow(/forceCodeSigning/)
+})
+
+test("build-start preflight: forceCodeSigning needs no key when the planned targets emit no manifest", async ({ expect }) => {
+  const { targetsCreated } = createManager("never")
+  const forced = makeForcedPlatformPackager({ provider: "generic", url: "https://example.com/updates" })
+  await targetsCreated([{ packager: forced, arch: Arch.x64, targets: [makeTarget("portable", false), makeTarget("nsis", true, { publish: null })] }])
+  expect(forced.requireUpdateSigningKeys).not.toHaveBeenCalled()
+})
+
+test("build-start preflight: forceCodeSigning fails a build that does not publish when the signing key is outside updateManifest.publicKey", async ({ expect }) => {
+  const { targetsCreated } = createManager("never")
+  const packager: any = makeTrustListPackager(generateUpdateSigningKeypair().privateKeyPem, { publicKey: generateUpdateSigningKeypair().publicKeyPem })
+  packager.forceCodeSigning = true
+  await expect(targetsCreated([{ packager, arch: Arch.x64, targets: [makeTarget("nsis", true)] }])).rejects.toThrow(
+    /none of the update-manifest signing keys \(key id\(s\) .*\) is in updateManifest\.publicKey/
+  )
+})
