@@ -20,7 +20,7 @@ DEBUG=electron-builder electron-builder build
 : Renew the certificate in Apple Developer portal, re-export it, and update your CI secrets.
 
 **Build produces unsigned output without an error**
-: `CSC_LINK` isn't set, so electron-builder silently skips signing. Set `forceCodeSigning: true` to turn this into a build failure so you catch it early.
+: `CSC_LINK` isn't set, so electron-builder silently skips signing. Set `forceCodeSigning: true` to turn this — and skipped notarization or update-manifest signing — into a build failure so you catch it early, and run [`electron-builder verify`](./cli.md#verify) to check a build's output.
 
 **"Keychain not unlocked" / codesign hangs**
 : Verify `CSC_LINK` and `CSC_KEY_PASSWORD` are set correctly — electron-builder creates a temporary keychain and runs all required setup commands, including `set-key-partition-list`, automatically. If using a manually managed keychain (via `CSC_KEYCHAIN`), ensure you run `security set-key-partition-list -S apple-tool:,apple: -s -k <password> <keychain>` after importing.
