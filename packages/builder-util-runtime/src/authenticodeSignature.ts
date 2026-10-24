@@ -106,11 +106,11 @@ export function matchPublisherName(data: AuthenticodeSignerCertificateData, publ
   })
 }
 
+// SignatureType is kept: electron-updater rejects a signature from a Windows security catalog (2) instead of one embedded in the file.
 export function parseAuthenticodeSignatureOutput(out: string): any {
   const data = JSON.parse(out)
   delete data.PrivateKey
   delete data.IsOSBinary
-  delete data.SignatureType
   const signerCertificate = data.SignerCertificate
   if (signerCertificate != null) {
     delete signerCertificate.Archived

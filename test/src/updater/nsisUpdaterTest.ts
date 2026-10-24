@@ -380,41 +380,10 @@ test.skip("test download progress", config, async ({ expect }) => {
   }
 })
 
-// On non-Windows platforms the built-in Authenticode verifier is a no-op, which is exactly what these
-// tests exercised before against externally hosted (signed) installers. Verifying a genuinely signed
-// installer requires a production code-signing certificate and is intentionally not reproducible
-// in-repo; the failure path of the real verifier is still covered by "invalid signature" below.
-test.ifNotWindows("valid signature", config, async ({ expect }) => {
-  const { url, close } = await serveDefaultUpdate()
-  try {
-    const updater = await createNsisUpdater("0.0.1")
-    updater.updateConfigPath = await writeUpdateConfig({
-      provider: "generic",
-      url,
-      publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev"],
-    })
-    await validateDownload(expect, updater)
-  } finally {
-    await close()
-  }
-})
-
-test.ifNotWindows("valid signature - multiple publisher DNs", config, async ({ expect }) => {
-  const { url, close } = await serveDefaultUpdate()
-  try {
-    const updater = await createNsisUpdater("0.0.1")
-    updater.updateConfigPath = await writeUpdateConfig({
-      provider: "generic",
-      url,
-      publisherName: ["CN=Foo Bar, O=Foo Bar", "CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE", "CN=Bar Foo, O=Bar Foo"],
-    })
-    await validateDownload(expect, updater)
-  } finally {
-    await close()
-  }
-})
-
-test.ifNotWindows("valid signature using DN", config, async ({ expect }) => {
+// Without PowerShell (any non-Windows host), the built-in Authenticode verifier cannot verify the update, so it fails closed:
+// before v27 it skipped the verification with a warning and accepted the update. Verifying a genuinely signed installer is
+// covered by the real-certificate e2e tests in windowsExecutableCodeSignatureVerifierTest.
+test.ifNotWindows("fails closed when the signature cannot be verified (no PowerShell)", config, async ({ expect }) => {
   const { url, close } = await serveDefaultUpdate()
   try {
     const updater = await createNsisUpdater("0.0.1")
@@ -423,8 +392,13 @@ test.ifNotWindows("valid signature using DN", config, async ({ expect }) => {
       url,
       publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
     })
-
-    await validateDownload(expect, updater)
+    const actualEvents = trackEvents(updater)
+    const updateCheckResult = await updater.checkForUpdates()
+    await expect(updateCheckResult?.downloadPromise).rejects.toMatchObject({
+      code: "ERR_UPDATER_SIGNATURE_UNVERIFIABLE",
+      message: expect.stringContaining("Cannot verify the Authenticode signature of the update"),
+    })
+    expect(actualEvents).toEqual(["checking-for-update", "update-available", "error"])
   } finally {
     await close()
   }

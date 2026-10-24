@@ -101,6 +101,8 @@ describe("parseAuthenticodeSignatureOutput", () => {
       Status: 0,
       StatusMessage: "Signature verified.",
       Path: FILE,
+      // kept: electron-updater rejects a catalog signature (2)
+      SignatureType: 1,
     })
   })
 

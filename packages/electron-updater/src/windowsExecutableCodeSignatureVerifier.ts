@@ -1,6 +1,5 @@
-import { escapePowerShellSingleQuotes, isValidPublisherNameDn, matchPublisherName, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "builder-util-runtime"
-import { execFile, execFileSync } from "child_process"
-import * as os from "os"
+import { escapePowerShellSingleQuotes, isValidPublisherNameDn, matchPublisherName, newError, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "builder-util-runtime"
+import { execFile, ExecFileException } from "child_process"
 import type { VerifyUpdateFileResult } from "./types.js"
 import { Logger } from "./types.js"
 import * as path from "path"
@@ -72,45 +71,84 @@ export function missingPublisherNameMessage(): string {
   )
 }
 
-// Thrown when the Path reported by Get-AuthenticodeSignature does not match the expected
-// update file path. Signals verifySignature to reject directly, without running the
-// ConvertTo-Json availability probe in handleError.
-class LiteralPathMismatchError extends Error {}
+// An update is installed only when Get-AuthenticodeSignature positively verifies it. Everything else rejects it (fail-closed):
+// PowerShell cannot be started, times out, fails or writes to stderr, or its output cannot be parsed or names another file.
 
-// Throws LiteralPathMismatchError if a LiteralPath mismatch is detected.
-// Returns normally if path verification passed or was skipped (missing data.Path).
-function checkLiteralPath(data: any, unescapedTempUpdateFile: string, logger: Logger): void {
-  let normalizedDataPath: string
-  try {
-    normalizedDataPath = path.normalize(data.Path)
-  } catch (error: any) {
-    logger.warn(
-      `Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}. ` +
-        "This fail-open behavior is deprecated: electron-builder v28 will treat a missing/mismatched LiteralPath as a verification failure (fail-closed)."
-    )
-    return
+const VERIFY_TIMEOUT_MS = 60 * 1000
+
+const CUSTOM_VERIFIER_HINT =
+  "If PowerShell cannot run on your users' machines, verify updates natively by assigning autoUpdater.verifyUpdateFileAuthenticodeSignature: " +
+  "https://www.electron.build/docs/win#how-do-you-use-a-custom-verify-function-to-enable-nsis-signature-verification-alternatives-instead-of-powershell"
+
+// System.Management.Automation.SignatureType.Catalog (None 0, Authenticode 1, Catalog 2). Get-AuthenticodeSignature reports the
+// signer of a Windows security catalog that lists the file's hash in preference to the signature embedded in the file. A uniquely
+// built update installer is in no catalog, so a catalog signature means the file is another (catalogued, e.g. in-box Windows)
+// file. A missing SignatureType comes from a PowerShell that only checks embedded signatures.
+const CATALOG_SIGNATURE_TYPE = 2
+
+// The verification could not be done, as opposed to a signature that does not verify (a failure result, ERR_UPDATER_INVALID_SIGNATURE).
+function cannotVerify(reason: string, options: { cause?: unknown; isPowerShellProblem?: boolean } = {}): Error {
+  const hint = options.isPowerShellProblem === false ? "" : ` ${CUSTOM_VERIFIER_HINT}`
+  const error = newError(`Cannot verify the Authenticode signature of the update, so it is not installed: ${reason}.${hint}`, "ERR_UPDATER_SIGNATURE_UNVERIFIABLE")
+  if (options.cause !== undefined) {
+    error.cause = options.cause
   }
-  const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
-  logger.info(`LiteralPath: ${normalizedDataPath}. Update Path: ${normalizedTempUpdateFile}`)
-  if (normalizedDataPath !== normalizedTempUpdateFile) {
-    throw new LiteralPathMismatchError(`LiteralPath of ${normalizedDataPath} is different than ${normalizedTempUpdateFile}`)
+  return error
+}
+
+function describeExecError(error: ExecFileException, stderr: string): string {
+  if (error.killed) {
+    return `Get-AuthenticodeSignature did not finish within ${VERIFY_TIMEOUT_MS / 1000}s`
+  }
+  if (error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") {
+    return "Get-AuthenticodeSignature printed more output than a signature has"
+  }
+  if (typeof error.code === "number") {
+    const details = stderr.trim()
+    return `Get-AuthenticodeSignature failed with exit code ${error.code}${details.length > 0 ? `: ${details}` : ""}`
+  }
+  return `cannot run PowerShell: ${error.message}`
+}
+
+// PowerShell rebuilds a drive-qualified path from the drive's root (C:\), so the case of the drive letter may differ
+function normalizeForComparison(file: string): string {
+  return path.normalize(file).replace(/^[a-z]:/, drive => drive.toUpperCase())
+}
+
+// Get-AuthenticodeSignature reports the path of the file it verified: it must be the update file (it is not resolved through links).
+function checkLiteralPath(data: any, updateFile: string, logger: Logger): void {
+  if (typeof data.Path !== "string") {
+    throw cannotVerify("Get-AuthenticodeSignature did not report the path of the verified file", { isPowerShellProblem: false })
+  }
+  const normalizedDataPath = normalizeForComparison(data.Path)
+  const normalizedUpdateFile = normalizeForComparison(updateFile)
+  logger.info(`LiteralPath: ${normalizedDataPath}. Update Path: ${normalizedUpdateFile}`)
+  if (normalizedDataPath !== normalizedUpdateFile) {
+    throw cannotVerify(`LiteralPath of ${normalizedDataPath} is different than ${normalizedUpdateFile}`, { isPowerShellProblem: false })
   }
 }
 
-// Parses Get-AuthenticodeSignature JSON, checks the LiteralPath guard, and
-// matches against publisherNames. Returns a success/failure result. Throws
-// LiteralPathMismatchError when checkLiteralPath detects a mismatch.
-function evaluateSignatureResult(stdout: string, publisherNames: string[], unescapedTempUpdateFile: string, logger: Logger): VerifyUpdateFileResult {
-  const data = parseAuthenticodeSignatureOutput(stdout)
+// Parses Get-AuthenticodeSignature JSON, checks the LiteralPath guard, and matches against publisherNames. Returns a
+// success/failure result; throws when the output cannot be parsed or names another file.
+function evaluateSignatureResult(stdout: string, publisherNames: string[], updateFile: string, logger: Logger): VerifyUpdateFileResult {
+  let data: any
+  try {
+    data = parseAuthenticodeSignatureOutput(stdout)
+  } catch (e: any) {
+    throw cannotVerify(`cannot parse the output of Get-AuthenticodeSignature (${e.message})`, { cause: e })
+  }
+  let reason = ""
   if (data.Status === 0) {
-    checkLiteralPath(data, unescapedTempUpdateFile, logger)
-    if (matchPublisherName(data, publisherNames)) {
+    checkLiteralPath(data, updateFile, logger)
+    if (data.SignatureType === CATALOG_SIGNATURE_TYPE) {
+      reason = "Windows reports the signer of a Windows security catalog for the update file instead of a signature embedded in it. "
+    } else if (matchPublisherName(data, publisherNames)) {
       return { response: "success" }
     }
   }
   const note = publisherNameDnNote(publisherNames)
   const result =
-    `publisherNames: ${publisherNames.join(" | ")}, raw info: ` +
+    `${reason}publisherNames: ${publisherNames.join(" | ")}, raw info: ` +
     JSON.stringify(data, (name, value) => (name === "RawData" ? undefined : value), 2) +
     (note == null ? "" : `\n${note}`)
   logger.warn(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
@@ -120,64 +158,29 @@ function evaluateSignatureResult(stdout: string, publisherNames: string[], unesc
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
 // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
-export function verifySignature(publisherNames: Array<string>, unescapedTempUpdateFile: string, logger: Logger): Promise<VerifyUpdateFileResult> {
-  const tempUpdateFile = escapePowerShellSingleQuotes(unescapedTempUpdateFile)
-  logger.info(`Verifying signature ${tempUpdateFile}`)
+export function verifySignature(publisherNames: Array<string>, updateFile: string, logger: Logger): Promise<VerifyUpdateFileResult> {
+  logger.info(`Verifying signature ${updateFile}`)
   return new Promise<VerifyUpdateFileResult>((resolve, reject) => {
-    execFile(...preparePowerShellExec(`Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress`, 20 * 1000), (error, stdout, stderr) => {
-      if (error != null || stderr) {
-        if (handleError(logger, error, stderr, reject)) {
-          resolve({ response: "success" })
-        }
-        return
-      }
-      try {
-        resolve(evaluateSignatureResult(stdout, publisherNames, unescapedTempUpdateFile, logger))
-      } catch (e: any) {
-        if (e instanceof LiteralPathMismatchError) {
-          // Reject directly — the signature data was parsed successfully, so the
-          // ConvertTo-Json availability probe in handleError is not applicable.
-          reject(e)
+    try {
+      const command = `Get-AuthenticodeSignature -LiteralPath '${escapePowerShellSingleQuotes(updateFile)}' | ConvertTo-Json -Compress`
+      execFile(...preparePowerShellExec(command, VERIFY_TIMEOUT_MS), (error, stdout, stderr) => {
+        if (error != null) {
+          reject(cannotVerify(describeExecError(error, String(stderr ?? "")), { cause: error }))
           return
         }
-        if (handleError(logger, e, null, reject)) {
-          resolve({ response: "success" })
+        if (stderr) {
+          reject(cannotVerify(`Get-AuthenticodeSignature wrote to stderr: ${String(stderr).trim()}`))
+          return
         }
-      }
-    })
+        try {
+          resolve(evaluateSignatureResult(stdout, publisherNames, updateFile, logger))
+        } catch (e: any) {
+          reject(e)
+        }
+      })
+    } catch (e: any) {
+      // PowerShell cannot be started at all, e.g. blocked by AppLocker / WDAC
+      reject(cannotVerify(`cannot run PowerShell: ${e.message}`, { cause: e }))
+    }
   })
-}
-
-// Returns true when the error is ignored (caller should resolve { response: "success" }).
-// Returns false when reject() was called (caller must not resolve).
-function handleError(logger: Logger, error: Error | null, stderr: string | null, reject: (reason: any) => void): boolean {
-  if (isOldWin6()) {
-    logger.warn(
-      `Cannot execute Get-AuthenticodeSignature: ${error || stderr}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher. ` +
-        "This fail-open behavior is deprecated: electron-builder v28 will treat an unverifiable signature as a failure (fail-closed)."
-    )
-    return true
-  }
-
-  try {
-    execFileSync(...preparePowerShellExec("ConvertTo-Json test", 10 * 1000))
-  } catch (testError: any) {
-    logger.warn(
-      `Cannot execute ConvertTo-Json: ${testError.message}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher. ` +
-        "This fail-open behavior is deprecated: electron-builder v28 will treat an unverifiable signature as a failure (fail-closed)."
-    )
-    return true
-  }
-
-  if (error != null) {
-    reject(error)
-  } else if (stderr) {
-    reject(new Error(`Cannot execute Get-AuthenticodeSignature, stderr: ${stderr}. Failing signature validation due to unknown stderr.`))
-  }
-  return false
-}
-
-function isOldWin6(): boolean {
-  const winVersion = os.release()
-  return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }

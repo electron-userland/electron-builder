@@ -22,8 +22,7 @@ describe("windowsExecutableCodeSignatureVerifier PSModulePath env stripping", ()
     logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
     vi.clearAllMocks()
     vi.mocked(execFile).mockImplementation((_: any, __: any, ___: any, cb: any) => {
-      // Status 1 → verifySignature resolves with a non-null error string; neither handleError
-      // nor the execFileSync ConvertTo-Json probe is involved.
+      // Status 1 → verifySignature resolves with a failure result
       cb(null, JSON.stringify({ Status: 1 }), "")
       return {} as any
     })
