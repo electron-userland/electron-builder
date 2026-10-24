@@ -290,10 +290,9 @@ export abstract class DifferentialDownloader {
       }
 
       let downloadOperationCount = 0
-      let actualUrl: string | null = null
       this.logger.info(`Differential download: ${this.options.newUrl}`)
 
-      const requestOptions = this.createRequestOptions()
+      let requestOptions = this.createRequestOptions()
       ;(requestOptions as any).redirect = "manual"
 
       w = (index: number): void => {
@@ -335,41 +334,59 @@ export abstract class DifferentialDownloader {
           downloadInfoTransform.beginRangeDownload()
         }
 
-        const request = this.createRangeRequest(requestOptions, response => {
-          response.on("error", reject)
-          // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
-          if (!checkIsPartialContent(response, operation.start, operation.end - 1, reject)) {
-            return
-          }
-          response.on("aborted", () => {
-            reject(new Error("response has been aborted by the server"))
-          })
-
-          response.pipe(firstStream, {
-            end: false,
-          })
-          response.once("end", () => {
-            // Pass on that we are downloading a segment
-            if (downloadInfoTransform) {
-              downloadInfoTransform.endRangeDownload()
+        const requestRange = (redirectCount: number): void => {
+          const request = this.createRangeRequest(requestOptions, response => {
+            response.on("error", reject)
+            // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
+            if (!checkIsPartialContent(response, operation.start, operation.end - 1, reject)) {
+              return
             }
+            response.on("aborted", () => {
+              reject(new Error("response has been aborted by the server"))
+            })
 
-            if (++downloadOperationCount === 100) {
-              downloadOperationCount = 0
-              setTimeout(() => w(index), 1000)
-            } else {
-              w(index)
-            }
+            response.pipe(firstStream, {
+              end: false,
+            })
+            response.once("end", () => {
+              // Pass on that we are downloading a segment
+              if (downloadInfoTransform) {
+                downloadInfoTransform.endRangeDownload()
+              }
+
+              if (++downloadOperationCount === 100) {
+                downloadOperationCount = 0
+                setTimeout(() => w(index), 1000)
+              } else {
+                w(index)
+              }
+            })
           })
-        })
-        request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
-          this.logger.info(`Redirect to ${removeQuery(redirectUrl)}`)
-          actualUrl = redirectUrl
-          configureRequestUrl(new URL(actualUrl), requestOptions)
-          request.followRedirect()
-        })
-        this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-        request.end()
+          request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
+            this.logger.info(`Redirect to ${removeQuery(redirectUrl)}`)
+            // like ElectronHttpExecutor: followRedirect() would resend every header, so abort and request the range again, without
+            // the credential headers if the redirect leaves the origin. The remaining ranges are requested from the redirect URL too.
+            request.abort()
+            // the redirect may be reported after a cancel or a failure already settled the download
+            if (cancellationToken.cancelled) {
+              reject(new CancellationError())
+              return
+            }
+            if (firstStream.destroyed) {
+              reject(new Error("Cannot follow the redirect: the output stream is destroyed"))
+              return
+            }
+            if (redirectCount >= MAX_REDIRECTS) {
+              reject(new Error(`Too many redirects (> ${MAX_REDIRECTS})`))
+              return
+            }
+            requestOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions)
+            requestRange(redirectCount + 1)
+          })
+          this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
+          request.end()
+        }
+        requestRange(0)
       }
 
       w(0)
@@ -414,6 +431,9 @@ export abstract class DifferentialDownloader {
     })
   }
 }
+
+// the redirect limit of HttpExecutor
+const MAX_REDIRECTS = 10
 
 function formatBytes(value: number, symbol = " KB"): string {
   return new Intl.NumberFormat("en").format((value / 1024).toFixed(2) as any) + symbol
