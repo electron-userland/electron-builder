@@ -142,12 +142,15 @@ describe("readCertInfo — happy path", () => {
     expect(result.commonName).toBe("Test Publisher")
     // DN uses shortName=value pairs joined by commas, no spaces — must match binary format exactly
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=Test Publisher,O=Test Org,L=San Francisco,ST=California,C=US")
+    // the format Windows reports (and electron-updater matches publisherName against): reversed order, ", ", S for the state
+    expect(result.windowsSubjectDn).toBe("C=US, S=California, L=San Francisco, O=Test Org, CN=Test Publisher")
   })
 
   it("handles a certificate with CN only", async () => {
     const result = await readCertInfo(CN_ONLY_PFX, "pw")
     expect(result.commonName).toBe("My Company Inc.")
     expect(result.bloodyMicrosoftSubjectDn).toBe("CN=My Company Inc.")
+    expect(result.windowsSubjectDn).toBe("CN=My Company Inc.")
   })
 
   itLegacyPbe("handles the legacy 3DES test certificate (empty password)", async () => {
@@ -189,6 +192,7 @@ describe("readCertInfo — special characters in DN values", () => {
     expect(jsResult.commonName).toBe("Publisher, Inc. + Partners")
     // , and + in the CN value must cause the whole value to be wrapped in quotes
     expect(jsResult.bloodyMicrosoftSubjectDn).toBe(`CN="Publisher, Inc. + Partners",C=US`)
+    expect(jsResult.windowsSubjectDn).toBe(`C=US, CN="Publisher, Inc. + Partners"`)
   })
 })
 

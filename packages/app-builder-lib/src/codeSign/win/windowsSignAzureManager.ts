@@ -10,11 +10,13 @@ import { resolveToolsetVersion } from "../../toolsets/version.js"
 import { VmManager } from "../../vm/vm.js"
 import { WineVmManager } from "../../vm/WineVm.js"
 import { WinPackager } from "../../winPackager.js"
+import { validatePublisherNameFormat } from "./publisherName.js"
 import { SignManager } from "./signManager.js"
 import { WindowsSignOptions } from "./windowsCodeSign.js"
 import { SignFileResult } from "../signResult.js"
 import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager.js"
 import semver from "semver"
+import { BUILD_CHANGES_URL } from "../../util/config/legacyOptions.js"
 
 const minimumWinCodeSignVersionForDlib = "1.3.0"
 export class WindowsSignAzureManager implements SignManager {
@@ -24,14 +26,16 @@ export class WindowsSignAzureManager implements SignManager {
   private readonly vm: VmManager = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine, this.packager.buildResourcesDir)
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(() => {
-    return Promise.resolve(asArray(this.publisherName))
+    return Promise.resolve(asArray(this.resolvePublisherName()))
   })
 
-  private get publisherName(): string {
+  // Throws synchronously for a missing publisherName, or one that is not a distinguished name (electron-updater 7 never matches one).
+  private resolvePublisherName(): string {
     const result = this.signing.publisherName
     if (isEmptyOrSpaces(result)) {
       throw new Error("Azure Trusted Signing requires 'publisherName' in win.sign config (no local certificate to derive it from)")
     }
+    validatePublisherNameFormat(result)
     return result
   }
 
@@ -66,6 +70,7 @@ export class WindowsSignAzureManager implements SignManager {
         // oxlint-disable-next-line typescript/no-base-to-string -- pre-existing log text; a custom toolset object prints as "[object Object]", changing it is out of scope for the lint migration
         reason: `toolsets.winCodeSign "${String(wcs)}" is below the minimum "${minimumWinCodeSignVersionForDlib}"`,
         guidance: `leave toolsets.winCodeSign unset (or set it to "${minimumWinCodeSignVersionForDlib}" / "latest") to use the faster signtool /dlib integration`,
+        docs: `${BUILD_CHANGES_URL}#azure-trusted-signing-signtool-dlib-is-the-default`,
       },
       `Azure Trusted Signing: falling back to legacy PowerShell (Invoke-TrustedSigning)`
     )
@@ -82,7 +87,7 @@ export class WindowsSignAzureManager implements SignManager {
   }
 
   computePublisherName(_target: Target, publisherName: string | null): Promise<string> {
-    return Promise.resolve(this.publisherName ?? publisherName)
+    return Promise.resolve(this.resolvePublisherName() ?? publisherName)
   }
 
   readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
@@ -91,6 +96,8 @@ export class WindowsSignAzureManager implements SignManager {
   )
 
   async signFile(options: WindowsSignOptions): Promise<SignFileResult> {
+    // validate publisherName before the first file is signed, like the signtool-family managers do, even when no publish config exists
+    this.resolvePublisherName()
     return this.isLegacyMode() ? this.signFileLegacy(options) : this.signFileWithDlib(options)
   }
 

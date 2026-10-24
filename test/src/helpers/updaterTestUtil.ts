@@ -22,7 +22,20 @@ export async function createNsisUpdater(version = "0.0.1") {
 }
 
 // to reduce difference in test mode, setFeedURL is not used to set (NsisUpdater also read configOnDisk to load original publisherName)
+// The update installers the updater tests download are not Authenticode-signed, and NsisUpdater rejects an update when the config has
+// no publisherName, so a config without publisherName opts out of the verification the way electron-builder writes it for
+// win.verifyUpdateCodeSignature: false (unless the test sets verifyUpdateCodeSignature itself). Use writeRawUpdateConfig to write the
+// config as given.
 export async function writeUpdateConfig<T extends AllPublishOptions>(data: T): Promise<string> {
+  const options: AllPublishOptions = data
+  if (typeof options === "string" || options.publisherName != null || options.verifyUpdateCodeSignature !== undefined) {
+    return await writeRawUpdateConfig(options)
+  }
+  return await writeRawUpdateConfig({ ...options, verifyUpdateCodeSignature: false })
+}
+
+/** Writes the update config exactly as given (see {@link writeUpdateConfig}). */
+export async function writeRawUpdateConfig<T extends AllPublishOptions>(data: T): Promise<string> {
   const updateConfigPath = path.join(await tmpDir.getTempDir({ prefix: "test-update-config" }), "app-update.yml")
   await fsExtra.outputFile(updateConfigPath, serializeToYaml(data))
   return updateConfigPath

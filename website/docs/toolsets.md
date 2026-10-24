@@ -7,7 +7,7 @@ electron-builder relies on a handful of external **binary bundles** — the NSIS
 For most projects you never touch this key: every toolset defaults to the newest published bundle. You reach for `toolsets` only to **pin a specific (or legacy) version**, or to **supply a custom bundle** in place of a built-in one.
 
 :::info[New in v27]
-Before v27, toolset selection was a mix of fixed version pins and environment-variable overrides (`APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, …). v27 **removes every one of those env vars** and replaces them with the typed `toolsets` config on this page. See [Toolsets & environment variables](./migration/v27-breaking-changes.md#toolsets-environment-variables) in the breaking-changes reference and the [Replacing removed environment variables](#replacing-removed-environment-variables) section below.
+Before v27, toolset selection was a mix of fixed version pins and environment-variable overrides (`APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, …). v27 **removes every one of those env vars** and replaces them with the typed `toolsets` config on this page. See [Toolsets & environment variables](./migration/v27-build-changes.md#toolsets-environment-variables) in the breaking-changes reference and the [Replacing removed environment variables](#replacing-removed-environment-variables) section below.
 :::
 
 ## The toolsets
@@ -33,7 +33,7 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 - **`fpm`**, **`icons`**, and **`squirrel`** each have only one published version today, so `"latest"` and the listed version are equivalent.
 :::
 
-For the full version-by-version breakdown of what each `"latest"` bundle upgrades from — and which are drop-in replacements versus behavior changes — see the migration table in [Toolset defaults resolve to `"latest"`](./migration/v27-breaking-changes.md#toolset-defaults-resolve-to-latest-newest-bundle).
+For the full version-by-version breakdown of what each `"latest"` bundle upgrades from — and which are drop-in replacements versus behavior changes — see the migration table in [Toolset defaults resolve to `"latest"`](./migration/v27-build-changes.md#toolset-defaults-resolve-to-latest-newest-bundle).
 
 ## Default resolution — `"latest"`
 
@@ -162,7 +162,7 @@ Because 7-Zip is the tool electron-builder uses to extract `.7z` and `.tar.xz` a
 ### Custom NSIS bundle layout {#custom-nsis-bundle-layout}
 
 :::warning[Did you use deprecated `.customNsisBinary`/`.customNsisResources` properties in `v26` config?]
-Checkout our [`v26`-> `v27` migration guide](./migration/v26-to-v27#step-4-custom-nsis-migration-guide) and relevant [breaking changes note](./migration/v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis).
+Checkout our [`v26`-> `v27` migration guide](./migration/v26-to-v27#step-4-custom-nsis-migration-guide) and relevant [breaking changes note](./migration/v27-config-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis).
 :::
 
 
@@ -327,7 +327,7 @@ The two signing `USE_SYSTEM_*` variables (`USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSS
 `USE_SYSTEM_FPM` is likewise removed. On **Windows there is no bundled FPM**, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` (`{ url: "file:///path/to/dir" }`) and otherwise throws a clear configuration error — previously it silently fell back to a host `fpm` on `PATH`.
 :::
 
-See [Toolset env-var overrides removed](./migration/v27-breaking-changes.md#toolset-env-var-overrides-removed) for the complete rationale.
+See [Toolset env-var overrides removed](./migration/v27-build-changes.md#toolset-env-var-overrides-removed) for the complete rationale.
 
 ## Code signing and toolsets
 
@@ -336,5 +336,5 @@ Windows signing is driven by the `winCodeSign` toolset in combination with [`win
 - The default `winCodeSign` (`"latest"` → `1.3.1`) bundles a modern `signtool` / `osslsigncode` (native arm64) plus the Windows Kits used for AppX/MSIX. The `hsm` and `pkcs11` signing modes require this modern bundle.
 - **Azure Trusted Signing** (`win.sign: { type: "azure" }`) uses the faster `signtool /dlib` path **out of the box**, because the default `winCodeSign` ships the ATS `dlib` + .NET 8 payload — no pin needed. To force the legacy PowerShell `Invoke-TrustedSigning` path, pin `winCodeSign` **below** `1.3.0` (e.g. `"1.2.1"` or `"0.0.0"`). A `ToolsetCustom` object uses the `dlib` from your supplied bundle.
 
-For full setup — certificate methods, HSM/PKCS#11, and Azure — see [Code Signing for Windows](./features/code-signing/code-signing-win.md) and [Azure Trusted Signing `signtool /dlib` is the default](./migration/v27-breaking-changes.md#azure-trusted-signing-signtool-dlib-is-the-default).
+For full setup — certificate methods, HSM/PKCS#11, and Azure — see [Code Signing for Windows](./features/code-signing/code-signing-win.md) and [Azure Trusted Signing `signtool /dlib` is the default](./migration/v27-build-changes.md#azure-trusted-signing-signtool-dlib-is-the-default).
 

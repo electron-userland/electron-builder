@@ -21,9 +21,10 @@ describe("windowsExecutableCodeSignatureVerifier PSModulePath env stripping", ()
   beforeEach(() => {
     logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
     vi.clearAllMocks()
+    // PowerShell is started by an absolute path derived from SystemRoot, which is only set on Windows
+    vi.stubEnv("SystemRoot", "C:\\Windows")
     vi.mocked(execFile).mockImplementation((_: any, __: any, ___: any, cb: any) => {
-      // Status 1 → verifySignature resolves with a non-null error string; neither handleError
-      // nor the execFileSync ConvertTo-Json probe is involved.
+      // Status 1 → verifySignature resolves with a failure result
       cb(null, JSON.stringify({ Status: 1 }), "")
       return {} as any
     })
@@ -31,10 +32,11 @@ describe("windowsExecutableCodeSignatureVerifier PSModulePath env stripping", ()
 
   afterEach(() => {
     vi.clearAllMocks()
+    vi.unstubAllEnvs()
   })
 
   async function envPassedToPowerShell(): Promise<NodeJS.ProcessEnv> {
-    await verifySignature(["Test Publisher"], "C:\\fake\\update.exe", logger)
+    await verifySignature(["CN=Test Publisher"], "C:\\fake\\update.exe", logger)
     const [, , options] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any]
     return options.env
   }

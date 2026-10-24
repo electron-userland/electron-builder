@@ -122,7 +122,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       `autoInstallOnAppQuit was removed in electron-updater 7 (electron-builder v27) — use autoInstallEvent instead. ` +
         `Mapping autoInstallOnAppQuit = ${value} to autoInstallEvent = "${mapped}". ` +
         `This compatibility shim is removed in v28. ` +
-        `https://www.electron.build/docs/migration/v27-breaking-changes#autoinstallevent-replaces-autoinstallonappquit`
+        `https://www.electron.build/docs/migration/v27-runtime-changes#autoinstallevent-replaces-autoinstallonappquit`
     )
     this.autoInstallEvent = mapped
   }
@@ -679,10 +679,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
     const info = await client.getLatestVersion()
-    await this.verifyManifestSignature(info)
+    // recorded on the new result object (never on the parsed manifest, which listeners of update-available also get), so the state
+    // travels with exactly the update info it was established for
+    const manifestSignatureVerified = await this.verifyManifestSignature(info)
     return {
       info,
       provider: client,
+      manifestSignatureVerified,
     }
   }
 
@@ -698,8 +701,10 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * the legacy single `signature`; any trusted key matching any of them is sufficient, which is what allows
    * a release to be dual-signed while installs trust `[old, new]` during key rotation. Never fails open once
    * a key is configured. A throw here propagates before any download starts (fail-closed).
+   *
+   * Resolves to `true` when a trusted key verified the manifest, `false` when verification was skipped (no key configured).
    */
-  private async verifyManifestSignature(info: UpdateInfo): Promise<void> {
+  private async verifyManifestSignature(info: UpdateInfo): Promise<boolean> {
     let trustedKeys = normalizePublicKeyList(this.updateManifestPublicKey)
     if (trustedKeys.length === 0) {
       try {
@@ -717,7 +722,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       this.limitedLogger("manifest-verification-disabled").warn(
         "update manifest signature verification is disabled. Configure updateManifestPublicKey (and sign manifests at build time) to enable it."
       )
-      return
+      return false
     }
 
     if (collectManifestSignatures(info).length === 0) {
@@ -743,6 +748,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
     this._logger.debug?.(`Update manifest for version ${info.version} verified with trusted key ${result.keyId}`)
     this._logger.info(`Update manifest signature verified for version ${info.version}`)
+    return true
   }
 
   private createProviderRuntimeOptions() {
@@ -897,7 +903,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       `quitAndInstall(isSilent, isForceRunAfter) was replaced by quitAndInstall({ isSilent, isForceRunAfter }) in electron-updater 7 (electron-builder v27). ` +
         `Interpreting the positional arguments as { isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter} }. ` +
         `This compatibility shim is removed in v28. ` +
-        `https://www.electron.build/docs/migration/v27-breaking-changes#quitandinstall-takes-an-options-object`
+        `https://www.electron.build/docs/migration/v27-runtime-changes#quitandinstall-takes-an-options-object`
     )
     return { isSilent, isForceRunAfter }
   }
@@ -944,7 +950,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   // Only names are logged (header names, query parameter names, origins), never values.
   private announceCrossOriginDownload(url: URL, credentialOrigin: URL, headers: OutgoingHttpHeaders, feedBaseUrl: URL | null): void {
-    const docs = "https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+    const docs = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
     const names = HttpExecutor.sensitiveHeaderNames(headers)
     // v27 behaviour changes a plain-JavaScript app would otherwise not notice: each is announced once per updater
     if (names.length !== 0) {
@@ -975,7 +981,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         `The custom update provider ${provider.constructor.name} does not declare feedBaseUrl, but its downloads would send the credential headers ${names.join(", ")} ` +
           `(from requestHeaders, addAuthHeader or fileExtraDownloadHeaders). Override Provider.feedBaseUrl to return the feed URL ` +
           `(the headers are then only sent to its origin), or null to send the request headers to every origin. ` +
-          `https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin`,
+          `https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin`,
         "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED"
       )
     }
@@ -1420,6 +1426,12 @@ export class NoOpLogger implements Logger {
 export interface UpdateInfoAndProvider {
   info: UpdateInfo
   provider: Provider<any>
+  /**
+   * Whether the signature of `info` was verified against a trusted key (`updateManifestPublicKey`) when it was fetched. Absent (or
+   * `false`) when no key is configured, and for an object not made by the update check. Settings that only a signed manifest may make,
+   * such as `allowCatalogSignature`, are honored only when it is `true`.
+   */
+  readonly manifestSignatureVerified?: boolean
 }
 
 export interface DownloadExecutorTask {
@@ -1470,7 +1482,7 @@ function withLegacyArrayCompat(result: DownloadExecutorResult, logger: Logger): 
         "downloadUpdate() resolves with a DownloadExecutorResult object in electron-updater 7 (electron-builder v27), not an array. " +
           "Replace `const [updateFile] = await downloadUpdate()` with `const { updateFile } = await downloadUpdate()`. " +
           "This compatibility shim is removed in v28. " +
-          "https://www.electron.build/docs/migration/v27-breaking-changes#downloadupdate-resolves-with-a-downloadexecutorresult-object"
+          "https://www.electron.build/docs/migration/v27-runtime-changes#downloadupdate-resolves-with-a-downloadexecutorresult-object"
       )
       yield result.updateFile
       if (result.packageFile != null) {

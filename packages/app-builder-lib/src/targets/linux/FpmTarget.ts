@@ -522,7 +522,7 @@ function assertNoLegacyEjsTemplate(templatePath: string, template: string): void
       `Use the shell-style form instead: \${${name}}\n` +
       "Left as-is the tag is copied verbatim into the generated maintainer script and shipped inside the package, " +
       "so every install would run a broken postinst/postrm.\n" +
-      "https://www.electron.build/docs/migration/v27-breaking-changes#linux-maintainer-script-ejs-template-syntax"
+      "https://www.electron.build/docs/migration/v27-developer-changes#linux-maintainer-script-ejs-template-syntax"
   )
 }
 
