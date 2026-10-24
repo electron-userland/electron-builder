@@ -41,6 +41,20 @@ export interface SquirrelWindowsOptions extends TargetSpecificOptions {
   readonly useAppIdAsId?: boolean
 
   /**
+   * The absolute path of the Mono executable (`mono`) that runs the Squirrel.Windows tools when building on macOS or Linux.
+   * Not used on Windows.
+   *
+   * Mono is started by absolute path and never looked up on `PATH`. When this is not set, the first of these that exists is used:
+   * - macOS: `/Library/Frameworks/Mono.framework/Versions/Current/Commands/mono`,
+   *   `/Library/Frameworks/Mono.framework/Versions/Current/bin/mono`, `/opt/homebrew/bin/mono`, `/usr/local/bin/mono`,
+   *   `/opt/local/bin/mono`
+   * - Linux: `/usr/bin/mono`, `/usr/local/bin/mono`, `/home/linuxbrew/.linuxbrew/bin/mono`
+   *
+   * If Mono is not found there, the build fails with a configuration error. Set this to use a Mono installed elsewhere.
+   */
+  readonly monoPath?: string | null
+
+  /**
    * https://github.com/electron-userland/electron-builder/issues/1743
    * @private
    */
