@@ -18,6 +18,9 @@ import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis/nsisOptions.js"
 import { ElectronGetOptions } from "./util/electronGet.js"
+import type { ExecutablesConfig } from "builder-util"
+// the types of toolsets.executables live with its resolver, in builder-util
+export type { ExecutableLocation, ExecutableName, ExecutablesConfig } from "builder-util"
 import { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 
 /**
@@ -756,14 +759,19 @@ export interface ToolsetConfig {
    * |---------|-------------|-----------------|-------|
    * | `"0.0.0"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |
    * | `"1.0.1"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |
-   * | `"system"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |
+   * | `"system"` | host install | macOS, Linux | Uses the host Wine at a fixed install location instead of a bundle |
    *
    * `"system"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and
    * is what `"latest"` (the default) currently resolves to on every platform: the published `"1.0.1"`
    * bundles ship no PE builtins, so a host Wine installation is required to build Windows targets on
    * macOS or Linux.
    *
-   * To use a custom Wine binary, use a `ToolsetCustom` object.
+   * The host Wine (`"system"`) is started by absolute path, never looked up on `PATH`: it is the `wine` entry of
+   * {@link executables}, which lists its default install locations and is where a Wine installed elsewhere is set.
+   * Setting both a bundle that would be used (a `ToolsetCustom` object, or a version on macOS; on Linux a version selects no
+   * bundle) and `executables.wine` is a configuration error.
+   *
+   * To use a custom Wine bundle, use a `ToolsetCustom` object.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md
    *
@@ -868,6 +876,29 @@ export interface ToolsetConfig {
    * @default "latest"
    */
   readonly squirrel?: "1.1.1" | ToolsetCustom | "latest"
+
+  /**
+   * Where the host programs that electron-builder starts are installed on the build machine, by program name.
+   *
+   * electron-builder starts these programs only from an absolute path, never by looking up a name on `PATH`. For each one it
+   * uses the first location that is an executable file: from this entry when it is set, otherwise from a built-in list of
+   * default install locations for the host operating system (see https://www.electron.build/docs/toolsets#executables).
+   * An entry replaces the default list for that program; it is not merged with it.
+   *
+   * @example
+   * ```json
+   * {
+   *   "toolsets": {
+   *     "executables": {
+   *       "mono": "file:///opt/homebrew/bin/mono",
+   *       "pwsh": ["file:///usr/local/microsoft/powershell/7/pwsh", "file:///opt/microsoft/powershell/7/pwsh"],
+   *       "powershell": "file:///C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+   *     }
+   *   }
+   * }
+   * ```
+   */
+  readonly executables?: ExecutablesConfig | null
 }
 
 /**

@@ -3,5 +3,11 @@ WORKDIR /app
 ENV CI=true
 # git + bash: needed by website/scripts/build-versioned-site.sh to materialize
 # and build additional release branches/tags (RELEASE_TAGS) inside the container.
-RUN apk add --no-cache bash git
+# Retried: a transient error of the Alpine CDN (e.g. a TLS error fetching APKINDEX) otherwise fails the docs build.
+RUN for i in 1 2 3; do \
+      apk add --no-cache bash git && exit 0; \
+      echo "apk add failed (attempt $i/3)" >&2; \
+      [ "$i" -lt 3 ] && sleep 10; \
+    done; \
+    exit 1
 RUN corepack enable

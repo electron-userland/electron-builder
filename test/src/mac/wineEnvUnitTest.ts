@@ -1,8 +1,11 @@
-import { afterEach, beforeEach } from "vitest"
+import { afterEach, beforeEach, vi } from "vitest"
 import type { ToolsetCustom } from "app-builder-lib/internal"
 import * as path from "path"
 import { mkdir, rm, writeFile } from "fs/promises"
+import { Executables, InvalidConfigurationError } from "builder-util"
 import { getWineToolset } from "app-builder-lib/src/toolsets/wine"
+import { defaultExecutableLocations } from "builder-util/src/executables"
+const HOST_WINE = "/usr/bin/wine"
 
 // Unit tests for wine env merging via ToolsetCustom with a file:// directory path.
 // A minimal fake wine directory is created in /tmp for each test.
@@ -33,6 +36,7 @@ beforeEach(async context => {
 })
 
 afterEach(async () => {
+  vi.restoreAllMocks()
   for (const k of ENV_KEYS) {
     if (SAVED_ENV[k] === undefined) {
       delete process.env[k]
@@ -83,6 +87,13 @@ describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env me
     expect(result.env.WINEPREFIX).toBe(path.join(FAKE_WINE_DIR, "wine-home"))
   })
 
+  test("custom bundle without its wine-home prefix is a configuration error", async ({ expect }) => {
+    await rm(path.join(FAKE_WINE_DIR, "wine-home"), { recursive: true })
+    const result = getWineToolset(fakeToolset(), "")
+    await expect(result).rejects.toBeInstanceOf(InvalidConfigurationError)
+    await expect(result).rejects.toThrow("is missing expected path")
+  })
+
   test("custom bundle with only bin/wine64: falls back to bin/wine64 as execPath", async ({ expect }) => {
     await rm(path.join(FAKE_WINE_DIR, "bin", "wine"))
     await writeFile(path.join(FAKE_WINE_DIR, "bin", "wine64"), "#!/bin/sh\necho fake wine64", { mode: 0o755 })
@@ -93,9 +104,15 @@ describe.ifNotWindows("getWineToolset — ToolsetCustom file:// directory env me
 })
 
 describe.ifNotWindows('getWineToolset — "system"', { concurrent: false }, () => {
-  test("resolves the host wine on PATH and downloads no bundle", async ({ expect }) => {
+  beforeEach(() => {
+    // the host wine is taken only from toolsets.executables.wine or its default install locations; stand in for it being installed
+    vi.spyOn(Executables, "resolve").mockReturnValue(HOST_WINE)
+  })
+
+  test("resolves the host wine through toolsets.executables.wine and downloads no bundle", async ({ expect }) => {
     const result = await getWineToolset("system", "")
-    expect(result.execPath).toBe("wine")
+    expect(result.execPath).toBe(HOST_WINE)
+    expect(vi.mocked(Executables.resolve)).toHaveBeenCalledWith("wine")
   })
 
   test("sets no WINEPREFIX or library paths, so the host wine uses its own defaults", async ({ expect }) => {
@@ -109,7 +126,23 @@ describe.ifNotWindows('getWineToolset — "system"', { concurrent: false }, () =
   for (const value of [undefined, null, "latest"] as const) {
     test(`${value} resolves through the WINE_LATEST alias without downloading`, async ({ expect }) => {
       const result = await getWineToolset(value, "")
-      expect(result.execPath).toBe("wine")
+      expect(result.execPath).toBe(HOST_WINE)
     })
   }
+
+  test("is the configuration error of the resolver when wine is not installed", async ({ expect }) => {
+    const error = new InvalidConfigurationError("wine is not installed at its default install locations")
+    vi.mocked(Executables.resolve).mockImplementation(() => {
+      throw error
+    })
+    await expect(getWineToolset("system", "")).rejects.toBe(error)
+  })
+
+  test("looks in the order of the default PATH", ({ expect }) => {
+    const linux = defaultExecutableLocations("wine", "linux")
+    expect(linux.indexOf("/usr/local/bin/wine")).toBeLessThan(linux.indexOf("/usr/bin/wine"))
+    const darwin = defaultExecutableLocations("wine", "darwin")
+    expect(darwin.slice(0, 2)).toEqual(["/opt/homebrew/bin/wine", "/usr/local/bin/wine"])
+    expect(darwin.findIndex(it => it.startsWith("/Applications/"))).toBeGreaterThan(darwin.indexOf("/opt/local/bin/wine"))
+  })
 })

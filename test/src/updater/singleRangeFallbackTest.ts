@@ -1,4 +1,4 @@
-import { BlockMap, CancellationToken, HttpExecutor } from "builder-util-runtime"
+import { CancellationToken, HttpExecutor } from "builder-util-runtime"
 import { GenericDifferentialDownloader } from "electron-updater/src/differentialDownloader/GenericDifferentialDownloader"
 import { createHash } from "crypto"
 import { readFileSync, writeFileSync } from "fs"
@@ -6,6 +6,7 @@ import { ClientRequest, createServer, IncomingMessage, request as httpRequest, S
 import { AddressInfo } from "net"
 import * as path from "path"
 import { afterEach, describe, expect, test } from "vitest"
+import { blockMap } from "../helpers/updaterTestUtil.js"
 
 // Plain node:http, so the sandbox's HTTP_PROXY settings (honoured by NodeHttpExecutor) cannot route 127.0.0.1 through a proxy.
 class LocalHttpExecutor extends HttpExecutor<ClientRequest> {
@@ -30,7 +31,10 @@ function block(seed: number): Buffer {
 const blocks = { A: block(1), B: block(2), C: block(3), D: block(4), X: block(5), Y: block(6) }
 const oldContent = Buffer.concat([blocks.A, blocks.X, blocks.C, blocks.Y])
 const newContent = Buffer.concat([blocks.A, blocks.B, blocks.C, blocks.D])
-const blockMapOf = (names: Array<string>): BlockMap => ({ version: "2", files: [{ name: "file", offset: 0, checksums: names, sizes: names.map(() => BLOCK) }] })
+// the block names stand in for the checksums
+function namedBlockMap(names: Array<string>) {
+  return blockMap(names, new Array<number>(names.length).fill(BLOCK))
+}
 
 type HostBehaviour = "multipart" | "multi-501" | "multi-400" | "multi-200" | "multi-403" | "ignores-ranges" | "wrong-range" | "uppercase-unit"
 
@@ -122,7 +126,7 @@ describe("differential download on hosts with limited range support", { concurre
       isUseMultipleRangeRequest,
       cancellationToken: new CancellationToken(),
     })
-    await downloader.download(blockMapOf(["A", "X", "C", "Y"]), blockMapOf(["A", "B", "C", "D"]))
+    await downloader.download(namedBlockMap(["A", "X", "C", "Y"]), namedBlockMap(["A", "B", "C", "D"]))
     return { newFile, warnings }
   }
 

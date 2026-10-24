@@ -10,7 +10,7 @@ What the build machine and CI need, what the build now validates or rejects, and
 **How you'll find out:** most changes on this page **fail the build** or **warn** with a link to their section. Each entry starts with a **How you'll find out** line. The ones marked **Silent** or **Info log only** won't stop or warn you, so read those. Changes that only show up when publishing (signing keys, S3 credentials, feed conflicts) need a **publishing** build to surface.
 
 :::info[Toolsets now default to the newest bundle ("latest")]
-In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** property and the literal `"latest"` both resolve to the **newest published bundle** for that toolset. No config change is required, but the effective defaults moved. The one most likely to affect you: **`wine` → `"system"`**, the host-installed `wine` on `PATH`, so **building Windows targets on macOS now requires Wine on the host** (`brew install --cask wine-stable`). Pin a toolset to `"0.0.0"` to stay on a legacy bundle. Full breakdown in [Toolset defaults resolve to `"latest"`](#toolset-defaults-resolve-to-latest-newest-bundle).
+In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** property and the literal `"latest"` both resolve to the **newest published bundle** for that toolset. No config change is required, but the effective defaults moved. The one most likely to affect you: **`wine` → `"system"`**, the host-installed Wine (started by absolute path from its install locations or [`toolsets.executables.wine`](../toolsets.md#executables), never from `PATH`), so **building Windows targets on macOS now requires Wine on the host** (`brew install --cask wine-stable`). Pin a toolset to `"0.0.0"` to stay on a legacy bundle. Full breakdown in [Toolset defaults resolve to `"latest"`](#toolset-defaults-resolve-to-latest-newest-bundle).
 :::
 
 ## At a glance {#at-a-glance}
@@ -105,7 +105,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset prope
 
 | Toolset | v26 default | v27 `"latest"` resolves to | What the upgrade entails |
 |---------|-------------|----------------------------|--------------------------|
-| `wine` | `0.0.0` (Wine 4.0.1, macOS only) | `system` | Host-installed `wine` on `PATH`, on macOS and Linux. **Requires a host Wine on macOS** — see the note below. The `"1.0.1"` Wine 11.0 bundle still downloads when pinned, but ships no PE builtins and cannot run Windows tools on its own |
+| `wine` | `0.0.0` (Wine 4.0.1, macOS only) | `system` | Host-installed Wine, on macOS and Linux, started by absolute path from its install locations or [`toolsets.executables.wine`](../toolsets.md#executables), never from `PATH`. **Requires a host Wine on macOS** — see the note below. The `"1.0.1"` Wine 11.0 bundle still downloads when pinned, but ships no PE builtins and cannot run Windows tools on its own |
 | `winCodeSign` | `0.0.0` (winCodeSign 2.6.0) | `1.3.1` | Windows Kits 10.0.26100.0; `osslsigncode` 2.11 + native arm64; bundles the Azure Trusted Signing `dlib` + .NET 8 runtime |
 | `appimage` | `0.0.0` (FUSE2 runtime) | `1.1.0` | Static FUSE3-compatible runtime (runs without a host FUSE install); adds `unsquashfs` support |
 | `nsis` | `0.0.0` (NSIS 3.0.4.1, split bundle) | `1.2.1` | NSIS 3.12; unified single-archive bundle; entrypoint scripts auto-set `NSISDIR` |
@@ -178,7 +178,7 @@ The `url` accepts an `https://` URL (downloaded and cached automatically) or a `
 { "build": { "toolsets": { "appimage": { "url": "file:///path/to/my-appimage-tools-dir" } } } }
 ```
 
-> **Wine note:** macOS and Linux both use the host-installed `wine` on `PATH` by default (`"latest"` resolves to `"system"`), so `USE_SYSTEM_WINE` can simply be dropped. To point at a custom Wine build instead, supply a `ToolsetCustom` object on `toolsets.wine`; note that such a directory must contain a prebuilt `wine-home` prefix alongside `bin/` and `lib/`, so the host install is the simpler option for a stock Wine installation.
+> **Wine note:** macOS and Linux both use the host-installed Wine by default (`"latest"` resolves to `"system"`), so `USE_SYSTEM_WINE` can simply be dropped. electron-builder starts it only from an absolute path, never from `PATH`: from its install locations, or from [`toolsets.executables.wine`](../toolsets.md#executables) for a Wine installed elsewhere. A custom Wine bundle is a `ToolsetCustom` object on `toolsets.wine`, whose directory must contain a prebuilt `wine-home` prefix alongside `bin/` and `lib/`.
 
 Supported archive formats: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`. **Exception for `sevenZip`**: because 7-Zip is used to extract `.7z` and `.tar.xz` archives, a custom `sevenZip` bundle can only be supplied as a `.tar.gz`, `.zip`, or bare `file://` directory.
 

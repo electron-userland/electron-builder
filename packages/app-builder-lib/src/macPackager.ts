@@ -8,6 +8,7 @@ import {
   copyFile,
   deepAssign,
   exec,
+  Executables,
   exists,
   getArchSuffix,
   InvalidConfigurationError,
@@ -701,7 +702,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const args = prepareProductBuildArgs(identity, keychain)
     args.push("--component", safeAppPath, "/Applications")
     args.push(safeOutFile)
-    return await exec("productbuild", args)
+    return await exec(Executables.resolve("productbuild"), args)
   }
 
   public getElectronSrcDir(dist: string) {

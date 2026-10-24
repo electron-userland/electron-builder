@@ -27,13 +27,14 @@ export function parseDn(seq: string): Map<string, string> {
       }
 
       if (ch === "\\") {
-        i++
-        const ord = parseInt(seq.slice(i, i + 2), 16)
-        if (Number.isNaN(ord)) {
+        // a run of \XX hex pairs is the UTF-8 encoding of the escaped characters
+        const hexPairs = /^(?:\\[0-9a-fA-F]{2})+/.exec(seq.slice(i))
+        if (hexPairs == null) {
+          i++
           token += seq[i]
         } else {
-          i++
-          token += String.fromCharCode(ord)
+          i += hexPairs[0].length - 1
+          token += Buffer.from(hexPairs[0].replace(/\\/g, ""), "hex").toString("utf8")
         }
         continue
       }

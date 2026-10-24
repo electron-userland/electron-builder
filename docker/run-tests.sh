@@ -30,6 +30,12 @@ if ! docker image inspect "$_IMAGE" > /dev/null 2>&1; then
   done
 fi
 
+# The corepack home that .github/actions/pnpm caches on the runner: with the pnpm of `packageManager` already in it,
+# corepack in the container starts pnpm without a download (see test-in-docker.sh). Created here, or docker would
+# create it owned by root.
+_COREPACK_HOME="${COREPACK_HOME:-$HOME/.cache/node/corepack}"
+mkdir -p "$_COREPACK_HOME"
+
 docker run --rm \
   -e CI="${CI:-}" \
   -e DEBUG="${DEBUG:-}" \
@@ -45,6 +51,7 @@ docker run --rm \
   -v "$(pwd)/node-modules-docker:/project/node_modules" \
   -v "${ELECTRON_CACHE_PATH:-$_ELECTRON_CACHE_DEFAULT}:/root/.cache/electron" \
   -v "${ELECTRON_BUILDER_CACHE_PATH:-$_ELECTRON_BUILDER_CACHE_DEFAULT}:/root/.cache/electron-builder" \
+  -v "$_COREPACK_HOME:/root/.cache/node/corepack" \
   ${ADDITIONAL_DOCKER_ARGS} \
   "$_IMAGE" \
   /bin/bash -c "bash ./docker/test-in-docker.sh"

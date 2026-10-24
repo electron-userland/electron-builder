@@ -1103,7 +1103,8 @@ function migratePlatformAsar(c: Record<string, any>, name: string, rootAsarValue
 /** Removes `null` toolset values (rejected by the v27 schema) and remaps pins to bundles that are no longer published. */
 function migrateToolsets(toolsets: Record<string, any>, changes: MigrationChange[]) {
   for (const [key, value] of Object.entries(toolsets)) {
-    if (value === null) {
+    // toolsets.executables is not a bundle, and null is valid for it (the default locations)
+    if (value === null && key !== "executables") {
       delete toolsets[key]
       changes.push({
         key: `toolsets.${key}`,

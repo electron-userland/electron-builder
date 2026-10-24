@@ -1313,6 +1313,13 @@ describe("migrateConfig — toolsets", () => {
     const input = { toolsets: { appimage: "0.0.0", wine: "system", winCodeSign: "1.3.0" } }
     expect(migrateConfig(input).modified).toBe(false)
   })
+
+  test("keeps toolsets.executables, for which null is valid", () => {
+    const input = { toolsets: { executables: null, wine: "system" } }
+    expect(migrateConfig(input).modified).toBe(false)
+    const withEntries = { toolsets: { executables: { mono: "file:///opt/homebrew/bin/mono", pwsh: null } } }
+    expect(migrateConfig(withEntries).modified).toBe(false)
+  })
 })
 
 describe("migrateConfig — nativeRebuilder: legacy", () => {
