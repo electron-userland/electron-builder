@@ -22,6 +22,8 @@ import { cleanupWindowsSignedFixture, createSignedExecutable, getWindowsSignedFi
 
 const DEFAULT_SUBJECT = "CN=Test Publisher, O=Test Org, C=US"
 const DN_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
+// the environment variable that carries the update path into the PowerShell script
+const FILE_ENV = "ELECTRON_BUILDER_AUTHENTICODE_FILE"
 const POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
 
 // =============================================================================
@@ -152,6 +154,7 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
   // everywhere; an explicit filePath in opts still wins (used by the path tests).
   async function setup(tmpDir: TmpDir) {
     vi.clearAllMocks()
+    vi.stubEnv("SystemRoot", "C:\\Windows")
     const defaultFile = path.join(await tmpDir.getTempDir(), "test-update-1.0.1.exe")
     const logger = createLogger()
     const makeJson = (opts: SignatureJsonOpts = {}) => makeSignatureJson({ filePath: defaultFile, ...opts })
@@ -183,98 +186,113 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
     return Object.assign(new Error(message), properties)
   }
 
+  function lastCall(): { exe: string; args: string[]; options: any; script: string } {
+    const [exe, args, options] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any]
+    const script = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
+    return { exe, args, options, script }
+  }
+
   // ---------------------------------------------------------------------------
-  describe("preparePowerShellExec params", () => {
+  describe("PowerShell invocation", () => {
     test("exe and decoded command match snapshot", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson())
       await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
-      const [exe, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
-      const encodedIdx = args.indexOf("-EncodedCommand")
-      const script = Buffer.from(args[encodedIdx + 1], "base64").toString("utf16le")
-      const normalizedScript = script.replace(defaultFile, "<UPDATE_PATH>")
-      expect([exe, [...args.slice(0, encodedIdx), normalizedScript]]).toMatchSnapshot()
+      const { exe, args, script } = lastCall()
+      // the update path is not part of the command, so it needs no normalization
+      expect([exe, [...args.slice(0, args.indexOf("-EncodedCommand")), script]]).toMatchSnapshot()
     })
 
-    test("shell is false — PowerShell is invoked directly", async ({ tmpDir }) => {
+    test("the system Windows PowerShell is started by absolute path, without a shell or a console window", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson())
       await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
-      const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
-      expect(opts.shell).toBe(false)
+      const { exe, options } = lastCall()
+      // a bare powershell.exe would be searched for in the current directory first
+      expect(exe).toBe(POWERSHELL)
+      expect(options.shell).toBe(false)
+      expect(options.windowsHide).toBe(true)
+    })
+
+    test("the update path is passed in an environment variable, never in the script", async ({ tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson())
+      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
+      const { options, script } = lastCall()
+      expect(options.env[FILE_ENV]).toBe(defaultFile)
+      expect(script).toContain(`Get-AuthenticodeSignature -LiteralPath $env:${FILE_ENV} -ErrorAction Stop | ConvertTo-Json -Compress`)
+      expect(script).not.toContain(defaultFile)
     })
 
     test("PSModulePath is stripped from env even when present in process.env", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
-      const original = process.env.PSModulePath
-      process.env.PSModulePath = "C:\\FakeUserModules"
-      try {
-        mockPsSuccess(makeJson())
-        await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
-        const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
-        expect(opts.env.PSModulePath).toBeUndefined()
-      } finally {
-        if (original === undefined) {
-          delete process.env.PSModulePath
-        } else {
-          process.env.PSModulePath = original
-        }
-      }
+      vi.stubEnv("PSModulePath", "C:\\FakeUserModules")
+      mockPsSuccess(makeJson())
+      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
+      expect(lastCall().options.env.PSModulePath).toBeUndefined()
     })
 
     test("other process.env keys are inherited through env", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson())
       await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
-      const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
-      expect(opts.env.PATH).toBe(process.env.PATH)
+      expect(lastCall().options.env.PATH).toBe(process.env.PATH)
     })
 
     test("timeout is 60 seconds", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson())
       await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
-      const [, , opts] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[], any, any]
-      expect(opts.timeout).toBe(60_000)
+      expect(lastCall().options.timeout).toBe(60_000)
     })
 
-    test("script ordering: ProgressPreference → Import-Module → PSModulePath clear → encoding → command", async ({ tmpDir }) => {
+    test("script ordering: ProgressPreference → Import-Module → PSModulePath clear → command", async ({ tmpDir }) => {
       // Security/reliability properties:
       // 1. $ProgressPreference = 'SilentlyContinue' must come first so that the Import-Module
       //    progress stream record ("Preparing modules for first use.") is never written to stderr.
       // 2. Import-Module must precede PSModulePath clear so PowerShell can still find the module.
-      // 3. All encoding/path setup precedes the user command.
+      // 3. All module setup precedes the command.
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson())
       await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
-      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
-      const script = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
+      const { script } = lastCall()
       const progressIdx = script.indexOf("$ProgressPreference")
       const importIdx = script.indexOf("Import-Module")
       const clearIdx = script.indexOf(`$env:PSModulePath = ""`)
-      const encIdx = script.indexOf("$OutputEncoding")
       const cmdIdx = script.indexOf("Get-AuthenticodeSignature")
       expect(progressIdx).toBe(0)
       expect(progressIdx).toBeLessThan(importIdx)
       expect(importIdx).toBeLessThan(clearIdx)
-      expect(clearIdx).toBeLessThan(encIdx)
-      expect(encIdx).toBeLessThan(cmdIdx)
+      expect(clearIdx).toBeLessThan(cmdIdx)
+    })
+
+    test("both modules the command uses are imported by their $PSHOME path, not looked up in PSModulePath", async ({ tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson())
+      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
+      const { script } = lastCall()
+      expect(script).toContain(`Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Security"`)
+      expect(script).toContain(`Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Utility"`)
+    })
+
+    test("the script sets no output encoding, which Constrained Language Mode (AppLocker / WDAC) forbids", async ({ tmpDir }) => {
+      // https://github.com/electron-userland/electron-builder/issues/6917 — the error on stderr would reject every update
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson())
+      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
+      expect(lastCall().script).not.toMatch(/\[Console\]::|\$OutputEncoding|New-Object|::new\(|Add-Type|\[pscustomobject\]/i)
     })
 
     test("encoded command uses UTF-16LE base64 — round-trip decodes correctly", async ({ tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
       mockPsSuccess(makeJson())
       await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
-      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
-      const encodedIdx = args.indexOf("-EncodedCommand")
-      const b64 = args[encodedIdx + 1]
+      const { args, script } = lastCall()
       // Valid base64 — no non-base64 characters
-      expect(b64).toMatch(/^[A-Za-z0-9+/]+=*$/)
-      // Decode back and verify it contains the expected segments
-      const decoded = Buffer.from(b64, "base64").toString("utf16le")
-      expect(decoded).toContain("Import-Module")
-      expect(decoded).toContain("Get-AuthenticodeSignature")
-      expect(decoded).toContain("ConvertTo-Json")
+      expect(args[args.indexOf("-EncodedCommand") + 1]).toMatch(/^[A-Za-z0-9+/]+=*$/)
+      expect(script).toContain("Import-Module")
+      expect(script).toContain("Get-AuthenticodeSignature")
+      expect(script).toContain("ConvertTo-Json")
     })
   })
 
@@ -373,6 +391,17 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       mockPsSuccess(makeJson({ subject: "CN=Test, O=Test Org, L=City, C=US" }))
       // Publisher spec only specifies CN and C — L and O in the cert are beyond the spec, ignored
       expectVerificationSuccess(await verifySignature(["CN=Test, C=US"], defaultFile, logger))
+    })
+
+    test("a non-ASCII subject and path escaped as \\uXXXX by the script match", async ({ tmpDir }) => {
+      const { logger } = await setup(tmpDir)
+      const subject = "CN=İlker Pálfi, O=你好 😀, C=TR"
+      const file = path.join(await tmpDir.getTempDir(), "İlker Pálfi", "你好 😀", "update.exe")
+      // what the script prints: pure ASCII, whatever the console code page
+      const escaped = makeSignatureJson({ subject, filePath: file }).replace(/[^ -~]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`)
+      expect(escaped).toMatch(/^[ -~]+$/)
+      mockPsSuccess(escaped)
+      expectVerificationSuccess(await verifySignature([subject], file, logger))
     })
   })
 
@@ -487,6 +516,14 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow("cannot run PowerShell: spawn UNKNOWN")
     })
 
+    test("PowerShell that cannot be located (no SystemRoot) rejects without spawning anything", async ({ tmpDir }) => {
+      const { defaultFile, logger } = await setup(tmpDir)
+      vi.stubEnv("SystemRoot", undefined)
+      vi.stubEnv("windir", undefined)
+      await expect(verifySignature([DEFAULT_SUBJECT], defaultFile, logger)).rejects.toThrow("cannot locate Windows PowerShell: SystemRoot is not set")
+      expect(vi.mocked(execFile)).not.toHaveBeenCalled()
+    })
+
     test("output over the buffer limit rejects", async ({ tmpDir }) => {
       const { defaultFile, logger } = await setup(tmpDir)
       mockPsError(execError("stdout maxBuffer length exceeded", { code: "ERR_CHILD_PROCESS_STDIO_MAXBUFFER" }))
@@ -520,84 +557,31 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
   })
 
   // ---------------------------------------------------------------------------
-  describe("path injection prevention", () => {
-    test("single quote in path is doubled in the PowerShell -LiteralPath argument", async ({ tmpDir }) => {
+  // The path travels in an environment variable, so no character of it can end the -LiteralPath argument or run as code.
+  describe("path passing", () => {
+    test.for([
+      ["a single quote", "it's-an-update.exe"],
+      ["several single quotes", "it's-really-it's.exe"],
+      ["a typographic apostrophe (U+2019, a PowerShell quote character)", "D’Andre-update.exe"],
+      ["all Unicode single-quote variants (U+2018-U+201B)", "‘a’b‚c‛d.exe"],
+      ["a dollar sign and a subexpression", "$important $(whoami)-update.exe"],
+      ["a backtick", "`update.exe"],
+      ["cmd.exe metacharacters", "AT&T %USERNAME% Updates.exe"],
+      ["PowerShell syntax", "update '; & calc; $(whoami) `x.exe"],
+      ["non-ASCII characters", "üñícodé Pálfi 你好 😀.exe"],
+    ])("a path with %s is passed verbatim and leaves the script unchanged", async ([, name], { tmpDir }) => {
       const { defaultFile, logger, makeJson } = await setup(tmpDir)
-      const pathWithQuote = path.join(path.dirname(defaultFile), "it's-an-update.exe")
-      mockPsSuccess(makeJson({ filePath: pathWithQuote }))
-      await verifySignature([DEFAULT_SUBJECT], pathWithQuote, logger)
-      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
-      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
-      expect(cmd).toContain("it''s-an-update.exe")
-    })
+      mockPsSuccess(makeJson())
+      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
+      const plainScript = lastCall().script
 
-    test("multiple single quotes in path are all escaped", async ({ tmpDir }) => {
-      const { defaultFile, logger, makeJson } = await setup(tmpDir)
-      const multiQuotePath = path.join(path.dirname(defaultFile), "it's-really-it's.exe")
-      mockPsSuccess(makeJson({ filePath: multiQuotePath }))
-      await verifySignature([DEFAULT_SUBJECT], multiQuotePath, logger)
-      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
-      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
-      expect(cmd).toContain("it''s-really-it''s.exe")
-    })
-
-    test("typographic apostrophe (U+2019) in path is doubled (PS treats smart quotes as string delimiters)", async ({ tmpDir }) => {
-      // https://github.com/electron-userland/electron-builder/pull/9764#issuecomment-5435910678
-      const { defaultFile, logger, makeJson } = await setup(tmpDir)
-      const smartQuotePath = path.join(path.dirname(defaultFile), "D’Andre-update.exe")
-      mockPsSuccess(makeJson({ filePath: smartQuotePath }))
-      await verifySignature([DEFAULT_SUBJECT], smartQuotePath, logger)
-      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
-      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
-      expect(cmd).toContain("D’’Andre-update.exe")
-    })
-
-    test("all Unicode single-quote variants (U+2018-U+201B) are doubled", async ({ tmpDir }) => {
-      const { defaultFile, logger, makeJson } = await setup(tmpDir)
-      const trickyPath = path.join(path.dirname(defaultFile), "‘a’b‚c‛d.exe")
+      vi.mocked(execFile).mockClear()
+      const trickyPath = path.join(path.dirname(defaultFile), name)
       mockPsSuccess(makeJson({ filePath: trickyPath }))
-      await verifySignature([DEFAULT_SUBJECT], trickyPath, logger)
-      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
-      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
-      expect(cmd).toContain("‘‘a’’b‚‚c‛‛d.exe")
-    })
-
-    test("path without special characters is passed through unchanged inside single quotes", async ({ tmpDir }) => {
-      const { defaultFile, logger, makeJson } = await setup(tmpDir)
-      mockPsSuccess(makeJson())
-      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
-      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
-      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
-      expect(cmd).toContain(`-LiteralPath '${defaultFile}'`)
-    })
-
-    test("-LiteralPath value is enclosed in single quotes", async ({ tmpDir }) => {
-      const { defaultFile, logger, makeJson } = await setup(tmpDir)
-      mockPsSuccess(makeJson())
-      await verifySignature([DEFAULT_SUBJECT], defaultFile, logger)
-      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
-      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
-      expect(cmd).toMatch(/-LiteralPath '.*'/)
-    })
-
-    test("dollar sign in path is passed verbatim (not interpolated — single-quoted PS string)", async ({ tmpDir }) => {
-      const { defaultFile, logger, makeJson } = await setup(tmpDir)
-      const dollarPath = path.join(path.dirname(defaultFile), "$important-update.exe")
-      mockPsSuccess(makeJson({ filePath: dollarPath }))
-      await verifySignature([DEFAULT_SUBJECT], dollarPath, logger)
-      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
-      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
-      expect(cmd).toContain("$important-update.exe")
-    })
-
-    test("backtick in path is passed verbatim (not treated as PS escape char — single-quoted PS string)", async ({ tmpDir }) => {
-      const { defaultFile, logger, makeJson } = await setup(tmpDir)
-      const backtickPath = path.join(path.dirname(defaultFile), "`update.exe")
-      mockPsSuccess(makeJson({ filePath: backtickPath }))
-      await verifySignature([DEFAULT_SUBJECT], backtickPath, logger)
-      const [, args] = vi.mocked(execFile).mock.calls[0] as unknown as [string, string[]]
-      const cmd = Buffer.from(args[args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le")
-      expect(cmd).toContain("`update.exe")
+      expectVerificationSuccess(await verifySignature([DEFAULT_SUBJECT], trickyPath, logger))
+      const { options, script } = lastCall()
+      expect(options.env[FILE_ENV]).toBe(trickyPath)
+      expect(script).toBe(plainScript)
     })
   })
 })
@@ -606,8 +590,8 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
 // E2e tests — Windows only, real PowerShell
 //
 // These tests call verifySignature with the real child_process functions restored
-// from vi.importActual. They validate the full spawn → UTF-8 decode → JSON parse →
-// DN match chain, including the encoding and path-escaping fixes.
+// from vi.importActual. They validate the full chain: absolute-path spawn, the path
+// in an environment variable, the ASCII-escaped JSON, the parse and the DN match.
 // =============================================================================
 
 describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell)", () => {
@@ -654,8 +638,8 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     expectVerificationFailure(await verifySignature(["CN=Any Publisher"], p, logger))
   })
 
-  // Each of these paths broke an earlier invocation (run through cmd.exe, or quoted into the command): the unsigned file must
-  // verify as unsigned instead of crashing or rejecting.
+  // Each of these paths broke the old invocations (embedded in the command; before that, run through cmd.exe): now the path is
+  // read from an environment variable, so the unsigned file just verifies as unsigned instead of crashing or rejecting.
   test.for([
     ["spaces", "path with spaces"],
     ["a single quote", "it's a test"],
@@ -665,9 +649,24 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     ["%VAR% (cmd.exe)", "%USERNAME% Updates"],
     ["$", "$Updates"],
     ["a backtick", "`Updates"],
+    ["PowerShell syntax", "update '; & calc; $(whoami) `x"],
   ])("unsigned file in a directory with %s returns a failure", { timeout: UNSIGNED_TIMEOUT }, async ([, directoryName], { tmpDir }) => {
     const { logger } = await setup()
     expectVerificationFailure(await verifySignature(["CN=Any Publisher"], await unsignedFileIn(tmpDir, directoryName), logger))
+  })
+
+  // A cmdlet error is caught by the script: written to stderr escaped like the output, with exit code 1.
+  test("a cmdlet error (missing file) rejects with exit code 1 and ASCII-only error text", { timeout: UNSIGNED_TIMEOUT }, async ({ tmpDir }) => {
+    const { logger } = await setup()
+    // the error text names the path, whose non-ASCII characters must arrive escaped
+    const missing = path.join(path.dirname(await unsignedFileIn(tmpDir, "üñícodé Pálfi")), "missing.exe")
+    const error: any = await verifySignature(["CN=Any Publisher"], missing, logger).then(
+      () => null,
+      (e: any) => e
+    )
+    expect(error?.code).toBe("ERR_UPDATER_SIGNATURE_UNVERIFIABLE")
+    expect(error.message).toContain("Get-AuthenticodeSignature failed with exit code 1")
+    expect([...error.message].every((c: string) => c.charCodeAt(0) < 128)).toBe(true)
   })
 
   // -------------------------------------------------------------------------
@@ -678,7 +677,7 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
   // deterministic (CN=Electron Builder Verifier Test, O=EB Test Org, C=US), so
   // these tests exercise the DN matching semantics with known values, and they
   // produce REAL verification positives (Status 0/Valid) through the whole
-  // PowerShell pipeline — spawn, escaping, UTF-8 decode, JSON parse, DN match.
+  // PowerShell pipeline — spawn, environment, ASCII escaping, JSON parse, DN match.
   //
   // Fixture provisioning (cert generation + machine-global store install) is a
   // lazily initialized module-level idempotent promise in windowsSignedFixture.ts;
@@ -742,15 +741,16 @@ describe.ifWindows("windowsExecutableCodeSignatureVerifier (e2e, real PowerShell
     })
 
     // The unsigned-file path tests above only prove "no crash"; these prove a genuine Valid + LiteralPath + DN-match positive.
-    test.for([["a smart quote and spaces", "D’Andre’s signed updates"]])(
-      "signed exe inside a directory with %s verifies",
-      { timeout: 120_000 },
-      async ([, directoryName], context: TestContext) => {
-        const { logger } = await setup()
-        const { fixture, exe } = await signedExecutable(context, directoryName)
-        expectVerificationSuccess(await verifySignature([fixture.subject], exe, logger))
-      }
-    )
+    test.for([
+      ["a smart quote and spaces", "D’Andre’s signed updates"],
+      ["PowerShell syntax (the path is never parsed)", "update '; & calc; $(whoami) `x"],
+      // the LiteralPath guard compares the Path PowerShell reports: it reads back losslessly through the \uXXXX escaping (#8822)
+      ["non-ASCII characters", "İlker Pálfi 你好 😀"],
+    ])("signed exe inside a directory with %s verifies", { timeout: 120_000 }, async ([, directoryName], context: TestContext) => {
+      const { logger } = await setup()
+      const { fixture, exe } = await signedExecutable(context, directoryName)
+      expectVerificationSuccess(await verifySignature([fixture.subject], exe, logger))
+    })
 
     test("symlink to a validly-signed exe never yields a publisher mismatch — LiteralPath guard or genuine pass", { timeout: 120_000 }, async (context: TestContext) => {
       const { logger } = await setup()
