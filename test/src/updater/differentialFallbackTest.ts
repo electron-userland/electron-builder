@@ -423,6 +423,28 @@ describe("every differential download failure falls back to a verified full down
           }),
           { multiRange, socketTimeout: 300 }
         ))
+      // correct bytes, but the answer does not say they are the requested range: never trusted (a multi-range request
+      // answered this way is retried range by range first)
+      test("206 without Content-Range", ({ tmpDir }) =>
+        expectFallback(
+          tmpDir,
+          onRange((res, ranges) => {
+            const [start, end] = ranges[0]
+            res.writeHead(206, { "Content-Length": end - start + 1 })
+            res.end(NEW.subarray(start, end + 1))
+          }),
+          { multiRange }
+        ))
+      test("206 with a wrong Content-Range", ({ tmpDir }) =>
+        expectFallback(
+          tmpDir,
+          onRange((res, ranges) => {
+            const [start, end] = ranges[0]
+            res.writeHead(206, { "Content-Range": `bytes ${start + 1}-${end + 1}/${NEW.length}`, "Content-Length": end - start + 1 })
+            res.end(NEW.subarray(start, end + 1))
+          }),
+          { multiRange }
+        ))
     })
   }
 
