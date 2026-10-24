@@ -34,6 +34,7 @@ import { NodeModuleInfo } from "../node-module-collector/types.js"
 import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { archToNodeCpu } from "./archCompatibility.js"
 import { assertSourceFileInTrustedRoots } from "./trustedSourceRoots.js"
+import { BUILD_CHANGES_URL } from "./config/legacyOptions.js"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
@@ -415,7 +416,8 @@ export function enforceAllowMissingDependencies(allowMissingDependencies: boolea
   throw new InvalidConfigurationError(
     `The following production dependencies could not be resolved during node-module collection:\n` +
       fatal.map(id => `  - ${id}`).join("\n") +
-      `\nInstall the missing dependencies, list names in \`allowMissingDependencies\` to allow specific ones to be missing, or set \`allowMissingDependencies\` to true to only warn (electron-builder <= 26 behavior).`
+      `\nInstall the missing dependencies, list names in \`allowMissingDependencies\` to allow specific ones to be missing, or set \`allowMissingDependencies\` to true to only warn (electron-builder <= 26 behavior).` +
+      `\nSee ${BUILD_CHANGES_URL}#allowmissingdependencies-now-fails-the-build`
   )
 }
 

@@ -6,6 +6,7 @@ import * as path from "path"
 import type { WinPackager } from "../../winPackager.js"
 import { isSignResultSigned, SigningResult } from "../signResult.js"
 import { AuthenticodeSignatureStatus, AuthenticodeSignerReader, readAuthenticodeSigner } from "./authenticodeSignature.js"
+import { BUILD_CHANGES_URL } from "../../util/config/legacyOptions.js"
 
 export interface UpdatePublisherVerificationOptions {
   /** Reads the embedded signer of the signed file. Defaults to {@link readAuthenticodeSigner}. */
@@ -19,7 +20,8 @@ export interface UpdatePublisherVerificationOptions {
 
 const FIX_HINT =
   "Set win.sign.publisherName to the subject of the certificate that signs your installer, " +
-  "or set win.verifyUpdateCodeSignature: false only if your updates are not Authenticode-signed."
+  "or set win.verifyUpdateCodeSignature: false only if your updates are not Authenticode-signed. " +
+  `See ${BUILD_CHANGES_URL}#windows-publishername-is-validated-against-the-signing-certificate`
 
 /**
  * The publisher names electron-updater verifies downloaded updates against: the `publisherName` of the packed apps'

@@ -64,6 +64,7 @@ import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from 
 import { resolveModule } from "../util/resolve.js"
 import { parseUrl } from "../util/pathManager.js"
 import { isPublishForPullRequest } from "../util/flags.js"
+import { BUILD_CHANGES_URL } from "../util/config/legacyOptions.js"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/guides/integration/oss/#pass-secrets-to-builds-from-forked-pull-requests) for details)" +
@@ -476,8 +477,9 @@ function reportConflictingAppUpdateFeeds(
     `targets ${targets} are built from the same ${packager.platform.name} ${Arch[arch]} app, which holds a single app-update.yml, ` +
     `but their publish settings resolve to different auto-update feeds (${feeds}; the first provider of each that receives the manifest is embedded)`
   const solution = `configure \`publish\` once at the platform level (\`${packager.platform.buildConfigurationKey}.publish\`) and remove the target-level overrides, or point their first providers at the same feed`
+  const docs = `${BUILD_CHANGES_URL}#app-updateyml-feed-follows-the-update-writing-targets`
   if (isPublish) {
-    throw new InvalidConfigurationError(`${problem}. To fix it, ${solution}.`)
+    throw new InvalidConfigurationError(`${problem}. To fix it, ${solution}. See ${docs}`)
   }
 
   // scoped to the platform packager (one per platform and build): afterPack and the targets writing app-update.yml themselves
@@ -485,7 +487,7 @@ function reportConflictingAppUpdateFeeds(
   log
     .once(`conflicting-app-update-feeds:${feeds}`, packager)
     .warn(
-      { solution },
+      { solution, docs },
       `${problem}. No app-update.yml is written, so installed apps get neither an update feed nor the update-manifest public key. ` +
         "Publishing this configuration fails with an InvalidConfigurationError."
     )

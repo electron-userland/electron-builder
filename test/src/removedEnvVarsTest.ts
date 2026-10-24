@@ -1,6 +1,6 @@
 import { log } from "builder-util"
 import { assertNoRemovedEnvVars, checkRemovedEnvVars, resetRemovedEnvVarsCheck } from "app-builder-lib/internal"
-import { REMOVED_ENV_VARS, warnOnRemovedEnvVars } from "app-builder-lib/src/util/removedEnvVars"
+import { REMOVED_ENV_VARS, removedEnvVarDocsUrl, warnOnRemovedEnvVars } from "app-builder-lib/src/util/removedEnvVars"
 import { promises as fs } from "fs"
 import * as path from "path"
 import { describe, expect, test, vi } from "vitest"
@@ -42,7 +42,7 @@ describe("checkRemovedEnvVars", () => {
     expect(message).not.toBeNull()
     expect(message).toContain(name)
     expect(message).toContain(expected)
-    expect(message).toContain("v27-build-changes#toolset-env-var-overrides-removed")
+    expect(message).toContain(removedEnvVarDocsUrl(name))
   })
 
   test("every removed variable is reported at once, not just the first", () => {
@@ -118,6 +118,14 @@ describe("repo hygiene", () => {
 })
 
 describe("warnOnRemovedEnvVars", () => {
+  test("every docs link points at a section of the build-changes page", async () => {
+    const doc = await fs.readFile(path.join(import.meta.dirname, "../../website/docs/migration/v27-build-changes.md"), "utf8")
+    for (const { name } of REMOVED_ENV_VARS) {
+      const anchor = removedEnvVarDocsUrl(name).split("#")[1]
+      expect(doc, name).toContain(`{#${anchor}}`)
+    }
+  })
+
   test("warns exactly once for each removed env var, tagged with its name and v27 remediation", () => {
     const warn = vi.spyOn(log, "warn").mockImplementation(() => log)
     try {
@@ -127,6 +135,7 @@ describe("warnOnRemovedEnvVars", () => {
         expect(warn, name).toHaveBeenCalledTimes(1)
         const [data, message] = warn.mock.calls[0]
         expect((data as any).envVar).toBe(name)
+        expect((data as any).docs).toBe(removedEnvVarDocsUrl(name))
         expect(message).toMatch(/removed in electron-builder v27/)
       }
     } finally {

@@ -25,6 +25,9 @@ import { importCertificate } from "../codesign.js"
 import type { SignManager } from "./signManager.js"
 import { WindowsSignOptions } from "./windowsCodeSign.js"
 import { SignFileResult } from "../signResult.js"
+import { BUILD_CHANGES_URL } from "../../util/config/legacyOptions.js"
+
+const PUBLISHER_NAME_DOCS = `${BUILD_CHANGES_URL}#windows-publishername-is-validated-against-the-signing-certificate`
 const { rename } = _fsExtra
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
@@ -128,7 +131,8 @@ export abstract class SigntoolBaseSignManager implements SignManager {
         "A custom Windows signing hook (`win.sign.sign`) is configured without `win.sign.publisherName`. " +
           "electron-builder cannot tell which certificate the hook signs with, and electron-updater verifies the signature of downloaded updates against the publisherName in app-update.yml. " +
           'Set `win.sign.publisherName` to the subject of the certificate that your hook signs with (e.g. "CN=My Company, O=My Company, C=US"), ' +
-          "or set `win.verifyUpdateCodeSignature: false` (only if your updates are not Authenticode-signed or you don't use electron-updater) to opt out of update signature verification explicitly."
+          "or set `win.verifyUpdateCodeSignature: false` (only if your updates are not Authenticode-signed or you don't use electron-updater) to opt out of update signature verification explicitly. " +
+          `See ${PUBLISHER_NAME_DOCS}`
       )
     }
 
@@ -143,7 +147,8 @@ export abstract class SigntoolBaseSignManager implements SignManager {
         "Windows code signing is configured, but the publisher name cannot be determined at build time (the signing certificate has no Common Name). " +
           "electron-updater verifies the signature of downloaded updates against the publisherName in app-update.yml. " +
           'Set `win.sign.publisherName` to the subject of the certificate that signs your app (e.g. "CN=My Company, O=My Company, C=US"), ' +
-          "or set `win.verifyUpdateCodeSignature: false` (only if your updates are not Authenticode-signed or you don't use electron-updater) to opt out of update signature verification explicitly."
+          "or set `win.verifyUpdateCodeSignature: false` (only if your updates are not Authenticode-signed or you don't use electron-updater) to opt out of update signature verification explicitly. " +
+          `See ${PUBLISHER_NAME_DOCS}`
       )
     }
     return null

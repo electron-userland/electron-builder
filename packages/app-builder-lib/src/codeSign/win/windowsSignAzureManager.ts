@@ -15,6 +15,7 @@ import { WindowsSignOptions } from "./windowsCodeSign.js"
 import { SignFileResult } from "../signResult.js"
 import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager.js"
 import semver from "semver"
+import { BUILD_CHANGES_URL } from "../../util/config/legacyOptions.js"
 
 const minimumWinCodeSignVersionForDlib = "1.3.0"
 export class WindowsSignAzureManager implements SignManager {
@@ -66,6 +67,7 @@ export class WindowsSignAzureManager implements SignManager {
         // oxlint-disable-next-line typescript/no-base-to-string -- pre-existing log text; a custom toolset object prints as "[object Object]", changing it is out of scope for the lint migration
         reason: `toolsets.winCodeSign "${String(wcs)}" is below the minimum "${minimumWinCodeSignVersionForDlib}"`,
         guidance: `leave toolsets.winCodeSign unset (or set it to "${minimumWinCodeSignVersionForDlib}" / "latest") to use the faster signtool /dlib integration`,
+        docs: `${BUILD_CHANGES_URL}#azure-trusted-signing-signtool-dlib-is-the-default`,
       },
       `Azure Trusted Signing: falling back to legacy PowerShell (Invoke-TrustedSigning)`
     )

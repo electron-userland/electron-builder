@@ -57,7 +57,7 @@ describe("toolset version visibility", () => {
   test("the resolved toolset is logged once per release name", async () => {
     const source = await read("app-builder-lib", "src", "util", "electronGet.ts")
     expect(source).toContain("announceToolsetVersion")
-    expect(source).toContain('log.once(`toolset:${releaseName}`).info({ toolset: releaseName }, "using toolset")')
+    expect(source).toContain('log.once(`toolset:${releaseName}`).info({ toolset: releaseName, docs: TOOLSET_DEFAULTS_DOCS }, "using toolset")')
   })
 })
 

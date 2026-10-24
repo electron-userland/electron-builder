@@ -96,7 +96,7 @@ These flags are removed (they have thrown since v22).
 
 ### Toolset defaults resolve to `"latest"` (newest bundle) {#toolset-defaults-resolve-to-latest-newest-bundle}
 
-**How you'll find out:** **Info log only.** The build logs which toolset version it uses, not that the default changed. Without Wine installed, a macOS build that needs it fails with a bare `spawn wine ENOENT`.
+**How you'll find out:** **Info log only.** The build logs which toolset version it uses, with a link here, but not that the default changed. Without Wine installed, a macOS build that needs it fails with a bare `spawn wine ENOENT`.
 
 In v27 every `toolsets.*` property defaults to **`"latest"`** — an unset property or the literal `"latest"` resolves to the **newest published bundle** for that toolset. (Earlier v27 prereleases pinned a fixed default per toolset; those fixed defaults are gone.) (In v26 an unset or `null` toolset resolved to the legacy `"0.0.0"` bundle, so pin `"0.0.0"` if you need to stay on it.) A `null` value and the retired `appimage: "1.0.2"` pin are config changes: see [`toolsets.*: null` rejected](./v27-config-changes.md#toolsets-null-rejected).
 
@@ -124,7 +124,7 @@ Legacy-base snap template builds (`core18`/`core20`/`core22` with `useTemplateAp
 
 ### Azure Trusted Signing `signtool /dlib` is the default {#azure-trusted-signing-signtool-dlib-is-the-default}
 
-**How you'll find out:** **Info log only.** Each signed file logs which signing path was used.
+**How you'll find out:** **Info log only.** Each signed file logs which signing path was used. Falling back to the legacy PowerShell path logs a line that links here.
 
 Azure Trusted Signing (`win.sign: { type: "azure" }`) uses the faster `signtool /dlib` path automatically: the default `winCodeSign` (`"latest"` → `1.3.1`) ships the ATS `dlib` + .NET 8 payload, so no pin is required. To **force the legacy** PowerShell `Invoke-TrustedSigning` path instead (which requires the `TrustedSigning` PS module in the signing environment), pin `winCodeSign` below `1.3.0`:
 
@@ -136,7 +136,7 @@ The signer resolves the path from the `winCodeSign` value: unset / `null` / `"la
 
 ### Toolset env-var overrides removed {#toolset-env-var-overrides-removed}
 
-**How you'll find out:** **Fails the build** for most variables, with a link here. Five variables only warn (see below).
+**How you'll find out:** **Fails the build** for most variables. Five variables only warn (see below). Both the warning and the error link here.
 
 **This is a breaking change if you used env-var toolset overrides.** The following environment variables are **removed** — replace each with a [`ToolsetCustom`](#toolset-env-var-overrides-removed) object on the relevant `toolsets` key:
 
@@ -181,13 +181,13 @@ Supported archive formats: `.zip`, `.7z`, `.tar.gz`, `.tar.xz`. **Exception for 
 
 ### `CI_BUILD_TAG` environment variable {#ci_build_tag-environment-variable}
 
-**How you'll find out:** **Warns, then fails the build.**
+**How you'll find out:** **Warns, then fails the build**, with a link here.
 
 Removed. Use `CI_COMMIT_TAG` (the standard GitLab CI variable) to provide the release tag. A build with `CI_BUILD_TAG` still set fails.
 
-### `ELECTRON_BUILDER_BINARIES_ALLOW_HTTP` renamed
+### `ELECTRON_BUILDER_BINARIES_ALLOW_HTTP` renamed {#electron_builder_binaries_allow_http-renamed}
 
-**How you'll find out:** **Warns during the build** when the old name is set. The old name has no effect.
+**How you'll find out:** **Warns during the build**, with a link here, when the old name is set. The old name has no effect.
 
 Renamed to `ELECTRON_BUILDER_DANGEROUSLY_ALLOW_HTTP` to make the security implication explicit. The behavior is unchanged: set it to `true` to permit non-`localhost` plain-HTTP mirror / download-override URLs that would otherwise be rejected. Set the new name instead; the old one is no longer read.
 
@@ -250,7 +250,7 @@ This is a runtime behavior change, not a config-key rename, so `electron-builder
 
 ### `allowMissingDependencies` now fails the build {#allowmissingdependencies-now-fails-the-build}
 
-**How you'll find out:** **Fails the build**, listing every missing dependency.
+**How you'll find out:** **Fails the build**, listing every missing dependency, with a link here.
 
 A production dependency that cannot be resolved during `node_modules` collection is now a **hard error**. In v26 this logged `cannot find path for dependency` / `dependency not found on disk` warnings and produced a package that failed at runtime with `MODULE_NOT_FOUND`; v27 fails the build up front, listing every missing dependency at once.
 
@@ -265,7 +265,7 @@ A production dependency that cannot be resolved during `node_modules` collection
 
 ### Native binaries are verified against the target {#native-binaries-are-verified-against-the-target}
 
-**How you'll find out:** **Fails the build** for a `.node` addon built for another target. Other mismatched native files only warn.
+**How you'll find out:** **Fails the build**, with a link here, for a `.node` addon built for another target. Other mismatched native files only warn.
 
 After the app is packed, electron-builder reads the header of every `.node` addon in `app.asar`, `app.asar.unpacked` (or the unpacked `app` directory) and checks its format and machine type (ELF `e_machine`, Mach-O `cputype` including every slice of a fat binary, PE `Machine`) against the target platform and arch. A mismatch is now a **hard error** naming the file, what it was built for and what was expected. In v26 a stale or host-platform binary left in `node_modules` by a skipped or cached rebuild was packaged silently and only failed at runtime (`invalid ELF header`, `not a valid Win32 application`, `incompatible architecture`). For a macOS universal build each per-arch slice is checked before the slices are merged.
 
@@ -282,7 +282,7 @@ Relatedly, `nativeModules.buildDependenciesFromSource` no longer skips the nativ
 
 ### `extraFiles` / `extraResources` destinations are validated {#extrafiles--extraresources-destinations-are-validated}
 
-**How you'll find out:** **Fails the build.**
+**How you'll find out:** **Fails the build**, with a link here.
 
 A `to` path that is absolute (POSIX, drive-letter, or UNC) or that escapes the build output directory now throws an `InvalidConfigurationError`. v26 accepted these and copied files onto the build machine outside the packaged app.
 
@@ -339,7 +339,7 @@ electron-builder now **rejects** a macOS `productName` or `executableName` that 
 
 ### Windows `publisherName` is validated against the signing certificate {#windows-publishername-is-validated-against-the-signing-certificate}
 
-**How you'll find out:** **Fails the build.** `migrate-schema` also prints an advisory for a custom `win.sign.sign` hook without `publisherName`.
+**How you'll find out:** **Fails the build**, with a link here. `migrate-schema` also prints an advisory for a custom `win.sign.sign` hook without `publisherName`.
 
 A configured `win.sign.publisherName` (v26: `win.signtoolOptions.publisherName` / `win.azureSignOptions.publisherName`) that does not match the signing certificate's subject now fails the build instead of producing an installer that electron-updater would reject every update for. The common triggers are a certificate rotation and the wrong certificate leaking into `WIN_CSC_LINK` / `CSC_LINK` in CI.
 
@@ -417,9 +417,9 @@ updateManifest:
 
 When `publicKey` is not set, the trust list is derived from the signing keys and nothing changes. See [Key Rotation](../features/key-rotation.md#cutover-without-dual-signing).
 
-### `app-update.yml` feed follows the update-writing targets
+### `app-update.yml` feed follows the update-writing targets {#app-updateyml-feed-follows-the-update-writing-targets}
 
-**How you'll find out:** **Silent** for the feed choice itself. Targets with conflicting feeds **fail the build** when publishing and **warn** otherwise.
+**How you'll find out:** **Silent** for the feed choice itself. Targets with conflicting feeds **fail the build** when publishing and **warn** otherwise, with a link here.
 
 The feed an installed app polls — the first provider embedded in its `app-update.yml`, together with the manifest public key — is now resolved from the `publish` settings of the targets that write update info, not only from the platform/top-level `publish`. This changes package contents in three cases:
 
@@ -459,7 +459,7 @@ The deprecated top-level `path` and `sha512` fields are **no longer written** to
 
 ### S3 publishing requires an explicit `awsCredentials.source` {#s3-publishing-requires-an-explicit-awscredentialssource}
 
-**How you'll find out:** **Fails at publish.** Builds that don't publish are silent.
+**How you'll find out:** **Fails at publish**, with a link here. Builds that don't publish are silent.
 
 The `s3` publisher no longer picks up AWS credentials from ambient sources, and there is no default source. To publish, set the new `awsCredentials` publish option; only the source it names is consulted:
 
