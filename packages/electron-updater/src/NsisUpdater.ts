@@ -363,7 +363,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     if (options.isAdminRightsRequired) {
-      this._logger.info("isAdminRightsRequired is set to true, run installer with UAC elevation (PowerShell Start-Process -Verb RunAs, elevate.exe as fallback)")
+      this._logger.info("isAdminRightsRequired is set to true, run installer with UAC elevation (PowerShell ShellExecute runas, elevate.exe as fallback)")
       if (options.isAppQuitting) {
         // the app quit handler cannot wait for the trampoline to report, so the launch is fire-and-forget here
         this.launchElevatedDetached(installerPath, args)
@@ -395,7 +395,7 @@ export class NsisUpdater extends BaseUpdater {
 
   /**
    * Launches the installer elevated and waits until the outcome is known:
-   * - the PowerShell trampoline (`Start-Process -Verb RunAs`) reports that the installer is running → `true`;
+   * - the PowerShell trampoline (`ShellExecuteEx` with the `runas` verb) reports that the installer is running → `true`;
    * - the user declined the UAC prompt → an `error` event (`ERR_UPDATER_ELEVATION_CANCELLED`) and `false`. There is
    *   deliberately no fallback here: `elevate.exe` would only show the same prompt a second time;
    * - PowerShell cannot be started, is blocked (e.g. AppLocker/WDAC/constrained language mode), exits with another error
@@ -438,10 +438,14 @@ export class NsisUpdater extends BaseUpdater {
   }
 
   /**
-   * Runs the PowerShell elevation trampoline (see `windowsElevation.ts`) and maps its result. The child is not detached:
-   * its exit code is the only channel through which the UAC outcome is reported. `Start-Process -Verb RunAs` blocks while
-   * the UAC consent dialog is open, so the timeout is generous — it only guards against a hung PowerShell host, never
-   * against a user who is still deciding (Windows itself dismisses an unanswered prompt after about two minutes).
+   * Runs the PowerShell elevation trampoline (see `windowsElevation.ts`) and maps its result. The child is spawned
+   * `detached` but never `unref`'d: its exit code is the only channel through which the UAC outcome is reported, and the
+   * `exit`/`error` listeners still fire for a detached child. Without `detached`, libuv puts the child into its
+   * kill-on-close job object, so PowerShell (and with it the pending install) would die if the app exited while the UAC
+   * prompt is still open — e.g. an app that quits right after the public `install()` returned `true`, or a user quitting
+   * during `quitAndInstall()`. `ShellExecuteEx` blocks while the UAC consent dialog is open, so the timeout is generous —
+   * it only guards against a hung PowerShell host, never against a user who is still deciding (Windows itself dismisses
+   * an unanswered prompt after about two minutes).
    */
   private runElevationTrampoline(installerPath: string, args: Array<string>): Promise<ElevationOutcome> {
     const invocation = buildElevatedInstallerInvocation(installerPath, args)
@@ -463,7 +467,8 @@ export class NsisUpdater extends BaseUpdater {
 
       let child: ChildProcess
       try {
-        child = spawn(invocation.file, invocation.args, { stdio: "ignore", windowsHide: true, env: invocation.env })
+        // detached: not in libuv's kill-on-close job object, so the trampoline survives the app exiting while the UAC prompt is open
+        child = spawn(invocation.file, invocation.args, { stdio: "ignore", windowsHide: true, detached: true, env: invocation.env })
       } catch (e: any) {
         settle("unavailable", `Cannot spawn PowerShell for UAC elevation: ${e.message}`)
         return

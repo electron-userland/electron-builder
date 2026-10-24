@@ -215,7 +215,7 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly multiLanguageInstaller?: boolean
   /**
    * Whether to pack the `elevate.exe` helper into the app's `resources` directory. electron-updater elevates a per-machine
-   * (`isAdminRightsRequired`) install through Windows PowerShell (`Start-Process -Verb RunAs`) and uses `elevate.exe` as the
+   * (`isAdminRightsRequired`) install through Windows PowerShell (`ShellExecuteEx` with the `runas` verb) and uses `elevate.exe` as the
    * fallback, so the helper is still required for environments where PowerShell is unavailable or blocked (e.g. AppLocker/WDAC).
    * Keep it enabled if a per-machine installer is used or can be used in the future. Ignored if `perMachine` is set to `true`.
    * @default true

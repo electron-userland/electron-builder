@@ -13,8 +13,13 @@ exports[`windowsElevation script building > invocation uses the hardened powersh
 `;
 
 exports[`windowsElevation script building > invocation uses the hardened powershell.exe arguments and strips PSModulePath from the env 2`] = `
-"$ProgressPreference = 'SilentlyContinue'; Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Management"; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; try {
-  Start-Process -FilePath 'C:\\Users\\me\\AppData\\Local\\test-updater-app\\pending\\installer.exe' -ArgumentList @('--updated', '/S') -Verb RunAs -ErrorAction Stop
+"$ProgressPreference = 'SilentlyContinue'; $env:PSModulePath = ""; $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8; try {
+  $psi = [System.Diagnostics.ProcessStartInfo]::new()
+  $psi.FileName = 'C:\\Users\\me\\AppData\\Local\\test-updater-app\\pending\\installer.exe'
+  $psi.Arguments = '--updated /S'
+  $psi.UseShellExecute = $true
+  $psi.Verb = 'runas'
+  $null = [System.Diagnostics.Process]::Start($psi)
 } catch {
   $e = $_.Exception
   while ($null -ne $e) {
@@ -26,9 +31,14 @@ exports[`windowsElevation script building > invocation uses the hardened powersh
 exit 0"
 `;
 
-exports[`windowsElevation script building > script starts the installer via Start-Process -Verb RunAs and maps the outcome to exit codes 1`] = `
+exports[`windowsElevation script building > script starts the installer via [System.Diagnostics.Process]::Start with Verb runas and maps the outcome to exit codes 1`] = `
 "try {
-  Start-Process -FilePath 'C:\\Users\\me\\AppData\\Local\\test-updater-app\\pending\\installer.exe' -ArgumentList @('--updated', '/S', '--force-run') -Verb RunAs -ErrorAction Stop
+  $psi = [System.Diagnostics.ProcessStartInfo]::new()
+  $psi.FileName = 'C:\\Users\\me\\AppData\\Local\\test-updater-app\\pending\\installer.exe'
+  $psi.Arguments = '--updated /S --force-run'
+  $psi.UseShellExecute = $true
+  $psi.Verb = 'runas'
+  $null = [System.Diagnostics.Process]::Start($psi)
 } catch {
   $e = $_.Exception
   while ($null -ne $e) {

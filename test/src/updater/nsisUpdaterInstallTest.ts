@@ -13,6 +13,7 @@ import {
   buildElevatedInstallerInvocation,
   buildElevatedInstallerScript,
   buildElevationScript,
+  buildWin32CommandLine,
   quoteWin32CommandLineArg,
   UAC_CANCELLED_EXIT_CODE,
 } from "electron-updater/src/windowsElevation"
@@ -72,48 +73,93 @@ describe("windowsElevation script building", () => {
     expect(quoteWin32CommandLineArg('a\\"b')).toBe('"a\\\\\\"b"')
   })
 
-  test("script starts the installer via Start-Process -Verb RunAs and maps the outcome to exit codes", ({ expect }) => {
+  test("buildWin32CommandLine joins libuv-quoted tokens with single spaces and no trailing space", ({ expect }) => {
+    expect(buildWin32CommandLine([])).toBe("")
+    expect(buildWin32CommandLine(["--updated"])).toBe("--updated")
+    expect(buildWin32CommandLine(["--updated", "/S", "/D=C:\\Apps\\MyApp"])).toBe("--updated /S /D=C:\\Apps\\MyApp")
+    // per-token libuv parity: spaces → quoted, embedded quotes escaped, backslashes before a quote (or the end) doubled
+    expect(buildWin32CommandLine(["--updated", "/D=C:\\Program Files\\My App"])).toBe('--updated "/D=C:\\Program Files\\My App"')
+    expect(buildWin32CommandLine(["C:\\Program Files\\", 'say "hi"', "", 'a\\"b'])).toBe('"C:\\Program Files\\\\" "say \\"hi\\"" "" "a\\\\\\"b"')
+    for (const args of [["--updated", "/S"], ["--updated", "/D=C:\\Apps\\My App"], ["/D=C:\\Apps\\MyApp"]]) {
+      const commandLine = buildWin32CommandLine(args)
+      expect(commandLine, `trailing whitespace for ${JSON.stringify(args)}`).toBe(commandLine.trimEnd())
+      expect(commandLine).toBe(args.map(quoteWin32CommandLineArg).join(" "))
+    }
+  })
+
+  test("script starts the installer via [System.Diagnostics.Process]::Start with Verb runas and maps the outcome to exit codes", ({ expect }) => {
     const script = buildElevatedInstallerScript(INSTALLER_PATH, ["--updated", "/S", "--force-run"])
     expect(script).toMatchSnapshot()
-    expect(script).toContain(`-FilePath '${INSTALLER_PATH}'`)
-    expect(script).toContain("-ArgumentList @('--updated', '/S', '--force-run') -Verb RunAs -ErrorAction Stop")
+    expect(script).toContain("$psi = [System.Diagnostics.ProcessStartInfo]::new()")
+    expect(script).toContain(`$psi.FileName = '${INSTALLER_PATH}'`)
+    expect(script).toContain("$psi.Arguments = '--updated /S --force-run'")
+    expect(script).toContain("$psi.UseShellExecute = $true")
+    expect(script).toContain("$psi.Verb = 'runas'")
+    expect(script).toContain("[System.Diagnostics.Process]::Start($psi)")
+    // Start-Process is deliberately not used: it drops the inner Win32Exception and pads the command line with a trailing space
+    expect(script).not.toContain("Start-Process")
+    expect(script).not.toContain("-ArgumentList")
     expect(script).toContain(`exit ${UAC_CANCELLED_EXIT_CODE}`)
     expect(script.trimEnd().endsWith("exit 0")).toBe(true)
   })
 
-  test("buildElevationScript wraps the launch command and maps a nested Win32Exception(1223) to exit 1223, anything else to exit 1", ({ expect }) => {
+  test("$psi.Arguments is the exact libuv-joined command line: no trailing space, /D= last", ({ expect }) => {
+    const args = ["--updated", "/S", "--package-file=C:\\path with space\\x.7z", "/D=C:\\Apps\\My App"]
+    const script = buildElevatedInstallerScript(INSTALLER_PATH, args)
+    const argumentsLines = script.split("\n").filter(it => it.includes("$psi.Arguments = "))
+    expect(argumentsLines).toHaveLength(1)
+    expect(argumentsLines[0]).toBe(`  $psi.Arguments = '--updated /S "--package-file=C:\\path with space\\x.7z" "/D=C:\\Apps\\My App"'`)
+    expect(argumentsLines[0]).toBe(`  $psi.Arguments = '${buildWin32CommandLine(args)}'`)
+    // the literal ends right after the closing quote of the /D= token — NSIS keeps everything after /D= up to the end of the line
+    expect(argumentsLines[0].endsWith(`"/D=C:\\Apps\\My App"'`)).toBe(true)
+    expect(argumentsLines[0]).not.toMatch(/ '$/)
+    // an unspaced /D= token stays unquoted and is still the end of the command line
+    expect(buildElevatedInstallerScript(INSTALLER_PATH, ["--updated", "/D=C:\\Apps\\MyApp"])).toContain("$psi.Arguments = '--updated /D=C:\\Apps\\MyApp'\n")
+  })
+
+  test("buildElevationScript wraps the launch statements and maps a nested Win32Exception(1223) to exit 1223, anything else to exit 1", ({ expect }) => {
     const script = buildElevationScript("Invoke-Launch")
     const lines = script.split("\n")
     expect(lines[0]).toBe("try {")
     expect(lines[1]).toBe("  Invoke-Launch")
     expect(lines[2]).toBe("} catch {")
     expect(lines[lines.length - 1]).toBe("exit 0")
+    // several statements are indented one by one
+    expect(buildElevationScript(["$a = 1", "$b = 2"]).split("\n").slice(0, 4)).toEqual(["try {", "  $a = 1", "  $b = 2", "} catch {"])
     // the InnerException chain is walked for the Win32Exception carrying ERROR_CANCELLED
     expect(script).toContain("$e = $_.Exception")
     expect(script).toContain("$e = $e.InnerException")
     expect(script).toContain(`if (($e -is [System.ComponentModel.Win32Exception]) -and ($e.NativeErrorCode -eq ${UAC_CANCELLED_EXIT_CODE})) { exit ${UAC_CANCELLED_EXIT_CODE} }`)
     // any other failure exits 1 — the only other exit inside the catch block
     expect(script.match(/^\s*exit \d+$/gm)).toEqual(["  exit 1", "exit 0"])
-    // the production script is exactly this wrapper around the Start-Process line
+    // the production script is exactly this wrapper around the ProcessStartInfo launch
     expect(buildElevatedInstallerScript(INSTALLER_PATH, ["--updated", "/S"])).toBe(
-      buildElevationScript(`Start-Process -FilePath '${INSTALLER_PATH}' -ArgumentList @('--updated', '/S') -Verb RunAs -ErrorAction Stop`)
+      buildElevationScript([
+        "$psi = [System.Diagnostics.ProcessStartInfo]::new()",
+        `$psi.FileName = '${INSTALLER_PATH}'`,
+        "$psi.Arguments = '--updated /S'",
+        "$psi.UseShellExecute = $true",
+        "$psi.Verb = 'runas'",
+        "$null = [System.Diagnostics.Process]::Start($psi)",
+      ])
     )
   })
 
   test("installer args containing spaces arrive as a single token (Win32 double quotes inside the PS literal)", ({ expect }) => {
     const script = buildElevatedInstallerScript(INSTALLER_PATH, ["--updated", "/D=C:\\Program Files\\My App"])
-    expect(script).toContain(`-ArgumentList @('--updated', '"/D=C:\\Program Files\\My App"')`)
+    expect(script).toContain(`$psi.Arguments = '--updated "/D=C:\\Program Files\\My App"'`)
   })
 
   test("single quotes (plain and Unicode) are doubled for the PowerShell literals", ({ expect }) => {
     const script = buildElevatedInstallerScript("C:\\Users\\D’Andre\\it's.exe", ["--package-file=C:\\Users\\D'Andre\\pkg.7z"])
-    expect(script).toContain(`-FilePath 'C:\\Users\\D’’Andre\\it''s.exe'`)
-    expect(script).toContain(`@('--package-file=C:\\Users\\D''Andre\\pkg.7z')`)
+    expect(script).toContain(`$psi.FileName = 'C:\\Users\\D’’Andre\\it''s.exe'`)
+    expect(script).toContain(`$psi.Arguments = '--package-file=C:\\Users\\D''Andre\\pkg.7z'`)
   })
 
-  test("-ArgumentList is omitted when there are no installer args", ({ expect }) => {
-    expect(buildElevatedInstallerScript(INSTALLER_PATH, [])).toContain(`-FilePath '${INSTALLER_PATH}' -Verb RunAs`)
-    expect(buildElevatedInstallerScript(INSTALLER_PATH, [])).not.toContain("-ArgumentList")
+  test("$psi.Arguments is left at its empty default when there are no installer args", ({ expect }) => {
+    const script = buildElevatedInstallerScript(INSTALLER_PATH, [])
+    expect(script).toContain(`$psi.FileName = '${INSTALLER_PATH}'\n  $psi.UseShellExecute = $true`)
+    expect(script).not.toContain("$psi.Arguments")
   })
 
   test("invocation uses the hardened powershell.exe arguments and strips PSModulePath from the env", ({ expect }) => {
@@ -128,10 +174,10 @@ describe("windowsElevation script building", () => {
       expect(invocation.args).toHaveLength(encodedIndex + 2)
 
       const script = decodePowerShellEncodedCommand(invocation.args)!
-      // prelude: progress suppressed → Management module imported from $PSHOME → PSModulePath cleared → the trampoline
+      // prelude: progress suppressed → PSModulePath cleared → the trampoline; no cmdlet is used, so no module is imported
       expect(script).toMatchSnapshot()
-      expect(script.indexOf("$ProgressPreference = 'SilentlyContinue'")).toBeLessThan(script.indexOf(`Import-Module "$PSHOME\\Modules\\Microsoft.PowerShell.Management"`))
-      expect(script.indexOf("Import-Module")).toBeLessThan(script.indexOf(`$env:PSModulePath = ""`))
+      expect(script.indexOf("$ProgressPreference = 'SilentlyContinue'")).toBeLessThan(script.indexOf(`$env:PSModulePath = ""`))
+      expect(script).not.toContain("Import-Module")
       expect(script.endsWith(buildElevatedInstallerScript(INSTALLER_PATH, ["--updated", "/S"]))).toBe(true)
 
       expect(Object.keys(invocation.env).filter(it => it.toLowerCase() === "psmodulepath")).toEqual([])
@@ -171,7 +217,7 @@ describe("NsisUpdater.doInstall elevation", () => {
   const elevatedInstall = (updater: NsisUpdater, isAppQuitting = false) =>
     (updater as any).doInstall({ isSilent: true, isForceRunAfter: false, isAdminRightsRequired: true, isAppQuitting }) as boolean | Promise<boolean>
 
-  test("spawns the PowerShell trampoline (absolute path, not detached, hidden) and reports success on exit 0", async ({ expect }) => {
+  test("spawns the PowerShell trampoline (absolute path, detached but not unref'd, hidden) and reports success on exit 0", async ({ expect }) => {
     const { updater, spawnLog, errors } = await createUpdater()
     const child = mockSpawn()
 
@@ -180,13 +226,16 @@ describe("NsisUpdater.doInstall elevation", () => {
     expect(spawnMock).toHaveBeenCalledOnce()
     const [file, args, options] = spawnMock.mock.calls[0] as unknown as [string, Array<string>, any]
     expect(file).toBe(getWindowsPowerShellPath())
-    expect(options).toMatchObject({ stdio: "ignore", windowsHide: true })
-    expect(options.detached).toBeUndefined()
+    // detached: libuv would otherwise put powershell.exe into its kill-on-close job object and the pending install would
+    // die with the app while the UAC prompt is still open; not unref'd: the exit code is awaited
+    expect(options).toMatchObject({ stdio: "ignore", windowsHide: true, detached: true })
+    expect(child.unref).not.toHaveBeenCalled()
     expect(Object.keys(options.env).filter((it: string) => it.toLowerCase() === "psmodulepath")).toEqual([])
     expect(args).toEqual(buildElevatedInstallerInvocation(INSTALLER_PATH, ["--updated", "/S"]).args)
 
     child.emit("exit", 0, null)
     await expect(result).resolves.toBe(true)
+    expect(child.unref).not.toHaveBeenCalled()
     expect(spawnLog).not.toHaveBeenCalled()
     expect(errors).toEqual([])
   })
@@ -315,7 +364,7 @@ describe("NsisUpdater.doInstall elevation", () => {
 
     const result = elevatedInstall(updater)
     const script = decodePowerShellEncodedCommand((spawnMock.mock.calls[0] as unknown as [string, Array<string>])[1])!
-    expect(script).toContain(`'"/D=C:\\Program Files\\My App"'`)
+    expect(script).toContain(`$psi.Arguments = '--updated /S "/D=C:\\Program Files\\My App"'\n`)
     child.emit("exit", 0, null)
     await expect(result).resolves.toBe(true)
   })
@@ -428,9 +477,9 @@ describe.ifWindows("NsisUpdater.doInstall elevation — Windows integration", ()
     return code
   }
 
-  test("generated Start-Process script parses without errors (plain args, args with spaces, quotes)", async ({ expect }) => {
+  test("generated ProcessStartInfo script parses without errors (plain args, args with spaces, quotes)", async ({ expect }) => {
     // the check is not vacuous: an unterminated string literal is reported as a parse error
-    expect(await countParseErrors("Start-Process -FilePath 'C:\\fake\\installer.exe")).toBeGreaterThan(0)
+    expect(await countParseErrors("$psi.FileName = 'C:\\fake\\installer.exe")).toBeGreaterThan(0)
     for (const args of [["--updated", "/S"], ["--updated", "/D=C:\\Program Files\\My App"], ["--package-file=C:\\Users\\D'Andre\\pkg.7z"], []]) {
       const script = buildElevatedInstallerScript("C:\\fake\\installer.exe", args)
       expect(await countParseErrors(script), `parse errors for args ${JSON.stringify(args)}`).toBe(0)
@@ -443,8 +492,44 @@ describe.ifWindows("NsisUpdater.doInstall elevation — Windows integration", ()
     return code
   }
 
-  test("trampoline maps a Win32Exception(1223) nested in an InvalidOperationException (how Start-Process reports a declined UAC prompt) to exit 1223", async ({ expect }) => {
+  test("trampoline maps a Win32Exception(1223) wrapped in a MethodInvocationException (how a declined UAC prompt surfaces from [Process]::Start) to exit 1223", async ({
+    expect,
+  }) => {
+    expect(await runElevationScript("throw [System.Management.Automation.MethodInvocationException]::new('outer', [System.ComponentModel.Win32Exception]::new(1223))")).toBe(
+      UAC_CANCELLED_EXIT_CODE
+    )
+  })
+
+  test("trampoline maps a Win32Exception(1223) nested in an InvalidOperationException to exit 1223 as well", async ({ expect }) => {
     expect(await runElevationScript("throw [System.InvalidOperationException]::new('outer', [System.ComponentModel.Win32Exception]::new(1223))")).toBe(UAC_CANCELLED_EXIT_CODE)
+  })
+
+  // a real [System.Diagnostics.Process]::Start failure (no UAC prompt: ShellExecuteEx rejects a missing file before
+  // elevating) is surfaced by PowerShell as a MethodInvocationException whose InnerException is the Win32Exception
+  // carrying the native error code — the chain shape the production catch block relies on for ERROR_CANCELLED
+  test("a failing [System.Diagnostics.Process]::Start surfaces as MethodInvocationException → Win32Exception with the native error code", async ({ expect }) => {
+    const launch = [
+      "$psi = [System.Diagnostics.ProcessStartInfo]::new()",
+      "$psi.FileName = 'C:\\this\\does\\not\\exist\\installer.exe'",
+      "$psi.Arguments = '--updated'",
+      "$psi.UseShellExecute = $true",
+      "$psi.Verb = 'runas'",
+      "$null = [System.Diagnostics.Process]::Start($psi)",
+    ]
+    const probe = [
+      "try {",
+      ...launch.map(it => `  ${it}`),
+      "  exit 90",
+      "} catch {",
+      "  $e = $_.Exception",
+      "  if (-not ($e -is [System.Management.Automation.MethodInvocationException])) { exit 91 }",
+      "  if (-not ($e.InnerException -is [System.ComponentModel.Win32Exception])) { exit 92 }",
+      "  exit $e.InnerException.NativeErrorCode",
+      "}",
+    ].join("\n")
+    const { code } = await realExecFile(getWindowsPowerShellPath(), buildPowerShellArgs(probe, { modules: [] }))
+    // ERROR_FILE_NOT_FOUND (2) or ERROR_PATH_NOT_FOUND (3), depending on how the shell reports the missing directory
+    expect([2, 3]).toContain(code)
   })
 
   test("trampoline maps a directly thrown Win32Exception(1223) to exit 1223", async ({ expect }) => {
