@@ -102,6 +102,8 @@ For EV certificates (bound to a USB dongle), identify by subject name instead:
 2. Each file is signed once per entry in `signingHashAlgorithms` — by default SHA-1, then SHA-256 with the second signature appended as a nested signature.
 3. On Windows the signer is Microsoft `signtool.exe`; on macOS/Linux it is `osslsigncode` from the `winCodeSign` toolset bundle — no Wine or Windows VM is involved. Note: certificate-store lookups (`certificateSubjectName` / `certificateSha1`) read the Windows store and therefore require Windows (or the bundled Windows VM), whereas file-based signing works on any platform.
 
+Certificate-store lookups and the legacy Azure Trusted Signing integration run PowerShell, which electron-builder starts by absolute path and never looks up on `PATH`. On Windows it uses PowerShell 7 from `%ProgramFiles%\PowerShell\7\pwsh.exe`, the install location of its MSI installer, and otherwise Windows PowerShell from `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`; `SystemRoot` and `ProgramFiles` must be drive-absolute paths such as `C:\Windows`. Inside a Parallels VM the default locations `C:\Program Files` and `C:\Windows` are used. On macOS and Linux it uses `pwsh` from the install location of Microsoft's package: `/usr/local/microsoft/powershell/7/pwsh` on macOS, `/opt/microsoft/powershell/7/pwsh` or `/snap/bin/pwsh` on Linux.
+
 ### Configuration reference
 
 {!./app-builder-lib.Interface.WindowsSigntoolSigningConfig.md!}

@@ -1,25 +1,20 @@
 import { log } from "builder-util"
 import { Lazy } from "lazy-val"
-import { isPwshAvailable, VmManager } from "./vm.js"
+import { findHostPwsh, hostPwshNotFoundError } from "./systemTools.js"
+import { VmManager } from "./vm.js"
 
 export class PwshVmManager extends VmManager {
   constructor() {
     super()
   }
 
-  readonly powershellCommand = new Lazy<string>(async () => {
-    log.info(null, "checking for `pwsh` for powershell")
-    if (await isPwshAvailable.value) {
-      return "pwsh"
+  // pwsh only from the install location of Microsoft's package, never looked up on PATH
+  readonly powershellCommand = new Lazy<string>(() => {
+    const pwsh = findHostPwsh()
+    if (pwsh == null) {
+      return Promise.reject(hostPwshNotFoundError())
     }
-    const errorMessage = `unable to find \`pwsh\`, please install per instructions linked in logs`
-    log.error(
-      {
-        mac: "https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-macos",
-        linux: "https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-linux",
-      },
-      errorMessage
-    )
-    throw new Error(errorMessage)
+    log.info({ path: pwsh }, "using PowerShell 7")
+    return Promise.resolve(pwsh)
   })
 }

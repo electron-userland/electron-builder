@@ -1,6 +1,7 @@
 import { ParallelsVm, ParallelsVmManager } from "app-builder-lib/src/vm/ParallelsVm.js"
 import { getWindowsExecVm, VmManager } from "app-builder-lib/src/vm/vm.js"
 import { WineVmManager } from "app-builder-lib/src/vm/WineVm.js"
+import { findPrlctl, PRLCTL_PATHS } from "app-builder-lib/src/vm/systemTools.js"
 import { DebugLogger, exec } from "builder-util"
 import { afterEach, beforeEach, describe, test, vi } from "vitest"
 
@@ -11,6 +12,12 @@ vi.mock("builder-util", async importOriginal => {
   const actual = await importOriginal<typeof import("builder-util")>()
   return { ...actual, exec: vi.fn<typeof actual.exec>() }
 })
+// `prlctl` is started by absolute path, found only at its install locations; stand in for Parallels Desktop being installed
+vi.mock("app-builder-lib/src/vm/systemTools.js", async importOriginal => {
+  const actual = await importOriginal<typeof import("app-builder-lib/src/vm/systemTools.js")>()
+  return { ...actual, findPrlctl: vi.fn<typeof actual.findPrlctl>() }
+})
+const PRLCTL = PRLCTL_PATHS[0]
 
 const originalPlatform = process.platform
 
@@ -27,6 +34,9 @@ const execVm = () => getWindowsExecVm(new DebugLogger(false), undefined, "/build
 describe("getWindowsExecVm", () => {
   beforeEach(() => {
     vi.mocked(exec).mockReset()
+    vi.mocked(findPrlctl)
+      .mockReset()
+      .mockImplementation(() => (process.platform === "darwin" ? PRLCTL : null))
   })
 
   afterEach(() => {
@@ -40,8 +50,8 @@ describe("getWindowsExecVm", () => {
     expect(vi.mocked(exec)).not.toHaveBeenCalled()
   })
 
-  test.for<NodeJS.Platform>(["darwin", "linux"])("prefers a running Parallels Windows VM on %s", async (platform, { expect }) => {
-    setPlatform(platform)
+  test("prefers a running Parallels Windows VM on macOS", async ({ expect }) => {
+    setPlatform("darwin")
     vi.mocked(exec).mockResolvedValue(
       prlctlList([
         { id: "ubuntu", os: "ubuntu", state: "running" },
@@ -52,13 +62,20 @@ describe("getWindowsExecVm", () => {
     const result = await execVm()
     expect(result).toBeInstanceOf(ParallelsVmManager)
     expect((result as any).vm.id).toBe("{running}")
-    expect(vi.mocked(exec)).toHaveBeenCalledWith("prlctl", ["list", "-i", "-s", "name"], undefined, false)
+    expect(vi.mocked(exec)).toHaveBeenCalledWith(PRLCTL, ["list", "-i", "-s", "name"], undefined, false)
   })
 
   test.for<NodeJS.Platform>(["darwin", "linux"])("falls back to wine on %s when Parallels is unavailable", async (platform, { expect }) => {
     setPlatform(platform)
     vi.mocked(exec).mockRejectedValue(new Error("spawn prlctl ENOENT"))
     expect(await execVm()).toBeInstanceOf(WineVmManager)
+  })
+
+  test.for<NodeJS.Platform>(["darwin", "linux"])("falls back to wine on %s without running anything when prlctl is not installed", async (platform, { expect }) => {
+    setPlatform(platform)
+    vi.mocked(findPrlctl).mockReturnValue(null)
+    expect(await execVm()).toBeInstanceOf(WineVmManager)
+    expect(vi.mocked(exec)).not.toHaveBeenCalled()
   })
 
   test("falls back to wine when Parallels has no Windows VM", async ({ expect }) => {

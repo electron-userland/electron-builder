@@ -4,6 +4,8 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { ToolsetConfig } from "../configuration.js"
 import { ParallelsVm } from "./ParallelsVm.js"
+import { findHostPwsh, HOST_PWSH_PATHS, windowsPowerShellPath, windowsPwshPath } from "./systemTools.js"
+
 export class VmManager {
   get pathSep(): string {
     return path.sep
@@ -24,16 +26,28 @@ export class VmManager {
     return file
   }
 
-  readonly powershellCommand = new Lazy(() => {
-    return this.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", `Get-Command pwsh.exe`])
-      .then(() => {
-        log.info(null, "identified pwsh.exe")
-        return "pwsh.exe"
-      })
-      .catch(() => {
-        log.info(null, "unable to find pwsh.exe, falling back to powershell.exe")
-        return "powershell.exe"
-      })
+  // Absolute paths of Windows PowerShell and PowerShell 7 on the machine this manager runs commands on
+  protected windowsPowerShellPaths(): { powershell: string; pwsh: { path: string } | { error: string } } {
+    return { powershell: windowsPowerShellPath(), pwsh: windowsPwshPath() }
+  }
+
+  // PowerShell 7 when it is installed at its fixed location, else Windows PowerShell — both by absolute path, never looked up on PATH
+  readonly powershellCommand = new Lazy(async () => {
+    const { powershell, pwsh } = this.windowsPowerShellPaths()
+    if ("path" in pwsh) {
+      try {
+        await this.exec(pwsh.path, ["-NoProfile", "-NonInteractive", "-Command", "exit 0"])
+        log.info({ path: pwsh.path }, "using PowerShell 7")
+        return pwsh.path
+      } catch {
+        // not installed at its fixed location
+      }
+    }
+    log.warn(
+      { path: powershell, reason: "path" in pwsh ? `not found at ${pwsh.path}` : pwsh.error },
+      "PowerShell 7 (pwsh.exe) is used only from %ProgramFiles%\\PowerShell\\7\\pwsh.exe, the install location of its MSI installer; using Windows PowerShell"
+    )
+    return powershell
   })
 }
 
@@ -43,13 +57,16 @@ export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager>
   try {
     vmList = await parseWindowsVmList(debugLogger)
   } catch (_error) {
-    if ((await isPwshAvailable.value) && (await isWineAvailable.value)) {
+    if (findHostPwsh() != null && (await isWineAvailable.value)) {
       const vmModule = await import("./PwshVm.js")
       return new vmModule.PwshVmManager()
     }
   }
   if (vmList.length === 0) {
-    throw new InvalidConfigurationError("Cannot find suitable Parallels Desktop virtual machine (Windows 10 is required) and cannot access `pwsh` and `wine` locally")
+    const pwshPaths = (HOST_PWSH_PATHS[process.platform] ?? []).join(", ")
+    throw new InvalidConfigurationError(
+      `Cannot find suitable Parallels Desktop virtual machine (Windows 10 is required) and cannot access \`pwsh\` (used only from ${pwshPaths}) and \`wine\` locally`
+    )
   }
 
   return new parallelsVmModule.ParallelsVmManager(preferRunningVm(vmList))
@@ -98,10 +115,6 @@ export async function getLinuxVm(debugLogger: DebugLogger): Promise<VmManager | 
 
 const isWineAvailable = new Lazy(async () => {
   return isCommandAvailable("wine", ["--version"])
-})
-
-export const isPwshAvailable = new Lazy(async () => {
-  return isCommandAvailable("pwsh", ["--version"])
 })
 
 export const isCommandAvailable = async (command: string, args: string[]) => {
