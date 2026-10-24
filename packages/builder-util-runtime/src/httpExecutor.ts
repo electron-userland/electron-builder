@@ -374,6 +374,8 @@ Please double check that your authentication token is correct. Due to security r
 
   static prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions): RequestOptions {
     const newOptions = configureRequestOptionsFromUrl(redirectUrl, { ...options })
+    // the target is hostname and port: Electron's net prefers `host` (where ElectronHttpExecutor moves a `Host` header) over them
+    delete newOptions.host
     const headers = newOptions.headers
     if (headers == null) {
       return newOptions
