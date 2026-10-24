@@ -1,5 +1,5 @@
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
-import { getRceditBundle, waitForOtherPackTargets, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
+import { getRceditBundle, waitForPackWork, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
 import { InvalidConfigurationError, isEmptyOrSpaces, log, escapeForXml, prepareFixedNameWrite } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import * as fs from "fs"
@@ -166,8 +166,8 @@ export default class SquirrelWindowsTarget extends Target {
     })
     const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
     // The stub and the re-signed app exe are written into appOutDir, which the other targets of this pack read: wait for
-    // them, and write here rather than in the queue so the sync targets built after this one see the final appOutDir.
-    await waitForOtherPackTargets(packager, this, appOutDir, arch)
+    // their queued work (zip/7z), and write here rather than in the queue so the sync targets built after this one see the final appOutDir.
+    await waitForPackWork(packager, appOutDir, arch)
     await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory)
 
     this.buildQueueManager.add(async () => {

@@ -400,6 +400,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   // builds can still be running when the next arch is packaged.
   private readonly packToTargets = new Map<string, ReadonlyArray<Target>>()
 
+  /**
+   * @internal queued work still reading a pack's app dir (e.g. zip/7z archiving it), by `packKey` - see trackPackWork.
+   * Kept apart from `Target.buildQueueManager`, which `finishBuild()` may drain before that work is done.
+   */
+  readonly pendingPackWork = new Map<string, Set<Promise<any>>>()
+
   /** @internal the targets packaged from `appOutDir` for `arch`, as passed to their `build()` */
   getPackTargets(appOutDir: string, arch: Arch): ReadonlyArray<Target> | undefined {
     return this.packToTargets.get(packKey(appOutDir, arch))
@@ -1182,13 +1188,22 @@ function capitalizeFirstLetter(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
+/** Registers queued `work` that still reads `appOutDir`, see waitForPackWork */
+export function trackPackWork(packager: PlatformPackager<any>, appOutDir: string, arch: Arch, work: Promise<any>): void {
+  const key = packKey(appOutDir, arch)
+  const pending = packager.pendingPackWork.get(key) ?? new Set<Promise<any>>()
+  packager.pendingPackWork.set(key, pending)
+  pending.add(work)
+  const settle = () => pending.delete(work)
+  void work.then(settle, settle)
+}
+
 /**
- * Waits for the work that the other targets of the pack from `appOutDir` queued in their `build()` (zip/7z archive
- * `appOutDir` after `build()` returns), so `target` can then write into `appOutDir`.
+ * Waits for the work tracked so far for the pack from `appOutDir` for `arch` (not other arches'), so the caller can then
+ * write into `appOutDir`. A failure of that work is left to its target's `finishBuild()` to report.
  */
-export async function waitForOtherPackTargets(packager: PlatformPackager<any>, target: Target, appOutDir: string, arch: Arch): Promise<void> {
-  const targets = packager.getPackTargets(appOutDir, arch) ?? []
-  await Promise.all(targets.filter(it => it !== target).flatMap(it => it.buildQueueManager.tasks))
+export async function waitForPackWork(packager: PlatformPackager<any>, appOutDir: string, arch: Arch): Promise<void> {
+  await Promise.allSettled(Array.from(packager.pendingPackWork.get(packKey(appOutDir, arch)) ?? []))
 }
 
 function packKey(appOutDir: string, arch: Arch) {
