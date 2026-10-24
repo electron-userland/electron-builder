@@ -1,6 +1,6 @@
 import { notarize, type NotarizeOptions, type NotaryToolKeychainCredentials } from "@electron/notarize"
 import type { PerFileSignOptions, SigningDistributionType, SignOptions } from "@electron/osx-sign"
-import { Arch, decodeStrictBase64, InvalidConfigurationError, log, MAX_FILE_REQUESTS, spawnAndWriteWithOutput, statOrNull, walk } from "builder-util"
+import { Arch, decodeStrictBase64, Executables, InvalidConfigurationError, log, MAX_FILE_REQUESTS, spawnAndWriteWithOutput, statOrNull, walk } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { createPrivateKey } from "crypto"
 import { open, rm, writeFile, type FileHandle } from "fs/promises"
@@ -46,7 +46,7 @@ export class MacTargetHelper {
         solution: "remove `sign: null` to sign normally, or set `mac.sign.identity` — keep it only if you intend to ship an unsigned app",
       },
       'skipped macOS code signing. Note this changed in v27: `mac.sign: null` now means "do not sign", whereas in v26 it only meant "no custom signer" and the app was still signed. ' +
-        "See https://www.electron.build/docs/migration/v27-breaking-changes#macos-signing-macsign"
+        "See https://www.electron.build/docs/migration/v27-config-changes#macos-signing-macsign"
     )
     return "skipped:disabled"
   }
@@ -661,14 +661,16 @@ export class MacTargetHelper {
       return
     }
     const apiKey = "appleApiKey" in options ? MacTargetHelper.decodeAppleApiKey(options.appleApiKey) : null
+    // notarytool by absolute path, so that it never runs through an xcrun looked up on PATH: the credentials are in its arguments
+    const notarytoolPath = await Executables.notarytool()
     if (apiKey == null) {
-      await notarize(options)
+      await notarize({ ...options, notarytoolPath })
     } else {
       // notarytool only reads the API key from a file: a fresh 0600 file in the build's temp dir, deleted as soon as notarytool is done
       const keyFile = await this.packager.tempDirManager.getTempFile({ prefix: "notarize-api-key", suffix: ".p8" })
       try {
         await writeFile(keyFile, apiKey, { mode: 0o600, flag: "wx" })
-        await notarize({ ...options, appleApiKey: keyFile })
+        await notarize({ ...options, appleApiKey: keyFile, notarytoolPath })
       } finally {
         await rm(keyFile, { force: true }).catch((e: any) => log.warn({ error: e.message }, "cannot delete the temporary App Store Connect API key file"))
       }

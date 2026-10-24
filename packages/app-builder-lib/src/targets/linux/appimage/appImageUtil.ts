@@ -342,11 +342,11 @@ atexit()
 error()
 {
   if [ -x /usr/bin/zenity ] ; then
-    LD_LIBRARY_PATH="" zenity --error --text "\${1}" 2>/dev/null
+    LD_LIBRARY_PATH="" /usr/bin/zenity --error --text "\${1}" 2>/dev/null
   elif [ -x /usr/bin/kdialog ] ; then
-    LD_LIBRARY_PATH="" kdialog --msgbox "\${1}" 2>/dev/null
+    LD_LIBRARY_PATH="" /usr/bin/kdialog --msgbox "\${1}" 2>/dev/null
   elif [ -x /usr/bin/Xdialog ] ; then
-    LD_LIBRARY_PATH="" Xdialog --msgbox "\${1}" 2>/dev/null
+    LD_LIBRARY_PATH="" /usr/bin/Xdialog --msgbox "\${1}" 2>/dev/null
   else
     echo "\${1}"
   fi
@@ -358,11 +358,11 @@ yesno()
   TITLE=$1
   TEXT=$2
   if [ -x /usr/bin/zenity ] ; then
-    LD_LIBRARY_PATH="" zenity --question --title="$TITLE" --text="$TEXT" 2>/dev/null || exit 0
+    LD_LIBRARY_PATH="" /usr/bin/zenity --question --title="$TITLE" --text="$TEXT" 2>/dev/null || exit 0
   elif [ -x /usr/bin/kdialog ] ; then
-    LD_LIBRARY_PATH="" kdialog --title "$TITLE" --yesno "$TEXT" || exit 0
+    LD_LIBRARY_PATH="" /usr/bin/kdialog --title "$TITLE" --yesno "$TEXT" || exit 0
   elif [ -x /usr/bin/Xdialog ] ; then
-    LD_LIBRARY_PATH="" Xdialog --title "$TITLE" --clear --yesno "$TEXT" 10 80 || exit 0
+    LD_LIBRARY_PATH="" /usr/bin/Xdialog --title "$TITLE" --clear --yesno "$TEXT" 10 80 || exit 0
   else
     echo "zenity, kdialog, Xdialog missing. Skipping \${THIS}."
     exit 0
@@ -393,15 +393,15 @@ ${
     if [ -x /usr/bin/zenity ] ; then
       # on cancel simply exits and our trap handler launches app, so, $isEulaAccepted is set here to 0 and then to 1 if EULA accepted
       isEulaAccepted=0
-      LD_LIBRARY_PATH="" zenity --text-info --title=${escapeShellString(config.ProductName)} --filename="$APPDIR/${config.EulaFile}" --ok-label=Agree --cancel-label=Disagree ${config.IsHtmlEula ? "--html" : ""}
+      LD_LIBRARY_PATH="" /usr/bin/zenity --text-info --title=${escapeShellString(config.ProductName)} --filename="$APPDIR/${config.EulaFile}" --ok-label=Agree --cancel-label=Disagree ${config.IsHtmlEula ? "--html" : ""}
     elif [ -x /usr/bin/Xdialog ] ; then
       isEulaAccepted=0
-      LD_LIBRARY_PATH="" Xdialog --title ${escapeShellString(config.ProductName)} --textbox "$APPDIR/${config.EulaFile}" 30 80 --ok-label Agree --cancel-label Disagree
+      LD_LIBRARY_PATH="" /usr/bin/Xdialog --title ${escapeShellString(config.ProductName)} --textbox "$APPDIR/${config.EulaFile}" 30 80 --ok-label Agree --cancel-label Disagree
     elif [ -x /usr/bin/kdialog ] ; then
       # cannot find any option to force Agree/Disagree buttons for kdialog. And official example exactly with OK button https://techbase.kde.org/Development/Tutorials/Shell_Scripting_with_KDE_Dialogs#Example_21._--textbox_dialog_box
       # in any case we pass labels text
       isEulaAccepted=0
-      LD_LIBRARY_PATH="" kdialog --textbox "$APPDIR/${config.EulaFile}" --yes-label Agree --cancel-label "Disagree"
+      LD_LIBRARY_PATH="" /usr/bin/kdialog --textbox "$APPDIR/${config.EulaFile}" --yes-label Agree --cancel-label "Disagree"
     fi
 
     case $? in

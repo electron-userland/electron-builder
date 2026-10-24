@@ -48,7 +48,7 @@ linux:
 ```
 
 :::note[v27: launcher entrypoint]
-Every Linux target except flatpak (deb/rpm, AppImage, snap) now launches through a generated `<executableName>-launcher` shell script rather than invoking the executable directly. `executableArgs` (and `forceX11`) are injected into that launcher, and the generated `.desktop` `Exec` key points at it (e.g. `Exec=/opt/MyApp/MyApp-launcher %U`) rather than inlining the args. This makes `executableArgs` apply consistently across all Linux targets. If you ship a custom `.desktop` override, an AppArmor/snap profile, or a MIME handler that hard-codes the `Exec` command, point it at the `*-launcher` script. The flatpak target keeps its own `electron-wrapper` script (`Exec=electron-wrapper %U`), which receives `executableArgs` as well. See [v27 Breaking Changes → Linux launcher entrypoint](./migration/v27-breaking-changes.md#linux-launcher-entrypoint).
+Every Linux target except flatpak (deb/rpm, AppImage, snap) now launches through a generated `<executableName>-launcher` shell script rather than invoking the executable directly. `executableArgs` (and `forceX11`) are injected into that launcher, and the generated `.desktop` `Exec` key points at it (e.g. `Exec=/opt/MyApp/MyApp-launcher %U`) rather than inlining the args. This makes `executableArgs` apply consistently across all Linux targets. If you ship a custom `.desktop` override, an AppArmor/snap profile, or a MIME handler that hard-codes the `Exec` command, point it at the `*-launcher` script. The flatpak target keeps its own `electron-wrapper` script (`Exec=electron-wrapper %U`), which receives `executableArgs` as well. See [v27 Breaking Changes → Linux launcher entrypoint](./migration/v27-runtime-changes.md#linux-launcher-entrypoint).
 :::
 
 ## Desktop File Customization
@@ -104,7 +104,7 @@ To fix this, set `desktopName` in `package.json`:
 electron-builder installs the `.desktop` file as `${desktopName}.desktop` (here `com.example.MyApp.desktop`) and sets `StartupWMClass=com.example.MyApp`, both matching Electron's `app_id`. A trailing `.desktop` in `desktopName` is tolerated (stripped before the filename is composed), so configs written for earlier versions keep working. When `desktopName` is absent, the filename falls back to `executableName`. The flatpak target is the exception: its `.desktop` file is always named after the [Flatpak application ID](flatpak.md#application-id), so for the flatpak `desktopName` has to be that ID followed by `.desktop` — see [Desktop Name](flatpak.md#desktop-name).
 
 :::note[Changed in v27]
-The installed `.desktop` filename is now always derived from `desktopName`. The `linux.syncDesktopName` flag that previously gated this behaviour has been removed — see the [v27 breaking changes](./migration/v27-breaking-changes.md#linuxsyncdesktopname-always-synced).
+The installed `.desktop` filename is now always derived from `desktopName`. The `linux.syncDesktopName` flag that previously gated this behaviour has been removed — see the [v27 breaking changes](./migration/v27-config-changes.md#linuxsyncdesktopname-always-synced).
 :::
 
 :::warning[desktopName is required for reliable window association]
@@ -223,7 +223,7 @@ rpm:
 ```
 
 :::note[v27: maintainer-script variable syntax]
-electron-builder interpolates variables into maintainer scripts (`afterInstall` / `afterRemove`) using shell-style `${var}`. The legacy EJS `<%= var %>` interpolation was **removed** in v27 — update any templated maintainer scripts to `${var}`. See [v27 Breaking Changes → Linux maintainer-script EJS syntax](./migration/v27-breaking-changes.md#linux-maintainer-script-ejs-template-syntax).
+electron-builder interpolates variables into maintainer scripts (`afterInstall` / `afterRemove`) using shell-style `${var}`. The legacy EJS `<%= var %>` interpolation was **removed** in v27 — update any templated maintainer scripts to `${var}`. See [v27 Breaking Changes → Linux maintainer-script EJS syntax](./migration/v27-developer-changes.md#linux-maintainer-script-ejs-template-syntax).
 :::
 
 ## Pacman Package (`pacman`)

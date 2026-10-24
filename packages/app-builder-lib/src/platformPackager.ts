@@ -328,6 +328,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.info.emitAppxManifestCreated(path)
   }
 
+  emitPkgDistributionCreated(path: string): Promise<void> {
+    return this.info.emitPkgDistributionCreated(path)
+  }
+
   abstract get defaultTarget(): Array<string>
 
   // eslint-disable-next-line

@@ -35,7 +35,7 @@ const _require = createRequire(import.meta.url)
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
-  readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
+  readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger, this.config.toolsets?.wine)))
   // Like `vm`, but for running Windows executables: falls back to wine rather than PwshVmManager (which runs files natively)
   readonly execVm = new Lazy<VmManager>(() => getWindowsExecVm(this.debugLogger, this.config.toolsets?.wine, this.buildResourcesDir))
 

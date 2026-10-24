@@ -1,5 +1,5 @@
 import * as asn1js from "asn1js"
-import { escapePowerShellSingleQuotes, parseAuthenticodeSignatureOutput, preparePowerShellExec } from "builder-util-runtime"
+import { parseAuthenticodeSignatureOutput, prepareAuthenticodeSignatureExec } from "builder-util-runtime"
 import { execFile } from "child_process"
 import { open } from "fs/promises"
 import * as pkijs from "pkijs"
@@ -59,36 +59,42 @@ export function readAuthenticodeSigner(file: string): Promise<AuthenticodeSigner
 
 /**
  * Reads the signer with `Get-AuthenticodeSignature`, with the helpers electron-updater verifies downloaded updates
- * with (builder-util-runtime: the same PowerShell invocation, path escaping and JSON parsing), so the build sees
- * exactly what the updater will see.
+ * with (builder-util-runtime: the same PowerShell invocation and JSON parsing), so the build sees exactly what the
+ * updater will see.
  */
 export function readAuthenticodeSignerWithPowerShell(file: string): Promise<AuthenticodeSignerInfo> {
-  const escapedFile = escapePowerShellSingleQuotes(file)
   return new Promise<AuthenticodeSignerInfo>(resolve => {
-    // longer than the updater's 20s: a busy build machine may still be preparing the PowerShell modules on first use,
-    // and a timeout here fails the build
-    execFile(...preparePowerShellExec(`Get-AuthenticodeSignature -LiteralPath '${escapedFile}' | ConvertTo-Json -Compress`, 60 * 1000), (error, stdout, stderr) => {
-      if (error != null) {
-        const stderrText = String(stderr ?? "").trim()
-        resolve({ type: "unreadable", reason: `Get-AuthenticodeSignature failed: ${error.message}${stderrText.length > 0 ? `\n${stderrText}` : ""}` })
-        return
-      }
-      let data: unknown
-      try {
-        data = parseAuthenticodeSignatureOutput(stdout)
-      } catch (e: any) {
-        resolve({ type: "unreadable", reason: `cannot parse Get-AuthenticodeSignature output (${e.message}): ${stdout}` })
-        return
-      }
-      const status = getProperty(data, "Status")
-      const numericStatus = typeof status === "number" ? status : null
-      const subject = getProperty(getProperty(data, "SignerCertificate"), "Subject")
-      if (typeof subject !== "string") {
-        resolve({ type: "unsigned", reason: `Get-AuthenticodeSignature reports no signer certificate (status: ${authenticodeSignatureStatusName(numericStatus)})` })
-        return
-      }
-      resolve({ type: "signed", subject, status: numericStatus })
-    })
+    try {
+      // a busy build machine may still be preparing the PowerShell modules on first use, and a timeout here fails the build
+      execFile(...prepareAuthenticodeSignatureExec(file, 60 * 1000), (error, stdout, stderr) => {
+        if (error != null) {
+          const stderrText = String(stderr ?? "").trim()
+          // the message of a non-zero exit is "Command failed: <the whole command line, the encoded script included>\n<stderr>"
+          const failure = error.killed ? "did not finish within 60s" : typeof error.code === "number" ? `exited with code ${error.code}` : error.message
+          resolve({ type: "unreadable", reason: `Get-AuthenticodeSignature failed: ${failure}${stderrText.length > 0 ? `\n${stderrText}` : ""}` })
+          return
+        }
+        let data: unknown
+        try {
+          data = parseAuthenticodeSignatureOutput(stdout)
+        } catch (e: any) {
+          const stderrText = String(stderr ?? "").trim()
+          resolve({ type: "unreadable", reason: `cannot parse Get-AuthenticodeSignature output (${e.message}): ${stdout}${stderrText.length > 0 ? `\n${stderrText}` : ""}` })
+          return
+        }
+        const status = getProperty(data, "Status")
+        const numericStatus = typeof status === "number" ? status : null
+        const subject = getProperty(getProperty(data, "SignerCertificate"), "Subject")
+        if (typeof subject !== "string") {
+          resolve({ type: "unsigned", reason: `Get-AuthenticodeSignature reports no signer certificate (status: ${authenticodeSignatureStatusName(numericStatus)})` })
+          return
+        }
+        resolve({ type: "signed", subject, status: numericStatus })
+      })
+    } catch (e: any) {
+      // PowerShell cannot be located (no SystemRoot) or started at all
+      resolve({ type: "unreadable", reason: `Get-AuthenticodeSignature failed: ${e.message}` })
+    }
   })
 }
 
@@ -128,7 +134,8 @@ const WINDOWS_ATTRIBUTE_TYPE_NAMES: Record<string, string> = {
 // doubling embedded quotes.
 const NEEDS_WINDOWS_DN_QUOTING = /[,+="\n<>#;]/
 
-function quoteWindowsDnValue(value: string): string {
+/** Quotes an RDN value the way Windows does when it formats a certificate subject (see {@link formatWindowsSubjectDn}). */
+export function quoteWindowsDnValue(value: string): string {
   if (value.length === 0 || value !== value.trim() || NEEDS_WINDOWS_DN_QUOTING.test(value)) {
     return `"${value.replace(/"/g, '""')}"`
   }

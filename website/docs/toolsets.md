@@ -7,7 +7,7 @@ electron-builder relies on a handful of external **binary bundles** — the NSIS
 For most projects you never touch this key: every toolset defaults to the newest published bundle. You reach for `toolsets` only to **pin a specific (or legacy) version**, or to **supply a custom bundle** in place of a built-in one.
 
 :::info[New in v27]
-Before v27, toolset selection was a mix of fixed version pins and environment-variable overrides (`APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, …). v27 **removes every one of those env vars** and replaces them with the typed `toolsets` config on this page. See [Toolsets & environment variables](./migration/v27-breaking-changes.md#toolsets-environment-variables) in the breaking-changes reference and the [Replacing removed environment variables](#replacing-removed-environment-variables) section below.
+Before v27, toolset selection was a mix of fixed version pins and environment-variable overrides (`APPIMAGE_TOOLS_PATH`, `ELECTRON_BUILDER_NSIS_DIR`, `USE_SYSTEM_WINE`, …). v27 **removes every one of those env vars** and replaces them with the typed `toolsets` config on this page. See [Toolsets & environment variables](./migration/v27-build-changes.md#toolsets-environment-variables) in the breaking-changes reference and the [Replacing removed environment variables](#replacing-removed-environment-variables) section below.
 :::
 
 ## The toolsets
@@ -16,10 +16,10 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 
 | Toolset | Used for | `"latest"` resolves to |
 |---|---|---|
-| `winCodeSign` | Windows code signing & resource editing (`signtool` / `osslsigncode`, `rcedit`, Windows Kits for AppX/MSIX) | `1.3.0` |
+| `winCodeSign` | Windows code signing & resource editing (`signtool` / `osslsigncode`, `rcedit`, Windows Kits for AppX/MSIX) | `1.3.1` |
 | `appimage` | Building `.AppImage` files (`mksquashfs`, `unsquashfs`, the self-executing runtime); its `mksquashfs` also packs legacy-base snaps built from the snap template app | `1.1.0` |
 | `nsis` | Compiling Windows installers (`makensis`, plugin DLLs, `elevate.exe`) | `1.2.1` |
-| `wine` | Running Windows tools (NSIS, rcedit, signtool) on non-Windows hosts | `system` (host `wine` on `PATH`) |
+| `wine` | Running Windows tools (NSIS, rcedit, signtool) on non-Windows hosts | `system` (host `wine` at a fixed install location) |
 | `fpm` | Building Linux packages (`.deb`, `.rpm`, `.pacman`, …) on macOS & Linux | `2.2.1` |
 | `linuxToolsMac` | Building Linux targets / `.tar.lz` archives on macOS (`ar`, `lzip`, `gtar`) | `1.0.1` |
 | `sevenZip` | Extracting `.7z` and `.tar.xz` archives internally | `1.0.1` |
@@ -27,13 +27,13 @@ Each property of `toolsets` corresponds to one downloadable bundle, hosted at [e
 | `squirrel` | Building Squirrel.Windows installers (`Squirrel.exe`, `SyncReleases.exe`, `nuget.exe`, `7z`) — requires `electron-builder-squirrel-windows` | `1.1.1` |
 
 :::note[Platform notes]
-- **`wine`** is only needed to build **Windows targets on a non-Windows machine**. On Windows it has no effect. It defaults to the **host-installed `wine`** on `PATH` (`"system"`) on both macOS and Linux, so a macOS host that builds Windows targets needs Wine installed (`brew install --cask wine-stable`). `toolsets.wine: "1.0.1"` still downloads the Wine 11.0 bundle on macOS when pinned explicitly, but the published bundle ships no PE builtins, so it cannot run Windows tools on its own.
+- **`wine`** is only needed to build **Windows targets on a non-Windows machine**. On Windows it has no effect. It defaults to the **host-installed `wine`** (`"system"`) on both macOS and Linux, so a macOS host that builds Windows targets needs Wine installed (`brew install --cask wine-stable`). See [Host Wine](#host-wine) for where it is looked for. `toolsets.wine: "1.0.1"` still downloads the Wine 11.0 bundle on macOS when pinned explicitly, but the published bundle ships no PE builtins, so it cannot run Windows tools on its own.
 - **`winCodeSign`** is used on all platforms (`signtool.exe` on Windows, `osslsigncode` on macOS/Linux).
-- **`squirrel`** is only used by the `squirrelWindows` target. It runs natively on Windows; on macOS/Linux it needs a host-installed `mono`, and `rcedit` (from `winCodeSign`) runs under Wine.
+- **`squirrel`** is only used by the `squirrelWindows` target. It runs natively on Windows; on macOS/Linux it needs a host-installed `mono` (see [`executables`](#executables)), and `rcedit` (from `winCodeSign`) runs under Wine.
 - **`fpm`**, **`icons`**, and **`squirrel`** each have only one published version today, so `"latest"` and the listed version are equivalent.
 :::
 
-For the full version-by-version breakdown of what each `"latest"` bundle upgrades from — and which are drop-in replacements versus behavior changes — see the migration table in [Toolset defaults resolve to `"latest"`](./migration/v27-breaking-changes.md#toolset-defaults-resolve-to-latest-newest-bundle).
+For the full version-by-version breakdown of what each `"latest"` bundle upgrades from — and which are drop-in replacements versus behavior changes — see the migration table in [Toolset defaults resolve to `"latest"`](./migration/v27-build-changes.md#toolset-defaults-resolve-to-latest-newest-bundle).
 
 ## Default resolution — `"latest"`
 
@@ -53,7 +53,7 @@ Pinning to a concrete version is as simple as naming it:
 ```yaml
 toolsets:
   nsis: "1.2.1"
-  winCodeSign: "1.3.0"
+  winCodeSign: "1.3.1"
 ```
 
 ## Pinning the legacy bundle (`"0.0.0"`)
@@ -162,7 +162,7 @@ Because 7-Zip is the tool electron-builder uses to extract `.7z` and `.tar.xz` a
 ### Custom NSIS bundle layout {#custom-nsis-bundle-layout}
 
 :::warning[Did you use deprecated `.customNsisBinary`/`.customNsisResources` properties in `v26` config?]
-Checkout our [`v26`-> `v27` migration guide](./migration/v26-to-v27#step-4-custom-nsis-migration-guide) and relevant [breaking changes note](./migration/v27-breaking-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis).
+Checkout our [`v26`-> `v27` migration guide](./migration/v26-to-v27#step-4-custom-nsis-migration-guide) and relevant [breaking changes note](./migration/v27-config-changes#customnsisbinary-and-customnsisresources-replaced-by-toolsetsnsis).
 :::
 
 
@@ -285,6 +285,51 @@ Plugins are particularly of-note here. NSIS scripts do not offer a lot of functi
 `.installerDebugLogging` However it additionally needs `makensis/makensis.exe` binaries and the stubs compiled with `NSIS_CONFIG_LOG=yes`, which the default bundle's NSIS versions are not.
 :::
 
+## Host programs — `executables` {#executables}
+
+Besides the bundles above, electron-builder starts a few programs that are installed on the build machine: PowerShell, Wine, Mono, the Parallels Desktop command line tool, the macOS packaging and signing tools, `lzip`, `snapcraft` and `flatpak`. electron-builder starts these programs only from an absolute path, never by looking up a name on `PATH`, so that nothing a dependency puts on `PATH` (such as `node_modules/.bin`) or in the current directory can stand in for them.
+
+For each program it uses the first location that is an executable file: the locations of its `toolsets.executables` entry when that is set, otherwise the default install locations below. If none is, the build fails with a configuration error that names the locations it tried. An entry **replaces** the default locations of that program; it is not merged with them.
+
+Each entry is one `file://` URI or a list of them. A list can serve several hosts: a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. An entry applies only on the hosts it has a URI for; elsewhere the program is used as if the entry were not set, from its default locations. Plain paths, `~` and URIs that name another host (`file://server/share/...`) are refused with a configuration error that shows the `file://` form to write. Program names have no `.exe` suffix.
+
+```json
+{
+  "toolsets": {
+    "executables": {
+      "wine": "file:///opt/wine-custom/bin/wine",
+      "mono": "file:///opt/homebrew/bin/mono",
+      "pwsh": ["file:///usr/local/microsoft/powershell/7/pwsh", "file:///C:/Program%20Files/PowerShell/7/pwsh.exe"]
+    }
+  }
+}
+```
+
+| Name | Used for | Default locations |
+|---|---|---|
+| `powershell` | Windows certificate-store lookups and legacy Azure Trusted Signing, package-manager commands on Windows, `create-self-signed-cert` | Windows: `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe` |
+| `pwsh` | PowerShell 7, preferred over `powershell` on Windows when it is installed; the signing helper on macOS and Linux | Windows: `%ProgramFiles%\PowerShell\7\pwsh.exe`; macOS: `/usr/local/microsoft/powershell/7/pwsh`; Linux: `/opt/microsoft/powershell/7/pwsh`, `/snap/bin/pwsh` |
+| `prlctl` | Running Windows and Linux tools in a Parallels Desktop VM | macOS: `/Applications/Parallels Desktop.app/Contents/MacOS/prlctl`, `/usr/local/bin/prlctl` |
+| `wine` | The host Wine (`toolsets.wine: "system"`, the default) | macOS: `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine`, `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine` (likewise `Wine Devel.app`, `Wine Staging.app`); Linux: `/usr/local/bin/wine`, `/usr/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`, `/opt/wine-staging/bin/wine` |
+| `mono` | The Squirrel.Windows tools on macOS and Linux | macOS: `/opt/homebrew/bin/mono`, `/usr/local/bin/mono`, `/opt/local/bin/mono`, `/Library/Frameworks/Mono.framework/Versions/Current/Commands/mono`, `/Library/Frameworks/Mono.framework/Versions/Current/bin/mono`; Linux: `/home/linuxbrew/.linuxbrew/bin/mono`, `/usr/local/bin/mono`, `/usr/bin/mono` |
+| `productbuild`, `pkgbuild` | `pkg` and `mas` installers | macOS: `/usr/bin/<name>` |
+| `codesign` | Signing the DMG | macOS: `/usr/bin/codesign` |
+| `hdiutil`, `tiffutil`, `sips` | Building the DMG and its background | macOS: `/usr/bin/<name>` |
+| `actool` | Icon Composer (`.icon`) icons | macOS: `/usr/bin/actool` (which runs the `actool` of the selected Xcode) |
+| `zip` | `zip` archives of file names that 7-Zip cannot store (NFD) | macOS: `/usr/bin/zip` |
+| `notarytool` | Notarization | the `notarytool` of the selected Xcode, located with `/usr/bin/xcrun --find notarytool` |
+| `lzip` | `tar.lz` archives on Linux (macOS uses the `linuxToolsMac` toolset) | Linux: `/usr/bin/lzip`, `/usr/local/bin/lzip` |
+| `snapcraft` | Building and publishing snaps | macOS: `/opt/homebrew/bin/snapcraft`, `/usr/local/bin/snapcraft`; Linux: `/snap/bin/snapcraft`, `/usr/bin/snapcraft` |
+| `flatpak`, `flatpak-builder` | Building flatpaks | Linux: `/usr/bin/<name>`, `/usr/local/bin/<name>` |
+
+Where a program has several default locations they are tried in the order of the default `PATH`. `SystemRoot` and `ProgramFiles` must be drive-absolute paths such as `C:\Windows`.
+
+`toolsets.executables` describes the build machine only: inside a Parallels Windows VM, electron-builder runs Windows PowerShell from `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`, the location of a default Windows installation. Package managers (`npm`, `pnpm`, `yarn`, `bun`) and `node-gyp` are not configured here.
+
+### Host Wine {#host-wine}
+
+`toolsets.wine` selects a Wine **bundle** (`"0.0.0"`, `"1.0.1"`, or a custom bundle with a `wine-home` prefix). `"system"`, which `"latest"` and an unset value resolve to, is the Wine installed on the build machine, taken from `toolsets.executables.wine` or its default locations above, and run with Wine's own default prefix. Setting both a bundle that would be used (a custom bundle, or a version on macOS; on Linux a version selects no bundle) and `toolsets.executables.wine` is a configuration error.
+
 ## Replacing removed environment variables
 
 v27 **removes** the toolset environment-variable overrides. Replace each with a `toolsets.<name>` custom object:
@@ -316,14 +361,14 @@ The two signing `USE_SYSTEM_*` variables (`USE_SYSTEM_SIGNCODE`, `USE_SYSTEM_OSS
 `USE_SYSTEM_FPM` is likewise removed. On **Windows there is no bundled FPM**, so an FPM-based target now **requires** an explicit custom `toolsets.fpm` (`{ url: "file:///path/to/dir" }`) and otherwise throws a clear configuration error — previously it silently fell back to a host `fpm` on `PATH`.
 :::
 
-See [Toolset env-var overrides removed](./migration/v27-breaking-changes.md#toolset-env-var-overrides-removed) for the complete rationale.
+See [Toolset env-var overrides removed](./migration/v27-build-changes.md#toolset-env-var-overrides-removed) for the complete rationale.
 
 ## Code signing and toolsets
 
 Windows signing is driven by the `winCodeSign` toolset in combination with [`win.sign`](./features/code-signing/code-signing-win.md):
 
-- The default `winCodeSign` (`"latest"` → `1.3.0`) bundles a modern `signtool` / `osslsigncode` (native arm64) plus the Windows Kits used for AppX/MSIX. The `hsm` and `pkcs11` signing modes require this modern bundle.
+- The default `winCodeSign` (`"latest"` → `1.3.1`) bundles a modern `signtool` / `osslsigncode` (native arm64) plus the Windows Kits used for AppX/MSIX. The `hsm` and `pkcs11` signing modes require this modern bundle.
 - **Azure Trusted Signing** (`win.sign: { type: "azure" }`) uses the faster `signtool /dlib` path **out of the box**, because the default `winCodeSign` ships the ATS `dlib` + .NET 8 payload — no pin needed. To force the legacy PowerShell `Invoke-TrustedSigning` path, pin `winCodeSign` **below** `1.3.0` (e.g. `"1.2.1"` or `"0.0.0"`). A `ToolsetCustom` object uses the `dlib` from your supplied bundle.
 
-For full setup — certificate methods, HSM/PKCS#11, and Azure — see [Code Signing for Windows](./features/code-signing/code-signing-win.md) and [Azure Trusted Signing `signtool /dlib` is the default](./migration/v27-breaking-changes.md#azure-trusted-signing-signtool-dlib-is-the-default).
+For full setup — certificate methods, HSM/PKCS#11, and Azure — see [Code Signing for Windows](./features/code-signing/code-signing-win.md) and [Azure Trusted Signing `signtool /dlib` is the default](./migration/v27-build-changes.md#azure-trusted-signing-signtool-dlib-is-the-default).
 

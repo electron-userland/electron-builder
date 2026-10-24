@@ -418,7 +418,7 @@ test("build-start preflight: a publishing build signed by a key outside updateMa
   expect(message).toContain(computeUpdateManifestKeyId(signing.publicKeyPem))
   expect(message).toContain(computeUpdateManifestKeyId(trusted.publicKeyPem))
   expect(message).toContain("updateManifest.allowSigningKeyOutsideTrustList: true")
-  expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#signing-key-must-be-in-updatemanifestpublickey")
+  expect(message).toContain("https://www.electron.build/docs/migration/v27-build-changes#signing-key-must-be-in-updatemanifestpublickey")
   // never key material
   expect(message).not.toContain("-----BEGIN")
   for (const pem of [signing.privateKeyPem, signing.publicKeyPem, trusted.publicKeyPem]) {

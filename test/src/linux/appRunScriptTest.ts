@@ -32,4 +32,14 @@ describe("generateAppRunScript", () => {
     const script = generateAppRunScript({ ...baseConfig })
     expect(script).toContain('for arg in "${EXECUTABLE_ARGS[@]}" "${args[@]}" ;')
   })
+
+  test("runs each dialog tool from the absolute path it checked, not by name on the $APPDIR-first PATH", ({ expect }) => {
+    // an EULA adds the dialogs that show it
+    const script = generateAppRunScript({ ...baseConfig, EulaFile: "eula.txt" })
+    for (const tool of ["zenity", "kdialog", "Xdialog"]) {
+      expect(script).toContain(`[ -x /usr/bin/${tool} ]`)
+      expect(script).toContain(`LD_LIBRARY_PATH="" /usr/bin/${tool} `)
+      expect(script).not.toContain(`LD_LIBRARY_PATH="" ${tool} `)
+    }
+  })
 })

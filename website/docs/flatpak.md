@@ -113,7 +113,7 @@ The refs then stay at the versions that are installed, without the fixes and sec
 
 `runtimeVersion` and `baseVersion` both default to `26.08`. A build that sets neither uses that version of the runtime, the SDK and the base app.
 
-Set the two options together: `baseVersion` is not derived from `runtimeVersion`, and left out it stays at `26.08`. Setting both, even to the default, pins the versions, so the build stays on them when an electron-builder upgrade changes the default — as v27 did, from `20.08` (see the [migration guide](migration/v27-breaking-changes.md#flatpak-tooling-requirements)):
+Set the two options together: `baseVersion` is not derived from `runtimeVersion`, and left out it stays at `26.08`. Setting both, even to the default, pins the versions, so the build stays on them when an electron-builder upgrade changes the default — as v27 did, from `20.08` (see the [migration guide](migration/v27-build-changes.md#flatpak-tooling-requirements)):
 
 ```yaml
 flatpak:
@@ -160,7 +160,7 @@ flatpak:
     - "--share=network"
 ```
 
-With the Electron base app before `23.08` (`baseVersion`), the default list also has `--talk-name=org.freedesktop.Notifications`. Setting `finishArgs` replaces the whole list instead of adding to it, so name every permission the app needs. Since v27 the default list grants the Downloads folder instead of the whole home directory (`--filesystem=home`), and the notifications talk-name only to those older base apps — see the [migration guide](migration/v27-breaking-changes.md#flatpak-default-permissions).
+With the Electron base app before `23.08` (`baseVersion`), the default list also has `--talk-name=org.freedesktop.Notifications`. Setting `finishArgs` replaces the whole list instead of adding to it, so name every permission the app needs. Since v27 the default list grants the Downloads folder instead of the whole home directory (`--filesystem=home`), and the notifications talk-name only to those older base apps — see the [migration guide](migration/v27-runtime-changes.md#flatpak-default-permissions).
 
 ### What the Permissions Grant
 
@@ -275,7 +275,7 @@ Destinations, targets and links are paths **relative to the app prefix**, which 
 
 Give a file association a `mimeType` only for a type of your own, such as `application/x-myapp-project`. Each one is declared with the description `<productName> document` and a generic document icon, and the MIME data that flatpak exports comes before the system's, so for a standard type such as `text/markdown` the desktop can show that description for every such file on the machine. The deb and AppImage targets declare the types the same way. To have the app offered for a standard type, list the type in `linux.mimeTypes`, which only adds it to the desktop entry.
 
-The bundle contains no `<executableName>-launcher` script: the [launcher entrypoint](migration/v27-breaking-changes.md#linux-launcher-entrypoint) introduced in v27 does not apply to the flatpak target, which keeps `electron-wrapper`.
+The bundle contains no `<executableName>-launcher` script: the [launcher entrypoint](migration/v27-runtime-changes.md#linux-launcher-entrypoint) introduced in v27 does not apply to the flatpak target, which keeps `electron-wrapper`.
 
 ## Application ID {#application-id}
 
@@ -331,7 +331,7 @@ The flags depend on the Electron version. They come after your [`executableArgs`
 | 16 to 37 | `--ozone-platform=wayland` |
 | 12 to 15 | `--enable-features=UseOzonePlatform --ozone-platform=wayland` |
 
-From Electron 16, Ozone is on by default, so `--enable-features=UseOzonePlatform` is left out. Chromium keeps the last value of a repeated switch, so a second `--enable-features` could replace one in your `executableArgs`, such as `--enable-features=WaylandWindowDecorations`. electron-builder v26 added both flags for every Electron version; a build with Electron 16 to 37 warns once about the change — see the [migration guide](migration/v27-breaking-changes.md#flatpak-wayland-flags).
+From Electron 16, Ozone is on by default, so `--enable-features=UseOzonePlatform` is left out. Chromium keeps the last value of a repeated switch, so a second `--enable-features` could replace one in your `executableArgs`, such as `--enable-features=WaylandWindowDecorations`. electron-builder v26 added both flags for every Electron version; a build with Electron 16 to 37 warns once about the change — see the [migration guide](migration/v27-runtime-changes.md#flatpak-wayland-flags).
 
 ## How the Bundle Is Built
 

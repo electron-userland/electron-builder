@@ -79,7 +79,7 @@ While cross-compilation is possible, the most reliable approach is to build `arm
 macOS apps must be signed to avoid Gatekeeper warnings. See [Code Signing](features/code-signing/code-signing.md) for full setup.
 
 :::note[v27: signing options moved under mac.sign]
-In v27 every macOS signing option (`identity`, `entitlements`, `hardenedRuntime`, `type`, `provisioningProfile`, `binaries`, `requirements`, `timestamp`, …) lives inside a single `mac.sign` object (`sign.identity`, `sign.hardenedRuntime`, …); `signIgnore` is now `sign.ignore`. `electron-builder migrate-schema` rewrites the old flat keys automatically. The same structure applies to `mas` and `masDev`. See [v27 Breaking Changes → macOS signing](./migration/v27-breaking-changes.md#macos-signing-macsign).
+In v27 every macOS signing option (`identity`, `entitlements`, `hardenedRuntime`, `type`, `provisioningProfile`, `binaries`, `requirements`, `timestamp`, …) lives inside a single `mac.sign` object (`sign.identity`, `sign.hardenedRuntime`, …); `signIgnore` is now `sign.ignore`. `electron-builder migrate-schema` rewrites the old flat keys automatically. The same structure applies to `mas` and `masDev`. See [v27 Breaking Changes → macOS signing](./migration/v27-config-changes.md#macos-signing-macsign).
 :::
 
 ### Certificate Identity
@@ -202,7 +202,7 @@ mac:
         CFBundleURLName: "com.mycompany.myapp"
 ```
 
-For every target except `mas` and `mas-dev`, electron-builder adds App Transport Security entries that electron-updater's local update proxy needs: `NSAllowsLocalNetworking` and plain-HTTP exceptions for `localhost` and `127.0.0.1`. It also sets `NSAllowsArbitraryLoads: true`, unless you set that key yourself. To keep it off, set it in `extendInfo`:
+For every target except `mas` and `mas-dev`, electron-builder adds App Transport Security entries that electron-updater's local update proxy needs: `NSAllowsLocalNetworking` and plain-HTTP exceptions for `localhost` and `127.0.0.1`. Electron's default `Info.plist` already enables `NSAllowsArbitraryLoads`; electron-builder keeps whatever value you set in `extendInfo` (and adds it as `true` if it is missing). To turn it off, set it to `false` (setting it to `null` does not remove the key, it is set to `true` again):
 
 ```yaml
 mac:

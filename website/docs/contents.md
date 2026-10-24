@@ -26,7 +26,7 @@ By default, electron-builder includes all files matching `**/*` from the app dir
 
 These exclusions are applied even when you define custom patterns. To keep an excluded file, name it in a `fileOptions.files` pattern (one that names an excluded extension includes only the files it matches: `**/*.obj` every `.obj` file outside `node_modules` and the build resources and output directories, `models/teapot.obj` only that file), or change the excluded extensions with `fileOptions.excludedExts`.
 
-The file options are nested under `fileOptions` (`fileOptions.files`, `fileOptions.extraResources`, `fileOptions.extraFiles`), at the configuration root and in the platform sections (e.g. `mac.fileOptions`). A platform's lists are added to the root ones. Run `electron-builder migrate-schema` to move `files`, `extraResources` and `extraFiles` keys set directly on the configuration into `fileOptions`; see [file options](./migration/v27-breaking-changes.md#file-options-fileoptions).
+The file options are nested under `fileOptions` (`fileOptions.files`, `fileOptions.extraResources`, `fileOptions.extraFiles`), at the configuration root and in the platform sections (e.g. `mac.fileOptions`). A platform's lists are added to the root ones. Run `electron-builder migrate-schema` to move `files`, `extraResources` and `extraFiles` keys set directly on the configuration into `fileOptions`; see [file options](./migration/v27-config-changes.md#file-options-fileoptions).
 
 ## The `files` Option
 

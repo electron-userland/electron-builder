@@ -1,9 +1,15 @@
-import { createHttpError, safeGetHeader } from "builder-util-runtime"
+import { createHttpError, newError, safeGetHeader } from "builder-util-runtime"
 import { IncomingMessage } from "http"
 import { Writable } from "stream"
 import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter.js"
 import { DifferentialDownloader } from "./DifferentialDownloader.js"
 import { Operation, OperationKind } from "./downloadPlanBuilder.js"
+
+/** The server answered a multi-range request without a `multipart/byteranges` body: the download can be retried with one range per request. */
+export const ERR_MULTIPLE_RANGES_NOT_SUPPORTED = "ERR_UPDATER_MULTIPLE_RANGES_NOT_SUPPORTED"
+
+// 400 Bad Request (Google Cloud Storage: "Multiple ranges are not supported"), 416 Range Not Satisfiable, 501 Not Implemented (GitHub release assets)
+const MULTIPLE_RANGES_REJECTED_STATUS_CODES = new Set([400, 416, 501])
 
 export function executeTasksUsingMultipleRangeRequests(
   differentialDownloader: DifferentialDownloader,
@@ -73,7 +79,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
         const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
           response.on("error", reject)
 
-          if (!checkIsRangesSupported(response, reject)) {
+          if (!checkIsPartialContent(response, task.start, task.end - 1, reject)) {
             return
           }
 
@@ -96,14 +102,22 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
   const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
     response.on("error", reject)
 
-    if (!checkIsRangesSupported(response, reject)) {
+    // other errors (auth, missing file, server failure) are not about ranges: fail as before, without a range-by-range retry
+    const { statusCode } = response
+    if (typeof statusCode === "number" && statusCode >= 400 && !MULTIPLE_RANGES_REJECTED_STATUS_CODES.has(statusCode)) {
+      response.destroy()
+      reject(createHttpError(response))
       return
     }
 
+    // Hosts that serve only one range per request answer a multi-range request with an error (GitHub release assets: 501,
+    // GCS: 400), the whole file (S3: 200) or a single coalesced part. Stop reading and let the caller retry range by range.
     const contentType = safeGetHeader(response, "content-type")
-    const m = /^multipart\/.+?\s*;\s*boundary=(?:"([^"]+)"|([^\s";]+))\s*$/i.exec(contentType)
+    const m = statusCode === 206 ? /^multipart\/.+?\s*;\s*boundary=(?:"([^"]+)"|([^\s";]+))\s*$/i.exec(contentType) : null
     if (m == null) {
-      reject(new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`))
+      response.destroy()
+      request.abort()
+      reject(newError(`Server does not support multiple ranges in one request (status ${statusCode}, Content-Type "${contentType}")`, ERR_MULTIPLE_RANGES_NOT_SUPPORTED))
       return
     }
 
@@ -153,19 +167,31 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
   request.end()
 }
 
-export function checkIsRangesSupported(response: IncomingMessage, reject: (error: Error) => void): boolean {
+/**
+ * Accepts only a 206 answer for exactly `bytes=start-endInclusive`. `Accept-Ranges: bytes` is not evidence of range support
+ * (CDNs send it with a 200 full body), and piping a 200 would stream the whole file once per range before the sha512 check
+ * fails. A rejected response is destroyed, so nothing more is read from it.
+ */
+export function checkIsPartialContent(response: IncomingMessage, start: number, endInclusive: number, reject: (error: Error) => void): boolean {
   // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
-  if (response.statusCode! >= 400) {
+  const { statusCode } = response
+  if (typeof statusCode === "number" && statusCode >= 400) {
+    response.destroy()
     reject(createHttpError(response))
     return false
   }
 
-  if (response.statusCode !== 206) {
-    const acceptRanges = safeGetHeader(response, "accept-ranges")
-    if (acceptRanges == null || acceptRanges === "none") {
-      reject(new Error(`Server doesn't support Accept-Ranges (response code ${response.statusCode})`))
-      return false
-    }
+  // range units compare case-insensitively (RFC 9110 section 14.1)
+  const contentRange = safeGetHeader(response, "content-range")
+  if (statusCode !== 206 || contentRange == null || !contentRange.toLowerCase().startsWith(`bytes ${start}-${endInclusive}/`)) {
+    response.destroy()
+    reject(
+      newError(
+        `Server did not return the requested range bytes=${start}-${endInclusive} (status ${statusCode}, Content-Range "${contentRange ?? ""}")`,
+        "ERR_UPDATER_RANGE_NOT_SUPPORTED"
+      )
+    )
+    return false
   }
   return true
 }

@@ -197,7 +197,7 @@ describe("MacPackager.doAddAsarIntegrityDigest", () => {
     const announcements = warn.mock.calls.filter(([, message]) => message?.includes("#macos-asar-integrity-digest"))
     expect(announcements).toHaveLength(1)
     expect(announcements[0][1]).toContain("electron-builder v27 embeds the ASAR integrity digest into the Electron Framework after the afterPack hook")
-    expect(announcements[0][1]).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#macos-asar-integrity-digest")
+    expect(announcements[0][1]).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#macos-asar-integrity-digest")
     expect(announcements[0][0]).toEqual({ solution: expect.stringContaining("mac.asarIntegrityDigest to false") })
   })
 

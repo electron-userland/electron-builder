@@ -31,6 +31,15 @@ export interface PublishConfiguration {
 
   /**
    * @private
+   * win-only. Written as `false` into `app-update.yml` by electron-builder for a build with `win.verifyUpdateCodeSignature: false`:
+   * the explicit opt-out that makes electron-updater install an update without verifying its Authenticode signature, which it
+   * otherwise rejects when there is no `publisherName`. Managed by electron-builder; setting it in the `publish` configuration is
+   * rejected as a configuration error.
+   */
+  verifyUpdateCodeSignature?: false | null
+
+  /**
+   * @private
    * win-only
    */
   readonly updaterCacheDirName?: string | null
