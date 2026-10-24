@@ -7,15 +7,22 @@ import fsExtra from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
+import { WIN_SIGNING_SUBJECT } from "./codeSignData.js"
 import { assertThat } from "./fileAssert.js"
 import { PackedContext } from "./packTester.js"
 import { diff, WineManager } from "./wine.js"
 import { ExpectStatic } from "vitest"
 
+/**
+ * The explicit publisherName of the one-click tests: a name for certificate rotation (with a value that needs quoting) and the
+ * full subject of the Windows test identity (an explicit pin stricter than the derived `CN=<common name>`).
+ */
+export const EXPLICIT_PUBLISHER_NAMES: ReadonlyArray<string> = ['CN="Foo, Inc"', WIN_SIGNING_SUBJECT]
+
 export async function expectUpdateMetadata(expect: ExpectStatic, context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
   const data = load(await fs.readFile(path.join(context.getResources(Platform.WINDOWS, arch), "app-update.yml"), "utf-8")) as any
   if (requireCodeSign) {
-    expect(data.publisherName).toEqual(["Foo, Inc", "CN=EB Test Code Signing"])
+    expect(data.publisherName).toEqual(EXPLICIT_PUBLISHER_NAMES)
     delete data.publisherName
   }
 

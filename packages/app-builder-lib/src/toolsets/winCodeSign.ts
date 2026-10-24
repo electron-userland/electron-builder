@@ -9,7 +9,7 @@ import { getCustomToolsetPath } from "./custom.js"
 import { resolveToolsetVersion } from "./version.js"
 
 // Newest win-codesign bundle — selected when the config is unset / null / "latest".
-export const WIN_CODESIGN_LATEST = "1.3.0"
+export const WIN_CODESIGN_LATEST = "1.3.1"
 
 function getLegacyWinCodeSignBin(): Promise<string> {
   return downloadBuilderToolset({
@@ -76,6 +76,19 @@ export const wincodesignChecksums = {
     "win-codesign-windows-arm64.zip": "c707709440a07e400b4053d9bab77c9f335505c1701035c2aa8285d880360989",
     "win-codesign-windows-x64.zip": "40d621aad7593e6298ce1d24798760dcefb053f358be891d74c95386ac2ac50b",
     "windows-kits-bundle-10_0_26100_0.zip": "2eeb955e580103e1bbecf9666dca87b141c3bb73ad99ead64bb8821755694ecd",
+  },
+  "1.3.1": {
+    "ats-bundle-1_0_95.zip": "233230cefef263e2c9cc03e8c480bd8dcfe7ff3518e3c591dbb24fc21c1370e7",
+    "dotnet-runtime-win-x64-8_0_28.zip": "9de4bdfdf33d98afb73947a8c013eb1511af0d6e1051bfc4921fbe2d34426308",
+    "rcedit-windows-2_0_0.zip": "eb975970b1295a960ba5d428693f9aa548fc00b16ae441fb8cc97abedb7cb4b9",
+    "win-codesign-darwin-arm64.zip": "cda6c58a81fd86c4a5474c2da2d1b450b40805b3eef6974f5a6a3af7ece2b811",
+    "win-codesign-darwin-x86_64.zip": "9e07f6f7a4fd096b868e8cf2d6f06f50d9decf03fcbf6b39d3045688ccddb1f5",
+    "win-codesign-linux-amd64.zip": "8443dfd4acf811b2d7eb8420fdd500c07058f507cc65ee9a6b215f833acba659",
+    "win-codesign-linux-arm64.zip": "f7f287533cb302f4230960a3b2915ec5ae165f0089ddacf1940d8aa44c049fa6",
+    "win-codesign-linux-i386.zip": "45649f83d9378d39123620982fd7fe15cc9ba4fb8f4009fb697f03ff02f06545",
+    "win-codesign-windows-arm64.zip": "9daee4e5359371d8566639be70251abebe6ddbed82054e2ecd1812bd0d879291",
+    "win-codesign-windows-x64.zip": "830167112badff1bd5bf4759e0bac4d9f45a96c0cbb9b8e72e1f70187758516a",
+    "windows-kits-bundle-10_0_26100_0.zip": "6a8a6211f02c0cd09118710e4a48ee411bd3cb2dbb8bd25cbd5f9e4afd9f556d",
   },
 } as const
 

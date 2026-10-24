@@ -3,7 +3,7 @@ import { readFile } from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
 import { app, expectedWindowsPublisherName, EXTENDED_TIMEOUT } from "../helpers/packTester.js"
-import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper.js"
+import { checkHelpers, doTest, EXPLICIT_PUBLISHER_NAMES, expectUpdateMetadata } from "../helpers/winHelper.js"
 
 // Installer-building tests (custom includes, licenses, menuCategory, …) live in oneClickInstaller.e2e.ts.
 
@@ -16,10 +16,10 @@ test("one-click", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
         win: {
           sign: {
             type: "signtool" as const,
-            // An explicit publisherName must now include at least one name matching the signing
-            // certificate (the ephemeral test identity, CN=EB Test Code Signing) — extra names for
-            // certificate rotation still pass through to app-update.yml verbatim.
-            publisherName: ["Foo, Inc", "CN=EB Test Code Signing"],
+            // An explicit publisherName must include at least one name matching the signing certificate (the
+            // ephemeral test identity, WIN_SIGNING_SUBJECT), and every entry must be a distinguished name —
+            // extra names for certificate rotation still pass through to app-update.yml verbatim.
+            publisherName: [...EXPLICIT_PUBLISHER_NAMES],
           },
         },
         publish: {
@@ -58,10 +58,10 @@ test("one-click", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   )
 )
 
-// Without an explicit publisherName, a signed build embeds the common name of its certificate in app-update.yml; electron-updater
-// checks the signature of a downloaded update against it. Every blackbox update build relies on this (doBuild in
+// Without an explicit publisherName, a signed build embeds `CN=<common name>` of its certificate in app-update.yml (only the CN, so a
+// renewal that keeps the CN keeps updates working); electron-updater checks the signature of a downloaded update against it. Every blackbox update build relies on this (doBuild in
 // blackboxUpdateHelpers.ts asserts the same value on Windows).
-test("one-click signed without publisherName: app-update.yml has the certificate's common name", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
+test("one-click signed without publisherName: app-update.yml has the certificate's CN", { timeout: EXTENDED_TIMEOUT }, ({ expect }) =>
   app(
     expect,
     {

@@ -557,6 +557,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -644,6 +655,17 @@
           "type": [
             "null",
             "string"
+          ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
@@ -1977,6 +1999,17 @@
         "useMultipleRangeRequest": {
           "description": "Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.",
           "type": "boolean"
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -2128,6 +2161,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -2248,6 +2292,17 @@
           "default": true,
           "description": "Whether to use `v`-prefixed tag name.",
           "type": "boolean"
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -2354,6 +2409,17 @@
           "type": [
             "null",
             "string"
+          ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
@@ -6318,6 +6384,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -6753,7 +6830,7 @@
           ]
         },
         "source": {
-          "description": "The credential source (required, no default):\n- `env`: read only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` (or the variable names given in `env`).\n- `profile`: read the named `profile` from the shared config/credentials files. Static keys, IAM Identity Center (SSO), `credential_process` and assume-role profiles are supported.\n  An assume-role profile whose `source_profile` chain starts at an SSO profile is rejected; use `sso-role-chain` for it.\n  `credential_source` and web identity (`web_identity_token_file`) anywhere in the chain are rejected: they read ambient credentials or settings.\n- `sso-role-chain`: `profile` names an assume-role profile (`role_arn` + `source_profile`). Its `source_profile` chain (up to 5 assume-role hops, no cycles)\n  must end at an IAM Identity Center (SSO) profile. electron-builder resolves that SSO profile from the configured files, then calls STS AssumeRole for each hop\n  with the previous hop's credentials. `role_session_name`, `external_id` and `duration_seconds` are honoured per hop; STS uses the named profile's `region`\n  (else `us-east-1`) and `sts_regional_endpoints`. `AWS_REGION` and other `AWS_*` variables are not read. `credential_source`, `mfa_serial`, `web_identity_token_file`\n  and `credential_process` are rejected in the chain.",
+          "description": "The credential source (required, no default):\n- `env`: read only `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` (or the variable names given in `env`).\n- `profile`: read the named `profile` from the shared config/credentials files. Static keys, IAM Identity Center (SSO), `credential_process` and assume-role profiles are supported.\n  An assume-role profile whose `source_profile` chain starts at an SSO profile is rejected; use `sso-role-chain` for it.\n  `credential_source`, web identity (`web_identity_token_file`) and `aws login` sessions (`login_session`) anywhere in the chain are rejected: they read ambient credentials or settings.\n- `sso-role-chain`: `profile` names an assume-role profile (`role_arn` + `source_profile`). Its `source_profile` chain (up to 5 assume-role hops, no cycles)\n  must end at an IAM Identity Center (SSO) profile. electron-builder resolves that SSO profile from the configured files, then calls STS AssumeRole for each hop\n  with the previous hop's credentials. `role_session_name`, `external_id` and `duration_seconds` are honoured per hop; STS uses the named profile's `region`\n  (else `us-east-1`) and `sts_regional_endpoints`. `AWS_REGION` and other `AWS_*` variables are not read. `credential_source`, `mfa_serial`, `web_identity_token_file`\n  and `credential_process` are rejected in the chain.",
           "enum": [
             "env",
             "profile",
@@ -6769,7 +6846,7 @@
     },
     "S3Options": {
       "additionalProperties": false,
-      "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](https://docs.aws.amazon.com/sdkref/latest/guide/access.html).\nPublishing requires choosing where they come from with [awsCredentials](#awsCredentials) `source` (there is no default):\n- `source: \"env\"` reads only the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and optional `AWS_SESSION_TOKEN` environment variables (or custom names);\n- `source: \"profile\"` reads the named `profile` from the [shared config and credentials files](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)\n  (static keys, IAM Identity Center / SSO, `credential_process`, assume-role with `source_profile`; `credential_source` and web identity are rejected).\n- `source: \"sso-role-chain\"` reads the named assume-role `profile` from the same files and resolves its `source_profile` chain, which must start at an\n  IAM Identity Center (SSO) profile, with the configured files only.\n\nNo credentials are read implicitly: `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE`, `AWS_SHARED_CREDENTIALS_FILE` and the `~/.aws` files are never consulted on their own.\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\",\n   \"awsCredentials\": { \"source\": \"env\" }\n }\n}\n}\n```",
+      "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](https://docs.aws.amazon.com/sdkref/latest/guide/access.html).\nPublishing requires choosing where they come from with [awsCredentials](#awsCredentials) `source` (there is no default):\n- `source: \"env\"` reads only the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and optional `AWS_SESSION_TOKEN` environment variables (or custom names);\n- `source: \"profile\"` reads the named `profile` from the [shared config and credentials files](https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html)\n  (static keys, IAM Identity Center / SSO, `credential_process`, assume-role with `source_profile`; `credential_source`, web identity and `login_session` are rejected).\n- `source: \"sso-role-chain\"` reads the named assume-role `profile` from the same files and resolves its `source_profile` chain, which must start at an\n  IAM Identity Center (SSO) profile, with the configured files only.\n\nNo credentials are read implicitly: `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE`, `AWS_SHARED_CREDENTIALS_FILE` and the `~/.aws` files are never consulted on their own.\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\",\n   \"awsCredentials\": { \"source\": \"env\" }\n }\n}\n}\n```",
       "properties": {
         "accelerate": {
           "description": "If set to true, this will enable the s3 accelerated endpoint\nThese endpoints have a particular format of:\n ${bucketname}.s3-accelerate.amazonaws.com",
@@ -6928,6 +7005,17 @@
           "type": [
             "null",
             "string"
+          ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
@@ -7801,6 +7889,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -8295,6 +8394,17 @@
             "null",
             "string"
           ]
+        },
+        "verifyUpdateCodeSignature": {
+          "anyOf": [
+            {
+              "const": false,
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -8572,13 +8682,14 @@
                 "1.1.1",
                 "1.2.1",
                 "1.3.0",
+                "1.3.1",
                 "latest"
               ],
               "type": "string"
             }
           ],
           "default": "latest",
-          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — embeds version metadata and icons into `.exe` files (legacy usage, migrated to npm `resedit` package).\n- **Windows Kits** — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27) |\n| `\"1.0.0\"` | Windows Kits 10.0.26100.0, `osslsigncode` v2.9 |\n| `\"1.1.1\"` | Updates `osslsigncode` to v2.11 |\n| `\"1.2.1\"` | Adds native `osslsigncode` arm64 |\n| `\"1.3.0\"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md"
+          "description": "Version of the `win-codesign` bundle used for Windows code signing and resource editing.\n\nThe bundle ships:\n- **`signtool.exe`** (Windows) / **`osslsigncode`** (macOS & Linux) — used to sign `.exe`,\n  `.dll`, and `.msix` artifacts.\n- **`rcedit`** — embeds version metadata and icons into `.exe` files (legacy usage, migrated to npm `resedit` package).\n- **Windows Kits** — used by AppX/MSIX packaging (`makeappx`, `signtool`).\n\nAvailable versions:\n| Version | Notes |\n|---------|-------|\n| `\"0.0.0\"` | Legacy bundle — `winCodeSign-2.6.0` (pre-v27) |\n| `\"1.0.0\"` | Windows Kits 10.0.26100.0, `osslsigncode` v2.9 |\n| `\"1.1.1\"` | Updates `osslsigncode` to v2.11 |\n| `\"1.2.1\"` | Adds native `osslsigncode` arm64 |\n| `\"1.3.0\"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |\n| `\"1.3.1\"` | macOS `osslsigncode` bundles its own OpenSSL (no Homebrew `openssl@3` needed) and libp11's PKCS#11 provider |\n\nReleases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md"
         },
         "wine": {
           "anyOf": [
@@ -8714,7 +8825,7 @@
           "type": "string"
         },
         "publisherName": {
-          "description": "The publisher name to associate with the signature, exactly as it appears in the certificate\nissued by your Trusted Signing certificate profile. Required. Used for\n[update verification](#verifyUpdateCodeSignature) (embedded in `app-update.yml` and checked by\nelectron-updater) and must match the certificate subject.",
+          "description": "The publisher name to associate with the signature: a Distinguished Name (DN) of the subject of\nthe certificate issued by your Trusted Signing certificate profile (e.g.\n`CN=My Company, O=My Company, C=US`). Required. Used for\n[update verification](#verifyUpdateCodeSignature) (embedded in `app-update.yml` and checked by\nelectron-updater) and must match the certificate subject. A bare name fails the build since\nv27 — see\n[the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).",
           "type": "string"
         },
         "timestampDigest": {
@@ -8745,6 +8856,11 @@
     "WindowsConfiguration": {
       "additionalProperties": false,
       "properties": {
+        "allowCatalogSignature": {
+          "default": false,
+          "description": "Whether electron-updater accepts an update installer whose signature Windows reports from a security catalog (a signed list of\nfile hashes) instead of one embedded in the installer — for update installers that are catalog-signed on purpose, such as an\nenterprise deployment that adds their hashes to a catalog. The catalog signer must still match the [publisher name](#publisherName).\n\nWhen `true`, the `latest.yml` written for the `nsis` and `nsis-web` targets carries `allowCatalogSignature: true`. electron-updater\nhonors it only when the [signature of that update manifest](https://www.electron.build/docs/features/signed-update-manifests)\nwas verified against a trusted key; in an unsigned manifest (or one signed by an untrusted key) it is ignored with a warning, and\ncatalog signatures stay rejected unless the app sets `autoUpdater.allowCatalogSignature = true`. Since it is covered by the manifest\nsignature, changing it for a published release means signing `latest.yml` again or republishing it.\n\nInstalls running electron-updater 7.0.0-alpha.8 to alpha.11 with an update key configured reject a signed manifest that sets it\n(`ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`).",
+          "type": "boolean"
+        },
         "appId": {
           "default": "com.electron.${name}",
           "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
@@ -8995,7 +9111,7 @@
               "type": "null"
             }
           ],
-          "description": "Code signing configuration. Code signing stamps every installer and executable\nelectron-builder produces with an Authenticode signature, so that Windows (SmartScreen / UAC)\nand your auto-updater can verify the publisher and that the files were not tampered with.\n\nHow this option behaves:\n- Leave **unset** to sign using credentials discovered from the environment — primarily a\n  certificate supplied via `WIN_CSC_LINK` (or `CSC_LINK`) with its password in\n  `WIN_CSC_KEY_PASSWORD` (or `CSC_KEY_PASSWORD`). `WIN_CSC_LINK` accepts a file path, an\n  `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.\n- Set to `false` or `null` to **disable** code signing entirely (executable resources such as\n  the icon and metadata are still edited).\n- Set to an **object** to configure signing explicitly. The **required** `type` field selects the\n  signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign\n  manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`\n  backend is used with env-discovered credentials. Each output artifact is signed individually,\n  and by default executables are dual-signed (see `signingHashAlgorithms`).\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and\n  `osslsigncode` on macOS/Linux.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires a modern `winCodeSign` toolset (the default — only the legacy\n  `\"0.0.0\"` pin is unsupported). Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication.\n\nSee [Code Signing](https://www.electron.build/docs/features/code-signing)."
+          "description": "Code signing configuration. Code signing stamps every installer and executable\nelectron-builder produces with an Authenticode signature, so that Windows (SmartScreen / UAC)\nand your auto-updater can verify the publisher and that the files were not tampered with.\n\nHow this option behaves:\n- Leave **unset** to sign using credentials discovered from the environment — primarily a\n  certificate supplied via `WIN_CSC_LINK` (or `CSC_LINK`) with its password in\n  `WIN_CSC_KEY_PASSWORD` (or `CSC_KEY_PASSWORD`). `WIN_CSC_LINK` accepts a file path, an\n  `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.\n- Set to `false` or `null` to **disable** code signing entirely (executable resources such as\n  the icon and metadata are still edited). A build that writes `app-update.yml` then also needs\n  [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) set to `false`, since no publisher\n  name is derived; if you sign outside electron-builder, use `{ type: \"signtool\", publisherName: [...] }`\n  instead.\n- Set to an **object** to configure signing explicitly. The **required** `type` field selects the\n  signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign\n  manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`\n  backend is used with env-discovered credentials. Each output artifact is signed individually,\n  and by default executables are dual-signed (see `signingHashAlgorithms`).\n\n- `{ type: \"signtool\", ... }` — Sign with a local certificate file (.pfx/.p12) or a\n  certificate from the Windows certificate store. Uses Microsoft `signtool.exe` on Windows and\n  `osslsigncode` on macOS/Linux.\n- `{ type: \"hsm\", ... }` — Sign using a Hardware Security Module (HSM) or FIPS-compliant\n  hardware token via signtool's `/csp` (cryptographic service provider) and `/kc` (key\n  container) flags. Requires a modern `winCodeSign` toolset (the default — only the legacy\n  `\"0.0.0\"` pin is unsupported). Windows-only.\n- `{ type: \"pkcs11\", ... }` — Sign using a PKCS#11 hardware token via osslsigncode.\n  Available on macOS and Linux CI without a Windows VM.\n- `{ type: \"azure\", ... }` — Sign via Azure Trusted Signing (cloud service). Requires\n  Azure Entra ID environment variables for authentication.\n\nSee [Code Signing](https://www.electron.build/docs/features/code-signing)."
         },
         "signExts": {
           "anyOf": [
@@ -9056,7 +9172,7 @@
         },
         "verifyUpdateCodeSignature": {
           "default": true,
-          "description": "Whether the NSIS auto-updater should verify the Authenticode signature of a downloaded update\nbefore installing it. The verification itself runs in your app, via electron-updater.\n\nWhen enabled (the default), the resolved [publisher name](#publisherName) is embedded into\n`app-update.yml` at build time. At update time electron-updater inspects the certificate that\nsigned the downloaded installer and compares its subject (Distinguished Name / Common Name)\nagainst that publisher name, refusing to install on a mismatch. This prevents a tampered or\nmaliciously substituted update from being installed.\n\nWhile enabled, electron-builder also checks at build time that the signed NSIS installer (or\nnsis-web stub) is signed by a certificate matching that publisher name, using the same matching\nrules, and fails the build otherwise.\n\nSet to `false` to skip verification — in which case the publisher name is **not** embedded.\nDisable this only if your updates are not Authenticode-signed.",
+          "description": "Whether the NSIS auto-updater should verify the Authenticode signature of a downloaded update\nbefore installing it. The verification itself runs in your app, via electron-updater.\n\nWhen enabled (the default), the resolved [publisher name](#publisherName) is embedded into\n`app-update.yml` at build time. At update time electron-updater inspects the certificate that\nsigned the downloaded installer and compares its subject (Distinguished Name) against that\npublisher name, refusing to install on a mismatch or when the signature cannot be verified.\nThis prevents a tampered or maliciously substituted update from being installed.\n\nWhile enabled, electron-builder also checks at build time that the signed NSIS installer (or\nnsis-web stub) is signed by a certificate matching that publisher name, using the same matching\nrules, and fails the build otherwise.\n\nSince v27 a build that writes `app-update.yml` (an `nsis`, `nsis-web` or `electronUpdaterAware`\n`appx` target with a publish configuration) fails while this is enabled and no publisher name\nresolves (`sign: false` / `null`, no certificate, `publisherName: null`): electron-updater 7\nrejects every update of an app whose `app-update.yml` has no publisher name. Sign the build, set\n[publisherName](#publisherName), or set this to `false`.\n\nSet to `false` to skip verification explicitly — the publisher name is then **not** embedded, and\n`app-update.yml` carries `verifyUpdateCodeSignature: false` instead, which tells electron-updater\nto install updates without verifying their signature. This is the only opt-out.\nDisable this only if your updates are not Authenticode-signed.",
           "type": "boolean"
         }
       },
@@ -9116,7 +9232,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
+          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9157,7 +9273,7 @@
             }
           ],
           "default": "['sha1', 'sha256']",
-          "description": "The digest (hash) algorithms to sign with, applied via signtool's `/fd` flag (or\nosslsigncode's `-h`). One signing pass runs per entry, in order; listing more than one\n**dual-signs** the file, with each additional signature appended as a nested signature\n(signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on\nlegacy (pre-SHA-2) Windows as well as modern Windows.\n\nSome targets override this: `.msi` cannot be dual-signed (a single hash is used) and AppX/MSIX\nis always `sha256` only."
+          "description": "The digest (hash) algorithms to sign with, applied via signtool's `/fd` flag (or\nosslsigncode's `-h`). One signing pass runs per entry, in order; listing more than one\n**dual-signs** the file, with each additional signature appended as a nested signature\n(signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on\nlegacy (pre-SHA-2) Windows as well as modern Windows.\n\nSome targets override this: `.msi` cannot be dual-signed, so it is signed once, with `sha256`\nunless `sha1` is the only algorithm listed, and AppX/MSIX is always `sha256` only."
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9221,7 +9337,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
+          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9262,7 +9378,7 @@
             }
           ],
           "default": "['sha1', 'sha256']",
-          "description": "The digest (hash) algorithms to sign with, applied via signtool's `/fd` flag (or\nosslsigncode's `-h`). One signing pass runs per entry, in order; listing more than one\n**dual-signs** the file, with each additional signature appended as a nested signature\n(signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on\nlegacy (pre-SHA-2) Windows as well as modern Windows.\n\nSome targets override this: `.msi` cannot be dual-signed (a single hash is used) and AppX/MSIX\nis always `sha256` only."
+          "description": "The digest (hash) algorithms to sign with, applied via signtool's `/fd` flag (or\nosslsigncode's `-h`). One signing pass runs per entry, in order; listing more than one\n**dual-signs** the file, with each additional signature appended as a nested signature\n(signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on\nlegacy (pre-SHA-2) Windows as well as modern Windows.\n\nSome targets override this: `.msi` cannot be dual-signed, so it is signed once, with `sha256`\nunless `sha1` is the only algorithm listed, and AppX/MSIX is always `sha256` only."
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9339,7 +9455,7 @@
               ]
             }
           ],
-          "description": "The publisher name(s) to associate with the signature, written exactly as the subject appears\nin your code signing certificate. May be a single string or an array — an array is useful when\nrotating certificates, so updates signed by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to the Common Name (CN) extracted from your code signing certificate. **Required**\n(while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom\n[sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —\notherwise the build fails. Set to `null` to opt out."
+          "description": "The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code\nsigning certificate's subject, written with the attribute names Windows uses (e.g.\n`CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;\nattributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,\nbecause electron-updater 7 never matches it — see\n[the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).\nMay be a single string or an array — an array is useful when rotating certificates, so updates\nsigned by either the old or the new certificate still verify.\n\nThis value is not a `signtool` argument; it is consumed in two places:\n- **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is\n  enabled, it is written into `app-update.yml` and electron-updater checks it against the\n  certificate that signed each downloaded update.\n- **AppX / MSIX identity** — the package `Publisher` attribute must equal the certificate\n  subject, so electron-builder derives it from this value (or the certificate) to keep them\n  in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.\n\nDefaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the\nsame common name keeps updates working even when its other subject attributes change. For a stricter\npin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,\nsigned with the old certificate, that lists both DNs).\n**Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever\nno certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,\nfor a certificate without a CN, and when no certificate is configured (e.g. the build is signed\noutside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that\nwrites `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)\nto `false` instead."
         },
         "rfc3161TimeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -9380,7 +9496,7 @@
             }
           ],
           "default": "['sha1', 'sha256']",
-          "description": "The digest (hash) algorithms to sign with, applied via signtool's `/fd` flag (or\nosslsigncode's `-h`). One signing pass runs per entry, in order; listing more than one\n**dual-signs** the file, with each additional signature appended as a nested signature\n(signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on\nlegacy (pre-SHA-2) Windows as well as modern Windows.\n\nSome targets override this: `.msi` cannot be dual-signed (a single hash is used) and AppX/MSIX\nis always `sha256` only."
+          "description": "The digest (hash) algorithms to sign with, applied via signtool's `/fd` flag (or\nosslsigncode's `-h`). One signing pass runs per entry, in order; listing more than one\n**dual-signs** the file, with each additional signature appended as a nested signature\n(signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on\nlegacy (pre-SHA-2) Windows as well as modern Windows.\n\nSome targets override this: `.msi` cannot be dual-signed, so it is signed once, with `sha256`\nunless `sha1` is the only algorithm listed, and AppX/MSIX is always `sha256` only."
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -10082,6 +10198,20 @@
         }
       ],
       "description": "macOS PKG flat-package installer options."
+    },
+    "pkgDistributionCreated": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "Called after the `distribution.xml` of a macOS `pkg` installer has been written (synthesized by\n`productbuild --synthesize`, then customized from {@link PkgOptions}) but before `productbuild` builds the\ninstaller from it.\n\nThe hook receives the path to the distribution file as a string. Edit it in place or overwrite it to\ncustomize the installer beyond {@link PkgOptions} (for example, its `<title>`)."
     },
     "portable": {
       "anyOf": [

@@ -4,7 +4,7 @@ import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion } from "semver"
 import { AppAdapter } from "./AppAdapter.js"
-import { AppUpdater, DownloadExecutorTask } from "./AppUpdater.js"
+import { AppUpdater, DownloadExecutorTask, UpdateInfoAndProvider } from "./AppUpdater.js"
 import type { VerifyUpdateFileResult } from "./types.js"
 import { QuitAndInstallOptions, DownloadExecutorResult, verificationFailureMessage } from "./types.js"
 
@@ -254,7 +254,7 @@ export abstract class BaseUpdater extends AppUpdater {
         // ignore
       })
 
-    const signatureFailure = verificationFailureMessage(await this.verifyInstallerSignatureOnLaunch(installerPath))
+    const signatureFailure = verificationFailureMessage(await this.verifyInstallerSignatureOnLaunch(installerPath, updateInfoAndProvider))
     if (signatureFailure != null) {
       await clearPendingCache()
       this.dispatchError(newError(`Pending update ${latestInfo.version} is not signed by the application owner: ${signatureFailure}`, "ERR_UPDATER_INVALID_SIGNATURE"))
@@ -298,8 +298,11 @@ export abstract class BaseUpdater extends AppUpdater {
    *
    * This covers only the platform's own signature scheme; {@link AppUpdater.verifyUpdateFile} is re-run on the same
    * installer right after, and is the cross-platform place for an app's own verification.
+   *
+   * `updateInfoAndProvider` is the latest update info the cached installer was just matched against (fetched, and its manifest
+   * signature checked, on this launch), so manifest settings apply as they would to a download of that update.
    */
-  protected verifyInstallerSignatureOnLaunch(_installerPath: string): Promise<VerifyUpdateFileResult> {
+  protected verifyInstallerSignatureOnLaunch(_installerPath: string, _updateInfoAndProvider: UpdateInfoAndProvider): Promise<VerifyUpdateFileResult> {
     return Promise.resolve({ response: "success" })
   }
 

@@ -35,7 +35,10 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    *   `WIN_CSC_KEY_PASSWORD` (or `CSC_KEY_PASSWORD`). `WIN_CSC_LINK` accepts a file path, an
    *   `https://` URL, or a base64-encoded certificate. This is the recommended setup for CI.
    * - Set to `false` or `null` to **disable** code signing entirely (executable resources such as
-   *   the icon and metadata are still edited).
+   *   the icon and metadata are still edited). A build that writes `app-update.yml` then also needs
+   *   [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) set to `false`, since no publisher
+   *   name is derived; if you sign outside electron-builder, use `{ type: "signtool", publisherName: [...] }`
+   *   instead.
    * - Set to an **object** to configure signing explicitly. The **required** `type` field selects the
    *   signing backend (`signtool`, `hsm`, `pkcs11`, or `azure`) and dispatches to a dedicated sign
    *   manager; provide exactly one of the modes below. When `win.sign` is left unset, the `signtool`
@@ -64,20 +67,45 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    *
    * When enabled (the default), the resolved [publisher name](#publisherName) is embedded into
    * `app-update.yml` at build time. At update time electron-updater inspects the certificate that
-   * signed the downloaded installer and compares its subject (Distinguished Name / Common Name)
-   * against that publisher name, refusing to install on a mismatch. This prevents a tampered or
-   * maliciously substituted update from being installed.
+   * signed the downloaded installer and compares its subject (Distinguished Name) against that
+   * publisher name, refusing to install on a mismatch or when the signature cannot be verified.
+   * This prevents a tampered or maliciously substituted update from being installed.
    *
    * While enabled, electron-builder also checks at build time that the signed NSIS installer (or
    * nsis-web stub) is signed by a certificate matching that publisher name, using the same matching
    * rules, and fails the build otherwise.
    *
-   * Set to `false` to skip verification — in which case the publisher name is **not** embedded.
+   * Since v27 a build that writes `app-update.yml` (an `nsis`, `nsis-web` or `electronUpdaterAware`
+   * `appx` target with a publish configuration) fails while this is enabled and no publisher name
+   * resolves (`sign: false` / `null`, no certificate, `publisherName: null`): electron-updater 7
+   * rejects every update of an app whose `app-update.yml` has no publisher name. Sign the build, set
+   * [publisherName](#publisherName), or set this to `false`.
+   *
+   * Set to `false` to skip verification explicitly — the publisher name is then **not** embedded, and
+   * `app-update.yml` carries `verifyUpdateCodeSignature: false` instead, which tells electron-updater
+   * to install updates without verifying their signature. This is the only opt-out.
    * Disable this only if your updates are not Authenticode-signed.
    *
    * @default true
    */
   readonly verifyUpdateCodeSignature?: boolean
+
+  /**
+   * Whether electron-updater accepts an update installer whose signature Windows reports from a security catalog (a signed list of
+   * file hashes) instead of one embedded in the installer — for update installers that are catalog-signed on purpose, such as an
+   * enterprise deployment that adds their hashes to a catalog. The catalog signer must still match the [publisher name](#publisherName).
+   *
+   * When `true`, the `latest.yml` written for the `nsis` and `nsis-web` targets carries `allowCatalogSignature: true`. electron-updater
+   * honors it only when the [signature of that update manifest](https://www.electron.build/docs/features/signed-update-manifests)
+   * was verified against a trusted key; in an unsigned manifest (or one signed by an untrusted key) it is ignored with a warning, and
+   * catalog signatures stay rejected unless the app sets `autoUpdater.allowCatalogSignature = true`. Since it is covered by the manifest
+   * signature, changing it for a published release means signing `latest.yml` again or republishing it.
+   *
+   * Installs running electron-updater 7.0.0-alpha.8 to alpha.11 with an update key configured reject a signed manifest that sets it
+   * (`ERR_UPDATER_MANIFEST_SIGNATURE_INVALID`).
+   * @default false
+   */
+  readonly allowCatalogSignature?: boolean
 
   /**
    * The [security level](https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9) at which the application requests to be executed.
@@ -114,9 +142,14 @@ export type RequestedExecutionLevel = "asInvoker" | "highestAvailable" | "requir
  */
 interface WindowsSigningSharedOptions {
   /**
-   * The publisher name(s) to associate with the signature, written exactly as the subject appears
-   * in your code signing certificate. May be a single string or an array — an array is useful when
-   * rotating certificates, so updates signed by either the old or the new certificate still verify.
+   * The publisher name(s) to associate with the signature: a Distinguished Name (DN) of your code
+   * signing certificate's subject, written with the attribute names Windows uses (e.g.
+   * `CN=My Company, O=My Company, C=US`). Every attribute you list must equal the certificate's;
+   * attributes you leave out are not compared. A bare name (`My Company`) fails the build since v27,
+   * because electron-updater 7 never matches it — see
+   * [the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).
+   * May be a single string or an array — an array is useful when rotating certificates, so updates
+   * signed by either the old or the new certificate still verify.
    *
    * This value is not a `signtool` argument; it is consumed in two places:
    * - **Update verification** — when [verifyUpdateCodeSignature](#verifyUpdateCodeSignature) is
@@ -126,10 +159,16 @@ interface WindowsSigningSharedOptions {
    *   subject, so electron-builder derives it from this value (or the certificate) to keep them
    *   in sync; a mismatch makes packaging fail with `ERROR_BAD_FORMAT`.
    *
-   * Defaults to the Common Name (CN) extracted from your code signing certificate. **Required**
-   * (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) with a custom
-   * [sign](#sign) hook, even if a certificate is configured, and for a certificate without a CN —
-   * otherwise the build fails. Set to `null` to opt out.
+   * Defaults to `CN=<common name>` of your code signing certificate, so a renewed certificate with the
+   * same common name keeps updates working even when its other subject attributes change. For a stricter
+   * pin, set a fuller DN explicitly (a renewal that changes a configured attribute then needs a release,
+   * signed with the old certificate, that lists both DNs).
+   * **Required** (while `verifyUpdateCodeSignature` is enabled and `app-update.yml` is written) whenever
+   * no certificate supplies it: with a custom [sign](#sign) hook, even if a certificate is configured,
+   * for a certificate without a CN, and when no certificate is configured (e.g. the build is signed
+   * outside electron-builder) — otherwise the build fails. `null` is no opt-out since v27: a build that
+   * writes `app-update.yml` with it fails; set [verifyUpdateCodeSignature](#verifyUpdateCodeSignature)
+   * to `false` instead.
    *
    * @see https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073
    */
@@ -142,8 +181,8 @@ interface WindowsSigningSharedOptions {
    * (signtool `/as`). Signing with both `sha1` and `sha256` lets a single binary validate on
    * legacy (pre-SHA-2) Windows as well as modern Windows.
    *
-   * Some targets override this: `.msi` cannot be dual-signed (a single hash is used) and AppX/MSIX
-   * is always `sha256` only.
+   * Some targets override this: `.msi` cannot be dual-signed, so it is signed once, with `sha256`
+   * unless `sha1` is the only algorithm listed, and AppX/MSIX is always `sha256` only.
    *
    * @default ['sha1', 'sha256']
    */
@@ -359,10 +398,13 @@ export interface WindowsAzureSigningConfig {
   readonly type: "azure"
 
   /**
-   * The publisher name to associate with the signature, exactly as it appears in the certificate
-   * issued by your Trusted Signing certificate profile. Required. Used for
+   * The publisher name to associate with the signature: a Distinguished Name (DN) of the subject of
+   * the certificate issued by your Trusted Signing certificate profile (e.g.
+   * `CN=My Company, O=My Company, C=US`). Required. Used for
    * [update verification](#verifyUpdateCodeSignature) (embedded in `app-update.yml` and checked by
-   * electron-updater) and must match the certificate subject.
+   * electron-updater) and must match the certificate subject. A bare name fails the build since
+   * v27 — see
+   * [the migration guide](https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name).
    *
    * @see https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073
    */

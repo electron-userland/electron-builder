@@ -5,7 +5,7 @@ import fsExtra from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
-import { Platform } from "../core.js"
+import { Platform, Target } from "../core.js"
 import { ReleaseInfo } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
 import { ArtifactCreated } from "../packagerApi.js"
@@ -218,7 +218,18 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
       }
     }
   }
+
+  // win.allowCatalogSignature: read by electron-updater from the update info of an NSIS update, and honored only when the manifest
+  // signature is verified (it is covered by that signature)
+  if (event.packager.platform === Platform.WINDOWS && isNsisUpdateTarget(event.target) && event.packager.platformOptions.allowCatalogSignature === true) {
+    const windowsResult: WindowsUpdateInfo = { ...result, allowCatalogSignature: true }
+    return windowsResult
+  }
   return result
+}
+
+function isNsisUpdateTarget(target: Target | null): boolean {
+  return target != null && (target.name === "nsis" || target.name === "nsis-web")
 }
 
 export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfoFileTask>, packager: Packager, isPublish = false) {
@@ -295,6 +306,11 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
     if (signingKeys.length > 0) {
       const signatures = createUpdateManifestSignatures(task.info, signingKeys)
       info = { ...task.info, signature: signatures[0].signature, signatures }
+    } else if ("allowCatalogSignature" in info && info.allowCatalogSignature === true) {
+      log.warn(
+        { file: log.filePath(task.file), reason: "electron-updater honors it only in an update manifest whose signature it verified" },
+        "win.allowCatalogSignature has no effect: the update manifest is not signed"
+      )
     }
 
     const fileContent = Buffer.from(serializeToYaml(info, false, true))

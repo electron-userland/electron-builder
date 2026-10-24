@@ -41,6 +41,7 @@ export function registerWinCodeSignTests(toolsets: Partial<ToolsetConfig>): void
           case "1.1.0":
           case "1.2.1":
           case "1.3.0":
+          case "1.3.1":
             if (process.platform !== "win32") {
               message = "Initialization error or unsupported input file type."
             }
@@ -175,7 +176,7 @@ export function registerWinCodeSignTests(toolsets: Partial<ToolsetConfig>): void
           win: {
             sign: {
               type: "azure" as const,
-              publisherName: "test",
+              publisherName: "CN=Test, O=Test",
               endpoint: "https://weu.codesigning.azure.net/",
               certificateProfileName: "profilenamehere",
               codeSigningAccountName: "codesigningnamehere",

@@ -93,9 +93,9 @@ export const UNSTABLE_FAIL_RATIO = 0.2
 export const skippedTests = process.env.SKIPPED_TESTS?.split(",")
   .map(s => s.trim())
   .filter(Boolean) || [
-  // Runs natively in the "Test Flatpak" job (TEST_FILES=flatpak, which bypasses this list — see collectTests in
+  // Runs in the "Test Flatpak" job (TEST_FILES=flatpak, which bypasses this list — see collectTests in
   // file-discovery.ts). Kept out of the docker Linux shards, where it would only `describe.ifEnv`-skip: that skip
-  // still records a ~0 ms run for linux/flatpak.e2e.ts under the same `linux` cache key as the real native run, and
+  // still records a ~0 ms run for linux/flatpak.e2e.ts under the same `linux` cache key as the real run, and
   // merge-smart-cache.ts keeps whichever equal-runs artifact it reads first, making shard estimates nondeterministic.
   "flatpak.e2e",
   // These tests are run separately due to different docker images used for testing, and they are currently unstable in the CI environment

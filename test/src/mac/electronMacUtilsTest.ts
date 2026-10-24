@@ -1,3 +1,4 @@
+import { deepAssign } from "builder-util-runtime"
 import { expect } from "vitest"
 import { assertSafeHelperName, configureLocalhostAts, getAvailableHelperSuffixes, type AvailableHelpers } from "app-builder-lib/internal"
 
@@ -74,6 +75,19 @@ describe("electronMacUtils", () => {
       expect(plist.NSAppTransportSecurity.NSAllowsArbitraryLoads).toBe(false)
       expect(plist.NSAppTransportSecurity.NSAllowsLocalNetworking).toBe(true)
       expect(plist.NSAppTransportSecurity.NSExceptionDomains.localhost).toBeDefined()
+    })
+
+    // the order electronMac.ts applies them in: Electron's stock Info.plist, then mac.extendInfo (deepAssign), then this
+    test("an extendInfo false overrides Electron's stock NSAllowsArbitraryLoads: true and is kept", () => {
+      const plist: any = deepAssign({ NSAppTransportSecurity: { NSAllowsArbitraryLoads: true } }, { NSAppTransportSecurity: { NSAllowsArbitraryLoads: false } })
+      configureLocalhostAts(plist)
+      expect(plist.NSAppTransportSecurity.NSAllowsArbitraryLoads).toBe(false)
+    })
+
+    test("an extendInfo null cannot remove NSAllowsArbitraryLoads: it is set to true again", () => {
+      const plist: any = deepAssign({ NSAppTransportSecurity: { NSAllowsArbitraryLoads: true } }, { NSAppTransportSecurity: { NSAllowsArbitraryLoads: null } })
+      configureLocalhostAts(plist)
+      expect(plist.NSAppTransportSecurity.NSAllowsArbitraryLoads).toBe(true)
     })
 
     test("keeps an existing localhost exception", () => {
