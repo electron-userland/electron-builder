@@ -11,7 +11,23 @@
   !endif
 
   !ifmacrodef licensePage
-    !insertmacro skipPageIfUpdated
+    # The outer instance already accepted the license before elevation. Skip it only on the way in:
+    # Back must still reach it, otherwise NSIS closes the installer when all earlier pages are skipped.
+    Var isLicensePageSkippedInInnerInstance
+
+    Function licensePagePre
+      ${if} ${isUpdated}
+        Abort
+      ${endif}
+
+      ${if} ${UAC_IsInnerInstance}
+      ${andIf} $isLicensePageSkippedInInnerInstance != "1"
+        StrCpy $isLicensePageSkippedInInnerInstance "1"
+        Abort
+      ${endif}
+    FunctionEnd
+
+    !define MUI_PAGE_CUSTOMFUNCTION_PRE licensePagePre
     !insertmacro licensePage
   !endif
 
