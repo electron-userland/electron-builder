@@ -1,6 +1,6 @@
 import { expect, test, describe } from "vitest"
 import { CancellationToken, DigestTransform, HttpExecutor } from "builder-util-runtime"
-import { hashSensitiveValue, safeStringifyJson } from "builder-util-runtime/internal"
+import { hashSensitiveValue, REDACTED_VALUE, safeStringifyJson } from "builder-util-runtime/internal"
 import { addSensitiveFieldPattern, addSensitiveRedirectHeader, detectSha512Encoding, isSensitiveFieldName } from "builder-util-runtime/src/httpExecutor"
 import { createHash } from "crypto"
 import { RequestOptions } from "http"
@@ -973,5 +973,38 @@ describe("HttpExecutor redirect limit", () => {
     )
     // Same limit as doDownload: maxRedirects recursions + the initial request
     expect(executor.requestCount).toBe(executor["maxRedirects"] + 1)
+  })
+})
+
+describe("hashSensitiveValue", () => {
+  const FINGERPRINT = /^[a-f0-9]{32} \(redacted fingerprint\)$/
+
+  test("maps the same value to the same fingerprint within a run, and different values to different ones", ({ expect }) => {
+    const first = hashSensitiveValue("hunter2")
+    expect(first).toMatch(FINGERPRINT)
+    expect(hashSensitiveValue("hunter2")).toBe(first)
+    expect(hashSensitiveValue("hunter3")).not.toBe(first)
+    expect(hashSensitiveValue("")).toMatch(FINGERPRINT)
+  })
+
+  // a plain (unkeyed) hash of a weak secret in a log could be checked against guesses offline
+  test("is not a plain hash of the value, and does not contain it", ({ expect }) => {
+    const output = hashSensitiveValue("hunter2")
+    const fingerprint = output.split(" ")[0]
+    for (const algorithm of ["sha256", "sha1", "md5"]) {
+      const digest = createHash(algorithm).update("hunter2").digest("hex")
+      expect(output).not.toContain(digest)
+      expect(digest.startsWith(fingerprint)).toBe(false)
+    }
+    expect(output).not.toContain("hunter2")
+  })
+
+  test("never throws: a value that cannot be read is logged as a constant", ({ expect }) => {
+    const unreadable = {
+      toString() {
+        throw new Error("boom")
+      },
+    }
+    expect(hashSensitiveValue(unreadable as unknown as string)).toBe(REDACTED_VALUE)
   })
 })
