@@ -23,6 +23,27 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
     findProcessMacro = match ? match[0] : ""
   })
 
+  describe("IS_POWERSHELL_AVAILABLE macro", () => {
+    let availabilityMacro: string
+
+    beforeAll(() => {
+      const match = templateContent.match(/!macro IS_POWERSHELL_AVAILABLE[\s\S]*?!macroend/)
+      expect(match).not.toBeNull()
+      availabilityMacro = withoutComments(match![0])
+    })
+
+    // Wine's powershell.exe runs nothing and exits with 0, which FIND_PROCESS reads as "the app is running"
+    // (runtime behavior: nsisPowerShellAvailabilityTest)
+    test("requires the sentinel exit code 37, which only a PowerShell that ran the probe returns", () => {
+      expect(availabilityMacro).toMatch(/Get-Command Get-CimInstance -ErrorAction SilentlyContinue\) \{ exit 37 \} else \{ exit 1 \}/)
+      expect(availabilityMacro).toMatch(/\$\{if\} \$0 == 37\s+nsExec::Exec [^\n]*Get-ExecutionPolicy -Scope Process/)
+    })
+
+    test("treats every other probe result, including 0, as unavailable", () => {
+      expect(availabilityMacro).toMatch(/\$\{if\} \$0 == 37[\s\S]*?\$\{else\}\s+StrCpy \$0 1\s+\$\{endIf\}/)
+    })
+  })
+
   describe("FIND_PROCESS macro — PowerShell path", () => {
     test("uses path-based matching (not name-based)", () => {
       expect(findProcessMacro).toContain("$$_.Path -and ($processPathFilter)")
