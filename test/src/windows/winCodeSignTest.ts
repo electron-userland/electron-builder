@@ -83,6 +83,13 @@ test("parseDn decodes single-byte hex escapes that are not UTF-8 as Latin-1", ({
   expect(parseDn("CN=Caf\\C3\\A9").get("CN")).toEqual("Café")
 })
 
+test("parseDn decodes a hex escape run mixing UTF-8 and Latin-1 per sequence", ({ expect }) => {
+  expect(parseDn("CN=Caf\\C3\\A9\\FC").get("CN")).toEqual("Caféü")
+  expect(parseDn("CN=\\FC\\C3\\A9").get("CN")).toEqual("üé")
+  // a truncated UTF-8 sequence falls back to Latin-1
+  expect(parseDn("CN=\\C3").get("CN")).toEqual("Ã")
+})
+
 const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
