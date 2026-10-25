@@ -6,7 +6,7 @@ import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
 import { getSquirrelToolsetPath, getWixToolsetPath } from "./toolset.js"
-import { InstallerOptions, convertVersion, createWindowsInstaller } from "./windowsInstaller.js"
+import { InstallerOptions, convertVersion, copySquirrelExe, createWindowsInstaller } from "./windowsInstaller.js"
 
 export default class SquirrelWindowsTarget extends Target {
   readonly options: SquirrelWindowsOptions
@@ -165,10 +165,11 @@ export default class SquirrelWindowsTarget extends Target {
       arch,
     })
     const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
-    // The stub and the re-signed app exe are written into appOutDir, which the other targets of this pack read: wait for
+    // The stub, the re-signed app exe and Squirrel.exe are written into appOutDir, which the other targets of this pack read: wait for
     // their queued work (zip/7z), and write here rather than in the queue so the sync targets built after this one see the final appOutDir.
     await waitForPackWork(packager, appOutDir, arch)
     await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory)
+    await copySquirrelExe(appOutDir, distOptions.vendorDirectory)
 
     this.buildQueueManager.add(async () => {
       await withToolsetLock(() => createWindowsInstaller(distOptions))

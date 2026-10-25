@@ -10,12 +10,13 @@ import { exec, Executables, InvalidConfigurationError } from "builder-util"
 import {
   buildAdditionalFilesXml,
   convertVersion,
+  copySquirrelExe,
   createWindowsInstaller,
   escapeXml,
   InstallerOptions,
   renderNuspecTemplate,
 } from "electron-builder-squirrel-windows/src/windowsInstaller"
-import { access, chmod, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "fs/promises"
+import { chmod, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "fs/promises"
 import { tmpdir } from "os"
 import * as path from "path"
 
@@ -148,6 +149,20 @@ async function writeExecutable(file: string) {
   return file
 }
 
+describe("copySquirrelExe", () => {
+  test("puts Squirrel.exe next to the app so the nuspec can pick it up", async ({ tmpDir }) => {
+    const root = await tmpDir.createTempDir()
+    const vendorDir = path.join(root, "vendor")
+    const appDir = path.join(root, "app")
+    await Promise.all([vendorDir, appDir].map(dir => mkdir(dir)))
+    await writeFile(path.join(vendorDir, "Squirrel.exe"), "Squirrel.exe")
+
+    await copySquirrelExe(appDir, vendorDir)
+
+    expect(await readFile(path.join(appDir, "Squirrel.exe"), "utf8")).toBe("Squirrel.exe")
+  })
+})
+
 describe("createWindowsInstaller", () => {
   let tmpDir: string
   let vendorDir: string
@@ -245,9 +260,6 @@ describe("createWindowsInstaller", () => {
     await fakeReleasifyOutput(["Setup.exe"])
     const options = baseOptions()
     await createWindowsInstaller(options)
-
-    // Squirrel.exe must be next to the app so the nuspec can pick it up
-    expect(await readFile(path.join(appDir, "Squirrel.exe"), "utf8")).toBe("Squirrel.exe")
 
     const calls = invocations()
     expect(calls).toHaveLength(2)
@@ -446,7 +458,6 @@ describe("createWindowsInstaller", () => {
       const nuspec = await readNuspec("TestApp")
       expect(nuspec).toContain(`<file src="vk_swiftshader_icd.json" target="lib${sep}net45" />`)
       expect(nuspec).not.toContain("swiftshader\\**")
-      await access(path.join(appDir, "Squirrel.exe"))
     })
   })
 })
