@@ -119,7 +119,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   /**
    * Fails a forceCodeSigning build at build start, before anything is packed, when the macOS app could not be signed or
    * notarized: on a host other than macOS, in a pull-request build without CSC_FOR_PULL_REQUEST, or without notarization
-   * credentials. sign() and notarizeIfProvided keep their own checks for callers that never emit `targetsCreated`.
+   * credentials; and a build with `mac.notarize: true` without notarization credentials, where notarization can happen.
+   * sign() and notarizeIfProvided keep their own checks for callers that never emit `targetsCreated`.
    */
   private checkForceCodeSigningAtBuildStart(plans: ReadonlyArray<PlannedTargets>): void {
     const ownPlans = plans.filter(it => it.packager === this)
@@ -144,14 +145,22 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
         throw unavailable
       }
     }
-    if (!flavors.has("mac") || !this.forceCodeSigning) {
+    if (!flavors.has("mac")) {
       return
     }
     // the non-MAS app is notarized when it is packed (never for a prepackaged one), and the pkg installer always
     const prepackaged = this.packagerOptions.prepackaged != null
     const notarizes = ownPlans.some(({ targets }) => (!prepackaged && MacPackager.packsNonMasApp(targets)) || targets.some(it => it.name === "pkg"))
-    if (notarizes && this.platformSpecificBuildOptions.notarize !== false && MacTargetHelper.getNotarizeOptions("") == null) {
+    const notarize = this.platformSpecificBuildOptions.notarize
+    if (!notarizes || notarize === false || MacTargetHelper.getNotarizeOptions("") != null) {
+      return
+    }
+    if (this.forceCodeSigning) {
       throw MacTargetHelper.missingNotarizationCredentialsError()
+    }
+    // notarize: true requires notarization wherever it can happen: on a macOS host, outside a pull-request build
+    if (notarize === true && isSignAllowed(false)) {
+      throw MacTargetHelper.notarizeTrueWithoutCredentialsError()
     }
   }
 

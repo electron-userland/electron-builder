@@ -139,6 +139,53 @@ describe("notarizeIfProvided under forceCodeSigning", () => {
   })
 })
 
+// notarize: true requires notarization; left unset, notarization runs when credentials are set and is skipped with a warning otherwise
+describe("mac.notarize: true without forceCodeSigning", () => {
+  const preflight = (packager: any, ...targetNames: Array<string>) =>
+    (MacPackager.prototype as any).checkForceCodeSigningAtBuildStart.call(packager, [{ packager, arch: Arch.x64, targets: targetNames.map(name => ({ name })) }])
+
+  test("fails at notarize time without notarization credentials, linking the migration page", async ({ expect }) => {
+    const error = await errorOf(makeMacPackager({ notarize: true }, false).helper.notarizeIfProvided("/out/mac/My.app"))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error.message).toContain("mac.notarize is true, which requires notarization, but no notarization credentials are set")
+    expect(error.message).toContain("https://www.electron.build/docs/migration/v27-build-changes#mac-notarize-true-requires-credentials")
+    expect(notarize).not.toHaveBeenCalled()
+  })
+
+  test("notarizes with credentials", async ({ expect }) => {
+    vi.stubEnv("APPLE_KEYCHAIN_PROFILE", "notary-profile")
+    await makeMacPackager({ notarize: true }, false).helper.notarizeIfProvided("/out/mac/My.app")
+    expect(notarize).toHaveBeenCalledWith(expect.objectContaining({ keychainProfile: "notary-profile" }))
+  })
+
+  test("left unset, missing credentials still only warn", async ({ expect }) => {
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    await expect(makeMacPackager({}, false).helper.notarizeIfProvided("/out/mac/My.app")).resolves.toBeUndefined()
+    expect(warn).toHaveBeenCalledWith(expect.anything(), "skipped macOS notarization")
+  })
+
+  test("fails at build start on a macOS host, where notarization can happen", ({ expect }) => {
+    const packager = makeMacPackager({ notarize: true }, false)
+    expect(() => preflight(packager, "dmg")).toThrow("mac.notarize is true, which requires notarization")
+    // a MAS-only build is not notarized
+    expect(() => preflight(packager, "mas")).not.toThrow()
+    // left unset, nothing is required
+    expect(() => preflight(makeMacPackager({}, false), "dmg")).not.toThrow()
+    vi.stubEnv("APPLE_KEYCHAIN_PROFILE", "notary-profile")
+    expect(() => preflight(packager, "dmg")).not.toThrow()
+  })
+
+  test("is not required at build start where the app cannot be signed (another host, a pull-request build)", ({ expect }) => {
+    const packager = makeMacPackager({ notarize: true }, false)
+    setPlatform("linux")
+    expect(() => preflight(packager, "dmg")).not.toThrow()
+    setPlatform("darwin")
+    vi.stubEnv("GITHUB_BASE_REF", "main")
+    vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    expect(() => preflight(packager, "dmg")).not.toThrow()
+  })
+})
+
 describe("MacPackager.sign under forceCodeSigning", () => {
   const sign = (packager: any) => packager.sign("/out/mac/My.app", Arch.x64, "mac")
 

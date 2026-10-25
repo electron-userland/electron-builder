@@ -12,6 +12,7 @@ import { SigningResult } from "../../codeSign/signResult.js"
 import type { MacPackager } from "../../macPackager.js"
 import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
 import { parsePlistFile, savePlistFile, PlistObject, PlistValue } from "../../util/mac/plist.js"
+import { BUILD_CHANGES_URL } from "../../util/config/legacyOptions.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import asyncPool from "tiny-async-pool"
 
@@ -664,6 +665,16 @@ export class MacTargetHelper {
     )
   }
 
+  /** The error for `mac.notarize: true`, which requires notarization, when no notarization credentials are set. */
+  static notarizeTrueWithoutCredentialsError(): InvalidConfigurationError {
+    return new InvalidConfigurationError(
+      "mac.notarize is true, which requires notarization, but no notarization credentials are set. " +
+        "Set APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER (recommended for CI), or APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD and APPLE_TEAM_ID, or APPLE_KEYCHAIN_PROFILE (with APPLE_KEYCHAIN); " +
+        "they must be set when the build starts. Leave mac.notarize unset to notarize only when credentials are set (and skip it with a warning otherwise), or set it to false to never notarize. " +
+        `See ${BUILD_CHANGES_URL}#mac-notarize-true-requires-credentials`
+    )
+  }
+
   /** Under forceCodeSigning, checks the signature of an installer package electron-builder signed (`pkgutil --check-signature`). */
   async verifyInstallerPackage(pkg: string, targetPlatform: PlatformType = "mac"): Promise<void> {
     if (!this.packager.forceCodeSigningFor(targetPlatform)) {
@@ -691,6 +702,9 @@ export class MacTargetHelper {
     }
     const options = MacTargetHelper.getNotarizeOptions(appPath)
     if (!options) {
+      if (notarizeOptions === true) {
+        throw MacTargetHelper.notarizeTrueWithoutCredentialsError()
+      }
       if (forceCodeSigning) {
         throw MacTargetHelper.missingNotarizationCredentialsError()
       }

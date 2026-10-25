@@ -221,9 +221,13 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly universal?: ElectronUniversalOptions | null
 
   /**
-   * Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.
+   * Whether to notarize the app with [@electron/notarize](https://github.com/electron/notarize).
    *
-   * Note: In order to activate the notarization step You MUST specify one of the following via environment variables:
+   * - unset (the default): notarize when notarization credentials are set, otherwise skip it with a warning.
+   * - `true`: notarization is required: the build fails when no credentials are set (at build start, on a macOS host).
+   * - `false`: never notarize (for an ad-hoc or development-signed app, or one notarized in an `afterSign` hook).
+   *
+   * The credentials are one of the following sets of environment variables:
    *
    * 1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.
    * 2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`

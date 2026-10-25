@@ -3,10 +3,32 @@ import { KeyObject } from "crypto"
 import { load } from "js-yaml"
 import * as path from "path"
 
-/** The platform of an update manifest, by its file name: `latest-mac.yml`, `beta-linux-arm64.yml`, or `latest.yml` (Windows). */
+const LINUX_MARKER = "-linux"
+
+/**
+ * The platform of an update manifest, by its file name: `latest-mac.yml`, `beta-linux-arm64.yml`, or `latest.yml` (Windows). What
+ * `/-mac\.ya?ml$/` and then `/-linux(-[^.]+)?\.ya?ml$/` match, parsed in linear time: the second pattern backtracks polynomially on
+ * a name with many `-linux` (the name comes from the output folder or the command line).
+ */
 export function updateManifestPlatform(file: string): "mac" | "win" | "linux" {
   const name = path.basename(file)
-  return /-mac\.ya?ml$/.test(name) ? "mac" : /-linux(-[^.]+)?\.ya?ml$/.test(name) ? "linux" : "win"
+  const extension = name.endsWith(".yml") ? ".yml" : name.endsWith(".yaml") ? ".yaml" : null
+  if (extension == null) {
+    return "win"
+  }
+  const stem = name.substring(0, name.length - extension.length)
+  if (stem.endsWith("-mac")) {
+    return "mac"
+  }
+  // "-linux", then nothing, or "-" and at least one more character, with no "." up to the extension
+  const tail = stem.substring(stem.lastIndexOf(".") + 1)
+  for (let index = tail.indexOf(LINUX_MARKER); index !== -1; index = tail.indexOf(LINUX_MARKER, index + 1)) {
+    const end = index + LINUX_MARKER.length
+    if (end === tail.length || (tail[end] === "-" && tail.length - end >= 2)) {
+      return "linux"
+    }
+  }
+  return "win"
 }
 
 export type UpdateManifestVerification = { readonly ok: true; readonly keyId: string } | { readonly ok: false; readonly reason: string }

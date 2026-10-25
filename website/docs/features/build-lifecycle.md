@@ -220,7 +220,7 @@ The app bundle is signed using the platform-native toolchain:
 | Windows | `signtool.exe` | EXE and DLL files |
 | Linux | _(no signing in this phase)_ | — |
 
-Notarization (macOS) runs here when `mac.notarize: true` is set.
+Notarization (macOS) runs here when notarization credentials are set (and `mac.notarize` is not `false`); with `mac.notarize: true` missing credentials fail the build.
 
 #### 🪝 `afterSign`
 
@@ -237,7 +237,7 @@ afterSign: async ({ outDir, appOutDir, packager, electronPlatformName, arch, tar
 ```
 
 :::tip[Built-in notarization]
-Use `mac.notarize: true` for standard notarization — electron-builder handles it automatically. Only reach for `afterSign` when you need a custom notarization flow. See [Notarization](/docs/features/code-signing/notarization).
+Standard notarization needs no hook — electron-builder notarizes automatically when the credentials are set (`mac.notarize: true` makes them required). Only reach for `afterSign` when you need a custom notarization flow. See [Notarization](/docs/features/code-signing/notarization).
 :::
 
 For a fully custom signing implementation (replacing the built-in signer):

@@ -3613,7 +3613,7 @@
           ]
         },
         "notarize": {
-          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "description": "Whether to notarize the app with [@electron/notarize](https://github.com/electron/notarize).\n\n- unset (the default): notarize when notarization credentials are set, otherwise skip it with a warning.\n- `true`: notarization is required: the build fails when no credentials are set (at build start, on a macOS host).\n- `false`: never notarize (for an ad-hoc or development-signed app, or one notarized in an `afterSign` hook).\n\nThe credentials are one of the following sets of environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
           "type": "boolean"
         },
         "protocols": {
@@ -4043,7 +4043,7 @@
           ]
         },
         "notarize": {
-          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "description": "Whether to notarize the app with [@electron/notarize](https://github.com/electron/notarize).\n\n- unset (the default): notarize when notarization credentials are set, otherwise skip it with a warning.\n- `true`: notarization is required: the build fails when no credentials are set (at build start, on a macOS host).\n- `false`: never notarize (for an ad-hoc or development-signed app, or one notarized in an `afterSign` hook).\n\nThe credentials are one of the following sets of environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
           "type": "boolean"
         },
         "protocols": {
@@ -8786,7 +8786,7 @@
           ]
         },
         "msi": {
-          "description": "Whether to create an MSI installer. Defaults to `false` (MSI is not created).",
+          "description": "Whether to create an MSI installer. Defaults to `false` (MSI is not created).\n\nSquirrel.Windows builds the MSI around Setup.exe before electron-builder signs Setup.exe, so the installer inside the MSI is\nunsigned: the build warns, and fails with `forceCodeSigning`. For a signed MSI use the `msi` target instead.",
           "type": "boolean"
         },
         "name": {
