@@ -5,7 +5,9 @@ import { Nullish } from "builder-util-runtime"
 import { createPrivateKey } from "crypto"
 import { open, rm, writeFile, type FileHandle } from "fs/promises"
 import * as path from "path"
+import { forceCodeSigningError, VERIFICATION_FAILED_ERROR_CODE } from "../../codeSign/forceCodeSigning.js"
 import { CertType, findIdentity, Identity, reportError } from "../../codeSign/mac/macCodeSign.js"
+import { checkInstallerPackageSignature, validateStapledTicket } from "../../codeSign/mac/macSignatureVerifier.js"
 import { SigningResult } from "../../codeSign/signResult.js"
 import type { MacPackager } from "../../macPackager.js"
 import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
@@ -244,8 +246,8 @@ export class MacTargetHelper {
         return identity.hash
       }
 
-      // the same pattern osx-sign uses, so we never derive a Team ID it would have rejected
-      const teamId = /^.+\((.+?)\)\s*$/.exec(identity.name)?.[1]
+      // what osx-sign's pattern takes, so we never derive a Team ID it would have rejected
+      const teamId = parseIdentityTeamId(identity.name)
       if (teamId == null) {
         log.debug({ identityName: identity.name }, "cannot parse Team ID from identity name, signing with the identity name")
         return identity.name
@@ -289,7 +291,8 @@ export class MacTargetHelper {
 
   async buildSignOptions(
     appPath: string,
-    identity: Identity,
+    // null only for a custom signer without a keychain identity, which forceCodeSigning calls anyway (see MacPackager.sign)
+    identity: Identity | null,
     config: ElectronSignOptions | null | undefined,
     keychainFile: string | Nullish,
     arch: Arch,
@@ -471,9 +474,11 @@ export class MacTargetHelper {
    * only exists on macOS.
    */
   async readSigningTeamId(file: string): Promise<string | null> {
+    // resolved outside the try: a codesign that cannot be located is a configuration error, not an unsigned file
+    const codesign = Executables.resolve("codesign")
     try {
       // `codesign -d` reports on stderr, so stdout alone (as `exec` returns) is not enough
-      const { stderr } = await spawnAndWriteWithOutput("/usr/bin/codesign", ["-d", "--verbose=4", file], "")
+      const { stderr } = await spawnAndWriteWithOutput(codesign, ["-d", "--verbose=4", file], "")
       return parseSigningTeamId(stderr)
     } catch {
       // unsigned binaries make `codesign -d` exit non-zero
@@ -505,6 +510,7 @@ export class MacTargetHelper {
     MacTargetHelper.assertSafePathForCommandUsage(artifactName, "artifact name")
     const artifactPath = path.resolve(outDir, artifactName)
     await this.packager.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
+    await this.verifyInstallerPackage(artifactPath)
     await this.packager.emitArtifactBuildCompleted({
       file: artifactPath,
       target: null,
@@ -649,14 +655,45 @@ export class MacTargetHelper {
     return undefined
   }
 
+  /** The error for a forceCodeSigning build that would skip notarization because no notarization credentials are set. */
+  static missingNotarizationCredentialsError(): InvalidConfigurationError {
+    return forceCodeSigningError(
+      "forceCodeSigning is enabled, but no notarization credentials are set, so the macOS app would not be notarized. " +
+        "Set APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER (recommended for CI), or APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD and APPLE_TEAM_ID, or APPLE_KEYCHAIN_PROFILE (with APPLE_KEYCHAIN); " +
+        "they must be set when the build starts. To skip notarization - for an ad-hoc or development-signed app, or one you notarize yourself, e.g. in an afterSign hook - set mac.notarize: false (the build then warns)."
+    )
+  }
+
+  /** Under forceCodeSigning, checks the signature of an installer package electron-builder signed (`pkgutil --check-signature`). */
+  async verifyInstallerPackage(pkg: string): Promise<void> {
+    if (!this.packager.forceCodeSigning) {
+      return
+    }
+    const problem = await checkInstallerPackageSignature(pkg)
+    if (problem != null) {
+      throw forceCodeSigningError(`forceCodeSigning is enabled, but the installer package ${log.filePath(pkg)} is not validly signed (${problem}).`, VERIFICATION_FAILED_ERROR_CODE)
+    }
+  }
+
   async notarizeIfProvided(appPath: string): Promise<void> {
     const notarizeOptions = this.packager.platformOptions.notarize
+    const forceCodeSigning = this.packager.forceCodeSigning
     if (notarizeOptions === false) {
-      log.info({ reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization")
+      if (forceCodeSigning) {
+        // an explicit opt-out is honored under forceCodeSigning - the app may be notarized in an afterSign hook - but not silently
+        log
+          .once("notarize-false-with-force-code-signing", this.packager)
+          .warn({ reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization although forceCodeSigning is enabled")
+      } else {
+        log.info({ reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization")
+      }
       return
     }
     const options = MacTargetHelper.getNotarizeOptions(appPath)
     if (!options) {
+      if (forceCodeSigning) {
+        throw MacTargetHelper.missingNotarizationCredentialsError()
+      }
       log.warn({ reason: "`notarize` options were unable to be generated" }, "skipped macOS notarization")
       return
     }
@@ -676,6 +713,17 @@ export class MacTargetHelper {
       }
     }
     log.info(null, "notarization successful")
+
+    // @electron/notarize staples the ticket but never validates it
+    if (forceCodeSigning) {
+      const problem = await validateStapledTicket(appPath)
+      if (problem != null) {
+        throw forceCodeSigningError(
+          `forceCodeSigning is enabled, but ${log.filePath(appPath)} was notarized and stapler validate rejects its stapled ticket (${problem}).`,
+          VERIFICATION_FAILED_ERROR_CODE
+        )
+      }
+    }
   }
 
   /**
@@ -802,6 +850,28 @@ export function isLoadableMachOFileType(type: number | null): boolean {
  */
 export async function isMachOFile(file: string): Promise<boolean> {
   return (await readMachOFileType(file)) != null
+}
+
+const LINE_TERMINATOR = /[\n\r\u2028\u2029]/
+
+/**
+ * The Team ID of a signing identity name such as `Developer ID Application: Foo Inc (ABCDE12345)`, or `null`: what
+ * @electron/osx-sign's `/^.+\((.+?)\)\s*$/` captures - the text between the last `(` that leaves it non-empty and a closing `)`
+ * followed only by whitespace, with at least one character before the `(` and no line break before the trailing whitespace.
+ * Parsed without that regular expression, which backtracks polynomially on names with many `(` (the name comes from the
+ * keychain or the configuration).
+ *
+ * @internal Exported for tests only.
+ */
+export function parseIdentityTeamId(name: string): string | null {
+  // \s and trimEnd remove the same characters
+  const trimmed = name.trimEnd()
+  if (!trimmed.endsWith(")") || LINE_TERMINATOR.test(trimmed)) {
+    return null
+  }
+  // the last "(" with at least one character between it and the closing ")"
+  const open = trimmed.lastIndexOf("(", trimmed.length - 3)
+  return open < 1 ? null : trimmed.substring(open + 1, trimmed.length - 1)
 }
 
 /**

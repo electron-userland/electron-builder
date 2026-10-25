@@ -36,7 +36,8 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [Windows `publisherName` validated against the certificate](#windows-publishername-is-validated-against-the-signing-certificate) | Fails build | Update `publisherName` after a certificate rotation, or drop it. Custom `win.sign.sign` hooks (even with a certificate configured) and certificates without a CN now **require** it when `app-update.yml` is written (or set `win.verifyUpdateCodeSignature: false` if your updates are not Authenticode-signed) |
 | [Windows `publisherName` must be a distinguished name](#windows-publishername-must-be-a-distinguished-name) | Fails build, advisory | Set every `win.sign.publisherName` entry to a distinguished name (e.g. `"CN=My Company, O=My Company, C=US"`) — a bare name now **fails the build**, and electron-updater 7 never matches it. Without `publisherName`, the build now writes `CN=<common name>` of the certificate (a DN) instead of the bare Common Name |
 | [A missing Windows `publisherName` fails update verification](#missing-publishername-fails-update-verification) | Fails build, advisory | A Windows build that writes `app-update.yml` without a `publisherName` (`win.sign: false` / `null`, no certificate, `publisherName: null`) now **fails the build**, and electron-updater 7 rejects updates whose `app-update.yml` has none. Sign the build, set `win.sign.publisherName`, or set `win.verifyUpdateCodeSignature: false` (the only opt-out) |
-| [Signed update manifests are required](#signed-update-manifests-are-required) | Fails when publishing | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY` to the base64-encoded PEM file, or set `updateManifest: false` to keep publishing unsigned manifests |
+| [`forceCodeSigning` covers notarization and update manifests](#forcecodesigning-covers-notarization-and-update-manifests) | Fails build (with `forceCodeSigning`) | Provide notarization credentials and the update-manifest signing key wherever `forceCodeSigning` is set, or opt out explicitly (`mac.notarize: false`, `updateManifest: false`); pass `-c.forceCodeSigning=false` to pull-request and local builds that cannot sign |
+| [Signed update manifests are required](#signed-update-manifests-are-required) | Fails when publishing (or with `forceCodeSigning`) | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY` to the base64-encoded PEM file, or set `updateManifest: false` to keep publishing unsigned manifests |
 | [Signing key must be in `updateManifest.publicKey`](#signing-key-must-be-in-updatemanifestpublickey) | Fails when publishing | Only if you set `updateManifest.publicKey`: list a key the build signs with, or set `updateManifest.allowSigningKeyOutsideTrustList: true` for a deliberate cutover release |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | Silent (conflicts fail) | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
 | [Suffixed channels expand to lower channels](#suffixed-update-channels-now-expand-to-lower-channels) | Warns | Only with `generateUpdatesFilesForAllChannels`: a `beta-*`/`latest-*` channel now writes 2–3 yml files instead of 1 |
@@ -397,6 +398,33 @@ For testing updates in development (`forceDevUpdateConfig`), put the certificate
 
 > **Tip:** `electron-builder migrate-schema` prints an advisory for `win.sign: false` / `null` or `win.sign.publisherName: null` without `win.verifyUpdateCodeSignature: false`.
 
+### `forceCodeSigning` covers notarization and update manifests, and verifies signatures {#forcecodesigning-covers-notarization-and-update-manifests}
+
+**How you'll find out:** **Fails the build** (only with `forceCodeSigning`), at build start where possible, with a link here. `migrate-schema` prints an advisory when `forceCodeSigning` is set.
+
+In v26, `forceCodeSigning` only failed the build when no code signing identity or certificate was found: notarization and update-manifest signing could still be skipped with a log line, and nothing checked what a signing step produced. In v27, `forceCodeSigning: true` (at the root or on a platform) makes every signing step required, and verifies it:
+
+- **macOS notarization is required.** Without notarization credentials (`APPLE_API_KEY` + `APPLE_API_KEY_ID` + `APPLE_API_ISSUER`, `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` + `APPLE_TEAM_ID`, or `APPLE_KEYCHAIN_PROFILE`) the build fails at build start, before anything is packed — also a `--dir` build, which signs and notarizes the app. The credentials must be in the environment when the build starts. After notarizing, `stapler validate` checks the stapled ticket.
+- **macOS signing must be possible.** A build on a host other than macOS, or a pull-request build (where electron-builder skips signing unless `CSC_FOR_PULL_REQUEST=true`), now fails instead of producing an unsigned app.
+- **Update manifests must be signed**, also by a build that does not publish — including pull-request builds, and Linux builds, where this is the only effect of `forceCodeSigning`. A missing signing key fails at build start, and so does a signing key outside `updateManifest.publicKey` (unless `allowSigningKeyOutsideTrustList` is set).
+- **Signatures are verified.** Every file a Windows signing step reports as signed is read back and must carry a valid Authenticode signature, so a custom `win.sign.sign` hook that signs another path now fails the build. The output of a custom `mac.sign` signer is checked with `codesign --verify --deep --strict` (and a custom signer without a keychain identity is now called, as in v26, instead of being skipped silently). Signed `pkg` and MAS installers are checked with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.
+- **A prepackaged app must already be signed** (and, on macOS, notarized), since electron-builder does not sign it. `win.sign: false` with a prepackaged app now fails too.
+
+Explicit opt-outs are honored with a warning: `mac.notarize: false` (for an ad-hoc or development-signed app, or one you notarize yourself, e.g. in an `afterSign` hook), `updateManifest: false`, `win.signExts` exclusions, and a custom `nsis.script` (whose uninstaller electron-builder does not sign). An HSM/KMS signer that signs `latest*.yml` in a later step publishes with `publishAutoUpdate: false` on every provider (see [Key storage](../features/key-rotation.md#key-storage)), or builds without `forceCodeSigning`. Any valid signature counts, including ad-hoc and self-signed ones.
+
+Every signed `latest*.yml` is also read back before it is written, with or without `forceCodeSigning`, so a manifest that would not verify is never written or uploaded.
+
+**Action:** provide the notarization credentials and the update-manifest signing key wherever `forceCodeSigning` is set. Pull-request and local builds that cannot sign turn it off:
+
+```bash
+electron-builder --mac -c.forceCodeSigning=false      # pull-request or local builds without credentials
+electron-builder --mac -c.mac.forceCodeSigning=false  # when the mac block sets it: a platform value wins over the root one
+```
+
+Run [`electron-builder verify`](../cli.md#verify) after a build to check the signatures, notarization and update manifests of its output.
+
+> **Tip:** `electron-builder migrate-schema` prints an advisory when `forceCodeSigning` is set.
+
 ---
 
 ## Publishing & update metadata {#publishing-update-metadata}
@@ -415,7 +443,7 @@ updateManifest.signingKeyFile in the build configuration. To publish unsigned ma
 explicitly with `updateManifest: false`.
 ```
 
-Only a **publishing** build fails. A build without a publish policy warns instead, so local builds keep working — which matters because `app-update.yml` is generated whenever a publish configuration exists *or* can be inferred from your `repository` field.
+Only a **publishing** build fails — or any build with [`forceCodeSigning`](#forcecodesigning-covers-notarization-and-update-manifests). A build without a publish policy warns instead, so local builds keep working — which matters because `app-update.yml` is generated whenever a publish configuration exists *or* can be inferred from your `repository` field.
 
 **To adopt it** (recommended):
 

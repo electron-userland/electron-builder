@@ -307,17 +307,19 @@ Each entry is one `file://` URI or a list of them. A list can serve several host
 
 | Name | Used for | Default locations |
 |---|---|---|
-| `powershell` | Windows certificate-store lookups and legacy Azure Trusted Signing, package-manager commands on Windows, `create-self-signed-cert` | Windows: `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe` |
+| `powershell` | Windows certificate-store lookups and legacy Azure Trusted Signing, package-manager commands on Windows, `create-self-signed-cert`, reading Authenticode signatures back on Windows (the `publisherName` check, [`forceCodeSigning`](./features/code-signing/code-signing.md#the-forcecodesigning-option), [`electron-builder verify`](./cli.md#verify)) | Windows: `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe` |
 | `pwsh` | PowerShell 7, preferred over `powershell` on Windows when it is installed; the signing helper on macOS and Linux | Windows: `%ProgramFiles%\PowerShell\7\pwsh.exe`; macOS: `/usr/local/microsoft/powershell/7/pwsh`; Linux: `/opt/microsoft/powershell/7/pwsh`, `/snap/bin/pwsh` |
 | `prlctl` | Running Windows and Linux tools in a Parallels Desktop VM | macOS: `/Applications/Parallels Desktop.app/Contents/MacOS/prlctl`, `/usr/local/bin/prlctl` |
 | `wine` | The host Wine (`toolsets.wine: "system"`, the default) | macOS: `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine`, `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine` (likewise `Wine Devel.app`, `Wine Staging.app`); Linux: `/usr/local/bin/wine`, `/usr/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`, `/opt/wine-staging/bin/wine` |
 | `mono` | The Squirrel.Windows tools on macOS and Linux | macOS: `/opt/homebrew/bin/mono`, `/usr/local/bin/mono`, `/opt/local/bin/mono`, `/Library/Frameworks/Mono.framework/Versions/Current/Commands/mono`, `/Library/Frameworks/Mono.framework/Versions/Current/bin/mono`; Linux: `/home/linuxbrew/.linuxbrew/bin/mono`, `/usr/local/bin/mono`, `/usr/bin/mono` |
 | `productbuild`, `pkgbuild` | `pkg` and `mas` installers | macOS: `/usr/bin/<name>` |
-| `codesign` | Signing the DMG | macOS: `/usr/bin/codesign` |
+| `codesign` | Signing the DMG; re-signing the Electron framework after embedding the ASAR integrity digest; reading the Team ID of nested binaries; verifying signatures (`forceCodeSigning`, `electron-builder verify`). The keychain that electron-builder creates lets it (and `/usr/bin/codesign`, which `@electron/osx-sign` starts) use the imported signing keys | macOS: `/usr/bin/codesign` |
 | `hdiutil`, `tiffutil`, `sips` | Building the DMG and its background | macOS: `/usr/bin/<name>` |
 | `actool` | Icon Composer (`.icon`) icons | macOS: `/usr/bin/actool` (which runs the `actool` of the selected Xcode) |
 | `zip` | `zip` archives of file names that 7-Zip cannot store (NFD) | macOS: `/usr/bin/zip` |
 | `notarytool` | Notarization | the `notarytool` of the selected Xcode, located with `/usr/bin/xcrun --find notarytool` |
+| `stapler` | Validating stapled notarization tickets (`forceCodeSigning`, `electron-builder verify`) | the `stapler` of the selected Xcode, located with `/usr/bin/xcrun --find stapler` |
+| `pkgutil` | Checking the signature of `pkg` installers (`forceCodeSigning`, `electron-builder verify`) | macOS: `/usr/sbin/pkgutil` |
 | `lzip` | `tar.lz` archives on Linux (macOS uses the `linuxToolsMac` toolset) | Linux: `/usr/bin/lzip`, `/usr/local/bin/lzip` |
 | `snapcraft` | Building and publishing snaps | macOS: `/opt/homebrew/bin/snapcraft`, `/usr/local/bin/snapcraft`; Linux: `/snap/bin/snapcraft`, `/usr/bin/snapcraft` |
 | `flatpak`, `flatpak-builder` | Building flatpaks | Linux: `/usr/bin/<name>`, `/usr/local/bin/<name>` |

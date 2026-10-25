@@ -105,6 +105,8 @@ export class PkgTarget extends Target {
       cwd: appOutDir,
     })
     await Promise.all([unlink(innerPackageFile), unlink(distInfoFile)])
+    // under forceCodeSigning, identity is never null here (see above)
+    await packager.helper.verifyInstallerPackage(artifactPath)
     await packager.helper.notarizeIfProvided(artifactPath)
     await packager.emitArtifactBuildCompleted({
       file: artifactPath,

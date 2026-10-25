@@ -426,11 +426,25 @@ export interface CommonConfiguration {
   readonly extraMetadata?: any
 
   /**
-   * Whether to throw an error and abort the build if the app could not be code-signed.
+   * Whether to throw an error and abort the build if the app could not be code-signed, notarized, or have its
+   * auto-update manifests signed - and to verify the signatures the build produces.
    *
    * Set to `true` in release pipelines to catch missing or misconfigured signing credentials
    * before producing unsigned artifacts. When `false` (the default), missing signing credentials
    * produce a warning and the build continues unsigned.
+   *
+   * With `true`:
+   * - macOS: the app must be signed, which needs a macOS host, also in pull-request builds (set `CSC_FOR_PULL_REQUEST=true` to sign
+   *   them, or pass `-c.forceCodeSigning=false` there), and notarized: notarization credentials must be set when the build starts.
+   *   The output of a custom `mac.sign` signer is checked with `codesign --verify --deep --strict`, the stapled ticket with
+   *   `stapler validate`, a signed pkg with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.
+   * - Windows: every signed file is read back and must carry a valid Authenticode signature.
+   * - Every platform (the only effect on Linux): auto-update manifests must be signed, also by a build that does not publish.
+   * - A prepackaged app, which electron-builder does not sign, must already be signed (and, on macOS, notarized).
+   *
+   * Explicit opt-outs are honored with a warning: `mac.notarize: false`, `updateManifest: false`, `win.signExts` exclusions and a
+   * custom `nsis.script` (whose uninstaller electron-builder does not sign). `win.sign: false` and `mac.sign: null` contradict it
+   * and fail the build. `electron-builder verify` checks the build output afterwards.
    *
    * @default false
    */

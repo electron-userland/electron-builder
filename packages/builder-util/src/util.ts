@@ -207,13 +207,14 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
 
   const attempt = () =>
     new Promise<string>((resolve, reject) => {
+      // codeql[js/shell-command-injection-from-environment] - `file` is an absolute path from toolsets.executables (trusted config) or a default location built from SystemRoot/ProgramFiles (see Executables); execFile array args (no shell); env filtered via getProcessEnv/stripSensitiveEnvVars
       execFile(
         file,
         args,
         {
           ...options,
           maxBuffer: 1000 * 1024 * 1024,
-          env: getProcessEnv(options == null ? null : options.env), // codeql[js/shell-command-injection-from-environment] - env filtered via getProcessEnv/stripSensitiveEnvVars; execFile array args (no shell)
+          env: getProcessEnv(options == null ? null : options.env),
         },
         (error, stdout, stderr) => {
           if (error == null) {

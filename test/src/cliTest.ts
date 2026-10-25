@@ -320,6 +320,7 @@ describe("CLI entry points (ESM)", () => {
     expect(out).toContain("build")
     expect(out).toContain("install-app-deps")
     expect(out).toContain("publish")
+    expect(out).toContain("verify")
   })
 
   test("install-app-deps.js exits 0 without ERR_MODULE_NOT_FOUND", () => {

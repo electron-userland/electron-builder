@@ -230,6 +230,16 @@ describe("default locations", () => {
     }
   })
 
+  test("of pkgutil is /usr/sbin/pkgutil, and stapler and notarytool have none (they are found with /usr/bin/xcrun)", ({ expect }) => {
+    expect(defaultExecutableLocations("pkgutil", "darwin")).toEqual(["/usr/sbin/pkgutil"])
+    expect(defaultExecutableLocations("pkgutil", "linux")).toEqual([])
+    for (const name of ["stapler", "notarytool"] as const) {
+      for (const platform of ["darwin", "linux", "win32"] as const) {
+        expect(defaultExecutableLocations(name, platform)).toEqual([])
+      }
+    }
+  })
+
   test("of the Linux tools, snapcraft, Mono, Wine, pwsh and prlctl, in PATH order", ({ expect }) => {
     expect(defaultExecutableLocations("lzip", "linux")).toEqual(["/usr/bin/lzip", "/usr/local/bin/lzip"])
     // macOS uses the linuxToolsMac toolset
@@ -320,6 +330,43 @@ describe.skipIf(process.platform === "win32")("Executables.notarytool", { concur
     xcrun(`${notarytool}\n`)
     expect(await Executables.run(undefined, () => Executables.notarytool())).toBe(notarytool)
     expect(startedFiles()).toEqual([["/usr/bin/xcrun", ["--find", "notarytool"]]])
+  })
+})
+
+describe.skipIf(process.platform === "win32")("Executables.stapler", { concurrent: false }, () => {
+  test("uses toolsets.executables.stapler without running xcrun", async ({ expect, tmpDir }) => {
+    const stapler = await makeFile(await tmpDir.getTempDir({ prefix: "executables-stapler" }), "stapler", 0o755)
+    expect(await Executables.run({ stapler: uri(stapler) }, () => Executables.stapler())).toBe(stapler)
+    expect(execFile).not.toHaveBeenCalled()
+  })
+
+  test("otherwise is the stapler that /usr/bin/xcrun finds, looked up once per run scope", async ({ expect, tmpDir }) => {
+    const stapler = await makeFile(await tmpDir.getTempDir({ prefix: "executables-xcrun" }), "Xcode.app/usr/bin/stapler", 0o755)
+    xcrun(`${stapler}\n`)
+    expect(await Executables.run(null, async () => [await Executables.stapler(), await Executables.stapler()])).toEqual([stapler, stapler])
+    expect(startedFiles()).toEqual([["/usr/bin/xcrun", ["--find", "stapler"]]])
+  })
+
+  test("is a configuration error when /usr/bin/xcrun cannot find it, and is looked up again after that", async ({ expect, tmpDir }) => {
+    const stapler = await makeFile(await tmpDir.getTempDir({ prefix: "executables-xcrun" }), "Xcode.app/usr/bin/stapler", 0o755)
+    await Executables.run(null, async () => {
+      xcrun(new Error('xcrun: error: unable to find utility "stapler"'))
+      const error = await Executables.stapler().catch((e: unknown) => e)
+      expect(error).toBeInstanceOf(InvalidConfigurationError)
+      expect((error as Error).message).toContain("/usr/bin/xcrun --find stapler failed")
+      expect((error as Error).message).toContain(`"toolsets": { "executables": { "stapler": "file:///path/to/stapler" } }`)
+      xcrun(`${stapler}\n`)
+      expect(await Executables.stapler()).toBe(stapler)
+    })
+  })
+
+  test("is cached separately from notarytool", async ({ expect, tmpDir }) => {
+    const dir = await tmpDir.getTempDir({ prefix: "executables-xcrun" })
+    const stapler = await makeFile(dir, "Xcode.app/usr/bin/stapler", 0o755)
+    const notarytool = await makeFile(dir, "Xcode.app/usr/bin/notarytool", 0o755)
+    xcrun(`${notarytool}\n`)
+    xcrun(`${stapler}\n`)
+    expect(await Executables.run(null, async () => [await Executables.notarytool(), await Executables.stapler()])).toEqual([notarytool, stapler])
   })
 })
 
