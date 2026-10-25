@@ -331,7 +331,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   /**
    * Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,
    * notarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for
-   * what is enforced. Not read from `mas` / `masDev`: the `mac` (or root) value applies to Mac App Store builds.
+   * what is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.
    * @default false
    */
   readonly forceCodeSigning?: boolean

@@ -1,5 +1,5 @@
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
-import { getRceditBundle, waitForPackWork, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
+import { forceCodeSigningError, forceCodeSigningOverrideHint, getRceditBundle, waitForPackWork, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
 import { InvalidConfigurationError, isEmptyOrSpaces, log, escapeForXml, prepareFixedNameWrite } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import * as fs from "fs"
@@ -19,6 +19,23 @@ export default class SquirrelWindowsTarget extends Target {
   ) {
     super("squirrel")
     this.options = packager.getOptionsForTarget<SquirrelWindowsOptions>("squirrelWindows")
+  }
+
+  /**
+   * Squirrel.Windows builds the MSI (`msi: true`) inside `--releasify`, around the Setup.exe it has just written, before electron-builder
+   * signs that Setup.exe: the installer the MSI carries is unsigned. That warns, and fails under forceCodeSigning.
+   */
+  checkMsiSigning(): void {
+    if (this.options.msi !== true) {
+      return
+    }
+    const problem =
+      "squirrelWindows.msi is true, and the MSI that Squirrel.Windows builds embeds Setup.exe before electron-builder signs it, so the installer inside the MSI is unsigned"
+    const remedy = "For a signed MSI, remove msi: true and add the msi target (win.target: msi), which electron-builder builds from the signed app."
+    if (this.packager.forceCodeSigning) {
+      throw forceCodeSigningError(`forceCodeSigning is enabled, but ${problem}. ${remedy} Or pass ${forceCodeSigningOverrideHint(this.packager)} to build it as it is.`)
+    }
+    log.once("squirrel-msi-unsigned-setup", this.packager).warn({ reason: problem }, `the Squirrel.Windows MSI embeds an unsigned Setup.exe. ${remedy}`)
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {
@@ -150,6 +167,7 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   async build(appOutDir: string, arch: Arch) {
+    this.checkMsiSigning()
     const packager = this.packager
     const version = packager.appInfo.version
     const sanitizedName = sanitizeFileName(this.appName)

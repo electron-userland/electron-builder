@@ -2942,7 +2942,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Not read from `mas` / `masDev`: the `mac` (or root) value applies to Mac App Store builds.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -3541,7 +3541,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Not read from `mas` / `masDev`: the `mac` (or root) value applies to Mac App Store builds.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -3613,7 +3613,7 @@
           ]
         },
         "notarize": {
-          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "description": "Whether to notarize the app with [@electron/notarize](https://github.com/electron/notarize).\n\n- unset (the default): notarize when notarization credentials are set, otherwise skip it with a warning.\n- `true`: notarization is required: the build fails when no credentials are set, wherever notarization would run (a macOS host,\n  outside a pull-request build, with signing not turned off), at build start and when notarizing.\n- `false`: never notarize (for an ad-hoc or development-signed app, or one notarized in an `afterSign` hook).\n\nThe credentials are one of the following sets of environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
           "type": "boolean"
         },
         "protocols": {
@@ -3971,7 +3971,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Not read from `mas` / `masDev`: the `mac` (or root) value applies to Mac App Store builds.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -4043,7 +4043,7 @@
           ]
         },
         "notarize": {
-          "description": "Whether to disable electron-builder's [@electron/notarize](https://github.com/electron/notarize) integration.\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
+          "description": "Whether to notarize the app with [@electron/notarize](https://github.com/electron/notarize).\n\n- unset (the default): notarize when notarization credentials are set, otherwise skip it with a warning.\n- `true`: notarization is required: the build fails when no credentials are set, wherever notarization would run (a macOS host,\n  outside a pull-request build, with signing not turned off), at build start and when notarizing.\n- `false`: never notarize (for an ad-hoc or development-signed app, or one notarized in an `afterSign` hook).\n\nThe credentials are one of the following sets of environment variables:\n\n1. `APPLE_API_KEY` (path to the `.p8` file, or its contents base64-encoded), `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)",
           "type": "boolean"
         },
         "protocols": {
@@ -8786,7 +8786,7 @@
           ]
         },
         "msi": {
-          "description": "Whether to create an MSI installer. Defaults to `false` (MSI is not created).",
+          "description": "Whether to create an MSI installer. Defaults to `false` (MSI is not created).\n\nSquirrel.Windows builds the MSI around Setup.exe before electron-builder signs Setup.exe, so the installer inside the MSI is\nunsigned: the build warns, and fails with `forceCodeSigning`. For a signed MSI use the `msi` target instead.",
           "type": "boolean"
         },
         "name": {
@@ -9343,7 +9343,7 @@
         },
         "forceCodeSigning": {
           "default": false,
-          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Not read from `mas` / `masDev`: the `mac` (or root) value applies to Mac App Store builds.",
+          "description": "Overrides the root `forceCodeSigning` for this platform: whether to fail the build if the app could not be code-signed,\nnotarized, or have its auto-update manifests signed, and to verify the signatures it produces. See the root option for\nwhat is enforced. Mac App Store builds cascade `mac` → `mas` (→ `masDev` for `mas-dev`), like every other option, so `mas.forceCodeSigning` / `masDev.forceCodeSigning` apply to their targets only.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {

@@ -13,7 +13,7 @@ import {
 } from "../codeSign/win/authenticodeSignature.js"
 import type { Configuration } from "../configuration.js"
 import { shouldSignWindowsFile } from "../options/winOptions.js"
-import { verifyUpdateManifestContent } from "../publish/updateManifestVerifier.js"
+import { updateManifestPlatform, verifyUpdateManifestContent } from "../publish/updateManifestVerifier.js"
 import { hashFile } from "./hash.js"
 
 /**
@@ -262,9 +262,7 @@ async function readManifest(file: string): Promise<Manifest | null> {
   if (info == null || typeof info !== "object" || typeof info.version !== "string" || !Array.isArray(info.files)) {
     return null
   }
-  const name = path.basename(file)
-  const platform: PlatformKey = /-mac\.ya?ml$/.test(name) ? "mac" : /-linux(-[^.]+)?\.ya?ml$/.test(name) ? "linux" : "win"
-  return { file, platform, content, info }
+  return { file, platform: updateManifestPlatform(file), content, info }
 }
 
 /** A platform-level value wins over the root one, as in the build (`PlatformPackager.updateManifestOptions`). */
