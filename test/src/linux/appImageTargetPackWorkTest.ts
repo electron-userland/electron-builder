@@ -20,7 +20,7 @@ import * as path from "path"
 
 describe("AppImageTarget.build", () => {
   // for a prepackaged app the AppImage writes the only app-update.yml, into the app dir that the tar.*/zip/7z of the pack is still archiving
-  function createBuild(root: string) {
+  function createBuild(root: string, prepackaged: string | null) {
     const events: Array<string> = []
     let finishZip: () => void = () => {}
     const zipDone = new Promise<void>(resolve => (finishZip = resolve))
@@ -28,6 +28,7 @@ describe("AppImageTarget.build", () => {
       config: {},
       platform: Platform.LINUX,
       platformOptions: {},
+      packagerOptions: { prepackaged },
       pendingPackWork: new Map(),
       expandArtifactNamePattern: () => "artifact",
       getResourcesDir: (appOutDir: string) => path.join(appOutDir, "resources"),
@@ -74,7 +75,7 @@ describe("AppImageTarget.build", () => {
   test("waits for the archive of the same pack before writing app-update.yml, even once finishBuild() drained it", async ({ tmpDir }) => {
     const root = await tmpDir.createTempDir()
     const appOutDir = await createAppOutDir(root, "prepackaged")
-    const { events, finishZip, zip, buildAppImage } = createBuild(root)
+    const { events, finishZip, zip, buildAppImage } = createBuild(root, appOutDir)
     await zip.build(appOutDir, Arch.x64)
     // packager.ts calls finishBuild() of the async targets right after pack(), before the AppImage reaches its wait
     const zipFinished = expect(zip.finishBuild()).rejects.toThrow("archive stub")
@@ -89,12 +90,13 @@ describe("AppImageTarget.build", () => {
     await zipFinished
   })
 
-  test("does not wait for the archive of another arch", async ({ tmpDir }) => {
+  test("neither waits nor rewrites app-update.yml when not prepackaged (afterPack wrote it)", async ({ tmpDir }) => {
     const root = await tmpDir.createTempDir()
-    const { events, zip, buildAppImage } = createBuild(root)
-    // the x64 archive never finishes
-    await zip.build(await createAppOutDir(root, "linux-unpacked"), Arch.x64)
-    await buildAppImage(await createAppOutDir(root, "linux-ia32-unpacked"), Arch.ia32)
-    expect(events).toEqual(["appImage wrote app-update.yml: true"])
+    const appOutDir = await createAppOutDir(root, "linux-unpacked")
+    const { events, zip, buildAppImage } = createBuild(root, null)
+    // the archive of the same pack never finishes
+    await zip.build(appOutDir, Arch.x64)
+    await buildAppImage(appOutDir, Arch.x64)
+    expect(events).toEqual(["appImage wrote app-update.yml: false"])
   }, 5000)
 })

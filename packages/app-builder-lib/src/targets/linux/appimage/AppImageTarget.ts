@@ -67,9 +67,11 @@ export default class AppImageTarget extends Target {
       arch,
     })
 
+    // afterPack already wrote the same app-update.yml into the app dir, except for a prepackaged app (doPack returns before it)
+    const isPrepackaged = packager.packagerOptions.prepackaged != null
     // Parallelize independent async operations
     const [publishConfig, stageDir, desktopEntry, icons, license] = await Promise.all([
-      getPackAppUpdatePublishConfiguration(packager, packager.getPackTargets(appOutDir, arch) ?? [this], arch, false),
+      isPrepackaged ? getPackAppUpdatePublishConfiguration(packager, packager.getPackTargets(appOutDir, arch) ?? [this], arch, false) : null,
       createStageDir(this, packager, arch),
       this.desktopEntry.value,
       this.helper.icons,
@@ -77,8 +79,7 @@ export default class AppImageTarget extends Target {
     ])
 
     if (publishConfig != null) {
-      // the only app-update.yml of a prepackaged app (afterPack, which writes it otherwise, does not run for one), written
-      // into the app dir that the zip/7z/tar.* of this pack may still be archiving
+      // its only app-update.yml, written into the app dir that the zip/7z/tar.* of this pack may still be archiving
       await waitForPackWork(packager, appOutDir, arch)
       await writeAppUpdateYaml(packager.getResourcesDir(appOutDir), publishConfig, appOutDir)
     }

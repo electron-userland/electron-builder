@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-fix(linux): AppImage waits for the tar.*/zip/7z archive of the same app directory and arch before writing `app-update.yml` into it, so those archives never pick up the file halfway (for a prepackaged app, this is its only `app-update.yml`)
+fix(linux): AppImage only writes `app-update.yml` itself for a prepackaged app (afterPack already wrote the same file otherwise), and then first waits for the tar.*/zip/7z archive of that app directory, so those archives never pick up the file halfway
