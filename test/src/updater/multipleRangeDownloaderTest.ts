@@ -1,3 +1,4 @@
+import { CancellationToken } from "builder-util-runtime"
 import { executeTasksUsingMultipleRangeRequests } from "electron-updater/src/differentialDownloader/multipleRangeDownloader"
 import { DataSplitter } from "electron-updater/src/differentialDownloader/DataSplitter"
 import { OperationKind } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
@@ -7,15 +8,17 @@ import type { DifferentialDownloader } from "electron-updater/src/differentialDo
 import type { Operation } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
 
 function createFakeDifferentialDownloader(response: PassThrough): DifferentialDownloader {
+  const createRequest = (_options: unknown, callback: (response: unknown) => void) => ({
+    end: () => callback(response),
+    abort: () => {},
+  })
   return {
-    options: {},
+    options: { cancellationToken: new CancellationToken() },
     logger: null,
     createRequestOptions: () => ({ headers: {} }),
+    createRangeRequest: createRequest,
     httpExecutor: {
-      createRequest: (_options: unknown, callback: (response: unknown) => void) => ({
-        end: () => callback(response),
-        abort: () => {},
-      }),
+      createRequest,
       addErrorAndTimeoutHandlers: () => {},
       addRedirectHandlers: () => {},
     },

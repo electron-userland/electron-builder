@@ -11,6 +11,7 @@ import { DOWNLOAD_PROGRESS, DownloadExecutorResult, verificationFailureMessage }
 import type { VerifyUpdateCodeSignature, VerifyUpdateFileAuthenticodeSignature, VerifyUpdateFileResult } from "./types.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import fsExtra from "fs-extra"
+import { throwIfCancelled } from "./util.js"
 import {
   isUpdateCodeSignatureVerificationDisabled,
   missingPublisherNameMessage,
@@ -408,11 +409,13 @@ export class NsisUpdater extends BaseUpdater {
       }
 
       if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-        downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+        downloadOptions.onProgress = it => this.emitDownloadProgress(it)
       }
 
       await new FileWithEmbeddedBlockMapDifferentialDownloader(packageInfo, this.httpExecutor, downloadOptions).download()
     } catch (e: any) {
+      // a user cancellation is not a differential failure: no fallback to a full download
+      throwIfCancelled(e, downloadUpdateOptions.cancellationToken)
       this.logDifferentialDownloadFallback(e)
       // during test (developer machine mac or linux) we must throw error
       return process.platform === "win32"

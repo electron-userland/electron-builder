@@ -9,6 +9,7 @@ import { DifferentialDownloaderOptions } from "./differentialDownloader/Differen
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader.js"
 import { findFile, Provider } from "./providers/Provider.js"
 import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo, DownloadExecutorResult } from "./types.js"
+import { throwIfCancelled } from "./util.js"
 
 export class AppImageUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
@@ -69,12 +70,14 @@ export class AppImageUpdater extends BaseUpdater {
       }
 
       if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-        downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+        downloadOptions.onProgress = it => this.emitDownloadProgress(it)
       }
 
       await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download()
       return false
     } catch (e: any) {
+      // a user cancellation is not a differential failure: no fallback to a full download
+      throwIfCancelled(e, downloadUpdateOptions.cancellationToken)
       this.logDifferentialDownloadFallback(e)
       // during test (developer machine mac) we must throw error
       return process.platform === "linux"
