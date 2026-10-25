@@ -180,16 +180,18 @@ export function requestRange(
         reject(new Error(`Too many redirects (> ${MAX_REDIRECTS})`))
         return
       }
-      let redirectOptions: RequestOptions
       try {
-        redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions)
+        const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions)
+        // Electron's net.request throws for another protocol, where Electron following the redirect itself fails the request
+        if (redirectOptions.protocol !== "http:" && redirectOptions.protocol !== "https:") {
+          throw new Error(`Cannot follow the redirect to the "${redirectOptions.protocol ?? ""}" protocol`)
+        }
+        logRedirect(differentialDownloader, redirectOptions)
+        target.options = redirectOptions
+        send(redirectOptions, redirectCount + 1)
       } catch (e: unknown) {
         reject(e instanceof Error ? e : new Error(`Cannot follow the redirect: ${String(e)}`))
-        return
       }
-      logRedirect(differentialDownloader, redirectOptions)
-      target.options = redirectOptions
-      send(redirectOptions, redirectCount + 1)
     })
     httpExecutor.addErrorAndTimeoutHandlers(request, reject)
     request.end()

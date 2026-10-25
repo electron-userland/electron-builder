@@ -17,6 +17,7 @@ import { afterEach, describe, expect, test } from "vitest"
 const FILE_URL = "https://feed.example.com/updates/app-1.1.0.exe"
 const PRE_SIGNED_URL = "https://bucket.example.net/app-1.1.0.exe?X-Amz-Signature=abc"
 const SAME_ORIGIN_URL = "https://feed.example.com/files/app-1.1.0.exe"
+const FTP_URL = "ftp://files.example.net/app-1.1.0.exe"
 
 // three blocks; the middle one is unchanged, so the plan is: download bytes 0-15, copy 16-31 from the old file, download bytes 32-47
 const BLOCK = 16
@@ -124,6 +125,8 @@ class FakeNetRequest extends EventEmitter {
 
 class FakeElectronHttpExecutor extends ElectronHttpExecutor {
   readonly requests: Array<SentRequest> = []
+  // createRequest throws for these URLs, as net.request does for options it cannot make a request of
+  readonly unrequestableUrls = new Set<string>()
 
   constructor(readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer) {
     super()
@@ -139,8 +142,16 @@ class FakeElectronHttpExecutor extends ElectronHttpExecutor {
     // like net.request: `host` wins over `hostname` and `port`
     const host = options.host ?? `${options.hostname}${options.port == null ? "" : `:${options.port}`}`
     const redirect = "redirect" in options && typeof options.redirect === "string" ? options.redirect : "follow"
+    const url = `${options.protocol}//${host}${options.path}`
+    // like net.request, which throws (rather than failing the request) for a protocol other than http: and https:
+    if (options.protocol !== "http:" && options.protocol !== "https:") {
+      throw new Error(`Protocol "${options.protocol}" not supported`)
+    }
+    if (this.unrequestableUrls.has(url)) {
+      throw new Error(`Cannot create a request for ${url}`)
+    }
     // like net.request, the headers are copied when the request is created
-    const request = new FakeNetRequest(this, `${options.protocol}//${host}${options.path}`, { ...options.headers }, redirect)
+    const request = new FakeNetRequest(this, url, { ...options.headers }, redirect)
     request.on("response", callback)
     return request
   }
@@ -406,6 +417,29 @@ describe("differential download redirects", () => {
     )
 
     test(
+      `a redirect to a protocol other than http(s) fails a ${label}-range download`,
+      async () => {
+        const c: DownloadCase = { redirects: { [FILE_URL]: FTP_URL }, isUseMultipleRangeRequest }
+        const executor = createExecutor(c, NEW)
+        await expect(download(c, executor)).rejects.toThrow('Cannot follow the redirect to the "ftp:" protocol')
+        expect(executor.requests).toHaveLength(1)
+      },
+      GUARD_TIMEOUT
+    )
+
+    test(
+      `a redirect target that no request can be created for fails a ${label}-range download`,
+      async () => {
+        const c: DownloadCase = { redirects: { [FILE_URL]: PRE_SIGNED_URL }, isUseMultipleRangeRequest }
+        const executor = createExecutor(c, NEW)
+        executor.unrequestableUrls.add(PRE_SIGNED_URL)
+        await expect(download(c, executor)).rejects.toThrow(`Cannot create a request for ${PRE_SIGNED_URL}`)
+        expect(executor.requests).toHaveLength(1)
+      },
+      GUARD_TIMEOUT
+    )
+
+    test(
       `a logger that throws on the redirect does not fail a ${label}-range download`,
       async () => {
         const { requests, downloaded } = await download({
@@ -468,4 +502,10 @@ describe("differential download redirects when reading remote bytes", () => {
     await expect(createReader(executor).read(32, 47)).rejects.toThrow("Too many redirects (> 10)")
     expect(executor.requests).toHaveLength(11)
   })
+
+  test("a redirect to a protocol other than http(s) fails", async () => {
+    const executor = createExecutor({ redirects: { [FILE_URL]: FTP_URL } }, NEW)
+    await expect(createReader(executor).read(32, 47)).rejects.toThrow('Cannot follow the redirect to the "ftp:" protocol')
+    expect(executor.requests).toHaveLength(1)
+  }, 10_000)
 })
