@@ -126,6 +126,8 @@ electron-builder verify
 electron-builder publish -f dist/*.dmg dist/*.zip dist/*.blockmap dist/latest-mac.yml
 ```
 
+`electron-builder publish -f` checks an update manifest before it uploads anything: it must be signed, and, when `updateManifest.publicKey` is set, signed by one of those keys. See [Signed update manifests are required](./migration/v27-build-changes.md#signed-update-manifests-are-required).
+
 Prepend `npx` to sample commands below if you run them from Terminal and not from `package.json` scripts.
 
 :::note[build for macOS, Windows and Linux]

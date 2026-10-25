@@ -13,6 +13,8 @@ The Squirrel vendor binaries (`Squirrel.exe`, `SyncReleases.exe`, `nuget.exe`, â
 
 Your app must be able to handle Squirrel.Windows startup events that occur during install and uninstall. See [electron-squirrel-startup](https://github.com/mongodb-js/electron-squirrel-startup).
 
+`msi: true` makes Squirrel.Windows build an MSI as well. Squirrel.Windows builds it around `Setup.exe` before electron-builder signs `Setup.exe`, so the installer inside that MSI is unsigned: the build warns, and fails with [`forceCodeSigning`](./features/code-signing/code-signing.md#the-forcecodesigning-option). For a signed MSI, use the [`msi`](./msi.md) target instead.
+
 ## Configuration
 
   {!./app-builder-lib.Interface.SquirrelWindowsOptions.md!}

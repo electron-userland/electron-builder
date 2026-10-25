@@ -117,6 +117,8 @@ describe("the pkg installer under forceCodeSigning", () => {
   function makePkgTarget(outDir: string, forceCodeSigning: boolean): any {
     const packager: any = {
       forceCodeSigning,
+      // the pkg installer is the macOS app's
+      forceCodeSigningFor: (platformType: string) => platformType === "mac" && forceCodeSigning,
       appInfo: { id: "com.example.my" },
       // notarization has its own tests
       platformOptions: { notarize: false },

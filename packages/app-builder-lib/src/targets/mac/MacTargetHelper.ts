@@ -6,12 +6,13 @@ import { createPrivateKey } from "crypto"
 import { open, rm, writeFile, type FileHandle } from "fs/promises"
 import * as path from "path"
 import { forceCodeSigningError, VERIFICATION_FAILED_ERROR_CODE } from "../../codeSign/forceCodeSigning.js"
-import { CertType, findIdentity, Identity, reportError } from "../../codeSign/mac/macCodeSign.js"
+import { CertType, findIdentity, Identity, isSignAllowed, reportError } from "../../codeSign/mac/macCodeSign.js"
 import { checkInstallerPackageSignature, validateStapledTicket } from "../../codeSign/mac/macSignatureVerifier.js"
 import { SigningResult } from "../../codeSign/signResult.js"
 import type { MacPackager } from "../../macPackager.js"
 import { ElectronSignOptions, MasConfiguration } from "../../options/macOptions.js"
 import { parsePlistFile, savePlistFile, PlistObject, PlistValue } from "../../util/mac/plist.js"
+import { BUILD_CHANGES_URL } from "../../util/config/legacyOptions.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import asyncPool from "tiny-async-pool"
 
@@ -35,8 +36,8 @@ export class MacTargetHelper {
     return identity?.name === "-"
   }
 
-  handleNullIdentity(): SigningResult {
-    if (this.packager.forceCodeSigning) {
+  handleNullIdentity(targetPlatform: PlatformType): SigningResult {
+    if (this.packager.forceCodeSigningFor(targetPlatform)) {
       throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
     }
     // The meaning of `mac.sign: null` flipped in v27. In v26 `sign` was only a custom-signer hook, so
@@ -86,7 +87,7 @@ export class MacTargetHelper {
         }
         identity = new Identity("-", undefined)
       } else if (noIdentity) {
-        await reportError(isMas, certificateTypes, qualifier, keychainFile, this.packager.forceCodeSigning)
+        await reportError(isMas, certificateTypes, qualifier, keychainFile, this.packager.forceCodeSigningFor(targetPlatform))
         return null
       }
     }
@@ -291,7 +292,7 @@ export class MacTargetHelper {
 
   async buildSignOptions(
     appPath: string,
-    // null only for a custom signer without a keychain identity, which forceCodeSigning calls anyway (see MacPackager.sign)
+    // null only for a custom signer without a keychain identity, which is called without one (see MacPackager.sign)
     identity: Identity | null,
     config: ElectronSignOptions | null | undefined,
     keychainFile: string | Nullish,
@@ -510,7 +511,7 @@ export class MacTargetHelper {
     MacTargetHelper.assertSafePathForCommandUsage(artifactName, "artifact name")
     const artifactPath = path.resolve(outDir, artifactName)
     await this.packager.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
-    await this.verifyInstallerPackage(artifactPath)
+    await this.verifyInstallerPackage(artifactPath, targetPlatform)
     await this.packager.emitArtifactBuildCompleted({
       file: artifactPath,
       target: null,
@@ -664,9 +665,28 @@ export class MacTargetHelper {
     )
   }
 
+  /**
+   * Whether `mac.notarize: true` requires notarization here: where the app can be signed, on a macOS host outside a pull-request
+   * build (isSignAllowed). Elsewhere a missing credential set only warns, as when `notarize` is unset. The build-start check and
+   * every notarization use this rule.
+   */
+  static isNotarizationRequired(notarize: boolean | Nullish): boolean {
+    return notarize === true && isSignAllowed(false)
+  }
+
+  /** The error for `mac.notarize: true`, which requires notarization, when no notarization credentials are set. */
+  static notarizeTrueWithoutCredentialsError(): InvalidConfigurationError {
+    return new InvalidConfigurationError(
+      "mac.notarize is true, which requires notarization, but no notarization credentials are set. " +
+        "Set APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER (recommended for CI), or APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD and APPLE_TEAM_ID, or APPLE_KEYCHAIN_PROFILE (with APPLE_KEYCHAIN); " +
+        "they must be set when the build starts. Leave mac.notarize unset to notarize only when credentials are set (and skip it with a warning otherwise), or set it to false to never notarize. " +
+        `See ${BUILD_CHANGES_URL}#mac-notarize-true-requires-credentials`
+    )
+  }
+
   /** Under forceCodeSigning, checks the signature of an installer package electron-builder signed (`pkgutil --check-signature`). */
-  async verifyInstallerPackage(pkg: string): Promise<void> {
-    if (!this.packager.forceCodeSigning) {
+  async verifyInstallerPackage(pkg: string, targetPlatform: PlatformType = "mac"): Promise<void> {
+    if (!this.packager.forceCodeSigningFor(targetPlatform)) {
       return
     }
     const problem = await checkInstallerPackageSignature(pkg)
@@ -691,6 +711,9 @@ export class MacTargetHelper {
     }
     const options = MacTargetHelper.getNotarizeOptions(appPath)
     if (!options) {
+      if (MacTargetHelper.isNotarizationRequired(notarizeOptions)) {
+        throw MacTargetHelper.notarizeTrueWithoutCredentialsError()
+      }
       if (forceCodeSigning) {
         throw MacTargetHelper.missingNotarizationCredentialsError()
       }

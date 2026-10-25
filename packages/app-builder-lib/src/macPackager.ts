@@ -12,6 +12,7 @@ import {
   exists,
   getArchSuffix,
   InvalidConfigurationError,
+  isEmptyOrSpaces,
   log,
   orIfFileNotExist,
   sanitizeDirPath,
@@ -28,6 +29,7 @@ import { AppInfo } from "./appInfo.js"
 import { embedAsarIntegrityDigest, FIRST_ELECTRON_MAJOR_WITH_ASAR_INTEGRITY_DIGEST } from "./electron/mac/asarIntegrityDigest.js"
 import { assertSafeHelperName } from "./electron/mac/electronMacUtils.js"
 import { forceCodeSigningError, forceCodeSigningOverrideHint, VERIFICATION_FAILED_ERROR_CODE } from "./codeSign/forceCodeSigning.js"
+import { isAutoDiscoveryCodeSignIdentity } from "./util/flags.js"
 import { CodeSigningInfo, createKeychain, CreateKeychainOptions, Identity, isSignAllowed, macSigningUnavailableError, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
 import { validateStapledTicket, verifyMacCodeSignature } from "./codeSign/mac/macSignatureVerifier.js"
 import { combineSignResults, isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
@@ -119,23 +121,99 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
   /**
    * Fails a forceCodeSigning build at build start, before anything is packed, when the macOS app could not be signed or
    * notarized: on a host other than macOS, in a pull-request build without CSC_FOR_PULL_REQUEST, or without notarization
-   * credentials. sign() and notarizeIfProvided keep their own checks for callers that never emit `targetsCreated`.
+   * credentials; and a build with `mac.notarize: true` without notarization credentials, where notarization can happen.
+   * sign() and notarizeIfProvided keep their own checks for callers that never emit `targetsCreated`.
    */
   private checkForceCodeSigningAtBuildStart(plans: ReadonlyArray<PlannedTargets>): void {
     const ownPlans = plans.filter(it => it.packager === this)
-    if (ownPlans.length === 0 || !this.forceCodeSigning) {
-      return
+    // each flavor that is built, with its own forceCodeSigning: the macOS app (and its pkg), and every MAS target
+    const flavors = new Set<PlatformType>()
+    for (const { targets } of ownPlans) {
+      if (MacPackager.packsNonMasApp(targets) || targets.some(it => it.name === "pkg")) {
+        flavors.add("mac")
+      }
+      for (const target of targets) {
+        if (MacTargetHelper.isMasTarget(target.name)) {
+          flavors.add(MacTargetHelper.getPlatformTypeFromTarget(target.name))
+        }
+      }
     }
-    const unavailable = macSigningUnavailableError("the macOS app", forceCodeSigningOverrideHint(this))
-    if (unavailable != null) {
-      throw unavailable
+    for (const flavor of flavors) {
+      if (!this.forceCodeSigningFor(flavor)) {
+        continue
+      }
+      const unavailable = macSigningUnavailableError(flavor === "mac" ? "the macOS app" : `the ${flavor} app`, this.forceCodeSigningOverrideHintFor(flavor))
+      if (unavailable != null) {
+        throw unavailable
+      }
+    }
+    if (!flavors.has("mac")) {
+      return
     }
     // the non-MAS app is notarized when it is packed (never for a prepackaged one), and the pkg installer always
     const prepackaged = this.packagerOptions.prepackaged != null
-    const notarizes = ownPlans.some(({ targets }) => (!prepackaged && MacPackager.packsNonMasApp(targets)) || targets.some(it => it.name === "pkg"))
-    if (notarizes && this.platformSpecificBuildOptions.notarize !== false && MacTargetHelper.getNotarizeOptions("") == null) {
-      throw MacTargetHelper.missingNotarizationCredentialsError()
+    const packsApp = ownPlans.some(({ targets }) => !prepackaged && MacPackager.packsNonMasApp(targets))
+    const packsPkg = ownPlans.some(({ targets }) => targets.some(it => it.name === "pkg"))
+    const notarize = this.platformSpecificBuildOptions.notarize
+    if ((!packsApp && !packsPkg) || notarize === false) {
+      return
     }
+    // the credentials are read (getNotarizeOptions also rejects an incomplete set) only where they are required
+    if (this.forceCodeSigning) {
+      if (MacTargetHelper.getNotarizeOptions("") == null) {
+        throw MacTargetHelper.missingNotarizationCredentialsError()
+      }
+      return
+    }
+    // notarize: true requires notarization where it runs: the app only when sign() signs it, the pkg installer whenever it is built
+    if (!MacTargetHelper.isNotarizationRequired(notarize) || (!packsPkg && this.isMacSigningSkippedByConfiguration())) {
+      return
+    }
+    if (MacTargetHelper.getNotarizeOptions("") == null) {
+      throw MacTargetHelper.notarizeTrueWithoutCredentialsError()
+    }
+  }
+
+  /**
+   * `forceCodeSigning` of a flavor: `mas` and `mas-dev` cascade `mac` → `mas` → `masDev` like every other option (see
+   * getPlatformConfig), then the root value. For `mac` it is {@link forceCodeSigning}.
+   */
+  forceCodeSigningFor(platformType: PlatformType): boolean {
+    if (platformType === "mac") {
+      return this.forceCodeSigning
+    }
+    return this.getPlatformConfig(platformType).config.forceCodeSigning ?? this.config.forceCodeSigning ?? false
+  }
+
+  /** The `-c` override that turns `forceCodeSigning` off for a flavor: on the most specific block that sets it. */
+  forceCodeSigningOverrideHintFor(platformType: PlatformType): string {
+    if (platformType === "mas-dev" && this.config.masDev?.forceCodeSigning != null) {
+      return "-c.masDev.forceCodeSigning=false"
+    }
+    if (platformType !== "mac" && this.config.mas?.forceCodeSigning != null) {
+      return "-c.mas.forceCodeSigning=false"
+    }
+    return forceCodeSigningOverrideHint(this)
+  }
+
+  /**
+   * Whether sign() skips the macOS app because of the configuration, before it would notarize it: `sign: null`, `sign.identity: null`,
+   * or `CSC_IDENTITY_AUTO_DISCOVERY=false` without an identity (`sign.identity` or `CSC_NAME`) or a custom signer.
+   */
+  private isMacSigningSkippedByConfiguration(): boolean {
+    const signConfig = this.platformSpecificBuildOptions.sign
+    if (signConfig === null) {
+      return true
+    }
+    const signOpts = isElectronSignOptions(signConfig) ? signConfig : undefined
+    if (signConfig != null && signOpts == null) {
+      // a custom signer is called without an identity too
+      return false
+    }
+    if (signOpts?.identity === null) {
+      return true
+    }
+    return isEmptyOrSpaces(signOpts?.identity ?? process.env.CSC_NAME) && !isAutoDiscoveryCodeSignIdentity()
   }
 
   /** Whether `pack` builds the non-MAS app: unless every target is a MAS one. No target at all is a dir build. */
@@ -594,9 +672,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
    * (`isSignAllowed()` short-circuits it on non-mac hosts). Failures are thrown, never returned.
    */
   protected async sign(appPath: string, arch: Arch, targetPlatform: PlatformType): Promise<SigningResult> {
-    if (this.forceCodeSigning) {
+    const forceCodeSigning = this.forceCodeSigningFor(targetPlatform)
+    if (forceCodeSigning) {
       // checked before isSignAllowed, which would log that signing is skipped right before this fails the build
-      const unavailable = macSigningUnavailableError(`the ${targetPlatform} app ${log.filePath(appPath)}`, forceCodeSigningOverrideHint(this))
+      const unavailable = macSigningUnavailableError(`the ${targetPlatform} app ${log.filePath(appPath)}`, this.forceCodeSigningOverrideHintFor(targetPlatform))
       if (unavailable != null) {
         throw unavailable
       }
@@ -611,14 +690,14 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     // sign: null → user explicitly disabled signing
     if (config === null) {
-      return this.helper.handleNullIdentity()
+      return this.helper.handleNullIdentity(targetPlatform)
     }
 
     const signOpts = isElectronSignOptions(config) ? config : undefined
     // sign.identity: null → explicit skip; undefined → auto-discover
     const qualifier = signOpts?.identity
     if (qualifier === null) {
-      return this.helper.handleNullIdentity()
+      return this.helper.handleNullIdentity(targetPlatform)
     }
 
     const keychainFile = (await this.codeSigningInfo.value).keychainFile
@@ -628,10 +707,22 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
 
     const identity = await this.helper.findSigningIdentity(targetPlatform, qualifier, keychainFile, hasCustomSign, signOpts)
 
-    // A custom signer is not called without a keychain identity, which leaves the app unsigned without a word. Under
-    // forceCodeSigning it is called without one (a remote or HSM signer needs none), and its output is verified below.
-    if (!identity && !(hasCustomSign && this.forceCodeSigning)) {
-      return "skipped:no-certificate"
+    // A custom signer is called without a keychain identity too (a remote or HSM signer needs none); under forceCodeSigning
+    // its output is verified below. @electron/osx-sign needs one, and so does the installer of a MAS app (createMasInstaller), so
+    // a MAS app is only signed without one under forceCodeSigning, which fails on the missing installer identity instead.
+    if (!identity) {
+      if (!hasCustomSign) {
+        return "skipped:no-certificate"
+      }
+      // mas-dev builds no installer, so its custom signer is called without an identity too
+      if (!forceCodeSigning && MacTargetHelper.shouldCreateMasInstaller(targetPlatform, undefined)) {
+        log.warn(
+          { file: log.filePath(appPath), reason: "no keychain identity was found, and the MAS installer needs one" },
+          "the custom mac.sign signer is not called for the MAS app, which is left unsigned"
+        )
+        return "skipped:no-certificate"
+      }
+      log.info({ file: log.filePath(appPath), reason: "no keychain identity was found" }, "calling the custom mac.sign signer without an identity")
     }
 
     if (!isMacOsHighSierra()) {
@@ -642,7 +733,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     await this.doSign(signOptions, config, identity)
 
     // @electron/osx-sign verifies the signatures it makes; a custom signer replaces it, so its output is checked here
-    if (hasCustomSign && this.forceCodeSigning) {
+    if (hasCustomSign && forceCodeSigning) {
       const problem = await verifyMacCodeSignature(appPath, { deep: true })
       if (problem != null) {
         throw forceCodeSigningError(

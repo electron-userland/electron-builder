@@ -37,6 +37,7 @@ In v27 every `toolsets.*` property defaults to **`"latest"`**: an **unset** prop
 | [Windows `publisherName` must be a distinguished name](#windows-publishername-must-be-a-distinguished-name) | Fails build, advisory | Set every `win.sign.publisherName` entry to a distinguished name (e.g. `"CN=My Company, O=My Company, C=US"`) — a bare name now **fails the build**, and electron-updater 7 never matches it. Without `publisherName`, the build now writes `CN=<common name>` of the certificate (a DN) instead of the bare Common Name |
 | [A missing Windows `publisherName` fails update verification](#missing-publishername-fails-update-verification) | Fails build, advisory | A Windows build that writes `app-update.yml` without a `publisherName` (`win.sign: false` / `null`, no certificate, `publisherName: null`) now **fails the build**, and electron-updater 7 rejects updates whose `app-update.yml` has none. Sign the build, set `win.sign.publisherName`, or set `win.verifyUpdateCodeSignature: false` (the only opt-out) |
 | [`forceCodeSigning` covers notarization and update manifests](#forcecodesigning-covers-notarization-and-update-manifests) | Fails build (with `forceCodeSigning`) | Provide notarization credentials and the update-manifest signing key wherever `forceCodeSigning` is set, or opt out explicitly (`mac.notarize: false`, `updateManifest: false`); pass `-c.forceCodeSigning=false` to pull-request and local builds that cannot sign |
+| [`mac.notarize: true` requires notarization credentials](#mac-notarize-true-requires-credentials) | Fails build (with `notarize: true`) | Only if you set `mac.notarize: true`: set the notarization credentials, or leave `notarize` unset to notarize only when they are set |
 | [Signed update manifests are required](#signed-update-manifests-are-required) | Fails when publishing (or with `forceCodeSigning`) | Generate a key with `electron-builder create-update-key` and set `ELECTRON_BUILDER_UPDATE_SIGN_KEY` to the base64-encoded PEM file, or set `updateManifest: false` to keep publishing unsigned manifests |
 | [Signing key must be in `updateManifest.publicKey`](#signing-key-must-be-in-updatemanifestpublickey) | Fails when publishing | Only if you set `updateManifest.publicKey`: list a key the build signs with, or set `updateManifest.allowSigningKeyOutsideTrustList: true` for a deliberate cutover release |
 | [`app-update.yml` feed follows the update-writing targets](#app-updateyml-feed-follows-the-update-writing-targets) | Silent (conflicts fail) | Only with target-level `publish` (e.g. `nsis.publish`), targets of one app with different feeds, or a first provider with `publishAutoUpdate: false`: check which feed installs will poll |
@@ -409,6 +410,7 @@ In v26, `forceCodeSigning` only failed the build when no code signing identity o
 - **Update manifests must be signed**, also by a build that does not publish — including pull-request builds, and Linux builds, where this is the only effect of `forceCodeSigning`. A missing signing key fails at build start, and so does a signing key outside `updateManifest.publicKey` (unless `allowSigningKeyOutsideTrustList` is set).
 - **Signatures are verified.** Every file a Windows signing step reports as signed is read back and must carry a valid Authenticode signature, so a custom `win.sign.sign` hook that signs another path now fails the build. The output of a custom `mac.sign` signer is checked with `codesign --verify --deep --strict` (and a custom signer without a keychain identity is now called, as in v26, instead of being skipped silently). Signed `pkg` and MAS installers are checked with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.
 - **A prepackaged app must already be signed** (and, on macOS, notarized), since electron-builder does not sign it. `win.sign: false` with a prepackaged app now fails too.
+- **Squirrel.Windows `msi: true` fails.** Squirrel.Windows builds that MSI around `Setup.exe` before electron-builder signs it, so the installer inside it is unsigned; use the `msi` target for a signed MSI. Without `forceCodeSigning` it warns.
 
 Explicit opt-outs are honored with a warning: `mac.notarize: false` (for an ad-hoc or development-signed app, or one you notarize yourself, e.g. in an `afterSign` hook), `updateManifest: false`, `win.signExts` exclusions, and a custom `nsis.script` (whose uninstaller electron-builder does not sign). An HSM/KMS signer that signs `latest*.yml` in a later step publishes with `publishAutoUpdate: false` on every provider (see [Key storage](../features/key-rotation.md#key-storage)), or builds without `forceCodeSigning`. Any valid signature counts, including ad-hoc and self-signed ones.
 
@@ -424,6 +426,14 @@ electron-builder --mac -c.mac.forceCodeSigning=false  # when the mac block sets 
 Run [`electron-builder verify`](../cli.md#verify) after a build to check the signatures, notarization and update manifests of its output.
 
 > **Tip:** `electron-builder migrate-schema` prints an advisory when `forceCodeSigning` is set.
+
+### `mac.notarize: true` requires notarization credentials {#mac-notarize-true-requires-credentials}
+
+**How you'll find out:** **Fails the build** (only with `mac.notarize: true`), at build start on a macOS host, with a link here.
+
+`mac.notarize: true` now means that notarization is required: a build without notarization credentials (`APPLE_API_KEY` + `APPLE_API_KEY_ID` + `APPLE_API_ISSUER`, `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` + `APPLE_TEAM_ID`, or `APPLE_KEYCHAIN_PROFILE`) fails with an `InvalidConfigurationError`, at build start and again when notarizing — wherever notarization would run: on a macOS host, outside a pull-request build, and, for the app, unless the configuration turns its signing off (`mac.sign: null`, `sign.identity: null`, or `CSC_IDENTITY_AUTO_DISCOVERY=false` without an identity or custom signer); a `pkg` installer is notarized whenever it is built. Elsewhere missing credentials only warn. Previously `true` behaved like leaving `notarize` unset, which notarizes when the credentials are set and skips notarization with a warning otherwise; that is still the default.
+
+**Action:** if you set `mac.notarize: true` only because the docs showed it, remove it: notarization still runs whenever the credentials are set. Keep it where a build without notarization must fail, and make sure the credentials are in the environment when the build starts.
 
 ---
 
@@ -457,6 +467,8 @@ ELECTRON_BUILDER_UPDATE_SIGN_KEY="$(base64 < update-private-key.pem | tr -d '\n'
 :::note[Changed during the v27 pre-releases]
 27.0.0-alpha.9 to alpha.11 read `ELECTRON_BUILDER_UPDATE_SIGN_KEY` as raw PEM text. A raw PEM — or any value that is not the base64 of complete PEM private keys — now fails the build with an `InvalidConfigurationError` that names the variable and gives the encode command without printing the value. Re-encode the secret, or point `ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE` at the PEM file. A build script that sets the variable from a PEM string can pass `Buffer.from(pem).toString("base64")`, or set `updateManifest.signingKey` instead.
 :::
+
+`electron-builder publish -f` checks every update manifest it is given before it uploads anything: an unsigned manifest is refused, and with `updateManifest.publicKey` set the manifest must be signed by one of those keys (another key is allowed, with a warning, under `allowSigningKeyOutsideTrustList`). Without `publicKey` the signature cannot be checked against a trust list, which warns, and fails under `forceCodeSigning`. Only public keys are used.
 
 **To opt out**, set `updateManifest: false` at the top level or under a platform key. Every build that emits a manifest then logs a warning. `false` also short-circuits the environment variables, so a leftover `ELECTRON_BUILDER_UPDATE_SIGN_KEY` cannot silently re-enable signing. A platform value of `null` is **not** an opt-out — it falls back to the top-level value.
 

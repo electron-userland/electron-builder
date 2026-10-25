@@ -28,12 +28,13 @@ Before notarizing, you need:
 
 ```yaml
 mac:
-  notarize: true
   sign:
     hardenedRuntime: true
     entitlements: build/entitlements.mac.plist
     entitlementsInherit: build/entitlements.mac.inherit.plist
 ```
+
+electron-builder notarizes the app whenever notarization credentials are set (see below); without them it skips notarization with a warning. Set `mac.notarize: true` to make notarization required, so that a build without credentials fails ([at build start](../../migration/v27-build-changes.md#mac-notarize-true-requires-credentials)) instead, or `mac.notarize: false` to never notarize.
 
 :::note[v27]
 `notarize` stays on `mac`, but the signing options (`hardenedRuntime`, `entitlements`, `entitlementsInherit`) moved under `mac.sign` in v27. See [macOS signing](../../migration/v27-config-changes.md#macos-signing-macsign).
@@ -172,7 +173,7 @@ jobs:
 
 After notarization, Apple returns a "ticket" that confirms your app was approved. electron-builder automatically **staples** this ticket to the app bundle — meaning the notarization check can succeed even without an internet connection.
 
-Stapling is performed automatically when `notarize: true`. You don't need to configure anything extra.
+Stapling is performed automatically whenever electron-builder notarizes. You don't need to configure anything extra.
 
 ## Testing Notarization
 
