@@ -409,6 +409,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   // builds can still be running when the next arch is packaged.
   private readonly packToTargets = new Map<string, ReadonlyArray<Target>>()
 
+  /**
+   * @internal queued work still reading an app dir (e.g. zip/7z archiving it), by the resolved dir - see trackPackWork.
+   * Kept apart from `Target.buildQueueManager`, which `finishBuild()` may drain before that work is done.
+   */
+  readonly pendingPackWork = new Map<string, Set<Promise<any>>>()
+
   /** @internal the targets packaged from `appOutDir` for `arch`, as passed to their `build()` */
   getPackTargets(appOutDir: string, arch: Arch): ReadonlyArray<Target> | undefined {
     return this.packToTargets.get(packKey(appOutDir, arch))
@@ -1189,6 +1195,25 @@ export function chooseNotNull<T>(v1: T | Nullish, v2: T | Nullish): T | Nullish 
 
 function capitalizeFirstLetter(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+/** Registers queued `work` that still reads `appOutDir`, see waitForPackWork */
+export function trackPackWork(packager: PlatformPackager<any>, appOutDir: string, work: Promise<any>): void {
+  const key = path.resolve(appOutDir)
+  const pending = packager.pendingPackWork.get(key) ?? new Set<Promise<any>>()
+  packager.pendingPackWork.set(key, pending)
+  pending.add(work)
+  const settle = () => pending.delete(work)
+  void work.then(settle, settle)
+}
+
+/**
+ * Waits for the work tracked so far on `appOutDir`, so the caller can then write into it. Keyed by the dir alone, not by
+ * `_arch` (the pack the caller writes for): a prepackaged dir is shared by every arch, any other arch has its own dir.
+ * A failure of that work is left to its target's `finishBuild()` to report.
+ */
+export async function waitForPackWork(packager: PlatformPackager<any>, appOutDir: string, _arch: Arch): Promise<void> {
+  await Promise.allSettled(Array.from(packager.pendingPackWork.get(path.resolve(appOutDir)) ?? []))
 }
 
 function packKey(appOutDir: string, arch: Arch) {
