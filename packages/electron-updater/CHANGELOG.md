@@ -1,5 +1,29 @@
 ## 4.3.0
 
+## 7.0.0-alpha.11
+### Patch Changes
+
+- Fix: installing an AppImage update no longer deletes the installed app before the new one is in place. Before, the updater deleted the running AppImage and then ran `mv` through `PATH`; if `mv` failed (for example `spawnSync mv ENOTCONN` when a dead AppImage FUSE mount from an earlier launch was on `PATH`), the user was left with no app to launch. After, the new AppImage is staged next to the old one and atomically renamed over it without running any external command, so a failed install keeps the old AppImage. _[`#10386`](https://github.com/electron-userland/electron-builder/pull/10386) [`8512f4d`](https://github.com/electron-userland/electron-builder/commit/8512f4dae0ab01b066c4f23988cdf47822bd9aee)_
+- Fix: close embedded blockmap files exactly once on parse failures _[`#10120`](https://github.com/electron-userland/electron-builder/pull/10120) [`3bbc563`](https://github.com/electron-userland/electron-builder/commit/3bbc5634c288361a02311aa6ac25a0663a1c7e82)_
+- Fix(updater): download differentially when the update manifest has a hex-encoded sha512, never let a throwing logger stop a differential download or its fallback to a full download, time out stalled requests made with Electron's `net` module, and close the partially written file when a download's response fails or is aborted mid-body _[`#10366`](https://github.com/electron-userland/electron-builder/pull/10366) [`538aef4`](https://github.com/electron-userland/electron-builder/commit/538aef405d68940cb1322147ab050c24eb581342)_
+- Refactor(updater): split `GitHubProvider.getLatestVersion` into helpers (internal refactor, no behavior change) _[`#10290`](https://github.com/electron-userland/electron-builder/pull/10290) [`4705c20`](https://github.com/electron-userland/electron-builder/commit/4705c2084ca769b5bca98f08370bc89218048744)_
+- Fix(nsis): don't plan a differential download against a cached block map of another release. The cached block map is replaced when a download finishes, but the cached installer only when the update is installed, so a release found before the previous one was installed was planned against the wrong base: every differential byte was downloaded, the sha512 check failed, and the full installer was downloaded too. A cached block map that does not end at the cached installer's size is now ignored and the installed version's block map is fetched from the server. _[`#10337`](https://github.com/electron-userland/electron-builder/pull/10337) [`9ebb992`](https://github.com/electron-userland/electron-builder/commit/9ebb9924b76915d29fbb8c8097288eacc005e7f5)_
+- Fix: when a server rejects multi-range requests (GitHub release assets answer 501, Google Cloud Storage 400, S3 the whole file with 200), retry the differential download with one range per request instead of downloading the full update. Every range response must now be a 206 for exactly the requested range: a host that ignores ranges used to stream the whole file once per range before the checksum failed, and now fails on its first request and falls back to a full download. _[`#10343`](https://github.com/electron-userland/electron-builder/pull/10343) [`0fdce73`](https://github.com/electron-userland/electron-builder/commit/0fdce73d71b5949b91c8c893522efd73245a310e)_
+- Fix(updater): treat channel "latest" as stable-only when allowPrerelease is enabled _[`#10360`](https://github.com/electron-userland/electron-builder/pull/10360) [`a3c9240`](https://github.com/electron-userland/electron-builder/commit/a3c9240ca53bc33f0bee77c1d67aa8f4746ff6f4)_
+- Refactor(win): verify update signatures with the Authenticode helpers moved unchanged to builder-util-runtime (no behavior change) _[`#10378`](https://github.com/electron-userland/electron-builder/pull/10378) [`60e3708`](https://github.com/electron-userland/electron-builder/commit/60e3708955724138009f157cf0ad3f80a36ddeae)_
+
+<details><summary>Updated 1 dependency</summary>
+
+<small>
+
+[`45d3bc4`](https://github.com/electron-userland/electron-builder/commit/45d3bc431b5274b38b6b50b0b299d9ae6575469b) [`538aef4`](https://github.com/electron-userland/electron-builder/commit/538aef405d68940cb1322147ab050c24eb581342) [`8b71ed8`](https://github.com/electron-userland/electron-builder/commit/8b71ed87224beed7c0674fdd312d54047095d965) [`370d18c`](https://github.com/electron-userland/electron-builder/commit/370d18cb25e18b204d9ddbaf010879f8939cbeef) [`46be1f4`](https://github.com/electron-userland/electron-builder/commit/46be1f48e51a59b846ca76e631fc9e4e33348fb5) [`60e3708`](https://github.com/electron-userland/electron-builder/commit/60e3708955724138009f157cf0ad3f80a36ddeae)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.11`
+
+</details>
+
 ## 7.0.0-alpha.10
 ### Patch Changes
 

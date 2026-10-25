@@ -1,5 +1,37 @@
 # electron-publish
 
+## 27.0.0-alpha.12
+### Major Changes
+
+- Feat(s3)!: explicit AWS credential sources for S3 publishing via the new `awsCredentials` option (restores shared config / IAM Identity Center profiles, #10054) _[`#10257`](https://github.com/electron-userland/electron-builder/pull/10257) [`46be1f4`](https://github.com/electron-userland/electron-builder/commit/46be1f48e51a59b846ca76e631fc9e4e33348fb5)_
+
+  - `awsCredentials.source` is required to publish (no default, no implicit credentials).
+  - `awsCredentials.source: "env"` reads only `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_SESSION_TOKEN`, or the variable names given in `awsCredentials.env`.
+  - `awsCredentials.source: "profile"` with `profile` (plus optional `credentialsFile` / `configFile`) reads a named profile from the shared config and credentials files: static keys, IAM Identity Center (SSO), `credential_process` and assume-role. The AWS SDK providers are loaded lazily, only for non-static profiles, and are given explicit paths. Assume-role hops use an explicitly configured STS client (named profile's region, no configured endpoint URLs). `credential_source` and web identity (`web_identity_token_file`) are rejected anywhere in the chain, before the SDK is loaded.
+  - `awsCredentials.source: "sso-role-chain"` with `profile` resolves an assume-role profile whose `source_profile` chain (up to 5 hops, no cycles) starts at an IAM Identity Center (SSO) profile: the SSO profile is resolved from the configured files, then STS AssumeRole is called per hop with explicit region, endpoint and credentials (never `AWS_REGION`, `AWS_PROFILE` or `AWS_ENDPOINT_URL*`). `credential_source`, `mfa_serial`, web identity and `credential_process` are rejected in the chain. `source: "profile"` keeps rejecting SSO-sourced role chains and points to this source.
+  - Resolved credentials are reused for every file of a publish instead of being resolved again per upload.
+
+  BREAKING CHANGE: S3 publishing fails with an InvalidConfigurationError unless `awsCredentials.source` is set (add `{ "source": "env" }` to keep using `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`). `AWS_PROFILE`, `AWS_SDK_LOAD_CONFIG`, `AWS_CONFIG_FILE`, `AWS_SHARED_CREDENTIALS_FILE` and an implicit `~/.aws/credentials` are no longer read. Missing credentials now fail with a clear error instead of an unsigned or env-fallback signature. For dotted bucket names without `region`, the region is looked up only when publishing. `awsCredentials` is never written to `app-update.yml`.
+
+### Patch Changes
+
+- Fix(deps): bump the @aws-sdk credential providers to drop the vulnerable fast-xml-parser 5.2.5, and reject `aws login` (`login_session`) profiles for `awsCredentials.source: "profile"` _[`#10394`](https://github.com/electron-userland/electron-builder/pull/10394) [`e021179`](https://github.com/electron-userland/electron-builder/commit/e0211790a42c88a968e65352256b78bddb8054c7)_
+- Fix: cancel GitHub upload retry delays _[`#10138`](https://github.com/electron-userland/electron-builder/pull/10138) [`3910c94`](https://github.com/electron-userland/electron-builder/commit/3910c945cf9a4610072d2a9a4a01ad0131dd67de)_
+- Fix(publish): detect aborted S3 responses via `close` instead of the deprecated `aborted` event, and report non-http(s) or unparseable S3 endpoints as configuration errors _[`#10349`](https://github.com/electron-userland/electron-builder/pull/10349) [`9e0137e`](https://github.com/electron-userland/electron-builder/commit/9e0137e41597720f2ba4b473b066e56e41bcf5de)_
+
+<details><summary>Updated 2 dependencies</summary>
+
+<small>
+
+[`45d3bc4`](https://github.com/electron-userland/electron-builder/commit/45d3bc431b5274b38b6b50b0b299d9ae6575469b) [`f8a6719`](https://github.com/electron-userland/electron-builder/commit/f8a6719bded7b02881f7b88778f1645a53321825) [`08d4a10`](https://github.com/electron-userland/electron-builder/commit/08d4a10765028f9a36c88aefcae4cbdc421dd358) [`538aef4`](https://github.com/electron-userland/electron-builder/commit/538aef405d68940cb1322147ab050c24eb581342) [`8b71ed8`](https://github.com/electron-userland/electron-builder/commit/8b71ed87224beed7c0674fdd312d54047095d965) [`0b508ab`](https://github.com/electron-userland/electron-builder/commit/0b508abc19243c7309931c693f7b91bc66d62fb9) [`370d18c`](https://github.com/electron-userland/electron-builder/commit/370d18cb25e18b204d9ddbaf010879f8939cbeef) [`b1460cc`](https://github.com/electron-userland/electron-builder/commit/b1460cc01adb394db3cffd1ba4b547b4181c562d) [`46be1f4`](https://github.com/electron-userland/electron-builder/commit/46be1f48e51a59b846ca76e631fc9e4e33348fb5) [`60e3708`](https://github.com/electron-userland/electron-builder/commit/60e3708955724138009f157cf0ad3f80a36ddeae) [`f8a6719`](https://github.com/electron-userland/electron-builder/commit/f8a6719bded7b02881f7b88778f1645a53321825)
+
+</small>
+
+- `builder-util-runtime@10.0.0-alpha.11`
+- `builder-util@27.0.0-alpha.12`
+
+</details>
+
 ## 27.0.0-alpha.11
 ### Patch Changes
 

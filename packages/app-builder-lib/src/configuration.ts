@@ -18,6 +18,9 @@ import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/win/nsis/nsisOptions.js"
 import { ElectronGetOptions } from "./util/electronGet.js"
+import type { ExecutablesConfig } from "builder-util"
+// the types of toolsets.executables live with its resolver, in builder-util
+export type { ExecutableLocation, ExecutableName, ExecutablesConfig } from "builder-util"
 import { FuseOptionsV1 } from "./options/FuseOptionsV1.js"
 
 /**
@@ -423,11 +426,25 @@ export interface CommonConfiguration {
   readonly extraMetadata?: any
 
   /**
-   * Whether to throw an error and abort the build if the app could not be code-signed.
+   * Whether to throw an error and abort the build if the app could not be code-signed, notarized, or have its
+   * auto-update manifests signed - and to verify the signatures the build produces.
    *
    * Set to `true` in release pipelines to catch missing or misconfigured signing credentials
    * before producing unsigned artifacts. When `false` (the default), missing signing credentials
    * produce a warning and the build continues unsigned.
+   *
+   * With `true`:
+   * - macOS: the app must be signed, which needs a macOS host, also in pull-request builds (set `CSC_FOR_PULL_REQUEST=true` to sign
+   *   them, or pass `-c.forceCodeSigning=false` there), and notarized: notarization credentials must be set when the build starts.
+   *   The output of a custom `mac.sign` signer is checked with `codesign --verify --deep --strict`, the stapled ticket with
+   *   `stapler validate`, a signed pkg with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.
+   * - Windows: every signed file is read back and must carry a valid Authenticode signature.
+   * - Every platform (the only effect on Linux): auto-update manifests must be signed, also by a build that does not publish.
+   * - A prepackaged app, which electron-builder does not sign, must already be signed (and, on macOS, notarized).
+   *
+   * Explicit opt-outs are honored with a warning: `mac.notarize: false`, `updateManifest: false`, `win.signExts` exclusions and a
+   * custom `nsis.script` (whose uninstaller electron-builder does not sign). `win.sign: false` and `mac.sign: null` contradict it
+   * and fail the build. `electron-builder verify` checks the build output afterwards.
    *
    * @default false
    */
@@ -675,12 +692,13 @@ export interface ToolsetConfig {
    * | `"1.1.1"` | Updates `osslsigncode` to v2.11 |
    * | `"1.2.1"` | Adds native `osslsigncode` arm64 |
    * | `"1.3.0"` | Includes support for Azure Trusted Signing `signtool` via dlib and .NET 8 runtime |
+   * | `"1.3.1"` | macOS `osslsigncode` bundles its own OpenSSL (no Homebrew `openssl@3` needed) and libp11's PKCS#11 provider |
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/win-codesign/CHANGELOG.md
    *
    * @default "latest"
    */
-  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | "1.1.1" | "1.2.1" | "1.3.0" | ToolsetCustom | "latest"
+  readonly winCodeSign?: "0.0.0" | "1.0.0" | "1.1.0" | "1.1.1" | "1.2.1" | "1.3.0" | "1.3.1" | ToolsetCustom | "latest"
 
   /**
    * Version of the AppImage toolset bundle used for building `.AppImage` files.
@@ -765,14 +783,19 @@ export interface ToolsetConfig {
    * |---------|-------------|-----------------|-------|
    * | `"0.0.0"` | 4.0.1 | macOS | Legacy portable bundle (pre-v27) |
    * | `"1.0.1"` | 11.0 | macOS | Supports arm64 macOS via Rosetta |
-   * | `"system"` | host install | macOS, Linux | Uses the `wine` binary on `PATH` instead of a bundle |
+   * | `"system"` | host install | macOS, Linux | Uses the host Wine at a fixed install location instead of a bundle |
    *
    * `"system"` is the replacement for the `USE_SYSTEM_WINE` environment variable removed in v27, and
    * is what `"latest"` (the default) currently resolves to on every platform: the published `"1.0.1"`
    * bundles ship no PE builtins, so a host Wine installation is required to build Windows targets on
    * macOS or Linux.
    *
-   * To use a custom Wine binary, use a `ToolsetCustom` object.
+   * The host Wine (`"system"`) is started by absolute path, never looked up on `PATH`: it is the `wine` entry of
+   * {@link executables}, which lists its default install locations and is where a Wine installed elsewhere is set.
+   * Setting both a bundle that would be used (a `ToolsetCustom` object, or a version on macOS; on Linux a version selects no
+   * bundle) and `executables.wine` is a configuration error.
+   *
+   * To use a custom Wine bundle, use a `ToolsetCustom` object.
    *
    * Releases: https://github.com/electron-userland/electron-builder-binaries/blob/master/packages/wine/CHANGELOG.md
    *
@@ -877,6 +900,29 @@ export interface ToolsetConfig {
    * @default "latest"
    */
   readonly squirrel?: "1.1.1" | ToolsetCustom | "latest"
+
+  /**
+   * Where the host programs that electron-builder starts are installed on the build machine, by program name.
+   *
+   * electron-builder starts these programs only from an absolute path, never by looking up a name on `PATH`. For each one it
+   * uses the first location that is an executable file: from this entry when it is set, otherwise from a built-in list of
+   * default install locations for the host operating system (see https://www.electron.build/docs/toolsets#executables).
+   * An entry replaces the default list for that program; it is not merged with it.
+   *
+   * @example
+   * ```json
+   * {
+   *   "toolsets": {
+   *     "executables": {
+   *       "mono": "file:///opt/homebrew/bin/mono",
+   *       "pwsh": ["file:///usr/local/microsoft/powershell/7/pwsh", "file:///opt/microsoft/powershell/7/pwsh"],
+   *       "powershell": "file:///C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+   *     }
+   *   }
+   * }
+   * ```
+   */
+  readonly executables?: ExecutablesConfig | null
 }
 
 /**
@@ -1055,6 +1101,16 @@ export interface Hooks {
    * extensions (capabilities, protocol handlers, etc.) not exposed through {@link AppXOptions}.
    */
   readonly appxManifestCreated?: Hook<string, void> | string | null
+
+  /**
+   * Called after the `distribution.xml` of a macOS `pkg` installer has been written (synthesized by
+   * `productbuild --synthesize`, then customized from {@link PkgOptions}) but before `productbuild` builds the
+   * installer from it.
+   *
+   * The hook receives the path to the distribution file as a string. Edit it in place or overwrite it to
+   * customize the installer beyond {@link PkgOptions} (for example, its `<title>`).
+   */
+  readonly pkgDistributionCreated?: Hook<string, void> | string | null
 
   /**
    * Called for every file inside each `node_modules` package directory as electron-builder

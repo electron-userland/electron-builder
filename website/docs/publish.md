@@ -25,7 +25,7 @@ If `GITHUB_RELEASE_TOKEN` is defined, it will be used instead of (`GH_TOKEN` or 
 :::warning[Implicit publishing was removed in v27]
 In v26 and earlier, electron-builder auto-detected when to publish based on CI environment conditions (npm lifecycle event, a git tag in CI, etc.). **As of v27 this implicit behavior is removed** — publishing never happens unless you request it. This closes a hole where unfinished work or secrets could be published unintentionally.
 
-Explicitly specify your publish intent with the `--publish` CLI flag (e.g. `--publish always`, `--publish onTag`, `--publish onTagOrDraft`, `--publish never`) or set the `publish` option in your configuration. See [v27 Breaking Changes → implicit `--publish` removed](./migration/v27-breaking-changes.md#implicit-publish-removed).
+Explicitly specify your publish intent with the `--publish` CLI flag (e.g. `--publish always`, `--publish onTag`, `--publish onTagOrDraft`, `--publish never`) or set the `publish` option in your configuration. See [v27 Breaking Changes → implicit `--publish` removed](./migration/v27-build-changes.md#implicit-publish-removed).
 :::
 
 :::info[Snap store]
@@ -217,7 +217,7 @@ Publishing to S3 requires `awsCredentials.source`; no credentials are read impli
 
 If the publishing role is assumed from an SSO profile through `source_profile` (a `role_arn` + `source_profile = <sso profile>` role profile), opt in with `{ "source": "sso-role-chain", "profile": "<role profile>" }`: electron-builder resolves the SSO profile and each `AssumeRole` hop from the same configured files.
 
-For a bucket name containing dots, set `region`: it is only looked up automatically when publishing. See [v27 Breaking Changes](./migration/v27-breaking-changes.md#s3-publishing-requires-an-explicit-awscredentialssource).
+For a bucket name containing dots, set `region`: it is only looked up automatically when publishing. See [v27 Breaking Changes](./migration/v27-build-changes.md#s3-publishing-requires-an-explicit-awscredentialssource).
 :::
 
   {!./builder-util-runtime.Interface.S3Options.md!}

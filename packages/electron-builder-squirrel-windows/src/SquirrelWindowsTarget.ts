@@ -1,12 +1,12 @@
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
-import { getRceditBundle, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
+import { forceCodeSigningError, forceCodeSigningOverrideHint, getRceditBundle, waitForPackWork, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
 import { InvalidConfigurationError, isEmptyOrSpaces, log, escapeForXml, prepareFixedNameWrite } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
 import { getSquirrelToolsetPath, getWixToolsetPath } from "./toolset.js"
-import { InstallerOptions, convertVersion, createWindowsInstaller } from "./windowsInstaller.js"
+import { InstallerOptions, convertVersion, copySquirrelExe, createWindowsInstaller } from "./windowsInstaller.js"
 
 export default class SquirrelWindowsTarget extends Target {
   readonly options: SquirrelWindowsOptions
@@ -19,6 +19,23 @@ export default class SquirrelWindowsTarget extends Target {
   ) {
     super("squirrel")
     this.options = packager.getOptionsForTarget<SquirrelWindowsOptions>("squirrelWindows")
+  }
+
+  /**
+   * Squirrel.Windows builds the MSI (`msi: true`) inside `--releasify`, around the Setup.exe it has just written, before electron-builder
+   * signs that Setup.exe: the installer the MSI carries is unsigned. That warns, and fails under forceCodeSigning.
+   */
+  checkMsiSigning(): void {
+    if (this.options.msi !== true) {
+      return
+    }
+    const problem =
+      "squirrelWindows.msi is true, and the MSI that Squirrel.Windows builds embeds Setup.exe before electron-builder signs it, so the installer inside the MSI is unsigned"
+    const remedy = "For a signed MSI, remove msi: true and add the msi target (win.target: msi), which electron-builder builds from the signed app."
+    if (this.packager.forceCodeSigning) {
+      throw forceCodeSigningError(`forceCodeSigning is enabled, but ${problem}. ${remedy} Or pass ${forceCodeSigningOverrideHint(this.packager)} to build it as it is.`)
+    }
+    log.once("squirrel-msi-unsigned-setup", this.packager).warn({ reason: problem }, `the Squirrel.Windows MSI embeds an unsigned Setup.exe. ${remedy}`)
   }
 
   private async prepareSignedVendorDirectory(): Promise<string> {
@@ -150,6 +167,7 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   async build(appOutDir: string, arch: Arch) {
+    this.checkMsiSigning()
     const packager = this.packager
     const version = packager.appInfo.version
     const sanitizedName = sanitizeFileName(this.appName)
@@ -159,14 +177,19 @@ export default class SquirrelWindowsTarget extends Target {
     const artifactPath = path.join(installerOutDir, setupFile)
     const msiArtifactPath = path.join(installerOutDir, packager.expandArtifactNamePattern(this.options, "msi", arch, "${productName} Setup ${version}.${ext}"))
 
+    await packager.emitArtifactBuildStarted({
+      targetPresentableName: "Squirrel.Windows",
+      file: artifactPath,
+      arch,
+    })
+    const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
+    // The stub, the re-signed app exe and Squirrel.exe are written into appOutDir, which the other targets of this pack read: wait for
+    // their queued work (zip/7z), and write here rather than in the queue so the sync targets built after this one see the final appOutDir.
+    await waitForPackWork(packager, appOutDir, arch)
+    await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory)
+    await copySquirrelExe(appOutDir, distOptions.vendorDirectory)
+
     this.buildQueueManager.add(async () => {
-      await packager.emitArtifactBuildStarted({
-        targetPresentableName: "Squirrel.Windows",
-        file: artifactPath,
-        arch,
-      })
-      const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
-      await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory)
       await withToolsetLock(() => createWindowsInstaller(distOptions))
 
       await packager.signAndEditResources(artifactPath, arch, installerOutDir)
@@ -218,7 +241,6 @@ export default class SquirrelWindowsTarget extends Target {
         packager,
       })
     })
-    return Promise.resolve()
   }
 
   private get appName() {

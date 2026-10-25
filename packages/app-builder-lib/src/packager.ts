@@ -3,6 +3,7 @@ import {
   archFromString,
   AsyncTaskManager,
   DebugLogger,
+  Executables,
   executeFinally,
   getArtifactArchName,
   InvalidConfigurationError,
@@ -60,6 +61,7 @@ type PackagerEvents = {
 
   msiProjectCreated: Hook<string, void>
   appxManifestCreated: Hook<string, void>
+  pkgDistributionCreated: Hook<string, void>
 
   // internal-use only, prefer usage of `artifactBuildCompleted`
   artifactCreated: Hook<ArtifactCreated, void>
@@ -83,7 +85,7 @@ function checkRemovedPackagerOptions(options: PackagerOptions): void {
       throw new InvalidConfigurationError(
         `\`${key}\` was removed from PackagerOptions in electron-builder v27. Pass \`${replacement}\` instead, ` +
           `e.g. build({ targets, config: ${key === "devMetadata" ? "{ … }" : "{ extraMetadata: { … } }"} }).\n` +
-          "https://www.electron.build/docs/migration/v27-breaking-changes#devmetadata-extrametadata-programmatic-packageroptions"
+          "https://www.electron.build/docs/migration/v27-developer-changes#devmetadata-extrametadata-programmatic-packageroptions"
       )
     }
   }
@@ -287,6 +289,7 @@ export class Packager {
 
     this.eventEmitter.on("appxManifestCreated", await resolveFunction(type, this.config.appxManifestCreated, "appxManifestCreated", root), "user")
     this.eventEmitter.on("msiProjectCreated", await resolveFunction(type, this.config.msiProjectCreated, "msiProjectCreated", root), "user")
+    this.eventEmitter.on("pkgDistributionCreated", await resolveFunction(type, this.config.pkgDistributionCreated, "pkgDistributionCreated", root), "user")
 
     this.eventEmitter.on("beforePack", await resolveFunction(type, this.config.beforePack, "beforePack", root), "user")
     this.eventEmitter.on("afterExtract", await resolveFunction(type, this.config.afterExtract, "afterExtract", root), "user")
@@ -348,6 +351,10 @@ export class Packager {
 
   async emitMsiProjectCreated(path: string) {
     await this.eventEmitter.emit("msiProjectCreated", path)
+  }
+
+  async emitPkgDistributionCreated(path: string) {
+    await this.eventEmitter.emit("pkgDistributionCreated", path)
   }
 
   async emitBeforePack(context: BeforePackContext) {
@@ -426,6 +433,12 @@ export class Packager {
 
     await this.validateConfig()
 
+    // every host program the build starts, also in its asynchronous work, comes from this build's toolsets.executables (or the
+    // default install locations), whatever other builds in this process configure
+    return await Executables.run(this.config.toolsets?.executables, () => this.buildWithValidatedConfig(repositoryInfo))
+  }
+
+  private async buildWithValidatedConfig(repositoryInfo: SourceRepositoryInfo | undefined): Promise<BuildResult> {
     if (repositoryInfo != null) {
       this._repositoryInfo.value = Promise.resolve(repositoryInfo)
     }

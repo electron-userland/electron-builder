@@ -346,11 +346,18 @@ describe("S3 credentials — source: profile", { concurrent: false }, () => {
       ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = web", "[profile web]", "role_arn = arn:aws:iam::1:role/w", "web_identity_token_file = /tmp/token"],
       /profile "web" sets web_identity_token_file/,
     ],
+    ["a login_session (aws login) profile", ["[profile deploy]", "login_session = arn:aws:iam::1:user/me"], /profile "deploy" sets login_session/],
+    [
+      "login_session as the source_profile",
+      ["[profile deploy]", "role_arn = arn:aws:iam::1:role/a", "source_profile = console", "[profile console]", "login_session = arn:aws:iam::1:user/me"],
+      /profile "console" sets login_session/,
+    ],
   ] as Array<[string, Array<string>, RegExp]>)("rejects %s with InvalidConfigurationError before loading the SDK or reading AWS_*", async (_name, lines, message) => {
     stubAmbientDecoys({ envKeys: true })
-    // decoys the SDK's web identity / container / instance metadata providers would read
+    // decoys the SDK's web identity / login / container / instance metadata providers would read
     vi.stubEnv("AWS_ROLE_ARN", "arn:aws:iam::999999999999:role/DECOY_WEB_IDENTITY")
     vi.stubEnv("AWS_WEB_IDENTITY_TOKEN_FILE", write("decoy/token", "decoy-token"))
+    vi.stubEnv("AWS_LOGIN_CACHE_DIRECTORY", write("decoy/login-cache/.keep", ""))
     vi.stubEnv("AWS_REGION", "ap-south-1")
     vi.stubEnv("AWS_ENDPOINT_URL_STS", "https://decoy-sts.example.com")
     vi.stubEnv("AWS_CONTAINER_CREDENTIALS_FULL_URI", "http://127.0.0.1:1/decoy")
@@ -678,10 +685,11 @@ describe("S3 credentials — source: sso-role-chain", { concurrent: false }, () 
     expect(String(requests[0].body)).toContain("RoleArn=arn%3Aaws%3Aiam%3A%3A222222222222%3Arole%2Fdeploy")
 
     // neither our code nor the SSO / STS clients consult AWS_CONFIG_FILE, AWS_PROFILE, AWS_REGION, AWS_ENDPOINT_URL*, AWS_* keys etc.;
-    // only HOME (SSO token cache) and the SDK's user-agent / Lambda recursion-detection variables are read
+    // only HOME (SSO token cache) and the SDK's user-agent / Lambda recursion-detection / Node version warning variables are read
     const reads = await recordEnvReads(() => resolveS3Credentials({ source: "sso-role-chain", profile: "deploy", configFile, credentialsFile: credentialsFile() }))
     expect(requests).toHaveLength(2)
-    expect(reads.filter(it => it.startsWith("AWS_") && it !== "AWS_EXECUTION_ENV" && it !== "AWS_LAMBDA_FUNCTION_NAME")).toEqual([])
+    const sdkHousekeeping = ["AWS_EXECUTION_ENV", "AWS_LAMBDA_FUNCTION_NAME", "AWS_SDK_JS_NODE_VERSION_SUPPORT_WARNING_DISABLED"]
+    expect(reads.filter(it => it.startsWith("AWS_") && !sdkHousekeeping.includes(it))).toEqual([])
   })
 
   it("resolves the chain once for many uploads when memoized", async () => {

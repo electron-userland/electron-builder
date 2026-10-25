@@ -20,21 +20,14 @@ describe.heavy.ifEnv(canRunFlatpak())("Linux Flatpak Test", () => {
       },
     }))
 
-  test("enable Wayland flags", ({ expect }) =>
+  // One build for both: on the Electron of the test app, useWaylandFlags adds no flags (see flatpakTest.ts), and finishArgs only
+  // change the manifest, so the two have no interaction, and the build checks that flatpak-builder accepts both.
+  test("enable Wayland flags and custom finishArgs", ({ expect }) =>
     app(expect, {
       targets: Platform.LINUX.createTarget("flatpak"),
       config: {
         flatpak: {
           useWaylandFlags: true,
-        },
-      },
-    }))
-
-  test("custom finishArgs", ({ expect }) =>
-    app(expect, {
-      targets: Platform.LINUX.createTarget("flatpak"),
-      config: {
-        flatpak: {
           finishArgs: [
             // Wayland
             "--socket=wayland",
@@ -63,42 +56,5 @@ describe.heavy.ifEnv(canRunFlatpak())("Linux Flatpak Test", () => {
       },
     }))
 
-  // Regression test: `linux.files` (a string[] of glob patterns, used by most
-  // real-world Linux configs) used to get merged into FlatpakOptions.files
-  // (a [string, string][] of copy tuples) by getOptionsForTarget's deepAssign,
-  // which concatenates arrays instead of replacing them. The copy step then
-  // destructured each glob string as [src, dest], producing a bogus path and
-  // crashing the build with ENOENT.
-  test("linux.files does not corrupt the flatpak files option", ({ expect }) =>
-    app(expect, {
-      targets: Platform.LINUX.createTarget("flatpak"),
-      config: {
-        linux: {
-          fileOptions: { files: ["**/*", "!**/*.ts"] },
-        },
-      },
-    }))
-
-  // `linux.files` may also be a single glob string or a single FileSet object. The merged
-  // target options then hold a string/object under `files`, which is not filterable — the
-  // flatpak target must read its own `files` copy tuples from the flatpak config instead.
-  test("single-string linux.files does not throw in FlatpakTarget", ({ expect }) =>
-    app(expect, {
-      targets: Platform.LINUX.createTarget("flatpak"),
-      config: {
-        linux: {
-          fileOptions: { files: "**/*" },
-        },
-      },
-    }))
-
-  test("single FileSet linux.files does not throw in FlatpakTarget", ({ expect }) =>
-    app(expect, {
-      targets: Platform.LINUX.createTarget("flatpak"),
-      config: {
-        linux: {
-          fileOptions: { files: { from: ".", filter: ["**/*"] } },
-        },
-      },
-    }))
+  // The linux.files regression tests are in flatpakTest.ts: the copy pairs they check are computed before the bundle is built.
 })

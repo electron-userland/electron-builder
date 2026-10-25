@@ -2,8 +2,8 @@
 
 import { fileURLToPath } from "node:url"
 import { AppInfo, CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
-import { Publish, computeSafeArtifactNameIfNeeded, getConfig } from "app-builder-lib/internal"
-import { InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
+import { Publish, checkUpdateManifestBeforeUpload, computeSafeArtifactNameIfNeeded, getConfig } from "app-builder-lib/internal"
+import { Executables, InvalidConfigurationError, archFromString, log, printErrorAndExit } from "builder-util"
 import type { PublishPolicy } from "electron-publish"
 import chalk from "chalk"
 import * as path from "path"
@@ -92,7 +92,8 @@ export function createUploadTasks(uploadOptions: { file: string; arch: string | 
     })
 }
 
-async function publishPackageWithTasks(
+/** @internal */
+export async function publishPackageWithTasks(
   options: PackagerOptions & PublishOptions,
   uploadTasks: UploadTask[],
   buildVersion?: string,
@@ -100,6 +101,11 @@ async function publishPackageWithTasks(
   packager: Packager = new Packager(options, cancellationToken)
 ) {
   await packager.validateConfig()
+  // every update manifest is checked before anything is uploaded, as a build checks it before writing it; outside the upload's
+  // error handling, so that a manifest that fails the check fails the command
+  for (const { file } of uploadTasks) {
+    await checkUpdateManifestBeforeUpload(file, packager.config)
+  }
   const appInfo = new AppInfo(packager, buildVersion)
   const publishManager = new PublishManager(packager, options, cancellationToken)
 
@@ -109,28 +115,31 @@ async function publishPackageWithTasks(
     publishManager.cancelTasks()
   }
 
-  return withPublishSigIntHandler(sigIntHandler, async () => {
-    try {
-      const publishConfigurations = await publishManager.getGlobalPublishConfigurations()
-      if (publishConfigurations == null || publishConfigurations.length === 0) {
-        throw new InvalidConfigurationError("unable to find any publish configuration")
-      }
-
-      for (const newArtifact of uploadTasks) {
-        for (const publishConfiguration of publishConfigurations) {
-          await publishManager.scheduleUpload(publishConfiguration, newArtifact, appInfo)
+  // the uploads (snapcraft) get the toolsets.executables of the loaded configuration
+  return withPublishSigIntHandler(sigIntHandler, () =>
+    Executables.run(packager.config.toolsets?.executables, async () => {
+      try {
+        const publishConfigurations = await publishManager.getGlobalPublishConfigurations()
+        if (publishConfigurations == null || publishConfigurations.length === 0) {
+          throw new InvalidConfigurationError("unable to find any publish configuration")
         }
-      }
 
-      await publishManager.awaitTasks()
-      return uploadTasks
-    } catch (error: any) {
-      packager.cancellationToken.cancel()
-      publishManager.cancelTasks()
-      log.error({ message: (error.stack || error.message || error).toString() }, "error publishing")
-      return null
-    }
-  })
+        for (const newArtifact of uploadTasks) {
+          for (const publishConfiguration of publishConfigurations) {
+            await publishManager.scheduleUpload(publishConfiguration, newArtifact, appInfo)
+          }
+        }
+
+        await publishManager.awaitTasks()
+        return uploadTasks
+      } catch (error: any) {
+        packager.cancellationToken.cancel()
+        publishManager.cancelTasks()
+        log.error({ message: (error.stack || error.message || error).toString() }, "error publishing")
+        return null
+      }
+    })
+  )
 }
 
 /** @internal */

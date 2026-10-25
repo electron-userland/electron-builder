@@ -23,7 +23,7 @@ describe("generic publish url with a query string", () => {
     expect(message).toContain(
       "electron-updater 7 (electron-builder v27) adds it, and sends the credential headers from requestHeaders / addAuthHeader, only to downloads on the feed's origin"
     )
-    expect(message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin")
+    expect(message).toContain("https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin")
     const logged = JSON.stringify(warn.mock.calls)
     for (const secret of ["secret-token-value", "acme-tenant", "another-secret", "updates.example.com"]) {
       expect(logged).not.toContain(secret)
