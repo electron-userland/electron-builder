@@ -18,7 +18,7 @@ const WRITTEN_FILES = ["app-update.yml", "package-type", "apparmor-profile"]
 
 describe("FpmTarget.build", () => {
   // the tar.*/zip/7z archive of a pack is still reading appOutDir when deb/rpm/pacman (sync targets) start building it
-  async function createBuild(root: string) {
+  async function createBuild(root: string, platformOptions: Record<string, unknown> = {}) {
     const appArmor = path.join(root, "apparmor-profile.tpl")
     await writeFile(appArmor, "profile")
 
@@ -28,7 +28,7 @@ describe("FpmTarget.build", () => {
     const packager: any = {
       config: {},
       platform: Platform.LINUX,
-      platformOptions: {},
+      platformOptions,
       packagerOptions: {},
       pendingPackWork: new Map(),
       expandArtifactNamePattern: () => "artifact",
@@ -99,4 +99,15 @@ describe("FpmTarget.build", () => {
     await buildDeb(appOutDir, Arch.ia32)
     expect(events).toEqual([`deb wrote ${WRITTEN_FILES.join(", ")}`])
   }, 5000)
+
+  test("writes into the app dir it packages when linux.defaultArch is set", async ({ tmpDir }) => {
+    const root = await tmpDir.createTempDir()
+    // with defaultArch arm64 the x64 app dir is linux-x64-unpacked (computeAppOutDir), and linux-unpacked is arm64's
+    const appOutDir = await createAppOutDir(root, "linux-x64-unpacked")
+    const otherArchAppOutDir = await createAppOutDir(root, "linux-unpacked")
+    const { events, buildDeb } = await createBuild(root, { defaultArch: "arm64" })
+    await buildDeb(appOutDir, Arch.x64)
+    expect(events).toEqual([`deb wrote ${WRITTEN_FILES.join(", ")}`])
+    expect(WRITTEN_FILES.filter(it => existsSync(path.join(otherArchAppOutDir, "resources", it)))).toEqual([])
+  })
 })

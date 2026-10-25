@@ -1,17 +1,4 @@
-import {
-  Arch,
-  asArray,
-  exec,
-  getArchSuffix,
-  InvalidConfigurationError,
-  log,
-  prepareFixedNameWrite,
-  stripSensitiveEnvVars,
-  TmpDir,
-  toLinuxArchString,
-  unlinkIfExists,
-  use,
-} from "builder-util"
+import { Arch, asArray, exec, InvalidConfigurationError, log, prepareFixedNameWrite, stripSensitiveEnvVars, TmpDir, toLinuxArchString, unlinkIfExists, use } from "builder-util"
 import { expandDefaultKeyword } from "builder-util/internal"
 import { Nullish } from "builder-util-runtime"
 
@@ -182,8 +169,8 @@ export default class FpmTarget extends Target {
     if (packager.packagerOptions.prepackaged != null) {
       await mkdir(this.outDir, { recursive: true })
     }
-    const linuxDistType = packager.packagerOptions.prepackaged || path.join(this.outDir, `linux${getArchSuffix(arch)}-unpacked`)
-    const resourceDir = packager.getResourcesDir(linuxDistType)
+    // the app dir fpm packages (below), so these files land in it even with a `linux.defaultArch` set
+    const resourceDir = packager.getResourcesDir(appOutDir)
 
     const publishConfig = this.supportsAutoUpdate(target)
       ? await getPackAppUpdatePublishConfiguration(
@@ -197,10 +184,10 @@ export default class FpmTarget extends Target {
     await waitForPackWork(packager, appOutDir, arch)
     if (publishConfig != null) {
       log.info({ resourceDir: log.filePath(resourceDir) }, `adding autoupdate files for: ${target}`)
-      await writeAppUpdateYaml(resourceDir, publishConfig, linuxDistType)
+      await writeAppUpdateYaml(resourceDir, publishConfig, appOutDir)
       // Extra file needed for auto-updater to detect installation method
       const packageTypeFile = path.join(resourceDir, "package-type")
-      await prepareFixedNameWrite(linuxDistType, packageTypeFile, "package type file")
+      await prepareFixedNameWrite(appOutDir, packageTypeFile, "package type file")
       await outputFile(packageTypeFile, target)
     }
 
@@ -209,7 +196,7 @@ export default class FpmTarget extends Target {
     // Install AppArmor support for ubuntu 24+
     // https://github.com/electron-userland/electron-builder/issues/8635
     const appArmorFile = path.join(resourceDir, "apparmor-profile")
-    await prepareFixedNameWrite(linuxDistType, appArmorFile, "AppArmor profile")
+    await prepareFixedNameWrite(appOutDir, appArmorFile, "AppArmor profile")
     await copyFile(scripts.appArmor, appArmorFile)
 
     const appInfo = packager.appInfo
