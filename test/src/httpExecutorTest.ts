@@ -1,4 +1,4 @@
-import { expect, test, describe } from "vitest"
+import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import {
   HttpExecutor,
   safeStringifyJson,
@@ -7,7 +7,9 @@ import {
   isSensitiveFieldName,
   hashSensitiveValue,
 } from "builder-util-runtime/src/httpExecutor"
-import { RequestOptions } from "http"
+import { CancellationToken } from "builder-util-runtime/src/CancellationToken"
+import { ClientRequest, IncomingMessage, RequestOptions, Server, ServerResponse, createServer, request as httpRequest } from "http"
+import { AddressInfo } from "net"
 
 describe("HttpExecutor.prepareRedirectUrlOptions", () => {
   describe("basic functionality", () => {
@@ -796,4 +798,105 @@ describe("isSensitiveFieldName", () => {
     expect(isSensitiveFieldName("channel")).toBe(false)
     expect(isSensitiveFieldName("provider")).toBe(false)
   })
+})
+
+describe("HttpExecutor redirect limit (Node.js)", () => {
+  // Node.js does not follow redirects: HttpExecutor reads the 3xx itself, and must stop after `maxRedirects` of them
+  const MAX_REDIRECTS = 10
+  // without the fix the redirect count never grows and a redirect loop is followed forever: the server stops redirecting after
+  // this many requests, so such a test fails fast instead of hanging
+  const RUNAWAY_LIMIT = 100
+
+  class LocalHttpExecutor extends HttpExecutor<ClientRequest> {
+    createRequest(options: RequestOptions, callback: (response: IncomingMessage) => void): ClientRequest {
+      return httpRequest(options, callback)
+    }
+  }
+
+  let server: Server
+  let port = 0
+  const requested: Array<string> = []
+
+  // /a and /b redirect to each other; /chain/<n> redirects to /chain/<n + 1> until /chain/<end>, which answers "done"
+  function respond(request: IncomingMessage, response: ServerResponse): void {
+    const url = new URL(request.url ?? "/", "http://127.0.0.1")
+    requested.push(url.pathname)
+    const redirect = (location: string) => {
+      response.writeHead(302, { location })
+      response.end()
+    }
+    const chain = /^\/chain\/(\d+)$/.exec(url.pathname)
+    if (requested.length > RUNAWAY_LIMIT) {
+      response.end("redirects were not limited")
+    } else if (url.pathname === "/a") {
+      redirect("/b")
+    } else if (url.pathname === "/b") {
+      // an absolute location, the way a CDN or feed usually answers
+      redirect(`http://127.0.0.1:${port}/a`)
+    } else if (chain != null) {
+      const hop = Number(chain[1])
+      const end = Number(url.searchParams.get("end"))
+      if (hop < end) {
+        redirect(`/chain/${hop + 1}?end=${end}`)
+      } else {
+        response.end("done")
+      }
+    } else {
+      response.writeHead(404)
+      response.end()
+    }
+  }
+
+  beforeAll(async () => {
+    server = createServer(respond)
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
+    const address: AddressInfo | string | null = server.address()
+    if (address == null || typeof address === "string") {
+      throw new Error(`Unexpected server address: ${address}`)
+    }
+    port = address.port
+  })
+
+  afterAll(async () => {
+    server.closeAllConnections()
+    await new Promise<void>(resolve => server.close(() => resolve()))
+  })
+
+  function requestOptions(path: string): RequestOptions {
+    return { protocol: "http:", hostname: "127.0.0.1", port, path }
+  }
+
+  function apiRequest(path: string): Promise<string> {
+    requested.length = 0
+    return new LocalHttpExecutor().doApiRequest(requestOptions(path), new CancellationToken(), request => request.end())
+  }
+
+  async function download(path: string): Promise<string> {
+    requested.length = 0
+    const buffer = await new LocalHttpExecutor().downloadToBuffer(new URL(`http://127.0.0.1:${port}${path}`), { cancellationToken: new CancellationToken() })
+    return buffer.toString()
+  }
+
+  for (const [name, run] of [
+    ["doApiRequest", apiRequest],
+    ["doDownload", download],
+  ] as const) {
+    describe(name, () => {
+      test("an A -> B -> A redirect loop fails with Too many redirects", async () => {
+        await expect(run("/a")).rejects.toThrow(/Too many redirects/)
+        // the first request and maxRedirects redirects
+        expect(requested).toHaveLength(MAX_REDIRECTS + 1)
+      })
+
+      test("a chain of more than maxRedirects redirects fails with Too many redirects", async () => {
+        await expect(run(`/chain/0?end=${MAX_REDIRECTS + 5}`)).rejects.toThrow(/Too many redirects/)
+        expect(requested).toHaveLength(MAX_REDIRECTS + 1)
+      })
+
+      test("a chain of exactly maxRedirects redirects is followed", async () => {
+        await expect(run(`/chain/0?end=${MAX_REDIRECTS}`)).resolves.toBe("done")
+        expect(requested).toHaveLength(MAX_REDIRECTS + 1)
+      })
+    })
+  }
 })
