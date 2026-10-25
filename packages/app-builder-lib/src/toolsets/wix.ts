@@ -1,6 +1,7 @@
-import { Arch } from "builder-util"
+import { Arch, InvalidConfigurationError } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { ToolsetConfig } from "../configuration.js"
+import { BUILD_CHANGES_URL } from "../util/config/legacyOptions.js"
 import { downloadBuilderToolset } from "../util/electronGet.js"
 import { getCustomToolsetPath } from "./custom.js"
 import { resolveToolsetVersion } from "./version.js"
@@ -35,6 +36,35 @@ export interface WixToolset {
 /** The `xmlns` of a `.wxs` document in `schema`. */
 export function getWixNamespace(schema: WixSchema): string {
   return schema === "v3" ? "http://schemas.microsoft.com/wix/2006/wi" : "http://wixtoolset.org/schemas/v4/wxs"
+}
+
+const WIX4_NAMESPACE_PATTERN = /\bxmlns(?::[\w.-]+)?\s*=\s*(["'])(http:\/\/wixtoolset\.org\/schemas\/v4\/[^"']*)\1/g
+
+/** The WiX 4 namespaces (`http://wixtoolset.org/schemas/v4/...`) that a `.wxs` project declares, each once. */
+export function findWix4Namespaces(project: string): Array<string> {
+  return [...new Set(Array.from(project.matchAll(WIX4_NAMESPACE_PATTERN), it => it[2]))]
+}
+
+/**
+ * Fails a WiX 3 build whose project declares a WiX 4 namespace, which only an `msiProjectCreated` hook can add (the
+ * generated project uses the WiX 3 ones). candle would reject it with an "unhandled extension element" error that
+ * doesn't say the bundle is the cause.
+ */
+export function assertNoWix4Namespaces(project: string, schema: WixSchema): void {
+  if (schema !== "v3") {
+    return
+  }
+  const namespaces = findWix4Namespaces(project)
+  if (namespaces.length === 0) {
+    return
+  }
+  throw new InvalidConfigurationError(
+    `The MSI project declares the WiX 4 namespace ${namespaces.map(it => `"${it}"`).join(", ")}, most likely from an msiProjectCreated hook, ` +
+      `but the WiX 3 toolset reads WiX 3 namespaces only (electron-builder v27 builds MSIs with WiX 3.14.1 by default, toolsets.wix "latest"). ` +
+      `Use the WiX 3 namespace (for example "http://schemas.microsoft.com/wix/UtilExtension" instead of "http://wixtoolset.org/schemas/v4/wxs/util"), ` +
+      `or set toolsets.wix to "0.0.0" to keep the legacy WiX 4 preview bundle. ` +
+      `See ${BUILD_CHANGES_URL}#toolset-defaults-resolve-to-latest-newest-bundle`
+  )
 }
 
 /** Resolves a `toolsets.wix` version: unset or `"latest"` is the newest bundle, `"0.0.0"` the legacy one. */

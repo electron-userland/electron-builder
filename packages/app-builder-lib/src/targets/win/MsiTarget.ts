@@ -9,7 +9,7 @@ import { Target } from "../../core.js"
 import { MsiOptions } from "../../index.js"
 import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration.js"
 import { normalizeExt } from "../../platformPackager.js"
-import { getCandleArch, getWixArch, getWixNamespace, getWixToolset, WixToolset } from "../../toolsets/wix.js"
+import { assertNoWix4Namespaces, getCandleArch, getWixArch, getWixNamespace, getWixToolset, WixToolset } from "../../toolsets/wix.js"
 import { getTemplatePath } from "../../util/pathManager.js"
 import { withToolsetLock } from "../../util/toolsetLock.js"
 import { VmManager } from "../../vm/vm.js"
@@ -89,6 +89,8 @@ export default class MsiTarget extends Target {
     await writeFile(projectFile, await this.writeManifest(appOutDir, wixArch, commonOptions))
 
     await packager.emitMsiProjectCreated(projectFile)
+    // an msiProjectCreated hook written for the legacy bundle can add WiX 4 namespaces, which WiX 3 can't compile
+    assertNoWix4Namespaces(await readFile(projectFile, "utf8"), wixToolset.schema)
 
     const vendorPath = wixToolset.path
 

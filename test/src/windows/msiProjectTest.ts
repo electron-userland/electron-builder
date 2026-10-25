@@ -3,11 +3,12 @@ import { getEffectiveOptions } from "app-builder-lib/src/options/CommonWindowsIn
 import MsiTarget from "app-builder-lib/src/targets/win/MsiTarget"
 import { WixSchema } from "app-builder-lib/src/toolsets/wix"
 import { createHash } from "crypto"
+import { InvalidConfigurationError } from "builder-util"
 import { XMLValidator } from "fast-xml-parser"
-import { mkdir, writeFile } from "fs/promises"
+import { mkdir, readFile, writeFile } from "fs/promises"
 import * as path from "path"
 import { TmpDir } from "temp-file"
-import { vi } from "vitest"
+import { expect, vi } from "vitest"
 
 // Renders the MSI target's .wxs project (MsiTarget.writeManifest) offline and on every OS, for both WiX bundles, without
 // downloading a toolset or running candle/light: a real WinPackager over a minimal fake Packager, with the toolset and the
@@ -22,9 +23,11 @@ interface ProjectOptions {
   readonly msi?: Configuration["msi"]
   // relative paths (with "/") of the files in the app dir; defaults to the main executable and two subdirectories
   readonly files?: Array<string>
+  // runs as the msiProjectCreated hook, with the project file
+  readonly msiProjectCreated?: (projectFile: string) => Promise<void>
 }
 
-async function createTarget(tmpDir: TmpDir, { schema, msi, files }: ProjectOptions) {
+async function createTarget(tmpDir: TmpDir, { schema, msi, files, msiProjectCreated }: ProjectOptions) {
   const projectDir = await tmpDir.getTempDir({ prefix: "eb-msi-project-test" })
   const buildResourcesDir = path.join(projectDir, "build")
   await mkdir(buildResourcesDir, { recursive: true })
@@ -47,6 +50,9 @@ async function createTarget(tmpDir: TmpDir, { schema, msi, files }: ProjectOptio
     repositoryInfo: Promise.resolve(null),
     tempDirManager: tmpDir,
     framework: { defaultAppIdPrefix: "com.electron." },
+    stageDirPathCustomizer: () => path.join(projectDir, "stage"),
+    emitArtifactBuildStarted: async () => {},
+    emitMsiProjectCreated: async (projectFile: string) => await msiProjectCreated?.(projectFile),
   }
   const packager = new WinPackager(fakePackagerInfo as any)
   // the default icon would be converted with the icons toolset; the .wxs only references it when there is one
@@ -67,6 +73,15 @@ async function lightCalls(tmpDir: TmpDir, options: ProjectOptions): Promise<Arra
   const { target, appOutDir } = await createTarget(tmpDir, options)
   const vm = { toVmFile: (file: string) => file, exec: vi.fn().mockResolvedValue("") }
   await (target as any).light(["project.wixobj"], vm, path.join(appOutDir, "..", "Test MSI.msi"), appOutDir, "wix", appOutDir)
+  return vm.exec.mock.calls.map(([file, args]) => [file, args])
+}
+
+/** Runs MsiTarget.build up to candle.exe with a VM that records its calls instead of running anything. */
+async function buildUntilCandle(tmpDir: TmpDir, options: ProjectOptions): Promise<Array<[string, Array<string>]>> {
+  const { target, appOutDir } = await createTarget(tmpDir, options)
+  const vm = { toVmFile: (file: string) => file, exec: vi.fn().mockRejectedValue(new Error("stop after candle")) }
+  ;(target as any).vm = vm
+  await expect(target.build(appOutDir, Arch.x64)).rejects.toThrow("stop after candle")
   return vm.exec.mock.calls.map(([file, args]) => [file, args])
 }
 
@@ -226,6 +241,32 @@ describe("MSI project (.wxs)", () => {
       expect(project).toContain(` Id="LICENSE.electron.txt_f"`)
       expect(project).toContain(` Id="d3dcompiler_47.dll_f"`)
       expect(project).toContain(` Id="mainExecutable"`)
+    })
+  })
+
+  describe("msiProjectCreated with WiX 3", () => {
+    // what the "wix args" e2e test inserts, with the namespace of either bundle
+    const insertCloseApplication = (namespace: string) => async (projectFile: string) => {
+      const project = await readFile(projectFile, "utf8")
+      await writeFile(projectFile, project.replace("</Product>", `<util:CloseApplication xmlns:util="${namespace}" Target="Test MSI.exe"/></Product>`))
+    }
+
+    test("a hook that adds a WiX 4 namespace fails the build before candle runs", async ({ expect, tmpDir }) => {
+      const { target, appOutDir } = await createTarget(tmpDir, { schema: "v3", msiProjectCreated: insertCloseApplication("http://wixtoolset.org/schemas/v4/wxs/util") })
+      const vm = { toVmFile: (file: string) => file, exec: vi.fn().mockResolvedValue("") }
+      ;(target as any).vm = vm
+      await expect(target.build(appOutDir, Arch.x64)).rejects.toThrow(InvalidConfigurationError)
+      expect(vm.exec).not.toHaveBeenCalled()
+    })
+
+    test("a hook that adds the WiX 3 namespace builds", async ({ expect, tmpDir }) => {
+      const calls = await buildUntilCandle(tmpDir, { schema: "v3", msiProjectCreated: insertCloseApplication("http://schemas.microsoft.com/wix/UtilExtension") })
+      expect(calls.map(([file]) => path.basename(file))).toEqual(["candle.exe"])
+    })
+
+    test("the legacy bundle compiles a hook's WiX 4 namespace", async ({ expect, tmpDir }) => {
+      const calls = await buildUntilCandle(tmpDir, { schema: "v4-preview", msiProjectCreated: insertCloseApplication("http://wixtoolset.org/schemas/v4/wxs/util") })
+      expect(calls.map(([file]) => path.basename(file))).toEqual(["candle.exe"])
     })
   })
 })
