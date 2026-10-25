@@ -81,9 +81,8 @@ async function download(executor: FakeElectronHttpExecutor, path: string): Promi
   return buffer.toString()
 }
 
-// ElectronHttpExecutor's guard is `redirectCount > maxRedirects` (master: `>=`), so it follows one redirect more than the
-// Node.js path before rejecting
-const REQUESTS_AT_LIMIT = MAX_REDIRECTS + 2
+// maxRedirects redirects are followed, like the Node.js path: the original request plus one per redirect
+const REQUESTS_AT_LIMIT = MAX_REDIRECTS + 1
 
 describe("ElectronHttpExecutor redirect limit", () => {
   for (const [name, run] of [
