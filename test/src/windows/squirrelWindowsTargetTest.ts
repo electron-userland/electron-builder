@@ -102,7 +102,22 @@ describe("SquirrelWindowsTarget.build", () => {
     await zipFinished
   })
 
-  test("does not wait for the archive of another arch", async () => {
+  test("waits for the archive of another arch when the app dir is shared (prepackaged)", async () => {
+    const { events, finishZip, zip, squirrel } = createBuild()
+    const appOutDir = "/prepackaged"
+    await zip.build(appOutDir, Arch.x64)
+
+    const build = squirrel.build(appOutDir, Arch.ia32)
+    await new Promise(resolve => setTimeout(resolve, 10))
+    expect(squirrel.generateStubExecutableExe).not.toHaveBeenCalled()
+
+    finishZip()
+    await build
+    expect(events).toEqual(["zip done", "stub written", "installer queued"])
+    await expect(zip.finishBuild()).rejects.toThrow("archive stub")
+  })
+
+  test("does not wait for the archive of another arch in its own app dir", async () => {
     const { events, zip, squirrel } = createBuild()
     // the x64 archive never finishes
     await zip.build("/out/win-unpacked", Arch.x64)
