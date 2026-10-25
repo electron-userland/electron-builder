@@ -8,7 +8,7 @@ import { Logger } from "../types"
 import { copyData } from "./DataSplitter"
 import { URL } from "url"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder"
-import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader"
+import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests, RangeRequestTarget, requestRange } from "./multipleRangeDownloader"
 import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform"
 
 export interface DifferentialDownloaderOptions {
@@ -40,11 +40,13 @@ export abstract class DifferentialDownloader {
   }
 
   createRequestOptions(): RequestOptions {
-    const result = {
+    // requestRange follows a redirect itself, without the credential headers when the target is on another origin
+    const result: RequestOptions & { redirect: "manual" } = {
       headers: {
         ...this.options.requestHeaders,
         accept: "*/*",
       },
+      redirect: "manual",
     }
     configureRequestUrl(this.options.newUrl, result)
     // user-agent, cache-control and other common options
@@ -196,8 +198,8 @@ export abstract class DifferentialDownloader {
       let downloadOperationCount = 0
       this.logger.info(`Differential download: ${this.options.newUrl}`)
 
-      let requestOptions = this.createRequestOptions()
-      ;(requestOptions as any).redirect = "manual"
+      // once a request is redirected, the remaining ranges are requested from the redirect target
+      const target: RangeRequestTarget = { options: this.createRequestOptions() }
 
       w = (index: number): void => {
         if (index >= tasks.length) {
@@ -220,7 +222,6 @@ export abstract class DifferentialDownloader {
         }
 
         const range = `bytes=${operation.start}-${operation.end - 1}`
-        requestOptions.headers!.range = range
 
         this.logger?.debug?.(`download range: ${range}`)
 
@@ -229,16 +230,24 @@ export abstract class DifferentialDownloader {
           downloadInfoTransform.beginRangeDownload()
         }
 
-        const requestRange = (redirectCount: number): void => {
-          const request = this.httpExecutor.createRequest(requestOptions, response => {
+        requestRange(
+          this,
+          target,
+          range,
+          response => {
             response.on("error", reject)
+            // requestRange follows redirects (Electron reports them as events), so a 3xx is not expected here
+            const { statusCode } = response
+            if (typeof statusCode === "number" && statusCode >= 400) {
+              // nothing more is read from a rejected response, and the remaining ranges are not requested
+              response.destroy()
+              reject(createHttpError(response))
+              return
+            }
+            // after the status check: destroying a rejected response would otherwise report a server abort
             response.on("aborted", () => {
               reject(new Error("response has been aborted by the server"))
             })
-            // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
-            if (response.statusCode >= 400) {
-              reject(createHttpError(response))
-            }
 
             response.pipe(firstStream, {
               end: false,
@@ -256,23 +265,9 @@ export abstract class DifferentialDownloader {
                 w(index)
               }
             })
-          })
-          request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
-            this.logger.info(`Redirect to ${removeQuery(redirectUrl)}`)
-            // like ElectronHttpExecutor: followRedirect() would resend every header, so abort and request the range again, without
-            // the credential headers if the redirect leaves the origin. The remaining ranges are requested from the redirect URL too.
-            request.abort()
-            if (redirectCount >= MAX_REDIRECTS) {
-              reject(new Error(`Too many redirects (> ${MAX_REDIRECTS})`))
-              return
-            }
-            requestOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions)
-            requestRange(redirectCount + 1)
-          })
-          this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-          request.end()
-        }
-        requestRange(0)
+          },
+          reject
+        )
       }
 
       w(0)
@@ -281,10 +276,8 @@ export abstract class DifferentialDownloader {
 
   protected async readRemoteBytes(start: number, endInclusive: number): Promise<Buffer> {
     const buffer = Buffer.allocUnsafe(endInclusive + 1 - start)
-    const requestOptions = this.createRequestOptions()
-    requestOptions.headers!.range = `bytes=${start}-${endInclusive}`
     let position = 0
-    await this.request(requestOptions, chunk => {
+    await this.request(`bytes=${start}-${endInclusive}`, chunk => {
       chunk.copy(buffer, position)
       position += chunk.length
     })
@@ -295,38 +288,35 @@ export abstract class DifferentialDownloader {
     return buffer
   }
 
-  private request(requestOptions: RequestOptions, dataHandler: (chunk: Buffer) => void): Promise<void> {
+  private request(range: string, dataHandler: (chunk: Buffer) => void): Promise<void> {
     return new Promise((resolve, reject) => {
-      const request = this.httpExecutor.createRequest(requestOptions, response => {
-        if (!checkIsRangesSupported(response, reject)) {
-          return
-        }
+      requestRange(
+        this,
+        { options: this.createRequestOptions() },
+        range,
+        response => {
+          // before the check: a response it rejects can still emit an error, which unhandled would be an uncaught exception
+          response.on("error", reject)
+          // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
+          if (!checkIsRangesSupported(response, reject)) {
+            return
+          }
 
-        response.on("error", reject)
-        response.on("aborted", () => {
-          reject(new Error("response has been aborted by the server"))
-        })
+          response.on("aborted", () => {
+            reject(new Error("response has been aborted by the server"))
+          })
 
-        response.on("data", dataHandler)
-        response.on("end", () => resolve())
-      })
-      this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-      request.end()
+          response.on("data", dataHandler)
+          response.on("end", () => resolve())
+        },
+        reject
+      )
     })
   }
 }
 
-// the redirect limit of HttpExecutor
-const MAX_REDIRECTS = 10
-
 function formatBytes(value: number, symbol = " KB"): string {
   return new Intl.NumberFormat("en").format((value / 1024).toFixed(2) as any) + symbol
-}
-
-// safety
-function removeQuery(url: string): string {
-  const index = url.indexOf("?")
-  return index < 0 ? url : url.substring(0, index)
 }
 
 interface OpenedFile {
