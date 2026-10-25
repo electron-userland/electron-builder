@@ -73,6 +73,10 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     return request
   }
 
+  /**
+   * A redirect aborts `request` and `handler` sends a new one to the target. A redirect to a protocol other than http(s) is rejected,
+   * and so is anything `handler` throws.
+   */
   protected addRedirectHandlers(
     request: ClientRequest,
     options: RequestOptions,
@@ -87,8 +91,19 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
 
       if (redirectCount > this.maxRedirects) {
         reject(this.createMaxRedirectError())
-      } else {
-        handler(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options))
+        return
+      }
+      // an event listener: a throw (from preparing the options, or from the handler, which sends the new request) would escape as an
+      // uncaught exception and the request would never settle
+      try {
+        const redirectOptions = HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options)
+        // net.request throws for another protocol, where Electron following the redirect itself fails the request
+        if (redirectOptions.protocol !== "http:" && redirectOptions.protocol !== "https:") {
+          throw new Error(`Cannot follow the redirect to the "${redirectOptions.protocol ?? ""}" protocol`)
+        }
+        handler(redirectOptions)
+      } catch (e: unknown) {
+        reject(e instanceof Error ? e : new Error(`Cannot follow the redirect: ${String(e)}`))
       }
     })
   }
