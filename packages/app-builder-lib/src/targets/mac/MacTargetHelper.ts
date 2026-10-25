@@ -246,8 +246,8 @@ export class MacTargetHelper {
         return identity.hash
       }
 
-      // the same pattern osx-sign uses, so we never derive a Team ID it would have rejected
-      const teamId = /^.+\((.+?)\)\s*$/.exec(identity.name)?.[1]
+      // what osx-sign's pattern takes, so we never derive a Team ID it would have rejected
+      const teamId = parseIdentityTeamId(identity.name)
       if (teamId == null) {
         log.debug({ identityName: identity.name }, "cannot parse Team ID from identity name, signing with the identity name")
         return identity.name
@@ -850,6 +850,28 @@ export function isLoadableMachOFileType(type: number | null): boolean {
  */
 export async function isMachOFile(file: string): Promise<boolean> {
   return (await readMachOFileType(file)) != null
+}
+
+const LINE_TERMINATOR = /[\n\r\u2028\u2029]/
+
+/**
+ * The Team ID of a signing identity name such as `Developer ID Application: Foo Inc (ABCDE12345)`, or `null`: what
+ * @electron/osx-sign's `/^.+\((.+?)\)\s*$/` captures - the text between the last `(` that leaves it non-empty and a closing `)`
+ * followed only by whitespace, with at least one character before the `(` and no line break before the trailing whitespace.
+ * Parsed without that regular expression, which backtracks polynomially on names with many `(` (the name comes from the
+ * keychain or the configuration).
+ *
+ * @internal Exported for tests only.
+ */
+export function parseIdentityTeamId(name: string): string | null {
+  // \s and trimEnd remove the same characters
+  const trimmed = name.trimEnd()
+  if (!trimmed.endsWith(")") || LINE_TERMINATOR.test(trimmed)) {
+    return null
+  }
+  // the last "(" with at least one character between it and the closing ")"
+  const open = trimmed.lastIndexOf("(", trimmed.length - 3)
+  return open < 1 ? null : trimmed.substring(open + 1, trimmed.length - 1)
 }
 
 /**

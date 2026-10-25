@@ -89,7 +89,10 @@ const NOT_MANIFESTS = new Set(["app-update.yml", "builder-debug.yml", "builder-e
  * turn the affected checks into `skipped` results, whatever the host.
  */
 export async function verifyBuildOutput(options: VerifyBuildOutputOptions): Promise<Array<VerificationResult>> {
-  const { outDir, config } = options
+  // absolute, so that every path handed to codesign, stapler or pkgutil starts with "/": a file name of the output (which is not
+  // trusted) such as "-v.pkg" never reaches them as an option
+  const outDir = path.resolve(options.outDir)
+  const { config } = options
   const { apps, files } = await discover(outDir)
   const results: Array<VerificationResult> = []
   for (const app of apps) {

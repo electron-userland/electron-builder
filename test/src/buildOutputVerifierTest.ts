@@ -377,6 +377,17 @@ describe("macOS artifacts", () => {
     ).toEqual(["linux-unpacked", "win-ia32-unpacked"])
   })
 
+  test("hands the tools absolute paths only, so a file name such as -v.pkg is never read as an option", async ({ expect, tmpDir }) => {
+    setPlatform("darwin")
+    const outDir = await tmpDir.createTempDir()
+    await write(path.join(outDir, "-v.pkg"), "installer")
+    await write(path.join(outDir, "mac", "-v.app", "Contents", "Info.plist"), "<plist/>")
+    await run(path.relative(process.cwd(), outDir))
+    const files = [...vi.mocked(checkInstallerPackageSignature).mock.calls.map(call => call[0]), ...vi.mocked(verifyMacCodeSignature).mock.calls.map(call => call[0])]
+    expect(files).toEqual([path.join(outDir, "-v.pkg"), path.join(outDir, "mac", "-v.app")])
+    expect(files.every(it => path.isAbsolute(it))).toBe(true)
+  })
+
   test("honors mac.sign.strictVerify", async ({ expect, tmpDir }) => {
     setPlatform("darwin")
     const outDir = await tmpDir.createTempDir()
