@@ -437,8 +437,8 @@ test("--verify allows a cutover release signed outside the trust list only with 
   await writeKey(dir, "current.pem", current.privateKeyPem)
   const file = path.join(dir, "latest.yml")
   await fsp.writeFile(file, serializeToYaml({ ...manifest("9.0.0", "App-Setup-9.0.0.exe"), stagingPercentage: 10 }))
-  // re-signing does not consult the trust list: the release is signed with the old key, as its build was
-  expect(await run(dir, [file])).toEqual([{ file, version: "9.0.0", keyIds: [currentId] }])
+  // re-signing it with the old key needs the same cutover allowance its build needed
+  expect(await run(dir, [file, "-c.updateManifest.allowSigningKeyOutsideTrustList=true"])).toEqual([{ file, version: "9.0.0", keyIds: [currentId] }])
 
   const error = await rejection(run(dir, [file, "--verify"]))
   expect(error).toBeInstanceOf(InvalidConfigurationError)
@@ -513,4 +513,44 @@ test("--verify agrees with electron-builder verify (verifyBuildOutput) on the sa
   }
   // every outcome is covered
   expect(new Set([...reference.values()].map(it => it.status))).toEqual(new Set(["verified", "failed", "skipped"]))
+})
+
+test("re-signing refuses a signing key outside updateManifest.publicKey exactly as a publishing build does", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const dir = await createProject(await tmpDir.createTempDir(), { updateManifest: { signingKeyFile: "keys/current.pem", publicKey: next.publicKeyPem } })
+  await writeKey(dir, "current.pem", current.privateKeyPem)
+  const file = path.join(dir, "latest.yml")
+  const mac = path.join(dir, "latest-mac.yml")
+  await writeSigned(file, manifest("10.0.0", "App-Setup-10.0.0.exe"), [current.privateKeyPem])
+  await writeSigned(mac, manifest("10.0.0", "App-10.0.0-mac.zip"), [current.privateKeyPem])
+  await editManifest(file, it => (it.stagingPercentage = 20))
+  const before = await fsp.readFile(file, "utf8")
+  const macBefore = await fsp.readFile(mac, "utf8")
+
+  // the error the build's checkSigningKeysTrusted raises for a publishing build, for the build's platform name
+  const error = await rejection(run(dir, [mac, file]))
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toMatch(
+    new RegExp(`^none of the update-manifest signing keys \\(key id\\(s\\) ${currentId}\\) is in updateManifest\\.publicKey \\(key id\\(s\\) ${nextId}\\) for mac\\. `)
+  )
+  expect(error!.message).toContain("set updateManifest.allowSigningKeyOutsideTrustList: true")
+  // checked before anything is written, for every file of the batch
+  expect(await fsp.readFile(file, "utf8")).toBe(before)
+  expect(await fsp.readFile(mac, "utf8")).toBe(macBefore)
+  const winError = await rejection(run(dir, [file]))
+  expect(winError!.message).toContain(`for windows. `)
+
+  // a deliberate cutover release: allowed (the build only warns, once per process)
+  expect(await run(dir, [file, "-c.updateManifest.allowSigningKeyOutsideTrustList=true"])).toEqual([{ file, version: "10.0.0", keyIds: [currentId] }])
+
+  // a trusted signing key (one of the listed keys is enough, as in the build)
+  expect(await run(dir, [file, trust(next.publicKeyPem, current.publicKeyPem)])).toEqual([{ file, version: "10.0.0", keyIds: [currentId] }])
+
+  // no updateManifest.publicKey: the build derives the trust list from the signing keys, so there is nothing to refuse
+  await fsp.writeFile(path.join(dir, "electron-builder.yml"), serializeToYaml({ updateManifest: { signingKeyFile: "keys/current.pem" } }))
+  expect(await run(dir, [file, mac])).toMatchObject([{ keyIds: [currentId] }, { keyIds: [currentId] }])
+
+  // an invalid publicKey entry is the build's configuration error too
+  const invalid = await rejection(run(dir, [file, trust(current.publicKeyPem, current.publicKeyPem)]))
+  expect(invalid!.message).toBe("updateManifest.publicKey #2 duplicates entry #1 (key id " + currentId + "). List each trusted key once.")
 })

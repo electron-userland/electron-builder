@@ -56,7 +56,7 @@ import { AppInfo } from "../appInfo.js"
 import { Configuration } from "../configuration.js"
 import { Platform, Target, TargetSpecificOptions } from "../core.js"
 import { ArtifactCreated, PlannedTargets } from "../packagerApi.js"
-import { PlatformSpecificBuildOptions } from "../options/PlatformSpecificBuildOptions.js"
+import { PlatformSpecificBuildOptions, UpdateManifestSigningOptions } from "../options/PlatformSpecificBuildOptions.js"
 import { Packager } from "../packager.js"
 import { PlatformPackager } from "../platformPackager.js"
 import { missingUpdatePublisherNameError, validatePublisherNameFormat } from "../codeSign/win/publisherName.js"
@@ -633,6 +633,21 @@ async function applyUpdateCodeSignatureVerification(winPackager: WinPackager, pu
  * ever reported, never key material.
  */
 function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: ReadonlyArray<KeyObject>, explicitKeys: ReadonlyArray<string>, fail: boolean): void {
+  checkUpdateSigningKeysTrusted(packager.platform.name, packager.updateManifestOptions, signingKeys, explicitKeys, fail)
+}
+
+/**
+ * {@link checkSigningKeysTrusted} for a platform's resolved `updateManifest` options (`<platform>.updateManifest ?? updateManifest`)
+ * rather than a packager, so a step outside the build (the `sign-update-manifest` CLI) refuses exactly what the build refuses.
+ * @internal
+ */
+export function checkUpdateSigningKeysTrusted(
+  platformName: string,
+  updateManifestConfig: UpdateManifestSigningOptions | false | null,
+  signingKeys: ReadonlyArray<KeyObject>,
+  explicitKeys: ReadonlyArray<string>,
+  fail: boolean
+): void {
   if (signingKeys.length === 0 || explicitKeys.length === 0) {
     return
   }
@@ -642,11 +657,10 @@ function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: R
     return
   }
 
-  const updateManifestConfig = packager.updateManifestOptions
   const allowed = updateManifestConfig !== false && updateManifestConfig?.allowSigningKeyOutsideTrustList === true
   if (fail && !allowed) {
     throw new InvalidConfigurationError(
-      `none of the update-manifest signing keys (key id(s) ${signingIds.join(", ")}) is in updateManifest.publicKey (key id(s) ${trustedIds.join(", ")}) for ${packager.platform.name}. ` +
+      `none of the update-manifest signing keys (key id(s) ${signingIds.join(", ")}) is in updateManifest.publicKey (key id(s) ${trustedIds.join(", ")}) for ${platformName}. ` +
         "The app built here embeds only the listed keys, so its installs will reject manifests signed with the signing key(s) above: every later release would have to be signed by a key in updateManifest.publicKey. " +
         "Add the signing key's public key to updateManifest.publicKey, or sign with a key that is listed. " +
         "For a deliberate cutover release that hands installs over to a listed key, set updateManifest.allowSigningKeyOutsideTrustList: true. " +
@@ -656,7 +670,7 @@ function checkSigningKeysTrusted(packager: PlatformPackager<any>, signingKeys: R
   log
     .once("update-manifest-signing-key-outside-trust-list")
     .warn(
-      { platform: packager.platform.name, signingKeyIds: signingIds, trustedKeyIds: trustedIds },
+      { platform: platformName, signingKeyIds: signingIds, trustedKeyIds: trustedIds },
       "none of the update-manifest signing keys is in updateManifest.publicKey: installs of this release will not be able to verify manifests signed with the current key(s). " +
         (allowed
           ? "Allowed by updateManifest.allowSigningKeyOutsideTrustList for a deliberate cutover release; every later release must be signed by a key in updateManifest.publicKey."
@@ -670,8 +684,9 @@ const SIGNING_KEY_OUTSIDE_TRUST_LIST_DOCS = "https://www.electron.build/docs/mig
 /**
  * Normalizes the configured `updateManifest.publicKey` (string, multi-PEM string, or array) into distinct,
  * validated Ed25519 public keys, preserving order. Duplicates and non-Ed25519 keys are configuration errors.
+ * @internal
  */
-function normalizeExplicitPublicKeys(value: string | Array<string> | null | undefined): Array<string> {
+export function normalizeExplicitPublicKeys(value: string | Array<string> | null | undefined): Array<string> {
   const keys = normalizePublicKeyList(value)
   const seen = new Map<string, number>()
   keys.forEach((key, index) => {

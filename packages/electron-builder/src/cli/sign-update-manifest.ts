@@ -1,6 +1,6 @@
 import type { Configuration } from "app-builder-lib"
-import { getConfig, verifyUpdateManifestContent } from "app-builder-lib/internal"
-import { InvalidConfigurationError, loadUpdateSigningKeys, log, parseUpdateManifestYaml, resignUpdateManifestYaml } from "builder-util"
+import { checkUpdateSigningKeysTrusted, getConfig, normalizeExplicitPublicKeys, verifyUpdateManifestContent } from "app-builder-lib/internal"
+import { InvalidConfigurationError, loadUpdateSigningKeys, log, parsePrivateKey, parseUpdateManifestYaml, resignUpdateManifestYaml } from "builder-util"
 import { normalizePublicKeyList, parsePublicKey } from "builder-util-runtime"
 import chalk from "chalk"
 import { readFile, writeFile } from "fs/promises"
@@ -80,6 +80,9 @@ export interface VerifiedUpdateManifest {
 }
 
 type ManifestPlatform = "mac" | "win" | "linux"
+
+/** `Platform.name` of each manifest platform, as the build names it in its messages. */
+const BUILD_PLATFORM_NAMES: Record<ManifestPlatform, string> = { mac: "mac", win: "windows", linux: "linux" }
 
 const KEY_SOURCES_HINT =
   "Set updateManifest.signingKeyFile (or updateManifest.signingKey) in the electron-builder configuration, override it with -c.updateManifest.signingKeyFile=<path>, " +
@@ -162,10 +165,13 @@ class ManifestSigningSettings {
       }
       // same resolution as the build: config signingKey, config signingKeyFile (project-relative), then the environment variables
       keys = loadUpdateSigningKeys(value, this.projectDir)
+      if (keys.length === 0) {
+        throw new InvalidConfigurationError(`Cannot sign ${file}: no Ed25519 signing key was found for ${platform}. ${KEY_SOURCES_HINT}`)
+      }
+      // the publishing build's own check: an explicit updateManifest.publicKey must hold one of the signing keys, unless
+      // allowSigningKeyOutsideTrustList marks a cutover release; without a publicKey the build derives the trust list from the keys
+      checkUpdateSigningKeysTrusted(BUILD_PLATFORM_NAMES[platform], value ?? null, keys.map(parsePrivateKey), normalizeExplicitPublicKeys(value?.publicKey), true)
       this.signingKeys.set(platform, keys)
-    }
-    if (keys.length === 0) {
-      throw new InvalidConfigurationError(`Cannot sign ${file}: no Ed25519 signing key was found for ${platform}. ${KEY_SOURCES_HINT}`)
     }
     return keys
   }
