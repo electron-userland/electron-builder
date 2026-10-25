@@ -478,3 +478,24 @@ export function resolveWindowsSigningConfiguration(config: WindowsConfiguration)
 export function isWindowsSigningDisabled(config: WindowsConfiguration): boolean {
   return config.sign === false || config.sign === null
 }
+
+/**
+ * Whether `file` is signed according to `signExts`: a listed extension is signed, a `!`-negated one is not, and
+ * otherwise `.exe` files (or every file, with `fallbackValue`) are.
+ */
+export function shouldSignWindowsFile(file: string, signExts: ReadonlyArray<string> | null | undefined, fallbackValue = false): boolean {
+  const isExe = file.endsWith(".exe")
+  if (!signExts?.length) {
+    return isExe || fallbackValue
+  }
+  // process patterns ( !exe => exclude .exe, .dll => include .dll )
+  // we process first to allow literal negatives in case a filename matches "help!.txt" or similar
+  if (signExts.some(ext => file.endsWith(ext))) {
+    return true
+  }
+  // process negative patterns
+  if (signExts.some(ext => ext.startsWith("!") && file.endsWith(ext.substring(1)))) {
+    return false
+  }
+  return isExe || fallbackValue
+}

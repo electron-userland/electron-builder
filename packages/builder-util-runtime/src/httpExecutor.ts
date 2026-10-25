@@ -1,4 +1,4 @@
-import { BinaryToTextEncoding, createHash, Hash } from "crypto"
+import { BinaryToTextEncoding, createHash, Hash, randomBytes, scryptSync } from "crypto"
 import { sleep } from "./retry.js"
 import _debug from "debug"
 import { createWriteStream } from "fs"
@@ -171,9 +171,16 @@ export abstract class HttpExecutor<T extends Request> {
     })
   }
 
+  /**
+   * Follows the redirects of `request` when it reports them as events instead of 3xx responses (Electron's `net` with
+   * `redirect: "manual"`, see ElectronHttpExecutor): the request is aborted and `handler` gets the options for the redirect
+   * target from {@link HttpExecutor.prepareRedirectUrlOptions}, or `reject` gets the too-many-redirects error when
+   * `redirectCount`, the number of redirects already followed, has reached the limit. Node.js requests answer a redirect
+   * with a 3xx response, so this does nothing here.
+   */
   // noinspection JSUnusedLocalSymbols
   // eslint-disable-next-line
-  protected addRedirectHandlers(request: any, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void) {
+  addRedirectHandlers(request: any, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void) {
     // not required for NodeJS
   }
 
@@ -374,6 +381,8 @@ Please double check that your authentication token is correct. Due to security r
 
   static prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions): RequestOptions {
     const newOptions = configureRequestOptionsFromUrl(redirectUrl, { ...options })
+    // the target is hostname and port: Electron's net prefers `host` (where ElectronHttpExecutor moves a `Host` header) over them
+    delete newOptions.host
     const headers = newOptions.headers
     if (headers == null) {
       return newOptions
@@ -715,8 +724,28 @@ export function isSensitiveFieldName(name: string): boolean {
   return SENSITIVE_FIELD_PATTERNS.some(p => normalized.includes(p)) || SENSITIVE_FIELD_SUFFIXES.some(s => normalized.endsWith(s))
 }
 
+// The key of the fingerprints of this process, created on first use and never logged
+let fingerprintKey: Buffer | null = null
+
+/** What a sensitive value is logged as when its fingerprint cannot be computed. */
+export const REDACTED_VALUE = "<redacted>"
+
+/**
+ * Stands in for a secret (a password, token or key) in logs and error messages: a fingerprint that is the same for the same
+ * value within this process, so log lines can be compared, but that cannot be checked against guesses offline, since it is
+ * keyed with a random secret of this process. Derived with scrypt at a low cost: it runs whenever a secret is logged. Never
+ * throws: it returns {@link REDACTED_VALUE} when the fingerprint cannot be computed.
+ */
 export function hashSensitiveValue(value: string): string {
-  return `${createHash("sha256").update(value).digest("hex")} (sha256 hash)`
+  try {
+    if (fingerprintKey == null) {
+      fingerprintKey = randomBytes(32)
+    }
+    const fingerprint = scryptSync(String(value), fingerprintKey, 16, { N: 1024, r: 8, p: 1 }).toString("hex")
+    return `${fingerprint} (redacted fingerprint)`
+  } catch {
+    return REDACTED_VALUE
+  }
 }
 
 export function safeStringifyJson(data: any, skippedNames?: Set<string>): string {

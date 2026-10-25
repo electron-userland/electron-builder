@@ -4,7 +4,6 @@ import fsExtra from "fs-extra"
 import { createHash } from "crypto"
 import * as http from "http"
 import type { Socket } from "net"
-import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert.js"
 import { removeUnstableProperties } from "../helpers/packTester.js"
@@ -541,18 +540,27 @@ function s3UpdateConfig(url: string, channel: string): S3Options {
   }
 }
 
-test("90 staging percentage", config, async ({ expect }) => {
-  const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
-  // staging value of this user id is ≈0.878 — inside a 90% rollout
-  await fsExtra.outputFile(userIdFile, "1wa70172-80f8-5cc4-8131-28f5e0edd2a1")
+// staging value of this user id (bytes 12..15 of the UUID / 0xffffffff) is ≈0.878: inside a 90% rollout, outside a 1% one
+const STAGING_USER_ID = "12a70172-80f8-5cc4-8131-28f5e0edd2a1"
 
+// The updater reads its staging user id from `.updaterId` in the user data directory of its app adapter, so the id is
+// written there: anywhere else, the updater generates a random id and the rollout decision is left to chance.
+async function createStagedNsisUpdater(updateConfigPath: string) {
+  const appAdapter = await createTestAppAdapter("0.0.1")
+  await fsExtra.outputFile(path.join(appAdapter.userDataPath, ".updaterId"), STAGING_USER_ID)
+  const updater = new NsisUpdater(null, appAdapter)
+  tuneTestUpdater(updater)
+  updater.updateConfigPath = updateConfigPath
+  return updater
+}
+
+test("90 staging percentage", config, async ({ expect }) => {
   const { url, close } = await serveUpdate({
     "test-bucket/test/staging-percentage.yml": channelYml({ stagingPercentage: 90 }),
     [`test-bucket/test/${installerName(UPDATE_VERSION)}`]: INSTALLER_CONTENT,
   })
   try {
-    const updater = await createNsisUpdater("0.0.1")
-    updater.updateConfigPath = await writeUpdateConfig<S3Options>(s3UpdateConfig(url, "staging-percentage"))
+    const updater = await createStagedNsisUpdater(await writeUpdateConfig<S3Options>(s3UpdateConfig(url, "staging-percentage")))
     await validateDownload(expect, updater)
   } finally {
     await close()
@@ -560,17 +568,13 @@ test("90 staging percentage", config, async ({ expect }) => {
 })
 
 test("1 staging percentage", config, async ({ expect }) => {
-  const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
-  // staging value of this user id is ≈0.878 — outside a 1% rollout, so no download must happen
-  await fsExtra.outputFile(userIdFile, "12a70172-80f8-5cc4-8131-28f5e0edd2a1")
-
   const { url, close } = await serveUpdate({
     "test-bucket/test/staging-percentage-small.yml": channelYml({ stagingPercentage: 1 }),
     [`test-bucket/test/${installerName(UPDATE_VERSION)}`]: INSTALLER_CONTENT,
   })
   try {
-    const updater = await createNsisUpdater("0.0.1")
-    updater.updateConfigPath = await writeUpdateConfig<S3Options>(s3UpdateConfig(url, "staging-percentage-small"))
+    // outside the rollout, so no download must happen
+    const updater = await createStagedNsisUpdater(await writeUpdateConfig<S3Options>(s3UpdateConfig(url, "staging-percentage-small")))
     await validateDownload(expect, updater, false)
   } finally {
     await close()

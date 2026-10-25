@@ -1,7 +1,9 @@
 import * as asn1js from "asn1js"
+import { Executables, stripSensitiveEnvVars } from "builder-util"
 import { parseAuthenticodeSignatureOutput, prepareAuthenticodeSignatureExec } from "builder-util-runtime"
 import { execFile } from "child_process"
 import { open } from "fs/promises"
+import * as path from "path"
 import * as pkijs from "pkijs"
 
 /**
@@ -55,18 +57,45 @@ export function readAuthenticodeSigner(file: string): Promise<AuthenticodeSigner
   return process.platform === "win32" ? readAuthenticodeSignerWithPowerShell(file) : readEmbeddedAuthenticodeSigner(file)
 }
 
+/** File types electron-builder Authenticode-signs and can read the signature of back: PE files, MSI and AppX/MSIX packages. */
+const AUTHENTICODE_FILE_EXTENSIONS = new Set([".exe", ".dll", ".node", ".msi", ".appx", ".appxbundle", ".msix", ".msixbundle"])
+
+/** Whether `file` is a type whose Authenticode signature can be read back (see `AUTHENTICODE_FILE_EXTENSIONS`). */
+export function isAuthenticodeFileType(file: string): boolean {
+  return AUTHENTICODE_FILE_EXTENSIONS.has(path.extname(file).toLowerCase())
+}
+
+/**
+ * Why a signature read back with {@link readAuthenticodeSigner} does not count as valid, or `null` when it does. Any
+ * status but `HashMismatch` is accepted: the build host may not trust the signing chain that the users' machines
+ * trust, and the reader used off Windows reports no status at all.
+ */
+export function authenticodeSignatureProblem(signer: AuthenticodeSignerInfo): string | null {
+  switch (signer.type) {
+    case "unsigned":
+      return `carries no Authenticode signature (${signer.reason})`
+    case "unreadable":
+      return `has an Authenticode signature that cannot be read (${signer.reason})`
+    case "signed":
+      return signer.status === AuthenticodeSignatureStatus.HashMismatch ? "has an invalid Authenticode signature (HashMismatch: the file was modified after signing)" : null
+  }
+}
+
 // ─── Windows: Get-AuthenticodeSignature ──────────────────────────────────────
 
 /**
  * Reads the signer with `Get-AuthenticodeSignature`, with the helpers electron-updater verifies downloaded updates
  * with (builder-util-runtime: the same PowerShell invocation and JSON parsing), so the build sees exactly what the
- * updater will see.
+ * updater will see. Windows PowerShell is started from `toolsets.executables.powershell` or its default location, with
+ * the build's credential variables (signing passwords, tokens, keys) removed from its environment: reading a signature
+ * needs none of them.
  */
 export function readAuthenticodeSignerWithPowerShell(file: string): Promise<AuthenticodeSignerInfo> {
   return new Promise<AuthenticodeSignerInfo>(resolve => {
     try {
       // a busy build machine may still be preparing the PowerShell modules on first use, and a timeout here fails the build
-      execFile(...prepareAuthenticodeSignatureExec(file, 60 * 1000), (error, stdout, stderr) => {
+      const [, args, options] = prepareAuthenticodeSignatureExec(file, 60 * 1000)
+      execFile(Executables.resolve("powershell"), args, { ...options, env: withoutInheritedCredentials(options.env ?? {}) }, (error, stdout, stderr) => {
         if (error != null) {
           const stderrText = String(stderr ?? "").trim()
           // the message of a non-zero exit is "Command failed: <the whole command line, the encoded script included>\n<stderr>"
@@ -92,10 +121,24 @@ export function readAuthenticodeSignerWithPowerShell(file: string): Promise<Auth
         resolve({ type: "signed", subject, status: numericStatus })
       })
     } catch (e: any) {
-      // PowerShell cannot be located (no SystemRoot) or started at all
+      // PowerShell cannot be located (no SystemRoot, or no executable at its toolsets.executables locations) or started at all
       resolve({ type: "unreadable", reason: `Get-AuthenticodeSignature failed: ${e.message}` })
     }
   })
+}
+
+/**
+ * `env` without the credential variables it inherited from the build (see `stripSensitiveEnvVars`). The variables the command
+ * sets itself, such as the file to read, are kept: they are the ones whose value is not the inherited one.
+ */
+function withoutInheritedCredentials(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const result = stripSensitiveEnvVars(env)
+  for (const [key, value] of Object.entries(env)) {
+    if (process.env[key] !== value) {
+      result[key] = value
+    }
+  }
+  return result
 }
 
 function getProperty(value: unknown, name: string): unknown {

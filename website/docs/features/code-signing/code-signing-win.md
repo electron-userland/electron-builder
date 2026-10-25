@@ -43,7 +43,7 @@ All Windows code signing is configured under a single `win.sign` key using a dis
 | `{ type: "azure", ... }` | Azure Trusted Signing cloud service — **Beta** | all (`signtool /dlib`, Wine on macOS/Linux) |
 | `false` or `null` | Disable signing (resedit resource editing still runs). No certificate is read, not even from `WIN_CSC_LINK` / `CSC_LINK`, so no `publisherName` is derived: a build that writes `app-update.yml` then fails unless you also set `win.verifyUpdateCodeSignature: false` (the update-verification opt-out, written into `app-update.yml`). If you sign the build outside electron-builder, use `{ type: "signtool", publisherName: [...] }` (or a custom `sign` hook with `publisherName`) instead, so `app-update.yml` carries the publisher electron-updater verifies updates against | all |
 
-Combining `win.sign: false` with `forceCodeSigning: true` is a configuration error and fails the build.
+Combining `win.sign: false` with `forceCodeSigning: true` is a configuration error and fails the build, also for a prepackaged app. With `forceCodeSigning`, every file a signing step reports as signed is read back and must carry a valid Authenticode signature — so a custom `sign` hook must sign the file at `configuration.path` in place — and the executable of a prepackaged app, which electron-builder does not sign, must already be signed.
 
 ### Publisher name and update verification
 
@@ -105,6 +105,8 @@ For EV certificates (bound to a USB dongle), identify by subject name instead:
 1. The certificate is resolved from `certificateFile` (or the `WIN_CSC_LINK` / `CSC_LINK` env var), or looked up in the Windows certificate store by `certificateSubjectName` / `certificateSha1`.
 2. Each file is signed once per entry in `signingHashAlgorithms` — by default SHA-1, then SHA-256 with the second signature appended as a nested signature.
 3. On Windows the signer is Microsoft `signtool.exe`; on macOS/Linux it is `osslsigncode` from the `winCodeSign` toolset bundle — no Wine or Windows VM is involved. Note: certificate-store lookups (`certificateSubjectName` / `certificateSha1`) read the Windows store and therefore require Windows (or the bundled Windows VM), whereas file-based signing works on any platform.
+
+Certificate-store lookups and the legacy Azure Trusted Signing integration run PowerShell, which electron-builder starts by absolute path and never looks up on `PATH`; [`toolsets.executables`](../../toolsets.md#executables) (`powershell`, `pwsh`) sets other locations. On Windows it uses PowerShell 7 from `%ProgramFiles%\PowerShell\7\pwsh.exe`, the install location of its MSI installer, and otherwise Windows PowerShell from `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`; `SystemRoot` and `ProgramFiles` must be drive-absolute paths such as `C:\Windows`. Inside a Parallels VM it uses Windows PowerShell from `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`, the location of a default Windows installation; PowerShell 7 is not used there, because `prlctl exec` cannot start a path that contains a space. On macOS and Linux it uses `pwsh` from the install location of Microsoft's package: `/usr/local/microsoft/powershell/7/pwsh` on macOS, `/opt/microsoft/powershell/7/pwsh` or `/snap/bin/pwsh` on Linux.
 
 ### Configuration reference
 

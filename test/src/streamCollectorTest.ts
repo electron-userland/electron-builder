@@ -6,7 +6,8 @@ import * as childProcess from "child_process"
 import * as fse from "fs-extra"
 import * as nodeFs from "node:fs"
 import { EventEmitter } from "events"
-import type { TmpDir } from "builder-util"
+import { Executables, type TmpDir } from "builder-util"
+import { defaultExecutableLocations } from "builder-util/src/executables"
 
 vi.mock("child_process", async importOriginal => {
   const actual = await importOriginal<typeof import("child_process")>()
@@ -40,6 +41,8 @@ const TMP_FILE = "C:\\Temp\\pnpm-deadbeef.tmp"
 let OUTPUT_FILE: string
 
 const originalPlatform = process.platform
+// Windows PowerShell is started by its absolute path, derived from SystemRoot (only set on Windows)
+const POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
 
 // Decode a `powershell.exe -EncodedCommand <base64>` argv back into the PowerShell script text.
 function decodeEncodedCommand(spawnArgs: string[]): string {
@@ -82,6 +85,9 @@ async function waitForRetrySpawn() {
 }
 
 beforeEach(async context => {
+  vi.stubEnv("SystemRoot", "C:\\Windows")
+  // Windows PowerShell is started from its default location, which the resolver would look for on this machine's disk
+  vi.spyOn(Executables, "resolve").mockImplementation(name => defaultExecutableLocations(name, process.platform)[0])
   OUTPUT_FILE = await context.tmpDir.getTempFile({ suffix: ".json" })
   closeCb = undefined
   stderrDataCb = undefined
@@ -120,18 +126,19 @@ beforeEach(async context => {
 afterEach(() => {
   Object.defineProperty(process, "platform", { value: originalPlatform, configurable: true })
   vi.clearAllMocks()
+  vi.unstubAllEnvs()
 })
 
 describe("streamCollectorCommandToFile", { concurrent: false }, () => {
   describe("Windows PowerShell -EncodedCommand wrapping", () => {
-    test(".cmd file: spawn receives powershell.exe with -EncodedCommand", async ({ expect }) => {
+    test(".cmd file: spawn receives powershell.exe by absolute path with -EncodedCommand", async ({ expect }) => {
       setPlatform("win32")
       const p = collector.streamCollectorCommandToFile("C:\\nodejs\\npm.cmd", ["list"], "/cwd", OUTPUT_FILE)
       await waitForCloseCb()
       closeCb!(0)
       await p
       const [cmd, args] = vi.mocked(childProcess.spawn).mock.calls[0]
-      expect(cmd).toBe("powershell.exe")
+      expect(cmd).toBe(POWERSHELL)
       expect((args as string[]).slice(0, 3)).toEqual(["-NoProfile", "-NonInteractive", "-EncodedCommand"])
       const script = decodeEncodedCommand(args as string[])
       expect(script).toContain("& 'C:\\nodejs\\npm.cmd' 'list'")
@@ -154,7 +161,7 @@ describe("streamCollectorCommandToFile", { concurrent: false }, () => {
       await waitForCloseCb()
       closeCb!(0)
       await p
-      expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe("powershell.exe")
+      expect(vi.mocked(childProcess.spawn).mock.calls[0][0]).toBe(POWERSHELL)
       const script = decodeEncodedCommand(vi.mocked(childProcess.spawn).mock.calls[0][1] as string[])
       expect(script).toContain("& 'C:\\Program Files\\Volta\\pnpm'")
     })

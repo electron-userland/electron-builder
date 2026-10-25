@@ -88,6 +88,19 @@ if (patchedUpdateManifest === 0) {
   throw new Error("fix-schema: no `updateManifest` false-branch was patched - did the option or its union change?")
 }
 
+// toolsets.executables: the entries of the mapped type over ExecutableName get no description; give each the one of ExecutableLocation
+const executables = schema.definitions.ExecutablesConfig
+if (executables == null || executables.properties == null) {
+  throw new Error("fix-schema: ExecutablesConfig not found - did toolsets.executables change?")
+}
+for (const [name, property] of Object.entries(executables.properties)) {
+  property.description =
+    `One file:// URI, or a list of them, of the \`${name}\` executable on the build machine, such as \`file:///opt/homebrew/bin/${name}\` or ` +
+    `\`file:///C:/Program%20Files/${name}/${name}.exe\`. The first that is an executable file is used; a URI with a Windows drive letter is ` +
+    "skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. " +
+    "Unset or `null` uses the default locations."
+}
+
 o = schema.properties["$schema"] = {
   description: "JSON Schema for this document.",
   type: ["null", "string"],

@@ -50,7 +50,7 @@ updateManifest.signingKeyFile in the build configuration. To publish unsigned ma
 explicitly with `updateManifest: false`.
 ```
 
-A build **without** a publish policy only warns, so local builds keep working while your release pipeline is the thing that has to hold the key.
+A build **without** a publish policy only warns, so local builds keep working while your release pipeline is the thing that has to hold the key. With [`forceCodeSigning`](./code-signing/code-signing.md#the-forcecodesigning-option), every build that emits a manifest requires the key, whether or not it publishes — pull-request builds included.
 
 **3. That's it.** electron-updater picks the public key up from `app-update.yml` and enforces verification from the first update check.
 
@@ -130,9 +130,9 @@ A relative `signingKeyFile` path resolves against the project directory (where t
 
 Every key must be a distinct Ed25519 key; duplicates and other key types fail the build. When several keys are configured, **each manifest is signed by all of them** and the trust list embeds all of their public keys — this is the dual-signing used during [key rotation](#key-rotation).
 
-An explicit `publicKey` takes precedence over derivation and is embedded as-is. Use it to trust keys you do not (yet) sign with — for example the *next* key ahead of a rotation. It must also list at least one of the keys the build signs with: otherwise installs of that release reject manifests signed with the current key(s), and every later release has to be signed by a listed key. A publishing build in that state fails at build start with an `InvalidConfigurationError` naming the key ids on both sides (a build without a publish policy only warns). For a deliberate cutover release — signed with the old key, which the installs in the field trust, but embedding only the new one — set `allowSigningKeyOutsideTrustList: true`; the build then publishes and logs a warning. When `publicKey` is not set the trust list is derived from the signing keys, so this check does not apply.
+An explicit `publicKey` takes precedence over derivation and is embedded as-is. Use it to trust keys you do not (yet) sign with — for example the *next* key ahead of a rotation. It must also list at least one of the keys the build signs with: otherwise installs of that release reject manifests signed with the current key(s), and every later release has to be signed by a listed key. A publishing (or `forceCodeSigning`) build in that state fails at build start with an `InvalidConfigurationError` naming the key ids on both sides (any other build only warns). For a deliberate cutover release — signed with the old key, which the installs in the field trust, but embedding only the new one — set `allowSigningKeyOutsideTrustList: true`; the build then publishes and logs a warning. When `publicKey` is not set the trust list is derived from the signing keys, so this check does not apply.
 
-A `publicKey` on its own does **not** satisfy the signing requirement — electron-builder still has no key to sign with, so a publishing build fails. An HSM/KMS-style signer that signs `latest*.yml` in a later step of its own therefore either builds without a publish policy, where the requirement only warns and the unsigned manifest is written locally for it to sign, or keeps publishing with `publishAutoUpdate: false` on every publish provider — electron-builder then uploads the artifacts and embeds the `publicKey`, but writes no `latest*.yml`, so the external step has to generate the manifest too. See [Key storage](./key-rotation.md#key-storage).
+A `publicKey` on its own does **not** satisfy the signing requirement — electron-builder still has no key to sign with, so a publishing build fails. An HSM/KMS-style signer that signs `latest*.yml` in a later step of its own therefore either builds without a publish policy (and without `forceCodeSigning`), where the requirement only warns and the unsigned manifest is written locally for it to sign, or keeps publishing with `publishAutoUpdate: false` on every publish provider — electron-builder then uploads the artifacts and embeds the `publicKey`, but writes no `latest*.yml`, so the external step has to generate the manifest too. See [Key storage](./key-rotation.md#key-storage).
 
 At runtime you can also set the trust list on the updater directly; it overrides the value from `app-update.yml`:
 
@@ -154,7 +154,7 @@ Two properties are worth knowing:
 - **It short-circuits the environment variables.** A leftover `ELECTRON_BUILDER_UPDATE_SIGN_KEY` in CI cannot re-enable signing behind the back of the opt-out, so `false` means unsigned everywhere, deterministically.
 - **A platform value wins over the root**, so `linux: { updateManifest: false }` opts out for Linux only while a root signing config still covers the other platforms — and the converse works too. A platform value of `null`, on the other hand, falls back to the root rather than opting out.
 
-The requirement is also waived, without any configuration, where no manifest is emitted at all: a build whose publish providers all set `publishAutoUpdate: false`, a build whose targets write no update info (for example only snap, flatpak, MSI/MSIX, portable, mas/pkg or plain archives), and any build without a publish policy (which only warns).
+The requirement is also waived, without any configuration, where no manifest is emitted at all: a build whose publish providers all set `publishAutoUpdate: false`, a build whose targets write no update info (for example only snap, flatpak, MSI/MSIX, portable, mas/pkg or plain archives), and any build without a publish policy or `forceCodeSigning` (which only warns).
 
 :::danger[Opting out is not reversible for a release line]
 Once a release embeds a public key, its installs are **fail-closed**: an unsigned manifest is rejected with `ERR_UPDATER_MANIFEST_NOT_SIGNED` and those installs stop updating entirely. Do not switch to `updateManifest: false` after shipping signed manifests, and make sure *every* pipeline that can publish a release — including a hotfix built from a laptop — has the key.
@@ -188,6 +188,8 @@ signatures:
 Both fields are always written, even with a single key, so the manifest shape does not change when a second key is added. Every key signs both payload formats: electron-updater 7.0.0-alpha.12 and later verify the `EBUM2` entries, while 7.0.0-alpha.8 to alpha.11, which predate `format`, ignore the tag, fail on the `EBUM2` entries and verify the `EBUM1` entry of the same key. The `keyId` lets an updater holding several trusted keys pick the matching signature directly, and lets you tell at a glance which keys signed a release. An entry without `format` is an `EBUM1` signature, as electron-builder 27.0.0-alpha.9 to alpha.12 wrote them.
 
 Before writing the file, electron-builder parses the YAML back the way electron-updater does and checks that both payloads come out exactly as signed, so a build cannot publish a manifest its own installs would refuse.
+
+Before any manifest is written, each one is read back the way electron-updater parses it and verified with every signing key, so a manifest that would not verify is never written or uploaded. To check a finished build — for example after an external step signed its manifests — run [`electron-builder verify`](../cli.md#verify): it verifies every manifest against the trust list each packaged app embeds, and every file it lists against the artifacts.
 
 ## What is signed
 

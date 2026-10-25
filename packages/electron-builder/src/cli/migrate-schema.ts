@@ -106,6 +106,13 @@ export const MAC_ENTITLEMENTS_ADVISORY =
   "If you rely on the default (no mac.sign.entitlements and no build/entitlements.mac.plist) and your app loads native modules, frameworks, or plugins signed by another Team ID (or unsigned), " +
   "add those entitlements back in build/entitlements.mac.plist. See https://www.electron.build/docs/migration/v27-runtime-changes#macos-default-entitlements-tightened"
 
+// Advisory surfaced when forceCodeSigning is set. v27 extends it to notarization and update-manifest signing, and verifies signatures.
+export const FORCE_CODE_SIGNING_ADVISORY =
+  "forceCodeSigning detected. In v27 it also fails the build when macOS notarization (no APPLE_* credentials) or update-manifest signing (no ELECTRON_BUILDER_UPDATE_SIGN_KEY) is skipped, " +
+  "also in builds that do not publish, and fails macOS builds on hosts other than macOS and in pull-request builds; it also verifies the signatures the build produces. " +
+  "Provide the credentials wherever it is set, opt out explicitly with mac.notarize: false / updateManifest: false, or pass -c.forceCodeSigning=false to builds that cannot sign. " +
+  "See https://www.electron.build/docs/migration/v27-build-changes#forcecodesigning-covers-notarization-and-update-manifests"
+
 // Advisory surfaced when a generic publish url carries a query string (typically a token). v27 electron-updater sends the feed
 // query and credential headers only to downloads on the feed's origin.
 export const FEED_QUERY_ADVISORY =
@@ -618,6 +625,9 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   if (pdbPatterns.length > 0) {
     advisories.push(pdbFilesPatternsAdvisory(pdbPatterns))
   }
+  if (c.forceCodeSigning === true || ["mac", "win", "linux"].some(platform => isPlainObject(c[platform]) && c[platform].forceCodeSigning === true)) {
+    advisories.push(FORCE_CODE_SIGNING_ADVISORY)
+  }
 
   // ── nsis/nsisWeb/portable customNsisBinary / customNsisResources removed ──
   migrateCustomNsis(c, changes, warnings, keptKeyWarnings)
@@ -1093,7 +1103,8 @@ function migratePlatformAsar(c: Record<string, any>, name: string, rootAsarValue
 /** Removes `null` toolset values (rejected by the v27 schema) and remaps pins to bundles that are no longer published. */
 function migrateToolsets(toolsets: Record<string, any>, changes: MigrationChange[]) {
   for (const [key, value] of Object.entries(toolsets)) {
-    if (value === null) {
+    // toolsets.executables is not a bundle, and null is valid for it (the default locations)
+    if (value === null && key !== "executables") {
       delete toolsets[key]
       changes.push({
         key: `toolsets.${key}`,

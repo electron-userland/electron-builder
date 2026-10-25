@@ -105,6 +105,21 @@ describe("WindowsSignAzureManager.signFile", { concurrent: false }, () => {
     expect(execSpy).not.toHaveBeenCalled()
   })
 
+  test("passes the AZURE_* credential variables explicitly, since a child process gets no credentials otherwise", async ({ expect }) => {
+    vi.stubEnv("AZURE_CLIENT_SECRET", "azure-secret")
+    vi.stubEnv("AZURE_TENANT_ID", "tenant")
+    vi.stubEnv("GH_TOKEN", "github-token")
+    try {
+      await manager.signFile(signOptions)
+    } finally {
+      vi.unstubAllEnvs()
+    }
+    const env = (execSpy.mock.calls[0][2] as { env: Record<string, string> }).env
+    expect(env.AZURE_CLIENT_SECRET).toBe("azure-secret")
+    expect(env.AZURE_TENANT_ID).toBe("tenant")
+    expect(env).not.toHaveProperty("GH_TOKEN")
+  })
+
   test("invokes PowerShell via -EncodedCommand flag", async ({ expect }) => {
     await manager.signFile(signOptions)
     const [, args] = execSpy.mock.calls[0] as ExecArgs

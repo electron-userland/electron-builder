@@ -5,6 +5,7 @@ import * as path from "path"
 import { describe, expect, test } from "vitest"
 import {
   FEED_QUERY_ADVISORY,
+  FORCE_CODE_SIGNING_ADVISORY,
   INCLUDE_PDB_CHANGES,
   includePdbManualStep,
   MAC_ENTITLEMENTS_ADVISORY,
@@ -995,6 +996,7 @@ describe("migrateConfig — updater advisories", () => {
     ["FEED_QUERY_ADVISORY", FEED_QUERY_ADVISORY, "v27-runtime-changes", "update-credentials-stay-on-the-feeds-origin"],
     ["WIN_PUBLISHER_NAME_DN_ADVISORY", WIN_PUBLISHER_NAME_DN_ADVISORY, "v27-build-changes", "windows-publishername-must-be-a-distinguished-name"],
     ["WIN_MISSING_PUBLISHER_NAME_ADVISORY", WIN_MISSING_PUBLISHER_NAME_ADVISORY, "v27-build-changes", "missing-publishername-fails-update-verification"],
+    ["FORCE_CODE_SIGNING_ADVISORY", FORCE_CODE_SIGNING_ADVISORY, "v27-build-changes", "forcecodesigning-covers-notarization-and-update-manifests"],
   ])("%s links its v27 breaking-changes section", (_name, advisory, page, anchor) => {
     expect(advisory.endsWith(` See https://www.electron.build/docs/migration/${page}#${anchor}`)).toBe(true)
     const doc = readFileSync(path.join(import.meta.dirname, `../../website/docs/migration/${page}.md`), "utf8")
@@ -1025,6 +1027,24 @@ describe("migrateConfig — updater advisories", () => {
     })
     expect(result.advisories).toEqual([NSIS_WEB_ADVISORY, MAC_ENTITLEMENTS_ADVISORY, NSIS_PER_MACHINE_UPDATE_ADVISORY, WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY, FEED_QUERY_ADVISORY])
     expect(result.modified).toBe(false)
+  })
+
+  describe("forceCodeSigning", () => {
+    test.each<[string, Record<string, any>]>([
+      ["root forceCodeSigning", { forceCodeSigning: true }],
+      ["win.forceCodeSigning", { win: { forceCodeSigning: true } }],
+      ["mac.forceCodeSigning", { mac: { forceCodeSigning: true } }],
+    ])("%s: true emits the advisory without changing the config", (_name, input) => {
+      const result = migrateConfig(input)
+      // a mac section also gets the default-entitlements advisory
+      expect(result.advisories).toContain(FORCE_CODE_SIGNING_ADVISORY)
+      expect(result.modified).toBe(false)
+      expect(result.migrated).toEqual(input)
+    })
+
+    test("forceCodeSigning: false emits nothing", () => {
+      expect(advisoriesOf({ forceCodeSigning: false, linux: { forceCodeSigning: false } })).toEqual([])
+    })
   })
 
   describe("per-machine NSIS", () => {
@@ -1292,6 +1312,13 @@ describe("migrateConfig — toolsets", () => {
   test("leaves valid pins untouched", () => {
     const input = { toolsets: { appimage: "0.0.0", wine: "system", winCodeSign: "1.3.0" } }
     expect(migrateConfig(input).modified).toBe(false)
+  })
+
+  test("keeps toolsets.executables, for which null is valid", () => {
+    const input = { toolsets: { executables: null, wine: "system" } }
+    expect(migrateConfig(input).modified).toBe(false)
+    const withEntries = { toolsets: { executables: { mono: "file:///opt/homebrew/bin/mono", pwsh: null } } }
+    expect(migrateConfig(withEntries).modified).toBe(false)
   })
 })
 
