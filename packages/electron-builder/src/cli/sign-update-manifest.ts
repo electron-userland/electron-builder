@@ -1,9 +1,8 @@
 import type { Configuration } from "app-builder-lib"
-import { getConfig } from "app-builder-lib/internal"
-import { derivePublicKeyPem, InvalidConfigurationError, loadUpdateSigningKeys, log, parseUpdateManifestYaml, resignUpdateManifestYaml } from "builder-util"
-import { collectManifestSignatures, normalizePublicKeyList, parsePublicKey, UpdateInfo, verifyManifestSignatures } from "builder-util-runtime"
+import { getConfig, verifyUpdateManifestContent } from "app-builder-lib/internal"
+import { InvalidConfigurationError, loadUpdateSigningKeys, log, parseUpdateManifestYaml, resignUpdateManifestYaml } from "builder-util"
+import { normalizePublicKeyList, parsePublicKey } from "builder-util-runtime"
 import chalk from "chalk"
-import { KeyObject } from "crypto"
 import { readFile, writeFile } from "fs/promises"
 import * as path from "path"
 import type { Argv } from "yargs"
@@ -33,7 +32,8 @@ export function configureSignUpdateManifestCommand(yargs: Argv) {
     })
     .option("verify", {
       type: "boolean",
-      description: "Only verify the existing signatures against the configured trust list; nothing is written",
+      description:
+        "Only verify the existing signatures against the trust list in updateManifest.publicKey, as electron-builder verify does; nothing is written and no signing key is loaded",
     })
 }
 
@@ -42,7 +42,7 @@ export interface SignUpdateManifestOptions {
   readonly files: Array<string>
   /** `-c` / `--config`: a config file path, an inline configuration object, or both (an array), as for `build`. */
   readonly config?: string | Configuration | Array<string | Configuration> | null
-  /** Check the existing signatures against the configured trust list instead of re-signing; nothing is written. */
+  /** Check the existing signatures against `updateManifest.publicKey` instead of re-signing; nothing is written and no signing key is loaded. */
   readonly verify?: boolean
   /** The project directory the configuration is loaded from; the current directory, like `publish`. */
   readonly projectDir?: string
@@ -65,11 +65,17 @@ export interface SignedUpdateManifest {
 
 export interface VerifiedUpdateManifest {
   readonly file: string
-  readonly version: string
-  readonly ok: boolean
-  /** Id of the trusted key that verified the manifest, when `ok`. */
+  /** The manifest's version, or null when it cannot be parsed. */
+  readonly version: string | null
+  /**
+   * `verified`: signed by a key of the trust list. `failed`: not. `skipped`: not verified, but either `updateManifest` is `false`
+   * or `updateManifest.allowSigningKeyOutsideTrustList` allows it for a cutover release — the statuses `electron-builder verify`
+   * reports for the same manifest.
+   */
+  readonly status: "verified" | "failed" | "skipped"
+  /** Id of the trusted key that verified the manifest, when `verified`. */
   readonly keyId?: string
-  /** Why the manifest did not verify, when not `ok`. */
+  /** Why the manifest was not verified, when `failed` or `skipped`. */
   readonly reason?: string
 }
 
@@ -83,8 +89,8 @@ const KEY_SOURCES_HINT =
 /**
  * Backs `electron-builder sign-update-manifest`: re-signs existing `latest*.yml` files in place with the update signing
  * key(s), so a published manifest can be edited (`stagingPercentage`, a URL...) without rebuilding. With `verify` it only
- * checks the signatures already in the files against the trust list the build would embed, and throws if any fails.
- * Keys and trust list are resolved from the project configuration and the environment exactly as the build resolves them;
+ * checks the signatures already in the files against `updateManifest.publicKey`, exactly as `electron-builder verify` checks a
+ * manifest, and throws if any fails. Signing keys are resolved from the project configuration and the environment as the build resolves them;
  * key material is never logged.
  * @internal
  */
@@ -165,32 +171,31 @@ class ManifestSigningSettings {
   }
 
   /**
-   * The trust list the build embeds into `app-update.yml` for `platform` (PublishManager): an explicit `updateManifest.publicKey`
-   * list as-is, otherwise the public half of every configured signing key.
+   * What `--verify` checks `platform`'s manifests against, the same source `electron-builder verify` uses when no packaged app is at hand:
+   * the `publicKey` of `<platform>.updateManifest ?? updateManifest` (the platform block wins as a whole, as in the build). Like `verify`, it never loads a signing (private)
+   * key, so a release whose trust list is derived from its signing keys needs the public keys set here to be verified.
    */
-  trustedKeys(platform: ManifestPlatform, file: string): Array<KeyObject> {
+  verificationPolicy(platform: ManifestPlatform, file: string): { optedOut: true } | { optedOut: false; trustedKeys: Array<string>; allowCutover: boolean } {
     const { value, field } = this.options(platform)
     if (value === false) {
-      throw new InvalidConfigurationError(`Cannot verify ${file}: ${field} is false (signing is opted out of for ${platform}), so the build embeds no trust list`)
+      return { optedOut: true }
     }
-    const explicit = normalizePublicKeyList(value?.publicKey)
-    if (explicit.length > 0) {
-      return explicit.map((key, index) => {
-        try {
-          return parsePublicKey(key)
-        } catch (e: any) {
-          // the entry may be a private key pasted by mistake: name the field only, never the value
-          throw new InvalidConfigurationError(`${field}.publicKey #${index + 1} is not a valid Ed25519 public key (the value is not shown): ${e.message || e}`)
-        }
-      })
-    }
-    const keys = loadUpdateSigningKeys(value, this.projectDir)
-    if (keys.length === 0) {
+    const trustedKeys = normalizePublicKeyList(value?.publicKey)
+    if (trustedKeys.length === 0) {
       throw new InvalidConfigurationError(
-        `Cannot verify ${file}: no trust list for ${platform}. Set ${field}.publicKey, or provide the signing key(s) the build derives it from. ${KEY_SOURCES_HINT}`
+        `Cannot verify ${file}: ${field}.publicKey is not set. --verify checks against the public keys of ${field}.publicKey (as electron-builder verify does) ` +
+          "and never loads a signing key: set it in the configuration or pass -c.updateManifest.publicKey=<PEM>"
       )
     }
-    return keys.map(it => parsePublicKey(derivePublicKeyPem(it)))
+    trustedKeys.forEach((key, index) => {
+      try {
+        parsePublicKey(key)
+      } catch (e: any) {
+        // the entry may be a private key pasted by mistake: name the field only, never the value
+        throw new InvalidConfigurationError(`${field}.publicKey #${index + 1} is not a valid Ed25519 public key (the value is not shown): ${e.message || e}`)
+      }
+    })
+    return { optedOut: false, trustedKeys, allowCutover: value?.allowSigningKeyOutsideTrustList === true }
   }
 }
 
@@ -212,27 +217,55 @@ async function resignUpdateManifests(files: Array<string>, settings: ManifestSig
   })
 }
 
+function readVersion(content: string, file: string): string | null {
+  try {
+    const version = parseUpdateManifestYaml(content, file).version
+    return typeof version === "string" ? version : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Verifies each manifest with `verifyUpdateManifestContent`, the check `electron-builder verify` runs, and maps the outcome the same way:
+ * `updateManifest: false` is skipped, and a manifest no trusted key validates is skipped rather than failed when
+ * `updateManifest.allowSigningKeyOutsideTrustList` marks the release as a deliberate cutover.
+ */
 async function verifyUpdateManifests(files: Array<string>, settings: ManifestSigningSettings): Promise<Array<VerifiedUpdateManifest>> {
   const results: Array<VerifiedUpdateManifest> = []
   for (const file of files) {
-    const publicKeys = settings.trustedKeys(manifestPlatform(file), file)
-    const info: UpdateInfo = parseUpdateManifestYaml(await readFile(file, "utf8"), file)
-    if (collectManifestSignatures(info).length === 0) {
-      results.push({ file, version: info.version, ok: false, reason: "not signed" })
+    const policy = settings.verificationPolicy(manifestPlatform(file), file)
+    const content = await readFile(file, "utf8")
+    const version = readVersion(content, file)
+    if (policy.optedOut) {
+      results.push({ file, version, status: "skipped", reason: "updateManifest is false in the configuration, so the manifest is not signed" })
       continue
     }
-    const { ok, keyId, reason } = verifyManifestSignatures(info, publicKeys)
-    results.push({ file, version: info.version, ok, keyId, reason: ok ? undefined : (reason ?? "no signature matches a trusted key") })
-  }
-
-  for (const result of results) {
-    if (result.ok) {
-      log.info({ file: result.file, version: result.version, keyId: result.keyId }, "update manifest signature verified")
+    const verification = verifyUpdateManifestContent(content, policy.trustedKeys)
+    if (verification.ok) {
+      results.push({ file, version, status: "verified", keyId: verification.keyId })
+    } else if (policy.allowCutover) {
+      results.push({
+        file,
+        version,
+        status: "skipped",
+        reason: `not signed by a key of updateManifest.publicKey (${verification.reason}), which updateManifest.allowSigningKeyOutsideTrustList allows for a cutover release signed with a key outside the trust list`,
+      })
     } else {
-      log.error({ file: result.file, version: result.version, reason: result.reason }, "update manifest signature not verified")
+      results.push({ file, version, status: "failed", reason: verification.reason })
     }
   }
-  const failed = results.filter(it => !it.ok)
+
+  for (const { file, version, status, keyId, reason } of results) {
+    if (status === "verified") {
+      log.info({ file, version, keyId }, "update manifest signature verified")
+    } else if (status === "skipped") {
+      log.warn({ file, version, reason }, "update manifest signature not verified (skipped)")
+    } else {
+      log.error({ file, version, reason }, "update manifest signature not verified")
+    }
+  }
+  const failed = results.filter(it => it.status === "failed")
   if (failed.length > 0) {
     throw new InvalidConfigurationError(
       `${failed.length} of ${results.length} update manifest(s) failed signature verification: ${failed.map(it => `${it.file} (${it.reason})`).join(", ")}`

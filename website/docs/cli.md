@@ -88,8 +88,10 @@ Re-signs one or more existing `latest*.yml` files in place with the [update sign
 electron-builder sign-update-manifest latest.yml latest-mac.yml                       # keys from the config or the environment
 electron-builder sign-update-manifest latest.yml -c electron-builder.release.yml      # a different config file
 electron-builder sign-update-manifest latest.yml -c.updateManifest.signingKeyFile=k.pem # override one setting
-electron-builder sign-update-manifest latest.yml --verify                             # check against the trust list; nothing is written
+electron-builder sign-update-manifest latest.yml --verify                             # check against updateManifest.publicKey; nothing is written
 ```
+
+`--verify` runs the manifest check of [`verify`](#verify) on the given files only, against `updateManifest.publicKey`, and never loads a signing key; use `verify` for the whole build output.
 
 See [Re-signing a published manifest](./features/signed-update-manifests.md#re-signing-a-published-manifest).
 

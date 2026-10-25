@@ -206,11 +206,14 @@ npx electron-builder sign-update-manifest latest.yml -c.updateManifest.signingKe
 
 The platform of each manifest follows from its name, as the build writes it: `<channel>-mac.yml` is macOS, `<channel>-linux.yml` and `<channel>-linux-<arch>.yml` are Linux, and `<channel>.yml` is Windows. Each file is parsed the way electron-updater parses it, its existing `signature`/`signatures` fields are dropped, and it is checked against the same shape rules the updater applies (a manifest the updater would reject is never signed). It is then signed by every configured key (several keys dual-sign, as in a build) and written back in place in the format a build writes: every other field keeps its value and position, and `signature` plus `signatures` come last. YAML comments are not preserved. When several files are given, all of them are signed before any is written, so one invalid manifest leaves every file untouched. Without a key, or with `updateManifest: false`, the command fails with an error naming the key sources; errors name the configuration field or environment variable a key came from, and key material itself is never printed.
 
-To check signatures without writing anything, pass `--verify`. It checks against the trust list the build embeds into `app-update.yml`: `updateManifest.publicKey` when it is set, otherwise the public half of every configured signing key. It exits non-zero naming every file that is unsigned or not signed by a trusted key:
+To check an edited file without writing anything, pass `--verify`. It runs the same manifest check as [`electron-builder verify`](../cli.md#verify), with the trust list it uses when no packaged app is at hand: the public keys in `updateManifest.publicKey` (the platform's own block first). Like `verify`, it uses public keys only and never loads a signing key, so it fails with an error naming `updateManifest.publicKey` when that is not set, also when the build derives its trust list from the signing keys. A manifest that `updateManifest: false` opts out of is skipped, and so is one that no trusted key validates when `updateManifest.allowSigningKeyOutsideTrustList` marks a cutover release; any other manifest that is unsigned or not signed by a trusted key makes the command exit non-zero, naming the file:
 
 ```sh
 npx electron-builder sign-update-manifest latest.yml --verify
+npx electron-builder sign-update-manifest latest.yml --verify "-c.updateManifest.publicKey=$(cat update-public-key.pem)"
 ```
+
+`sign-update-manifest --verify` is the per-file check after an edit; [`electron-builder verify`](../cli.md#verify) is the whole-output check of a build, which also checks each manifest against the trust list the packaged apps embed and every file it lists against the artifacts.
 
 Upload the re-signed file to the update feed afterwards; the command does not publish.
 

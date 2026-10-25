@@ -2,6 +2,7 @@ import * as fsp from "fs/promises"
 import * as path from "path"
 import { createUpdateManifestSignatures, generateUpdateSigningKeypair, InvalidConfigurationError, log, serializeToYaml } from "builder-util"
 import { canonicalizeForSigning, computeUpdateManifestKeyId, UpdateInfo, verifyManifestSignatures, WindowsUpdateInfo } from "builder-util-runtime"
+import { verifyBuildOutput } from "app-builder-lib/internal"
 import { createYargs } from "electron-builder/src/builder"
 import {
   configureSignUpdateManifestCommand,
@@ -109,6 +110,8 @@ async function rejection(promise: Promise<unknown>): Promise<Error | null> {
 const current = generateUpdateSigningKeypair()
 const next = generateUpdateSigningKeypair()
 const currentId = computeUpdateManifestKeyId(current.publicKeyPem)
+/** `-c` override that sets the trust list `--verify` checks against. */
+const trust = (...publicKeys: Array<string>) => `-c.updateManifest.publicKey=${publicKeys.join("\n")}`
 const nextId = computeUpdateManifestKeyId(next.publicKeyPem)
 
 beforeEach(() => {
@@ -150,11 +153,11 @@ test("re-signs an edited manifest with the env key so the runtime verifier accep
 
   // an unsigned field can be edited without re-signing...
   await editManifest(file, info => (info.releaseNotes = "Fixed release notes"))
-  expect(await run(dir, [file, "--verify"])).toEqual([{ file, version: "1.2.3", ok: true, keyId: currentId, reason: undefined }])
+  expect(await run(dir, [file, "--verify", trust(current.publicKeyPem)])).toEqual([{ file, version: "1.2.3", status: "verified", keyId: currentId }])
 
   // ...but editing a signed one breaks the signature, and --verify reports it
   await editManifest(file, info => (info.stagingPercentage = 25))
-  const verifyError = await rejection(run(dir, [file, "--verify"]))
+  const verifyError = await rejection(run(dir, [file, "--verify", trust(current.publicKeyPem)]))
   expect(verifyError).toBeInstanceOf(InvalidConfigurationError)
   expect(verifyError!.message).toContain("1 of 1 update manifest(s) failed signature verification")
 
@@ -171,7 +174,7 @@ test("re-signs an edited manifest with the env key so the runtime verifier accep
 
   // --verify now passes and writes nothing
   const before = await fsp.readFile(file, "utf8")
-  expect(await run(dir, [file, "--verify"])).toMatchObject([{ ok: true, keyId: currentId }])
+  expect(await run(dir, [file, "--verify", trust(current.publicKeyPem)])).toMatchObject([{ status: "verified", keyId: currentId }])
   expect(await fsp.readFile(file, "utf8")).toBe(before)
 
   // the private key is never printed, in any encoding
@@ -196,10 +199,16 @@ test("throws InvalidConfigurationError and leaves the file untouched when no sig
   expect(error!.message).toContain("ELECTRON_BUILDER_UPDATE_SIGN_KEY")
   expect(await fsp.readFile(file, "utf8")).toBe(before)
 
-  // verifying needs a trust list: updateManifest.publicKey, or the signing key(s) it is derived from
-  const verifyError = await rejection(run(dir, [file, "--verify"]))
+  // verifying needs the trust list in updateManifest.publicKey: like electron-builder verify, it never derives one from a signing key
+  await writeKey(dir, "current.pem", current.privateKeyPem)
+  const verifyError = await rejection(run(dir, [file, "--verify", "-c.updateManifest.signingKeyFile=keys/current.pem"]))
   expect(verifyError).toBeInstanceOf(InvalidConfigurationError)
-  expect(verifyError!.message).toContain("no trust list for linux. Set updateManifest.publicKey")
+  expect(verifyError!.message).toContain(`Cannot verify ${file}: updateManifest.publicKey is not set`)
+  // ...and never loads one either: a broken signing key configuration does not get in the way
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", "not even base64")
+  const tampered = await rejection(run(dir, [file, "--verify", trust(current.publicKeyPem), "-c.updateManifest.signingKeyFile=keys/missing.pem"]))
+  expect(tampered!.message).toBe(`1 of 1 update manifest(s) failed signature verification: ${file} (no trusted key validates any of its signatures)`)
+  vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", undefined)
 
   // the explicit opt-out is honored, even with a key in the environment (as in the build)
   vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", Buffer.from(current.privateKeyPem + "\n").toString("base64"))
@@ -207,6 +216,10 @@ test("throws InvalidConfigurationError and leaves the file untouched when no sig
   expect(optOutError).toBeInstanceOf(InvalidConfigurationError)
   expect(optOutError!.message).toContain("updateManifest is false")
   expect(await fsp.readFile(file, "utf8")).toBe(before)
+  // ...and --verify skips an opted-out manifest, as electron-builder verify does
+  expect(await run(dir, [file, "--verify", "-c.updateManifest=false"])).toEqual([
+    { file, version: "2.0.1", status: "skipped", reason: "updateManifest is false in the configuration, so the manifest is not signed" },
+  ])
 })
 
 test("signs several manifests with the configured key files, and writes none when one cannot be signed", async ({ expect, tmpDir }) => {
@@ -257,18 +270,20 @@ test("signs several manifests with the configured key files, and writes none whe
   await fsp.writeFile(unsigned, serializeToYaml(manifest("3.2.0-beta.1", "App-Setup-3.2.0-beta.1.exe")))
   const trusted = path.join(dir, "trusted.yml")
   await fsp.writeFile(trusted, serializeToYaml({ updateManifest: { signingKeyFile: "keys/current.pem", publicKey: `${current.publicKeyPem}\n${next.publicKeyPem}` } }))
-  expect(await run(dir, [win, mac, "--verify", "-c", "trusted.yml"])).toMatchObject([{ ok: true, keyId: nextId }, { ok: true }])
+  expect(await run(dir, [win, mac, "--verify", "-c", "trusted.yml"])).toMatchObject([{ status: "verified", keyId: nextId }, { status: "verified" }])
   const untrusted = generateUpdateSigningKeypair().publicKeyPem
   const verifyError = await rejection(run(dir, [win, unsigned, "--verify", "-c", "trusted.yml", `-c.updateManifest.publicKey=${untrusted}`]))
   expect(verifyError).toBeInstanceOf(InvalidConfigurationError)
-  expect(verifyError!.message).toBe(`2 of 2 update manifest(s) failed signature verification: ${win} (no signature matches a trusted key), ${unsigned} (not signed)`)
+  expect(verifyError!.message).toBe(
+    `2 of 2 update manifest(s) failed signature verification: ${win} (no trusted key validates any of its signatures), ${unsigned} (the manifest is not signed)`
+  )
 })
 
 test("each manifest uses its platform's updateManifest settings, like the build", async ({ expect, tmpDir }) => {
   captureOutput()
   const dir = await createProject(await tmpDir.createTempDir(), {
-    updateManifest: { signingKeyFile: "keys/current.pem" },
-    mac: { updateManifest: { signingKeyFile: "keys/next.pem" } },
+    updateManifest: { signingKeyFile: "keys/current.pem", publicKey: current.publicKeyPem },
+    mac: { updateManifest: { signingKeyFile: "keys/next.pem", publicKey: next.publicKeyPem } },
   })
   await writeKey(dir, "current.pem", current.privateKeyPem)
   await writeKey(dir, "next.pem", next.privateKeyPem)
@@ -413,4 +428,89 @@ test("a signing key file value is never echoed, whatever key material was put wh
   // an ordinary missing path gets the same source-only message
   const missing = await rejection(run(dir, [file, "-c.updateManifest.signingKeyFile=keys/update-key.pem"]))
   expectRedacted(missing, "updateManifest.signingKeyFile", "keys/update-key.pem")
+})
+
+test("--verify allows a cutover release signed outside the trust list only with updateManifest.allowSigningKeyOutsideTrustList", async ({ expect, tmpDir }) => {
+  captureOutput()
+  // the cutover release of a rotation: signed with the OLD key while its trust list holds only the NEW one
+  const dir = await createProject(await tmpDir.createTempDir(), { updateManifest: { signingKeyFile: "keys/current.pem", publicKey: next.publicKeyPem } })
+  await writeKey(dir, "current.pem", current.privateKeyPem)
+  const file = path.join(dir, "latest.yml")
+  await fsp.writeFile(file, serializeToYaml({ ...manifest("9.0.0", "App-Setup-9.0.0.exe"), stagingPercentage: 10 }))
+  // re-signing does not consult the trust list: the release is signed with the old key, as its build was
+  expect(await run(dir, [file])).toEqual([{ file, version: "9.0.0", keyIds: [currentId] }])
+
+  const error = await rejection(run(dir, [file, "--verify"]))
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toBe(`1 of 1 update manifest(s) failed signature verification: ${file} (no trusted key validates any of its signatures)`)
+
+  expect(await run(dir, [file, "--verify", "-c.updateManifest.allowSigningKeyOutsideTrustList=true"])).toEqual([
+    {
+      file,
+      version: "9.0.0",
+      status: "skipped",
+      reason:
+        "not signed by a key of updateManifest.publicKey (no trusted key validates any of its signatures), which updateManifest.allowSigningKeyOutsideTrustList allows for a cutover release signed with a key outside the trust list",
+    },
+  ])
+  // a manifest that does verify is still reported as verified
+  expect(await run(dir, [file, "--verify", "-c.updateManifest.allowSigningKeyOutsideTrustList=true", trust(current.publicKeyPem)])).toMatchObject([
+    { status: "verified", keyId: currentId },
+  ])
+})
+
+test("--verify agrees with electron-builder verify (verifyBuildOutput) on the same manifests and configuration", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const dir = await tmpDir.createTempDir()
+  // no packaged app in the output, so electron-builder verify also checks against updateManifest.publicKey
+  const config = {
+    updateManifest: { publicKey: [current.publicKeyPem] },
+    mac: { updateManifest: { publicKey: next.publicKeyPem, allowSigningKeyOutsideTrustList: true } },
+    linux: { updateManifest: false as const },
+  }
+  await createProject(dir, config)
+  const cases: Record<string, () => Promise<void>> = {
+    "latest.yml": () => writeSigned(path.join(dir, "latest.yml"), manifest("1.0.0", "a.exe"), [current.privateKeyPem]),
+    "beta.yml": async () => {
+      await writeSigned(path.join(dir, "beta.yml"), manifest("1.0.0", "b.exe"), [current.privateKeyPem])
+      await editManifest(path.join(dir, "beta.yml"), it => (it.stagingPercentage = 50))
+    },
+    "alpha.yml": () => fsp.writeFile(path.join(dir, "alpha.yml"), serializeToYaml(manifest("1.0.0", "c.exe"))),
+    "dual.yml": () => writeSigned(path.join(dir, "dual.yml"), manifest("1.0.0", "d.exe"), [next.privateKeyPem, current.privateKeyPem]),
+    "latest-mac.yml": () => writeSigned(path.join(dir, "latest-mac.yml"), manifest("1.0.0", "e-mac.zip"), [next.privateKeyPem]),
+    "beta-mac.yml": () => writeSigned(path.join(dir, "beta-mac.yml"), manifest("1.0.0", "f-mac.zip"), [current.privateKeyPem]),
+    "latest-linux.yml": () => fsp.writeFile(path.join(dir, "latest-linux.yml"), serializeToYaml(manifest("1.0.0", "g.AppImage"))),
+  }
+  for (const write of Object.values(cases)) {
+    await write()
+  }
+
+  const reference = new Map(
+    (await verifyBuildOutput({ outDir: dir, config }))
+      .filter(it => it.check === "update manifest signature")
+      .map(it => [path.basename(it.file), { status: it.status, message: it.message }])
+  )
+  expect([...reference.keys()].sort()).toEqual(Object.keys(cases).sort())
+
+  for (const name of Object.keys(cases)) {
+    const file = path.join(dir, name)
+    let cli: { status: string; keyId?: string; reason?: string }
+    try {
+      cli = ((await run(dir, [file, "--verify"])) as Array<any>)[0]
+    } catch (e: any) {
+      expect(e).toBeInstanceOf(InvalidConfigurationError)
+      const prefix = `1 of 1 update manifest(s) failed signature verification: ${file} (`
+      expect(e.message.startsWith(prefix)).toBe(true)
+      cli = { status: "failed", reason: e.message.slice(prefix.length, -1) }
+    }
+    const expected = reference.get(name)!
+    expect({ name, status: cli.status }).toEqual({ name, status: expected.status })
+    if (cli.status === "verified") {
+      expect(expected.message).toContain(`signed by ${cli.keyId},`)
+    } else {
+      expect(cli.reason).toBe(expected.message)
+    }
+  }
+  // every outcome is covered
+  expect(new Set([...reference.values()].map(it => it.status))).toEqual(new Set(["verified", "failed", "skipped"]))
 })

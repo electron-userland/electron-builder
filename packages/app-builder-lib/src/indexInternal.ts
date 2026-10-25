@@ -93,6 +93,8 @@ export {
   resolveBuilderBinaryUrl,
 } from "./util/electronGet.js"
 export { verifyBuildOutput } from "./util/buildOutputVerifier.js"
+export { verifyUpdateManifestContent } from "./publish/updateManifestVerifier.js"
+export type { UpdateManifestVerification } from "./publish/updateManifestVerifier.js"
 export type { VerificationResult, VerificationStatus, VerifyBuildOutputOptions } from "./util/buildOutputVerifier.js"
 export { buildSourceCandidates, convertIcon, getPngSize } from "./util/iconConverter.js"
 export { getLicenseAssets, getLicenseFiles } from "./util/license.js"

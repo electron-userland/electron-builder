@@ -120,6 +120,8 @@ ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE=/run/secrets/update-key.old.pem:/run/secre
 npx electron-builder sign-update-manifest latest.yml --verify "-c.updateManifest.publicKey=$(cat update-public-key.old.pem)"
 ```
 
+For a [cutover release](#cutover-without-dual-signing) (signed with the old key, trusting only the new one), `--verify` against the configured `updateManifest.publicKey` reports the manifest as skipped rather than failed while `allowSigningKeyOutsideTrustList: true` is set, as [`electron-builder verify`](../cli.md#verify) does; pass the old public key as above to actually check its signature.
+
 See [Re-signing a published manifest](./signed-update-manifests.md#re-signing-a-published-manifest).
 
 **6. Retire the old key.** Once no feed is signed with it, delete the old private key from CI. Keep the *public* key and its key id on file for auditing.
