@@ -236,14 +236,18 @@ export abstract class DifferentialDownloader {
           range,
           response => {
             response.on("error", reject)
-            response.on("aborted", () => {
-              reject(new Error("response has been aborted by the server"))
-            })
             // requestRange follows redirects (Electron reports them as events), so a 3xx is not expected here
             const { statusCode } = response
             if (typeof statusCode === "number" && statusCode >= 400) {
+              // nothing more is read from a rejected response, and the remaining ranges are not requested
+              response.destroy()
               reject(createHttpError(response))
+              return
             }
+            // after the status check: destroying a rejected response would otherwise report a server abort
+            response.on("aborted", () => {
+              reject(new Error("response has been aborted by the server"))
+            })
 
             response.pipe(firstStream, {
               end: false,
@@ -291,11 +295,13 @@ export abstract class DifferentialDownloader {
         { options: this.createRequestOptions() },
         range,
         response => {
+          // before the check: a response it rejects can still emit an error, which unhandled would be an uncaught exception
+          response.on("error", reject)
+          // before the abort listener: rejecting a response destroys it, which would otherwise report a server abort
           if (!checkIsRangesSupported(response, reject)) {
             return
           }
 
-          response.on("error", reject)
           response.on("aborted", () => {
             reject(new Error("response has been aborted by the server"))
           })

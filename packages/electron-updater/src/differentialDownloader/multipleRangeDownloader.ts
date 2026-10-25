@@ -96,6 +96,9 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
   }
 
   const onResponse = (response: IncomingMessage, request: AbortableRequest): void => {
+    // before the checks: a response they reject can still emit an error, which unhandled would be an uncaught exception
+    response.on("error", reject)
+
     if (!checkIsRangesSupported(response, reject)) {
       return
     }
@@ -103,6 +106,8 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     const contentType = safeGetHeader(response, "content-type")
     const m = /^multipart\/.+?\s*;\s*boundary=(?:"([^"]+)"|([^\s";]+))\s*$/i.exec(contentType)
     if (m == null) {
+      response.destroy()
+      request.abort()
       reject(new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`))
       return
     }
@@ -215,10 +220,15 @@ function urlWithoutQuery(options: RequestOptions): string {
   return `${options.protocol ?? "https:"}//${options.hostname ?? ""}${port}${queryIndex < 0 ? path : path.substring(0, queryIndex)}`
 }
 
+/**
+ * Rejects an error status, or a full answer from a host without range support. A rejected response is destroyed, so nothing
+ * more is read from it; the caller attaches its `error` listener first, as a rejected response can still emit an error.
+ */
 export function checkIsRangesSupported(response: IncomingMessage, reject: (error: Error) => void): boolean {
   // requestRange follows redirects (Electron reports them as events), so a 3xx is not expected here
   const { statusCode } = response
   if (typeof statusCode === "number" && statusCode >= 400) {
+    response.destroy()
     reject(createHttpError(response))
     return false
   }
@@ -226,6 +236,7 @@ export function checkIsRangesSupported(response: IncomingMessage, reject: (error
   if (statusCode !== 206) {
     const acceptRanges = safeGetHeader(response, "accept-ranges")
     if (acceptRanges == null || acceptRanges === "none") {
+      response.destroy()
       reject(new Error(`Server doesn't support Accept-Ranges (response code ${statusCode})`))
       return false
     }

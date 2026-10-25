@@ -56,7 +56,10 @@ interface SentRequest {
 }
 
 /** How the fake host answers a request: with a redirect, or with a response. */
-type FakeNetAnswer = { readonly location: string } | { readonly statusCode: number; readonly headers?: Record<string, string>; readonly body?: Buffer }
+type FakeNetAnswer =
+  | { readonly location: string }
+  // `responseError` is emitted on the response once it was handled, as Electron's net does for a failure after the headers
+  | { readonly statusCode: number; readonly headers?: Record<string, string>; readonly body?: Buffer; readonly responseError?: Error }
 
 // Stands in for Electron's net ClientRequest. A redirect is reported as a "redirect" event: with `redirect: "manual"` the request
 // is then cancelled unless followRedirect() was called during the event, with "follow" (the default) it goes on to the new URL,
@@ -117,14 +120,27 @@ class FakeNetRequest extends EventEmitter {
         return
       }
       const response = Object.assign(new PassThrough(), { statusCode: answer.statusCode, headers: answer.headers ?? {} })
+      this.executor.responses.push(response)
       this.emit("response", response)
-      response.end(answer.body)
+      if (!response.destroyed) {
+        response.end(answer.body)
+      }
+      if (answer.responseError != null) {
+        // an `error` event without a listener throws, which in the main process is an uncaught exception
+        try {
+          response.emit("error", answer.responseError)
+        } catch (e: unknown) {
+          this.executor.unhandledResponseErrors.push(e)
+        }
+      }
     })
   }
 }
 
 class FakeElectronHttpExecutor extends ElectronHttpExecutor {
   readonly requests: Array<SentRequest> = []
+  readonly responses: Array<PassThrough> = []
+  readonly unhandledResponseErrors: Array<unknown> = []
   // createRequest throws for these URLs, as net.request does for options it cannot make a request of
   readonly unrequestableUrls = new Set<string>()
 
@@ -231,6 +247,27 @@ function expectCredentials(headers: OutgoingHttpHeaders, isSent: boolean): void 
   }
   expect(headers).toMatchObject({ "X-Tenant": "acme", accept: "*/*" })
 }
+
+// a host that rejects every request, and then fails the response it rejected
+function rejectingExecutor(answer: { readonly statusCode: number; readonly headers?: Record<string, string> }): FakeElectronHttpExecutor {
+  return new FakeElectronHttpExecutor(() => ({ ...answer, body: Buffer.from("rejected"), responseError: new Error("net::ERR_CONNECTION_RESET") }))
+}
+
+// the rejection is the reason the response was rejected (the later response error does not replace it), and the rejected
+// response was destroyed without an unhandled `error` event
+function expectRejectedResponsesReleased(executor: FakeElectronHttpExecutor): void {
+  expect(executor.unhandledResponseErrors).toEqual([])
+  expect(executor.responses.length).toBeGreaterThan(0)
+  for (const response of executor.responses) {
+    expect(response.destroyed).toBe(true)
+  }
+}
+
+const REJECTED_ANSWERS = [
+  ["a 403", { statusCode: 403 }, /^403 /],
+  ["a 416", { statusCode: 416 }, /^416 /],
+  ["a 200 without Accept-Ranges", { statusCode: 200 }, "Server doesn't support Accept-Ranges (response code 200)"],
+] as const
 
 describe("differential download redirects", () => {
   const tmpDir = new TmpDir("differential-redirect")
@@ -459,6 +496,43 @@ describe("differential download redirects", () => {
       GUARD_TIMEOUT
     )
   }
+
+  for (const [label, answer, message] of REJECTED_ANSWERS) {
+    for (const [kind, isUseMultipleRangeRequest, content] of [
+      ["a multi-range batch", true, NEW],
+      ["the lone range of a multi-range download", true, NEW_FIRST_BLOCK],
+      ["a single-range download", false, NEW],
+    ] as const) {
+      // the range-by-range download checks the status only: a full answer fails the sha512 check of the new file
+      if (!isUseMultipleRangeRequest && answer.statusCode < 400) {
+        continue
+      }
+      test(
+        `${label} that then fails rejects ${kind} without an unhandled response error`,
+        async () => {
+          const executor = rejectingExecutor(answer)
+          await expect(download({ redirects: {}, isUseMultipleRangeRequest, content }, executor)).rejects.toThrow(message)
+          expectRejectedResponsesReleased(executor)
+          // the download stops at the rejected range
+          expect(executor.requests).toHaveLength(1)
+        },
+        GUARD_TIMEOUT
+      )
+    }
+  }
+
+  test(
+    "a multi-range answer that is not multipart and then fails rejects the batch without an unhandled response error",
+    async () => {
+      const executor = rejectingExecutor({ statusCode: 206, headers: { "content-type": "application/octet-stream" } })
+      await expect(download({ redirects: {}, isUseMultipleRangeRequest: true }, executor)).rejects.toThrow(
+        'Content-Type "multipart/byteranges" is expected, but got "application/octet-stream"'
+      )
+      expectRejectedResponsesReleased(executor)
+      expect(executor.requests).toHaveLength(1)
+    },
+    GUARD_TIMEOUT
+  )
 })
 
 // FileWithEmbeddedBlockMapDifferentialDownloader reads the block map at the end of the new file with readRemoteBytes
@@ -508,4 +582,13 @@ describe("differential download redirects when reading remote bytes", () => {
     await expect(createReader(executor).read(32, 47)).rejects.toThrow('Cannot follow the redirect to the "ftp:" protocol')
     expect(executor.requests).toHaveLength(1)
   }, 10_000)
+
+  for (const [label, answer, message] of REJECTED_ANSWERS) {
+    test(`${label} that then fails rejects without an unhandled response error`, async () => {
+      const executor = rejectingExecutor(answer)
+      await expect(createReader(executor).read(32, 47)).rejects.toThrow(message)
+      expectRejectedResponsesReleased(executor)
+      expect(executor.requests).toHaveLength(1)
+    })
+  }
 })
