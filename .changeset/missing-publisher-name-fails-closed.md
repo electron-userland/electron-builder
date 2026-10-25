@@ -12,4 +12,4 @@ feat(win)!: a missing `publisherName` fails Windows update signature verificatio
 - **builder-util-runtime**: `PublishConfiguration` has the private, Windows-only `verifyUpdateCodeSignature` field.
 - **electron-builder**: `migrate-schema` prints an advisory for `win.sign: false` / `null` or `win.sign.publisherName: null` without `win.verifyUpdateCodeSignature: false`.
 
-See https://www.electron.build/docs/migration/v27-breaking-changes#missing-publishername-fails-update-verification
+See https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification

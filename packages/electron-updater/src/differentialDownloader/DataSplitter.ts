@@ -1,7 +1,7 @@
 import { newError } from "builder-util-runtime"
 import { Logger } from "../types.js"
-import { createReadStream } from "fs"
-import { Writable } from "stream"
+import fs from "fs"
+import { Readable, Writable } from "stream"
 import { Operation, OperationKind } from "./downloadPlanBuilder.js"
 import { ProgressInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
 
@@ -46,13 +46,35 @@ export interface PartListDataTask {
   readonly end: number
 }
 
+// The old file is shared by every copy and closed by the downloader, so a copy is given a `close` that leaves it open.
+function keepOldFileOpen(_fd: number, callback: (error: NodeJS.ErrnoException | null) => void): void {
+  callback(null)
+}
+
+// the copies that have not closed yet, by the descriptor of the old file they read
+const copiesInProgress = new Map<number, Set<Readable>>()
+
 export function copyData(task: Operation, out: Writable, oldFileFd: number, reject: (error: Error) => void, resolve: () => void): void {
-  const readStream = createReadStream("", {
+  // the download stopped (and may have closed the old file): do not read it again
+  if (out.destroyed) {
+    reject(new Error("Cannot copy data: the output stream is destroyed"))
+    return
+  }
+  const readStream = fs.createReadStream("", {
     fd: oldFileFd,
-    autoClose: false,
+    fs: { read: fs.read, close: keepOldFileOpen },
     start: task.start,
     // end is inclusive
     end: task.end - 1,
+  })
+  const copies = copiesInProgress.get(oldFileFd) ?? new Set<Readable>()
+  copies.add(readStream)
+  copiesInProgress.set(oldFileFd, copies)
+  readStream.once("close", () => {
+    copies.delete(readStream)
+    if (copies.size === 0) {
+      copiesInProgress.delete(oldFileFd)
+    }
   })
   const onOutError = (err: Error): void => reject(err)
   readStream.on("error", reject)
@@ -62,6 +84,24 @@ export function copyData(task: Operation, out: Writable, oldFileFd: number, reje
   })
   out.once("error", onOutError)
   readStream.pipe(out, { end: false })
+}
+
+/**
+ * Stops the copies that read the old file and resolves once they closed, so that its descriptor can be closed: a read in
+ * progress is waited for, as a destroyed stream emits `close` only after it.
+ * @internal
+ */
+export async function stopCopies(oldFileFd: number): Promise<void> {
+  const copies = Array.from(copiesInProgress.get(oldFileFd) ?? [])
+  await Promise.all(
+    copies.map(
+      readStream =>
+        new Promise<void>(resolve => {
+          readStream.once("close", () => resolve())
+          readStream.destroy()
+        })
+    )
+  )
 }
 
 export class DataSplitter extends Writable {

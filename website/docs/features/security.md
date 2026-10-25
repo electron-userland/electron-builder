@@ -22,7 +22,7 @@ Several security-relevant defaults changed in v27 — auto-update web installers
 
 - **Modern, verified update metadata.** Generated `latest*.yml` targets the `files[]` format and the default `electronUpdaterCompatibility` is now `>=2.16`. Update metadata validated only by the legacy SHA-256 `sha2` checksum is deprecated.
 
-- **Windows update signature verification.** On Windows, downloaded NSIS updates are Authenticode-verified before they are applied. `win.verifyUpdateCodeSignature` (default `true`) embeds your signing `publisherName` into `app-update.yml`, and electron-updater checks each downloaded update against the certificate subject. Supply an array of `publisherName` values when rotating certificates so updates signed by either the old or new certificate still verify. Verification fails closed: an update is rejected when `app-update.yml` has no `publisherName`, and a build that would write such an `app-update.yml` fails; `win.verifyUpdateCodeSignature: false` is the only opt-out (see [the v27 migration guide](../migration/v27-breaking-changes.md#missing-publishername-fails-update-verification)).
+- **Windows update signature verification.** On Windows, downloaded NSIS updates are Authenticode-verified before they are applied. `win.verifyUpdateCodeSignature` (default `true`) embeds your signing `publisherName` into `app-update.yml`, and electron-updater checks each downloaded update against the certificate subject. Supply an array of `publisherName` values when rotating certificates so updates signed by either the old or new certificate still verify. Verification fails closed: an update is rejected when `app-update.yml` has no `publisherName`, and a build that would write such an `app-update.yml` fails; `win.verifyUpdateCodeSignature: false` is the only opt-out (see [the v27 migration guide](../migration/v27-build-changes.md#missing-publishername-fails-update-verification)).
 
 :::warning[sha2-only metadata is rejected in v28]
 v27 is a grace period for `sha2`-only update metadata. In **v28**, it is **rejected**. Confirm your updates use modern `files[]` metadata before upgrading to v28.
@@ -34,7 +34,7 @@ v27 is a grace period for `sha2`-only update metadata. In **v28**, it is **rejec
 
 Two independent mechanisms protect the code inside your packaged app:
 
-- **ASAR integrity.** When your app is packaged into an `app.asar` archive (the default), electron-builder embeds integrity hashes so Electron can detect a tampered or swapped archive at runtime. It is on by default; `asar.disableIntegrity: true` disables it (not recommended). See the [ASAR options](../migration/v27-breaking-changes.md#asar-options-asar) for the v27 config shape. On macOS the hashes are stored in `Info.plist`, so with Electron 41 and later electron-builder also embeds a digest of them into the Electron Framework binary, which the code signature covers: with the `enableEmbeddedAsarIntegrityValidation` fuse (see below), the hashes can't be changed to match a modified archive either. The digest is embedded by default; `mac.asarIntegrityDigest: false` turns it off.
+- **ASAR integrity.** When your app is packaged into an `app.asar` archive (the default), electron-builder embeds integrity hashes so Electron can detect a tampered or swapped archive at runtime. It is on by default; `asar.disableIntegrity: true` disables it (not recommended). See the [ASAR options](../migration/v27-config-changes.md#asar-options-asar) for the v27 config shape. On macOS the hashes are stored in `Info.plist`, so with Electron 41 and later electron-builder also embeds a digest of them into the Electron Framework binary, which the code signature covers: with the `enableEmbeddedAsarIntegrityValidation` fuse (see below), the hashes can't be changed to match a modified archive either. The digest is embedded by default; `mac.asarIntegrityDigest: false` turns it off.
 
 - **Electron Fuses.** Fuses are "magic bits" flipped at package time — *before* code signing — that disable risky Electron features for the entire app (e.g. `runAsNode`, `enableNodeCliInspectArguments`, `enableNodeOptionsEnvironmentVariable`). Pairing `enableEmbeddedAsarIntegrityValidation` with `onlyLoadAppFromAsar` binds the app to its verified ASAR. Because the bits are flipped before signing, the OS (Gatekeeper / App Locker) is responsible for ensuring they can't be flipped back.
 
@@ -64,7 +64,7 @@ v27 **removed implicit `--publish`**. Earlier versions could auto-publish based 
 electron-builder --publish always   # explicit — required in v27
 ```
 
-**See also:** [Publish configuration](../publish.md) · [Implicit `--publish` removed](../migration/v27-breaking-changes.md#implicit-publish-removed)
+**See also:** [Publish configuration](../publish.md) · [Implicit `--publish` removed](../migration/v27-build-changes.md#implicit-publish-removed)
 
 ## Update feed ownership
 
@@ -98,4 +98,4 @@ The external build toolsets electron-builder downloads (NSIS, winCodeSign, AppIm
 }
 ```
 
-**See also:** [Toolsets](../toolsets.md) · [Custom toolset bundles](../migration/v27-breaking-changes.md#toolset-env-var-overrides-removed)
+**See also:** [Toolsets](../toolsets.md) · [Custom toolset bundles](../migration/v27-build-changes.md#toolset-env-var-overrides-removed)

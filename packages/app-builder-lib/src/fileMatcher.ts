@@ -22,6 +22,7 @@ import { FileSet, PlatformSpecificBuildOptions } from "./options/PlatformSpecifi
 import { normalizeExcludedExtensions } from "./util/config/fileOptions.js"
 import { PlatformPackager } from "./platformPackager.js"
 import { createFilter, hasMagic } from "./util/filter.js"
+import { BUILD_CHANGES_URL } from "./util/config/legacyOptions.js"
 
 // https://github.com/electron-userland/electron-builder/issues/733
 const minimatchOptions = { dot: true }
@@ -601,6 +602,7 @@ const VALIDATED_DESTINATION_NAMES: ReadonlyArray<string> = ["extraFiles", "extra
 
 const FPM_MAPPING_HINT =
   'To install a file at an absolute path inside a deb/rpm package, use the fpm file-mapping syntax instead, e.g. "deb": { "fpm": ["build/file.xml=/usr/share/metainfo/file.xml"] }.'
+const DESTINATION_DOCS = `See ${BUILD_CHANGES_URL}#extrafiles--extraresources-destinations-are-validated`
 
 /**
  * Resolves a file set `to` to the destination a FileMatcher should copy into.
@@ -628,7 +630,7 @@ export function resolveFileSetDestination(name: string, to: string | Nullish, de
   // UNC (\\server\share) paths as absolute no matter which OS the build runs on
   if (path.win32.isAbsolute(to) || path.posix.isAbsolute(to)) {
     throw new InvalidConfigurationError(
-      `The "to" path "${to}" in "${name}" is absolute. Absolute destinations are not copied into the packaged app — they would be written to that literal path on the build machine. Use a relative path instead. ${FPM_MAPPING_HINT}`
+      `The "to" path "${to}" in "${name}" is absolute. Absolute destinations are not copied into the packaged app — they would be written to that literal path on the build machine. Use a relative path instead. ${FPM_MAPPING_HINT} ${DESTINATION_DOCS}`
     )
   }
 
@@ -638,7 +640,7 @@ export function resolveFileSetDestination(name: string, to: string | Nullish, de
   const relativeToOutDir = path.relative(path.resolve(globalOutDir), resolved)
   if (relativeToOutDir.startsWith(`..${path.sep}`) || relativeToOutDir === ".." || path.isAbsolute(relativeToOutDir)) {
     throw new InvalidConfigurationError(
-      `The "to" path "${to}" in "${name}" resolves to "${resolved}", which is outside the build output directory "${path.resolve(globalOutDir)}". The files would be copied onto the build machine instead of into the packaged app. Use a relative path that stays within the package. ${FPM_MAPPING_HINT}`
+      `The "to" path "${to}" in "${name}" resolves to "${resolved}", which is outside the build output directory "${path.resolve(globalOutDir)}". The files would be copied onto the build machine instead of into the packaged app. Use a relative path that stays within the package. ${FPM_MAPPING_HINT} ${DESTINATION_DOCS}`
     )
   }
   return resolved

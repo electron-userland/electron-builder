@@ -54,14 +54,14 @@ export const NSIS_WEB_ADVISORY =
   "for installs made by an older installer or when switching from nsis to nsis-web. " +
   "The nsis-web installer also verifies a --package-file package, and a package downloaded from the URL derived from the publish configuration (no nsisWeb.appPackageUrl), against its built-in hashes; " +
   "set nsisWeb.allowUnverifiedAppPackage: true only if one installer is used with packages of other builds. " +
-  "See https://www.electron.build/docs/migration/v27-breaking-changes#disablewebinstaller-defaults-to-true"
+  "See https://www.electron.build/docs/migration/v27-runtime-changes#disablewebinstaller-defaults-to-true"
 
 // Advisory surfaced when nsis/nsisWeb installs per-machine. v27 sets isAdminRightsRequired in the update info of per-machine builds, so
 // electron-updater starts those updates with elevate.exe and skips them in the automatic install at launch.
 export const NSIS_PER_MACHINE_UPDATE_ADVISORY =
   "nsis/nsisWeb perMachine: true detected. In v27, electron-updater starts per-machine updates with elevate.exe directly and does not install them automatically at launch " +
   'with autoInstallEvent "onNextLaunch" (call autoUpdater.installPendingUpdateIfAvailable()). ' +
-  "See https://www.electron.build/docs/migration/v27-breaking-changes#nsis-per-machine-builds-set-isadminrightsrequired"
+  "See https://www.electron.build/docs/migration/v27-runtime-changes#nsis-per-machine-builds-set-isadminrightsrequired"
 
 // Advisory surfaced when a custom win.sign.sign hook has no publisherName. v27 fails such a build when it writes app-update.yml.
 export const WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY =
@@ -69,7 +69,7 @@ export const WIN_SIGN_HOOK_PUBLISHER_NAME_ADVISORY =
   "(an nsis, nsis-web or electronUpdaterAware appx target with a publish configuration, including one inferred from a GitHub repository) fails with InvalidConfigurationError " +
   "because electron-builder cannot tell which certificate the hook signs with (a certificate in the config or from WIN_CSC_LINK / CSC_LINK doesn't supply the publisher name of a hook). " +
   "Set win.sign.publisherName to the subject of the certificate your hook signs with, or win.verifyUpdateCodeSignature: false only if your updates are not Authenticode-signed. " +
-  "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-is-validated-against-the-signing-certificate"
+  "See https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-is-validated-against-the-signing-certificate"
 
 // Advisory surfaced when win.sign.publisherName has an entry that is not a distinguished name (DN), e.g. a bare name. v27 fails such a
 // build, because electron-updater 7 never matches such an entry.
@@ -78,7 +78,7 @@ export const WIN_PUBLISHER_NAME_DN_ADVISORY =
   'format, e.g. "CN=My Company, O=My Company, C=US": electron-updater 7 never matches a bare name, so the build fails with InvalidConfigurationError. ' +
   "Set win.sign.publisherName to the certificate subject (on Windows, (Get-AuthenticodeSignature <signed .exe>).SignerCertificate.Subject prints it), " +
   "or (unless a custom win.sign.sign hook signs) remove it to derive CN=<common name> from the signing certificate. " +
-  "See https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
+  "See https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name"
 
 // Advisory surfaced when Windows signing is disabled (win.sign: false / null) or win.sign.publisherName is null, while
 // win.verifyUpdateCodeSignature is not false. v27 fails a build that writes app-update.yml without publisherName, because
@@ -89,7 +89,7 @@ export const WIN_MISSING_PUBLISHER_NAME_ADVISORY =
   "InvalidConfigurationError when it has no publisherName, because electron-updater 7 rejects every update of such an app; publisherName: null no longer opts out. " +
   'Sign the build, set win.sign: { type: "signtool", publisherName: ["CN=..."] } to the subject of the certificate that signs your installer (e.g. when you sign outside electron-builder), ' +
   "or set win.verifyUpdateCodeSignature: false to opt out of update signature verification explicitly. " +
-  "See https://www.electron.build/docs/migration/v27-breaking-changes#missing-publishername-fails-update-verification"
+  "See https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification"
 
 /** True when `publisherName` (a string or a list) has an entry that is not a distinguished name. */
 export function hasInvalidPublisherNameDn(publisherName: unknown): boolean {
@@ -104,7 +104,14 @@ export function hasInvalidPublisherNameDn(publisherName: unknown): boolean {
 export const MAC_ENTITLEMENTS_ADVISORY =
   "In v27 the bundled default macOS entitlements grant only com.apple.security.cs.allow-jit (allow-unsigned-executable-memory and disable-library-validation are no longer granted). " +
   "If you rely on the default (no mac.sign.entitlements and no build/entitlements.mac.plist) and your app loads native modules, frameworks, or plugins signed by another Team ID (or unsigned), " +
-  "add those entitlements back in build/entitlements.mac.plist. See https://www.electron.build/docs/migration/v27-breaking-changes#macos-default-entitlements-tightened"
+  "add those entitlements back in build/entitlements.mac.plist. See https://www.electron.build/docs/migration/v27-runtime-changes#macos-default-entitlements-tightened"
+
+// Advisory surfaced when forceCodeSigning is set. v27 extends it to notarization and update-manifest signing, and verifies signatures.
+export const FORCE_CODE_SIGNING_ADVISORY =
+  "forceCodeSigning detected. In v27 it also fails the build when macOS notarization (no APPLE_* credentials) or update-manifest signing (no ELECTRON_BUILDER_UPDATE_SIGN_KEY) is skipped, " +
+  "also in builds that do not publish, and fails macOS builds on hosts other than macOS and in pull-request builds; it also verifies the signatures the build produces. " +
+  "Provide the credentials wherever it is set, opt out explicitly with mac.notarize: false / updateManifest: false, or pass -c.forceCodeSigning=false to builds that cannot sign. " +
+  "See https://www.electron.build/docs/migration/v27-build-changes#forcecodesigning-covers-notarization-and-update-manifests"
 
 // Advisory surfaced when a generic publish url carries a query string (typically a token). v27 electron-updater sends the feed
 // query and credential headers only to downloads on the feed's origin.
@@ -112,7 +119,7 @@ export const FEED_QUERY_ADVISORY =
   "generic publish url with a query string detected. In v27, electron-updater sends the feed url's query string, and the credential headers from requestHeaders / addAuthHeader, " +
   "only to downloads on the feed's origin (scheme, host and port); a download url in latest*.yml on another origin is requested without them. " +
   "If those downloads need these credentials, serve the update files from the feed origin or use pre-signed URLs. " +
-  "See https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+  "See https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
 
 /**
  * macOS signing/universal fields that v26 accepted as `null` (meaning "unset") but whose v27 type has no `null`
@@ -618,6 +625,9 @@ export function migrateConfig(raw: Record<string, any>): MigrationResult {
   if (pdbPatterns.length > 0) {
     advisories.push(pdbFilesPatternsAdvisory(pdbPatterns))
   }
+  if (c.forceCodeSigning === true || ["mac", "win", "linux"].some(platform => isPlainObject(c[platform]) && c[platform].forceCodeSigning === true)) {
+    advisories.push(FORCE_CODE_SIGNING_ADVISORY)
+  }
 
   // ── nsis/nsisWeb/portable customNsisBinary / customNsisResources removed ──
   migrateCustomNsis(c, changes, warnings, keptKeyWarnings)
@@ -702,7 +712,7 @@ export function pdbFilesPatternsAdvisory(patterns: ReadonlyArray<{ readonly key:
   return (
     `files patterns that name .pdb files detected: ${listed}. In v27 such a pattern ships the .pdb files it matches (v26 excluded .pdb files whatever files said, ` +
     'unless includePdb was true), also in configs that extend this one. To keep them out, remove the pattern, or add a negation after it, such as "!native/*.pdb". ' +
-    "See https://www.electron.build/docs/migration/v27-breaking-changes#includepdb-fileoptionsexcludedexts"
+    "See https://www.electron.build/docs/migration/v27-config-changes#includepdb-fileoptionsexcludedexts"
   )
 }
 
@@ -1093,7 +1103,8 @@ function migratePlatformAsar(c: Record<string, any>, name: string, rootAsarValue
 /** Removes `null` toolset values (rejected by the v27 schema) and remaps pins to bundles that are no longer published. */
 function migrateToolsets(toolsets: Record<string, any>, changes: MigrationChange[]) {
   for (const [key, value] of Object.entries(toolsets)) {
-    if (value === null) {
+    // toolsets.executables is not a bundle, and null is valid for it (the default locations)
+    if (value === null && key !== "executables") {
       delete toolsets[key]
       changes.push({
         key: `toolsets.${key}`,

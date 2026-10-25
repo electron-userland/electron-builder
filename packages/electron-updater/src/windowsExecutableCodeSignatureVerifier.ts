@@ -4,7 +4,7 @@ import type { VerifyUpdateFileResult } from "./types.js"
 import { Logger } from "./types.js"
 import * as path from "path"
 
-const PUBLISHER_NAME_DN_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
+const PUBLISHER_NAME_DN_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name"
 
 /**
  * Explains why some publisherName entries can never match the signer of an update, or returns null when every entry is
@@ -29,7 +29,7 @@ export function publisherNameDnNote(publisherNames: ReadonlyArray<unknown>): str
   )
 }
 
-const MISSING_PUBLISHER_NAME_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#missing-publishername-fails-update-verification"
+const MISSING_PUBLISHER_NAME_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#missing-publishername-fails-update-verification"
 
 /**
  * The publisher names of an update config (app-update.yml, dev-app-update.yml or the updateConfigPath file), or null when it has
@@ -88,7 +88,7 @@ const CUSTOM_VERIFIER_HINT =
 // was verified (win.allowCatalogSignature): the catalog signer must then match publisherName like an embedded one.
 const CATALOG_SIGNATURE_TYPE = 2
 
-const SIGNATURE_UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-update-signature-verification-fails-closed"
+const SIGNATURE_UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#windows-update-signature-verification-fails-closed"
 
 /**
  * Options of the default Authenticode verification of an update.

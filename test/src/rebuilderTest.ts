@@ -25,6 +25,10 @@ const extraFile = "./node_modules/better-sqlite3-multiple-ciphers/build/Release/
 const config: Configuration = {
   nativeModules: { npmRebuild: true },
   asar: { unpack: ["**/better_sqlite3.node"] },
+  // When the prebuilt binary cannot be downloaded, the module is compiled from source, which leaves intermediates that the
+  // prebuilt install does not have (the ones that electron-builder does not exclude by default). Exclude them, so the
+  // packed file tree, and its snapshot, is the same either way.
+  fileOptions: { files: ["!**/node_modules/better-sqlite3-multiple-ciphers/build/{Release/obj,Release/test_extension.node,deps}{,/**}"] },
 }
 
 describe.ifLinux("Rebuilder Test", () => {

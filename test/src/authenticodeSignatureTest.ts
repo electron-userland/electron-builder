@@ -7,6 +7,7 @@ vi.mock("child_process", async importOriginal => {
 })
 
 import { AuthenticodeSignatureStatus, authenticodeSignatureStatusName, readAuthenticodeSignerWithPowerShell } from "app-builder-lib/src/codeSign/win/authenticodeSignature"
+import { Executables, InvalidConfigurationError } from "builder-util"
 import { parseAuthenticodeSignatureOutput, prepareAuthenticodeSignatureExec, preparePowerShellExec } from "builder-util-runtime"
 import { execFile } from "child_process"
 
@@ -197,6 +198,41 @@ describe("AuthenticodeSignatureStatus (electron-builder)", () => {
 })
 
 describe("readAuthenticodeSignerWithPowerShell (electron-builder adapter)", () => {
+  beforeEach(() => {
+    // the default location on Windows, which is checked to be an executable file (see "takes PowerShell from toolsets.executables" below)
+    vi.spyOn(Executables, "resolve").mockReturnValue(POWERSHELL)
+  })
+
+  afterEach(() => {
+    vi.mocked(Executables.resolve).mockRestore()
+  })
+
+  test("takes PowerShell from toolsets.executables, never from PATH", async ({ expect }) => {
+    vi.mocked(Executables.resolve).mockReturnValue("D:\\Tools\\PowerShell\\powershell.exe")
+    mockExecFile(null, signatureJson())
+    await readAuthenticodeSignerWithPowerShell(FILE)
+    expect(Executables.resolve).toHaveBeenCalledWith("powershell")
+    expect(lastExecFileCall().file).toBe("D:\\Tools\\PowerShell\\powershell.exe")
+  })
+
+  // a signature read needs no credential, so a signing build's secrets do not reach PowerShell (or anything it loads)
+  test("strips the build's credential variables from the PowerShell environment, keeping the rest", async ({ expect }) => {
+    const secrets = ["CSC_KEY_PASSWORD", "WIN_CSC_KEY_PASSWORD", "AZURE_CLIENT_SECRET", "GH_TOKEN", "ELECTRON_BUILDER_UPDATE_SIGN_KEY", "SM_API_KEY"]
+    for (const name of secrets) {
+      vi.stubEnv(name, "s3cr3t")
+    }
+    vi.stubEnv("ACME_KEEP_ME", "kept")
+    mockExecFile(null, signatureJson())
+    await readAuthenticodeSignerWithPowerShell(FILE)
+    const { env } = lastExecFileCall().options
+    expect(Object.keys(env ?? {}).filter(it => secrets.includes(it))).toEqual([])
+    expect(Object.values(env ?? {})).not.toContain("s3cr3t")
+    expect(env?.ACME_KEEP_ME).toBe("kept")
+    // the file to read is still passed, and PSModulePath is still cleared
+    expect(env?.[FILE_ENV]).toBe(FILE)
+    expect(Object.keys(env ?? {}).filter(it => it.toLowerCase() === "psmodulepath")).toEqual([])
+  })
+
   test("maps a signature to the signer and its numeric status, with a 60s timeout", async ({ expect }) => {
     mockExecFile(null, signatureJson({ Status: AuthenticodeSignatureStatus.NotTrusted }))
     await expect(readAuthenticodeSignerWithPowerShell(FILE)).resolves.toEqual({ type: "signed", subject: SUBJECT, status: AuthenticodeSignatureStatus.NotTrusted })
@@ -219,6 +255,17 @@ describe("readAuthenticodeSignerWithPowerShell (electron-builder adapter)", () =
     await expect(readAuthenticodeSignerWithPowerShell(FILE)).resolves.toEqual({
       type: "unreadable",
       reason: "Get-AuthenticodeSignature failed: cannot locate Windows PowerShell: SystemRoot is not set",
+    })
+    expect(execFile).not.toHaveBeenCalled()
+  })
+
+  test("a toolsets.executables.powershell that is not an executable file is unreadable, naming the entry", async ({ expect }) => {
+    vi.mocked(Executables.resolve).mockImplementation(() => {
+      throw new InvalidConfigurationError('none of the locations in toolsets.executables.powershell is an executable file on this machine (tried "D:\\missing.exe")')
+    })
+    await expect(readAuthenticodeSignerWithPowerShell(FILE)).resolves.toEqual({
+      type: "unreadable",
+      reason: 'Get-AuthenticodeSignature failed: none of the locations in toolsets.executables.powershell is an executable file on this machine (tried "D:\\missing.exe")',
     })
     expect(execFile).not.toHaveBeenCalled()
   })

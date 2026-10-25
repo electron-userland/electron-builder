@@ -36,7 +36,11 @@ mac:
 ```
 
 :::note[v27]
-`notarize` stays on `mac`, but the signing options (`hardenedRuntime`, `entitlements`, `entitlementsInherit`) moved under `mac.sign` in v27. See [macOS signing](./migration/v27-breaking-changes.md#macos-signing-macsign).
+`notarize` stays on `mac`, but the signing options (`hardenedRuntime`, `entitlements`, `entitlementsInherit`) moved under `mac.sign` in v27. See [macOS signing](./migration/v27-config-changes.md#macos-signing-macsign).
+:::
+
+:::tip[Fail the build when notarization is skipped]
+Without credentials, electron-builder skips notarization with a warning. With [`forceCodeSigning: true`](./features/code-signing/code-signing.md#the-forcecodesigning-option), missing credentials fail the build at build start instead (unless `mac.notarize: false`), and the stapled ticket is checked with `stapler validate` (the `stapler` of the selected Xcode, or [`toolsets.executables.stapler`](./toolsets.md#executables)) after notarizing. The credentials must then be set when the build starts.
 :::
 
 ### Authentication — Option A: Apple ID
@@ -188,6 +192,8 @@ xcrun stapler validate dist/mac/MyApp.app
 # Check code signature
 codesign --verify --deep --strict --verbose=2 dist/mac/MyApp.app
 ```
+
+[`electron-builder verify`](./cli.md#verify) runs the code signature and stapled ticket checks on every app in the output directory, together with the update-manifest checks, and exits with code 1 when one fails.
 
 ## Troubleshooting
 

@@ -23,10 +23,10 @@ import { CancellationToken, type GenericServerOptions } from "builder-util-runti
 // =============================================================================
 
 const DEFAULT_SUBJECT = "CN=Test Publisher, O=Test Org, C=US"
-const DN_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name"
+const DN_DOCS = "https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name"
 // the environment variable that carries the update path into the PowerShell script
 const FILE_ENV = "ELECTRON_BUILDER_AUTHENTICODE_FILE"
-const UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-breaking-changes#windows-update-signature-verification-fails-closed"
+const UNVERIFIABLE_DOCS = "https://www.electron.build/docs/migration/v27-runtime-changes#windows-update-signature-verification-fails-closed"
 const POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
 // the start of the warning logged when allowCatalogSignature accepts a catalog signature
 const CATALOG_ACCEPTED = "is accepted via a signature Windows reports from a security catalog"
@@ -412,6 +412,13 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       mockPsSuccess(makeJson({ subject: "CN=Test, O=Test Org, L=City, C=US" }))
       // Publisher spec only specifies CN and C — L and O in the cert are beyond the spec, ignored
       expectVerificationSuccess(await verifySignature(["CN=Test, C=US"], defaultFile, logger))
+    })
+
+    test("escaped characters in a publisherName DN match the subject", async ({ tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson({ subject: 'CN="Acme+Bolt Café", O=Acme, C=FR' }))
+      // a "\\+" escape followed by a hex digit, and UTF-8 hex pairs as `openssl x509 -nameopt RFC2253` prints them
+      expectVerificationSuccess(await verifySignature(["CN=Acme\\+Bolt Caf\\C3\\A9, O=Acme, C=FR"], defaultFile, logger))
     })
 
     test("a non-ASCII subject and path escaped as \\uXXXX by the script match", async ({ tmpDir }) => {

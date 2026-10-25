@@ -16,6 +16,7 @@ import { WindowsSignOptions } from "./windowsCodeSign.js"
 import { SignFileResult } from "../signResult.js"
 import { CertificateFromStoreInfo, FileCodeSigningInfo } from "./windowsSignToolManager.js"
 import semver from "semver"
+import { BUILD_CHANGES_URL } from "../../util/config/legacyOptions.js"
 
 const minimumWinCodeSignVersionForDlib = "1.3.0"
 export class WindowsSignAzureManager implements SignManager {
@@ -69,6 +70,7 @@ export class WindowsSignAzureManager implements SignManager {
         // oxlint-disable-next-line typescript/no-base-to-string -- pre-existing log text; a custom toolset object prints as "[object Object]", changing it is out of scope for the lint migration
         reason: `toolsets.winCodeSign "${String(wcs)}" is below the minimum "${minimumWinCodeSignVersionForDlib}"`,
         guidance: `leave toolsets.winCodeSign unset (or set it to "${minimumWinCodeSignVersionForDlib}" / "latest") to use the faster signtool /dlib integration`,
+        docs: `${BUILD_CHANGES_URL}#azure-trusted-signing-signtool-dlib-is-the-default`,
       },
       `Azure Trusted Signing: falling back to legacy PowerShell (Invoke-TrustedSigning)`
     )
@@ -137,7 +139,7 @@ export class WindowsSignAzureManager implements SignManager {
     // PowerShell still parses the decoded string, so PS-level single-quote escaping above is retained.
     const psCommand = `Invoke-TrustedSigning ${paramsString}`
     const encodedCommand = Buffer.from(psCommand, "utf16le").toString("base64")
-    await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-EncodedCommand", encodedCommand])
+    await vm.exec(ps, ["-NoProfile", "-NonInteractive", "-EncodedCommand", encodedCommand], { env: azureCredentialEnv() })
     return "signed"
   }
 
@@ -210,8 +212,20 @@ export class WindowsSignAzureManager implements SignManager {
     // DOTNET_ROOT: Ijwhost.dll (shipped in the ats-bundle) reads this env var to locate
     // hostfxr.dll. On Wine, toVmFile converts the host path to a Z:\ path that Wine resolves
     // back to the same location on the host filesystem.
-    const execOptions = dotnetRootPath != null ? { env: { DOTNET_ROOT: this.vm.toVmFile(dotnetRootPath) } } : undefined
-    await this.vm.exec(signtoolPath, args, execOptions)
+    const env = dotnetRootPath != null ? { ...azureCredentialEnv(), DOTNET_ROOT: this.vm.toVmFile(dotnetRootPath) } : azureCredentialEnv()
+    await this.vm.exec(signtoolPath, args, { env })
     return "signed"
   }
+}
+
+// The Azure.Identity credential (EnvironmentCredential and the others of DefaultAzureCredential) reads its settings and secrets from
+// AZURE_* variables, which a child process without an explicit environment does not get: builder-util removes credentials from it
+function azureCredentialEnv(): Record<string, string> {
+  const env: Record<string, string> = {}
+  for (const [name, value] of Object.entries(process.env)) {
+    if (value != null && name.toUpperCase().startsWith("AZURE_")) {
+      env[name] = value
+    }
+  }
+  return env
 }

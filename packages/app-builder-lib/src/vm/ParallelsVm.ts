@@ -1,12 +1,18 @@
-import { DebugLogger, ExtraSpawnOptions, exec, log, sanitizeDirPath, spawn, stripSensitiveEnvVars } from "builder-util"
+import { DebugLogger, Executables, ExtraSpawnOptions, exec, log, sanitizeDirPath, spawn, stripSensitiveEnvVars } from "builder-util"
 import { ExecFileOptions, SpawnOptions, execFileSync } from "child_process"
 import { homedir } from "os"
 import { VmManager } from "./vm.js"
 
+/** The same executables inside a Parallels Windows guest, at the locations of a default Windows installation. */
+export const PARALLELS_GUEST_WINDOWS_POWERSHELL = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+export const PARALLELS_GUEST_PWSH = "C:\\Program Files\\PowerShell\\7\\pwsh.exe"
+
 /** @internal */
 export async function parseVmList(debugLogger: DebugLogger) {
+  // prlctl by absolute path; when Parallels Desktop is not installed this throws, which callers treat as "no Parallels VM"
+  const prlctl = Executables.resolve("prlctl")
   // do not log output if debug - it is huge, logged using debugLogger
-  let rawList = await exec("prlctl", ["list", "-i", "-s", "name"], undefined, false)
+  let rawList = await exec(prlctl, ["list", "-i", "-s", "name"], undefined, false)
   debugLogger.add("parallels.list", rawList)
 
   rawList = rawList.substring(rawList.indexOf("ID:"))
@@ -39,8 +45,11 @@ export class ParallelsVmManager extends VmManager {
 
   private isExitHookAdded = false
 
+  private readonly prlctl: string
+
   constructor(private readonly vm: ParallelsVm) {
     super()
+    this.prlctl = Executables.resolve("prlctl")
 
     this.startPromise = this.doStartVm()
   }
@@ -60,17 +69,17 @@ export class ParallelsVmManager extends VmManager {
 
   async exec(file: string, args: Array<string>, options?: ExecFileOptions): Promise<string> {
     await this.ensureThatVmStarted()
-    // Merge caller-supplied env onto the base environment, so extra vars don't strip PATH and `prlctl` itself stays resolvable.
+    // Merge caller-supplied env onto the base environment, so extra vars don't strip the variables `prlctl` relies on (HOME, etc.).
     const mergedOptions = options?.env != null ? { ...options, env: { ...stripSensitiveEnvVars(process.env), ...options.env } } : options
     // it is important to use "--current-user" to execute command under logged in user - to access certs.
-    return await exec("prlctl", ["exec", this.vm.id, "--current-user", file.startsWith("/") ? macPathToParallelsWindows(file) : file].concat(args), mergedOptions).catch(error =>
+    return await exec(this.prlctl, ["exec", this.vm.id, "--current-user", file.startsWith("/") ? macPathToParallelsWindows(file) : file].concat(args), mergedOptions).catch(error =>
       this.handleExecuteError(error)
     )
   }
 
   async spawn(file: string, args: Array<string>, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
     await this.ensureThatVmStarted()
-    return await spawn("prlctl", ["exec", this.vm.id, file].concat(args), options, extraOptions).catch(error => this.handleExecuteError(error))
+    return await spawn(this.prlctl, ["exec", this.vm.id, file].concat(args), options, extraOptions).catch(error => this.handleExecuteError(error))
   }
 
   private async doStartVm() {
@@ -86,10 +95,10 @@ export class ParallelsVmManager extends VmManager {
       // Suspend the VM on normal exit and on termination signals.
       // SIGTERM/SIGINT use async exec(); the synchronous 'exit' fallback fires
       // after all async callbacks have already resolved, so execFileSync is safe.
-      const suspendAsync = () => exec("prlctl", stopArgs).catch(() => {})
+      const suspendAsync = () => exec(this.prlctl, stopArgs).catch(() => {})
       const suspendSync = () => {
         try {
-          execFileSync("prlctl", stopArgs)
+          execFileSync(this.prlctl, stopArgs)
         } catch {
           /* best-effort */
         }
@@ -102,7 +111,7 @@ export class ParallelsVmManager extends VmManager {
       })
       process.once("exit", suspendSync)
     }
-    await exec("prlctl", ["start", vmId])
+    await exec(this.prlctl, ["start", vmId])
   }
 
   private ensureThatVmStarted() {
@@ -112,6 +121,15 @@ export class ParallelsVmManager extends VmManager {
       this.startPromise = startPromise
     }
     return startPromise
+  }
+
+  // The guest's environment is not visible from the host, so the location of a default Windows installation is used. PowerShell 7
+  // is not: `prlctl exec` passes its arguments to the guest without quoting, so a path containing a space cannot be started.
+  protected windowsPowerShellPaths() {
+    return {
+      powershell: PARALLELS_GUEST_WINDOWS_POWERSHELL,
+      pwsh: { unavailable: `PowerShell 7 (${PARALLELS_GUEST_PWSH}) is not used in a Parallels VM, because prlctl exec cannot start a path that contains a space` },
+    }
   }
 
   toVmFile(file: string): string {

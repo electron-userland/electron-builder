@@ -957,7 +957,7 @@ describe("validateExplicitPublisherName", () => {
     expect(error!.message).toContain('"CN=My Company, O=My Company, C=US"')
     expect(error!.message).toContain("or set win.verifyUpdateCodeSignature: false to opt out")
     expect(error!.message).not.toContain("null")
-    expect(error!.message.endsWith("https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name")).toBe(true)
+    expect(error!.message.endsWith("https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name")).toBe(true)
   })
 
   test("skips when publisherName is not configured (auto-derive path)", async () => {
@@ -1221,7 +1221,7 @@ BAMCA0cAMEQCIBatA9LgGVzZvqS8X/x3cgV/lk9r86fB/O5hXBhkgBmNAiBlj5Iw
     expect(error.message).toContain("Set win.sign.publisherName explicitly")
     expect(error.message).toContain("or set win.verifyUpdateCodeSignature: false to opt out")
     expect(error.message).not.toContain("set it to null")
-    expect(error.message).toContain("https://www.electron.build/docs/migration/v27-breaking-changes#windows-publishername-must-be-a-distinguished-name")
+    expect(error.message).toContain("https://www.electron.build/docs/migration/v27-build-changes#windows-publishername-must-be-a-distinguished-name")
   })
 
   test("an explicit bare publisherName throws even for a custom sign hook", async () => {

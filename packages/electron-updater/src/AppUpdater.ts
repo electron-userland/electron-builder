@@ -41,7 +41,7 @@ import type { AuthInfo } from "electron"
 import { gunzipSync, gzipSync } from "zlib"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader.js"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader.js"
-import { nonThrowingLogger } from "./util.js"
+import { nonThrowingLogger, throwIfCancelled } from "./util.js"
 import {
   AutoInstallEvent,
   DOWNLOAD_PROGRESS,
@@ -122,7 +122,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       `autoInstallOnAppQuit was removed in electron-updater 7 (electron-builder v27) — use autoInstallEvent instead. ` +
         `Mapping autoInstallOnAppQuit = ${value} to autoInstallEvent = "${mapped}". ` +
         `This compatibility shim is removed in v28. ` +
-        `https://www.electron.build/docs/migration/v27-breaking-changes#autoinstallevent-replaces-autoinstallonappquit`
+        `https://www.electron.build/docs/migration/v27-runtime-changes#autoinstallevent-replaces-autoinstallonappquit`
     )
     this.autoInstallEvent = mapped
   }
@@ -335,6 +335,29 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   protected limitedLogger(key: string, max = 1): LimitedLogger<Logger> {
     return this.logLimiter.wrap(() => this._logger, { key, max })
+  }
+
+  /**
+   * Emits `download-progress`. It runs inside download streams and response handlers, where an exception from an app's
+   * listener would escape as an uncaught exception or break the download, so a throwing listener is logged and ignored.
+   * Each listener is called on its own: `emit` stops at the first listener that throws, so the ones after it would get no progress.
+   * @internal
+   */
+  protected emitDownloadProgress(info: ProgressInfo): void {
+    // raw listeners, so that a `once` listener still removes itself
+    for (const listener of this.rawListeners(DOWNLOAD_PROGRESS)) {
+      try {
+        listener.call(this, info)
+      } catch (e: unknown) {
+        try {
+          this.limitedLogger("download-progress-listener-error").error(
+            `A "${DOWNLOAD_PROGRESS}" listener threw, the download continues (further listener errors are not logged): ${e instanceof Error ? (e.stack ?? e.message) : String(e)}`
+          )
+        } catch (_ignored) {
+          // a throwing logger must not break the download either
+        }
+      }
+    }
   }
 
   // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
@@ -903,7 +926,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       `quitAndInstall(isSilent, isForceRunAfter) was replaced by quitAndInstall({ isSilent, isForceRunAfter }) in electron-updater 7 (electron-builder v27). ` +
         `Interpreting the positional arguments as { isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter} }. ` +
         `This compatibility shim is removed in v28. ` +
-        `https://www.electron.build/docs/migration/v27-breaking-changes#quitandinstall-takes-an-options-object`
+        `https://www.electron.build/docs/migration/v27-runtime-changes#quitandinstall-takes-an-options-object`
     )
     return { isSilent, isForceRunAfter }
   }
@@ -950,7 +973,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   // Only names are logged (header names, query parameter names, origins), never values.
   private announceCrossOriginDownload(url: URL, credentialOrigin: URL, headers: OutgoingHttpHeaders, feedBaseUrl: URL | null): void {
-    const docs = "https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin"
+    const docs = "https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin"
     const names = HttpExecutor.sensitiveHeaderNames(headers)
     // v27 behaviour changes a plain-JavaScript app would otherwise not notice: each is announced once per updater
     if (names.length !== 0) {
@@ -981,7 +1004,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         `The custom update provider ${provider.constructor.name} does not declare feedBaseUrl, but its downloads would send the credential headers ${names.join(", ")} ` +
           `(from requestHeaders, addAuthHeader or fileExtraDownloadHeaders). Override Provider.feedBaseUrl to return the feed URL ` +
           `(the headers are then only sent to its origin), or null to send the request headers to every origin. ` +
-          `https://www.electron.build/docs/migration/v27-breaking-changes#update-credentials-stay-on-the-feeds-origin`,
+          `https://www.electron.build/docs/migration/v27-runtime-changes#update-credentials-stay-on-the-feeds-origin`,
         "ERR_UPDATER_FEED_BASE_URL_NOT_DECLARED"
       )
     }
@@ -1069,7 +1092,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-      downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+      downloadOptions.onProgress = it => this.emitDownloadProgress(it)
     }
 
     const updateInfo = taskOptions.downloadUpdateOptions.updateInfoAndProvider.info
@@ -1266,7 +1289,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       }
 
       if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-        downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+        downloadOptions.onProgress = it => this.emitDownloadProgress(it)
       }
 
       const saveBlockMapToCacheDir = async (blockMapData: BlockMap, cacheDir: string) => {
@@ -1317,6 +1340,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(oldBlockMapData, newBlockMapData)
       return false
     } catch (e: any) {
+      // a user cancellation is not a differential failure: no fallback to a full download
+      throwIfCancelled(e, downloadUpdateOptions.cancellationToken)
       if (e?.code === "ERR_CHECKSUM_MISMATCH") {
         nonThrowingLogger(this._logger).warn(
           `sha512 checksum mismatch after differential download (old blockmap ${
@@ -1482,7 +1507,7 @@ function withLegacyArrayCompat(result: DownloadExecutorResult, logger: Logger): 
         "downloadUpdate() resolves with a DownloadExecutorResult object in electron-updater 7 (electron-builder v27), not an array. " +
           "Replace `const [updateFile] = await downloadUpdate()` with `const { updateFile } = await downloadUpdate()`. " +
           "This compatibility shim is removed in v28. " +
-          "https://www.electron.build/docs/migration/v27-breaking-changes#downloadupdate-resolves-with-a-downloadexecutorresult-object"
+          "https://www.electron.build/docs/migration/v27-runtime-changes#downloadupdate-resolves-with-a-downloadexecutorresult-object"
       )
       yield result.updateFile
       if (result.packageFile != null) {

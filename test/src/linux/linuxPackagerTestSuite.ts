@@ -131,7 +131,7 @@ export function registerLinuxPackagerTests(toolsets: ToolsetConfig): void {
         expect(error.message).toContain("`appImage.systemIntegration` was removed in electron-builder v27")
         expect(error.message).toContain("AppImageLauncher")
         expect(error.message).toContain("electron-builder migrate-schema")
-        expect(error.message).toContain("v27-breaking-changes#appimagesystemintegration")
+        expect(error.message).toContain("v27-config-changes#appimagesystemintegration")
       }
     ))
 
