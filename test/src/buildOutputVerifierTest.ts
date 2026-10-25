@@ -209,6 +209,60 @@ describe("update manifests", () => {
   })
 })
 
+// nsis-web writes into its own folder, and the manifest of each further publish provider one level below it
+describe("manifests of a target with its own folder", () => {
+  async function writeNsisWebOutput(outDir: string, nestedSigner = keyA.privateKeyPem) {
+    await write(path.join(outDir, "win-unpacked", "resources", "app-update.yml"), appUpdateYml({ keys: [keyA.publicKeyPem] }))
+    const nsisWeb = path.join(outDir, "nsis-web")
+    const installer = await writeArtifact(nsisWeb, "My Web Setup 1.0.0.exe", "My-Web-Setup-1.0.0.exe")
+    await writeManifest(path.join(nsisWeb, "latest.yml"), [installer])
+    await writeManifest(path.join(nsisWeb, "s3", "latest.yml"), [installer], [nestedSigner])
+    return { nsisWeb, installer }
+  }
+
+  test("a further provider's manifest below the target folder is verified, and its files are found in the target folder", async ({ expect, tmpDir }) => {
+    const outDir = await tmpDir.createTempDir()
+    const { nsisWeb } = await writeNsisWebOutput(outDir)
+    const results = await run(outDir)
+    const manifestResults = (check: string) => results.filter(it => it.check === check).map(it => [path.relative(outDir, it.file), it.status])
+    expect(manifestResults("update manifest signature")).toEqual([
+      [path.join("nsis-web", "latest.yml"), "verified"],
+      [path.join("nsis-web", "s3", "latest.yml"), "verified"],
+    ])
+    expect(manifestResults("update manifest file")).toEqual([
+      [path.join("nsis-web", "latest.yml"), "verified"],
+      [path.join("nsis-web", "s3", "latest.yml"), "verified"],
+    ])
+    expect(results.find(it => it.file === path.join(nsisWeb, "s3", "latest.yml") && it.check === "update manifest file")?.message).toContain(
+      path.join("nsis-web", "My Web Setup 1.0.0.exe")
+    )
+  })
+
+  test("a further provider's manifest with a foreign signature or a changed file fails", async ({ expect, tmpDir }) => {
+    const signedElsewhere = await tmpDir.createTempDir()
+    await writeNsisWebOutput(signedElsewhere, keyB.privateKeyPem)
+    expect(resultsOf(await run(signedElsewhere), "update manifest signature", "latest.yml")).toEqual(["verified", "failed"])
+
+    const changed = await tmpDir.createTempDir()
+    const { nsisWeb, installer } = await writeNsisWebOutput(changed)
+    await writeManifest(path.join(nsisWeb, "s3", "latest.yml"), [{ ...installer, sha512: "AAAA" }])
+    const nested = (await run(changed)).filter(it => it.file === path.join(nsisWeb, "s3", "latest.yml") && it.check === "update manifest file")
+    expect(nested.map(it => it.status)).toEqual(["failed"])
+  })
+
+  test.skipIf(process.platform === "win32")("a symlink to a folder outside the output is not followed", async ({ expect, tmpDir }) => {
+    const outDir = await tmpDir.createTempDir()
+    const { nsisWeb } = await writeNsisWebOutput(outDir)
+    const outside = await tmpDir.createTempDir()
+    await writeManifest(path.join(outside, "latest.yml"), [await writeArtifact(outside, "Other Setup.exe")], [keyB.privateKeyPem])
+    await symlink(outside, path.join(nsisWeb, "github"))
+    await symlink(outside, path.join(outDir, "bitbucket"))
+    const results = await run(outDir)
+    expect(results.filter(it => !it.file.startsWith(outDir) || it.file.includes("github") || it.file.includes("bitbucket"))).toEqual([])
+    expect(resultsOf(results, "update manifest signature")).toEqual(["verified", "verified"])
+  })
+})
+
 describe("update manifest files", () => {
   test("are matched by sha512, also under the different name a GitHub manifest lists", async ({ expect, tmpDir }) => {
     const outDir = await tmpDir.createTempDir()

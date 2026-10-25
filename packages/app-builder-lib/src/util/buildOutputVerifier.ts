@@ -138,9 +138,36 @@ export async function verifyBuildOutput(options: VerifyBuildOutputOptions): Prom
 
 // ─── discovery ────────────────────────────────────────────────────────────────
 
+// How deep below a target folder files are collected: a further publish provider's manifest of a target with its own folder is
+// one level down (<outDir>/nsis-web/<provider>/latest.yml, see createUpdateInfoTasks)
+const MAX_TARGET_DIR_DEPTH = 2
+
+/**
+ * Collects the regular files of a target folder and of its subfolders, up to {@link MAX_TARGET_DIR_DEPTH} levels down. The output is not
+ * trusted: a symlink is never followed, and a folder whose real path is not inside the output folder is not read.
+ */
+async function collectTargetFiles(dir: string, realOutDir: string, depth: number, files: Array<string>): Promise<void> {
+  if (!isPathWithin(realOutDir, await realpath(dir))) {
+    return
+  }
+  for (const child of await readdir(dir, { withFileTypes: true })) {
+    if (child.name.startsWith(".")) {
+      continue
+    }
+    const childPath = path.join(dir, child.name)
+    // Dirent types come from lstat: a symlink is neither a file nor a directory here
+    if (child.isFile()) {
+      files.push(childPath)
+    } else if (child.isDirectory() && depth < MAX_TARGET_DIR_DEPTH) {
+      await collectTargetFiles(childPath, realOutDir, depth + 1, files)
+    }
+  }
+}
+
 async function discover(outDir: string): Promise<{ apps: Array<PackagedApp>; files: Array<string> }> {
   const apps: Array<PackagedApp> = []
   const files: Array<string> = []
+  const realOutDir = await realpath(outDir)
   for (const entry of await readdir(outDir, { withFileTypes: true })) {
     const entryPath = path.join(outDir, entry.name)
     if (entry.name.startsWith(".")) {
@@ -173,12 +200,8 @@ async function discover(outDir: string): Promise<{ apps: Array<PackagedApp>; fil
       const platform: PlatformKey = unpackedDir[1] === "win" ? "win" : "linux"
       apps.push(await readApp(platform, entryPath, false, [], path.join(entryPath, "resources", "app-update.yml")))
     } else {
-      // nsis-web/, squirrel-windows*/, and the manifests of a second publish provider (<outDir>/<provider>/)
-      for (const child of await readdir(entryPath, { withFileTypes: true })) {
-        if (child.isFile()) {
-          files.push(path.join(entryPath, child.name))
-        }
-      }
+      // nsis-web/, squirrel-windows*/, and the manifests of a further publish provider (<outDir>/<provider>/, <outDir>/nsis-web/<provider>/)
+      await collectTargetFiles(entryPath, realOutDir, 0, files)
     }
   }
   return { apps, files }
@@ -312,7 +335,10 @@ async function verifyManifestFiles(
   sha512Of: (file: string) => Promise<string>
 ): Promise<Array<{ result: VerificationResult; artifact: string | null }>> {
   const check = "update manifest file"
-  const dirs = new Set([path.dirname(manifest.file), outDir])
+  // the artifacts of a target with its own folder (nsis-web/) are there, also for the manifest of a further provider (nsis-web/<provider>/)
+  const parts = path.relative(outDir, manifest.file).split(path.sep)
+  const targetDir = parts.length > 1 ? path.join(outDir, parts[0]) : outDir
+  const dirs = new Set([path.dirname(manifest.file), targetDir, outDir])
   const candidates = files.filter(it => dirs.has(path.dirname(it)) && !/\.(ya?ml|blockmap)$/.test(it))
   const verified: Array<{ result: VerificationResult; artifact: string | null }> = []
   for (const entry of manifest.info.files as Array<any>) {
