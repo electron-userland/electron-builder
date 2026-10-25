@@ -590,3 +590,45 @@ test("--verify with a trust list given on the command line fails a wrong signatu
   await run(dir, [file])
   expect(await run(dir, [file, "--verify", trust(old.publicKeyPem), "-c.updateManifest.allowSigningKeyOutsideTrustList=true"])).toMatchObject([{ status: "skipped" }])
 })
+
+test("--verify uses a command-line trust list exactly as passed, never merged with the configured keys", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const old = current
+  const other = generateUpdateSigningKeypair()
+  const otherId = computeUpdateManifestKeyId(other.publicKeyPem)
+  const noTrustedKey = "no trusted key validates any of its signatures"
+  const expectFailure = async (file: string, args: Array<string>) => {
+    const error = await rejection(run(dir, [file, "--verify", ...args]))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error!.message).toBe(`1 of 1 update manifest(s) failed signature verification: ${file} (${noTrustedKey})`)
+  }
+  // configured: a YAML list at the root, and a mac block of its own; both trust `next` and `other`, with the cutover allowance
+  const dir = await createProject(await tmpDir.createTempDir(), {
+    updateManifest: { publicKey: [next.publicKeyPem, other.publicKeyPem], allowSigningKeyOutsideTrustList: true },
+    mac: { updateManifest: { publicKey: [next.publicKeyPem, other.publicKeyPem], allowSigningKeyOutsideTrustList: true } },
+  })
+  // each manifest is signed only by a configured key the overrides below do not pass
+  const win = path.join(dir, "latest.yml")
+  const mac = path.join(dir, "latest-mac.yml")
+  await writeSigned(win, manifest("12.0.0", "App-Setup-12.0.0.exe"), [next.privateKeyPem])
+  await writeSigned(mac, manifest("12.0.0", "App-12.0.0-mac.zip"), [other.privateKeyPem])
+  // the configured trust lists accept them
+  expect(await run(dir, [win, mac, "--verify"])).toMatchObject([
+    { status: "verified", keyId: nextId },
+    { status: "verified", keyId: otherId },
+  ])
+
+  // a root override reaches a manifest whose platform has a configured block of its own
+  await expectFailure(mac, [trust(old.publicKeyPem)])
+  // repeated root overrides are the whole trust list, not appended to the configured YAML list
+  await expectFailure(win, [trust(old.publicKeyPem), trust(generateUpdateSigningKeypair().publicKeyPem)])
+  // ...also when they come with a config file path
+  await expectFailure(win, ["-c", "electron-builder.yml", trust(old.publicKeyPem), trust(generateUpdateSigningKeypair().publicKeyPem)])
+  // a platform override beats a root override, even one that would accept the manifest
+  await expectFailure(mac, [trust(other.publicKeyPem), `-c.mac.updateManifest.publicKey=${old.publicKeyPem}`])
+  await expectFailure(win, [trust(next.publicKeyPem), `-c.win.updateManifest.publicKey=${old.publicKeyPem}`])
+
+  // the overrides are honored when they do hold the signing key
+  expect(await run(dir, [mac, "--verify", trust(old.publicKeyPem), trust(other.publicKeyPem)])).toMatchObject([{ status: "verified", keyId: otherId }])
+  expect(await run(dir, [win, "--verify", trust(old.publicKeyPem), `-c.win.updateManifest.publicKey=${next.publicKeyPem}`])).toMatchObject([{ status: "verified", keyId: nextId }])
+})

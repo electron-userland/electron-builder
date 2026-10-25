@@ -103,8 +103,8 @@ export async function signUpdateManifest(options: SignUpdateManifestOptions): Pr
     throw new InvalidConfigurationError("No update manifest given: pass one or more latest*.yml paths")
   }
   const projectDir = path.resolve(options.projectDir ?? process.cwd())
-  const { config, overrides } = await loadProjectConfig(projectDir, options.config)
-  const settings = new ManifestSigningSettings(config, projectDir, overrides)
+  const config = await loadProjectConfig(projectDir, options.config)
+  const settings = new ManifestSigningSettings(config, projectDir, new CommandLineOverrides(options.config))
   return options.verify === true ? verifyUpdateManifests(files, settings) : resignUpdateManifests(files, settings)
 }
 
@@ -112,9 +112,8 @@ export async function signUpdateManifest(options: SignUpdateManifestOptions): Pr
  * Resolves the configuration like `publish` and `build` do: the `-c` value is normalized by the build's own option
  * normalization (a file path, inline `-c.<key>=value` overrides, or both, with `"false"`/`"null"` coerced for `updateManifest`),
  * then a file path is loaded by `getConfig` with the inline overrides merged on top, as Packager.validateConfig does.
- * Returns the inline overrides too, so `--verify` can tell a trust list given on the command line from the configured one.
  */
-async function loadProjectConfig(projectDir: string, configOption: SignUpdateManifestOptions["config"]): Promise<{ config: Configuration; overrides: Configuration | null }> {
+async function loadProjectConfig(projectDir: string, configOption: SignUpdateManifestOptions["config"]): Promise<Configuration> {
   let configFromOptions = normalizeOptions({ config: (configOption ?? undefined) as any }).config
   let configPath: string | null = null
   if (typeof configFromOptions === "string") {
@@ -125,8 +124,62 @@ async function loadProjectConfig(projectDir: string, configOption: SignUpdateMan
     configPath = configFromOptions.extends as string
     delete configFromOptions.extends
   }
-  const overrides = configFromOptions ?? null
-  return { config: await getConfig(projectDir, configPath, overrides), overrides }
+  return getConfig(projectDir, configPath, configFromOptions ?? null)
+}
+
+/**
+ * The `updateManifest` values passed inline with `-c.<key>=value`, read from the raw `-c` value rather than the merged configuration:
+ * merging lets a configured platform block shadow a root override and concatenates a repeated override with a configured list, so a
+ * trust list given on the command line could otherwise end up holding keys the operator did not pass.
+ */
+class CommandLineOverrides {
+  private readonly items: Array<Record<string, any>>
+
+  constructor(configOption: SignUpdateManifestOptions["config"]) {
+    // a file path plus inline overrides (or repeated overrides with a file) arrive as an array, one object per flag
+    const values = Array.isArray(configOption) ? configOption : [configOption]
+    this.items = values.filter((it): it is Record<string, any> => it != null && typeof it === "object" && !Array.isArray(it))
+  }
+
+  private values(block: (item: Record<string, any>) => unknown, key: string): Array<unknown> {
+    const result: Array<unknown> = []
+    for (const item of this.items) {
+      const value = block(item)
+      if (value != null && typeof value === "object" && !Array.isArray(value) && (value as any)[key] != null) {
+        result.push((value as any)[key])
+      }
+    }
+    return result
+  }
+
+  /**
+   * The trust list given on the command line for `platform`'s manifests: every `-c.<platform>.updateManifest.publicKey` when there is
+   * one, otherwise every `-c.updateManifest.publicKey` (also when the configuration has a platform block), or null when neither was passed.
+   */
+  trustList(platform: ManifestPlatform): { keys: Array<string>; field: string } | null {
+    for (const [field, block] of [
+      [`${platform}.updateManifest`, (item: Record<string, any>) => item[platform]?.updateManifest],
+      ["updateManifest", (item: Record<string, any>) => item.updateManifest],
+    ] as const) {
+      const values = this.values(block, "publicKey")
+      if (values.length > 0) {
+        return { keys: values.flatMap(it => normalizePublicKeyList(it as string | Array<string>)), field }
+      }
+    }
+    return null
+  }
+
+  /** `allowSigningKeyOutsideTrustList` given on the command line for `platform` (the platform override first), or null. */
+  allowSigningKeyOutsideTrustList(platform: ManifestPlatform): boolean | null {
+    for (const block of [(item: Record<string, any>) => item[platform]?.updateManifest, (item: Record<string, any>) => item.updateManifest]) {
+      const values = this.values(block, "allowSigningKeyOutsideTrustList")
+      if (values.length > 0) {
+        const last = values[values.length - 1]
+        return last === true || last === "true"
+      }
+    }
+    return null
+  }
 }
 
 /** The platform whose build writes a manifest of this name: `<channel>-mac.yml`, `<channel>-linux[-<arch>].yml`, else Windows (`<channel>.yml`). */
@@ -148,15 +201,8 @@ class ManifestSigningSettings {
   constructor(
     private readonly config: Configuration,
     private readonly projectDir: string,
-    /** The inline `-c.<key>=value` overrides, already merged into `config`. */
-    private readonly overrides: Configuration | null
+    private readonly commandLine: CommandLineOverrides
   ) {}
-
-  /** Whether the inline overrides set `updateManifest.<key>`, at the root or for `platform`. */
-  private overridden(platform: ManifestPlatform, key: "publicKey" | "allowSigningKeyOutsideTrustList"): boolean {
-    const blocks = [(this.overrides as any)?.updateManifest, (this.overrides as any)?.[platform]?.updateManifest]
-    return blocks.some(block => block != null && typeof block === "object" && block[key] != null)
-  }
 
   private options(platform: ManifestPlatform): { value: Configuration["updateManifest"]; field: string } {
     const platformValue = (this.config as any)[platform]?.updateManifest
@@ -196,10 +242,14 @@ class ManifestSigningSettings {
     if (value === false) {
       return { optedOut: true }
     }
-    const trustedKeys = normalizePublicKeyList(value?.publicKey)
+    // A trust list given on the command line is used exactly as passed (see CommandLineOverrides); otherwise the effective
+    // configuration block's publicKey, as electron-builder verify reads it.
+    const override = this.commandLine.trustList(platform)
+    const trustedKeys = override == null ? normalizePublicKeyList(value?.publicKey) : override.keys
+    const source = override == null ? `${field}.publicKey` : `-c.${override.field}.publicKey`
     if (trustedKeys.length === 0) {
       throw new InvalidConfigurationError(
-        `Cannot verify ${file}: ${field}.publicKey is not set. --verify checks against the public keys of ${field}.publicKey (as electron-builder verify does) ` +
+        `Cannot verify ${file}: ${source} ${override == null ? "is not set" : "holds no key"}. --verify checks against the public keys of updateManifest.publicKey (as electron-builder verify does) ` +
           "and never loads a signing key: set it in the configuration or pass -c.updateManifest.publicKey=<PEM>"
       )
     }
@@ -208,15 +258,13 @@ class ManifestSigningSettings {
         parsePublicKey(key)
       } catch (e: any) {
         // the entry may be a private key pasted by mistake: name the field only, never the value
-        throw new InvalidConfigurationError(`${field}.publicKey #${index + 1} is not a valid Ed25519 public key (the value is not shown): ${e.message || e}`)
+        throw new InvalidConfigurationError(`${source} #${index + 1} is not a valid Ed25519 public key (the value is not shown): ${e.message || e}`)
       }
     })
     // The cutover allowance turns a failure into "skipped", as electron-builder verify does for the configured trust list. A trust list
-    // given on the command line (-c.updateManifest.publicKey=...) is an explicit request to check against those keys, so the configured
-    // allowance does not apply to it: the check must fail when the manifest is not signed by them. Only an allowance given on the
-    // command line as well still applies.
-    const allowCutover =
-      value?.allowSigningKeyOutsideTrustList === true && (!this.overridden(platform, "publicKey") || this.overridden(platform, "allowSigningKeyOutsideTrustList"))
+    // given on the command line is an explicit request to check against those keys, so the configured allowance does not apply to it:
+    // the check must fail when the manifest is not signed by them. Only an allowance given on the command line as well still applies.
+    const allowCutover = override == null ? value?.allowSigningKeyOutsideTrustList === true : this.commandLine.allowSigningKeyOutsideTrustList(platform) === true
     return { optedOut: false, trustedKeys, allowCutover }
   }
 }
