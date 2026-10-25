@@ -82,11 +82,11 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="${programFilesId}">
-        {{ if (menuCategory) { }}
-          <Directory Id="COMPANYDIR" Name="${menuCategory}">
+        {{ for (const companyDirectory of companyDirectories) { }}
+          <Directory Id="${companyDirectory.id}" Name="${companyDirectory.name}">
         {{ } -}}
               <Directory Id="APPLICATIONFOLDER" Name="${installationDirectoryWixName}"/>
-        {{ if (menuCategory) { }}
+        {{ for (const companyDirectory of companyDirectories) { }}
           </Directory>
         {{ } -}}
       </Directory>

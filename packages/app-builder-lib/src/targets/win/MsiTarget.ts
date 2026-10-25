@@ -172,6 +172,7 @@ export default class MsiTarget extends Target {
     const appInfo = this.packager.appInfo
     const { files, dirs } = await this.computeFileDeclaration(appOutDir)
     const options = this.options
+    const isWix3 = (await this.wixToolset.value).schema === "v3"
 
     return (await this.projectTemplate.value)({
       ...(await this.getBaseOptions(commonOptions)),
@@ -180,7 +181,9 @@ export default class MsiTarget extends Target {
       // https://stackoverflow.com/questions/1929038/compilation-error-ice80-the-64bitcomponent-uses-32bitdirectory
       programFilesId: wixArch === Arch.ia32 ? "ProgramFilesFolder" : "ProgramFiles64Folder",
       // a WiX 3 component can't override the directory of its ComponentGroup, so there each component names its own (computeFileDeclaration)
-      componentGroupDirectoryAttribute: (await this.wixToolset.value).schema === "v3" ? "" : ` Directory="${ROOT_DIR_ID}"`,
+      componentGroupDirectoryAttribute: isWix3 ? "" : ` Directory="${ROOT_DIR_ID}"`,
+      // the directories between the Program Files folder and APPLICATIONFOLDER, outermost first
+      companyDirectories: getCompanyDirectories(commonOptions.menuCategory, isWix3),
       // wix in the name because special wix format can be used in the name
       installationDirectoryWixName: getWindowsInstallationDirName(appInfo, commonOptions.isAssisted || commonOptions.isPerMachine === true),
       dirs,
@@ -224,6 +227,8 @@ export default class MsiTarget extends Target {
     let startMenuCategory = null as string | null
     const fileSpace = " ".repeat(6)
     const commonOptions = getEffectiveOptions(this.options, this.packager)
+    // WiX 3 declares one Directory per segment, so empty segments (a leading, trailing or doubled separator) are dropped
+    const menuCategory = isWix3 ? joinMenuCategory(commonOptions.menuCategory, path.sep) : commonOptions.menuCategory
     // The template only declares `<Icon Id="${iconId}"/>` when an icon is configured, so referencing
     // that id unconditionally makes light.exe fail with LGHT0094 for an app without an icon.
     const iconAttribute = (await this.packager.getIconPath()) == null ? "" : ` Icon="${this.iconId}"`
@@ -278,7 +283,6 @@ export default class MsiTarget extends Target {
           )}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes"${iconAttribute}/>\n`
         }
 
-        const { menuCategory } = commonOptions
         const hasMenuCategory = menuCategory != null
         const startMenuShortcutDirectoryId = hasMenuCategory ? "AppProgramMenuDir" : "ProgramMenuFolder"
         if (commonOptions.isCreateStartMenuShortcut) {
@@ -327,13 +331,40 @@ export default class MsiTarget extends Target {
       dirs.push(...renderDirectoryTree(ROOT_DIR_ID, dirNames, path.sep, getDirectoryId))
       if (startMenuCategory != null) {
         // the shortcut is in the innermost directory of the category, which keeps the id the shortcut and RemoveFolder use
-        const categoryPath = startMenuCategory.split(/[\\/]+/).join(path.sep)
+        const categoryPath = startMenuCategory
         dirs.push(...renderDirectoryTree("ProgramMenuFolder", [categoryPath], path.sep, it => (it === categoryPath ? "AppProgramMenuDir" : getDirectoryId(`menu:${it}`))))
       }
     }
 
     return { dirs: listToString(dirs, 2), files: listToString(files, 3) }
   }
+}
+
+/** The non-empty segments of a `menuCategory` ("A/B", "A\\B"); a leading, trailing or doubled separator gives no segment. */
+function getMenuCategorySegments(menuCategory: string | null): Array<string> {
+  return menuCategory == null ? [] : menuCategory.split(/[\\/]+/).filter(it => it.length > 0)
+}
+
+/** WiX 3: `menuCategory` with its non-empty segments joined with `separator`, or null if it has none. */
+function joinMenuCategory(menuCategory: string | null, separator: string): string | null {
+  const segments = getMenuCategorySegments(menuCategory)
+  return segments.length === 0 ? null : segments.join(separator)
+}
+
+/**
+ * The `Directory` elements that wrap APPLICATIONFOLDER under the Program Files folder for `menuCategory`, outermost first; the
+ * innermost is `COMPANYDIR`. The legacy bundle takes the category as one name (its inline directory syntax splits it); WiX 3
+ * has no inline syntax, so there each segment is a nested directory.
+ */
+function getCompanyDirectories(menuCategory: string | null, isWix3: boolean): Array<{ id: string; name: string }> {
+  if (!isWix3) {
+    return menuCategory ? [{ id: "COMPANYDIR", name: menuCategory }] : []
+  }
+  const segments = getMenuCategorySegments(menuCategory)
+  return segments.map((name, index) => ({
+    id: index === segments.length - 1 ? "COMPANYDIR" : getDirectoryId(`company:${segments.slice(0, index + 1).join("/")}`),
+    name,
+  }))
 }
 
 function getDirectoryId(dirName: string): string {
