@@ -315,6 +315,8 @@ export class FakeNetRequest extends EventEmitter {
 /** An ElectronHttpExecutor whose requests are {@link FakeNetRequest}s answered by `answer`; `sent` lists what they sent. */
 export class FakeElectronHttpExecutor extends ElectronHttpExecutor {
   readonly sent: Array<FakeNetSentRequest> = []
+  /** createRequest throws for these URLs, as net.request does for options it cannot make a request of */
+  readonly unrequestableUrls = new Set<string>()
 
   constructor(private readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer) {
     super()
@@ -325,7 +327,15 @@ export class FakeElectronHttpExecutor extends ElectronHttpExecutor {
     // like net.request: `host` (with its port) wins over `hostname` and `port`
     const host = options.host ?? `${options.hostname}${options.port == null ? "" : `:${options.port}`}`
     const redirect = "redirect" in options && typeof options.redirect === "string" ? options.redirect : undefined
-    const request = new FakeNetRequest({ url: `${options.protocol}//${host}${options.path}`, headers: options.headers, redirect, answer: this.answer, sent: this.sent })
+    const url = `${options.protocol}//${host}${options.path}`
+    // like net.request, which throws (rather than failing the request) for a protocol other than http: and https:
+    if (options.protocol !== "http:" && options.protocol !== "https:") {
+      throw new Error(`Protocol "${options.protocol}" not supported`)
+    }
+    if (this.unrequestableUrls.has(url)) {
+      throw new Error(`Cannot create a request for ${url}`)
+    }
+    const request = new FakeNetRequest({ url, headers: options.headers, redirect, answer: this.answer, sent: this.sent })
     request.on("response", callback)
     return request
   }
