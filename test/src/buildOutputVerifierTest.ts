@@ -3,7 +3,7 @@ import { AuthenticodeSignerInfo } from "app-builder-lib/src/codeSign/win/authent
 import { verifyBuildOutput, VerificationResult } from "app-builder-lib/src/util/buildOutputVerifier.js"
 import { createUpdateManifestSignatures, generateUpdateSigningKeypair, parsePrivateKey, serializeToYaml } from "builder-util"
 import { hashFile } from "builder-util-runtime"
-import { mkdir, readFile, writeFile } from "fs/promises"
+import { mkdir, readFile, symlink, writeFile } from "fs/promises"
 import * as path from "path"
 import { afterEach, beforeEach, vi } from "vitest"
 
@@ -79,6 +79,44 @@ function run(outDir: string, config: any = {}, signers: Record<string, Authentic
 
 const resultsOf = (results: Array<VerificationResult>, check: string, fileName?: string) =>
   results.filter(it => it.check === check && (fileName == null || path.basename(it.file) === fileName)).map(it => it.status)
+
+// The output directory can hold downloaded artifacts, which are not trusted
+describe("app-update.yml of an untrusted output", () => {
+  test.skipIf(process.platform === "win32")("is not read through a symlink that leads out of the app", async ({ expect, tmpDir }) => {
+    const outDir = await tmpDir.createTempDir()
+    const secret = path.join(await tmpDir.createTempDir(), "id_ed25519")
+    await write(secret, "-----BEGIN OPENSSH PRIVATE KEY-----\nnot: [valid\n")
+    await mkdir(path.join(outDir, "linux-unpacked", "resources"), { recursive: true })
+    await symlink(secret, path.join(outDir, "linux-unpacked", "resources", "app-update.yml"))
+    await writeManifest(path.join(outDir, "latest-linux.yml"), [await writeArtifact(outDir, "My-1.0.0.AppImage")])
+    const results = await run(outDir)
+    const problem = results.find(it => it.check === "app update configuration")
+    expect(problem).toMatchObject({ status: "failed", message: "app-update.yml is a symlink that leads out of the app" })
+    expect(JSON.stringify(results)).not.toContain("OPENSSH")
+  })
+
+  test.skipIf(process.platform === "win32")("is read through a symlink that stays inside the app", async ({ expect, tmpDir }) => {
+    const outDir = await tmpDir.createTempDir()
+    await write(path.join(outDir, "linux-unpacked", "resources", "real-app-update.yml"), appUpdateYml({ keys: [keyA.publicKeyPem] }))
+    await symlink("real-app-update.yml", path.join(outDir, "linux-unpacked", "resources", "app-update.yml"))
+    await writeManifest(path.join(outDir, "latest-linux.yml"), [await writeArtifact(outDir, "My-1.0.0.AppImage")])
+    const results = await run(outDir)
+    expect(resultsOf(results, "app update configuration")).toEqual([])
+    expect(resultsOf(results, "update manifest signature")).toEqual(["verified"])
+  })
+
+  test("that is not valid YAML, or not a mapping, fails without quoting its content", async ({ expect, tmpDir }) => {
+    const outDir = await tmpDir.createTempDir()
+    await write(path.join(outDir, "linux-unpacked", "resources", "app-update.yml"), "provider: generic\nurl: [SECRET-TOKEN-1234\n")
+    await write(path.join(outDir, "linux-arm64-unpacked", "resources", "app-update.yml"), "- a list\n")
+    const results = await run(outDir)
+    const problems = results.filter(it => it.check === "app update configuration")
+    expect(problems.map(it => it.status)).toEqual(["failed", "failed"])
+    expect(problems.find(it => it.file.includes("linux-unpacked"))?.message).toMatch(/^app-update\.yml is not valid YAML \(.+\)$/)
+    expect(problems.find(it => it.file.includes("linux-arm64-unpacked"))?.message).toBe("app-update.yml is not a YAML mapping")
+    expect(JSON.stringify(results)).not.toContain("SECRET-TOKEN-1234")
+  })
+})
 
 describe("update manifests", () => {
   test("a signed manifest verifies against the trust list of every packaged app of its platform, and its files match", async ({ expect, tmpDir }) => {

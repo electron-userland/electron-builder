@@ -570,7 +570,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     const ticketProblem = await validateStapledTicket(appPath)
     if (ticketProblem != null) {
       throw forceCodeSigningError(
-        `forceCodeSigning is enabled, but the prepackaged app ${log.filePath(appPath)} has no valid stapled notarization ticket (xcrun stapler validate: ${ticketProblem}). ` +
+        `forceCodeSigning is enabled, but the prepackaged app ${log.filePath(appPath)} has no valid stapled notarization ticket (stapler validate: ${ticketProblem}). ` +
           "Notarize and staple it before packaging it, or set mac.notarize: false.",
         VERIFICATION_FAILED_ERROR_CODE
       )

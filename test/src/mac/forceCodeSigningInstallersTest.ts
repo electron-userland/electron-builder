@@ -3,7 +3,7 @@ import { MacTargetHelper } from "app-builder-lib/internal"
 import { findIdentity } from "app-builder-lib/src/codeSign/mac/macCodeSign.js"
 import { checkInstallerPackageSignature, verifyMacCodeSignature } from "app-builder-lib/src/codeSign/mac/macSignatureVerifier.js"
 import { PkgTarget } from "app-builder-lib/src/targets/mac/pkg.js"
-import { Arch, exec, InvalidConfigurationError, log } from "builder-util"
+import { Arch, exec, Executables, InvalidConfigurationError, log } from "builder-util"
 import { DmgTarget } from "dmg-builder"
 import { writeFile } from "fs/promises"
 import * as path from "path"
@@ -39,6 +39,8 @@ beforeEach(() => {
   }
   setPlatform("darwin")
   vi.mocked(exec).mockReset().mockResolvedValue("")
+  // the default locations on macOS, which exist on macOS only
+  vi.spyOn(Executables, "resolve").mockImplementation(name => `/usr/bin/${name}`)
   vi.mocked(findIdentity).mockReset().mockResolvedValue(identity)
   vi.mocked(verifyMacCodeSignature).mockReset().mockResolvedValue(null)
   vi.mocked(checkInstallerPackageSignature).mockReset().mockResolvedValue(null)
@@ -87,7 +89,7 @@ describe("DMG signing (dmg.sign: true) under forceCodeSigning", () => {
 
   test("the signed DMG is verified with codesign --verify", async ({ expect }) => {
     await signDmg(makeDmgPackager({}))
-    expect(vi.mocked(exec)).toHaveBeenCalledWith("codesign", ["--sign", identity.hash, "/out/My-1.0.0.dmg"])
+    expect(vi.mocked(exec)).toHaveBeenCalledWith("/usr/bin/codesign", ["--sign", identity.hash, "/out/My-1.0.0.dmg"])
     expect(verifyMacCodeSignature).toHaveBeenCalledWith("/out/My-1.0.0.dmg", { deep: false })
 
     vi.mocked(verifyMacCodeSignature).mockResolvedValue("invalid signature (code or signature have been modified)")

@@ -40,7 +40,7 @@ mac:
 :::
 
 :::tip[Fail the build when notarization is skipped]
-Without credentials, electron-builder skips notarization with a warning. With [`forceCodeSigning: true`](./code-signing.md#the-forcecodesigning-option), missing credentials fail the build at build start instead (unless `mac.notarize: false`), and the stapled ticket is checked with `xcrun stapler validate` after notarizing. The credentials must then be set when the build starts.
+Without credentials, electron-builder skips notarization with a warning. With [`forceCodeSigning: true`](./code-signing.md#the-forcecodesigning-option), missing credentials fail the build at build start instead (unless `mac.notarize: false`), and the stapled ticket is checked with `stapler validate` (the `stapler` of the selected Xcode, or [`toolsets.executables.stapler`](../../toolsets.md#executables)) after notarizing. The credentials must then be set when the build starts.
 :::
 
 ### Authentication — Option A: Apple ID

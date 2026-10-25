@@ -717,7 +717,7 @@ export class MacTargetHelper {
       const problem = await validateStapledTicket(appPath)
       if (problem != null) {
         throw forceCodeSigningError(
-          `forceCodeSigning is enabled, but ${log.filePath(appPath)} was notarized and xcrun stapler validate rejects its stapled ticket (${problem}).`,
+          `forceCodeSigning is enabled, but ${log.filePath(appPath)} was notarized and stapler validate rejects its stapled ticket (${problem}).`,
           VERIFICATION_FAILED_ERROR_CODE
         )
       }

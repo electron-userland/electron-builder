@@ -1,6 +1,6 @@
 import { AppInfo, Packager } from "app-builder-lib"
 import { expandMacro, VERIFICATION_FAILED_ERROR_CODE, verifyBuildOutput, VerificationResult } from "app-builder-lib/internal"
-import { InvalidConfigurationError, log } from "builder-util"
+import { Executables, InvalidConfigurationError, log } from "builder-util"
 import { stat } from "fs/promises"
 import * as path from "path"
 import type { Argv } from "yargs"
@@ -65,7 +65,8 @@ export async function verify(args: VerifyCliOptions): Promise<Array<Verification
     throw new InvalidConfigurationError(`the output directory ${outDir} does not exist: build first, or pass the directory to verify`)
   }
 
-  const results = await verifyBuildOutput({ outDir, projectDir: packager.projectDir, config })
+  // codesign, stapler, pkgutil and PowerShell come from the toolsets.executables of the project configuration, as in the build
+  const results = await Executables.run(config.toolsets?.executables, () => verifyBuildOutput({ outDir, projectDir: packager.projectDir, config }))
   const allowUnverified = args["allow-unverified"] === true
   for (const { status, check, file, message } of results) {
     const fields = { check, file: log.filePath(file) }

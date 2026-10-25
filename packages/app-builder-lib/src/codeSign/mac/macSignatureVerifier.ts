@@ -1,10 +1,11 @@
-import { exec } from "builder-util"
+import { exec, Executables } from "builder-util"
 import { stripVTControlCharacters } from "util"
 
 /**
  * Read-back checks of macOS signatures, shared by the `forceCodeSigning` build checks and `electron-builder verify`.
  * Each returns `null` when the check passes, or the tool's complaint; none throws on a bad signature. They run Apple's
- * tools, so they work on macOS only.
+ * tools, so they work on macOS only. Each tool is started by absolute path, from `toolsets.executables` or its default
+ * location (see {@link Executables}); a tool that cannot be located is an `InvalidConfigurationError`, not a complaint.
  */
 
 /**
@@ -22,12 +23,12 @@ export async function verifyMacCodeSignature(file: string, options: { readonly d
     args.push(strict === true ? "--strict" : `--strict=${strict}`)
   }
   args.push("--verbose=2", file)
-  return await toolProblem("/usr/bin/codesign", args)
+  return await toolProblem(Executables.resolve("codesign"), args)
 }
 
-/** `xcrun stapler validate`: whether a valid notarization ticket is stapled to the app, pkg or DMG. */
+/** `stapler validate`: whether a valid notarization ticket is stapled to the app, pkg or DMG. */
 export async function validateStapledTicket(file: string): Promise<string | null> {
-  return await toolProblem("/usr/bin/xcrun", ["stapler", "validate", file])
+  return await toolProblem(await Executables.stapler(), ["validate", file])
 }
 
 /**
@@ -35,9 +36,10 @@ export async function validateStapledTicket(file: string): Promise<string | null
  * certificate; only a package without a signature, or with an invalid or revoked one, fails.
  */
 export async function checkInstallerPackageSignature(pkg: string): Promise<string | null> {
+  const pkgutil = Executables.resolve("pkgutil")
   let output: string
   try {
-    output = await exec("/usr/sbin/pkgutil", ["--check-signature", pkg], undefined, false)
+    output = await exec(pkgutil, ["--check-signature", pkg], undefined, false)
   } catch (e: any) {
     // pkgutil exits non-zero for some signed statuses too, so the decision is made on its Status line
     output = errorText(e)

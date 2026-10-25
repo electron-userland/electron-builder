@@ -2,7 +2,7 @@ import { MacPackager, Platform } from "app-builder-lib"
 import { MacTargetHelper } from "app-builder-lib/internal"
 import { findIdentity } from "app-builder-lib/src/codeSign/mac/macCodeSign.js"
 import { checkInstallerPackageSignature, validateStapledTicket, verifyMacCodeSignature } from "app-builder-lib/src/codeSign/mac/macSignatureVerifier.js"
-import { Arch, InvalidConfigurationError, log } from "builder-util"
+import { Arch, Executables, InvalidConfigurationError, log } from "builder-util"
 import { DIR_TARGET } from "electron-builder"
 import { afterEach, beforeEach, vi } from "vitest"
 import { appThrows } from "../helpers/packTester"
@@ -59,6 +59,8 @@ beforeEach(() => {
   vi.mocked(verifyMacCodeSignature).mockReset().mockResolvedValue(null)
   vi.mocked(validateStapledTicket).mockReset().mockResolvedValue(null)
   vi.mocked(checkInstallerPackageSignature).mockReset().mockResolvedValue(null)
+  // notarytool is found with /usr/bin/xcrun, which exists on macOS only
+  vi.spyOn(Executables, "notarytool").mockResolvedValue("/Applications/Xcode.app/Contents/Developer/usr/bin/notarytool")
 })
 
 afterEach(() => {
@@ -116,13 +118,13 @@ describe("notarizeIfProvided under forceCodeSigning", () => {
     expect(validateStapledTicket).toHaveBeenCalledWith("/out/mac/My.app")
   })
 
-  test("fails when xcrun stapler validate rejects the ticket", async ({ expect }) => {
+  test("fails when stapler validate rejects the ticket", async ({ expect }) => {
     vi.stubEnv("APPLE_KEYCHAIN_PROFILE", "notary-profile")
     vi.mocked(validateStapledTicket).mockResolvedValue("My.app does not have a ticket stapled to it.")
     const error = await errorOf(makeMacPackager({}).helper.notarizeIfProvided("/out/mac/My.app"))
     expect(error).toBeInstanceOf(InvalidConfigurationError)
     expect(error.code).toBe("ERR_ELECTRON_BUILDER_VERIFICATION_FAILED")
-    expect(error.message).toContain("xcrun stapler validate rejects its stapled ticket (My.app does not have a ticket stapled to it.)")
+    expect(error.message).toContain("stapler validate rejects its stapled ticket (My.app does not have a ticket stapled to it.)")
   })
 
   test("without forceCodeSigning, missing credentials still only warn and no ticket is validated", async ({ expect }) => {

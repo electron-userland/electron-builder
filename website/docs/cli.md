@@ -109,10 +109,12 @@ electron-builder verify --allow-unverified # only warn about checks that cannot 
 What it checks:
 
 - **Update manifests** — every `latest*.yml` (found by its content, also a second provider's in a subdirectory) must be signed by a key in the trust list (`updateManifestPublicKey`) that each packaged app of its platform embeds in `app-update.yml`, the check electron-updater makes. Without a packaged app in the directory, it uses `updateManifest.publicKey` or the configured signing key instead. Every file a manifest lists must match an artifact by sha512 and size, which catches an artifact changed after the manifest was written.
-- **macOS** — every `.app` must have a valid code signature (`codesign --verify --deep --strict`) and, outside the Mac App Store, a stapled notarization ticket (`xcrun stapler validate`). A `.pkg` must be signed (`pkgutil --check-signature`) and notarized, and a DMG with `dmg.sign: true` must be signed. Any valid signature counts.
+- **macOS** — every `.app` must have a valid code signature (`codesign --verify --deep --strict`) and, outside the Mac App Store, a stapled notarization ticket (`stapler validate`). A `.pkg` must be signed (`pkgutil --check-signature`) and notarized, and a DMG with `dmg.sign: true` must be signed. Any valid signature counts.
 - **Windows** — installers, `.msi` / AppX / MSIX packages and the app executable must carry a valid Authenticode signature, and the update installers must match the `publisherName` electron-updater verifies them against.
 
 The options of the project configuration are honored: `updateManifest: false`, `mac.notarize: false`, `mac.sign: null`, `win.sign: false` and `win.signExts` exclusions turn the checks they affect into warnings. Pass the configuration of the build with `-c` / `--config` and `--projectDir` as for a build.
+
+`codesign`, `stapler`, `pkgutil` and Windows PowerShell are started by absolute path, from [`toolsets.executables`](./toolsets.md#executables) of the configuration or their default locations, never from `PATH`.
 
 A check that cannot run on this host fails, unless `--allow-unverified` is passed: macOS checks need macOS, the signature hash of a Windows file can only be validated on Windows (elsewhere only its signer is read), and an update manifest needs a trust list to be verified against. Store-only AppX/MSIX packages are unsigned by design: exclude them with `win.signExts: ["!.appx"]`.
 

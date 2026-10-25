@@ -437,7 +437,7 @@ export interface CommonConfiguration {
    * - macOS: the app must be signed, which needs a macOS host, also in pull-request builds (set `CSC_FOR_PULL_REQUEST=true` to sign
    *   them, or pass `-c.forceCodeSigning=false` there), and notarized: notarization credentials must be set when the build starts.
    *   The output of a custom `mac.sign` signer is checked with `codesign --verify --deep --strict`, the stapled ticket with
-   *   `xcrun stapler validate`, a signed pkg with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.
+   *   `stapler validate`, a signed pkg with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.
    * - Windows: every signed file is read back and must carry a valid Authenticode signature.
    * - Every platform (the only effect on Linux): auto-update manifests must be signed, also by a build that does not publish.
    * - A prepackaged app, which electron-builder does not sign, must already be signed (and, on macOS, notarized).

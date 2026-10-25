@@ -1,4 +1,4 @@
-import { createUpdateManifestSignatures, generateUpdateSigningKeypair, InvalidConfigurationError, log, parsePrivateKey, serializeToYaml } from "builder-util"
+import { createUpdateManifestSignatures, Executables, generateUpdateSigningKeypair, InvalidConfigurationError, log, parsePrivateKey, serializeToYaml } from "builder-util"
 import { hashFile } from "builder-util-runtime"
 import { configureVerifyCommand, verify } from "electron-builder/src/cli/verify"
 import { mkdir, writeFile } from "fs/promises"
@@ -84,6 +84,20 @@ test("-c overrides apply as in a build: -c.linux.updateManifest=false skips the 
     ["update manifest signature", "skipped"],
     ["update manifest file", "verified"],
   ])
+})
+
+test("checks in an Executables.run scope of toolsets.executables, so codesign, stapler, pkgutil and PowerShell come from it", async ({ expect, tmpDir }) => {
+  const projectDir = await tmpDir.createTempDir()
+  await createProject(projectDir, "toolsets:\n  executables:\n    codesign: file:///opt/tools/codesign\n    stapler: file:///opt/tools/stapler\n")
+  await writeLinuxOutput(path.join(projectDir, "dist"))
+  const scopes: Array<unknown> = []
+  const run = vi.spyOn(Executables, "run").mockImplementation((executables, fn) => {
+    scopes.push(executables)
+    return fn()
+  })
+  await verify({ projectDir })
+  expect(run).toHaveBeenCalledTimes(1)
+  expect(scopes).toEqual([{ codesign: "file:///opt/tools/codesign", stapler: "file:///opt/tools/stapler" }])
 })
 
 test("verifies the output directory of the project configuration", async ({ expect, tmpDir }) => {

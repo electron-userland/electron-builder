@@ -1529,6 +1529,23 @@
           ],
           "description": "One file:// URI, or a list of them, of the `pkgbuild` executable on the build machine, such as `file:///opt/homebrew/bin/pkgbuild` or `file:///C:/Program%20Files/pkgbuild/pkgbuild.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
         },
+        "pkgutil": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `pkgutil` executable on the build machine, such as `file:///opt/homebrew/bin/pkgutil` or `file:///C:/Program%20Files/pkgutil/pkgutil.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
         "powershell": {
           "anyOf": [
             {
@@ -1630,6 +1647,23 @@
             }
           ],
           "description": "One file:// URI, or a list of them, of the `snapcraft` executable on the build machine, such as `file:///opt/homebrew/bin/snapcraft` or `file:///C:/Program%20Files/snapcraft/snapcraft.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
+        },
+        "stapler": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "One file:// URI, or a list of them, of the `stapler` executable on the build machine, such as `file:///opt/homebrew/bin/stapler` or `file:///C:/Program%20Files/stapler/stapler.exe`. The first that is an executable file is used; a URI with a Windows drive letter is skipped on macOS and Linux, and one without it on Windows. Plain paths, `~` and URIs that name another host are not accepted. Unset or `null` uses the default locations."
         },
         "tiffutil": {
           "anyOf": [
@@ -10293,7 +10327,7 @@
     },
     "forceCodeSigning": {
       "default": false,
-      "description": "Whether to throw an error and abort the build if the app could not be code-signed, notarized, or have its\nauto-update manifests signed - and to verify the signatures the build produces.\n\nSet to `true` in release pipelines to catch missing or misconfigured signing credentials\nbefore producing unsigned artifacts. When `false` (the default), missing signing credentials\nproduce a warning and the build continues unsigned.\n\nWith `true`:\n- macOS: the app must be signed, which needs a macOS host, also in pull-request builds (set `CSC_FOR_PULL_REQUEST=true` to sign\n  them, or pass `-c.forceCodeSigning=false` there), and notarized: notarization credentials must be set when the build starts.\n  The output of a custom `mac.sign` signer is checked with `codesign --verify --deep --strict`, the stapled ticket with\n  `xcrun stapler validate`, a signed pkg with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.\n- Windows: every signed file is read back and must carry a valid Authenticode signature.\n- Every platform (the only effect on Linux): auto-update manifests must be signed, also by a build that does not publish.\n- A prepackaged app, which electron-builder does not sign, must already be signed (and, on macOS, notarized).\n\nExplicit opt-outs are honored with a warning: `mac.notarize: false`, `updateManifest: false`, `win.signExts` exclusions and a\ncustom `nsis.script` (whose uninstaller electron-builder does not sign). `win.sign: false` and `mac.sign: null` contradict it\nand fail the build. `electron-builder verify` checks the build output afterwards.",
+      "description": "Whether to throw an error and abort the build if the app could not be code-signed, notarized, or have its\nauto-update manifests signed - and to verify the signatures the build produces.\n\nSet to `true` in release pipelines to catch missing or misconfigured signing credentials\nbefore producing unsigned artifacts. When `false` (the default), missing signing credentials\nproduce a warning and the build continues unsigned.\n\nWith `true`:\n- macOS: the app must be signed, which needs a macOS host, also in pull-request builds (set `CSC_FOR_PULL_REQUEST=true` to sign\n  them, or pass `-c.forceCodeSigning=false` there), and notarized: notarization credentials must be set when the build starts.\n  The output of a custom `mac.sign` signer is checked with `codesign --verify --deep --strict`, the stapled ticket with\n  `stapler validate`, a signed pkg with `pkgutil --check-signature`, and a DMG with `dmg.sign: true` must be signed.\n- Windows: every signed file is read back and must carry a valid Authenticode signature.\n- Every platform (the only effect on Linux): auto-update manifests must be signed, also by a build that does not publish.\n- A prepackaged app, which electron-builder does not sign, must already be signed (and, on macOS, notarized).\n\nExplicit opt-outs are honored with a warning: `mac.notarize: false`, `updateManifest: false`, `win.signExts` exclusions and a\ncustom `nsis.script` (whose uninstaller electron-builder does not sign). `win.sign: false` and `mac.sign: null` contradict it\nand fail the build. `electron-builder verify` checks the build output afterwards.",
       "type": "boolean"
     },
     "freebsd": {

@@ -1,4 +1,5 @@
 import * as asn1js from "asn1js"
+import { Executables, stripSensitiveEnvVars } from "builder-util"
 import { parseAuthenticodeSignatureOutput, prepareAuthenticodeSignatureExec } from "builder-util-runtime"
 import { execFile } from "child_process"
 import { open } from "fs/promises"
@@ -85,13 +86,16 @@ export function authenticodeSignatureProblem(signer: AuthenticodeSignerInfo): st
 /**
  * Reads the signer with `Get-AuthenticodeSignature`, with the helpers electron-updater verifies downloaded updates
  * with (builder-util-runtime: the same PowerShell invocation and JSON parsing), so the build sees exactly what the
- * updater will see.
+ * updater will see. Windows PowerShell is started from `toolsets.executables.powershell` or its default location, with
+ * the build's credential variables (signing passwords, tokens, keys) removed from its environment: reading a signature
+ * needs none of them.
  */
 export function readAuthenticodeSignerWithPowerShell(file: string): Promise<AuthenticodeSignerInfo> {
   return new Promise<AuthenticodeSignerInfo>(resolve => {
     try {
       // a busy build machine may still be preparing the PowerShell modules on first use, and a timeout here fails the build
-      execFile(...prepareAuthenticodeSignatureExec(file, 60 * 1000), (error, stdout, stderr) => {
+      const [, args, options] = prepareAuthenticodeSignatureExec(file, 60 * 1000)
+      execFile(Executables.resolve("powershell"), args, { ...options, env: withoutInheritedCredentials(options.env ?? {}) }, (error, stdout, stderr) => {
         if (error != null) {
           const stderrText = String(stderr ?? "").trim()
           // the message of a non-zero exit is "Command failed: <the whole command line, the encoded script included>\n<stderr>"
@@ -117,10 +121,24 @@ export function readAuthenticodeSignerWithPowerShell(file: string): Promise<Auth
         resolve({ type: "signed", subject, status: numericStatus })
       })
     } catch (e: any) {
-      // PowerShell cannot be located (no SystemRoot) or started at all
+      // PowerShell cannot be located (no SystemRoot, or no executable at its toolsets.executables locations) or started at all
       resolve({ type: "unreadable", reason: `Get-AuthenticodeSignature failed: ${e.message}` })
     }
   })
+}
+
+/**
+ * `env` without the credential variables it inherited from the build (see `stripSensitiveEnvVars`). The variables the command
+ * sets itself, such as the file to read, are kept: they are the ones whose value is not the inherited one.
+ */
+function withoutInheritedCredentials(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const result = stripSensitiveEnvVars(env)
+  for (const [key, value] of Object.entries(env)) {
+    if (process.env[key] !== value) {
+      result[key] = value
+    }
+  }
+  return result
 }
 
 function getProperty(value: unknown, name: string): unknown {

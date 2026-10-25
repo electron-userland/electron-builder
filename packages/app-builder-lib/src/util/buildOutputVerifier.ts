@@ -1,6 +1,6 @@
-import { derivePublicKeyPem, loadUpdateSigningKeys, parsePrivateKey } from "builder-util"
+import { derivePublicKeyPem, isPathWithin, loadUpdateSigningKeys, parsePrivateKey } from "builder-util"
 import { asArray, matchPublisherName, normalizePublicKeyList, UpdateInfo } from "builder-util-runtime"
-import { readdir, readFile, stat } from "fs/promises"
+import { readdir, readFile, realpath, stat } from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
 import { checkInstallerPackageSignature, validateStapledTicket, verifyMacCodeSignature } from "../codeSign/mac/macSignatureVerifier.js"
@@ -52,8 +52,10 @@ interface PackagedApp {
   readonly path: string
   readonly isMas: boolean
   readonly updateConfigFile: string
-  /** The parsed `app-update.yml`, or null when the app has none (it does not auto-update). */
+  /** The parsed `app-update.yml`, or null when the app has none (it does not auto-update) or it cannot be read. */
   readonly updateConfig: { readonly trustedKeys: Array<string>; readonly publisherNames: Array<string> | null } | null
+  /** Why `app-update.yml` cannot be read, or null. */
+  readonly updateConfigProblem: string | null
 }
 
 interface Manifest {
@@ -82,6 +84,11 @@ export async function verifyBuildOutput(options: VerifyBuildOutputOptions): Prom
   const { outDir, config } = options
   const { apps, files } = await discover(outDir)
   const results: Array<VerificationResult> = []
+  for (const app of apps) {
+    if (app.updateConfigProblem != null) {
+      results.push({ status: "failed", check: "app update configuration", file: app.updateConfigFile, message: app.updateConfigProblem })
+    }
+  }
 
   const manifests: Array<Manifest> = []
   for (const file of files.filter(it => /\.ya?ml$/.test(it) && !NOT_MANIFESTS.has(path.basename(it)))) {
@@ -164,19 +171,47 @@ async function discover(outDir: string): Promise<{ apps: Array<PackagedApp>; fil
 }
 
 async function readApp(platform: PlatformKey, appPath: string, isMas: boolean, updateConfigFile: string): Promise<PackagedApp> {
+  const app = { platform, path: appPath, isMas, updateConfigFile }
+  const problem = (updateConfigProblem: string): PackagedApp => ({ ...app, updateConfig: null, updateConfigProblem })
   let content: string
   try {
-    content = await readFile(updateConfigFile, "utf8")
+    // The output can be downloaded artifacts, which are not trusted: app-update.yml is read only as a regular file inside the app,
+    // never through a symlink to another file on this machine (whose content a YAML error would print)
+    const [appRealPath, configRealPath] = await Promise.all([realpath(appPath), realpath(updateConfigFile)])
+    if (!isPathWithin(appRealPath, configRealPath)) {
+      return problem("app-update.yml is a symlink that leads out of the app")
+    }
+    if (!(await stat(configRealPath)).isFile()) {
+      return problem("app-update.yml is not a file")
+    }
+    content = await readFile(configRealPath, "utf8")
   } catch (e: any) {
-    if (e.code === "ENOENT") {
-      return { platform, path: appPath, isMas, updateConfigFile, updateConfig: null }
+    // ENOTDIR: a "resources" (or "Resources") that is a file, so there is no app-update.yml either
+    if (e.code === "ENOENT" || e.code === "ENOTDIR") {
+      return { ...app, updateConfig: null, updateConfigProblem: null }
     }
     throw e
   }
-  const parsed: any = load(content) ?? {}
+  let parsed: unknown
+  try {
+    parsed = load(content)
+  } catch (e: any) {
+    // the reason only: the message of a YAML error quotes the content
+    return problem(`app-update.yml is not valid YAML (${e.reason ?? "cannot be parsed"})`)
+  }
+  if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return problem("app-update.yml is not a YAML mapping")
+  }
+  const updateConfig = parsed as Record<string, unknown>
   const publisherNames =
-    parsed.verifyUpdateCodeSignature === false || parsed.publisherName == null ? null : asArray(parsed.publisherName).filter((it): it is string => typeof it === "string")
-  return { platform, path: appPath, isMas, updateConfigFile, updateConfig: { trustedKeys: normalizePublicKeyList(parsed.updateManifestPublicKey), publisherNames } }
+    updateConfig.verifyUpdateCodeSignature === false || updateConfig.publisherName == null
+      ? null
+      : asArray(updateConfig.publisherName).filter((it): it is string => typeof it === "string")
+  return {
+    ...app,
+    updateConfig: { trustedKeys: normalizePublicKeyList(updateConfig.updateManifestPublicKey as Parameters<typeof normalizePublicKeyList>[0]), publisherNames },
+    updateConfigProblem: null,
+  }
 }
 
 async function readManifest(file: string): Promise<Manifest | null> {
