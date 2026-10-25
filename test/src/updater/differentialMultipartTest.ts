@@ -1,7 +1,8 @@
-import { DataSplitter, PartListDataTask } from "electron-updater/src/differentialDownloader/DataSplitter"
+import { CancellationToken } from "builder-util-runtime"
+import { copyData, DataSplitter, PartListDataTask } from "electron-updater/src/differentialDownloader/DataSplitter"
 import { Operation, OperationKind } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
 import { executeTasksUsingMultipleRangeRequests } from "electron-updater/src/differentialDownloader/multipleRangeDownloader"
-import { closeSync, openSync, writeFileSync } from "fs"
+import fs, { closeSync, openSync, writeFileSync } from "fs"
 import { createServer, IncomingMessage, request as httpRequest, RequestOptions, Server, ServerResponse } from "http"
 import { AddressInfo } from "net"
 import * as path from "path"
@@ -151,6 +152,36 @@ describe("differential multipart download", () => {
     })
   }
 
+  // A copy runs after a part or a request ended, by which time a failure or a cancel may have destroyed the output and the
+  // downloader may be closing the old file: the copy must not start reading it.
+  test("a copy into a destroyed output stream does not read the old file and fails", async ({ expect, tmpDir }) => {
+    const oldFileFd = await openOldFile(tmpDir, oldFile)
+    const createReadStreamSpy = vi.spyOn(fs, "createReadStream")
+    const readSpy = vi.spyOn(fs, "read")
+    try {
+      const { out } = collector()
+      out.destroy()
+      const outcomes: Array<string> = []
+      copyData(
+        { kind: OperationKind.COPY, start: 0, end: 1024 },
+        out,
+        oldFileFd,
+        error => outcomes.push(`rejected: ${error.message}`),
+        () => outcomes.push("resolved")
+      )
+      // a read started anyway would have been issued by now
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      expect(outcomes).toEqual(["rejected: Cannot copy data: the output stream is destroyed"])
+      expect(createReadStreamSpy.mock.calls.filter(args => (args[1] as any)?.fd === oldFileFd)).toEqual([])
+      expect(readSpy.mock.calls.filter(args => args[0] === oldFileFd)).toEqual([])
+    } finally {
+      createReadStreamSpy.mockRestore()
+      readSpy.mockRestore()
+      closeSync(oldFileFd)
+    }
+  })
+
   describe("multiple batches", () => {
     let server: Server | null = null
 
@@ -205,8 +236,9 @@ describe("differential multipart download", () => {
 
       const differentialDownloader: any = {
         fileMetadataBuffer: null,
-        options: { onProgress: undefined },
+        options: { onProgress: undefined, cancellationToken: new CancellationToken() },
         createRequestOptions: (): RequestOptions => ({ hostname: "127.0.0.1", port, path: "/new.bin", method: "GET", headers: {} }),
+        createRangeRequest: (options: RequestOptions, callback: (response: IncomingMessage) => void) => httpRequest(options, callback),
         httpExecutor: {
           createRequest: (options: RequestOptions, callback: (response: IncomingMessage) => void) => httpRequest(options, callback),
           addErrorAndTimeoutHandlers: (request: any, reject: (error: Error) => void) => request.on("error", reject),

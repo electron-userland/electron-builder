@@ -1,10 +1,12 @@
-import { BlockMapDataHolder, CancellationToken, ProgressInfo } from "builder-util-runtime"
+import { BlockMapDataHolder, CancellationError, CancellationToken, ProgressInfo } from "builder-util-runtime"
 import { DifferentialDownloader } from "electron-updater/src/differentialDownloader/DifferentialDownloader"
 import { GenericDifferentialDownloader } from "electron-updater/src/differentialDownloader/GenericDifferentialDownloader"
+import { requestRange } from "electron-updater/src/differentialDownloader/multipleRangeDownloader"
 import { createHash } from "crypto"
 import fsExtra from "fs-extra"
 import type { OutgoingHttpHeaders } from "http"
 import * as path from "path"
+import { PassThrough } from "stream"
 import type { TmpDir } from "temp-file"
 import { describe, type ExpectStatic, test } from "vitest"
 import { blockMapOf, FakeElectronHttpExecutor, FakeNetAnswer, FakeNetSentRequest } from "../helpers/updaterTestUtil.js"
@@ -71,6 +73,7 @@ interface DownloadCase {
   readonly multiRangeStatus?: number
   readonly old?: Buffer
   readonly blockSize?: number
+  readonly cancellationToken?: CancellationToken
 }
 
 function createExecutor(c: DownloadCase, content: Buffer): FakeElectronHttpExecutor {
@@ -109,7 +112,7 @@ async function download(tmpDir: TmpDir, c: DownloadCase, executor = createExecut
     logger: createLogger(infos, warnings),
     requestHeaders: REQUEST_HEADERS,
     isUseMultipleRangeRequest: c.isUseMultipleRangeRequest === true,
-    cancellationToken: new CancellationToken(),
+    cancellationToken: c.cancellationToken ?? new CancellationToken(),
     onProgress: it => progress.push(it),
   })
   await downloader.download(blockMapOf(old, blockSize), blockMapOf(content, blockSize))
@@ -269,6 +272,67 @@ describe("differential download redirects", () => {
     await expect(download(tmpDir, c, executor)).rejects.toThrow("Too many redirects (> 10)")
     // the request and the 10 redirects it may follow
     expect(executor.sent).toHaveLength(11)
+  })
+
+  test("a redirect reported after a cancel is a cancellation, and the range is not requested again", async ({ tmpDir, expect }) => {
+    const cancellationToken = new CancellationToken()
+    const c: DownloadCase = { redirects: { [FILE_URL]: PRE_SIGNED_URL }, cancellationToken }
+    // the cancel comes while the redirect is answered, so the redirect event is reported after it
+    const executor = new FakeElectronHttpExecutor((url, headers) => {
+      if (url === FILE_URL) {
+        cancellationToken.cancel()
+        return { location: PRE_SIGNED_URL }
+      }
+      return serveRanges(NEW, headers)
+    })
+    const error = await download(tmpDir, c, executor).then(
+      () => null,
+      (e: unknown) => e
+    )
+    expect(error).toBeInstanceOf(CancellationError)
+    expect(urlsAndRanges(executor.sent)).toEqual([[FILE_URL, "bytes=0-15"]])
+  })
+
+  test("a redirect reported after the output stream was destroyed is not followed, and the range is not requested again", async ({ expect }) => {
+    const out = new PassThrough()
+    // a failure destroys the output while the redirect is answered, so the redirect event is reported after it
+    const executor = new FakeElectronHttpExecutor((url, headers) => {
+      if (url === FILE_URL) {
+        out.destroy()
+        return { location: PRE_SIGNED_URL }
+      }
+      return serveRanges(NEW, headers)
+    })
+    const downloader = new GenericDifferentialDownloader(fileInfoOf(NEW), executor, {
+      newUrl: new URL(FILE_URL),
+      oldFile: "unused",
+      newFile: "unused",
+      logger: createLogger([], []),
+      requestHeaders: REQUEST_HEADERS,
+      cancellationToken: new CancellationToken(),
+    })
+    const outcomes: Array<string> = []
+    await new Promise<void>(resolve => {
+      requestRange(
+        downloader,
+        { options: downloader.createRequestOptions() },
+        "bytes=0-15",
+        response => {
+          outcomes.push(`response ${response.statusCode}`)
+          resolve()
+        },
+        error => {
+          outcomes.push(`rejected: ${error.message}`)
+          resolve()
+        },
+        out
+      )
+    })
+    // a request sent anyway would have been answered by now
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    expect(outcomes).toEqual(["rejected: Cannot request a range: the output stream is destroyed"])
+    expect(urlsAndRanges(executor.sent)).toEqual([[FILE_URL, "bytes=0-15"]])
   })
 })
 
