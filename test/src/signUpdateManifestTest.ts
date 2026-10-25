@@ -632,3 +632,24 @@ test("--verify uses a command-line trust list exactly as passed, never merged wi
   expect(await run(dir, [mac, "--verify", trust(old.publicKeyPem), trust(other.publicKeyPem)])).toMatchObject([{ status: "verified", keyId: otherId }])
   expect(await run(dir, [win, "--verify", trust(old.publicKeyPem), `-c.win.updateManifest.publicKey=${next.publicKeyPem}`])).toMatchObject([{ status: "verified", keyId: nextId }])
 })
+
+test("--verify with a config file and repeated -c.updateManifest.publicKey flags trusts every one of them, and only them", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const keyA = generateUpdateSigningKeypair()
+  const keyB = generateUpdateSigningKeypair()
+  const dir = await createProject(await tmpDir.createTempDir(), { updateManifest: { publicKey: [next.publicKeyPem] } })
+  await fsp.writeFile(path.join(dir, "release.yml"), serializeToYaml({ updateManifest: { publicKey: [next.publicKeyPem] } }))
+  const signedByA = path.join(dir, "latest.yml")
+  const signedByConfiguredKey = path.join(dir, "beta.yml")
+  await writeSigned(signedByA, manifest("13.0.0", "App-Setup-13.0.0.exe"), [keyA.privateKeyPem])
+  await writeSigned(signedByConfiguredKey, manifest("13.0.0", "App-Setup-beta.exe"), [next.privateKeyPem])
+
+  // the whole command path, from the real yargs parse: the first of the repeated overrides must survive the config merge
+  for (const configFile of [[], ["-c", "release.yml"]]) {
+    const overrides = [...configFile, trust(keyA.publicKeyPem), trust(keyB.publicKeyPem)]
+    expect(await run(dir, [signedByA, "--verify", ...overrides])).toMatchObject([{ status: "verified", keyId: computeUpdateManifestKeyId(keyA.publicKeyPem) }])
+    const error = await rejection(run(dir, [signedByConfiguredKey, "--verify", ...overrides]))
+    expect(error).toBeInstanceOf(InvalidConfigurationError)
+    expect(error!.message).toBe(`1 of 1 update manifest(s) failed signature verification: ${signedByConfiguredKey} (no trusted key validates any of its signatures)`)
+  }
+})

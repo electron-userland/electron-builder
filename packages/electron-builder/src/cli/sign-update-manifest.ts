@@ -80,6 +80,12 @@ export interface VerifiedUpdateManifest {
 }
 
 type ManifestPlatform = "mac" | "win" | "linux"
+const MANIFEST_PLATFORMS: ReadonlyArray<ManifestPlatform> = ["mac", "win", "linux"]
+
+/** A deep copy of an `updateManifest` value from the command line, which later configuration merging cannot change. */
+function snapshotOf(value: unknown): unknown {
+  return value == null || typeof value !== "object" ? value : structuredClone(value)
+}
 
 /** `Platform.name` of each manifest platform, as the build names it in its messages. */
 const BUILD_PLATFORM_NAMES: Record<ManifestPlatform, string> = { mac: "mac", win: "windows", linux: "linux" }
@@ -98,13 +104,15 @@ const KEY_SOURCES_HINT =
  * @internal
  */
 export async function signUpdateManifest(options: SignUpdateManifestOptions): Promise<Array<SignedUpdateManifest> | Array<VerifiedUpdateManifest>> {
+  // first, before anything reads the -c value: normalizeOptions and getConfig merge its objects into one another in place
+  const commandLine = new CommandLineOverrides(options.config)
   const files = (options.files ?? []).filter(it => typeof it === "string" && it.trim().length > 0).map(it => path.resolve(it))
   if (files.length === 0) {
     throw new InvalidConfigurationError("No update manifest given: pass one or more latest*.yml paths")
   }
   const projectDir = path.resolve(options.projectDir ?? process.cwd())
   const config = await loadProjectConfig(projectDir, options.config)
-  const settings = new ManifestSigningSettings(config, projectDir, new CommandLineOverrides(options.config))
+  const settings = new ManifestSigningSettings(config, projectDir, commandLine)
   return options.verify === true ? verifyUpdateManifests(files, settings) : resignUpdateManifests(files, settings)
 }
 
@@ -130,7 +138,9 @@ async function loadProjectConfig(projectDir: string, configOption: SignUpdateMan
 /**
  * The `updateManifest` values passed inline with `-c.<key>=value`, read from the raw `-c` value rather than the merged configuration:
  * merging lets a configured platform block shadow a root override and concatenates a repeated override with a configured list, so a
- * trust list given on the command line could otherwise end up holding keys the operator did not pass.
+ * trust list given on the command line could otherwise end up holding keys the operator did not pass. Construct it before the `-c`
+ * value is handed to normalizeOptions / getConfig: they deep-assign its objects into one another in place, so by then the first of
+ * several `-c.updateManifest.publicKey=` objects already holds the last value. The `updateManifest` blocks are deep-copied here.
  */
 class CommandLineOverrides {
   private readonly items: Array<Record<string, any>>
@@ -138,7 +148,16 @@ class CommandLineOverrides {
   constructor(configOption: SignUpdateManifestOptions["config"]) {
     // a file path plus inline overrides (or repeated overrides with a file) arrive as an array, one object per flag
     const values = Array.isArray(configOption) ? configOption : [configOption]
-    this.items = values.filter((it): it is Record<string, any> => it != null && typeof it === "object" && !Array.isArray(it))
+    this.items = values
+      .filter((it): it is Record<string, any> => it != null && typeof it === "object" && !Array.isArray(it))
+      .map(item => {
+        // only the updateManifest blocks are kept: plain data (strings, lists, booleans), unlike a programmatic config's hooks
+        const snapshot: Record<string, any> = { updateManifest: snapshotOf(item.updateManifest) }
+        for (const platform of MANIFEST_PLATFORMS) {
+          snapshot[platform] = { updateManifest: snapshotOf(item[platform]?.updateManifest) }
+        }
+        return snapshot
+      })
   }
 
   private values(block: (item: Record<string, any>) => unknown, key: string): Array<unknown> {
