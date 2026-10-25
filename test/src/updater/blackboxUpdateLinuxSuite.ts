@@ -64,20 +64,40 @@ const determineEnvironment = (distro: string) => {
   return execSync(`cat /etc/*release | grep "^ID="`).toString().includes(distro)
 }
 
-export function registerBlackboxLinuxPackageManagerTests(): void {
+/**
+ * The Linux package-manager blackbox cases. "update" is one `<distro> - (<pm>)` test per package manager; each other
+ * case is one `<distro> - <case>` test per distro, run with the pinned package manager (PACKAGE_MANAGER_TO_TEST) or the
+ * distro's primary one.
+ */
+export type LinuxPackageManagerCase = "update" | "install on next launch" | "signed update manifest" | "key rotation"
+
+const ALL_LINUX_PACKAGE_MANAGER_CASES: LinuxPackageManagerCase[] = ["update", "install on next launch", "signed update manifest", "key rotation"]
+
+/**
+ * Register Linux package-manager blackbox cases. Every case is a full build → install → launch → update cycle (4-7 min
+ * each in the rpm CI image), and the CI e2e matrix picks test FILES per job, so each case lives in its own
+ * `test/src/updater/linux-pm/` file and passes its name here; the describe path — and thus every snapshot key
+ * (`linux > <distro> - <case> N`) — stays identical to when they shared one file.
+ *
+ * With no arguments all cases are registered (the original single-file layout).
+ */
+export function registerBlackboxLinuxPackageManagerTests(...cases: LinuxPackageManagerCase[]): void {
+  const selected = new Set(cases.length > 0 ? cases : ALL_LINUX_PACKAGE_MANAGER_CASES)
   for (const distro in packageManagerMap) {
     const { pms, target } = packageManagerMap[distro as keyof typeof packageManagerMap]
-    for (const pm of pms) {
-      test(`${distro} - (${pm})`, optionsForFlakyE2E, async (context: TestContext) => {
-        if (!determineEnvironment(distro)) {
-          context.skip()
-        }
-        // skip if already set to avoid interfering with other package manager tests
-        if (!isEmptyOrSpaces(process.env.PACKAGE_MANAGER_TO_TEST) && process.env.PACKAGE_MANAGER_TO_TEST !== pm) {
-          context.skip()
-        }
-        await runTest(context, target, pm, Arch.x64)
-      })
+    if (selected.has("update")) {
+      for (const pm of pms) {
+        test(`${distro} - (${pm})`, optionsForFlakyE2E, async (context: TestContext) => {
+          if (!determineEnvironment(distro)) {
+            context.skip()
+          }
+          // skip if already set to avoid interfering with other package manager tests
+          if (!isEmptyOrSpaces(process.env.PACKAGE_MANAGER_TO_TEST) && process.env.PACKAGE_MANAGER_TO_TEST !== pm) {
+            context.skip()
+          }
+          await runTest(context, target, pm, Arch.x64)
+        })
+      }
     }
 
     // Install-on-next-launch cycle (#7807) for package-manager targets. deb/rpm/pacman never install a
@@ -85,44 +105,50 @@ export function registerBlackboxLinuxPackageManagerTests(): void {
     // an authentication prompt at launch), so the app calls installPendingUpdateIfAvailable() explicitly.
     // One run per distro is enough — the per-package-manager install commands are already covered by the
     // immediate quitAndInstall tests above.
-    test(`${distro} - install on next launch (explicit installPendingUpdateIfAvailable)`, optionsForFlakyE2E, async (context: TestContext) => {
-      if (!determineEnvironment(distro)) {
-        context.skip()
-      }
-      // reuse the CI job's package manager selection when one is pinned; otherwise use the distro's primary one
-      const pinnedPm = process.env.PACKAGE_MANAGER_TO_TEST
-      const pm = pinnedPm == null || isEmptyOrSpaces(pinnedPm) ? pms[0] : pinnedPm
-      if (!pms.includes(pm)) {
-        context.skip()
-      }
-      await runInstallOnNextLaunchTest(context, target, pm, Arch.x64, {}, "explicit")
-    })
+    if (selected.has("install on next launch")) {
+      test(`${distro} - install on next launch (explicit installPendingUpdateIfAvailable)`, optionsForFlakyE2E, async (context: TestContext) => {
+        if (!determineEnvironment(distro)) {
+          context.skip()
+        }
+        // reuse the CI job's package manager selection when one is pinned; otherwise use the distro's primary one
+        const pinnedPm = process.env.PACKAGE_MANAGER_TO_TEST
+        const pm = pinnedPm == null || isEmptyOrSpaces(pinnedPm) ? pms[0] : pinnedPm
+        if (!pms.includes(pm)) {
+          context.skip()
+        }
+        await runInstallOnNextLaunchTest(context, target, pm, Arch.x64, {}, "explicit")
+      })
+    }
 
     // Signed update manifests, one run per distro with the same package manager selection as above:
     // the manifest is verified before the package is downloaded, independent of the package manager used to install it.
-    test(`${distro} - signed update manifest`, optionsForFlakyE2E, async (context: TestContext) => {
-      if (!determineEnvironment(distro)) {
-        context.skip()
-      }
-      const pinnedPm = process.env.PACKAGE_MANAGER_TO_TEST
-      const pm = pinnedPm == null || isEmptyOrSpaces(pinnedPm) ? pms[0] : pinnedPm
-      if (!pms.includes(pm)) {
-        context.skip()
-      }
-      await runSignedManifestTest(context, target, pm, Arch.x64)
-    })
+    if (selected.has("signed update manifest")) {
+      test(`${distro} - signed update manifest`, optionsForFlakyE2E, async (context: TestContext) => {
+        if (!determineEnvironment(distro)) {
+          context.skip()
+        }
+        const pinnedPm = process.env.PACKAGE_MANAGER_TO_TEST
+        const pm = pinnedPm == null || isEmptyOrSpaces(pinnedPm) ? pms[0] : pinnedPm
+        if (!pms.includes(pm)) {
+          context.skip()
+        }
+        await runSignedManifestTest(context, target, pm, Arch.x64)
+      })
+    }
 
     // Key rotation A → [A, B] → B over three builds, including manifests the installed app must refuse.
-    test(`${distro} - key rotation`, optionsForFlakyMultiHopE2E, async (context: TestContext) => {
-      if (!determineEnvironment(distro)) {
-        context.skip()
-      }
-      const pinnedPm = process.env.PACKAGE_MANAGER_TO_TEST
-      const pm = pinnedPm == null || isEmptyOrSpaces(pinnedPm) ? pms[0] : pinnedPm
-      if (!pms.includes(pm)) {
-        context.skip()
-      }
-      await runKeyRotationTest(context, target, pm, Arch.x64)
-    })
+    if (selected.has("key rotation")) {
+      test(`${distro} - key rotation`, optionsForFlakyMultiHopE2E, async (context: TestContext) => {
+        if (!determineEnvironment(distro)) {
+          context.skip()
+        }
+        const pinnedPm = process.env.PACKAGE_MANAGER_TO_TEST
+        const pm = pinnedPm == null || isEmptyOrSpaces(pinnedPm) ? pms[0] : pinnedPm
+        if (!pms.includes(pm)) {
+          context.skip()
+        }
+        await runKeyRotationTest(context, target, pm, Arch.x64)
+      })
+    }
   }
 }

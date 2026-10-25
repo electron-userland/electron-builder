@@ -592,35 +592,83 @@ jobs:
           name: flatpak
 
   test-e2e:
-    name: Test e2e Auto Updater Linux
+    name: Test e2e Auto Updater Linux (${{ matrix.test_config.id }})
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
+        # One job per entry. Without test_files a job runs every Linux e2e suite (the default TEST_FILES in
+        # test/src/updater/test-specific-platforms.sh). Every package manager runs every update case, but the rpm
+        # cases are too long for one job (4-7 min each, almost all of it rpm builds), so each rpm package manager is
+        # split into an "update" and a "signing" job. blackboxInstallTest installs with a fixed command per distro and
+        # ignores PACKAGE_MANAGER_TO_TEST, so it runs once per image (rpm-install, debian-apt, archlinux-pacman,
+        # appimage-install) instead of in every package-manager job.
         test_config:
-          - stem: archlinux
+          - id: archlinux-pacman
+            stem: archlinux
             env:
               PACKAGE_MANAGER_TO_TEST: pacman
-          - stem: rpm
-            env:
-              PACKAGE_MANAGER_TO_TEST: dnf
-          - stem: rpm
-            env:
-              PACKAGE_MANAGER_TO_TEST: zypper
-          - stem: rpm
-            env:
-              PACKAGE_MANAGER_TO_TEST: yum
-          - stem: rpm
-            env:
-              PACKAGE_MANAGER_TO_TEST: rpm
-          - stem: debian
+          - id: debian-apt
+            stem: debian
             env:
               PACKAGE_MANAGER_TO_TEST: apt
-          - stem: debian
+          - id: debian-dpkg
+            stem: debian
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch,blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
             env:
               PACKAGE_MANAGER_TO_TEST: dpkg
-          - stem: appimage
+          - id: rpm-zypper-update
+            stem: rpm
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch
+            env:
+              PACKAGE_MANAGER_TO_TEST: zypper
+          - id: rpm-zypper-signing
+            stem: rpm
+            test_files: blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
+            env:
+              PACKAGE_MANAGER_TO_TEST: zypper
+          - id: rpm-dnf-update
+            stem: rpm
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch
+            env:
+              PACKAGE_MANAGER_TO_TEST: dnf
+          - id: rpm-dnf-signing
+            stem: rpm
+            test_files: blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
+            env:
+              PACKAGE_MANAGER_TO_TEST: dnf
+          - id: rpm-yum-update
+            stem: rpm
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch
+            env:
+              PACKAGE_MANAGER_TO_TEST: yum
+          - id: rpm-yum-signing
+            stem: rpm
+            test_files: blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
+            env:
+              PACKAGE_MANAGER_TO_TEST: yum
+          - id: rpm-rpm-update
+            stem: rpm
+            test_files: blackboxUpdateTest,linuxUpdaterTest,blackboxUpdateLinuxNextLaunch
+            env:
+              PACKAGE_MANAGER_TO_TEST: rpm
+          - id: rpm-rpm-signing
+            stem: rpm
+            test_files: blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation
+            env:
+              PACKAGE_MANAGER_TO_TEST: rpm
+          - id: rpm-install
+            stem: rpm
+            test_files: blackboxInstallTest
+          - id: appimage-install
+            stem: appimage
+            test_files: blackboxInstallTest
+            env:
+              RUN_APP_IMAGE_TEST: true
+          - id: appimage-update
+            stem: appimage
+            test_files: blackboxLinux__appimage
             env:
               RUN_APP_IMAGE_TEST: true
     steps:
@@ -646,6 +694,8 @@ jobs:
         run: ./test/src/updater/test-specific-platforms.sh "$TEST_STEM" run
         env:
           TEST_STEM: ${{ matrix.test_config.stem }}
+          # empty → the script's default (every Linux e2e suite)
+          TEST_FILES: ${{ matrix.test_config.test_files || '' }}
           ADDITIONAL_DOCKER_ARGS: >-
             -e PACKAGE_MANAGER_TO_TEST=${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || '' }}
             -e RUN_APP_IMAGE_TEST=${{ matrix.test_config.env.RUN_APP_IMAGE_TEST || false }}
@@ -656,7 +706,7 @@ jobs:
         if: always()
         uses: $/.github/actions/upload-test-artifacts
         with:
-          name: e2e-${{ matrix.test_config.env.PACKAGE_MANAGER_TO_TEST || matrix.test_config.stem }}
+          name: e2e-${{ matrix.test_config.id }}
 
   # -------------------------
   # Merge Smart Cache Artifacts

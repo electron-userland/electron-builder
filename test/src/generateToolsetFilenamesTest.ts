@@ -311,6 +311,41 @@ describe("TEST_MODE file discovery", () => {
     expect(getAllTestFiles("linux", "all")).toContain("test/src/linux/flatpak.e2e.ts")
   })
 
+  // The Linux e2e suites in skipPerOSTests.linux only do work in the "Test e2e Auto Updater Linux" images (and the Test
+  // Flatpak job), which select them by TEST_FILES. In the docker Linux shards they skip, so the shard plan must not
+  // budget them the e2e jobs' durations.
+  it("Linux e2e-only suites are excluded from default Linux discovery but still selected by TEST_FILES", () => {
+    const linuxE2eOnly = [
+      "test/src/updater/blackboxInstallTest.ts",
+      "test/src/updater/linux-pm/blackboxUpdateTest.ts",
+      "test/src/updater/linux-pm/blackboxUpdateLinuxNextLaunch.e2e.ts",
+      "test/src/updater/linux-pm/blackboxUpdateLinuxSignedManifest.e2e.ts",
+      "test/src/updater/linux-pm/blackboxUpdateLinuxKeyRotation.e2e.ts",
+      "test/src/generated/blackboxLinux/blackboxLinux__appimage-0.0.0.linux.Test.ts",
+    ]
+    for (const f of linuxE2eOnly) {
+      expect(fs.existsSync(f), `${f} must exist (renamed? update skipPerOSTests.linux and the CI e2e matrix)`).toBe(true)
+    }
+
+    vi.stubEnv("TEST_FILES", undefined)
+    const linux = getAllTestFiles("linux", "all")
+    expect(linux.filter(f => linuxE2eOnly.includes(f) || f.includes("blackboxLinux__appimage"))).toEqual([])
+    // its detectPackageManager unit tests run in the Linux shards
+    expect(linux).toContain("test/src/updater/linuxUpdaterTest.ts")
+    // the Linux skip list does not leak to other platforms: the mac split blackbox suites stay on macOS
+    expect(getAllTestFiles("darwin", "all")).toContain("test/src/updater/mac/blackboxUpdateKeyRotation.e2e.ts")
+
+    // the tokens the CI e2e matrix passes (test/src/updater/test-specific-platforms.sh, .github/workflows/test.yaml)
+    vi.stubEnv(
+      "TEST_FILES",
+      "blackboxInstallTest,blackboxUpdateTest,blackboxUpdateLinuxNextLaunch,blackboxUpdateLinuxSignedManifest,blackboxUpdateLinuxKeyRotation,blackboxLinux__appimage"
+    )
+    const selected = getAllTestFiles("linux", "all")
+    for (const f of linuxE2eOnly) {
+      expect(selected).toContain(f)
+    }
+  })
+
   it("hand-written e2e files are discovered next to their unit-level siblings", () => {
     const e2e = getAllTestFiles("linux", "e2e")
     expect(e2e).toContain("test/src/windows/oneClickInstaller.e2e.ts")
