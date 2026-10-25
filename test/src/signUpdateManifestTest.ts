@@ -554,3 +554,39 @@ test("re-signing refuses a signing key outside updateManifest.publicKey exactly 
   const invalid = await rejection(run(dir, [file, trust(current.publicKeyPem, current.publicKeyPem)]))
   expect(invalid!.message).toBe("updateManifest.publicKey #2 duplicates entry #1 (key id " + currentId + "). List each trusted key once.")
 })
+
+test("--verify with a trust list given on the command line fails a wrong signature even in a cutover configuration", async ({ expect, tmpDir }) => {
+  captureOutput()
+  const old = current
+  const wrong = generateUpdateSigningKeypair()
+  // the cutover release configuration: trusts only the NEW key and allows signing outside that trust list
+  const dir = await createProject(await tmpDir.createTempDir(), {
+    updateManifest: { signingKeyFile: "keys/wrong.pem", publicKey: next.publicKeyPem, allowSigningKeyOutsideTrustList: true },
+  })
+  await writeKey(dir, "wrong.pem", wrong.privateKeyPem)
+  const file = path.join(dir, "latest.yml")
+  await writeSigned(file, manifest("11.0.0", "App-Setup-11.0.0.exe"), [old.privateKeyPem])
+  await editManifest(file, it => (it.stagingPercentage = 30))
+  // re-signed with the wrong key: the cutover allowance lets that through, as it would in the build
+  expect(await run(dir, [file])).toMatchObject([{ keyIds: [computeUpdateManifestKeyId(wrong.publicKeyPem)] }])
+
+  // the plain configured check keeps electron-builder verify's outcome: skipped
+  expect(await run(dir, [file, "--verify"])).toMatchObject([{ status: "skipped" }])
+
+  // the documented check against the old key must fail, not skip
+  const error = await rejection(run(dir, [file, "--verify", trust(old.publicKeyPem)]))
+  expect(error).toBeInstanceOf(InvalidConfigurationError)
+  expect(error!.message).toBe(`1 of 1 update manifest(s) failed signature verification: ${file} (no trusted key validates any of its signatures)`)
+  // ...also when the override is set for the platform
+  const platformError = await rejection(run(dir, [file, "--verify", `-c.win.updateManifest.publicKey=${old.publicKeyPem}`]))
+  expect(platformError).toBeInstanceOf(InvalidConfigurationError)
+
+  // re-signed with the right key, the same check passes
+  await writeKey(dir, "old.pem", old.privateKeyPem)
+  await run(dir, [file, "-c.updateManifest.signingKeyFile=keys/old.pem"])
+  expect(await run(dir, [file, "--verify", trust(old.publicKeyPem)])).toMatchObject([{ status: "verified", keyId: currentId }])
+
+  // an allowance given on the command line together with the trust list still applies
+  await run(dir, [file])
+  expect(await run(dir, [file, "--verify", trust(old.publicKeyPem), "-c.updateManifest.allowSigningKeyOutsideTrustList=true"])).toMatchObject([{ status: "skipped" }])
+})

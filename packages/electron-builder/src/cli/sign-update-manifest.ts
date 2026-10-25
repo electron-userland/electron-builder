@@ -103,8 +103,8 @@ export async function signUpdateManifest(options: SignUpdateManifestOptions): Pr
     throw new InvalidConfigurationError("No update manifest given: pass one or more latest*.yml paths")
   }
   const projectDir = path.resolve(options.projectDir ?? process.cwd())
-  const config = await loadProjectConfig(projectDir, options.config)
-  const settings = new ManifestSigningSettings(config, projectDir)
+  const { config, overrides } = await loadProjectConfig(projectDir, options.config)
+  const settings = new ManifestSigningSettings(config, projectDir, overrides)
   return options.verify === true ? verifyUpdateManifests(files, settings) : resignUpdateManifests(files, settings)
 }
 
@@ -112,8 +112,9 @@ export async function signUpdateManifest(options: SignUpdateManifestOptions): Pr
  * Resolves the configuration like `publish` and `build` do: the `-c` value is normalized by the build's own option
  * normalization (a file path, inline `-c.<key>=value` overrides, or both, with `"false"`/`"null"` coerced for `updateManifest`),
  * then a file path is loaded by `getConfig` with the inline overrides merged on top, as Packager.validateConfig does.
+ * Returns the inline overrides too, so `--verify` can tell a trust list given on the command line from the configured one.
  */
-async function loadProjectConfig(projectDir: string, configOption: SignUpdateManifestOptions["config"]): Promise<Configuration> {
+async function loadProjectConfig(projectDir: string, configOption: SignUpdateManifestOptions["config"]): Promise<{ config: Configuration; overrides: Configuration | null }> {
   let configFromOptions = normalizeOptions({ config: (configOption ?? undefined) as any }).config
   let configPath: string | null = null
   if (typeof configFromOptions === "string") {
@@ -124,7 +125,8 @@ async function loadProjectConfig(projectDir: string, configOption: SignUpdateMan
     configPath = configFromOptions.extends as string
     delete configFromOptions.extends
   }
-  return getConfig(projectDir, configPath, configFromOptions ?? null)
+  const overrides = configFromOptions ?? null
+  return { config: await getConfig(projectDir, configPath, overrides), overrides }
 }
 
 /** The platform whose build writes a manifest of this name: `<channel>-mac.yml`, `<channel>-linux[-<arch>].yml`, else Windows (`<channel>.yml`). */
@@ -145,8 +147,16 @@ class ManifestSigningSettings {
 
   constructor(
     private readonly config: Configuration,
-    private readonly projectDir: string
+    private readonly projectDir: string,
+    /** The inline `-c.<key>=value` overrides, already merged into `config`. */
+    private readonly overrides: Configuration | null
   ) {}
+
+  /** Whether the inline overrides set `updateManifest.<key>`, at the root or for `platform`. */
+  private overridden(platform: ManifestPlatform, key: "publicKey" | "allowSigningKeyOutsideTrustList"): boolean {
+    const blocks = [(this.overrides as any)?.updateManifest, (this.overrides as any)?.[platform]?.updateManifest]
+    return blocks.some(block => block != null && typeof block === "object" && block[key] != null)
+  }
 
   private options(platform: ManifestPlatform): { value: Configuration["updateManifest"]; field: string } {
     const platformValue = (this.config as any)[platform]?.updateManifest
@@ -201,7 +211,13 @@ class ManifestSigningSettings {
         throw new InvalidConfigurationError(`${field}.publicKey #${index + 1} is not a valid Ed25519 public key (the value is not shown): ${e.message || e}`)
       }
     })
-    return { optedOut: false, trustedKeys, allowCutover: value?.allowSigningKeyOutsideTrustList === true }
+    // The cutover allowance turns a failure into "skipped", as electron-builder verify does for the configured trust list. A trust list
+    // given on the command line (-c.updateManifest.publicKey=...) is an explicit request to check against those keys, so the configured
+    // allowance does not apply to it: the check must fail when the manifest is not signed by them. Only an allowance given on the
+    // command line as well still applies.
+    const allowCutover =
+      value?.allowSigningKeyOutsideTrustList === true && (!this.overridden(platform, "publicKey") || this.overridden(platform, "allowSigningKeyOutsideTrustList"))
+    return { optedOut: false, trustedKeys, allowCutover }
   }
 }
 
