@@ -175,6 +175,52 @@ describe("mac.notarize: true without forceCodeSigning", () => {
     expect(() => preflight(packager, "dmg")).not.toThrow()
   })
 
+  test("is not required when notarizing in a pull-request build, e.g. the pkg installer: it warns and skips, like the build-start check", async ({ expect }) => {
+    vi.stubEnv("GITHUB_BASE_REF", "main")
+    const warn = vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    await expect(makeMacPackager({ notarize: true }, false).helper.notarizeIfProvided("/out/My-1.0.0.pkg")).resolves.toBeUndefined()
+    expect(warn).toHaveBeenCalledWith(expect.anything(), "skipped macOS notarization")
+    expect(notarize).not.toHaveBeenCalled()
+  })
+
+  test("is not required at build start when the configuration turns signing of the app off, unless a pkg is built", ({ expect }) => {
+    for (const macConfig of [
+      { notarize: true, sign: null },
+      { notarize: true, sign: { identity: null } },
+    ]) {
+      const packager = makeMacPackager(macConfig, false)
+      expect(() => preflight(packager, "dmg"), JSON.stringify(macConfig)).not.toThrow()
+      expect(() => preflight(packager), JSON.stringify(macConfig)).not.toThrow()
+      // the pkg installer is built, and notarized, whether the app is signed or not
+      expect(() => preflight(packager, "pkg"), JSON.stringify(macConfig)).toThrow("mac.notarize is true, which requires notarization")
+    }
+    // identity auto-discovery turned off, without CSC_NAME, a configured identity or a custom signer
+    vi.stubEnv("CSC_IDENTITY_AUTO_DISCOVERY", "false")
+    vi.stubEnv("CSC_NAME", undefined)
+    expect(() => preflight(makeMacPackager({ notarize: true }, false), "dmg")).not.toThrow()
+    expect(() => preflight(makeMacPackager({ notarize: true, sign: { identity: "Foo Inc (TEAM123456)" } }, false), "dmg")).toThrow("mac.notarize is true")
+    expect(() => preflight(makeMacPackager({ notarize: true, sign: vi.fn() }, false), "dmg")).toThrow("mac.notarize is true")
+    vi.stubEnv("CSC_NAME", "Foo Inc (TEAM123456)")
+    expect(() => preflight(makeMacPackager({ notarize: true }, false), "dmg")).toThrow("mac.notarize is true")
+  })
+
+  test("an incomplete credential set fails the build start only where the credentials are required", ({ expect }) => {
+    vi.stubEnv("APPLE_ID", "me@example.com")
+    // notarize unset, no forceCodeSigning: the credentials are not read at build start
+    expect(() => preflight(makeMacPackager({}, false), "dmg")).not.toThrow()
+    // notarize: true on another host, in a pull-request build, or with signing turned off
+    setPlatform("linux")
+    expect(() => preflight(makeMacPackager({ notarize: true }, false), "dmg")).not.toThrow()
+    setPlatform("darwin")
+    expect(() => preflight(makeMacPackager({ notarize: true, sign: null }, false), "dmg")).not.toThrow()
+    vi.stubEnv("GITHUB_BASE_REF", "main")
+    vi.spyOn(log, "warn").mockImplementation(() => undefined)
+    expect(() => preflight(makeMacPackager({ notarize: true }, false), "dmg")).not.toThrow()
+    vi.stubEnv("GITHUB_BASE_REF", undefined)
+    // where they are required, the incomplete set is named
+    expect(() => preflight(makeMacPackager({ notarize: true }, false), "dmg")).toThrow("APPLE_APP_SPECIFIC_PASSWORD env var needs to be set")
+  })
+
   test("is not required at build start where the app cannot be signed (another host, a pull-request build)", ({ expect }) => {
     const packager = makeMacPackager({ notarize: true }, false)
     setPlatform("linux")
@@ -256,6 +302,17 @@ describe("MacPackager.sign under forceCodeSigning", () => {
     expect(packager.doSign).toHaveBeenCalledWith({ app: "/out/mac/My.app" }, customSign, null)
     expect(info).toHaveBeenCalledWith(expect.objectContaining({ reason: "no keychain identity was found" }), "calling the custom mac.sign signer without an identity")
     expect(verifyMacCodeSignature).not.toHaveBeenCalled()
+  })
+
+  test("without forceCodeSigning, a mas-dev app, which builds no installer, is signed by a custom signer without a keychain identity", async ({ expect }) => {
+    vi.spyOn(log, "info").mockImplementation(() => undefined)
+    const customSign = vi.fn()
+    const packager = makeMacPackager({ sign: customSign }, false)
+    packager.forceCodeSigningFor = () => false
+    packager.helper.buildSignOptions = vi.fn(() => Promise.resolve({ app: "/out/mas-dev/My.app" }))
+    packager.doSign = vi.fn(() => Promise.resolve())
+    await expect(packager.sign("/out/mas-dev/My.app", Arch.x64, "mas-dev")).resolves.toBe("signed:custom")
+    expect(packager.doSign).toHaveBeenCalledWith({ app: "/out/mas-dev/My.app" }, customSign, null)
   })
 
   test("without forceCodeSigning, a MAS app is not signed by a custom signer without a keychain identity, which warns", async ({ expect }) => {

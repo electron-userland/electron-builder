@@ -224,7 +224,8 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Whether to notarize the app with [@electron/notarize](https://github.com/electron/notarize).
    *
    * - unset (the default): notarize when notarization credentials are set, otherwise skip it with a warning.
-   * - `true`: notarization is required: the build fails when no credentials are set (at build start, on a macOS host).
+   * - `true`: notarization is required: the build fails when no credentials are set, wherever notarization would run (a macOS host,
+   *   outside a pull-request build, with signing not turned off), at build start and when notarizing.
    * - `false`: never notarize (for an ad-hoc or development-signed app, or one notarized in an `afterSign` hook).
    *
    * The credentials are one of the following sets of environment variables:

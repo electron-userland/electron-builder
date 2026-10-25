@@ -12,6 +12,7 @@ import {
   exists,
   getArchSuffix,
   InvalidConfigurationError,
+  isEmptyOrSpaces,
   log,
   orIfFileNotExist,
   sanitizeDirPath,
@@ -28,6 +29,7 @@ import { AppInfo } from "./appInfo.js"
 import { embedAsarIntegrityDigest, FIRST_ELECTRON_MAJOR_WITH_ASAR_INTEGRITY_DIGEST } from "./electron/mac/asarIntegrityDigest.js"
 import { assertSafeHelperName } from "./electron/mac/electronMacUtils.js"
 import { forceCodeSigningError, forceCodeSigningOverrideHint, VERIFICATION_FAILED_ERROR_CODE } from "./codeSign/forceCodeSigning.js"
+import { isAutoDiscoveryCodeSignIdentity } from "./util/flags.js"
 import { CodeSigningInfo, createKeychain, CreateKeychainOptions, Identity, isSignAllowed, macSigningUnavailableError, removeKeychain, sign } from "./codeSign/mac/macCodeSign.js"
 import { validateStapledTicket, verifyMacCodeSignature } from "./codeSign/mac/macSignatureVerifier.js"
 import { combineSignResults, isSignResultSigned, SigningResult } from "./codeSign/signResult.js"
@@ -150,16 +152,24 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
     }
     // the non-MAS app is notarized when it is packed (never for a prepackaged one), and the pkg installer always
     const prepackaged = this.packagerOptions.prepackaged != null
-    const notarizes = ownPlans.some(({ targets }) => (!prepackaged && MacPackager.packsNonMasApp(targets)) || targets.some(it => it.name === "pkg"))
+    const packsApp = ownPlans.some(({ targets }) => !prepackaged && MacPackager.packsNonMasApp(targets))
+    const packsPkg = ownPlans.some(({ targets }) => targets.some(it => it.name === "pkg"))
     const notarize = this.platformSpecificBuildOptions.notarize
-    if (!notarizes || notarize === false || MacTargetHelper.getNotarizeOptions("") != null) {
+    if ((!packsApp && !packsPkg) || notarize === false) {
       return
     }
+    // the credentials are read (getNotarizeOptions also rejects an incomplete set) only where they are required
     if (this.forceCodeSigning) {
-      throw MacTargetHelper.missingNotarizationCredentialsError()
+      if (MacTargetHelper.getNotarizeOptions("") == null) {
+        throw MacTargetHelper.missingNotarizationCredentialsError()
+      }
+      return
     }
-    // notarize: true requires notarization wherever it can happen: on a macOS host, outside a pull-request build
-    if (notarize === true && isSignAllowed(false)) {
+    // notarize: true requires notarization where it runs: the app only when sign() signs it, the pkg installer whenever it is built
+    if (!MacTargetHelper.isNotarizationRequired(notarize) || (!packsPkg && this.isMacSigningSkippedByConfiguration())) {
+      return
+    }
+    if (MacTargetHelper.getNotarizeOptions("") == null) {
       throw MacTargetHelper.notarizeTrueWithoutCredentialsError()
     }
   }
@@ -184,6 +194,26 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       return "-c.mas.forceCodeSigning=false"
     }
     return forceCodeSigningOverrideHint(this)
+  }
+
+  /**
+   * Whether sign() skips the macOS app because of the configuration, before it would notarize it: `sign: null`, `sign.identity: null`,
+   * or `CSC_IDENTITY_AUTO_DISCOVERY=false` without an identity (`sign.identity` or `CSC_NAME`) or a custom signer.
+   */
+  private isMacSigningSkippedByConfiguration(): boolean {
+    const signConfig = this.platformSpecificBuildOptions.sign
+    if (signConfig === null) {
+      return true
+    }
+    const signOpts = isElectronSignOptions(signConfig) ? signConfig : undefined
+    if (signConfig != null && signOpts == null) {
+      // a custom signer is called without an identity too
+      return false
+    }
+    if (signOpts?.identity === null) {
+      return true
+    }
+    return isEmptyOrSpaces(signOpts?.identity ?? process.env.CSC_NAME) && !isAutoDiscoveryCodeSignIdentity()
   }
 
   /** Whether `pack` builds the non-MAS app: unless every target is a MAS one. No target at all is a dir build. */
@@ -684,7 +714,8 @@ export class MacPackager extends PlatformPackager<MacConfiguration | MasConfigur
       if (!hasCustomSign) {
         return "skipped:no-certificate"
       }
-      if (isMas && !forceCodeSigning) {
+      // mas-dev builds no installer, so its custom signer is called without an identity too
+      if (!forceCodeSigning && MacTargetHelper.shouldCreateMasInstaller(targetPlatform, undefined)) {
         log.warn(
           { file: log.filePath(appPath), reason: "no keychain identity was found, and the MAS installer needs one" },
           "the custom mac.sign signer is not called for the MAS app, which is left unsigned"

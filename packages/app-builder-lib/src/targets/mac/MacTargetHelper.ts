@@ -6,7 +6,7 @@ import { createPrivateKey } from "crypto"
 import { open, rm, writeFile, type FileHandle } from "fs/promises"
 import * as path from "path"
 import { forceCodeSigningError, VERIFICATION_FAILED_ERROR_CODE } from "../../codeSign/forceCodeSigning.js"
-import { CertType, findIdentity, Identity, reportError } from "../../codeSign/mac/macCodeSign.js"
+import { CertType, findIdentity, Identity, isSignAllowed, reportError } from "../../codeSign/mac/macCodeSign.js"
 import { checkInstallerPackageSignature, validateStapledTicket } from "../../codeSign/mac/macSignatureVerifier.js"
 import { SigningResult } from "../../codeSign/signResult.js"
 import type { MacPackager } from "../../macPackager.js"
@@ -665,6 +665,15 @@ export class MacTargetHelper {
     )
   }
 
+  /**
+   * Whether `mac.notarize: true` requires notarization here: where the app can be signed, on a macOS host outside a pull-request
+   * build (isSignAllowed). Elsewhere a missing credential set only warns, as when `notarize` is unset. The build-start check and
+   * every notarization use this rule.
+   */
+  static isNotarizationRequired(notarize: boolean | Nullish): boolean {
+    return notarize === true && isSignAllowed(false)
+  }
+
   /** The error for `mac.notarize: true`, which requires notarization, when no notarization credentials are set. */
   static notarizeTrueWithoutCredentialsError(): InvalidConfigurationError {
     return new InvalidConfigurationError(
@@ -702,7 +711,7 @@ export class MacTargetHelper {
     }
     const options = MacTargetHelper.getNotarizeOptions(appPath)
     if (!options) {
-      if (notarizeOptions === true) {
+      if (MacTargetHelper.isNotarizationRequired(notarizeOptions)) {
         throw MacTargetHelper.notarizeTrueWithoutCredentialsError()
       }
       if (forceCodeSigning) {
