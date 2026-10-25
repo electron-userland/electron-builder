@@ -113,7 +113,23 @@ describe("SquirrelWindowsTarget.build", () => {
     await zipFinished
   })
 
-  test("does not wait for the archive of another arch", async ({ tmpDir }) => {
+  test("waits for the archive of another arch when the app dir is shared (prepackaged)", async ({ tmpDir }) => {
+    const root = await tmpDir.createTempDir()
+    const appOutDir = path.join(root, "prepackaged")
+    const { events, finishZip, zip, squirrel } = await createBuild(root, appOutDir)
+    await zip.build(appOutDir, Arch.x64)
+
+    const build = squirrel.build(appOutDir, Arch.ia32)
+    await new Promise(resolve => setTimeout(resolve, 10))
+    expect(squirrel.generateStubExecutableExe).not.toHaveBeenCalled()
+
+    finishZip()
+    await build
+    expect(events).toEqual(["zip done", "stub written", "installer queued (Squirrel.exe in appOutDir)"])
+    await expect(zip.finishBuild()).rejects.toThrow("archive stub")
+  })
+
+  test("does not wait for the archive of another arch in its own app dir", async ({ tmpDir }) => {
     const root = await tmpDir.createTempDir()
     const appOutDir = path.join(root, "win-ia32-unpacked")
     const { events, zip, squirrel } = await createBuild(root, appOutDir)

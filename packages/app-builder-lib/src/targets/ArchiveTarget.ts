@@ -115,7 +115,7 @@ export class ArchiveTarget extends Target {
     })()
     this.buildQueueManager.addTask(work)
     // a target writing into appOutDir (Squirrel.Windows) waits for the archive
-    trackPackWork(packager, appOutDir, arch, work)
+    trackPackWork(packager, appOutDir, work)
     return Promise.resolve()
   }
 }

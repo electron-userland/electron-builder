@@ -401,7 +401,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   private readonly packToTargets = new Map<string, ReadonlyArray<Target>>()
 
   /**
-   * @internal queued work still reading a pack's app dir (e.g. zip/7z archiving it), by `packKey` - see trackPackWork.
+   * @internal queued work still reading an app dir (e.g. zip/7z archiving it), by the resolved dir - see trackPackWork.
    * Kept apart from `Target.buildQueueManager`, which `finishBuild()` may drain before that work is done.
    */
   readonly pendingPackWork = new Map<string, Set<Promise<any>>>()
@@ -1189,8 +1189,8 @@ function capitalizeFirstLetter(text: string) {
 }
 
 /** Registers queued `work` that still reads `appOutDir`, see waitForPackWork */
-export function trackPackWork(packager: PlatformPackager<any>, appOutDir: string, arch: Arch, work: Promise<any>): void {
-  const key = packKey(appOutDir, arch)
+export function trackPackWork(packager: PlatformPackager<any>, appOutDir: string, work: Promise<any>): void {
+  const key = path.resolve(appOutDir)
   const pending = packager.pendingPackWork.get(key) ?? new Set<Promise<any>>()
   packager.pendingPackWork.set(key, pending)
   pending.add(work)
@@ -1199,11 +1199,12 @@ export function trackPackWork(packager: PlatformPackager<any>, appOutDir: string
 }
 
 /**
- * Waits for the work tracked so far for the pack from `appOutDir` for `arch` (not other arches'), so the caller can then
- * write into `appOutDir`. A failure of that work is left to its target's `finishBuild()` to report.
+ * Waits for the work tracked so far on `appOutDir`, so the caller can then write into it. Keyed by the dir alone, not by
+ * `_arch` (the pack the caller writes for): a prepackaged dir is shared by every arch, any other arch has its own dir.
+ * A failure of that work is left to its target's `finishBuild()` to report.
  */
-export async function waitForPackWork(packager: PlatformPackager<any>, appOutDir: string, arch: Arch): Promise<void> {
-  await Promise.allSettled(Array.from(packager.pendingPackWork.get(packKey(appOutDir, arch)) ?? []))
+export async function waitForPackWork(packager: PlatformPackager<any>, appOutDir: string, _arch: Arch): Promise<void> {
+  await Promise.allSettled(Array.from(packager.pendingPackWork.get(path.resolve(appOutDir)) ?? []))
 }
 
 function packKey(appOutDir: string, arch: Arch) {
