@@ -160,7 +160,9 @@ export abstract class HttpExecutor<T extends Request> {
       })
       this.addErrorAndTimeoutHandlers(request, reject, options.timeout)
       this.addRedirectHandlers(request, options, reject, redirectCount, options => {
-        this.doApiRequest(options, cancellationToken, requestProcessor, redirectCount).then(resolve).catch(reject)
+        this.doApiRequest(options, cancellationToken, requestProcessor, redirectCount + 1)
+          .then(resolve)
+          .catch(reject)
       })
       requestProcessor(request, reject)
       onCancel(() => request.abort())
@@ -218,12 +220,14 @@ Please double check that your authentication token is correct. Due to security r
     const shouldRedirect = code >= 300 && code < 400
     const redirectUrl = safeGetHeader(response, "location")
     if (shouldRedirect && redirectUrl != null) {
-      if (redirectCount > this.maxRedirects) {
+      if (redirectCount >= this.maxRedirects) {
         reject(this.createMaxRedirectError())
         return
       }
 
-      this.doApiRequest(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount).then(resolve).catch(reject)
+      this.doApiRequest(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount + 1)
+        .then(resolve)
+        .catch(reject)
       return
     }
 
@@ -321,7 +325,7 @@ Please double check that your authentication token is correct. Due to security r
       const redirectUrl = safeGetHeader(response, "location")
       if (redirectUrl != null) {
         if (redirectCount < this.maxRedirects) {
-          this.doDownload(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions), options, redirectCount++)
+          this.doDownload(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions), options, redirectCount + 1)
         } else {
           options.callback(this.createMaxRedirectError())
         }
@@ -336,7 +340,7 @@ Please double check that your authentication token is correct. Due to security r
     })
     this.addErrorAndTimeoutHandlers(request, options.callback, requestOptions.timeout)
     this.addRedirectHandlers(request, requestOptions, options.callback, redirectCount, requestOptions => {
-      this.doDownload(requestOptions, options, redirectCount++)
+      this.doDownload(requestOptions, options, redirectCount + 1)
     })
     request.end()
   }
