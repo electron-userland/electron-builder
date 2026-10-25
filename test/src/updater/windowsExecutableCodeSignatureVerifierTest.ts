@@ -427,6 +427,16 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       expectVerificationSuccess(await verifySignature(["CN=M\\FCller Caf\\E9, O=Acme, C=DE"], defaultFile, logger))
     })
 
+    test.for([
+      ["CN=Caf\\C3\\A9\\FC, O=Acme, C=DE", "CN=Caféü, O=Acme, C=DE"],
+      ["CN=\\FC\\C3\\A9, O=Acme, C=DE", "CN=üé, O=Acme, C=DE"],
+      ["CN=\\C3, O=Acme, C=DE", "CN=Ã, O=Acme, C=DE"],
+    ] as const)("a hex escape run mixing UTF-8 and Latin-1 decodes per sequence: %s", async ([publisherName, subject], { tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson({ subject }))
+      expectVerificationSuccess(await verifySignature([publisherName], defaultFile, logger))
+    })
+
     test("a non-ASCII subject and path escaped as \\uXXXX by the script match", async ({ tmpDir }) => {
       const { logger } = await setup(tmpDir)
       const subject = "CN=İlker Pálfi, O=你好 😀, C=TR"
