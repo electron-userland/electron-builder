@@ -55,10 +55,28 @@ async function compileStub(dir: string): Promise<string> {
   return stub
 }
 
-function run(file: string): Promise<number | null> {
+// The environment of an installer started from Explorer. The suite runs under PowerShell 7 (the CI test step's shell), whose
+// PSModulePath lists its own module directories first: Windows PowerShell inherits it through node and the probe, auto-loads the
+// PowerShell 7 CimCmdlets for Get-Command Get-CimInstance, fails to load it and the probe reports PowerShell as unavailable
+// (pwsh corrects PSModulePath only for a powershell.exe it starts itself). Without PSModulePath, module auto-loading fails on
+// Windows Server 2025 runners as well (see windowsSignedFixture.ts), so it is set to the machine default of Windows PowerShell.
+function explorerEnv(systemRoot: string): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env }
+  // Windows environment variable names are case-insensitive, the keys of the spread object are not
+  for (const key of Object.keys(env)) {
+    if (key.toLowerCase() === "psmodulepath") {
+      delete env[key]
+    }
+  }
+  const programFiles = process.env.ProgramFiles ?? "C:\\Program Files"
+  env.PSModulePath = [path.join(programFiles, "WindowsPowerShell", "Modules"), path.join(systemRoot, "System32", "WindowsPowerShell", "v1.0", "Modules")].join(";")
+  return env
+}
+
+function run(file: string, env: NodeJS.ProcessEnv): Promise<number | null> {
   return new Promise((resolve, reject) => {
     // a probe that waits on something fails (exit code null) instead of stalling the suite
-    const child = spawn(file, [], { stdio: "ignore", timeout: 60_000 })
+    const child = spawn(file, [], { stdio: "ignore", timeout: 60_000, env })
     child.on("error", reject)
     child.on("exit", code => resolve(code))
   })
@@ -76,13 +94,14 @@ describe("IS_POWERSHELL_AVAILABLE", { concurrent: false }, () => {
     const dir = await tmpDir.createTempDir({ prefix: "nsis-powershell-probe" })
     const systemRoot = process.env.SystemRoot ?? "C:\\Windows"
     const powerShell = path.join(systemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
+    const env = explorerEnv(systemRoot)
 
     // real Windows PowerShell runs the command and returns the sentinel exit code
-    expect(await run(await compileProbe(dir, "probe-powershell", powerShell))).toBe(AVAILABLE)
+    expect(await run(await compileProbe(dir, "probe-powershell", powerShell), env)).toBe(AVAILABLE)
     // a stub that exits with 0 without running the command (Wine) must not select the PowerShell process check, whose exit code 0
     // means "the app is running" and would keep the installer in the "cannot be closed" loop
-    expect(await run(await compileProbe(dir, "probe-stub", await compileStub(dir)))).toBe(NOT_AVAILABLE)
+    expect(await run(await compileProbe(dir, "probe-stub", await compileStub(dir)), env)).toBe(NOT_AVAILABLE)
     // no PowerShell at all
-    expect(await run(await compileProbe(dir, "probe-missing", path.join(dir, "missing", "powershell.exe")))).toBe(NOT_AVAILABLE)
+    expect(await run(await compileProbe(dir, "probe-missing", path.join(dir, "missing", "powershell.exe")), env)).toBe(NOT_AVAILABLE)
   })
 })
