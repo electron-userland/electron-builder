@@ -1,3 +1,14 @@
+const strictUtf8Decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true })
+
+function decodeEscapedBytes(bytes: Buffer): string {
+  try {
+    return strictUtf8Decoder.decode(bytes)
+  } catch {
+    // not valid UTF-8 (e.g. a single-byte \FC), so decode each byte as a Latin-1 character
+    return bytes.toString("latin1")
+  }
+}
+
 export function parseDn(seq: string): Map<string, string> {
   let quoted = false
   let key: string | null = null
@@ -34,7 +45,7 @@ export function parseDn(seq: string): Map<string, string> {
           token += seq[i]
         } else {
           i += hexPairs[0].length - 1
-          token += Buffer.from(hexPairs[0].replace(/\\/g, ""), "hex").toString("utf8")
+          token += decodeEscapedBytes(Buffer.from(hexPairs[0].replace(/\\/g, ""), "hex"))
         }
         continue
       }

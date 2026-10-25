@@ -77,6 +77,12 @@ test("parseDn decodes escaped characters", ({ expect }) => {
   expect(dn.get("C")).toEqual("FR")
 })
 
+test("parseDn decodes single-byte hex escapes that are not UTF-8 as Latin-1", ({ expect }) => {
+  expect(parseDn("CN=M\\FCller").get("CN")).toEqual("Müller")
+  expect(parseDn("CN=Caf\\E9").get("CN")).toEqual("Café")
+  expect(parseDn("CN=Caf\\C3\\A9").get("CN")).toEqual("Café")
+})
+
 const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
 const winCodeSignVersions: ToolsetConfig["winCodeSign"][] = ["0.0.0", "1.0.0", "1.1.0"]
