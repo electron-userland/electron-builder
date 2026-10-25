@@ -1,5 +1,6 @@
 import { TmpDir } from "builder-util/out/util"
-import { BlockMap, CancellationToken } from "builder-util-runtime"
+import { BlockMap, BlockMapDataHolder, CancellationToken } from "builder-util-runtime"
+import { DifferentialDownloader } from "electron-updater/src/differentialDownloader/DifferentialDownloader"
 import { GenericDifferentialDownloader } from "electron-updater/src/differentialDownloader/GenericDifferentialDownloader"
 import { ElectronHttpExecutor } from "electron-updater/src/electronHttpExecutor"
 import { createHash } from "crypto"
@@ -10,9 +11,8 @@ import * as path from "path"
 import { PassThrough } from "stream"
 import { afterEach, describe, expect, test } from "vitest"
 
-// The single-range differential download makes `redirect: "manual"` Electron net requests, and our Node test server never
-// redirects, so the requests go to a fake net request here. Like ElectronHttpExecutor.download, a redirect must not send the
-// credential headers to another origin.
+// Differential downloads make `redirect: "manual"` Electron net requests, which go to a fake net request here (our Node test
+// server never redirects). Like ElectronHttpExecutor.download, a redirect must not send the credential headers to another origin.
 
 const FILE_URL = "https://feed.example.com/updates/app-1.1.0.exe"
 const PRE_SIGNED_URL = "https://bucket.example.net/app-1.1.0.exe?X-Amz-Signature=abc"
@@ -22,19 +22,31 @@ const SAME_ORIGIN_URL = "https://feed.example.com/files/app-1.1.0.exe"
 const BLOCK = 16
 const OLD = Buffer.from("a".repeat(BLOCK) + "b".repeat(BLOCK) + "c".repeat(BLOCK))
 const NEW = Buffer.from("x".repeat(BLOCK) + "b".repeat(BLOCK) + "z".repeat(BLOCK))
+// only the first block changed: one range to download, which the multi-range downloader requests on its own
+const NEW_FIRST_BLOCK = Buffer.from("x".repeat(BLOCK) + "b".repeat(BLOCK) + "c".repeat(BLOCK))
 
-function blockMapOf(data: Buffer): BlockMap {
+const REQUEST_HEADERS: OutgoingHttpHeaders = {
+  authorization: "Bearer feed-secret",
+  "PRIVATE-TOKEN": "gitlab-secret",
+  "X-Api-Key": "api-secret",
+  Cookie: "session=secret",
+  "X-Tenant": "acme",
+}
+const CREDENTIAL_HEADERS = ["authorization", "PRIVATE-TOKEN", "X-Api-Key", "Cookie"]
+
+function blockMapOf(data: Buffer, blockSize = BLOCK): BlockMap {
   const checksums: Array<string> = []
   const sizes: Array<number> = []
-  for (let i = 0; i < data.length; i += BLOCK) {
-    checksums.push(
-      createHash("sha256")
-        .update(data.subarray(i, i + BLOCK))
-        .digest("base64")
-    )
-    sizes.push(BLOCK)
+  for (let i = 0; i < data.length; i += blockSize) {
+    const block = data.subarray(i, i + blockSize)
+    checksums.push(createHash("sha256").update(block).digest("base64"))
+    sizes.push(block.length)
   }
   return { version: "2", files: [{ name: "file", offset: 0, checksums, sizes }] }
+}
+
+function fileInfoOf(content: Buffer): BlockMapDataHolder {
+  return { size: content.length, sha512: createHash("sha512").update(content).digest("base64") }
 }
 
 interface SentRequest {
@@ -42,16 +54,22 @@ interface SentRequest {
   readonly headers: OutgoingHttpHeaders
 }
 
-// Stands in for Electron's net ClientRequest with `redirect: "manual"`: a redirect is reported as a "redirect" event, after
-// which the request is either aborted or sent again by followRedirect() to the new URL, with the same headers.
+/** How the fake host answers a request: with a redirect, or with a response. */
+type FakeNetAnswer = { readonly location: string } | { readonly statusCode: number; readonly headers?: Record<string, string>; readonly body?: Buffer }
+
+// Stands in for Electron's net ClientRequest. A redirect is reported as a "redirect" event: with `redirect: "manual"` the request
+// is then cancelled unless followRedirect() was called during the event, with "follow" (the default) it goes on to the new URL,
+// with the same headers, unless it was aborted.
 class FakeNetRequest extends EventEmitter {
-  private redirectUrl: string | null = null
+  private aborted = false
   private redirectCount = 0
+  private isFollowRedirectCalled = false
 
   constructor(
     private readonly executor: FakeElectronHttpExecutor,
     private url: string,
-    private readonly headers: OutgoingHttpHeaders
+    private readonly headers: OutgoingHttpHeaders,
+    private readonly redirect: string
   ) {
     super()
   }
@@ -61,42 +79,45 @@ class FakeNetRequest extends EventEmitter {
   }
 
   followRedirect(): void {
-    if (this.redirectUrl == null) {
-      throw new Error("no redirect to follow")
-    }
-    this.url = this.redirectUrl
-    this.send()
+    this.isFollowRedirectCalled = true
   }
 
   abort(): void {
-    this.redirectUrl = null
-    this.emit("abort")
+    if (!this.aborted) {
+      this.aborted = true
+      this.emit("abort")
+    }
   }
 
   private send(): void {
     this.executor.requests.push({ url: this.url, headers: this.headers })
     setImmediate(() => {
-      const location = this.executor.redirects[this.url]
-      if (location != null) {
+      if (this.aborted) {
+        return
+      }
+      const answer = this.executor.answer(this.url, this.headers)
+      if ("location" in answer) {
         // Chromium's limit
         if (++this.redirectCount > 20) {
           this.emit("error", new Error("net::ERR_TOO_MANY_REDIRECTS"))
           return
         }
-        this.redirectUrl = location
-        this.emit("redirect", 302, "GET", location)
+        this.isFollowRedirectCalled = false
+        this.emit("redirect", 302, "GET", answer.location, {})
+        if (this.aborted) {
+          return
+        }
+        if (this.redirect === "manual" && !this.isFollowRedirectCalled) {
+          this.emit("error", new Error("Redirect was cancelled"))
+          return
+        }
+        this.url = answer.location
+        this.send()
         return
       }
-
-      const match = /^bytes=(\d+)-(\d+)$/.exec(String(this.headers.range))
-      if (match == null) {
-        this.emit("error", new Error(`unexpected range: ${String(this.headers.range)}`))
-        return
-      }
-      const [start, end] = match.slice(1).map(Number)
-      const response = Object.assign(new PassThrough(), { statusCode: 206, headers: { "content-range": `bytes ${start}-${end}/${NEW.length}` } })
+      const response = Object.assign(new PassThrough(), { statusCode: answer.statusCode, headers: answer.headers ?? {} })
       this.emit("response", response)
-      response.end(NEW.subarray(start, end + 1))
+      response.end(answer.body)
     })
   }
 }
@@ -104,74 +125,347 @@ class FakeNetRequest extends EventEmitter {
 class FakeElectronHttpExecutor extends ElectronHttpExecutor {
   readonly requests: Array<SentRequest> = []
 
-  constructor(readonly redirects: Record<string, string>) {
+  constructor(readonly answer: (url: string, headers: OutgoingHttpHeaders) => FakeNetAnswer) {
     super()
   }
 
+  // the return type of the overridden method is Electron's ClientRequest, which the fake does not implement
   createRequest(options: RequestOptions, callback: (response: any) => void): any {
-    const port = options.port == null ? "" : `:${options.port}`
+    // like ElectronHttpExecutor.createRequest: a `Host` header is moved to `host`
+    if (options.headers != null && options.headers.Host != null) {
+      options.host = String(options.headers.Host)
+      delete options.headers.Host
+    }
+    // like net.request: `host` wins over `hostname` and `port`
+    const host = options.host ?? `${options.hostname}${options.port == null ? "" : `:${options.port}`}`
+    const redirect = "redirect" in options && typeof options.redirect === "string" ? options.redirect : "follow"
     // like net.request, the headers are copied when the request is created
-    const request = new FakeNetRequest(this, `${options.protocol}//${options.hostname}${port}${options.path}`, { ...options.headers })
+    const request = new FakeNetRequest(this, `${options.protocol}//${host}${options.path}`, { ...options.headers }, redirect)
     request.on("response", callback)
     return request
   }
+}
+
+function parseRanges(header: unknown): Array<[number, number]> {
+  return String(header)
+    .replace(/^bytes=/, "")
+    .split(",")
+    .map(range => {
+      const [start, end] = range.trim().split("-").map(Number)
+      return [start, end]
+    })
+}
+
+// a host that serves the ranges of `content`, several in one multipart/byteranges answer
+function serveRanges(content: Buffer, headers: OutgoingHttpHeaders): FakeNetAnswer {
+  const ranges = parseRanges(headers.range)
+  if (ranges.length === 1) {
+    const [start, end] = ranges[0]
+    return { statusCode: 206, headers: { "content-range": `bytes ${start}-${end}/${content.length}` }, body: content.subarray(start, end + 1) }
+  }
+  const boundary = "test-boundary"
+  const parts = ranges.map(([start, end]) =>
+    Buffer.concat([
+      Buffer.from(`\r\n--${boundary}\r\nContent-Type: application/octet-stream\r\nContent-Range: bytes ${start}-${end}/${content.length}\r\n\r\n`),
+      content.subarray(start, end + 1),
+    ])
+  )
+  return { statusCode: 206, headers: { "content-type": `multipart/byteranges; boundary=${boundary}` }, body: Buffer.concat([...parts, Buffer.from(`\r\n--${boundary}--\r\n`)]) }
+}
+
+interface DownloadCase {
+  readonly redirects: Record<string, string>
+  readonly isUseMultipleRangeRequest?: boolean
+  readonly content?: Buffer
+  // a redirect for these ranges only
+  readonly redirectRanges?: Array<string>
+  readonly old?: Buffer
+  readonly blockSize?: number
+  readonly requestHeaders?: OutgoingHttpHeaders
+  readonly logInfo?: (message: string) => void
+}
+
+function createExecutor(c: DownloadCase, content: Buffer): FakeElectronHttpExecutor {
+  return new FakeElectronHttpExecutor((url, headers) => {
+    const location = c.redirects[url]
+    if (location != null && (c.redirectRanges == null || c.redirectRanges.includes(String(headers.range)))) {
+      return { location }
+    }
+    return serveRanges(content, headers)
+  })
+}
+
+function createLogger(infos: Array<string>, logInfo?: (message: string) => void) {
+  return {
+    info: (message: unknown) => {
+      infos.push(String(message))
+      logInfo?.(String(message))
+    },
+    warn: () => {},
+    error: () => {},
+  }
+}
+
+function urlsAndRanges(requests: Array<SentRequest>): Array<[string, unknown]> {
+  return requests.map(it => [it.url, it.headers.range])
+}
+
+function expectCredentials(headers: OutgoingHttpHeaders, isSent: boolean): void {
+  for (const name of CREDENTIAL_HEADERS) {
+    if (isSent) {
+      expect(headers).toHaveProperty(name, REQUEST_HEADERS[name])
+    } else {
+      expect(headers).not.toHaveProperty(name)
+    }
+  }
+  expect(headers).toMatchObject({ "X-Tenant": "acme", accept: "*/*" })
 }
 
 describe("differential download redirects", () => {
   const tmpDir = new TmpDir("differential-redirect")
   afterEach(() => tmpDir.cleanup())
 
-  async function download(redirects: Record<string, string>) {
+  async function download(c: DownloadCase, executor = createExecutor(c, c.content ?? NEW)) {
+    const content = c.content ?? NEW
     const dir = await tmpDir.createTempDir({ prefix: "differential-redirect" })
     const oldFile = path.join(dir, "old.exe")
     const newFile = path.join(dir, "new.exe")
-    await fsExtra.writeFile(oldFile, OLD)
-    const executor = new FakeElectronHttpExecutor(redirects)
-    const downloader = new GenericDifferentialDownloader({ size: NEW.length, sha512: createHash("sha512").update(NEW).digest("base64") }, executor, {
+    const old = c.old ?? OLD
+    const blockSize = c.blockSize ?? BLOCK
+    await fsExtra.writeFile(oldFile, old)
+    const infos: Array<string> = []
+    const downloader = new GenericDifferentialDownloader(fileInfoOf(content), executor, {
       newUrl: new URL(FILE_URL),
       oldFile,
       newFile,
-      logger: { info: () => {}, warn: () => {}, error: () => {} },
-      requestHeaders: { authorization: "Bearer feed-secret", "X-Tenant": "acme" },
-      isUseMultipleRangeRequest: false,
+      logger: createLogger(infos, c.logInfo),
+      requestHeaders: c.requestHeaders ?? REQUEST_HEADERS,
+      isUseMultipleRangeRequest: c.isUseMultipleRangeRequest === true,
       cancellationToken: new CancellationToken(),
     })
-    await downloader.download(blockMapOf(OLD), blockMapOf(NEW))
-    return { requests: executor.requests, downloaded: await fsExtra.readFile(newFile) }
+    await downloader.download(blockMapOf(old, blockSize), blockMapOf(content, blockSize))
+    return { requests: executor.requests, downloaded: await fsExtra.readFile(newFile), infos }
   }
 
   test("a redirect to another origin gets no credential headers, and neither do the remaining ranges", async () => {
-    const { requests, downloaded } = await download({ [FILE_URL]: PRE_SIGNED_URL })
+    const { requests, downloaded, infos } = await download({ redirects: { [FILE_URL]: PRE_SIGNED_URL } })
 
     expect(downloaded).toEqual(NEW)
-    expect(requests.map(it => [it.url, it.headers.range])).toEqual([
+    expect(urlsAndRanges(requests)).toEqual([
       [FILE_URL, "bytes=0-15"],
       [PRE_SIGNED_URL, "bytes=0-15"],
       [PRE_SIGNED_URL, "bytes=32-47"],
     ])
     // positive control: the feed gets the credentials
-    expect(requests[0].headers).toHaveProperty("authorization", "Bearer feed-secret")
+    expectCredentials(requests[0].headers, true)
     for (const { headers } of requests.slice(1)) {
-      expect(headers).not.toHaveProperty("authorization")
-      expect(headers).toMatchObject({ "X-Tenant": "acme", accept: "*/*" })
+      expectCredentials(headers, false)
     }
+    // the redirect is logged without the query, which holds the signature of a pre-signed URL
+    expect(infos).toContain("Redirect to https://bucket.example.net/app-1.1.0.exe")
+    expect(infos.join("\n")).not.toContain("Signature")
   })
 
   test("a same-origin redirect keeps the credential headers", async () => {
-    const { requests, downloaded } = await download({ [FILE_URL]: SAME_ORIGIN_URL })
+    const { requests, downloaded } = await download({ redirects: { [FILE_URL]: SAME_ORIGIN_URL } })
 
     expect(downloaded).toEqual(NEW)
-    expect(requests.map(it => [it.url, it.headers.range])).toEqual([
+    expect(urlsAndRanges(requests)).toEqual([
       [FILE_URL, "bytes=0-15"],
       [SAME_ORIGIN_URL, "bytes=0-15"],
       [SAME_ORIGIN_URL, "bytes=32-47"],
     ])
     for (const { headers } of requests) {
-      expect(headers).toHaveProperty("authorization", "Bearer feed-secret")
+      expectCredentials(headers, true)
     }
   })
 
-  test("a redirect loop fails the download", async () => {
-    await expect(download({ [FILE_URL]: PRE_SIGNED_URL, [PRE_SIGNED_URL]: FILE_URL })).rejects.toThrow("Too many redirects (> 10)")
+  test("a redirect of a later range only moves the ranges from there on", async () => {
+    const { requests, downloaded } = await download({ redirects: { [FILE_URL]: PRE_SIGNED_URL }, redirectRanges: ["bytes=32-47"] })
+
+    expect(downloaded).toEqual(NEW)
+    expect(urlsAndRanges(requests)).toEqual([
+      [FILE_URL, "bytes=0-15"],
+      [FILE_URL, "bytes=32-47"],
+      [PRE_SIGNED_URL, "bytes=32-47"],
+    ])
+    expectCredentials(requests[0].headers, true)
+    expectCredentials(requests[1].headers, true)
+    expectCredentials(requests[2].headers, false)
+  })
+
+  // ElectronHttpExecutor.createRequest moves a `Host` header to `host`, which Electron's net prefers over hostname and port
+  for (const isUseMultipleRangeRequest of [false, true]) {
+    test(`a ${isUseMultipleRangeRequest ? "multi" : "single"}-range request with a Host header is redirected to the redirect target`, async () => {
+      const { requests, downloaded } = await download({
+        redirects: { [FILE_URL]: PRE_SIGNED_URL },
+        isUseMultipleRangeRequest,
+        requestHeaders: { ...REQUEST_HEADERS, Host: "feed.example.com" },
+      })
+
+      expect(downloaded).toEqual(NEW)
+      expect(requests.map(it => it.url)).toEqual(isUseMultipleRangeRequest ? [FILE_URL, PRE_SIGNED_URL] : [FILE_URL, PRE_SIGNED_URL, PRE_SIGNED_URL])
+      expectCredentials(requests[0].headers, true)
+      for (const { headers } of requests.slice(1)) {
+        expectCredentials(headers, false)
+      }
+    })
+  }
+
+  test("a multi-range request redirected to another origin gets no credential headers", async () => {
+    const { requests, downloaded } = await download({ redirects: { [FILE_URL]: PRE_SIGNED_URL }, isUseMultipleRangeRequest: true })
+
+    expect(downloaded).toEqual(NEW)
+    expect(urlsAndRanges(requests)).toEqual([
+      [FILE_URL, "bytes=0-15, 32-47"],
+      [PRE_SIGNED_URL, "bytes=0-15, 32-47"],
+    ])
+    expectCredentials(requests[0].headers, true)
+    expectCredentials(requests[1].headers, false)
+  })
+
+  test("a multi-range request redirected on the same origin keeps the credential headers", async () => {
+    const { requests, downloaded } = await download({ redirects: { [FILE_URL]: SAME_ORIGIN_URL }, isUseMultipleRangeRequest: true })
+
+    expect(downloaded).toEqual(NEW)
+    expect(urlsAndRanges(requests)).toEqual([
+      [FILE_URL, "bytes=0-15, 32-47"],
+      [SAME_ORIGIN_URL, "bytes=0-15, 32-47"],
+    ])
+    for (const { headers } of requests) {
+      expectCredentials(headers, true)
+    }
+  })
+
+  test("the lone range of a multi-range download, redirected to another origin, gets no credential headers", async () => {
+    const { requests, downloaded } = await download({ redirects: { [FILE_URL]: PRE_SIGNED_URL }, isUseMultipleRangeRequest: true, content: NEW_FIRST_BLOCK })
+
+    expect(downloaded).toEqual(NEW_FIRST_BLOCK)
+    expect(urlsAndRanges(requests)).toEqual([
+      [FILE_URL, "bytes=0-15"],
+      [PRE_SIGNED_URL, "bytes=0-15"],
+    ])
+    expectCredentials(requests[0].headers, true)
+    expectCredentials(requests[1].headers, false)
+  })
+
+  test("each multi-range batch and the lone range of a batch start at the update URL, so each gets its own redirect", async () => {
+    // 2001 blocks, every other one changed: 1001 ranges to download and 1000 to copy. The multi-range downloader sends the
+    // operations in batches of 1000: two of 500 ranges, then one with the last range alone.
+    const blockSize = 8
+    const blockCount = 2001
+    const blocksOf = (marker: (index: number) => string) =>
+      Buffer.from(Array.from({ length: blockCount }, (_, index) => marker(index) + String(index).padStart(blockSize - 1, "0")).join(""))
+    const old = blocksOf(() => "o")
+    const content = blocksOf(index => (index % 2 === 0 ? "n" : "o"))
+    // a pre-signed URL can expire during a long download, so a later batch does not reuse it
+    const { requests, downloaded } = await download({ redirects: { [FILE_URL]: PRE_SIGNED_URL }, isUseMultipleRangeRequest: true, content, old, blockSize })
+
+    expect(downloaded).toEqual(content)
+    expect(requests.map(it => [it.url, parseRanges(it.headers.range).length])).toEqual([
+      [FILE_URL, 500],
+      [PRE_SIGNED_URL, 500],
+      [FILE_URL, 500],
+      [PRE_SIGNED_URL, 500],
+      [FILE_URL, 1],
+      [PRE_SIGNED_URL, 1],
+    ])
+    expect(requests[4].headers.range).toBe(`bytes=${2000 * blockSize}-${2001 * blockSize - 1}`)
+    for (const { url, headers } of requests) {
+      expectCredentials(headers, url === FILE_URL)
+    }
+  })
+
+  // a redirect handler that throws (an invalid URL, a failing logger) used to leave the download waiting forever
+  const GUARD_TIMEOUT = 10_000
+
+  for (const isUseMultipleRangeRequest of [false, true]) {
+    const label = isUseMultipleRangeRequest ? "multi" : "single"
+
+    test(
+      `a redirect loop fails a ${label}-range download after 10 redirects`,
+      async () => {
+        const c: DownloadCase = { redirects: { [FILE_URL]: PRE_SIGNED_URL, [PRE_SIGNED_URL]: FILE_URL }, isUseMultipleRangeRequest }
+        const executor = createExecutor(c, NEW)
+        await expect(download(c, executor)).rejects.toThrow("Too many redirects (> 10)")
+        // the request and the 10 redirects it may follow
+        expect(executor.requests).toHaveLength(11)
+      },
+      GUARD_TIMEOUT
+    )
+
+    test(
+      `an invalid redirect URL fails a ${label}-range download`,
+      async () => {
+        const c: DownloadCase = { redirects: { [FILE_URL]: "https://[invalid/app.exe" }, isUseMultipleRangeRequest }
+        const executor = createExecutor(c, NEW)
+        await expect(download(c, executor)).rejects.toThrow("Invalid URL")
+        expect(executor.requests).toHaveLength(1)
+      },
+      GUARD_TIMEOUT
+    )
+
+    test(
+      `a logger that throws on the redirect does not fail a ${label}-range download`,
+      async () => {
+        const { requests, downloaded } = await download({
+          redirects: { [FILE_URL]: PRE_SIGNED_URL },
+          isUseMultipleRangeRequest,
+          logInfo: message => {
+            if (message.startsWith("Redirect to")) {
+              throw new Error("logger failure")
+            }
+          },
+        })
+
+        expect(downloaded).toEqual(NEW)
+        expect(requests[1].url).toBe(PRE_SIGNED_URL)
+        expectCredentials(requests[1].headers, false)
+      },
+      GUARD_TIMEOUT
+    )
+  }
+})
+
+// FileWithEmbeddedBlockMapDifferentialDownloader reads the block map at the end of the new file with readRemoteBytes
+class RemoteBytesReader extends DifferentialDownloader {
+  read(start: number, endInclusive: number): Promise<Buffer> {
+    return this.readRemoteBytes(start, endInclusive)
+  }
+}
+
+describe("differential download redirects when reading remote bytes", () => {
+  function createReader(executor: FakeElectronHttpExecutor): RemoteBytesReader {
+    return new RemoteBytesReader(fileInfoOf(NEW), executor, {
+      newUrl: new URL(FILE_URL),
+      oldFile: "unused",
+      newFile: "unused",
+      logger: createLogger([]),
+      requestHeaders: REQUEST_HEADERS,
+      cancellationToken: new CancellationToken(),
+    })
+  }
+
+  for (const [label, target, isSent] of [
+    ["another origin gets no credential headers", PRE_SIGNED_URL, false],
+    ["the same origin keeps the credential headers", SAME_ORIGIN_URL, true],
+  ] as const) {
+    test(`a redirect to ${label}`, async () => {
+      const executor = createExecutor({ redirects: { [FILE_URL]: target } }, NEW)
+
+      expect(await createReader(executor).read(32, 47)).toEqual(NEW.subarray(32, 48))
+      expect(urlsAndRanges(executor.requests)).toEqual([
+        [FILE_URL, "bytes=32-47"],
+        [target, "bytes=32-47"],
+      ])
+      expectCredentials(executor.requests[0].headers, true)
+      expectCredentials(executor.requests[1].headers, isSent)
+    })
+  }
+
+  test("a redirect loop fails after 10 redirects", async () => {
+    const executor = createExecutor({ redirects: { [FILE_URL]: PRE_SIGNED_URL, [PRE_SIGNED_URL]: FILE_URL } }, NEW)
+    await expect(createReader(executor).read(32, 47)).rejects.toThrow("Too many redirects (> 10)")
+    expect(executor.requests).toHaveLength(11)
   })
 })
