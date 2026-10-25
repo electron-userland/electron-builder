@@ -10,9 +10,16 @@ Var updated
 Var result
 Var navigation
 Var directoryShown
+Var outerAccepted
+Var customLeaveCalled
 
-; Isolate state detection, not the page callbacks under test. No real elevation occurs.
+; Isolate UAC state and the outer-process read, not the page callbacks under test.
+; No real elevation or IPC occurs in the simulated executable.
 !ifdef SIMULATE_UAC
+  !macroundef UAC_AsUser_GetGlobalVar
+  !macro UAC_AsUser_GetGlobalVar var
+    StrCpy ${var} $outerAccepted
+  !macroend
   !undef UAC_IsInnerInstance
   !define UAC_IsInnerInstance '$inner == 1'
   !undef UAC_IsAdmin
@@ -47,6 +54,12 @@ Var directoryShown
 !macro customFinishPage
 !macroend
 
+; User callbacks may already own the generic name and the LEAVE hook.
+!define MUI_PAGE_CUSTOMFUNCTION_LEAVE licensePagePre
+Function licensePagePre
+  StrCpy $customLeaveCalled 1
+FunctionEnd
+
 !include assistedInstaller.nsh
 !insertmacro MUI_LANGUAGE "English"
 !ifdef MULTILINGUAL
@@ -58,6 +71,7 @@ Function .onInit
   ${GetOptions} $R0 "--inner=" $inner
   ${GetOptions} $R0 "--admin=" $admin
   ${GetOptions} $R0 "--updated=" $updated
+  ${GetOptions} $R0 "--outer-accepted=" $outerAccepted
   ${GetOptions} $R0 "--language=" $LANGUAGE
   ${GetOptions} $R0 "--page=" $R1
   StrCpy $INSTDIR "$EXEDIR\license-test"
@@ -100,6 +114,9 @@ FunctionEnd
 Function directoryPageShown
   FileOpen $result "$EXEDIR\result.txt" a
   FileSeek $result 0 END
+  ${If} $inner == 0
+    FileWrite $result "accepted=$isAssistedLicenseAccepted,customLeave=$customLeaveCalled$\r$\n"
+  ${EndIf}
   FileWrite $result "directory$\r$\n"
   FileClose $result
   ${If} $directoryShown == 0
