@@ -1,6 +1,6 @@
 import type { SignOptions } from "@electron/osx-sign"
 import { sign as _sign } from "@electron/osx-sign"
-import { copyFile, exec, Fields, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
+import { copyFile, exec, Executables, Fields, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, Logger, retry, TmpDir, unlinkIfExists } from "builder-util"
 import { Nullish } from "builder-util-runtime"
 import { createHash, randomBytes } from "crypto"
 import { rename } from "fs/promises"
@@ -216,10 +216,20 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
   return await importCerts(keychainFile, certPaths, cscPasswords, keychainPassword)
 }
 
+/**
+ * The programs the imported signing keys may be used by without a prompt (`security import -T`): the codesign and productbuild
+ * that electron-builder starts (from `toolsets.executables` or their default locations), and /usr/bin/codesign, which
+ * @electron/osx-sign starts by name.
+ */
+export function keychainTrustedApplications(): Array<string> {
+  return Array.from(new Set(["/usr/bin/codesign", Executables.resolve("codesign"), Executables.resolve("productbuild")]))
+}
+
 async function importCerts(keychainFile: string, paths: Array<string>, keyPasswords: Array<string>, keychainPassword: string): Promise<CodeSigningInfo> {
+  const trustedApplications = keychainTrustedApplications().flatMap(it => ["-T", it])
   for (let i = 0; i < paths.length; i++) {
     const password = keyPasswords[i] ?? ""
-    await exec("/usr/bin/security", ["import", paths[i], "-k", keychainFile, "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild", "-P", password])
+    await exec("/usr/bin/security", ["import", paths[i], "-k", keychainFile, ...trustedApplications, "-P", password])
 
     // https://stackoverflow.com/questions/39868578/security-codesign-in-sierra-keychain-ignores-access-control-settings-and-ui-p
     // https://github.com/electron-userland/electron-packager/issues/701#issuecomment-322315996

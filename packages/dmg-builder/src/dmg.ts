@@ -171,7 +171,7 @@ export class DmgTarget extends Target {
       args.push("--keychain", keychainFile)
     }
     args.push(artifactPath)
-    // by absolute path, the program the keychain lets use the signing key (security import -T /usr/bin/codesign)
+    // by absolute path, a program the keychain lets use the signing key (security import -T, see keychainTrustedApplications)
     await exec(Executables.resolve("codesign"), args)
 
     if (forceCodeSigning) {

@@ -54,7 +54,11 @@ export async function verify(args: VerifyCliOptions): Promise<Array<Verification
   if (args.dir != null) {
     outDir = path.resolve(args.dir)
   } else {
-    const output = config.directories!.output!
+    // the loaded configuration has the default ("dist") unless the project sets another
+    const output = config.directories?.output
+    if (output == null) {
+      throw new InvalidConfigurationError("directories.output is not set, so pass the output directory to verify: electron-builder verify <dir>")
+    }
     // each platform and arch of the build has its own output directory then
     if (/\$\{(os|arch|platform)\}/.test(output)) {
       throw new InvalidConfigurationError(`directories.output (${output}) depends on the platform or arch, so pass the output directory to verify: electron-builder verify <dir>`)
@@ -66,7 +70,7 @@ export async function verify(args: VerifyCliOptions): Promise<Array<Verification
   }
 
   // codesign, stapler, pkgutil and PowerShell come from the toolsets.executables of the project configuration, as in the build
-  const results = await Executables.run(config.toolsets?.executables, () => verifyBuildOutput({ outDir, projectDir: packager.projectDir, config }))
+  const results = await Executables.run(config.toolsets?.executables, () => verifyBuildOutput({ outDir, config }))
   const allowUnverified = args["allow-unverified"] === true
   for (const { status, check, file, message } of results) {
     const fields = { check, file: log.filePath(file) }

@@ -42,6 +42,20 @@ describe("macSignatureVerifier", () => {
     expect(vi.mocked(exec)).toHaveBeenLastCalledWith("/usr/bin/codesign", ["--verify", "--deep", "--strict=all", "--verbose=2", "/out/mac/My.app"], undefined, false)
   })
 
+  test("a strictVerify list is rebuilt from codesign's --strict keywords, and anything else is a configuration error", async ({ expect }) => {
+    vi.mocked(exec).mockResolvedValueOnce("")
+    await verifyMacCodeSignature("/out/mac/My.app", { deep: true, strict: " symlinks, sideband " })
+    expect(vi.mocked(exec)).toHaveBeenLastCalledWith("/usr/bin/codesign", ["--verify", "--deep", "--strict=symlinks,sideband", "--verbose=2", "/out/mac/My.app"], undefined, false)
+
+    vi.mocked(exec).mockClear()
+    for (const strict of ["symlinks --deep", "all;rm", "", "symlinks,,all"]) {
+      const error = await verifyMacCodeSignature("/out/mac/My.app", { deep: true, strict }).catch((e: unknown) => e)
+      expect(error, strict).toBeInstanceOf(InvalidConfigurationError)
+      expect((error as Error).message).toContain("mac.sign.strictVerify")
+    }
+    expect(vi.mocked(exec)).not.toHaveBeenCalled()
+  })
+
   test("a failed check returns the tool's complaint without terminal colors", async ({ expect }) => {
     vi.mocked(exec).mockRejectedValueOnce(
       new Error("\u001b[31mExit code: 1. Command failed: /usr/bin/codesign\u001b[39m\n\u001b[31mMy.app: code object is not signed at all\u001b[39m")

@@ -474,9 +474,11 @@ export class MacTargetHelper {
    * only exists on macOS.
    */
   async readSigningTeamId(file: string): Promise<string | null> {
+    // resolved outside the try: a codesign that cannot be located is a configuration error, not an unsigned file
+    const codesign = Executables.resolve("codesign")
     try {
       // `codesign -d` reports on stderr, so stdout alone (as `exec` returns) is not enough
-      const { stderr } = await spawnAndWriteWithOutput("/usr/bin/codesign", ["-d", "--verbose=4", file], "")
+      const { stderr } = await spawnAndWriteWithOutput(codesign, ["-d", "--verbose=4", file], "")
       return parseSigningTeamId(stderr)
     } catch {
       // unsigned binaries make `codesign -d` exit non-zero

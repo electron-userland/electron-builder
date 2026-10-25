@@ -1,4 +1,4 @@
-import { derivePublicKeyPem, isPathWithin, loadUpdateSigningKeys, parsePrivateKey } from "builder-util"
+import { isPathWithin } from "builder-util"
 import { asArray, matchPublisherName, normalizePublicKeyList, UpdateInfo } from "builder-util-runtime"
 import { readdir, readFile, realpath, stat } from "fs/promises"
 import { load } from "js-yaml"
@@ -36,8 +36,6 @@ export interface VerificationResult {
 export interface VerifyBuildOutputOptions {
   /** The output directory of the build (`directories.output`). */
   readonly outDir: string
-  /** The project directory, against which a relative `updateManifest.signingKeyFile` resolves. */
-  readonly projectDir: string
   /** The configuration of the build that produced the output: its opt-outs are honored. */
   readonly config: Configuration
   /** Reads Windows Authenticode signatures; defaults to {@link readAuthenticodeSigner}. */
@@ -45,12 +43,22 @@ export interface VerifyBuildOutputOptions {
 }
 
 type PlatformKey = "mac" | "win" | "linux"
+type MacConfigKey = "mac" | "mas" | "masDev"
+
+// The app output directories of the targets: `<platform><-arch, unless it is the default arch>`, with `-unpacked` for Windows and
+// Linux (PlatformPackager.computeAppOutDir) and the MAS target name for MAS (MacPackager.packMasTargets)
+const ARCH_SUFFIX = "(?:-(?:ia32|x64|armv7l|arm64|universal))?"
+const MAC_APP_DIR = new RegExp(`^(mac|mas|mas-dev)${ARCH_SUFFIX}$`)
+const UNPACKED_APP_DIR = new RegExp(`^(win|linux)${ARCH_SUFFIX}-unpacked$`)
+const MAC_CONFIG_KEYS: Readonly<Record<string, ReadonlyArray<MacConfigKey>>> = { mac: ["mac"], mas: ["mac", "mas"], "mas-dev": ["mac", "mas", "masDev"] }
 
 interface PackagedApp {
   readonly platform: PlatformKey
   /** The `.app` bundle, or the `*-unpacked` directory. */
   readonly path: string
   readonly isMas: boolean
+  /** The configuration blocks of a macOS app, in the order they cascade (`mac`, then `mas`, then `masDev`); empty for other platforms. */
+  readonly macConfigKeys: ReadonlyArray<MacConfigKey>
   readonly updateConfigFile: string
   /** The parsed `app-update.yml`, or null when the app has none (it does not auto-update) or it cannot be read. */
   readonly updateConfig: { readonly trustedKeys: Array<string>; readonly publisherNames: Array<string> | null } | null
@@ -144,20 +152,23 @@ async function discover(outDir: string): Promise<{ apps: Array<PackagedApp>; fil
       continue
     }
 
-    if (/^(mac|mas)/.test(entry.name)) {
-      const isMas = entry.name.startsWith("mas")
+    const macDir = MAC_APP_DIR.exec(entry.name)
+    const unpackedDir = UNPACKED_APP_DIR.exec(entry.name)
+    if (macDir != null) {
+      const macConfigKeys = MAC_CONFIG_KEYS[macDir[1]] ?? ["mac"]
+      const isMas = macDir[1] !== "mac"
       for (const child of await readdir(entryPath, { withFileTypes: true })) {
         const childPath = path.join(entryPath, child.name)
         if (child.isDirectory() && child.name.endsWith(".app")) {
-          apps.push(await readApp("mac", childPath, isMas, path.join(childPath, "Contents", "Resources", "app-update.yml")))
+          apps.push(await readApp("mac", childPath, isMas, macConfigKeys, path.join(childPath, "Contents", "Resources", "app-update.yml")))
         } else if (child.isFile() && child.name.endsWith(".pkg")) {
           // the MAS installer is written next to the app
           files.push(childPath)
         }
       }
-    } else if (/^(win|linux).*-unpacked$/.test(entry.name)) {
-      const platform: PlatformKey = entry.name.startsWith("win") ? "win" : "linux"
-      apps.push(await readApp(platform, entryPath, false, path.join(entryPath, "resources", "app-update.yml")))
+    } else if (unpackedDir != null) {
+      const platform: PlatformKey = unpackedDir[1] === "win" ? "win" : "linux"
+      apps.push(await readApp(platform, entryPath, false, [], path.join(entryPath, "resources", "app-update.yml")))
     } else {
       // nsis-web/, squirrel-windows*/, and the manifests of a second publish provider (<outDir>/<provider>/)
       for (const child of await readdir(entryPath, { withFileTypes: true })) {
@@ -170,8 +181,8 @@ async function discover(outDir: string): Promise<{ apps: Array<PackagedApp>; fil
   return { apps, files }
 }
 
-async function readApp(platform: PlatformKey, appPath: string, isMas: boolean, updateConfigFile: string): Promise<PackagedApp> {
-  const app = { platform, path: appPath, isMas, updateConfigFile }
+async function readApp(platform: PlatformKey, appPath: string, isMas: boolean, macConfigKeys: ReadonlyArray<MacConfigKey>, updateConfigFile: string): Promise<PackagedApp> {
+  const app = { platform, path: appPath, isMas, macConfigKeys, updateConfigFile }
   const problem = (updateConfigProblem: string): PackagedApp => ({ ...app, updateConfig: null, updateConfigProblem })
   let content: string
   try {
@@ -245,28 +256,25 @@ function verifyManifestSignature(manifest: Manifest, apps: Array<PackagedApp>, o
     return [result("skipped", "updateManifest is false in the configuration, so the manifest is not signed")]
   }
 
-  const signingKeys = (): Array<string> => loadUpdateSigningKeys(updateManifest ?? undefined, options.projectDir).map(it => derivePublicKeyPem(parsePrivateKey(it)))
-  // a deliberate cutover release is signed with a key outside the trust list it embeds (updateManifest.allowSigningKeyOutsideTrustList)
-  const verifyCutover = (reason: string): VerificationResult => {
-    const keys = signingKeys()
-    if (keys.length === 0) {
-      return result("skipped", `${reason}, which updateManifest.allowSigningKeyOutsideTrustList allows for a cutover release; no signing key is configured here to verify it with`)
-    }
-    const verification = verifyUpdateManifestContent(manifest.content, keys)
-    return verification.ok
-      ? result("verified", `${reason}; it verifies with the configured signing key ${verification.keyId} (updateManifest.allowSigningKeyOutsideTrustList)`)
-      : result("failed", `${reason}, and it does not verify with the configured signing keys either: ${verification.reason}`)
-  }
+  // Only public keys are used: verify never loads a signing (private) key, from the configuration or the environment.
+  // A deliberate cutover release is signed with a key outside the trust list it embeds (updateManifest.allowSigningKeyOutsideTrustList),
+  // whose public key verify does not have.
+  const cutover = (reason: string): VerificationResult =>
+    result("skipped", `${reason}, which updateManifest.allowSigningKeyOutsideTrustList allows for a cutover release signed with a key outside the trust list`)
 
-  const trustingApps = apps.filter(it => it.platform === manifest.platform && !it.isMas && it.updateConfig != null)
+  const trustingApps: Array<{ app: PackagedApp; trustedKeys: Array<string> }> = []
+  for (const app of apps) {
+    if (app.platform === manifest.platform && !app.isMas && app.updateConfig != null) {
+      trustingApps.push({ app, trustedKeys: app.updateConfig.trustedKeys })
+    }
+  }
   if (trustingApps.length === 0) {
-    const explicitKeys = updateManifest?.publicKey == null ? [] : normalizePublicKeyList(updateManifest.publicKey)
-    const keys = explicitKeys.length > 0 ? explicitKeys : signingKeys()
+    const keys = updateManifest?.publicKey == null ? [] : normalizePublicKeyList(updateManifest.publicKey)
     if (keys.length === 0) {
       return [
         result(
           "unverifiable",
-          "no packaged app embeds a trust list (app-update.yml), and the configuration has no updateManifest.publicKey or signing key to verify the manifest with"
+          "no packaged app embeds a trust list (app-update.yml), and updateManifest.publicKey is not set in the configuration: set it to the public keys to verify the manifest with"
         ),
       ]
     }
@@ -276,13 +284,12 @@ function verifyManifestSignature(manifest: Manifest, apps: Array<PackagedApp>, o
     }
     return [
       updateManifest?.allowSigningKeyOutsideTrustList === true
-        ? verifyCutover(`not signed by a key of updateManifest.publicKey (${verification.reason})`)
+        ? cutover(`not signed by a key of updateManifest.publicKey (${verification.reason})`)
         : result("failed", verification.reason),
     ]
   }
 
-  return trustingApps.map(app => {
-    const trustedKeys = app.updateConfig!.trustedKeys
+  return trustingApps.map(({ app, trustedKeys }) => {
     if (trustedKeys.length === 0) {
       return result("failed", `${path.relative(options.outDir, app.updateConfigFile)} embeds no updateManifestPublicKey, so installs of this build accept any update manifest`)
     }
@@ -291,7 +298,7 @@ function verifyManifestSignature(manifest: Manifest, apps: Array<PackagedApp>, o
       return result("verified", `signed by ${verification.keyId}, which ${path.relative(options.outDir, app.updateConfigFile)} trusts`)
     }
     const reason = `not accepted by the trust list of ${path.relative(options.outDir, app.updateConfigFile)} (${verification.reason})`
-    return updateManifest?.allowSigningKeyOutsideTrustList === true ? verifyCutover(reason) : result("failed", reason)
+    return updateManifest?.allowSigningKeyOutsideTrustList === true ? cutover(reason) : result("failed", reason)
   })
 }
 
@@ -340,13 +347,36 @@ async function verifyManifestFiles(
 
 // ─── macOS ────────────────────────────────────────────────────────────────────
 
+/**
+ * The `sign` option of a macOS app, cascaded over its configuration blocks as the build does (a later block wins, and sign objects
+ * are merged): whether it opts out of signing (`sign: null` or `sign.identity: null`), and its `strictVerify`.
+ */
+function macSigning(config: Configuration, keys: ReadonlyArray<MacConfigKey>): { signingOptOut: string | null; strict: boolean | string | null | undefined } {
+  let sign: unknown = undefined
+  let where = "mac.sign"
+  for (const key of keys) {
+    const value: unknown = config[key]?.sign
+    if (value === undefined) {
+      continue
+    }
+    where = `${key}.sign`
+    sign = isPlainSignObject(value) && isPlainSignObject(sign) ? { ...sign, ...value } : value
+  }
+  if (sign === null || (isPlainSignObject(sign) && sign.identity === null)) {
+    return { signingOptOut: `${where} (or its identity) is null in the configuration`, strict: undefined }
+  }
+  const strict = isPlainSignObject(sign) ? sign.strictVerify : undefined
+  return { signingOptOut: null, strict: typeof strict === "boolean" || typeof strict === "string" ? strict : undefined }
+}
+
+function isPlainSignObject(value: unknown): value is { readonly identity?: unknown; readonly strictVerify?: unknown } {
+  return value != null && typeof value === "object" && !Array.isArray(value)
+}
+
 async function verifyMacArtifacts(apps: Array<PackagedApp>, files: Array<string>, outDir: string, config: Configuration): Promise<Array<VerificationResult>> {
   const macApps = apps.filter(it => it.platform === "mac")
   const pkgs = files.filter(it => it.endsWith(".pkg"))
   const dmgs = config.dmg?.sign === true ? files.filter(it => it.endsWith(".dmg") && path.dirname(it) === outDir) : []
-  const sign = config.mac?.sign
-  const signingDisabled = sign === null || (sign != null && typeof sign === "object" && sign.identity === null)
-  const strict = sign != null && typeof sign === "object" ? sign.strictVerify : undefined
   const notarizeDisabled = config.mac?.notarize === false
   const results: Array<VerificationResult> = []
 
@@ -361,14 +391,16 @@ async function verifyMacArtifacts(apps: Array<PackagedApp>, files: Array<string>
     }
   }
 
-  const signingOptOut = signingDisabled ? "mac.sign (or its identity) is null in the configuration" : null
   const notarizeOptOut = notarizeDisabled ? "mac.notarize is false in the configuration" : null
   for (const app of macApps) {
+    // a MAS app is signed with its mas (and masDev) configuration, which cascades over mac
+    const { signingOptOut, strict } = macSigning(config, app.macConfigKeys)
     await run("code signature", app.path, signingOptOut, () => verifyMacCodeSignature(app.path, { deep: true, strict }))
     if (!app.isMas) {
       await run("notarization ticket", app.path, signingOptOut ?? notarizeOptOut, () => validateStapledTicket(app.path))
     }
   }
+  const signingOptOut = macSigning(config, ["mac"]).signingOptOut
   for (const pkg of pkgs) {
     await run("installer signature", pkg, null, () => checkInstallerPackageSignature(pkg))
     // the MAS installer (next to the app, in mas*/) goes to the App Store unnotarized
@@ -401,7 +433,13 @@ async function verifyWindowsArtifacts(
     }
   }
   const targets = [...files.filter(it => isAuthenticodeFileType(it)), ...appExecutables]
-  const publisherNameSets = apps.filter(it => it.platform === "win" && it.updateConfig?.publisherNames != null).map(it => it.updateConfig!.publisherNames!)
+  const publisherNameSets: Array<Array<string>> = []
+  for (const app of apps) {
+    const publisherNames = app.platform === "win" ? app.updateConfig?.publisherNames : null
+    if (publisherNames != null) {
+      publisherNameSets.push(publisherNames)
+    }
+  }
   const signingDisabled = config.win?.sign === false || config.win?.sign === null
   const results: Array<VerificationResult> = []
 

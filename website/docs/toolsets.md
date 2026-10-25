@@ -313,7 +313,7 @@ Each entry is one `file://` URI or a list of them. A list can serve several host
 | `wine` | The host Wine (`toolsets.wine: "system"`, the default) | macOS: `/opt/homebrew/bin/wine`, `/usr/local/bin/wine`, `/opt/local/bin/wine`, `/Applications/Wine Stable.app/Contents/Resources/wine/bin/wine` (likewise `Wine Devel.app`, `Wine Staging.app`); Linux: `/usr/local/bin/wine`, `/usr/bin/wine`, `/opt/wine-stable/bin/wine`, `/opt/wine-devel/bin/wine`, `/opt/wine-staging/bin/wine` |
 | `mono` | The Squirrel.Windows tools on macOS and Linux | macOS: `/opt/homebrew/bin/mono`, `/usr/local/bin/mono`, `/opt/local/bin/mono`, `/Library/Frameworks/Mono.framework/Versions/Current/Commands/mono`, `/Library/Frameworks/Mono.framework/Versions/Current/bin/mono`; Linux: `/home/linuxbrew/.linuxbrew/bin/mono`, `/usr/local/bin/mono`, `/usr/bin/mono` |
 | `productbuild`, `pkgbuild` | `pkg` and `mas` installers | macOS: `/usr/bin/<name>` |
-| `codesign` | Signing the DMG; verifying signatures (`forceCodeSigning`, `electron-builder verify`) | macOS: `/usr/bin/codesign` |
+| `codesign` | Signing the DMG; re-signing the Electron framework after embedding the ASAR integrity digest; reading the Team ID of nested binaries; verifying signatures (`forceCodeSigning`, `electron-builder verify`). The keychain that electron-builder creates lets it (and `/usr/bin/codesign`, which `@electron/osx-sign` starts) use the imported signing keys | macOS: `/usr/bin/codesign` |
 | `hdiutil`, `tiffutil`, `sips` | Building the DMG and its background | macOS: `/usr/bin/<name>` |
 | `actool` | Icon Composer (`.icon`) icons | macOS: `/usr/bin/actool` (which runs the `actool` of the selected Xcode) |
 | `zip` | `zip` archives of file names that 7-Zip cannot store (NFD) | macOS: `/usr/bin/zip` |

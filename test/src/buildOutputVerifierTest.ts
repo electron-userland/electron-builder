@@ -74,7 +74,7 @@ const writeLinuxApp = (outDir: string, keys: Array<string>) => write(path.join(o
 
 function run(outDir: string, config: any = {}, signers: Record<string, AuthenticodeSignerInfo> = {}): Promise<Array<VerificationResult>> {
   const readSigner = (file: string) => Promise.resolve(signers[path.basename(file)] ?? ({ type: "unsigned", reason: "no signature in the test fixture" } as const))
-  return verifyBuildOutput({ outDir, projectDir: outDir, config, readSigner })
+  return verifyBuildOutput({ outDir, config, readSigner })
 }
 
 const resultsOf = (results: Array<VerificationResult>, check: string, fileName?: string) =>
@@ -159,23 +159,39 @@ describe("update manifests", () => {
     expect(resultsOf(await run(outDir, { linux: { updateManifest: false } }), "update manifest signature")).toEqual(["skipped"])
   })
 
-  test("without a packaged app, the configuration provides the trust list, or the manifest cannot be verified", async ({ expect, tmpDir }) => {
+  test("without a packaged app, updateManifest.publicKey provides the trust list, or the manifest cannot be verified", async ({ expect, tmpDir }) => {
     const outDir = await tmpDir.createTempDir()
     await writeManifest(path.join(outDir, "latest-mac.yml"), [await writeArtifact(outDir, "My-1.0.0-mac.zip")])
     expect(resultsOf(await run(outDir, { updateManifest: { publicKey: keyA.publicKeyPem } }), "update manifest signature")).toEqual(["verified"])
-    expect(resultsOf(await run(outDir, { updateManifest: { signingKey: keyA.privateKeyPem } }), "update manifest signature")).toEqual(["verified"])
     expect(resultsOf(await run(outDir, { updateManifest: { publicKey: keyB.publicKeyPem } }), "update manifest signature")).toEqual(["failed"])
-    expect(resultsOf(await run(outDir), "update manifest signature")).toEqual(["unverifiable"])
+    const results = await run(outDir)
+    expect(resultsOf(results, "update manifest signature")).toEqual(["unverifiable"])
+    expect(results.find(it => it.check === "update manifest signature")?.message).toContain("updateManifest.publicKey is not set")
   })
 
-  test("a cutover release signed outside its embedded trust list is verified with the configured signing key, or skipped", async ({ expect, tmpDir }) => {
+  // verify needs public keys only: a signing (private) key is never loaded, from the configuration or the environment
+  test("a signing key is never used as the trust list: without updateManifest.publicKey the manifest is unverifiable", async ({ expect, tmpDir }) => {
+    const outDir = await tmpDir.createTempDir()
+    await writeManifest(path.join(outDir, "latest-mac.yml"), [await writeArtifact(outDir, "My-1.0.0-mac.zip")])
+    // the key that signed the manifest, where electron-builder would find it to sign with
+    vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", Buffer.from(keyA.privateKeyPem).toString("base64"))
+    expect(resultsOf(await run(outDir), "update manifest signature")).toEqual(["unverifiable"])
+    expect(resultsOf(await run(outDir, { updateManifest: { signingKey: keyA.privateKeyPem } }), "update manifest signature")).toEqual(["unverifiable"])
+    // a key file that would fail the read if verify tried to load it
+    vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY", undefined)
+    vi.stubEnv("ELECTRON_BUILDER_UPDATE_SIGN_KEY_FILE", path.join(outDir, "missing-key.pem"))
+    expect(resultsOf(await run(outDir, { updateManifest: { signingKeyFile: path.join(outDir, "missing-key.pem") } }), "update manifest signature")).toEqual(["unverifiable"])
+  })
+
+  test("a cutover release signed outside its embedded trust list is skipped, since its signing key is not in any trust list", async ({ expect, tmpDir }) => {
     const outDir = await tmpDir.createTempDir()
     // the release is signed with the old key A but embeds only the new key B (updateManifest.allowSigningKeyOutsideTrustList)
     await writeLinuxApp(outDir, [keyB.publicKeyPem])
     await writeManifest(path.join(outDir, "latest-linux.yml"), [await writeArtifact(outDir, "My-1.0.0.AppImage")])
     const cutover = { publicKey: keyB.publicKeyPem, allowSigningKeyOutsideTrustList: true }
     expect(resultsOf(await run(outDir, { updateManifest: cutover }), "update manifest signature")).toEqual(["skipped"])
-    expect(resultsOf(await run(outDir, { updateManifest: { ...cutover, signingKey: keyA.privateKeyPem } }), "update manifest signature")).toEqual(["verified"])
+    // the signing key is not loaded to verify it with either
+    expect(resultsOf(await run(outDir, { updateManifest: { ...cutover, signingKey: keyA.privateKeyPem } }), "update manifest signature")).toEqual(["skipped"])
     // without the opt-in it is a failure
     expect(resultsOf(await run(outDir, { updateManifest: { publicKey: keyB.publicKeyPem } }), "update manifest signature")).toEqual(["failed"])
   })
@@ -308,6 +324,57 @@ describe("macOS artifacts", () => {
 
     // mac.sign: null opts out of the app signature and notarization checks
     expect(resultsOf(await run(outDir, { mac: { sign: null } }), "code signature")).toEqual(["skipped", "skipped"])
+  })
+
+  test("a MAS app follows its mas (and masDev) sign configuration, which cascades over mac", async ({ expect, tmpDir }) => {
+    setPlatform("darwin")
+    const outDir = await tmpDir.createTempDir()
+    await write(path.join(outDir, "mac", "My.app", "Contents", "Info.plist"), "<plist/>")
+    await write(path.join(outDir, "mas-arm64", "My.app", "Contents", "Info.plist"), "<plist/>")
+    await write(path.join(outDir, "mas-dev", "My.app", "Contents", "Info.plist"), "<plist/>")
+    const statusOf = (results: Array<VerificationResult>) =>
+      Object.fromEntries(results.filter(it => it.check === "code signature").map(it => [path.basename(path.dirname(it.file)), it.status]))
+
+    // mas.sign: null opts the MAS apps out, not the mac app
+    const masOff = await run(outDir, { mas: { sign: null } })
+    expect(statusOf(masOff)).toEqual({ mac: "verified", "mas-arm64": "skipped", "mas-dev": "skipped" })
+    expect(masOff.find(it => it.file.includes("mas-arm64"))?.message).toBe("mas.sign (or its identity) is null in the configuration")
+    // masDev only affects mas-dev; an identity of null in a sign object opts out too
+    expect(statusOf(await run(outDir, { masDev: { sign: { identity: null } } }))).toEqual({ mac: "verified", "mas-arm64": "verified", "mas-dev": "skipped" })
+    // mac.sign: null cascades to the MAS apps, unless mas signs them again
+    expect(statusOf(await run(outDir, { mac: { sign: null }, mas: { sign: { identity: "3rd Party Mac Developer Application: Foo" } } }))).toEqual({
+      mac: "skipped",
+      "mas-arm64": "verified",
+      "mas-dev": "verified",
+    })
+    // strictVerify merges over mac's sign object
+    vi.mocked(verifyMacCodeSignature).mockClear()
+    await run(outDir, { mac: { sign: { strictVerify: false } }, mas: { sign: { type: "distribution" } } })
+    expect(vi.mocked(verifyMacCodeSignature).mock.calls.map(call => call[1].strict)).toEqual([false, false, false])
+  })
+
+  test("only the app output directories of the mac targets are read as macOS apps", async ({ expect, tmpDir }) => {
+    setPlatform("darwin")
+    const outDir = await tmpDir.createTempDir()
+    for (const dir of ["mac", "mac-universal", "mas-x64", "mas-dev-arm64", "machine-learning", "mascot", "mac-arm64-extra", "mac-universal-x64-temp"]) {
+      await write(path.join(outDir, dir, "My.app", "Contents", "Info.plist"), "<plist/>")
+    }
+    for (const dir of ["linux-unpacked", "win-ia32-unpacked", "linux-tools-unpacked"]) {
+      await write(path.join(outDir, dir, "resources", "app-update.yml"), "- not a mapping\n")
+    }
+    const results = await run(outDir)
+    expect(
+      results
+        .filter(it => it.check === "code signature")
+        .map(it => path.relative(outDir, path.dirname(it.file)))
+        .sort()
+    ).toEqual(["mac", "mac-universal", "mas-dev-arm64", "mas-x64"])
+    expect(
+      results
+        .filter(it => it.check === "app update configuration")
+        .map(it => path.relative(outDir, it.file).split(path.sep)[0])
+        .sort()
+    ).toEqual(["linux-unpacked", "win-ia32-unpacked"])
   })
 
   test("honors mac.sign.strictVerify", async ({ expect, tmpDir }) => {
