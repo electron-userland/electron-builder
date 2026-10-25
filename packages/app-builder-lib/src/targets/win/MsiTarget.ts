@@ -20,7 +20,8 @@ import { createStageDir, getWindowsInstallationDirName } from "../targetUtil.js"
 const ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID = UUID.parse("d752fe43-5d44-44d5-9fc9-6dd1bf19d5cc")
 const ROOT_DIR_ID = "APPLICATIONFOLDER"
 
-// WiX doesn't support Mono, so, dontnet462 is required to be installed for wine (preinstalled in our bundled wine)
+// candle.exe and light.exe are .NET Framework programs: on macOS and Linux they run under Wine, which runs them with wine-mono (the
+// toolsets.wix notes in toolsets.md), not with a host Mono
 export default class MsiTarget extends Target {
   protected readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager(this.packager.config.toolsets?.wine, this.packager.buildResourcesDir)
 
