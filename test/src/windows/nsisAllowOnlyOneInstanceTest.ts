@@ -13,15 +13,10 @@ const withoutComments = (text: string) =>
     .filter(line => !line.trim().startsWith("#"))
     .join("\n")
 let findProcessMacro: string
-let powerShellAvailabilityMacro: string
 
 describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
   beforeAll(async () => {
     templateContent = await fs.readFile(templatePath, "utf8")
-
-    // Extract the PowerShell availability macro for focused probe assertions
-    const availabilityMatch = templateContent.match(/!macro IS_POWERSHELL_AVAILABLE[\s\S]*?!macroend/)
-    powerShellAvailabilityMacro = availabilityMatch ? availabilityMatch[0] : ""
 
     // Extract just the FIND_PROCESS macro body for targeted assertions
     const match = templateContent.match(/!macro FIND_PROCESS[\s\S]*?!macroend/)
@@ -29,15 +24,23 @@ describe("allowOnlyOneInstallerInstance.nsh", { concurrent: false }, () => {
   })
 
   describe("IS_POWERSHELL_AVAILABLE macro", () => {
-    test("requires proof that the capability probe was executed", () => {
-      expect(powerShellAvailabilityMacro).toContain("Get-Command Get-CimInstance")
-      expect(powerShellAvailabilityMacro).toContain("exit 37")
-      expect(powerShellAvailabilityMacro).toContain("${if} $0 == 37")
-      expect(powerShellAvailabilityMacro).toContain("Get-ExecutionPolicy -Scope Process")
+    let availabilityMacro: string
+
+    beforeAll(() => {
+      const match = templateContent.match(/!macro IS_POWERSHELL_AVAILABLE[\s\S]*?!macroend/)
+      expect(match).not.toBeNull()
+      availabilityMacro = withoutComments(match![0])
     })
 
-    test("marks every non-sentinel capability result as unavailable", () => {
-      expect(powerShellAvailabilityMacro).toContain("${else}\n    StrCpy $0 1\n  ${endIf}")
+    // Wine's powershell.exe runs nothing and exits with 0, which FIND_PROCESS reads as "the app is running"
+    // (runtime behavior: nsisPowerShellAvailabilityTest)
+    test("requires the sentinel exit code 37, which only a PowerShell that ran the probe returns", () => {
+      expect(availabilityMacro).toMatch(/Get-Command Get-CimInstance -ErrorAction SilentlyContinue\) \{ exit 37 \} else \{ exit 1 \}/)
+      expect(availabilityMacro).toMatch(/\$\{if\} \$0 == 37\s+nsExec::Exec [^\n]*Get-ExecutionPolicy -Scope Process/)
+    })
+
+    test("treats every other probe result, including 0, as unavailable", () => {
+      expect(availabilityMacro).toMatch(/\$\{if\} \$0 == 37[\s\S]*?\$\{else\}\s+StrCpy \$0 1\s+\$\{endIf\}/)
     })
   })
 
