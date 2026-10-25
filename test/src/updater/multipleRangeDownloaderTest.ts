@@ -1,3 +1,4 @@
+import { CancellationToken } from "builder-util-runtime"
 import {
   computeBatchEnd,
   executeTasksUsingMultipleRangeRequests,
@@ -14,15 +15,17 @@ import type { DifferentialDownloader } from "electron-updater/src/differentialDo
 import type { Operation } from "electron-updater/src/differentialDownloader/downloadPlanBuilder"
 
 function createFakeDifferentialDownloader(response: PassThrough): DifferentialDownloader {
+  const createRequest = (_options: unknown, callback: (response: unknown) => void) => ({
+    end: () => callback(response),
+    abort: () => {},
+  })
   return {
-    options: {},
+    options: { cancellationToken: new CancellationToken() },
     logger: null,
     createRequestOptions: () => ({ headers: {} }),
+    createRangeRequest: createRequest,
     httpExecutor: {
-      createRequest: (_options: unknown, callback: (response: unknown) => void) => ({
-        end: () => callback(response),
-        abort: () => {},
-      }),
+      createRequest,
       addErrorAndTimeoutHandlers: () => {},
       addRedirectHandlers: () => {},
     },
@@ -40,37 +43,39 @@ const C = (start: number, end: number): Operation => ({ kind: OperationKind.COPY
 function createFakeRangeServer(remote: Buffer): { downloader: DifferentialDownloader; rangeHeaders: Array<string> } {
   const rangeHeaders: Array<string> = []
   const boundary = "gc0p4Jq0M2Yt08jU534c0p"
+  const createRequest = (options: { headers: Record<string, string> }, callback: (response: unknown) => void) => ({
+    end: () => {
+      const rangeHeader = options.headers.range
+      rangeHeaders.push(rangeHeader)
+      const ranges = rangeHeader
+        .substring("bytes=".length)
+        .split(",")
+        .map(it => it.trim().split("-").map(Number))
+      const response = new PassThrough() as PassThrough & { statusCode: number; headers: Record<string, string> }
+      response.statusCode = 206
+      if (ranges.length === 1) {
+        response.headers = { "content-type": "application/octet-stream" }
+        callback(response)
+        response.end(remote.subarray(ranges[0][0], ranges[0][1] + 1))
+        return
+      }
+      response.headers = { "content-type": `multipart/byteranges; boundary=${boundary}` }
+      callback(response)
+      ranges.forEach(([start, end], i) => {
+        response.write(`${i === 0 ? "" : "\r\n"}--${boundary}\r\nContent-Type: application/octet-stream\r\nContent-Range: bytes ${start}-${end}/${remote.length}\r\n\r\n`)
+        response.write(remote.subarray(start, end + 1))
+      })
+      response.end(`\r\n--${boundary}--\r\n`)
+    },
+    abort: () => {},
+  })
   const downloader = {
-    options: {},
+    options: { cancellationToken: new CancellationToken() },
     logger: { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} },
     createRequestOptions: () => ({ headers: {} }),
+    createRangeRequest: createRequest,
     httpExecutor: {
-      createRequest: (options: { headers: Record<string, string> }, callback: (response: unknown) => void) => ({
-        end: () => {
-          const rangeHeader = options.headers.range
-          rangeHeaders.push(rangeHeader)
-          const ranges = rangeHeader
-            .substring("bytes=".length)
-            .split(",")
-            .map(it => it.trim().split("-").map(Number))
-          const response = new PassThrough() as PassThrough & { statusCode: number; headers: Record<string, string> }
-          response.statusCode = 206
-          if (ranges.length === 1) {
-            response.headers = { "content-type": "application/octet-stream" }
-            callback(response)
-            response.end(remote.subarray(ranges[0][0], ranges[0][1] + 1))
-            return
-          }
-          response.headers = { "content-type": `multipart/byteranges; boundary=${boundary}` }
-          callback(response)
-          ranges.forEach(([start, end], i) => {
-            response.write(`${i === 0 ? "" : "\r\n"}--${boundary}\r\nContent-Type: application/octet-stream\r\nContent-Range: bytes ${start}-${end}/${remote.length}\r\n\r\n`)
-            response.write(remote.subarray(start, end + 1))
-          })
-          response.end(`\r\n--${boundary}--\r\n`)
-        },
-        abort: () => {},
-      }),
+      createRequest,
       addErrorAndTimeoutHandlers: () => {},
       addRedirectHandlers: () => {},
     },

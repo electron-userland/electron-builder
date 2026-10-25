@@ -2,15 +2,22 @@ import { BlockMapDataHolder, DigestTransform, HttpExecutor, configureRequestUrl,
 import { BlockMap } from "builder-util-runtime"
 import { detectSha512Encoding } from "builder-util-runtime/internal"
 import fsExtra from "fs-extra"
-import { createWriteStream } from "fs"
-import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { ProgressInfo, CancellationToken } from "builder-util-runtime"
+import { createWriteStream, WriteStream } from "fs"
+import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
+import { ProgressInfo, CancellationError, CancellationToken } from "builder-util-runtime"
 import { Logger } from "../types.js"
-import { nonThrowingLogger } from "../util.js"
-import { copyData } from "./DataSplitter.js"
+import { nonThrowingLogger, throwIfCancelled } from "../util.js"
+import { copyData, stopCopies } from "./DataSplitter.js"
 import { URL } from "url"
 import { coalesceDownloadGaps, computeOperations, downloadGapCoalesceThreshold, Operation, OperationKind } from "./downloadPlanBuilder.js"
-import { checkIsPartialContent, ERR_MULTIPLE_RANGES_NOT_SUPPORTED, executeTasksUsingMultipleRangeRequests, RangeRequestTarget, requestRange } from "./multipleRangeDownloader.js"
+import {
+  AbortableRequest,
+  checkIsPartialContent,
+  ERR_MULTIPLE_RANGES_NOT_SUPPORTED,
+  executeTasksUsingMultipleRangeRequests,
+  RangeRequestTarget,
+  requestRange,
+} from "./multipleRangeDownloader.js"
 import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform.js"
 
 export interface DifferentialDownloaderOptions {
@@ -31,6 +38,9 @@ export abstract class DifferentialDownloader {
   fileMetadataBuffer: Buffer | null = null
 
   readonly logger: Logger
+
+  // range requests that have not closed yet, aborted when the download is cancelled or fails
+  private readonly requestsInFlight = new Set<AbortableRequest>()
 
   // starts from the provider's choice; turned off for the rest of this download when the server rejects multi-range requests
   private isUseMultipleRangeRequest: boolean
@@ -59,6 +69,29 @@ export abstract class DifferentialDownloader {
     // user-agent, cache-control and other common options
     configureRequestOptions(result)
     return result
+  }
+
+  /**
+   * Creates a request for a part of the new file, tracked so that a cancel or a failure aborts it even when no data flows.
+   * @internal
+   */
+  createRangeRequest(requestOptions: RequestOptions, callback: (response: IncomingMessage) => void): any {
+    const request = this.httpExecutor.createRequest(requestOptions, callback)
+    this.requestsInFlight.add(request)
+    request.on("close", () => this.requestsInFlight.delete(request))
+    return request
+  }
+
+  private abortRequestsInFlight(): void {
+    for (const request of this.requestsInFlight) {
+      try {
+        request.abort()
+      } catch (e: unknown) {
+        // runs inside CancellationToken.cancel(), which must not throw
+        this.logger.warn(`Cannot abort request: ${e}`)
+      }
+    }
+    this.requestsInFlight.clear()
   }
 
   protected doDownload(oldBlockMap: BlockMap, newBlockMap: BlockMap): Promise<any> {
@@ -94,6 +127,8 @@ export abstract class DifferentialDownloader {
     logger.info(`Full: ${formatBytes(newSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newSize / 100))}%)`)
 
     return this.downloadFile(operations).catch((e: unknown) => {
+      // a cancel (or a failure caused by one, such as an aborted request) ends the download instead of starting the retry
+      throwIfCancelled(e, this.options.cancellationToken)
       // anything but our own rejection (including a non-Error throw) is rethrown as is
       if (!(e instanceof Error) || !("code" in e) || e.code !== ERR_MULTIPLE_RANGES_NOT_SUPPORTED || !this.isUseMultipleRangeRequest) {
         throw e
@@ -106,49 +141,45 @@ export abstract class DifferentialDownloader {
     })
   }
 
-  private downloadFile(tasks: Array<Operation>): Promise<any> {
-    const fdList: Array<OpenedFile> = []
-    const closeFiles = (): Promise<Array<void>> => {
-      return Promise.all(
-        fdList.map(openedFile => {
-          return fsExtra.close(openedFile.descriptor).catch((e: any) => {
-            this.logger.error(`cannot close file "${openedFile.path}": ${e}`)
-          })
-        })
-      )
+  private async downloadFile(tasks: Array<Operation>): Promise<void> {
+    if (this.options.cancellationToken.cancelled) {
+      throw new CancellationError()
     }
-    return this.doDownloadFile(tasks, fdList)
-      .then(closeFiles)
-      .catch((e: any) => {
-        // then must be after catch here (since then always throws error)
-        return closeFiles()
-          .catch(closeFilesError => {
-            // closeFiles never throw error, but just to be sure
-            try {
-              this.logger.error(`cannot close files: ${closeFilesError}`)
-            } catch (errorOnLog) {
-              try {
-                console.error(errorOnLog)
-              } catch (_ignored) {
-                // ok, give up and ignore error
-              }
-            }
-            throw e
-          })
-          .then(() => {
-            throw e
-          })
-      })
+    const oldFileFd = await fsExtra.open(this.options.oldFile, "r")
+    try {
+      await this.doDownloadFile(tasks, oldFileFd)
+    } finally {
+      // after a failure, a copy may still read the old file: closing the descriptor under it would fail the read or, worse,
+      // let it read whatever file reuses the descriptor number
+      await stopCopies(oldFileFd)
+      await fsExtra.close(oldFileFd).catch((e: unknown) => this.logger.error(`cannot close file "${this.options.oldFile}": ${e}`))
+    }
   }
 
-  private async doDownloadFile(tasks: Array<Operation>, fdList: Array<OpenedFile>): Promise<any> {
-    const oldFileFd = await fsExtra.open(this.options.oldFile, "r")
-    fdList.push({ descriptor: oldFileFd, path: this.options.oldFile })
-    const newFileFd = await fsExtra.open(this.options.newFile, "w")
-    fdList.push({ descriptor: newFileFd, path: this.options.newFile })
-    const fileOut = createWriteStream(this.options.newFile, { fd: newFileFd })
-    await new Promise((resolve, reject) => {
-      const streams: Array<any> = []
+  private async doDownloadFile(tasks: Array<Operation>, oldFileFd: number): Promise<void> {
+    // fileOut owns the descriptor of the new file: it closes it when it finishes, fails or is destroyed
+    const fileOut = createWriteStream(this.options.newFile, { fd: await fsExtra.open(this.options.newFile, "w") })
+    const fileOutClosed = new Promise<void>(resolve => fileOut.once("close", () => resolve()))
+    const streams: Array<any> = []
+    try {
+      await this.writeNewFile(tasks, oldFileFd, fileOut, streams)
+    } catch (e: unknown) {
+      // stop everything that may still write the new file or start another copy from the old one
+      this.abortRequestsInFlight()
+      for (const stream of streams) {
+        stream.destroy()
+      }
+      fileOut.destroy()
+      await fileOutClosed
+      throw e
+    }
+  }
+
+  private writeNewFile(tasks: Array<Operation>, oldFileFd: number, fileOut: WriteStream, streams: Array<any>): Promise<void> {
+    // A cancel is otherwise only noticed by the progress transform when data flows, so a stalled range request would never
+    // settle: createPromise rejects on cancel (and unsubscribes once settled), and the requests in flight are aborted.
+    return this.options.cancellationToken.createPromise<void>((resolve, reject, onCancel) => {
+      onCancel(() => this.abortRequestsInFlight())
 
       // Create our download info transformer if we have one
       let downloadInfoTransform: ProgressDifferentialDownloadCallbackTransform | undefined = undefined
@@ -182,8 +213,6 @@ export abstract class DifferentialDownloader {
       // noinspection JSArrowFunctionCanBeReplacedWithShorthand
       fileOut.on("finish", () => {
         ;(fileOut.close as any)(() => {
-          // remove from fd list because closed successfully
-          fdList.splice(1, 1)
           try {
             digestTransform.validate()
           } catch (e: any) {
@@ -191,7 +220,7 @@ export abstract class DifferentialDownloader {
             return
           }
 
-          resolve(undefined)
+          resolve()
         })
       })
 
@@ -282,7 +311,8 @@ export abstract class DifferentialDownloader {
               }
             })
           },
-          reject
+          reject,
+          firstStream
         )
       }
 
@@ -305,7 +335,8 @@ export abstract class DifferentialDownloader {
   }
 
   private request(start: number, endInclusive: number, dataHandler: (chunk: Buffer) => void): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return this.options.cancellationToken.createPromise<void>((resolve, reject, onCancel) => {
+      onCancel(() => this.abortRequestsInFlight())
       requestRange(
         this,
         { options: this.createRequestOptions() },
@@ -332,9 +363,4 @@ export abstract class DifferentialDownloader {
 
 function formatBytes(value: number, symbol = " KB"): string {
   return new Intl.NumberFormat("en").format((value / 1024).toFixed(2) as any) + symbol
-}
-
-interface OpenedFile {
-  readonly descriptor: number
-  readonly path: string
 }

@@ -61,6 +61,14 @@ export interface InstallerOptions {
   externalLinks?: ExternalLinkPolicy | null
 }
 
+/** Squirrel.exe must live in the app directory so the nuspec can reference it: call before `createWindowsInstaller` */
+export async function copySquirrelExe(appDirectory: string, vendorDirectory: string): Promise<void> {
+  // into the app output directory, which untrusted files were copied into: replace, never follow, a symlink at the name
+  const squirrelExe = path.join(appDirectory, "Squirrel.exe")
+  await prepareFixedNameWrite(appDirectory, squirrelExe, "Squirrel.exe")
+  await fs.copyFile(path.join(vendorDirectory, "Squirrel.exe"), squirrelExe)
+}
+
 export async function createWindowsInstaller(options: InstallerOptions): Promise<void> {
   const {
     appDirectory,
@@ -83,12 +91,6 @@ export async function createWindowsInstaller(options: InstallerOptions): Promise
 
   // On macOS and Linux the vendor tools run under Mono, started by absolute path (toolsets.executables.mono or its default locations)
   const mono = process.platform === "win32" ? null : Executables.resolve("mono")
-
-  // Squirrel.exe must live in the app directory so the nuspec can reference it
-  // into the app output directory, which untrusted files were copied into: replace, never follow, a symlink at the name
-  const squirrelExe = path.join(appDirectory, "Squirrel.exe")
-  await prepareFixedNameWrite(appDirectory, squirrelExe, "Squirrel.exe")
-  await fs.copyFile(path.join(vendorDirectory, "Squirrel.exe"), squirrelExe)
 
   const nugetVersion = convertVersion(version)
   const authors = options.authors || ""

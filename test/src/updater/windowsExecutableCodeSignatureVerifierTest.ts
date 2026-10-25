@@ -414,6 +414,13 @@ describe("windowsExecutableCodeSignatureVerifier (unit)", () => {
       expectVerificationSuccess(await verifySignature(["CN=Test, C=US"], defaultFile, logger))
     })
 
+    test("escaped characters in a publisherName DN match the subject", async ({ tmpDir }) => {
+      const { defaultFile, logger, makeJson } = await setup(tmpDir)
+      mockPsSuccess(makeJson({ subject: 'CN="Acme+Bolt Café", O=Acme, C=FR' }))
+      // a "\\+" escape followed by a hex digit, and UTF-8 hex pairs as `openssl x509 -nameopt RFC2253` prints them
+      expectVerificationSuccess(await verifySignature(["CN=Acme\\+Bolt Caf\\C3\\A9, O=Acme, C=FR"], defaultFile, logger))
+    })
+
     test("a non-ASCII subject and path escaped as \\uXXXX by the script match", async ({ tmpDir }) => {
       const { logger } = await setup(tmpDir)
       const subject = "CN=İlker Pálfi, O=你好 😀, C=TR"

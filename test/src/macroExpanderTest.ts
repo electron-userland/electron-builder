@@ -1,4 +1,5 @@
 import { expandMacro } from "app-builder-lib/internal"
+import { vi } from "vitest"
 
 const appInfoStub: any = {
   sanitizedProductName: "1",
@@ -23,4 +24,14 @@ test("sanitized product name", ({ expect }) => {
 test("product name", ({ expect }) => {
   const result = expandMacro("${productName}-${arch}.${ext}", "x64", appInfoStub, {}, false)
   expect(result).toBe("2-x64.dmg")
+})
+
+test("${env.NAME} macro with a digit in the name", ({ expect }) => {
+  vi.stubEnv("S3_BUCKET", "my-bucket")
+  try {
+    expect(expandMacro("${env.S3_BUCKET}/${name}", null, appInfoStub)).toBe("my-bucket/Test")
+    expect(() => expandMacro("${env.UNDEFINED_ENV_2}", null, appInfoStub)).toThrow("env UNDEFINED_ENV_2 is not defined")
+  } finally {
+    vi.unstubAllEnvs()
+  }
 })
