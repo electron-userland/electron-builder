@@ -33,7 +33,7 @@ export {
 } from "./node-module-collector/index.js"
 export { PM } from "./node-module-collector/packageManager.js"
 export type { NodeModuleInfo } from "./node-module-collector/types.js"
-export { computeSafeArtifactNameIfNeeded, DoPackOptions } from "./platformPackager.js"
+export { computeSafeArtifactNameIfNeeded, DoPackOptions, trackPackWork, waitForPackWork } from "./platformPackager.js"
 export { createPublisher } from "./publish/PublishManager.js"
 export { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./publish/updateInfoBuilder.js"
 export { buildBlockMap } from "./targets/blockmap/blockmap.js"

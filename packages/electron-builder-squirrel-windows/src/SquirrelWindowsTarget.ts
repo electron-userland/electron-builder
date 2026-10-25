@@ -1,5 +1,5 @@
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target, WinPackager } from "app-builder-lib"
-import { getRceditBundle, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
+import { getRceditBundle, waitForPackWork, withToolsetLock, WineVmManager } from "app-builder-lib/internal"
 import { InvalidConfigurationError, isEmptyOrSpaces, log, escapeForXml, prepareFixedNameWrite } from "builder-util"
 import { sanitizeFileName } from "builder-util/internal"
 import * as fs from "fs"
@@ -159,14 +159,18 @@ export default class SquirrelWindowsTarget extends Target {
     const artifactPath = path.join(installerOutDir, setupFile)
     const msiArtifactPath = path.join(installerOutDir, packager.expandArtifactNamePattern(this.options, "msi", arch, "${productName} Setup ${version}.${ext}"))
 
+    await packager.emitArtifactBuildStarted({
+      targetPresentableName: "Squirrel.Windows",
+      file: artifactPath,
+      arch,
+    })
+    const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
+    // The stub and the re-signed app exe are written into appOutDir, which the other targets of this pack read: wait for
+    // their queued work (zip/7z), and write here rather than in the queue so the sync targets built after this one see the final appOutDir.
+    await waitForPackWork(packager, appOutDir, arch)
+    await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory)
+
     this.buildQueueManager.add(async () => {
-      await packager.emitArtifactBuildStarted({
-        targetPresentableName: "Squirrel.Windows",
-        file: artifactPath,
-        arch,
-      })
-      const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFile)
-      await this.generateStubExecutableExe(appOutDir, distOptions.vendorDirectory)
       await withToolsetLock(() => createWindowsInstaller(distOptions))
 
       await packager.signAndEditResources(artifactPath, arch, installerOutDir)
@@ -218,7 +222,6 @@ export default class SquirrelWindowsTarget extends Target {
         packager,
       })
     })
-    return Promise.resolve()
   }
 
   private get appName() {
